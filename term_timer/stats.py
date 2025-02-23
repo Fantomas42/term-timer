@@ -3,21 +3,20 @@ from functools import cached_property
 
 import numpy as np
 
+from term_timer.colors import C_AO5
+from term_timer.colors import C_AO12
+from term_timer.colors import C_AO100
+from term_timer.colors import C_GREEN
+from term_timer.colors import C_MO3
 from term_timer.colors import C_RED
 from term_timer.colors import C_RESET
-from term_timer.colors import C_STATS
 from term_timer.colors import C_RESULT
-from term_timer.colors import C_GREEN
-from term_timer.colors import C_AO100
-from term_timer.colors import C_AO12
-from term_timer.colors import C_AO5
-from term_timer.colors import C_MO3
 from term_timer.colors import C_SCRAMBLE
+from term_timer.colors import C_STATS
 from term_timer.constants import STEP_BAR
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_time
-
 
 
 class Statistics:
@@ -125,7 +124,7 @@ class Statistics:
 
         return [
             (value, edge)
-            for value, edge in zip(histo, bin_edges)
+            for value, edge in zip(histo, bin_edges, strict=False)
             if value
         ]
 

@@ -1,7 +1,7 @@
-from term_timer.constants import SECOND
 from term_timer.colors import C_GREEN
 from term_timer.colors import C_RED
 from term_timer.colors import C_RESET
+from term_timer.constants import SECOND
 
 
 def format_time(elapsed_ns):
@@ -25,7 +25,7 @@ def format_edge(elapsed_ns):
 
 def format_delta(delta):
     return '%s%ss%s' % (
-        delta > 0 and f'{ C_RED }+' or C_GREEN,
+        (delta > 0 and f'{ C_RED }+') or C_GREEN,
         format_duration(delta),
         C_RESET,
     )

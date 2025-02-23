@@ -1,27 +1,27 @@
+import sys
 import termios
 import threading
 import time
 import tty
-import sys
 
-from term_timer.constants import SECOND
-from term_timer.colors import C_DURATION
-from term_timer.colors import C_MO3
 from term_timer.colors import C_AO5
 from term_timer.colors import C_AO12
+from term_timer.colors import C_DURATION
+from term_timer.colors import C_GO_BASE
+from term_timer.colors import C_GO_FIF
+from term_timer.colors import C_GO_TEN
+from term_timer.colors import C_GO_THF
+from term_timer.colors import C_GO_THR
+from term_timer.colors import C_GO_TWE
+from term_timer.colors import C_GO_TWF
+from term_timer.colors import C_MO3
 from term_timer.colors import C_RECORD
 from term_timer.colors import C_RESET
 from term_timer.colors import C_RESULT
 from term_timer.colors import C_SCRAMBLE
-from term_timer.colors import C_GO_BASE
-from term_timer.colors import C_GO_THF
-from term_timer.colors import C_GO_THR
-from term_timer.colors import C_GO_TWF
-from term_timer.colors import C_GO_TWE
-from term_timer.colors import C_GO_TEN
-from term_timer.colors import C_GO_FIF
-from term_timer.formatter import format_time
+from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
+from term_timer.formatter import format_time
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 

@@ -1,19 +1,17 @@
-# ruff: noqa: T201
 # TODO(me): better colors
 #           other cubes ?
 #           decompte
 import logging
 import sys
-
 from argparse import ArgumentParser
 from random import seed
 
 from term_timer.colors import C_RED
 from term_timer.colors import C_RESET
-from term_timer.in_out import save_solves
 from term_timer.in_out import load_solves
-from term_timer.timer import Timer
+from term_timer.in_out import save_solves
 from term_timer.stats import Statistics
+from term_timer.timer import Timer
 
 
 def main():
@@ -115,6 +113,6 @@ def main():
 
     if len(stack) > 1:
         session_stats = Statistics(stack)
-        session_stats.resume(free_play and 'Session ' or 'Global ')
+        session_stats.resume((free_play and 'Session ') or 'Global ')
 
     return 0
