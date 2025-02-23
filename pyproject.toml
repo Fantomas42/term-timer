@@ -19,15 +19,78 @@ term-timer = "term_timer.scripts.timer:main"
 packages = ["term_timer"]
 
 [tool.ruff]
+line-length = 80
+indent-width = 4
 target-version = "py312"
+show-fixes = true
 
 [tool.ruff.lint]
-ignore = [
-       "PLR0904",
-       "RUF021",
-       "TD003",
-       "UP031",
+preview = true
+fixable = ["ALL"]
+select = [
+       "A",
+       "ARG",
+       "B",
+       "BLE",
+       "C4",
+       #"C90",
+       "COM",
+       #"D",
+       "DJ",
+       "DTZ",
+       "E",
+       "EM",
+       "ERA",
+       "EXE",
+       "F",
+       "FBT",
+       #"FIX",
+       "FLY",
+       "FURB",
+       "G",
+       "I",
+       "ICN",
+       "INP",
+       "INT",
+       "ISC",
+       "LOG",
+       "N",
+       "PIE",
+       "PL",
+       "PTH",
+       "Q",
+       "RET",
+       "RSE",
+       "RUF",
+       "S",
+       "SIM",
+       "SLF",
+       "T10",
+       "T20",
+       "TD",
+       "TRY",
+       "UP",
+       "W",
 ]
+ignore = [
+       "TD003",
+       "T201",
+]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false
+docstring-code-line-length = "dynamic"
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "single"
+
+[tool.ruff.lint.isort]
+force-single-line = true
 
 [tool.ruff.lint.pylint]
 allow-magic-value-types = ["str", "int"]
