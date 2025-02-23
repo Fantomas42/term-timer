@@ -111,7 +111,6 @@ class Timer:
         scramble, cube = scrambler(
             mode=self.mode,
             iterations=self.iterations,
-            show_cube=False,
         )
 
         solve_number = len(self.stack) + 1
