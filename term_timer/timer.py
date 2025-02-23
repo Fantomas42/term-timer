@@ -1,8 +1,9 @@
 import sys
 import termios
-import threading
 import time
 import tty
+from threading import Event
+from threading import Thread
 
 from term_timer.colors import C_AO5
 from term_timer.colors import C_AO12
@@ -30,12 +31,14 @@ from term_timer.stats import Statistics
 
 
 class Timer:
+    thread: Thread | None
+
     def __init__(self, free_play: bool, mode: str,
                  iterations: int, show_cube: bool,
                  stack: list[Solve]):
-        self.start_time = None
-        self.end_time = None
-        self.elapsed_time = None
+        self.start_time = 0
+        self.end_time = 0
+        self.elapsed_time = 0
 
         self.free_play = free_play
         self.mode = mode
@@ -43,7 +46,7 @@ class Timer:
         self.show_cube = show_cube
         self.stack = stack
 
-        self.stop_event = threading.Event()
+        self.stop_event = Event()
         self.thread = None
 
     @staticmethod
@@ -133,7 +136,7 @@ class Timer:
         self.clear_line()
 
         self.stop_event.clear()
-        self.thread = threading.Thread(target=self.stopwatch)
+        self.thread = Thread(target=self.stopwatch)
         self.thread.start()
 
         self.getch()
