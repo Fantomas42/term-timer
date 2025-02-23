@@ -14,7 +14,7 @@ Speed Cubing Timer on your Terminal.
 
 ## Short demo
 
-![Term Timer Demo](docs/demo.webm)
+![](docs/demo.webm)
 
 ## Usage
 
