@@ -12,8 +12,11 @@ dependencies = [
     "magiccube",
 ]
 
+[project.scripts]
+term-timer = "term_timer.scripts.timer:main"
+
 [tool.setuptools]
-packages = ["term-timer"]
+packages = ["term_timer"]
 
 [tool.ruff]
 target-version = "py312"

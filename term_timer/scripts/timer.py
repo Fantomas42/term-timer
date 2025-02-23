@@ -1,4 +1,7 @@
 # ruff: noqa: T201
+# TODO(me): better colors
+#           other cubes ?
+#           decompte
 import logging
 import statistics
 import sys
@@ -605,10 +608,3 @@ def main():
         session_stats.resume(free_play and 'Session ' or 'Global ')
 
     return 0
-
-
-if __name__ == '__main__':
-    # TODO(me): better colors
-    #           other cubes ?
-    #           decompte
-    sys.exit(main())
