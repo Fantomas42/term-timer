@@ -59,7 +59,7 @@ def solve_moves(state: str) -> list[str]:
     return solution.split()
 
 
-def scrambler(mode: str, iterations: int, *, show_cube: bool) -> (list[str], Cube):
+def scrambler(mode: str, iterations: int) -> (list[str], Cube):
     cube = Cube(3, INITIAL_SCRAMBLE)
 
     moves = random_moves(mode, iterations)

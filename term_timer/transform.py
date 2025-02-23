@@ -1,22 +1,21 @@
+from term_timer.constants import INVERT_CHAR
 from term_timer.constants import JAPANESE_CHAR
 from term_timer.constants import ROTATIONS
 
 
 def invert(move: str) -> str:
-    if move.endswith("'"):
+    if move.endswith(INVERT_CHAR):
         return move[:1]
-    return "%s'" % move
+    return f'{ move }{ INVERT_CHAR }'
 
 
 def mirror_moves(old_moves: list[str]) -> list[str]:
     moves = []
     for move in reversed(old_moves):
-        if move.endswith("'"):
-            moves.append(move.replace("'", ''))
-        elif move.endswith('2'):
+        if move.endswith('2'):
             moves.append(move)
         else:
-            moves.append("%s'" % move)
+            moves.append(invert(move))
 
     return moves
 
@@ -26,7 +25,7 @@ def is_japanese_move(move: str) -> bool:
 
 
 def japanese_move(move: str) -> str:
-    return '%s%s%s' % (move[0].upper(), JAPANESE_CHAR, move[1:])
+    return f'{ move[0].upper() }{ JAPANESE_CHAR }{ move[1:] }'
 
 
 def is_japanesable_move(move: str) -> bool:

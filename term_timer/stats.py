@@ -206,7 +206,7 @@ class Statistics:
                 print(
                     f'{ C_STATS }{ count!s:{" "}>{max_count}}',
                     f'(+{ format_edge(edge) }) :{ C_RESET }',
-                    f'{ C_SCRAMBLE }{ round(percent * STEP_BAR) * " " }{ C_RESET }'
+                    f'{ C_SCRAMBLE }{ round(percent * STEP_BAR) * " " }{ C_RESET }'  # noqa: E501
                     f'{ (STEP_BAR - round(percent * STEP_BAR)) * " " }'
                     f'{ C_RESULT }{ percent * 100:.2f}%{ C_RESET }',
                 )
