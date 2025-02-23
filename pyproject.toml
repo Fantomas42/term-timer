@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "term-timer"
+version = "1.0"
+description = "Speed Cubing Timer on your Terminal"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "magiccube",
+]
+
+[tool.setuptools]
+packages = ["term-timer"]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+ignore = [
+       "PLR0904",
+       "RUF021",
+       "TD003",
+       "UP031",
+]
+
+[tool.ruff.lint.pylint]
+allow-magic-value-types = ["str", "int"]
+
+[tool.mypy]
+disable_error_code = ["import-untyped"]
+exclude = ["tests"]
+python_version = 3.12
