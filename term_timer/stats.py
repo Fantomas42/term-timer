@@ -120,8 +120,7 @@ class Statistics:
         return sum(self.stack_time)
 
     @cached_property
-    def repartition(self) -> list[tuple[int, int]]:
-        # TODO(me): check
+    def repartition(self) -> list[tuple[int, float]]:
         (histo, bin_edges) = np.histogram(self.stack_time, bins=6)
 
         return [
