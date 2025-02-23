@@ -12,6 +12,10 @@ Speed Cubing Timer on your Terminal.
 - Seed control
 - Rich colors
 
+## Short demo
+
+![Term Timer Demo](docs/demo.webm)
+
 ## Usage
 
 Start timing solves :
