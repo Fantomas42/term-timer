@@ -39,7 +39,7 @@ class Statistics:
         return int(statistics.fmean(last_of))
 
     def best_ao(self, limit: int) -> int:
-        aos = []
+        aos: list[int] = []
         stack = list(self.stack_time[:-1])
 
         current_ao = getattr(self, f'ao{ limit }')

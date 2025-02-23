@@ -4,7 +4,7 @@ from random import randint
 from term_timer.magic_cube import INITIAL_SCRAMBLE
 from term_timer.magic_cube import Cube
 from term_timer.transform import mirror_moves
-from term_timer.twophases import solver
+from term_timer.twophases import solve
 
 MOVES_DEFAULT = [
     'F', "F'", 'F2',
@@ -47,7 +47,7 @@ def random_moves(mode: str, iterations: int) -> list[str]:
 
 
 def solve_moves(state: str) -> list[str]:
-    solution = solver.solve(state, 0, 0.1)
+    solution: str = solve(state, 0, 0.1)
 
     if 'Error' in solution:
         return []
