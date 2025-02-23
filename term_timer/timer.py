@@ -22,6 +22,7 @@ from term_timer.colors import C_SCRAMBLE
 from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
+from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 
