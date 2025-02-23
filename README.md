@@ -14,7 +14,7 @@ Speed Cubing Timer on your Terminal.
 
 ## Short demo
 
-![](docs/demo.mov)
+![](docs/demo.gif)
 
 ## Usage
 
