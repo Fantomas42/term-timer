@@ -33,8 +33,8 @@ from term_timer.stats import Statistics
 class Timer:
     thread: Thread | None
 
-    def __init__(self, free_play: bool, mode: str,
-                 iterations: int, show_cube: bool,
+    def __init__(self, *, mode: str, iterations: int,
+                 free_play: bool, show_cube: bool,
                  stack: list[Solve]):
         self.start_time = 0
         self.end_time = 0

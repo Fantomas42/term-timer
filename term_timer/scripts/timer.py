@@ -85,9 +85,9 @@ def main() -> int:
 
     while 42:
         timer = Timer(
-            free_play=free_play,
             mode=options.mode,
             iterations=options.iterations,
+            free_play=free_play,
             show_cube=options.show_cube,
             stack=stack,
         )
