@@ -1,6 +1,3 @@
-# TODO(me): better colors
-#           other cubes ?
-#           decompte
 import logging
 import sys
 from argparse import ArgumentParser
