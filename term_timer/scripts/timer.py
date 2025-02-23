@@ -3,8 +3,7 @@ import sys
 from argparse import ArgumentParser
 from random import seed
 
-from term_timer.colors import C_RED
-from term_timer.colors import C_RESET
+from term_timer.colors import Color as C
 from term_timer.in_out import load_solves
 from term_timer.in_out import save_solves
 from term_timer.stats import Statistics
@@ -72,8 +71,8 @@ def main() -> int:
     if free_play:
         stack = []
         print(
-            f'{ C_RED }Mode Free Play is active, '
-            f'solves will not be recorded !{ C_RESET }',
+            f'{ C.RED }Mode Free Play is active, '
+            f'solves will not be recorded !{ C.RESET }',
         )
     else:
         stack = load_solves()

@@ -3,16 +3,7 @@ from functools import cached_property
 
 import numpy as np
 
-from term_timer.colors import C_AO5
-from term_timer.colors import C_AO12
-from term_timer.colors import C_AO100
-from term_timer.colors import C_GREEN
-from term_timer.colors import C_MO3
-from term_timer.colors import C_RED
-from term_timer.colors import C_RESET
-from term_timer.colors import C_RESULT
-from term_timer.colors import C_SCRAMBLE
-from term_timer.colors import C_STATS
+from term_timer.colors import Color as C
 from term_timer.constants import STEP_BAR
 from term_timer.formatter import computing_padding
 from term_timer.formatter import format_delta
@@ -132,70 +123,70 @@ class Statistics:
 
     def resume(self, prefix: str = '') -> None:
         if not self.stack:
-            print(f'{ C_RED }No saved solves yet.{ C_RESET }')
+            print(f'{ C.RED }No saved solves yet.{ C.RESET }')
             return
 
         print(
-            f'{ C_STATS }{ prefix }Total :{ C_RESET }',
-            f'{ C_RESULT }{ self.total }{ C_RESET }',
+            f'{ C.STATS }{ prefix }Total :{ C.RESET }',
+            f'{ C.RESULT }{ self.total }{ C.RESET }',
         )
         print(
-            f'{ C_STATS }{ prefix }Time  :{ C_RESET }',
-            f'{ C_RESULT }{ format_time(self.total_time) }{ C_RESET }',
+            f'{ C.STATS }{ prefix }Time  :{ C.RESET }',
+            f'{ C.RESULT }{ format_time(self.total_time) }{ C.RESET }',
         )
         print(
-            f'{ C_STATS }{ prefix }Mean  :{ C_RESET }',
-            f'{ C_RESULT }{ format_time(self.mean) }{ C_RESET }',
+            f'{ C.STATS }{ prefix }Mean  :{ C.RESET }',
+            f'{ C.RESULT }{ format_time(self.mean) }{ C.RESET }',
         )
         print(
-            f'{ C_STATS }{ prefix }Median:{ C_RESET }',
-            f'{ C_RESULT }{ format_time(self.median) }{ C_RESET }',
+            f'{ C.STATS }{ prefix }Median:{ C.RESET }',
+            f'{ C.RESULT }{ format_time(self.median) }{ C.RESET }',
         )
         print(
-            f'{ C_STATS }{ prefix }Stdev :{ C_RESET }',
-            f'{ C_RESULT }{ format_time(self.stdev) }{ C_RESET }',
+            f'{ C.STATS }{ prefix }Stdev :{ C.RESET }',
+            f'{ C.RESULT }{ format_time(self.stdev) }{ C.RESET }',
         )
         if self.total >= 2:
             print(
-                f'{ C_STATS }{ prefix }Best  :{ C_RESET }',
-                f'{ C_GREEN }{ format_time(self.best) }{ C_RESET }',
+                f'{ C.STATS }{ prefix }Best  :{ C.RESET }',
+                f'{ C.GREEN }{ format_time(self.best) }{ C.RESET }',
             )
             print(
-                f'{ C_STATS }{ prefix }Worst :{ C_RESET }',
-                f'{ C_RED }{ format_time(self.worst) }{ C_RESET }',
+                f'{ C.STATS }{ prefix }Worst :{ C.RESET }',
+                f'{ C.RED }{ format_time(self.worst) }{ C.RESET }',
             )
         if self.total >= 3:
             print(
-                f'{ C_STATS }{ prefix }Mo3   :{ C_RESET }',
-                f'{ C_MO3 }{ format_time(self.mo3) }{ C_RESET }',
+                f'{ C.STATS }{ prefix }Mo3   :{ C.RESET }',
+                f'{ C.MO3 }{ format_time(self.mo3) }{ C.RESET }',
             )
         if self.total >= 5:
             print(
-                f'{ C_STATS }{ prefix }Ao5   :{ C_RESET }',
-                f'{ C_AO5 }{ format_time(self.ao5) }{ C_RESET }',
-                f'{ C_STATS }Best :{ C_RESET }',
-                f'{ C_RESULT }{ format_time(self.best_ao5) }{ C_RESET }',
+                f'{ C.STATS }{ prefix }Ao5   :{ C.RESET }',
+                f'{ C.AO5 }{ format_time(self.ao5) }{ C.RESET }',
+                f'{ C.STATS }Best :{ C.RESET }',
+                f'{ C.RESULT }{ format_time(self.best_ao5) }{ C.RESET }',
                 format_delta(self.ao5 - self.best_ao5),
             )
         if self.total >= 12:
             print(
-                f'{ C_STATS }{ prefix }Ao12  :{ C_RESET }',
-                f'{ C_AO12 }{ format_time(self.ao12) }{ C_RESET }',
-                f'{ C_STATS }Best :{ C_RESET }',
-                f'{ C_RESULT }{ format_time(self.best_ao12) }{ C_RESET }',
+                f'{ C.STATS }{ prefix }Ao12  :{ C.RESET }',
+                f'{ C.AO12 }{ format_time(self.ao12) }{ C.RESET }',
+                f'{ C.STATS }Best :{ C.RESET }',
+                f'{ C.RESULT }{ format_time(self.best_ao12) }{ C.RESET }',
                 format_delta(self.ao12 - self.best_ao12),
             )
         if self.total >= 100:
             print(
-                f'{ C_STATS }{ prefix }Ao100 :{ C_RESET }',
-                f'{ C_AO100 }{ format_time(self.ao100) }{ C_RESET }',
-                f'{ C_STATS }Best :{ C_RESET }',
-                f'{ C_RESULT }{ format_time(self.best_ao100) }{ C_RESET }',
+                f'{ C.STATS }{ prefix }Ao100 :{ C.RESET }',
+                f'{ C.AO100 }{ format_time(self.ao100) }{ C.RESET }',
+                f'{ C.STATS }Best :{ C.RESET }',
+                f'{ C.RESULT }{ format_time(self.best_ao100) }{ C.RESET }',
                 format_delta(self.ao100 - self.best_ao100),
             )
 
         if self.total > 2:
-            print(f'{ C_STATS }Distribution :{ C_RESET }')
+            print(f'{ C.STATS }Distribution :{ C.RESET }')
             max_count = computing_padding(
                 max(c for c, e in self.repartition),
             )
@@ -206,13 +197,13 @@ class Statistics:
             for count, edge in self.repartition:
                 percent = (count / self.total)
 
-                start = f'{ C_STATS }{ count!s:{" "}>{max_count}} '
+                start = f'{ C.STATS }{ count!s:{" "}>{max_count}} '
                 start += f'(+{ format_edge(edge) })'
                 start = start.ljust(15 + max_count + max_edge)
 
                 print(
-                    f'{ start }:{ C_RESET }',
-                    f'{ C_SCRAMBLE }{ round(percent * STEP_BAR) * " " }{ C_RESET }'  # noqa: E501
+                    f'{ start }:{ C.RESET }',
+                    f'{ C.SCRAMBLE }{ round(percent * STEP_BAR) * " " }{ C.RESET }'  # noqa: E501
                     f'{ (STEP_BAR - round(percent * STEP_BAR)) * " " }'
-                    f'{ C_RESULT }{ percent * 100:.2f}%{ C_RESET }',
+                    f'{ C.RESULT }{ percent * 100:.2f}%{ C.RESET }',
                 )

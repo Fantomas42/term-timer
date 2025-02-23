@@ -1,6 +1,4 @@
-from term_timer.colors import C_GREEN
-from term_timer.colors import C_RED
-from term_timer.colors import C_RESET
+from term_timer.colors import Color as C
 from term_timer.constants import DNF
 from term_timer.constants import SECOND
 
@@ -25,9 +23,9 @@ def format_edge(edge: float) -> str:
 
 
 def format_delta(delta: int) -> str:
-    color = (delta > 0 and f'{ C_RED }+') or C_GREEN
+    color = (delta > 0 and f'{ C.RED }+') or C.GREEN
 
-    return f'{ color }{ format_duration(delta) }{ C_RESET }'
+    return f'{ color }{ format_duration(delta) }{ C.RESET }'
 
 
 def computing_padding(max_value: int | float) -> int:

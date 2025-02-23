@@ -91,6 +91,9 @@ docstring-code-line-length = "dynamic"
 docstring-quotes = "double"
 inline-quotes = "single"
 
+[tool.ruff.lint.flake8-import-conventions.extend-aliases]
+"term_timer.colors.Color" = "C"
+
 [tool.ruff.lint.isort]
 force-single-line = true
 
