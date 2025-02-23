@@ -1,12 +1,13 @@
 from term_timer.colors import C_GREEN
 from term_timer.colors import C_RED
 from term_timer.colors import C_RESET
+from term_timer.constants import DNF
 from term_timer.constants import SECOND
 
 
 def format_time(elapsed_ns):
     if not elapsed_ns:
-        return 'DNF'
+        return DNF
 
     elapsed_sec = elapsed_ns / SECOND
     mins, secs = divmod(int(elapsed_sec), 60)
@@ -24,8 +25,6 @@ def format_edge(elapsed_ns):
 
 
 def format_delta(delta):
-    return '%s%ss%s' % (
-        (delta > 0 and f'{ C_RED }+') or C_GREEN,
-        format_duration(delta),
-        C_RESET,
-    )
+    color = (delta > 0 and f'{ C_RED }+') or C_GREEN
+
+    return f'{ color }{ format_duration(delta) }{ C_RESET }'

@@ -1,3 +1,5 @@
+from term_timer.constants import DNF
+from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_time
 
@@ -15,9 +17,9 @@ class Solve:
     def final_time(self):
         elapsed = self.elapsed_time
 
-        if self.flag == '+2':
+        if self.flag == PLUS_TWO:
             return elapsed + (2 * SECOND)
-        if self.flag == 'DNF':
+        if self.flag == DNF:
             return 0
 
         return elapsed

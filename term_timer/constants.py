@@ -13,3 +13,7 @@ JAPANESE_CHAR = 'w'
 ROTATIONS = (
     'x', 'y', 'z',
 )
+
+DNF = 'DNF'
+
+PLUS_TWO = '+2'

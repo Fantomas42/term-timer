@@ -19,6 +19,8 @@ from term_timer.colors import C_RECORD
 from term_timer.colors import C_RESET
 from term_timer.colors import C_RESULT
 from term_timer.colors import C_SCRAMBLE
+from term_timer.constants import DNF
+from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
@@ -211,9 +213,9 @@ class Timer:
             self.clear_line()
 
             if char == 'd':
-                self.stack[-1].flag = 'DNF'
+                self.stack[-1].flag = DNF
             elif char == '2':
-                self.stack[-1].flag = '+2'
+                self.stack[-1].flag = PLUS_TWO
             elif char == 'z':
                 self.stack.pop()
             elif char == 'q':
