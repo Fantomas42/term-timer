@@ -14,6 +14,7 @@ from term_timer.colors import C_RESULT
 from term_timer.colors import C_SCRAMBLE
 from term_timer.colors import C_STATS
 from term_timer.constants import STEP_BAR
+from term_timer.formatter import computing_padding
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_time
@@ -195,18 +196,22 @@ class Statistics:
 
         if self.total > 2:
             print(f'{ C_STATS }Distribution :{ C_RESET }')
-            max_count = 1
-            max_value = max(c for c, e in self.repartition)
-            if max_value > 10:
-                max_count = 2
-            elif max_value > 100:
-                max_count = 3
+            max_count = computing_padding(
+                max(c for c, e in self.repartition),
+            )
+            max_edge = computing_padding(
+                max(e for c, e in self.repartition),
+            )
 
             for count, edge in self.repartition:
                 percent = (count / self.total)
+
+                start = f'{ C_STATS }{ count!s:{" "}>{max_count}} '
+                start += f'(+{ format_edge(edge) })'
+                start = start.ljust(15 + max_count + max_edge)
+
                 print(
-                    f'{ C_STATS }{ count!s:{" "}>{max_count}}',
-                    f'(+{ format_edge(edge) }) :{ C_RESET }',
+                    f'{ start }:{ C_RESET }',
                     f'{ C_SCRAMBLE }{ round(percent * STEP_BAR) * " " }{ C_RESET }'  # noqa: E501
                     f'{ (STEP_BAR - round(percent * STEP_BAR)) * " " }'
                     f'{ C_RESULT }{ percent * 100:.2f}%{ C_RESET }',

@@ -28,3 +28,13 @@ def format_delta(delta: int) -> str:
     color = (delta > 0 and f'{ C_RED }+') or C_GREEN
 
     return f'{ color }{ format_duration(delta) }{ C_RESET }'
+
+
+def computing_padding(max_value: int | float) -> int:
+    padding = 1
+    if max_value > 10:
+        padding = 2
+    elif max_value > 100:
+        padding = 3
+
+    return padding
