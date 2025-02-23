@@ -21,26 +21,35 @@ Speed Cubing Timer on your Terminal.
 Start timing solves :
 
 ```console
-mad-cuber$ term-timer
+term-timer
 ```
 
 Start timings 2 solves in free-play :
 
 ```console
-mad-cuber$ term-timer -f 2
+term-timer -f 2
 ```
 
 Start timings with easy white cross, showing the scramble :
 
 ```console
-mad-cuber$ term-timer -c -m ec
+term-timer -c -m ec
 ```
 
 Show statistics on recorded solves
 
 ```console
-mad-cuber$ term-timer --stats
+term-timer --stats
 ```
+
+## Installation
+
+``` console
+pip install -e .
+```
+
+Warning, for the moment, the first launch will compute the resolution
+tables of the Twophase algorythm, it will take several minutes.
 
 ## Help
 
