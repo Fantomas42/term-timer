@@ -30,7 +30,9 @@ from term_timer.stats import Statistics
 
 
 class Timer:
-    def __init__(self, free_play, mode, iterations, show_cube, stack):
+    def __init__(self, free_play: bool, mode: str,
+                 iterations: int, show_cube: bool,
+                 stack: list[Solve]):
         self.start_time = None
         self.end_time = None
         self.elapsed_time = None
@@ -45,7 +47,7 @@ class Timer:
         self.thread = None
 
     @staticmethod
-    def getch():
+    def getch() -> str:
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
 
@@ -57,10 +59,10 @@ class Timer:
         return ch
 
     @staticmethod
-    def clear_line():
+    def clear_line() -> None:
         print(f'\r{" " * 100}\r', end='', flush=True)
 
-    def stopwatch(self):
+    def stopwatch(self) -> None:
         self.start_time = time.perf_counter_ns()
 
         while not self.stop_event.is_set():
@@ -89,7 +91,7 @@ class Timer:
             time.sleep(0.01)
 
     @staticmethod
-    def start_line():
+    def start_line() -> None:
         print(
             'Press any key to start/stop the timer,',
             f'{ C_RESULT }(q){ C_RESET } to quit.',
@@ -97,7 +99,7 @@ class Timer:
         )
 
     @staticmethod
-    def save_line():
+    def save_line() -> None:
         print(
             'Press any key to save and continue,',
             f'{ C_RESULT }(d){ C_RESET } for DNF,',

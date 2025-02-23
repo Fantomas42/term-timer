@@ -3,7 +3,7 @@ from term_timer.formatter import format_duration
 from term_timer.solve import Solve
 
 
-def load_solves():
+def load_solves() -> list[Solve]:
     if SAVE_FILE.exists():
         with SAVE_FILE.open() as fd:
             datas = fd.readlines()
@@ -15,7 +15,7 @@ def load_solves():
     return []
 
 
-def save_solves(solves):
+def save_solves(solves: list[Solve]) -> None:
     with SAVE_FILE.open('w+') as fd:
         for s in solves:
             fd.write(

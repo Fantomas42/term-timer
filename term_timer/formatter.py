@@ -5,7 +5,7 @@ from term_timer.constants import DNF
 from term_timer.constants import SECOND
 
 
-def format_time(elapsed_ns):
+def format_time(elapsed_ns: int) -> str:
     if not elapsed_ns:
         return DNF
 
@@ -16,15 +16,15 @@ def format_time(elapsed_ns):
     return f'{mins:02}:{secs:02}.{milliseconds:03}'
 
 
-def format_duration(elapsed_ns):
+def format_duration(elapsed_ns: int) -> str:
     return f'{ elapsed_ns / SECOND:.2f}'
 
 
-def format_edge(elapsed_ns):
+def format_edge(elapsed_ns: int) -> str:
     return f'{ elapsed_ns / SECOND:.0f}'
 
 
-def format_delta(delta):
+def format_delta(delta: int) -> str:
     color = (delta > 0 and f'{ C_RED }+') or C_GREEN
 
     return f'{ color }{ format_duration(delta) }{ C_RESET }'

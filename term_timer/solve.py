@@ -5,7 +5,8 @@ from term_timer.formatter import format_time
 
 
 class Solve:
-    def __init__(self, start_time, end_time, scramble, flag=''):
+    def __init__(self, start_time: int | str, end_time: int | str,
+                 scramble: str, flag: str = ''):
         self.start_time = int(start_time)
         self.end_time = int(end_time)
         self.scramble = scramble
@@ -14,7 +15,7 @@ class Solve:
         self.elapsed_time = self.end_time - self.start_time
 
     @property
-    def final_time(self):
+    def final_time(self) -> int:
         elapsed = self.elapsed_time
 
         if self.flag == PLUS_TWO:
@@ -24,5 +25,5 @@ class Solve:
 
         return elapsed
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{ format_time(self.elapsed_time) }{ self.flag }'

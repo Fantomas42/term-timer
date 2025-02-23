@@ -17,10 +17,11 @@ from term_timer.constants import STEP_BAR
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_time
+from term_timer.solve import Solve
 
 
 class Statistics:
-    def __init__(self, stack):
+    def __init__(self, stack: list[Solve]):
         self.stack = stack
 
         self.stack_time = [
@@ -28,7 +29,7 @@ class Statistics:
         ]
 
     @staticmethod
-    def ao(limit, stack_elapsed):
+    def ao(limit: int, stack_elapsed: list[int]) -> int:
         if limit > len(stack_elapsed):
             return -1
 
@@ -37,7 +38,7 @@ class Statistics:
         last_of.remove(max(last_of))
         return int(statistics.fmean(last_of))
 
-    def best_ao(self, limit):
+    def best_ao(self, limit: int) -> int:
         aos = []
         stack = list(self.stack_time[:-1])
 
@@ -56,70 +57,71 @@ class Statistics:
         return min(aos)
 
     @cached_property
-    def mo3(self):
+    def mo3(self) -> int:
         return int(statistics.fmean(self.stack_time[-3:]))
 
     @cached_property
-    def ao5(self):
+    def ao5(self) -> int:
         return self.ao(5, self.stack_time)
 
     @cached_property
-    def ao12(self):
+    def ao12(self) -> int:
         return self.ao(12, self.stack_time)
 
     @cached_property
-    def ao100(self):
+    def ao100(self) -> int:
         return self.ao(100, self.stack_time)
 
     @cached_property
-    def best_ao5(self):
+    def best_ao5(self) -> int:
         return self.best_ao(5)
 
     @cached_property
-    def best_ao12(self):
+    def best_ao12(self) -> int:
         return self.best_ao(12)
 
     @cached_property
-    def best_ao100(self):
+    def best_ao100(self) -> int:
         return self.best_ao(100)
 
     @cached_property
-    def best(self):
+    def best(self) -> int:
         return min(t for t in self.stack_time if t)
 
     @cached_property
-    def worst(self):
+    def worst(self) -> int:
         return max(self.stack_time)
 
     @cached_property
-    def mean(self):
+    def mean(self) -> int:
         return int(statistics.fmean(self.stack_time))
 
     @cached_property
-    def median(self):
+    def median(self) -> int:
         return int(statistics.median(self.stack_time))
 
     @cached_property
-    def stdev(self):
+    def stdev(self) -> int:
         return int(statistics.stdev(self.stack_time))
 
     @cached_property
-    def delta(self):
+    def delta(self) -> int:
         return (
             self.stack[-1].elapsed_time
             - self.stack[-2].elapsed_time
         )
 
     @cached_property
-    def total(self):
+    def total(self) -> int:
         return len(self.stack)
 
     @cached_property
-    def total_time(self):
+    def total_time(self) -> int:
         return sum(self.stack_time)
 
     @cached_property
-    def repartition(self):
+    def repartition(self) -> list[tuple[int, int]]:
+        # TODO(me): check
         (histo, bin_edges) = np.histogram(self.stack_time, bins=6)
 
         return [
@@ -128,7 +130,7 @@ class Statistics:
             if value
         ]
 
-    def resume(self, prefix=''):
+    def resume(self, prefix: str = '') -> None:
         if not self.stack:
             print(f'{ C_RED }No saved solves yet.{ C_RESET }')
             return

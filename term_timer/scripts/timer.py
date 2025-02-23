@@ -11,7 +11,7 @@ from term_timer.stats import Statistics
 from term_timer.timer import Timer
 
 
-def main():
+def main() -> int:
     parser = ArgumentParser(
         description='3x3 timer',
     )
