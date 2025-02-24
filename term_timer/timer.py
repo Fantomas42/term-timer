@@ -5,7 +5,7 @@ import tty
 from threading import Event
 from threading import Thread
 
-from term_timer.colors import Color as C
+from term_timer.console import console
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
@@ -49,7 +49,7 @@ class Timer:
 
     @staticmethod
     def clear_line() -> None:
-        print(f'\r{" " * 100}\r', end='', flush=True)
+        console.print('')
 
     def stopwatch(self) -> None:
         self.start_time = time.perf_counter_ns()
@@ -57,45 +57,46 @@ class Timer:
         while not self.stop_event.is_set():
             elapsed_time = time.perf_counter_ns() - self.start_time
 
-            color = C.GO_BASE
+            style = 'timer_base'
             if elapsed_time > 35 * SECOND:
-                color = C.GO_THF
+                style = 'timer_35'
             elif elapsed_time > 30 * SECOND:
-                color = C.GO_THR
+                style = 'timer_30'
             elif elapsed_time > 25 * SECOND:
-                color = C.GO_TWF
+                style = 'timer_25'
             elif elapsed_time > 20 * SECOND:
-                color = C.GO_TWE
+                style = 'timer_20'
             elif elapsed_time > 15 * SECOND:
-                color = C.GO_FIF
+                style = 'timer_15'
             elif elapsed_time > 10 * SECOND:
-                color = C.GO_TEN
+                style = 'timer_10'
 
-            print(
-                f'\r{ color }Go Go Go :{ C.RESET }',
-                format_time(elapsed_time),
-                end='', flush=True,
+            print('\r', end='')
+            console.print(
+                f'[{ style }]Go Go Go :[/{ style }]'
+                f' { format_time(elapsed_time) }',
+                end='',
             )
 
             time.sleep(0.01)
 
     @staticmethod
     def start_line() -> None:
-        print(
+        console.print(
             'Press any key to start/stop the timer,',
-            f'{ C.RESULT }(q){ C.RESET } to quit.',
-            end='', flush=True,
+            '[b](q)[/b] to quit.',
+            end='',
         )
 
     @staticmethod
     def save_line() -> None:
-        print(
+        console.print(
             'Press any key to save and continue,',
-            f'{ C.RESULT }(d){ C.RESET } for DNF,',
-            f'{ C.RESULT }(2){ C.RESET } for +2,',
-            f'{ C.RESULT }(z){ C.RESET } to cancel,',
-            f'{ C.RESULT }(q){ C.RESET } to save and quit.',
-            end='', flush=True,
+            '[b](d)[/b] for DNF,',
+            '[b](2)[/b] for +2,',
+            '[b](z)[/b] to cancel,',
+            '[b](q)[/b] to save and quit.',
+            end='',
         )
 
     def start(self) -> bool:
@@ -106,10 +107,11 @@ class Timer:
 
         solve_number = len(self.stack) + 1
 
-        print(
-            f'{ C.SCRAMBLE }Scramble #{ solve_number }:{ C.RESET }',
-            f'{ C.RESULT }{ " ".join(scramble) }{ C.RESET }',
+        console.print(
+            f'[scramble]Scramble #{ solve_number }:[/scramble]',
+            f' [moves]{ " ".join(scramble) }[/moves]',
         )
+
         if self.show_cube:
             print(str(cube), end='')
 
@@ -150,48 +152,49 @@ class Timer:
 
             if new_stats.total >= 3:
                 mo3 = new_stats.mo3
-                extra += f' { C.MO3 }Mo3 { format_time(mo3) }{ C.RESET }'
+                extra += f' [mo3]Mo3 { format_time(mo3) }[/mo3]'
 
             if new_stats.total >= 5:
                 ao5 = new_stats.ao5
-                extra += f' { C.AO5 }Ao5 { format_time(ao5) }{ C.RESET }'
+                extra += f' [ao5]Ao5 { format_time(ao5) }[/ao5]'
 
             if new_stats.total >= 12:
                 ao12 = new_stats.ao12
-                extra += f' { C.AO12 }Ao12 { format_time(ao12) }{ C.RESET }'
+                extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
 
-        print(
-            f'\r{ C.DURATION }Duration #{ solve_number }:{ C.RESET }',
-            f'{ C.RESULT }{ format_time(self.elapsed_time) }{ C.RESET }',
+        print('\r', end='')
+        console.print(
+            f'[duration]Duration #{ solve_number}:[/duration]',
+            f'[result]{ format_time(self.elapsed_time) }[/result]',
             extra,
         )
 
         if new_stats.total > 1:
             if new_stats.best < old_stats.best:
-                print(
-                    f'{ C.RECORD }** New PB !!! ***{ C.RESET }',
-                    f'{ C.RESULT }{ format_time(new_stats.best) }{ C.RESET }',
+                console.print(
+                    '[record]*** New PB !!! ***[/record]',
+                    f'[result]{ format_time(new_stats.best) }[/result]',
                     format_delta(new_stats.best - old_stats.best),
                 )
 
             if new_stats.ao5 < old_stats.best_ao5:
-                print(
-                    f'{ C.RECORD }** New Best Ao5 !!! ***{ C.RESET}',
-                    f'{ C.RESULT }{ format_time(new_stats.ao5) }{ C.RESET }',
+                console.print(
+                    '[record]*** New Best Ao5 !!! ***[/record]',
+                    f'[result]{ format_time(new_stats.ao5) }[/result]',
                     format_delta(new_stats.ao5 - old_stats.best_ao5),
                 )
 
             if new_stats.ao12 < old_stats.best_ao12:
-                print(
-                    f'{ C.RECORD }** New Best Ao12 !!! ***{ C.RESET}',
-                    f'{ C.RESULT }{ format_time(new_stats.ao12) }{ C.RESET }',
+                console.print(
+                    '[record]*** New Best Ao12 !!! ***[/record]',
+                    f'[result]{ format_time(new_stats.ao12) }[/result]',
                     format_delta(new_stats.ao12 - old_stats.best_ao12),
                 )
 
             if new_stats.ao100 < old_stats.best_ao100:
-                print(
-                    f'{ C.RECORD }** New Best Ao100 !!! ***{ C.RESET}',
-                    f'{ C.RESULT }{ format_time(new_stats.ao100) }{ C.RESET }',
+                console.print(
+                    '[record]*** New Best Ao100 !!! ***[/record]',
+                    f'[result]{ format_time(new_stats.ao100) }[/result]',
                     format_delta(new_stats.ao100 - old_stats.best_ao100),
                 )
 

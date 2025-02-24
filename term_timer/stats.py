@@ -3,7 +3,7 @@ from functools import cached_property
 
 import numpy as np
 
-from term_timer.colors import Color as C
+from term_timer.console import console
 from term_timer.constants import STEP_BAR
 from term_timer.formatter import computing_padding
 from term_timer.formatter import format_delta
@@ -123,70 +123,70 @@ class Statistics:
 
     def resume(self, prefix: str = '') -> None:
         if not self.stack:
-            print(f'{ C.RED }No saved solves yet.{ C.RESET }')
+            console.print('[warning]No saved solves yet.[/warning]')
             return
 
-        print(
-            f'{ C.STATS }{ prefix }Total :{ C.RESET }',
-            f'{ C.RESULT }{ self.total }{ C.RESET }',
+        console.print(
+            f'[stats]{ prefix }Total :[/stats]',
+            f'[result]{ self.total }[/result]',
         )
-        print(
-            f'{ C.STATS }{ prefix }Time  :{ C.RESET }',
-            f'{ C.RESULT }{ format_time(self.total_time) }{ C.RESET }',
+        console.print(
+            f'[stats]{ prefix }Time  :[/stats]',
+            f'[result]{ format_time(self.total_time) }[/result]',
         )
-        print(
-            f'{ C.STATS }{ prefix }Mean  :{ C.RESET }',
-            f'{ C.RESULT }{ format_time(self.mean) }{ C.RESET }',
+        console.print(
+            f'[stats]{ prefix }Mean  :[/stats]',
+            f'[result]{ format_time(self.mean) }[/result]',
         )
-        print(
-            f'{ C.STATS }{ prefix }Median:{ C.RESET }',
-            f'{ C.RESULT }{ format_time(self.median) }{ C.RESET }',
+        console.print(
+            f'[stats]{ prefix }Median:[/stats]',
+            f'[result]{ format_time(self.median) }[/result]',
         )
-        print(
-            f'{ C.STATS }{ prefix }Stdev :{ C.RESET }',
-            f'{ C.RESULT }{ format_time(self.stdev) }{ C.RESET }',
+        console.print(
+            f'[stats]{ prefix }Stdev :[/stats]',
+            f'[result]{ format_time(self.stdev) }[/result]',
         )
         if self.total >= 2:
-            print(
-                f'{ C.STATS }{ prefix }Best  :{ C.RESET }',
-                f'{ C.GREEN }{ format_time(self.best) }{ C.RESET }',
+            console.print(
+                f'[stats]{ prefix }Best  :[/stats]',
+                f'[green]{ format_time(self.best) }[/green]',
             )
-            print(
-                f'{ C.STATS }{ prefix }Worst :{ C.RESET }',
-                f'{ C.RED }{ format_time(self.worst) }{ C.RESET }',
+            console.print(
+                f'[stats]{ prefix }Worst :[/stats]',
+                f'[red]{ format_time(self.worst) }[/red]',
             )
         if self.total >= 3:
-            print(
-                f'{ C.STATS }{ prefix }Mo3   :{ C.RESET }',
-                f'{ C.MO3 }{ format_time(self.mo3) }{ C.RESET }',
+            console.print(
+                f'[stats]{ prefix }Mo3   :[/stats]',
+                f'[mo3]{ format_time(self.mo3) }[/mo3]',
             )
         if self.total >= 5:
-            print(
-                f'{ C.STATS }{ prefix }Ao5   :{ C.RESET }',
-                f'{ C.AO5 }{ format_time(self.ao5) }{ C.RESET }',
-                f'{ C.STATS }Best :{ C.RESET }',
-                f'{ C.RESULT }{ format_time(self.best_ao5) }{ C.RESET }',
+            console.print(
+                f'[stats]{ prefix }Ao5   :[/stats]',
+                f'[ao5]{ format_time(self.ao5) }[/ao5]',
+                '[stats]Best :[/stats]',
+                f'[result]{ format_time(self.best_ao5) }[/result]',
                 format_delta(self.ao5 - self.best_ao5),
             )
         if self.total >= 12:
-            print(
-                f'{ C.STATS }{ prefix }Ao12  :{ C.RESET }',
-                f'{ C.AO12 }{ format_time(self.ao12) }{ C.RESET }',
-                f'{ C.STATS }Best :{ C.RESET }',
-                f'{ C.RESULT }{ format_time(self.best_ao12) }{ C.RESET }',
+            console.print(
+                f'[stats]{ prefix }Ao12  :[/stats]',
+                f'[ao12]{ format_time(self.ao12) }[/ao12]',
+                '[stats]Best :[/stats]',
+                f'[result]{ format_time(self.best_ao12) }[/result]',
                 format_delta(self.ao12 - self.best_ao12),
             )
         if self.total >= 100:
-            print(
-                f'{ C.STATS }{ prefix }Ao100 :{ C.RESET }',
-                f'{ C.AO100 }{ format_time(self.ao100) }{ C.RESET }',
-                f'{ C.STATS }Best :{ C.RESET }',
-                f'{ C.RESULT }{ format_time(self.best_ao100) }{ C.RESET }',
+            console.print(
+                f'[stats]{ prefix }Ao100 :[/stats]',
+                f'[ao100]{ format_time(self.ao100) }[/ao100]',
+                '[stats]Best :[/stats]',
+                f'[result]{ format_time(self.best_ao100) }[/result]',
                 format_delta(self.ao100 - self.best_ao100),
             )
 
         if self.total > 2:
-            print(f'{ C.STATS }Distribution :{ C.RESET }')
+            console.print('[stats]Distribution :[/stats]')
             max_count = computing_padding(
                 max(c for c, e in self.repartition),
             )
@@ -197,13 +197,13 @@ class Statistics:
             for count, edge in self.repartition:
                 percent = (count / self.total)
 
-                start = f'{ C.STATS }{ count!s:{" "}>{max_count}} '
+                start = f'[stats]{ count!s:{" "}>{max_count}} '
                 start += f'(+{ format_edge(edge) })'
                 start = start.ljust(15 + max_count + max_edge)
 
-                print(
-                    f'{ start }:{ C.RESET }',
-                    f'{ C.SCRAMBLE }{ round(percent * STEP_BAR) * " " }{ C.RESET }'  # noqa: E501
+                console.print(
+                    f'{ start }:[/stats]',
+                    f'[bar]{ round(percent * STEP_BAR) * " " }[/bar]'
                     f'{ (STEP_BAR - round(percent * STEP_BAR)) * " " }'
-                    f'{ C.RESULT }{ percent * 100:.2f}%{ C.RESET }',
+                    f'[result]{ percent * 100:.2f}%[/result]',
                 )
