@@ -1,45 +1,52 @@
 from rich.console import Console
 from rich.theme import Theme
 
+RED = '#FF0000'
+GREEN = '#00D700'
+ORANGE = '#FF8700'
+YELLOW = '#FFFF00'
+TEXT_DARK = '#080808'
+TEXT_LIGHT = '#FFFFD7'
+
 theme = Theme(
     {
-        'warning': 'bold #FF0000',
-        'scramble': '#080808 on #00D700',
-        'duration': '#080808 on #FF8700',
-        'record': '#080808 on #5FFFAF',
+        'warning': f'bold { RED }',
+        'scramble': f'{ TEXT_DARK } on { GREEN }',
+        'duration': f'{ TEXT_DARK } on { ORANGE }',
+        'record': f'{ TEXT_DARK } on #5FFFAF',
         'consign': '#CECECE',
 
-        'moves': 'bold #FFFFFF',
-        'result': 'bold #FFFFFF',
+        'moves': f'bold { TEXT_LIGHT }',
+        'result': f'bold { TEXT_LIGHT }',
 
         'stats': 'bold #00AFFF',
-        'bar': 'on #00D700',
+        'bar': f'on { GREEN }',
 
-        'red': '#FF0000',
-        'green': '#00D700',
+        'red': f'{ RED }',
+        'green': f'{ GREEN }',
 
-        'mo3': 'bold #FF8700',
+        'mo3': f'bold { ORANGE }',
         'ao5': 'bold #00FFFF',
         'ao12': 'bold #FF00FF',
-        'ao100': 'bold #FFFF00',
+        'ao100': f'bold { YELLOW }',
 
-        'timer_base': '#080808 on #DDFF00',
-        'timer_10': '#080808 on #33FF00',
-        'timer_15': '#080808 on #00FFCC',
-        'timer_20': '#080808 on #00FFFF',
-        'timer_25': '#FFFFD7 on #3399FF',
-        'timer_30': '#FFFFD7 on #0000FF',
-        'timer_35': '#FFFFD7 on #6600FF',
-        'timer_40': '#FFFFD7 on #9900FF',
-        'timer_45': '#FFFFD7 on #CC00FF',
-        'timer_50': '#FFFFD7 on #FF00FF',
+        'timer_base': f'{ TEXT_DARK } on #DDFF00',
+        'timer_10': f'{ TEXT_DARK } on #33FF00',
+        'timer_15': f'{ TEXT_DARK } on #00FFCC',
+        'timer_20': f'{ TEXT_DARK } on #00FFFF',
+        'timer_25': f'{ TEXT_LIGHT } on #3399FF',
+        'timer_30': f'{ TEXT_LIGHT } on #0000FF',
+        'timer_35': f'{ TEXT_LIGHT } on #6600FF',
+        'timer_40': f'{ TEXT_LIGHT } on #9900FF',
+        'timer_45': f'{ TEXT_LIGHT } on #CC00FF',
+        'timer_50': f'{ TEXT_LIGHT } on #FF00FF',
 
-        'face_w': '#080808 on #E4E4E4',
-        'face_y': '#080808 on #FFFF00',
-        'face_b': '#FFFFFF on #0000FF',
-        'face_r': '#080808 on #FF0000',
-        'face_g': '#080808 on #00D700',
-        'face_o': '#080808 on #FF8700',
+        'face_w': f'{ TEXT_DARK } on #E4E4E4',
+        'face_y': f'{ TEXT_DARK } on { YELLOW }',
+        'face_b': f'{ TEXT_LIGHT } on #0000FF',
+        'face_r': f'{ TEXT_DARK } on { RED }',
+        'face_g': f'{ TEXT_DARK } on { GREEN }',
+        'face_o': f'{ TEXT_DARK } on { ORANGE }',
     },
 )
 
