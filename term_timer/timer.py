@@ -104,49 +104,9 @@ class Timer:
             end='',
         )
 
-    def start(self) -> bool:
-        scramble, cube = scrambler(
-            mode=self.mode,
-            iterations=self.iterations,
-        )
-
-        solve_number = len(self.stack) + 1
-
-        console.print(
-            f'[scramble]Scramble #{ solve_number }:[/scramble]',
-            f'[moves]{ " ".join(scramble) }[/moves]',
-        )
-
-        if self.show_cube:
-            print(str(cube), end='')
-
-        self.start_line()
-
-        char = self.getch()
-
-        if char == 'q':
-            return False
-
-        self.stop_event.clear()
-        self.thread = Thread(target=self.stopwatch)
-        self.thread.start()
-
-        self.getch()
-
-        self.end_time = time.perf_counter_ns()
-
-        self.stop_event.set()
-        self.thread.join()
-
-        self.elapsed_time = self.end_time - self.start_time
-
-        solve = Solve(
-            self.start_time,
-            self.end_time,
-            ' '.join(scramble),
-        )
-
+    def handle_solve(self, solve: Solve) -> None:
         old_stats = Statistics(self.stack)
+
         self.stack = [*self.stack, solve]
         new_stats = Statistics(self.stack)
 
@@ -168,7 +128,7 @@ class Timer:
 
         print('\r', end='')
         console.print(
-            f'[duration]Duration #{ solve_number}:[/duration]',
+            f'[duration]Duration #{ len(self.stack) }:[/duration]',
             f'[result]{ format_time(self.elapsed_time) }[/result]',
             extra,
         )
@@ -201,6 +161,48 @@ class Timer:
                     f'[result]{ format_time(new_stats.ao100) }[/result]',
                     format_delta(new_stats.ao100 - old_stats.best_ao100),
                 )
+
+    def start(self) -> bool:
+        scramble, cube = scrambler(
+            mode=self.mode,
+            iterations=self.iterations,
+        )
+
+        console.print(
+            f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
+            f'[moves]{ " ".join(scramble) }[/moves]',
+        )
+
+        if self.show_cube:
+            print(str(cube), end='')
+
+        self.start_line()
+
+        char = self.getch()
+
+        if char == 'q':
+            return False
+
+        self.stop_event.clear()
+        self.thread = Thread(target=self.stopwatch)
+        self.thread.start()
+
+        self.getch()
+
+        self.end_time = time.perf_counter_ns()
+
+        self.stop_event.set()
+        self.thread.join()
+
+        self.elapsed_time = self.end_time - self.start_time
+
+        solve = Solve(
+            self.start_time,
+            self.end_time,
+            ' '.join(scramble),
+        )
+
+        self.handle_solve(solve)
 
         if not self.free_play:
             self.save_line()
