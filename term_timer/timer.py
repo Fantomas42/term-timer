@@ -45,11 +45,10 @@ class Timer:
             ch = sys.stdin.read(1)
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        return ch
 
-    @staticmethod
-    def clear_line() -> None:
         console.print('')
+
+        return ch
 
     def stopwatch(self) -> None:
         self.start_time = time.perf_counter_ns()
@@ -79,7 +78,7 @@ class Timer:
 
             print('\r', end='')
             console.print(
-                f'[{ style }]Go Go Go :[/{ style }]',
+                f'[{ style }]Go Go Go:[/{ style }]',
                 f'[result]{ format_time(elapsed_time) }[/result]',
                 end='',
             )
@@ -124,10 +123,9 @@ class Timer:
         self.start_line()
 
         char = self.getch()
+
         if char == 'q':
             return False
-
-        self.clear_line()
 
         self.stop_event.clear()
         self.thread = Thread(target=self.stopwatch)
@@ -208,8 +206,6 @@ class Timer:
             self.save_line()
 
             char = self.getch()
-
-            self.clear_line()
 
             if char == 'd':
                 self.stack[-1].flag = DNF
