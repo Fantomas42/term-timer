@@ -36,4 +36,4 @@ theme = Theme(
     },
 )
 
-console = Console(theme=theme)
+console = Console(highlighter=None, theme=theme)
