@@ -21,7 +21,7 @@ class Timer:
 
     def __init__(self, *, mode: str, iterations: int,
                  free_play: bool, show_cube: bool,
-                 stack: list[Solve]):
+                 metronome: bool, stack: list[Solve]):
         self.start_time = 0
         self.end_time = 0
         self.elapsed_time = 0
@@ -30,6 +30,7 @@ class Timer:
         self.mode = mode
         self.iterations = iterations
         self.show_cube = show_cube
+        self.metronome = metronome
         self.stack = stack
 
         self.stop_event = Event()
@@ -53,8 +54,11 @@ class Timer:
     def stopwatch(self) -> None:
         self.start_time = time.perf_counter_ns()
 
+        seconds_elapsed = 0
+
         while not self.stop_event.is_set():
             elapsed_time = time.perf_counter_ns() - self.start_time
+            rounded_seconds = int(elapsed_time / SECOND)
 
             style = 'timer_base'
             if elapsed_time > 50 * SECOND:
@@ -75,6 +79,11 @@ class Timer:
                 style = 'timer_15'
             elif elapsed_time > 10 * SECOND:
                 style = 'timer_10'
+
+            if seconds_elapsed != rounded_seconds:
+                seconds_elapsed = rounded_seconds
+                if self.metronome:
+                    print('\a', end='', flush=True)
 
             print('\r', end='')
             console.print(

@@ -28,6 +28,12 @@ def main() -> int:
         default=False,
     )
     parser.add_argument(
+        '-b', '--metronome',
+        help='Make a beep every seconds',
+        action='store_true',
+        default=False,
+    )
+    parser.add_argument(
         '-f', '--free-play',
         help='Disable recording of solves',
         action='store_true',
@@ -88,6 +94,7 @@ def main() -> int:
             iterations=options.iterations,
             free_play=free_play,
             show_cube=options.show_cube,
+            metronome=options.metronome,
             stack=stack,
         )
 
