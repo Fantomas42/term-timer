@@ -17,15 +17,17 @@ INITIAL_SCRAMBLE = ''.join(  # noqa: FLY002
 
 
 class CubePrintRich:
-    def __init__(self, cube):
+    def __init__(self, cube: 'Cube'):
         self.cube = cube
 
     @staticmethod
     def _format_color(color: str) -> str:
         return f'[face_{ color.lower() }] { color } [/face_{ color.lower() }]'
 
-    def _print_top_down_face(self, cube, face):
+    def _print_top_down_face(self, face: Face) -> str:
         result = ''
+        cube = self.cube
+
         for index, color in enumerate(cube.get_face_flat(face)):
             if index % cube.size == 0:
                 result += (' ' * (3 * cube.size))
@@ -38,7 +40,7 @@ class CubePrintRich:
 
         return result
 
-    def print_cube(self):
+    def print_cube(self) -> str:
         cube = self.cube
 
         # Flatten middle layer
@@ -51,7 +53,7 @@ class CubePrintRich:
         )
 
         # Top
-        result = self._print_top_down_face(cube, Face.U)
+        result = self._print_top_down_face(Face.U)
         # Middle
         for line in print_order_mid:
             for line_index, face_line in enumerate(line):
@@ -63,7 +65,7 @@ class CubePrintRich:
                 if line_index == 3:
                     result += '\n'
         # Bottom
-        result += self._print_top_down_face(cube, Face.D)
+        result += self._print_top_down_face(Face.D)
 
         return result
 
@@ -112,6 +114,6 @@ class Cube(BaseCube):  # type: ignore[misc]
 
         return facelets
 
-    def __str__(self):
+    def __str__(self) -> str:
         printer = CubePrintRich(self)
         return printer.print_cube()

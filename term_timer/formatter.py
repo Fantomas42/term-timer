@@ -32,7 +32,7 @@ def format_delta(delta: int) -> str:
     return f'[{ style }]{ sign }{ format_duration(delta) }[/{ style }]'
 
 
-def computing_padding(max_value: int | float) -> int:
+def computing_padding(max_value: float) -> int:
     padding = 1
     if max_value > 10:
         padding = 2
