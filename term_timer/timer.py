@@ -174,7 +174,7 @@ class Timer:
         )
 
         if self.show_cube:
-            print(str(cube), end='')
+            console.print(str(cube), end='')
 
         self.start_line()
 

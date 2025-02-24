@@ -3,19 +3,19 @@ from rich.theme import Theme
 
 theme = Theme(
     {
-        'warning': 'bold red',
+        'warning': 'bold #FF0000',
         'scramble': '#080808 on #00D700',
         'duration': '#080808 on #FF8700',
         'record': '#080808 on #5FFFAF',
         'consign': '#CECECE',
 
-        'moves': 'bold white',
-        'result': 'bold white',
+        'moves': 'bold #FFFFFF',
+        'result': 'bold #FFFFFF',
 
         'stats': 'bold #00AFFF',
         'bar': 'on #00D700',
 
-        'red': '#ff0000',
+        'red': '#FF0000',
         'green': '#00D700',
 
         'mo3': 'bold #FF8700',
@@ -33,6 +33,13 @@ theme = Theme(
         'timer_40': '#FFFFD7 on #9900FF',
         'timer_45': '#FFFFD7 on #CC00FF',
         'timer_50': '#FFFFD7 on #FF00FF',
+
+        'face_w': '#080808 on #E4E4E4',
+        'face_y': '#080808 on #FFFF00',
+        'face_b': '#FFFFFF on #0000FF',
+        'face_r': '#080808 on #FF0000',
+        'face_g': '#080808 on #00D700',
+        'face_o': '#080808 on #FF8700',
     },
 )
 
