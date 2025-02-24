@@ -7,6 +7,7 @@ theme = Theme(
         'scramble': '#080808 on #00D700',
         'duration': '#080808 on #FF8700',
         'record': '#080808 on #5FFFAF',
+        'consign': '#CECECE',
 
         'moves': 'bold white',
         'result': 'bold white',

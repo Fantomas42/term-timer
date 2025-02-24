@@ -46,7 +46,7 @@ class Timer:
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
-        console.print('')
+        print(f'\r{ " " * 100}\r', flush=True, end='')
 
         return ch
 
@@ -90,7 +90,7 @@ class Timer:
         console.print(
             'Press any key to start/stop the timer,',
             '[b](q)[/b] to quit.',
-            end='',
+            end='', style='consign',
         )
 
     @staticmethod
@@ -101,7 +101,7 @@ class Timer:
             '[b](2)[/b] for +2,',
             '[b](z)[/b] to cancel,',
             '[b](q)[/b] to save and quit.',
-            end='',
+            end='', style='consign',
         )
 
     def handle_solve(self, solve: Solve) -> None:

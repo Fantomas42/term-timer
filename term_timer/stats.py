@@ -185,20 +185,16 @@ class Statistics:
                 format_delta(self.ao100 - self.best_ao100),
             )
 
-        if self.total > 2:
+        if self.total > 1:
             max_count = computing_padding(
                 max(c for c, e in self.repartition),
             )
-            max_edge = computing_padding(
-                max(e for c, e in self.repartition),
-            )
-
             for count, edge in self.repartition:
                 percent = (count / self.total)
 
                 start = f'[stats]{ count!s:{" "}>{max_count}} '
                 start += f'(+{ format_edge(edge) })'
-                start = start.ljust(17 + max_count + max_edge)
+                start = start.ljust(13 + len(prefix))
 
                 console.print(
                     f'{ start }:[/stats]',
