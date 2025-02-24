@@ -58,7 +58,13 @@ class Timer:
             elapsed_time = time.perf_counter_ns() - self.start_time
 
             style = 'timer_base'
-            if elapsed_time > 35 * SECOND:
+            if elapsed_time > 50 * SECOND:
+                style = 'timer_50'
+            elif elapsed_time > 45 * SECOND:
+                style = 'timer_45'
+            elif elapsed_time > 40 * SECOND:
+                style = 'timer_40'
+            elif elapsed_time > 35 * SECOND:
                 style = 'timer_35'
             elif elapsed_time > 30 * SECOND:
                 style = 'timer_30'
@@ -73,8 +79,8 @@ class Timer:
 
             print('\r', end='')
             console.print(
-                f'[{ style }]Go Go Go :[/{ style }]'
-                f' { format_time(elapsed_time) }',
+                f'[{ style }]Go Go Go :[/{ style }]',
+                f'[result]{ format_time(elapsed_time) }[/result]',
                 end='',
             )
 
@@ -109,7 +115,7 @@ class Timer:
 
         console.print(
             f'[scramble]Scramble #{ solve_number }:[/scramble]',
-            f' [moves]{ " ".join(scramble) }[/moves]',
+            f'[moves]{ " ".join(scramble) }[/moves]',
         )
 
         if self.show_cube:
@@ -172,28 +178,28 @@ class Timer:
         if new_stats.total > 1:
             if new_stats.best < old_stats.best:
                 console.print(
-                    '[record]*** New PB !!! ***[/record]',
+                    '[record]:rocket: New PB !!![/record]',
                     f'[result]{ format_time(new_stats.best) }[/result]',
                     format_delta(new_stats.best - old_stats.best),
                 )
 
             if new_stats.ao5 < old_stats.best_ao5:
                 console.print(
-                    '[record]*** New Best Ao5 !!! ***[/record]',
+                    '[record]:boom: New Best Ao5 !!![/record]',
                     f'[result]{ format_time(new_stats.ao5) }[/result]',
                     format_delta(new_stats.ao5 - old_stats.best_ao5),
                 )
 
             if new_stats.ao12 < old_stats.best_ao12:
                 console.print(
-                    '[record]*** New Best Ao12 !!! ***[/record]',
+                    '[record]:sports_medal: New Best Ao12 !!![/record]',
                     f'[result]{ format_time(new_stats.ao12) }[/result]',
                     format_delta(new_stats.ao12 - old_stats.best_ao12),
                 )
 
             if new_stats.ao100 < old_stats.best_ao100:
                 console.print(
-                    '[record]*** New Best Ao100 !!! ***[/record]',
+                    '[record]:muscle: New Best Ao100 !!![/record]',
                     f'[result]{ format_time(new_stats.ao100) }[/result]',
                     format_delta(new_stats.ao100 - old_stats.best_ao100),
                 )

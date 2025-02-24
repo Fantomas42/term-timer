@@ -22,6 +22,8 @@ def format_edge(edge: float) -> str:
 
 
 def format_delta(delta: int) -> str:
+    if delta == 0:
+        return ''
     style = (delta > 0 and 'red') or 'green'
     sign = ''
     if delta > 0:

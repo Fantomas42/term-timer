@@ -108,5 +108,7 @@ def main() -> int:
     if len(stack) > 1:
         session_stats = Statistics(stack)
         session_stats.resume((free_play and 'Session ') or 'Global ')
+    else:
+        timer.clear_line()  # TODO fix when quitting
 
     return 0

@@ -186,7 +186,6 @@ class Statistics:
             )
 
         if self.total > 2:
-            console.print('[stats]Distribution :[/stats]')
             max_count = computing_padding(
                 max(c for c, e in self.repartition),
             )
@@ -199,7 +198,7 @@ class Statistics:
 
                 start = f'[stats]{ count!s:{" "}>{max_count}} '
                 start += f'(+{ format_edge(edge) })'
-                start = start.ljust(15 + max_count + max_edge)
+                start = start.ljust(17 + max_count + max_edge)
 
                 console.print(
                     f'{ start }:[/stats]',
