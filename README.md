@@ -8,6 +8,7 @@ Speed Cubing Timer on your Terminal.
 - Free-play and recorded solves
 - Scrambled cube display
 - Statistics
+- Metronome
 - Easy white cross
 - Seed control
 - Rich colors

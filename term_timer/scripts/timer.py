@@ -29,9 +29,9 @@ def main() -> int:
     )
     parser.add_argument(
         '-b', '--metronome',
-        help='Make a beep every seconds',
-        action='store_true',
-        default=False,
+        help='Make a beep with tempo',
+        default=0,
+        type=float,
     )
     parser.add_argument(
         '-f', '--free-play',
