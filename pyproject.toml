@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 term-timer = "term_timer.scripts.timer:main"
+cs_timer_import = "term_timer.scripts.cs_timer:import_csv"
 
 [tool.setuptools]
 packages = ["term_timer"]
