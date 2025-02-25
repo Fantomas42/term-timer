@@ -43,6 +43,12 @@ Show statistics on recorded solves
 term-timer --stats
 ```
 
+Show last ten recorded solves
+
+```console
+term-timer --list 10
+```
+
 ## Installation
 
 ``` console

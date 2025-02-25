@@ -6,6 +6,7 @@ from random import seed
 from term_timer.console import console
 from term_timer.in_out import load_solves
 from term_timer.in_out import save_solves
+from term_timer.list import Listing
 from term_timer.stats import Statistics
 from term_timer.timer import Timer
 
@@ -60,6 +61,12 @@ def main() -> int:
         action='store_true',
         default=False,
     )
+    parser.add_argument(
+        '--list',
+        help='Show the last solves',
+        default=0,
+        type=int,
+    )
 
     options = parser.parse_args(sys.argv[1:])
 
@@ -68,6 +75,11 @@ def main() -> int:
     if options.stats:
         session_stats = Statistics(load_solves())
         session_stats.resume('Global ')
+        return 0
+
+    if options.list:
+        session_list = Listing(load_solves())
+        session_list.resume(options.list)
         return 0
 
     free_play = options.free_play
