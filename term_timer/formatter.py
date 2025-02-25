@@ -36,9 +36,11 @@ def format_delta(delta: int) -> str:
 
 def computing_padding(max_value: float) -> int:
     padding = 1
-    if max_value > 10:
-        padding = 2
+    if max_value > 1000:
+        padding = 4
     elif max_value > 100:
         padding = 3
+    elif max_value > 100:
+        padding = 2
 
     return padding
