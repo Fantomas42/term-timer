@@ -58,7 +58,7 @@ class Timer:
 
         while not self.stop_event.is_set():
             elapsed_time = time.perf_counter_ns() - self.start_time
-            new_tempo = int(elapsed_time / (SECOND * self.metronome))
+            new_tempo = int(elapsed_time / (SECOND * self.metronome or 1))
 
             style = 'timer_base'
             if elapsed_time > 50 * SECOND:
