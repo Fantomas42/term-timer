@@ -21,6 +21,13 @@ class Statistics:
         ]
 
     @staticmethod
+    def mo(limit: int, stack_elapsed: list[int]) -> int:
+        if limit > len(stack_elapsed):
+            return -1
+
+        return int(statistics.fmean(stack_elapsed[-limit:]))
+
+    @staticmethod
     def ao(limit: int, stack_elapsed: list[int]) -> int:
         if limit > len(stack_elapsed):
             return -1
@@ -29,6 +36,24 @@ class Statistics:
         last_of.remove(min(last_of))
         last_of.remove(max(last_of))
         return int(statistics.fmean(last_of))
+
+    def best_mo(self, limit: int) -> int:
+        mos: list[int] = []
+        stack = list(self.stack_time[:-1])
+
+        current_mo = getattr(self, f'mo{ limit }')
+        if current_mo:
+            mos.append(current_mo)
+
+        while 42:
+            mo = self.mo(limit, stack)
+            if mo == -1:
+                break
+            if mo:
+                mos.append(mo)
+            stack.pop()
+
+        return min(mos)
 
     def best_ao(self, limit: int) -> int:
         aos: list[int] = []
@@ -50,7 +75,7 @@ class Statistics:
 
     @cached_property
     def mo3(self) -> int:
-        return int(statistics.fmean(self.stack_time[-3:]))
+        return self.mo(3, self.stack_time)
 
     @cached_property
     def ao5(self) -> int:
@@ -63,6 +88,10 @@ class Statistics:
     @cached_property
     def ao100(self) -> int:
         return self.ao(100, self.stack_time)
+
+    @cached_property
+    def best_mo3(self) -> int:
+        return self.best_mo(3)
 
     @cached_property
     def best_ao5(self) -> int:
@@ -159,6 +188,9 @@ class Statistics:
             console.print(
                 f'[stats]{ prefix }Mo3   :[/stats]',
                 f'[mo3]{ format_time(self.mo3) }[/mo3]',
+                '[stats]Best :[/stats]',
+                f'[result]{ format_time(self.best_mo3) }[/result]',
+                format_delta(self.mo3 - self.best_mo3),
             )
         if self.total >= 5:
             console.print(
