@@ -53,6 +53,29 @@ class Timer:
 
         return ch
 
+    def inspection(self) -> None:
+        inspection_start_time = time.perf_counter_ns()
+
+        while not self.stop_event.is_set():
+            elapsed_time = time.perf_counter_ns() - inspection_start_time
+            elapsed_seconds = elapsed_time / SECOND
+
+            remaining_time = round(self.countdown - elapsed_seconds, 1)
+
+            if elapsed_seconds >= self.countdown:
+                console.print('Finished')
+
+                return
+
+            print('\r', end='')
+            console.print(
+                '[record]Inspection :[/record]',
+                f'[result]{ remaining_time }[/result]',
+                end='',
+            )
+
+            time.sleep(0.01)
+
     def stopwatch(self) -> None:
         self.start_time = time.perf_counter_ns()
 
@@ -60,7 +83,7 @@ class Timer:
 
         while not self.stop_event.is_set():
             elapsed_time = time.perf_counter_ns() - self.start_time
-            new_tempo = int(elapsed_time / (SECOND * self.metronome))
+            new_tempo = int(elapsed_time / (SECOND * self.metronome or 1))
 
             style = 'timer_base'
             if elapsed_time > 50 * SECOND:
@@ -196,7 +219,14 @@ class Timer:
             return False
 
         if self.countdown:
-            ...
+            self.stop_event.clear()
+            self.thread = Thread(target=self.inspection)
+            self.thread.start()
+
+            self.getch()
+
+            self.stop_event.set()
+            self.thread.join()
 
         self.stop_event.clear()
         self.thread = Thread(target=self.stopwatch)
