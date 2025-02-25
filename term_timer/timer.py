@@ -21,7 +21,8 @@ class Timer:
 
     def __init__(self, *, mode: str, iterations: int,
                  free_play: bool, show_cube: bool,
-                 metronome: float, stack: list[Solve]):
+                 countdown: int, metronome: float,
+                 stack: list[Solve]):
         self.start_time = 0
         self.end_time = 0
         self.elapsed_time = 0
@@ -30,6 +31,7 @@ class Timer:
         self.mode = mode
         self.iterations = iterations
         self.show_cube = show_cube
+        self.countdown = countdown
         self.metronome = metronome
         self.stack = stack
 
@@ -192,6 +194,9 @@ class Timer:
 
         if char == 'q':
             return False
+
+        if self.countdown:
+            ...
 
         self.stop_event.clear()
         self.thread = Thread(target=self.stopwatch)
