@@ -1,3 +1,4 @@
+import math
 import statistics
 from functools import cached_property
 
@@ -32,9 +33,13 @@ class Statistics:
         if limit > len(stack_elapsed):
             return -1
 
+        cap = math.ceil(limit * 5 / 100)
+
         last_of = stack_elapsed[-limit:]
-        last_of.remove(min(last_of))
-        last_of.remove(max(last_of))
+        for _ in range(cap):
+            last_of.remove(min(last_of))
+            last_of.remove(max(last_of))
+
         return int(statistics.fmean(last_of))
 
     def best_mo(self, limit: int) -> int:
