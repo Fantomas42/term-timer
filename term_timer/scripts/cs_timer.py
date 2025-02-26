@@ -3,6 +3,8 @@ from argparse import ArgumentParser
 from datetime import datetime
 from pathlib import Path
 
+from term_timer.constants import DNF
+from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 
 
@@ -49,10 +51,25 @@ def import_csv() -> None:
         lines = fd.readlines()
 
     for line in lines[1:]:
-        (_i, time, _, scramble, date, __) = line.split(';')
+        flag = ''
+        (_i, time_corrected, _comment, scramble, date, time) = line.split(';')
         start_date = date_to_ns(date)
         end_date = start_date + time_to_ns(time)
 
+        if '+' in time_corrected:
+            flag = PLUS_TWO
+        elif 'DNF(' in time_corrected:
+            flag = DNF
+
         print(
-            ';'.join([time, str(start_date), str(end_date), scramble, '', '']),
+            ';'.join(
+                [
+                    time.strip(),
+                    str(start_date),
+                    str(end_date),
+                    scramble,
+                    flag,
+                    '',
+                ],
+            ),
         )
