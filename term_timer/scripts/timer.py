@@ -29,6 +29,11 @@ def main() -> int:
         default=False,
     )
     parser.add_argument(
+        '-p', '--puzzle',
+        help='Size of the puzzle',
+        default=3,
+    )
+    parser.add_argument(
         '-i', '--countdown',
         help='Countdown for inspection time',
         default=0,
@@ -78,13 +83,14 @@ def main() -> int:
 
     logging.disable(logging.INFO)
 
+    puzzle = options.puzzle
     if options.stats:
-        session_stats = Statistics(load_solves())
+        session_stats = Statistics(puzzle, load_solves(puzzle))
         session_stats.resume('Global ')
         return 0
 
     if options.list:
-        session_list = Listing(load_solves())
+        session_list = Listing(load_solves(puzzle))
         session_list.resume(options.list)
         return 0
 
@@ -99,7 +105,7 @@ def main() -> int:
             style='warning',
         )
     else:
-        stack = load_solves()
+        stack = load_solves(puzzle)
 
     if options.seed:
         seed(options.seed)
@@ -108,6 +114,7 @@ def main() -> int:
 
     while 42:
         timer = Timer(
+            puzzle=puzzle,
             mode=options.mode,
             iterations=options.iterations,
             free_play=free_play,
@@ -129,10 +136,10 @@ def main() -> int:
             break
 
     if not free_play:
-        save_solves(stack)
+        save_solves(puzzle, stack)
 
     if len(stack) > 1:
-        session_stats = Statistics(stack)
+        session_stats = Statistics(puzzle, stack)
         session_stats.resume((free_play and 'Session ') or 'Global ')
 
     return 0

@@ -14,8 +14,10 @@ from term_timer.solve import Solve
 
 
 class Statistics:
-    def __init__(self, stack: list[Solve]):
+    def __init__(self, puzzle: str, stack: list[Solve]):
         self.stack = stack
+        self.puzzle = puzzle
+        self.puzzle_name = f'{ puzzle }x{ puzzle }x{ puzzle }'
 
         self.stack_time = [
             s.final_time for s in stack
@@ -157,7 +159,10 @@ class Statistics:
 
     def resume(self, prefix: str = '') -> None:
         if not self.stack:
-            console.print('[warning]No saved solves yet.[/warning]')
+            console.print(
+                '[warning]No saved solves yet '
+                f'for { self.puzzle_name }.[/warning]',
+            )
             return
 
         console.print(

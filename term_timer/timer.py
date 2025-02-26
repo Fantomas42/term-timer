@@ -20,7 +20,8 @@ from term_timer.stats import Statistics
 class Timer:
     thread: Thread | None
 
-    def __init__(self, *, mode: str, iterations: int,
+    def __init__(self, *, puzzle: str,
+                 mode: str, iterations: int,
                  free_play: bool, show_cube: bool,
                  countdown: int, metronome: float,
                  stack: list[Solve]):
@@ -28,6 +29,7 @@ class Timer:
         self.end_time = 0
         self.elapsed_time = 0
 
+        self.puzzle = puzzle
         self.free_play = free_play
         self.mode = mode
         self.iterations = iterations
@@ -40,7 +42,7 @@ class Timer:
         self.thread = None
 
     @staticmethod
-    def getch(timeout=None) -> str:
+    def getch(timeout: float | None = None) -> str:
         ch = ''
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
@@ -60,7 +62,7 @@ class Timer:
         return ch
 
     @staticmethod
-    def beep():
+    def beep() -> None:
         print('\a', end='', flush=True)
 
     def inspection(self) -> None:
@@ -150,10 +152,10 @@ class Timer:
         )
 
     def handle_solve(self, solve: Solve) -> None:
-        old_stats = Statistics(self.stack)
+        old_stats = Statistics(self.puzzle, self.stack)
 
         self.stack = [*self.stack, solve]
-        new_stats = Statistics(self.stack)
+        new_stats = Statistics(self.puzzle, self.stack)
 
         extra = ''
         if new_stats.total > 1:

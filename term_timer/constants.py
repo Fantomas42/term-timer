@@ -4,7 +4,8 @@ SECOND = 1_000_000_000
 
 STEP_BAR = 17
 
-SAVE_FILE = Path.home() / '.solves'
+SAVE_DIRECTORY = Path.home() / '.solves'
+SAVE_DIRECTORY.mkdir(exist_ok=True)
 
 INVERT_CHAR = "'"
 

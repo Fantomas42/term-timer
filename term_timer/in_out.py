@@ -1,11 +1,13 @@
-from term_timer.constants import SAVE_FILE
+from term_timer.constants import SAVE_DIRECTORY
 from term_timer.formatter import format_duration
 from term_timer.solve import Solve
 
 
-def load_solves() -> list[Solve]:
-    if SAVE_FILE.exists():
-        with SAVE_FILE.open() as fd:
+def load_solves(puzzle: str) -> list[Solve]:
+    source = SAVE_DIRECTORY / f'{ puzzle }x{ puzzle }x{ puzzle }.csv'
+
+    if source.exists():
+        with source.open() as fd:
             datas = fd.readlines()
         return [
             Solve(*data.split(';')[1:-1])
@@ -15,8 +17,10 @@ def load_solves() -> list[Solve]:
     return []
 
 
-def save_solves(solves: list[Solve]) -> None:
-    with SAVE_FILE.open('w+') as fd:
+def save_solves(puzzle: str, solves: list[Solve]) -> None:
+    source = SAVE_DIRECTORY / f'{ puzzle }x{ puzzle }x{ puzzle }.csv'
+
+    with source.open('w+') as fd:
         for s in solves:
             fd.write(
                 f'{ format_duration(s.elapsed_time) };'
