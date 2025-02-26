@@ -1,3 +1,4 @@
+import re
 from random import choices
 from random import randint
 
@@ -5,6 +6,8 @@ from term_timer.magic_cube import FACES_ORDER
 from term_timer.magic_cube import Cube
 from term_timer.transform import mirror_moves
 from term_timer.twophases import solve
+
+FACE_REGEXP = re.compile(r'(F|R|U|L|B|D)')
 
 MOVES_DEFAULT = [
     'F', "F'", 'F2',
@@ -23,11 +26,39 @@ MOVES_EC = [
 ]
 
 
-def random_moves(puzzle: str, mode: str, iterations: int) -> list[str]:
+def build_big_cube_moves(puzzle: int) -> list[str]:
+    moves = []
+
+    for face in ['F', 'R', 'U', 'B', 'L', 'D']:
+        moves.append(face)
+        moves.append(f"{ face }'")
+        moves.append(f'{ face }2')
+
+        moves.append(f'{ face }w')
+        moves.append(f"{ face }w'")
+        moves.append(f'{ face }w2')
+
+        for i in range(2, puzzle):
+            moves.append(f'{ i }{ face }')
+            moves.append(f"{ i }{ face }'")
+            moves.append(f'{ i }{ face }2')
+
+            moves.append(f'{ i }{ face }w')
+            moves.append(f"{ i }{ face }w'")
+            moves.append(f'{ i }{ face }w2')
+
+    return moves
+
+
+def random_moves(puzzle: int, mode: str, iterations: int) -> list[str]:
     move_set = MOVES_DEFAULT
     if mode == 'ec':
         move_set = MOVES_EC
         iterations = 10
+
+    if puzzle > 3:
+        move_set = build_big_cube_moves(puzzle)
+        iterations = 30
 
     value = choices(move_set)[0]
     moves = [value]
@@ -37,7 +68,7 @@ def random_moves(puzzle: str, mode: str, iterations: int) -> list[str]:
         iterations = randint(25, 30)
 
     while len(moves) < iterations:
-        while value[0] == previous[0]:
+        while FACE_REGEXP.search(value)[0] == FACE_REGEXP.search(previous)[0]:
             value = choices(move_set)[0]
 
         previous = value
@@ -69,7 +100,7 @@ def scrambler(puzzle: str, mode: str,
 
     cube = Cube(puzzle_int, initial_state)
 
-    moves = random_moves(puzzle, mode, iterations)
+    moves = random_moves(puzzle_int, mode, iterations)
 
     cube.rotate(moves)
 
