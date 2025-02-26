@@ -14,6 +14,7 @@ theme = Theme(
         'scramble': f'{ TEXT_DARK } on { GREEN }',
         'duration': f'{ TEXT_DARK } on { ORANGE }',
         'record': f'{ TEXT_DARK } on #5FFFAF',
+        'inspection': f'{ TEXT_LIGHT } on #5F00D7',
         'consign': '#CECECE',
 
         'moves': f'bold { TEXT_LIGHT }',

@@ -1,3 +1,4 @@
+import select
 import sys
 import termios
 import time
@@ -39,13 +40,18 @@ class Timer:
         self.thread = None
 
     @staticmethod
-    def getch() -> str:
+    def getch(timeout=None) -> str:
+        ch = ''
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
 
         try:
-            tty.setraw(sys.stdin.fileno())
-            ch = sys.stdin.read(1)
+            tty.setcbreak(fd)
+            rlist, _, _ = select.select([fd], [], [], timeout)
+
+            if fd in rlist:
+                ch = sys.stdin.read(1)
+
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
@@ -62,14 +68,9 @@ class Timer:
 
             remaining_time = round(self.countdown - elapsed_seconds, 1)
 
-            if elapsed_seconds >= self.countdown:
-                console.print('Finished')
-
-                return
-
             print('\r', end='')
             console.print(
-                '[record]Inspection :[/record]',
+                '[inspection]Inspection :[/inspection]',
                 f'[result]{ remaining_time }[/result]',
                 end='',
             )
@@ -223,7 +224,7 @@ class Timer:
             self.thread = Thread(target=self.inspection)
             self.thread.start()
 
-            self.getch()
+            self.getch(self.countdown)
 
             self.stop_event.set()
             self.thread.join()
