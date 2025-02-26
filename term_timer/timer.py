@@ -59,7 +59,12 @@ class Timer:
 
         return ch
 
+    @staticmethod
+    def beep():
+        print('\a', end='', flush=True)
+
     def inspection(self) -> None:
+        state = 0
         inspection_start_time = time.perf_counter_ns()
 
         while not self.stop_event.is_set():
@@ -67,6 +72,11 @@ class Timer:
             elapsed_seconds = elapsed_time / SECOND
 
             remaining_time = round(self.countdown - elapsed_seconds, 1)
+
+            if int(remaining_time // 1) != state:
+                state = int(remaining_time // 1)
+                if state in {2, 1, 0}:
+                    self.beep()
 
             print('\r', end='')
             console.print(
@@ -109,7 +119,7 @@ class Timer:
             if tempo_elapsed != new_tempo:
                 tempo_elapsed = new_tempo
                 if self.metronome:
-                    print('\a', end='', flush=True)
+                    self.beep()
 
             print('\r', end='')
             console.print(
