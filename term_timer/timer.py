@@ -1,3 +1,4 @@
+import select
 import sys
 import termios
 import time
@@ -21,7 +22,8 @@ class Timer:
 
     def __init__(self, *, mode: str, iterations: int,
                  free_play: bool, show_cube: bool,
-                 metronome: float, stack: list[Solve]):
+                 countdown: int, metronome: float,
+                 stack: list[Solve]):
         self.start_time = 0
         self.end_time = 0
         self.elapsed_time = 0
@@ -30,6 +32,7 @@ class Timer:
         self.mode = mode
         self.iterations = iterations
         self.show_cube = show_cube
+        self.countdown = countdown
         self.metronome = metronome
         self.stack = stack
 
@@ -37,19 +40,52 @@ class Timer:
         self.thread = None
 
     @staticmethod
-    def getch() -> str:
+    def getch(timeout=None) -> str:
+        ch = ''
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
 
         try:
-            tty.setraw(sys.stdin.fileno())
-            ch = sys.stdin.read(1)
+            tty.setcbreak(fd)
+            rlist, _, _ = select.select([fd], [], [], timeout)
+
+            if fd in rlist:
+                ch = sys.stdin.read(1)
+
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
         print(f'\r{ " " * 100}\r', flush=True, end='')
 
         return ch
+
+    @staticmethod
+    def beep():
+        print('\a', end='', flush=True)
+
+    def inspection(self) -> None:
+        state = 0
+        inspection_start_time = time.perf_counter_ns()
+
+        while not self.stop_event.is_set():
+            elapsed_time = time.perf_counter_ns() - inspection_start_time
+            elapsed_seconds = elapsed_time / SECOND
+
+            remaining_time = round(self.countdown - elapsed_seconds, 1)
+
+            if int(remaining_time // 1) != state:
+                state = int(remaining_time // 1)
+                if state in {2, 1, 0}:
+                    self.beep()
+
+            print('\r', end='')
+            console.print(
+                '[inspection]Inspection :[/inspection]',
+                f'[result]{ remaining_time }[/result]',
+                end='',
+            )
+
+            time.sleep(0.01)
 
     def stopwatch(self) -> None:
         self.start_time = time.perf_counter_ns()
@@ -83,7 +119,7 @@ class Timer:
             if tempo_elapsed != new_tempo:
                 tempo_elapsed = new_tempo
                 if self.metronome:
-                    print('\a', end='', flush=True)
+                    self.beep()
 
             print('\r', end='')
             console.print(
@@ -192,6 +228,16 @@ class Timer:
 
         if char == 'q':
             return False
+
+        if self.countdown:
+            self.stop_event.clear()
+            self.thread = Thread(target=self.inspection)
+            self.thread.start()
+
+            self.getch(self.countdown)
+
+            self.stop_event.set()
+            self.thread.join()
 
         self.stop_event.clear()
         self.thread = Thread(target=self.stopwatch)

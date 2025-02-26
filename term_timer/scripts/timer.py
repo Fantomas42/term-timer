@@ -29,6 +29,12 @@ def main() -> int:
         default=False,
     )
     parser.add_argument(
+        '-i', '--countdown',
+        help='Countdown for inspection time',
+        default=0,
+        type=int,
+    )
+    parser.add_argument(
         '-b', '--metronome',
         help='Make a beep with tempo',
         default=0,
@@ -45,7 +51,7 @@ def main() -> int:
         help='Seed of random moves',
     )
     parser.add_argument(
-        '-i', '--iterations',
+        '-n', '--iterations',
         help='Iterations of random moves',
         default=0,
         type=int,
@@ -106,6 +112,7 @@ def main() -> int:
             iterations=options.iterations,
             free_play=free_play,
             show_cube=options.show_cube,
+            countdown=options.countdown,
             metronome=options.metronome,
             stack=stack,
         )
