@@ -4,16 +4,7 @@ from magiccube.cube import Face
 from term_timer.constants import ROTATIONS
 from term_timer.transform import japanese_moves
 
-INITIAL_SCRAMBLE = ''.join(  # noqa: FLY002
-    [
-        'WWWWWWWWW',
-        'OOOOOOOOO',
-        'GGGGGGGGG',
-        'RRRRRRRRR',
-        'BBBBBBBBB',
-        'YYYYYYYYY',
-    ],
-)
+FACES_ORDER = ['W', 'O', 'G', 'R', 'B', 'Y']
 
 
 class CubePrintRich:

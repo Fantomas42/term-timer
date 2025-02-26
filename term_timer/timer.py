@@ -212,6 +212,7 @@ class Timer:
 
     def start(self) -> bool:
         scramble, cube = scrambler(
+            puzzle=self.puzzle,
             mode=self.mode,
             iterations=self.iterations,
         )

@@ -1,7 +1,7 @@
 from random import choices
 from random import randint
 
-from term_timer.magic_cube import INITIAL_SCRAMBLE
+from term_timer.magic_cube import FACES_ORDER
 from term_timer.magic_cube import Cube
 from term_timer.transform import mirror_moves
 from term_timer.twophases import solve
@@ -23,7 +23,7 @@ MOVES_EC = [
 ]
 
 
-def random_moves(mode: str, iterations: int) -> list[str]:
+def random_moves(puzzle: str, mode: str, iterations: int) -> list[str]:
     move_set = MOVES_DEFAULT
     if mode == 'ec':
         move_set = MOVES_EC
@@ -59,12 +59,22 @@ def solve_moves(state: str) -> list[str]:
     return solution.split()
 
 
-def scrambler(mode: str, iterations: int) -> tuple[list[str], Cube]:
-    cube = Cube(3, INITIAL_SCRAMBLE)
+def scrambler(puzzle: str, mode: str,
+              iterations: int) -> tuple[list[str], Cube]:
+    puzzle_int = int(puzzle)
 
-    moves = random_moves(mode, iterations)
+    initial_state = ''
+    for face in FACES_ORDER:
+        initial_state += face * puzzle_int * puzzle_int
+
+    cube = Cube(puzzle_int, initial_state)
+
+    moves = random_moves(puzzle, mode, iterations)
 
     cube.rotate(moves)
+
+    if puzzle != '3':
+        return moves, cube
 
     solve = solve_moves(
         cube.as_twophase_facelets,
