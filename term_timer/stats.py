@@ -14,7 +14,7 @@ from term_timer.solve import Solve
 
 
 class Statistics:
-    def __init__(self, puzzle: str, stack: list[Solve]):
+    def __init__(self, puzzle: int, stack: list[Solve]):
         self.stack = stack
         self.puzzle = puzzle
         self.puzzle_name = f'{ puzzle }x{ puzzle }x{ puzzle }'

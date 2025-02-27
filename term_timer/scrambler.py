@@ -9,15 +9,6 @@ from term_timer.twophases import solve
 
 FACE_REGEXP = re.compile(r'(F|R|U|L|B|D)')
 
-MOVES_DEFAULT = [
-    'F', "F'", 'F2',
-    'R', "R'", 'R2',
-    'U', "U'", 'U2',
-    'B', "B'", 'B2',
-    'L', "L'", 'L2',
-    'D', "D'", 'D2',
-]
-
 MOVES_EC = [
     'F',
     'R',
@@ -26,7 +17,7 @@ MOVES_EC = [
 ]
 
 
-def build_big_cube_moves(puzzle: int) -> list[str]:
+def build_puzzle_moves(puzzle: int) -> list[str]:
     moves = []
 
     for face in ['F', 'R', 'U', 'B', 'L', 'D']:
@@ -35,35 +26,40 @@ def build_big_cube_moves(puzzle: int) -> list[str]:
                 face,
                 f"{ face }'",
                 f'{ face }2',
-                f'{ face }w',
-                f"{ face }w'",
-                f'{ face }w2',
             ],
         )
-        for i in range(2, puzzle):
+        if puzzle > 3:
             moves.extend(
                 [
-                    f'{ i }{ face }',
-                    f"{ i }{ face }'",
-                    f'{ i }{ face }2',
-                    f'{ i }{ face }w',
-                    f"{ i }{ face }w'",
-                    f'{ i }{ face }w2',
+                    f'{ face }w',
+                    f"{ face }w'",
+                    f'{ face }w2',
                 ],
             )
+            for i in range(2, puzzle):
+                moves.extend(
+                    [
+                        f'{ i }{ face }',
+                        f"{ i }{ face }'",
+                        f'{ i }{ face }2',
+                        f'{ i }{ face }w',
+                        f"{ i }{ face }w'",
+                        f'{ i }{ face }w2',
+                    ],
+                )
 
     return moves
 
 
 def random_moves(puzzle: int, mode: str, iterations: int) -> list[str]:
-    move_set = MOVES_DEFAULT
+    # TODO(me): adaptative length, cancel opposite face
     if mode == 'ec':
         move_set = MOVES_EC
         iterations = 10
-
-    if puzzle > 3:
-        move_set = build_big_cube_moves(puzzle)
-        iterations = 30
+    else:
+        move_set = build_puzzle_moves(puzzle)
+        if puzzle == 2:
+            iterations = 10
 
     value = choices(move_set)[0]
     moves = [value]
@@ -95,21 +91,19 @@ def solve_moves(state: str) -> list[str]:
     return solution.split()
 
 
-def scrambler(puzzle: str, mode: str,
+def scrambler(puzzle: int, mode: str,
               iterations: int) -> tuple[list[str], Cube]:
-    puzzle_int = int(puzzle)
-
     initial_state = ''
     for face in FACES_ORDER:
-        initial_state += face * puzzle_int * puzzle_int
+        initial_state += face * puzzle * puzzle
 
-    cube = Cube(puzzle_int, initial_state)
+    cube = Cube(puzzle, initial_state)
 
-    moves = random_moves(puzzle_int, mode, iterations)
+    moves = random_moves(puzzle, mode, iterations)
 
     cube.rotate(moves)
 
-    if puzzle != '3':
+    if puzzle != 3:
         return moves, cube
 
     solve = solve_moves(

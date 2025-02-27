@@ -32,6 +32,7 @@ def main() -> int:
         '-p', '--puzzle',
         help='Size of the puzzle',
         default=3,
+        type=int,
     )
     parser.add_argument(
         '-i', '--countdown',

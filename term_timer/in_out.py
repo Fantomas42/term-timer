@@ -3,7 +3,7 @@ from term_timer.formatter import format_duration
 from term_timer.solve import Solve
 
 
-def load_solves(puzzle: str) -> list[Solve]:
+def load_solves(puzzle: int) -> list[Solve]:
     source = SAVE_DIRECTORY / f'{ puzzle }x{ puzzle }x{ puzzle }.csv'
 
     if source.exists():
@@ -17,7 +17,7 @@ def load_solves(puzzle: str) -> list[Solve]:
     return []
 
 
-def save_solves(puzzle: str, solves: list[Solve]) -> None:
+def save_solves(puzzle: int, solves: list[Solve]) -> None:
     source = SAVE_DIRECTORY / f'{ puzzle }x{ puzzle }x{ puzzle }.csv'
 
     with source.open('w+') as fd:
