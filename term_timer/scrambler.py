@@ -30,22 +30,27 @@ def build_big_cube_moves(puzzle: int) -> list[str]:
     moves = []
 
     for face in ['F', 'R', 'U', 'B', 'L', 'D']:
-        moves.append(face)
-        moves.append(f"{ face }'")
-        moves.append(f'{ face }2')
-
-        moves.append(f'{ face }w')
-        moves.append(f"{ face }w'")
-        moves.append(f'{ face }w2')
-
+        moves.extend(
+            [
+                face,
+                f"{ face }'",
+                f'{ face }2',
+                f'{ face }w',
+                f"{ face }w'",
+                f'{ face }w2',
+            ],
+        )
         for i in range(2, puzzle):
-            moves.append(f'{ i }{ face }')
-            moves.append(f"{ i }{ face }'")
-            moves.append(f'{ i }{ face }2')
-
-            moves.append(f'{ i }{ face }w')
-            moves.append(f"{ i }{ face }w'")
-            moves.append(f'{ i }{ face }w2')
+            moves.extend(
+                [
+                    f'{ i }{ face }',
+                    f"{ i }{ face }'",
+                    f'{ i }{ face }2',
+                    f'{ i }{ face }w',
+                    f"{ i }{ face }w'",
+                    f'{ i }{ face }w2',
+                ],
+            )
 
     return moves
 
