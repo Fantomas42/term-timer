@@ -3,7 +3,7 @@ name: Kwalitee
 on: [push]
 
 jobs:
-  Check Kwalitee:
+  Kwalitee:
     runs-on: ubuntu-latest
     strategy:
       matrix:
