@@ -2,12 +2,22 @@ import re
 from random import choices
 from random import randint
 
+from term_timer.constants import MOVES
 from term_timer.magic_cube import FACES_ORDER
 from term_timer.magic_cube import Cube
 from term_timer.transform import mirror_moves
 from term_timer.twophases import solve
 
 FACE_REGEXP = re.compile(r'(F|R|U|B|L|D)')
+
+OPPOSITE_MOVES = {
+    'F': 'B',
+    'R': 'L',
+    'U': 'D',
+    'B': 'F',
+    'L': 'R',
+    'D': 'U',
+}
 
 MOVES_EC = [
     'F',
@@ -20,7 +30,7 @@ MOVES_EC = [
 def build_puzzle_moves(puzzle: int) -> list[str]:
     moves = []
 
-    for face in ['F', 'R', 'U', 'B', 'L', 'D']:
+    for face in MOVES:
         moves.extend(
             [
                 face,
@@ -51,18 +61,24 @@ def build_puzzle_moves(puzzle: int) -> list[str]:
     return moves
 
 
-def is_same_move(current: str, previous: str) -> bool:
-    current_move = FACE_REGEXP.search(current)
-    previous_move = FACE_REGEXP.search(previous)
+def is_valid_next_move(current: str, previous: str) -> bool:
+    current_move_search = FACE_REGEXP.search(current)
+    previous_move_search = FACE_REGEXP.search(previous)
 
-    if not current_move or not previous_move:
-        return True
+    if not current_move_search or not previous_move_search:
+        return False
 
-    return current_move[0] == previous_move[0]
+    current_move = current_move_search[0]
+    previous_move = previous_move_search[0]
+
+    if current_move == previous_move:
+        return False
+
+    return OPPOSITE_MOVES[current_move] != previous_move
 
 
 def random_moves(puzzle: int, mode: str, iterations: int) -> list[str]:
-    # TODO(me): adaptative length, cancel opposite face
+    # TODO(me): adaptative length
     if mode == 'ec':
         move_set = MOVES_EC
         iterations = 10
@@ -79,7 +95,7 @@ def random_moves(puzzle: int, mode: str, iterations: int) -> list[str]:
         iterations = randint(25, 30)
 
     while len(moves) < iterations:
-        while is_same_move(value, previous):
+        while not is_valid_next_move(value, previous):
             value = choices(move_set)[0]
 
         previous = value

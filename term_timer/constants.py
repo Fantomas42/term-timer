@@ -11,6 +11,11 @@ INVERT_CHAR = "'"
 
 JAPANESE_CHAR = 'w'
 
+MOVES = [
+    'F', 'R', 'U',
+    'B', 'L', 'D',
+]
+
 ROTATIONS = (
     'x', 'y', 'z',
 )
