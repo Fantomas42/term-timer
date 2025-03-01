@@ -7,7 +7,7 @@ from term_timer.magic_cube import Cube
 from term_timer.transform import mirror_moves
 from term_timer.twophases import solve
 
-FACE_REGEXP = re.compile(r'(F|R|U|L|B|D)')
+FACE_REGEXP = re.compile(r'(F|R|U|B|L|D)')
 
 MOVES_EC = [
     'F',
@@ -51,6 +51,16 @@ def build_puzzle_moves(puzzle: int) -> list[str]:
     return moves
 
 
+def is_same_move(current: str, previous: str) -> bool:
+    current_move = FACE_REGEXP.search(current)
+    previous_move = FACE_REGEXP.search(previous)
+
+    if not current_move or not previous_move:
+        return True
+
+    return current_move[0] == previous_move[0]
+
+
 def random_moves(puzzle: int, mode: str, iterations: int) -> list[str]:
     # TODO(me): adaptative length, cancel opposite face
     if mode == 'ec':
@@ -69,7 +79,7 @@ def random_moves(puzzle: int, mode: str, iterations: int) -> list[str]:
         iterations = randint(25, 30)
 
     while len(moves) < iterations:
-        while FACE_REGEXP.search(value)[0] == FACE_REGEXP.search(previous)[0]:
+        while is_same_move(value, previous):
             value = choices(move_set)[0]
 
         previous = value
