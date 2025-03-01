@@ -13,12 +13,9 @@ from term_timer.formatter import format_time
 from term_timer.solve import Solve
 
 
-class Statistics:
-    def __init__(self, puzzle: int, stack: list[Solve]):
+class StatisticsTools:
+    def __init__(self, stack: list[Solve]):
         self.stack = stack
-        self.puzzle = puzzle
-        self.puzzle_name = f'{ puzzle }x{ puzzle }x{ puzzle }'
-
         self.stack_time = [
             s.final_time for s in stack
         ]
@@ -79,6 +76,14 @@ class Statistics:
             stack.pop()
 
         return min(aos)
+
+
+class Statistics(StatisticsTools):
+    def __init__(self, puzzle: int, stack: list[Solve]):
+        self.puzzle = puzzle
+        self.puzzle_name = f'{ puzzle }x{ puzzle }x{ puzzle }'
+
+        super().__init__(stack)
 
     @cached_property
     def mo3(self) -> int:
