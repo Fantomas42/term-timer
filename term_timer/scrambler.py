@@ -78,7 +78,6 @@ def is_valid_next_move(current: str, previous: str) -> bool:
 
 
 def random_moves(puzzle: int, mode: str, iterations: int) -> list[str]:
-    # TODO(me): adaptative length
     if mode == 'ec':
         move_set = MOVES_EC
         iterations = 10
