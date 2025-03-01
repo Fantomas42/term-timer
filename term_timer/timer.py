@@ -20,7 +20,7 @@ from term_timer.stats import Statistics
 class Timer:
     thread: Thread | None
 
-    def __init__(self, *, puzzle: int,
+    def __init__(self, *, puzzle: int,  # noqa: PLR0913
                  mode: str, iterations: int,
                  free_play: bool, show_cube: bool,
                  countdown: int, metronome: float,
