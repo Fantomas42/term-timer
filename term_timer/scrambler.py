@@ -6,6 +6,7 @@ from term_timer.constants import MOVES
 from term_timer.magic_cube import FACES_ORDER
 from term_timer.magic_cube import Cube
 from term_timer.transform import mirror_moves
+from term_timer.twophases import TWO_PHASE_INSTALLED
 from term_timer.twophases import solve
 
 FACE_REGEXP = re.compile(r'(F|R|U|B|L|D)')
@@ -128,7 +129,7 @@ def scrambler(puzzle: int, mode: str,
 
     cube.rotate(moves)
 
-    if puzzle != 3:
+    if puzzle != 3 or not TWO_PHASE_INSTALLED:
         return moves, cube
 
     solve = solve_moves(

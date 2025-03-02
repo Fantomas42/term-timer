@@ -11,13 +11,13 @@ requires-python = ">=3.8"
 dependencies = [
     "magiccube",
     "rich",
-    "RubikTwoPhase",
 ]
 
 [project.optional-dependencies]
 dev = [
     "ruff",
     "mypy",
+    "RubikTwoPhase",
 ]
 two-phase = [
     "RubikTwoPhase",
