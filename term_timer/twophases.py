@@ -17,7 +17,7 @@ if TWO_PHASE_INSTALLED:
             '[warning]:brain: Please be patient for the first run...[/warning]',
         )
 
-    from twophase.solver import solve  # noqa: E402
+    from twophase.solver import solve
 
     if computed:
         builtins.print = _print
