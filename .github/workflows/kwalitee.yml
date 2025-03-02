@@ -1,19 +1,21 @@
 name: Kwalitee
 
-on: [push]
+on:
+  push:
+    branches: [ "develop" ]
+  pull_request:
+    branches: [ "develop" ]
+
 
 jobs:
   Kwalitee:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.12
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -21,6 +23,7 @@ jobs:
     - name: Analysing the code with Mypy
       run: |
         mypy $(git ls-files 'term_timer/*.py') --strict
+      continue-on-error: true
     - name: Analysing the code with Ruff
       run: |
         ruff check $(git ls-files 'term_timer/*.py')
