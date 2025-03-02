@@ -14,6 +14,16 @@ dependencies = [
     "RubikTwoPhase",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "mypy",
+]
+two-phase = [
+    "RubikTwoPhase",
+]
+
+
 [project.scripts]
 term-timer = "term_timer.scripts.timer:main"
 cs_timer_import = "term_timer.scripts.cs_timer:import_csv"
