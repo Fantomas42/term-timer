@@ -13,7 +13,7 @@ from term_timer.timer import Timer
 
 def main() -> int:
     parser = ArgumentParser(
-        description='3x3 timer',
+        description='Speed cubing timer on terminal',
     )
     parser.add_argument(
         'scrambles',
