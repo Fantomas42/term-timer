@@ -5,7 +5,7 @@ Practice your speed cubing skills on your terminal.
 ##  Main Features
 
 - Valid WCA scrambles
-- From 2x2x2 to NxNxN cubes
+- From 2x2x2 to 7x7x7 cubes
 - Free-play and recorded solves
 - Colorfull cube display
 - Detailled statistics
