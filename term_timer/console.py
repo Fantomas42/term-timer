@@ -19,6 +19,7 @@ theme = Theme(
 
         'moves': f'bold { TEXT_LIGHT }',
         'result': f'bold { TEXT_LIGHT }',
+        'best': f'bold { GREEN}',
 
         'stats': 'bold #00AFFF',
         'bar': f'on { GREEN }',

@@ -185,28 +185,28 @@ class Timer:
             if new_stats.best < old_stats.best:
                 console.print(
                     f'[record]:rocket:{ "New PB !".center(mc) }[/record]',
-                    f'[result]{ format_time(new_stats.best) }[/result]',
+                    f'[best]{ format_time(new_stats.best) }[/best]',
                     format_delta(new_stats.best - old_stats.best),
                 )
 
             if new_stats.ao5 < old_stats.best_ao5:
                 console.print(
                     f'[record]:boom:{ "Best Ao5".center(mc) }[/record]',
-                    f'[result]{ format_time(new_stats.ao5) }[/result]',
+                    f'[best]{ format_time(new_stats.ao5) }[/best]',
                     format_delta(new_stats.ao5 - old_stats.best_ao5),
                 )
 
             if new_stats.ao12 < old_stats.best_ao12:
                 console.print(
                     f'[record]:muscle:{ "Best Ao12".center(mc) }[/record]',
-                    f'[result]{ format_time(new_stats.ao12) }[/result]',
+                    f'[best]{ format_time(new_stats.ao12) }[/best]',
                     format_delta(new_stats.ao12 - old_stats.best_ao12),
                 )
 
             if new_stats.ao100 < old_stats.best_ao100:
                 console.print(
                     f'[record]:crown:{ "Best Ao100".center(mc) }[/record]',
-                    f'[result]{ format_time(new_stats.ao100) }[/result]',
+                    f'[best]{ format_time(new_stats.ao100) }[/best]',
                     format_delta(new_stats.ao100 - old_stats.best_ao100),
                 )
 
