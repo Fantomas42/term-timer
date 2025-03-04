@@ -62,6 +62,21 @@ def build_puzzle_moves(puzzle: int) -> list[str]:
     return moves
 
 
+MOVES_BY_PUZZLE = {
+    i: build_puzzle_moves(i)
+    for i in range(2, 8)
+}
+
+ITERATIONS_BY_PUZZLE = {
+    2: (9, 11),
+    3: (19, 22),
+    4: (45, 50),
+    5: (60, 60),
+    6: (80, 80),
+    7: (100, 100),
+}
+
+
 def is_valid_next_move(current: str, previous: str) -> bool:
     current_move_search = FACE_REGEXP.search(current)
     previous_move_search = FACE_REGEXP.search(previous)
@@ -79,20 +94,21 @@ def is_valid_next_move(current: str, previous: str) -> bool:
 
 
 def random_moves(puzzle: int, mode: str, iterations: int) -> list[str]:
+    move_set = MOVES_BY_PUZZLE[puzzle]
+
     if mode == 'ec':
         move_set = MOVES_EC
         iterations = 10
-    else:
-        move_set = build_puzzle_moves(puzzle)
-        if puzzle == 2:
-            iterations = 10
 
     value = choices(move_set)[0]
     moves = [value]
     previous = value
 
     if not iterations:
-        iterations = randint(25, 30)
+        iterations_range = ITERATIONS_BY_PUZZLE[puzzle]
+        if puzzle == 3 and TWO_PHASE_INSTALLED:
+            iterations_range = (25, 30)
+        iterations = randint(*iterations_range)
 
     while len(moves) < iterations:
         while not is_valid_next_move(value, previous):
