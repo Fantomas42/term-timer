@@ -47,17 +47,18 @@ def build_puzzle_moves(puzzle: int) -> list[str]:
                     f'{ face }w2',
                 ],
             )
-            for i in range(2, puzzle):
-                moves.extend(
-                    [
-                        f'{ i }{ face }',
-                        f"{ i }{ face }'",
-                        f'{ i }{ face }2',
-                        f'{ i }{ face }w',
-                        f"{ i }{ face }w'",
-                        f'{ i }{ face }w2',
-                    ],
-                )
+            if puzzle > 5:
+                for i in range(2, 4):
+                    moves.extend(
+                        [
+                            f'{ i }{ face }',
+                            f"{ i }{ face }'",
+                            f'{ i }{ face }2',
+                            f'{ i }{ face }w',
+                            f"{ i }{ face }w'",
+                            f'{ i }{ face }w2',
+                        ],
+                    )
 
     return moves
 
