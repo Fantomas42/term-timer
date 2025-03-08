@@ -1,8 +1,8 @@
 import sys
-from argparse import ArgumentParser
 from datetime import datetime
 from pathlib import Path
 
+from term_timer.argparser import ArgumentParser
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
@@ -36,11 +36,11 @@ def time_to_ns(time: str) -> int:
 
 def import_csv() -> None:
     parser = ArgumentParser(
-        description='Import csTimer solves in CSV',
+        description='Import CSTimer solves in CSV',
     )
     parser.add_argument(
         'export',
-        help='csTimer csv file to import',
+        help='CSTimer csv file to import',
     )
 
     options = parser.parse_args(sys.argv[1:])
