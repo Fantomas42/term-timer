@@ -95,13 +95,11 @@ def main() -> int:
         ),
     )
     parser.add_argument(
-        '-m', '--mode',
-        default='default',
-        choices=('default', 'ec'),
-        metavar='MODE',
+        '--easy-cross',
+        action='store_true',
         help=(
-            'Choose the scramble mode.\n'
-            "Default: 'default'. Choices: 'default', 'ec'."
+            'Set the scramble with an easy cross.\n'
+            'Default: False.'
         ),
     )
     parser.add_argument(
@@ -139,7 +137,7 @@ def main() -> int:
         return 0
 
     free_play = options.free_play
-    if options.seed or options.iterations or options.mode != 'default':
+    if options.seed or options.iterations or options.easy_cross:
         free_play = True
 
     if free_play:
@@ -159,8 +157,8 @@ def main() -> int:
     while 42:
         timer = Timer(
             puzzle=puzzle,
-            mode=options.mode,
             iterations=options.iterations,
+            easy_cross=options.easy_cross,
             free_play=free_play,
             show_cube=options.show_cube,
             countdown=options.countdown,

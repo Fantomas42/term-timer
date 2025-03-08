@@ -21,7 +21,7 @@ class Timer:
     thread: Thread | None
 
     def __init__(self, *, puzzle: int,  # noqa: PLR0913
-                 mode: str, iterations: int,
+                 iterations: int, easy_cross: bool,
                  free_play: bool, show_cube: bool,
                  countdown: int, metronome: float,
                  stack: list[Solve]):
@@ -31,8 +31,8 @@ class Timer:
 
         self.puzzle = puzzle
         self.free_play = free_play
-        self.mode = mode
         self.iterations = iterations
+        self.easy_cross = easy_cross
         self.show_cube = show_cube
         self.countdown = countdown
         self.metronome = metronome
@@ -213,8 +213,8 @@ class Timer:
     def start(self) -> bool:
         scramble, cube = scrambler(
             puzzle=self.puzzle,
-            mode=self.mode,
             iterations=self.iterations,
+            easy_cross=self.easy_cross,
         )
 
         console.print(

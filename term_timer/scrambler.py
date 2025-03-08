@@ -20,7 +20,7 @@ OPPOSITE_MOVES = {
     'D': 'U',
 }
 
-MOVES_EC = [
+MOVES_EASY_CROSS = [
     'F',
     'R',
     'B',
@@ -94,12 +94,12 @@ def is_valid_next_move(current: str, previous: str) -> bool:
     return OPPOSITE_MOVES[current_move] != previous_move
 
 
-def random_moves(puzzle: int, mode: str, iterations: int) -> list[str]:
+def random_moves(puzzle: int, iterations: int, easy_cross: bool) -> list[str]:
     move_set = MOVES_BY_PUZZLE[puzzle]
 
-    if mode == 'ec':
-        move_set = MOVES_EC
+    if easy_cross:
         iterations = 10
+        move_set = MOVES_EASY_CROSS
 
     value = choices(move_set)[0]
     moves = [value]
@@ -134,15 +134,15 @@ def solve_moves(state: str) -> list[str]:
     return solution.split()
 
 
-def scrambler(puzzle: int, mode: str,
-              iterations: int) -> tuple[list[str], Cube]:
+def scrambler(puzzle: int, iterations: int,
+              easy_cross: bool) -> tuple[list[str], Cube]:
     initial_state = ''
     for face in FACES_ORDER:
         initial_state += face * puzzle * puzzle
 
     cube = Cube(puzzle, initial_state)
 
-    moves = random_moves(puzzle, mode, iterations)
+    moves = random_moves(puzzle, iterations, easy_cross)
 
     cube.rotate(moves)
 
