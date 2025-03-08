@@ -22,7 +22,7 @@ Practice your speed cubing skills on your terminal.
 
 ![](docs/demo.gif)
 
-## Example usage
+## Examples usage
 
 Start timing 3x3x3 solves :
 
@@ -33,31 +33,31 @@ term-timer
 Start timing showing the scrambled cube :
 
 ```console
-term-timer -c
+term-timer -p
 ```
 
 Start timing 2 solves of 4x4x4 in free-play :
 
 ```console
-term-timer -p 4 -f 2
+term-timer -c 4 -f 2
 ```
 
 Start timing with an easy white cross, with 15 secs of inspection :
 
 ```console
-term-timer -m ec -i 15
+term-timer -ei 15
 ```
 
 Show statistics on recorded solves :
 
 ```console
-term-timer --stats
+term-timer -s
 ```
 
 Show last ten recorded solves of 7x7x7 :
 
 ```console
-term-timer --list 10 -p 7
+term-timer -l 10 -c 7
 ```
 
 ## Installation
@@ -81,31 +81,50 @@ pip install -e .[two-phase]
 ## Help
 
 ```console
-usage: term-timer [-h] [-c] [-p PUZZLE] [-i COUNTDOWN] [-b METRONOME] [-f] [-s SEED] [-n ITERATIONS]
-                  [-m MODE] [--stats] [--list LIST]
-                  [scrambles]
+Usage: term-timer [-c CUBE] [-p] [-f] [-i SECONDS] [-b TEMPO] [-e] [-n ITERATIONS] [-r SEED]
+                  [-l [SOLVES]] [-s] [-h]
+                  [SOLVES]
 
-3x3 timer
+Speed cubing timer on your terminal.
 
-positional arguments:
-  scrambles             Number of scrambles
+Positional Arguments:
+  SOLVES                Specify the number of solves to be done.
+                        Default: Infinite.
 
-options:
-  -h, --help            show this help message and exit
-  -c, --show-cube       Show the cube scrambled
-  -p PUZZLE, --puzzle PUZZLE
-                        Size of the puzzle
-  -i COUNTDOWN, --countdown COUNTDOWN
-                        Countdown for inspection time
-  -b METRONOME, --metronome METRONOME
-                        Make a beep with tempo
-  -f, --free-play       Disable recording of solves
-  -s SEED, --seed SEED  Seed of random moves
+Configuration:
+  -c CUBE, --cube CUBE  Set the size of the cube (from 2 to 7).
+                        Default: 3.
+  -p, --show-cube       Display the cube in its scrambled state.
+                        Default: False.
+  -f, --free-play       Enable free play mode to disable recording of solves.
+                        Default: False.
+
+Timer:
+  -i SECONDS, --countdown SECONDS
+                        Set the countdown timer for inspection time in seconds.
+                        Default: 0.
+  -b TEMPO, --metronome TEMPO
+                        Set a metronome beep at a specified tempo in seconds.
+                        Default: 0.0.
+
+Scramble:
+  -e, --easy-cross      Set the scramble with an easy cross.
+                        Default: False.
   -n ITERATIONS, --iterations ITERATIONS
-                        Iterations of random moves
-  -m MODE, --mode MODE  Mode of the scramble
-  --stats               Show the statistics
-  --list LIST           Show the last solves
+                        Set the number of random moves.
+                        Default: Auto.
+  -r SEED, --seed SEED  Set a seed for random move generation to ensure repeatable scrambles.
+                        Default: None.
+
+Actions:
+  -l [SOLVES], --list [SOLVES]
+                        Display the last recorded solves.
+                        Default: All.
+  -s, --stats           Display statistics of recorded solves.
+                        Default: False.
+  -h, --help            Display this help message.
+
+Have fun cubing !
 ```
 
 ## Origin Story

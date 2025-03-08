@@ -14,7 +14,7 @@ from term_timer.timer import Timer
 def main() -> int:
     parser = ArgumentParser(
         add_help=False,
-        description='Speed cubing timer on terminal',
+        description='Speed cubing timer on your terminal.',
         epilog='Have fun cubing !',
     )
     parser.add_argument(
