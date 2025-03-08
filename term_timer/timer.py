@@ -20,7 +20,7 @@ from term_timer.stats import Statistics
 class Timer:
     thread: Thread | None
 
-    def __init__(self, *, puzzle: int,  # noqa: PLR0913
+    def __init__(self, *, cube_size: int,  # noqa: PLR0913
                  iterations: int, easy_cross: bool,
                  free_play: bool, show_cube: bool,
                  countdown: int, metronome: float,
@@ -29,7 +29,7 @@ class Timer:
         self.end_time = 0
         self.elapsed_time = 0
 
-        self.puzzle = puzzle
+        self.cube_size = cube_size
         self.free_play = free_play
         self.iterations = iterations
         self.easy_cross = easy_cross
@@ -152,10 +152,10 @@ class Timer:
         )
 
     def handle_solve(self, solve: Solve) -> None:
-        old_stats = Statistics(self.puzzle, self.stack)
+        old_stats = Statistics(self.cube_size, self.stack)
 
         self.stack = [*self.stack, solve]
-        new_stats = Statistics(self.puzzle, self.stack)
+        new_stats = Statistics(self.cube_size, self.stack)
 
         extra = ''
         if new_stats.total > 1:
@@ -212,7 +212,7 @@ class Timer:
 
     def start(self) -> bool:
         scramble, cube = scrambler(
-            puzzle=self.puzzle,
+            cube_size=self.cube_size,
             iterations=self.iterations,
             easy_cross=self.easy_cross,
         )

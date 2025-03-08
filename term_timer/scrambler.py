@@ -28,7 +28,7 @@ MOVES_EASY_CROSS = [
 ]
 
 
-def build_puzzle_moves(puzzle: int) -> list[str]:
+def build_cube_moves(cube_size: int) -> list[str]:
     moves = []
 
     for face in MOVES:
@@ -39,7 +39,7 @@ def build_puzzle_moves(puzzle: int) -> list[str]:
                 f'{ face }2',
             ],
         )
-        if puzzle > 3:
+        if cube_size > 3:
             moves.extend(
                 [
                     f'{ face }w',
@@ -47,7 +47,7 @@ def build_puzzle_moves(puzzle: int) -> list[str]:
                     f'{ face }w2',
                 ],
             )
-            if puzzle > 5:
+            if cube_size > 5:
                 for i in range(2, 4):
                     moves.extend(
                         [
@@ -63,12 +63,12 @@ def build_puzzle_moves(puzzle: int) -> list[str]:
     return moves
 
 
-MOVES_BY_PUZZLE = {
-    i: build_puzzle_moves(i)
+MOVES_BY_CUBE = {
+    i: build_cube_moves(i)
     for i in range(2, 8)
 }
 
-ITERATIONS_BY_PUZZLE = {
+ITERATIONS_BY_CUBE = {
     2: (9, 11),
     3: (19, 22),
     4: (45, 50),
@@ -94,8 +94,9 @@ def is_valid_next_move(current: str, previous: str) -> bool:
     return OPPOSITE_MOVES[current_move] != previous_move
 
 
-def random_moves(puzzle: int, iterations: int, easy_cross: bool) -> list[str]:
-    move_set = MOVES_BY_PUZZLE[puzzle]
+def random_moves(cube_size: int, iterations: int,
+                 easy_cross: bool) -> list[str]:
+    move_set = MOVES_BY_CUBE[cube_size]
 
     if easy_cross:
         iterations = 10
@@ -106,8 +107,8 @@ def random_moves(puzzle: int, iterations: int, easy_cross: bool) -> list[str]:
     previous = value
 
     if not iterations:
-        iterations_range = ITERATIONS_BY_PUZZLE[puzzle]
-        if puzzle == 3 and TWO_PHASE_INSTALLED:
+        iterations_range = ITERATIONS_BY_CUBE[cube_size]
+        if cube_size == 3 and TWO_PHASE_INSTALLED:
             iterations_range = (25, 30)
         iterations = randint(*iterations_range)
 
@@ -134,19 +135,19 @@ def solve_moves(state: str) -> list[str]:
     return solution.split()
 
 
-def scrambler(puzzle: int, iterations: int,
+def scrambler(cube_size: int, iterations: int,
               easy_cross: bool) -> tuple[list[str], Cube]:
     initial_state = ''
     for face in FACES_ORDER:
-        initial_state += face * puzzle * puzzle
+        initial_state += face * cube_size * cube_size
 
-    cube = Cube(puzzle, initial_state)
+    cube = Cube(cube_size, initial_state)
 
-    moves = random_moves(puzzle, iterations, easy_cross)
+    moves = random_moves(cube_size, iterations, easy_cross)
 
     cube.rotate(moves)
 
-    if puzzle != 3 or not TWO_PHASE_INSTALLED:
+    if cube_size != 3 or not TWO_PHASE_INSTALLED:
         return moves, cube
 
     solve = solve_moves(

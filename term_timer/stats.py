@@ -79,9 +79,9 @@ class StatisticsTools:
 
 
 class Statistics(StatisticsTools):
-    def __init__(self, puzzle: int, stack: list[Solve]):
-        self.puzzle = puzzle
-        self.puzzle_name = f'{ puzzle }x{ puzzle }x{ puzzle }'
+    def __init__(self, cube_size: int, stack: list[Solve]):
+        self.cube_size = cube_size
+        self.cube_name = f'{ cube_size }x{ cube_size }x{ cube_size }'
 
         super().__init__(stack)
 
@@ -166,7 +166,7 @@ class Statistics(StatisticsTools):
         if not self.stack:
             console.print(
                 '[warning]No saved solves yet '
-                f'for { self.puzzle_name }.[/warning]',
+                f'for { self.cube_name }.[/warning]',
             )
             return
 
