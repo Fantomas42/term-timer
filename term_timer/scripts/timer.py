@@ -1,8 +1,8 @@
 import logging
 import sys
-from argparse import ArgumentParser
 from random import seed
 
+from term_timer.argparser import ArgumentParser
 from term_timer.console import console
 from term_timer.in_out import load_solves
 from term_timer.in_out import save_solves
@@ -14,71 +14,113 @@ from term_timer.timer import Timer
 def main() -> int:
     parser = ArgumentParser(
         description='Speed cubing timer on terminal',
+        epilog='Have fun cubing !',
     )
     parser.add_argument(
-        'scrambles',
+        'solves',
         nargs='?',
-        help='Number of scrambles',
-        default=0,
         type=int,
+        default=0,
+        metavar='SOLVES',
+        help=(
+            'Specify the number of solves to record.\n'
+            'Default: Infinite.'
+        ),
     )
     parser.add_argument(
         '-c', '--show-cube',
-        help='Show the cube scrambled',
         action='store_true',
-        default=False,
+        help=(
+            'Display the cube in its scrambled state.\n'
+            'Default: False.'
+        ),
     )
     parser.add_argument(
         '-p', '--puzzle',
-        help='Size of the puzzle',
-        default=3,
         type=int,
         choices=range(2, 8),
+        default=3,
+        metavar='PUZZLE',
+        help=(
+            'Set the size of the puzzle (2 to 7).\n'
+            'Default: 3.'
+        ),
     )
     parser.add_argument(
         '-i', '--countdown',
-        help='Countdown for inspection time',
-        default=0,
         type=int,
+        default=0,
+        metavar='SECONDS',
+        help=(
+            'Set the countdown timer for inspection time in seconds.\n'
+            'Default: 0.'
+        ),
     )
     parser.add_argument(
         '-b', '--metronome',
-        help='Make a beep with tempo',
-        default=0,
         type=float,
+        default=0,
+        metavar='TEMPO',
+        help=(
+            'Set a metronome beep at a specified tempo in seconds.\n'
+            'Default: 0.0.'
+        ),
     )
     parser.add_argument(
         '-f', '--free-play',
-        help='Disable recording of solves',
         action='store_true',
-        default=False,
+        help=(
+            'Enable free play mode to disable recording of solves.\n'
+            'Default: False.'
+        ),
     )
     parser.add_argument(
         '-s', '--seed',
-        help='Seed of random moves',
+        default='',
+        metavar='SEED',
+        help=(
+            'Provide a seed for random move generation '
+            'to ensure repeatable scrambles.\n'
+            'Default: None.'
+        ),
     )
     parser.add_argument(
         '-n', '--iterations',
-        help='Iterations of random moves',
-        default=0,
         type=int,
+        default=0,
+        metavar='ITERATIONS',
+        help=(
+            'Set the number of iterations of random moves.\n'
+            'Default: Auto.'
+        ),
     )
     parser.add_argument(
         '-m', '--mode',
-        help='Mode of the scramble',
         default='default',
+        choices=('default', 'ec'),
+        metavar='MODE',
+        help=(
+            'Choose the scramble mode.\n'
+            "Default: 'default'. Choices: 'default', 'ec'."
+        ),
     )
     parser.add_argument(
         '--stats',
-        help='Show the statistics',
         action='store_true',
-        default=False,
+        help=(
+            'Display statistics of recorded solves.\n'
+            'Default: False.'
+        ),
     )
     parser.add_argument(
         '--list',
-        help='Show the last solves',
-        default=0,
         type=int,
+        default=0,
+        metavar='SIZE',
+        help=(
+            'Display the number of last solves.\n'
+            'Default: All.'
+        ),
     )
 
     options = parser.parse_args(sys.argv[1:])
@@ -132,7 +174,7 @@ def main() -> int:
         if done:
             solves_done += 1
 
-            if options.scrambles and solves_done >= options.scrambles:
+            if options.solves and solves_done >= options.solves:
                 break
         else:
             break
