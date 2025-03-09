@@ -1,6 +1,7 @@
 import logging
 import sys
 from random import seed
+from typing import Any
 
 from term_timer.argparser import ArgumentParser
 from term_timer.console import console
@@ -11,7 +12,7 @@ from term_timer.stats import Statistics
 from term_timer.timer import Timer
 
 
-def get_arguments():
+def get_arguments() -> Any:
     parser = ArgumentParser(
         add_help=False,
         description='Speed cubing timer on your terminal.',

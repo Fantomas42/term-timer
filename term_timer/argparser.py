@@ -1,15 +1,16 @@
 import argparse
+from typing import Any
 
 
 class ArgumentParser(argparse.ArgumentParser):
 
     class _ArgumentGroup(argparse._ArgumentGroup):  # noqa: SLF001
-        def __init__(self, *args, **kwargs) -> None:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
             super().__init__(*args, **kwargs)
             self.title = self.title and self.title.title()
 
     class _HelpFormatter(argparse.RawTextHelpFormatter):
-        def _format_usage(self, *args, **kwargs) -> str:
+        def _format_usage(self, *args: Any, **kwargs: Any) -> str:
             return super()._format_usage(*args, **kwargs).replace(
                 'usage:', 'Usage:', 1,
             )
@@ -22,10 +23,11 @@ class ArgumentParser(argparse.ArgumentParser):
                 action.help = f'{ action.help }.'
             return super()._format_action_invocation(action)
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs, formatter_class=self._HelpFormatter)
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs['formatter_class'] = self._HelpFormatter
+        super().__init__(*args, **kwargs)
 
-    def add_argument_group(self, *args, **kwargs) -> _ArgumentGroup:
+    def add_argument_group(self, *args: Any, **kwargs: Any) -> _ArgumentGroup:
         group = self._ArgumentGroup(self, *args, **kwargs)
         self._action_groups.append(group)
         return group

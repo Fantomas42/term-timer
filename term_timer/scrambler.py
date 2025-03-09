@@ -143,7 +143,10 @@ def scrambler(cube_size: int, iterations: int,
 
     cube = Cube(cube_size, initial_state)
 
-    moves = random_moves(cube_size, iterations, easy_cross)
+    moves = random_moves(
+        cube_size, iterations,
+        easy_cross=easy_cross,
+    )
 
     cube.rotate(moves)
 
