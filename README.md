@@ -18,11 +18,9 @@ Practice your speed cubing skills on your terminal.
 - csTimer import
 - Seed control
 
-## Short demos
+## Short demo
 
-![](docs/demo.gif)
-
-![](docs/stats.gif)
+![](docs/solve.gif)
 
 ## Examples usage
 
