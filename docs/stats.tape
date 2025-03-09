@@ -1,0 +1,13 @@
+Output docs/stats.gif
+
+Require term-timer
+
+Set Shell "bash"
+Set Theme "The Hulk"
+Set TypingSpeed 75ms
+Set FontSize 32
+Set Height 900
+
+Type "term-timer --stats" Enter
+
+Sleep 5s
