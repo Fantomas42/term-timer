@@ -11,7 +11,7 @@ from term_timer.stats import Statistics
 from term_timer.timer import Timer
 
 
-def main() -> int:
+def get_arguments():
     parser = ArgumentParser(
         add_help=False,
         description='Speed cubing timer on your terminal.',
@@ -135,7 +135,11 @@ def main() -> int:
         help='Display this help message.',
     )
 
-    options = parser.parse_args(sys.argv[1:])
+    return parser.parse_args(sys.argv[1:])
+
+
+def main() -> int:
+    options = get_arguments()
 
     logging.disable(logging.INFO)
 

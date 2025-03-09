@@ -95,7 +95,7 @@ def is_valid_next_move(current: str, previous: str) -> bool:
 
 
 def random_moves(cube_size: int, iterations: int,
-                 easy_cross: bool) -> list[str]:
+                 *, easy_cross: bool) -> list[str]:
     move_set = MOVES_BY_CUBE[cube_size]
 
     if easy_cross:
@@ -136,7 +136,7 @@ def solve_moves(state: str) -> list[str]:
 
 
 def scrambler(cube_size: int, iterations: int,
-              easy_cross: bool) -> tuple[list[str], Cube]:
+              *, easy_cross: bool) -> tuple[list[str], Cube]:
     initial_state = ''
     for face in FACES_ORDER:
         initial_state += face * cube_size * cube_size
