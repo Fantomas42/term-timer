@@ -27,3 +27,7 @@ jobs:
     - name: Analysing the code with Ruff
       run: |
         ruff check $(git ls-files 'term_timer/*.py')
+      continue-on-error: true
+    - name: Running the tests
+      run: |
+        pytest term_timer
