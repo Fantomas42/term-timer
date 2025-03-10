@@ -76,7 +76,7 @@ class TestCsTimer(unittest.TestCase):
             f"{ date_to_ns('2023-05-15 14:32:10') + time_to_ns('15.67') };"
             f"F R F' R';{ DNF };",
             f"16.78;{ date_to_ns('2023-05-15 14:33:25') };"
-            "{ date_to_ns('2023-05-15 14:33:25') + time_to_ns('16.78') };"
+            f"{ date_to_ns('2023-05-15 14:33:25') + time_to_ns('16.78') };"
             f"L B L' B';{ PLUS_TWO };",
         ]
 
