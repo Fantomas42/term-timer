@@ -119,7 +119,3 @@ class TestCsTimer(unittest.TestCase):
         self.assertIn('14560', third_call_args)
         self.assertIn("L' B L B'", third_call_args)
         self.assertIn('+2', third_call_args)
-
-
-if __name__ == '__main__':
-    unittest.main()

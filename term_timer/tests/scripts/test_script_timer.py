@@ -125,7 +125,3 @@ class TestTimer(unittest.TestCase):
         # Verify the random seed was set
         mock_seed.assert_called_once_with('42')
         self.assertEqual(result, 0)  # Verify return code
-
-
-if __name__ == '__main__':
-    unittest.main()
