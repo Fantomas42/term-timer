@@ -78,6 +78,24 @@ pip install -e .[two-phase]
 > the  resolution tables of the Twophase algorythm.
 > It will take several minutes, be patient.
 
+## Acknowledgments
+
+I would like to express my sincere gratitude to the developers of the
+following projects, without which Term Timer would not have been possible:
+
+* [Herbert Kociemba's RubiksCube-TwophaseSolver][1] for the highly efficient
+  Two-Phase algorithm implementation that enables optimal 3x3x3 cube
+  scrambles.
+
+* [trincaog's magiccube][2] for providing an excellent foundation for cube
+  modeling and manipulation.
+
+Their outstanding work and contributions to the Rubik's Cube programming
+community have been invaluable to this project.
+
+[1]: https://github.com/hkociemba/RubiksCube-TwophaseSolver
+[2]: https://github.com/trincaog/magiccube/
+
 ## Help
 
 ```console
