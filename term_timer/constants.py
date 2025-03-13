@@ -23,3 +23,5 @@ ROTATIONS = (
 DNF = 'DNF'
 
 PLUS_TWO = '+2'
+
+CUBE_SIZES = list(range(2, 8))

@@ -5,6 +5,7 @@ from typing import Any
 
 from term_timer.argparser import ArgumentParser
 from term_timer.console import console
+from term_timer.constants import CUBE_SIZES
 from term_timer.in_out import load_solves
 from term_timer.in_out import save_solves
 from term_timer.list import Listing
@@ -34,7 +35,7 @@ def get_arguments() -> Any:
     config.add_argument(
         '-c', '--cube',
         type=int,
-        choices=range(2, 8),
+        choices=CUBE_SIZES,
         default=3,
         metavar='CUBE',
         help=(

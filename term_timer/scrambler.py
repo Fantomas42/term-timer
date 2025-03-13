@@ -2,6 +2,7 @@ import re
 from random import choices
 from random import randint
 
+from term_timer.constants import CUBE_SIZES
 from term_timer.constants import MOVES
 from term_timer.magic_cube import FACES_ORDER
 from term_timer.magic_cube import Cube
@@ -65,7 +66,7 @@ def build_cube_moves(cube_size: int) -> list[str]:
 
 MOVES_BY_CUBE = {
     i: build_cube_moves(i)
-    for i in range(2, 8)
+    for i in CUBE_SIZES
 }
 
 ITERATIONS_BY_CUBE = {
