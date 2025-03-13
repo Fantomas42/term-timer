@@ -1,6 +1,6 @@
 from pathlib import Path
 
-SECOND = 1_000_000_000
+SECOND = 1_000_000_000  # In nano seconds
 
 STEP_BAR = 17
 
