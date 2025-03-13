@@ -24,7 +24,7 @@ jobs:
         pip install .[dev]
     - name: Analysing the code with Mypy
       run: |
-        mypy $(git ls-files 'term_timer/*.py') --strict
+        mypy term_timer --strict
       continue-on-error: true
     - name: Analysing the code with Ruff
       run: |
