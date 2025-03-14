@@ -122,7 +122,7 @@ class TestScrambler(unittest.TestCase):
         # solve_moves should not be called for 2x2
         mock_solve_moves.assert_not_called()
 
-    @patch('term_timer.scrambler.TWO_PHASE_INSTALLED', False)  # noqa: FBT003
+    @patch('term_timer.scrambler.USE_TWO_PHASE', False)  # noqa: FBT003
     @patch('term_timer.scrambler.random_moves')
     @patch('term_timer.scrambler.solve_moves')
     def test_scrambler_3x3_no_twophase(
