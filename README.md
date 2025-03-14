@@ -2,6 +2,8 @@
 
 Practice your speed cubing skills on your terminal.
 
+[![image](https://github.com/fantomas42/term-timer/actions/workflows/kwalitee.yml/badge.svg)](https://github.com/fantomas42/term-timer/actions/workflows/kwalitee.yml)
+
 ##  Main Features
 
 - Valid WCA scrambles
