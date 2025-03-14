@@ -1,12 +1,17 @@
 import builtins
+import os
 from importlib.util import find_spec
 from pathlib import Path
 
 from term_timer.console import console
 
 TWO_PHASE_INSTALLED = find_spec('twophase') is not None
+TWO_PHASE_ENABLED = bool(int(os.getenv('TWO_PHASE_ENABLED', '1')))
 
-if TWO_PHASE_INSTALLED:
+USE_TWO_PHASE = TWO_PHASE_INSTALLED and TWO_PHASE_ENABLED
+
+
+if USE_TWO_PHASE:
     computed = Path('twophase').exists()
 
     if computed:

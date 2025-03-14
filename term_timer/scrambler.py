@@ -7,7 +7,7 @@ from term_timer.constants import MOVES
 from term_timer.magic_cube import FACES_ORDER
 from term_timer.magic_cube import Cube
 from term_timer.transform import mirror_moves
-from term_timer.twophases import TWO_PHASE_INSTALLED
+from term_timer.twophases import USE_TWO_PHASE
 from term_timer.twophases import solve
 
 FACE_REGEXP = re.compile(r'(F|R|U|B|L|D)')
@@ -109,7 +109,7 @@ def random_moves(cube_size: int, iterations: int,
 
     if not iterations:
         iterations_range = ITERATIONS_BY_CUBE[cube_size]
-        if cube_size == 3 and TWO_PHASE_INSTALLED:
+        if cube_size == 3 and USE_TWO_PHASE:
             iterations_range = (25, 30)
         iterations = randint(*iterations_range)
 
@@ -151,7 +151,7 @@ def scrambler(cube_size: int, iterations: int,
 
     cube.rotate(moves)
 
-    if cube_size != 3 or not TWO_PHASE_INSTALLED:
+    if cube_size != 3 or not USE_TWO_PHASE:
         return moves, cube
 
     solve = solve_moves(
