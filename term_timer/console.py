@@ -21,6 +21,7 @@ theme = Theme(
         'result': f'bold { TEXT_LIGHT }',
         'best': f'bold { GREEN}',
 
+        'edge': 'bold #00DFFF',
         'stats': 'bold #00AFFF',
         'bar': f'on { GREEN }',
 

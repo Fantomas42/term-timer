@@ -253,8 +253,8 @@ class Statistics(StatisticsTools):
                 percent = (count / self.total)
 
                 start = f'[stats]{ count!s:{" "}>{max_count}} '
-                start += f'(+{ format_edge(edge) })'
-                start = start.ljust(13 + len(prefix))
+                start += f'([edge]+{ format_edge(edge) }[/edge])'
+                start = start.ljust(26 + len(prefix))
 
                 console.print(
                     f'{ start }:[/stats]',
