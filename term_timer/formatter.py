@@ -19,8 +19,11 @@ def format_duration(elapsed_ns: int) -> str:
     return f'{ elapsed_ns / SECOND:.2f}'
 
 
-def format_edge(edge: float) -> str:
-    return f'{ edge / SECOND:.0f}'
+def format_edge(edge: int) -> str:
+    mins, secs = divmod(int(edge), 60)
+    _, mins = divmod(mins, 60)
+
+    return f'{mins:02}:{secs:02}'
 
 
 def format_delta(delta: int) -> str:

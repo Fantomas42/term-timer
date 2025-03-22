@@ -5,6 +5,8 @@ from functools import cached_property
 import numpy as np
 
 from term_timer.console import console
+from term_timer.constants import HISTOGRAM_BIN
+from term_timer.constants import SECOND
 from term_timer.constants import STEP_BAR
 from term_timer.formatter import computing_padding
 from term_timer.formatter import format_delta
@@ -153,8 +155,19 @@ class Statistics(StatisticsTools):
         return sum(self.stack_time)
 
     @cached_property
-    def repartition(self) -> list[tuple[int, float]]:
-        (histo, bin_edges) = np.histogram(self.stack_time, bins=6)
+    def repartition(self) -> list[tuple[int, int]]:
+        values = [st / SECOND for st in self.stack_time]
+
+        min_val = int((np.min(values) // HISTOGRAM_BIN) * HISTOGRAM_BIN)
+        max_val = int(((np.max(values) // HISTOGRAM_BIN) + 1) * HISTOGRAM_BIN)
+
+        bins = np.arange(
+            int(min_val),
+            int(max_val + HISTOGRAM_BIN),
+            HISTOGRAM_BIN,
+        )
+
+        (histo, bin_edges) = np.histogram(values, bins=bins)
 
         return [
             (value, edge)

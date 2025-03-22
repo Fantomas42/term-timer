@@ -46,8 +46,14 @@ class TestFormatEdge(unittest.TestCase):
 
     def test_format_edge(self):
         """Test formatting edge value as integer seconds."""
-        edge_ns = 12345678900  # 12.345678900 seconds
-        expected = '12'  # Integer, no decimal places
+        edge_ns = 12
+        expected = '00:12'
+        self.assertEqual(format_edge(edge_ns), expected)
+
+    def test_format_edge_minutes(self):
+        """Test formatting edge value as integer seconds."""
+        edge_ns = 72
+        expected = '01:12'
         self.assertEqual(format_edge(edge_ns), expected)
 
 
