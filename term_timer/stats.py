@@ -249,11 +249,12 @@ class Statistics(StatisticsTools):
             max_count = computing_padding(
                 max(c for c, e in self.repartition),
             )
+            max_edge = max(e for c, e in self.repartition)
             for count, edge in self.repartition:
                 percent = (count / self.total)
 
                 start = f'[stats]{ count!s:{" "}>{max_count}} '
-                start += f'([edge]+{ format_edge(edge) }[/edge])'
+                start += f'([edge]+{ format_edge(edge, max_edge) }[/edge])'
                 start = start.ljust(26 + len(prefix))
 
                 console.print(

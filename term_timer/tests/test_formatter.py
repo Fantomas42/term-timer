@@ -47,14 +47,28 @@ class TestFormatEdge(unittest.TestCase):
     def test_format_edge(self):
         """Test formatting edge value as integer seconds."""
         edge_ns = 12
+
         expected = '00:12'
-        self.assertEqual(format_edge(edge_ns), expected)
+        self.assertEqual(format_edge(edge_ns, 605), expected)
+
+        expected = '0:12'
+        self.assertEqual(format_edge(edge_ns, 75), expected)
+
+        expected = '12s'
+        self.assertEqual(format_edge(edge_ns, 59), expected)
 
     def test_format_edge_minutes(self):
         """Test formatting edge value as integer seconds."""
         edge_ns = 72
+
         expected = '01:12'
-        self.assertEqual(format_edge(edge_ns), expected)
+        self.assertEqual(format_edge(edge_ns, 605), expected)
+
+        expected = '1:12'
+        self.assertEqual(format_edge(edge_ns, 75), expected)
+
+        expected = '12s'
+        self.assertEqual(format_edge(edge_ns, 59), expected)
 
 
 class TestFormatDelta(unittest.TestCase):
