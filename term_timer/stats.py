@@ -1,5 +1,3 @@
-import math
-import statistics
 from functools import cached_property
 
 import numpy as np
@@ -21,27 +19,28 @@ class StatisticsTools:
         self.stack_time = [
             s.final_time for s in stack
         ]
+        self.stack_time_sorted = sorted(self.stack_time)
 
     @staticmethod
     def mo(limit: int, stack_elapsed: list[int]) -> int:
         if limit > len(stack_elapsed):
             return -1
 
-        return int(statistics.fmean(stack_elapsed[-limit:]))
+        return int(np.mean(stack_elapsed[-limit:]))
 
     @staticmethod
     def ao(limit: int, stack_elapsed: list[int]) -> int:
         if limit > len(stack_elapsed):
             return -1
 
-        cap = math.ceil(limit * 5 / 100)
+        cap = int(np.ceil(limit * 5 / 100))
 
         last_of = stack_elapsed[-limit:]
         for _ in range(cap):
             last_of.remove(min(last_of))
             last_of.remove(max(last_of))
 
-        return int(statistics.fmean(last_of))
+        return int(np.mean(last_of))
 
     def best_mo(self, limit: int) -> int:
         mos: list[int] = []
@@ -88,12 +87,12 @@ class Statistics(StatisticsTools):
         super().__init__(stack)
 
     @cached_property
-    def bwpa(self) -> tuple[int, int]:
-        stack_sorted = sorted(self.stack_time)
-        bpa = int(statistics.fmean(stack_sorted[:3]))
-        wpa = int(statistics.fmean(stack_sorted[-3:]))
+    def bpa(self) -> int:
+        return int(np.mean(self.stack_time_sorted[:3]))
 
-        return bpa, wpa
+    @cached_property
+    def wpa(self) -> int:
+        return int(np.mean(self.stack_time_sorted[-3:]))
 
     @cached_property
     def mo3(self) -> int:
@@ -129,23 +128,23 @@ class Statistics(StatisticsTools):
 
     @cached_property
     def best(self) -> int:
-        return min(t for t in self.stack_time if t)
+        return self.stack_time_sorted[0]
 
     @cached_property
     def worst(self) -> int:
-        return max(self.stack_time)
+        return self.stack_time_sorted[-1]
 
     @cached_property
     def mean(self) -> int:
-        return int(statistics.fmean(self.stack_time))
+        return int(np.mean(self.stack_time))
 
     @cached_property
     def median(self) -> int:
-        return int(statistics.median(self.stack_time))
+        return int(np.median(self.stack_time))
 
     @cached_property
     def stdev(self) -> int:
-        return int(statistics.stdev(self.stack_time))
+        return int(np.std(self.stack_time))
 
     @cached_property
     def delta(self) -> int:
@@ -217,15 +216,15 @@ class Statistics(StatisticsTools):
                     f'[stats]{ prefix }Best  :[/stats]',
                     f'[green]{ format_time(self.best) }[/green]',
                     '[stats]BPA  :[/stats]',
-                    f'[result]{ format_time(self.bwpa[0]) }[/result]',
-                    format_delta(self.bwpa[0] - self.best),
+                    f'[result]{ format_time(self.bpa) }[/result]',
+                    format_delta(self.bpa - self.best),
                 )
                 console.print(
                     f'[stats]{ prefix }Worst :[/stats]',
                     f'[red]{ format_time(self.worst) }[/red]',
                     '[stats]WPA  :[/stats]',
-                    f'[result]{ format_time(self.bwpa[1]) }[/result]',
-                    format_delta(self.bwpa[1] - self.worst),
+                    f'[result]{ format_time(self.wpa) }[/result]',
+                    format_delta(self.wpa - self.worst),
                 )
             else:
                 console.print(
