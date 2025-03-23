@@ -6,7 +6,7 @@ from term_timer.constants import CONFIG_FILE
 if find_spec('tomllib') is not None:
     import tomllib
 else:
-    import pip._vendor.tomli as tomllib  # noqa: PLC2701 # type: ignore[import-not-found]
+    import pip._vendor.tomli as tomllib  # type: ignore[import-not-found, no-redef] # noqa: PLC2701
 
 
 DEFAULT_CONFIG = """[timer]
