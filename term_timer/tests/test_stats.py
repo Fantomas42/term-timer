@@ -5,6 +5,7 @@ from unittest.mock import patch
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
+from term_timer.stats import StatisticsResume
 from term_timer.stats import StatisticsTools
 
 
@@ -82,52 +83,61 @@ class TestStatistics(unittest.TestCase):
             Solve(4000000000000, 4030000000000, 'F U R', ''),  # 30 seconds
             Solve(5000000000000, 5025000000000, 'R F U', ''),  # 25 seconds
         ]
-        self.puzzle = 3
 
     def test_mo3_property(self, mock_console, mock_histogram):
         """Test mo3 property."""
-        stats = Statistics(self.puzzle, self.solves)
+        stats = Statistics(self.solves)
         self.assertEqual(stats.mo3, 25 * SECOND)
 
     def test_ao5_property(self, mock_console, mock_histogram):
         """Test ao5 property."""
-        stats = Statistics(self.puzzle, self.solves)
+        stats = Statistics(self.solves)
         self.assertEqual(stats.ao5, 20 * SECOND)
 
     def test_best_property(self, mock_console, mock_histogram):
         """Test best property."""
-        stats = Statistics(self.puzzle, self.solves)
+        stats = Statistics(self.solves)
         self.assertEqual(stats.best, 10 * SECOND)
 
     def test_worst_property(self, mock_console, mock_histogram):
         """Test worst property."""
-        stats = Statistics(self.puzzle, self.solves)
+        stats = Statistics(self.solves)
         self.assertEqual(stats.worst, 30 * SECOND)
+
+    def test_bpa_property(self, mock_console, mock_histogram):
+        """Test bpa property."""
+        stats = Statistics(self.solves)
+        self.assertEqual(stats.bpa, 15 * SECOND)
+
+    def test_wpa_property(self, mock_console, mock_histogram):
+        """Test wpa property."""
+        stats = Statistics(self.solves)
+        self.assertEqual(stats.wpa, 25 * SECOND)
 
     def test_mean_property(self, mock_console, mock_histogram):
         """Test mean property."""
-        stats = Statistics(self.puzzle, self.solves)
+        stats = Statistics(self.solves)
         self.assertEqual(stats.mean, 20 * SECOND)
 
     def test_median_property(self, mock_console, mock_histogram):
         """Test median property."""
-        stats = Statistics(self.puzzle, self.solves)
+        stats = Statistics(self.solves)
         self.assertEqual(stats.median, 20 * SECOND)
 
     def test_delta_property(self, mock_console, mock_histogram):
         """Test delta property (difference between last two solves)."""
-        stats = Statistics(self.puzzle, self.solves)
+        stats = Statistics(self.solves)
         # Last solve (25s) - second to last solve (30s) = -5s
         self.assertEqual(stats.delta, -5 * SECOND)
 
     def test_total_property(self, mock_console, mock_histogram):
         """Test total property (number of solves)."""
-        stats = Statistics(self.puzzle, self.solves)
+        stats = Statistics(self.solves)
         self.assertEqual(stats.total, 5)
 
     def test_total_time_property(self, mock_console, mock_histogram):
         """Test total_time property (sum of all solve times)."""
-        stats = Statistics(self.puzzle, self.solves)
+        stats = Statistics(self.solves)
         # 10 + 15 + 20 + 30 + 25 = 100s
         self.assertEqual(stats.total_time, 100 * SECOND)
 
@@ -147,7 +157,7 @@ class TestStatisticsResume(unittest.TestCase):
 
     def test_resume(self):
         """Test the resume method which prints statistics summary."""
-        stats = Statistics(self.puzzle, self.solves)
+        stats = StatisticsResume(self.puzzle, self.solves)
 
         with patch('term_timer.console.console.print') as mock_print:
             stats.resume('Test ')
@@ -157,7 +167,7 @@ class TestStatisticsResume(unittest.TestCase):
 
     def test_resume_no_solves(self):
         """Test resume method with no solves."""
-        empty_stats = Statistics(self.puzzle, [])
+        empty_stats = StatisticsResume(self.puzzle, [])
 
         with patch('term_timer.console.console.print') as mock_print:
             empty_stats.resume()

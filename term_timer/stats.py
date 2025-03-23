@@ -1,10 +1,10 @@
-import math
-import statistics
 from functools import cached_property
 
 import numpy as np
 
 from term_timer.console import console
+from term_timer.constants import SECOND
+from term_timer.constants import SECOND_BINS
 from term_timer.constants import STEP_BAR
 from term_timer.formatter import computing_padding
 from term_timer.formatter import format_delta
@@ -19,27 +19,28 @@ class StatisticsTools:
         self.stack_time = [
             s.final_time for s in stack
         ]
+        self.stack_time_sorted = sorted(self.stack_time)
 
     @staticmethod
     def mo(limit: int, stack_elapsed: list[int]) -> int:
         if limit > len(stack_elapsed):
             return -1
 
-        return int(statistics.fmean(stack_elapsed[-limit:]))
+        return int(np.mean(stack_elapsed[-limit:]))
 
     @staticmethod
     def ao(limit: int, stack_elapsed: list[int]) -> int:
         if limit > len(stack_elapsed):
             return -1
 
-        cap = math.ceil(limit * 5 / 100)
+        cap = int(np.ceil(limit * 5 / 100))
 
         last_of = stack_elapsed[-limit:]
         for _ in range(cap):
             last_of.remove(min(last_of))
             last_of.remove(max(last_of))
 
-        return int(statistics.fmean(last_of))
+        return int(np.mean(last_of))
 
     def best_mo(self, limit: int) -> int:
         mos: list[int] = []
@@ -79,11 +80,14 @@ class StatisticsTools:
 
 
 class Statistics(StatisticsTools):
-    def __init__(self, cube_size: int, stack: list[Solve]):
-        self.cube_size = cube_size
-        self.cube_name = f'{ cube_size }x{ cube_size }x{ cube_size }'
 
-        super().__init__(stack)
+    @cached_property
+    def bpa(self) -> int:
+        return int(np.mean(self.stack_time_sorted[:3]))
+
+    @cached_property
+    def wpa(self) -> int:
+        return int(np.mean(self.stack_time_sorted[-3:]))
 
     @cached_property
     def mo3(self) -> int:
@@ -119,23 +123,23 @@ class Statistics(StatisticsTools):
 
     @cached_property
     def best(self) -> int:
-        return min(t for t in self.stack_time if t)
+        return self.stack_time_sorted[0]
 
     @cached_property
     def worst(self) -> int:
-        return max(self.stack_time)
+        return self.stack_time_sorted[-1]
 
     @cached_property
     def mean(self) -> int:
-        return int(statistics.fmean(self.stack_time))
+        return int(np.mean(self.stack_time))
 
     @cached_property
     def median(self) -> int:
-        return int(statistics.median(self.stack_time))
+        return int(np.median(self.stack_time))
 
     @cached_property
     def stdev(self) -> int:
-        return int(statistics.stdev(self.stack_time))
+        return int(np.std(self.stack_time))
 
     @cached_property
     def delta(self) -> int:
@@ -153,14 +157,42 @@ class Statistics(StatisticsTools):
         return sum(self.stack_time)
 
     @cached_property
-    def repartition(self) -> list[tuple[int, float]]:
-        (histo, bin_edges) = np.histogram(self.stack_time, bins=6)
+    def repartition(self) -> list[tuple[int, int]]:
+        gap = (self.worst - self.best) / SECOND
+
+        best_bin = 1
+        for second in SECOND_BINS:
+            if gap / 10 < second:
+                best_bin = second
+                break
+
+        values = [st / SECOND for st in self.stack_time]
+
+        min_val = int((np.min(values) // best_bin) * best_bin)
+        max_val = int(((np.max(values) // best_bin) + 1) * best_bin)
+
+        bins = np.arange(
+            int(min_val),
+            int(max_val + best_bin),
+            best_bin,
+        )
+
+        (histo, bin_edges) = np.histogram(values, bins=bins)
 
         return [
             (value, edge)
             for value, edge in zip(histo, bin_edges, strict=False)
             if value
         ]
+
+
+class StatisticsResume(Statistics):
+
+    def __init__(self, cube_size: int, stack: list[Solve]):
+        self.cube_size = cube_size
+        self.cube_name = f'{ cube_size }x{ cube_size }x{ cube_size }'
+
+        super().__init__(stack)
 
     def resume(self, prefix: str = '') -> None:
         if not self.stack:
@@ -191,14 +223,30 @@ class Statistics(StatisticsTools):
             f'[result]{ format_time(self.stdev) }[/result]',
         )
         if self.total >= 2:
-            console.print(
-                f'[stats]{ prefix }Best  :[/stats]',
-                f'[green]{ format_time(self.best) }[/green]',
-            )
-            console.print(
-                f'[stats]{ prefix }Worst :[/stats]',
-                f'[red]{ format_time(self.worst) }[/red]',
-            )
+            if self.total >= 3:
+                console.print(
+                    f'[stats]{ prefix }Best  :[/stats]',
+                    f'[green]{ format_time(self.best) }[/green]',
+                    '[stats]BPA  :[/stats]',
+                    f'[result]{ format_time(self.bpa) }[/result]',
+                    format_delta(self.bpa - self.best),
+                )
+                console.print(
+                    f'[stats]{ prefix }Worst :[/stats]',
+                    f'[red]{ format_time(self.worst) }[/red]',
+                    '[stats]WPA  :[/stats]',
+                    f'[result]{ format_time(self.wpa) }[/result]',
+                    format_delta(self.wpa - self.worst),
+                )
+            else:
+                console.print(
+                    f'[stats]{ prefix }Best  :[/stats]',
+                    f'[green]{ format_time(self.best) }[/green]',
+                )
+                console.print(
+                    f'[stats]{ prefix }Worst :[/stats]',
+                    f'[red]{ format_time(self.worst) }[/red]',
+                )
         if self.total >= 3:
             console.print(
                 f'[stats]{ prefix }Mo3   :[/stats]',
@@ -236,16 +284,20 @@ class Statistics(StatisticsTools):
             max_count = computing_padding(
                 max(c for c, e in self.repartition),
             )
+            max_edge = max(e for c, e in self.repartition)
+            total_percent = 0.0
             for count, edge in self.repartition:
                 percent = (count / self.total)
+                total_percent += percent
 
                 start = f'[stats]{ count!s:{" "}>{max_count}} '
-                start += f'(+{ format_edge(edge) })'
-                start = start.ljust(13 + len(prefix))
+                start += f'([edge]+{ format_edge(edge, max_edge) }[/edge])'
+                start = start.ljust(26 + len(prefix))
 
                 console.print(
                     f'{ start }:[/stats]',
                     f'[bar]{ round(percent * STEP_BAR) * " " }[/bar]'
                     f'{ (STEP_BAR - round(percent * STEP_BAR)) * " " }'
-                    f'[result]{ percent * 100:.2f}%[/result]',
+                    f'[result]{ percent * 100:05.2f}%[/result]   ',
+                    f'[edge]{ total_percent * 100:05.2f}%[/edge]',
                 )

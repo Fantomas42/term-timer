@@ -6,7 +6,7 @@ from term_timer.scripts.timer import main
 
 
 class TestTimer(unittest.TestCase):
-    @patch('term_timer.scripts.timer.Statistics')
+    @patch('term_timer.scripts.timer.StatisticsResume')
     @patch('term_timer.scripts.timer.load_solves')
     @patch('sys.argv', ['timer.py', '--stats'])
     def test_stats_command(self, mock_load_solves, mock_statistics):
@@ -78,7 +78,7 @@ class TestTimer(unittest.TestCase):
     @patch('term_timer.scripts.timer.Timer')
     @patch('term_timer.scripts.timer.load_solves')
     @patch('term_timer.scripts.timer.save_solves')
-    @patch('term_timer.scripts.timer.Statistics')
+    @patch('term_timer.scripts.timer.StatisticsResume')
     @patch('sys.argv', ['timer.py', '3'])  # 3 scrambles
     def test_normal_operation_with_scrambles(
         self, mock_stats, mock_save, mock_load, mock_timer,

@@ -14,7 +14,7 @@ from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
-from term_timer.stats import Statistics
+from term_timer.stats import StatisticsResume
 
 
 class Timer:
@@ -152,10 +152,10 @@ class Timer:
         )
 
     def handle_solve(self, solve: Solve) -> None:
-        old_stats = Statistics(self.cube_size, self.stack)
+        old_stats = StatisticsResume(self.cube_size, self.stack)
 
         self.stack = [*self.stack, solve]
-        new_stats = Statistics(self.cube_size, self.stack)
+        new_stats = StatisticsResume(self.cube_size, self.stack)
 
         extra = ''
         if new_stats.total > 1:
