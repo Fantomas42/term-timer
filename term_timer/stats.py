@@ -1,6 +1,7 @@
 from functools import cached_property
 
 import numpy as np
+import plotext as plt
 
 from term_timer.config import STATS_CONFIG
 from term_timer.console import console
@@ -303,3 +304,42 @@ class StatisticsResume(Statistics):
                     f'[result]{ percent * 100:05.2f}%[/result]   ',
                     f'[edge]{ total_percent * 100:05.2f}%[/edge]',
                 )
+
+    def listing(self, limit: int) -> None:
+        if not self.stack_time:
+            console.print('[warning]No saved solves yet.[/warning]')
+            return
+
+        size = len(self.stack_time)
+        max_count = computing_padding(size) + 1
+
+        for i in range(1, limit + 1):
+            if i > size:
+                return
+
+            solve = self.stack[-i]
+            index = f'#{ size - i + 1}'
+
+            console.print(
+                f'[stats]{ index:{" "}>{max_count}}[/stats]',
+                f'[result]{ format_time(solve.elapsed_time) }[/result]',
+                f'[consign]{ solve.scramble }[/consign]',
+                f'[result]{ solve.flag }[/result]',
+        )
+
+    def graph(self):
+        plt.plot(
+            [s / SECOND for s in self.stack_time],
+            marker='fhd',
+            label='time',
+        )
+        plt.xlabel('xlabel')
+        #plt.ylabel('ytime')
+        plt.title('Solves')
+        plt.plot_size(height=25)
+
+        plt.canvas_color('black')
+        plt.axes_color('red')
+        plt.ticks_color('white')
+
+        plt.show()
