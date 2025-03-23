@@ -80,11 +80,6 @@ class StatisticsTools:
 
 
 class Statistics(StatisticsTools):
-    def __init__(self, cube_size: int, stack: list[Solve]):
-        self.cube_size = cube_size
-        self.cube_name = f'{ cube_size }x{ cube_size }x{ cube_size }'
-
-        super().__init__(stack)
 
     @cached_property
     def bpa(self) -> int:
@@ -181,6 +176,15 @@ class Statistics(StatisticsTools):
             for value, edge in zip(histo, bin_edges, strict=False)
             if value
         ]
+
+
+class StatisticsResume(Statistics):
+
+    def __init__(self, cube_size: int, stack: list[Solve]):
+        self.cube_size = cube_size
+        self.cube_name = f'{ cube_size }x{ cube_size }x{ cube_size }'
+
+        super().__init__(stack)
 
     def resume(self, prefix: str = '') -> None:
         if not self.stack:

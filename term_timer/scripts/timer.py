@@ -9,7 +9,7 @@ from term_timer.constants import CUBE_SIZES
 from term_timer.in_out import load_solves
 from term_timer.in_out import save_solves
 from term_timer.list import Listing
-from term_timer.stats import Statistics
+from term_timer.stats import StatisticsResume
 from term_timer.timer import Timer
 
 
@@ -147,7 +147,7 @@ def main() -> int:
 
     cube = options.cube
     if options.stats:
-        session_stats = Statistics(cube, load_solves(cube))
+        session_stats = StatisticsResume(cube, load_solves(cube))
         session_stats.resume('Global ')
         return 0
 
@@ -201,7 +201,7 @@ def main() -> int:
         save_solves(cube, stack)
 
     if len(stack) > 1:
-        session_stats = Statistics(cube, stack)
+        session_stats = StatisticsResume(cube, stack)
         session_stats.resume((free_play and 'Session ') or 'Global ')
 
     return 0
