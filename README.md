@@ -1,6 +1,6 @@
 # Term Timer
 
-Practice your speed cubing skills on your terminal.
+Practice your speed cubing skills on your terminal, for a full 80's vibe.
 
 [![image](https://github.com/fantomas42/term-timer/actions/workflows/kwalitee.yml/badge.svg)](https://github.com/fantomas42/term-timer/actions/workflows/kwalitee.yml)
 
