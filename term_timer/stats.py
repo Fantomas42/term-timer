@@ -88,6 +88,14 @@ class Statistics(StatisticsTools):
         super().__init__(stack)
 
     @cached_property
+    def bwpa(self) -> tuple[int, int]:
+        stack_sorted = sorted(self.stack_time)
+        bpa = int(statistics.fmean(stack_sorted[:3]))
+        wpa = int(statistics.fmean(stack_sorted[-3:]))
+
+        return bpa, wpa
+
+    @cached_property
     def mo3(self) -> int:
         return self.mo(3, self.stack_time)
 
@@ -204,14 +212,30 @@ class Statistics(StatisticsTools):
             f'[result]{ format_time(self.stdev) }[/result]',
         )
         if self.total >= 2:
-            console.print(
-                f'[stats]{ prefix }Best  :[/stats]',
-                f'[green]{ format_time(self.best) }[/green]',
-            )
-            console.print(
-                f'[stats]{ prefix }Worst :[/stats]',
-                f'[red]{ format_time(self.worst) }[/red]',
-            )
+            if self.total >= 3:
+                console.print(
+                    f'[stats]{ prefix }Best  :[/stats]',
+                    f'[green]{ format_time(self.best) }[/green]',
+                    '[stats]BPA  :[/stats]',
+                    f'[result]{ format_time(self.bwpa[0]) }[/result]',
+                    format_delta(self.bwpa[0] - self.best),
+                )
+                console.print(
+                    f'[stats]{ prefix }Worst :[/stats]',
+                    f'[red]{ format_time(self.worst) }[/red]',
+                    '[stats]WPA  :[/stats]',
+                    f'[result]{ format_time(self.bwpa[1]) }[/result]',
+                    format_delta(self.bwpa[1] - self.worst),
+                )
+            else:
+                console.print(
+                    f'[stats]{ prefix }Best  :[/stats]',
+                    f'[green]{ format_time(self.best) }[/green]',
+                )
+                console.print(
+                    f'[stats]{ prefix }Worst :[/stats]',
+                    f'[red]{ format_time(self.worst) }[/red]',
+                )
         if self.total >= 3:
             console.print(
                 f'[stats]{ prefix }Mo3   :[/stats]',
