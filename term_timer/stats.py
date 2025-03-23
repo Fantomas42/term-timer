@@ -197,13 +197,18 @@ class StatisticsReporter(Statistics):
 
         super().__init__(stack)
 
-    def resume(self, prefix: str = '') -> None:
+    def resume(self, prefix: str = '', *, show_title=False) -> None:
         if not self.stack:
             console.print(
                 '[warning]No saved solves yet '
                 f'for { self.cube_name }.[/warning]',
             )
             return
+
+        if show_title:
+            console.print(
+                f'[result]Statistics for { self.cube_name }[/result]',
+            )
 
         console.print(
             f'[stats]{ prefix }Total :[/stats]',

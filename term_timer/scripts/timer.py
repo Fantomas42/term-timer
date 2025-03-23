@@ -160,7 +160,7 @@ def main() -> int:  # noqa: PLR0912
             session_stats.listing(options.list)
 
         if options.stats:
-            session_stats.resume('Global ')
+            session_stats.resume('Global ', show_title=True)
 
         if options.graph:
             session_stats.graph()

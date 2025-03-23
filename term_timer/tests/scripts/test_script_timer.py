@@ -22,7 +22,9 @@ class TestTimer(unittest.TestCase):
         # Verify the function behavior
         mock_load_solves.assert_called_once_with(3)  # Default puzzle size is 3
         mock_statistics.assert_called_once_with(3, [])
-        mock_stats_instance.resume.assert_called_once_with('Global ')
+        mock_stats_instance.resume.assert_called_once_with(
+            'Global ', show_title=True,
+        )
         self.assertEqual(result, 0)  # Verify return code
 
     @patch('term_timer.scripts.timer.StatisticsReporter')
