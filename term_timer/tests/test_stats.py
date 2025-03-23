@@ -229,11 +229,14 @@ class TestStatisticsReporterListing(unittest.TestCase):
         # The time should be formatted
         self.assertIn('[result]00:01.000[/result]', call_args[1])
 
+        # The date should be included
+        self.assertIn('[date]1970-01-01 01:00[/date]', call_args[2])
+
         # The scramble should be included
-        self.assertIn('[consign]F U R[/consign]', call_args[2])
+        self.assertIn('[consign]F U R[/consign]', call_args[3])
 
         # The flag should be included
-        self.assertIn('[result]+2[/result]', call_args[3])
+        self.assertIn('[result]+2[/result]', call_args[4])
 
     @patch('term_timer.console.console.print')
     def test_resume_reverse_order(self, mock_console):

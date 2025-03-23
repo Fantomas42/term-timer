@@ -197,7 +197,7 @@ class StatisticsReporter(Statistics):
 
         super().__init__(stack)
 
-    def resume(self, prefix: str = '', *, show_title=False) -> None:
+    def resume(self, prefix: str = '', *, show_title: bool = False) -> None:
         if not self.stack:
             console.print(
                 '[warning]No saved solves yet '
@@ -207,7 +207,7 @@ class StatisticsReporter(Statistics):
 
         if show_title:
             console.print(
-                f'[result]Statistics for { self.cube_name }[/result]',
+                f'[title]Statistics for { self.cube_name }[/title]',
             )
 
         console.print(
@@ -307,7 +307,7 @@ class StatisticsReporter(Statistics):
                     f'[bar]{ round(percent * STEP_BAR) * " " }[/bar]'
                     f'{ (STEP_BAR - round(percent * STEP_BAR)) * " " }'
                     f'[result]{ percent * 100:05.2f}%[/result]   ',
-                    f'[edge]{ total_percent * 100:05.2f}%[/edge]',
+                    f'[percent]{ total_percent * 100:05.2f}%[/percent]',
                 )
 
     def listing(self, limit: int) -> None:
@@ -316,7 +316,7 @@ class StatisticsReporter(Statistics):
             return
 
         console.print(
-            f'[result]Listing for { self.cube_name }[/result]',
+            f'[title]Listing for { self.cube_name }[/title]',
         )
 
         size = len(self.stack_time)
@@ -329,9 +329,12 @@ class StatisticsReporter(Statistics):
             solve = self.stack[-i]
             index = f'#{ size - i + 1}'
 
+            date = solve.start_datetime.strftime('%Y-%m-%d %H:%M')
+
             console.print(
                 f'[stats]{ index:{" "}>{max_count}}[/stats]',
                 f'[result]{ format_time(solve.elapsed_time) }[/result]',
+                f'[date]{ date }[/date]',
                 f'[consign]{ solve.scramble }[/consign]',
                 f'[result]{ solve.flag }[/result]',
         )
