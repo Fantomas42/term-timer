@@ -7,6 +7,8 @@ STEP_BAR = 17
 SAVE_DIRECTORY = Path.home() / '.solves'
 SAVE_DIRECTORY.mkdir(exist_ok=True)
 
+CONFIG_FILE = Path('~/.term_timer').expanduser()
+
 INVERT_CHAR = "'"
 
 JAPANESE_CHAR = 'w'

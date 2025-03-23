@@ -2,6 +2,7 @@ from functools import cached_property
 
 import numpy as np
 
+from term_timer.config import STATS_CONFIG
 from term_timer.console import console
 from term_timer.constants import SECOND
 from term_timer.constants import SECOND_BINS
@@ -160,11 +161,12 @@ class Statistics(StatisticsTools):
     def repartition(self) -> list[tuple[int, int]]:
         gap = (self.worst - self.best) / SECOND
 
-        best_bin = 1
-        for second in SECOND_BINS:
-            if gap / 10 < second:
-                best_bin = second
-                break
+        best_bin = STATS_CONFIG.get('distribution')
+        if not best_bin:
+            for second in SECOND_BINS:
+                if gap / 10 < second:
+                    best_bin = second
+                    break
 
         values = [st / SECOND for st in self.stack_time]
 
