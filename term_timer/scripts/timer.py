@@ -8,7 +8,6 @@ from term_timer.console import console
 from term_timer.constants import CUBE_SIZES
 from term_timer.in_out import load_solves
 from term_timer.in_out import save_solves
-from term_timer.list import Listing
 from term_timer.stats import StatisticsResume
 from term_timer.timer import Timer
 
@@ -124,6 +123,14 @@ def get_arguments() -> Any:
         ),
     )
     actions.add_argument(
+        '-g', '--graph',
+        action='store_true',
+        help=(
+            'Display evolution graph of recorded solves.\n'
+            'Default: False.'
+        ),
+    )
+    actions.add_argument(
         '-s', '--stats',
         action='store_true',
         help=(
@@ -146,14 +153,18 @@ def main() -> int:
     logging.disable(logging.INFO)
 
     cube = options.cube
-    if options.stats:
+    if options.stats or options.list or options.graph:
         session_stats = StatisticsResume(cube, load_solves(cube))
-        session_stats.resume('Global ')
-        return 0
 
-    if options.list:
-        session_list = Listing(load_solves(cube))
-        session_list.resume(options.list)
+        if options.stats:
+            session_stats.resume('Global ')
+
+        if options.list:
+            session_stats.listing(options.list)
+
+        if options.graph:
+            session_stats.graph()
+
         return 0
 
     free_play = options.free_play
