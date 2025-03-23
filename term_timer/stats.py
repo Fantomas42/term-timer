@@ -3,8 +3,8 @@ from functools import cached_property
 import numpy as np
 
 from term_timer.console import console
-from term_timer.constants import HISTOGRAM_BIN
 from term_timer.constants import SECOND
+from term_timer.constants import SECOND_BINS
 from term_timer.constants import STEP_BAR
 from term_timer.formatter import computing_padding
 from term_timer.formatter import format_delta
@@ -158,15 +158,23 @@ class Statistics(StatisticsTools):
 
     @cached_property
     def repartition(self) -> list[tuple[int, int]]:
+        gap = (self.worst - self.best) / SECOND
+
+        best_bin = 1
+        for second in SECOND_BINS:
+            if gap / 10 < second:
+                best_bin = second
+                break
+
         values = [st / SECOND for st in self.stack_time]
 
-        min_val = int((np.min(values) // HISTOGRAM_BIN) * HISTOGRAM_BIN)
-        max_val = int(((np.max(values) // HISTOGRAM_BIN) + 1) * HISTOGRAM_BIN)
+        min_val = int((np.min(values) // best_bin) * best_bin)
+        max_val = int(((np.max(values) // best_bin) + 1) * best_bin)
 
         bins = np.arange(
             int(min_val),
-            int(max_val + HISTOGRAM_BIN),
-            HISTOGRAM_BIN,
+            int(max_val + best_bin),
+            best_bin,
         )
 
         (histo, bin_edges) = np.histogram(values, bins=bins)
