@@ -8,7 +8,7 @@ from term_timer.console import console
 from term_timer.constants import CUBE_SIZES
 from term_timer.in_out import load_solves
 from term_timer.in_out import save_solves
-from term_timer.stats import StatisticsResume
+from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
 
 
@@ -154,13 +154,13 @@ def main() -> int:
 
     cube = options.cube
     if options.stats or options.list or options.graph:
-        session_stats = StatisticsResume(cube, load_solves(cube))
-
-        if options.stats:
-            session_stats.resume('Global ')
+        session_stats = StatisticsReporter(cube, load_solves(cube))
 
         if options.list:
             session_stats.listing(options.list)
+
+        if options.stats:
+            session_stats.resume('Global ')
 
         if options.graph:
             session_stats.graph()
@@ -212,7 +212,7 @@ def main() -> int:
         save_solves(cube, stack)
 
     if len(stack) > 1:
-        session_stats = StatisticsResume(cube, stack)
+        session_stats = StatisticsReporter(cube, stack)
         session_stats.resume((free_play and 'Session ') or 'Global ')
 
     return 0

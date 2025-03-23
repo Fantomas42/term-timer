@@ -189,7 +189,7 @@ class Statistics(StatisticsTools):
         ]
 
 
-class StatisticsResume(Statistics):
+class StatisticsReporter(Statistics):
 
     def __init__(self, cube_size: int, stack: list[Solve]):
         self.cube_size = cube_size
@@ -335,7 +335,7 @@ class StatisticsResume(Statistics):
         )
         plt.xlabel('xlabel')
         #plt.ylabel('ytime')
-        plt.title('Solves')
+        plt.title(f'Solves { self.cube_name }')
         plt.plot_size(height=25)
 
         plt.canvas_color('black')
