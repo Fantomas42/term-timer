@@ -328,18 +328,54 @@ class StatisticsReporter(Statistics):
         )
 
     def graph(self):
+        ao5s = []
+        ao12s = []
+        times = []
+
+        for time in self.stack_time:
+            seconds = time / SECOND
+            times.append(seconds)
+
+            ao5 = self.ao(5, times)
+            ao12 = self.ao(12, times)
+            ao5s.append((ao5 > 0 and ao5) or None)
+            ao12s.append((ao12 > 0 and ao12) or None)
+
         plt.plot(
-            [s / SECOND for s in self.stack_time],
+            times,
             marker='fhd',
-            label='time',
+            label='Time',
         )
-        plt.xlabel('xlabel')
-        #plt.ylabel('ytime')
+
+        plt.plot(
+            ao5s,
+            marker='fhd',
+            label='AO5',
+            color='red',
+        )
+
+        plt.plot(
+            ao12s,
+            marker='fhd',
+            label='AO12',
+            color='blue',
+        )
+
+        # xticks = [i + 1  for i in range(490)]
+        # xlabels = [str(i) for i in xticks]
+        # plt.xticks(xticks, xlabels)
+        # plt.xfrequency(200)
+
+        # yticks = [i + 1  for i in range(120)]
+        # ylabels = [str(i) + 's' for i in yticks]
+        # plt.yticks(yticks, ylabels)
+        # plt.yfrequency(8)
+
         plt.title(f'Solves { self.cube_name }')
         plt.plot_size(height=25)
 
-        plt.canvas_color('black')
-        plt.axes_color('red')
-        plt.ticks_color('white')
+        plt.canvas_color('default')
+        plt.axes_color('default')
+        plt.ticks_color('blue')
 
         plt.show()
