@@ -348,7 +348,7 @@ class StatisticsReporter(Statistics):
         times = []
 
         for time in self.stack_time:
-            seconds = time / SECOND  # TODO(me): fix
+            seconds = time / SECOND
             times.append(seconds)
 
             ao5 = self.ao(5, times)
@@ -376,21 +376,12 @@ class StatisticsReporter(Statistics):
             color='blue',
         )
 
-        # xticks = [i + 1  for i in range(490)]
-        # xlabels = [str(i) for i in xticks]
-        # plt.xticks(xticks, xlabels)
-        # plt.xfrequency(200)
-
-        # yticks = [i + 1  for i in range(120)]
-        # ylabels = [str(i) + 's' for i in yticks]
-        # plt.yticks(yticks, ylabels)
-        # plt.yfrequency(8)
-
         plt.title(f'Tendencies { self.cube_name }')
         plt.plot_size(height=25)
 
         plt.canvas_color('default')
         plt.axes_color('default')
-        plt.ticks_color('blue')
+        plt.ticks_color((0, 175, 255))
+        plt.ticks_style('bold')
 
         plt.show()
