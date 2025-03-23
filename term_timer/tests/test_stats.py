@@ -204,16 +204,16 @@ class TestStatisticsReporterListing(unittest.TestCase):
         """Test that resume respects the limit parameter."""
         self.listing.listing(2)
 
-        # Should print 2 solves
-        self.assertEqual(mock_console.call_count, 2)
+        # Should print 2 solves + title
+        self.assertEqual(mock_console.call_count, 3)
 
     @patch('term_timer.console.console.print')
     def test_resume_limit_larger_than_stack(self, mock_console):
         """Test that resume handles limits larger than the stack size."""
         self.listing.listing(10)
 
-        # Should only print 4 solves (the size of our stack)
-        self.assertEqual(mock_console.call_count, 4)
+        # Should only print 4 solves (the size of our stack) + title
+        self.assertEqual(mock_console.call_count, 5)
 
     @patch('term_timer.console.console.print')
     def test_resume_format(self, mock_console):
@@ -244,7 +244,7 @@ class TestStatisticsReporterListing(unittest.TestCase):
         call_args_list = mock_console.call_args_list
 
         # First call should have #4 (newest)
-        self.assertIn('#4', call_args_list[0][0][0])
+        self.assertIn('#4', call_args_list[1][0][0])
 
         # Last call should have #1 (oldest)
-        self.assertIn('#1', call_args_list[3][0][0])
+        self.assertIn('#1', call_args_list[4][0][0])

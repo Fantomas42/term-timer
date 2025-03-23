@@ -315,6 +315,10 @@ class StatisticsReporter(Statistics):
             console.print('[warning]No saved solves yet.[/warning]')
             return
 
+        console.print(
+            f'[result]Listing for { self.cube_name }[/result]',
+        )
+
         size = len(self.stack_time)
         max_count = computing_padding(size) + 1
 
@@ -376,7 +380,7 @@ class StatisticsReporter(Statistics):
         # plt.yticks(yticks, ylabels)
         # plt.yfrequency(8)
 
-        plt.title(f'Solves { self.cube_name }')
+        plt.title(f'Tendancies { self.cube_name }')
         plt.plot_size(height=25)
 
         plt.canvas_color('default')
