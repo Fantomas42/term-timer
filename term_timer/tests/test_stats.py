@@ -5,7 +5,7 @@ from unittest.mock import patch
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
-from term_timer.stats import StatisticsResume
+from term_timer.stats import StatisticsReporter
 from term_timer.stats import StatisticsTools
 
 
@@ -142,7 +142,7 @@ class TestStatistics(unittest.TestCase):
         self.assertEqual(stats.total_time, 100 * SECOND)
 
 
-class TestStatisticsResume(unittest.TestCase):
+class TestStatisticsResumeReporter(unittest.TestCase):
 
     def setUp(self):
         """Set up test cases with sample solves."""
@@ -157,7 +157,7 @@ class TestStatisticsResume(unittest.TestCase):
 
     def test_resume(self):
         """Test the resume method which prints statistics summary."""
-        stats = StatisticsResume(self.puzzle, self.solves)
+        stats = StatisticsReporter(self.puzzle, self.solves)
 
         with patch('term_timer.console.console.print') as mock_print:
             stats.resume('Test ')
@@ -167,7 +167,7 @@ class TestStatisticsResume(unittest.TestCase):
 
     def test_resume_no_solves(self):
         """Test resume method with no solves."""
-        empty_stats = StatisticsResume(self.puzzle, [])
+        empty_stats = StatisticsReporter(self.puzzle, [])
 
         with patch('term_timer.console.console.print') as mock_print:
             empty_stats.resume()
@@ -176,3 +176,75 @@ class TestStatisticsResume(unittest.TestCase):
             mock_print.assert_called_once()
             args, _ = mock_print.call_args
             self.assertIn('No saved solves', args[0])
+
+
+class TestStatisticsReporterListing(unittest.TestCase):
+    def setUp(self):
+        """Set up test cases with sample solves."""
+        self.solves = [
+            Solve(1000000000, 2000000000, 'F R U', ''),
+            Solve(3000000000, 4000000000, 'R U F', ''),
+            Solve(5000000000, 6000000000, 'U F R', 'DNF'),
+            Solve(7000000000, 8000000000, 'F U R', '+2'),
+        ]
+        self.listing = StatisticsReporter(3, self.solves)
+
+    @patch('term_timer.console.console.print')
+    def test_resume_no_solves(self, mock_console):  # noqa: PLR6301
+        """Test that a warning is displayed when there are no solves."""
+        empty_listing = StatisticsReporter(3, [])
+        empty_listing.listing(5)
+
+        mock_console.assert_called_once_with(
+            '[warning]No saved solves yet.[/warning]',
+        )
+
+    @patch('term_timer.console.console.print')
+    def test_resume_with_limit(self, mock_console):
+        """Test that resume respects the limit parameter."""
+        self.listing.listing(2)
+
+        # Should print 2 solves
+        self.assertEqual(mock_console.call_count, 2)
+
+    @patch('term_timer.console.console.print')
+    def test_resume_limit_larger_than_stack(self, mock_console):
+        """Test that resume handles limits larger than the stack size."""
+        self.listing.listing(10)
+
+        # Should only print 4 solves (the size of our stack)
+        self.assertEqual(mock_console.call_count, 4)
+
+    @patch('term_timer.console.console.print')
+    def test_resume_format(self, mock_console):
+        """Test the formatting of the resume output."""
+        self.listing.listing(1)
+
+        # Check the format of the most recent solve
+        call_args = mock_console.call_args[0]
+
+        # The index should be #4 (for the 4th solve)
+        self.assertIn('#4', call_args[0])
+
+        # The time should be formatted
+        self.assertIn('[result]00:01.000[/result]', call_args[1])
+
+        # The scramble should be included
+        self.assertIn('[consign]F U R[/consign]', call_args[2])
+
+        # The flag should be included
+        self.assertIn('[result]+2[/result]', call_args[3])
+
+    @patch('term_timer.console.console.print')
+    def test_resume_reverse_order(self, mock_console):
+        """Test that solves are displayed in reverse order (newest first)."""
+        self.listing.listing(4)
+
+        # Get all the call arguments
+        call_args_list = mock_console.call_args_list
+
+        # First call should have #4 (newest)
+        self.assertIn('#4', call_args_list[0][0][0])
+
+        # Last call should have #1 (oldest)
+        self.assertIn('#1', call_args_list[3][0][0])

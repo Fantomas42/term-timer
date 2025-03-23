@@ -147,7 +147,7 @@ def get_arguments() -> Any:
     return parser.parse_args(sys.argv[1:])
 
 
-def main() -> int:
+def main() -> int:  # noqa: PLR0912
     options = get_arguments()
 
     logging.disable(logging.INFO)

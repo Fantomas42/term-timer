@@ -327,13 +327,13 @@ class StatisticsReporter(Statistics):
                 f'[result]{ solve.flag }[/result]',
         )
 
-    def graph(self):
+    def graph(self) -> None:
         ao5s = []
         ao12s = []
         times = []
 
         for time in self.stack_time:
-            seconds = time / SECOND
+            seconds = time / SECOND  # TODO(me): fix
             times.append(seconds)
 
             ao5 = self.ao(5, times)

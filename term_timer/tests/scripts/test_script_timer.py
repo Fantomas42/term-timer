@@ -6,7 +6,7 @@ from term_timer.scripts.timer import main
 
 
 class TestTimer(unittest.TestCase):
-    @patch('term_timer.scripts.timer.StatisticsResume')
+    @patch('term_timer.scripts.timer.StatisticsReporter')
     @patch('term_timer.scripts.timer.load_solves')
     @patch('sys.argv', ['timer.py', '--stats'])
     def test_stats_command(self, mock_load_solves, mock_statistics):
@@ -25,23 +25,23 @@ class TestTimer(unittest.TestCase):
         mock_stats_instance.resume.assert_called_once_with('Global ')
         self.assertEqual(result, 0)  # Verify return code
 
-    @patch('term_timer.scripts.timer.Listing')
+    @patch('term_timer.scripts.timer.StatisticsReporter')
     @patch('term_timer.scripts.timer.load_solves')
     @patch('sys.argv', ['timer.py', '--list', '5'])
-    def test_list_command(self, mock_load_solves, mock_listing):
+    def test_list_command(self, mock_load_solves, mock_statistics):
         """Test the --list command line option."""
         # Configure mocks
         mock_load_solves.return_value = []
         mock_list_instance = MagicMock()
-        mock_listing.return_value = mock_list_instance
+        mock_statistics.return_value = mock_list_instance
 
         # Run the main function
         result = main()
 
         # Verify the function behavior
         mock_load_solves.assert_called_once_with(3)  # Default puzzle size is 3
-        mock_listing.assert_called_once_with([])
-        mock_list_instance.resume.assert_called_once_with(5)
+        mock_statistics.assert_called_once_with(3, [])
+        mock_list_instance.listing.assert_called_once_with(5)
         self.assertEqual(result, 0)  # Verify return code
 
     @patch('term_timer.scripts.timer.console.print')
@@ -78,7 +78,7 @@ class TestTimer(unittest.TestCase):
     @patch('term_timer.scripts.timer.Timer')
     @patch('term_timer.scripts.timer.load_solves')
     @patch('term_timer.scripts.timer.save_solves')
-    @patch('term_timer.scripts.timer.StatisticsResume')
+    @patch('term_timer.scripts.timer.StatisticsReporter')
     @patch('sys.argv', ['timer.py', '3'])  # 3 scrambles
     def test_normal_operation_with_scrambles(
         self, mock_stats, mock_save, mock_load, mock_timer,
