@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
@@ -24,6 +26,10 @@ class Solve:
             return 0
 
         return elapsed
+
+    @property
+    def start_datetime(self) -> datetime:
+        return datetime.fromtimestamp(self.start_time // SECOND)   # noqa: DTZ006
 
     def __str__(self) -> str:
         return f'{ format_time(self.elapsed_time) }{ self.flag }'

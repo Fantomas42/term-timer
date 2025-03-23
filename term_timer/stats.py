@@ -1,6 +1,7 @@
 from functools import cached_property
 
 import numpy as np
+import plotext as plt
 
 from term_timer.config import STATS_CONFIG
 from term_timer.console import console
@@ -188,7 +189,7 @@ class Statistics(StatisticsTools):
         ]
 
 
-class StatisticsResume(Statistics):
+class StatisticsReporter(Statistics):
 
     def __init__(self, cube_size: int, stack: list[Solve]):
         self.cube_size = cube_size
@@ -196,13 +197,18 @@ class StatisticsResume(Statistics):
 
         super().__init__(stack)
 
-    def resume(self, prefix: str = '') -> None:
+    def resume(self, prefix: str = '', *, show_title: bool = False) -> None:
         if not self.stack:
             console.print(
                 '[warning]No saved solves yet '
                 f'for { self.cube_name }.[/warning]',
             )
             return
+
+        if show_title:
+            console.print(
+                f'[title]Statistics for { self.cube_name }[/title]',
+            )
 
         console.print(
             f'[stats]{ prefix }Total :[/stats]',
@@ -301,5 +307,90 @@ class StatisticsResume(Statistics):
                     f'[bar]{ round(percent * STEP_BAR) * " " }[/bar]'
                     f'{ (STEP_BAR - round(percent * STEP_BAR)) * " " }'
                     f'[result]{ percent * 100:05.2f}%[/result]   ',
-                    f'[edge]{ total_percent * 100:05.2f}%[/edge]',
+                    f'[percent]{ total_percent * 100:05.2f}%[/percent]',
                 )
+
+    def listing(self, limit: int) -> None:
+        if not self.stack_time:
+            console.print('[warning]No saved solves yet.[/warning]')
+            return
+
+        console.print(
+            f'[title]Listing for { self.cube_name }[/title]',
+        )
+
+        size = len(self.stack_time)
+        max_count = computing_padding(size) + 1
+
+        if limit < 0:
+            limit = size
+
+        for i in range(1, limit + 1):
+            if i > size:
+                return
+
+            solve = self.stack[-i]
+            index = f'#{ size - i + 1}'
+
+            date = solve.start_datetime.strftime('%Y-%m-%d %H:%M')
+
+            console.print(
+                f'[stats]{ index:{" "}>{max_count}}[/stats]',
+                f'[result]{ format_time(solve.elapsed_time) }[/result]',
+                f'[date]{ date }[/date]',
+                f'[consign]{ solve.scramble }[/consign]',
+                f'[result]{ solve.flag }[/result]',
+        )
+
+    def graph(self) -> None:
+        ao5s = []
+        ao12s = []
+        times = []
+
+        for time in self.stack_time:
+            seconds = time / SECOND  # TODO(me): fix
+            times.append(seconds)
+
+            ao5 = self.ao(5, times)
+            ao12 = self.ao(12, times)
+            ao5s.append((ao5 > 0 and ao5) or None)
+            ao12s.append((ao12 > 0 and ao12) or None)
+
+        plt.plot(
+            times,
+            marker='fhd',
+            label='Time',
+        )
+
+        plt.plot(
+            ao5s,
+            marker='fhd',
+            label='AO5',
+            color='red',
+        )
+
+        plt.plot(
+            ao12s,
+            marker='fhd',
+            label='AO12',
+            color='blue',
+        )
+
+        # xticks = [i + 1  for i in range(490)]
+        # xlabels = [str(i) for i in xticks]
+        # plt.xticks(xticks, xlabels)
+        # plt.xfrequency(200)
+
+        # yticks = [i + 1  for i in range(120)]
+        # ylabels = [str(i) + 's' for i in yticks]
+        # plt.yticks(yticks, ylabels)
+        # plt.yfrequency(8)
+
+        plt.title(f'Tendencies { self.cube_name }')
+        plt.plot_size(height=25)
+
+        plt.canvas_color('default')
+        plt.axes_color('default')
+        plt.ticks_color('blue')
+
+        plt.show()

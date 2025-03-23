@@ -17,11 +17,14 @@ theme = Theme(
         'inspection': f'{ TEXT_LIGHT } on #5F00D7',
         'consign': '#CECECE',
 
+        'title': f'bold { TEXT_LIGHT }',
         'moves': f'bold { TEXT_LIGHT }',
         'result': f'bold { TEXT_LIGHT }',
+        'date': f'bold { GREEN}',
         'best': f'bold { GREEN}',
 
         'edge': 'bold #00DFFF',
+        'percent': 'bold #00DFFF',
         'stats': 'bold #00AFFF',
         'bar': f'on { GREEN }',
 

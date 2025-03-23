@@ -8,8 +8,7 @@ from term_timer.console import console
 from term_timer.constants import CUBE_SIZES
 from term_timer.in_out import load_solves
 from term_timer.in_out import save_solves
-from term_timer.list import Listing
-from term_timer.stats import StatisticsResume
+from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
 
 
@@ -115,12 +114,22 @@ def get_arguments() -> Any:
     actions = parser.add_argument_group('Actions')
     actions.add_argument(
         '-l', '--list',
+        nargs='?',
         type=int,
-        default=0,
-        metavar='[SOLVES]',
+        const=-1,
+        default=False,
+        metavar='SOLVES',
         help=(
             'Display the last recorded solves.\n'
             'Default: All.'
+        ),
+    )
+    actions.add_argument(
+        '-g', '--graph',
+        action='store_true',
+        help=(
+            'Display evolution graph of recorded solves.\n'
+            'Default: False.'
         ),
     )
     actions.add_argument(
@@ -140,20 +149,24 @@ def get_arguments() -> Any:
     return parser.parse_args(sys.argv[1:])
 
 
-def main() -> int:
+def main() -> int:  # noqa: PLR0912
     options = get_arguments()
 
     logging.disable(logging.INFO)
 
     cube = options.cube
-    if options.stats:
-        session_stats = StatisticsResume(cube, load_solves(cube))
-        session_stats.resume('Global ')
-        return 0
+    if options.stats or options.list or options.graph:
+        session_stats = StatisticsReporter(cube, load_solves(cube))
 
-    if options.list:
-        session_list = Listing(load_solves(cube))
-        session_list.resume(options.list)
+        if options.list:
+            session_stats.listing(options.list)
+
+        if options.stats:
+            session_stats.resume('Global ', show_title=True)
+
+        if options.graph:
+            session_stats.graph()
+
         return 0
 
     free_play = options.free_play
@@ -201,7 +214,7 @@ def main() -> int:
         save_solves(cube, stack)
 
     if len(stack) > 1:
-        session_stats = StatisticsResume(cube, stack)
+        session_stats = StatisticsReporter(cube, stack)
         session_stats.resume((free_play and 'Session ') or 'Global ')
 
     return 0
