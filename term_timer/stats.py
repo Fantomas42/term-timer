@@ -386,7 +386,7 @@ class StatisticsReporter(Statistics):
         # plt.yticks(yticks, ylabels)
         # plt.yfrequency(8)
 
-        plt.title(f'Tendancies { self.cube_name }')
+        plt.title(f'Tendencies { self.cube_name }')
         plt.plot_size(height=25)
 
         plt.canvas_color('default')

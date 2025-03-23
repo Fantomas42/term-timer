@@ -56,6 +56,12 @@ Show statistics on recorded solves :
 term-timer -s
 ```
 
+Show tendencies graph on recorded solves :
+
+```console
+term-timer -g
+```
+
 Show last ten recorded solves of 7x7x7 :
 
 ```console
