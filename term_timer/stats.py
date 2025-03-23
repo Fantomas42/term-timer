@@ -274,8 +274,10 @@ class Statistics(StatisticsTools):
                 max(c for c, e in self.repartition),
             )
             max_edge = max(e for c, e in self.repartition)
+            total_percent = 0.0
             for count, edge in self.repartition:
                 percent = (count / self.total)
+                total_percent += percent
 
                 start = f'[stats]{ count!s:{" "}>{max_count}} '
                 start += f'([edge]+{ format_edge(edge, max_edge) }[/edge])'
@@ -285,5 +287,6 @@ class Statistics(StatisticsTools):
                     f'{ start }:[/stats]',
                     f'[bar]{ round(percent * STEP_BAR) * " " }[/bar]'
                     f'{ (STEP_BAR - round(percent * STEP_BAR)) * " " }'
-                    f'[result]{ percent * 100:.2f}%[/result]',
+                    f'[result]{ percent * 100:05.2f}%[/result]   ',
+                    f'[edge]{ total_percent * 100:05.2f}%[/edge]',
                 )
