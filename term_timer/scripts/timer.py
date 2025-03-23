@@ -114,9 +114,11 @@ def get_arguments() -> Any:
     actions = parser.add_argument_group('Actions')
     actions.add_argument(
         '-l', '--list',
+        nargs='?',
         type=int,
-        default=0,
-        metavar='[SOLVES]',
+        const=-1,
+        default=False,
+        metavar='SOLVES',
         help=(
             'Display the last recorded solves.\n'
             'Default: All.'

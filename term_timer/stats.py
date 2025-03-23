@@ -322,6 +322,9 @@ class StatisticsReporter(Statistics):
         size = len(self.stack_time)
         max_count = computing_padding(size) + 1
 
+        if limit < 0:
+            limit = size
+
         for i in range(1, limit + 1):
             if i > size:
                 return
