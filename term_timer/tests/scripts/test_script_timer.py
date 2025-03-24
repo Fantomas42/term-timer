@@ -29,6 +29,25 @@ class TestTimer(unittest.TestCase):
 
     @patch('term_timer.scripts.timer.StatisticsReporter')
     @patch('term_timer.scripts.timer.load_solves')
+    @patch('sys.argv', ['timer.py', '--graph'])
+    def test_graph_command(self, mock_load_solves, mock_statistics):
+        """Test the --graph command line option."""
+        # Configure mocks
+        mock_load_solves.return_value = []
+        mock_stats_instance = MagicMock()
+        mock_statistics.return_value = mock_stats_instance
+
+        # Run the main function
+        result = main()
+
+        # Verify the function behavior
+        mock_load_solves.assert_called_once_with(3)  # Default puzzle size is 3
+        mock_statistics.assert_called_once_with(3, [])
+        mock_stats_instance.graph.assert_called_once_with()
+        self.assertEqual(result, 0)  # Verify return code
+
+    @patch('term_timer.scripts.timer.StatisticsReporter')
+    @patch('term_timer.scripts.timer.load_solves')
     @patch('sys.argv', ['timer.py', '--list', '5'])
     def test_list_command(self, mock_load_solves, mock_statistics):
         """Test the --list command line option."""
