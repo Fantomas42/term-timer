@@ -10,6 +10,8 @@ else:
 
 
 DEFAULT_CONFIG = """[timer]
+countdown = 0.0
+metronome = 0.0
 
 [statistics]
 distribution = 0
@@ -31,3 +33,5 @@ def load_config() -> dict[str, Any]:
 CONFIG = load_config()
 
 STATS_CONFIG = CONFIG.get('statistics', {})
+
+TIMER_CONFIG = CONFIG.get('timer', {})

@@ -4,6 +4,7 @@ from random import seed
 from typing import Any
 
 from term_timer.argparser import ArgumentParser
+from term_timer.config import TIMER_CONFIG
 from term_timer.console import console
 from term_timer.constants import CUBE_SIZES
 from term_timer.in_out import load_solves
@@ -13,6 +14,9 @@ from term_timer.timer import Timer
 
 
 def get_arguments() -> Any:
+    countdown = TIMER_CONFIG.get('countdown', 0.0)
+    metronome = TIMER_CONFIG.get('metronome', 0.0)
+
     parser = ArgumentParser(
         add_help=False,
         description='Speed cubing timer on your terminal.',
@@ -63,21 +67,21 @@ def get_arguments() -> Any:
     timer.add_argument(
         '-i', '--countdown',
         type=int,
-        default=0,
+        default=countdown,
         metavar='SECONDS',
         help=(
             'Set the countdown timer for inspection time in seconds.\n'
-            'Default: 0.'
+            f'Default: { countdown }.'
         ),
     )
     timer.add_argument(
         '-b', '--metronome',
         type=float,
-        default=0,
+        default=metronome,
         metavar='TEMPO',
         help=(
             'Set a metronome beep at a specified tempo in seconds.\n'
-            'Default: 0.0.'
+            f'Default: { metronome }.'
         ),
     )
 
