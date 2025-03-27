@@ -2,6 +2,7 @@ from datetime import datetime
 from datetime import timezone
 
 from term_timer.bluetooth.constants import GAN_ENCRYPTION_KEY
+from term_timer.bluetooth.constants import MOYU_ENCRYPTION_KEY
 from term_timer.bluetooth.constants import GAN_GEN2_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN2_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN2_STATE_CHARACTERISTIC
@@ -44,7 +45,7 @@ class GanGen2Driver(Driver):
     GAN356 i Carry
     GAN356 i 3
     Monster Go 3Ai
-    MoYu AI 2023 (TODO ?)
+    MoYu AI 2023
     """
     service_uid = GAN_GEN2_SERVICE
     state_characteristic_uid = GAN_GEN2_STATE_CHARACTERISTIC
@@ -53,6 +54,12 @@ class GanGen2Driver(Driver):
     last_serial = -1
 
     def init_cypher(self):
+        if self.device.name.startswith('AiCube'):
+            return GanGen2CubeEncrypter(
+                MOYU_ENCRYPTION_KEY['key'],
+                MOYU_ENCRYPTION_KEY['iv'],
+                get_salt(self.device.address),
+            )
         return GanGen2CubeEncrypter(
             GAN_ENCRYPTION_KEY['key'],
             GAN_ENCRYPTION_KEY['iv'],
