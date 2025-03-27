@@ -12,18 +12,23 @@ from term_timer.bluetooth.drivers import GanGen2Driver
 
 logger = logging.getLogger(__name__)
 
+DRIVERS = [
+    GanGen2Driver,
+]
+
 
 class BluetoothCube:
     device = None
     client = None
     driver = None
 
+    scan_timeout = 5
+
     async def scan(self):
-        logger.info('Scanning for cube during 5s...')
+        logger.info(f'Scanning for cube during {self.scan_timeout}s...')
         selected_device = None
         devices = await BleakScanner.discover(
-            timeout=5,
-            #service_uuids=args.services,
+            timeout=self.scan_timeout,
         )
 
         for device in devices:
@@ -63,9 +68,16 @@ class BluetoothCube:
         logger.info(f'Connected: { self.client.is_connected }')
 
         for service in self.client.services:
-            logger.info('- Service %s', service)
+            for driver in DRIVERS:
+                if service.uuid == driver.service_uid:
+                    logger.info('Using %s driver', driver.__name__)
+                    self.driver = driver(self.client, self.device)
+                    break
+            if self.driver:
+                break
 
-        self.driver = GanGen2Driver(self.client, self.device)
+        if not self.driver:
+            logger.warning('No driver found')
 
         # Subscribe to notifications for state changes
         await self.client.start_notify(
@@ -103,15 +115,19 @@ class BluetoothCube:
 async def run():
     cube = BluetoothCube()
     if await cube.scan_and_connect():
-        print('Waiting 2sec...')
+        logger.info('Waiting 2sec...')
         sleep(2)
-        print('Ending connection')
+        logger.info('Ending connection')
         await cube.client.disconnect()
 
         for event in cube.driver.events:
             if event['event'] != 'gyro':
-                print(pformat(event))
+                logger.info(pformat(event))
 
 
 def main():
+    logging.basicConfig(
+        format='%(levelname)s: %(message)s',
+        level=logging.INFO,
+    )
     asyncio.run(run())
