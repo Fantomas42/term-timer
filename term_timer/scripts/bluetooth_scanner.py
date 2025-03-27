@@ -116,7 +116,7 @@ async def run():
     cube = BluetoothCube()
     if await cube.scan_and_connect():
         logger.info('Waiting 2sec...')
-        sleep(2)
+        await asyncio.sleep(2)
         logger.info('Ending connection')
         await cube.client.disconnect()
 
