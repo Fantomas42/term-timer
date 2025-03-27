@@ -63,32 +63,31 @@ class BluetoothCube:
 
         self.device = device
 
-        self.client = BleakClient(self.device.address)
-        await self.client.connect()
-        logger.info(f'Connected: { self.client.is_connected }')
+        async with BleakClient(self.device.address) as self.client:
+            logger.info(f'Connected: { self.client.is_connected }')
 
-        for service in self.client.services:
-            for driver in DRIVERS:
-                if service.uuid == driver.service_uid:
-                    logger.info('Using %s driver', driver.__name__)
-                    self.driver = driver(self.client, self.device)
+            for service in self.client.services:
+                for driver in DRIVERS:
+                    if service.uuid == driver.service_uid:
+                        logger.info('Using %s driver', driver.__name__)
+                        self.driver = driver(self.client, self.device)
+                        break
+                if self.driver:
                     break
-            if self.driver:
-                break
 
-        if not self.driver:
-            logger.warning('No driver found')
+            if not self.driver:
+                logger.warning('No driver found')
 
-        # Subscribe to notifications for state changes
-        await self.client.start_notify(
-            self.driver.state_characteristic_uid,
-            self.driver.notification_handler,
-        )
+            # Subscribe to notifications for state changes
+            await self.client.start_notify(
+                self.driver.state_characteristic_uid,
+                self.driver.notification_handler,
+            )
 
-        # Initialize/reset the cube
-        await self.send_command('REQUEST_HARDWARE')
-        await self.send_command('REQUEST_FACELETS')
-        await self.send_command('REQUEST_BATTERY')
+            # Initialize/reset the cube
+            await self.send_command('REQUEST_HARDWARE')
+            await self.send_command('REQUEST_FACELETS')
+            await self.send_command('REQUEST_BATTERY')
 
         return True
 
@@ -122,7 +121,7 @@ async def run():
 
         for event in cube.driver.events:
             if event['event'] != 'gyro':
-                logger.info(pformat(event))
+                logger.info('\n%s', pformat(event))
 
 
 def main():
