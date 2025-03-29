@@ -40,13 +40,38 @@ class Timer:
     async def getch(timeout: float | None = None) -> str:
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
+        ch = ''
 
         try:
             tty.setcbreak(fd)
-            rlist, _, _ = select.select([fd], [], [], timeout)
 
-            if fd in rlist:
-                ch = sys.stdin.read(1)
+            # Create a Future that will be resolved when input is available
+            loop = asyncio.get_event_loop()
+            future = loop.create_future()
+
+            def stdin_callback() -> None:
+                if not future.done():
+                    ch = sys.stdin.read(1)
+                    future.set_result(ch)
+
+            # Add the stdin file descriptor to the event loop
+            loop.add_reader(fd, stdin_callback)
+
+            try:
+                if timeout is not None:
+                    # Wait for input with timeout
+                    await asyncio.wait_for(future, timeout)
+                else:
+                    # Wait for input indefinitely
+                    await future
+
+                # Get the result (the character)
+                ch = future.result()
+            except asyncio.TimeoutError:  # noqa UP041
+                ch = ''
+            finally:
+                # Clean up the reader
+                loop.remove_reader(fd)
 
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
