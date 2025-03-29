@@ -2,10 +2,10 @@ from datetime import datetime
 from datetime import timezone
 
 from term_timer.bluetooth.constants import GAN_ENCRYPTION_KEY
-from term_timer.bluetooth.constants import MOYU_ENCRYPTION_KEY
 from term_timer.bluetooth.constants import GAN_GEN2_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN2_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN2_STATE_CHARACTERISTIC
+from term_timer.bluetooth.constants import MOYU_ENCRYPTION_KEY
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.facelets import to_kociemba_facelets
 from term_timer.bluetooth.message import GanProtocolMessage
@@ -34,6 +34,10 @@ class Driver:
 
     def notification_handler(self, sender, data) -> bool:
         raise NotImplementedError
+
+    def add_event(self, store, event):
+        store.append(event)
+        self.events.append(event)
 
 
 class GanGen2Driver(Driver):
@@ -86,7 +90,7 @@ class GanGen2Driver(Driver):
 
         return self.cypher.encrypt(bytes(msg))
 
-    async def notification_handler(self, sender, data):  # noqa: ARG002
+    async def event_handler(self, sender, data):  # noqa: ARG002
         """Process notifications from the cube"""
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
 
@@ -109,23 +113,24 @@ class GanGen2Driver(Driver):
             vy = msg.get_bit_word(72, 4)
             vz = msg.get_bit_word(76, 4)
 
-            self.events.append(
-                {
-                    'event': 'gyro',
-                    'timestamp': timestamp,
-                    'quaternion': {
-                        'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
-                        'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
-                        'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
-                        'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
-                    },
-                    'velocity': {
-                        'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
-                        'y': (1 - (vy >> 3) * 2) * (vy & 0x7),
-                        'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
-                    },
+            payload = {
+                'event': 'gyro',
+                'timestamp': timestamp,
+                'quaternion': {
+                    'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
+                    'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
+                    'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
+                    'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
                 },
-            )
+                'velocity': {
+                    'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
+                    'y': (1 - (vy >> 3) * 2) * (vy & 0x7),
+                    'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
+                },
+            }
+
+            self.add_event(events, payload)
+
         elif event == 0x02:  # Moves
             serial = msg.get_bit_word(4, 8)
             diff = min((serial - self.last_serial) & 0xFF, 7)
@@ -139,19 +144,19 @@ class GanGen2Driver(Driver):
                 # if elapsed == 0:  # In case of 16-bit cube timestamp register overflow
                 #     elapsed = timestamp - self.last_move_timestamp
                 self.cube_timestamp += elapsed
-                self.events.append(
-                    {
-                        'event': 'move',
-                        'timestamp': timestamp,
-                        'serial': (serial - i) & 0xFF,
-                        # Missed and recovered events has no meaningful local timestamps
-                        'localTimestamp': timestamp if i == 0 else None,
-                        'cubeTimestamp': self.cube_timestamp,
-                        'face': face,
-                        'direction': direction,
-                        'move': move.strip(),
-                    },
-                )
+                payload = {
+                    'event': 'move',
+                    'timestamp': timestamp,
+                    'serial': (serial - i) & 0xFF,
+                    # Missed and recovered events has no meaningful local timestamps
+                    'localTimestamp': timestamp if i == 0 else None,
+                    'cubeTimestamp': self.cube_timestamp,
+                    'face': face,
+                    'direction': direction,
+                    'move': move.strip(),
+                }
+                self.add_event(events, payload)
+
             self.last_move_timestamp = timestamp
 
         elif event == 0x04:  # Facelets
@@ -175,20 +180,20 @@ class GanGen2Driver(Driver):
                 eo.append(msg.get_bit_word(91 + i, 1))
             ep.append(66 - sum(ep))
             eo.append((2 - (sum(eo) % 2)) % 2)
-            self.events.append(
-                {
-                    'event': 'facelets',
-                    'serial': serial,
-                    'timestamp': timestamp,
-                    'facelets': to_kociemba_facelets(cp, co, ep, eo),
-                    'state': {
-                        'CP': cp,
-                        'CO': co,
-                        'EP': ep,
-                        'EO': eo,
-                    },
+
+            payload = {
+                'event': 'facelets',
+                'serial': serial,
+                'timestamp': timestamp,
+                'facelets': to_kociemba_facelets(cp, co, ep, eo),
+                'state': {
+                    'CP': cp,
+                    'CO': co,
+                    'EP': ep,
+                    'EO': eo,
                 },
-            )
+            }
+            self.add_event(events, payload)
 
         elif event == 0x05:  # Hardware
             hw_major = msg.get_bit_word(8, 8)
@@ -199,28 +204,34 @@ class GanGen2Driver(Driver):
             hardware_name = ''
             for i in range(8):
                 hardware_name += chr(msg.get_bit_word(i * 8 + 40, 8))
-            self.events.append(
-                {
-                    'event': 'hardware',
-                    'timestamp': timestamp,
-                    'hardwareName': hardware_name,
-                    'hardwareVersion': f'{hw_major}.{hw_minor}',
-                    'softwareVersion': f'{sw_major}.{sw_minor}',
-                    'gyroSupported': bool(gyro_supported),
-                },
-            )
+
+            payload = {
+                'event': 'hardware',
+                'timestamp': timestamp,
+                'hardware_name': hardware_name,
+                'hardware_version': f'{hw_major}.{hw_minor}',
+                'software_version': f'{sw_major}.{sw_minor}',
+                'gyroscope_supported': bool(gyro_supported),
+            }
+            self.add_event(events, payload)
 
         elif event == 0x09:  # Battery
             battery_level = msg.get_bit_word(8, 8)
-            self.events.append(
-                {
-                    'event': 'battery',
-                    'timestamp': timestamp,
-                    'level': min(battery_level, 100),
-                },
-            )
+
+            payload = {
+                'event': 'battery',
+                'timestamp': timestamp,
+                'level': min(battery_level, 100),
+            }
+            self.add_event(events, payload)
 
         elif event == 0x0D:  # Disconnect
+            payload = {
+                'event': 'disconnect',
+                'timestamp': timestamp,
+            }
+            self.add_event(events, payload)
+
             self.client.disconnect()
 
         return events
