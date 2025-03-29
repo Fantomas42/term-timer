@@ -7,7 +7,7 @@ from term_timer.bluetooth.constants import GAN_GEN2_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN2_STATE_CHARACTERISTIC
 from term_timer.bluetooth.constants import MOYU_ENCRYPTION_KEY
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
-from term_timer.bluetooth.facelets import to_kociemba_facelets
+from term_timer.bluetooth.facelets import to_magiccube_facelets
 from term_timer.bluetooth.message import GanProtocolMessage
 from term_timer.bluetooth.salt import get_salt
 
@@ -185,7 +185,7 @@ class GanGen2Driver(Driver):
                 'event': 'facelets',
                 'serial': serial,
                 'timestamp': timestamp,
-                'facelets': to_kociemba_facelets(cp, co, ep, eo),
+                'facelets': to_magiccube_facelets(cp, co, ep, eo),
                 'state': {
                     'CP': cp,
                     'CO': co,

@@ -75,3 +75,20 @@ def to_kociemba_facelets(cp, co, ep, eo):
             ]
 
     return ''.join(facelets)
+
+
+def to_magiccube_facelets(cp, co, ep, eo):
+    facelets = to_kociemba_facelets(cp, co, ep, eo)
+
+    for color, face in (
+            ('W', 'U'), ('Y', 'D'),
+            ('G', 'F'), ('O', 'L'),
+    ):
+        facelets = facelets.replace(face, color)
+
+    U, R, F, D, L, B = [
+        facelets[i:i + 9]
+        for i in range(0, len(facelets), 9)
+    ]
+
+    return f'{U}{L}{F}{R}{B}{D}'

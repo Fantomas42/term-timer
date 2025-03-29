@@ -132,6 +132,11 @@ class BluetoothCube:
 async def consumer_cb(queue):
     logger.info('CONSUMER : Start consumming')
 
+    internal_cube = None
+
+    def show_cube(cube):
+        console.print(str(cube), end='')
+
     while True:
         # Use await asyncio.wait_for(queue.get(), timeout=1.0)
         # if you want a timeout for getting data.
@@ -162,12 +167,16 @@ async def consumer_cb(queue):
                     event['level'],
                 )
             elif event_name == 'facelets':
+                internal_cube = Cube(3, event['facelets'])
                 logger.info(
-                    'CONSUMER : Facelets : %s',
-                    event['facelets'],
+                    'CONSUMER : Facelets initialized',
                 )
-                show_cube(event['facelets'])
+                show_cube(internal_cube)
+
             elif event_name == 'move':
+                if internal_cube:
+                    internal_cube.rotate([event['move']])
+                    show_cube(internal_cube)
                 logger.info(
                     'CONSUMER : Move : Face : %s, Direction : %s, Move : %s',
                     event['face'],
@@ -195,21 +204,7 @@ async def run():
     except DeviceNotFoundError:
         pass
 
-    logger.info('Bye')
-
-
-def show_cube(facelets):
-    for color, face in (
-            ('W', 'U'), ('Y', 'D'),
-            ('G', 'F'), ('O', 'L'),
-    ):
-        facelets = facelets.replace(face, color)
-
-    U, R, F, D, L, B = [facelets[i:i + 9] for i in range(0, len(facelets), 9)]
-    final_facelets = ''.join([U, L, F, R, B, D])
-
-    cube = Cube(3, final_facelets)
-    console.print(str(cube), end='')
+    logger.info('Bye bye')
 
 
 def main():
