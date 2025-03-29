@@ -68,7 +68,7 @@ class TestTimer(unittest.TestCase):
     @patch('term_timer.scripts.timer.console.print')
     @patch('term_timer.scripts.timer.Timer')
     @patch('sys.argv', ['timer.py', '-f'])
-    def test_free_play_mode(self, mock_timer, mock_console_print):
+    async def test_free_play_mode(self, mock_timer, mock_console_print):
         """Test free play mode activation."""
         # Configure mocks
         timer_instance = MagicMock()
@@ -77,7 +77,7 @@ class TestTimer(unittest.TestCase):
         mock_timer.return_value = timer_instance
 
         # Run the main function
-        result = main()
+        result = await main()
 
         # Verify the function behavior
         mock_console_print.assert_called_with(
@@ -101,7 +101,7 @@ class TestTimer(unittest.TestCase):
     @patch('term_timer.scripts.timer.save_solves')
     @patch('term_timer.scripts.timer.StatisticsReporter')
     @patch('sys.argv', ['timer.py', '3'])  # 3 scrambles
-    def test_normal_operation_with_scrambles(
+    async def test_normal_operation_with_scrambles(
         self, mock_stats, mock_save, mock_load, mock_timer,
     ):
         """Test normal operation with a specific number of scrambles."""
@@ -118,7 +118,7 @@ class TestTimer(unittest.TestCase):
         mock_stats.return_value = stats_instance
 
         # Run the main function
-        result = main()
+        result = await main()
 
         # Verify the function behavior
         self.assertEqual(
@@ -132,7 +132,7 @@ class TestTimer(unittest.TestCase):
     @patch('term_timer.scripts.timer.seed')
     @patch('term_timer.scripts.timer.Timer')
     @patch('sys.argv', ['timer.py', '-r', '42'])
-    def test_seed_option(self, mock_timer, mock_seed):
+    async def test_seed_option(self, mock_timer, mock_seed):
         """Test the seed option sets the random seed."""
         # Configure mocks
         timer_instance = MagicMock()
@@ -141,7 +141,7 @@ class TestTimer(unittest.TestCase):
         mock_timer.return_value = timer_instance
 
         # Run the main function
-        result = main()
+        result = await main()
 
         # Verify the random seed was set
         mock_seed.assert_called_once_with('42')
