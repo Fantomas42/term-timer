@@ -1,10 +1,8 @@
-import select
+import asyncio
 import sys
 import termios
 import time
 import tty
-from threading import Event
-from threading import Thread
 
 from term_timer.console import console
 from term_timer.constants import DNF
@@ -18,8 +16,6 @@ from term_timer.stats import Statistics
 
 
 class Timer:
-    thread: Thread | None
-
     def __init__(self, *, cube_size: int,  # noqa: PLR0913
                  iterations: int, easy_cross: bool,
                  free_play: bool, show_cube: bool,
@@ -38,12 +34,10 @@ class Timer:
         self.metronome = metronome
         self.stack = stack
 
-        self.stop_event = Event()
-        self.thread = None
+        self.stop_event = asyncio.Event()
 
     @staticmethod
-    def getch(timeout: float | None = None) -> str:
-        ch = ''
+    async def getch(timeout: float | None = None) -> str:
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
 
@@ -65,8 +59,9 @@ class Timer:
     def beep() -> None:
         print('\a', end='', flush=True)
 
-    def inspection(self) -> None:
+    async def inspection(self) -> None:
         state = 0
+        self.stop_event.clear()
         inspection_start_time = time.perf_counter_ns()
 
         while not self.stop_event.is_set():
@@ -87,9 +82,10 @@ class Timer:
                 end='',
             )
 
-            time.sleep(0.01)
+            await asyncio.sleep(0.01)
 
-    def stopwatch(self) -> None:
+    async def stopwatch(self) -> None:
+        self.stop_event.clear()
         self.start_time = time.perf_counter_ns()
 
         tempo_elapsed = 0
@@ -130,7 +126,7 @@ class Timer:
                 end='',
             )
 
-            time.sleep(0.01)
+            await asyncio.sleep(0.01)
 
     @staticmethod
     def start_line() -> None:
@@ -210,7 +206,7 @@ class Timer:
                     format_delta(new_stats.ao100 - old_stats.best_ao100),
                 )
 
-    def start(self) -> bool:
+    async def start(self) -> bool:
         scramble, cube = scrambler(
             cube_size=self.cube_size,
             iterations=self.iterations,
@@ -227,31 +223,26 @@ class Timer:
 
         self.start_line()
 
-        char = self.getch()
+        char = await self.getch()
 
         if char == 'q':
             return False
 
         if self.countdown:
-            self.stop_event.clear()
-            self.thread = Thread(target=self.inspection)
-            self.thread.start()
+            inspection_task = asyncio.create_task(self.inspection())
 
-            self.getch(self.countdown)
+            await self.getch(self.countdown)
 
             self.stop_event.set()
-            self.thread.join()
+            await inspection_task
 
-        self.stop_event.clear()
-        self.thread = Thread(target=self.stopwatch)
-        self.thread.start()
+        stopwatch_task = asyncio.create_task(self.stopwatch())
 
-        self.getch()
-
+        await self.getch()
         self.end_time = time.perf_counter_ns()
 
         self.stop_event.set()
-        self.thread.join()
+        await stopwatch_task
 
         self.elapsed_time = self.end_time - self.start_time
 
@@ -266,7 +257,7 @@ class Timer:
         if not self.free_play:
             self.save_line()
 
-            char = self.getch()
+            char = await self.getch()
 
             if char == 'd':
                 self.stack[-1].flag = DNF
