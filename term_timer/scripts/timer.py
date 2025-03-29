@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import sys
 from random import seed
@@ -153,7 +154,7 @@ def get_arguments() -> Any:
     return parser.parse_args(sys.argv[1:])
 
 
-def main() -> int:  # noqa: PLR0912
+async def timer() -> int:  # noqa: PLR0912
     options = get_arguments()
 
     logging.disable(logging.INFO)
@@ -203,7 +204,7 @@ def main() -> int:  # noqa: PLR0912
             stack=stack,
         )
 
-        done = timer.start()
+        done = await timer.start()
         stack = timer.stack
 
         if done:
@@ -222,3 +223,7 @@ def main() -> int:  # noqa: PLR0912
         session_stats.resume((free_play and 'Session ') or 'Global ')
 
     return 0
+
+
+def main() -> int:
+    return asyncio.run(timer())
