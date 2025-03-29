@@ -32,7 +32,7 @@ two-phase = [
 [project.scripts]
 term-timer = "term_timer.scripts.timer:main"
 cs_timer_import = "term_timer.scripts.cs_timer:import_csv"
-btsc_scanner = "term_timer.scripts.bluetooth_scanner:main"
+bt-info = "term_timer.scripts.bluetooth_info:main"
 
 [tool.setuptools]
 packages = ["term_timer"]

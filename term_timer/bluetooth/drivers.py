@@ -86,9 +86,11 @@ class GanGen2Driver(Driver):
 
         return self.cypher.encrypt(bytes(msg))
 
-    def notification_handler(self, sender, data):  # noqa: ARG002
+    async def notification_handler(self, sender, data):  # noqa: ARG002
         """Process notifications from the cube"""
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        events = []
 
         msg = GanProtocolMessage(
             self.cypher.decrypt(data),
@@ -220,3 +222,5 @@ class GanGen2Driver(Driver):
 
         elif event == 0x0D:  # Disconnect
             self.client.disconnect()
+
+        return events

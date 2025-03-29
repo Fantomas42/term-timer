@@ -1,8 +1,6 @@
+import asyncio
 import logging
 from pprint import pformat
-from time import sleep
-
-import asyncio
 
 from bleak import BleakClient
 from bleak import BleakScanner
@@ -79,7 +77,7 @@ class BluetoothCube:
                 logger.warning('No driver found')
 
             # Subscribe to notifications for state changes
-            await self.client.start_notify(
+            result = await self.client.start_notify(
                 self.driver.state_characteristic_uid,
                 self.driver.notification_handler,
             )
