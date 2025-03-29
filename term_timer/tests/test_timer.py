@@ -40,29 +40,26 @@ class TestTimer(unittest.TestCase):
         self.assertEqual(self.timer.end_time, 0)
         self.assertEqual(self.timer.elapsed_time, 0)
 
-    @patch('term_timer.timer.select.select')
     @patch('term_timer.timer.termios.tcgetattr')
     @patch('term_timer.timer.termios.tcsetattr')
     @patch('term_timer.timer.tty.setcbreak')
     @patch('sys.stdin')
-    def test_getch(
+    async def test_getch(
         self,
         mock_stdin,
         mock_setcbreak,
         mock_tcsetattr,
         mock_tcgetattr,
-        mock_select,
     ):
         """Test getch method for keyboard input."""
         # Setup mocks
         mock_tcgetattr.return_value = 'old_settings'
         mock_stdin.fileno.return_value = 0
         mock_stdin.read.return_value = 'a'
-        mock_select.return_value = ([0], [], [])  # stdin ready for reading
 
         # Test with character input
         with patch('builtins.print') as mock_print:
-            result = Timer.getch(timeout=0.1)
+            result = await Timer.getch(timeout=0.1)
 
             # Verify the result
             self.assertEqual(result, 'a')
@@ -84,7 +81,7 @@ class TestTimer(unittest.TestCase):
             mock_print.assert_called_once_with('\a', end='', flush=True)
 
     @patch('time.perf_counter_ns')
-    @patch('time.sleep')
+    @patch('asyncio.sleep')
     def test_inspection(self, mock_sleep, mock_perf_counter):
         """Test inspection countdown."""
         # Setup mocks
@@ -110,7 +107,7 @@ class TestTimer(unittest.TestCase):
             mock_sleep.assert_called_once_with(0.01)
 
     @patch('time.perf_counter_ns')
-    @patch('time.sleep')
+    @patch('asyncio.sleep')
     def test_stopwatch(self, mock_sleep, mock_perf_counter):
         """Test stopwatch functionality."""
         # Setup mocks
@@ -167,7 +164,7 @@ class TestTimer(unittest.TestCase):
             self.assertTrue(mock_print.call_count >= 1)
 
     @patch('term_timer.timer.scrambler')
-    def test_start_quit_immediately(self, mock_scrambler):
+    async def test_start_quit_immediately(self, mock_scrambler):
         """Test start method when user quits immediately."""
         # Setup mocks
         mock_scrambler.return_value = (['F', 'R', 'U'], MagicMock())
@@ -177,7 +174,7 @@ class TestTimer(unittest.TestCase):
             patch('term_timer.console.console.print'),
         ):
             # Start the timer but immediately quit
-            result = self.timer.start()
+            result = await self.timer.start()
 
             # Verify the result
             self.assertFalse(result)
