@@ -29,6 +29,14 @@ def get_arguments() -> Any:
 
     config = parser.add_argument_group('Configuration')
     config.add_argument(
+        '-b', '--bluetooth',
+        action='store_true',
+        help=(
+            'Use a Bluetooth-connected cube.\n'
+            'Default: False.'
+        ),
+    )
+    config.add_argument(
         '-c', '--cube',
         type=int,
         choices=CUBE_SIZES,
@@ -68,7 +76,7 @@ def get_arguments() -> Any:
         ),
     )
     timer.add_argument(
-        '-b', '--metronome',
+        '-m', '--metronome',
         type=float,
         default=metronome,
         metavar='TEMPO',
