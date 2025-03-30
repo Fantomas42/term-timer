@@ -31,7 +31,7 @@ class BluetoothInterface:
         device = await self.scan()
 
         if not device:
-            logger.warning(
+            logger.debug(
                 'No bluetooth cube found.\n'
                 "Make sure it's powered on and in pairing mode.",
             )
@@ -41,19 +41,20 @@ class BluetoothInterface:
         self.client = BleakClient(self.device.address)
         await self.client.connect()
 
-        logger.info(' * Connected: %r', self.client.is_connected)
+        logger.debug(' * Connected: %r', self.client.is_connected)
 
         for service in self.client.services:
             for driver in DRIVERS:
                 if service.uuid == driver.service_uid:
-                    logger.info(' * Using %s driver', driver.__name__)
+                    logger.debug(' * Using %s driver', driver.__name__)
                     self.driver = driver(self.client, self.device)
                     break
             if self.driver:
                 break
 
         if not self.driver:
-            logger.warning('No driver found')
+            logger.debug('No driver found')
+            raise CubeNotFoundError
 
         await self.client.start_notify(
             self.driver.state_characteristic_uid,
@@ -77,13 +78,13 @@ class BluetoothInterface:
     async def send_command(self, command: str) -> bool:
         """Send a command to the cube"""
         if not self.client or not self.client.is_connected:
-            logger.warning('Not connected to cube')
+            logger.debug('Command not connected to cube')
             return False
 
         msg = self.driver.send_command_handler(command)
 
         if not msg:
-            logger.warning('Unknown command')
+            logger.debug('Unknown command "%s"', command)
             return False
 
         await self.client.write_gatt_char(
@@ -94,7 +95,7 @@ class BluetoothInterface:
         return True
 
     async def scan(self):
-        logger.info(
+        logger.debug(
             'Scanning for cube during %ss...',
             self.scan_timeout,
         )
@@ -105,11 +106,11 @@ class BluetoothInterface:
 
         for device in devices:
             name = device.name or 'N/A'
-            logger.info(' * %s %s', device, name)
+            logger.debug(' * %s %s', device, name)
 
             for prefix in PREFIX:
                 if prefix in name:
-                    logger.info(
+                    logger.debug(
                         'Found %s cube: %s (%s)',
                         prefix, device.name, device.address,
                     )
