@@ -1,4 +1,3 @@
-import logging
 import asyncio
 import sys
 import termios
@@ -17,8 +16,6 @@ from term_timer.magic_cube import Cube
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
-
-logger = logging.getLogger(__name__)
 
 
 class Timer:
@@ -147,16 +144,12 @@ class Timer:
             await self.bluetooth_interface.__aexit__(None, None, None)
 
     async def bluetooth_consumer(self) -> None:
-        logger.info('CONSUMER: Start consuming')
-
         while True:
             events = await self.bluetooth_queue.get()
 
             if events is None:
-                logger.info(
-                    'CONSUMER: Got message from client about disconnection. '
-                    'Exiting consumer loop...',
-                )
+                # Got message from client about disconnection.
+                # Exiting consumer loop...'
                 break
 
             for event in events:
@@ -176,12 +169,6 @@ class Timer:
                     self.bluetooth_facelets = event['facelets']
                     self.facelets_received_event.set()
                 elif event_name == 'move':
-                    logger.info(
-                        'CONSUMER: Face: %s, Direction: %s, Move: %s',
-                        event['face'],
-                        event['direction'],
-                        event['move'],
-                    )
                     if self.bluetooth_cube:
                         self.bluetooth_cube.rotate([event['move']])
 
