@@ -49,7 +49,6 @@ async def timer() -> int:  # noqa: PLR0912
         show_cube=options.show_cube,
         countdown=options.countdown,
         metronome=options.metronome,
-        bluetooth=options.bluetooth,
         stack=stack,
     )
 
@@ -68,7 +67,7 @@ async def timer() -> int:  # noqa: PLR0912
             else:
                 break
     finally:
-        if options.bluetooth and timer.bluetooth_interface:
+        if timer.bluetooth_interface:
             await timer.bluetooth_disconnect()
 
     if not free_play:

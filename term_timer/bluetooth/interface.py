@@ -27,8 +27,9 @@ class BluetoothInterface:
     def __init__(self, queue):
         self.queue = queue
 
-    async def __aenter__(self) -> bool:
-        device = await self.scan()
+    async def __aenter__(self, device=None) -> bool:
+        if not device:
+            device = await self.scan()
 
         if not device:
             logger.debug(
@@ -64,6 +65,7 @@ class BluetoothInterface:
         return self
 
     async def __aexit__(self, exc_type, exc_value, exc_traceback):
+        logger.debug('Disconnect from client')
         await self.client.stop_notify(
             self.driver.state_characteristic_uid,
         )

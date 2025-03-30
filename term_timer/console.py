@@ -17,8 +17,7 @@ theme = Theme(
         'inspection': f'{ TEXT_LIGHT } on #5F00D7',
         'consign': '#CECECE',
 
-        'bt': f'{ TEXT_LIGHT } on #00AFFF',
-        'bt-init': f'{ TEXT_DARK } on #00DFFF',
+        'bluetooth': 'bold #FFFFFF on #133EBF',
 
         'title': f'bold { TEXT_LIGHT }',
         'moves': f'bold { TEXT_LIGHT }',
