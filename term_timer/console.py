@@ -11,12 +11,14 @@ TEXT_LIGHT = '#FFFFD7'
 theme = Theme(
     {
         'warning': f'bold { RED }',
-        'bluetooth': f'{ TEXT_DARK } on #00AFFF',
         'scramble': f'{ TEXT_DARK } on { GREEN }',
         'duration': f'{ TEXT_DARK } on { ORANGE }',
         'record': f'{ TEXT_DARK } on #5FFFAF',
         'inspection': f'{ TEXT_LIGHT } on #5F00D7',
         'consign': '#CECECE',
+
+        'bt': f'{ TEXT_LIGHT } on #00AFFF',
+        'bt-init': f'{ TEXT_DARK } on #00DFFF',
 
         'title': f'bold { TEXT_LIGHT }',
         'moves': f'bold { TEXT_LIGHT }',

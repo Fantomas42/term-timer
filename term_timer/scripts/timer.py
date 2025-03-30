@@ -34,42 +34,42 @@ async def timer() -> int:  # noqa: PLR0912
     if options.seed or options.iterations or options.easy_cross:
         free_play = True
 
-    if free_play:
-        stack = []
-        console.print(
-            ':lock: Mode Free Play is active, solves will not be recorded !',
-            style='warning',
-        )
-    else:
-        stack = load_solves(cube)
+    stack = [] if free_play else load_solves(cube)
 
     if options.seed:
         seed(options.seed)
 
     solves_done = 0
 
-    while 42:
-        timer = Timer(
-            cube_size=cube,
-            iterations=options.iterations,
-            easy_cross=options.easy_cross,
-            free_play=free_play,
-            show_cube=options.show_cube,
-            countdown=options.countdown,
-            metronome=options.metronome,
-            stack=stack,
-        )
+    timer = Timer(
+        cube_size=cube,
+        iterations=options.iterations,
+        easy_cross=options.easy_cross,
+        free_play=free_play,
+        show_cube=options.show_cube,
+        countdown=options.countdown,
+        metronome=options.metronome,
+        bluetooth=options.bluetooth,
+        stack=stack,
+    )
 
-        done = await timer.start()
-        stack = timer.stack
+    if options.bluetooth:
+        await timer.bluetooth_connect()
 
-        if done:
-            solves_done += 1
+    try:
+        while 42:
+            done = await timer.start()
 
-            if options.solves and solves_done >= options.solves:
+            if done:
+                solves_done += 1
+
+                if options.solves and solves_done >= options.solves:
+                    break
+            else:
                 break
-        else:
-            break
+    finally:
+        if options.bluetooth and timer.bluetooth_interface:
+            await timer.bluetooth_disconnect()
 
     if not free_play:
         save_solves(cube, stack)

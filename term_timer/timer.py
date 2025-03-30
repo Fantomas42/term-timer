@@ -1,18 +1,24 @@
+import logging
 import asyncio
 import sys
 import termios
 import time
 import tty
 
+from term_timer.bluetooth.interface import BluetoothInterface
+from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.console import console
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
+from term_timer.magic_cube import Cube
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
+
+logger = logging.getLogger(__name__)
 
 
 class Timer:
@@ -20,7 +26,7 @@ class Timer:
                  iterations: int, easy_cross: bool,
                  free_play: bool, show_cube: bool,
                  countdown: int, metronome: float,
-                 stack: list[Solve]):
+                 bluetooth: bool, stack: list[Solve]):
         self.start_time = 0
         self.end_time = 0
         self.elapsed_time = 0
@@ -32,9 +38,168 @@ class Timer:
         self.show_cube = show_cube
         self.countdown = countdown
         self.metronome = metronome
+
+        self.bluetooth = bluetooth
+        self.bluetooth_cube = None
+        self.bluetooth_queue = None
+        self.bluetooth_interface = None
+        self.bluetooth_device_name = ''
+        self.bluetooth_facelets = ''
+        self.bluetooth_ready = False
+
         self.stack = stack
 
         self.stop_event = asyncio.Event()
+        self.solve_completed_event = asyncio.Event()
+
+        self.facelets_received_event = asyncio.Event()
+        self.hardware_received_event = asyncio.Event()
+
+        self.started_solving = False
+
+        if self.free_play:
+            console.print(
+                ':lock: Mode Free Play is active, '
+                'solves will not be recorded !',
+                style='warning',
+            )
+
+    async def bluetooth_connect(self) -> bool:
+        self.bluetooth_queue = asyncio.Queue()
+
+        try:
+            self.bluetooth_interface = BluetoothInterface(
+                self.bluetooth_queue,
+            )
+            await self.bluetooth_interface.__aenter__()
+
+
+            bluetooth_consumer_ref = asyncio.create_task(
+                self.bluetooth_consumer(),
+            )
+
+            console.print(
+                '[bt]'
+                f'{ self.bluetooth_interface.device.name } '
+                'connected successfully![/bt]'
+            )
+
+            # Réinitialiser les événements
+            self.facelets_received_event.clear()
+            self.hardware_received_event.clear()
+
+            self.bluetooth_cube = Cube(3)
+
+            # Initialize the cube
+            await self.bluetooth_interface.send_command('REQUEST_HARDWARE')
+            await self.bluetooth_interface.send_command('REQUEST_FACELETS')
+
+            init = await self.wait_for_initialization()
+
+            if not init:
+                console.print(
+                    '[warning]Could not initialize cube properly. Continuing in manual mode.[/warning]',
+                )
+                self.bluetooth = False
+
+            return True
+        except CubeNotFoundError:
+            console.print(
+                '[warning]No Bluetooth cube found. Running in manual mode.[/warning]',
+                style='warning'
+            )
+            self.bluetooth = False
+            return False
+
+    async def wait_for_initialization(self, timeout=10.0) -> bool:
+        """
+        Attend que les informations de facelets et de hardware soient reçues
+        Renvoie True si tout a été reçu avec succès, False sinon
+        """
+        console.print('[bt-init]Waiting for cube initialization data...[/bt-init]')
+        try:
+            # Attendre que les deux événements soient définis
+            await asyncio.wait_for(
+                asyncio.gather(
+                    self.facelets_received_event.wait(),
+                    self.hardware_received_event.wait(),
+                ),
+                timeout=timeout,
+            )
+            console.print('[bluetooth]Cube initialized successfully![/bluetooth]')
+
+            # Afficher les informations du cube
+            # if self.hardware_info:
+            #     console.print(
+            #         f'[bluetooth]Cube: {self.hardware_info["hardware_name"]} '
+            #         f'v{self.hardware_info["hardware_version"]}, '
+            #         f'Battery: {self.battery_level}%[/bluetooth]'
+            #     )
+
+            return True
+        except asyncio.TimeoutError:
+            console.print('[warning]Timeout waiting for cube initialization.[/warning]')
+            return False
+
+    async def bluetooth_disconnect(self) -> None:
+        if self.bluetooth_interface:
+            console.print('[warning]Disconnecting...[/warning]')
+            await self.bluetooth_interface.__aexit__(None, None, None)
+
+    async def bluetooth_consumer(self) -> None:
+        logger.info('CONSUMER: Start consuming')
+
+        while True:
+            events = await self.bluetooth_queue.get()
+
+            if events is None:
+                logger.info(
+                    'CONSUMER: Got message from client about disconnection. '
+                    'Exiting consumer loop...',
+                )
+                break
+
+            for event in events:
+                event_name = event['event']
+                if event_name == 'hardware':
+                    self.bluetooth_device_name = '%s v %s, Software %s, %s' % (
+                        event['hardware_name'],
+                        event['hardware_version'],
+                        event['software_version'],
+                        (
+                            (event['gyroscope_supported'] and 'with Gyroscope')
+                            or 'w/o Gyroscope'
+                        ),
+                    )
+                    self.hardware_received_event.set()
+                elif event_name == 'facelets':
+                    self.bluetooth_facelets = event['facelets']
+                    self.facelets_received_event.set()
+                elif event_name == 'move':
+                    logger.info(
+                        'CONSUMER: Face: %s, Direction: %s, Move: %s',
+                        event['face'],
+                        event['direction'],
+                        event['move'],
+                    )
+                    if self.bluetooth_cube:
+                        self.bluetooth_cube.rotate([event['move']])
+
+                    if self.started_solving:
+                        self.move_count += 1
+
+                        # Check if cube is solved
+                        if self.bluetooth_cube.is_done():
+                            if self.started_solving and not self.stop_event.is_set():
+                                self.stop_event.set()
+                                self.end_time = time.perf_counter_ns()
+                                self.solve_completed_event.set()
+
+            if not self.bluetooth_ready:
+                if self.bluetooth_device_name and self.bluetooth_facelets:
+                    console.print('[bluetooth]Device is ready[/bluetooth]')
+                    self.bluetooth_ready = True
+
 
     @staticmethod
     async def getch(timeout: float | None = None) -> str:
@@ -112,6 +277,8 @@ class Timer:
     async def stopwatch(self) -> None:
         self.stop_event.clear()
         self.start_time = time.perf_counter_ns()
+        self.started_solving = True
+        self.move_count = 0
 
         tempo_elapsed = 0
 
@@ -261,13 +428,50 @@ class Timer:
             self.stop_event.set()
             await inspection_task
 
+        # stopwatch_task = asyncio.create_task(self.stopwatch())
+
+        # await self.getch()
+        # self.end_time = time.perf_counter_ns()
+
+        ######################
+        self.started_solving = False
+        self.move_count = 0
+        self.solve_completed_event.clear()
+
         stopwatch_task = asyncio.create_task(self.stopwatch())
 
-        await self.getch()
-        self.end_time = time.perf_counter_ns()
+        # In Bluetooth mode, wait for either manual stop or cube solved detection
+        if self.bluetooth:
+            # Create two tasks: one for manual stopping and one for cube solved detection
+            done, pending = await asyncio.wait(
+                [
+                    asyncio.create_task(self.getch()),
+                    asyncio.create_task(self.solve_completed_event.wait())
+                ],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
 
-        self.stop_event.set()
+            # Cancel the remaining task
+            for task in pending:
+                task.cancel()
+
+            # If not already set by the solve_completed_event
+            if not self.stop_event.is_set():
+                self.end_time = time.perf_counter_ns()
+                self.stop_event.set()
+        else:
+            # Manual mode (same as original)
+            await self.getch()
+            self.end_time = time.perf_counter_ns()
+            self.stop_event.set()
+
         await stopwatch_task
+
+        #############
+
+
+        # self.stop_event.set()
+        # await stopwatch_task
 
         self.elapsed_time = self.end_time - self.start_time
 
