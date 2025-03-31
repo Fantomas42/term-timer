@@ -93,8 +93,6 @@ class Timer:
                 self.bluetooth_consumer(),
             )
 
-            self.bluetooth_cube = Cube(3)  # TODO(me): review
-
             # Initialize the cube
             await self.bluetooth_interface.send_command('REQUEST_HARDWARE')
             await self.bluetooth_interface.send_command('REQUEST_FACELETS')
@@ -161,6 +159,14 @@ class Timer:
                     self.hardware_received_event.set()
                 elif event_name == 'facelets':
                     self.bluetooth_facelets = event['facelets']
+                    self.bluetooth_cube = Cube(3, event['facelets'])
+
+                    if not self.bluetooth_cube.is_done():
+                        self.clear_line(full=True)
+                        console.print(
+                            '[bluetooth]🫤Bluetooth:[/bluetooth] '
+                            '[warning]Cube is not in solved state[/warning]',
+                        )
                     self.facelets_received_event.set()
                 elif event_name == 'move':
                     if self.bluetooth_cube:
