@@ -68,19 +68,22 @@ class Timer:
             )
 
             console.print(
-                '📡 Scanning for Bluetooth cube for '
+                '[bluetooth]📡Bluetooth:[/bluetooth] '
+                'Scanning for Bluetooth cube for '
                 f'{ self.bluetooth_interface.scan_timeout}s...',
-                style='bluetooth',
+                end='',
             )
 
             device = await self.bluetooth_interface.scan()
 
             await self.bluetooth_interface.__aenter__(device)
 
+            self.clear_line(full=True)
             console.print(
-                f'🤓 { self.bluetooth_interface.device.name } '
+                '[bluetooth]🔗Bluetooth:[/bluetooth] '
+                f'{ self.bluetooth_interface.device.name } '
                 'connected successfully !',
-                style='bluetooth',
+                end='',
             )
 
             self.facelets_received_event.clear()
@@ -104,41 +107,37 @@ class Timer:
                     ),
                     timeout=10.0,
                 )
-                # Afficher les informations du cube
-                # if self.hardware_info:
-                #     console.print(
-                #         f'[bluetooth]Cube: {self.hardware_info["hardware_name"]} '
-                #         f'v{self.hardware_info["hardware_version"]}, '
-                #         f'Battery: {self.battery_level}%[/bluetooth]'
-                #     )
             except asyncio.TimeoutError:
+                self.clear_line(full=True)
                 console.print(
-                    '😱 Cube could not be initialized properly. '
-                    'Running in manual mode.',
-                    style='warning',
+                    '[bluetooth]😱Bluetooth:[/bluetooth] '
+                    '[warning]Cube could not be initialized properly. '
+                    'Running in manual mode.[/warning]',
                 )
                 return False
 
+            self.clear_line(full=True)
             console.print(
-                f'{ self.bluetooth_interface.device.name } '
-                'initialized successfully !',
-                style='bluetooth',
+                '[bluetooth]🤓Bluetooth:[/bluetooth] '
+                f'[result]{ self.bluetooth_device_name } '
+                'initialized successfully ![/result]',
             )
             return True
         except CubeNotFoundError:
+            self.clear_line(full=True)
             console.print(
-                '😥 No Bluetooth cube could be found. '
-                'Running in manual mode.',
-                style='warning',
+                '[bluetooth]😥Bluetooth:[/bluetooth] '
+                '[warning]No Bluetooth cube could be found. '
+                'Running in manual mode.[/warning]',
             )
             return False
 
     async def bluetooth_disconnect(self) -> None:
         if self.bluetooth_interface and self.bluetooth_interface.device:
             console.print(
-                f'{ self.bluetooth_interface.device.name } '
+                '[bluetooth]🔗 Bluetooth[/bluetooth] '
+                f'{ self.bluetooth_device_name } '
                 'disconnecting...',
-                style='bluetooth',
             )
             await self.bluetooth_interface.__aexit__(None, None, None)
 
@@ -154,14 +153,10 @@ class Timer:
             for event in events:
                 event_name = event['event']
                 if event_name == 'hardware':
-                    self.bluetooth_device_name = '%s v %s, Software %s, %s' % (
-                        event['hardware_name'],
+                    self.bluetooth_device_name = '%sv%s, Software %s' % (
+                        self.bluetooth_interface.device.name,
                         event['hardware_version'],
                         event['software_version'],
-                        (
-                            (event['gyroscope_supported'] and 'with Gyroscope')
-                            or 'w/o Gyroscope'
-                        ),
                     )
                     self.hardware_received_event.set()
                 elif event_name == 'facelets':
@@ -181,8 +176,7 @@ class Timer:
                                 self.end_time = time.perf_counter_ns()
                                 self.solve_completed_event.set()
 
-    @staticmethod
-    async def getch(timeout: float | None = None) -> str:
+    async def getch(self, timeout: float | None = None) -> str:
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         ch = ''
@@ -221,9 +215,16 @@ class Timer:
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
-        print(f'\r{ " " * 100}\r', flush=True, end='')
+        self.clear_line(full=True)
 
         return ch
+
+    @staticmethod
+    def clear_line(full) -> None:
+        if full:
+            print(f'\r{ " " * 100}\r', flush=True, end='')
+        else:
+            print('\r', end='')
 
     @staticmethod
     def beep() -> None:
@@ -245,7 +246,7 @@ class Timer:
                 if state in {2, 1, 0}:
                     self.beep()
 
-            print('\r', end='')
+            self.clear_line(full=False)
             console.print(
                 '[inspection]Inspection :[/inspection]',
                 f'[result]{ remaining_time }[/result]',
@@ -291,7 +292,7 @@ class Timer:
                 if self.metronome:
                     self.beep()
 
-            print('\r', end='')
+            self.clear_line(full=False)
             console.print(
                 f'[{ style }]Go Go Go:[/{ style }]',
                 f'[result]{ format_time(elapsed_time) }[/result]',
@@ -341,7 +342,7 @@ class Timer:
                 ao12 = new_stats.ao12
                 extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
 
-        print('\r', end='')
+        self.clear_line(full=False)
         console.print(
             f'[duration]Duration #{ len(self.stack) }:[/duration]',
             f'[result]{ format_time(self.elapsed_time) }[/result]',
