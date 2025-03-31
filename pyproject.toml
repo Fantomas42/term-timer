@@ -13,7 +13,7 @@ dependencies = [
     "plotext",
     "rich",
     "bleak",
-    "pycryptodome",
+    "cryptography",
 ]
 
 [project.optional-dependencies]

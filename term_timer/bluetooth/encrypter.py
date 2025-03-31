@@ -1,6 +1,7 @@
-from Crypto.Cipher import AES
-
-# https://cryptography.io/en/latest/hazmat/primitives/symmetric-encryption/
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.primitives.ciphers import algorithms
+from cryptography.hazmat.primitives.ciphers import modes
 
 INVALID_KEY = 'Key must be 16 bytes (128-bit) long'
 INVALID_IV = 'Initialization Vector must be 16 bytes (128-bit) long'
@@ -28,8 +29,15 @@ class GanGen2CubeEncrypter:
 
     def _encrypt_chunk(self, buffer, offset):
         """Encrypt 16-byte buffer chunk starting at offset using AES-128-CBC"""
-        cipher = AES.new(bytes(self._key), AES.MODE_CBC, bytes(self._iv))
-        chunk = cipher.encrypt(bytes(buffer[offset : offset + 16]))
+        cipher = Cipher(
+            algorithms.AES(bytes(self._key)),
+            modes.CBC(bytes(self._iv)),
+            backend=default_backend(),
+        )
+        encryptor = cipher.encryptor()
+        chunk = encryptor.update(
+            bytes(buffer[offset : offset + 16]),
+        ) + encryptor.finalize()
 
         # Update buffer with encrypted chunk
         for i in range(16):
@@ -37,8 +45,15 @@ class GanGen2CubeEncrypter:
 
     def _decrypt_chunk(self, buffer, offset):
         """Decrypt 16-byte buffer chunk starting at offset using AES-128-CBC"""
-        cipher = AES.new(bytes(self._key), AES.MODE_CBC, bytes(self._iv))
-        chunk = cipher.decrypt(bytes(buffer[offset : offset + 16]))
+        cipher = Cipher(
+            algorithms.AES(bytes(self._key)),
+            modes.CBC(bytes(self._iv)),
+            backend=default_backend(),
+        )
+        decryptor = cipher.decryptor()
+        chunk = decryptor.update(
+            bytes(buffer[offset : offset + 16]),
+        ) + decryptor.finalize()
 
         # Update buffer with decrypted chunk
         for i in range(16):

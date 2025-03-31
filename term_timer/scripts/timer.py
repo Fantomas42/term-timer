@@ -3,7 +3,6 @@ import logging
 from random import seed
 
 from term_timer.arguments import get_arguments
-from term_timer.console import console
 from term_timer.in_out import load_solves
 from term_timer.in_out import save_solves
 from term_timer.stats import StatisticsReporter

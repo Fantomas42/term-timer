@@ -86,9 +86,9 @@ def to_magiccube_facelets(cp, co, ep, eo):
     ):
         facelets = facelets.replace(face, color)
 
-    U, R, F, D, L, B = [
+    u_face, r_face, f_face, d_face, l_face, b_face = [
         facelets[i:i + 9]
         for i in range(0, len(facelets), 9)
     ]
 
-    return f'{U}{L}{F}{R}{B}{D}'
+    return f'{u_face}{l_face}{f_face}{r_face}{b_face}{d_face}'
