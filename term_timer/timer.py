@@ -27,7 +27,7 @@ class Timer:
         self.start_time = 0
         self.end_time = 0
         self.elapsed_time = 0
-        self.move_count = 0
+        self.moves = []
         self.state = 'init'
 
         self.cube_size = cube_size
@@ -186,7 +186,12 @@ class Timer:
                         self.scramble_completed_event.set()
 
                     elif self.state == 'solving':
-                        self.move_count += 1
+                        self.moves.append(
+                            {
+                                'move': event['move'],
+                                'time': event['cubeTimestamp'],
+                            },
+                        )
 
                         if (
                                 not self.stop_event.is_set()
@@ -293,8 +298,8 @@ class Timer:
 
         self.start_time = time.perf_counter_ns()
         self.end_time = 0
-        self.move_count = 0
         self.elapsed_time = 0
+        self.moves = []
         self.state = 'solving'
 
         tempo_elapsed = 0
@@ -378,12 +383,17 @@ class Timer:
                 ao12 = new_stats.ao12
                 extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
 
-            if self.move_count:
+            if self.moves:
                 extra += ' '
 
-        if self.move_count:
-            tps = self.move_count / (self.elapsed_time / SECOND)
-            extra += f'[move]{ self.move_count } moves / { tps:.2f} TPS[/move]'
+        if self.moves:
+            tps = len(self.moves) / (self.elapsed_time / SECOND)
+            extra += f'[tps]{ len(self.moves) } moves / { tps:.2f} TPS[/tps]'
+
+            ###
+            for m in self.moves:
+                print(m)
+            ###
 
         self.clear_line(full=False)
         console.print(
@@ -505,6 +515,7 @@ class Timer:
             self.start_time,
             self.end_time,
             ' '.join(scramble),
+            moves=self.moves,
         )
 
         self.handle_solve(solve)

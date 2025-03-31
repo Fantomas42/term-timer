@@ -18,7 +18,6 @@ theme = Theme(
         'consign': '#CECECE',
 
         'bluetooth': 'bold #FFFFFF on #133EBF',
-        'move': 'bold #00DFFF',
 
         'title': f'bold { TEXT_LIGHT }',
         'moves': f'bold { TEXT_LIGHT }',
@@ -38,6 +37,7 @@ theme = Theme(
         'ao5': 'bold #00FFFF',
         'ao12': 'bold #FF00FF',
         'ao100': f'bold { YELLOW }',
+        'tps': 'bold #00DFFF',
 
         'timer_base': f'{ TEXT_DARK } on #DDFF00',
         'timer_10': f'{ TEXT_DARK } on #33FF00',
