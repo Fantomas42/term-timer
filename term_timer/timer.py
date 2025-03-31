@@ -78,14 +78,12 @@ class Timer:
 
             device = await self.bluetooth_interface.scan()
 
-            await self.bluetooth_interface.__aenter__(device)
-
-            self.bluetooth_hardware['device_name'] = self.bluetooth_interface.device.name
+            await self.bluetooth_interface.__aenter__(device)  # noqa: PLC2801
 
             self.clear_line(full=True)
             console.print(
                 '[bluetooth]🔗Bluetooth:[/bluetooth] '
-                f'{ self.bluetooth_hardware['device_name'] } '
+                f'{ self.bluetooth_device_label } '
                 'connected successfully !',
                 end='',
             )
@@ -97,9 +95,9 @@ class Timer:
                 self.bluetooth_consumer(),
             )
 
+            await self.bluetooth_interface.send_command('REQUEST_BATTERY')
             await self.bluetooth_interface.send_command('REQUEST_HARDWARE')
             await self.bluetooth_interface.send_command('REQUEST_FACELETS')
-            await self.bluetooth_interface.send_command('REQUEST_BATTERY')
 
             try:
                 await asyncio.wait_for(
@@ -109,7 +107,7 @@ class Timer:
                     ),
                     timeout=10.0,
                 )
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError:  # noqa: UP041
                 self.clear_line(full=True)
                 console.print(
                     '[bluetooth]😱Bluetooth:[/bluetooth] '
@@ -122,10 +120,9 @@ class Timer:
 
             console.print(
                 '[bluetooth]🤓Bluetooth:[/bluetooth] '
-                f'[result]{ self.bluetooth_hardware['label'] } '
+                f'[result]{ self.bluetooth_device_label } '
                 'initialized successfully ![/result]',
             )
-            return True
         except CubeNotFoundError:
             self.clear_line(full=True)
             console.print(
@@ -134,12 +131,14 @@ class Timer:
                 'Running in manual mode.[/warning]',
             )
             return False
+        else:
+            return True
 
     async def bluetooth_disconnect(self) -> None:
         if self.bluetooth_interface and self.bluetooth_interface.device:
             console.print(
                 '[bluetooth]🔗 Bluetooth[/bluetooth] '
-                f'{ self.bluetooth_hardware["label"] } disconnecting...',
+                f'{ self.bluetooth_device_label } disconnecting...',
             )
             await self.bluetooth_interface.__aexit__(None, None, None)
 
@@ -154,32 +153,13 @@ class Timer:
                 event_name = event['event']
 
                 if event_name == 'hardware':
-                    self.bluetooth_hardware['hardware_name'] = event['hardware_name']
-                    self.bluetooth_hardware['hardware_version'] = event['hardware_version']
-                    self.bluetooth_hardware['software_version'] = event['software_version']
-                    self.bluetooth_hardware['gyroscope_supported'] = event['gyroscope_supported']
-
-                    # TODO(me): factorize
-                    device_label = (
-                        f"{ self.bluetooth_hardware['device_name'] }"
-                        f"v{ self.bluetooth_hardware['hardware_version'] }"
-                    )
-                    if 'battery_level' in self.bluetooth_hardware:
-                        device_label += f" ({ self.bluetooth_hardware['battery_level'] }%)"
-                    self.bluetooth_hardware['label'] = device_label
+                    event.pop('event')
+                    event.pop('timestamp')
+                    self.bluetooth_hardware.update(event)
 
                     self.hardware_received_event.set()
                 if event_name == 'battery':
                     self.bluetooth_hardware['battery_level'] = event['level']
-
-                    # TODO(me): factorize
-                    device_label = (
-                        f"{ self.bluetooth_hardware['device_name'] }"
-                        f"v{ self.bluetooth_hardware['hardware_version'] }"
-                    )
-                    if 'battery_level' in self.bluetooth_hardware:
-                        device_label += f" ({ self.bluetooth_hardware['battery_level'] }%)"
-                    self.bluetooth_hardware['label'] = device_label
 
                 elif event_name == 'facelets':
                     self.bluetooth_facelets = event['facelets']
@@ -191,6 +171,7 @@ class Timer:
                             '[bluetooth]🫤Bluetooth:[/bluetooth] '
                             '[warning]Cube is not in solved state[/warning]',
                         )
+
                     self.facelets_received_event.set()
                 elif event_name == 'move':
                     if not self.bluetooth_cube:
@@ -198,17 +179,38 @@ class Timer:
 
                     self.bluetooth_cube.rotate([event['move']])
 
-                    if self.state == 'scrambling':
-                        if self.bluetooth_cube.as_twophase_facelets == self.cube.as_twophase_facelets:
-                            self.scramble_completed_event.set()
+                    if self.state == 'scrambling' and (
+                            self.bluetooth_cube.as_twophase_facelets
+                            == self.cube.as_twophase_facelets
+                    ):
+                        self.scramble_completed_event.set()
 
-                    if self.state == 'solving':
+                    elif self.state == 'solving':
                         self.move_count += 1
 
-                        if not self.stop_event.is_set() and self.bluetooth_cube.is_done():
+                        if (
+                                not self.stop_event.is_set()
+                                and self.bluetooth_cube.is_done()
+                        ):
                             self.end_time = time.perf_counter_ns()
                             self.stop_event.set()
                             self.solve_completed_event.set()
+
+    @property
+    def bluetooth_device_label(self):
+        device_label = self.bluetooth_interface.device.name
+
+        if 'hardware_version' in self.bluetooth_hardware:
+            device_label += f"v{ self.bluetooth_hardware['hardware_version'] }"
+
+        battery_level = self.bluetooth_hardware.get('battery_level')
+        if battery_level:
+            if battery_level <= 15:
+                device_label += f' ([warning]{ battery_level }[/warning]%)'
+            else:
+                device_label += f' ({ battery_level }%)'
+
+        return device_label
 
     async def getch(self, timeout: float | None = None) -> str:
         fd = sys.stdin.fileno()
@@ -377,10 +379,9 @@ class Timer:
                 extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
 
             if self.move_count:
-                tps = self.move_count / (self.elapsed_time / SECOND)
-                extra += f' [move]{ self.move_count } moves / { tps:.2f} TPS[/move]'
+                extra += ' '
 
-        elif self.move_count:
+        if self.move_count:
             tps = self.move_count / (self.elapsed_time / SECOND)
             extra += f'[move]{ self.move_count } moves / { tps:.2f} TPS[/move]'
 
