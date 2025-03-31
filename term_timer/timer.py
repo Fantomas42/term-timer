@@ -27,6 +27,7 @@ class Timer:
         self.start_time = 0
         self.end_time = 0
         self.elapsed_time = 0
+        self.move_count = 0
 
         self.cube_size = cube_size
         self.free_play = free_play
@@ -333,6 +334,9 @@ class Timer:
         new_stats = Statistics(self.stack)
 
         extra = ''
+        if self.move_count:
+            extra += f'[edge]{ self.move_count } moves[/edge]'
+
         if new_stats.total > 1:
             extra += format_delta(new_stats.delta)
 
