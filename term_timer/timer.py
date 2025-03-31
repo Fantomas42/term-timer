@@ -42,7 +42,7 @@ class Timer:
         self.bluetooth_queue = None
         self.bluetooth_interface = None
         self.bluetooth_consumer_ref = None
-        self.bluetooth_device_name = ''
+        self.bluetooth_hardware = {}
         self.bluetooth_facelets = ''
 
         self.stack = stack
@@ -79,10 +79,12 @@ class Timer:
 
             await self.bluetooth_interface.__aenter__(device)
 
+            self.bluetooth_hardware['device_name'] = self.bluetooth_interface.device.name
+
             self.clear_line(full=True)
             console.print(
                 '[bluetooth]🔗Bluetooth:[/bluetooth] '
-                f'{ self.bluetooth_interface.device.name } '
+                f'{ self.bluetooth_hardware['device_name'] } '
                 'connected successfully !',
                 end='',
             )
@@ -96,6 +98,7 @@ class Timer:
 
             await self.bluetooth_interface.send_command('REQUEST_HARDWARE')
             await self.bluetooth_interface.send_command('REQUEST_FACELETS')
+            await self.bluetooth_interface.send_command('REQUEST_BATTERY')
 
             try:
                 await asyncio.wait_for(
@@ -115,9 +118,10 @@ class Timer:
                 return False
 
             self.clear_line(full=True)
+
             console.print(
                 '[bluetooth]🤓Bluetooth:[/bluetooth] '
-                f'[result]{ self.bluetooth_device_name } '
+                f'[result]{ self.bluetooth_hardware['label'] } '
                 'initialized successfully ![/result]',
             )
             return True
@@ -134,8 +138,7 @@ class Timer:
         if self.bluetooth_interface and self.bluetooth_interface.device:
             console.print(
                 '[bluetooth]🔗 Bluetooth[/bluetooth] '
-                f'{ self.bluetooth_device_name } '
-                'disconnecting...',
+                f'{ self.bluetooth_hardware["label"] } disconnecting...',
             )
             await self.bluetooth_interface.__aexit__(None, None, None)
 
@@ -148,13 +151,35 @@ class Timer:
 
             for event in events:
                 event_name = event['event']
+
                 if event_name == 'hardware':
-                    self.bluetooth_device_name = '%sv%s, Software %s' % (
-                        self.bluetooth_interface.device.name,
-                        event['hardware_version'],
-                        event['software_version'],
+                    self.bluetooth_hardware['hardware_name'] = event['hardware_name']
+                    self.bluetooth_hardware['hardware_version'] = event['hardware_version']
+                    self.bluetooth_hardware['software_version'] = event['software_version']
+                    self.bluetooth_hardware['gyroscope_supported'] = event['gyroscope_supported']
+
+                    # TODO(me): factorize
+                    device_label = (
+                        f"{ self.bluetooth_hardware['device_name'] }"
+                        f"v{ self.bluetooth_hardware['hardware_version'] }"
                     )
+                    if 'battery_level' in self.bluetooth_hardware:
+                        device_label += f" ({ self.bluetooth_hardware['battery_level'] }%)"
+                    self.bluetooth_hardware['label'] = device_label
+
                     self.hardware_received_event.set()
+                if event_name == 'battery':
+                    self.bluetooth_hardware['battery_level'] = event['level']
+
+                    # TODO(me): factorize
+                    device_label = (
+                        f"{ self.bluetooth_hardware['device_name'] }"
+                        f"v{ self.bluetooth_hardware['hardware_version'] }"
+                    )
+                    if 'battery_level' in self.bluetooth_hardware:
+                        device_label += f" ({ self.bluetooth_hardware['battery_level'] }%)"
+                    self.bluetooth_hardware['label'] = device_label
+
                 elif event_name == 'facelets':
                     self.bluetooth_facelets = event['facelets']
                     self.bluetooth_cube = Cube(3, event['facelets'])
