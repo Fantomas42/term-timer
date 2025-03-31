@@ -45,6 +45,7 @@ class Timer:
         self.bluetooth_hardware = {}
         self.bluetooth_facelets = ''
 
+        self.cube = None
         self.stack = stack
 
         self.stop_event = asyncio.Event()
@@ -192,8 +193,14 @@ class Timer:
                         )
                     self.facelets_received_event.set()
                 elif event_name == 'move':
-                    if self.bluetooth_cube:
-                        self.bluetooth_cube.rotate([event['move']])
+                    if not self.bluetooth_cube:
+                        continue
+
+                    self.bluetooth_cube.rotate([event['move']])
+
+                    if self.state == 'scrambling':
+                        if self.bluetooth_cube.as_twophase_facelets == self.cube.as_twophase_facelets:
+                            self.scramble_completed_event.set()
 
                     if self.state == 'solving':
                         self.move_count += 1
@@ -252,8 +259,10 @@ class Timer:
         print('\a', end='', flush=True)
 
     async def inspection(self) -> None:
-        state = 0
+        self.state = 'inspecting'
         self.stop_event.clear()
+
+        state = 0
         inspection_start_time = time.perf_counter_ns()
 
         while not self.stop_event.is_set():
@@ -413,7 +422,7 @@ class Timer:
                 )
 
     async def start(self) -> bool:
-        scramble, cube = scrambler(
+        scramble, self.cube = scrambler(
             cube_size=self.cube_size,
             iterations=self.iterations,
             easy_cross=self.easy_cross,
@@ -425,11 +434,34 @@ class Timer:
         )
 
         if self.show_cube:
-            console.print(str(cube), end='')
+            console.print(str(self.cube), end='')
 
+        self.state = 'scrambling'
         self.start_line()
 
-        char = await self.getch()
+        if self.bluetooth_interface:
+            self.scramble_completed_event.clear()
+
+            tasks = [
+                asyncio.create_task(self.getch()),
+                asyncio.create_task(self.scramble_completed_event.wait()),
+            ]
+            done, pending = await asyncio.wait(
+                tasks,
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            for task in pending:
+                task.cancel()
+
+            char = ''
+            if tasks[0] in done:
+                char = tasks[0].result()
+                self.scramble_completed_event.set()
+            else:
+                self.clear_line(full=True)
+        else:
+            char = await self.getch()
 
         if char == 'q':
             return False
