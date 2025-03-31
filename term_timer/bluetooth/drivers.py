@@ -141,9 +141,9 @@ class GanGen2Driver(Driver):
                 direction = msg.get_bit_word(16 + 5 * i, 1)
                 move = 'URFDLB'[face] + " '"[direction]
                 elapsed = msg.get_bit_word(47 + 16 * i, 16)
-                if elapsed == 0:
-                    # In case of 16-bit cube timestamp register overflow
-                    elapsed = timestamp - self.last_move_timestamp
+                # if elapsed == 0:
+                #     # In case of 16-bit cube timestamp register overflow
+                #     elapsed = timestamp - self.last_move_timestamp
                 self.cube_timestamp += elapsed
                 payload = {
                     'event': 'move',
