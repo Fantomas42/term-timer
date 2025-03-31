@@ -368,10 +368,12 @@ class Timer:
                 extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
 
             if self.move_count:
-                extra += f' [move]{ self.move_count } moves[/move]'
+                tps = self.move_count / (self.elapsed_time / SECOND)
+                extra += f' [move]{ self.move_count } moves / { tps:.2f} TPS[/move]'
 
         elif self.move_count:
-            extra += f'[move]{ self.move_count } moves[/move]'
+            tps = self.move_count / (self.elapsed_time / SECOND)
+            extra += f'[move]{ self.move_count } moves / { tps:.2f} TPS[/move]'
 
         self.clear_line(full=False)
         console.print(
