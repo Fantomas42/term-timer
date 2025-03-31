@@ -28,6 +28,7 @@ class Timer:
         self.end_time = 0
         self.elapsed_time = 0
         self.move_count = 0
+        self.state = 'init'
 
         self.cube_size = cube_size
         self.free_play = free_play
@@ -47,11 +48,10 @@ class Timer:
         self.stack = stack
 
         self.stop_event = asyncio.Event()
+        self.scramble_completed_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
         self.facelets_received_event = asyncio.Event()
         self.hardware_received_event = asyncio.Event()
-
-        self.started_solving = False  # TODO(me): review
 
         if self.free_play:
             console.print(
@@ -94,7 +94,6 @@ class Timer:
                 self.bluetooth_consumer(),
             )
 
-            # Initialize the cube
             await self.bluetooth_interface.send_command('REQUEST_HARDWARE')
             await self.bluetooth_interface.send_command('REQUEST_FACELETS')
 
@@ -145,8 +144,6 @@ class Timer:
             events = await self.bluetooth_queue.get()
 
             if events is None:
-                # Got message from client about disconnection.
-                # Exiting consumer loop...'
                 break
 
             for event in events:
@@ -173,15 +170,13 @@ class Timer:
                     if self.bluetooth_cube:
                         self.bluetooth_cube.rotate([event['move']])
 
-                    if self.started_solving:
+                    if self.state == 'solving':
                         self.move_count += 1
 
-                        # Check if cube is solved
-                        if self.bluetooth_cube.is_done():
-                            if self.started_solving and not self.stop_event.is_set():
-                                self.stop_event.set()
-                                self.end_time = time.perf_counter_ns()
-                                self.solve_completed_event.set()
+                        if not self.stop_event.is_set() and self.bluetooth_cube.is_done():
+                            self.end_time = time.perf_counter_ns()
+                            self.stop_event.set()
+                            self.solve_completed_event.set()
 
     async def getch(self, timeout: float | None = None) -> str:
         fd = sys.stdin.fileno()
@@ -191,7 +186,6 @@ class Timer:
         try:
             tty.setcbreak(fd)
 
-            # Create a Future that will be resolved when input is available
             loop = asyncio.get_event_loop()
             future = loop.create_future()
 
@@ -200,23 +194,18 @@ class Timer:
                     ch = sys.stdin.read(1)
                     future.set_result(ch)
 
-            # Add the stdin file descriptor to the event loop
             loop.add_reader(fd, stdin_callback)
 
             try:
                 if timeout is not None:
-                    # Wait for input with timeout
                     await asyncio.wait_for(future, timeout)
                 else:
-                    # Wait for input indefinitely
                     await future
 
-                # Get the result (the character)
                 ch = future.result()
             except asyncio.TimeoutError:  # noqa UP041
                 ch = ''
             finally:
-                # Clean up the reader
                 loop.remove_reader(fd)
 
         finally:
@@ -264,9 +253,13 @@ class Timer:
 
     async def stopwatch(self) -> None:
         self.stop_event.clear()
+        self.solve_completed_event.clear()
+
         self.start_time = time.perf_counter_ns()
-        self.started_solving = True
+        self.end_time = 0
         self.move_count = 0
+        self.elapsed_time = 0
+        self.state = 'solving'
 
         tempo_elapsed = 0
 
@@ -334,9 +327,6 @@ class Timer:
         new_stats = Statistics(self.stack)
 
         extra = ''
-        if self.move_count:
-            extra += f'[edge]{ self.move_count } moves[/edge]'
-
         if new_stats.total > 1:
             extra += format_delta(new_stats.delta)
 
@@ -351,6 +341,12 @@ class Timer:
             if new_stats.total >= 12:
                 ao12 = new_stats.ao12
                 extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
+
+            if self.move_count:
+                extra += f' [move]{ self.move_count } moves[/move]'
+
+        elif self.move_count:
+            extra += f'[move]{ self.move_count } moves[/move]'
 
         self.clear_line(full=False)
         console.print(
@@ -419,50 +415,29 @@ class Timer:
             self.stop_event.set()
             await inspection_task
 
-        # stopwatch_task = asyncio.create_task(self.stopwatch())
-
-        # await self.getch()
-        # self.end_time = time.perf_counter_ns()
-
-        ######################
-        self.started_solving = False
-        self.move_count = 0
-        self.solve_completed_event.clear()
-
         stopwatch_task = asyncio.create_task(self.stopwatch())
 
-        # In Bluetooth mode, wait for either manual stop or cube solved detection
         if self.bluetooth_interface:
-            # Create two tasks: one for manual stopping and one for cube solved detection
-            done, pending = await asyncio.wait(
+            _done, pending = await asyncio.wait(
                 [
                     asyncio.create_task(self.getch()),
-                    asyncio.create_task(self.solve_completed_event.wait())
+                    asyncio.create_task(self.solve_completed_event.wait()),
                 ],
                 return_when=asyncio.FIRST_COMPLETED,
             )
 
-            # Cancel the remaining task
             for task in pending:
                 task.cancel()
 
-            # If not already set by the solve_completed_event
             if not self.stop_event.is_set():
                 self.end_time = time.perf_counter_ns()
                 self.stop_event.set()
         else:
-            # Manual mode (same as original)
             await self.getch()
             self.end_time = time.perf_counter_ns()
             self.stop_event.set()
 
         await stopwatch_task
-
-        #############
-
-
-        # self.stop_event.set()
-        # await stopwatch_task
 
         self.elapsed_time = self.end_time - self.start_time
 

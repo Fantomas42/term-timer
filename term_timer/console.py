@@ -18,6 +18,7 @@ theme = Theme(
         'consign': '#CECECE',
 
         'bluetooth': 'bold #FFFFFF on #133EBF',
+        'move': 'bold #00DFFF',
 
         'title': f'bold { TEXT_LIGHT }',
         'moves': f'bold { TEXT_LIGHT }',
