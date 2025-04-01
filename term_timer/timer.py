@@ -394,11 +394,6 @@ class Timer:
             tps = len(self.moves) / (self.elapsed_time / SECOND)
             extra += f'[tps]{ len(self.moves) } moves / { tps:.2f} TPS[/tps]'
 
-            ###
-            for m in self.moves:
-                print(m)
-            ###
-
         self.clear_line(full=False)
         console.print(
             f'[duration]Duration #{ len(self.stack) }:[/duration]',
@@ -515,6 +510,12 @@ class Timer:
 
         self.elapsed_time = self.end_time - self.start_time
 
+        moves = []
+        if self.moves:
+            first_time = self.moves[0]['time']
+            for move in self.moves:
+                moves.append(f'{ move["move"] }@{ move["time"] - first_time }')
+
         solve = Solve(
             datetime.now(tz=timezone.utc).timestamp(),  # noqa: UP017
             self.elapsed_time,
@@ -523,7 +524,7 @@ class Timer:
                 self.bluetooth_interface
                 and self.bluetooth_interface.device.name
             ) or '',
-            moves=self.moves,
+            moves=' '.join(moves),
         )
 
         self.handle_solve(solve)
