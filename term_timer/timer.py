@@ -3,6 +3,9 @@ import sys
 import termios
 import time
 import tty
+from datetime import datetime
+from datetime import timezone
+
 
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
@@ -513,8 +516,8 @@ class Timer:
         self.elapsed_time = self.end_time - self.start_time
 
         solve = Solve(
-            self.start_time,
-            self.end_time,
+            datetime.now(tz=timezone.utc).timestamp(),  # noqa: UP017
+            self.elapsed_time,
             ' '.join(scramble),
             device=(
                 self.bluetooth_interface

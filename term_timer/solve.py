@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timezone
 
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
@@ -7,39 +8,36 @@ from term_timer.formatter import format_time
 
 
 class Solve:
-    def __init__(self, start_time: int | str, end_time: int | str,
+    def __init__(self,
+                 date: datetime,
+                 time: int | str,
                  scramble: str, flag: str = '',
                  device: str = '',
                  moves: list[dict[str, str]] | None = None):
-        self.start_time = int(start_time)
-        self.end_time = int(end_time)
+        self.date = int(date)
+        self.time = int(time)
         self.scramble = scramble
         self.flag = flag
-
         self.moves = moves
         self.device = device
 
-        self.elapsed_time = self.end_time - self.start_time
-
     @property
     def final_time(self) -> int:
-        elapsed = self.elapsed_time
-
         if self.flag == PLUS_TWO:
-            return elapsed + (2 * SECOND)
+            return self.time + (2 * SECOND)
         if self.flag == DNF:
             return 0
 
-        return elapsed
+        return self.time
 
     @property
-    def start_datetime(self) -> datetime:
-        return datetime.fromtimestamp(self.start_time // SECOND)   # noqa: DTZ006
+    def datetime(self) -> datetime:
+        return datetime.fromtimestamp(self.date, tz=timezone.utc)   # noqa: UP017
 
     def as_save(self):
         return {
-            'start_time': self.start_time,
-            'end_time': self.end_time,
+            'date': self.date,
+            'time': self.time,
             'scramble': self.scramble,
             'flag': self.flag,
             'device': self.device,
@@ -47,4 +45,4 @@ class Solve:
         }
 
     def __str__(self) -> str:
-        return f'{ format_time(self.elapsed_time) }{ self.flag }'
+        return f'{ format_time(self.time) }{ self.flag }'

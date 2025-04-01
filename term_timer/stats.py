@@ -146,8 +146,8 @@ class Statistics(StatisticsTools):
     @cached_property
     def delta(self) -> int:
         return (
-            self.stack[-1].elapsed_time
-            - self.stack[-2].elapsed_time
+            self.stack[-1].time
+            - self.stack[-2].time
         )
 
     @cached_property
@@ -332,11 +332,11 @@ class StatisticsReporter(Statistics):
             solve = self.stack[-i]
             index = f'#{ size - i + 1}'
 
-            date = solve.start_datetime.strftime('%Y-%m-%d %H:%M')
+            date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
             console.print(
                 f'[stats]{ index:{" "}>{max_count}}[/stats]',
-                f'[result]{ format_time(solve.elapsed_time) }[/result]',
+                f'[result]{ format_time(solve.time) }[/result]',
                 f'[date]{ date }[/date]',
                 f'[consign]{ solve.scramble }[/consign]',
                 f'[result]{ solve.flag }[/result]',
