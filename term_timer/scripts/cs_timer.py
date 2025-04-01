@@ -1,3 +1,4 @@
+import json
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -6,15 +7,14 @@ from term_timer.argparser import ArgumentParser
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
+from term_timer.solve import Solve
 
 
-def date_to_ns(date: str) -> int:
+def date_to_ts(date: str) -> int:
     date_format = '%Y-%m-%d %H:%M:%S'
     dt = datetime.strptime(date, date_format)  # noqa: DTZ007
 
-    timestamp_seconds = dt.timestamp()
-
-    return int(timestamp_seconds * SECOND)
+    return dt.timestamp()
 
 
 def time_to_ns(time: str) -> int:
@@ -50,26 +50,24 @@ def import_csv() -> None:
     with export_path.open() as fd:
         lines = fd.readlines()
 
+    solves = []
     for line in lines[1:]:
         flag = ''
         (_i, time_corrected, _comment, scramble, date, time) = line.split(';')
-        start_date = date_to_ns(date)
-        end_date = start_date + time_to_ns(time)
+        date = date_to_ts(date)
+        time = time_to_ns(time)
 
         if '+' in time_corrected:
             flag = PLUS_TWO
         elif 'DNF(' in time_corrected:
             flag = DNF
 
-        print(
-            ';'.join(
-                [
-                    time.strip(),
-                    str(start_date),
-                    str(end_date),
-                    scramble,
-                    flag,
-                    '',
-                ],
-            ),
+        solves.append(
+            Solve(
+                date, time,
+                scramble,
+                flag,
+            ).as_save(),
         )
+
+    print(json.dumps(solves, indent=1))

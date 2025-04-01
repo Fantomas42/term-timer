@@ -9,8 +9,7 @@ from term_timer.formatter import format_time
 
 class Solve:
     def __init__(self,
-                 date: datetime,
-                 time: int | str,
+                 date: int, time: int,
                  scramble: str, flag: str = '',
                  device: str = '',
                  moves: list[dict[str, str]] | None = None):
