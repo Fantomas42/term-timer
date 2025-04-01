@@ -70,7 +70,7 @@ async def timer() -> int:  # noqa: PLR0912
             await timer.bluetooth_disconnect()
 
     if not free_play:
-        save_solves(cube, stack)
+        save_solves(cube, timer.stack)
 
     if len(stack) > 1:
         session_stats = StatisticsReporter(cube, stack)

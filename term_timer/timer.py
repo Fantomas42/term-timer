@@ -515,6 +515,10 @@ class Timer:
             self.start_time,
             self.end_time,
             ' '.join(scramble),
+            device=(
+                self.bluetooth_interface
+                and self.bluetooth_interface.device.name
+            ) or '',
             moves=self.moves,
         )
 
