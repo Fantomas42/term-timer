@@ -11,8 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 async def consumer_cb(queue):
-    logger.info('CONSUMER: Start consumming')
-
     internal_cube = None
 
     def show_cube(cube):
