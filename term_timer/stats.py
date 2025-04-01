@@ -362,19 +362,21 @@ class StatisticsReporter(Statistics):
             label='Time',
         )
 
-        plt.plot(
-            ao5s,
-            marker='fhd',
-            label='AO5',
-            color='red',
-        )
+        if any(ao5s):
+            plt.plot(
+                ao5s,
+                marker='fhd',
+                label='AO5',
+                color='red',
+            )
 
-        plt.plot(
-            ao12s,
-            marker='fhd',
-            label='AO12',
-            color='blue',
-        )
+        if any(ao12s):
+            plt.plot(
+                ao12s,
+                marker='fhd',
+                label='AO12',
+                color='blue',
+            )
 
         plt.title(f'Tendencies { self.cube_name }')
         plt.plot_size(height=25)
