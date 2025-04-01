@@ -4,7 +4,6 @@ from random import seed
 
 from term_timer.arguments import get_arguments
 from term_timer.in_out import load_solves
-from term_timer.in_out import save_solves
 from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
 
@@ -69,11 +68,8 @@ async def timer() -> int:  # noqa: PLR0912
         if timer.bluetooth_interface:
             await timer.bluetooth_disconnect()
 
-    if not free_play:
-        save_solves(cube, timer.stack)
-
     if len(stack) > 1:
-        session_stats = StatisticsReporter(cube, stack)
+        session_stats = StatisticsReporter(cube, timer.stack)
         session_stats.resume((free_play and 'Session ') or 'Global ')
 
     return 0

@@ -12,6 +12,7 @@ from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
+from term_timer.in_out import save_solves
 from term_timer.magic_cube import Cube
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
@@ -535,7 +536,10 @@ class Timer:
                 self.stack[-1].flag = PLUS_TWO
             elif char == 'z':
                 self.stack.pop()
-            elif char == 'q':
+
+            save_solves(self.cube_size, self.stack)
+
+            if char == 'q':
                 return False
 
         return True
