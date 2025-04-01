@@ -1,4 +1,5 @@
 import json
+import operator
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -34,19 +35,7 @@ def time_to_ns(time: str) -> int:
     return int(total_seconds * SECOND)
 
 
-def import_csv() -> None:
-    parser = ArgumentParser(
-        description='Import CSTimer solves in CSV',
-    )
-    parser.add_argument(
-        'export',
-        help='CSTimer csv file to import',
-    )
-
-    options = parser.parse_args(sys.argv[1:])
-
-    export_path = Path(options.export)
-
+def import_csv(export_path: Path) -> str:
     with export_path.open() as fd:
         lines = fd.readlines()
 
@@ -70,4 +59,92 @@ def import_csv() -> None:
             ).as_save(),
         )
 
-    print(json.dumps(solves, indent=1))
+    return json.dumps(solves, indent=1)
+
+
+def import_json(export_path: Path) -> str:
+    """
+    Advanced import for 3x3x3 bluetooth cube
+    """
+    with export_path.open() as fd:
+        data = json.load(fd)
+
+    properties = data['properties']
+    session_data = json.loads(properties['sessionData'])
+
+    solves = []
+
+    for session_key in data:
+        if 'session' not in session_key:
+            continue
+
+        if not len(data[session_key]):
+            continue
+
+        property_key = session_key.replace('session', '')
+        session_property = session_data[property_key]
+
+        scramble_type = session_property.get('opt', {}).get('scrType', '')
+
+        if scramble_type:
+            continue
+
+        for solve in data[session_key]:
+            if len(solve) != 5:
+                continue
+
+            flag, time = solve[0]
+            scramble = solve[1]
+            date = solve[3]
+            moves = solve[4][0]
+
+            if flag == -1:
+                flag = DNF
+            elif flag == 2000:
+                flag = PLUS_TWO
+            else:
+                flag = ''
+
+            device = ''
+            if 'moyu' in session_property['name'].lower():
+                device = 'WCU_MY32_A6A7'
+            else:
+                device = 'GAN12uiFp-2EE'
+
+            solves.append(
+                Solve(
+                    date,
+                    time * 1_000_000,
+                    scramble,
+                    flag,
+                    device,
+                    moves,
+                ).as_save(),
+            )
+
+    solves = sorted(solves, key=operator.itemgetter('date'))
+
+    return json.dumps(solves, indent=1)
+
+
+def main() -> None:
+    parser = ArgumentParser(
+        description='Import CSTimer solves in CSV',
+    )
+    parser.add_argument(
+        'export',
+        help='CSTimer CSV or TXT file to import',
+    )
+
+    options = parser.parse_args(sys.argv[1:])
+
+    export = options.export
+    export_path = Path(options.export)
+
+    if export.endswith('.csv'):
+        print(import_csv(export_path))
+
+    elif export.endswith('.txt'):
+        print(import_json(export_path))
+
+    return 0
