@@ -22,6 +22,12 @@ class Solve:
         self.raw_moves = moves
 
     @cached_property
+    def datetime(self) -> datetime:
+        return datetime.fromtimestamp(
+            self.date, tz=timezone.utc,  # noqa: UP017
+        )
+
+    @cached_property
     def final_time(self) -> int:
         if self.flag == PLUS_TWO:
             return self.time + (2 * SECOND)
@@ -29,10 +35,6 @@ class Solve:
             return 0
 
         return self.time
-
-    @cached_property
-    def datetime(self) -> datetime:
-        return datetime.fromtimestamp(self.date, tz=timezone.utc)   # noqa: UP017
 
     @cached_property
     def move_times(self) -> list[str, int]:

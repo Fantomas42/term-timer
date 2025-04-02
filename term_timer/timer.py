@@ -468,18 +468,19 @@ class Timer:
                 ao12 = new_stats.ao12
                 extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
 
-            if self.moves:
-                extra += ' '
-
-        if self.moves:
-            extra += f'[tps]{ solve.moves_number } moves / { solve.tps:.2f} TPS[/tps]'
-
         self.clear_line(full=False)
         console.print(
             f'[duration]Duration #{ len(self.stack) }:[/duration]',
             f'[result]{ format_time(self.elapsed_time) }[/result]',
             extra,
         )
+
+        if solve.moves_number:
+            console.print(
+                f'[bluetooth]Analysis #{ len(self.stack) }:[/bluetooth]',
+                f'[result]{ solve.moves_number } moves[/result]',
+                f'[tps]{ solve.tps:.2f} TPS[/tps]',
+            )
 
         if new_stats.total > 1:
             mc = 10 + len(str(len(self.stack))) - 1
