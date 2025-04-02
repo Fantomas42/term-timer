@@ -56,8 +56,9 @@ class Timer:
 
         self.stop_event = asyncio.Event()
         self.scramble_completed_event = asyncio.Event()
-        self.solve_completed_event = asyncio.Event()
         self.solve_started_event = asyncio.Event()
+        self.solve_completed_event = asyncio.Event()
+
         self.facelets_received_event = asyncio.Event()
         self.hardware_received_event = asyncio.Event()
 
@@ -209,7 +210,7 @@ class Timer:
 
                         self.handle_scrambled()
 
-                    if self.state in {'inspecting', 'scrambled'}:
+                    elif self.state in {'inspecting', 'scrambled'}:
                         self.moves.append(
                             {
                                 'move': event['move'],
@@ -592,7 +593,7 @@ class Timer:
         elif self.bluetooth_interface:
             _done, pending = await asyncio.wait(
                 [
-                    asyncio.create_task(self.getch(self.countdown)),
+                    asyncio.create_task(self.getch()),
                     asyncio.create_task(self.solve_started_event.wait()),
                 ],
                 return_when=asyncio.FIRST_COMPLETED,
