@@ -208,7 +208,7 @@ class Timer:
 
                         self.handle_scrambled()
 
-                    if self.state in {'inspection', 'scrambled'}:
+                    if self.state in {'inspecting', 'scrambled'}:
                         self.moves.append(
                             {
                                 'move': event['move'],
@@ -363,7 +363,6 @@ class Timer:
         self.start_time = time.perf_counter_ns()
         self.end_time = 0
         self.elapsed_time = 0
-        self.moves = []
         self.scrambled = []
         self.state = 'solving'
 
@@ -512,6 +511,8 @@ class Timer:
                 )
 
     async def start(self) -> bool:
+        self.moves = []
+
         self.scramble, self.cube = scrambler(
             cube_size=self.cube_size,
             iterations=self.iterations,
@@ -561,13 +562,13 @@ class Timer:
         self.solve_started_event.clear()
 
         if self.countdown:
-            # TODO(me): fix in bluetooth does not work
             inspection_task = asyncio.create_task(self.inspection())
+
             if self.bluetooth_interface:
 
                 _done, pending = await asyncio.wait(
                     [
-                        asyncio.create_task(self.getch()),
+                        asyncio.create_task(self.getch(self.countdown)),
                         asyncio.create_task(self.solve_started_event.wait()),
                     ],
                     return_when=asyncio.FIRST_COMPLETED,
@@ -590,7 +591,7 @@ class Timer:
         elif self.bluetooth_interface:
             _done, pending = await asyncio.wait(
                 [
-                    asyncio.create_task(self.getch()),
+                    asyncio.create_task(self.getch(self.countdown)),
                     asyncio.create_task(self.solve_started_event.wait()),
                 ],
                 return_when=asyncio.FIRST_COMPLETED,
