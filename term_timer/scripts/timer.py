@@ -68,7 +68,7 @@ async def timer() -> int:  # noqa: PLR0912
         if timer.bluetooth_interface:
             await timer.bluetooth_disconnect()
 
-    if len(stack) > 1:
+    if len(timer.stack) > 1:
         session_stats = StatisticsReporter(cube, timer.stack)
         session_stats.resume((free_play and 'Session ') or 'Global ')
 

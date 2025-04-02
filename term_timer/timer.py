@@ -520,13 +520,13 @@ class Timer:
             easy_cross=self.easy_cross,
         )
 
+        if self.show_cube:
+            console.print(str(self.cube), end='')
+
         console.print(
             f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
             f'[moves]{ " ".join(self.scramble) }[/moves]',
         )
-
-        if self.show_cube:
-            console.print(str(self.cube), end='')
 
         self.state = 'scrambling'
         self.scrambled = []
