@@ -58,6 +58,7 @@ class Timer:
         self.stop_event = asyncio.Event()
         self.scramble_completed_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
+        self.solve_started_event = asyncio.Event()
         self.facelets_received_event = asyncio.Event()
         self.hardware_received_event = asyncio.Event()
 
@@ -180,10 +181,10 @@ class Timer:
                         )
                         console.print(
                             '[bluetooth]❓Bluetooth:[/bluetooth] '
-                            '[consign]Does the cube is really solve ?'
-                            '[b](y)[/b] to reset the cube[/consign]',
+                            '[consign]Is the cube is really solved ? '
+                            '[b](y)[/b] to reset the cube.[/consign]',
                         )
-                        char = await self.getch(self.countdown)
+                        char = await self.getch()
                         if char == 'y':
                             await self.bluetooth_interface.send_command('REQUEST_RESET')
                             await self.bluetooth_interface.send_command('REQUEST_FACELETS')
@@ -206,6 +207,15 @@ class Timer:
                         self.scrambled.append(event['move'])
 
                         self.handle_scrambled()
+
+                    if self.state in {'inspection', 'scrambled'}:
+                        self.moves.append(
+                            {
+                                'move': event['move'],
+                                'time': event['cubeTimestamp'],
+                            },
+                        )
+                        self.solve_started_event.set()
 
                     elif self.state == 'solving':
                         self.moves.append(
@@ -294,7 +304,10 @@ class Timer:
         ):
             self.scramble_completed_event.set()
             self.beep()
-            out = '[result]Cube ready and scrambled ![/result]\n'
+            out = (
+                '[result]Cube scrambled and ready to be solved ![/result] '
+                '[consign]Start moving to launch the timer.[/consign]\n'
+            )
 
         else:
             out = ''
@@ -544,13 +557,50 @@ class Timer:
         if char == 'q':
             return False
 
+        self.state = 'scrambled'
+        self.solve_started_event.clear()
+
         if self.countdown:
+            # TODO(me): fix in bluetooth does not work
             inspection_task = asyncio.create_task(self.inspection())
+            if self.bluetooth_interface:
 
-            await self.getch(self.countdown)
+                _done, pending = await asyncio.wait(
+                    [
+                        asyncio.create_task(self.getch()),
+                        asyncio.create_task(self.solve_started_event.wait()),
+                    ],
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
 
-            self.stop_event.set()
+                for task in pending:
+                    task.cancel()
+
+                if not self.solve_started_event.is_set():
+                    self.solve_started_event.set()
+                if not self.stop_event.is_set():
+                    self.stop_event.set()
+            else:
+                await self.getch(self.countdown)
+                self.solve_started_event.set()
+                self.stop_event.set()
+
             await inspection_task
+
+        elif self.bluetooth_interface:
+            _done, pending = await asyncio.wait(
+                [
+                    asyncio.create_task(self.getch()),
+                    asyncio.create_task(self.solve_started_event.wait()),
+                ],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            for task in pending:
+                task.cancel()
+
+            if not self.solve_started_event.is_set():
+                self.solve_started_event.set()
 
         stopwatch_task = asyncio.create_task(self.stopwatch())
 
