@@ -323,6 +323,7 @@ class Timer:
 
                 out += f'[{ style }]{ move }[/{ style }] '
 
+        # TODO(me): improve to reduce glitches
         self.clear_line(full=True)
 
         console.print(
@@ -332,6 +333,8 @@ class Timer:
         )
 
     async def inspection(self) -> None:
+        self.clear_line(full=True)
+
         self.state = 'inspecting'
         self.stop_event.clear()
 
@@ -359,6 +362,8 @@ class Timer:
             await asyncio.sleep(0.01)
 
     async def stopwatch(self) -> None:
+        self.clear_line(full=True)
+
         self.stop_event.clear()
         self.solve_completed_event.clear()
 
@@ -552,8 +557,6 @@ class Timer:
             if tasks[0] in done:
                 char = tasks[0].result()
                 self.scramble_completed_event.set()
-            else:
-                self.clear_line(full=True)
         else:
             char = await self.getch()
 
