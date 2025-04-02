@@ -635,6 +635,7 @@ class Timer:
         self.elapsed_time = self.end_time - self.start_time
 
         moves = []
+
         if self.moves:
             first_time = self.moves[0]['time']
             for move in self.moves:
