@@ -97,7 +97,7 @@ def optimize_double_moves(old_moves: list[str]) -> list[str]:
 
     while i < len(moves) - 1:
         if moves[i] == moves[i + 1]:
-            moves[i:i + 2] = ['%s2' % moves[i][0]]
+            moves[i:i + 2] = [f'{ moves[i][0] }2']
             changed = True
         else:
             i += 1

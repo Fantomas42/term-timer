@@ -6,7 +6,6 @@ import tty
 from datetime import datetime
 from datetime import timezone
 
-
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.console import console
@@ -186,8 +185,10 @@ class Timer:
                         )
                         char = await self.getch()
                         if char == 'y':
-                            await self.bluetooth_interface.send_command('REQUEST_RESET')
-                            await self.bluetooth_interface.send_command('REQUEST_FACELETS')
+                            for command in ['RESET', 'FACELETS']:
+                                await self.bluetooth_interface.send_command(
+                                    f'REQUEST_{ command }',
+                                )
                             continue
 
                         console.print(
