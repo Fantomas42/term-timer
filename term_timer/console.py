@@ -11,6 +11,8 @@ TEXT_LIGHT = '#FFFFD7'
 theme = Theme(
     {
         'warning': f'bold { RED }',
+        'caution': f'bold { ORANGE }',
+
         'scramble': f'{ TEXT_DARK } on { GREEN }',
         'duration': f'{ TEXT_DARK } on { ORANGE }',
         'record': f'{ TEXT_DARK } on #5FFFAF',

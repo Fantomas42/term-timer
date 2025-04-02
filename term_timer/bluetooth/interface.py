@@ -66,12 +66,14 @@ class BluetoothInterface:
 
     async def __aexit__(self, exc_type, exc_value, exc_traceback):
         logger.debug('Disconnect from client')
-        await self.client.stop_notify(
-            self.driver.state_characteristic_uid,
-        )
-        await self.client.disconnect()
         # Send an "exit command to the consumer"
         await self.queue.put(None)
+
+        if self.client and self.client.is_connected:
+            await self.client.stop_notify(
+                self.driver.state_characteristic_uid,
+            )
+            await self.client.disconnect()
 
     async def notification_handler(self, sender, data):
         events = await self.driver.event_handler(sender, data)

@@ -20,6 +20,7 @@ from term_timer.magic_cube import Cube
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
+from term_timer.transform import compress_moves
 
 
 class Timer:
@@ -31,7 +32,9 @@ class Timer:
         self.start_time = 0
         self.end_time = 0
         self.elapsed_time = 0
+        self.scramble = []
         self.moves = []
+        self.scrambled = []
         self.state = 'init'
 
         self.cube_size = cube_size
@@ -160,8 +163,8 @@ class Timer:
                     event.pop('event')
                     event.pop('timestamp')
                     self.bluetooth_hardware.update(event)
-
                     self.hardware_received_event.set()
+
                 if event_name == 'battery':
                     self.bluetooth_hardware['battery_level'] = event['level']
 
@@ -175,6 +178,22 @@ class Timer:
                             '[bluetooth]🫤Bluetooth:[/bluetooth] '
                             '[warning]Cube is not in solved state[/warning]',
                         )
+                        console.print(
+                            '[bluetooth]❓Bluetooth:[/bluetooth] '
+                            '[consign]Does the cube is really solve ?'
+                            '[b](y)[/b] to reset the cube[/consign]',
+                        )
+                        char = await self.getch(self.countdown)
+                        if char == 'y':
+                            await self.bluetooth_interface.send_command('REQUEST_RESET')
+                            await self.bluetooth_interface.send_command('REQUEST_FACELETS')
+                            continue
+
+                        console.print(
+                            '[warning]Quit until solved[/warning]',
+                        )
+                        await self.bluetooth_queue.put(None)
+                        continue
 
                     self.facelets_received_event.set()
                 elif event_name == 'move':
@@ -183,11 +202,10 @@ class Timer:
 
                     self.bluetooth_cube.rotate([event['move']])
 
-                    if self.state == 'scrambling' and (
-                            self.bluetooth_cube.as_twophase_facelets
-                            == self.cube.as_twophase_facelets
-                    ):
-                        self.scramble_completed_event.set()
+                    if self.state in {'init', 'scrambling'}:
+                        self.scrambled.append(event['move'])
+
+                        self.handle_scrambled()
 
                     elif self.state == 'solving':
                         self.moves.append(
@@ -269,6 +287,35 @@ class Timer:
     def beep() -> None:
         print('\a', end='', flush=True)
 
+    def handle_scrambled(self):
+        if (
+                self.bluetooth_cube.as_twophase_facelets
+                == self.cube.as_twophase_facelets
+        ):
+            self.scramble_completed_event.set()
+            self.beep()
+            out = '[result]Cube ready and scrambled ![/result]\n'
+
+        else:
+            out = ''
+            for i, move in enumerate(compress_moves(self.scrambled)):
+                expected = self.scramble[i]
+                style = 'move'
+                if expected != move:
+                    style = 'warning'
+                    if expected[0] == move[0]:
+                        style = 'caution'
+
+                out += f'[{ style }]{ move }[/{ style }] '
+
+        self.clear_line(full=True)
+
+        console.print(
+            f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
+            out,
+            end='',
+        )
+
     async def inspection(self) -> None:
         self.state = 'inspecting'
         self.stop_event.clear()
@@ -304,6 +351,7 @@ class Timer:
         self.end_time = 0
         self.elapsed_time = 0
         self.moves = []
+        self.scrambled = []
         self.state = 'solving'
 
         tempo_elapsed = 0
@@ -346,13 +394,32 @@ class Timer:
 
             await asyncio.sleep(0.01)
 
-    @staticmethod
-    def start_line() -> None:
-        console.print(
-            'Press any key to start/stop the timer,',
-            '[b](q)[/b] to quit.',
-            end='', style='consign',
-        )
+    def start_line(self) -> None:
+        if self.bluetooth_interface:
+            if self.countdown:
+                console.print(
+                    'Apply the scramble on the cube to start the inspection,',
+                    '[b](q)[/b] to quit.',
+                    end='', style='consign',
+                )
+            else:
+                console.print(
+                    'Apply the scramble on the cube to init the timer,',
+                    '[b](q)[/b] to quit.',
+                    end='', style='consign',
+                )
+        elif self.countdown:
+            console.print(
+                'Press any key once scrambled to start the inspection,',
+                '[b](q)[/b] to quit.',
+                end='', style='consign',
+            )
+        else:
+            console.print(
+                'Press any key once scrambled to start/stop the timer,',
+                '[b](q)[/b] to quit.',
+                end='', style='consign',
+            )
 
     @staticmethod
     def save_line() -> None:
@@ -432,7 +499,7 @@ class Timer:
                 )
 
     async def start(self) -> bool:
-        scramble, self.cube = scrambler(
+        self.scramble, self.cube = scrambler(
             cube_size=self.cube_size,
             iterations=self.iterations,
             easy_cross=self.easy_cross,
@@ -440,13 +507,14 @@ class Timer:
 
         console.print(
             f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
-            f'[moves]{ " ".join(scramble) }[/moves]',
+            f'[moves]{ " ".join(self.scramble) }[/moves]',
         )
 
         if self.show_cube:
             console.print(str(self.cube), end='')
 
         self.state = 'scrambling'
+        self.scrambled = []
         self.start_line()
 
         if self.bluetooth_interface:
@@ -519,7 +587,7 @@ class Timer:
         solve = Solve(
             datetime.now(tz=timezone.utc).timestamp(),  # noqa: UP017
             self.elapsed_time,
-            ' '.join(scramble),
+            ' '.join(self.scramble),
             device=(
                 self.bluetooth_interface
                 and self.bluetooth_interface.device.name
