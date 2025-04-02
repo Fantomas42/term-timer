@@ -308,7 +308,7 @@ class Timer:
             self.beep()
             out = (
                 '[result]Cube scrambled and ready to be solved ![/result] '
-                '[consign]Start moving to launch the timer.[/consign]\n'
+                '[consign]Start solving to launch the timer.[/consign]'
             )
 
         else:
@@ -553,7 +553,8 @@ class Timer:
                 char = tasks[0].result()
                 self.scramble_completed_event.set()
             else:
-                self.clear_line(full=True)
+                ...
+                # self.clear_line(full=True)
         else:
             char = await self.getch()
 
@@ -632,6 +633,7 @@ class Timer:
         self.elapsed_time = self.end_time - self.start_time
 
         moves = []
+
         if self.moves:
             first_time = self.moves[0]['time']
             for move in self.moves:
