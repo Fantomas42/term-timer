@@ -472,8 +472,7 @@ class Timer:
                 extra += ' '
 
         if self.moves:
-            tps = len(self.moves) / (self.elapsed_time / SECOND)
-            extra += f'[tps]{ len(self.moves) } moves / { tps:.2f} TPS[/tps]'
+            extra += f'[tps]{ solve.moves_number } moves / { solve.tps:.2f} TPS[/tps]'
 
         self.clear_line(full=False)
         console.print(

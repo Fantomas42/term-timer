@@ -1,5 +1,6 @@
 from datetime import datetime
 from datetime import timezone
+from functools import cached_property
 
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
@@ -17,10 +18,10 @@ class Solve:
         self.time = int(time)
         self.scramble = scramble
         self.flag = flag
-        self.moves = moves
         self.device = device
+        self.raw_moves = moves
 
-    @property
+    @cached_property
     def final_time(self) -> int:
         if self.flag == PLUS_TWO:
             return self.time + (2 * SECOND)
@@ -29,10 +30,26 @@ class Solve:
 
         return self.time
 
-    @property
+    @cached_property
     def datetime(self) -> datetime:
         return datetime.fromtimestamp(self.date, tz=timezone.utc)   # noqa: UP017
 
+    @cached_property
+    def move_times(self) -> list[str, int]:
+        return [
+            move_time.split('@')
+            for move_time in self.raw_moves.split(' ')
+        ]
+
+    @cached_property
+    def moves_number(self):
+        return len(self.move_times)
+
+    @cached_property
+    def tps(self) -> float:
+        return self.moves_number / (self.time / SECOND)
+
+    @property
     def as_save(self):
         return {
             'date': self.date,
