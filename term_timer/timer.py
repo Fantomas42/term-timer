@@ -477,7 +477,7 @@ class Timer:
 
         if solve.moves_number:
             console.print(
-                f'[bluetooth]Analysis #{ len(self.stack) }:[/bluetooth]',
+                f'[analysis]Analysis #{ len(self.stack) }:[/analysis]',
                 f'[result]{ solve.moves_number } moves[/result]',
                 f'[tps]{ solve.tps:.2f} TPS[/tps]',
             )
