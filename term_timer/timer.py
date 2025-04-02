@@ -308,7 +308,7 @@ class Timer:
             self.beep()
             out = (
                 '[result]Cube scrambled and ready to be solved ![/result] '
-                '[consign]Start moving to launch the timer.[/consign]\n'
+                '[consign]Start solving to launch the timer.[/consign]'
             )
 
         else:

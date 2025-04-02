@@ -41,6 +41,7 @@ class Solve:
         return [
             move_time.split('@')
             for move_time in self.raw_moves.split(' ')
+            if move_time
         ]
 
     @cached_property
