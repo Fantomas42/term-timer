@@ -8,6 +8,7 @@ from term_timer.argparser import ArgumentParser
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
+from term_timer.in_out import load_solves
 from term_timer.solve import Solve
 
 
@@ -35,11 +36,10 @@ def time_to_ns(time: str) -> int:
     return int(total_seconds * SECOND)
 
 
-def import_csv(export_path: Path) -> str:
+def import_csv(export_path: Path, solves: list) -> str:
     with export_path.open() as fd:
         lines = fd.readlines()
 
-    solves = []
     for line in lines[1:]:
         flag = ''
         (_i, time_corrected, _comment, scramble, date, time) = line.split(';')
@@ -59,10 +59,12 @@ def import_csv(export_path: Path) -> str:
             ).as_save(),
         )
 
+    solves = sorted(solves, key=operator.itemgetter('date'))
+
     return json.dumps(solves, indent=1)
 
 
-def import_json(export_path: Path) -> str:
+def import_json(export_path: Path, solves: []) -> str:
     """
     Advanced import for 3x3x3 bluetooth cube
     """
@@ -71,8 +73,6 @@ def import_json(export_path: Path) -> str:
 
     properties = data['properties']
     session_data = json.loads(properties['sessionData'])
-
-    solves = []
 
     for session_key in data:
         if 'session' not in session_key:
@@ -135,16 +135,24 @@ def main() -> None:
         'export',
         help='CSTimer CSV or TXT file to import',
     )
+    parser.add_argument(
+        'merge',
+        type=int,
+        default=0,
+        help='Merge within existing data',
+    )
 
     options = parser.parse_args(sys.argv[1:])
 
     export = options.export
+    merge = options.merge
+    source = (merge and load_solves(merge)) or []
     export_path = Path(options.export)
 
     if export.endswith('.csv'):
-        print(import_csv(export_path))
+        print(import_csv(export_path, source))
 
     elif export.endswith('.txt'):
-        print(import_json(export_path))
+        print(import_json(export_path, source))
 
     return 0
