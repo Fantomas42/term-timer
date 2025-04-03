@@ -24,7 +24,7 @@ def save_solves(cube: int, solves: list[Solve]) -> bool:
 
     data = []
     for s in solves:
-        data.append(s.as_save())
+        data.append(s.as_save)
 
     with source.open('w+') as fd:
         json.dump(data, fd, indent=1)

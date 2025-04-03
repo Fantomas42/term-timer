@@ -60,7 +60,7 @@ class Solve:
             'scramble': self.scramble,
             'flag': self.flag,
             'device': self.device,
-            'moves': self.moves or [],
+            'moves': self.raw_moves or [],
         }
 
     def __str__(self) -> str:

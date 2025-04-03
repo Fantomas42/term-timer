@@ -56,7 +56,7 @@ def import_csv(export_path: Path, solves: list) -> str:
                 date, time,
                 scramble,
                 flag,
-            ).as_save(),
+            ).as_save,
         )
 
     solves = sorted(solves, key=operator.itemgetter('date'))
@@ -119,7 +119,7 @@ def import_json(export_path: Path, solves: []) -> str:
                     flag,
                     device,
                     moves,
-                ).as_save(),
+                ).as_save,
             )
 
     solves = sorted(solves, key=operator.itemgetter('date'))
@@ -129,14 +129,15 @@ def import_json(export_path: Path, solves: []) -> str:
 
 def main() -> None:
     parser = ArgumentParser(
-        description='Import CSTimer solves in CSV',
+        description='Import CSTimer solves into term-timer',
     )
     parser.add_argument(
         'export',
         help='CSTimer CSV or TXT file to import',
     )
     parser.add_argument(
-        'merge',
+        '-m', '--merge',
+        nargs='?',
         type=int,
         default=0,
         help='Merge within existing data',
@@ -146,8 +147,10 @@ def main() -> None:
 
     export = options.export
     merge = options.merge
-    source = (merge and load_solves(merge)) or []
-    export_path = Path(options.export)
+    source = []
+    for solve in (merge and load_solves(merge)) or []:
+        source.append(solve.as_save)
+    export_path = Path(export)
 
     if export.endswith('.csv'):
         print(import_csv(export_path, source))

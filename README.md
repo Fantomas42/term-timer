@@ -17,8 +17,9 @@ Practice your speed cubing skills on your terminal, for a full 80's vibe.
 - Metronome
 - Inspection time
 - Easy white cross
-- csTimer import
 - Seed control
+- csTimer import
+- Cubeast import
 
 ## Short demo
 
