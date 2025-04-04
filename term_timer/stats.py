@@ -340,7 +340,17 @@ class StatisticsReporter(Statistics):
                 f'[date]{ date }[/date]',
                 f'[consign]{ solve.scramble }[/consign]',
                 f'[result]{ solve.flag }[/result]',
-        )
+            )
+            if solve.raw_moves:
+                console.print(
+                    f'[analysis]{ index:{" "}>{max_count}}[/analysis]',
+                    f'[result]{ solve.raw_moves_number } moves[/result]',
+                    f'[tps]{ solve.raw_tps:.2f} TPS[/tps]',
+                    f'[result]{ solve.moves_number } moves[/result]',
+                    f'[tps]{ solve.tps:.2f} TPS[/tps]\n',
+                    f'[result]{ " ".join([m[0] for m in solve.move_times]) }[/result]\n',
+                    f'[result]{ " ".join(solve.moves) }[/result]',
+                )
 
     def graph(self) -> None:
         ao5s = []

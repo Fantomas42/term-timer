@@ -22,6 +22,23 @@ ROTATIONS = (
     'x', 'y', 'z',
 )
 
+SLICES = {
+    "L' R": 'M',
+    "R L'": 'M',
+    "L R'": "M'",
+    "R' L": "M'",
+
+    "F' B": 'S',
+    "B F'": 'S',
+    "F B'": "S'",
+    "B' F": "S'",
+
+    "U' D": 'E',
+    "D U'": 'E',
+    "U D'": "E'",
+    "D' U": "E'",
+}
+
 DNF = 'DNF'
 
 PLUS_TWO = '+2'

@@ -45,8 +45,25 @@ class Solve:
         ]
 
     @cached_property
-    def moves_number(self):
+    def raw_moves_number(self):
         return len(self.move_times)
+
+    @cached_property
+    def raw_tps(self) -> float:
+        return self.raw_moves_number / (self.time / SECOND)
+
+    @cached_property
+    def moves(self) -> list[str, int]:
+        from term_timer.transform import reslice_moves
+        from term_timer.transform import optimize_double_moves
+        # TODO(me): Handle times
+        moves = reslice_moves([m[0] for m in self.move_times])
+        return moves
+        return optimize_double_moves(moves)
+
+    @cached_property
+    def moves_number(self):
+        return len(self.moves)
 
     @cached_property
     def tps(self) -> float:

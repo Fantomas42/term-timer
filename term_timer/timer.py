@@ -480,9 +480,11 @@ class Timer:
             extra,
         )
 
-        if solve.moves_number:
+        if solve.raw_moves_number:
             console.print(
                 f'[analysis]Analysis #{ len(self.stack) }:[/analysis]',
+                f'[result]{ solve.raw_moves_number } moves[/result]',
+                f'[tps]{ solve.raw_tps:.2f} TPS[/tps]',
                 f'[result]{ solve.moves_number } moves[/result]',
                 f'[tps]{ solve.tps:.2f} TPS[/tps]',
             )
