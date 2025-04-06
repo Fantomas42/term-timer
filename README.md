@@ -17,8 +17,9 @@ Practice your speed cubing skills on your terminal, for a full 80's vibe.
 - Metronome
 - Inspection time
 - Easy white cross
-- csTimer import
 - Seed control
+- csTimer import
+- Cubeast import
 
 ## Short demo
 
@@ -118,6 +119,8 @@ Positional Arguments:
                         Default: Infinite.
 
 Configuration:
+  -b, --bluetooth       Use a Bluetooth-connected cube.
+                        Default: False.
   -c CUBE, --cube CUBE  Set the size of the cube (from 2 to 7).
                         Default: 3.
   -p, --show-cube       Display the cube in its scrambled state.
@@ -129,7 +132,7 @@ Timer:
   -i SECONDS, --countdown SECONDS
                         Set the countdown timer for inspection time in seconds.
                         Default: 0.
-  -b TEMPO, --metronome TEMPO
+  -m TEMPO, --metronome TEMPO
                         Set a metronome beep at a specified tempo in seconds.
                         Default: 0.0.
 

@@ -12,6 +12,8 @@ dependencies = [
     "magiccube",
     "plotext",
     "rich",
+    "bleak",
+    "cryptography",
 ]
 
 [project.optional-dependencies]
@@ -28,8 +30,10 @@ two-phase = [
 
 
 [project.scripts]
+bc-info = "term_timer.scripts.bluetooth_info:main"
 term-timer = "term_timer.scripts.timer:main"
-cs_timer_import = "term_timer.scripts.cs_timer:import_csv"
+cstimer_import = "term_timer.scripts.cstimer:main"
+cubeast_import = "term_timer.scripts.cubeast:main"
 
 [tool.setuptools]
 packages = ["term_timer"]

@@ -3,16 +3,23 @@ import sys
 import termios
 import time
 import tty
+from datetime import datetime
+from datetime import timezone
 
+from term_timer.bluetooth.interface import BluetoothInterface
+from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.console import console
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
+from term_timer.in_out import save_solves
+from term_timer.magic_cube import Cube
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
+from term_timer.transform import compress_moves
 
 
 class Timer:
@@ -24,6 +31,10 @@ class Timer:
         self.start_time = 0
         self.end_time = 0
         self.elapsed_time = 0
+        self.scramble = []
+        self.moves = []
+        self.scrambled = []
+        self.state = 'init'
 
         self.cube_size = cube_size
         self.free_play = free_play
@@ -32,12 +43,215 @@ class Timer:
         self.show_cube = show_cube
         self.countdown = countdown
         self.metronome = metronome
+
+        self.bluetooth_cube = None
+        self.bluetooth_queue = None
+        self.bluetooth_interface = None
+        self.bluetooth_consumer_ref = None
+        self.bluetooth_hardware = {}
+        self.bluetooth_facelets = ''
+
+        self.cube = None
         self.stack = stack
 
         self.stop_event = asyncio.Event()
+        self.scramble_completed_event = asyncio.Event()
+        self.solve_started_event = asyncio.Event()
+        self.solve_completed_event = asyncio.Event()
 
-    @staticmethod
-    async def getch(timeout: float | None = None) -> str:
+        self.facelets_received_event = asyncio.Event()
+        self.hardware_received_event = asyncio.Event()
+
+        if self.free_play:
+            console.print(
+                '🔒 Mode Free Play is active, '
+                'solves will not be recorded !',
+                style='warning',
+            )
+
+    async def bluetooth_connect(self) -> bool:
+        self.bluetooth_queue = asyncio.Queue()
+
+        try:
+            self.bluetooth_interface = BluetoothInterface(
+                self.bluetooth_queue,
+            )
+
+            console.print(
+                '[bluetooth]📡Bluetooth:[/bluetooth] '
+                'Scanning for Bluetooth cube for '
+                f'{ self.bluetooth_interface.scan_timeout}s...',
+                end='',
+            )
+
+            device = await self.bluetooth_interface.scan()
+
+            await self.bluetooth_interface.__aenter__(device)  # noqa: PLC2801
+
+            self.clear_line(full=True)
+            console.print(
+                '[bluetooth]🔗Bluetooth:[/bluetooth] '
+                f'{ self.bluetooth_device_label } '
+                'connected successfully !',
+                end='',
+            )
+
+            self.facelets_received_event.clear()
+            self.hardware_received_event.clear()
+
+            self.bluetooth_consumer_ref = asyncio.create_task(
+                self.bluetooth_consumer(),
+            )
+
+            await self.bluetooth_interface.send_command('REQUEST_BATTERY')
+            await self.bluetooth_interface.send_command('REQUEST_HARDWARE')
+            await self.bluetooth_interface.send_command('REQUEST_FACELETS')
+
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(
+                        self.facelets_received_event.wait(),
+                        self.hardware_received_event.wait(),
+                    ),
+                    timeout=10.0,
+                )
+            except asyncio.TimeoutError:  # noqa: UP041
+                self.clear_line(full=True)
+                console.print(
+                    '[bluetooth]😱Bluetooth:[/bluetooth] '
+                    '[warning]Cube could not be initialized properly. '
+                    'Running in manual mode.[/warning]',
+                )
+                return False
+
+            self.clear_line(full=True)
+
+            console.print(
+                '[bluetooth]🤓Bluetooth:[/bluetooth] '
+                f'[result]{ self.bluetooth_device_label } '
+                'initialized successfully ![/result]',
+            )
+        except CubeNotFoundError:
+            self.clear_line(full=True)
+            console.print(
+                '[bluetooth]😥Bluetooth:[/bluetooth] '
+                '[warning]No Bluetooth cube could be found. '
+                'Running in manual mode.[/warning]',
+            )
+            return False
+        else:
+            return True
+
+    async def bluetooth_disconnect(self) -> None:
+        if self.bluetooth_interface and self.bluetooth_interface.device:
+            console.print(
+                '[bluetooth]🔗 Bluetooth[/bluetooth] '
+                f'{ self.bluetooth_device_label } disconnecting...',
+            )
+            await self.bluetooth_interface.__aexit__(None, None, None)
+
+    async def bluetooth_consumer(self) -> None:
+        while True:
+            events = await self.bluetooth_queue.get()
+
+            if events is None:
+                break
+
+            for event in events:
+                event_name = event['event']
+
+                if event_name == 'hardware':
+                    event.pop('event')
+                    event.pop('timestamp')
+                    self.bluetooth_hardware.update(event)
+                    self.hardware_received_event.set()
+
+                if event_name == 'battery':
+                    self.bluetooth_hardware['battery_level'] = event['level']
+
+                elif event_name == 'facelets':
+                    self.bluetooth_facelets = event['facelets']
+                    self.bluetooth_cube = Cube(3, event['facelets'])
+
+                    if not self.bluetooth_cube.is_done():
+                        self.clear_line(full=True)
+                        console.print(
+                            '[bluetooth]🫤Bluetooth:[/bluetooth] '
+                            '[warning]Cube is not in solved state[/warning]',
+                        )
+                        console.print(
+                            '[bluetooth]❓Bluetooth:[/bluetooth] '
+                            '[consign]Is the cube is really solved ? '
+                            '[b](y)[/b] to reset the cube.[/consign]',
+                        )
+                        char = await self.getch()
+                        if char == 'y':
+                            for command in ['RESET', 'FACELETS']:
+                                await self.bluetooth_interface.send_command(
+                                    f'REQUEST_{ command }',
+                                )
+                            continue
+
+                        console.print(
+                            '[warning]Quit until solved[/warning]',
+                        )
+                        await self.bluetooth_queue.put(None)
+                        continue
+
+                    self.facelets_received_event.set()
+                elif event_name == 'move':
+                    if not self.bluetooth_cube:
+                        continue
+
+                    self.bluetooth_cube.rotate([event['move']])
+
+                    if self.state in {'init', 'scrambling'}:
+                        self.scrambled.append(event['move'])
+
+                        self.handle_scrambled()
+
+                    elif self.state in {'inspecting', 'scrambled'}:
+                        self.moves.append(
+                            {
+                                'move': event['move'],
+                                'time': event['cubeTimestamp'],
+                            },
+                        )
+                        self.solve_started_event.set()
+
+                    elif self.state == 'solving':
+                        self.moves.append(
+                            {
+                                'move': event['move'],
+                                'time': event['cubeTimestamp'],
+                            },
+                        )
+
+                        if (
+                                not self.stop_event.is_set()
+                                and self.bluetooth_cube.is_done()
+                        ):
+                            self.end_time = time.perf_counter_ns()
+                            self.stop_event.set()
+                            self.solve_completed_event.set()
+
+    @property
+    def bluetooth_device_label(self):
+        device_label = self.bluetooth_interface.device.name
+
+        if 'hardware_version' in self.bluetooth_hardware:
+            device_label += f"v{ self.bluetooth_hardware['hardware_version'] }"
+
+        battery_level = self.bluetooth_hardware.get('battery_level')
+        if battery_level:
+            if battery_level <= 15:
+                device_label += f' ([warning]{ battery_level }[/warning]%)'
+            else:
+                device_label += f' ({ battery_level }%)'
+
+        return device_label
+
+    async def getch(self, timeout: float | None = None) -> str:
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         ch = ''
@@ -45,7 +259,6 @@ class Timer:
         try:
             tty.setcbreak(fd)
 
-            # Create a Future that will be resolved when input is available
             loop = asyncio.get_event_loop()
             future = loop.create_future()
 
@@ -54,39 +267,78 @@ class Timer:
                     ch = sys.stdin.read(1)
                     future.set_result(ch)
 
-            # Add the stdin file descriptor to the event loop
             loop.add_reader(fd, stdin_callback)
 
             try:
                 if timeout is not None:
-                    # Wait for input with timeout
                     await asyncio.wait_for(future, timeout)
                 else:
-                    # Wait for input indefinitely
                     await future
 
-                # Get the result (the character)
                 ch = future.result()
             except asyncio.TimeoutError:  # noqa UP041
                 ch = ''
             finally:
-                # Clean up the reader
                 loop.remove_reader(fd)
 
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
-        print(f'\r{ " " * 100}\r', flush=True, end='')
+        self.clear_line(full=True)
 
         return ch
+
+    @staticmethod
+    def clear_line(full) -> None:
+        if full:
+            print(f'\r{ " " * 100}\r', flush=True, end='')
+        else:
+            print('\r', end='')
 
     @staticmethod
     def beep() -> None:
         print('\a', end='', flush=True)
 
+    def handle_scrambled(self):
+        if (
+                self.bluetooth_cube.as_twophase_facelets
+                == self.cube.as_twophase_facelets
+        ):
+            self.scramble_completed_event.set()
+            self.beep()
+            out = (
+                '[result]Cube scrambled and ready to be solved ![/result] '
+                '[consign]Start solving to launch the timer.[/consign]'
+            )
+
+        else:
+            out = ''
+            for i, move in enumerate(compress_moves(self.scrambled)):
+                expected = self.scramble[i]
+                style = 'move'
+                if expected != move:
+                    style = 'warning'
+                    if expected[0] == move[0]:
+                        style = 'caution'
+
+                out += f'[{ style }]{ move }[/{ style }] '
+
+        # TODO(me): improve to reduce glitches
+        self.clear_line(full=True)
+
+        console.print(
+            f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
+            out,
+            end='',
+        )
+
     async def inspection(self) -> None:
-        state = 0
+        self.clear_line(full=True)
+
+        self.state = 'inspecting'
         self.stop_event.clear()
+
+        state = 0
         inspection_start_time = time.perf_counter_ns()
 
         while not self.stop_event.is_set():
@@ -100,7 +352,7 @@ class Timer:
                 if state in {2, 1, 0}:
                     self.beep()
 
-            print('\r', end='')
+            self.clear_line(full=False)
             console.print(
                 '[inspection]Inspection :[/inspection]',
                 f'[result]{ remaining_time }[/result]',
@@ -110,8 +362,16 @@ class Timer:
             await asyncio.sleep(0.01)
 
     async def stopwatch(self) -> None:
+        self.clear_line(full=True)
+
         self.stop_event.clear()
+        self.solve_completed_event.clear()
+
         self.start_time = time.perf_counter_ns()
+        self.end_time = 0
+        self.elapsed_time = 0
+        self.scrambled = []
+        self.state = 'solving'
 
         tempo_elapsed = 0
 
@@ -144,7 +404,7 @@ class Timer:
                 if self.metronome:
                     self.beep()
 
-            print('\r', end='')
+            self.clear_line(full=False)
             console.print(
                 f'[{ style }]Go Go Go:[/{ style }]',
                 f'[result]{ format_time(elapsed_time) }[/result]',
@@ -153,13 +413,32 @@ class Timer:
 
             await asyncio.sleep(0.01)
 
-    @staticmethod
-    def start_line() -> None:
-        console.print(
-            'Press any key to start/stop the timer,',
-            '[b](q)[/b] to quit.',
-            end='', style='consign',
-        )
+    def start_line(self) -> None:
+        if self.bluetooth_interface:
+            if self.countdown:
+                console.print(
+                    'Apply the scramble on the cube to start the inspection,',
+                    '[b](q)[/b] to quit.',
+                    end='', style='consign',
+                )
+            else:
+                console.print(
+                    'Apply the scramble on the cube to init the timer,',
+                    '[b](q)[/b] to quit.',
+                    end='', style='consign',
+                )
+        elif self.countdown:
+            console.print(
+                'Press any key once scrambled to start the inspection,',
+                '[b](q)[/b] to quit.',
+                end='', style='consign',
+            )
+        else:
+            console.print(
+                'Press any key once scrambled to start/stop the timer,',
+                '[b](q)[/b] to quit.',
+                end='', style='consign',
+            )
 
     @staticmethod
     def save_line() -> None:
@@ -194,12 +473,21 @@ class Timer:
                 ao12 = new_stats.ao12
                 extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
 
-        print('\r', end='')
+        self.clear_line(full=False)
         console.print(
             f'[duration]Duration #{ len(self.stack) }:[/duration]',
             f'[result]{ format_time(self.elapsed_time) }[/result]',
             extra,
         )
+
+        if solve.raw_moves_number:
+            console.print(
+                f'[analysis]Analysis #{ len(self.stack) }:[/analysis]',
+                f'[result]{ solve.raw_moves_number } moves[/result]',
+                f'[tps]{ solve.raw_tps:.2f} TPS[/tps]',
+                f'[result]{ solve.moves_number } moves[/result]',
+                f'[tps]{ solve.tps:.2f} TPS[/tps]',
+            )
 
         if new_stats.total > 1:
             mc = 10 + len(str(len(self.stack))) - 1
@@ -232,49 +520,138 @@ class Timer:
                 )
 
     async def start(self) -> bool:
-        scramble, cube = scrambler(
+        self.moves = []
+
+        self.scramble, self.cube = scrambler(
             cube_size=self.cube_size,
             iterations=self.iterations,
             easy_cross=self.easy_cross,
         )
 
+        if self.show_cube:
+            console.print(str(self.cube), end='')
+
         console.print(
             f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
-            f'[moves]{ " ".join(scramble) }[/moves]',
+            f'[moves]{ " ".join(self.scramble) }[/moves]',
         )
 
-        if self.show_cube:
-            console.print(str(cube), end='')
-
+        self.state = 'scrambling'
+        self.scrambled = []
         self.start_line()
 
-        char = await self.getch()
+        if self.bluetooth_interface:
+            self.scramble_completed_event.clear()
+
+            tasks = [
+                asyncio.create_task(self.getch()),
+                asyncio.create_task(self.scramble_completed_event.wait()),
+            ]
+            done, pending = await asyncio.wait(
+                tasks,
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            for task in pending:
+                task.cancel()
+
+            char = ''
+            if tasks[0] in done:
+                char = tasks[0].result()
+                self.scramble_completed_event.set()
+        else:
+            char = await self.getch()
 
         if char == 'q':
             return False
 
+        self.state = 'scrambled'
+        self.solve_started_event.clear()
+
         if self.countdown:
             inspection_task = asyncio.create_task(self.inspection())
 
-            await self.getch(self.countdown)
+            if self.bluetooth_interface:
 
-            self.stop_event.set()
+                _done, pending = await asyncio.wait(
+                    [
+                        asyncio.create_task(self.getch(self.countdown)),
+                        asyncio.create_task(self.solve_started_event.wait()),
+                    ],
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+
+                for task in pending:
+                    task.cancel()
+
+                if not self.solve_started_event.is_set():
+                    self.solve_started_event.set()
+                if not self.stop_event.is_set():
+                    self.stop_event.set()
+            else:
+                await self.getch(self.countdown)
+                self.solve_started_event.set()
+                self.stop_event.set()
+
             await inspection_task
+
+        elif self.bluetooth_interface:
+            _done, pending = await asyncio.wait(
+                [
+                    asyncio.create_task(self.getch()),
+                    asyncio.create_task(self.solve_started_event.wait()),
+                ],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            for task in pending:
+                task.cancel()
+
+            if not self.solve_started_event.is_set():
+                self.solve_started_event.set()
 
         stopwatch_task = asyncio.create_task(self.stopwatch())
 
-        await self.getch()
-        self.end_time = time.perf_counter_ns()
+        if self.bluetooth_interface:
+            _done, pending = await asyncio.wait(
+                [
+                    asyncio.create_task(self.getch()),
+                    asyncio.create_task(self.solve_completed_event.wait()),
+                ],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
 
-        self.stop_event.set()
+            for task in pending:
+                task.cancel()
+
+            if not self.stop_event.is_set():
+                self.end_time = time.perf_counter_ns()
+                self.stop_event.set()
+        else:
+            await self.getch()
+            self.end_time = time.perf_counter_ns()
+            self.stop_event.set()
+
         await stopwatch_task
 
         self.elapsed_time = self.end_time - self.start_time
 
+        moves = []
+
+        if self.moves:
+            first_time = self.moves[0]['time']
+            for move in self.moves:
+                moves.append(f'{ move["move"] }@{ move["time"] - first_time }')
+
         solve = Solve(
-            self.start_time,
-            self.end_time,
-            ' '.join(scramble),
+            datetime.now(tz=timezone.utc).timestamp(),  # noqa: UP017
+            self.elapsed_time,
+            ' '.join(self.scramble),
+            device=(
+                self.bluetooth_interface
+                and self.bluetooth_interface.device.name
+            ) or '',
+            moves=' '.join(moves),
         )
 
         self.handle_solve(solve)
@@ -290,7 +667,10 @@ class Timer:
                 self.stack[-1].flag = PLUS_TWO
             elif char == 'z':
                 self.stack.pop()
-            elif char == 'q':
+
+            save_solves(self.cube_size, self.stack)
+
+            if char == 'q':
                 return False
 
         return True

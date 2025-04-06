@@ -146,8 +146,8 @@ class Statistics(StatisticsTools):
     @cached_property
     def delta(self) -> int:
         return (
-            self.stack[-1].elapsed_time
-            - self.stack[-2].elapsed_time
+            self.stack[-1].time
+            - self.stack[-2].time
         )
 
     @cached_property
@@ -332,15 +332,25 @@ class StatisticsReporter(Statistics):
             solve = self.stack[-i]
             index = f'#{ size - i + 1}'
 
-            date = solve.start_datetime.strftime('%Y-%m-%d %H:%M')
+            date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
             console.print(
                 f'[stats]{ index:{" "}>{max_count}}[/stats]',
-                f'[result]{ format_time(solve.elapsed_time) }[/result]',
+                f'[result]{ format_time(solve.time) }[/result]',
                 f'[date]{ date }[/date]',
                 f'[consign]{ solve.scramble }[/consign]',
                 f'[result]{ solve.flag }[/result]',
-        )
+            )
+            if solve.raw_moves:
+                console.print(
+                    f'[analysis]{ index:{" "}>{max_count}}[/analysis]',
+                    f'[result]{ solve.raw_moves_number } moves[/result]',
+                    f'[tps]{ solve.raw_tps:.2f} TPS[/tps]',
+                    f'[result]{ solve.moves_number } moves[/result]',
+                    f'[tps]{ solve.tps:.2f} TPS[/tps]\n',
+                    f'[result]{ " ".join([m[0] for m in solve.move_times]) }[/result]\n',
+                    f'[result]{ " ".join(solve.moves) }[/result]',
+                )
 
     def graph(self) -> None:
         ao5s = []
@@ -362,19 +372,21 @@ class StatisticsReporter(Statistics):
             label='Time',
         )
 
-        plt.plot(
-            ao5s,
-            marker='fhd',
-            label='AO5',
-            color='red',
-        )
+        if any(ao5s):
+            plt.plot(
+                ao5s,
+                marker='fhd',
+                label='AO5',
+                color='red',
+            )
 
-        plt.plot(
-            ao12s,
-            marker='fhd',
-            label='AO12',
-            color='blue',
-        )
+        if any(ao12s):
+            plt.plot(
+                ao12s,
+                marker='fhd',
+                label='AO12',
+                color='blue',
+            )
 
         plt.title(f'Tendencies { self.cube_name }')
         plt.plot_size(height=25)
