@@ -151,7 +151,7 @@ def scrambler(cube_size: int, iterations: int,
 
     cube.rotate(moves)
 
-    if cube_size != 3 or not USE_TWO_PHASE:
+    if cube_size != 3 or iterations or not USE_TWO_PHASE:
         return moves, cube
 
     solve = solve_moves(
