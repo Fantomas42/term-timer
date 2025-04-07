@@ -14,6 +14,7 @@ dependencies = [
     "rich",
     "bleak",
     "cryptography",
+    "cubing_algs @ git+https://github.com/Fantomas42/cubing-algs.git",
 ]
 
 [project.optional-dependencies]
