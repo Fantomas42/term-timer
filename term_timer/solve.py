@@ -54,12 +54,7 @@ class Solve:
 
     @cached_property
     def moves(self) -> list[str, int]:
-        from term_timer.transform import reslice_moves
-        from term_timer.transform import optimize_double_moves
-        # TODO(me): Handle times
-        moves = reslice_moves([m[0] for m in self.move_times])
-        return moves
-        return optimize_double_moves(moves)
+        return self.raw_moves
 
     @cached_property
     def moves_number(self):

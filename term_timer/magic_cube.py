@@ -1,8 +1,9 @@
+from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.japanese import japanese_moves
 from magiccube.cube import Cube as BaseCube
 from magiccube.cube import Face
 
 from term_timer.constants import ROTATIONS
-from term_timer.transform import japanese_moves
 
 FACES_ORDER = ['W', 'O', 'G', 'R', 'B', 'Y']
 
@@ -69,14 +70,11 @@ class Cube(BaseCube):  # type: ignore[misc]
 
     @classmethod
     def convert_moves(cls, old_moves: list[str]) -> str:
-        old_moves = japanese_moves(old_moves)
         moves = []
-        for _move in old_moves:
-            move = str(_move)
+        old_moves = parse_moves(old_moves).transform(japanese_moves)
 
-            if move[0] in ROTATIONS:
-                move = move.upper()
-
+        for _move in old_moves.moves:
+            move = _move.upper() if _move.is_rotation_move else str(_move)
             moves.append(move)
 
         return ' '.join(moves)

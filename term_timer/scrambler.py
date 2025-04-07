@@ -2,11 +2,14 @@ import re
 from random import choices
 from random import randint
 
+from cubing_algs.algorythm import Algorythm
+from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.mirror import mirror_moves
+
 from term_timer.constants import CUBE_SIZES
 from term_timer.constants import MOVES
 from term_timer.magic_cube import FACES_ORDER
 from term_timer.magic_cube import Cube
-from term_timer.transform import mirror_moves
 from term_timer.twophases import USE_TWO_PHASE
 from term_timer.twophases import solve
 
@@ -137,7 +140,7 @@ def solve_moves(state: str) -> list[str]:
 
 
 def scrambler(cube_size: int, iterations: int,
-              *, easy_cross: bool) -> tuple[list[str], Cube]:
+              *, easy_cross: bool) -> tuple[Algorythm, Cube]:
     initial_state = ''
     for face in FACES_ORDER:
         initial_state += face * cube_size * cube_size
@@ -152,14 +155,16 @@ def scrambler(cube_size: int, iterations: int,
     cube.rotate(moves)
 
     if cube_size != 3 or iterations or not USE_TWO_PHASE:
-        return moves, cube
+        scramble = parse_moves(moves).transform(mirror_moves)
+
+        return scramble, cube
 
     solve = solve_moves(
         cube.as_twophase_facelets,
     )
 
     if solve:
-        scramble = mirror_moves(solve)
+        scramble = parse_moves(solve).transform(mirror_moves)
 
         return scramble, cube
 

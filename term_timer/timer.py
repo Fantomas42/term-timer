@@ -6,6 +6,9 @@ import tty
 from datetime import datetime
 from datetime import timezone
 
+from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.size import compress_moves
+
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.console import console
@@ -19,7 +22,6 @@ from term_timer.magic_cube import Cube
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
-from term_timer.transform import compress_moves
 
 
 class Timer:
@@ -313,8 +315,9 @@ class Timer:
 
         else:
             out = ''
-            for i, move in enumerate(compress_moves(self.scrambled)):
-                expected = self.scramble[i]
+            algo = parse_moves(self.scrambled).transform(compress_moves)
+            for i, move in enumerate(algo.moves):
+                expected = self.scramble.moves[i]
                 style = 'move'
                 if expected != move:
                     style = 'warning'
@@ -533,7 +536,7 @@ class Timer:
 
         console.print(
             f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
-            f'[moves]{ " ".join(self.scramble) }[/moves]',
+            f'[moves]{ self.scramble }[/moves]',
         )
 
         self.state = 'scrambling'
@@ -646,7 +649,7 @@ class Timer:
         solve = Solve(
             datetime.now(tz=timezone.utc).timestamp(),  # noqa: UP017
             self.elapsed_time,
-            ' '.join(self.scramble),
+            str(self.scramble),
             device=(
                 self.bluetooth_interface
                 and self.bluetooth_interface.device.name
