@@ -15,6 +15,7 @@ metronome = 0.0
 
 [statistics]
 distribution = 0
+metrics = ["htm", "stm"]
 
 """
 

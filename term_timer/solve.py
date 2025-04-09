@@ -2,6 +2,12 @@ from datetime import datetime
 from datetime import timezone
 from functools import cached_property
 
+from cubing_algs.algorythm import Algorythm
+from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.optimize import optimize_do_undo_moves
+from cubing_algs.transform.optimize import optimize_double_moves
+from cubing_algs.transform.optimize import optimize_repeat_three_moves
+
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
@@ -45,24 +51,31 @@ class Solve:
         ]
 
     @cached_property
-    def raw_moves_number(self):
-        return len(self.move_times)
+    def solution(self) -> Algorythm:
+        return parse_moves([m[0] for m in self.move_times])
 
     @cached_property
-    def raw_tps(self) -> float:
-        return self.raw_moves_number / (self.time / SECOND)
+    def solution_tps(self) -> float:
+        return len(self.solution) / (self.time / SECOND)
 
     @cached_property
-    def moves(self) -> list[str, int]:
-        return self.raw_moves
+    def reconstructed_solution(self) -> list[str, int]:
+        return self.solution.transform(
+            optimize_double_moves,  # + slicing + rotations
+        )
 
     @cached_property
-    def moves_number(self):
-        return len(self.moves)
+    def reconstructed_solution_tps(self) -> float:
+        return len(self.reconstructed_solution) / (self.time / SECOND)
 
     @cached_property
-    def tps(self) -> float:
-        return self.moves_number / (self.time / SECOND)
+    def missed_moves(self) -> int:
+        return len(self.solution) - len(
+            self.solution.transform(
+                optimize_do_undo_moves,
+                optimize_repeat_three_moves,
+            ),
+        )
 
     @property
     def as_save(self):
