@@ -17,6 +17,8 @@ metronome = 0.0
 distribution = 0
 metrics = ["htm", "stm"]
 
+[ui]
+
 """
 
 
@@ -36,3 +38,5 @@ CONFIG = load_config()
 STATS_CONFIG = CONFIG.get('statistics', {})
 
 TIMER_CONFIG = CONFIG.get('timer', {})
+
+UI_CONFIG = CONFIG.get('ui', {})
