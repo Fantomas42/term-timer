@@ -71,6 +71,7 @@ class Cube(BaseCube):  # type: ignore[misc]
     @classmethod
     def convert_moves(cls, old_moves: list[str]) -> str:
         moves = []
+
         old_moves = parse_moves(old_moves).transform(japanese_moves)
 
         for _move in old_moves.moves:

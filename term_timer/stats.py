@@ -355,7 +355,8 @@ class StatisticsReporter(Statistics):
                     f'[analysis]{ index:{" "}>{max_count}}[/analysis]'
                     f'{ metric_string }',
                     f'[tps]{ solve.reconstructed_solution_tps:.2f} TPS[/tps]',
-                    f'[warning]{ solve.missed_moves } missed moves[/warning]',
+                    f'[warning]{ solve.missed_moves } missed moves[/warning]'
+                    if solve.missed_moves else '',
                 )
 
     def graph(self) -> None:
