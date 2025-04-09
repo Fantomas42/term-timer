@@ -75,7 +75,7 @@ class Cube(BaseCube):  # type: ignore[misc]
         old_moves = parse_moves(old_moves).transform(japanese_moves)
 
         for _move in old_moves.moves:
-            move = _move.upper() if _move.is_rotation_move else str(_move)
+            move = str(_move).upper() if _move.is_rotation_move else str(_move)
             moves.append(move)
 
         return ' '.join(moves)

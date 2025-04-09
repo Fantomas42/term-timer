@@ -99,7 +99,7 @@ def is_valid_next_move(current: str, previous: str) -> bool:
 
 
 def random_moves(cube_size: int, iterations: int,
-                 *, easy_cross: bool) -> list[str]:
+                 *, easy_cross: bool) -> Algorythm:
     move_set = MOVES_BY_CUBE[cube_size]
 
     if easy_cross:
@@ -123,20 +123,20 @@ def random_moves(cube_size: int, iterations: int,
         previous = value
         moves.append(value)
 
-    return moves
+    return parse_moves(moves)
 
 
-def solve_moves(state: str) -> list[str]:
+def solve_moves(state: str) -> Algorythm | None:
     solution: str = solve(state, 0, 0.1)
 
     if 'Error' in solution:
-        return []
+        return None
 
     solution = solution.split('(')[0]
     solution = solution.replace('1', '')
     solution = solution.replace('3', "'")
 
-    return solution.split()
+    return parse_moves(solution)
 
 
 def scrambler(cube_size: int, iterations: int,
@@ -147,16 +147,14 @@ def scrambler(cube_size: int, iterations: int,
 
     cube = Cube(cube_size, initial_state)
 
-    moves = random_moves(
+    scramble = random_moves(
         cube_size, iterations,
         easy_cross=easy_cross,
     )
 
-    cube.rotate(moves)
+    cube.rotate(scramble)
 
     if cube_size != 3 or iterations or not USE_TWO_PHASE:
-        scramble = parse_moves(moves).transform(mirror_moves)
-
         return scramble, cube
 
     solve = solve_moves(
@@ -164,7 +162,7 @@ def scrambler(cube_size: int, iterations: int,
     )
 
     if solve:
-        scramble = parse_moves(solve).transform(mirror_moves)
+        scramble = solve.transform(mirror_moves)
 
         return scramble, cube
 
