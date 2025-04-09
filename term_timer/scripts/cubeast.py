@@ -49,7 +49,6 @@ def import_csv(export_path: Path, solves: list) -> str:
                 time = time.replace(']', '')
                 fixed_moves.append(f'{ move }@{ time }')
 
-
         solves.append(
             Solve(
                 date,

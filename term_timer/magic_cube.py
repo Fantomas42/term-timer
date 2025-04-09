@@ -3,8 +3,6 @@ from cubing_algs.transform.japanese import japanese_moves
 from magiccube.cube import Cube as BaseCube
 from magiccube.cube import Face
 
-from term_timer.constants import ROTATIONS
-
 FACES_ORDER = ['W', 'O', 'G', 'R', 'B', 'Y']
 
 

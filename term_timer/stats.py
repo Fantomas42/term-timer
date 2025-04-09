@@ -348,7 +348,9 @@ class StatisticsReporter(Statistics):
                 for metric in metrics:
                     value = solve.reconstructed_solution.metrics[metric]
                     if value != previous_value:
-                        metric_string += f' [result]{ value } { metric.upper() }[/result]'
+                        metric_string += (
+                            f' [result]{ value } { metric.upper() }[/result]'
+                        )
                         previous_value = value
 
                 console.print(
