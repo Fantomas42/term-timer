@@ -3,11 +3,11 @@ from random import choices
 from random import randint
 
 from cubing_algs.algorythm import Algorythm
+from term_timer.constants import OUTER_BASIC_MOVES
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
 
 from term_timer.constants import CUBE_SIZES
-from term_timer.constants import MOVES
 from term_timer.magic_cube import FACES_ORDER
 from term_timer.magic_cube import Cube
 from term_timer.twophases import USE_TWO_PHASE
@@ -35,7 +35,7 @@ MOVES_EASY_CROSS = [
 def build_cube_moves(cube_size: int) -> list[str]:
     moves = []
 
-    for face in MOVES:
+    for face in OUTER_BASIC_MOVES:
         moves.extend(
             [
                 face,
