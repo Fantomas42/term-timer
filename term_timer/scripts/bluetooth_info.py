@@ -2,6 +2,12 @@ import asyncio
 import contextlib
 import logging
 
+from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.degrip import degrip_full_moves
+from cubing_algs.transform.optimize import optimize_double_moves
+from cubing_algs.transform.rotation import remove_final_rotations
+from cubing_algs.transform.slice import reslice_moves
+
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.console import console
@@ -12,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 async def consumer_cb(queue):
     internal_cube = None
+    moves = []
 
     def show_cube(cube):
         console.print(str(cube), end='')
@@ -58,9 +65,19 @@ async def consumer_cb(queue):
                     event['direction'],
                     event['move'],
                 )
+                moves.append(event['move'])
                 if internal_cube:
                     internal_cube.rotate([event['move']])
                     show_cube(internal_cube)
+                    algo = parse_moves(moves)
+                    recon = algo.transform(
+                        reslice_moves,
+                        degrip_full_moves,
+                        remove_final_rotations,
+                        optimize_double_moves,
+                    )
+                    logger.info('MOVES: %s', algo)
+                    logger.info('RECON: %s', recon)
 
 
 async def client_cb(queue):
