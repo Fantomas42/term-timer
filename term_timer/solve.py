@@ -4,9 +4,12 @@ from functools import cached_property
 
 from cubing_algs.algorythm import Algorythm
 from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_do_undo_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.optimize import optimize_repeat_three_moves
+from cubing_algs.transform.rotation import remove_final_rotations
+from cubing_algs.transform.slice import reslice_moves
 
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
@@ -19,7 +22,7 @@ class Solve:
                  date: int, time: int,
                  scramble: str, flag: str = '',
                  device: str = '',
-                 moves: list[dict[str, str]] | None = None):
+                 moves: list[str] | None = None):
         self.date = int(date)
         self.time = int(time)
         self.scramble = scramble
@@ -61,7 +64,10 @@ class Solve:
     @cached_property
     def reconstructed_solution(self) -> list[str, int]:
         return self.solution.transform(
-            optimize_double_moves,  # + slicing + rotations
+            reslice_moves,
+            degrip_full_moves,
+            remove_final_rotations,
+            optimize_double_moves,
         )
 
     @cached_property

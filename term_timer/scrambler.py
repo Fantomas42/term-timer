@@ -3,7 +3,7 @@ from random import choices
 from random import randint
 
 from cubing_algs.algorythm import Algorythm
-from term_timer.constants import OUTER_BASIC_MOVES
+from cubing_algs.constants import OUTER_BASIC_MOVES
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
 
