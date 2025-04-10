@@ -2,7 +2,7 @@ import re
 from random import choices
 from random import randint
 
-from cubing_algs.algorythm import Algorythm
+from cubing_algs.algorythm import Algorithm
 from cubing_algs.constants import OUTER_BASIC_MOVES
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
@@ -99,7 +99,7 @@ def is_valid_next_move(current: str, previous: str) -> bool:
 
 
 def random_moves(cube_size: int, iterations: int,
-                 *, easy_cross: bool) -> Algorythm:
+                 *, easy_cross: bool) -> Algorithm:
     move_set = MOVES_BY_CUBE[cube_size]
 
     if easy_cross:
@@ -126,7 +126,7 @@ def random_moves(cube_size: int, iterations: int,
     return parse_moves(moves)
 
 
-def solve_moves(state: str) -> Algorythm | None:
+def solve_moves(state: str) -> Algorithm | None:
     solution: str = solve(state, 0, 0.1)
 
     if 'Error' in solution:
@@ -140,7 +140,7 @@ def solve_moves(state: str) -> Algorythm | None:
 
 
 def scrambler(cube_size: int, iterations: int,
-              *, easy_cross: bool) -> tuple[Algorythm, Cube]:
+              *, easy_cross: bool) -> tuple[Algorithm, Cube]:
     initial_state = ''
     for face in FACES_ORDER:
         initial_state += face * cube_size * cube_size
