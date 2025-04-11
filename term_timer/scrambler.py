@@ -3,6 +3,7 @@ from random import choices
 from random import randint
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.constants import OPPOSITE_FACES
 from cubing_algs.constants import OUTER_BASIC_MOVES
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
@@ -14,15 +15,6 @@ from term_timer.twophases import USE_TWO_PHASE
 from term_timer.twophases import solve
 
 FACE_REGEXP = re.compile(r'(F|R|U|B|L|D)')
-
-OPPOSITE_MOVES = {
-    'F': 'B',
-    'R': 'L',
-    'U': 'D',
-    'B': 'F',
-    'L': 'R',
-    'D': 'U',
-}
 
 MOVES_EASY_CROSS = [
     'F',
@@ -95,7 +87,7 @@ def is_valid_next_move(current: str, previous: str) -> bool:
     if current_move == previous_move:
         return False
 
-    return OPPOSITE_MOVES[current_move] != previous_move
+    return OPPOSITE_FACES[current_move] != previous_move
 
 
 def random_moves(cube_size: int, iterations: int,
