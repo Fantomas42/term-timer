@@ -2,7 +2,7 @@ from datetime import datetime
 from datetime import timezone
 from functools import cached_property
 
-from cubing_algs.algorythm import Algorithm
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_do_undo_moves

@@ -317,6 +317,8 @@ class Timer:
         else:
             out = ''
             algo = parse_moves(self.scrambled).transform(compress_moves)
+            previous_algo = parse_moves(self.scrambled[:-1]).transform(compress_moves)
+
             for i, move in enumerate(algo.moves):
                 expected = self.scramble.moves[i]
                 style = 'move'
@@ -327,8 +329,8 @@ class Timer:
 
                 out += f'[{ style }]{ move }[/{ style }] '
 
-        # TODO(me): improve to reduce glitches
-        self.clear_line(full=True)
+        full_clear = len(algo) < len(previous_algo) or len(algo) <= 1
+        self.clear_line(full=full_clear)
 
         console.print(
             f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
