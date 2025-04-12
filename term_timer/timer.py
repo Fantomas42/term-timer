@@ -313,7 +313,7 @@ class Timer:
                 '[result]Cube scrambled and ready to be solved ![/result] '
                 '[consign]Start solving to launch the timer.[/consign]'
             )
-
+            full_clear = True
         else:
             out = ''
             algo = parse_moves(self.scrambled).transform(compress_moves)
@@ -328,8 +328,8 @@ class Timer:
                         style = 'caution'
 
                 out += f'[{ style }]{ move }[/{ style }] '
+                full_clear = len(algo) < len(p_algo) or len(algo) <= 1
 
-        full_clear = len(algo) < len(p_algo) or len(algo) <= 1
         self.clear_line(full=full_clear)
 
         console.print(
