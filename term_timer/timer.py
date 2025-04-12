@@ -330,10 +330,12 @@ class Timer:
                 parse_moves(self.scrambled[:-1]).transform(compress_moves),
             )
 
+            on_good_way = True
             for i, move in enumerate(algo.moves):
                 expected = self.scramble_oriented.moves[i]
                 style = 'move'
-                if expected != move:
+                if expected != move or not on_good_way:
+                    on_good_way = False
                     style = 'warning'
                     if expected[0] == move[0]:
                         style = 'caution'
