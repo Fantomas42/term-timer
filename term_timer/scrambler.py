@@ -133,11 +133,7 @@ def solve_moves(state: str) -> Algorithm | None:
 
 def scrambler(cube_size: int, iterations: int,
               *, easy_cross: bool) -> tuple[Algorithm, Cube]:
-    initial_state = ''
-    for face in FACES_ORDER:
-        initial_state += face * cube_size * cube_size
-
-    cube = Cube(cube_size, initial_state)
+    cube = Cube(cube_size)
 
     scramble = random_moves(
         cube_size, iterations,
