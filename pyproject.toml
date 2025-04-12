@@ -9,11 +9,11 @@ description = "Speed Cubing Timer on your Terminal"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
-    "magiccube",
-    "plotext",
-    "rich",
-    "bleak",
-    "cryptography",
+    "magiccube==0.3.0",
+    "plotext==5.3.2",
+    "rich==13.9.4",
+    "bleak==0.22.3",
+    "cryptography==44.0.2",
     "cubing_algs @ git+https://github.com/Fantomas42/cubing-algs.git",
 ]
 
