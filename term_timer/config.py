@@ -13,6 +13,9 @@ DEFAULT_CONFIG = """[timer]
 countdown = 0.0
 metronome = 0.0
 
+[cube]
+orientation =
+
 [statistics]
 distribution = 0
 metrics = ["htm", "stm"]
@@ -40,3 +43,7 @@ STATS_CONFIG = CONFIG.get('statistics', {})
 TIMER_CONFIG = CONFIG.get('timer', {})
 
 UI_CONFIG = CONFIG.get('ui', {})
+
+CUBE_CONFIG = CONFIG.get('cube', {})
+
+CUBE_ORIENTATION = CUBE_CONFIG.get('orientation')

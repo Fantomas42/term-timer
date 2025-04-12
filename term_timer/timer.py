@@ -6,11 +6,16 @@ import tty
 from datetime import datetime
 from datetime import timezone
 
+from cubing_algs.algorithm import Algorithm
+from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.degrip import degrip_full_moves
+from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.size import compress_moves
 
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
+from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import STATS_CONFIG
 from term_timer.console import console
 from term_timer.constants import DNF
@@ -56,6 +61,7 @@ class Timer:
 
         self.cube = None
         self.stack = stack
+        self.cube_orientation = Move(CUBE_ORIENTATION)
 
         self.stop_event = asyncio.Event()
         self.scramble_completed_event = asyncio.Event()
@@ -316,8 +322,12 @@ class Timer:
             full_clear = True
         else:
             out = ''
-            algo = parse_moves(self.scrambled).transform(compress_moves)
-            p_algo = parse_moves(self.scrambled[:-1]).transform(compress_moves)
+            algo = self.reorient(
+                parse_moves(self.scrambled).transform(compress_moves),
+            )
+            p_algo = self.reorient(
+                parse_moves(self.scrambled[:-1]).transform(compress_moves),
+            )
 
             for i, move in enumerate(algo.moves):
                 expected = self.scramble.moves[i]
@@ -457,6 +467,15 @@ class Timer:
             end='', style='consign',
         )
 
+    def reorient(self, algorithm: Algorithm) -> Algorithm:
+        if self.cube_orientation:
+            algorithm.insert(0, self.cube_orientation)
+            algorithm = algorithm.transform(
+                degrip_full_moves,
+                remove_final_rotations,
+            )
+        return algorithm
+
     def handle_solve(self, solve: Solve) -> None:
         old_stats = Statistics(self.stack)
 
@@ -544,6 +563,7 @@ class Timer:
             iterations=self.iterations,
             easy_cross=self.easy_cross,
         )
+        self.scramble = self.reorient(self.scramble)
 
         if self.show_cube:
             console.print(str(self.cube), end='')

@@ -3,6 +3,8 @@ from cubing_algs.transform.japanese import japanese_moves
 from magiccube.cube import Cube as BaseCube
 from magiccube.cube import Face
 
+from term_timer.config import CUBE_ORIENTATION
+
 
 class CubePrintRich:
     def __init__(self, cube: 'Cube'):
@@ -28,8 +30,11 @@ class CubePrintRich:
 
         return result
 
-    def print_cube(self) -> str:
+    def print_cube(self, orientation: str = '') -> str:
         cube = self.cube
+
+        if orientation:
+            cube.rotate([orientation])
 
         # Flatten middle layer
         print_order_mid = zip(
@@ -54,6 +59,12 @@ class CubePrintRich:
                     result += '\n'
         # Bottom
         result += self._print_top_down_face(Face.D)
+
+        if orientation:
+            cube.rotate([orientation])
+            if cube._store_history:  # noqa: SLF001
+                cube._history.pop()  # noqa: SLF001
+                cube._history.pop()  # noqa: SLF001
 
         return result
 
@@ -102,4 +113,4 @@ class Cube(BaseCube):  # type: ignore[misc]
 
     def __str__(self) -> str:
         printer = CubePrintRich(self)
-        return printer.print_cube()
+        return printer.print_cube(CUBE_ORIENTATION)

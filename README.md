@@ -10,6 +10,7 @@ Practice your speed cubing skills on your terminal, for a full 80's vibe.
 - From 2x2x2 to 7x7x7 cubes
 - Free-play and recorded solves
 - Colorfull cube display
+- Handle Bluetooth cubes
 - Detailled statistics
 
 ## Other Features
@@ -17,6 +18,7 @@ Practice your speed cubing skills on your terminal, for a full 80's vibe.
 - Metronome
 - Inspection time
 - Easy white cross
+- Cube orientation control
 - Seed control
 - csTimer import
 - Cubeast import
