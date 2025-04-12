@@ -339,7 +339,7 @@ class Timer:
                         style = 'caution'
 
                 out += f'[{ style }]{ move }[/{ style }] '
-                full_clear = len(algo) < len(p_algo) or len(algo) <= 1
+            full_clear = len(algo) < len(p_algo) or len(algo) <= 1
 
         self.clear_line(full=full_clear)
 
