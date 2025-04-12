@@ -40,8 +40,9 @@ class Timer:
         self.end_time = 0
         self.elapsed_time = 0
         self.scramble = []
-        self.moves = []
+        self.scramble_oriented = []
         self.scrambled = []
+        self.moves = []
         self.state = 'init'
 
         self.cube_size = cube_size
@@ -330,7 +331,7 @@ class Timer:
             )
 
             for i, move in enumerate(algo.moves):
-                expected = self.scramble.moves[i]
+                expected = self.scramble_oriented.moves[i]
                 style = 'move'
                 if expected != move:
                     style = 'warning'
@@ -469,6 +470,7 @@ class Timer:
 
     def reorient(self, algorithm: Algorithm) -> Algorithm:
         if self.cube_orientation:
+            algorithm = algorithm.copy()
             algorithm.insert(0, self.cube_orientation)
             algorithm = algorithm.transform(
                 degrip_full_moves,
@@ -563,14 +565,14 @@ class Timer:
             iterations=self.iterations,
             easy_cross=self.easy_cross,
         )
-        self.scramble = self.reorient(self.scramble)
+        self.scramble_oriented = self.reorient(self.scramble)
 
         if self.show_cube:
             console.print(str(self.cube), end='')
 
         console.print(
             f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
-            f'[moves]{ self.scramble }[/moves]',
+            f'[moves]{ self.scramble_oriented }[/moves]',
         )
 
         self.state = 'scrambling'
