@@ -1,6 +1,7 @@
 import logging
 
 from bleak import BleakClient
+from bleak import BleakError
 from bleak import BleakScanner
 
 from term_timer.bluetooth.constants import PREFIX
@@ -104,9 +105,13 @@ class BluetoothInterface:
             self.scan_timeout,
         )
         selected_device = None
-        devices = await BleakScanner.discover(
-            timeout=self.scan_timeout,
-        )
+        try:
+            devices = await BleakScanner.discover(
+                timeout=self.scan_timeout,
+            )
+        except BleakError as error:
+            logger.debug(str(error))
+            raise CubeNotFoundError from error
 
         for device in devices:
             name = device.name or 'N/A'
