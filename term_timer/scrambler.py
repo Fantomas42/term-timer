@@ -9,7 +9,6 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
 
 from term_timer.constants import CUBE_SIZES
-from term_timer.magic_cube import FACES_ORDER
 from term_timer.magic_cube import Cube
 from term_timer.twophases import USE_TWO_PHASE
 from term_timer.twophases import solve

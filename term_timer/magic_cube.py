@@ -3,8 +3,6 @@ from cubing_algs.transform.japanese import japanese_moves
 from magiccube.cube import Cube as BaseCube
 from magiccube.cube import Face
 
-FACES_ORDER = ['W', 'O', 'G', 'R', 'B', 'Y']
-
 
 class CubePrintRich:
     def __init__(self, cube: 'Cube'):
