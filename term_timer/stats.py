@@ -342,23 +342,9 @@ class StatisticsReporter(Statistics):
                 f'[result]{ solve.flag }[/result]',
             )
             if solve.raw_moves:
-                metrics = STATS_CONFIG.get('metrics')
-                metric_string = ''
-                previous_value = 0
-                for metric in metrics:
-                    value = solve.reconstructed_solution.metrics[metric]
-                    if value != previous_value:
-                        metric_string += (
-                            f' [result]{ value } { metric.upper() }[/result]'
-                        )
-                        previous_value = value
-
                 console.print(
-                    f'[analysis]{ index:{" "}>{max_count}}[/analysis]'
-                    f'{ metric_string }',
-                    f'[tps]{ solve.reconstructed_solution_tps:.2f} TPS[/tps]',
-                    f'[warning]{ solve.missed_moves } missed moves[/warning]'
-                    if solve.missed_moves else '',
+                    f'[analysis]{ index:{" "}>{max_count}}[/analysis]',
+                    f'{ solve.report_line }',
                 )
 
     def graph(self) -> None:
