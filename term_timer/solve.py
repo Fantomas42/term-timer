@@ -3,6 +3,7 @@ from datetime import timezone
 from functools import cached_property
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_do_undo_moves
@@ -11,6 +12,8 @@ from cubing_algs.transform.optimize import optimize_repeat_three_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.slice import reslice_moves
 
+from term_timer.config import CUBE_ORIENTATION
+from term_timer.config import STATS_CONFIG
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
@@ -62,8 +65,11 @@ class Solve:
         return len(self.solution) / (self.time / SECOND)
 
     @cached_property
-    def reconstructed_solution(self) -> list[str, int]:
-        return self.solution.transform(
+    def reconstructed(self) -> list[str, int]:
+        reconstruction = self.solution.copy()
+        reconstruction.insert(0, Move(CUBE_ORIENTATION))
+
+        return reconstruction.transform(
             reslice_moves,
             degrip_full_moves,
             remove_final_rotations,
@@ -71,8 +77,8 @@ class Solve:
         )
 
     @cached_property
-    def reconstructed_solution_tps(self) -> float:
-        return len(self.reconstructed_solution) / (self.time / SECOND)
+    def reconstructed_tps(self) -> float:
+        return len(self.reconstructed) / (self.time / SECOND)
 
     @cached_property
     def missed_moves(self) -> int:
@@ -81,6 +87,53 @@ class Solve:
                 optimize_do_undo_moves,
                 optimize_repeat_three_moves,
             ),
+        )
+
+    @cached_property
+    def report_line(self) -> str:
+        if not self.raw_moves:
+            return ''
+
+        metric_string = ''
+        metrics = STATS_CONFIG.get('metrics')
+        for metric in metrics:
+            value = self.reconstructed.metrics[metric]
+            metric_string += (
+                f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
+            )
+
+        date = self.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
+        link = self.alg_cubing_url(
+            f'Solve { date }: { format_time(self.time) }'.replace(' ', '%20'),
+            self.scramble,
+            'z2 // Orientation\n' + str(self.reconstructed),
+        )
+
+        return (
+            f'{ metric_string }'
+            f'[tps]{ self.reconstructed_tps:.2f} TPS[/tps] '
+            f'[missed]{ self.missed_moves } missed moves[/missed] '
+            f'[extlink][link={ link }]alg.cubing.net[/link][/extlink]'
+        )
+
+    @staticmethod
+    def alg_cubing_url(title: str, setup: str, alg: str) -> str:
+        def clean(string: str) -> str:
+            return string.replace(
+                ' ', '_',
+            ).replace(
+                "'", '-',
+            ).replace(
+                '/', '%2F',
+            ).replace(
+                '\n', '%0A',
+            )
+
+        return (
+            'https://alg.cubing.net/'
+            f'?title={ title }'
+            f'&alg={ clean(alg) }'
+            f'&setup={ clean(setup) }'
         )
 
     @property

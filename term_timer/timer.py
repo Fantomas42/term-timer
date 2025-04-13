@@ -16,7 +16,6 @@ from cubing_algs.transform.size import compress_moves
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.config import CUBE_ORIENTATION
-from term_timer.config import STATS_CONFIG
 from term_timer.console import console
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
@@ -510,23 +509,9 @@ class Timer:
         )
 
         if solve.raw_moves:
-            metrics = STATS_CONFIG.get('metrics')
-            metric_string = ''
-            previous_value = 0
-            for metric in metrics:
-                value = solve.reconstructed_solution.metrics[metric]
-                if value != previous_value:
-                    metric_string += (
-                        f' [result]{ value } { metric.upper() }[/result]'
-                    )
-                    previous_value = value
-
             console.print(
-                f'[analysis]Analysis #{ len(self.stack) }:[/analysis]'
-                f'{ metric_string }',
-                f'[tps]{ solve.reconstructed_solution_tps:.2f} TPS[/tps]',
-                f'[warning]{ solve.missed_moves } missed moves[/warning]'
-                if solve.missed_moves else '',
+                f'[analysis]Analysis #{ len(self.stack) }:[/analysis] '
+                f'{ solve.report_line }',
             )
 
         if new_stats.total > 1:

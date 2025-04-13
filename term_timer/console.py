@@ -17,7 +17,7 @@ theme = {
     'scramble': f'{ TEXT_DARK } on { GREEN }',
     'duration': f'{ TEXT_DARK } on { ORANGE }',
     'record': f'{ TEXT_DARK } on #5FFFAF',
-    'analysis': f'{ TEXT_LIGHT } on #4D0092',
+    'analysis': f'bold { TEXT_LIGHT } on #4D0092',
     'inspection': f'{ TEXT_LIGHT } on #5F00D7',
     'consign': '#CECECE',
 
@@ -41,7 +41,15 @@ theme = {
     'ao5': 'bold #00FFFF',
     'ao12': 'bold #FF00FF',
     'ao100': f'bold { YELLOW }',
+
     'tps': 'bold #00DFFF',
+    'missed': 'bold #FF4444',
+    'htm': 'bold #6EFFFF',
+    'stm': 'bold #6EDFF6',
+    'qtm': 'bold #99D799',
+    'etm': 'bold #C2A0FA',
+    'qstm': 'bold #FEBF8A',
+    'extlink': 'bold #FFFFFF',
 
     'timer_base': f'{ TEXT_DARK } on #DDFF00',
     'timer_10': f'{ TEXT_DARK } on #33FF00',
