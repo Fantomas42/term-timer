@@ -18,7 +18,7 @@ orientation =
 
 [statistics]
 distribution = 0
-metrics = ["htm", "stm"]
+metrics = ["htm", "stm", "qtm"]
 
 [ui]
 
