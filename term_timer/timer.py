@@ -16,7 +16,6 @@ from cubing_algs.transform.size import compress_moves
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.config import CUBE_ORIENTATION
-from term_timer.config import STATS_CONFIG
 from term_timer.console import console
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
