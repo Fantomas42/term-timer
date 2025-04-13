@@ -49,6 +49,7 @@ theme = {
     'qtm': '#75B798',
     'etm': '#C2A0FA',
     'qstm': '#FEBF8A',
+    'extlink': 'bold #FF3399',
 
     'timer_base': f'{ TEXT_DARK } on #DDFF00',
     'timer_10': f'{ TEXT_DARK } on #33FF00',

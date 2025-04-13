@@ -113,7 +113,7 @@ class Solve:
             f'{ metric_string }'
             f'[tps]{ self.reconstructed_tps:.2f} TPS[/tps] '
             f'[missed]{ self.missed_moves } missed moves[/missed] '
-            f'[link={ link }]alg.cubing.net[/link] '
+            f'[extlink][link={ link }]alg.cubing.net[/link][/extlink]'
         )
 
     @staticmethod
