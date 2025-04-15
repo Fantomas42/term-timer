@@ -111,12 +111,38 @@ class Solve:
             'z2 // Orientation\n' + str(self.reconstructed),
         )
 
+        missed_moves = f'[missed]{ self.missed_moves } missed moves[/missed]'
+        if not self.missed_moves:
+            missed_moves = '[green]No missed move[/green]'
+
         return (
+            f'[extlink][link={ link }]alg.cubing.net[/link][/extlink] '
             f'{ metric_string }'
             f'[tps]{ self.reconstructed_tps:.2f} TPS[/tps] '
-            f'[missed]{ self.missed_moves } missed moves[/missed] '
-            f'[extlink][link={ link }]alg.cubing.net[/link][/extlink]'
+            f'{ missed_moves }'
         )
+
+    @cached_property
+    def missed_line(self) -> str:
+        compressed = self.solution.transform(
+            optimize_do_undo_moves,
+            optimize_repeat_three_moves,
+            to_fixpoint=True,
+        )
+
+        moves = []
+        missed = 0
+        for i, m in enumerate(self.solution):
+            if i - missed < len(compressed):
+                if m == compressed[i - missed]:
+                    moves.append(str(m))
+                else:
+                    moves.append(f'[warning]{ m!s }[/warning]')
+                    missed += 1
+            else:
+                moves.append(str(m))
+
+        return ' '.join(moves)
 
     @staticmethod
     def alg_cubing_url(title: str, setup: str, alg: str) -> str:

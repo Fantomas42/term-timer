@@ -198,13 +198,6 @@ class StatisticsReporter(Statistics):
         super().__init__(stack)
 
     def resume(self, prefix: str = '', *, show_title: bool = False) -> None:
-        if not self.stack:
-            console.print(
-                '[warning]No saved solves yet '
-                f'for { self.cube_name }.[/warning]',
-            )
-            return
-
         if show_title:
             console.print(
                 f'[title]Statistics for { self.cube_name }[/title]',
@@ -311,40 +304,52 @@ class StatisticsReporter(Statistics):
                 )
 
     def listing(self, limit: int) -> None:
-        if not self.stack_time:
-            console.print('[warning]No saved solves yet.[/warning]')
-            return
-
         console.print(
             f'[title]Listing for { self.cube_name }[/title]',
         )
 
-        size = len(self.stack_time)
+        size = len(self.stack)
         max_count = computing_padding(size) + 1
 
         if limit < 0:
             limit = size
 
-        for i in range(1, limit + 1):
+        for i in range(limit):
             if i > size:
                 return
 
-            solve = self.stack[-i]
-            index = f'#{ size - i + 1}'
+            self.detail(size - i, max_count, advanced=False)
 
-            date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
-
+    def detail(self, solve_id: int, max_count: int = -1,
+               *, advanced: bool = True) -> None:
+        if advanced:
             console.print(
-                f'[stats]{ index:{" "}>{max_count}}[/stats]',
-                f'[result]{ format_time(solve.time) }[/result]',
-                f'[date]{ date }[/date]',
-                f'[consign]{ solve.scramble }[/consign]',
-                f'[result]{ solve.flag }[/result]',
+                f'[title]Detail for { self.cube_name } #{ solve_id }[/title]',
             )
-            if solve.raw_moves:
+        if max_count < 0:
+            max_count = computing_padding(len(self.stack)) + 1
+
+        solve = self.stack[solve_id - 1]
+        index = f'#{ solve_id }'
+
+        date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
+
+        console.print(
+            f'[stats]{ index:{" "}>{max_count}}[/stats]',
+            f'[result]{ format_time(solve.time) }[/result]',
+            f'[date]{ date }[/date]',
+            f'[consign]{ solve.scramble }[/consign]',
+            f'[result]{ solve.flag }[/result]',
+        )
+        if solve.raw_moves:
+            console.print(
+                f'[analysis]{ index:{" "}>{max_count}}[/analysis]',
+                f'{ solve.report_line }',
+            )
+            if advanced and solve.missed_moves:
                 console.print(
                     f'[analysis]{ index:{" "}>{max_count}}[/analysis]',
-                    f'{ solve.report_line }',
+                    f'[title]Missed moves[/title]\n{ solve.missed_line }',
                 )
 
     def graph(self) -> None:

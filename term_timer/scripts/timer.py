@@ -3,6 +3,7 @@ import logging
 from random import seed
 
 from term_timer.arguments import get_arguments
+from term_timer.console import console
 from term_timer.in_out import load_solves
 from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
@@ -14,11 +15,21 @@ async def timer() -> int:  # noqa: PLR0912
     logging.disable(logging.INFO)
 
     cube = options.cube
-    if options.stats or options.list or options.graph:
+    if options.stats or options.list or options.graph or options.detail:
         session_stats = StatisticsReporter(cube, load_solves(cube))
+
+        if not session_stats.stack:
+            console.print(
+                f'No saved solves yet for { session_stats.cube_name }.',
+                style='warning',
+            )
+            return 1
 
         if options.list:
             session_stats.listing(options.list)
+
+        if options.detail:
+            session_stats.detail(options.detail)
 
         if options.stats:
             session_stats.resume('Global ', show_title=True)

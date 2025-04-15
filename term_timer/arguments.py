@@ -130,6 +130,16 @@ def get_arguments() -> Any:
         ),
     )
     actions.add_argument(
+        '-d', '--detail',
+        type=int,
+        default=0,
+        metavar='SOLVE',
+        help=(
+            'Display the details of the solve.\n'
+            'Default: None.'
+        ),
+    )
+    actions.add_argument(
         '-g', '--graph',
         action='store_true',
         help=(

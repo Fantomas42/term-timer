@@ -151,6 +151,9 @@ Actions:
   -l [SOLVES], --list [SOLVES]
                         Display the last recorded solves.
                         Default: All.
+  -d SOLVE, --detail SOLVE
+                        Display the details of the solve.
+                        Default: None.
   -g, --graph           Display evolution graph of recorded solves.
                         Default: False.
   -s, --stats           Display statistics of recorded solves.
