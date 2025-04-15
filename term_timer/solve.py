@@ -10,7 +10,7 @@ from cubing_algs.transform.optimize import optimize_do_undo_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.optimize import optimize_repeat_three_moves
 from cubing_algs.transform.rotation import remove_final_rotations
-from cubing_algs.transform.slice import reslice_moves
+from cubing_algs.transform.slice import reslice_m_moves
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import STATS_CONFIG
@@ -70,7 +70,7 @@ class Solve:
         reconstruction.insert(0, Move(CUBE_ORIENTATION))
 
         return reconstruction.transform(
-            reslice_moves,
+            reslice_m_moves,
             degrip_full_moves,
             remove_final_rotations,
             optimize_double_moves,
