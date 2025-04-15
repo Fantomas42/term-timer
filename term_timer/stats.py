@@ -12,6 +12,7 @@ from term_timer.formatter import computing_padding
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_time
+from term_timer.magic_cube import Cube
 from term_timer.solve import Solve
 
 
@@ -322,15 +323,19 @@ class StatisticsReporter(Statistics):
 
     def detail(self, solve_id: int, max_count: int = -1,
                *, advanced: bool = True) -> None:
-        if advanced:
-            console.print(
-                f'[title]Detail for { self.cube_name } #{ solve_id }[/title]',
-            )
         if max_count < 0:
             max_count = computing_padding(len(self.stack)) + 1
 
         solve = self.stack[solve_id - 1]
         index = f'#{ solve_id }'
+
+        if advanced:
+            console.print(
+                f'[title]Detail for { self.cube_name } #{ solve_id }[/title]',
+            )
+            cube = Cube(self.cube_size)
+            cube.rotate(solve.scramble)
+            console.print(str(cube), end='')
 
         date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
