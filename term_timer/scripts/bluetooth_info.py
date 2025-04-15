@@ -75,6 +75,7 @@ async def consumer_cb(queue):
                         degrip_full_moves,
                         remove_final_rotations,
                         optimize_double_moves,
+                        to_fixpoint=True,
                     )
                     logger.info('MOVES: %s', algo)
                     logger.info('RECON: %s', recon)

@@ -74,6 +74,7 @@ class Solve:
             degrip_full_moves,
             remove_final_rotations,
             optimize_double_moves,
+            to_fixpoint=True,
         )
 
     @cached_property
@@ -86,6 +87,7 @@ class Solve:
             self.solution.transform(
                 optimize_do_undo_moves,
                 optimize_repeat_three_moves,
+                to_fixpoint=True,
             ),
         )
 

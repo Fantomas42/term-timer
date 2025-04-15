@@ -330,8 +330,8 @@ class Timer:
             )
 
             on_good_way = True
-            for i, move in enumerate(algo.moves):
-                expected = self.scramble_oriented.moves[i]
+            for i, move in enumerate(algo):
+                expected = self.scramble_oriented[i]
                 style = 'move'
                 if expected != move or not on_good_way:
                     on_good_way = False
