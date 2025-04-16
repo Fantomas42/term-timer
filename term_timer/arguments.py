@@ -131,11 +131,12 @@ def get_arguments() -> Any:
     )
     actions.add_argument(
         '-d', '--detail',
+        nargs='*',
         type=int,
-        default=0,
+        default=False,
         metavar='SOLVE',
         help=(
-            'Display the details of the solve.\n'
+            'Display the details of the solves.\n'
             'Default: None.'
         ),
     )

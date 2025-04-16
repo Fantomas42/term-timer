@@ -110,8 +110,8 @@ community have been invaluable to this project.
 ## Help
 
 ```console
-Usage: term-timer [-c CUBE] [-p] [-f] [-i SECONDS] [-b TEMPO] [-e] [-n ITERATIONS] [-r SEED]
-                  [-l [SOLVES]] [-s] [-h]
+Usage: term-timer [-b] [-c CUBE] [-p] [-f] [-i SECONDS] [-m TEMPO] [-e] [-n ITERATIONS] [-r SEED]
+                  [-l [SOLVES]] [-d [SOLVE ...]] [-g] [-s] [-h]
                   [SOLVES]
 
 Speed cubing timer on your terminal.
@@ -151,8 +151,8 @@ Actions:
   -l [SOLVES], --list [SOLVES]
                         Display the last recorded solves.
                         Default: All.
-  -d SOLVE, --detail SOLVE
-                        Display the details of the solve.
+  -d [SOLVE ...], --detail [SOLVE ...]
+                        Display the details of the solves.
                         Default: None.
   -g, --graph           Display evolution graph of recorded solves.
                         Default: False.

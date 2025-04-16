@@ -29,7 +29,8 @@ async def timer() -> int:  # noqa: PLR0912
             session_stats.listing(options.list)
 
         if options.detail:
-            session_stats.detail(options.detail)
+            for solve_id in options.detail:
+                session_stats.detail(solve_id)
 
         if options.stats:
             session_stats.resume('Global ', show_title=True)

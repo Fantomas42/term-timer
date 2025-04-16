@@ -326,7 +326,15 @@ class StatisticsReporter(Statistics):
         if max_count < 0:
             max_count = computing_padding(len(self.stack)) + 1
 
-        solve = self.stack[solve_id - 1]
+        try:
+            solve = self.stack[solve_id - 1]
+        except IndexError:
+            console.print(
+                f'Invalid solve #{ solve_id }',
+                style='warning',
+            )
+            return
+
         index = f'#{ solve_id }'
 
         if advanced:
