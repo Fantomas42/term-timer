@@ -24,12 +24,14 @@ class Solve:
     def __init__(self,
                  date: int, time: int,
                  scramble: str, flag: str = '',
+                 timer: str = '',
                  device: str = '',
                  moves: list[str] | None = None):
         self.date = int(date)
         self.time = int(time)
         self.scramble = scramble
         self.flag = flag
+        self.timer = timer
         self.device = device
         self.raw_moves = moves
 
@@ -171,6 +173,7 @@ class Solve:
             'time': self.time,
             'scramble': self.scramble,
             'flag': self.flag,
+            'timer': self.timer,
             'device': self.device,
             'moves': self.raw_moves or [],
         }

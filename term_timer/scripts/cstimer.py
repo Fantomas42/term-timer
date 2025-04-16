@@ -56,6 +56,7 @@ def import_csv(export_path: Path, solves: list) -> str:
                 date, time,
                 scramble,
                 flag,
+                'csTimer',
             ).as_save,
         )
 
@@ -117,6 +118,7 @@ def import_json(export_path: Path, solves: []) -> str:
                     time * 1_000_000,
                     scramble,
                     flag,
+                    'csTimer',
                     device,
                     moves,
                 ).as_save,

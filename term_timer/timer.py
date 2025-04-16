@@ -673,6 +673,7 @@ class Timer:
             datetime.now(tz=timezone.utc).timestamp(),  # noqa: UP017
             self.elapsed_time,
             str(self.scramble),
+            timer='Term-Timer',
             device=(
                 self.bluetooth_interface
                 and self.bluetooth_interface.device.name

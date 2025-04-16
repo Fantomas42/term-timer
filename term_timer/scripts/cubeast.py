@@ -55,6 +55,7 @@ def import_csv(export_path: Path, solves: list) -> str:
                 int(time) * 1_000_000,
                 scramble,
                 flag,
+                'Cubeast',
                 device,
                 ' '.join(fixed_moves),
             ).as_save,
