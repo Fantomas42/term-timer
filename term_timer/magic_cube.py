@@ -111,6 +111,9 @@ class Cube(BaseCube):  # type: ignore[misc]
 
         return facelets
 
-    def __str__(self) -> str:
+    def printed(self, orientation: str = ''):
         printer = CubePrintRich(self)
-        return printer.print_cube(CUBE_ORIENTATION)
+        return printer.print_cube(orientation)
+
+    def __str__(self) -> str:
+        return self.printed(CUBE_ORIENTATION)

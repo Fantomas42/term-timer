@@ -335,7 +335,7 @@ class StatisticsReporter(Statistics):
             )
             cube = Cube(self.cube_size)
             cube.rotate(solve.scramble)
-            console.print(str(cube), end='')
+            console.print(cube.printed(), end='')
 
         date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
