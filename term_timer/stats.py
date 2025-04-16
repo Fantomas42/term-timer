@@ -312,7 +312,7 @@ class StatisticsReporter(Statistics):
         size = len(self.stack)
         max_count = computing_padding(size) + 1
 
-        if limit < 0:
+        if not limit:
             limit = size
 
         for i in range(limit):

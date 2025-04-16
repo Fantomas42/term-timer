@@ -121,7 +121,7 @@ def get_arguments() -> Any:
         '-l', '--list',
         nargs='?',
         type=int,
-        const=-1,
+        const=0,
         default=False,
         metavar='SOLVES',
         help=(

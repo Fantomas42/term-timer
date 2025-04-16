@@ -13,9 +13,13 @@ async def timer() -> int:  # noqa: PLR0912
     options = get_arguments()
 
     logging.disable(logging.INFO)
-
     cube = options.cube
-    if options.stats or options.list or options.graph or options.detail:
+    if (
+            options.list is not False
+            or options.stats
+            or options.graph
+            or options.detail
+        ):
         session_stats = StatisticsReporter(cube, load_solves(cube))
 
         if not session_stats.stack:
@@ -25,7 +29,7 @@ async def timer() -> int:  # noqa: PLR0912
             )
             return 1
 
-        if options.list:
+        if options.list is not False:
             session_stats.listing(options.list)
 
         if options.detail:
