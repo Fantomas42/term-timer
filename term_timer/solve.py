@@ -54,7 +54,12 @@ class Solve:
     @cached_property
     def move_times(self) -> list[str, int]:
         return [
-            move_time.split('@')
+            list(
+                map(
+                    lambda x: x if not x.isdigit() else int(x),
+                    move_time.split('@'),
+                ),
+            )
             for move_time in self.raw_moves.split(' ')
             if move_time
         ]
