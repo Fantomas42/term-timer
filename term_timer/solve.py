@@ -12,6 +12,7 @@ from cubing_algs.transform.optimize import optimize_repeat_three_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.slice import reslice_m_moves
 
+from term_timer.cfop import cfop_steps
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import STATS_CONFIG
 from term_timer.constants import DNF
@@ -70,7 +71,7 @@ class Solve:
     def reconstructed(self) -> list[str, int]:
         reconstruction = self.solution.copy()
         reconstruction.insert(0, Move(CUBE_ORIENTATION))
-
+        # TODO(me): base reconstruction on the method used
         return reconstruction.transform(
             reslice_m_moves,
             degrip_full_moves,
@@ -92,6 +93,10 @@ class Solve:
                 to_fixpoint=True,
             ),
         )
+
+    @cached_property
+    def cfop(self) -> dict[str, dict]:
+        return cfop_steps(self.scramble, self.move_times)
 
     @cached_property
     def report_line(self) -> str:

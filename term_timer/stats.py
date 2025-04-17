@@ -3,6 +3,7 @@ from functools import cached_property
 import numpy as np
 import plotext as plt
 
+from term_timer.config import CUBE_METHOD
 from term_timer.config import STATS_CONFIG
 from term_timer.console import console
 from term_timer.constants import SECOND
@@ -319,13 +320,24 @@ class StatisticsReporter(Statistics):
             if i > size:
                 return
 
-            self.detail(size - i, max_count, advanced=False)
+            solve = self.stack[size - (i + 1)]
+            index = f'#{ size - i}'
+            date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
-    def detail(self, solve_id: int, max_count: int = -1,
-               *, advanced: bool = True) -> None:
-        if max_count < 0:
-            max_count = computing_padding(len(self.stack)) + 1
+            console.print(
+                f'[stats]{ index:{" "}>{max_count}}[/stats]',
+                f'[result]{ format_time(solve.time) }[/result]',
+                f'[date]{ date }[/date]',
+                f'[consign]{ solve.scramble }[/consign]',
+                f'[result]{ solve.flag }[/result]',
+            )
+            if solve.raw_moves:
+                console.print(
+                    f'[analysis]{ index:{" "}>{max_count}}[/analysis]',
+                    f'{ solve.report_line }',
+                )
 
+    def detail(self, solve_id: int) -> None:
         try:
             solve = self.stack[solve_id - 1]
         except IndexError:
@@ -335,35 +347,74 @@ class StatisticsReporter(Statistics):
             )
             return
 
-        index = f'#{ solve_id }'
-
-        if advanced:
-            console.print(
-                f'[title]Detail for { self.cube_name } #{ solve_id }[/title]',
-            )
-            cube = Cube(self.cube_size)
-            cube.rotate(solve.scramble)
-            console.print(cube.printed(), end='')
+        cube = Cube(self.cube_size)
+        cube.rotate(solve.scramble)
 
         date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
         console.print(
-            f'[stats]{ index:{" "}>{max_count}}[/stats]',
-            f'[result]{ format_time(solve.time) }[/result]',
-            f'[date]{ date }[/date]',
-            f'[consign]{ solve.scramble }[/consign]',
+            f'[title]Detail for { self.cube_name } #{ solve_id }[/title]',
+        )
+        console.print(
+            '[stats]Time    :[/stats] '
+            f'[result]{ format_time(solve.time) }[/result]'
             f'[result]{ solve.flag }[/result]',
         )
+        console.print(
+            '[stats]Date    :[/stats] '
+            f'[date]{ date }[/date]',
+        )
+        console.print(
+            '[stats]Scramble:[/stats] '
+            f'[consign]{ solve.scramble }[/consign]',
+        )
+        console.print(cube.printed(), end='')
+
         if solve.raw_moves:
-            console.print(
-                f'[analysis]{ index:{" "}>{max_count}}[/analysis]',
-                f'{ solve.report_line }',
+            link = solve.alg_cubing_url(
+                f'Solve { date }: { format_time(solve.time) }'.replace(' ', '%20'),
+                solve.scramble,
+                'z2 // Orientation\n' + str(solve.reconstructed),
             )
-            if advanced and solve.missed_moves:
+
+            console.print(
+                '[stats]Recons  :[/stats] '
+                f'[extlink][link={ link }]alg.cubing.net[/link][/extlink]',
+            )
+
+            console.print(
+                '[stats]Metric  :[/stats] '
+                f'[tps]{ solve.reconstructed_tps:.2f} TPS[/tps]',
+            )
+
+            metrics = STATS_CONFIG.get('metrics')
+            for metric in metrics:
+                value = solve.reconstructed.metrics[metric]
                 console.print(
-                    f'[analysis]{ index:{" "}>{max_count}}[/analysis]',
-                    f'[title]Missed moves[/title]\n{ solve.missed_line }',
+                    '[stats]Metric  :[/stats] '
+                    f'[{ metric }]{ value } { metric.upper() }[/{ metric }]',
                 )
+
+            if self.cube_size == 3 and CUBE_METHOD == 'cfop':
+                cfop = solve.cfop
+                for step in ('cross', 'f2l  ', 'oll  ', 'pll  '):
+                    console.print(
+                        f'[stats]{ step.title() }   :[/stats] '
+                        f'[result]{ len(cfop[step.strip()].get("moves", [])) } moves[/result]',
+                    )
+                # total = 0
+                # for value in cfop.values():
+                #     total += len(value.get('moves', []))
+                # if total != len(solve.move_times):
+                #     print(total, len(solve.move_times))
+                #     breakpoint()
+
+            missed = f'[missed]{ solve.missed_moves } missed moves[/missed]'
+            if not solve.missed_moves:
+                missed = '[green]No missed move[/green]'
+            console.print(f'[stats]Missed  :[/stats] { missed }')
+            if solve.missed_moves:
+                console.print(solve.missed_line)
 
     def graph(self) -> None:
         ao5s = []
