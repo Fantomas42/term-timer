@@ -15,10 +15,11 @@ metronome = 0.0
 
 [cube]
 orientation =
+method = 'cfop'
 
 [statistics]
 distribution = 0
-metrics = ["htm", "stm", "qtm"]
+metrics = ["htm", "qtm", "stm"]
 
 [ui]
 
@@ -47,3 +48,5 @@ UI_CONFIG = CONFIG.get('ui', {})
 CUBE_CONFIG = CONFIG.get('cube', {})
 
 CUBE_ORIENTATION = CUBE_CONFIG.get('orientation')
+
+CUBE_METHOD = CUBE_CONFIG.get('method')
