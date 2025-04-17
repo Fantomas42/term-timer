@@ -13,6 +13,7 @@ from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.slice import reslice_m_moves
 
 from term_timer.cfop import CFOPAnalyser
+from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import STATS_CONFIG
 from term_timer.constants import DNF
@@ -116,19 +117,12 @@ class Solve:
                 f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
             )
 
-        date = self.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
-        link = self.alg_cubing_url(
-            f'Solve { date }: { format_time(self.time) }'.replace(' ', '%20'),
-            self.scramble,
-            'z2 // Orientation\n' + str(self.reconstructed),
-        )
-
         missed_moves = f'[missed]{ self.missed_moves } missed moves[/missed]'
         if not self.missed_moves:
             missed_moves = '[green]No missed move[/green]'
 
         return (
-            f'[extlink][link={ link }]alg.cubing.net[/link][/extlink] '
+            f'[extlink][link={ self.link }]alg.cubing.net[/link][/extlink] '
             f'{ metric_string }'
             f'[tps]{ self.reconstructed_tps:.2f} TPS[/tps] '
             f'{ missed_moves }'
@@ -155,6 +149,16 @@ class Solve:
                 moves.append(str(m))
 
         return ' '.join(moves)
+
+    @cached_property
+    def link(self):
+        date = self.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
+
+        return self.alg_cubing_url(
+            f'Solve { date }: { format_time(self.time) }'.replace(' ', '%20'),
+            self.scramble,
+            self.cfop.reconstruction_detailed,
+        )
 
     @staticmethod
     def alg_cubing_url(title: str, setup: str, alg: str) -> str:

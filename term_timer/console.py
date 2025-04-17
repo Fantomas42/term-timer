@@ -23,6 +23,7 @@ theme = {
 
     'bluetooth': 'bold #FFFFFF on #133EBF',
 
+    'timer': f'bold { ORANGE }',
     'title': f'bold { TEXT_LIGHT }',
     'moves': f'bold { TEXT_LIGHT }',
     'result': f'bold { TEXT_LIGHT }',

@@ -4,6 +4,7 @@ import numpy as np
 import plotext as plt
 
 from term_timer.config import CUBE_METHOD
+from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import STATS_CONFIG
 from term_timer.console import console
 from term_timer.constants import SECOND
@@ -11,6 +12,7 @@ from term_timer.constants import SECOND_BINS
 from term_timer.constants import STEP_BAR
 from term_timer.formatter import computing_padding
 from term_timer.formatter import format_delta
+from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_time
 from term_timer.magic_cube import Cube
@@ -365,23 +367,16 @@ class StatisticsReporter(Statistics):
             f'[date]{ date }[/date]',
         )
         console.print(
+            '[stats]Timer   :[/stats] '
+            f'[timer]{ solve.timer }[/timer]',
+        )
+        console.print(
             '[stats]Scramble:[/stats] '
             f'[consign]{ solve.scramble }[/consign]',
         )
         console.print(cube.printed(), end='')
 
         if solve.raw_moves:
-            link = solve.alg_cubing_url(
-                f'Solve { date }: { format_time(solve.time) }'.replace(' ', '%20'),
-                solve.scramble,
-                'z2 // Orientation\n' + str(solve.reconstructed),
-            )
-
-            console.print(
-                '[stats]Recons  :[/stats] '
-                f'[extlink][link={ link }]alg.cubing.net[/link][/extlink]',
-            )
-
             console.print(
                 '[stats]Metric  :[/stats] '
                 f'[tps]{ solve.reconstructed_tps:.2f} TPS[/tps]',
@@ -397,22 +392,39 @@ class StatisticsReporter(Statistics):
 
             if self.cube_size == 3 and CUBE_METHOD == 'cfop':
                 cfop = solve.cfop
-                for step in ('cross', 'f2l  ', 'oll  ', 'pll  '):
-                    console.print(
-                        f'[stats]{ step.upper() }   :[/stats] '
-                        f'[result]{ len(cfop.steps[step.strip()]["moves"]) } moves[/result]',
-                    )
-                # total = 0
-                # for value in cfop.values():
-                #     total += len(value.get('moves', []))
-                # if total != len(solve.move_times):
-                #     print(total, len(solve.move_times))
-                #     breakpoint()
 
-            missed = f'[missed]{ solve.missed_moves } missed moves[/missed]'
+                console.print('Reconstruction CFOP', style='title')
+                console.print(
+                    f'[stats]Orient  :[/stats] '
+                    f'[consign]{ CUBE_ORIENTATION }[/consign]',
+                )
+                for step in ('Cross', 'F2L  ', 'OLL  ', 'PLL  '):
+                    infos = cfop.step_info(step.strip().lower())
+
+                    if infos['moves']:
+                        console.print(
+                            f'[stats]{ step }   :[/stats] '
+                            f'[consign]{ infos["reconstruction"]!s }[/consign]'
+                            '\n          '
+                            f'[result]{ len(infos["reconstruction"]):>2} moves[/result] '
+                            f'[inspection]{ format_duration(infos["inspection"]):>5}s[/inspection] '
+                            f'[duration]{ format_duration(infos["execution"]):>5}s[/duration] '
+                            f'[analysis]{ format_duration(infos["total"]):>5}s[/analysis]',
+                        )
+                    else:
+                        console.print(
+                            f'[stats]{ step }   :[/stats] [record]SKIPPED[record]',
+                        )
+
+            console.print(
+                '[stats]Recons  :[/stats] '
+                f'[extlink][link={ solve.link }]alg.cubing.net[/link][/extlink]',
+            )
+
+            missed = f'[missed]{ solve.missed_moves }[/missed]'
             if not solve.missed_moves:
-                missed = '[green]No missed move[/green]'
-            console.print(f'[stats]Missed  :[/stats] { missed }')
+                missed = '[green]0[/green]'
+            console.print('[title]Missed Moves :[/title]', missed)
             if solve.missed_moves:
                 console.print(solve.missed_line)
 
