@@ -12,7 +12,7 @@ from cubing_algs.transform.optimize import optimize_repeat_three_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.slice import reslice_m_moves
 
-from term_timer.cfop import cfop_steps
+from term_timer.cfop import CFOPAnalyser
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import STATS_CONFIG
 from term_timer.constants import DNF
@@ -96,7 +96,7 @@ class Solve:
 
     @cached_property
     def cfop(self) -> dict[str, dict]:
-        return cfop_steps(self.scramble, self.move_times)
+        return CFOPAnalyser(self.scramble, self.move_times)
 
     @cached_property
     def report_line(self) -> str:

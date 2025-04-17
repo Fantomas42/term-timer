@@ -1,84 +1,75 @@
 from term_timer.magic_cube import Cube
 
-STEPS = ['cross', 'f2l', 'oll', 'pll', ]#'auf']
 
+class CFOPAnalyser:
+    STEPS = ('cross', 'f2l', 'oll', 'pll') #, 'auf')
 
-def build_facelets_masked(mask: str, facelets: str) -> str:
-    masked = []
-    for i, value in enumerate(facelets):
-        if mask[i] == '0':
-            masked.append('-')
-        else:
-            masked.append(value)
+    def __init__(self, scramble, move_times):
+        self.scramble = scramble
+        self.move_times = move_times
 
-    return ''.join(masked)
+        self.steps = {}
+        for step in self.STEPS:
+            self.steps[step] = {
+                'moves': [],
+                'comments': [],
+            }
 
+        self.split_steps()
 
-def check_cross(cube):
-    mask = '010111010' + '000010000' * 5
-    facelets = build_facelets_masked(mask, cube.as_twophase_facelets)
-    return '-U-UUU-U-----R--------F--------D--------L--------B----' == facelets
+    def split_steps(self):
+        cube = Cube(3)
+        cube.rotate(self.scramble)
 
+        move_index = 0
+        current_step = self.STEPS[0]
+        step_moves = []
 
-def check_f2l(cube):
-    mask = '111111111' + ('111111000' * 2) + '000000000' + ('111111000' * 2)
-    facelets = build_facelets_masked(mask, cube.as_twophase_facelets)
-    return 'UUUUUUUUURRRRRR---FFFFFF------------LLLLLL---BBBBBB---' == facelets
+        while not cube.is_done():
+            step_index = self.STEPS.index(current_step)
 
+            for step in self.STEPS[step_index:]:
+                step_passed = getattr(self, f'check_{ step}')(cube)
+                if step_passed:
+                    self.steps[step]['moves'] = step_moves.copy()
+                    current_step = self.STEPS[step_index + 1]
+                    step_moves = []
+                else:
+                    break
 
-def check_oll(cube):
-    mask = '111111111' + ('111111000' * 2) + '111111111' + ('111111000' * 2)
-    facelets = build_facelets_masked(mask, cube.as_twophase_facelets)
-    return 'UUUUUUUUURRRRRR---FFFFFF---DDDDDDDDDLLLLLL---BBBBBB---' == facelets
+            step_moves.append(self.move_times[move_index])
+            cube.rotate(self.move_times[move_index][0])
+            move_index += 1
 
+        self.steps[current_step]['moves'] = step_moves.copy()
 
-def check_pll(cube):
-    mask = '1' * 54
-    facelets = build_facelets_masked(mask, cube.as_twophase_facelets)
-    return 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB' == facelets
-
-
-def check_auf(cube):
-    mask = '1' * 54
-    facelets = build_facelets_masked(mask, cube.as_twophase_facelets)
-    return 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB' == facelets
-
-
-def cfop_steps(scramble, move_times):
-    steps = {
-        'cross': {},
-        'f2l': {},
-        'oll': {},
-        'pll': {},
-        #'auf': {},
-    }
-    cube = Cube(3)
-    cube.rotate(scramble)
-
-    index = 0
-    current_step = 'cross'
-    step_moves = []
-
-    while not cube.is_done():
-        step_index = STEPS.index(current_step)
-
-        for step in STEPS[step_index:]:
-            step_passed = globals()[f'check_{ step }'](cube)
-            if step_passed:
-                steps[step] = {
-                    'moves': step_moves.copy(),
-                }
-                current_step = STEPS[step_index + 1]
-                step_moves = []
+    @staticmethod
+    def build_facelets_masked(mask: str, facelets: str) -> str:
+        masked = []
+        for i, value in enumerate(facelets):
+            if mask[i] == '0':
+                masked.append('-')
             else:
-                break
+                masked.append(value)
 
-        step_moves.append(move_times[index])
-        cube.rotate(move_times[index][0])
-        index += 1
+        return ''.join(masked)
 
-    steps[current_step] = {
-        'moves': step_moves.copy(),
-    }
+    def check_cross(self, cube):
+        mask = '010111010' + '000010000' * 5
+        facelets = self.build_facelets_masked(mask, cube.as_twophase_facelets)
+        return '-U-UUU-U-----R--------F--------D--------L--------B----' == facelets
 
-    return steps
+    def check_f2l(self, cube):
+        mask = '111111111' + ('111111000' * 2) + '000000000' + ('111111000' * 2)
+        facelets = self.build_facelets_masked(mask, cube.as_twophase_facelets)
+        return 'UUUUUUUUURRRRRR---FFFFFF------------LLLLLL---BBBBBB---' == facelets
+
+    def check_oll(self, cube):
+        mask = '111111111' + ('111111000' * 2) + '111111111' + ('111111000' * 2)
+        facelets = self.build_facelets_masked(mask, cube.as_twophase_facelets)
+        return 'UUUUUUUUURRRRRR---FFFFFF---DDDDDDDDDLLLLLL---BBBBBB---' == facelets
+
+    def check_pll(self, cube):
+        mask = '1' * 54
+        facelets = self.build_facelets_masked(mask, cube.as_twophase_facelets)
+        return 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB' == facelets

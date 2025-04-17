@@ -399,8 +399,8 @@ class StatisticsReporter(Statistics):
                 cfop = solve.cfop
                 for step in ('cross', 'f2l  ', 'oll  ', 'pll  '):
                     console.print(
-                        f'[stats]{ step.title() }   :[/stats] '
-                        f'[result]{ len(cfop[step.strip()].get("moves", [])) } moves[/result]',
+                        f'[stats]{ step.upper() }   :[/stats] '
+                        f'[result]{ len(cfop.steps[step.strip()]["moves"]) } moves[/result]',
                     )
                 # total = 0
                 # for value in cfop.values():
