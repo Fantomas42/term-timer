@@ -13,8 +13,8 @@ class CFOPAnalyser:
     STEPS = ('cross', 'f2l', 'oll', 'pll')
     STEPS_CONFIG = {
         'cross': {
-            'mask': '010111010' + '000010000' * 5,
-            'match': '-U-UUU-U-----R--------F--------D--------L--------B----',
+            'mask': '010111010' + ('010010000' * 2) + ('000010000') + ('010010000' * 2),
+            'match': '-U-UUU-U--R--R-----F--F--------D-----L--L-----B--B----',  # Fix
             'transformations': (
                 degrip_full_moves,
                 remove_final_rotations,
