@@ -377,35 +377,26 @@ class StatisticsReporter(Statistics):
         console.print(cube.printed(), end='')
 
         if solve.raw_moves:
-            console.print(
-                '[stats]Metric  :[/stats] '
-                f'[tps]{ solve.reconstructed_tps:.2f} TPS[/tps]',
-            )
-
-            metrics = STATS_CONFIG.get('metrics')
-            for metric in metrics:
-                value = solve.reconstructed.metrics[metric]
-                console.print(
-                    '[stats]Metric  :[/stats] '
-                    f'[{ metric }]{ value } { metric.upper() }[/{ metric }]',
-                )
-
             if self.cube_size == 3 and CUBE_METHOD == 'cfop':
                 cfop = solve.cfop
 
-                console.print('Reconstruction CFOP', style='title')
                 console.print(
-                    f'[stats]Orient  :[/stats] '
+                    '[title]Reconstruction CFOP[/title]',
+                    f'[extlink][link={ solve.link }]alg.cubing.net[/link][/extlink]',
+                )
+
+                console.print(
+                    f'[stats]Orientation  :[/stats] '
                     f'[consign]{ CUBE_ORIENTATION }[/consign]',
                 )
-                for step in ('Cross', 'F2L  ', 'OLL  ', 'PLL  '):
-                    infos = cfop.step_info(step.strip().lower())
+                for step in cfop.STEPS:
+                    infos = cfop.step_info(step)
 
                     if infos['moves']:
                         console.print(
-                            f'[stats]{ step }   :[/stats] '
+                            f'[stats]{ step:<13}:[/stats] '
                             f'[consign]{ infos["reconstruction"]!s }[/consign]'
-                            '\n          '
+                            '\n               '
                             f'[result]{ len(infos["reconstruction"]):>2} moves[/result] '
                             f'[inspection]{ format_duration(infos["inspection"]):>5}s[/inspection] '
                             f'[duration]{ format_duration(infos["execution"]):>5}s[/duration] '
@@ -416,10 +407,15 @@ class StatisticsReporter(Statistics):
                             f'[stats]{ step }   :[/stats] [record]SKIPPED[record]',
                         )
 
-            console.print(
-                '[stats]Recons  :[/stats] '
-                f'[extlink][link={ solve.link }]alg.cubing.net[/link][/extlink]',
-            )
+            metric_string = '[title]Metrics      :[/title] '
+            for metric in STATS_CONFIG.get('metrics'):
+                value = solve.reconstructed.metrics[metric]
+                metric_string += (
+                    f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
+                )
+            metric_string += f'[tps]{ solve.reconstructed_tps:.2f} TPS[/tps]'
+
+            console.print(metric_string)
 
             missed = f'[missed]{ solve.missed_moves }[/missed]'
             if not solve.missed_moves:

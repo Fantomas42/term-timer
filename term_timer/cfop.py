@@ -9,47 +9,48 @@ from term_timer.formatter import format_duration
 from term_timer.magic_cube import Cube
 
 
-class CFOPAnalyser:
-    STEPS = ('cross', 'f2l', 'oll', 'pll')
-    STEPS_CONFIG = {
-        'cross': {
-            'mask': '010111010' + ('010010000' * 2) + ('000010000') + ('010010000' * 2),
-            'match': '-U-UUU-U--R--R-----F--F--------D-----L--L-----B--B----',  # Fix
-            'transformations': (
-                degrip_full_moves,
-                remove_final_rotations,
-                optimize_double_moves,
-            ),
-        },
-        'f2l': {
-            'mask': '111111111' + ('111111000' * 2) + '000000000' + ('111111000' * 2),
-            'match': 'UUUUUUUUURRRRRR---FFFFFF------------LLLLLL---BBBBBB---',
-            'transformations': (
-                degrip_full_moves,
-                remove_final_rotations,
-                optimize_double_moves,
-            ),
-        },
-        'oll': {
-            'mask': '111111111' + ('111111000' * 2) + '111111111' + ('111111000' * 2),
-            'match': 'UUUUUUUUURRRRRR---FFFFFF---DDDDDDDDDLLLLLL---BBBBBB---',
-            'transformations': (
-                degrip_full_moves,
-                remove_final_rotations,
-                optimize_double_moves,
-            ),
-        },
-        'pll': {
-            'mask': '1' * 54,
-            'match': 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
-            'transformations': (
-                reslice_m_moves,
-                degrip_full_moves,
-                remove_final_rotations,
-                optimize_double_moves,
-            ),
-        },
-    }
+STEPS_CONFIG = {
+    'Cross': {
+        'mask': '010111010' + ('010010000' * 2) + ('000010000') + ('010010000' * 2),
+        'match': '-U-UUU-U--R--R-----F--F--------D-----L--L-----B--B----',
+        'transformations': (
+            degrip_full_moves,
+            remove_final_rotations,
+            optimize_double_moves,
+        ),
+    },
+    'F2L': {
+        'mask': '111111111' + ('111111000' * 2) + '000000000' + ('111111000' * 2),
+        'match': 'UUUUUUUUURRRRRR---FFFFFF------------LLLLLL---BBBBBB---',
+        'transformations': (
+            degrip_full_moves,
+            remove_final_rotations,
+            optimize_double_moves,
+        ),
+    },
+    'OLL': {
+        'mask': '111111111' + ('111111000' * 2) + '111111111' + ('111111000' * 2),
+        'match': 'UUUUUUUUURRRRRR---FFFFFF---DDDDDDDDDLLLLLL---BBBBBB---',
+        'transformations': (
+            degrip_full_moves,
+            remove_final_rotations,
+            optimize_double_moves,
+        ),
+    },
+    'PLL': {
+        'mask': '1' * 54,
+        'match': 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
+        'transformations': (
+            reslice_m_moves,
+            degrip_full_moves,
+            remove_final_rotations,
+            optimize_double_moves,
+        ),
+    },
+}
+
+
+class Analyser:
 
     def __init__(self, scramble, move_times):
         self.scramble = scramble
@@ -59,7 +60,6 @@ class CFOPAnalyser:
         for step in self.STEPS:
             self.steps[step] = {
                 'moves': [],
-                'comments': [],
             }
 
         self.duration = (
@@ -106,8 +106,8 @@ class CFOPAnalyser:
         return ''.join(masked)
 
     def check_step(self, step, cube):
-        return self.STEPS_CONFIG[step]['match'] == self.build_facelets_masked(
-            self.STEPS_CONFIG[step]['mask'],
+        return STEPS_CONFIG[step]['match'] == self.build_facelets_masked(
+            STEPS_CONFIG[step]['mask'],
             cube.as_twophase_facelets,
         )
 
@@ -133,7 +133,7 @@ class CFOPAnalyser:
         times = [m[1] for m in infos['moves']]
 
         recons = parse_moves([CUBE_ORIENTATION] + moves).transform(
-            *self.STEPS_CONFIG[step]['transformations'],
+            *STEPS_CONFIG[step]['transformations'],
             to_fixpoint=True,
         )
 
@@ -174,3 +174,7 @@ class CFOPAnalyser:
             recons += f'{ infos["reconstruction"]!s }'
 
         return parse_moves(recons)
+
+
+class CFOPAnalyser(Analyser):
+    STEPS = ('Cross', 'F2L', 'OLL', 'PLL')
