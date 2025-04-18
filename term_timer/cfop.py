@@ -51,13 +51,15 @@ STEPS_CONFIG = {
 
 
 class Analyser:
+    name = ''
+    step_list = []
 
     def __init__(self, scramble, move_times):
         self.scramble = scramble
         self.move_times = move_times
 
         self.steps = {}
-        for step in self.STEPS:
+        for step in self.step_list:
             self.steps[step] = {
                 'moves': [],
             }
@@ -73,17 +75,17 @@ class Analyser:
         cube.rotate(self.scramble)
 
         move_index = 0
-        current_step = self.STEPS[0]
+        current_step = self.step_list[0]
         step_moves = []
 
         while not cube.is_done():
-            step_index = self.STEPS.index(current_step)
+            step_index = self.step_list.index(current_step)
 
-            for step in self.STEPS[step_index:]:
+            for step in self.step_list[step_index:]:
                 step_passed = self.check_step(step, cube)
                 if step_passed:
                     self.steps[step]['moves'] = step_moves.copy()
-                    current_step = self.STEPS[step_index + 1]
+                    current_step = self.step_list[step_index + 1]
                     step_moves = []
                 else:
                     break
@@ -115,11 +117,11 @@ class Analyser:
     def step_info(self, step):
         infos = self.steps[step]
 
-        step_index = self.STEPS.index(step)
+        step_index = self.step_list.index(step)
         if not step_index:
             previous_move = ('', 0)
         else:
-            previous_move = self.steps[self.STEPS[step_index - 1]]['moves'][-1]
+            previous_move = self.steps[self.step_list[step_index - 1]]['moves'][-1]
 
         execution = 0
         inspection = 0
@@ -153,7 +155,7 @@ class Analyser:
         if CUBE_ORIENTATION:
             recons += f'{ CUBE_ORIENTATION } // Orientation\n'
 
-        for step in self.STEPS:
+        for step in self.step_list:
             infos = self.step_info(step)
             recons += (
                 f'{ infos["reconstruction"]!s } // '
@@ -169,7 +171,7 @@ class Analyser:
     def reconstruction(self):
         recons = ''
 
-        for step in self.STEPS:
+        for step in self.step_list:
             infos = self.step_info(step)
             recons += f'{ infos["reconstruction"]!s }'
 
@@ -177,4 +179,5 @@ class Analyser:
 
 
 class CFOPAnalyser(Analyser):
-    STEPS = ('Cross', 'F2L', 'OLL', 'PLL')
+    name = 'CFOP'
+    step_list = ('Cross', 'F2L', 'OLL', 'PLL')

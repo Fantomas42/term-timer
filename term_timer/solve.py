@@ -21,6 +21,10 @@ from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_time
 
+METHODS = {
+    'cfop': CFOPAnalyser,
+}
+
 
 class Solve:
     def __init__(self,
@@ -101,8 +105,10 @@ class Solve:
         )
 
     @cached_property
-    def cfop(self) -> dict[str, dict]:
-        return CFOPAnalyser(self.scramble, self.move_times)
+    def method_applied(self) -> dict[str, dict]:
+        if not self.raw_moves:
+            return {}
+        return METHODS[CUBE_METHOD](self.scramble, self.move_times)
 
     @cached_property
     def report_line(self) -> str:
@@ -157,7 +163,7 @@ class Solve:
         return self.alg_cubing_url(
             f'Solve { date }: { format_time(self.time) }'.replace(' ', '%20'),
             self.scramble,
-            self.cfop.reconstruction_detailed,
+            self.method_applied.reconstruction_detailed,
         )
 
     @staticmethod

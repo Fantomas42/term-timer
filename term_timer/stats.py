@@ -377,35 +377,34 @@ class StatisticsReporter(Statistics):
         console.print(cube.printed(), end='')
 
         if solve.raw_moves:
-            if self.cube_size == 3 and CUBE_METHOD == 'cfop':
-                cfop = solve.cfop
+            method = solve.method_applied
 
-                console.print(
-                    '[title]Reconstruction CFOP[/title]',
-                    f'[extlink][link={ solve.link }]alg.cubing.net[/link][/extlink]',
-                )
+            console.print(
+                f'[title]Reconstruction { method.name }[/title]',
+                f'[extlink][link={ solve.link }]alg.cubing.net[/link][/extlink]',
+            )
 
-                console.print(
-                    f'[stats]Orientation  :[/stats] '
-                    f'[consign]{ CUBE_ORIENTATION }[/consign]',
-                )
-                for step in cfop.STEPS:
-                    infos = cfop.step_info(step)
+            console.print(
+                f'[stats]Orientation  :[/stats] '
+                f'[consign]{ CUBE_ORIENTATION }[/consign]',
+            )
+            for step in method.step_list:
+                infos = method.step_info(step)
 
-                    if infos['moves']:
-                        console.print(
-                            f'[stats]{ step:<13}:[/stats] '
-                            f'[consign]{ infos["reconstruction"]!s }[/consign]'
-                            '\n               '
-                            f'[result]{ len(infos["reconstruction"]):>2} moves[/result] '
-                            f'[inspection]{ format_duration(infos["inspection"]):>5}s[/inspection] '
-                            f'[duration]{ format_duration(infos["execution"]):>5}s[/duration] '
-                            f'[analysis]{ format_duration(infos["total"]):>5}s[/analysis]',
-                        )
-                    else:
-                        console.print(
-                            f'[stats]{ step }   :[/stats] [record]SKIPPED[record]',
-                        )
+                if infos['moves']:
+                    console.print(
+                        f'[stats]{ step:<13}:[/stats] '
+                        f'[consign]{ infos["reconstruction"]!s }[/consign]'
+                        '\n               '
+                        f'[result]{ len(infos["reconstruction"]):>2} moves[/result] '
+                        f'[inspection]{ format_duration(infos["inspection"]):>5}s[/inspection] '
+                        f'[duration]{ format_duration(infos["execution"]):>5}s[/duration] '
+                        f'[analysis]{ format_duration(infos["total"]):>5}s[/analysis]',
+                    )
+                else:
+                    console.print(
+                        f'[stats]{ step }   :[/stats] [record]SKIPPED[record]',
+                    )
 
             metric_string = '[title]Metrics      :[/title] '
             for metric in STATS_CONFIG.get('metrics'):
