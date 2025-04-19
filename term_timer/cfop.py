@@ -16,7 +16,9 @@ F2L_FACE     = '111111000'
 FULL_FACE    = '1' * 9
 FULL_CUBE    = '1' * 54
 
-INITIAL = 'U' * 9 + 'R' * 9 + 'F' * 9 + 'D' * 9 + 'L' * 9 + 'B' * 9
+INITIAL = ''
+for face in ['U', 'R', 'F', 'D', 'L', 'B']:
+    INITIAL += face * 9
 
 STEPS_CONFIG = {
     'Cross': {

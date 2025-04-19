@@ -381,7 +381,7 @@ class StatisticsReporter(Statistics):
                     f'[title]Reconstruction { solve.method.name }[/title]',
                     f'[extlink][link={ solve.link }]alg.cubing.net[/link][/extlink]',
                 )
-                console.print(method_line)
+                console.print(method_line, end='')
 
             metric_string = '[title]Metrics      :[/title] '
             for metric in STATS_CONFIG.get('metrics'):
