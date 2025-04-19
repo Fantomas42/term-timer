@@ -158,20 +158,18 @@ class Solve:
             f'[consign]{ CUBE_ORIENTATION }[/consign]\n'
         )
 
-        for step in self.method_applied.step_list:
-            infos = self.method_applied.step_info(step)
-
-            if infos:
+        for info in self.method_applied.summary:
+            if info:
                 line += (
-                    f'[stats]{ step:<13}:[/stats] '
-                    f'[consign]{ infos["reconstruction"]!s }[/consign]'
+                    f'[stats]{ info["name"]:<13}:[/stats] '
+                    f'[consign]{ info["reconstruction"]!s }[/consign]'
                     '\n               '
-                    f'[result]{ len(infos["reconstruction"]):>2} moves[/result] '
-                    f'[inspection]{ format_duration(infos["inspection"]):>5}s[/inspection] '
-                    f'[duration]{ format_duration(infos["execution"]):>5}s[/duration] '
-                    f'[analysis]{ format_duration(infos["total"]):>5}s[/analysis]\n'
+                    f'[result]{ len(info["reconstruction"]):>2} moves[/result] '
+                    f'[inspection]{ format_duration(info["inspection"]):>5}s[/inspection] '
+                    f'[duration]{ format_duration(info["execution"]):>5}s[/duration] '
+                    f'[analysis]{ format_duration(info["total"]):>5}s[/analysis]\n'
                 )
-            else:
+            else:  # TODO fix case
                 line += (
                     f'[stats]{ step }        :[/stats] [record]SKIPPED[/record]\n'
                 )

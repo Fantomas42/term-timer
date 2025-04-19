@@ -8,13 +8,15 @@ from term_timer.config import CUBE_ORIENTATION
 from term_timer.formatter import format_duration
 from term_timer.magic_cube import Cube
 
+TO_NS = 1_000_000
+
 CENTER_PIECE = '000010000'
-CROSS_PIECE  = '010010000'
-LEFT_FACE    = '110110000'
-RIGHT_FACE   = '011011000'
-F2L_FACE     = '111111000'
-FULL_FACE    = '1' * 9
-FULL_CUBE    = '1' * 54
+CROSS_PIECE  = '010010000'  # noqa: E221
+LEFT_FACE    = '110110000'  # noqa: E221
+RIGHT_FACE   = '011011000'  # noqa: E221
+F2L_FACE     = '111111000'  # noqa: E221
+FULL_FACE    = '1' * 9      # noqa: E221
+FULL_CUBE    = '1' * 54     # noqa: E221
 
 INITIAL = ''
 for face in ['U', 'R', 'F', 'D', 'L', 'B']:
@@ -112,48 +114,118 @@ STEPS_CONFIG = {
 
 class Analyser:
     name = ''
-    step_list = []
+    step_list: tuple[str] = ()
 
     def __init__(self, scramble, move_times):
         self.scramble = scramble
-        self.move_times = move_times
 
-        self.steps = {}
-        for step in self.step_list:
-            self.steps[step] = []
+        self.moves = []
+        self.times = []
+        for move_time in move_times:
+            self.moves.append(move_time[0])
+            self.times.append(move_time[1])
 
         self.duration = (
-            self.move_times[-1][1] - self.move_times[0][1]
-        ) * 1_000_000
+            self.times[-1] - self.times[0]
+        ) * TO_NS
 
-        self.split_steps()
-        self.summarize()
+        self.steps = self.split_steps()
+        self.summary = self.summarize()
 
     def split_steps(self):
         cube = Cube(3)
         cube.rotate(self.scramble)
 
+        steps = {}
         progress = 0
         step_moves = []
 
-        for move, time in self.move_times:
+        for move_index, move in enumerate(self.moves):
             current_progress = self.compute_progress(cube)
 
             if current_progress > progress:
                 step_name = self.step_list[current_progress - 1]
 
                 progress = current_progress
-                self.steps[step_name] = step_moves.copy()
+                steps[step_name] = step_moves.copy()
                 step_moves = []
 
-            step_moves.append((move, time))
+            step_moves.append(move_index)
             cube.rotate(move)
 
         step_name = self.step_list[-1]
-        self.steps[step_name] = step_moves.copy()
+        steps[step_name] = step_moves.copy()
+
+        return steps
 
     def compute_progress(self):
         raise NotImplementedError
+
+    def summarize(self):
+        summary = []
+
+        for step_index, step in enumerate(self.step_list):
+            if step not in self.steps:
+                continue
+
+            step_moves = self.steps[step]
+
+            moves = [self.moves[i] for i in step_moves]
+            times = [self.times[i] for i in step_moves]
+
+            ante_time = 0
+            if step_moves[0]:
+                ante_time = self.times[step_moves[0] - 1]
+
+            execution = (self.times[step_moves[-1]] - self.times[step_moves[0]]) * TO_NS
+            inspection = (self.times[step_moves[0]] - ante_time) * TO_NS
+            total = execution + inspection
+
+            reconstruction = parse_moves([CUBE_ORIENTATION, *moves]).transform(
+                *STEPS_CONFIG[step]['transformations'],
+                to_fixpoint=True,
+            )
+
+            summary.append(
+                {
+                    'name': step,
+                    'moves': moves,
+                    'times': times,
+                    'total': total,
+                    'execution': execution,
+                    'inspection': inspection,
+                    'reconstruction': reconstruction,
+                },
+            )
+
+        return summary
+
+    @property
+    def reconstruction_detailed(self):
+        recons = ''
+
+        if CUBE_ORIENTATION:
+            recons += f'{ CUBE_ORIENTATION } // Orientation\n'
+
+        for info in self.summary:
+            recons += (
+                f'{ info["reconstruction"]!s } // '
+                f'{ info["name"] } '
+                f'Insp: { format_duration(info["inspection"]) }s '
+                f'Exec: { format_duration(info["execution"]) }s '
+                f'Moves: { len(info["reconstruction"]) }\n'
+            )
+
+        return recons
+
+    @property
+    def reconstruction(self):
+        recons = ''
+
+        for info in self.summary:
+            recons += f'{ info["reconstruction"]!s }'
+
+        return parse_moves(recons)
 
     @staticmethod
     def build_facelets_masked(mask: str, facelets: str) -> str:
@@ -175,83 +247,6 @@ class Analyser:
             STEPS_CONFIG[step]['mask'],
             facelets,
         )
-
-    def summarize(self):
-        pass
-
-    # TODO(me): cache
-    def step_info(self, step):
-        infos = self.steps[step]
-
-        if not infos:
-            return {}
-
-        step_index = self.step_list.index(step)
-        previous_move = ('', 0)
-        if step_index:
-            i = 1
-            try:
-                previous_move = self.steps[self.step_list[step_index - i]][-1]
-            except IndexError:
-                return {}  # TODO(me): FIX
-
-        execution = 0
-        inspection = 0
-        try:
-            execution = (infos[-1][1] - infos[0][1]) * 1_000_000
-            inspection = (infos[0][1] - previous_move[1]) * 1_000_000
-        except IndexError:
-            return {}  # TODO(me): FIX
-
-        moves = [m[0] for m in infos]
-        times = [m[1] for m in infos]
-
-        recons = parse_moves([CUBE_ORIENTATION, *moves]).transform(
-            *STEPS_CONFIG[step]['transformations'],
-            to_fixpoint=True,
-        )
-
-        return {
-            'reconstruction': recons,
-            'moves': moves,
-            'times': times,
-            'inspection': inspection,
-            'execution': execution,
-            'total': inspection + execution,
-        }
-
-    @property
-    def reconstruction_detailed(self):
-        recons = ''
-
-        if CUBE_ORIENTATION:
-            recons += f'{ CUBE_ORIENTATION } // Orientation\n'
-
-        for step in self.step_list:
-            infos = self.step_info(step)
-            if not infos:
-                continue
-            recons += (
-                f'{ infos["reconstruction"]!s } // '
-                f'{ step.title() }  '
-                f'Insp: { format_duration(infos["inspection"]) }s '
-                f'Exec: { format_duration(infos["execution"]) }s '
-                f'Moves: { len(infos["reconstruction"]) }\n'
-            )
-
-        return recons
-
-    @property
-    def reconstruction(self):
-        recons = ''
-
-        for step in self.step_list:
-            infos = self.step_info(step)
-            if not infos:
-                continue
-            recons += f'{ infos["reconstruction"]!s }'
-
-        return parse_moves(recons)
 
 
 class CFOPAnalyser(Analyser):
