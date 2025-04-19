@@ -164,7 +164,7 @@ class Analyser:
     def summarize(self):
         summary = []
 
-        for step_index, step in enumerate(self.step_list):
+        for step in self.step_list:
             if step not in self.steps:
                 continue
 
@@ -198,10 +198,17 @@ class Analyser:
                     'execution_percent': (execution / self.duration) * 100,
                     'inspection_percent': (inspection / self.duration) * 100,
                     'reconstruction': reconstruction,
+                    # + Missed lines
+                    # + Case detection
                 },
             )
 
+        self.correct_summary(summary)
+
         return summary
+
+    def correct_summary(self):
+        pass
 
     @property
     def reconstruction_detailed(self):
@@ -291,3 +298,16 @@ class CF4OPAnalyser(Analyser):
             )
 
         return 6
+
+    def correct_summary(self, summary):
+        if summary[0]['name'] == 'F2L-1':
+            summary[0]['name'] = 'XCross'
+
+        elif summary[0]['name'] == 'F2L-2':
+            summary[0]['name'] = 'XXCross'
+
+        elif summary[0]['name'] == 'F2L-3':
+            summary[0]['name'] = 'XXXCross'
+
+        elif summary[0]['name'] == 'F2L-4':
+            summary[0]['name'] = 'XXXXCross'
