@@ -391,7 +391,7 @@ class StatisticsReporter(Statistics):
             for step in method.step_list:
                 infos = method.step_info(step)
 
-                if infos['moves']:
+                if infos:
                     console.print(
                         f'[stats]{ step:<13}:[/stats] '
                         f'[consign]{ infos["reconstruction"]!s }[/consign]'
@@ -403,7 +403,7 @@ class StatisticsReporter(Statistics):
                     )
                 else:
                     console.print(
-                        f'[stats]{ step }   :[/stats] [record]SKIPPED[record]',
+                        f'[stats]{ step }        :[/stats] [record]SKIPPED[record]',
                     )
 
             metric_string = '[title]Metrics      :[/title] '

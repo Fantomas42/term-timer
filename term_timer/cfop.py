@@ -8,11 +8,66 @@ from term_timer.config import CUBE_ORIENTATION
 from term_timer.formatter import format_duration
 from term_timer.magic_cube import Cube
 
+CENTER_PIECE = '000010000'
+CROSS_PIECE  = '010010000'
+LEFT_FACE    = '110110000'
+RIGHT_FACE   = '011011000'
+F2L_FACE     = '111111000'
+FULL_FACE    = '1' * 9
+FULL_CUBE    = '1' * 54
+
+INITIAL = 'U' * 9 + 'R' * 9 + 'F' * 9 + 'D' * 9 + 'L' * 9 + 'B' * 9
 
 STEPS_CONFIG = {
     'Cross': {
-        'mask': '010111010' + ('010010000' * 2) + ('000010000') + ('010010000' * 2),
-        'match': '-U-UUU-U--R--R-----F--F--------D-----L--L-----B--B----',
+        'mask': (
+            '010111010' + (CROSS_PIECE * 2)
+            + CENTER_PIECE + (CROSS_PIECE * 2)
+        ),
+        'transformations': (
+            degrip_full_moves,
+            remove_final_rotations,
+            optimize_double_moves,
+        ),
+    },
+    'F2L-1': {  # FR Pair
+        'mask':  (
+            '010111011' + LEFT_FACE + RIGHT_FACE
+            + CENTER_PIECE + CROSS_PIECE + CROSS_PIECE
+        ),
+        'transformations': (
+            degrip_full_moves,
+            remove_final_rotations,
+            optimize_double_moves,
+        ),
+    },
+    'F2L-2': {  # FL Pair
+        'mask': (
+            '010111110' + CROSS_PIECE + LEFT_FACE
+            + CENTER_PIECE + RIGHT_FACE + CROSS_PIECE
+        ),
+        'transformations': (
+            degrip_full_moves,
+            remove_final_rotations,
+            optimize_double_moves,
+        ),
+    },
+    'F2L-3': {  # BR Pair
+        'mask':  (
+            '011111010' + RIGHT_FACE + CROSS_PIECE
+            + CENTER_PIECE + CROSS_PIECE + LEFT_FACE
+        ),
+        'transformations': (
+            degrip_full_moves,
+            remove_final_rotations,
+            optimize_double_moves,
+        ),
+    },
+    'F2L-4': {  # BL Pair
+        'mask':  (
+            '110111010' + CROSS_PIECE + CROSS_PIECE
+            + CENTER_PIECE + LEFT_FACE + RIGHT_FACE
+        ),
         'transformations': (
             degrip_full_moves,
             remove_final_rotations,
@@ -20,8 +75,10 @@ STEPS_CONFIG = {
         ),
     },
     'F2L': {
-        'mask': '111111111' + ('111111000' * 2) + '000000000' + ('111111000' * 2),
-        'match': 'UUUUUUUUURRRRRR---FFFFFF------------LLLLLL---BBBBBB---',
+        'mask': (
+            FULL_FACE + (F2L_FACE * 2)
+            + CENTER_PIECE + (F2L_FACE * 2)
+        ),
         'transformations': (
             degrip_full_moves,
             remove_final_rotations,
@@ -29,8 +86,10 @@ STEPS_CONFIG = {
         ),
     },
     'OLL': {
-        'mask': '111111111' + ('111111000' * 2) + '111111111' + ('111111000' * 2),
-        'match': 'UUUUUUUUURRRRRR---FFFFFF---DDDDDDDDDLLLLLL---BBBBBB---',
+        'mask': (
+            FULL_FACE + (F2L_FACE * 2)
+            + FULL_FACE + (F2L_FACE * 2)
+        ),
         'transformations': (
             degrip_full_moves,
             remove_final_rotations,
@@ -38,8 +97,7 @@ STEPS_CONFIG = {
         ),
     },
     'PLL': {
-        'mask': '1' * 54,
-        'match': 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
+        'mask': FULL_CUBE,
         'transformations': (
             reslice_m_moves,
             degrip_full_moves,
@@ -74,27 +132,27 @@ class Analyser:
         cube = Cube(3)
         cube.rotate(self.scramble)
 
-        move_index = 0
-        current_step = self.step_list[0]
+        progress = 0
         step_moves = []
 
-        while not cube.is_done():
-            step_index = self.step_list.index(current_step)
+        for move, time in self.move_times:
+            current_progress = self.compute_progress(cube)
 
-            for step in self.step_list[step_index:]:
-                step_passed = self.check_step(step, cube)
-                if step_passed:
-                    self.steps[step]['moves'] = step_moves.copy()
-                    current_step = self.step_list[step_index + 1]
-                    step_moves = []
-                else:
-                    break
+            if current_progress > progress:
+                step_name = self.step_list[current_progress - 1]
 
-            step_moves.append(self.move_times[move_index])
-            cube.rotate(self.move_times[move_index][0])
-            move_index += 1
+                progress = current_progress
+                self.steps[step_name]['moves'] = step_moves.copy()
+                step_moves = []
 
-        self.steps[current_step]['moves'] = step_moves.copy()
+            step_moves.append((move, time))
+            cube.rotate(move)
+
+        step_name = self.step_list[-1]
+        self.steps[step_name]['moves'] = step_moves.copy()
+
+    def compute_progress(self):
+        raise NotImplementedError
 
     @staticmethod
     def build_facelets_masked(mask: str, facelets: str) -> str:
@@ -107,21 +165,28 @@ class Analyser:
 
         return ''.join(masked)
 
-    def check_step(self, step, cube):
-        return STEPS_CONFIG[step]['match'] == self.build_facelets_masked(
+    def check_step(self, step, facelets):
+        matching = self.build_facelets_masked(
             STEPS_CONFIG[step]['mask'],
-            cube.as_twophase_facelets,
+            INITIAL,
+        )
+        return matching == self.build_facelets_masked(
+            STEPS_CONFIG[step]['mask'],
+            facelets,
         )
 
     # TODO(me): cache
     def step_info(self, step):
         infos = self.steps[step]
 
+        if not infos['moves']:
+            return {}
+
         step_index = self.step_list.index(step)
-        if not step_index:
-            previous_move = ('', 0)
-        else:
-            previous_move = self.steps[self.step_list[step_index - 1]]['moves'][-1]
+        previous_move = ('', 0)
+        if step_index:
+            i = 1
+            previous_move = self.steps[self.step_list[step_index - i]]['moves'][-1]
 
         execution = 0
         inspection = 0
@@ -157,6 +222,8 @@ class Analyser:
 
         for step in self.step_list:
             infos = self.step_info(step)
+            if not infos:
+                continue
             recons += (
                 f'{ infos["reconstruction"]!s } // '
                 f'{ step.title() }  '
@@ -181,3 +248,39 @@ class Analyser:
 class CFOPAnalyser(Analyser):
     name = 'CFOP'
     step_list = ('Cross', 'F2L', 'OLL', 'PLL')
+
+    def compute_progress(self, cube):
+        progress = 0
+        facelets = cube.as_twophase_facelets
+
+        for name in self.step_list:
+            if self.check_step(name, facelets):
+                progress += 1
+            else:
+                break
+
+        return progress
+
+
+class CF4OPAnalyser(Analyser):
+    name = 'CF4OP'
+    step_list = ('Cross', 'F2L-1', 'F2L-2', 'F2L-3', 'F2L-4', 'OLL', 'PLL')
+
+    def compute_progress(self, cube):
+        facelets = cube.as_twophase_facelets
+
+        if not self.check_step('Cross', facelets):
+            return 0
+
+        if not self.check_step('OLL', facelets):
+            return 1 + int(
+                self.check_step('F2L-1', facelets),
+            ) + int(
+                self.check_step('F2L-2', facelets),
+            ) + int(
+                self.check_step('F2L-3', facelets),
+            ) + int(
+                self.check_step('F2L-4', facelets),
+            )
+
+        return 6

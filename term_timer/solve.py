@@ -10,8 +10,8 @@ from cubing_algs.transform.optimize import optimize_do_undo_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.optimize import optimize_repeat_three_moves
 from cubing_algs.transform.rotation import remove_final_rotations
-from cubing_algs.transform.slice import reslice_m_moves
 
+from term_timer.cfop import CF4OPAnalyser
 from term_timer.cfop import CFOPAnalyser
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
@@ -23,6 +23,7 @@ from term_timer.formatter import format_time
 
 METHODS = {
     'cfop': CFOPAnalyser,
+    'cf4op': CF4OPAnalyser,
 }
 
 
@@ -79,11 +80,15 @@ class Solve:
 
     @cached_property
     def reconstructed(self) -> list[str, int]:
+        applied = self.method_applied
+
+        if applied:
+            return self.method_applied.reconstruction.copy()
+
         reconstruction = self.solution.copy()
         reconstruction.insert(0, Move(CUBE_ORIENTATION))
-        # TODO(me): base reconstruction on the method used
+
         return reconstruction.transform(
-            reslice_m_moves,
             degrip_full_moves,
             remove_final_rotations,
             optimize_double_moves,
@@ -105,10 +110,18 @@ class Solve:
         )
 
     @cached_property
+    def method(self):
+        return METHODS.get(CUBE_METHOD)
+
+    @cached_property
     def method_applied(self) -> dict[str, dict]:
         if not self.raw_moves:
             return {}
-        return METHODS[CUBE_METHOD](self.scramble, self.move_times)
+
+        if self.method:
+            return self.method(self.scramble, self.move_times)
+
+        return {}
 
     @cached_property
     def report_line(self) -> str:
