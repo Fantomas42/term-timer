@@ -120,15 +120,14 @@ class Analyser:
 
         self.steps = {}
         for step in self.step_list:
-            self.steps[step] = {
-                'moves': [],
-            }
+            self.steps[step] = []
 
         self.duration = (
             self.move_times[-1][1] - self.move_times[0][1]
         ) * 1_000_000
 
         self.split_steps()
+        self.summarize()
 
     def split_steps(self):
         cube = Cube(3)
@@ -144,14 +143,14 @@ class Analyser:
                 step_name = self.step_list[current_progress - 1]
 
                 progress = current_progress
-                self.steps[step_name]['moves'] = step_moves.copy()
+                self.steps[step_name] = step_moves.copy()
                 step_moves = []
 
             step_moves.append((move, time))
             cube.rotate(move)
 
         step_name = self.step_list[-1]
-        self.steps[step_name]['moves'] = step_moves.copy()
+        self.steps[step_name] = step_moves.copy()
 
     def compute_progress(self):
         raise NotImplementedError
@@ -177,31 +176,37 @@ class Analyser:
             facelets,
         )
 
+    def summarize(self):
+        pass
+
     # TODO(me): cache
     def step_info(self, step):
         infos = self.steps[step]
 
-        if not infos['moves']:
+        if not infos:
             return {}
 
         step_index = self.step_list.index(step)
         previous_move = ('', 0)
         if step_index:
             i = 1
-            previous_move = self.steps[self.step_list[step_index - i]]['moves'][-1]
+            try:
+                previous_move = self.steps[self.step_list[step_index - i]][-1]
+            except IndexError:
+                return {}  # TODO(me): FIX
 
         execution = 0
         inspection = 0
         try:
-            execution = (infos['moves'][-1][1] - infos['moves'][0][1]) * 1_000_000
-            inspection = (infos['moves'][0][1] - previous_move[1]) * 1_000_000
+            execution = (infos[-1][1] - infos[0][1]) * 1_000_000
+            inspection = (infos[0][1] - previous_move[1]) * 1_000_000
         except IndexError:
-            pass
+            return {}  # TODO(me): FIX
 
-        moves = [m[0] for m in infos['moves']]
-        times = [m[1] for m in infos['moves']]
+        moves = [m[0] for m in infos]
+        times = [m[1] for m in infos]
 
-        recons = parse_moves([CUBE_ORIENTATION] + moves).transform(
+        recons = parse_moves([CUBE_ORIENTATION, *moves]).transform(
             *STEPS_CONFIG[step]['transformations'],
             to_fixpoint=True,
         )
@@ -242,6 +247,8 @@ class Analyser:
 
         for step in self.step_list:
             infos = self.step_info(step)
+            if not infos:
+                continue
             recons += f'{ infos["reconstruction"]!s }'
 
         return parse_moves(recons)
