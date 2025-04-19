@@ -160,10 +160,17 @@ class Solve:
 
         for info in self.method_applied.summary:
             if info:
+                header = ''
+                if info['type'] == 'substep':
+                    header += f'[tps]- { info["name"]:<11}:[/tps] '
+                else:
+                    header += f'[stats]{ info["name"]:<13}:[/stats] '
+
+                if info['type'] != 'virtual':
+                    header += f'[consign]{ info["reconstruction"]!s }[/consign]'
+
                 line += (
-                    f'[stats]{ info["name"]:<13}:[/stats] '
-                    f'[consign]{ info["reconstruction"]!s }[/consign]'
-                    '\n               '
+                    f'{ header }\n               '
                     f'[result]{ len(info["reconstruction"]):>2} moves[/result] '
                     f'[inspection]{ format_duration(info["inspection"]):>5}s[/inspection] '
                     f'[inspection]{ info["inspection_percent"]:5.2f}%[/inspection] '

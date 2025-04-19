@@ -1,3 +1,4 @@
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves
@@ -188,6 +189,7 @@ class Analyser:
 
             summary.append(
                 {
+                    'type': 'step',
                     'name': step,
                     'moves': moves,
                     'times': times,
@@ -218,13 +220,14 @@ class Analyser:
             recons += f'{ CUBE_ORIENTATION } // Orientation\n'
 
         for info in self.summary:
-            recons += (
-                f'{ info["reconstruction"]!s } // '
-                f'{ info["name"] } '
-                f'Insp: { format_duration(info["inspection"]) }s '
-                f'Exec: { format_duration(info["execution"]) }s '
-                f'Moves: { len(info["reconstruction"]) }\n'
-            )
+            if info['type'] != 'virtual':
+                recons += (
+                    f'{ info["reconstruction"]!s } // '
+                    f'{ info["name"] } '
+                    f'Insp: { format_duration(info["inspection"]) }s '
+                    f'Exec: { format_duration(info["execution"]) }s '
+                    f'Moves: { len(info["reconstruction"]) }\n'
+                )
 
         return recons
 
@@ -233,7 +236,8 @@ class Analyser:
         recons = ''
 
         for info in self.summary:
-            recons += f'{ info["reconstruction"]!s }'
+            if info['type'] != 'virtual':
+                recons += f'{ info["reconstruction"]!s } '
 
         return parse_moves(recons)
 
@@ -311,3 +315,32 @@ class CF4OPAnalyser(Analyser):
 
         elif summary[0]['name'] == 'F2L-4':
             summary[0]['name'] = 'XXXXCross'
+
+        f2l = {
+            'type': 'virtual',
+            'name': 'F2L',
+            'moves': [],
+            'times': [],
+            'total': 0,
+            'execution': 0,
+            'inspection': 0,
+            'total_percent': 0,
+            'execution_percent': 0,
+            'inspection_percent': 0,
+            'reconstruction': Algorithm(),
+        }
+        for info in summary:
+            if 'F2L-' in info['name']:
+                info['type'] = 'substep'
+
+                f2l['moves'].extend(info['moves'])
+                f2l['times'].extend(info['times'])
+                f2l['total'] += info['total']
+                f2l['execution'] += info['execution']
+                f2l['inspection'] += info['inspection']
+                f2l['total_percent'] += info['total_percent']
+                f2l['execution_percent'] += info['execution_percent']
+                f2l['inspection_percent'] += info['inspection_percent']
+                f2l['reconstruction'].extend(info['reconstruction'])
+
+        summary.insert(1, f2l)
