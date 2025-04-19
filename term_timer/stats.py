@@ -3,8 +3,6 @@ from functools import cached_property
 import numpy as np
 import plotext as plt
 
-from term_timer.config import CUBE_METHOD
-from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import STATS_CONFIG
 from term_timer.console import console
 from term_timer.constants import SECOND
@@ -12,7 +10,6 @@ from term_timer.constants import SECOND_BINS
 from term_timer.constants import STEP_BAR
 from term_timer.formatter import computing_padding
 from term_timer.formatter import format_delta
-from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_time
 from term_timer.magic_cube import Cube
@@ -377,34 +374,14 @@ class StatisticsReporter(Statistics):
         console.print(cube.printed(), end='')
 
         if solve.raw_moves:
-            method = solve.method_applied
 
-            console.print(
-                f'[title]Reconstruction { method.name }[/title]',
-                f'[extlink][link={ solve.link }]alg.cubing.net[/link][/extlink]',
-            )
-
-            console.print(
-                f'[stats]Orientation  :[/stats] '
-                f'[consign]{ CUBE_ORIENTATION }[/consign]',
-            )
-            for step in method.step_list:
-                infos = method.step_info(step)
-
-                if infos:
-                    console.print(
-                        f'[stats]{ step:<13}:[/stats] '
-                        f'[consign]{ infos["reconstruction"]!s }[/consign]'
-                        '\n               '
-                        f'[result]{ len(infos["reconstruction"]):>2} moves[/result] '
-                        f'[inspection]{ format_duration(infos["inspection"]):>5}s[/inspection] '
-                        f'[duration]{ format_duration(infos["execution"]):>5}s[/duration] '
-                        f'[analysis]{ format_duration(infos["total"]):>5}s[/analysis]',
-                    )
-                else:
-                    console.print(
-                        f'[stats]{ step }        :[/stats] [record]SKIPPED[record]',
-                    )
+            method_line = solve.method_line
+            if method_line:
+                console.print(
+                    f'[title]Reconstruction { solve.method.name }[/title]',
+                    f'[extlink][link={ solve.link }]alg.cubing.net[/link][/extlink]',
+                )
+                console.print(method_line)
 
             metric_string = '[title]Metrics      :[/title] '
             for metric in STATS_CONFIG.get('metrics'):

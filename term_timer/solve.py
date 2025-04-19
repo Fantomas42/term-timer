@@ -19,6 +19,7 @@ from term_timer.config import STATS_CONFIG
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
+from term_timer.formatter import format_duration
 from term_timer.formatter import format_time
 
 METHODS = {
@@ -146,6 +147,36 @@ class Solve:
             f'[tps]{ self.reconstructed_tps:.2f} TPS[/tps] '
             f'{ missed_moves }'
         )
+
+    @cached_property
+    def method_line(self) -> str:
+        if not self.method_applied:
+            return ''
+
+        line = (
+            '[stats]Orientation  :[/stats] '
+            f'[consign]{ CUBE_ORIENTATION }[/consign]\n'
+        )
+
+        for step in self.method_applied.step_list:
+            infos = self.method_applied.step_info(step)
+
+            if infos:
+                line += (
+                    f'[stats]{ step:<13}:[/stats] '
+                    f'[consign]{ infos["reconstruction"]!s }[/consign]'
+                    '\n               '
+                    f'[result]{ len(infos["reconstruction"]):>2} moves[/result] '
+                    f'[inspection]{ format_duration(infos["inspection"]):>5}s[/inspection] '
+                    f'[duration]{ format_duration(infos["execution"]):>5}s[/duration] '
+                    f'[analysis]{ format_duration(infos["total"]):>5}s[/analysis]\n'
+                )
+            else:
+                line += (
+                    f'[stats]{ step }        :[/stats] [record]SKIPPED[record]\n'
+                )
+
+        return line
 
     @cached_property
     def missed_line(self) -> str:
