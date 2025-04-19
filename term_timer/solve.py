@@ -11,8 +11,6 @@ from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.optimize import optimize_repeat_three_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 
-from term_timer.cfop import CF4OPAnalyser
-from term_timer.cfop import CFOPAnalyser
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import STATS_CONFIG
@@ -21,6 +19,8 @@ from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_time
+from term_timer.methods.cfop import CF4OPAnalyser
+from term_timer.methods.cfop import CFOPAnalyser
 
 METHODS = {
     'cfop': CFOPAnalyser,
@@ -173,7 +173,7 @@ class Solve:
                 )
             else:
                 line += (
-                    f'[stats]{ step }        :[/stats] [record]SKIPPED[record]\n'
+                    f'[stats]{ step }        :[/stats] [record]SKIPPED[/record]\n'
                 )
 
         return line
