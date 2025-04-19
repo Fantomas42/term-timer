@@ -194,6 +194,9 @@ class Analyser:
                     'total': total,
                     'execution': execution,
                     'inspection': inspection,
+                    'total_percent': (total / self.duration) * 100,
+                    'execution_percent': (execution / self.duration) * 100,
+                    'inspection_percent': (inspection / self.duration) * 100,
                     'reconstruction': reconstruction,
                 },
             )

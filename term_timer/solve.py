@@ -166,12 +166,15 @@ class Solve:
                     '\n               '
                     f'[result]{ len(info["reconstruction"]):>2} moves[/result] '
                     f'[inspection]{ format_duration(info["inspection"]):>5}s[/inspection] '
+                    f'[inspection]{ info["inspection_percent"]:5.2f}%[/inspection] '
                     f'[duration]{ format_duration(info["execution"]):>5}s[/duration] '
-                    f'[analysis]{ format_duration(info["total"]):>5}s[/analysis]\n'
+                    f'[duration]{ info["execution_percent"]:5.2f}%[/duration] '
+                    f'[analysis]{ format_duration(info["total"]):>5}s[/analysis] '
+                    f'[analysis]{ info["total_percent"]:5.2f}%[/analysis]\n'
                 )
             else:  # TODO fix case
                 line += (
-                    f'[stats]{ step }        :[/stats] [record]SKIPPED[/record]\n'
+                    f'[stats]{ info["name"]:<13}:[/stats] [record]SKIPPED[/record]\n'
                 )
 
         return line
