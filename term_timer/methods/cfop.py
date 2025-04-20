@@ -200,8 +200,9 @@ class Analyser:
                     'execution_percent': (execution / self.duration) * 100,
                     'inspection_percent': (inspection / self.duration) * 100,
                     'reconstruction': reconstruction,
-                    # + Missed lines
+                    # + Missed moves
                     # + Case detection
+                    # + Pair name
                 },
             )
 

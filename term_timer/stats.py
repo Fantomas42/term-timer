@@ -363,10 +363,16 @@ class StatisticsReporter(Statistics):
             '[stats]Date    :[/stats] '
             f'[date]{ date }[/date]',
         )
-        console.print(
-            '[stats]Timer   :[/stats] '
-            f'[timer]{ solve.timer }[/timer]',
-        )
+        if solve.device:
+            console.print(
+                '[stats]Cube    :[/stats] '
+                f'[device]{ solve.device }[/device]',
+            )
+        if solve.timer:
+            console.print(
+                '[stats]Timer   :[/stats] '
+                f'[timer]{ solve.timer }[/timer]',
+            )
         console.print(
             '[stats]Scramble:[/stats] '
             f'[consign]{ solve.scramble }[/consign]',
