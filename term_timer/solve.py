@@ -161,7 +161,10 @@ class Solve:
         for info in self.method_applied.summary:
             if info:
                 tps = len(info['reconstruction']) / (info['total'] / SECOND)
-                tps_exec = len(info['reconstruction']) / (info['execution'] / SECOND)
+                if not info['execution']:
+                    tps_exec = tps
+                else:
+                    tps_exec = len(info['reconstruction']) / (info['execution'] / SECOND)
 
                 header = ''
                 if info['type'] == 'substep':

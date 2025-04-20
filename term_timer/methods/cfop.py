@@ -330,10 +330,12 @@ class CF4OPAnalyser(Analyser):
             'inspection_percent': 0,
             'reconstruction': Algorithm(),
         }
+        insert_f2l = False
         for info in summary:
             if 'F2L-' in info['name']:
                 info['type'] = 'substep'
 
+                insert_f2l = True
                 f2l['moves'].extend(info['moves'])
                 f2l['times'].extend(info['times'])
                 f2l['total'] += info['total']
@@ -344,4 +346,5 @@ class CF4OPAnalyser(Analyser):
                 f2l['inspection_percent'] += info['inspection_percent']
                 f2l['reconstruction'].extend(info['reconstruction'])
 
-        summary.insert(1, f2l)
+        if insert_f2l:
+            summary.insert(1, f2l)
