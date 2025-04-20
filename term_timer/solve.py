@@ -154,31 +154,42 @@ class Solve:
             return ''
 
         line = (
-            '[stats]Orientation  :[/stats] '
+            '[step]Orientation  :[/step] '
             f'[consign]{ CUBE_ORIENTATION }[/consign]\n'
         )
 
         for info in self.method_applied.summary:
             if info:
+                tps = len(info['reconstruction']) / (info['total'] / SECOND)
+                tps_exec = len(info['reconstruction']) / (info['execution'] / SECOND)
+
                 header = ''
                 if info['type'] == 'substep':
-                    header += f'[tps]- { info["name"]:<11}:[/tps] '
+                    header += f'[substep]- { info["name"]:<11}:[/substep] '
                 else:
-                    header += f'[stats]{ info["name"]:<13}:[/stats] '
+                    header += f'[step]{ info["name"]:<13}:[/step] '
 
+                footer = ''
                 if info['type'] != 'virtual':
-                    header += f'[consign]{ info["reconstruction"]!s }[/consign]'
+                    footer += (
+                        '\n               '
+                        f'[consign]{ info["reconstruction"]!s }[/consign]'
+                    )
 
                 line += (
-                    f'{ header }\n               '
+                    f'{ header }'
                     f'[result]{ len(info["reconstruction"]):>2} moves[/result] '
                     f'[inspection]{ format_duration(info["inspection"]):>5}s[/inspection] '
-                    f'[inspection]{ info["inspection_percent"]:5.2f}%[/inspection] '
-                    f'[duration]{ format_duration(info["execution"]):>5}s[/duration] '
-                    f'[duration]{ info["execution_percent"]:5.2f}%[/duration] '
-                    f'[analysis]{ format_duration(info["total"]):>5}s[/analysis] '
-                    f'[analysis]{ info["total_percent"]:5.2f}%[/analysis]\n'
+                    f'[inspection_p]{ info["inspection_percent"]:5.2f}%[/inspection_p] '
+                    f'[execution]{ format_duration(info["execution"]):>5}s[/execution] '
+                    f'[execution_p]{ info["execution_percent"]:5.2f}%[/execution_p] '
+                    f'[duration]{ format_duration(info["total"]):>5}s[/duration] '
+                    f'[duration_p]{ info["total_percent"]:5.2f}%[/duration_p] '
+                    f'[tps]{ tps:.2f} TPS[/tps] '
+                    f'[tps_e]{ tps_exec:.2f} eTPS[/tps_e]'
+                    f'{ footer }\n'
                 )
+
             else:  # TODO fix case
                 line += (
                     f'[stats]{ info["name"]:<13}:[/stats] [record]SKIPPED[/record]\n'

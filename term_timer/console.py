@@ -17,13 +17,23 @@ theme = {
     'scramble': f'{ TEXT_DARK } on { GREEN }',
     'duration': f'{ TEXT_DARK } on { ORANGE }',
     'record': f'{ TEXT_DARK } on #5FFFAF',
+
     'analysis': f'bold { TEXT_LIGHT } on #4D0092',
     'inspection': f'{ TEXT_LIGHT } on #5F00D7',
+    'execution': f'{ TEXT_LIGHT } on #4D0092',
     'consign': '#CECECE',
+    'step': 'bold #00AFFF',
+    'substep': 'bold #00DFFF',
+
+    'inspection_p': TEXT_LIGHT,
+    'execution_p': TEXT_LIGHT,
+    'duration_p': TEXT_LIGHT,
 
     'bluetooth': 'bold #FFFFFF on #133EBF',
+    'extlink': 'bold #FFFFFF on #522081',
 
     'timer': f'bold { ORANGE }',
+    'device': 'bold #CFAAD7',
     'title': f'bold { TEXT_LIGHT }',
     'moves': f'bold { TEXT_LIGHT }',
     'result': f'bold { TEXT_LIGHT }',
@@ -44,13 +54,13 @@ theme = {
     'ao100': f'bold { YELLOW }',
 
     'tps': 'bold #00DFFF',
+    'tps_e': 'bold #00AAAA',
     'missed': 'bold #FF4444',
     'htm': 'bold #6EFFFF',
     'stm': 'bold #6EDFF6',
     'qtm': 'bold #99D799',
     'etm': 'bold #C2A0FA',
     'qstm': 'bold #FEBF8A',
-    'extlink': 'bold #FFFFFF',
 
     'timer_base': f'{ TEXT_DARK } on #DDFF00',
     'timer_10': f'{ TEXT_DARK } on #33FF00',
