@@ -1,5 +1,7 @@
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.japanese import japanese_moves
+from cubing_algs.transform.mirror import mirror_moves
 from magiccube.cube import Cube as BaseCube
 from magiccube.cube import Face
 
@@ -30,11 +32,11 @@ class CubePrintRich:
 
         return result
 
-    def print_cube(self, orientation: str = '') -> str:
+    def print_cube(self, orientation: Algorithm) -> str:
         cube = self.cube
 
         if orientation:
-            cube.rotate([orientation])
+            cube.rotate(orientation)
 
         # Flatten middle layer
         print_order_mid = zip(
@@ -60,11 +62,12 @@ class CubePrintRich:
         # Bottom
         result += self._print_top_down_face(Face.D)
 
-        if orientation:
-            cube.rotate([orientation])
-            if cube._store_history:  # noqa: SLF001
-                cube._history.pop()  # noqa: SLF001
-                cube._history.pop()  # noqa: SLF001
+        if orientation:  # TODO(me): pass to 1.1.1 to use undo() method
+            cube.rotate(orientation.transform(mirror_moves))
+            for _ in orientation:
+                if cube._store_history:  # noqa: SLF001
+                    cube._history.pop()  # noqa: SLF001
+                    cube._history.pop()  # noqa: SLF001
 
         return result
 
@@ -111,7 +114,7 @@ class Cube(BaseCube):  # type: ignore[misc]
 
         return facelets
 
-    def printed(self, orientation: str = ''):
+    def printed(self, orientation: Algorithm):
         printer = CubePrintRich(self)
         return printer.print_cube(orientation)
 

@@ -377,7 +377,7 @@ class StatisticsReporter(Statistics):
             '[stats]Scramble:[/stats] '
             f'[consign]{ solve.scramble }[/consign]',
         )
-        console.print(cube.printed(), end='')
+        console.print(cube.printed(None), end='')
 
         if solve.raw_moves:
 

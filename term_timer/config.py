@@ -1,6 +1,8 @@
 from importlib.util import find_spec
 from typing import Any
 
+from cubing_algs.parsing import parse_moves
+
 from term_timer.constants import CONFIG_FILE
 
 if find_spec('tomllib') is not None:
@@ -14,7 +16,7 @@ countdown = 0.0
 metronome = 0.0
 
 [cube]
-orientation =
+orientation = []
 method = 'cf4op'
 
 [statistics]
@@ -47,6 +49,8 @@ UI_CONFIG = CONFIG.get('ui', {})
 
 CUBE_CONFIG = CONFIG.get('cube', {})
 
-CUBE_ORIENTATION = CUBE_CONFIG.get('orientation')
+CUBE_ORIENTATION = parse_moves(
+    CUBE_CONFIG.get('orientation'),
+)
 
 CUBE_METHOD = CUBE_CONFIG.get('method')

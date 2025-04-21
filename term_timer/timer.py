@@ -7,7 +7,6 @@ from datetime import datetime
 from datetime import timezone
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.rotation import remove_final_rotations
@@ -61,7 +60,7 @@ class Timer:
 
         self.cube = None
         self.stack = stack
-        self.cube_orientation = Move(CUBE_ORIENTATION)
+        self.cube_orientation = CUBE_ORIENTATION
 
         self.stop_event = asyncio.Event()
         self.scramble_completed_event = asyncio.Event()
@@ -471,13 +470,12 @@ class Timer:
 
     def reorient(self, algorithm: Algorithm) -> Algorithm:
         if self.cube_orientation:
-            algorithm = algorithm.copy()
-            algorithm.insert(0, self.cube_orientation)
-            algorithm = algorithm.transform(
+            new_algorithm = self.cube_orientation + algorithm
+            new_algorithm = new_algorithm.transform(
                 degrip_full_moves,
                 remove_final_rotations,
             )
-        return algorithm
+        return new_algorithm
 
     def handle_solve(self, solve: Solve) -> None:
         old_stats = Statistics(self.stack)

@@ -181,7 +181,8 @@ class Analyser:
             inspection = (self.times[step_moves[0]] - ante_time) * TO_NS
             total = execution + inspection
 
-            reconstruction = parse_moves([CUBE_ORIENTATION, *moves]).transform(
+            reconstruction = CUBE_ORIENTATION + moves
+            reconstruction = reconstruction.transform(
                 *STEPS_CONFIG[step]['transformations'],
                 to_fixpoint=True,
             )
@@ -217,7 +218,7 @@ class Analyser:
         recons = ''
 
         if CUBE_ORIENTATION:
-            recons += f'{ CUBE_ORIENTATION } // Orientation\n'
+            recons += f'{ CUBE_ORIENTATION!s } // Orientation\n'
 
         for info in self.summary:
             if info['type'] != 'virtual':

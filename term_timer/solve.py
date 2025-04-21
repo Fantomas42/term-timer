@@ -3,7 +3,6 @@ from datetime import timezone
 from functools import cached_property
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_do_undo_moves
@@ -86,8 +85,7 @@ class Solve:
         if applied:
             return self.method_applied.reconstruction.copy()
 
-        reconstruction = self.solution.copy()
-        reconstruction.insert(0, Move(CUBE_ORIENTATION))
+        reconstruction = CUBE_ORIENTATION + self.solution
 
         return reconstruction.transform(
             degrip_full_moves,
@@ -155,7 +153,7 @@ class Solve:
 
         line = (
             '[step]Orientation  :[/step] '
-            f'[consign]{ CUBE_ORIENTATION }[/consign]\n'
+            f'[consign]{ CUBE_ORIENTATION!s }[/consign]\n'
         )
 
         for info in self.method_applied.summary:
