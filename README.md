@@ -11,7 +11,7 @@ Practice your speed cubing skills on your terminal, for a full 80's vibe.
 - Free-play and recorded solves
 - Colorfull cube display
 - Handle Bluetooth cubes
-- Detailled statistics
+- Detailled statistics and reconstructions
 
 ## Other Features
 
@@ -20,8 +20,7 @@ Practice your speed cubing skills on your terminal, for a full 80's vibe.
 - Easy white cross
 - Cube orientation control
 - Seed control
-- csTimer import
-- Cubeast import
+- csTimer and Cubeast import
 
 ## Short demo
 
@@ -114,8 +113,6 @@ community have been invaluable to this project.
 ![](docs/detail.gif)
 
 ![](docs/stats.gif)
-
-![](docs/graph.gif)
 
 ## Help
 
