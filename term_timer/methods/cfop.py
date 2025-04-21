@@ -6,6 +6,11 @@ from term_timer.methods.base import Analyser
 class CFOPAnalyser(Analyser):
     name = 'CFOP'
     step_list = ('Cross', 'F2L', 'OLL', 'PLL')
+    norms = {
+        'moves': {
+            'Cross': 7,
+        },
+    }
 
     def compute_progress(self, cube):
         progress = 0

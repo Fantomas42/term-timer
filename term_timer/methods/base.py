@@ -115,6 +115,7 @@ STEPS_CONFIG = {
 class Analyser:
     name = ''
     step_list: tuple[str] = ()
+    norms = {}
 
     def __init__(self, scramble, move_times):
         self.scramble = scramble
@@ -212,6 +213,15 @@ class Analyser:
 
     def correct_summary(self):
         pass
+
+    def normalize_value(self, metric, name, value, default):
+        norm = self.norms.get(metric, {}).get(name)
+        if not norm:
+            return default
+
+        if value <= norm:
+            return 'step'  # CHANGE
+        return 'warning'
 
     @property
     def reconstruction_detailed(self):

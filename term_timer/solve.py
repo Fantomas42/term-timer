@@ -180,9 +180,15 @@ class Solve:
                         f'[consign]{ info["reconstruction"]!s }[/consign]'
                     )
 
+                move_klass = self.method_applied.normalize_value(
+                    'moves', info['name'],
+                    len(info["reconstruction"]),
+                    'result',
+                )
+
                 line += (
                     f'{ header }'
-                    f'[result]{ len(info["reconstruction"]):>2} moves[/result] '
+                    f'[{ move_klass }]{ len(info["reconstruction"]):>2} moves[/{ move_klass }] '
                     f'[inspection]{ format_duration(info["inspection"]):>5}s[/inspection] '
                     f'[inspection_p]{ info["inspection_percent"]:5.2f}%[/inspection_p] '
                     f'[execution]{ format_duration(info["execution"]):>5}s[/execution] '
