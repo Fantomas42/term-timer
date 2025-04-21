@@ -70,13 +70,16 @@ class Solve:
             if move_time
         ]
 
+    def tps(self, moves, time):
+        return len(moves) / (time / SECOND)
+
     @cached_property
     def solution(self) -> Algorithm:
         return parse_moves([m[0] for m in self.move_times])
 
     @cached_property
     def solution_tps(self) -> float:
-        return len(self.solution) / (self.time / SECOND)
+        return self.tps(self.solution, self.time)
 
     @cached_property
     def reconstructed(self) -> list[str, int]:
@@ -96,7 +99,7 @@ class Solve:
 
     @cached_property
     def reconstructed_tps(self) -> float:
-        return len(self.reconstructed) / (self.time / SECOND)
+        return self.tps(self.reconstructed, self.time)
 
     @cached_property
     def missed_moves(self) -> int:
@@ -158,11 +161,11 @@ class Solve:
 
         for info in self.method_applied.summary:
             if info:
-                tps = len(info['reconstruction']) / (info['total'] / SECOND)
+                tps = self.tps(info['reconstruction'], info['total'])
                 if not info['execution']:
                     tps_exec = tps
                 else:
-                    tps_exec = len(info['reconstruction']) / (info['execution'] / SECOND)
+                    tps_exec = self.tps(info['reconstruction'], info['execution'])
 
                 header = ''
                 if info['type'] == 'substep':
