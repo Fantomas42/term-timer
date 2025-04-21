@@ -7,7 +7,7 @@ Set Theme "The Hulk"
 Set TypingSpeed 75ms
 Set FontSize 32
 Set Width 2200
-Set Height 900
+Set Height 700
 
 Type "term-timer --list 5" Enter
 
