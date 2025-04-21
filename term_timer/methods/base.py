@@ -34,7 +34,7 @@ STEPS_CONFIG = {
             optimize_double_moves,
         ),
     },
-    'F2L-1': {  # FR Pair
+    'F2L 1': {  # FR Pair
         'mask':  (
             '010111011' + LEFT_FACE + RIGHT_FACE
             + CENTER_PIECE + CROSS_PIECE + CROSS_PIECE
@@ -45,7 +45,7 @@ STEPS_CONFIG = {
             optimize_double_moves,
         ),
     },
-    'F2L-2': {  # FL Pair
+    'F2L 2': {  # FL Pair
         'mask': (
             '010111110' + CROSS_PIECE + LEFT_FACE
             + CENTER_PIECE + RIGHT_FACE + CROSS_PIECE
@@ -56,7 +56,7 @@ STEPS_CONFIG = {
             optimize_double_moves,
         ),
     },
-    'F2L-3': {  # BR Pair
+    'F2L 3': {  # BR Pair
         'mask':  (
             '011111010' + RIGHT_FACE + CROSS_PIECE
             + CENTER_PIECE + CROSS_PIECE + LEFT_FACE
@@ -67,7 +67,7 @@ STEPS_CONFIG = {
             optimize_double_moves,
         ),
     },
-    'F2L-4': {  # BL Pair
+    'F2L 4': {  # BL Pair
         'mask':  (
             '110111010' + CROSS_PIECE + CROSS_PIECE
             + CENTER_PIECE + LEFT_FACE + RIGHT_FACE

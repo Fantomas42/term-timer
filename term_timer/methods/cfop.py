@@ -22,7 +22,16 @@ class CFOPAnalyser(Analyser):
 
 class CF4OPAnalyser(Analyser):
     name = 'CF4OP'
-    step_list = ('Cross', 'F2L-1', 'F2L-2', 'F2L-3', 'F2L-4', 'OLL', 'PLL')
+    step_list = ('Cross', 'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4', 'OLL', 'PLL')
+    norms = {
+        'moves': {
+            'Cross': 7,
+            'XCross': 9,
+            'XXCross': 11,
+            'XXXCross': 13,
+            'XXXXCross': 15,
+        },
+    }
 
     def compute_progress(self, cube):
         facelets = cube.as_twophase_facelets
@@ -32,28 +41,28 @@ class CF4OPAnalyser(Analyser):
 
         if not self.check_step('OLL', facelets):
             return 1 + int(
-                self.check_step('F2L-1', facelets),
+                self.check_step('F2L 1', facelets),
             ) + int(
-                self.check_step('F2L-2', facelets),
+                self.check_step('F2L 2', facelets),
             ) + int(
-                self.check_step('F2L-3', facelets),
+                self.check_step('F2L 3', facelets),
             ) + int(
-                self.check_step('F2L-4', facelets),
+                self.check_step('F2L 4', facelets),
             )
 
         return 6
 
     def correct_summary(self, summary):
-        if summary[0]['name'] == 'F2L-1':
+        if summary[0]['name'] == 'F2L 1':
             summary[0]['name'] = 'XCross'
 
-        elif summary[0]['name'] == 'F2L-2':
+        elif summary[0]['name'] == 'F2L 2':
             summary[0]['name'] = 'XXCross'
 
-        elif summary[0]['name'] == 'F2L-3':
+        elif summary[0]['name'] == 'F2L 3':
             summary[0]['name'] = 'XXXCross'
 
-        elif summary[0]['name'] == 'F2L-4':
+        elif summary[0]['name'] == 'F2L 4':
             summary[0]['name'] = 'XXXXCross'
 
         f2l = {
@@ -71,7 +80,7 @@ class CF4OPAnalyser(Analyser):
         }
         insert_f2l = False
         for info in summary:
-            if 'F2L-' in info['name']:
+            if 'F2L ' in info['name']:
                 info['type'] = 'substep'
 
                 insert_f2l = True
