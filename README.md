@@ -107,6 +107,16 @@ community have been invaluable to this project.
 [1]: https://github.com/hkociemba/RubiksCube-TwophaseSolver
 [2]: https://github.com/trincaog/magiccube/
 
+## Demos
+
+![](docs/list.gif)
+
+![](docs/detail.gif)
+
+![](docs/stats.gif)
+
+![](docs/graph.gif)
+
 ## Help
 
 ```console
