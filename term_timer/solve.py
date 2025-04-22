@@ -6,9 +6,9 @@ from functools import cached_property
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.rotation import remove_final_rotations
+from cubing_algs.transform.size import compress_moves
 
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
@@ -70,7 +70,8 @@ class Solve:
             if move_time
         ]
 
-    def tps(self, moves, time):
+    @staticmethod
+    def tps(moves, time):
         return len(moves) / (time / SECOND)
 
     @cached_property
@@ -225,10 +226,24 @@ class Solve:
 
         moves = []
         matcher = difflib.SequenceMatcher(None, source, compressed)
-
         for opcode, i1, i2, j1, j2 in matcher.get_opcodes():
             if opcode == 'equal':
                 moves.extend(source[i1:i2])
+            elif opcode == 'delete':
+                moves.extend(
+                    [
+                        f'[red]{ item }[/red]'
+                        for item in source[i1:i2]
+                    ],
+                )
+            elif opcode == 'insert':
+                moves.extend(
+                    [
+                        f'[green]{ item }[/green]'
+                        for item in compressed[j1:j2]
+                    ],
+                )
+
             elif opcode == 'replace':
                 moves.extend(
                     [
