@@ -380,6 +380,20 @@ class StatisticsReporter(Statistics):
         console.print(cube.printed(None), end='')
 
         if solve.raw_moves:
+            metric_string = '[title]Metrics      :[/title] '
+            for metric in STATS_CONFIG.get('metrics'):
+                value = solve.reconstructed.metrics[metric]
+                metric_string += (
+                    f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
+                )
+            metric_string += f'[tps]{ solve.reconstructed_tps:.2f} TPS[/tps] '
+
+            missed_moves = solve.missed_moves(solve.solution)
+            missed_line = f'[missed]{ missed_moves } missed moves[/missed]'
+            if not missed_moves:
+                missed_line = '[green]No missed move[/green]'
+
+            console.print(metric_string + missed_line)
 
             method_line = solve.method_line
             if method_line:
@@ -388,23 +402,6 @@ class StatisticsReporter(Statistics):
                     f'[extlink][link={ solve.link }]alg.cubing.net[/link][/extlink]',
                 )
                 console.print(method_line, end='')
-
-            metric_string = '[title]Metrics      :[/title] '
-            for metric in STATS_CONFIG.get('metrics'):
-                value = solve.reconstructed.metrics[metric]
-                metric_string += (
-                    f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
-                )
-            metric_string += f'[tps]{ solve.reconstructed_tps:.2f} TPS[/tps]'
-
-            console.print(metric_string)
-
-            missed = f'[missed]{ solve.missed_moves }[/missed]'
-            if not solve.missed_moves:
-                missed = '[green]0[/green]'
-            console.print('[title]Missed Moves :[/title]', missed)
-            if solve.missed_moves:
-                console.print(solve.missed_line)
 
     def graph(self) -> None:
         ao5s = []

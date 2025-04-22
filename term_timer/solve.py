@@ -1,3 +1,4 @@
+import difflib
 from datetime import datetime
 from datetime import timezone
 from functools import cached_property
@@ -5,9 +6,8 @@ from functools import cached_property
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.optimize import optimize_do_undo_moves
+from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.optimize import optimize_double_moves
-from cubing_algs.transform.optimize import optimize_repeat_three_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 
 from term_timer.config import CUBE_METHOD
@@ -102,16 +102,6 @@ class Solve:
         return self.tps(self.reconstructed, self.time)
 
     @cached_property
-    def missed_moves(self) -> int:
-        return len(self.solution) - len(
-            self.solution.transform(
-                optimize_do_undo_moves,
-                optimize_repeat_three_moves,
-                to_fixpoint=True,
-            ),
-        )
-
-    @cached_property
     def method(self):
         return METHODS.get(CUBE_METHOD)
 
@@ -138,15 +128,16 @@ class Solve:
                 f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
             )
 
-        missed_moves = f'[missed]{ self.missed_moves } missed moves[/missed]'
-        if not self.missed_moves:
-            missed_moves = '[green]No missed move[/green]'
+        missed_moves = self.missed_moves(self.solution)
+        missed_line = f'[missed]{ missed_moves } missed moves[/missed]'
+        if not missed_moves:
+            missed_line = '[green]No missed move[/green]'
 
         return (
             f'[extlink][link={ self.link }]alg.cubing.net[/link][/extlink] '
             f'{ metric_string }'
             f'[tps]{ self.reconstructed_tps:.2f} TPS[/tps] '
-            f'{ missed_moves }'
+            f'{ missed_line }'
         )
 
     @cached_property
@@ -177,7 +168,7 @@ class Solve:
                 if info['type'] != 'virtual':
                     footer += (
                         '\n               '
-                        f'[consign]{ info["reconstruction"]!s }[/consign]'
+                        f'[consign]{ self.missed_moves_line(info["reconstruction"]) }[/consign]'
                     )
 
                 move_klass = self.method_applied.normalize_value(
@@ -212,27 +203,47 @@ class Solve:
 
         return line
 
-    @cached_property
-    def missed_line(self) -> str:
-        compressed = self.solution.transform(
-            optimize_do_undo_moves,
-            optimize_repeat_three_moves,
-            to_fixpoint=True,
+    @staticmethod
+    def missed_moves_pair(algorithm) -> list[Algorithm, Algorithm]:
+        source = algorithm.transform(
+            optimize_double_moves,
         )
+        compressed = source.transform(
+            compress_moves,
+        )
+        return source, compressed
+
+    def missed_moves(self, algorithm) -> int:
+        source, compressed = self.missed_moves_pair(algorithm)
+
+        return len(source) - len(compressed)
+
+    def missed_moves_line(self, algorithm) -> str:
+        source, compressed = self.missed_moves_pair(algorithm)
+        if source == compressed:
+            return str(source)
 
         moves = []
-        missed = 0
-        for i, m in enumerate(self.solution):
-            if i - missed < len(compressed):
-                if m == compressed[i - missed]:
-                    moves.append(str(m))
-                else:
-                    moves.append(f'[warning]{ m!s }[/warning]')
-                    missed += 1
-            else:
-                moves.append(str(m))
+        matcher = difflib.SequenceMatcher(None, source, compressed)
 
-        return ' '.join(moves)
+        for opcode, i1, i2, j1, j2 in matcher.get_opcodes():
+            if opcode == 'equal':
+                moves.extend(source[i1:i2])
+            elif opcode == 'replace':
+                moves.extend(
+                    [
+                        f'[red]{ item }[/red]'
+                        for item in source[i1:i2]
+                    ],
+                )
+                moves.extend(
+                    [
+                        f'[green]{ item }[/green]'
+                        for item in compressed[j1:j2]
+                    ],
+                )
+
+        return ' '.join([str(m) for m in moves])
 
     @cached_property
     def link(self):
