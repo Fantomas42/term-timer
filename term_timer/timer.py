@@ -511,6 +511,7 @@ class Timer:
                 f'[analysis]Analysis #{ len(self.stack) }:[/analysis] '
                 f'{ solve.report_line }',
             )
+            console.print(solve.method_line, end='')
 
         if new_stats.total > 1:
             mc = 10 + len(str(len(self.stack))) - 1

@@ -167,13 +167,13 @@ class Solve:
 
                 footer = ''
                 if info['type'] != 'virtual':
-                    ratio_1 = info['inspection'] / info['total'] * 13
-                    ratio_2 = info['execution'] / info['total'] * 13
+                    ratio_execution = info['execution'] / info['total'] * 13
+                    ratio_inspection = info['inspection'] / info['total'] * 13
 
                     footer += (
                         '\n'
-                        f'[inspection]{ round(ratio_1) * " " }[/inspection]'
-                        f'[execution]{ round(ratio_2) * " " }[/execution] '
+                        f'[inspection]{ round(ratio_inspection) * " " }[/inspection]'
+                        f'{ round(ratio_execution) * " " } '
                         f'[consign]{ self.missed_moves_line(info["reconstruction"]) }[/consign]'
                     )
 
