@@ -220,7 +220,7 @@ class Analyser:
             return default
 
         if value <= norm:
-            return 'step'  # CHANGE
+            return 'success'
         return 'warning'
 
     @property

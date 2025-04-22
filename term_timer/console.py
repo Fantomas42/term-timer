@@ -13,6 +13,7 @@ TEXT_LIGHT = '#FFFFD7'
 theme = {
     'warning': f'bold { RED }',
     'caution': f'bold { ORANGE }',
+    'success': f'bold { GREEN }',
 
     'scramble': f'{ TEXT_DARK } on { GREEN }',
     'duration': f'{ TEXT_DARK } on { ORANGE }',

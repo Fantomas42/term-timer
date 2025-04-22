@@ -182,8 +182,13 @@ class Solve:
 
                 move_klass = self.method_applied.normalize_value(
                     'moves', info['name'],
-                    len(info["reconstruction"]),
+                    len(info['reconstruction']),
                     'result',
+                )
+                percent_klass = self.method_applied.normalize_value(
+                    'percent', info['name'],
+                    info['total_percent'],
+                    'duration_p',
                 )
 
                 line += (
@@ -194,7 +199,7 @@ class Solve:
                     f'[execution]{ format_duration(info["execution"]):>5}s[/execution] '
                     f'[execution_p]{ info["execution_percent"]:5.2f}%[/execution_p] '
                     f'[duration]{ format_duration(info["total"]):>5}s[/duration] '
-                    f'[duration_p]{ info["total_percent"]:5.2f}%[/duration_p] '
+                    f'[{ percent_klass }]{ info["total_percent"]:5.2f}%[/{ percent_klass }] '
                     f'[tps]{ tps:.2f} TPS[/tps] '
                     f'[tps_e]{ tps_exec:.2f} eTPS[/tps_e]'
                     f'{ footer }\n'
