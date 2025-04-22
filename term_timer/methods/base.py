@@ -220,7 +220,11 @@ class Analyser:
 
         if value <= norm:
             return 'success'
-        return 'warning'
+
+        if value >= norm * 1.2:
+            return 'warning'
+
+        return 'caution'
 
     @property
     def reconstruction_detailed(self):

@@ -7,15 +7,10 @@ class CFOPAnalyser(Analyser):
     name = 'CFOP'
     step_list = ('Cross', 'F2L', 'OLL', 'PLL')
     norms = {
-        # High level solvers
-        # Cross - 6
-        # F2L - 30
-        # OLL - 10
-        # PLL - 15
         'moves': {
-            'Cross': 7,
-            'F2L': 34,
-            'OLL': 13,
+            'Cross': 6,
+            'F2L': 30,
+            'OLL': 10,
             'PLL': 15,
         },
         'percent': {
@@ -44,13 +39,13 @@ class CF4OPAnalyser(Analyser):
     step_list = ('Cross', 'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4', 'OLL', 'PLL')
     norms = {
         'moves': {
-            'Cross': 7,
-            'XCross': 9,
-            'XXCross': 11,
-            'XXXCross': 13,
-            'XXXXCross': 15,
-            'F2L': 34,
-            'OLL': 13,
+            'Cross': 6,
+            'XCross': 8,
+            'XXCross': 10,
+            'XXXCross': 12,
+            'XXXXCross': 14,
+            'F2L': 30,
+            'OLL': 10,
             'PLL': 15,
         },
         'percent': {
