@@ -286,6 +286,8 @@ class Solve:
                 '/', '%2F',
             ).replace(
                 '\n', '%0A',
+            ).replace(
+                '+', '%26%232b%3B',
             )
 
         return (

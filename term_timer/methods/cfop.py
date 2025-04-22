@@ -93,6 +93,19 @@ class CF4OPAnalyser(Analyser):
         elif summary[0]['name'] == 'F2L 4':
             summary[0]['name'] = 'XXXXCross'
 
+        for i, info in enumerate(summary):
+            if info['increment'] > 1:
+                if 'F2L ' in info['name']:
+                    previous = summary[i - 1]
+                    name = previous['name']
+                    if 'F2L ' in name:
+                        previous['name'] += f'+{ int(name[-1]) + 1 }'
+                    else:
+                        info['name'] = 'F2L 1+2'
+
+                if 'OLL' in info['name']:
+                    info['name'] = 'F2L 4'
+
         f2l = {
             'type': 'virtual',
             'name': 'F2L',
@@ -106,6 +119,7 @@ class CF4OPAnalyser(Analyser):
             'inspection_percent': 0,
             'reconstruction': Algorithm(),
         }
+
         insert_f2l = False
         for info in summary:
             if 'F2L ' in info['name']:

@@ -147,15 +147,21 @@ class Analyser:
             if current_progress > progress:
                 step_name = self.step_list[current_progress - 1]
 
-                progress = current_progress
-                steps[step_name] = step_moves.copy()
+                steps[step_name] = {
+                    'moves': step_moves.copy(),
+                    'increment': current_progress - progress,
+                }
                 step_moves = []
+                progress = current_progress
 
             step_moves.append(move_index)
             cube.rotate(move)
 
         step_name = self.step_list[-1]
-        steps[step_name] = step_moves.copy()
+        steps[step_name] = {
+            'moves': step_moves.copy(),
+            'increment': 1,
+        }
 
         return steps
 
@@ -169,7 +175,8 @@ class Analyser:
             if step not in self.steps:
                 continue
 
-            step_moves = self.steps[step]
+            info = self.steps[step]
+            step_moves = info['moves']
 
             moves = [self.moves[i] for i in step_moves]
             times = [self.times[i] for i in step_moves]
@@ -201,6 +208,7 @@ class Analyser:
                     'execution_percent': (execution / self.duration) * 100,
                     'inspection_percent': (inspection / self.duration) * 100,
                     'reconstruction': reconstruction,
+                    'increment': info['increment'],
                     # + Case detection
                     # + Pair name
                 },
