@@ -141,21 +141,23 @@ class Analyser:
         cases = []
         progress = 0
         step_moves = []
+        facelets = cube.as_twophase_facelets
 
         for move_index, move in enumerate(self.moves):
             current_progress, current_cases = self.compute_progress(cube)
 
             if current_progress > progress:
                 step_name = self.step_list[current_progress - 1]
-
                 cleaned_cases = list(set(current_cases) - set(cases))
 
                 steps[step_name] = {
                     'moves': step_moves.copy(),
                     'increment': current_progress - progress,
                     'cases': cleaned_cases,
+                    'facelets': facelets,
                 }
                 step_moves = []
+                facelets = cube.as_twophase_facelets
                 progress = current_progress
                 cases.extend(cleaned_cases)
 
@@ -167,6 +169,7 @@ class Analyser:
             'moves': step_moves.copy(),
             'increment': 1,
             'cases': [],
+            'facelets': facelets,
         }
 
         return steps
@@ -216,7 +219,7 @@ class Analyser:
                     'reconstruction': reconstruction,
                     'increment': info['increment'],
                     'cases': info['cases'],
-                    # + Case detection
+                    'facelets': info['facelets'],
                 },
             )
 

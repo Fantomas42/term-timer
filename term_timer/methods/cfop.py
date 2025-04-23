@@ -1,6 +1,31 @@
+import json
+
 from cubing_algs.algorithm import Algorithm
 
 from term_timer.methods.base import Analyser
+
+
+OLL_MASKS = {}
+with open('/home/fantomas/dev/term-timer/term_timer/methods/oll.json') as fd:
+    for oll, rotations in json.load(fd).items():
+        for rotation, alternatives in rotations.items():
+            for alternative, hashed in alternatives.items():
+                OLL_MASKS[hashed] = {
+                    'case': oll,
+                    'rotation': rotation,
+                    'alternative': alternative,
+                }
+
+PLL_MASKS = {}
+with open('/home/fantomas/dev/term-timer/term_timer/methods/pll.json') as fd:
+    for pll, rotations in json.load(fd).items():
+        for rotation, alternatives in rotations.items():
+            for alternative, hashed in alternatives.items():
+                PLL_MASKS[hashed] = {
+                    'case': pll,
+                    'rotation': rotation,
+                    'alternative': alternative,
+                }
 
 
 class CFOPAnalyser(Analyser):
@@ -84,6 +109,53 @@ class CF4OPAnalyser(Analyser):
 
         return 6, []
 
+    def get_oll_case(self, facelets):
+        masked = []
+        for value in facelets:
+            if value != 'D':
+                masked.append('-')
+            else:
+                masked.append(value)
+
+        masked = ''.join(masked)
+
+        if masked in OLL_MASKS:
+            kase = OLL_MASKS[masked]['case']
+
+            return kase
+
+        return ''
+
+    def get_pll_case(self, facelets):
+        alls = list(PLL_MASKS.keys())
+
+        mask = ('0' * 9) + ('000000111' * 2) + ('0' * 9) + ('000000111' * 2)
+        masked = self.build_facelets_masked(
+            mask,
+            facelets,
+        )
+
+        if masked in PLL_MASKS:
+            kase = PLL_MASKS[masked]['case']
+
+            return kase
+
+        return ''
+
+    def get_auf(self, moves):
+        auf = 0
+
+        for move in reversed(moves):
+            if move[0] == 'D':
+                auf += move.endswith('2') and 2 or 1
+            else:
+                break
+
+        if not auf:
+            return ''
+
+        return f'+{ auf } AUF'
+
     def correct_summary(self, summary):
         if summary[0]['name'] == 'F2L 1':
             summary[0]['name'] = 'XCross'
@@ -109,6 +181,19 @@ class CF4OPAnalyser(Analyser):
 
                 if 'OLL' in info['name']:
                     info['name'] = 'F2L 4'
+
+        for info in summary:
+
+            if info['name'] == 'OLL':
+                facelets = info['facelets']
+                info['cases'] = [self.get_oll_case(facelets)]
+
+            elif info['name'] == 'PLL':
+                facelets = info['facelets']
+                info['cases'] = [self.get_pll_case(facelets)]
+                auf = self.get_auf(info['moves'])
+                if auf:
+                    info['cases'].append(auf)
 
         f2l = {
             'type': 'virtual',
