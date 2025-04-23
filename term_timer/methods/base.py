@@ -138,21 +138,26 @@ class Analyser:
         cube.rotate(self.scramble)
 
         steps = {}
+        cases = []
         progress = 0
         step_moves = []
 
         for move_index, move in enumerate(self.moves):
-            current_progress = self.compute_progress(cube)
+            current_progress, current_cases = self.compute_progress(cube)
 
             if current_progress > progress:
                 step_name = self.step_list[current_progress - 1]
 
+                cleaned_cases = list(set(current_cases) - set(cases))
+
                 steps[step_name] = {
                     'moves': step_moves.copy(),
                     'increment': current_progress - progress,
+                    'cases': cleaned_cases,
                 }
                 step_moves = []
                 progress = current_progress
+                cases.extend(cleaned_cases)
 
             step_moves.append(move_index)
             cube.rotate(move)
@@ -161,6 +166,7 @@ class Analyser:
         steps[step_name] = {
             'moves': step_moves.copy(),
             'increment': 1,
+            'cases': [],
         }
 
         return steps
@@ -209,8 +215,8 @@ class Analyser:
                     'inspection_percent': (inspection / self.duration) * 100,
                     'reconstruction': reconstruction,
                     'increment': info['increment'],
+                    'cases': info['cases'],
                     # + Case detection
-                    # + Pair name
                 },
             )
 
@@ -243,9 +249,13 @@ class Analyser:
 
         for info in self.summary:
             if info['type'] != 'virtual':
+                cases = ''
+                if info['cases']:
+                    cases = f' ({ " ".join(info["cases"]) })'
+
                 recons += (
                     f'{ info["reconstruction"]!s } // '
-                    f'{ info["name"] } '
+                    f'{ info["name"] }{ cases } '
                     f'Insp: { format_duration(info["inspection"]) }s '
                     f'Exec: { format_duration(info["execution"]) }s '
                     f'Moves: { len(info["reconstruction"]) }\n'

@@ -31,7 +31,7 @@ class CFOPAnalyser(Analyser):
             else:
                 break
 
-        return progress
+        return progress, []
 
 
 class CF4OPAnalyser(Analyser):
@@ -65,20 +65,24 @@ class CF4OPAnalyser(Analyser):
         facelets = cube.as_twophase_facelets
 
         if not self.check_step('Cross', facelets):
-            return 0
+            return 0, []
 
         if not self.check_step('OLL', facelets):
-            return 1 + int(
-                self.check_step('F2L 1', facelets),
-            ) + int(
-                self.check_step('F2L 2', facelets),
-            ) + int(
-                self.check_step('F2L 3', facelets),
-            ) + int(
-                self.check_step('F2L 4', facelets),
-            )
+            name = ['F2L 1', 'F2L 2', 'F2L 3', 'F2L 4']
+            pair = ['FL', 'FR', 'BL', 'BR']
 
-        return 6
+            score = 1
+            pairs = []
+
+            for n, p in zip(name, pair, strict=True):
+                result = self.check_step(n, facelets)
+                if result:
+                    score += 1
+                    pairs.append(p)
+
+            return score, pairs
+
+        return 6, []
 
     def correct_summary(self, summary):
         if summary[0]['name'] == 'F2L 1':

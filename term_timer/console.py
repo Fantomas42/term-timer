@@ -14,6 +14,7 @@ theme = {
     'warning': f'bold { RED }',
     'caution': f'bold { ORANGE }',
     'success': f'bold { GREEN }',
+    'comment': '#CC9933',
 
     'scramble': f'{ TEXT_DARK } on { GREEN }',
     'duration': f'{ TEXT_DARK } on { ORANGE }',
