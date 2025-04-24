@@ -157,6 +157,7 @@ class CF4OPAnalyser(Analyser):
         return f'+{ auf } AUF'
 
     def correct_summary(self, summary):
+        # Merge XCrosses
         if summary[0]['name'] == 'F2L 1':
             summary[0]['name'] = 'XCross'
 
@@ -169,6 +170,7 @@ class CF4OPAnalyser(Analyser):
         elif summary[0]['name'] == 'F2L 4':
             summary[0]['name'] = 'XXXXCross'
 
+        # Merge double F2L inserts
         for i, info in enumerate(summary):
             if info['increment'] > 1:
                 if 'F2L ' in info['name']:
@@ -182,19 +184,64 @@ class CF4OPAnalyser(Analyser):
                 if 'OLL' in info['name']:
                     info['name'] = 'F2L 4'
 
-        for info in summary:
+        # Skipped PLL insert
+        if summary[-1]['name'] != 'PLL':
+            summary.append(
+                {
+                    'type': 'skipped',
+                    'name': 'PLL',
+                    'moves': [],
+                    'times': [],
+                    'total': 0,
+                    'execution': 0,
+                    'inspection': 0,
+                    'total_percent': 0,
+                    'execution_percent': 0,
+                    'inspection_percent': 0,
+                    'reconstruction': Algorithm(),
+                    'increment': 0,
+                    'cases': ['SKIP'],
+                    'facelets': '',
+                },
+            )
+        # Skipped OLL insert
+        if summary[-2]['name'] != 'OLL':
+            summary.insert(
+                len(summary) - 1,
+                {
+                    'type': 'skipped',
+                    'name': 'OLL',
+                    'moves': [],
+                    'times': [],
+                    'total': 0,
+                    'execution': 0,
+                    'inspection': 0,
+                    'total_percent': 0,
+                    'execution_percent': 0,
+                    'inspection_percent': 0,
+                    'reconstruction': Algorithm(),
+                    'increment': 0,
+                    'cases': ['SKIP'],
+                    'facelets': '',
+                },
+            )
 
+        # Guess OLL/PLL cases
+        for info in summary:
             if info['name'] == 'OLL':
                 facelets = info['facelets']
-                info['cases'] = [self.get_oll_case(facelets)]
+                if facelets:
+                    info['cases'] = [self.get_oll_case(facelets)]
 
             elif info['name'] == 'PLL':
                 facelets = info['facelets']
-                info['cases'] = [self.get_pll_case(facelets)]
-                auf = self.get_auf(info['moves'])
-                if auf:
-                    info['cases'].append(auf)
+                if facelets:
+                    info['cases'] = [self.get_pll_case(facelets)]
+                    auf = self.get_auf(info['moves'])
+                    if auf:
+                        info['cases'].append(auf)
 
+        # Summary for F2L
         f2l = {
             'type': 'virtual',
             'name': 'F2L',
@@ -207,6 +254,9 @@ class CF4OPAnalyser(Analyser):
             'execution_percent': 0,
             'inspection_percent': 0,
             'reconstruction': Algorithm(),
+            'increment': 0,
+            'cases': [],
+            'facelets': '',
         }
 
         insert_f2l = False

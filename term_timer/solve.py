@@ -152,62 +152,63 @@ class Solve:
         )
 
         for info in self.method_applied.summary:
-            if info:
-                tps = self.tps(info['reconstruction'], info['total'])
-                if not info['execution']:
-                    tps_exec = tps
-                else:
-                    tps_exec = self.tps(info['reconstruction'], info['execution'])
 
-                header = ''
-                if info['type'] == 'substep':
-                    header += f'[substep]- { info["name"]:<11}:[/substep] '
-                else:
-                    header += f'[step]{ info["name"]:<13}:[/step] '
+            header = ''
+            if info['type'] == 'substep':
+                header += f'[substep]- { info["name"]:<11}:[/substep] '
+            else:
+                header += f'[step]{ info["name"]:<13}:[/step] '
 
-                footer = ''
-                if info['type'] != 'virtual':
-                    ratio_execution = info['execution'] / info['total'] * 13
-                    ratio_inspection = info['inspection'] / info['total'] * 13
-
-                    footer += (
-                        '\n'
-                        f'[inspection]{ round(ratio_inspection) * " " }[/inspection]'
-                        f'{ round(ratio_execution) * " " } '
-                        f'[consign]{ self.missed_moves_line(info["reconstruction"]) }[/consign]'
-                    )
-                    if info['cases']:
-                        footer += f' [comment]// { " ".join(info["cases"]) }[/comment]'
-
-                move_klass = self.method_applied.normalize_value(
-                    'moves', info['name'],
-                    len(info['reconstruction']),
-                    'result',
-                )
-                percent_klass = self.method_applied.normalize_value(
-                    'percent', info['name'],
-                    info['total_percent'],
-                    'duration_p',
-                )
-
+            footer = ''
+            if info['type'] == 'skipped':
                 line += (
-                    f'{ header }'
-                    f'[{ move_klass }]{ len(info["reconstruction"]):>2} moves[/{ move_klass }] '
-                    f'[inspection]{ format_duration(info["inspection"]):>5}s[/inspection] '
-                    f'[inspection_p]{ info["inspection_percent"]:5.2f}%[/inspection_p] '
-                    f'[execution]{ format_duration(info["execution"]):>5}s[/execution] '
-                    f'[execution_p]{ info["execution_percent"]:5.2f}%[/execution_p] '
-                    f'[duration]{ format_duration(info["total"]):>5}s[/duration] '
-                    f'[{ percent_klass }]{ info["total_percent"]:5.2f}%[/{ percent_klass }] '
-                    f'[tps]{ tps:.2f} TPS[/tps] '
-                    f'[tps_e]{ tps_exec:.2f} eTPS[/tps_e]'
-                    f'{ footer }\n'
+                    f'{ header }[skipped]SKIP[/skipped]\n'
                 )
+                continue
 
-            else:  # TODO fix case
-                line += (
-                    f'[stats]{ info["name"]:<13}:[/stats] [record]SKIPPED[/record]\n'
+            if info['type'] != 'virtual':
+                ratio_execution = info['execution'] / info['total'] * 13
+                ratio_inspection = info['inspection'] / info['total'] * 13
+
+                footer += (
+                    '\n'
+                    f'[inspection]{ round(ratio_inspection) * " " }[/inspection]'
+                    f'{ round(ratio_execution) * " " } '
+                    f'[consign]{ self.missed_moves_line(info["reconstruction"]) }[/consign]'
                 )
+                if info['cases']:
+                    footer += f' [comment]// { " ".join(info["cases"]) }[/comment]'
+
+            move_klass = self.method_applied.normalize_value(
+                'moves', info['name'],
+                len(info['reconstruction']),
+                'result',
+            )
+            percent_klass = self.method_applied.normalize_value(
+                'percent', info['name'],
+                info['total_percent'],
+                'duration_p',
+            )
+
+            tps = self.tps(info['reconstruction'], info['total'])
+            if not info['execution']:
+                tps_exec = tps
+            else:
+                tps_exec = self.tps(info['reconstruction'], info['execution'])
+
+            line += (
+                f'{ header }'
+                f'[{ move_klass }]{ len(info["reconstruction"]):>2} moves[/{ move_klass }] '
+                f'[inspection]{ format_duration(info["inspection"]):>5}s[/inspection] '
+                f'[inspection_p]{ info["inspection_percent"]:5.2f}%[/inspection_p] '
+                f'[execution]{ format_duration(info["execution"]):>5}s[/execution] '
+                f'[execution_p]{ info["execution_percent"]:5.2f}%[/execution_p] '
+                f'[duration]{ format_duration(info["total"]):>5}s[/duration] '
+                f'[{ percent_klass }]{ info["total_percent"]:5.2f}%[/{ percent_klass }] '
+                f'[tps]{ tps:.2f} TPS[/tps] '
+                f'[tps_e]{ tps_exec:.2f} eTPS[/tps_e]'
+                f'{ footer }\n'
+            )
 
         return line
 

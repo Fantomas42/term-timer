@@ -252,6 +252,11 @@ class Analyser:
 
         for info in self.summary:
             if info['type'] != 'virtual':
+
+                if info['type'] == 'skipped':
+                    recons += f'// { info["name"] } SKIPPED\n'
+                    continue
+
                 cases = ''
                 if info['cases']:
                     cases = f' ({ " ".join(info["cases"]) })'

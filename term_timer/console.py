@@ -26,6 +26,7 @@ theme = {
     'consign': '#CECECE',
     'step': 'bold #00AFFF',
     'substep': 'bold #00DFFF',
+    'skipped': f'{ TEXT_DARK } on #5FFFAF',
 
     'inspection_p': TEXT_LIGHT,
     'execution_p': TEXT_LIGHT,
