@@ -1,31 +1,32 @@
 import json
+from pathlib import Path
 
 from cubing_algs.algorithm import Algorithm
 
 from term_timer.methods.base import Analyser
 
+DATA_DIRECTORY = Path(__file__).parent
+OLL_PATH = DATA_DIRECTORY / 'oll.json'
+PLL_PATH = DATA_DIRECTORY / 'pll.json'
 
-OLL_MASKS = {}
-with open('/home/fantomas/dev/term-timer/term_timer/methods/oll.json') as fd:
-    for oll, rotations in json.load(fd).items():
-        for rotation, alternatives in rotations.items():
-            for alternative, hashed in alternatives.items():
-                OLL_MASKS[hashed] = {
-                    'case': oll,
-                    'rotation': rotation,
-                    'alternative': alternative,
-                }
 
-PLL_MASKS = {}
-with open('/home/fantomas/dev/term-timer/term_timer/methods/pll.json') as fd:
-    for pll, rotations in json.load(fd).items():
-        for rotation, alternatives in rotations.items():
-            for alternative, hashed in alternatives.items():
-                PLL_MASKS[hashed] = {
-                    'case': pll,
-                    'rotation': rotation,
-                    'alternative': alternative,
-                }
+def load_and_fill(path):
+    data = {}
+
+    with path.open('r') as fd:
+        for kase, rotations in json.load(fd).items():
+            for rotation, alternatives in rotations.items():
+                for alternative, hashed in alternatives.items():
+                    data[hashed] = {
+                        'case': kase,
+                        'rotation': rotation,
+                        'alternative': alternative,
+                    }
+    return data
+
+
+OLL_MASKS = load_and_fill(OLL_PATH)
+PLL_MASKS = load_and_fill(PLL_PATH)
 
 
 class CFOPAnalyser(Analyser):
