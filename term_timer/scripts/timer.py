@@ -4,6 +4,7 @@ from random import seed
 
 from term_timer.arguments import get_arguments
 from term_timer.console import console
+from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
 from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
@@ -21,7 +22,10 @@ async def timer() -> int:  # noqa: PLR0912
             or options.detail
             or options.cfop
         ):
-        session_stats = StatisticsReporter(cube, load_solves(cube))
+        session_stats = StatisticsReporter(
+            cube,
+            load_all_solves(cube, options.session),
+        )
 
         if not session_stats.stack:
             console.print(
@@ -52,7 +56,7 @@ async def timer() -> int:  # noqa: PLR0912
     if options.seed or options.iterations or options.easy_cross:
         free_play = True
 
-    stack = [] if free_play else load_solves(cube)
+    stack = [] if free_play else load_solves(cube, options.session)
 
     if options.seed:
         seed(options.seed)
@@ -63,6 +67,7 @@ async def timer() -> int:  # noqa: PLR0912
         cube_size=cube,
         iterations=options.iterations,
         easy_cross=options.easy_cross,
+        session=options.session,
         free_play=free_play,
         show_cube=options.show_cube,
         countdown=options.countdown,

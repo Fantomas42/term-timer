@@ -31,8 +31,9 @@ from term_timer.stats import Statistics
 class Timer:
     def __init__(self, *, cube_size: int,  # noqa: PLR0913
                  iterations: int, easy_cross: bool,
-                 free_play: bool, show_cube: bool,
-                 countdown: int, metronome: float,
+                 session: str, free_play: bool,
+                 show_cube: bool, countdown: int,
+                 metronome: float,
                  stack: list[Solve]):
         self.start_time = 0
         self.end_time = 0
@@ -44,6 +45,7 @@ class Timer:
         self.state = 'init'
 
         self.cube_size = cube_size
+        self.session = session
         self.free_play = free_play
         self.iterations = iterations
         self.easy_cross = easy_cross
@@ -694,7 +696,11 @@ class Timer:
             elif char == 'z':
                 self.stack.pop()
 
-            save_solves(self.cube_size, self.stack)
+            save_solves(
+                self.cube_size,
+                self.session,
+                self.stack,
+            )
 
             if char == 'q':
                 return False

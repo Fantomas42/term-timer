@@ -56,6 +56,15 @@ def get_arguments() -> Any:
         ),
     )
     config.add_argument(
+        '-u', '--session',
+        default='',
+        metavar='SESSION',
+        help=(
+            'Name of the session for for solves.\n'
+            'Default: None.'
+        ),
+    )
+    config.add_argument(
         '-f', '--free-play',
         action='store_true',
         help=(
@@ -157,7 +166,7 @@ def get_arguments() -> Any:
         ),
     )
     actions.add_argument(
-        '--cfop',
+        '-t', '--cfop',
         action='store_true',
         help=(
             'Display statistics on CFOP OLL/PLL cases.\n'
