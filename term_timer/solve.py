@@ -20,10 +20,12 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_time
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.methods.cfop import CFOPAnalyser
+from term_timer.methods.lbl import LBLAnalyser
 
 METHODS = {
     'cfop': CFOPAnalyser,
     'cf4op': CF4OPAnalyser,
+    'lbl': LBLAnalyser,
 }
 
 

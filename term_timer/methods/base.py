@@ -18,6 +18,7 @@ CENTER_PIECE = '000010000'
 CROSS_PIECE  = '010010000'  # noqa: E221
 LEFT_FACE    = '110110000'  # noqa: E221
 RIGHT_FACE   = '011011000'  # noqa: E221
+F1L_FACE     = '111010000'  # noqa: E221
 F2L_FACE     = '111111000'  # noqa: E221
 FULL_FACE    = '1' * 9      # noqa: E221
 FULL_CUBE    = '1' * 54     # noqa: E221
@@ -27,6 +28,17 @@ STEPS_CONFIG = {
         'mask': (
             '010111010' + (CROSS_PIECE * 2)
             + CENTER_PIECE + (CROSS_PIECE * 2)
+        ),
+        'transformations': (
+            degrip_full_moves,
+            remove_final_rotations,
+            optimize_double_moves,
+        ),
+    },
+    'F1L': {
+        'mask': (
+            FULL_FACE + (F1L_FACE * 2)
+            + CENTER_PIECE + (F1L_FACE * 2)
         ),
         'transformations': (
             degrip_full_moves,
@@ -101,6 +113,15 @@ STEPS_CONFIG = {
         ),
     },
     'PLL': {
+        'mask': FULL_CUBE,
+        'transformations': (
+            reslice_m_moves,
+            degrip_full_moves,
+            remove_final_rotations,
+            optimize_double_moves,
+        ),
+    },
+    'LL': {
         'mask': FULL_CUBE,
         'transformations': (
             reslice_m_moves,
