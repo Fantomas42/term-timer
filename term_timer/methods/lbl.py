@@ -22,7 +22,7 @@ class LBLAnalyser(Analyser):
         progress = 0
         facelets = cube.as_twophase_facelets
 
-        for name in self.step_list:
+        for name in self.step_list[:-1]:
             if self.check_step(name, facelets):
                 progress += 1
             else:
