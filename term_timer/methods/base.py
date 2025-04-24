@@ -227,7 +227,7 @@ class Analyser:
 
         return summary
 
-    def correct_summary(self):
+    def correct_summary(self, summary):
         pass
 
     def normalize_value(self, metric, name, value, default):

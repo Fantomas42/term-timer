@@ -58,8 +58,71 @@ class CFOPAnalyser(Analyser):
 
         return progress, []
 
+    def get_oll_case(self, facelets):
+        masked = []
+        for value in facelets:
+            if value != 'D':
+                masked.append('-')
+            else:
+                masked.append(value)
 
-class CF4OPAnalyser(Analyser):
+        masked = ''.join(masked)
+
+        if masked in OLL_MASKS:
+            kase = OLL_MASKS[masked]['case']
+
+            return kase
+
+        return ''
+
+    def get_pll_case(self, facelets):
+        alls = list(PLL_MASKS.keys())
+
+        mask = ('0' * 9) + ('000000111' * 2) + ('0' * 9) + ('000000111' * 2)
+        masked = self.build_facelets_masked(
+            mask,
+            facelets,
+        )
+
+        if masked in PLL_MASKS:
+            kase = PLL_MASKS[masked]['case']
+
+            return kase
+
+        return ''
+
+    def get_auf(self, moves):
+        auf = 0
+
+        for move in reversed(moves):
+            if move[0] == 'D':
+                auf += move.endswith('2') and 2 or 1
+            else:
+                break
+
+        if not auf:
+            return ''
+
+        return f'+{ auf } AUF'
+
+    def correct_summary(self, summary):
+        # Guess OLL/PLL cases
+        for info in summary:
+            if info['name'] == 'OLL':
+                facelets = info['facelets']
+                if facelets:
+                    info['cases'] = [self.get_oll_case(facelets)]
+
+            elif info['name'] == 'PLL':
+                facelets = info['facelets']
+                if facelets:
+                    info['cases'] = [self.get_pll_case(facelets)]
+                    auf = self.get_auf(info['moves'])
+                    if auf:
+                        info['cases'].append(auf)
+
+
+class CF4OPAnalyser(CFOPAnalyser):
     name = 'CF4OP'
     step_list = ('Cross', 'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4', 'OLL', 'PLL')
     norms = {
@@ -108,53 +171,6 @@ class CF4OPAnalyser(Analyser):
             return score, pairs
 
         return 6, []
-
-    def get_oll_case(self, facelets):
-        masked = []
-        for value in facelets:
-            if value != 'D':
-                masked.append('-')
-            else:
-                masked.append(value)
-
-        masked = ''.join(masked)
-
-        if masked in OLL_MASKS:
-            kase = OLL_MASKS[masked]['case']
-
-            return kase
-
-        return ''
-
-    def get_pll_case(self, facelets):
-        alls = list(PLL_MASKS.keys())
-
-        mask = ('0' * 9) + ('000000111' * 2) + ('0' * 9) + ('000000111' * 2)
-        masked = self.build_facelets_masked(
-            mask,
-            facelets,
-        )
-
-        if masked in PLL_MASKS:
-            kase = PLL_MASKS[masked]['case']
-
-            return kase
-
-        return ''
-
-    def get_auf(self, moves):
-        auf = 0
-
-        for move in reversed(moves):
-            if move[0] == 'D':
-                auf += move.endswith('2') and 2 or 1
-            else:
-                break
-
-        if not auf:
-            return ''
-
-        return f'+{ auf } AUF'
 
     def correct_summary(self, summary):
         # Merge XCrosses
