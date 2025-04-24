@@ -12,7 +12,9 @@ from term_timer.formatter import computing_padding
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_time
+from term_timer.formatter import format_duration
 from term_timer.magic_cube import Cube
+from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.solve import Solve
 
 
@@ -401,6 +403,69 @@ class StatisticsReporter(Statistics):
                 )
                 console.print(method_line, end='')
                 console.print(metric_string + missed_line)
+
+    def cfop(self) -> None:
+        console.print(
+            f'[title]CFOP Analysis for { self.cube_name }[/title]',
+        )
+        olls = {}
+        plls = {}
+        for i, solve in enumerate(self.stack):
+            if solve.raw_moves:
+                # TODO(me): switch to CFOPAnalyser once debugged
+                analysis = CF4OPAnalyser(solve.scramble, solve.move_times)
+                oll, pll = analysis.summary[-2:]
+                # if not pll['cases'][0]:
+                #     print(f'Issue solve #{ i + 1 }')
+                #     breakpoint()
+
+                olls.setdefault(
+                    oll['cases'][0],
+                    {
+                        'inspections': [],
+                        'executions': [],
+                        'totals': [],
+                     },
+                )
+                olls[oll['cases'][0]]['totals'].append(oll['total'])
+                olls[oll['cases'][0]]['executions'].append(oll['execution'])
+                olls[oll['cases'][0]]['inspections'].append(oll['inspection'])
+
+                plls.setdefault(
+                    pll['cases'][0],
+                    {
+                        'inspections': [],
+                        'executions': [],
+                        'totals': [],
+                     },
+                )
+                plls[pll['cases'][0]]['totals'].append(pll['total'])
+                plls[pll['cases'][0]]['executions'].append(pll['execution'])
+                plls[pll['cases'][0]]['inspections'].append(pll['inspection'])
+
+        console.print(
+            '[title]OLLS[/title]',
+        )
+        for name, info in sorted(olls.items(), key=lambda x: (-len(x[1]['totals']), x[0])):
+            count = len(info['totals'])
+            console.print(
+                f'[stats]{ name:<25}[/stats]: { len(info["totals"]):<4} '
+                f'[inspection]{ format_duration(sum(info["inspections"]) / count ):>5}[/inspection] '
+                f'[execution]{ format_duration(sum(info["executions"]) / count ):>5}[/execution] '
+                f'[duration]{ format_duration(sum(info["totals"]) / count ):>5}[/duration] ',
+            )
+
+        console.print(
+            '[title]PLLS[/title]',
+        )
+        for name, info in sorted(plls.items(), key=lambda x: (-len(x[1]['totals']), x[0])):
+            count = len(info['totals'])
+            console.print(
+                f'[stats]{ name:<25}[/stats]: { len(info["totals"]):<4} '
+                f'[inspection]{ format_duration(sum(info["inspections"]) / count ):>5}[/inspection] '
+                f'[execution]{ format_duration(sum(info["executions"]) / count ):>5}[/execution] '
+                f'[duration]{ format_duration(sum(info["totals"]) / count ):>5}[/duration] ',
+            )
 
     def graph(self) -> None:
         ao5s = []

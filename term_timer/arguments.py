@@ -157,6 +157,14 @@ def get_arguments() -> Any:
         ),
     )
     actions.add_argument(
+        '--cfop',
+        action='store_true',
+        help=(
+            'Display statistics on CFOP OLL/PLL cases.\n'
+            'Default: False.'
+        ),
+    )
+    actions.add_argument(
         '-h', '--help',
         action='help',
         help='Display this help message.',

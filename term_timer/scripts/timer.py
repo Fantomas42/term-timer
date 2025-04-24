@@ -19,6 +19,7 @@ async def timer() -> int:  # noqa: PLR0912
             or options.stats
             or options.graph
             or options.detail
+            or options.cfop
         ):
         session_stats = StatisticsReporter(cube, load_solves(cube))
 
@@ -41,6 +42,9 @@ async def timer() -> int:  # noqa: PLR0912
 
         if options.graph:
             session_stats.graph()
+
+        if options.cfop:
+            session_stats.cfop()
 
         return 0
 
