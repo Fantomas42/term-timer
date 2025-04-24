@@ -147,7 +147,7 @@ class Solve:
             return ''
 
         line = (
-            '[step]Orientation  :[/step] '
+            '[step]Orientation :[/step] '
             f'[consign]{ CUBE_ORIENTATION!s }[/consign]\n'
         )
 
@@ -155,17 +155,17 @@ class Solve:
 
             header = ''
             if info['type'] == 'substep':
-                header += f'[substep]- { info["name"]:<11}:[/substep] '
+                header += f'[substep]- { info["name"]:<10}:[/substep] '
             else:
-                header += f'[step]{ info["name"]:<13}:[/step] '
+                header += f'[step]{ info["name"]:<12}:[/step] '
 
-            footer = ''
             if info['type'] == 'skipped':
                 line += (
                     f'{ header }[skipped]SKIP[/skipped]\n'
                 )
                 continue
 
+            footer = ''
             if info['type'] != 'virtual':
                 ratio_execution = info['execution'] / info['total'] * 13
                 ratio_inspection = info['inspection'] / info['total'] * 13

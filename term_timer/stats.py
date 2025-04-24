@@ -355,32 +355,32 @@ class StatisticsReporter(Statistics):
             f'[title]Detail for { self.cube_name } #{ solve_id }[/title]',
         )
         console.print(
-            '[stats]Time    :[/stats] '
+            '[stats]Time     :[/stats] '
             f'[result]{ format_time(solve.time) }[/result]'
             f'[result]{ solve.flag }[/result]',
         )
         console.print(
-            '[stats]Date    :[/stats] '
+            '[stats]Date     :[/stats] '
             f'[date]{ date }[/date]',
         )
         if solve.device:
             console.print(
-                '[stats]Cube    :[/stats] '
+                '[stats]Cube     :[/stats] '
                 f'[device]{ solve.device }[/device]',
             )
         if solve.timer:
             console.print(
-                '[stats]Timer   :[/stats] '
+                '[stats]Timer    :[/stats] '
                 f'[timer]{ solve.timer }[/timer]',
             )
         console.print(
-            '[stats]Scramble:[/stats] '
+            '[stats]Scramble :[/stats] '
             f'[consign]{ solve.scramble }[/consign]',
         )
         console.print(cube.printed(None), end='')
 
         if solve.raw_moves:
-            metric_string = '[title]Metrics      :[/title] '
+            metric_string = '[title]Metrics     :[/title] '
             for metric in STATS_CONFIG.get('metrics'):
                 value = solve.reconstructed.metrics[metric]
                 metric_string += (
@@ -393,8 +393,6 @@ class StatisticsReporter(Statistics):
             if not missed_moves:
                 missed_line = '[green]No missed move[/green]'
 
-            console.print(metric_string + missed_line)
-
             method_line = solve.method_line
             if method_line:
                 console.print(
@@ -402,6 +400,7 @@ class StatisticsReporter(Statistics):
                     f'[extlink][link={ solve.link }]alg.cubing.net[/link][/extlink]',
                 )
                 console.print(method_line, end='')
+                console.print(metric_string + missed_line)
 
     def graph(self) -> None:
         ao5s = []
