@@ -188,7 +188,9 @@ class CF4OPAnalyser(CFOPAnalyser):
             summary[0]['name'] = 'XXXXCross'
 
         # Merge double F2L inserts
+        cases = []
         for i, info in enumerate(summary):
+            cases.extend(info['cases'])
             if info['increment'] > 1:
                 if 'F2L ' in info['name']:
                     previous = summary[i - 1]
@@ -200,6 +202,10 @@ class CF4OPAnalyser(CFOPAnalyser):
 
                 if 'OLL' in info['name'] and info['increment'] < 6:
                     info['name'] = 'F2L 4'
+                    info['cases'] = list(
+                        {'FR', 'FL', 'BR', 'BL'} -
+                        set(cases)
+                    )
 
         # Skipped PLL insert
         if summary[-1]['name'] != 'PLL':
