@@ -198,7 +198,7 @@ class CF4OPAnalyser(CFOPAnalyser):
                     else:
                         info['name'] = 'F2L 1+2'
 
-                if 'OLL' in info['name']:
+                if 'OLL' in info['name'] and info['increment'] < 6:
                     info['name'] = 'F2L 4'
 
         # Skipped PLL insert

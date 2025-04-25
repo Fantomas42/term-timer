@@ -178,7 +178,7 @@ class Solve:
                     f'{ round(ratio_execution) * " " } '
                     f'[consign]{ self.missed_moves_line(info["reconstruction"]) }[/consign]'
                 )
-                if info['cases']:
+                if info['cases'] and info['cases'][0]:
                     footer += f' [comment]// { " ".join(info["cases"]) }[/comment]'
 
             move_klass = self.method_applied.normalize_value(

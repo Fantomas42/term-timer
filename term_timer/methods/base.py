@@ -185,7 +185,7 @@ class Analyser:
             step_moves.append(move_index)
             cube.rotate(move)
 
-        step_name = self.step_list[-1]
+        step_name = self.step_list[progress]
         steps[step_name] = {
             'moves': step_moves.copy(),
             'increment': 1,
@@ -280,7 +280,7 @@ class Analyser:
                     continue
 
                 cases = ''
-                if info['cases']:
+                if info['cases'] and info['cases'][0]:
                     cases = f' ({ " ".join(info["cases"]) })'
 
                 recons += (
