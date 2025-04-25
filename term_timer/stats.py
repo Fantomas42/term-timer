@@ -12,9 +12,9 @@ from term_timer.constants import SECOND_BINS
 from term_timer.constants import STEP_BAR
 from term_timer.formatter import computing_padding
 from term_timer.formatter import format_delta
+from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_time
-from term_timer.formatter import format_duration
 from term_timer.magic_cube import Cube
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.solve import Solve
@@ -401,7 +401,8 @@ class StatisticsReporter(Statistics):
             if method_line:
                 console.print(
                     f'[title]Reconstruction { solve.method.name }[/title]',
-                    f'[extlink][link={ solve.link }]alg.cubing.net[/link][/extlink]',
+                    '[extlink]'
+                    f'[link={ solve.link }]alg.cubing.net[/link][/extlink]',
                 )
                 console.print(method_line, end='')
                 console.print(metric_string + missed_line)
@@ -434,7 +435,7 @@ class StatisticsReporter(Statistics):
             plt.show()
 
     def cfop(self) -> None:
-        console.print('Computing cases...', end='')
+        console.print('Aggregating cases...', end='')
 
         olls = {}
         plls = {}
@@ -478,9 +479,12 @@ class StatisticsReporter(Statistics):
             table = Table(title=f'{ title }s', box=box.SIMPLE)
             table.add_column('Case', min_width=22)
             table.add_column('Count')
+            table.add_column('Freq.')
             table.add_column('Insp.')
             table.add_column('Exec.')
             table.add_column('Time')
+            table.add_column('Ao12')
+            table.add_column('Ao5')
 
             for name, info in sorted(
                     items.items(),
@@ -496,6 +500,9 @@ class StatisticsReporter(Statistics):
                     f'{ title }/{ name.split(" ")[0] }.html]{ label }'
                     '[/link][/extlink] ',
                     f'[stats]{ count!s }[/stats]',
+                    '[percent]'
+                    f'{ (count / len(self.stack) * 100):.2f}%'
+                    '[/percent]',
                     '[inspection]' +
                     format_duration(sum(info['inspections']) / count) +
                     '[/inspection]',
@@ -505,6 +512,12 @@ class StatisticsReporter(Statistics):
                     '[duration]' +
                     format_duration(sum(info['totals']) / count) +
                     '[/duration]',
+                    '[ao12]' +
+                    format_duration(self.ao(12, info['totals'])) +
+                    '[/ao12]',
+                    '[ao5]' +
+                    format_duration(self.ao(5, info['totals'])) +
+                    '[/ao5]',
                 )
             console.print(table)
 
