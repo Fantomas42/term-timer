@@ -410,6 +410,7 @@ class StatisticsReporter(Statistics):
                 label='Time',
             )
 
+            yticks = []
             xticks = []
             xlabels = []
             for s in solve.method_applied.summary:
@@ -417,9 +418,11 @@ class StatisticsReporter(Statistics):
                     index = s['index'][-1] + 1
                     plt.vline(index, 'red')
                     xticks.append(index)
+                    yticks.append(solve.move_times[index - 1][1] / 1000)
                     xlabels.append(s['name'])
 
             plt.xticks(xticks, xlabels)
+            plt.yticks(yticks)
             plt.plot_size(height=20)
             plt.canvas_color('default')
             plt.axes_color('default')
