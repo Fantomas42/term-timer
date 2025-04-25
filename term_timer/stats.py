@@ -404,6 +404,30 @@ class StatisticsReporter(Statistics):
                 console.print(method_line, end='')
                 console.print(metric_string + missed_line)
 
+            plt.scatter(
+                [m[1] / 1000 for m in solve.move_times],
+                marker='fhd',
+                label='Time',
+            )
+
+            xticks = []
+            xlabels = []
+            for s in solve.method_applied.summary:
+                if s['type'] not in {'skipped', 'virtual'}:
+                    index = s['index'][-1] + 1
+                    plt.vline(index, 'red')
+                    xticks.append(index)
+                    xlabels.append(s['name'])
+
+            plt.xticks(xticks, xlabels)
+            plt.plot_size(height=20)
+            plt.canvas_color('default')
+            plt.axes_color('default')
+            plt.ticks_color((0, 175, 255))
+            plt.ticks_style('bold')
+
+            plt.show()
+
     def cfop(self) -> None:
         console.print(
             f'[title]CFOP Analysis for { self.cube_name }[/title]',

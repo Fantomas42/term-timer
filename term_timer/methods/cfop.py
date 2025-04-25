@@ -210,6 +210,7 @@ class CF4OPAnalyser(CFOPAnalyser):
                     'moves': [],
                     'times': [],
                     'total': 0,
+                    'index': [],
                     'execution': 0,
                     'inspection': 0,
                     'total_percent': 0,
@@ -231,6 +232,7 @@ class CF4OPAnalyser(CFOPAnalyser):
                     'moves': [],
                     'times': [],
                     'total': 0,
+                    'index': [],
                     'execution': 0,
                     'inspection': 0,
                     'total_percent': 0,
@@ -265,6 +267,7 @@ class CF4OPAnalyser(CFOPAnalyser):
             'moves': [],
             'times': [],
             'total': 0,
+            'index': [],
             'execution': 0,
             'inspection': 0,
             'total_percent': 0,
@@ -284,6 +287,7 @@ class CF4OPAnalyser(CFOPAnalyser):
                 insert_f2l = True
                 f2l['moves'].extend(info['moves'])
                 f2l['times'].extend(info['times'])
+                f2l['index'].extend(info['index'])
                 f2l['total'] += info['total']
                 f2l['execution'] += info['execution']
                 f2l['inspection'] += info['inspection']

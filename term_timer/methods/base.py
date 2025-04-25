@@ -232,6 +232,7 @@ class Analyser:
                     'moves': moves,
                     'times': times,
                     'total': total,
+                    'index': step_moves,
                     'execution': execution,
                     'inspection': inspection,
                     'total_percent': (total / self.duration) * 100,
