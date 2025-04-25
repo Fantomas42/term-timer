@@ -494,11 +494,19 @@ class StatisticsReporter(Statistics):
                 label = name
                 if title == 'PLL':
                     label = f'PLL { name }'
+                if label == 'SKIP':
+                    label = 'OLL SKIP'
 
-                table.add_row(
+                head = (
                     '[extlink][link=https://cubing.fache.fr/'
                     f'{ title }/{ name.split(" ")[0] }.html]{ label }'
-                    '[/link][/extlink] ',
+                    '[/link][/extlink]'
+                )
+                if 'SKIP' in label:
+                    head = f'[skipped]{ label }[/skipped]'
+
+                table.add_row(
+                    head,
                     f'[stats]{ count!s }[/stats]',
                     '[percent]'
                     f'{ (count / len(self.stack) * 100):.2f}%'
