@@ -2,6 +2,8 @@ from functools import cached_property
 
 import numpy as np
 import plotext as plt
+from rich import box
+from rich.table import Table
 
 from term_timer.config import STATS_CONFIG
 from term_timer.console import console
@@ -432,11 +434,11 @@ class StatisticsReporter(Statistics):
             plt.show()
 
     def cfop(self) -> None:
-        console.print(
-            f'[title]CFOP Analysis for { self.cube_name }[/title]',
-        )
+        console.print('Computing cases...', end='')
+
         olls = {}
         plls = {}
+
         for i, solve in enumerate(self.stack):
             if solve.raw_moves:
                 # TODO(me): switch to CFOPAnalyser once debugged
@@ -470,29 +472,44 @@ class StatisticsReporter(Statistics):
                 plls[pll['cases'][0]]['executions'].append(pll['execution'])
                 plls[pll['cases'][0]]['inspections'].append(pll['inspection'])
 
-        console.print(
-            '[title]OLLS[/title]',
-        )
-        for name, info in sorted(olls.items(), key=lambda x: (-len(x[1]['totals']), x[0])):
-            count = len(info['totals'])
-            console.print(
-                f'[stats]{ name:<25}[/stats]: { len(info["totals"]):<4} '
-                f'[inspection]{ format_duration(sum(info["inspections"]) / count ):>5}[/inspection] '
-                f'[execution]{ format_duration(sum(info["executions"]) / count ):>5}[/execution] '
-                f'[duration]{ format_duration(sum(info["totals"]) / count ):>5}[/duration] ',
-            )
+        print('\r', end='')
 
-        console.print(
-            '[title]PLLS[/title]',
-        )
-        for name, info in sorted(plls.items(), key=lambda x: (-len(x[1]['totals']), x[0])):
-            count = len(info['totals'])
-            console.print(
-                f'[stats]{ name:<25}[/stats]: { len(info["totals"]):<4} '
-                f'[inspection]{ format_duration(sum(info["inspections"]) / count ):>5}[/inspection] '
-                f'[execution]{ format_duration(sum(info["executions"]) / count ):>5}[/execution] '
-                f'[duration]{ format_duration(sum(info["totals"]) / count ):>5}[/duration] ',
-            )
+        def table(title, items):
+            table = Table(title=f'{ title }s', box=box.SIMPLE)
+            table.add_column('Case', min_width=22)
+            table.add_column('Count')
+            table.add_column('Insp.')
+            table.add_column('Exec.')
+            table.add_column('Time')
+
+            for name, info in sorted(
+                    items.items(),
+                    key=lambda x: (-len(x[1]['totals']), x[0]),
+            ):
+                count = len(info['totals'])
+                label = name
+                if title == 'PLL':
+                    label = f'PLL { name }'
+
+                table.add_row(
+                    '[extlink][link=https://cubing.fache.fr/'
+                    f'{ title }/{ name.split(" ")[0] }.html]{ label }'
+                    '[/link][/extlink] ',
+                    f'[stats]{ count!s }[/stats]',
+                    '[inspection]' +
+                    format_duration(sum(info['inspections']) / count) +
+                    '[/inspection]',
+                    '[execution]' +
+                    format_duration(sum(info['executions']) / count) +
+                    '[/execution]',
+                    '[duration]' +
+                    format_duration(sum(info['totals']) / count) +
+                    '[/duration]',
+                )
+            console.print(table)
+
+        table('OLL', olls)
+        table('PLL', plls)
 
     def graph(self) -> None:
         ao5s = []
