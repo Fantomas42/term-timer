@@ -26,7 +26,7 @@ class Driver:
 
         self.cypher = self.init_cypher()
 
-    def init_cypher(self):  # noqa: PLR6301
+    def init_cypher(self):
         return None
 
     def send_command_handler(self, command: str) -> bool:

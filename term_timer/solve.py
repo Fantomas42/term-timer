@@ -62,12 +62,10 @@ class Solve:
     @cached_property
     def move_times(self) -> list[str, int]:
         return [
-            list(
-                map(
-                    lambda x: x if not x.isdigit() else int(x),
-                    move_time.split('@'),
-                ),
-            )
+            [
+                x if not x.isdigit() else int(x)
+                for x in move_time.split('@')
+            ]
             for move_time in self.raw_moves.split(' ')
             if move_time
         ]
@@ -174,12 +172,20 @@ class Solve:
 
                 footer += (
                     '\n'
-                    f'[inspection]{ round(ratio_inspection) * " " }[/inspection]'
-                    f'{ round(ratio_execution) * " " } '
-                    f'[consign]{ self.missed_moves_line(info["reconstruction"]) }[/consign]'
+                    '[inspection]' +
+                    (round(ratio_inspection) * ' ') +
+                    '[/inspection]' +
+                    (round(ratio_execution) * ' ') +
+                    ' [consign]' +
+                    self.missed_moves_line(info['reconstruction']) +
+                    '[/consign]'
                 )
                 if info['cases'] and info['cases'][0]:
-                    footer += f' [comment]// { " ".join(info["cases"]) }[/comment]'
+                    footer += (
+                        ' [comment]// ' +
+                        ' '.join(info['cases']) +
+                        '[/comment]'
+                    )
 
             move_klass = self.method_applied.normalize_value(
                 'moves', info['name'],
@@ -200,13 +206,20 @@ class Solve:
 
             line += (
                 f'{ header }'
-                f'[{ move_klass }]{ len(info["reconstruction"]):>2} moves[/{ move_klass }] '
-                f'[inspection]{ format_duration(info["inspection"]):>5}s[/inspection] '
-                f'[inspection_p]{ info["inspection_percent"]:5.2f}%[/inspection_p] '
-                f'[execution]{ format_duration(info["execution"]):>5}s[/execution] '
-                f'[execution_p]{ info["execution_percent"]:5.2f}%[/execution_p] '
-                f'[duration]{ format_duration(info["total"]):>5}s[/duration] '
-                f'[{ percent_klass }]{ info["total_percent"]:5.2f}%[/{ percent_klass }] '
+                f'[{ move_klass }]'
+                f'{ len(info["reconstruction"]):>2} moves[/{ move_klass }] '
+                f'[inspection]'
+                f'{ format_duration(info["inspection"]):>5}s[/inspection] '
+                f'[inspection_p]'
+                f'{ info["inspection_percent"]:5.2f}%[/inspection_p] '
+                f'[execution]'
+                f'{ format_duration(info["execution"]):>5}s[/execution] '
+                f'[execution_p]'
+                f'{ info["execution_percent"]:5.2f}%[/execution_p] '
+                f'[duration]'
+                f'{ format_duration(info["total"]):>5}s[/duration] '
+                f'[{ percent_klass }]'
+                f'{ info["total_percent"]:5.2f}%[/{ percent_klass }] '
                 f'[tps]{ tps:.2f} TPS[/tps] '
                 f'[tps_e]{ tps_exec:.2f} eTPS[/tps_e]'
                 f'{ footer }\n'

@@ -74,7 +74,7 @@ class TestTimer(unittest.TestCase):
             # Verify that the terminal was cleared
             mock_print.assert_called_once()
 
-    def test_beep(self):  # noqa: PLR6301
+    def test_beep(self):
         """Test beep method."""
         with patch('builtins.print') as mock_print:
             Timer.beep()

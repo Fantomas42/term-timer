@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
 
@@ -32,7 +33,7 @@ PLL_MASKS = load_and_fill(PLL_PATH)
 class CFOPAnalyser(Analyser):
     name = 'CFOP'
     step_list = ('Cross', 'F2L', 'OLL', 'PLL')
-    norms = {
+    norms: ClassVar[dict[str, dict[str, float]]] = {
         'moves': {
             'Cross': 6,
             'F2L': 30,
@@ -70,15 +71,11 @@ class CFOPAnalyser(Analyser):
         masked = ''.join(masked)
 
         if masked in OLL_MASKS:
-            kase = OLL_MASKS[masked]['case']
-
-            return kase
+            return OLL_MASKS[masked]['case']
 
         return ''
 
     def get_pll_case(self, facelets):
-        alls = list(PLL_MASKS.keys())
-
         mask = ('0' * 9) + ('000000111' * 2) + ('0' * 9) + ('000000111' * 2)
         masked = self.build_facelets_masked(
             mask,
@@ -86,9 +83,7 @@ class CFOPAnalyser(Analyser):
         )
 
         if masked in PLL_MASKS:
-            kase = PLL_MASKS[masked]['case']
-
-            return kase
+            return PLL_MASKS[masked]['case']
 
         return ''
 
@@ -97,7 +92,7 @@ class CFOPAnalyser(Analyser):
 
         for move in reversed(moves):
             if move[0] == 'D':
-                auf += move.endswith('2') and 2 or 1
+                auf += (move.endswith('2') and 2) or 1
             else:
                 break
 
@@ -171,7 +166,7 @@ class CFOPAnalyser(Analyser):
 class CF4OPAnalyser(CFOPAnalyser):
     name = 'CF4OP'
     step_list = ('Cross', 'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4', 'OLL', 'PLL')
-    norms = {
+    norms: ClassVar[dict[str, dict[str, float]]] = {
         'moves': {
             'Cross': 6,
             'XCross': 8,
@@ -249,7 +244,7 @@ class CF4OPAnalyser(CFOPAnalyser):
                     info['name'] = 'F2L 4'
                     info['cases'] = list(
                         {'FR', 'FL', 'BR', 'BL'} -
-                        set(cases)
+                        set(cases),
                     )
 
         super().correct_summary(summary)

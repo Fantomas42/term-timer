@@ -190,7 +190,7 @@ class TestStatisticsReporterListing(unittest.TestCase):
         self.listing = StatisticsReporter(3, self.solves)
 
     @patch('term_timer.console.console.print')
-    def test_resume_no_solves(self, mock_console):  # noqa: PLR6301
+    def test_resume_no_solves(self, mock_console):
         """Test that a warning is displayed when there are no solves."""
         empty_listing = StatisticsReporter(3, [])
         empty_listing.listing(5)

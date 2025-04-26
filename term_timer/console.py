@@ -92,5 +92,5 @@ console = Console(highlighter=None, theme=Theme(theme))
 if __name__ == '__main__':
     for name, color in theme.items():
         console.print(
-            f'[{ name }]{ name:>15}[/{ name }] : { color }'
+            f'[{ name }]{ name:>15}[/{ name }] : { color }',
         )
