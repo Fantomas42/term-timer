@@ -159,54 +159,6 @@ class TestCube(unittest.TestCase):
         # avec le résultat de convert_moves
         mock_parent_rotate.assert_called_once_with("R U' F2")
 
-    def test_as_twophase_facelets(self):
-        """
-        Test que la propriété as_twophase_facelets
-        retourne les facettes au bon format.
-        """
-
-        # Créer des mocks pour les couleurs à retourner par get_face_flat
-        def create_mock_colors(color_name):
-            result = []
-            for _ in range(9):
-                color_mock = MagicMock()
-                color_mock.name = color_name
-                result.append(color_mock)
-            return result
-
-        # Simuler les retours de get_face_flat
-        # avec des noms de couleurs spécifiques
-        face_mocks = {
-            'U': create_mock_colors('W'),
-            'R': create_mock_colors('R'),
-            'F': create_mock_colors('G'),
-            'D': create_mock_colors('Y'),
-            'L': create_mock_colors('O'),
-            'B': create_mock_colors('B'),
-        }
-
-        # Patcher la méthode get_face_flat pour qu'elle retourne nos mocks
-        with patch.object(
-            self.cube,
-            'get_face_flat',
-            side_effect=lambda face: face_mocks[face.name],
-        ):
-            result = self.cube.as_twophase_facelets
-
-            # La chaîne devrait avoir 54 caractères (9 par face * 6 faces)
-            self.assertEqual(len(result), 54)
-
-            # Vérifier que les couleurs ont été remplacées
-            # par les faces correspondantes
-            self.assertNotIn('W', result)
-            self.assertNotIn('O', result)
-            self.assertNotIn('G', result)
-            self.assertNotIn('Y', result)
-
-            # Les couleurs devraient être remplacées par U, R, F, D, L, B
-            for face in ['U', 'R', 'F', 'D', 'L', 'B']:
-                self.assertIn(face, result)
-
     @patch(
         'term_timer.magic_cube.CubePrintRich.print_cube',
         return_value='Cube Representation',

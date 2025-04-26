@@ -213,7 +213,7 @@ class Timer:
                     if not self.bluetooth_cube:
                         continue
 
-                    self.bluetooth_cube.rotate([event['move']])
+                    self.bluetooth_cube.rotate(event['move'])
 
                     if self.state in {'init', 'scrambling'}:
                         self.scrambled.append(event['move'])
@@ -311,8 +311,8 @@ class Timer:
 
     def handle_scrambled(self):
         if (
-                self.bluetooth_cube.as_twophase_facelets
-                == self.cube.as_twophase_facelets
+                self.bluetooth_cube.get_kociemba_facelet_positions()
+                == self.cube.get_kociemba_facelet_positions()
         ):
             self.scramble_completed_event.set()
             self.beep()

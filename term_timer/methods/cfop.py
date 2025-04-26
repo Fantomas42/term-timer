@@ -50,7 +50,7 @@ class CFOPAnalyser(Analyser):
 
     def compute_progress(self, cube):
         progress = 0
-        facelets = cube.as_twophase_facelets
+        facelets = cube.get_kociemba_facelet_positions()
 
         for name in self.step_list[:-1]:
             if self.check_step(name, facelets):
@@ -146,7 +146,7 @@ class CF4OPAnalyser(CFOPAnalyser):
     }
 
     def compute_progress(self, cube):
-        facelets = cube.as_twophase_facelets
+        facelets = cube.get_kociemba_facelet_positions()
 
         if not self.check_step('Cross', facelets):
             return 0, []
