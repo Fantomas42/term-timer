@@ -107,6 +107,51 @@ class CFOPAnalyser(Analyser):
         return f'+{ auf } AUF'
 
     def correct_summary(self, summary):
+        # Skipped PLL insert
+        if summary[-1]['name'] != 'PLL':
+            summary.append(
+                {
+                    'type': 'skipped',
+                    'name': 'PLL',
+                    'moves': [],
+                    'times': [],
+                    'total': 0,
+                    'index': [],
+                    'execution': 0,
+                    'inspection': 0,
+                    'total_percent': 0,
+                    'execution_percent': 0,
+                    'inspection_percent': 0,
+                    'reconstruction': Algorithm(),
+                    'increment': 0,
+                    'cases': ['SKIP'],
+                    'facelets': '',
+                },
+            )
+
+        # Skipped OLL insert
+        if summary[-2]['name'] != 'OLL':
+            summary.insert(
+                len(summary) - 1,
+                {
+                    'type': 'skipped',
+                    'name': 'OLL',
+                    'moves': [],
+                    'times': [],
+                    'total': 0,
+                    'index': [],
+                    'execution': 0,
+                    'inspection': 0,
+                    'total_percent': 0,
+                    'execution_percent': 0,
+                    'inspection_percent': 0,
+                    'reconstruction': Algorithm(),
+                    'increment': 0,
+                    'cases': ['SKIP'],
+                    'facelets': '',
+                },
+            )
+
         # Guess OLL/PLL cases
         for info in summary:
             if info['name'] == 'OLL':
@@ -207,64 +252,7 @@ class CF4OPAnalyser(CFOPAnalyser):
                         set(cases)
                     )
 
-        # Skipped PLL insert
-        if summary[-1]['name'] != 'PLL':
-            summary.append(
-                {
-                    'type': 'skipped',
-                    'name': 'PLL',
-                    'moves': [],
-                    'times': [],
-                    'total': 0,
-                    'index': [],
-                    'execution': 0,
-                    'inspection': 0,
-                    'total_percent': 0,
-                    'execution_percent': 0,
-                    'inspection_percent': 0,
-                    'reconstruction': Algorithm(),
-                    'increment': 0,
-                    'cases': ['SKIP'],
-                    'facelets': '',
-                },
-            )
-        # Skipped OLL insert
-        if summary[-2]['name'] != 'OLL':
-            summary.insert(
-                len(summary) - 1,
-                {
-                    'type': 'skipped',
-                    'name': 'OLL',
-                    'moves': [],
-                    'times': [],
-                    'total': 0,
-                    'index': [],
-                    'execution': 0,
-                    'inspection': 0,
-                    'total_percent': 0,
-                    'execution_percent': 0,
-                    'inspection_percent': 0,
-                    'reconstruction': Algorithm(),
-                    'increment': 0,
-                    'cases': ['SKIP'],
-                    'facelets': '',
-                },
-            )
-
-        # Guess OLL/PLL cases
-        for info in summary:
-            if info['name'] == 'OLL':
-                facelets = info['facelets']
-                if facelets:
-                    info['cases'] = [self.get_oll_case(facelets)]
-
-            elif info['name'] == 'PLL':
-                facelets = info['facelets']
-                if facelets:
-                    info['cases'] = [self.get_pll_case(facelets)]
-                    auf = self.get_auf(info['moves'])
-                    if auf:
-                        info['cases'].append(auf)
+        super().correct_summary(summary)
 
         # Summary for F2L
         f2l = {

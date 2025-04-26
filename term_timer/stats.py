@@ -16,7 +16,7 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_time
 from term_timer.magic_cube import Cube
-from term_timer.methods.cfop import CF4OPAnalyser
+from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.solve import Solve
 
 
@@ -440,14 +440,10 @@ class StatisticsReporter(Statistics):
         olls = {}
         plls = {}
 
-        for i, solve in enumerate(self.stack):
+        for solve in self.stack:
             if solve.raw_moves:
-                # TODO(me): switch to CFOPAnalyser once debugged
-                analysis = CF4OPAnalyser(solve.scramble, solve.move_times)
+                analysis = CFOPAnalyser(solve.scramble, solve.move_times)
                 oll, pll = analysis.summary[-2:]
-                # if not pll['cases'][0]:
-                #     print(f'Issue solve #{ i + 1 }')
-                #     breakpoint()
 
                 olls.setdefault(
                     oll['cases'][0],
