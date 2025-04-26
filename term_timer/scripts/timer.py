@@ -10,7 +10,7 @@ from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
 
 
-async def timer() -> int:  # noqa: PLR0912
+async def timer() -> int:
     options = get_arguments()
 
     logging.disable(logging.INFO)

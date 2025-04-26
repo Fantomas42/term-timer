@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves
@@ -136,7 +138,7 @@ STEPS_CONFIG = {
 class Analyser:
     name = ''
     step_list: tuple[str] = ()
-    norms = {}
+    norms: ClassVar[dict[str, dict[str, float]]] = {}
 
     def __init__(self, scramble, move_times):
         self.scramble = scramble
@@ -215,8 +217,14 @@ class Analyser:
             if step_moves[0]:
                 ante_time = self.times[step_moves[0] - 1]
 
-            execution = (self.times[step_moves[-1]] - self.times[step_moves[0]]) * TO_NS
-            inspection = (self.times[step_moves[0]] - ante_time) * TO_NS
+            execution = (
+                self.times[step_moves[-1]]
+                - self.times[step_moves[0]]
+            ) * TO_NS
+            inspection = (
+                self.times[step_moves[0]]
+                - ante_time
+            ) * TO_NS
             total = execution + inspection
 
             reconstruction = CUBE_ORIENTATION + moves

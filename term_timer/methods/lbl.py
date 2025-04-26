@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from cubing_algs.algorithm import Algorithm
 
 from term_timer.methods.base import Analyser
@@ -6,7 +8,7 @@ from term_timer.methods.base import Analyser
 class LBLAnalyser(Analyser):
     name = 'LBL'
     step_list = ('Cross', 'F1L', 'F2L', 'LL')
-    norms = {
+    norms: ClassVar[dict[str, dict[str, float]]] = {
         'moves': {
             'Cross': 6,
             'F2L': 30,

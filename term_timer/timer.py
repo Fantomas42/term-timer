@@ -29,7 +29,7 @@ from term_timer.stats import Statistics
 
 
 class Timer:
-    def __init__(self, *, cube_size: int,  # noqa: PLR0913
+    def __init__(self, *, cube_size: int,
                  iterations: int, easy_cross: bool,
                  session: str, free_play: bool,
                  show_cube: bool, countdown: int,
