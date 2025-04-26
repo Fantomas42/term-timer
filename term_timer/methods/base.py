@@ -164,7 +164,7 @@ class Analyser:
         cases = []
         progress = 0
         step_moves = []
-        facelets = cube.as_twophase_facelets
+        facelets = cube.get_kociemba_facelet_positions()
 
         for move_index, move in enumerate(self.moves):
             current_progress, current_cases = self.compute_progress(cube)
@@ -180,7 +180,7 @@ class Analyser:
                     'facelets': facelets,
                 }
                 step_moves = []
-                facelets = cube.as_twophase_facelets
+                facelets = cube.get_kociemba_facelet_positions()
                 progress = current_progress
                 cases.extend(cleaned_cases)
 

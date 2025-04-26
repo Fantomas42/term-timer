@@ -145,7 +145,7 @@ def scrambler(cube_size: int, iterations: int,
         return scramble, cube
 
     solve = solve_moves(
-        cube.as_twophase_facelets,
+        cube.get_kociemba_facelet_positions(),
     )
 
     if solve:

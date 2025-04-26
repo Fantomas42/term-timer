@@ -67,7 +67,7 @@ async def consumer_cb(queue):
                 )
                 moves.append(event['move'])
                 if internal_cube:
-                    internal_cube.rotate([event['move']])
+                    internal_cube.rotate(event['move'])
                     show_cube(internal_cube)
                     algo = parse_moves(moves)
                     recon = algo.transform(

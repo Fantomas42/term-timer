@@ -1,7 +1,4 @@
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.parsing import parse_moves
-from cubing_algs.transform.japanese import japanese_moves
-from cubing_algs.transform.mirror import mirror_moves
 from magiccube.cube import Cube as BaseCube
 from magiccube.cube import Face
 
@@ -36,7 +33,7 @@ class CubePrintRich:
         cube = self.cube
 
         if orientation:
-            cube.rotate(orientation)
+            cube.rotate(str(orientation).upper())
 
         # Flatten middle layer
         print_order_mid = zip(
@@ -62,57 +59,21 @@ class CubePrintRich:
         # Bottom
         result += self._print_top_down_face(Face.D)
 
-        if orientation:  # TODO(me): pass to 1.1.1 to use undo() method
-            cube.rotate(orientation.transform(mirror_moves))
+        if orientation:
             for _ in orientation:
-                if cube._store_history:  # noqa: SLF001
-                    cube._history.pop()  # noqa: SLF001
-                    cube._history.pop()  # noqa: SLF001
+                cube.undo()
 
         return result
 
 
 class Cube(BaseCube):  # type: ignore[misc]
 
-    def rotate(self, moves: list[str]) -> None:
-        converted_moves = self.convert_moves(moves)
-        super().rotate(converted_moves)
-
-    @classmethod
-    def convert_moves(cls, old_moves: list[str]) -> str:
-        moves = []
-
-        old_moves = parse_moves(old_moves).transform(japanese_moves)
-
-        for _move in old_moves:
-            move = str(_move).upper() if _move.is_rotation_move else str(_move)
-            moves.append(move)
-
-        return ' '.join(moves)
-
-    @property
-    def as_twophase_facelets(self) -> str:
-        faces = [
-            ''.join(
-                [
-                    fc.name
-                    for fc in self.get_face_flat(
-                            Face.create(f),
-                    )
-                ],
-            )
-            for f in ['U', 'R', 'F', 'D', 'L', 'B']
-        ]
-
-        facelets = ''.join(faces).upper()
-
-        for color, face in (
-                ('W', 'U'), ('Y', 'D'),
-                ('G', 'F'), ('O', 'L'),
-        ):
-            facelets = facelets.replace(color, face)
-
-        return facelets
+    def rotate(self, movements) -> None:
+        if isinstance(movements, list):
+            for move in movements:
+                self._rotate_once(move)
+        else:
+            super().rotate(str(movements))
 
     def printed(self, orientation: Algorithm):
         printer = CubePrintRich(self)
