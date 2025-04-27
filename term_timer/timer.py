@@ -58,7 +58,6 @@ class Timer:
         self.bluetooth_interface = None
         self.bluetooth_consumer_ref = None
         self.bluetooth_hardware = {}
-        self.bluetooth_facelets = ''
 
         self.cube = None
         self.stack = stack
@@ -180,7 +179,6 @@ class Timer:
                     self.bluetooth_hardware['battery_level'] = event['level']
 
                 elif event_name == 'facelets':
-                    self.bluetooth_facelets = event['facelets']
                     self.bluetooth_cube = Cube(3, event['facelets'])
 
                     if not self.bluetooth_cube.is_done():
