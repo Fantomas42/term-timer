@@ -11,6 +11,7 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.size import compress_moves
+from cubing_algs.vcube import VCube
 
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
@@ -22,7 +23,6 @@ from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.in_out import save_solves
-from term_timer.magic_cube import Cube
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -179,9 +179,9 @@ class Timer:
                     self.bluetooth_hardware['battery_level'] = event['level']
 
                 elif event_name == 'facelets':
-                    self.bluetooth_cube = Cube(3, event['facelets'])
+                    self.bluetooth_cube = VCube(event['facelets'])
 
-                    if not self.bluetooth_cube.is_done():
+                    if not self.bluetooth_cube.is_solved:
                         self.clear_line(full=True)
                         console.print(
                             '[bluetooth]🫤Bluetooth:[/bluetooth] '
@@ -237,7 +237,7 @@ class Timer:
 
                         if (
                                 not self.stop_event.is_set()
-                                and self.bluetooth_cube.is_done()
+                                and self.bluetooth_cube.is_solved
                         ):
                             self.end_time = time.perf_counter_ns()
                             self.stop_event.set()
@@ -309,8 +309,8 @@ class Timer:
 
     def handle_scrambled(self):
         if (
-                self.bluetooth_cube.get_kociemba_facelet_positions()
-                == self.cube.get_kociemba_facelet_positions()
+                self.bluetooth_cube.state
+                == self.cube.get_kociemba_facelet_positions()  # TODO(me) change
         ):
             self.scramble_completed_event.set()
             self.beep()
