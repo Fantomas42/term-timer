@@ -1,4 +1,6 @@
 from functools import cached_property
+from multiprocessing import Pool
+from multiprocessing import cpu_count
 
 import numpy as np
 import plotext as plt
@@ -434,40 +436,67 @@ class StatisticsReporter(Statistics):
 
             plt.show()
 
+    def analyze_solve_cases(self, solve):
+        if not solve.raw_moves:
+            return None
+
+        analysis = CFOPAnalyser(solve.scramble, solve.move_times)
+        oll, pll = analysis.summary[-2:]
+
+        return {
+            'oll': {
+                'case': oll['cases'][0],
+                'total': oll['total'],
+                'execution': oll['execution'],
+                'inspection': oll['inspection'],
+            },
+            'pll': {
+                'case': pll['cases'][0],
+                'total': pll['total'],
+                'execution': pll['execution'],
+                'inspection': pll['inspection'],
+            },
+        }
+
     def cfop(self) -> None:
         console.print('Aggregating cases...', end='')
+
+        num_processes = max(1, cpu_count() - 1)
+
+        with Pool(processes=num_processes) as pool:
+            results = pool.map(self.analyze_solve_cases, self.stack)
 
         olls = {}
         plls = {}
 
-        for solve in self.stack:
-            if solve.raw_moves:
-                analysis = CFOPAnalyser(solve.scramble, solve.move_times)
-                oll, pll = analysis.summary[-2:]
+        for result in results:
+            if not result:
+                continue
 
-                olls.setdefault(
-                    oll['cases'][0],
-                    {
-                        'inspections': [],
-                        'executions': [],
-                        'totals': [],
-                     },
-                )
-                olls[oll['cases'][0]]['totals'].append(oll['total'])
-                olls[oll['cases'][0]]['executions'].append(oll['execution'])
-                olls[oll['cases'][0]]['inspections'].append(oll['inspection'])
+            oll_case = result['oll']['case']
+            olls.setdefault(
+                oll_case, {
+                    'inspections': [],
+                    'executions': [],
+                    'totals': [],
+                },
+            )
+            olls[oll_case]['totals'].append(result['oll']['total'])
+            olls[oll_case]['executions'].append(result['oll']['execution'])
+            olls[oll_case]['inspections'].append(result['oll']['inspection'])
 
-                plls.setdefault(
-                    pll['cases'][0],
-                    {
-                        'inspections': [],
-                        'executions': [],
-                        'totals': [],
-                     },
-                )
-                plls[pll['cases'][0]]['totals'].append(pll['total'])
-                plls[pll['cases'][0]]['executions'].append(pll['execution'])
-                plls[pll['cases'][0]]['inspections'].append(pll['inspection'])
+            pll_case = result['pll']['case']
+            plls.setdefault(
+                pll_case,
+                {
+                    'inspections': [],
+                    'executions': [],
+                    'totals': [],
+                 },
+            )
+            plls[pll_case]['totals'].append(result['pll']['total'])
+            plls[pll_case]['executions'].append(result['pll']['execution'])
+            plls[pll_case]['inspections'].append(result['pll']['inspection'])
 
         print('\r', end='')
 
