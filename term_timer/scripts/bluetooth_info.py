@@ -8,6 +8,7 @@ from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.slice import reslice_moves
 
+from term_timer.bluetooth.facelets import to_magiccube_facelets
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.console import console
@@ -52,7 +53,7 @@ async def consumer_cb(queue):
                     event['level'],
                 )
             elif event_name == 'facelets':
-                internal_cube = Cube(3, event['facelets'])
+                internal_cube = Cube(3, to_magiccube_facelets(['facelets']))
                 logger.info(
                     'CONSUMER: Facelets initialized',
                 )

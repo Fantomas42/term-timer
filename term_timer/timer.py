@@ -59,8 +59,8 @@ class Timer:
         self.bluetooth_consumer_ref = None
         self.bluetooth_hardware = {}
 
-        self.cube = None
         self.stack = stack
+        self.facelets_scrambled = ''
         self.cube_orientation = CUBE_ORIENTATION
 
         self.stop_event = asyncio.Event()
@@ -308,10 +308,7 @@ class Timer:
         print('\a', end='', flush=True)
 
     def handle_scrambled(self):
-        if (
-                self.bluetooth_cube.state
-                == self.cube.get_kociemba_facelet_positions()  # TODO(me) change
-        ):
+        if self.bluetooth_cube.state == self.facelets_scrambled:
             self.scramble_completed_event.set()
             self.beep()
             out = (
@@ -546,15 +543,16 @@ class Timer:
     async def start(self) -> bool:
         self.moves = []
 
-        self.scramble, self.cube = scrambler(
+        self.scramble, cube = scrambler(
             cube_size=self.cube_size,
             iterations=self.iterations,
             easy_cross=self.easy_cross,
         )
         self.scramble_oriented = self.reorient(self.scramble)
+        self.facelets_scrambled = cube.get_kociemba_facelet_positions()
 
         if self.show_cube:
-            console.print(str(self.cube), end='')
+            console.print(str(cube), end='')
 
         console.print(
             f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',

@@ -77,9 +77,7 @@ def to_kociemba_facelets(cp, co, ep, eo):
     return ''.join(facelets)
 
 
-def to_magiccube_facelets(cp, co, ep, eo):
-    facelets = to_kociemba_facelets(cp, co, ep, eo)
-
+def to_magiccube_facelets(facelets):
     for color, face in (
             ('W', 'U'), ('Y', 'D'),
             ('G', 'F'), ('O', 'L'),
