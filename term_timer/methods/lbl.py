@@ -20,9 +20,8 @@ class LBLAnalyser(Analyser):
         },
     }
 
-    def compute_progress(self, cube):
+    def compute_progress(self, facelets):
         progress = 0
-        facelets = cube.get_kociemba_facelet_positions()
 
         for name in self.step_list[:-1]:
             if self.check_step(name, facelets):

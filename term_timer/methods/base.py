@@ -5,10 +5,10 @@ from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.slice import reslice_m_moves
+from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.formatter import format_duration
-from term_timer.magic_cube import Cube
 
 TO_NS = 1_000_000
 
@@ -157,17 +157,16 @@ class Analyser:
         self.summary = self.summarize()
 
     def split_steps(self):
-        cube = Cube(3)
-        cube.rotate(self.scramble)
+        cube = VCube()
+        facelets = cube.rotate(self.scramble)
 
         steps = {}
         cases = []
         progress = 0
         step_moves = []
-        facelets = cube.get_kociemba_facelet_positions()
 
         for move_index, move in enumerate(self.moves):
-            current_progress, current_cases = self.compute_progress(cube)
+            current_progress, current_cases = self.compute_progress(cube.state)
 
             if current_progress > progress:
                 step_name = self.step_list[current_progress - 1]
@@ -180,7 +179,7 @@ class Analyser:
                     'facelets': facelets,
                 }
                 step_moves = []
-                facelets = cube.get_kociemba_facelet_positions()
+                facelets = cube.state
                 progress = current_progress
                 cases.extend(cleaned_cases)
 
