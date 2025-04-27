@@ -10,24 +10,29 @@ DATA_DIRECTORY = Path(__file__).parent
 OLL_PATH = DATA_DIRECTORY / 'oll.json'
 PLL_PATH = DATA_DIRECTORY / 'pll.json'
 
+OLL_MASKS = {}
+PLL_MASKS = {}
+OLL_INFO = {}
+PLL_INFO = {}
 
-def load_and_fill(path):
-    data = {}
 
+def load_and_fill(path, masks, info):
     with path.open('r') as fd:
-        for kase, rotations in json.load(fd).items():
-            for rotation, alternatives in rotations.items():
+        for kase, data in json.load(fd).items():
+            for rotation, alternatives in data['rotations'].items():
                 for alternative, hashed in alternatives.items():
-                    data[hashed] = {
+                    masks[hashed] = {
                         'case': kase,
                         'rotation': rotation,
                         'alternative': alternative,
                     }
-    return data
+            info[kase] = {
+                'probability': data['probability'],
+            }
 
 
-OLL_MASKS = load_and_fill(OLL_PATH)
-PLL_MASKS = load_and_fill(PLL_PATH)
+load_and_fill(OLL_PATH, OLL_MASKS, OLL_INFO)
+load_and_fill(PLL_PATH, PLL_MASKS, PLL_INFO)
 
 
 class CFOPAnalyser(Analyser):

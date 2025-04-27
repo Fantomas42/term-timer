@@ -18,6 +18,8 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_time
 from term_timer.magic_cube import Cube
+from term_timer.methods.cfop import OLL_INFO
+from term_timer.methods.cfop import PLL_INFO
 from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.solve import Solve
 
@@ -505,6 +507,7 @@ class StatisticsReporter(Statistics):
             table.add_column('Case', min_width=22)
             table.add_column('Count')
             table.add_column('Freq.')
+            table.add_column('Prob.')
             table.add_column('Insp.')
             table.add_column('Exec.')
             table.add_column('Time')
@@ -519,8 +522,20 @@ class StatisticsReporter(Statistics):
                 label = name
                 if title == 'PLL':
                     label = f'PLL { name }'
+                    try:
+                        probability = PLL_INFO[name]['probability']
+                    except:  # TODO(me): remove once analyser fixed
+                        probability = -1
+                else:
+                    try:
+                        probability = OLL_INFO[name]['probability']
+                    except:  # TODO(me): remove once analyser fixed
+                        probability = -1
                 if label == 'SKIP':
                     label = 'OLL SKIP'
+
+                percent = count / len(self.stack)
+                percent_klass = (percent > probability and 'green') or 'red'
 
                 head = (
                     '[extlink][link=https://cubing.fache.fr/'
@@ -533,8 +548,11 @@ class StatisticsReporter(Statistics):
                 table.add_row(
                     head,
                     f'[stats]{ count!s }[/stats]',
+                    f'[{ percent_klass }]'
+                    f'{ (percent * 100):.2f}%'
+                    f'[/{ percent_klass }]',
                     '[percent]'
-                    f'{ (count / len(self.stack) * 100):.2f}%'
+                    f'{ (probability * 100):.2f}%'
                     '[/percent]',
                     '[inspection]' +
                     format_duration(sum(info['inspections']) / count) +
