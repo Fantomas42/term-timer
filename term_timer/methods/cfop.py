@@ -252,7 +252,7 @@ class CF4OPAnalyser(CFOPAnalyser):
                     else:
                         info['name'] = 'F2L 1+2'
 
-                if 'OLL' in info['name'] and info['increment'] < 6:
+                if 'OLL' in info['name']:
                     info['name'] = 'F2L 4'
                     info['cases'] = list(
                         {'FR', 'FL', 'BR', 'BL'} -
@@ -298,4 +298,7 @@ class CF4OPAnalyser(CFOPAnalyser):
                 f2l['reconstruction'].extend(info['reconstruction'])
 
         if insert_f2l:
-            summary.insert(1, f2l)
+            if 'F2L' not in summary[0]['name']:
+                summary.insert(1, f2l)
+            else:
+                summary.insert(0, f2l)
