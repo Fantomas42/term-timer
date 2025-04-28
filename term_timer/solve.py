@@ -181,11 +181,24 @@ class Solve:
                     '[/consign]'
                 )
                 if info['cases'] and info['cases'][0]:
-                    footer += (
-                        ' [comment]// ' +
-                        ' '.join(info['cases']) +
-                        '[/comment]'
-                    )
+                    if info['name'] in {'OLL', 'PLL'}:
+                        link = (
+                            'https://cubing.fache.fr/'
+                            f'{ info["name"] }/'
+                            f'{ info["cases"][0].split(" ")[0] }.html'
+                        )
+                        footer += (
+                            ' [comment]// '
+                            f'[link={ link }]{ info["cases"][0] }[/link] ' +
+                            ' '.join(info['cases'][1:]) +
+                            '[/comment]'
+                        )
+                    else:
+                        footer += (
+                            ' [comment]// ' +
+                            ' '.join(info['cases']) +
+                            '[/comment]'
+                        )
 
             move_klass = self.method_applied.normalize_value(
                 'moves', info['name'],
