@@ -480,6 +480,15 @@ class Timer:
         self.stack = [*self.stack, solve]
         new_stats = Statistics(self.stack)
 
+        self.clear_line(full=True)
+
+        if solve.raw_moves:
+            console.print(solve.method_line, end='')
+            console.print(
+                f'[analysis]Analysis #{ len(self.stack) }:[/analysis] '
+                f'{ solve.report_line }',
+            )
+
         extra = ''
         if new_stats.total > 1:
             extra += format_delta(new_stats.delta)
@@ -496,19 +505,11 @@ class Timer:
                 ao12 = new_stats.ao12
                 extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
 
-        self.clear_line(full=False)
         console.print(
             f'[duration]Duration #{ len(self.stack) }:[/duration]',
             f'[result]{ format_time(self.elapsed_time) }[/result]',
             extra,
         )
-
-        if solve.raw_moves:
-            console.print(
-                f'[analysis]Analysis #{ len(self.stack) }:[/analysis] '
-                f'{ solve.report_line }',
-            )
-            console.print(solve.method_line, end='')
 
         if new_stats.total > 1:
             mc = 10 + len(str(len(self.stack))) - 1
