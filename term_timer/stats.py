@@ -334,8 +334,8 @@ class StatisticsReporter(Statistics):
             header = f'[stats]{ index:{" "}>{max_count}}[/stats]'
             if solve.raw_moves:
                 header = (
-                    f'[stats][link={ solve.link }]'
-                    f'{ index:{" "}>{max_count}}[/link][/stats]'
+                    f'[extlink][link={ solve.link }]'
+                    f'{ index:{" "}>{max_count}}[/link][/extlink]'
                 )
 
             console.print(
