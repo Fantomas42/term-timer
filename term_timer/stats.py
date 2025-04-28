@@ -331,18 +331,20 @@ class StatisticsReporter(Statistics):
             index = f'#{ size - i}'
             date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
+            header = f'[stats]{ index:{" "}>{max_count}}[/stats]'
+            if solve.raw_moves:
+                header = (
+                    f'[stats][link={ solve.link }]'
+                    f'{ index:{" "}>{max_count}}[/link][/stats]'
+                )
+
             console.print(
-                f'[stats]{ index:{" "}>{max_count}}[/stats]',
+                header,
                 f'[result]{ format_time(solve.time) }[/result]',
                 f'[date]{ date }[/date]',
                 f'[consign]{ solve.scramble }[/consign]',
                 f'[result]{ solve.flag }[/result]',
             )
-            if solve.raw_moves:
-                console.print(
-                    f'[analysis]{ index:{" "}>{max_count}}[/analysis]',
-                    f'{ solve.report_line }',
-                )
 
     def detail(self, solve_id: int) -> None:
         try:
