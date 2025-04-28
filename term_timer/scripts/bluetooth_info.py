@@ -53,7 +53,10 @@ async def consumer_cb(queue):
                     event['level'],
                 )
             elif event_name == 'facelets':
-                internal_cube = Cube(3, to_magiccube_facelets(['facelets']))
+                internal_cube = Cube(
+                    3,
+                    to_magiccube_facelets(event['facelets']),
+                )
                 logger.info(
                     'CONSUMER: Facelets initialized',
                 )
