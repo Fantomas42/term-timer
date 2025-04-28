@@ -267,27 +267,35 @@ class Timer:
         try:
             tty.setcbreak(fd)
 
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             future = loop.create_future()
 
             def stdin_callback() -> None:
-                if not future.done():
+                try:
                     ch = sys.stdin.read(1)
-                    future.set_result(ch)
+                    if not future.done():
+                        future.set_result(ch)
+                except Exception as e:
+                    if not future.done():
+                        future.set_exception(e)
 
             loop.add_reader(fd, stdin_callback)
 
             try:
                 if timeout is not None:
-                    await asyncio.wait_for(future, timeout)
+                    ch = await asyncio.wait_for(future, timeout)
                 else:
-                    await future
-
-                ch = future.result()
+                    ch = await future
             except asyncio.TimeoutError:  # noqa UP041
                 ch = ''
+            except Exception as e:
+                print(f"Error in getch: {e}")
+                ch = ''
             finally:
-                loop.remove_reader(fd)
+                if loop.is_closed():
+                    pass
+                else:
+                    loop.remove_reader(fd)
 
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
