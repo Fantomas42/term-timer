@@ -72,7 +72,9 @@ class Solve:
 
     @staticmethod
     def tps(moves, time):
-        return len(moves) / (time / SECOND)
+        if time:
+            return len(moves) / (time / SECOND)
+        return 0
 
     @cached_property
     def solution(self) -> Algorithm:
@@ -167,8 +169,12 @@ class Solve:
 
             footer = ''
             if info['type'] != 'virtual':
-                ratio_execution = info['execution'] / info['total'] * 12
-                ratio_inspection = info['inspection'] / info['total'] * 12
+                if info['total']:
+                    ratio_execution = info['execution'] / info['total'] * 12
+                    ratio_inspection = info['inspection'] / info['total'] * 12
+                else:
+                    ratio_execution = 0
+                    ratio_inspection = 0
 
                 footer += (
                     '\n'
