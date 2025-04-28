@@ -524,15 +524,9 @@ class StatisticsReporter(Statistics):
                 label = name
                 if title == 'PLL':
                     label = f'PLL { name }'
-                    try:
-                        probability = PLL_INFO[name]['probability']
-                    except:  # TODO(me): remove once analyser fixed
-                        probability = -1
+                    probability = PLL_INFO[name]['probability']
                 else:
-                    try:
-                        probability = OLL_INFO[name]['probability']
-                    except:  # TODO(me): remove once analyser fixed
-                        probability = -1
+                    probability = OLL_INFO[name]['probability']
                 if label == 'SKIP':
                     label = 'OLL SKIP'
 
