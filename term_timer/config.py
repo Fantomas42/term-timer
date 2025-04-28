@@ -17,7 +17,7 @@ metronome = 0.0
 
 [cube]
 orientation = []
-method = 'cf4op'
+method = "cf4op"
 
 [statistics]
 distribution = 0
