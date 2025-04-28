@@ -18,6 +18,7 @@ from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.console import console
 from term_timer.constants import DNF
+from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
@@ -222,7 +223,7 @@ class Timer:
                         self.moves.append(
                             {
                                 'move': event['move'],
-                                'time': event['cubeTimestamp'],
+                                'time': event['clock'],
                             },
                         )
                         self.solve_started_event.set()
@@ -231,7 +232,7 @@ class Timer:
                         self.moves.append(
                             {
                                 'move': event['move'],
-                                'time': event['cubeTimestamp'],
+                                'time': event['clock'],
                             },
                         )
 
@@ -239,7 +240,7 @@ class Timer:
                                 not self.stop_event.is_set()
                                 and self.bluetooth_cube.is_solved
                         ):
-                            self.end_time = time.perf_counter_ns()
+                            self.end_time = event['clock']
                             self.stop_event.set()
                             self.solve_completed_event.set()
 
@@ -671,11 +672,10 @@ class Timer:
         self.elapsed_time = self.end_time - self.start_time
 
         moves = []
-
         if self.moves:
-            first_time = self.moves[0]['time']
             for move in self.moves:
-                moves.append(f'{ move["move"] }@{ move["time"] - first_time }')
+                timing = int((move['time'] - self.start_time) / MS_TO_NS_FACTOR)
+                moves.append(f'{ move["move"] }@{ timing }')
 
         solve = Solve(
             datetime.now(tz=timezone.utc).timestamp(),  # noqa: UP017

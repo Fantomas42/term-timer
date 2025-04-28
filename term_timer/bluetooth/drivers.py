@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from datetime import timezone
 
@@ -92,6 +93,7 @@ class GanGen2Driver(Driver):
 
     async def event_handler(self, sender, data):  # noqa: ARG002
         """Process notifications from the cube"""
+        clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
 
         events = []
@@ -115,6 +117,7 @@ class GanGen2Driver(Driver):
 
             payload = {
                 'event': 'gyro',
+                'clock': clock,
                 'timestamp': timestamp,
                 'quaternion': {
                     'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
@@ -147,6 +150,7 @@ class GanGen2Driver(Driver):
                 self.cube_timestamp += elapsed
                 payload = {
                     'event': 'move',
+                    'clock': clock,
                     'timestamp': timestamp,
                     'serial': (serial - i) & 0xFF,
                     # Missed and recovered events has no meaningful
@@ -185,8 +189,9 @@ class GanGen2Driver(Driver):
 
             payload = {
                 'event': 'facelets',
-                'serial': serial,
+                'clock': clock,
                 'timestamp': timestamp,
+                'serial': serial,
                 'facelets': to_kociemba_facelets(cp, co, ep, eo),
                 'state': {
                     'CP': cp,
@@ -209,6 +214,7 @@ class GanGen2Driver(Driver):
 
             payload = {
                 'event': 'hardware',
+                'clock': clock,
                 'timestamp': timestamp,
                 'hardware_name': hardware_name,
                 'hardware_version': f'{hw_major}.{hw_minor}',
@@ -222,6 +228,7 @@ class GanGen2Driver(Driver):
 
             payload = {
                 'event': 'battery',
+                'clock': clock,
                 'timestamp': timestamp,
                 'level': min(battery_level, 100),
             }
@@ -230,6 +237,7 @@ class GanGen2Driver(Driver):
         elif event == 0x0D:  # Disconnect
             payload = {
                 'event': 'disconnect',
+                'clock': clock,
                 'timestamp': timestamp,
             }
             self.add_event(events, payload)
