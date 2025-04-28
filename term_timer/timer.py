@@ -420,6 +420,8 @@ class Timer:
                 style = 'timer_15'
             elif elapsed_time > 10 * SECOND:
                 style = 'timer_10'
+            elif elapsed_time > 5 * SECOND:
+                style = 'timer_05'
 
             if tempo_elapsed != new_tempo:
                 tempo_elapsed = new_tempo

@@ -65,7 +65,8 @@ theme = {
     'etm': 'bold #C2A0FA',
     'qstm': 'bold #FEBF8A',
 
-    'timer_base': f'{ TEXT_DARK } on #DDFF00',
+    'timer_base': f'{ TEXT_DARK } on #FFE100',
+    'timer_05': f'{ TEXT_DARK } on #C8FF00',
     'timer_10': f'{ TEXT_DARK } on #33FF00',
     'timer_15': f'{ TEXT_DARK } on #00FFCC',
     'timer_20': f'{ TEXT_DARK } on #00FFFF',
