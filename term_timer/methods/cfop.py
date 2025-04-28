@@ -64,6 +64,16 @@ class CFOPAnalyser(Analyser):
 
         return progress, []
 
+    def correct_summary(self, summary):
+        # Fix OLL SKIP instead of F2L
+        cases = []
+        for info in summary:
+            cases.extend(info['cases'])
+            if info['increment'] > 1 and 'OLL' in info['name']:
+                info['name'] = 'F2L'
+
+        self.correct_summary_cfop(summary)
+
     def get_oll_case(self, facelets):
         masked = []
         for value in facelets:
@@ -105,7 +115,7 @@ class CFOPAnalyser(Analyser):
 
         return f'+{ auf } AUF'
 
-    def correct_summary(self, summary):
+    def correct_summary_cfop(self, summary):
         # Skipped PLL insert
         if summary[-1]['name'] != 'PLL':
             summary.append(
@@ -249,7 +259,7 @@ class CF4OPAnalyser(CFOPAnalyser):
                         set(cases),
                     )
 
-        super().correct_summary(summary)
+        self.correct_summary_cfop(summary)
 
         # Summary for F2L
         f2l = {
