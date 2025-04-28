@@ -338,9 +338,15 @@ class StatisticsReporter(Statistics):
                     f'{ index:{" "}>{max_count}}[/link][/extlink]'
                 )
 
+            time_class = 'result'
+            if solve.time == self.best:
+                time_class = 'success'
+            elif solve.time == self.worst:
+                time_class = 'warning'
+
             console.print(
                 header,
-                f'[result]{ format_time(solve.time) }[/result]',
+                f'[{ time_class }]{ format_time(solve.time) }[/{ time_class }]',
                 f'[date]{ date }[/date]',
                 f'[consign]{ solve.scramble }[/consign]',
                 f'[result]{ solve.flag }[/result]',
