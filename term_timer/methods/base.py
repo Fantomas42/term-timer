@@ -8,9 +8,8 @@ from cubing_algs.transform.slice import reslice_m_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.formatter import format_duration
-
-TO_NS = 1_000_000
 
 INITIAL = ''
 for face in ['U', 'R', 'F', 'D', 'L', 'B']:
@@ -151,7 +150,7 @@ class Analyser:
 
         self.duration = (
             self.times[-1] - self.times[0]
-        ) * TO_NS
+        ) * MS_TO_NS_FACTOR
 
         self.steps = self.split_steps()
         self.summary = self.summarize()
@@ -219,11 +218,11 @@ class Analyser:
             execution = (
                 self.times[step_moves[-1]]
                 - self.times[step_moves[0]]
-            ) * TO_NS
+            ) * MS_TO_NS_FACTOR
             inspection = (
                 self.times[step_moves[0]]
                 - ante_time
-            ) * TO_NS
+            ) * MS_TO_NS_FACTOR
             total = execution + inspection
 
             reconstruction = CUBE_ORIENTATION + moves

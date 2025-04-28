@@ -1,4 +1,5 @@
 from term_timer.constants import DNF
+from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 
 
@@ -9,7 +10,7 @@ def format_time(elapsed_ns: int) -> str:
     elapsed_sec = elapsed_ns / SECOND
     mins, secs = divmod(int(elapsed_sec), 60)
     hours, mins = divmod(mins, 60)
-    milliseconds = (elapsed_ns // 1_000_000) % 1000
+    milliseconds = (elapsed_ns // MS_TO_NS_FACTOR) % 1_000
     if hours:
         return f'{hours:02}:{mins:02}:{secs:02}.{milliseconds:03}'
     return f'{mins:02}:{secs:02}.{milliseconds:03}'

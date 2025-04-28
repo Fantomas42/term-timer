@@ -2,6 +2,8 @@ from pathlib import Path
 
 SECOND = 1_000_000_000  # In nano seconds
 
+MS_TO_NS_FACTOR = 1_000_000
+
 STEP_BAR = 17
 
 SAVE_DIRECTORY = Path.home() / '.solves'

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from term_timer.argparser import ArgumentParser
 from term_timer.constants import DNF
+from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.in_out import load_solves
 from term_timer.solve import Solve
 
@@ -52,7 +53,7 @@ def import_csv(export_path: Path, solves: list) -> str:
         solves.append(
             Solve(
                 date,
-                int(time) * 1_000_000,
+                int(time) * MS_TO_NS_FACTOR,
                 scramble,
                 flag,
                 'Cubeast',

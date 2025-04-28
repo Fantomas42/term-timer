@@ -6,6 +6,7 @@ from pathlib import Path
 
 from term_timer.argparser import ArgumentParser
 from term_timer.constants import DNF
+from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.in_out import load_solves
@@ -115,7 +116,7 @@ def import_json(export_path: Path, solves: []) -> str:
             solves.append(
                 Solve(
                     date,
-                    time * 1_000_000,
+                    time * MS_TO_NS_FACTOR,
                     scramble,
                     flag,
                     'csTimer',
