@@ -3,7 +3,10 @@ from pathlib import Path
 from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.transform.degrip import degrip_full_moves
+from cubing_algs.transform.rotation import remove_final_rotations
 
+from term_timer.config import CUBE_ORIENTATION
 from term_timer.methods.base import Analyser
 
 DATA_DIRECTORY = Path(__file__).parent
@@ -14,6 +17,11 @@ OLL_MASKS = {}
 PLL_MASKS = {}
 OLL_INFO = {}
 PLL_INFO = {}
+
+AUF_MOVE = (CUBE_ORIENTATION + 'U').transform(
+    degrip_full_moves,
+    remove_final_rotations,
+)[0].base_move
 
 
 def load_and_fill(path, masks, info):
@@ -105,7 +113,7 @@ class CFOPAnalyser(Analyser):
         auf = 0
 
         for move in reversed(moves):
-            if move[0] == 'D':
+            if move[0] == AUF_MOVE:
                 auf += (move.endswith('2') and 2) or 1
             else:
                 break
