@@ -404,20 +404,28 @@ class StatisticsReporter(Statistics):
                 )
             metric_string += f'[tps]{ solve.reconstructed_tps:.2f} TPS[/tps] '
 
-            missed_moves = solve.missed_moves(solve.solution)
+            missed_moves = solve.all_missed_moves
             missed_line = f'[missed]{ missed_moves } missed moves[/missed]'
             if not missed_moves:
                 missed_line = '[green]No missed move[/green]'
 
-            method_line = solve.method_line
-            if method_line:
-                console.print(
-                    f'[title]Reconstruction { solve.method.name }[/title]',
-                    '[extlink]'
-                    f'[link={ solve.link }]alg.cubing.net[/link][/extlink]',
+            grade = solve.grade
+            grade_line = ''
+            if grade:
+                grade_class = grade.lower()
+                grade_line = (
+                    f' [grade_{ grade_class }]'
+                    f'Score { grade }'
+                    f'[/grade_{ grade_class }]'
                 )
-                console.print(method_line, end='')
-                console.print(metric_string + missed_line)
+
+            console.print(
+                f'[title]Reconstruction { solve.method.name }[/title]',
+                '[extlink]'
+                f'[link={ solve.link }]alg.cubing.net[/link][/extlink]',
+            )
+            console.print(solve.method_line, end='')
+            console.print(metric_string + missed_line + grade_line)
 
             plt.scatter(
                 [m[1] / 1000 for m in solve.move_times],

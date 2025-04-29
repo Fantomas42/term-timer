@@ -65,6 +65,17 @@ theme = {
     'etm': 'bold #C2A0FA',
     'qstm': 'bold #FEBF8A',
 
+    'grade_s': 'bold #FF7F7E',
+    'grade_a+': 'bold #FFBF7F',
+    'grade_a': 'bold #FFBF7F',
+    'grade_b+': 'bold #FFDF80',
+    'grade_b': 'bold #FFDF80',
+    'grade_c+': 'bold #FEFF7F',
+    'grade_c': 'bold #FEFF7F',
+    'grade_d': 'bold #BEFF7F',
+    'grade_e': 'bold #7EFF80',
+    'grade_f': 'bold #7FFFFF',
+
     'timer_base': f'{ TEXT_DARK } on #FFE100',
     'timer_05': f'{ TEXT_DARK } on #C8FF00',
     'timer_10': f'{ TEXT_DARK } on #33FF00',

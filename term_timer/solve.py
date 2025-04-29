@@ -105,6 +105,10 @@ class Solve:
         return self.tps(self.reconstructed, self.time)
 
     @cached_property
+    def all_missed_moves(self) -> int:
+        return self.missed_moves(self.solution)
+
+    @cached_property
     def method(self):
         return METHODS.get(CUBE_METHOD, CF4OPAnalyser)
 
@@ -128,16 +132,26 @@ class Solve:
                 f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
             )
 
-        missed_moves = self.missed_moves(self.solution)
+        missed_moves = self.all_missed_moves
         missed_line = f'[missed]{ missed_moves } missed moves[/missed]'
         if not missed_moves:
             missed_line = '[green]No missed move[/green]'
+
+        grade = self.grade
+        grade_line = ''
+        if grade:
+            grade_class = grade.lower()
+            grade_line = (
+                f' [grade_{ grade_class }]'
+                f'Score { grade }'
+                f'[/grade_{ grade_class }]'
+            )
 
         return (
             f'[extlink][link={ self.link }]alg.cubing.net[/link][/extlink] '
             f'{ metric_string }'
             f'[tps]{ self.reconstructed_tps:.2f} TPS[/tps] '
-            f'{ missed_line }'
+            f'{ missed_line }{ grade_line }'
         )
 
     @cached_property
@@ -298,6 +312,31 @@ class Solve:
                 )
 
         return ' '.join([str(m) for m in moves])
+
+    @cached_property
+    def grade(self):
+        final_score = self.method_applied.score - self.all_missed_moves
+        final_score = min(max(0, final_score), 20)
+
+        if final_score == 20:
+            return 'S'
+        if final_score >= 18:
+            return 'A+'
+        if final_score >= 16:
+            return 'A'
+        if final_score >= 14:
+            return 'B+'
+        if final_score >= 12:
+            return 'B'
+        if final_score >= 10:
+            return 'C+'
+        if final_score >= 8:
+            return 'C'
+        if final_score >= 6:
+            return 'D'
+        if final_score >= 4:
+            return 'E'
+        return 'F'
 
     @cached_property
     def link(self):
