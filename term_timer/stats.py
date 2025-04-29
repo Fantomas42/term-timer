@@ -398,6 +398,7 @@ class StatisticsReporter(Statistics):
                 f' [grade_{ grade_class }]'
                 f'{ grade }'
                 f'[/grade_{ grade_class }]'
+                f' ({ solve.score:.2f})'
             )
             console.print(f'[stats]Grade      :[/stats]{ grade_line }')
 

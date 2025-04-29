@@ -318,7 +318,7 @@ class Solve:
 
     @cached_property
     def score(self):
-        bonus = max((30 - (self.time / SECOND)) / 10, 0)
+        bonus = max((30 - (self.time / SECOND)) / 5, 0)
         final_score = self.method_applied.score - self.all_missed_moves + bonus
         return min(max(0, final_score), 20)
 
