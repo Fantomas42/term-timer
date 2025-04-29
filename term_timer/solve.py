@@ -143,7 +143,7 @@ class Solve:
             grade_class = grade.lower()
             grade_line = (
                 f' [grade_{ grade_class }]'
-                f'Score { grade }'
+                f'Grade { grade }'
                 f'[/grade_{ grade_class }]'
             )
 

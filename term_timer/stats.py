@@ -389,14 +389,20 @@ class StatisticsReporter(Statistics):
                 '[stats]Timer      :[/stats] '
                 f'[timer]{ solve.timer }[/timer]',
             )
-        console.print(
-            '[stats]Scramble   :[/stats] '
-            f'[consign]{ solve.scramble }[/consign]',
-        )
-        console.print(cube.printed(None), end='')
 
         if solve.raw_moves:
-            metric_string = '[title]Metrics    :[/title] '
+            grade = solve.grade
+            grade_line = ''
+            if grade:
+                grade_class = grade.lower()
+                grade_line = (
+                    f' [grade_{ grade_class }]'
+                    f'{ grade }'
+                    f'[/grade_{ grade_class }]'
+                )
+                console.print(f'[stats]Grade      :[/stats]{ grade_line }')
+
+            metric_string = '[stats]Metrics    :[/stats] '
             for metric in STATS_CONFIG.get('metrics'):
                 value = solve.reconstructed.metrics[metric]
                 metric_string += (
@@ -409,23 +415,21 @@ class StatisticsReporter(Statistics):
             if not missed_moves:
                 missed_line = '[green]No missed move[/green]'
 
-            grade = solve.grade
-            grade_line = ''
-            if grade:
-                grade_class = grade.lower()
-                grade_line = (
-                    f' [grade_{ grade_class }]'
-                    f'Score { grade }'
-                    f'[/grade_{ grade_class }]'
-                )
+            console.print(metric_string + missed_line)
 
+        console.print(
+            '[stats]Scramble   :[/stats] '
+            f'[consign]{ solve.scramble }[/consign]',
+        )
+        console.print(cube.printed(None), end='')
+
+        if solve.raw_moves:
             console.print(
                 f'[title]Reconstruction { solve.method.name }[/title]',
                 '[extlink]'
                 f'[link={ solve.link }]alg.cubing.net[/link][/extlink]',
             )
             console.print(solve.method_line, end='')
-            console.print(metric_string + missed_line + grade_line)
 
             plt.scatter(
                 [m[1] / 1000 for m in solve.move_times],
