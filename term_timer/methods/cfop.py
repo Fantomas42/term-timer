@@ -146,6 +146,8 @@ class CFOPAnalyser(Analyser):
             if len(info['cases']) > 1:
                 for kase in info['cases'][1:]:
                     if kase[0] == '+':
+                        if info['name'] == 'PLL' and 'pre' in kase:
+                            continue
                         malus += int(kase[1])
 
         return 20 + bonus - malus
