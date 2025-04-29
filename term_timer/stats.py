@@ -470,16 +470,18 @@ class StatisticsReporter(Statistics):
                 'total': oll['total'],
                 'execution': oll['execution'],
                 'inspection': oll['inspection'],
-                'tps': Solve.tps(oll['reconstruction'], oll['total']),
-                'etps': Solve.tps(oll['reconstruction'], oll['execution']),
+                'moves': len(oll['moves']),
+                'tps': Solve.tps(oll['moves'], oll['total']),
+                'etps': Solve.tps(oll['moves'], oll['execution']),
             },
             'pll': {
                 'case': pll['cases'][0],
                 'total': pll['total'],
                 'execution': pll['execution'],
                 'inspection': pll['inspection'],
-                'tps': Solve.tps(pll['reconstruction'], pll['total']),
-                'etps': Solve.tps(pll['reconstruction'], pll['execution']),
+                'moves': len(pll['moves']),
+                'tps': Solve.tps(pll['moves'], pll['total']),
+                'etps': Solve.tps(pll['moves'], pll['execution']),
             },
             'score': analysis.score,
         }
@@ -508,6 +510,7 @@ class StatisticsReporter(Statistics):
                     'inspections': [],
                     'executions': [],
                     'totals': [],
+                    'moves': [],
                     'tps': [],
                     'etps': [],
                 },
@@ -515,6 +518,7 @@ class StatisticsReporter(Statistics):
             olls[oll_case]['totals'].append(result['oll']['total'])
             olls[oll_case]['executions'].append(result['oll']['execution'])
             olls[oll_case]['inspections'].append(result['oll']['inspection'])
+            olls[oll_case]['moves'].append(result['oll']['moves'])
             olls[oll_case]['tps'].append(result['oll']['tps'])
             olls[oll_case]['etps'].append(result['oll']['etps'])
 
@@ -525,6 +529,7 @@ class StatisticsReporter(Statistics):
                     'inspections': [],
                     'executions': [],
                     'totals': [],
+                    'moves': [],
                     'tps': [],
                     'etps': [],
                  },
@@ -532,6 +537,7 @@ class StatisticsReporter(Statistics):
             plls[pll_case]['totals'].append(result['pll']['total'])
             plls[pll_case]['executions'].append(result['pll']['execution'])
             plls[pll_case]['inspections'].append(result['pll']['inspection'])
+            plls[pll_case]['moves'].append(result['pll']['moves'])
             plls[pll_case]['tps'].append(result['pll']['tps'])
             plls[pll_case]['etps'].append(result['pll']['etps'])
 
@@ -539,7 +545,7 @@ class StatisticsReporter(Statistics):
 
         def table(title, items, total):
             table = Table(title=f'{ title }s', box=box.SIMPLE)
-            table.add_column('Case', width=21)
+            table.add_column('Case', width=10)
             table.add_column('Σ', width=3)
             table.add_column('Freq.', width=5, justify='right')
             table.add_column('Prob.', width=5, justify='right')
@@ -548,6 +554,7 @@ class StatisticsReporter(Statistics):
             table.add_column('Time', width=5, justify='right')
             table.add_column('Ao12', width=5, justify='right')
             table.add_column('Ao5', width=5, justify='right')
+            table.add_column('QTM', width=5, justify='right')
             table.add_column('TPS', width=5, justify='right')
             table.add_column('eTPS', width=5, justify='right')
 
@@ -556,14 +563,12 @@ class StatisticsReporter(Statistics):
                     key=lambda x: (-len(x[1]['totals']), x[0]),
             ):
                 count = len(info['totals'])
-                label = name
                 if title == 'PLL':
                     label = f'PLL { name }'
                     probability = PLL_INFO[name]['probability']
                 else:
+                    label = f'OLL { name.split(" ")[0] }'
                     probability = OLL_INFO[name]['probability']
-                if label == 'SKIP':
-                    label = 'OLL SKIP'
 
                 percent = count / total
                 percent_klass = (percent > probability and 'green') or 'red'
@@ -600,6 +605,7 @@ class StatisticsReporter(Statistics):
                     '[ao5]' +
                     format_duration(self.ao(5, info['totals'])) +
                     '[/ao5]',
+                    f'[moves]{ sum(info["moves"]) / count:.2f}[/moves]',
                     f'[tps]{ sum(info["tps"]) / count:.2f}[/tps]',
                     f'[tps_e]{ sum(info["etps"]) / count:.2f}[/tps_e]',
                 )

@@ -73,9 +73,13 @@ class Solve:
 
     @staticmethod
     def tps(moves, time):
-        if time:
-            return len(moves) / (time / SECOND)
-        return 0
+        if not time:
+            return 0
+
+        if not isinstance(moves, int):
+            moves = len(moves)
+
+        return moves / (time / SECOND)
 
     @cached_property
     def solution(self) -> Algorithm:
@@ -103,7 +107,7 @@ class Solve:
 
     @cached_property
     def reconstructed_tps(self) -> float:
-        return self.tps(self.reconstructed, self.time)
+        return self.tps(self.reconstructed.metrics['qtm'], self.time)
 
     @cached_property
     def all_missed_moves(self) -> int:
