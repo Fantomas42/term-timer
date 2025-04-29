@@ -483,7 +483,7 @@ class StatisticsReporter(Statistics):
                 'tps': Solve.tps(pll['moves'], pll['total']),
                 'etps': Solve.tps(pll['moves'], pll['execution']),
             },
-            'score': analysis.score,
+            'score_cfop': analysis.score,
         }
 
     def cfop(self) -> None:
@@ -496,13 +496,13 @@ class StatisticsReporter(Statistics):
 
         olls = {}
         plls = {}
-        score = 0
+        score_cfop = 0
 
         for result in results:
             if not result:
                 continue
 
-            score += result['score']
+            score_cfop += result['score_cfop']
 
             oll_case = result['oll']['case']
             olls.setdefault(
@@ -615,7 +615,7 @@ class StatisticsReporter(Statistics):
         table('OLL', olls, total)
         table('PLL', plls, total)
 
-        mean = score / total
+        mean = score_cfop / total
         grade = format_grade(mean)
         grade_class = grade.lower()
         grade_line = (
@@ -623,7 +623,9 @@ class StatisticsReporter(Statistics):
                 f'{ grade }'
                 f'[/grade_{ grade_class }]'
             )
-        console.print(f'[title]Grade   :[/title]{ grade_line } ({ mean:.2f})')
+        console.print(
+            f'[title]Grade CFOP :[/title]{ grade_line } ({ mean:.2f})',
+        )
 
     def graph(self) -> None:
         ao5s = []

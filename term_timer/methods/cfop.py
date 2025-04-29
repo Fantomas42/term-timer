@@ -134,7 +134,7 @@ class CFOPAnalyser(Analyser):
 
         step_one = self.summary[0]
         if 'XCross' in step_one['name']:
-            bonus = 2 * step_one.count('X')
+            bonus = 2 * step_one['name'].count('X')
 
         malus = 0
         if 'Cross' in step_one['name']:
