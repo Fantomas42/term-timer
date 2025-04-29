@@ -106,17 +106,14 @@ class Solve:
 
     @cached_property
     def method(self):
-        return METHODS.get(CUBE_METHOD)
+        return METHODS.get(CUBE_METHOD, CF4OPAnalyser)
 
     @cached_property
     def method_applied(self) -> dict[str, dict]:
         if not self.raw_moves:
-            return {}
+            return None
 
-        if self.method:
-            return self.method(self.scramble, self.move_times)
-
-        return {}
+        return self.method(self.scramble, self.move_times)
 
     @cached_property
     def report_line(self) -> str:
