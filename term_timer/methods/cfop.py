@@ -109,10 +109,14 @@ class CFOPAnalyser(Analyser):
 
         return ''
 
-    def get_auf(self, moves):
+    def get_auf(self, sequence, mode):
         auf = 0
 
-        for move in reversed(moves):
+        moves = sequence
+        if mode == 'post':
+            moves = reversed(sequence)
+
+        for move in moves:
             if move[0] == AUF_MOVE:
                 auf += (move.endswith('2') and 2) or 1
             else:
@@ -121,7 +125,7 @@ class CFOPAnalyser(Analyser):
         if not auf:
             return ''
 
-        return f'+{ auf } AUF'
+        return f'+{ auf } { mode } AUF'
 
     def correct_summary_cfop(self, summary):
         # Skipped PLL insert
@@ -175,14 +179,23 @@ class CFOPAnalyser(Analyser):
                 facelets = info['facelets']
                 if facelets:
                     info['cases'] = [self.get_oll_case(facelets)]
+                auf = self.get_auf(info['moves'], 'pre')
+                if auf:
+                    info['cases'].append(auf)
+                auf = self.get_auf(info['moves'], 'post')
+                if auf:
+                    info['cases'].append(auf)
 
             elif info['name'] == 'PLL':
                 facelets = info['facelets']
                 if facelets:
                     info['cases'] = [self.get_pll_case(facelets)]
-                    auf = self.get_auf(info['moves'])
-                    if auf:
-                        info['cases'].append(auf)
+                auf = self.get_auf(info['moves'], 'pre')
+                if auf:
+                    info['cases'].append(auf)
+                auf = self.get_auf(info['moves'], 'post')
+                if auf:
+                    info['cases'].append(auf)
 
 
 class CF4OPAnalyser(CFOPAnalyser):
