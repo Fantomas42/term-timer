@@ -1,4 +1,5 @@
 import json
+from functools import cached_property
 from pathlib import Path
 from typing import ClassVar
 
@@ -126,6 +127,28 @@ class CFOPAnalyser(Analyser):
             return ''
 
         return f'+{ auf } { mode } AUF'
+
+    @cached_property
+    def score(self):
+        bonus = 0
+
+        step_one = self.summary[0]
+        if 'XCross' in step_one['name']:
+            bonus = 2 * step_one.count('X')
+
+        malus = 0
+        if 'Cross' in step_one['name']:
+            cross_norm = self.norms.get('moves', {}).get(step_one['name'], 0)
+            if cross_norm:
+                malus += len(step_one['reconstruction']) - cross_norm
+
+        for info in self.summary:
+            if len(info['cases']) > 1:
+                for kase in info['cases'][1:]:
+                    if kase[0] == '+':
+                        malus += int(kase[1])
+
+        return 20 + bonus - malus
 
     def correct_summary_cfop(self, summary):
         # Skipped PLL insert
