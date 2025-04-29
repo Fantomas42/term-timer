@@ -16,6 +16,7 @@ from term_timer.formatter import computing_padding
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
+from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
 from term_timer.magic_cube import Cube
 from term_timer.methods.cfop import OLL_INFO
@@ -391,16 +392,14 @@ class StatisticsReporter(Statistics):
             )
 
         if solve.raw_moves:
-            grade = solve.grade
-            grade_line = ''
-            if grade:
-                grade_class = grade.lower()
-                grade_line = (
-                    f' [grade_{ grade_class }]'
-                    f'{ grade }'
-                    f'[/grade_{ grade_class }]'
-                )
-                console.print(f'[stats]Grade      :[/stats]{ grade_line }')
+            grade = format_grade(solve.score)
+            grade_class = grade.lower()
+            grade_line = (
+                f' [grade_{ grade_class }]'
+                f'{ grade }'
+                f'[/grade_{ grade_class }]'
+            )
+            console.print(f'[stats]Grade      :[/stats]{ grade_line }')
 
             metric_string = '[stats]Metrics    :[/stats] '
             for metric in STATS_CONFIG.get('metrics'):
@@ -478,6 +477,7 @@ class StatisticsReporter(Statistics):
                 'execution': pll['execution'],
                 'inspection': pll['inspection'],
             },
+            'score': analysis.score,
         }
 
     def cfop(self) -> None:
@@ -490,10 +490,13 @@ class StatisticsReporter(Statistics):
 
         olls = {}
         plls = {}
+        score = 0
 
         for result in results:
             if not result:
                 continue
+
+            score += result['score']
 
             oll_case = result['oll']['case']
             olls.setdefault(
@@ -522,7 +525,7 @@ class StatisticsReporter(Statistics):
 
         print('\r', end='')
 
-        def table(title, items):
+        def table(title, items, total):
             table = Table(title=f'{ title }s', box=box.SIMPLE)
             table.add_column('Case', min_width=22)
             table.add_column('Count')
@@ -548,7 +551,7 @@ class StatisticsReporter(Statistics):
                 if label == 'SKIP':
                     label = 'OLL SKIP'
 
-                percent = count / len(self.stack)
+                percent = count / total
                 percent_klass = (percent > probability and 'green') or 'red'
 
                 head = (
@@ -586,8 +589,19 @@ class StatisticsReporter(Statistics):
                 )
             console.print(table)
 
-        table('OLL', olls)
-        table('PLL', plls)
+        total = len(results)
+        table('OLL', olls, total)
+        table('PLL', plls, total)
+
+        mean = score / total
+        grade = format_grade(mean)
+        grade_class = grade.lower()
+        grade_line = (
+                f' [grade_{ grade_class }]'
+                f'{ grade }'
+                f'[/grade_{ grade_class }]'
+            )
+        console.print(f'[title]Grade   :[/title]{ grade_line } ({ mean:.2f})')
 
     def graph(self) -> None:
         ao5s = []

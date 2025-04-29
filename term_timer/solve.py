@@ -17,6 +17,7 @@ from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_duration
+from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.methods.cfop import CFOPAnalyser
@@ -137,15 +138,13 @@ class Solve:
         if not missed_moves:
             missed_line = '[green]No missed move[/green]'
 
-        grade = self.grade
-        grade_line = ''
-        if grade:
-            grade_class = grade.lower()
-            grade_line = (
-                f' [grade_{ grade_class }]'
-                f'Grade { grade }'
-                f'[/grade_{ grade_class }]'
-            )
+        grade = format_grade(self.score)
+        grade_class = grade.lower()
+        grade_line = (
+            f' [grade_{ grade_class }]'
+            f'Grade { grade }'
+            f'[/grade_{ grade_class }]'
+        )
 
         return (
             f'[extlink][link={ self.link }]alg.cubing.net[/link][/extlink] '
@@ -314,29 +313,9 @@ class Solve:
         return ' '.join([str(m) for m in moves])
 
     @cached_property
-    def grade(self):
+    def score(self):
         final_score = self.method_applied.score - self.all_missed_moves
-        final_score = min(max(0, final_score), 20)
-
-        if final_score == 20:
-            return 'S'
-        if final_score >= 18:
-            return 'A+'
-        if final_score >= 16:
-            return 'A'
-        if final_score >= 14:
-            return 'B+'
-        if final_score >= 12:
-            return 'B'
-        if final_score >= 10:
-            return 'C+'
-        if final_score >= 8:
-            return 'C'
-        if final_score >= 6:
-            return 'D'
-        if final_score >= 4:
-            return 'E'
-        return 'F'
+        return min(max(0, final_score), 20)
 
     @cached_property
     def link(self):

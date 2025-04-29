@@ -56,3 +56,25 @@ def computing_padding(max_value: float) -> int:
         padding = 2
 
     return padding
+
+
+def format_grade(score):
+    if score == 20:
+        return 'S'
+    if score >= 18:
+        return 'A+'
+    if score >= 16:
+        return 'A'
+    if score >= 14:
+        return 'B+'
+    if score >= 12:
+        return 'B'
+    if score >= 10:
+        return 'C+'
+    if score >= 8:
+        return 'C'
+    if score >= 6:
+        return 'D'
+    if score >= 4:
+        return 'E'
+    return 'F'
