@@ -1,3 +1,4 @@
+from functools import cached_property
 from typing import ClassVar
 
 from cubing_algs.parsing import parse_moves
@@ -271,7 +272,7 @@ class Analyser:
 
         return 'caution'
 
-    @property
+    @cached_property
     def reconstruction_detailed(self):
         recons = ''
 
@@ -299,7 +300,7 @@ class Analyser:
 
         return recons
 
-    @property
+    @cached_property
     def reconstruction(self):
         recons = ''
 
@@ -308,6 +309,10 @@ class Analyser:
                 recons += f'{ info["reconstruction"]!s } '
 
         return parse_moves(recons)
+
+    @cached_property
+    def score(self):
+        return 20
 
     @staticmethod
     def build_facelets_masked(mask: str, facelets: str) -> str:
