@@ -20,10 +20,9 @@ def set_session_arguments(parser):
         ),
     )
     session.add_argument(
-        '-u', '--session',
+        '-u', '--include-sessions',
         nargs='*',
         default=[],
-        dest='include_sessions',
         metavar='SESSION',
         help=(
             'Names of the session for solves.\n'
@@ -31,10 +30,9 @@ def set_session_arguments(parser):
         ),
     )
     session.add_argument(
-        '-x', '--exclude-session',
+        '-x', '--exclude-sessions',
         nargs='*',
         default=[],
-        dest='exclude_sessions',
         metavar='SESSION',
         help=(
             'Names of the session to exclude for solves.\n'
@@ -198,6 +196,18 @@ def list_arguments(subparsers):
         help=(
             'Number of solves to display.\n'
             'Default: All solves.'
+        ),
+    )
+
+    sort = parser.add_argument_group('Sorting')
+    sort.add_argument(
+        '-s', '--sort',
+        default='date',
+        choices={'date', 'time'},
+        metavar='SORT',
+        help=(
+            'Set the sorting attribute of the solves.\n'
+            'Default: date.'
         ),
     )
 

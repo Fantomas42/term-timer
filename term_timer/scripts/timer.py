@@ -37,7 +37,7 @@ async def timer() -> int:
             return 1
 
         if command == 'list':
-            session_stats.listing(options.count)
+            session_stats.listing(options.count, options.sort)
 
         if command == 'stats':
             session_stats.resume('Global ', show_title=True)

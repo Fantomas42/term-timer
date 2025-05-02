@@ -313,7 +313,7 @@ class StatisticsReporter(Statistics):
                     f'[percent]{ total_percent * 100:05.2f}%[/percent]',
                 )
 
-    def listing(self, limit: int) -> None:
+    def listing(self, limit: int, sorting: str) -> None:
         console.print(
             f'[title]Listing for { self.cube_name }[/title]',
         )
@@ -323,6 +323,9 @@ class StatisticsReporter(Statistics):
 
         if not limit:
             limit = size
+
+        if sorting == 'time':
+            self.stack = sorted(self.stack, key=lambda x: x.time, reverse=True)
 
         for i in range(limit):
             if i >= size:
