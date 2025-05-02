@@ -34,7 +34,7 @@ def load_all_solves(cube: int,
     prefix = f'{ cube }x{ cube }x{ cube }-'
 
     solves = []
-    sessions = [''] + [
+    sessions = ['default'] + [
         f.name.split(prefix, 1)[1].replace('.json', '')
         for f in SAVE_DIRECTORY.iterdir()
         if f.is_file() and f.name.startswith(prefix)

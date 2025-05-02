@@ -22,7 +22,7 @@ def set_session_arguments(parser):
     session.add_argument(
         '-u', '--session',
         nargs='*',
-        default='',
+        default=[],
         dest='include_sessions',
         metavar='SESSION',
         help=(
@@ -33,7 +33,7 @@ def set_session_arguments(parser):
     session.add_argument(
         '-x', '--exclude-session',
         nargs='*',
-        default='',
+        default=[],
         dest='exclude_sessions',
         metavar='SESSION',
         help=(
