@@ -19,7 +19,7 @@ async def timer() -> int:
 
     cube = options.cube
 
-    if command in {'list', 'stats', 'graph', 'detail'}:
+    if command in {'list', 'stats', 'graph', 'cfop', 'detail'}:
         session_stats = StatisticsReporter(
             cube,
             load_all_solves(
@@ -43,8 +43,8 @@ async def timer() -> int:
         if command == 'stats':
             session_stats.resume('Global ', show_title=True)
 
-            if options.cfop:
-                session_stats.cfop()
+        if command == 'cfop':
+            session_stats.cfop()
 
         if command == 'graph':
             session_stats.graph()

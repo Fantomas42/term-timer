@@ -10,6 +10,7 @@ COMMAND_ALIASES = {
     'list': ['ls', 'l'],
     'stats': ['st', 's'],
     'graph': ['gr', 'g'],
+    'cfop': ['op', 'c'],
     'detail': ['dt', 'd'],
 }
 
@@ -232,18 +233,9 @@ def list_arguments(subparsers):
 def statistics_arguments(subparsers):
     parser = subparsers.add_parser(
         'stats',
-        help='Display statistics information',
-        description='Display statistics information about recorded solves.',
+        help='Display statistics',
+        description='Display statistics about recorded solves.',
         aliases=COMMAND_ALIASES['stats'],
-    )
-
-    parser.add_argument(
-        '-t', '--cfop',
-        action='store_true',
-        help=(
-            'Include CFOP OLL/PLL case information.\n'
-            'Default: False.'
-        ),
     )
 
     set_session_arguments(parser)
@@ -254,9 +246,22 @@ def statistics_arguments(subparsers):
 def graph_arguments(subparsers):
     parser = subparsers.add_parser(
         'graph',
-        help='Display tendencies information',
-        description='Display tendencies graph about recorded solves.',
+        help='Display trend graph',
+        description='Display trend graph for recorded solves.',
         aliases=COMMAND_ALIASES['graph'],
+    )
+
+    set_session_arguments(parser)
+
+    return parser
+
+
+def cfop_arguments(subparsers):
+    parser = subparsers.add_parser(
+        'cfop',
+        help='Display CFOP cases',
+        description='Display CFOP OLL and PLL information for recorded solves.',
+        aliases=COMMAND_ALIASES['cfop'],
     )
 
     set_session_arguments(parser)
@@ -307,6 +312,7 @@ def get_arguments() -> Any:
     list_arguments(subparsers)
     statistics_arguments(subparsers)
     graph_arguments(subparsers)
+    cfop_arguments(subparsers)
     detail_arguments(subparsers)
 
     args = parser.parse_args(sys.argv[1:])
