@@ -2,6 +2,7 @@ import asyncio
 import logging
 from random import seed
 
+from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.console import console
 from term_timer.in_out import load_all_solves
@@ -14,7 +15,7 @@ async def timer() -> int:
     logging.disable(logging.INFO)
 
     options = get_arguments()
-    command = options.command
+    command = COMMAND_RESOLUTIONS.get(options.command, options.command)
 
     cube = options.cube
 

@@ -5,6 +5,18 @@ from term_timer.argparser import ArgumentParser
 from term_timer.config import TIMER_CONFIG
 from term_timer.constants import CUBE_SIZES
 
+COMMAND_ALIASES = {
+    'solve': ['sv', 't'],
+    'list': ['ls', 'l'],
+    'stats': ['st', 's'],
+    'detail': ['dt', 'd'],
+}
+
+COMMAND_RESOLUTIONS = {}
+for name, aliases in COMMAND_ALIASES.items():
+    for alias in aliases:
+        COMMAND_RESOLUTIONS[alias] = name
+
 
 def set_session_arguments(parser):
     session = parser.add_argument_group('Session')
@@ -61,7 +73,7 @@ def solve_arguments(subparsers):
         'solve',
         help='Start the timer and record solves',
         description='Start the speed cubing timer to record and time your solves.',
-        aliases=['t'],
+        aliases=COMMAND_ALIASES['solve'],
     )
 
     parser.add_argument(
@@ -184,7 +196,7 @@ def list_arguments(subparsers):
         'list',
         help='Display recorded solves',
         description='Display the list of recorded solves.',
-        aliases=['l'],
+        aliases=COMMAND_ALIASES['list'],
     )
 
     parser.add_argument(
@@ -221,7 +233,7 @@ def statistics_arguments(subparsers):
         'stats',
         help='Display statistics information',
         description='Display statistics information about recorded solves.',
-        aliases=['s'],
+        aliases=COMMAND_ALIASES['stats'],
     )
 
     parser.add_argument(
@@ -252,7 +264,7 @@ def detail_arguments(subparsers):
         'detail',
         help='Display detailed information about solves',
         description='Display detailed information about specific solves.',
-        aliases=['d'],
+        aliases=COMMAND_ALIASES['detail'],
     )
 
     parser.add_argument(
