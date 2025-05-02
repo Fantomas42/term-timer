@@ -18,7 +18,7 @@ def load_solves(cube: int, session: str) -> list[Solve]:
             datas = json.load(fd)
 
         return [
-            Solve(**data)
+            Solve(**data, session=session)
             for data in datas
         ]
 

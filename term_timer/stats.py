@@ -380,6 +380,10 @@ class StatisticsReporter(Statistics):
             '[stats]Date       :[/stats] '
             f'[date]{ date }[/date]',
         )
+        console.print(
+            '[stats]Session    :[/stats] '
+            f'[session]{ solve.session }[/session]',
+        )
         if solve.device:
             console.print(
                 '[stats]Cube       :[/stats] '

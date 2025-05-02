@@ -36,6 +36,7 @@ class Solve:
                  scramble: str, flag: str = '',
                  timer: str = '',
                  device: str = '',
+                 session: str = '',
                  moves: list[str] | None = None):
         self.date = int(date)
         self.time = int(time)
@@ -43,6 +44,7 @@ class Solve:
         self.flag = flag
         self.timer = timer
         self.device = device
+        self.session = session
         self.raw_moves = moves
 
     @cached_property
