@@ -6,15 +6,42 @@ from term_timer.config import TIMER_CONFIG
 from term_timer.constants import CUBE_SIZES
 
 
-def get_arguments() -> Any:
+def set_session_arguments(parser):
+    session = parser.add_argument_group('Session')
+    session.add_argument(
+        '-c', '--cube',
+        type=int,
+        choices=CUBE_SIZES,
+        default=3,
+        metavar='CUBE',
+        help=(
+            'Set the size of the cube (from 2 to 7).\n'
+            'Default: 3.'
+        ),
+    )
+    session.add_argument(
+        '-s', '--session',
+        default='',
+        metavar='SESSION',
+        help=(
+            'Name of the session for solves.\n'
+            'Default: None.'
+        ),
+    )
+
+    return session
+
+
+def solve_arguments(subparsers):
     countdown = TIMER_CONFIG.get('countdown', 0.0)
     metronome = TIMER_CONFIG.get('metronome', 0.0)
 
-    parser = ArgumentParser(
-        add_help=False,
-        description='Speed cubing timer on your terminal.',
-        epilog='Have fun cubing !',
+    parser = subparsers.add_parser(
+        'solve',
+        help='Start the timer and record solves',
+        description='Start the speed cubing timer to record and time your solves.',
     )
+
     parser.add_argument(
         'solves',
         nargs='?',
@@ -37,17 +64,6 @@ def get_arguments() -> Any:
         ),
     )
     config.add_argument(
-        '-c', '--cube',
-        type=int,
-        choices=CUBE_SIZES,
-        default=3,
-        metavar='CUBE',
-        help=(
-            'Set the size of the cube (from 2 to 7).\n'
-            'Default: 3.'
-        ),
-    )
-    config.add_argument(
         '-p', '--show-cube',
         action='store_true',
         help=(
@@ -55,16 +71,9 @@ def get_arguments() -> Any:
             'Default: False.'
         ),
     )
-    config.add_argument(
-        '-u', '--session',
-        default='',
-        metavar='SESSION',
-        help=(
-            'Name of the session for for solves.\n'
-            'Default: None.'
-        ),
-    )
-    config.add_argument(
+
+    session = set_session_arguments(parser)
+    session.add_argument(
         '-f', '--free-play',
         action='store_true',
         help=(
@@ -81,7 +90,7 @@ def get_arguments() -> Any:
         metavar='SECONDS',
         help=(
             'Set the countdown timer for inspection time in seconds.\n'
-            f'Default: { countdown }.'
+            f'Default: {countdown}.'
         ),
     )
     timer.add_argument(
@@ -91,7 +100,7 @@ def get_arguments() -> Any:
         metavar='TEMPO',
         help=(
             'Set a metronome beep at a specified tempo in seconds.\n'
-            f'Default: { metronome }.'
+            f'Default: {metronome}.'
         ),
     )
 
@@ -125,31 +134,49 @@ def get_arguments() -> Any:
         ),
     )
 
-    actions = parser.add_argument_group('Actions')
-    actions.add_argument(
-        '-l', '--list',
+    return parser
+
+
+def list_arguments(subparsers):
+    parser = subparsers.add_parser(
+        'list',
+        help='Display recorded solves',
+        description='Display the list of recorded solves.',
+    )
+
+    parser.add_argument(
+        'count',
         nargs='?',
         type=int,
-        const=0,
-        default=False,
-        metavar='SOLVES',
+        default=0,
+        metavar='COUNT',
         help=(
-            'Display the last recorded solves.\n'
-            'Default: All.'
+            'Number of solves to display.\n'
+            'Default: All solves.'
         ),
     )
-    actions.add_argument(
-        '-d', '--detail',
-        nargs='*',
-        type=int,
-        default=False,
-        metavar='SOLVE',
+    set_session_arguments(parser)
+
+    return parser
+
+
+def statistics_arguments(subparsers):
+    parser = subparsers.add_parser(
+        'stats',
+        help='Display statistics information',
+        description='Display statistics information about recorded solves.',
+    )
+
+    parser.add_argument(
+        '-t', '--cfop',
+        action='store_true',
         help=(
-            'Display the details of the solves.\n'
-            'Default: None.'
+            'Include CFOP OLL/PLL case information.\n'
+            'Default: False.'
         ),
     )
-    actions.add_argument(
+
+    parser.add_argument(
         '-g', '--graph',
         action='store_true',
         help=(
@@ -157,26 +184,58 @@ def get_arguments() -> Any:
             'Default: False.'
         ),
     )
-    actions.add_argument(
-        '-s', '--stats',
-        action='store_true',
-        help=(
-            'Display statistics of recorded solves.\n'
-            'Default: False.'
-        ),
-    )
-    actions.add_argument(
-        '-t', '--cfop',
-        action='store_true',
-        help=(
-            'Display statistics on CFOP OLL/PLL cases.\n'
-            'Default: False.'
-        ),
-    )
-    actions.add_argument(
-        '-h', '--help',
-        action='help',
-        help='Display this help message.',
+
+    set_session_arguments(parser)
+
+    return parser
+
+
+def detail_arguments(subparsers):
+    parser = subparsers.add_parser(
+        'detail',
+        help='Display detailed information about solves',
+        description='Display detailed information about specific solves.',
     )
 
-    return parser.parse_args(sys.argv[1:])
+    parser.add_argument(
+        'solves',
+        nargs='+',
+        type=int,
+        metavar='SOLVE_ID',
+        help='ID(s) of the solve(s) to display details for.',
+    )
+
+    set_session_arguments(parser)
+
+    return parser
+
+
+def get_arguments() -> Any:
+    parser = ArgumentParser(
+        add_help=False,
+        description='Speed cubing timer on your terminal.',
+        epilog='Have fun cubing !',
+    )
+
+    parser.add_argument(
+        '-h', '--help',
+        action='help',
+        help='Show this help message and exit.',
+    )
+
+    subparsers = parser.add_subparsers(
+        dest='command',
+        help='Available commands',
+    )
+
+    solve_arguments(subparsers)
+    list_arguments(subparsers)
+    statistics_arguments(subparsers)
+    detail_arguments(subparsers)
+
+    args = parser.parse_args(sys.argv[1:])
+
+    if args.command is None:
+        args = parser.parse_args(['solve'] + sys.argv[1:])
+
+    return args
