@@ -325,7 +325,7 @@ class StatisticsReporter(Statistics):
             limit = size
 
         for i in range(limit):
-            if i > size:
+            if i >= size:
                 return
 
             solve = self.stack[size - (i + 1)]
