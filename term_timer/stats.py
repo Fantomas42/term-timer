@@ -382,7 +382,7 @@ class StatisticsReporter(Statistics):
         )
         console.print(
             '[stats]Session    :[/stats] '
-            f'[session]{ solve.session }[/session]',
+            f'[session]{ solve.session.title() }[/session]',
         )
         if solve.device:
             console.print(
