@@ -25,6 +25,7 @@ async def timer() -> int:
                 cube,
                 options.include_sessions,
                 options.exclude_sessions,
+                options.devices,
             ),
         )
 

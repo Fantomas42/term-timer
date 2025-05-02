@@ -41,6 +41,16 @@ def set_session_arguments(parser):
             'Default: None.'
         ),
     )
+    session.add_argument(
+        '-d', '--devices',
+        nargs='*',
+        default=[],
+        metavar='DEVICE',
+        help=(
+            'Filter solves by device names.\n'
+            'Default: None.'
+        ),
+    )
 
     return session
 
@@ -190,6 +200,7 @@ def list_arguments(subparsers):
             'Default: All solves.'
         ),
     )
+
     set_session_arguments(parser)
 
     return parser

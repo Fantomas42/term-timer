@@ -27,7 +27,8 @@ def load_solves(cube: int, session: str) -> list[Solve]:
 
 def load_all_solves(cube: int,
                     includes: list[str],
-                    excludes: list[str]) -> list[Solve]:
+                    excludes: list[str],
+                    devices: list[str]) -> list[Solve]:
     if len(includes) == 1:
         return load_solves(cube, includes[0])
 
@@ -52,6 +53,9 @@ def load_all_solves(cube: int,
                 solves.extend(
                     load_solves(cube, session_name),
                 )
+
+    if devices:
+        solves = [solve for solve in solves if solve.device in devices]
 
     uniques = {}
     for solve in solves:
