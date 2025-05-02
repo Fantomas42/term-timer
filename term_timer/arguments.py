@@ -9,6 +9,7 @@ COMMAND_ALIASES = {
     'solve': ['sv', 't'],
     'list': ['ls', 'l'],
     'stats': ['st', 's'],
+    'graph': ['gr', 'g'],
     'detail': ['dt', 'd'],
 }
 
@@ -245,13 +246,17 @@ def statistics_arguments(subparsers):
         ),
     )
 
-    parser.add_argument(
-        '-g', '--graph',
-        action='store_true',
-        help=(
-            'Display evolution graph of recorded solves.\n'
-            'Default: False.'
-        ),
+    set_session_arguments(parser)
+
+    return parser
+
+
+def graph_arguments(subparsers):
+    parser = subparsers.add_parser(
+        'graph',
+        help='Display tendencies information',
+        description='Display tendencies graph about recorded solves.',
+        aliases=COMMAND_ALIASES['graph'],
     )
 
     set_session_arguments(parser)
@@ -301,6 +306,7 @@ def get_arguments() -> Any:
     solve_arguments(subparsers)
     list_arguments(subparsers)
     statistics_arguments(subparsers)
+    graph_arguments(subparsers)
     detail_arguments(subparsers)
 
     args = parser.parse_args(sys.argv[1:])
