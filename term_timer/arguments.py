@@ -40,6 +40,7 @@ def solve_arguments(subparsers):
         'solve',
         help='Start the timer and record solves',
         description='Start the speed cubing timer to record and time your solves.',
+        aliases=['t'],
     )
 
     parser.add_argument(
@@ -142,6 +143,7 @@ def list_arguments(subparsers):
         'list',
         help='Display recorded solves',
         description='Display the list of recorded solves.',
+        aliases=['l'],
     )
 
     parser.add_argument(
@@ -165,6 +167,7 @@ def statistics_arguments(subparsers):
         'stats',
         help='Display statistics information',
         description='Display statistics information about recorded solves.',
+        aliases=['s'],
     )
 
     parser.add_argument(
@@ -195,6 +198,7 @@ def detail_arguments(subparsers):
         'detail',
         help='Display detailed information about solves',
         description='Display detailed information about specific solves.',
+        aliases=['d'],
     )
 
     parser.add_argument(
@@ -236,6 +240,7 @@ def get_arguments() -> Any:
     args = parser.parse_args(sys.argv[1:])
 
     if args.command is None:
-        args = parser.parse_args(['solve'] + sys.argv[1:])
+        parser.print_help()
+        sys.exit(1)
 
     return args
