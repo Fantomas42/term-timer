@@ -494,7 +494,7 @@ class StatisticsReporter(Statistics):
             'score_cfop': analysis.score,
         }
 
-    def cfop(self) -> None:
+    def cfop(self, oll_only: bool = False, pll_only: bool = False) -> None:
         console.print('Aggregating cases...', end='')
 
         num_processes = max(1, cpu_count() - 1)
@@ -620,8 +620,10 @@ class StatisticsReporter(Statistics):
             console.print(table)
 
         total = len(results)
-        table('OLL', olls, total)
-        table('PLL', plls, total)
+        if not pll_only:
+            table('OLL', olls, total)
+        if not oll_only:
+            table('PLL', plls, total)
 
         mean = score_cfop / total
         grade = format_grade(mean)

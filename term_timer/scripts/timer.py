@@ -44,7 +44,7 @@ async def timer() -> int:
             session_stats.resume('Global ', show_title=True)
 
         if command == 'cfop':
-            session_stats.cfop()
+            session_stats.cfop(options.oll, options.pll)
 
         if command == 'graph':
             session_stats.graph()

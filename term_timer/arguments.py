@@ -264,6 +264,24 @@ def cfop_arguments(subparsers):
         aliases=COMMAND_ALIASES['cfop'],
     )
 
+    cases = parser.add_argument_group('Cases')
+    cases.add_argument(
+        '--oll',
+        action='store_true',
+        help=(
+            'Display only OLL cases.\n'
+            'Default: False.'
+        ),
+    )
+    cases.add_argument(
+        '--pll',
+        action='store_true',
+        help=(
+            'Display only OLL cases.\n'
+            'Default: False.'
+        ),
+    )
+
     set_session_arguments(parser)
 
     return parser
