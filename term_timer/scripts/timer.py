@@ -21,7 +21,11 @@ async def timer() -> int:
     if command in {'list', 'stats', 'detail'}:
         session_stats = StatisticsReporter(
             cube,
-            load_all_solves(cube, options.session),
+            load_all_solves(
+                cube,
+                options.include_sessions,
+                options.exclude_sessions,
+            ),
         )
 
         if not session_stats.stack:

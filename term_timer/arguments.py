@@ -20,11 +20,24 @@ def set_session_arguments(parser):
         ),
     )
     session.add_argument(
-        '-s', '--session',
+        '-u', '--session',
+        nargs='*',
         default='',
+        dest='include_sessions',
         metavar='SESSION',
         help=(
-            'Name of the session for solves.\n'
+            'Names of the session for solves.\n'
+            'Default: None.'
+        ),
+    )
+    session.add_argument(
+        '-x', '--exclude-session',
+        nargs='*',
+        default='',
+        dest='exclude_sessions',
+        metavar='SESSION',
+        help=(
+            'Names of the session to exclude for solves.\n'
             'Default: None.'
         ),
     )
@@ -73,7 +86,27 @@ def solve_arguments(subparsers):
         ),
     )
 
-    session = set_session_arguments(parser)
+    session = parser.add_argument_group('Session')
+    session.add_argument(
+        '-c', '--cube',
+        type=int,
+        choices=CUBE_SIZES,
+        default=3,
+        metavar='CUBE',
+        help=(
+            'Set the size of the cube (from 2 to 7).\n'
+            'Default: 3.'
+        ),
+    )
+    session.add_argument(
+        '-u', '--session',
+        default='',
+        metavar='SESSION',
+        help=(
+            'Name of the session for solves.\n'
+            'Default: None.'
+        ),
+    )
     session.add_argument(
         '-f', '--free-play',
         action='store_true',

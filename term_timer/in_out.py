@@ -25,9 +25,11 @@ def load_solves(cube: int, session: str) -> list[Solve]:
     return []
 
 
-def load_all_solves(cube: int, session: str) -> list[Solve]:
-    if session:
-        return load_solves(cube, session)
+def load_all_solves(cube: int,
+                    includes: list[str],
+                    excludes: list[str]) -> list[Solve]:
+    if len(includes) == 1:
+        return load_solves(cube, includes[0])
 
     prefix = f'{ cube }x{ cube }x{ cube }-'
 
@@ -38,10 +40,18 @@ def load_all_solves(cube: int, session: str) -> list[Solve]:
         if f.is_file() and f.name.startswith(prefix)
     ]
 
-    for session_name in sessions:
-        solves.extend(
-            load_solves(cube, session_name),
-        )
+    if includes:
+        for session_name in sessions:
+            if session_name in includes:
+                solves.extend(
+                    load_solves(cube, session_name),
+                )
+    else:
+        for session_name in sessions:
+            if session_name not in excludes:
+                solves.extend(
+                    load_solves(cube, session_name),
+                )
 
     uniques = {}
     for solve in solves:
