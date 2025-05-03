@@ -494,6 +494,70 @@ class StatisticsReporter(Statistics):
             'score_cfop': analysis.score,
         }
 
+    def case_table(self, title, items, sorting, ordering):
+        table = Table(title=f'{ title }s', box=box.SIMPLE)
+        table.add_column('Case', width=10)
+        table.add_column('Σ', width=3)
+        table.add_column('Freq.', width=5, justify='right')
+        table.add_column('Prob.', width=5, justify='right')
+        table.add_column('Insp.', width=5, justify='right')
+        table.add_column('Exec.', width=5, justify='right')
+        table.add_column('Time', width=5, justify='right')
+        table.add_column('Ao12', width=5, justify='right')
+        table.add_column('Ao5', width=5, justify='right')
+        table.add_column('QTM', width=5, justify='right')
+        table.add_column('TPS', width=5, justify='right')
+        table.add_column('eTPS', width=5, justify='right')
+
+        for name, info in sorted(
+                items.items(),
+                key=lambda x: (x[1][sorting], x[0]),
+                reverse=ordering == 'desc',
+        ):
+            percent_klass = (
+                info['frequency'] > info['probability'] and 'green'
+            ) or 'red'
+
+            head = (
+                '[extlink][link=https://cubing.fache.fr/'
+                f'{ title }/{ name.split(" ")[0] }.html]{ info["label"] }'
+                '[/link][/extlink]'
+            )
+            if 'SKIP' in info['label']:
+                head = f'[skipped]{ info["label"] }[/skipped]'
+
+            count = info['count']
+
+            table.add_row(
+                head,
+                f'[stats]{ count!s }[/stats]',
+                f'[{ percent_klass }]'
+                f'{ (info["frequency"] * 100):.2f}%'
+                f'[/{ percent_klass }]',
+                '[percent]'
+                f'{ (info["probability"] * 100):.2f}%'
+                '[/percent]',
+                '[inspection]' +
+                format_duration(info['inspection']) +
+                '[/inspection]',
+                '[execution]' +
+                format_duration(info['execution']) +
+                '[/execution]',
+                '[duration]' +
+                format_duration(info['time']) +
+                '[/duration]',
+                '[ao12]' +
+                format_duration(info['ao12']) +
+                '[/ao12]',
+                '[ao5]' +
+                format_duration(info['ao5']) +
+                '[/ao5]',
+                f'[moves]{ info["qtm"]:.2f}[/moves]',
+                f'[tps]{ info["tps"]:.2f}[/tps]',
+                f'[tps_e]{ info["etps"]:.2f}[/tps_e]',
+            )
+        console.print(table)
+
     def cfop(self, oll_only: bool = False, pll_only: bool = False,
              sorting: str = 'count', ordering: str = 'asc') -> None:
         console.print('Aggregating cases...', end='')
@@ -553,9 +617,12 @@ class StatisticsReporter(Statistics):
             plls[pll_case]['tpss'].append(result['pll']['tps'])
             plls[pll_case]['etpss'].append(result['pll']['etps'])
 
+        total = len(results)
+
         for name, info in olls.items():
             count = len(info['totals'])
             info['count'] = count
+            info['frequency'] = count / total
             info['probability'] = OLL_INFO[name]['probability']
             info['label'] = f'OLL { name.split(" ")[0] }'
             info['inspection'] = sum(info['inspections']) / count
@@ -567,10 +634,11 @@ class StatisticsReporter(Statistics):
             info['tps'] = sum(info['tpss']) / count
             info['etps'] = sum(info['etpss']) / count
 
-        # FIX FREQUENCY sorting, rename total to time
+        # TODO(me): rename total to time
         for name, info in plls.items():
             count = len(info['totals'])
             info['count'] = count
+            info['frequency'] = count / total
             info['probability'] = PLL_INFO[name]['probability']
             info['label'] = f'PLL { name }'
             info['inspection'] = sum(info['inspections']) / count
@@ -584,77 +652,10 @@ class StatisticsReporter(Statistics):
 
         print('\r', end='')
 
-        def table(title, items, total):
-            table = Table(title=f'{ title }s', box=box.SIMPLE)
-            table.add_column('Case', width=10)
-            table.add_column('Σ', width=3)
-            table.add_column('Freq.', width=5, justify='right')
-            table.add_column('Prob.', width=5, justify='right')
-            table.add_column('Insp.', width=5, justify='right')
-            table.add_column('Exec.', width=5, justify='right')
-            table.add_column('Time', width=5, justify='right')
-            table.add_column('Ao12', width=5, justify='right')
-            table.add_column('Ao5', width=5, justify='right')
-            table.add_column('QTM', width=5, justify='right')
-            table.add_column('TPS', width=5, justify='right')
-            table.add_column('eTPS', width=5, justify='right')
-
-            for name, info in sorted(
-                    items.items(),
-                    key=lambda x: (x[1][sorting], x[0]),
-                    reverse=ordering == 'desc',
-            ):
-
-                percent = info['count'] / total
-                percent_klass = (
-                    percent > info['probability'] and 'green'
-                ) or 'red'
-
-                head = (
-                    '[extlink][link=https://cubing.fache.fr/'
-                    f'{ title }/{ name.split(" ")[0] }.html]{ info["label"] }'
-                    '[/link][/extlink]'
-                )
-                if 'SKIP' in info['label']:
-                    head = f'[skipped]{ info["label"] }[/skipped]'
-
-                count = info['count']
-
-                table.add_row(
-                    head,
-                    f'[stats]{ count!s }[/stats]',
-                    f'[{ percent_klass }]'
-                    f'{ (percent * 100):.2f}%'
-                    f'[/{ percent_klass }]',
-                    '[percent]'
-                    f'{ (info["probability"] * 100):.2f}%'
-                    '[/percent]',
-                    '[inspection]' +
-                    format_duration(info['inspection']) +
-                    '[/inspection]',
-                    '[execution]' +
-                    format_duration(info['execution']) +
-                    '[/execution]',
-                    '[duration]' +
-                    format_duration(info['time']) +
-                    '[/duration]',
-                    '[ao12]' +
-                    format_duration(info['ao12']) +
-                    '[/ao12]',
-                    '[ao5]' +
-                    format_duration(info['ao5']) +
-                    '[/ao5]',
-                    f'[moves]{ info["qtm"]:.2f}[/moves]',
-                    f'[tps]{ info["tps"]:.2f}[/tps]',
-                    f'[tps_e]{ info["etps"]:.2f}[/tps_e]',
-                )
-            console.print(table)
-
-        total = len(results)
         if not pll_only:
-            table('OLL', olls, total)
+            self.case_table('OLL', olls, sorting, ordering)
         if not oll_only:
-            table('PLL', plls, total)
+            self.case_table('PLL', plls, sorting, ordering)
 
         mean = score_cfop / total
         grade = format_grade(mean)
