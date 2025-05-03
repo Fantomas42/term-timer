@@ -7,8 +7,8 @@ Set Theme "The Hulk"
 Set TypingSpeed 75ms
 Set FontSize 32
 Set Width 2200
-Set Height 1500
+Set Height 2300
 
-Type "term-timer --detail 889" Enter
+Type "term-timer detail 888" Enter
 
 Sleep 5s

@@ -9,7 +9,7 @@ Set FontSize 32
 Set Width 2200
 Set Height 1200
 
-Type "term-timer -p 1" Sleep 500ms  Enter
+Type "term-timer solve -p 1" Sleep 500ms  Enter
 
 Sleep 2s  # Inspect
 
