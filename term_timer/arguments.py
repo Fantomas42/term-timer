@@ -282,6 +282,22 @@ def cfop_arguments(subparsers):
         ),
     )
 
+    sort = parser.add_argument_group('Sorting')
+    sort.add_argument(
+        '-s', '--sort',
+        default='count',
+        choices={
+            'case', 'count', 'frequency', 'probability',
+            'inspection', 'execution', 'time',
+            'ao5', 'ao12', 'qtm', 'tps', 'etps',
+        },
+        metavar='SORT',
+        help=(
+            'Set the sorting attribute of the cases.\n'
+            'Default: count.'
+        ),
+    )
+
     set_session_arguments(parser)
 
     return parser
