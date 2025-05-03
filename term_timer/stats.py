@@ -475,7 +475,7 @@ class StatisticsReporter(Statistics):
         return {
             'oll': {
                 'case': oll['cases'][0],
-                'total': oll['total'],
+                'time': oll['total'],
                 'execution': oll['execution'],
                 'inspection': oll['inspection'],
                 'moves': len(oll['moves']),
@@ -484,7 +484,7 @@ class StatisticsReporter(Statistics):
             },
             'pll': {
                 'case': pll['cases'][0],
-                'total': pll['total'],
+                'time': pll['total'],
                 'execution': pll['execution'],
                 'inspection': pll['inspection'],
                 'moves': len(pll['moves']),
@@ -585,13 +585,13 @@ class StatisticsReporter(Statistics):
                 oll_case, {
                     'inspections': [],
                     'executions': [],
-                    'totals': [],
+                    'times': [],
                     'moves': [],
                     'tpss': [],
                     'etpss': [],
                 },
             )
-            olls[oll_case]['totals'].append(result['oll']['total'])
+            olls[oll_case]['times'].append(result['oll']['time'])
             olls[oll_case]['executions'].append(result['oll']['execution'])
             olls[oll_case]['inspections'].append(result['oll']['inspection'])
             olls[oll_case]['moves'].append(result['oll']['moves'])
@@ -604,13 +604,13 @@ class StatisticsReporter(Statistics):
                 {
                     'inspections': [],
                     'executions': [],
-                    'totals': [],
+                    'times': [],
                     'moves': [],
                     'tpss': [],
                     'etpss': [],
                  },
             )
-            plls[pll_case]['totals'].append(result['pll']['total'])
+            plls[pll_case]['times'].append(result['pll']['time'])
             plls[pll_case]['executions'].append(result['pll']['execution'])
             plls[pll_case]['inspections'].append(result['pll']['inspection'])
             plls[pll_case]['moves'].append(result['pll']['moves'])
@@ -620,32 +620,31 @@ class StatisticsReporter(Statistics):
         total = len(results)
 
         for name, info in olls.items():
-            count = len(info['totals'])
+            count = len(info['times'])
             info['count'] = count
             info['frequency'] = count / total
             info['probability'] = OLL_INFO[name]['probability']
             info['label'] = f'OLL { name.split(" ")[0] }'
             info['inspection'] = sum(info['inspections']) / count
             info['execution'] = sum(info['executions']) / count
-            info['time'] = sum(info['totals']) / count
-            info['ao5'] = self.ao(5, info['totals'])
-            info['ao12'] = self.ao(12, info['totals'])
+            info['time'] = sum(info['times']) / count
+            info['ao5'] = self.ao(5, info['times'])
+            info['ao12'] = self.ao(12, info['times'])
             info['qtm'] = sum(info['moves']) / count
             info['tps'] = sum(info['tpss']) / count
             info['etps'] = sum(info['etpss']) / count
 
-        # TODO(me): rename total to time
         for name, info in plls.items():
-            count = len(info['totals'])
+            count = len(info['times'])
             info['count'] = count
             info['frequency'] = count / total
             info['probability'] = PLL_INFO[name]['probability']
             info['label'] = f'PLL { name }'
             info['inspection'] = sum(info['inspections']) / count
             info['execution'] = sum(info['executions']) / count
-            info['time'] = sum(info['totals']) / count
-            info['ao5'] = self.ao(5, info['totals'])
-            info['ao12'] = self.ao(12, info['totals'])
+            info['time'] = sum(info['times']) / count
+            info['ao5'] = self.ao(5, info['times'])
+            info['ao12'] = self.ao(12, info['times'])
             info['qtm'] = sum(info['moves']) / count
             info['tps'] = sum(info['tpss']) / count
             info['etps'] = sum(info['etpss']) / count
