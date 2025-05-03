@@ -31,43 +31,43 @@ Practice your speed cubing skills on your terminal, for a full 80's vibe.
 Start timing 3x3x3 solves :
 
 ```console
-term-timer
+term-timer solve
 ```
 
 Start timing showing the scrambled cube :
 
 ```console
-term-timer -p
+term-timer solve -p
 ```
 
 Start timing 2 solves of 4x4x4 in free-play :
 
 ```console
-term-timer -c 4 -f 2
+term-timer solve -c 4 -f 2
 ```
 
 Start timing with an easy white cross, with 15 secs of inspection :
 
 ```console
-term-timer -ei 15
+term-timer solve -ei 15
 ```
 
 Show statistics on recorded solves :
 
 ```console
-term-timer -s
+term-timer stats
 ```
 
 Show tendencies graph on recorded solves :
 
 ```console
-term-timer -g
+term-timer graph
 ```
 
 Show last ten recorded solves of 7x7x7 :
 
 ```console
-term-timer -l 10 -c 7
+term-timer list 10 -c 7
 ```
 
 ## Installation
@@ -116,31 +116,64 @@ community have been invaluable to this project.
 
 ## Help
 
+### General
+
 ```console
-Usage: term-timer [-b] [-c CUBE] [-p] [-f] [-i SECONDS] [-m TEMPO] [-e] [-n ITERATIONS] [-r SEED]
-                  [-l [SOLVES]] [-d [SOLVE ...]] [-g] [-s] [-h]
-                  [SOLVES]
+Usage: term-timer [-h] {solve,sv,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d} ...
 
 Speed cubing timer on your terminal.
+
+Positional Arguments:
+  {solve,sv,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d}
+                        Available commands.
+    solve (sv, t)       Start the timer and record solves.
+    list (ls, l)        Display recorded solves.
+    stats (st, s)       Display statistics.
+    graph (gr, g)       Display trend graph.
+    cfop (op, c)        Display CFOP cases.
+    detail (dt, d)      Display detailed information about solves.
+
+Options:
+  -h, --help            Show this help message and exit.
+
+Have fun cubing !
+```
+
+### Timer
+
+```console
+Usage: term-timer solve [-h] [-b] [-p] [-c CUBE] [-u SESSION] [-f] [-i SECONDS] [-m TEMPO] [-e]
+                        [-n ITERATIONS] [-r SEED]
+                        [SOLVES]
+
+Start the speed cubing timer to record and time your solves.
 
 Positional Arguments:
   SOLVES                Specify the number of solves to be done.
                         Default: Infinite.
 
+Options:
+  -h, --help            Show this help message and exit.
+
 Configuration:
   -b, --bluetooth       Use a Bluetooth-connected cube.
                         Default: False.
-  -c CUBE, --cube CUBE  Set the size of the cube (from 2 to 7).
-                        Default: 3.
   -p, --show-cube       Display the cube in its scrambled state.
                         Default: False.
+
+Session:
+  -c CUBE, --cube CUBE  Set the size of the cube (from 2 to 7).
+                        Default: 3.
+  -u SESSION, --session SESSION
+                        Name of the session for solves.
+                        Default: None.
   -f, --free-play       Enable free play mode to disable recording of solves.
                         Default: False.
 
 Timer:
   -i SECONDS, --countdown SECONDS
                         Set the countdown timer for inspection time in seconds.
-                        Default: 0.
+                        Default: 0.0.
   -m TEMPO, --metronome TEMPO
                         Set a metronome beep at a specified tempo in seconds.
                         Default: 0.0.
@@ -153,21 +186,6 @@ Scramble:
                         Default: Auto.
   -r SEED, --seed SEED  Set a seed for random move generation to ensure repeatable scrambles.
                         Default: None.
-
-Actions:
-  -l [SOLVES], --list [SOLVES]
-                        Display the last recorded solves.
-                        Default: All.
-  -d [SOLVE ...], --detail [SOLVE ...]
-                        Display the details of the solves.
-                        Default: None.
-  -g, --graph           Display evolution graph of recorded solves.
-                        Default: False.
-  -s, --stats           Display statistics of recorded solves.
-                        Default: False.
-  -h, --help            Display this help message.
-
-Have fun cubing !
 ```
 
 ## Origin Story

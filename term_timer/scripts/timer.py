@@ -2,6 +2,7 @@ import asyncio
 import logging
 from random import seed
 
+from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.console import console
 from term_timer.in_out import load_all_solves
@@ -11,20 +12,22 @@ from term_timer.timer import Timer
 
 
 async def timer() -> int:
-    options = get_arguments()
-
     logging.disable(logging.INFO)
+
+    options = get_arguments()
+    command = COMMAND_RESOLUTIONS.get(options.command, options.command)
+
     cube = options.cube
-    if (
-            options.list is not False
-            or options.stats
-            or options.graph
-            or options.detail
-            or options.cfop
-        ):
+
+    if command in {'list', 'stats', 'graph', 'cfop', 'detail'}:
         session_stats = StatisticsReporter(
             cube,
-            load_all_solves(cube, options.session),
+            load_all_solves(
+                cube,
+                options.include_sessions,
+                options.exclude_sessions,
+                options.devices,
+            ),
         )
 
         if not session_stats.stack:
@@ -34,21 +37,24 @@ async def timer() -> int:
             )
             return 1
 
-        if options.list is not False:
-            session_stats.listing(options.list)
+        if command == 'list':
+            session_stats.listing(options.count, options.sort)
 
-        if options.detail:
-            for solve_id in options.detail:
-                session_stats.detail(solve_id)
-
-        if options.stats:
+        if command == 'stats':
             session_stats.resume('Global ', show_title=True)
 
-        if options.graph:
+        if command == 'cfop':
+            session_stats.cfop(
+                options.oll, options.pll,
+                options.sort, options.order,
+            )
+
+        if command == 'graph':
             session_stats.graph()
 
-        if options.cfop:
-            session_stats.cfop()
+        if command == 'detail':
+            for solve_id in options.solves:
+                session_stats.detail(solve_id, options.method)
 
         return 0
 

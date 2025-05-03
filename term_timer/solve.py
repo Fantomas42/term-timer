@@ -36,6 +36,7 @@ class Solve:
                  scramble: str, flag: str = '',
                  timer: str = '',
                  device: str = '',
+                 session: str = '',
                  moves: list[str] | None = None):
         self.date = int(date)
         self.time = int(time)
@@ -43,7 +44,10 @@ class Solve:
         self.flag = flag
         self.timer = timer
         self.device = device
+        self.session = session
         self.raw_moves = moves
+
+        self.method_name = CUBE_METHOD
 
     @cached_property
     def datetime(self) -> datetime:
@@ -115,7 +119,7 @@ class Solve:
 
     @cached_property
     def method(self):
-        return METHODS.get(CUBE_METHOD, CF4OPAnalyser)
+        return METHODS.get(self.method_name, CF4OPAnalyser)
 
     @cached_property
     def method_applied(self) -> dict[str, dict]:

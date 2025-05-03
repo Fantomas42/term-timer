@@ -9,6 +9,6 @@ Set FontSize 32
 Set Width 2200
 Set Height 900
 
-Type "term-timer --stats" Enter
+Type "term-timer stats" Enter
 
 Sleep 5s

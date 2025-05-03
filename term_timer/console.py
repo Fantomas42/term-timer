@@ -37,6 +37,7 @@ theme = {
 
     'timer': f'bold { ORANGE }',
     'device': 'bold #CFAAD7',
+    'session': 'bold #00FFCC',
     'title': f'bold { TEXT_LIGHT }',
     'moves': f'bold { TEXT_LIGHT }',
     'result': f'bold { TEXT_LIGHT }',

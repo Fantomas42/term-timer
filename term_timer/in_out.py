@@ -18,30 +18,44 @@ def load_solves(cube: int, session: str) -> list[Solve]:
             datas = json.load(fd)
 
         return [
-            Solve(**data)
+            Solve(**data, session=session)
             for data in datas
         ]
 
     return []
 
 
-def load_all_solves(cube: int, session: str) -> list[Solve]:
-    if session:
-        return load_solves(cube, session)
+def load_all_solves(cube: int,
+                    includes: list[str],
+                    excludes: list[str],
+                    devices: list[str]) -> list[Solve]:
+    if len(includes) == 1:
+        return load_solves(cube, includes[0])
 
     prefix = f'{ cube }x{ cube }x{ cube }-'
 
     solves = []
-    sessions = [''] + [
+    sessions = ['default'] + [
         f.name.split(prefix, 1)[1].replace('.json', '')
         for f in SAVE_DIRECTORY.iterdir()
         if f.is_file() and f.name.startswith(prefix)
     ]
 
-    for session_name in sessions:
-        solves.extend(
-            load_solves(cube, session_name),
-        )
+    if includes:
+        for session_name in sessions:
+            if session_name in includes:
+                solves.extend(
+                    load_solves(cube, session_name),
+                )
+    else:
+        for session_name in sessions:
+            if session_name not in excludes:
+                solves.extend(
+                    load_solves(cube, session_name),
+                )
+
+    if devices:
+        solves = [solve for solve in solves if solve.device in devices]
 
     uniques = {}
     for solve in solves:
