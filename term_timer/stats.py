@@ -495,7 +495,7 @@ class StatisticsReporter(Statistics):
         }
 
     def cfop(self, oll_only: bool = False, pll_only: bool = False,
-             sorting: str = 'count') -> None:
+             sorting: str = 'count', ordering: str = 'asc') -> None:
         console.print('Aggregating cases...', end='')
 
         if sorting == 'case':
@@ -602,6 +602,7 @@ class StatisticsReporter(Statistics):
             for name, info in sorted(
                     items.items(),
                     key=lambda x: (x[1][sorting], x[0]),
+                    reverse=ordering == 'desc',
             ):
 
                 percent = info['count'] / total

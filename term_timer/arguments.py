@@ -297,6 +297,16 @@ def cfop_arguments(subparsers):
             'Default: count.'
         ),
     )
+    sort.add_argument(
+        '-o', '--order',
+        default='asc',
+        choices={'asc', 'desc'},
+        metavar='ORDER',
+        help=(
+            'Set the ordering attribute of the cases.\n'
+            'Default: as.'
+        ),
+    )
 
     set_session_arguments(parser)
 
