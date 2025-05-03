@@ -54,7 +54,7 @@ async def timer() -> int:
 
         if command == 'detail':
             for solve_id in options.solves:
-                session_stats.detail(solve_id)
+                session_stats.detail(solve_id, options.method)
 
         return 0
 

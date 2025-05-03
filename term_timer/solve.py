@@ -47,6 +47,8 @@ class Solve:
         self.session = session
         self.raw_moves = moves
 
+        self.method_name = CUBE_METHOD
+
     @cached_property
     def datetime(self) -> datetime:
         return datetime.fromtimestamp(
@@ -117,7 +119,7 @@ class Solve:
 
     @cached_property
     def method(self):
-        return METHODS.get(CUBE_METHOD, CF4OPAnalyser)
+        return METHODS.get(self.method_name, CF4OPAnalyser)
 
     @cached_property
     def method_applied(self) -> dict[str, dict]:

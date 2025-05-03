@@ -2,6 +2,7 @@ import sys
 from typing import Any
 
 from term_timer.argparser import ArgumentParser
+from term_timer.config import CUBE_METHOD
 from term_timer.config import TIMER_CONFIG
 from term_timer.constants import CUBE_SIZES
 
@@ -146,7 +147,7 @@ def solve_arguments(subparsers):
         metavar='SECONDS',
         help=(
             'Set the countdown timer for inspection time in seconds.\n'
-            f'Default: {countdown}.'
+            f'Default: { countdown }.'
         ),
     )
     timer.add_argument(
@@ -156,7 +157,7 @@ def solve_arguments(subparsers):
         metavar='TEMPO',
         help=(
             'Set a metronome beep at a specified tempo in seconds.\n'
-            f'Default: {metronome}.'
+            f'Default: { metronome }.'
         ),
     )
 
@@ -327,6 +328,19 @@ def detail_arguments(subparsers):
         type=int,
         metavar='SOLVE_ID',
         help='ID(s) of the solve(s) to display details for.',
+    )
+    analyze = parser.add_argument_group('Analysis')
+    analyze.add_argument(
+        '-m', '--method',
+        default=CUBE_METHOD,
+        choices={
+            'lbl', 'cfop', 'cf4op',
+        },
+        metavar='METHOD',
+        help=(
+            'Set the method of analyse used.\n'
+            f'Default: { CUBE_METHOD }.'
+        ),
     )
 
     set_session_arguments(parser)

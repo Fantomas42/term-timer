@@ -356,7 +356,7 @@ class StatisticsReporter(Statistics):
                 f'[result]{ solve.flag }[/result]',
             )
 
-    def detail(self, solve_id: int) -> None:
+    def detail(self, solve_id: int, method: str) -> None:
         try:
             solve = self.stack[solve_id - 1]
         except IndexError:
@@ -365,6 +365,8 @@ class StatisticsReporter(Statistics):
                 style='warning',
             )
             return
+
+        solve.method_name = method
 
         cube = Cube(self.cube_size)
         cube.rotate(solve.scramble)
