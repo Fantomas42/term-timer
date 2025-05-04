@@ -366,15 +366,8 @@ def detail_arguments(subparsers):
 
 def get_arguments() -> Any:
     parser = ArgumentParser(
-        add_help=False,
         description='Speed cubing timer on your terminal.',
         epilog='Have fun cubing !',
-    )
-
-    parser.add_argument(
-        '-h', '--help',
-        action='help',
-        help='Show this help message and exit.',
     )
 
     subparsers = parser.add_subparsers(
