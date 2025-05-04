@@ -6,6 +6,12 @@ from term_timer.bluetooth.constants import GAN_ENCRYPTION_KEY
 from term_timer.bluetooth.constants import GAN_GEN2_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN2_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN2_STATE_CHARACTERISTIC
+from term_timer.bluetooth.constants import GAN_GEN3_COMMAND_CHARACTERISTIC
+from term_timer.bluetooth.constants import GAN_GEN3_SERVICE
+from term_timer.bluetooth.constants import GAN_GEN3_STATE_CHARACTERISTIC
+from term_timer.bluetooth.constants import GAN_GEN4_COMMAND_CHARACTERISTIC
+from term_timer.bluetooth.constants import GAN_GEN4_SERVICE
+from term_timer.bluetooth.constants import GAN_GEN4_STATE_CHARACTERISTIC
 from term_timer.bluetooth.constants import MOYU_ENCRYPTION_KEY
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.facelets import to_kociemba_facelets
@@ -55,17 +61,18 @@ class GanGen2Driver(Driver):
     service_uid = GAN_GEN2_SERVICE
     state_characteristic_uid = GAN_GEN2_STATE_CHARACTERISTIC
     command_characteristic_uid = GAN_GEN2_COMMAND_CHARACTERISTIC
+    encrypter = GanGen2CubeEncrypter
 
     last_serial = -1
 
     def init_cypher(self):
         if self.device.name.startswith('AiCube'):
-            return GanGen2CubeEncrypter(
+            return self.encrypter(
                 MOYU_ENCRYPTION_KEY['key'],
                 MOYU_ENCRYPTION_KEY['iv'],
                 get_salt(self.device.address),
             )
-        return GanGen2CubeEncrypter(
+        return self.encrypter(
             GAN_ENCRYPTION_KEY['key'],
             GAN_ENCRYPTION_KEY['iv'],
             get_salt(self.device.address),
@@ -245,3 +252,72 @@ class GanGen2Driver(Driver):
             self.client.disconnect()
 
         return events
+
+
+class GanGen3Driver(GanGen2Driver):
+    """
+    GAN356 i Carry 2
+    """
+    service_uid = GAN_GEN3_SERVICE
+    state_characteristic_uid = GAN_GEN3_STATE_CHARACTERISTIC
+    command_characteristic_uid = GAN_GEN3_COMMAND_CHARACTERISTIC
+
+    def send_command_handler(self, command: str):
+        msg = bytearray(16)
+
+        if command == 'REQUEST_FACELETS':
+            msg[0] = 0x68
+            msg[1] = 0x01
+        elif command == 'REQUEST_HARDWARE':
+            msg[0] = 0x68
+            msg[1] = 0x04
+        elif command == 'REQUEST_BATTERY':
+            msg[0] = 0x68
+            msg[1] = 0x07
+        elif command == 'REQUEST_RESET':
+            reset_sequence = [
+                0x68, 0x05, 0x05, 0x39, 0x77, 0x00, 0x00, 0x01,
+                0x23, 0x45, 0x67, 0x89, 0xAB, 0x00, 0x00, 0x00,
+            ]
+            msg = bytearray(reset_sequence)
+        else:
+            return False
+
+        return self.cypher.encrypt(bytes(msg))
+
+
+class GanGen4Driver(GanGen2Driver):
+    """
+    GAN12 ui Maglev
+    GAN14 ui FreePlay
+    """
+    service_uid = GAN_GEN4_SERVICE
+    state_characteristic_uid = GAN_GEN4_STATE_CHARACTERISTIC
+    command_characteristic_uid = GAN_GEN4_COMMAND_CHARACTERISTIC
+
+    def send_command_handler(self, command: str):
+        msg = bytearray(20)
+
+        if command == 'REQUEST_FACELETS':
+            values = [0xDD, 0x04, 0x00, 0xED, 0x00, 0x00]
+            for i, val in enumerate(values):
+                msg[i] = val
+        elif command == 'REQUEST_HARDWARE':
+            values = [0xDF, 0x03, 0x00, 0x00, 0x00]
+            for i, val in enumerate(values):
+                msg[i] = val
+        elif command == 'REQUEST_BATTERY':
+            values = [0xDD, 0x04, 0x00, 0xEF, 0x00, 0x00]
+            for i, val in enumerate(values):
+                msg[i] = val
+        elif command == 'REQUEST_RESET':
+            values = [
+                0xD2, 0x0D, 0x05, 0x39, 0x77, 0x00, 0x00, 0x01,
+                0x23, 0x45, 0x67, 0x89, 0xAB, 0x00, 0x00, 0x00,
+            ]
+            for i, val in enumerate(values):
+                msg[i] = val
+        else:
+            return False
+
+        return self.cypher.encrypt(bytes(msg))

@@ -6,11 +6,15 @@ from bleak import BleakScanner
 
 from term_timer.bluetooth.constants import PREFIX
 from term_timer.bluetooth.drivers import GanGen2Driver
+from term_timer.bluetooth.drivers import GanGen3Driver
+from term_timer.bluetooth.drivers import GanGen4Driver
 
 logger = logging.getLogger(__name__)
 
 DRIVERS = [
     GanGen2Driver,
+    GanGen3Driver,
+    GanGen4Driver,
 ]
 
 
