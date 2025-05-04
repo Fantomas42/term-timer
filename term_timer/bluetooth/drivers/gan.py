@@ -13,38 +13,11 @@ from term_timer.bluetooth.constants import GAN_GEN4_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN4_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN4_STATE_CHARACTERISTIC
 from term_timer.bluetooth.constants import MOYU_ENCRYPTION_KEY
+from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.facelets import to_kociemba_facelets
 from term_timer.bluetooth.message import GanProtocolMessage
 from term_timer.bluetooth.salt import get_salt
-
-
-class Driver:
-    service_uid = ''
-    state_characteristic_uid = ''
-    command_characteristic_uid = ''
-
-    def __init__(self, client, device):
-        self.client = client
-        self.device = device
-
-        self.events = []
-        self.cube_timestamp = 0
-
-        self.cypher = self.init_cypher()
-
-    def init_cypher(self):
-        return None
-
-    def send_command_handler(self, command: str) -> bool:
-        raise NotImplementedError
-
-    def notification_handler(self, sender, data) -> bool:
-        raise NotImplementedError
-
-    def add_event(self, store, event):
-        store.append(event)
-        self.events.append(event)
 
 
 class GanGen2Driver(Driver):
