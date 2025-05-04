@@ -5,6 +5,7 @@ from random import seed
 from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.console import console
+from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
 from term_timer.stats import StatisticsReporter
@@ -16,6 +17,11 @@ async def timer() -> int:
 
     options = get_arguments()
     command = COMMAND_RESOLUTIONS.get(options.command, options.command)
+
+    if command == 'import':
+        Importer().import_file(options.source)
+
+        return 0
 
     cube = options.cube
 

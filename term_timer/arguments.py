@@ -13,6 +13,7 @@ COMMAND_ALIASES = {
     'graph': ['gr', 'g'],
     'cfop': ['op', 'c'],
     'detail': ['dt', 'd'],
+    'import': ['im', 'i'],
 }
 
 COMMAND_RESOLUTIONS = {}
@@ -314,6 +315,21 @@ def cfop_arguments(subparsers):
     return parser
 
 
+def import_arguments(subparsers):
+    parser = subparsers.add_parser(
+        'import',
+        help='Import external solves',
+        description='Import solves recorded in csTimer or Cubeast.',
+        aliases=COMMAND_ALIASES['import'],
+    )
+    parser.add_argument(
+        'source',
+        help='Solve file to import',
+    )
+
+    return parser
+
+
 def detail_arguments(subparsers):
     parser = subparsers.add_parser(
         'detail',
@@ -372,6 +388,7 @@ def get_arguments() -> Any:
     graph_arguments(subparsers)
     cfop_arguments(subparsers)
     detail_arguments(subparsers)
+    import_arguments(subparsers)
 
     args = parser.parse_args(sys.argv[1:])
 
