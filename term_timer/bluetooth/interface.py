@@ -8,6 +8,7 @@ from term_timer.bluetooth.constants import PREFIX
 from term_timer.bluetooth.drivers.gan import GanGen2Driver
 from term_timer.bluetooth.drivers.gan import GanGen3Driver
 from term_timer.bluetooth.drivers.gan import GanGen4Driver
+from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,7 @@ DRIVERS = [
     GanGen2Driver,
     GanGen3Driver,
     GanGen4Driver,
+    MoyuWeilong10Driver,
 ]
 
 
