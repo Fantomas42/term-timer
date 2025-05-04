@@ -100,11 +100,15 @@ following projects, without which Term Timer would not have been possible:
 * [trincaog's magiccube][2] for providing an excellent foundation for cube
   modeling and manipulation.
 
+* [afedotov's gan-web-bluetooth][3] for his clean and well-structured
+  implementation of the GAN Bluetooth cubes.
+
 Their outstanding work and contributions to the Rubik's Cube programming
 community have been invaluable to this project.
 
 [1]: https://github.com/hkociemba/RubiksCube-TwophaseSolver
 [2]: https://github.com/trincaog/magiccube/
+[3]: https://github.com/afedotov/gan-web-bluetooth/
 
 ## Demos
 
