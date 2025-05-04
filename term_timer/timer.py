@@ -180,6 +180,9 @@ class Timer:
                     self.bluetooth_hardware['battery_level'] = event['level']
 
                 elif event_name == 'facelets':
+                    if self.facelets_received_event.is_set():
+                        continue
+
                     self.bluetooth_cube = VCube(event['facelets'])
 
                     if not self.bluetooth_cube.is_solved:
