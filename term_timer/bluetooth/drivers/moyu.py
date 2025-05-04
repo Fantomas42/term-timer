@@ -1,3 +1,8 @@
+"""
+References :
+  - https://github.com/lukeburong/weilong-v10-ai-protocol
+"""
+
 from term_timer.bluetooth.constants import MOYU_WEILONG_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import MOYU_WEILONG_ENCRYPTION_KEY
 from term_timer.bluetooth.constants import MOYU_WEILONG_SERVICE

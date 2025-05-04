@@ -1,3 +1,8 @@
+"""
+References :
+  - https://github.com/afedotov/gan-web-bluetooth
+"""
+
 import time
 from datetime import datetime
 from datetime import timezone
