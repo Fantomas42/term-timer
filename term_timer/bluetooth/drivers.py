@@ -174,8 +174,10 @@ class GanGen2Driver(Driver):
 
         elif event == 0x04:  # Facelets
             serial = msg.get_bit_word(4, 8)
+
             if self.last_serial == -1:
                 self.last_serial = serial
+
             # Corner/Edge Permutation/Orientation
             cp = []
             co = []
@@ -215,6 +217,7 @@ class GanGen2Driver(Driver):
             sw_major = msg.get_bit_word(24, 8)
             sw_minor = msg.get_bit_word(32, 8)
             gyro_supported = msg.get_bit_word(104, 1)
+
             hardware_name = ''
             for i in range(8):
                 hardware_name += chr(msg.get_bit_word(i * 8 + 40, 8))
@@ -249,7 +252,7 @@ class GanGen2Driver(Driver):
             }
             self.add_event(events, payload)
 
-            self.client.disconnect()
+            await self.client.disconnect()
 
         return events
 
@@ -261,6 +264,152 @@ class GanGen3Driver(GanGen2Driver):
     service_uid = GAN_GEN3_SERVICE
     state_characteristic_uid = GAN_GEN3_STATE_CHARACTERISTIC
     command_characteristic_uid = GAN_GEN3_COMMAND_CHARACTERISTIC
+
+    async def event_handler(self, sender, data):  # noqa: ARG002
+        """Process notifications from the cube"""
+        clock = time.perf_counter_ns()
+        timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        events = []
+
+        msg = GanProtocolMessage(
+            self.cypher.decrypt(data),
+        )
+        magic = msg.get_bit_word(0, 8)
+        event = msg.get_bit_word(8, 8)
+        data_size = msg.get_bit_word(16, 8)
+
+        if magic != 0x55 or data_size <= 0:
+            return events
+
+        if event == 0x01:  # Move
+            serial = msg.get_bit_word(56, 16, little_endian=True)
+            cube_timestamp = msg.get_bit_word(24, 32, little_endian=True)
+
+            direction = msg.get_bit_word(72, 2)
+            face = [2, 32, 8, 1, 16, 4].index(msg.get_bit_word(74, 6))
+            move = 'URFDLB'[face] + " '"[direction]
+
+            if face >= 0:
+                payload = {
+                    'event': 'move',
+                    'clock': clock,
+                    'timestamp': timestamp,
+                    'serial': serial,
+                    'localTimestamp': timestamp,
+                    'cubeTimestamp': cube_timestamp,
+                    'face': face,
+                    'direction': direction,
+                    'move': move.strip(),
+                }
+                self.add_event(events, payload)
+
+        elif event == 0x02:  # Facelets
+            serial = msg.get_bit_word(24, 16, little_endian=True)
+
+            if self.last_serial == -1:
+                self.last_serial = serial
+
+            # Corner/Edge Permutation/Orientation
+            cp = []
+            co = []
+            ep = []
+            eo = []
+            # Corners
+            for i in range(7):
+                cp.append(msg.get_bit_word(40 + i * 3, 3))
+                co.append(msg.get_bit_word(61 + i * 2, 2))
+            cp.append(28 - sum(cp))
+            co.append((3 - (sum(co) % 3)) % 3)
+            # Edges
+            for i in range(11):
+                ep.append(msg.get_bit_word(77 + i * 4, 4))
+                eo.append(msg.get_bit_word(121 + i, 1))
+            ep.append(66 - sum(ep))
+            eo.append((2 - (sum(eo) % 2)) % 2)
+
+            payload = {
+                'event': 'facelets',
+                'clock': clock,
+                'timestamp': timestamp,
+                'serial': serial,
+                'facelets': to_kociemba_facelets(cp, co, ep, eo),
+                'state': {
+                    'CP': cp,
+                    'CO': co,
+                    'EP': ep,
+                    'EO': eo,
+                },
+            }
+            self.add_event(events, payload)
+
+        elif event == 0x06:  # Move history
+            start_serial = msg.get_bit_word(24, 8)
+            count = (data_size - 1) * 2
+
+            for i in range(count):
+                direction = msg.get_bit_word(35 + 4 * i, 1)
+                face = [1, 5, 3, 0, 4, 2].index(msg.get_bit_word(32 + 4 * i, 3))
+                move = 'URFDLB'[face] + " '"[direction]
+
+                if face >= 0:
+                    payload = {
+                        'event': 'move-history',
+                        'clock': clock,
+                        'timestamp': timestamp,
+                        'serial': (start_serial - i) & 0xFF,
+                        'localTimestamp': None,
+                        'cubeTimestamp': None,
+                        'face': face,
+                        'direction': direction,
+                        'move': move.strip(),
+                    }
+                    self.add_event(events, payload)
+
+        elif event == 0x07:  # Hardware
+            sw_major = msg.get_bit_word(72, 4)
+            sw_minor = msg.get_bit_word(76, 4)
+            hw_major = msg.get_bit_word(80, 4)
+            hw_minor = msg.get_bit_word(84, 4)
+
+            hardware_name = ''
+            for i in range(5):
+                hardware_name += chr(msg.get_bit_word(i * 8 + 32, 8))
+
+            payload = {
+                'event': 'hardware',
+                'clock': clock,
+                'timestamp': timestamp,
+                'hardware_name': hardware_name,
+                'hardware_version': f'{hw_major}.{hw_minor}',
+                'software_version': f'{sw_major}.{sw_minor}',
+                'gyroscope_supported': False,
+            }
+            self.add_event(events, payload)
+
+        elif event == 0x10:  # Battery
+            battery_level = msg.get_bit_word(24, 8)
+
+            payload = {
+                'event': 'battery',
+                'clock': clock,
+                'timestamp': timestamp,
+                'level': min(battery_level, 100),
+            }
+            self.add_event(events, payload)
+
+        elif event == 0x11:  # Disconnect
+            payload = {
+                'event': 'disconnect',
+                'clock': clock,
+                'timestamp': timestamp,
+            }
+            self.add_event(events, payload)
+
+            await self.client.disconnect()
+
+        return events
+
 
     def send_command_handler(self, command: str):
         msg = bytearray(16)
