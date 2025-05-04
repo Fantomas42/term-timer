@@ -123,12 +123,13 @@ community have been invaluable to this project.
 ### General
 
 ```console
-Usage: term-timer [-h] {solve,sv,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d} ...
+Usage: term-timer [-h]
+                  {solve,sv,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d,import,im,i} ...
 
 Speed cubing timer on your terminal.
 
 Positional Arguments:
-  {solve,sv,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d}
+  {solve,sv,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d,import,im,i}
                         Available commands.
     solve (sv, t)       Start the timer and record solves.
     list (ls, l)        Display recorded solves.
@@ -136,6 +137,7 @@ Positional Arguments:
     graph (gr, g)       Display trend graph.
     cfop (op, c)        Display CFOP cases.
     detail (dt, d)      Display detailed information about solves.
+    import (im, i)      Import external solves.
 
 Options:
   -h, --help            Show this help message and exit.
