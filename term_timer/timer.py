@@ -90,7 +90,7 @@ class Timer:
             console.print(
                 '[bluetooth]📡Bluetooth:[/bluetooth] '
                 'Scanning for Bluetooth cube for '
-                f'{ self.bluetooth_interface.scan_timeout}s...',
+                f'{ self.bluetooth_interface.scan_timeout }s...',
                 end='',
             )
 

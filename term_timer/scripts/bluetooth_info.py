@@ -1,6 +1,10 @@
 import asyncio
 import contextlib
 import logging
+import logging.config
+import os
+import sys
+from pprint import pformat
 
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
@@ -8,6 +12,7 @@ from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.slice import reslice_moves
 
+from term_timer.argparser import ArgumentParser
 from term_timer.bluetooth.facelets import to_magiccube_facelets
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
@@ -16,13 +21,60 @@ from term_timer.magic_cube import Cube
 
 logger = logging.getLogger(__name__)
 
+LOGGING_CONF = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'simpleFormatter': {
+            'class': 'logging.Formatter',
+            'format': '[PID %(process)s@%(asctime)s] '
+                      '%(levelname)-7s %(message)s',
+        },
+        'consoleFormatter': {
+            'class': 'logging.Formatter',
+            'format': '%(levelname)-7s %(message)s',
+        },
+    },
+    'handlers': {
+        'fileHandler': {
+            'formatter': 'simpleFormatter',
+            'level': 'DEBUG',
+            'backupCount': 5,
+            'maxBytes': 50000000,
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join('/tmp/', 'term-timer-debug.log'),
+        },
+        'consoleHandler': {
+            'formatter': 'consoleFormatter',
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+        },
+    },
+    'loggers': {
+        'bleak': {
+            'level': 'DEBUG',
+            'handlers': [
+                'fileHandler',
+            ],
+        },
+        'term_timer': {
+            'level': 'DEBUG',
+            'handlers': [
+                'consoleHandler',
+                'fileHandler',
+            ],
+        },
+    },
+}
 
-async def consumer_cb(queue):
+
+async def consumer_cb(queue, show_cube):
     internal_cube = None
     moves = []
 
-    def show_cube(cube):
-        console.print(str(cube), end='')
+    def print_cube(cube):
+        if show_cube:
+            console.print(str(cube), end='')
 
     while True:
         events = await queue.get()
@@ -52,6 +104,10 @@ async def consumer_cb(queue):
                     'CONSUMER: Battery: %s%%',
                     event['level'],
                 )
+            elif event_name == 'gyro':
+                logger.info(
+                    'CONSUMER: Gyroscope event',
+                )
             elif event_name == 'facelets':
                 internal_cube = Cube(
                     3,
@@ -60,7 +116,7 @@ async def consumer_cb(queue):
                 logger.info(
                     'CONSUMER: Facelets initialized',
                 )
-                show_cube(internal_cube)
+                print_cube(internal_cube)
 
             elif event_name == 'move':
                 logger.info(
@@ -72,7 +128,8 @@ async def consumer_cb(queue):
                 moves.append(event['move'])
                 if internal_cube:
                     internal_cube.rotate(event['move'])
-                    show_cube(internal_cube)
+                    print_cube(internal_cube)
+
                     algo = parse_moves(moves)
                     recon = algo.transform(
                         reslice_moves,
@@ -83,28 +140,40 @@ async def consumer_cb(queue):
                     )
                     logger.info('MOVES: %s', algo)
                     logger.info('RECON: %s', recon)
+            else:
+                logger.info(
+                    'CONSUMER: UNKNOWN\n%s',
+                    pformat(event),
+                )
 
 
-async def client_cb(queue):
+async def client_cb(queue, time):
 
-    async with BluetoothInterface(queue) as bi:
+    bluetooth_interface = BluetoothInterface(
+        queue,
+    )
 
-        # Initialize/reset the cube
-        await bi.send_command('REQUEST_HARDWARE')
-        await bi.send_command('REQUEST_BATTERY')
-        await bi.send_command('REQUEST_FACELETS')
+    device = await bluetooth_interface.scan()
 
-        logger.info('Free play for 10s')
-        await asyncio.sleep(10.0)
+    await bluetooth_interface.__aenter__(device)  # noqa: PLC2801
 
+    # Initialize/reset the cube
+    await bluetooth_interface.send_command('REQUEST_HARDWARE')
+    await bluetooth_interface.send_command('REQUEST_BATTERY')
+    await bluetooth_interface.send_command('REQUEST_FACELETS')
+
+    logger.info('Free play for %ss', time)
+    await asyncio.sleep(time)
+
+    await bluetooth_interface.__aexit__(None, None, None)
     logger.warning('Interface disconnected')
 
 
-async def run():
+async def run(options):
     queue = asyncio.Queue()
 
-    client = client_cb(queue)
-    consumer = consumer_cb(queue)
+    client = client_cb(queue, options.time)
+    consumer = consumer_cb(queue, options.show_cube)
 
     with contextlib.suppress(CubeNotFoundError):
         await asyncio.gather(client, consumer)
@@ -113,8 +182,31 @@ async def run():
 
 
 def main():
-    logging.basicConfig(
-        format='%(levelname)s: %(message)s',
-        level=logging.INFO,
+    logging.config.dictConfig(LOGGING_CONF)
+
+    parser = ArgumentParser(
+        description='Debug bluetooth devices.',
     )
-    asyncio.run(run())
+
+    parser.add_argument(
+        '-t', '--time',
+        type=int,
+        default=10,
+        metavar='SECONDS',
+        help=(
+            'Set the countdown before disconnecting.\n'
+            'Default: 10.'
+        ),
+    )
+    parser.add_argument(
+        '-p', '--show-cube',
+        action='store_true',
+        help=(
+            'Display the cube state.\n'
+            'Default: False.'
+        ),
+    )
+
+    args = parser.parse_args(sys.argv[1:])
+
+    asyncio.run(run(args))
