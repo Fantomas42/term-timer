@@ -227,8 +227,8 @@ class GanGen2Driver(Driver):
                 'clock': clock,
                 'timestamp': timestamp,
                 'hardware_name': hardware_name,
-                'hardware_version': f'{hw_major}.{hw_minor}',
-                'software_version': f'{sw_major}.{sw_minor}',
+                'hardware_version': f'{ hw_major }.{ hw_minor }',
+                'software_version': f'{ sw_major }.{ sw_minor }',
                 'gyroscope_supported': bool(gyro_supported),
             }
             self.add_event(events, payload)
@@ -381,8 +381,8 @@ class GanGen3Driver(GanGen2Driver):
                 'clock': clock,
                 'timestamp': timestamp,
                 'hardware_name': hardware_name,
-                'hardware_version': f'{hw_major}.{hw_minor}',
-                'software_version': f'{sw_major}.{sw_minor}',
+                'hardware_version': f'{ hw_major }.{ hw_minor }',
+                'software_version': f'{ sw_major }.{ sw_minor }',
                 'gyroscope_supported': False,
             }
             self.add_event(events, payload)
@@ -550,7 +550,7 @@ class GanGen4Driver(GanGen2Driver):
                     'event': 'hardware',
                     'clock': clock,
                     'timestamp': timestamp,
-                    'product_date': f'{year:04d}-{month:02d}-{day:02d}',
+                    'product_date': f'{ year:04d}-{ month:02d}-{ day:02d}',
                 }
                 self.add_event(events, payload)
             elif event == 0xFC:  # Hardware name
@@ -562,6 +562,7 @@ class GanGen4Driver(GanGen2Driver):
                     'clock': clock,
                     'timestamp': timestamp,
                     'hardware_name': hardware_name,
+                    'gyroscope_supported': 'GAN12uiM' in hardware_name,
                 }
                 self.add_event(events, payload)
             elif event == 0xFD:  # Software version
@@ -581,7 +582,7 @@ class GanGen4Driver(GanGen2Driver):
                 payload = {
                     'event': 'hardware',
                     'clock': clock,
-                    'hardware_version': f'{hw_major}.{hw_minor}',
+                    'hardware_version': f'{ hw_major }.{ hw_minor }',
                 }
                 self.add_event(events, payload)
 
