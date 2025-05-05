@@ -322,15 +322,18 @@ class StatisticsReporter(Statistics):
         max_count = computing_padding(size) + 1
 
         if not limit:
-            limit = size
+            s = slice(None, None)
+        elif limit > 0:
+            s = slice(None, limit)
+        else:
+            s = slice(limit, None)
+
+        indices = range(*s.indices(size))
 
         if sorting == 'time':
             self.stack = sorted(self.stack, key=lambda x: x.time, reverse=True)
 
-        for i in range(limit):
-            if i >= size:
-                return
-
+        for i in indices:
             solve = self.stack[size - (i + 1)]
             index = f'#{ size - i}'
             date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
