@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 LOGGING_CONF = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'simpleFormatter': {
             'class': 'logging.Formatter',
