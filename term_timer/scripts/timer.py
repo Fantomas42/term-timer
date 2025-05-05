@@ -1,19 +1,20 @@
 import asyncio
-import logging
 from random import seed
 
 from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
+from term_timer.config import DEBUG
 from term_timer.console import console
 from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
+from term_timer.logger import configure_logging
 from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
 
 
 async def timer() -> int:
-    logging.disable(logging.INFO)
+    configure_logging()
 
     options = get_arguments()
     command = COMMAND_RESOLUTIONS.get(options.command, options.command)
@@ -113,4 +114,4 @@ async def timer() -> int:
 
 
 def main() -> int:
-    return asyncio.run(timer())
+    return asyncio.run(timer(), debug=DEBUG)

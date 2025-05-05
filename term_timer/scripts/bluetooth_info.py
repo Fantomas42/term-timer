@@ -209,4 +209,4 @@ def main():
 
     args = parser.parse_args(sys.argv[1:])
 
-    asyncio.run(run(args))
+    asyncio.run(run(args), debug=True)

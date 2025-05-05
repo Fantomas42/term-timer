@@ -56,4 +56,4 @@ CUBE_ORIENTATION = parse_moves(
 
 CUBE_METHOD = CUBE_CONFIG.get('method')
 
-DEBUG = os.getenv('TERM_TIMER_DEBUG', None)
+DEBUG = bool(os.getenv('TERM_TIMER_DEBUG', None))
