@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import suppress
 from random import seed
 
 from term_timer.arguments import COMMAND_RESOLUTIONS
@@ -114,4 +115,5 @@ async def timer() -> int:
 
 
 def main() -> int:
-    return asyncio.run(timer(), debug=DEBUG)
+    with suppress(KeyboardInterrupt):
+        return asyncio.run(timer(), debug=DEBUG)
