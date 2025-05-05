@@ -1,9 +1,9 @@
 import asyncio
-import contextlib
 import logging
 import logging.config
 import os
 import sys
+from contextlib import suppress
 from pprint import pformat
 
 from cubing_algs.parsing import parse_moves
@@ -175,7 +175,7 @@ async def run(options):
     client = client_cb(queue, options.time)
     consumer = consumer_cb(queue, options.show_cube)
 
-    with contextlib.suppress(CubeNotFoundError):
+    with suppress(CubeNotFoundError):
         await asyncio.gather(client, consumer)
 
     logger.info('Bye bye')
