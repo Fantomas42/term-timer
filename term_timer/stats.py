@@ -328,14 +328,19 @@ class StatisticsReporter(Statistics):
         else:
             s = slice(limit, None)
 
+        indexed_solves = [
+            (size - i, self.stack[size - (i + 1)])
+            for i in range(size)
+        ]
+
         indices = range(*s.indices(size))
 
         if sorting == 'time':
-            self.stack = sorted(self.stack, key=lambda x: x.time, reverse=True)
+            indexed_solves.sort(key=lambda x: x[1].time)
 
-        for i in indices:
-            solve = self.stack[size - (i + 1)]
-            index = f'#{ size - i}'
+        for indice in indices:
+            original_index, solve = indexed_solves[indice]
+            index = f'#{ original_index }'
             date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
             header = f'[stats]{ index:{" "}>{max_count}}[/stats]'
