@@ -3,6 +3,8 @@ class Driver:
     state_characteristic_uid = ''
     command_characteristic_uid = ''
 
+    disable_gyro = True
+
     def __init__(self, client, device):
         self.client = client
         self.device = device

@@ -84,6 +84,8 @@ class GanGen2Driver(Driver):
         event = msg.get_bit_word(0, 4)
 
         if event == 0x01:  # Gyroscope
+            if self.disable_gyro:
+                return []
             # Orientation Quaternion
             qw = msg.get_bit_word(4, 16)
             qx = msg.get_bit_word(20, 16)
@@ -560,6 +562,8 @@ class GanGen4Driver(GanGen2Driver):
                 self.add_event(events, payload)
 
         elif event == 0xEC:  # Gyroscope
+            if self.disable_gyro:
+                return []
             # Orientation Quaternion
             qw = msg.get_bit_word(16, 16)
             qx = msg.get_bit_word(32, 16)
