@@ -6,6 +6,7 @@ from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.config import DEBUG
 from term_timer.console import console
+from term_timer.exporters import Exporter
 from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
@@ -103,6 +104,9 @@ def tools(command, options):
     if command == 'detail':
         for solve_id in options.solves:
             session_stats.detail(solve_id, options.method)
+
+    if command == 'export':
+        Exporter().export_html(session_stats)
 
     return 0
 
