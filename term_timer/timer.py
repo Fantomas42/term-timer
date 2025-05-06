@@ -676,8 +676,9 @@ class Timer:
 
         moves = []
         if self.moves:
+            first_time = self.moves[0]['time']
             for move in self.moves:
-                timing = int((move['time'] - self.start_time) / MS_TO_NS_FACTOR)
+                timing = int((move['time'] - first_time) / MS_TO_NS_FACTOR)
                 moves.append(f'{ move["move"] }@{ timing }')
 
         solve = Solve(
