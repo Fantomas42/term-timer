@@ -297,7 +297,7 @@ class Timer:
             except asyncio.TimeoutError:  # noqa UP041
                 ch = ''
             except Exception as e:
-                print(f'Error in getch: { e }')
+                logger.exception('Error in getch')
                 ch = ''
             finally:
                 if loop.is_closed():
