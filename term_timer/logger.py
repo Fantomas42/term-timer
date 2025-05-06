@@ -14,9 +14,20 @@ LOGGING_FILE = datetime.now(
 
 LOGGING_PATH = LOGGING_DIR / LOGGING_FILE
 
+
+class DbusSignalFilter(logging.Filter):
+    def filter(self, record):
+        return record.funcName not in {'_parse_msg', 'write_gatt_char'}
+
+
 LOGGING_CONF = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'no_dbus_signal': {
+            '()': DbusSignalFilter,
+        },
+    },
     'formatters': {
         'verbose': {
             'class': 'logging.Formatter',
@@ -32,6 +43,7 @@ LOGGING_CONF = {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': LOGGING_PATH,
+            'filters': ['no_dbus_signal'],
         },
     },
     'loggers': {
