@@ -7,7 +7,7 @@ from term_timer.config import TIMER_CONFIG
 from term_timer.constants import CUBE_SIZES
 
 COMMAND_ALIASES = {
-    'solve': ['sv', 't'],
+    'solve': ['sw', 't'],
     'list': ['ls', 'l'],
     'stats': ['st', 's'],
     'graph': ['gr', 'g'],
