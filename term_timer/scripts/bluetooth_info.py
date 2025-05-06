@@ -114,7 +114,7 @@ async def consumer_cb(queue, show_cube):
                     to_magiccube_facelets(event['facelets']),
                 )
                 logger.info(
-                    'CONSUMER: Facelets initialized',
+                    'CONSUMER: Facelets received',
                 )
                 print_cube(internal_cube)
 
