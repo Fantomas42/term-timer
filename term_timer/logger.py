@@ -29,17 +29,15 @@ LOGGING_CONF = {
         },
     },
     'formatters': {
-        'verbose': {
+        'standard': {
             'class': 'logging.Formatter',
-            'format': (
-                '%(levelname)-8s; [%(process)d]; %(threadName)s; %(name)s; '
-                '%(module)s:%(funcName)s;%(lineno)d: %(message)s'
-            ),
+            'format': '[%(asctime)s] %(levelname)-8s %(name)s: %(message)s',
+            'datefmt': '%H:%M:%S',
         },
     },
     'handlers': {
         'fileHandler': {
-            'formatter': 'verbose',
+            'formatter': 'standard',
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': LOGGING_PATH,
