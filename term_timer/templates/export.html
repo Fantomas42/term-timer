@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Term Timer Statistics Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <style>
+     :root {
+       --primary: #2563eb;
+       --secondary: #64748b;
+       --success: #10b981;
+       --danger: #ef4444;
+       --warning: #f59e0b;
+       --info: #3b82f6;
+       --light: #f8fafc;
+       --dark: #1e293b;
+       --bg-main: #0f172a;
+       --card-bg: #1e293b;
+       --text-primary: #f8fafc;
+       --text-secondary: #94a3b8;
+       --border-color: #334155;
+     }
+
+     * {
+       margin: 0;
+       padding: 0;
+       box-sizing: border-box;
+     }
+
+     body {
+       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+       background-color: var(--bg-main);
+       color: var(--text-primary);
+       line-height: 1.6;
+     }
+
+     .container {
+       /* max-width: 1200px; */
+       margin: 0 auto;
+       padding: 1rem;
+     }
+
+     header {
+       padding: 1.5rem 0;
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       border-bottom: 1px solid var(--border-color);
+       margin-bottom: 2rem;
+     }
+
+     .logo {
+       display: flex;
+       align-items: center;
+       gap: 1rem;
+     }
+
+     .logo h1 {
+       font-size: 1.8rem;
+       font-weight: 700;
+       color: var(--text-primary);
+     }
+
+     .logo i {
+       font-size: 2.5rem;
+       color: var(--primary);
+     }
+
+     .card {
+       background-color: var(--card-bg);
+       border-radius: 0.5rem;
+       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+       padding: 1.5rem;
+       margin-bottom: 1.5rem;
+     }
+
+     .card-header {
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       margin-bottom: 1rem;
+       border-bottom: 1px solid var(--border-color);
+       padding-bottom: 0.75rem;
+     }
+
+     .card-title {
+       font-size: 1.25rem;
+       font-weight: 600;
+       color: var(--text-primary);
+     }
+
+     .card-tool {
+       color: var(--text-secondary);
+       cursor: pointer;
+       transition: color 0.2s;
+     }
+
+     .card-tool:hover {
+       color: var(--text-primary);
+     }
+
+     .stats-grid {
+       display: grid;
+       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+       gap: 1.5rem;
+     }
+
+     .stat-card {
+       display: flex;
+       flex-direction: column;
+       padding: 1rem;
+       background-color: rgba(255, 255, 255, 0.05);
+       border-radius: 0.375rem;
+       transition: transform 0.2s, background-color 0.2s;
+     }
+
+     .stat-card:hover {
+       transform: translateY(-5px);
+       background-color: rgba(255, 255, 255, 0.1);
+     }
+
+     .stat-title {
+       font-size: 0.875rem;
+       color: var(--text-secondary);
+       margin-bottom: 0.5rem;
+     }
+
+     .stat-value {
+       font-size: 1.5rem;
+       font-weight: 700;
+       color: var(--text-primary);
+     }
+
+     .stat-meta {
+       margin-top: 0.5rem;
+       display: flex;
+       align-items: center;
+       gap: 0.5rem;
+       font-size: 0.875rem;
+     }
+
+     .stat-best {
+       color: var(--success);
+     }
+
+     .stat-delta {
+       color: var(--text-secondary);
+     }
+
+     .stat-delta.positive {
+       color: var(--danger);
+     }
+
+     .stat-delta.negative {
+       color: var(--success);
+     }
+
+     .tabs {
+       display: flex;
+       gap: 1rem;
+       margin-bottom: 1rem;
+       border-bottom: 1px solid var(--border-color);
+     }
+
+     .tab {
+       padding: 0.75rem 1rem;
+       cursor: pointer;
+       border-bottom: 2px solid transparent;
+       color: var(--text-secondary);
+       transition: all 0.2s;
+     }
+
+     .tab.active {
+       color: var(--primary);
+       border-bottom-color: var(--primary);
+     }
+
+     .tab:hover:not(.active) {
+       color: var(--text-primary);
+       border-bottom-color: var(--text-primary);
+     }
+
+     .tab-content {
+       display: none;
+     }
+
+     .tab-content.active {
+       display: block;
+     }
+
+     .solve-list {
+       width: 100%;
+       border-collapse: collapse;
+     }
+
+     .solve-list th, .solve-list td {
+       padding: 0.75rem 1rem;
+       text-align: left;
+       border-bottom: 1px solid var(--border-color);
+     }
+
+     .solve-list th {
+       color: var(--text-secondary);
+       font-weight: 500;
+     }
+
+     .solve-list td {
+       color: var(--text-primary);
+     }
+
+     .solve-list tr:hover {
+       background-color: rgba(255, 255, 255, 0.05);
+     }
+
+     .time-best {
+       color: var(--success);
+       font-weight: 600;
+     }
+
+     .time-worst {
+       color: var(--danger);
+       font-weight: 600;
+     }
+
+     .solve-date {
+       color: var(--text-secondary);
+       font-size: 0.875rem;
+     }
+
+     .solve-scramble {
+       max-width: 300px;
+       overflow: hidden;
+       text-overflow: ellipsis;
+       white-space: nowrap;
+       color: var(--text-secondary);
+       font-size: 0.875rem;
+     }
+
+     .solve-detail-btn {
+       background-color: rgba(37, 99, 235, 0.1);
+       color: var(--primary);
+       border: none;
+       padding: 0.25rem 0.5rem;
+       border-radius: 0.25rem;
+       cursor: pointer;
+       transition: background-color 0.2s;
+       font-size: 0.875rem;
+     }
+
+     .solve-detail-btn:hover {
+       background-color: rgba(37, 99, 235, 0.2);
+     }
+
+     .cfop-table {
+       width: 100%;
+       border-collapse: collapse;
+     }
+
+     .cfop-table th, .cfop-table td {
+       padding: 0.5rem;
+       text-align: left;
+       border-bottom: 1px solid var(--border-color);
+     }
+
+     .cfop-table th {
+       color: var(--text-secondary);
+       font-weight: 500;
+     }
+
+     .cfop-table td {
+       color: var(--text-primary);
+     }
+
+     .cfop-case {
+       display: flex;
+       align-items: center;
+       gap: 0.5rem;
+     }
+
+     .cfop-case-img {
+       width: 30px;
+       height: 30px;
+       background-color: rgba(255, 255, 255, 0.1);
+       border-radius: 4px;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       font-size: 0.75rem;
+     }
+
+     .frequency-higher {
+       color: var(--success);
+     }
+
+     .frequency-lower {
+       color: var(--danger);
+     }
+
+     .chart-container {
+       width: 100%;
+       height: 300px;
+       position: relative;
+     }
+
+     .distribution-chart {
+       width: 100%;
+       display: flex;
+       align-items: flex-end;
+       height: 200px;
+       gap: 4px;
+     }
+
+     .distribution-bar {
+       flex: 1;
+       background-color: var(--primary);
+       min-width: 4px;
+       border-radius: 4px 4px 0 0;
+       position: relative;
+     }
+
+     .distribution-bar:hover {
+       background-color: var(--info);
+     }
+
+     .distribution-bar::after {
+       content: attr(data-value);
+       position: absolute;
+       bottom: -20px;
+       left: 50%;
+       transform: translateX(-50%);
+       font-size: 0.75rem;
+       color: var(--text-secondary);
+     }
+
+     .distribution-time {
+       position: absolute;
+       bottom: -40px;
+       font-size: 0.75rem;
+       color: var(--text-secondary);
+     }
+
+     .method-insights {
+       display: grid;
+       grid-template-columns: repeat(4, 1fr);
+       gap: 1rem;
+     }
+
+     .method-stage {
+       background-color: rgba(255, 255, 255, 0.05);
+       border-radius: 0.375rem;
+       padding: 1rem;
+       text-align: center;
+     }
+
+     .method-stage-title {
+       font-size: 0.875rem;
+       color: var(--text-secondary);
+       margin-bottom: 0.5rem;
+     }
+
+     .method-stage-time {
+       font-size: 1.25rem;
+       font-weight: 600;
+       margin-bottom: 0.25rem;
+     }
+
+     .method-stage-percent {
+       font-size: 0.875rem;
+       color: var(--text-secondary);
+     }
+
+     .progress-bar {
+       width: 100%;
+       height: 6px;
+       background-color: rgba(255, 255, 255, 0.1);
+       border-radius: 3px;
+       margin-top: 0.5rem;
+       overflow: hidden;
+     }
+
+     .progress-fill {
+       height: 100%;
+       border-radius: 3px;
+     }
+
+     .progress-fill.cross {
+       background-color: #10b981;
+     }
+
+     .progress-fill.f2l {
+       background-color: #3b82f6;
+     }
+
+     .progress-fill.oll {
+       background-color: #f59e0b;
+     }
+
+     .progress-fill.pll {
+       background-color: #ef4444;
+     }
+
+     @media (max-width: 768px) {
+       .stats-grid {
+         grid-template-columns: repeat(2, 1fr);
+       }
+
+       .method-insights {
+         grid-template-columns: repeat(2, 1fr);
+       }
+     }
+
+     @media (max-width: 480px) {
+       .stats-grid {
+         grid-template-columns: 1fr;
+       }
+
+       .method-insights {
+         grid-template-columns: 1fr;
+       }
+     }
+     /* Footer */
+     .app-footer {
+       background-color: var(--card-bg);
+       border-top: 1px solid var(--border-color);
+       margin-top: 2rem;
+       padding: 1.5rem 0;
+       color: var(--text-secondary);
+     }
+
+     .footer-container {
+       display: grid;
+       grid-template-columns: repeat(2, 1fr);
+       gap: 2rem;
+       max-width: 1200px;
+       margin: 0 auto;
+       padding: 0 1rem;
+     }
+
+     .footer-section {
+       display: flex;
+       flex-direction: column;
+     }
+
+     .footer-title {
+       font-size: 1rem;
+       font-weight: 600;
+       color: var(--text-primary);
+       margin-bottom: 1rem;
+       padding-bottom: 0.5rem;
+       border-bottom: 1px solid var(--border-color);
+     }
+
+     .footer-info {
+       display: flex;
+       flex-direction: column;
+       gap: 0.5rem;
+     }
+
+     .info-item {
+       display: flex;
+       align-items: center;
+       gap: 0.5rem;
+     }
+
+     .info-item i {
+       color: var(--primary);
+       width: 1rem;
+       text-align: center;
+     }
+
+     .sessions-grid {
+       display: flex;
+       flex-wrap: wrap;
+       gap: 0.5rem;
+     }
+
+     .session-badge {
+       background-color: rgba(37, 99, 235, 0.1);
+       color: var(--primary);
+       padding: 0.25rem 0.5rem;
+       border-radius: 4px;
+       font-size: 0.875rem;
+       display: flex;
+       align-items: center;
+       gap: 0.5rem;
+     }
+
+     .session-count {
+       background-color: var(--primary);
+       color: white;
+       font-size: 0.75rem;
+       padding: 0.125rem 0.375rem;
+       border-radius: 999px;
+     }
+
+     .footer-bottom {
+       max-width: 1200px;
+       margin: 0 auto;
+       padding: 1.5rem 1rem 0;
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       margin-top: 1.5rem;
+       border-top: 1px solid var(--border-color);
+     }
+
+     .copyright {
+       font-size: 0.875rem;
+     }
+
+     .link {
+       color: var(--text-secondary);
+       text-decoration: none;
+       font-size: 0.875rem;
+       transition: color 0.2s;
+     }
+
+     .link:hover {
+       color: var(--primary);
+     }
+
+     @media (max-width: 768px) {
+       .footer-container {
+         grid-template-columns: 1fr;
+         gap: 2rem;
+       }
+
+       .footer-bottom {
+         flex-direction: column;
+         gap: 1rem;
+         text-align: center;
+       }
+     }
+    </style>
+    <script>
+     document.addEventListener('DOMContentLoaded', function() {
+       // Sélectionner tous les onglets et le contenu des onglets
+       const tabs = document.querySelectorAll('.tab');
+       const tabContents = document.querySelectorAll('.tab-content');
+
+       // Ajouter un écouteur d'événement pour chaque onglet
+       tabs.forEach(tab => {
+         tab.addEventListener('click', function() {
+           // Enlever la classe 'active' de tous les onglets
+           tabs.forEach(t => t.classList.remove('active'));
+
+           // Ajouter la classe 'active' à l'onglet actuel
+           this.classList.add('active');
+
+           // Masquer tout le contenu des onglets
+           tabContents.forEach(content => content.classList.remove('active'));
+
+           // Afficher le contenu de l'onglet sélectionné
+           const tabId = this.getAttribute('data-tab');
+           document.getElementById(`${tabId}-tab`).classList.add('active');
+         });
+       });
+
+       // Ajouter des écouteurs d'événements pour les autres boutons interactifs
+       const refreshButton = document.querySelector('.fa-sync-alt');
+       if (refreshButton) {
+         refreshButton.addEventListener('click', function() {
+           // Animation de rotation pour simuler un rafraîchissement
+           this.classList.add('fa-spin');
+           setTimeout(() => {
+             this.classList.remove('fa-spin');
+           }, 1000);
+         });
+       }
+
+       // Gestion des boutons de détails des résolutions
+       const detailButtons = document.querySelectorAll('.solve-detail-btn');
+       detailButtons.forEach(button => {
+         button.addEventListener('click', function() {
+           const solveRow = this.closest('tr');
+           const solveNumber = solveRow.querySelector('td:first-child').textContent;
+           const solveTime = solveRow.querySelector('td:nth-child(2)').textContent;
+           const solveScramble = solveRow.querySelector('.solve-scramble').textContent;
+
+           alert(`Détails de la résolution #${solveNumber}\nTemps: ${solveTime}\nScramble: ${solveScramble}`);
+         });
+       });
+
+       // Initialiser les graphiques
+       initializeProgressChart();
+       initializeDistributionChart();
+     });
+
+     // Fonction pour initialiser le graphique de progression
+     function initializeProgressChart() {
+       const ctx = document.getElementById('progressChart');
+       if (!ctx) return;
+
+       // Données pour le graphique de progression
+       const progressData = {
+         labels: Array.from({length: 25}, (_, i) => `Session ${i+1}`),
+         datasets: [
+           {
+             label: 'Moyenne Ao5',
+             data: generateRandomData(25, 12, 16),
+             borderColor: '#3b82f6',
+             backgroundColor: 'rgba(59, 130, 246, 0.1)',
+             tension: 0.4,
+             borderWidth: 2,
+             fill: true
+           },
+           {
+             label: 'Moyenne Ao12',
+             data: generateRandomData(25, 13, 17),
+             borderColor: '#10b981',
+             backgroundColor: 'rgba(16, 185, 129, 0.1)',
+             tension: 0.4,
+             borderWidth: 2,
+             fill: true
+           },
+           {
+             label: 'Moyenne Ao100',
+             data: generateRandomData(25, 14, 18),
+             borderColor: '#f59e0b',
+             backgroundColor: 'rgba(245, 158, 11, 0.1)',
+             tension: 0.4,
+             borderWidth: 2,
+             fill: true
+           }
+         ]
+       };
+
+       // Configuration du graphique
+       new Chart(ctx, {
+         type: 'line',
+         data: progressData,
+         options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           plugins: {
+             legend: {
+               position: 'top',
+               labels: {
+                 color: '#94a3b8'
+               }
+             },
+             tooltip: {
+               mode: 'index',
+               intersect: false
+             }
+           },
+           scales: {
+             x: {
+               ticks: {
+                 color: '#94a3b8'
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)'
+               }
+             },
+             y: {
+               min: 10,
+               max: 20,
+               ticks: {
+                 color: '#94a3b8'
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)'
+               }
+             }
+           }
+         }
+       });
+     }
+
+     // Fonction pour initialiser le graphique de distribution
+     function initializeDistributionChart() {
+       const ctx = document.getElementById('timeDistributionChart');
+       if (!ctx) return;
+
+       // Créer des données pour la distribution (histogramme)
+       const bins = ['10-11s', '11-12s', '12-13s', '13-14s', '14-15s', '15-16s', '16-17s', '17-18s', '18-19s', '19-20s', '20+s'];
+       const counts = [1, 5, 12, 24, 37, 26, 14, 5, 2, 1, 1];
+
+       // Configuration du graphique
+       new Chart(ctx, {
+         type: 'bar',
+         data: {
+           labels: bins,
+           datasets: [{
+             label: 'Nombre de résolutions',
+             data: counts,
+             backgroundColor: 'rgba(59, 130, 246, 0.7)',
+             borderColor: '#3b82f6',
+             borderWidth: 1
+           }]
+         },
+         options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           plugins: {
+             legend: {
+               display: false
+             },
+             tooltip: {
+               callbacks: {
+                 title: function(tooltipItem) {
+                   return tooltipItem[0].label;
+                 },
+                 label: function(context) {
+                   return `${context.parsed.y} résolutions`;
+                 }
+               }
+             }
+           },
+           scales: {
+             x: {
+               title: {
+                 display: true,
+                 text: 'Temps (secondes)',
+                 color: '#94a3b8'
+               },
+               ticks: {
+                 color: '#94a3b8'
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)'
+               }
+             },
+             y: {
+               title: {
+                 display: true,
+                 text: 'Fréquence',
+                 color: '#94a3b8'
+               },
+               ticks: {
+                 color: '#94a3b8'
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)'
+               }
+             }
+           }
+         }
+       });
+     }
+
+     // Fonction utilitaire pour générer des données aléatoires avec une tendance décroissante
+     function generateRandomData(length, min, max) {
+       // Créer une tendance décroissante progressive
+       const trend = Array.from({length: length}, (_, i) => max - (i * (max - min) / (length * 1.5)));
+
+       // Ajouter de l'aléatoire
+       return trend.map(value => value + (Math.random() - 0.5) * 0.8);
+     }
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo">
+          <i class="fas fa-cube"></i>
+          <h1>Term Timer Stats</h1>
+        </div>
+      </header>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Key Statistics</h2>
+          <div class="card-tool">
+            <i class="fas fa-sync-alt"></i>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-title">Total Solves</div>
+            <div class="stat-value">128</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Total Time</div>
+            <div class="stat-value">5h 23m</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Mean</div>
+            <div class="stat-value">15.32s</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Median</div>
+            <div class="stat-value">14.92s</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Standard Deviation</div>
+            <div class="stat-value">1.85s</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Best</div>
+            <div class="stat-value">10.23s</div>
+            <div class="stat-meta">
+              <span class="stat-best">Best Pa: 10.87s</span>
+              <span class="stat-delta negative">-0.64s</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Worst</div>
+            <div class="stat-value">24.52s</div>
+            <div class="stat-meta">
+              <span class="stat-best">Worst Pa: 22.15s</span>
+              <span class="stat-delta positive">+2.37s</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Current Mo3</div>
+            <div class="stat-value">12.86s</div>
+            <div class="stat-meta">
+              <span class="stat-best">Best: 11.95s</span>
+              <span class="stat-delta positive">+0.91s</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Current Ao5</div>
+            <div class="stat-value">13.54s</div>
+            <div class="stat-meta">
+              <span class="stat-best">Best: 12.28s</span>
+              <span class="stat-delta positive">+1.26s</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Current Ao12</div>
+            <div class="stat-value">14.74s</div>
+            <div class="stat-meta">
+              <span class="stat-best">Best: 13.42s</span>
+              <span class="stat-delta positive">+1.32s</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Current Ao100</div>
+            <div class="stat-value">15.26s</div>
+            <div class="stat-meta">
+              <span class="stat-best">Best: 14.89s</span>
+              <span class="stat-delta positive">+0.37s</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">CFOP Grade</div>
+            <div class="stat-value">B+</div>
+            <div class="stat-meta">
+              <span class="stat-best">Score: 83.5</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Progress Over Time</h2>
+          <div class="card-tool">
+            <i class="fas fa-expand"></i>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="progressChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Time Distribution</h2>
+          <div class="card-tool">
+            <i class="fas fa-sliders-h"></i>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="timeDistributionChart"></canvas>
+        </div>
+      </div>
+
+
+      <div class="card">
+        <div class="tabs">
+          <div class="tab active" data-tab="solves">Solves</div>
+          <div class="tab" data-tab="oll">OLL</div>
+          <div class="tab" data-tab="pll">PLL</div>
+        </div>
+
+        <div class="tab-content active" id="solves-tab">
+          <table class="solve-list">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Time</th>
+                <th>Date</th>
+                <th>Scramble</th>
+                <th>Flag</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>128</td>
+                <td class="time-best">10.23s</td>
+                <td class="solve-date">2025-05-06 14:32</td>
+                <td class="solve-scramble">R' D' F R2 D2 B2 U2 F2 D L2 R2 B' R2 F L' B2 D' B' U2</td>
+                <td>PB</td>
+                <td><button class="solve-detail-btn">Details</button></td>
+              </tr>
+              <tr>
+                <td>127</td>
+                <td>13.85s</td>
+                <td class="solve-date">2025-05-06 14:30</td>
+                <td class="solve-scramble">F' D2 B2 L2 U2 B' L2 B D2 F' U2 F D F U' R F D2 L F'</td>
+                <td></td>
+                <td><button class="solve-detail-btn">Details</button></td>
+              </tr>
+              <tr>
+                <td>126</td>
+                <td>14.49s</td>
+                <td class="solve-date">2025-05-06 14:28</td>
+                <td class="solve-scramble">B2 D B2 U' R2 F2 D2 U B2 U' L F' D B2 R B' F2 L B2 D'</td>
+                <td></td>
+                <td><button class="solve-detail-btn">Details</button></td>
+              </tr>
+              <tr>
+                <td>125</td>
+                <td>15.21s</td>
+                <td class="solve-date">2025-05-06 14:26</td>
+                <td class="solve-scramble">D2 L' F2 D2 L' B2 L D2 L2 F2 D2 F L2 R D' L B F D' U'</td>
+                <td></td>
+                <td><button class="solve-detail-btn">Details</button></td>
+              </tr>
+              <tr>
+                <td>124</td>
+                <td class="time-worst">24.52s</td>
+                <td class="solve-date">2025-05-06 14:24</td>
+                <td class="solve-scramble">B2 U' L2 F2 U' B2 D' L2 U F2 U2 F L' B' U F2 L' D B R U</td>
+                <td>+2</td>
+                <td><button class="solve-detail-btn">Details</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tab-content" id="oll-tab">
+          <table class="cfop-table">
+            <thead>
+              <tr>
+                <th>Case</th>
+                <th>Count</th>
+                <th>Frequency</th>
+                <th>Probability</th>
+                <th>Inspection</th>
+                <th>Execution</th>
+                <th>Time</th>
+                <th>QTM</th>
+                <th>TPS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="cfop-case">
+                    <div class="cfop-case-img">21</div>
+                    <div>OLL 21</div>
+                  </div>
+                </td>
+                <td>14</td>
+                <td class="frequency-higher">10.94%</td>
+                <td>4.17%</td>
+                <td>0.32s</td>
+                <td>0.95s</td>
+                <td>1.27s</td>
+                <td>9.50</td>
+                <td>7.48</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cfop-case">
+                    <div class="cfop-case-img">33</div>
+                    <div>OLL 33</div>
+                  </div>
+                </td>
+                <td>11</td>
+                <td class="frequency-higher">8.59%</td>
+                <td>4.17%</td>
+                <td>0.28s</td>
+                <td>0.88s</td>
+                <td>1.16s</td>
+                <td>8.75</td>
+                <td>7.54</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cfop-case">
+                    <div class="cfop-case-img">45</div>
+                    <div>OLL 45</div>
+                  </div>
+                </td>
+                <td>9</td>
+                <td class="frequency-higher">7.03%</td>
+                <td>4.17%</td>
+                <td>0.41s</td>
+                <td>1.05s</td>
+                <td>1.46s</td>
+                <td>10.25</td>
+                <td>7.02</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cfop-case">
+                    <div class="cfop-case-img">01</div>
+                    <div>OLL 1</div>
+                  </div>
+                </td>
+                <td>3</td>
+                <td class="frequency-lower">2.34%</td>
+                <td>4.17%</td>
+                <td>0.37s</td>
+                <td>1.23s</td>
+                <td>1.60s</td>
+                <td>11.00</td>
+                <td>6.88</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cfop-case">
+                    <div class="cfop-case-img">00</div>
+                    <div>OLL SKIP</div>
+                  </div>
+                </td>
+                <td>2</td>
+                <td class="frequency-higher">1.56%</td>
+                <td>0.36%</td>
+                <td>0.00s</td>
+                <td>0.00s</td>
+                <td>0.00s</td>
+                <td>0.00</td>
+                <td>0.00</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tab-content" id="pll-tab">
+          <table class="cfop-table">
+            <thead>
+              <tr>
+                <th>Case</th>
+                <th>Count</th>
+                <th>Frequency</th>
+                <th>Probability</th>
+                <th>Inspection</th>
+                <th>Execution</th>
+                <th>Time</th>
+                <th>QTM</th>
+                <th>TPS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="cfop-case">
+                    <div class="cfop-case-img">T</div>
+                    <div>PLL T</div>
+                  </div>
+                </td>
+                <td>16</td>
+                <td class="frequency-higher">12.50%</td>
+                <td>4.17%</td>
+                <td>0.21s</td>
+                <td>1.05s</td>
+                <td>1.26s</td>
+                <td>14.00</td>
+                <td>11.11</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cfop-case">
+                    <div class="cfop-case-img">J</div>
+                    <div>PLL Ja</div>
+                  </div>
+                </td>
+                <td>12</td>
+                <td class="frequency-higher">9.38%</td>
+                <td>4.17%</td>
+                <td>0.18s</td>
+                <td>0.98s</td>
+                <td>1.16s</td>
+                <td>13.50</td>
+                <td>11.64</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cfop-case">
+                    <div class="cfop-case-img">U</div>
+                    <div>PLL Ua</div>
+                  </div>
+                </td>
+                <td>12</td>
+                <td class="frequency-higher">9.38%</td>
+                <td>4.17%</td>
+                <td>0.16s</td>
+                <td>0.87s</td>
+                <td>1.03s</td>
+                <td>11.75</td>
+                <td>11.41</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cfop-case">
+                    <div class="cfop-case-img">A</div>
+                    <div>PLL Aa</div>
+                  </div>
+                </td>
+                <td>10</td>
+                <td class="frequency-higher">7.81%</td>
+                <td>4.17%</td>
+                <td>0.19s</td>
+                <td>0.92s</td>
+                <td>1.11s</td>
+                <td>12.25</td>
+                <td>11.04</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cfop-case">
+                    <div class="cfop-case-img">Z</div>
+                    <div>PLL Z</div>
+                  </div>
+                </td>
+                <td>2</td>
+                <td class="frequency-lower">1.56%</td>
+                <td>4.17%</td>
+                <td>0.24s</td>
+                <td>1.45s</td>
+                <td>1.69s</td>
+                <td>17.00</td>
+                <td>10.06</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <footer class="app-footer">
+        <div class="footer-container">
+          <div class="footer-section">
+            <h3 class="footer-title">Report informations</h3>
+            <div class="footer-info">
+              <div class="info-item">
+                <i class="fas fa-cube"></i>
+                <span>Puzzle: 3x3x3</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Generation date: 14:32 7 mai 2025</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-clock"></i>
+                <span>Last solve: 14:32 8 mai 2025</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-title">Sessions</h3>
+            <div class="sessions-grid">
+              <div class="session-badge">Session #1 <span class="session-count">45</span></div>
+              <div class="session-badge">Session #2 <span class="session-count">32</span></div>
+              <div class="session-badge">Session #3 <span class="session-count">51</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div class="copyright">
+            © 2025 Term Timer.
+          </div>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
