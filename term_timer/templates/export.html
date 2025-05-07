@@ -1144,15 +1144,15 @@
             <div class="footer-info">
               <div class="info-item">
                 <i class="fas fa-cube"></i>
-                <span>Puzzle: 3x3x3</span>
+                <span>Puzzle: {{ cube_name }}</span>
               </div>
               <div class="info-item">
                 <i class="fas fa-calendar-alt"></i>
-                <span>Generation date: 14:32 7 mai 2025</span>
+                <span>Generation date: {{ now.strftime('%c') }}</span>
               </div>
               <div class="info-item">
                 <i class="fas fa-clock"></i>
-                <span>Last solve: 14:32 8 mai 2025</span>
+                <span>Last solve: {{ last_solve.datetime.strftime('%c') }}</span>
               </div>
             </div>
           </div>
@@ -1160,16 +1160,19 @@
           <div class="footer-section">
             <h3 class="footer-title">Sessions</h3>
             <div class="sessions-grid">
-              <div class="session-badge">Session #1 <span class="session-count">45</span></div>
-              <div class="session-badge">Session #2 <span class="session-count">32</span></div>
-              <div class="session-badge">Session #3 <span class="session-count">51</span></div>
+              {% for session, count in sessions.items() %}
+                <div class="session-badge">
+                  Session {{ session|default('default', true) }}
+                  <span class="session-count">{{ count }}</span>
+                </div>
+              {% endfor %}
             </div>
           </div>
         </div>
 
         <div class="footer-bottom">
           <div class="copyright">
-            © 2025 Term Timer.
+            © {{ now.strftime('%Y') }} Term Timer.
           </div>
         </div>
       </footer>

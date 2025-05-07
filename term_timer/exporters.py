@@ -18,10 +18,25 @@ TEMPLATES = Environment(
 
 class Exporter:
 
+    def compute_sessions(self):
+        sessions = {}
+        for solve in self.stats.stack:
+            sessions.setdefault(solve.session, 0)
+            sessions[solve.session] += 1
+
+        return sessions
+
     def get_context(self, stats):
-        return {}
+        return {
+            'now': datetime.now(tz=timezone.utc),  # noqa UP017
+            'last_solve': stats.stack[-1],
+            'cube_name': stats.cube_name,
+            'sessions': self.compute_sessions(),
+        }
 
     def export_html(self, stats):
+        self.stats = stats
+
         timestamp = datetime.now(
             tz=timezone.utc,  # noqa: UP017
         ).strftime('%Y%m%d_%H%M%S')
