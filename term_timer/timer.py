@@ -447,11 +447,11 @@ class Timer:
     def reorient(self, algorithm: Algorithm) -> Algorithm:
         if self.cube_orientation:
             new_algorithm = self.cube_orientation + algorithm
-            new_algorithm = new_algorithm.transform(
+            return new_algorithm.transform(
                 degrip_full_moves,
                 remove_final_rotations,
             )
-        return new_algorithm
+        return algorithm
 
     def handle_scrambled(self):
         if self.bluetooth_cube.state == self.facelets_scrambled:
