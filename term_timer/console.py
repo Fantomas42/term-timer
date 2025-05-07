@@ -52,6 +52,8 @@ theme = {
     'red': f'{ RED }',
     'green': f'{ GREEN }',
 
+    'dnf': f'bold { TEXT_LIGHT } on { RED }',
+
     'mo3': f'bold { ORANGE }',
     'ao5': 'bold #00FFFF',
     'ao12': 'bold #FF00FF',

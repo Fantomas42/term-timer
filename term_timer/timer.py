@@ -434,10 +434,10 @@ class Timer:
             )
 
     @staticmethod
-    def save_line() -> None:
+    def save_line(flag: str) -> None:
         console.print(
             'Press any key to save and continue,',
-            '[b](d)[/b] for DNF,',
+            '[b](d)[/b] for DNF,' if flag != DNF else '[b](o)[/b] for OK',
             '[b](2)[/b] for +2,',
             '[b](z)[/b] to cancel,',
             '[b](q)[/b] to save and quit.',
@@ -501,11 +501,19 @@ class Timer:
         self.clear_line(full=True)
 
         if solve.raw_moves:
-            console.print(solve.method_line, end='')
-            console.print(
-                f'[analysis]Analysis #{ len(self.stack) }:[/analysis] '
-                f'{ solve.report_line }',
-            )
+            if solve.flag != DNF:
+                console.print(solve.method_line, end='')
+                console.print(
+                    f'[analysis]Analysis #{ len(self.stack) }:[/analysis] '
+                    f'{ solve.report_line }',
+                )
+            else:
+                console.print(
+                    f'[duration]Duration #{ len(self.stack) }:[/duration]',
+                    f'[result]{ format_time(self.elapsed_time) }[/result]',
+                    '[dnf]DNF[/dnf]',
+                )
+                return
 
         extra = ''
         if new_stats.total > 1:
@@ -684,17 +692,21 @@ class Timer:
 
         self.elapsed_time = self.end_time - self.start_time
 
+        flag = ''
         moves = []
         if self.moves:
             first_time = self.moves[0]['time']
             for move in self.moves:
                 timing = int((move['time'] - first_time) / MS_TO_NS_FACTOR)
                 moves.append(f'{ move["move"] }@{ timing }')
+            if not self.bluetooth_cube.is_solved:
+                flag = DNF
 
         solve = Solve(
             datetime.now(tz=timezone.utc).timestamp(),  # noqa: UP017
             self.elapsed_time,
             str(self.scramble),
+            flag=flag,
             timer='Term-Timer',
             device=(
                 self.bluetooth_interface
@@ -706,12 +718,14 @@ class Timer:
         self.handle_solve(solve)
 
         if not self.free_play:
-            self.save_line()
+            self.save_line(flag)
 
             char = await self.getch()
 
             if char == 'd':
                 self.stack[-1].flag = DNF
+            elif char == 'o':
+                self.stack[-1].flag = ''
             elif char == '2':
                 self.stack[-1].flag = PLUS_TWO
             elif char == 'z':
