@@ -20,6 +20,7 @@ Practice your speed cubing skills on your terminal, for a full 80's vibe.
 - Easy white cross
 - Cube orientation control
 - Seed control
+- Full offline application
 - csTimer and Cubeast import
 
 ## Short demo
@@ -34,10 +35,10 @@ Start timing 3x3x3 solves :
 term-timer solve
 ```
 
-Start timing showing the scrambled cube :
+Start timing in Bluetooth showing the scrambled cube :
 
 ```console
-term-timer solve -p
+term-timer solve -bp
 ```
 
 Start timing 2 solves of 4x4x4 in free-play :
