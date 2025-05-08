@@ -659,7 +659,6 @@
        const bins = {{ distribution.labels|tojson }};
        const counts = {{ distribution.counts|tojson }};
 
-       // Configuration du graphique
        new Chart(ctx, {
          type: 'bar',
          data: {
@@ -757,72 +756,86 @@
             <div class="stat-title">Standard Deviation</div>
             <div class="stat-value">{{ stats.stdev|format_time }}</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-title">Best</div>
-            <div class="stat-value">{{ stats.best|format_time }}</div>
-            <div class="stat-meta">
-              <span class="stat-best">BPA: {{ stats.bpa|format_time }}</span>
-              {% set delta = (stats.bpa - stats.best)|format_delta %}
-              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
-                {{ delta }}
-              </span>
+          {% if stats.total >= 2 %}
+            <div class="stat-card">
+              <div class="stat-title">Best</div>
+              <div class="stat-value">{{ stats.best|format_time }}</div>
+              {% if stats.total >= 3 %}
+                <div class="stat-meta">
+                  <span class="stat-best">BPA: {{ stats.bpa|format_time }}</span>
+                  {% set delta = (stats.bpa - stats.best)|format_delta %}
+                  <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                    {{ delta }}
+                  </span>
+                </div>
+              {% endif %}
             </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-title">Worst</div>
-            <div class="stat-value">{{ stats.worst|format_time }}</div>
-            <div class="stat-meta">
-              <span class="stat-worst">WPA: {{ stats.wpa|format_time }}</span>
-              {% set delta = (stats.wpa - stats.worst)|format_delta %}
-              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
-                {{ delta }}
-              </span>
+            <div class="stat-card">
+              <div class="stat-title">Worst</div>
+              <div class="stat-value">{{ stats.worst|format_time }}</div>
+              {% if stats.total >= 3 %}
+                <div class="stat-meta">
+                  <span class="stat-worst">WPA: {{ stats.wpa|format_time }}</span>
+                  {% set delta = (stats.wpa - stats.worst)|format_delta %}
+                  <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                    {{ delta }}
+                  </span>
+                </div>
+              {% endif %}
             </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-title">Current Mo3</div>
-            <div class="stat-value">{{ stats.mo3|format_time }}</div>
-            <div class="stat-meta">
-              <span class="stat-best">Best: {{ stats.best_mo3|format_time }}</span>
-              {% set delta = (stats.mo3 - stats.best_mo3)|format_delta %}
-              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
-                {{ delta }}
-              </span>
+          {% endif %}
+          {% if stats.total >= 3 %}
+            <div class="stat-card">
+              <div class="stat-title">Current Mo3</div>
+              <div class="stat-value">{{ stats.mo3|format_time }}</div>
+              <div class="stat-meta">
+                <span class="stat-best">Best: {{ stats.best_mo3|format_time }}</span>
+                {% set delta = (stats.mo3 - stats.best_mo3)|format_delta %}
+                <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                  {{ delta }}
+                </span>
+              </div>
             </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-title">Current Ao5</div>
-            <div class="stat-value">{{ stats.ao5|format_time }}</div>
-            <div class="stat-meta">
-              <span class="stat-best">Best: {{ stats.best_ao5|format_time }}</span>
-              {% set delta = (stats.ao5 - stats.best_ao5)|format_delta %}
-              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
-                {{ delta }}
-              </span>
+          {% endif %}
+          {% if stats.total >= 5 %}
+            <div class="stat-card">
+              <div class="stat-title">Current Ao5</div>
+              <div class="stat-value">{{ stats.ao5|format_time }}</div>
+              <div class="stat-meta">
+                <span class="stat-best">Best: {{ stats.best_ao5|format_time }}</span>
+                {% set delta = (stats.ao5 - stats.best_ao5)|format_delta %}
+                <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                  {{ delta }}
+                </span>
+              </div>
             </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-title">Current Ao12</div>
-            <div class="stat-value">{{ stats.ao12|format_time }}</div>
-            <div class="stat-meta">
-              <span class="stat-best">Best: {{ stats.best_ao12|format_time }}</span>
-              {% set delta = (stats.ao12 - stats.best_ao12)|format_delta %}
-              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
-                {{ delta }}
-              </span>
+          {% endif %}
+          {% if stats.total >= 12 %}
+            <div class="stat-card">
+              <div class="stat-title">Current Ao12</div>
+              <div class="stat-value">{{ stats.ao12|format_time }}</div>
+              <div class="stat-meta">
+                <span class="stat-best">Best: {{ stats.best_ao12|format_time }}</span>
+                {% set delta = (stats.ao12 - stats.best_ao12)|format_delta %}
+                <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                  {{ delta }}
+                </span>
+              </div>
             </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-title">Current Ao100</div>
-            <div class="stat-value">{{ stats.ao100|format_time }}</div>
-            <div class="stat-meta">
-              <span class="stat-best">Best: {{ stats.best_ao100|format_time }}</span>
-              {% set delta = (stats.ao100 - stats.best_ao100)|format_delta %}
-              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
-                {{ delta }}
-              </span>
+          {% endif %}
+          {% if stats.total >= 100 %}
+            <div class="stat-card">
+              <div class="stat-title">Current Ao100</div>
+              <div class="stat-value">{{ stats.ao100|format_time }}</div>
+              <div class="stat-meta">
+                <span class="stat-best">Best: {{ stats.best_ao100|format_time }}</span>
+                {% set delta = (stats.ao100 - stats.best_ao100)|format_delta %}
+                <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                  {{ delta }}
+                </span>
+              </div>
             </div>
-          </div>
+          {% endif %}
           <!-- TODO -->
           <div class="stat-card">
             <div class="stat-title">CFOP Grade</div>
