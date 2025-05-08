@@ -31,7 +31,9 @@ class StatisticsTools:
         self.stack_time = [
             s.final_time for s in stack
         ]
-        self.stack_time_sorted = sorted(self.stack_time)
+        self.stack_time_sorted = sorted(
+            [s for s in self.stack_time if s],
+        )
 
     @staticmethod
     def mo(limit: int, stack_elapsed: list[int]) -> int:
