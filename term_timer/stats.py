@@ -578,13 +578,7 @@ class StatisticsReporter(Statistics):
             )
         console.print(table)
 
-    def cfop(self, oll_only: bool = False, pll_only: bool = False,
-             sorting: str = 'count', ordering: str = 'asc') -> None:
-        console.print('Aggregating cases...', end='')
-
-        if sorting == 'case':
-            sorting = 'label'
-
+    def compute_cfop(self):
         num_processes = max(1, cpu_count() - 1)
 
         with Pool(processes=num_processes) as pool:
@@ -592,13 +586,13 @@ class StatisticsReporter(Statistics):
 
         olls = {}
         plls = {}
-        score_cfop = 0
+        score = 0
 
         for result in results:
             if not result:
                 continue
 
-            score_cfop += result['score_cfop']
+            score += result['score_cfop']
 
             oll_case = result['oll']['case']
             olls.setdefault(
@@ -669,14 +663,31 @@ class StatisticsReporter(Statistics):
             info['tps'] = sum(info['tpss']) / count
             info['etps'] = sum(info['etpss']) / count
 
+        return {
+            'olls': olls,
+            'plls': plls,
+            'total': total,
+            'score': score,
+            'mean': score / total,
+        }
+
+    def cfop(self, oll_only: bool = False, pll_only: bool = False,
+             sorting: str = 'count', ordering: str = 'asc') -> None:
+        if sorting == 'case':
+            sorting = 'label'
+
+        console.print('Aggregating cases...', end='')
+
+        cfop = self.compute_cfop()
+
         print('\r', end='')
 
         if not pll_only:
-            self.case_table('OLL', olls, sorting, ordering)
+            self.case_table('OLL', cfop['olls'], sorting, ordering)
         if not oll_only:
-            self.case_table('PLL', plls, sorting, ordering)
+            self.case_table('PLL', cfop['plls'], sorting, ordering)
 
-        mean = score_cfop / total
+        mean = cfop['mean']
         grade = format_grade(mean)
         grade_class = grade.lower()
         grade_line = (
