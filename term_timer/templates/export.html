@@ -21,6 +21,7 @@
        --text-primary: #f8fafc;
        --text-secondary: #94a3b8;
        --border-color: #334155;
+       --pastille: rgba(37, 99, 235, 0.3);
      }
 
      * {
@@ -39,7 +40,7 @@
      .container {
        /* max-width: 1200px; */
        margin: 0 auto;
-       padding: 1rem;
+       padding: 0 1rem;
      }
 
      header {
@@ -144,6 +145,9 @@
      .stat-best {
        color: var(--success);
      }
+     .stat-worst {
+       color: var(--danger);
+     }
 
      .stat-delta {
        color: var(--text-secondary);
@@ -232,7 +236,7 @@
      }
 
      .solve-detail-btn {
-       background-color: rgba(37, 99, 235, 0.5);
+       background-color: var(--pastille);
        color: var(--light);
        border: none;
        padding: 0.25rem 0.5rem;
@@ -244,7 +248,7 @@
      }
 
      .solve-detail-btn:hover {
-       background-color: rgba(37, 99, 235, 0.3);
+       background-color: var(--info)
      }
 
      .cfop-table th, .cfop-table td {
@@ -411,10 +415,6 @@
      }
      /* Footer */
      .app-footer {
-       background-color: var(--card-bg);
-       border-top: 1px solid var(--border-color);
-       margin-top: 2rem;
-       padding: 1.5rem 0;
        color: var(--text-secondary);
      }
 
@@ -459,6 +459,10 @@
        text-align: center;
      }
 
+     .info-item .value {
+       color: var(--light);
+     }
+
      .sessions-grid {
        display: flex;
        flex-wrap: wrap;
@@ -466,8 +470,8 @@
      }
 
      .session-badge {
-       background-color: rgba(37, 99, 235, 0.1);
-       color: var(--primary);
+       background-color: var(--pastille);
+       color: var(--light);
        padding: 0.25rem 0.5rem;
        border-radius: 4px;
        font-size: 0.875rem;
@@ -770,72 +774,91 @@
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-title">Total Solves</div>
-            <div class="stat-value">{{ stats.stack|length }}</div>
+            <div class="stat-value">{{ stats.total }}</div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Total Time</div>
-            <div class="stat-value">5h 23m</div>
+            <div class="stat-value">{{ stats.total_time|format_time }}</div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Mean</div>
-            <div class="stat-value">15.32s</div>
+            <div class="stat-value">{{ stats.mean|format_time }}</div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Median</div>
-            <div class="stat-value">14.92s</div>
+            <div class="stat-value">{{ stats.median|format_time }}</div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Standard Deviation</div>
-            <div class="stat-value">1.85s</div>
+            <div class="stat-value">{{ stats.stdev|format_time }}</div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Best</div>
-            <div class="stat-value">10.23s</div>
+            <div class="stat-value">{{ stats.best|format_time }}</div>
             <div class="stat-meta">
-              <span class="stat-best">Best Pa: 10.87s</span>
-              <span class="stat-delta negative">-0.64s</span>
+              <span class="stat-best">BPA: {{ stats.bpa|format_time }}</span>
+              {% set delta = (stats.bpa - stats.best)|format_delta %}
+              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                {{ delta }}
+              </span>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Worst</div>
-            <div class="stat-value">24.52s</div>
+            <div class="stat-value">{{ stats.worst|format_time }}</div>
             <div class="stat-meta">
-              <span class="stat-best">Worst Pa: 22.15s</span>
-              <span class="stat-delta positive">+2.37s</span>
+              <span class="stat-worst">WPA: {{ stats.wpa|format_time }}</span>
+              {% set delta = (stats.wpa - stats.worst)|format_delta %}
+              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                {{ delta }}
+              </span>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Current Mo3</div>
-            <div class="stat-value">12.86s</div>
+            <div class="stat-value">{{ stats.mo3|format_time }}</div>
             <div class="stat-meta">
-              <span class="stat-best">Best: 11.95s</span>
-              <span class="stat-delta positive">+0.91s</span>
+              <span class="stat-best">Best: {{ stats.best_mo3|format_time }}</span>
+              {% set delta = (stats.mo3 - stats.best_mo3)|format_delta %}
+              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                {{ delta }}
+              </span>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Current Ao5</div>
-            <div class="stat-value">13.54s</div>
+            <div class="stat-value">{{ stats.ao5|format_time }}</div>
             <div class="stat-meta">
-              <span class="stat-best">Best: 12.28s</span>
-              <span class="stat-delta positive">+1.26s</span>
+              <span class="stat-best">Best: {{ stats.best_ao5|format_time }}</span>
+              {% set delta = (stats.ao5 - stats.best_ao5)|format_delta %}
+              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                {{ delta }}
+              </span>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Current Ao12</div>
-            <div class="stat-value">14.74s</div>
+            <div class="stat-value">{{ stats.ao12|format_time }}</div>
             <div class="stat-meta">
-              <span class="stat-best">Best: 13.42s</span>
-              <span class="stat-delta positive">+1.32s</span>
+              <span class="stat-best">Best: {{ stats.best_ao12|format_time }}</span>
+              {% set delta = (stats.ao12 - stats.best_ao12)|format_delta %}
+              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                {{ delta }}
+              </span>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Current Ao100</div>
-            <div class="stat-value">15.26s</div>
+            <div class="stat-value">{{ stats.ao100|format_time }}</div>
             <div class="stat-meta">
-              <span class="stat-best">Best: 14.89s</span>
-              <span class="stat-delta positive">+0.37s</span>
+              <span class="stat-best">Best: {{ stats.best_ao100|format_time }}</span>
+              {% set delta = (stats.ao100 - stats.best_ao100)|format_delta %}
+              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                {{ delta }}
+              </span>
             </div>
           </div>
+          <!-- TODO -->
           <div class="stat-card">
             <div class="stat-title">CFOP Grade</div>
             <div class="stat-value">B+</div>
@@ -894,7 +917,9 @@
               {% for solve in stats.stack|reverse %}
               <tr>
                 <td>{{ stats.stack|length - loop.index0 }}</td>
-                <td class="time-best__">{{ solve.time|format_time }}s</td>
+                <td class="time-best__">
+                  {{ solve.time|format_time }}
+                </td>
                 <td class="solve-date">
                   {{ solve.datetime.strftime('%Y-%m-%d %H:%M') }}
                 </td>
@@ -1120,28 +1145,31 @@
         </div>
       </div>
 
-      <footer class="app-footer">
+      <footer class="app-footer card">
         <div class="footer-container">
           <div class="footer-section">
             <h3 class="footer-title">Report informations</h3>
             <div class="footer-info">
               <div class="info-item">
                 <i class="fas fa-cube"></i>
-                <span>Puzzle: {{ stats.cube_name }}</span>
-              </div>
-              <div class="info-item">
-                <i class="fas fa-calendar-alt"></i>
-                <span>Generation date: {{ now.strftime('%c') }}</span>
+                <span class="key">Puzzle:</span>
+                <span class="value">{{ stats.cube_name }}</span>
               </div>
               <div class="info-item">
                 <i class="fas fa-clock"></i>
-                <span>Last solve: {{ stats.stack[-1].datetime.strftime('%c') }}</span>
+                <span class="key">Last solve:</span>
+                <span class="value">{{ stats.stack[-1].datetime.strftime('%c') }}</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="key">Generation date:</span>
+                <span class="value">{{ now.strftime('%c') }}</span>
               </div>
             </div>
           </div>
 
           <div class="footer-section">
-            <h3 class="footer-title">Sessions</h3>
+            <h3 class="footer-title">Session{% if sessions|length > 1 %}s{% endif %}</h3>
             <div class="sessions-grid">
               {% for session, count in sessions.items() %}
                 <div class="session-badge">
