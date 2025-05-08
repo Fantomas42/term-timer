@@ -5,7 +5,7 @@ from term_timer.constants import SECOND
 
 def format_time(elapsed_ns: int) -> str:
     if not elapsed_ns:
-        return DNF
+        return f'{ DNF:>9}'
 
     elapsed_sec = elapsed_ns / SECOND
     mins, secs = divmod(int(elapsed_sec), 60)
