@@ -7,6 +7,9 @@ from jinja2 import FileSystemLoader
 from term_timer.console import console
 from term_timer.constants import EXPORT_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
+from term_timer.constants import SECOND
+from term_timer.formatter import format_duration
+from term_timer.formatter import format_time
 
 TEMPLATES = Environment(
     loader=FileSystemLoader(TEMPLATES_DIRECTORY),
@@ -14,6 +17,21 @@ TEMPLATES = Environment(
     trim_blocks=True,
     autoescape=True,
 )
+
+
+def format_delta(delta: int) -> str:
+    if delta == 0:
+        return ''
+    sign = ''
+    if delta > 0:
+        sign = '+'
+
+    return f'{ sign }{ format_duration(delta) }'
+
+
+TEMPLATES.filters['format_delta'] = format_delta
+TEMPLATES.filters['format_duration'] = format_duration
+TEMPLATES.filters['format_time'] = format_time
 
 
 class Exporter:
@@ -26,12 +44,54 @@ class Exporter:
 
         return sessions
 
-    def get_context(self, stats):
+    def compute_trend(self):
+        ao5s = []
+        ao12s = []
+        ao100s = []
+        times = []
+        indices = []
+
+        stack_time = list(self.stats.stack_time)
+        for i, time in enumerate(stack_time):
+            seconds = time / SECOND
+            times.append(seconds)
+            indices.append(i + 1)
+
+            ao5 = self.stats.ao(5, stack_time[:i + 1])
+            ao12 = self.stats.ao(12, stack_time[:i + 1])
+            ao100 = self.stats.ao(12, stack_time[:i + 1])
+
+            ao5s.append(ao5 / SECOND if ao5 > 0 else None)
+            ao12s.append(ao12 / SECOND if ao12 > 0 else None)
+            ao100s.append(ao100 / SECOND if ao100 > 0 else None)
+
+        return {
+            'indices': indices,
+            'times': times,
+            'ao5s': ao5s,
+            'ao12s': ao12s,
+            'ao100s': ao100s,
+        }
+
+    def compute_distribution(self):
+        dist_labels = []
+        dist_counts = []
+        for count, edge in self.stats.repartition:
+            dist_labels.append(f'{ edge }')
+            dist_counts.append(int(count))
+
+        return {
+            'labels': dist_labels,
+            'counts': dist_counts,
+        }
+
+    def get_context(self):
         return {
             'now': datetime.now(tz=timezone.utc),  # noqa UP017
-            'last_solve': stats.stack[-1],
-            'cube_name': stats.cube_name,
             'sessions': self.compute_sessions(),
+            'trend': self.compute_trend(),
+            'distribution': self.compute_distribution(),
+            'stats': self.stats,
         }
 
     def export_html(self, stats):
@@ -47,7 +107,7 @@ class Exporter:
         )
 
         template = TEMPLATES.get_template('export.html')
-        context = self.get_context(stats)
+        context = self.get_context()
 
         html = template.render(**context)
 

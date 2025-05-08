@@ -92,16 +92,6 @@
        color: var(--text-primary);
      }
 
-     .card-tool {
-       color: var(--text-secondary);
-       cursor: pointer;
-       transition: color 0.2s;
-     }
-
-     .card-tool:hover {
-       color: var(--text-primary);
-     }
-
      .stats-grid {
        display: grid;
        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -552,85 +542,76 @@
     </style>
     <script>
      document.addEventListener('DOMContentLoaded', function() {
-       // Sélectionner tous les onglets et le contenu des onglets
        const tabs = document.querySelectorAll('.tab');
        const tabContents = document.querySelectorAll('.tab-content');
 
-       // Ajouter un écouteur d'événement pour chaque onglet
        tabs.forEach(tab => {
          tab.addEventListener('click', function() {
-           // Enlever la classe 'active' de tous les onglets
            tabs.forEach(t => t.classList.remove('active'));
-
-           // Ajouter la classe 'active' à l'onglet actuel
            this.classList.add('active');
-
-           // Masquer tout le contenu des onglets
            tabContents.forEach(content => content.classList.remove('active'));
 
-           // Afficher le contenu de l'onglet sélectionné
            const tabId = this.getAttribute('data-tab');
            document.getElementById(`${tabId}-tab`).classList.add('active');
          });
        });
 
-       // Ajouter des écouteurs d'événements pour les autres boutons interactifs
-       const refreshButton = document.querySelector('.fa-sync-alt');
-       if (refreshButton) {
-         refreshButton.addEventListener('click', function() {
-           // Animation de rotation pour simuler un rafraîchissement
-           this.classList.add('fa-spin');
-           setTimeout(() => {
-             this.classList.remove('fa-spin');
-           }, 1000);
-         });
-       }
-
-       // Initialiser les graphiques
        initializeProgressChart();
        initializeDistributionChart();
      });
 
-     // Fonction pour initialiser le graphique de progression
      function initializeProgressChart() {
        const ctx = document.getElementById('progressChart');
        if (!ctx) return;
 
-       // Données pour le graphique de progression
        const progressData = {
-         labels: Array.from({length: 25}, (_, i) => `Session ${i+1}`),
+         labels: {{ trend.indices|tojson }},
          datasets: [
            {
-             label: 'Moyenne Ao5',
-             data: generateRandomData(25, 12, 16),
-             borderColor: '#3b82f6',
-             backgroundColor: 'rgba(59, 130, 246, 0.1)',
+             label: 'Times',
+             data: {{ trend.times|tojson }},
+             borderColor: '#2563ec',
+             //backgroundColor: 'rgba(59, 130, 246, 0.1)',
              tension: 0.4,
              borderWidth: 2,
              fill: true
            },
+           {% if trend.ao5s %}
            {
-             label: 'Moyenne Ao12',
-             data: generateRandomData(25, 13, 17),
-             borderColor: '#10b981',
-             backgroundColor: 'rgba(16, 185, 129, 0.1)',
+             label: 'AO5',
+             data: {{ trend.ao5s|tojson }},
+             borderColor: '#EF4444',
+             //backgroundColor: 'rgba(59, 130, 246, 0.1)',
              tension: 0.4,
              borderWidth: 2,
              fill: true
            },
+           {% endif %}
+           {% if trend.ao12s %}
            {
-             label: 'Moyenne Ao100',
-             data: generateRandomData(25, 14, 18),
-             borderColor: '#f59e0b',
-             backgroundColor: 'rgba(245, 158, 11, 0.1)',
+             label: 'AO12',
+             data: {{ trend.ao12s|tojson }},
+             borderColor: '#10B981',
+             //backgroundColor: 'rgba(16, 185, 129, 0.1)',
+             tension: 0.4,
+             borderWidth: 2,
+             fill: true
+           },
+           {% endif %}
+           {% if trend.ao100s %}
+           {
+             label: 'AO100',
+             data: {{ trend.ao100s|tojson }},
+             borderColor: '#64748B',
+             //backgroundColor: 'rgba(245, 158, 11, 0.1)',
              tension: 0.4,
              borderWidth: 2,
              fill: true
            }
+           {% endif %}
          ]
        };
 
-       // Configuration du graphique
        new Chart(ctx, {
          type: 'line',
          data: progressData,
@@ -659,8 +640,6 @@
                }
              },
              y: {
-               min: 10,
-               max: 20,
                ticks: {
                  color: '#94a3b8'
                },
@@ -673,14 +652,12 @@
        });
      }
 
-     // Fonction pour initialiser le graphique de distribution
      function initializeDistributionChart() {
        const ctx = document.getElementById('timeDistributionChart');
        if (!ctx) return;
 
-       // Créer des données pour la distribution (histogramme)
-       const bins = ['10-11s', '11-12s', '12-13s', '13-14s', '14-15s', '15-16s', '16-17s', '17-18s', '18-19s', '19-20s', '20+s'];
-       const counts = [1, 5, 12, 24, 37, 26, 14, 5, 2, 1, 1];
+       const bins = {{ distribution.labels|tojson }};
+       const counts = {{ distribution.counts|tojson }};
 
        // Configuration du graphique
        new Chart(ctx, {
@@ -688,7 +665,7 @@
          data: {
            labels: bins,
            datasets: [{
-             label: 'Nombre de résolutions',
+             label: 'Solves',
              data: counts,
              backgroundColor: 'rgba(59, 130, 246, 0.7)',
              borderColor: '#3b82f6',
@@ -708,7 +685,7 @@
                    return tooltipItem[0].label;
                  },
                  label: function(context) {
-                   return `${context.parsed.y} résolutions`;
+                   return `${context.parsed.y} solves`;
                  }
                }
              }
@@ -717,7 +694,7 @@
              x: {
                title: {
                  display: true,
-                 text: 'Temps (secondes)',
+                 text: 'Time',
                  color: '#94a3b8'
                },
                ticks: {
@@ -730,7 +707,7 @@
              y: {
                title: {
                  display: true,
-                 text: 'Fréquence',
+                 text: 'Frequency',
                  color: '#94a3b8'
                },
                ticks: {
@@ -743,15 +720,6 @@
            }
          }
        });
-     }
-
-     // Fonction utilitaire pour générer des données aléatoires avec une tendance décroissante
-     function generateRandomData(length, min, max) {
-       // Créer une tendance décroissante progressive
-       const trend = Array.from({length: length}, (_, i) => max - (i * (max - min) / (length * 1.5)));
-
-       // Ajouter de l'aléatoire
-       return trend.map(value => value + (Math.random() - 0.5) * 0.8);
      }
     </script>
   </head>
@@ -767,9 +735,6 @@
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">Key Statistics</h2>
-          <div class="card-tool">
-            <i class="fas fa-sync-alt"></i>
-          </div>
         </div>
         <div class="stats-grid">
           <div class="stat-card">
@@ -872,9 +837,6 @@
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">Progress Over Time</h2>
-          <div class="card-tool">
-            <i class="fas fa-expand"></i>
-          </div>
         </div>
         <div class="chart-container">
           <canvas id="progressChart"></canvas>
@@ -884,9 +846,6 @@
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">Time Distribution</h2>
-          <div class="card-tool">
-            <i class="fas fa-sliders-h"></i>
-          </div>
         </div>
         <div class="chart-container">
           <canvas id="timeDistributionChart"></canvas>
