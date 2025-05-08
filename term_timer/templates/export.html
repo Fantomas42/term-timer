@@ -190,11 +190,6 @@
        display: block;
      }
 
-     .solve-list {
-       width: 100%;
-       border-collapse: collapse;
-     }
-
      .solve-list th, .solve-list td {
        padding: 0.75rem 1rem;
        text-align: left;
@@ -226,7 +221,6 @@
 
      .solve-date {
        color: var(--text-secondary);
-       font-size: 0.875rem;
      }
 
      .solve-scramble {
@@ -235,27 +229,22 @@
        text-overflow: ellipsis;
        white-space: nowrap;
        color: var(--text-secondary);
-       font-size: 0.875rem;
      }
 
      .solve-detail-btn {
-       background-color: rgba(37, 99, 235, 0.1);
-       color: var(--primary);
+       background-color: rgba(37, 99, 235, 0.5);
+       color: var(--light);
        border: none;
        padding: 0.25rem 0.5rem;
        border-radius: 0.25rem;
        cursor: pointer;
        transition: background-color 0.2s;
        font-size: 0.875rem;
+       text-decoration: none;
      }
 
      .solve-detail-btn:hover {
-       background-color: rgba(37, 99, 235, 0.2);
-     }
-
-     .cfop-table {
-       width: 100%;
-       border-collapse: collapse;
+       background-color: rgba(37, 99, 235, 0.3);
      }
 
      .cfop-table th, .cfop-table td {
@@ -533,6 +522,29 @@
          text-align: center;
        }
      }
+     /* Table */
+     .table-container {
+       max-height: 600px; /* Hauteur fixe du tableau */
+       overflow-y: auto; /* Ajoute une barre de défilement verticale si nécessaire */
+       margin-bottom: 20px;
+     }
+
+     .table-container table {
+       width: 100%;
+       border-collapse: collapse;
+     }
+
+     .table-container th {
+       position: sticky; /* En-têtes fixes pendant le défilement */
+       top: 0;
+       background-color: var(--secondary);
+       color: var(--text-primary);
+       z-index: 1;
+     }
+
+     tr:hover {
+       background-color: #f5f5f5;
+     }
     </style>
     <script>
      document.addEventListener('DOMContentLoaded', function() {
@@ -569,19 +581,6 @@
            }, 1000);
          });
        }
-
-       // Gestion des boutons de détails des résolutions
-       const detailButtons = document.querySelectorAll('.solve-detail-btn');
-       detailButtons.forEach(button => {
-         button.addEventListener('click', function() {
-           const solveRow = this.closest('tr');
-           const solveNumber = solveRow.querySelector('td:first-child').textContent;
-           const solveTime = solveRow.querySelector('td:nth-child(2)').textContent;
-           const solveScramble = solveRow.querySelector('.solve-scramble').textContent;
-
-           alert(`Détails de la résolution #${solveNumber}\nTemps: ${solveTime}\nScramble: ${solveScramble}`);
-         });
-       });
 
        // Initialiser les graphiques
        initializeProgressChart();
@@ -771,7 +770,7 @@
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-title">Total Solves</div>
-            <div class="stat-value">128</div>
+            <div class="stat-value">{{ stats.stack|length }}</div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Total Time</div>
@@ -879,7 +878,7 @@
           <div class="tab" data-tab="pll">PLL</div>
         </div>
 
-        <div class="tab-content active" id="solves-tab">
+        <div class="tab-content active table-container" id="solves-tab">
           <table class="solve-list">
             <thead>
               <tr>
@@ -892,46 +891,30 @@
               </tr>
             </thead>
             <tbody>
+              {% for solve in stats.stack|reverse %}
               <tr>
-                <td>128</td>
-                <td class="time-best">10.23s</td>
-                <td class="solve-date">2025-05-06 14:32</td>
-                <td class="solve-scramble">R' D' F R2 D2 B2 U2 F2 D L2 R2 B' R2 F L' B2 D' B' U2</td>
-                <td>PB</td>
-                <td><button class="solve-detail-btn">Details</button></td>
+                <td>{{ stats.stack|length - loop.index0 }}</td>
+                <td class="time-best__">{{ solve.time|format_time }}s</td>
+                <td class="solve-date">
+                  {{ solve.datetime.strftime('%Y-%m-%d %H:%M') }}
+                </td>
+                <td class="solve-scramble">
+                  {{ solve.scramble }}
+                </td>
+                <td class="solve-flag">
+                  {{ solve.flag|default('---', true) }}
+                </td>
+                <td>
+                  {% if solve.raw_moves %}
+                    <a href="{{ solve.link }}" target="_blank" class="solve-detail-btn">
+                      Recons
+                    </a>
+                  {% else %}
+                    ---
+                  {% endif %}
+                </td>
               </tr>
-              <tr>
-                <td>127</td>
-                <td>13.85s</td>
-                <td class="solve-date">2025-05-06 14:30</td>
-                <td class="solve-scramble">F' D2 B2 L2 U2 B' L2 B D2 F' U2 F D F U' R F D2 L F'</td>
-                <td></td>
-                <td><button class="solve-detail-btn">Details</button></td>
-              </tr>
-              <tr>
-                <td>126</td>
-                <td>14.49s</td>
-                <td class="solve-date">2025-05-06 14:28</td>
-                <td class="solve-scramble">B2 D B2 U' R2 F2 D2 U B2 U' L F' D B2 R B' F2 L B2 D'</td>
-                <td></td>
-                <td><button class="solve-detail-btn">Details</button></td>
-              </tr>
-              <tr>
-                <td>125</td>
-                <td>15.21s</td>
-                <td class="solve-date">2025-05-06 14:26</td>
-                <td class="solve-scramble">D2 L' F2 D2 L' B2 L D2 L2 F2 D2 F L2 R D' L B F D' U'</td>
-                <td></td>
-                <td><button class="solve-detail-btn">Details</button></td>
-              </tr>
-              <tr>
-                <td>124</td>
-                <td class="time-worst">24.52s</td>
-                <td class="solve-date">2025-05-06 14:24</td>
-                <td class="solve-scramble">B2 U' L2 F2 U' B2 D' L2 U F2 U2 F L' B' U F2 L' D B R U</td>
-                <td>+2</td>
-                <td><button class="solve-detail-btn">Details</button></td>
-              </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
@@ -1144,7 +1127,7 @@
             <div class="footer-info">
               <div class="info-item">
                 <i class="fas fa-cube"></i>
-                <span>Puzzle: {{ cube_name }}</span>
+                <span>Puzzle: {{ stats.cube_name }}</span>
               </div>
               <div class="info-item">
                 <i class="fas fa-calendar-alt"></i>
@@ -1152,7 +1135,7 @@
               </div>
               <div class="info-item">
                 <i class="fas fa-clock"></i>
-                <span>Last solve: {{ last_solve.datetime.strftime('%c') }}</span>
+                <span>Last solve: {{ stats.stack[-1].datetime.strftime('%c') }}</span>
               </div>
             </div>
           </div>
