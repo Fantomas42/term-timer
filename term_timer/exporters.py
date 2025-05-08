@@ -79,7 +79,7 @@ class Exporter:
         dist_labels = []
         dist_counts = []
         for count, edge in self.stats.repartition:
-            dist_labels.append(f'{ edge }')
+            dist_labels.append(f'{ edge }s')
             dist_counts.append(int(count))
 
         return {
