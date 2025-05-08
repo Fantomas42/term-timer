@@ -184,25 +184,6 @@
        display: block;
      }
 
-     .solve-list th, .solve-list td {
-       padding: 0.75rem 1rem;
-       text-align: left;
-       border-bottom: 1px solid var(--border-color);
-     }
-
-     .solve-list th {
-       color: var(--text-secondary);
-       font-weight: 500;
-     }
-
-     .solve-list td {
-       color: var(--text-primary);
-     }
-
-     .solve-list tr:hover {
-       background-color: rgba(255, 255, 255, 0.05);
-     }
-
      .time-best {
        color: var(--success);
        font-weight: 600;
@@ -239,21 +220,6 @@
 
      .solve-detail-btn:hover {
        background-color: var(--info)
-     }
-
-     .cfop-table th, .cfop-table td {
-       padding: 0.5rem;
-       text-align: left;
-       border-bottom: 1px solid var(--border-color);
-     }
-
-     .cfop-table th {
-       color: var(--text-secondary);
-       font-weight: 500;
-     }
-
-     .cfop-table td {
-       color: var(--text-primary);
      }
 
      .cfop-case {
@@ -528,16 +494,23 @@
        border-collapse: collapse;
      }
 
+     .table-container th, .table-container td {
+       padding: 0.75rem 1rem;
+       text-align: left;
+       border-bottom: 1px solid var(--border-color);
+       color: var(--text-primary);
+     }
+
      .table-container th {
        position: sticky; /* En-têtes fixes pendant le défilement */
        top: 0;
        background-color: var(--secondary);
-       color: var(--text-primary);
        z-index: 1;
+       font-weight: 500;
      }
 
-     tr:hover {
-       background-color: #f5f5f5;
+     .table-container tr:hover {
+       background-color: rgba(255, 255, 255, 0.05);
      }
     </style>
     <script>
@@ -836,14 +809,15 @@
               </div>
             </div>
           {% endif %}
-          <!-- TODO -->
-          <div class="stat-card">
-            <div class="stat-title">CFOP Grade</div>
-            <div class="stat-value">B+</div>
-            <div class="stat-meta">
-              <span class="stat-best">Score: 83.5</span>
+          {% if cfop.total %}
+            <div class="stat-card">
+              <div class="stat-title">CFOP Grade</div>
+              <div class="stat-value">{{ cfop.mean|format_grade }}</div>
+              <div class="stat-meta">
+                <span class="stat-best">Mean: {{ cfop.mean|round(2) }}</span>
+              </div>
             </div>
-          </div>
+          {% endif %}
         </div>
       </div>
 
@@ -903,7 +877,7 @@
                 </td>
                 <td>
                   {% if solve.raw_moves %}
-                    <a href="{{ solve.link }}" target="_blank" class="solve-detail-btn">
+                    <a href="{{ solve.todo_link }}" target="_blank" class="solve-detail-btn">
                       Recons
                     </a>
                   {% else %}
@@ -916,8 +890,8 @@
           </table>
         </div>
 
-        <div class="tab-content" id="oll-tab">
-          <table class="cfop-table">
+        <div class="tab-content table-container" id="oll-tab">
+          <table class="oll-list">
             <thead>
               <tr>
                 <th>Case</th>
@@ -929,95 +903,53 @@
                 <th>Time</th>
                 <th>QTM</th>
                 <th>TPS</th>
+                <th>eTPS</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>
-                  <div class="cfop-case">
-                    <div class="cfop-case-img">21</div>
-                    <div>OLL 21</div>
-                  </div>
-                </td>
-                <td>14</td>
-                <td class="frequency-higher">10.94%</td>
-                <td>4.17%</td>
-                <td>0.32s</td>
-                <td>0.95s</td>
-                <td>1.27s</td>
-                <td>9.50</td>
-                <td>7.48</td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="cfop-case">
-                    <div class="cfop-case-img">33</div>
-                    <div>OLL 33</div>
-                  </div>
-                </td>
-                <td>11</td>
-                <td class="frequency-higher">8.59%</td>
-                <td>4.17%</td>
-                <td>0.28s</td>
-                <td>0.88s</td>
-                <td>1.16s</td>
-                <td>8.75</td>
-                <td>7.54</td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="cfop-case">
-                    <div class="cfop-case-img">45</div>
-                    <div>OLL 45</div>
-                  </div>
-                </td>
-                <td>9</td>
-                <td class="frequency-higher">7.03%</td>
-                <td>4.17%</td>
-                <td>0.41s</td>
-                <td>1.05s</td>
-                <td>1.46s</td>
-                <td>10.25</td>
-                <td>7.02</td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="cfop-case">
-                    <div class="cfop-case-img">01</div>
-                    <div>OLL 1</div>
-                  </div>
-                </td>
-                <td>3</td>
-                <td class="frequency-lower">2.34%</td>
-                <td>4.17%</td>
-                <td>0.37s</td>
-                <td>1.23s</td>
-                <td>1.60s</td>
-                <td>11.00</td>
-                <td>6.88</td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="cfop-case">
-                    <div class="cfop-case-img">00</div>
-                    <div>OLL SKIP</div>
-                  </div>
-                </td>
-                <td>2</td>
-                <td class="frequency-higher">1.56%</td>
-                <td>0.36%</td>
-                <td>0.00s</td>
-                <td>0.00s</td>
-                <td>0.00s</td>
-                <td>0.00</td>
-                <td>0.00</td>
-              </tr>
+              {% for name, oll in cfop.olls.items() %}
+                <tr>
+                  <td>
+                    <div class="cfop-case">
+                      <div class="cfop-case-img">{{ name.split(" ")[0] }}</div>
+                      <div>{{ name }}</div>
+                    </div>
+                  </td>
+                  <td>
+                    {{ oll.count }}
+                  </td>
+                  <td class="frequency-higher">
+                    {{ (oll.frequency * 100)|round(2) }}%
+                  </td>
+                  <td>
+                    {{ (oll.probability * 100)|round(2) }}%
+                  </td>
+                  <td>
+                    {{ oll.inspection|format_duration }}
+                  </td>
+                  <td>
+                    {{ oll.execution|format_duration }}
+                  </td>
+                  <td>
+                    {{ oll.time|format_duration }}
+                  </td>
+                  <td>
+                    {{ oll.qtm|round(2) }}
+                  </td>
+                  <td>
+                    {{ oll.tps|round(2) }}
+                  </td>
+                  <td>
+                    {{ oll.etps|round(2) }}
+                  </td>
+                </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
 
-        <div class="tab-content" id="pll-tab">
-          <table class="cfop-table">
+        <div class="tab-content table-container" id="pll-tab">
+          <table class="pll-list">
             <thead>
               <tr>
                 <th>Case</th>
@@ -1029,89 +961,47 @@
                 <th>Time</th>
                 <th>QTM</th>
                 <th>TPS</th>
+                <th>eTPS</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>
-                  <div class="cfop-case">
-                    <div class="cfop-case-img">T</div>
-                    <div>PLL T</div>
-                  </div>
-                </td>
-                <td>16</td>
-                <td class="frequency-higher">12.50%</td>
-                <td>4.17%</td>
-                <td>0.21s</td>
-                <td>1.05s</td>
-                <td>1.26s</td>
-                <td>14.00</td>
-                <td>11.11</td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="cfop-case">
-                    <div class="cfop-case-img">J</div>
-                    <div>PLL Ja</div>
-                  </div>
-                </td>
-                <td>12</td>
-                <td class="frequency-higher">9.38%</td>
-                <td>4.17%</td>
-                <td>0.18s</td>
-                <td>0.98s</td>
-                <td>1.16s</td>
-                <td>13.50</td>
-                <td>11.64</td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="cfop-case">
-                    <div class="cfop-case-img">U</div>
-                    <div>PLL Ua</div>
-                  </div>
-                </td>
-                <td>12</td>
-                <td class="frequency-higher">9.38%</td>
-                <td>4.17%</td>
-                <td>0.16s</td>
-                <td>0.87s</td>
-                <td>1.03s</td>
-                <td>11.75</td>
-                <td>11.41</td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="cfop-case">
-                    <div class="cfop-case-img">A</div>
-                    <div>PLL Aa</div>
-                  </div>
-                </td>
-                <td>10</td>
-                <td class="frequency-higher">7.81%</td>
-                <td>4.17%</td>
-                <td>0.19s</td>
-                <td>0.92s</td>
-                <td>1.11s</td>
-                <td>12.25</td>
-                <td>11.04</td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="cfop-case">
-                    <div class="cfop-case-img">Z</div>
-                    <div>PLL Z</div>
-                  </div>
-                </td>
-                <td>2</td>
-                <td class="frequency-lower">1.56%</td>
-                <td>4.17%</td>
-                <td>0.24s</td>
-                <td>1.45s</td>
-                <td>1.69s</td>
-                <td>17.00</td>
-                <td>10.06</td>
-              </tr>
+              {% for name, pll in cfop.plls.items() %}
+                <tr>
+                  <td>
+                    <div class="cfop-case">
+                      <div class="cfop-case-img">{{ name.split(" ")[0] }}</div>
+                      <div>{{ name }}</div>
+                    </div>
+                  </td>
+                  <td>
+                    {{ pll.count }}
+                  </td>
+                  <td class="frequency-higher">
+                    {{ (pll.frequency * 100)|round(2) }}%
+                  </td>
+                  <td>
+                    {{ (pll.probability * 100)|round(2) }}%
+                  </td>
+                  <td>
+                    {{ pll.inspection|format_duration }}
+                  </td>
+                  <td>
+                    {{ pll.execution|format_duration }}
+                  </td>
+                  <td>
+                    {{ pll.time|format_duration }}
+                  </td>
+                  <td>
+                    {{ pll.qtm|round(2) }}
+                  </td>
+                  <td>
+                    {{ pll.tps|round(2) }}
+                  </td>
+                  <td>
+                    {{ pll.etps|round(2) }}
+                  </td>
+                </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>

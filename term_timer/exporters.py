@@ -9,6 +9,7 @@ from term_timer.constants import EXPORT_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
 from term_timer.constants import SECOND
 from term_timer.formatter import format_duration
+from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
 
 TEMPLATES = Environment(
@@ -31,6 +32,7 @@ def format_delta(delta: int) -> str:
 
 TEMPLATES.filters['format_delta'] = format_delta
 TEMPLATES.filters['format_duration'] = format_duration
+TEMPLATES.filters['format_grade'] = format_grade
 TEMPLATES.filters['format_time'] = format_time
 
 
@@ -88,10 +90,11 @@ class Exporter:
     def get_context(self):
         return {
             'now': datetime.now(tz=timezone.utc),  # noqa UP017
+            'stats': self.stats,
             'sessions': self.compute_sessions(),
+            'cfop': self.stats.compute_cfop(),
             'trend': self.compute_trend(),
             'distribution': self.compute_distribution(),
-            'stats': self.stats,
         }
 
     def export_html(self, stats):
