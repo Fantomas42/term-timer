@@ -3,9 +3,12 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Term Timer Statistics Dashboard</title>
+    <title>Term Timer Statistics {{ stats.cube_name }}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script> -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
+    -->
     <style>
      :root {
        --primary: #2563eb;
@@ -67,6 +70,11 @@
      .logo i {
        font-size: 2.5rem;
        color: var(--primary);
+     }
+
+     .logo span {
+       font-size: 1.4rem;
+       color: var(--secondary);
      }
 
      .card {
@@ -535,51 +543,50 @@
 
      function initializeProgressChart() {
        const ctx = document.getElementById('progressChart');
-       if (!ctx) return;
 
        const progressData = {
          labels: {{ trend.indices|tojson }},
          datasets: [
            {
-             label: 'Times',
+             label: 'Time',
              data: {{ trend.times|tojson }},
              borderColor: '#2563ec',
-             //backgroundColor: 'rgba(59, 130, 246, 0.1)',
-             tension: 0.4,
+             backgroundColor: 'rgba(37, 99, 236, 0.3)',
+             tension: 0.2,
              borderWidth: 2,
-             fill: true
+             pointRadius: 0,
            },
-           {% if trend.ao5s %}
+           {% if stats.total >= 5 %}
            {
              label: 'AO5',
              data: {{ trend.ao5s|tojson }},
              borderColor: '#EF4444',
-             //backgroundColor: 'rgba(59, 130, 246, 0.1)',
-             tension: 0.4,
+             backgroundColor: 'rgba(239, 68, 68, 0.3)',
+             tension: 0.2,
              borderWidth: 2,
-             fill: true
+             pointRadius: 0,
            },
            {% endif %}
-           {% if trend.ao12s %}
+           {% if stats.total >= 12 %}
            {
              label: 'AO12',
              data: {{ trend.ao12s|tojson }},
              borderColor: '#10B981',
-             //backgroundColor: 'rgba(16, 185, 129, 0.1)',
-             tension: 0.4,
+             backgroundColor: 'rgba(16, 185, 129, 0.3)',
+             tension: 0.2,
              borderWidth: 2,
-             fill: true
+             pointRadius: 0,
            },
            {% endif %}
-           {% if trend.ao100s %}
+           {% if stats.total >= 100 %}
            {
              label: 'AO100',
              data: {{ trend.ao100s|tojson }},
              borderColor: '#64748B',
-             //backgroundColor: 'rgba(245, 158, 11, 0.1)',
-             tension: 0.4,
+             backgroundColor: 'rgba(100, 116, 139, 0.3)',
+             tension: 0.2,
              borderWidth: 2,
-             fill: true
+             pointRadius: 0,
            }
            {% endif %}
          ]
@@ -593,7 +600,7 @@
            maintainAspectRatio: false,
            plugins: {
              legend: {
-               position: 'top',
+               position: 'bottom',
                labels: {
                  color: '#94a3b8'
                }
@@ -601,7 +608,24 @@
              tooltip: {
                mode: 'index',
                intersect: false
-             }
+             },
+             /* zoom: {
+              *   pan: {
+              *     enabled: true,
+              *   },
+              *   zoom: {
+              *     wheel: {
+              *       enabled: true,
+              *     },
+              *     drag: {
+              *       enabled: true
+              *     },
+              *     pinch: {
+              *       enabled: true
+              *     },
+              *     mode: 'xy',
+              *   }
+              * } */
            },
            scales: {
              x: {
@@ -627,7 +651,6 @@
 
      function initializeDistributionChart() {
        const ctx = document.getElementById('timeDistributionChart');
-       if (!ctx) return;
 
        const bins = {{ distribution.labels|tojson }};
        const counts = {{ distribution.counts|tojson }};
@@ -700,7 +723,10 @@
       <header>
         <div class="logo">
           <i class="fas fa-cube"></i>
-          <h1>Term Timer Stats</h1>
+          <h1>
+            Term Timer Stats
+            <span class="subtitle">{{ stats.cube_name }}</span>
+          </h1>
         </div>
       </header>
 

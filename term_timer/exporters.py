@@ -61,7 +61,7 @@ class Exporter:
 
             ao5 = self.stats.ao(5, stack_time[:i + 1])
             ao12 = self.stats.ao(12, stack_time[:i + 1])
-            ao100 = self.stats.ao(12, stack_time[:i + 1])
+            ao100 = self.stats.ao(100, stack_time[:i + 1])
 
             ao5s.append(ao5 / SECOND if ao5 > 0 else None)
             ao12s.append(ao12 / SECOND if ao12 > 0 else None)
