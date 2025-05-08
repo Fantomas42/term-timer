@@ -59,7 +59,7 @@ def computing_padding(max_value: float) -> int:
 
 
 def format_grade(score):
-    if score == 20:
+    if score >= 20:
         return 'S'
     if score >= 18:
         return 'A+'
