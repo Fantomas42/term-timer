@@ -9,6 +9,8 @@ from rich.table import Table
 
 from term_timer.config import STATS_CONFIG
 from term_timer.console import console
+from term_timer.constants import DNF
+from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.constants import SECOND_BINS
 from term_timer.constants import STEP_BAR
@@ -358,12 +360,18 @@ class StatisticsReporter(Statistics):
             elif solve.time == self.worst:
                 time_class = 'warning'
 
+            flag_class = 'result'
+            if solve.flag == DNF:
+                flag_class = 'dnf'
+            if solve.flag == PLUS_TWO:
+                flag_class = 'plus_two'
+
             console.print(
                 header,
                 f'[{ time_class }]{ format_time(solve.time) }[/{ time_class }]',
                 f'[date]{ date }[/date]',
                 f'[consign]{ solve.scramble }[/consign]',
-                f'[result]{ solve.flag }[/result]',
+                f'[{ flag_class }]{ solve.flag }[/{ flag_class }]',
             )
 
     def detail(self, solve_id: int, method: str) -> None:
