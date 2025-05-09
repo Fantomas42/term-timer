@@ -58,7 +58,7 @@ class Exporter:
         for i, time in enumerate(stack_time):
             seconds = time / SECOND
             times.append(seconds)
-            indices.append(i + 1)
+            indices.append(str(i + 1))
 
             ao5 = self.stats.ao(5, stack_time[:i + 1])
             ao12 = self.stats.ao(12, stack_time[:i + 1])
