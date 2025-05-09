@@ -511,6 +511,11 @@
        color: var(--primary);
      }
 
+     .skip {
+       font-size: 0.875rem;
+       color: var(--success);
+     }
+
      @media (max-width: 768px) {
        .footer-container {
          grid-template-columns: 1fr;
@@ -1080,8 +1085,16 @@
                 <tr>
                   <td>
                     <div class="cfop-case">
-                      <div class="cfop-case-img">{{ name.split(" ")[0] }}</div>
-                        <div>{{ " ".join(name.split(" ")[1:]) }}</div>
+                      {% set name_part = name.split(" ") %}
+                      <div class="cfop-case-img">{{ name_part[0] }}</div>
+                      {% if 'SKIP' not in name %}
+                        <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
+                           target="_blank" class="link">
+                          {{ " ".join(name_part[1:]) }}
+                        </a>
+                      {% else %}
+                        <span class="skip">SKIP</span>
+                      {% endif %}
                     </div>
                   </td>
                   <td>
@@ -1138,7 +1151,16 @@
                 <tr>
                   <td>
                     <div class="cfop-case">
-                      <div class="cfop-case-img">{{ name.split(" ")[0] }}</div>
+                      {% set name_part = name.split(" ") %}
+                      <div class="cfop-case-img">{{ name_part[0] }}</div>
+                      {% if 'SKIP' not in name %}
+                        <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
+                           target="_blank" class="link">
+                          PLL {{ name }}
+                        </a>
+                      {% else %}
+                        <span class="skip">SKIP</span>
+                      {% endif %}
                     </div>
                   </td>
                   <td>
