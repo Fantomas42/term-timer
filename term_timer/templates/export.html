@@ -579,6 +579,53 @@
        font-size: 0.7em;
        color: var(--light);
      }
+     .pll-list, .oll-list {
+       table-layout: fixed;
+       width: 100%;
+     }
+
+     .pll-list th, .oll-list th,
+     .pll-list td, .oll-list td {
+       overflow: hidden;
+       text-overflow: ellipsis;
+       white-space: nowrap;
+     }
+
+     .pll-list th:nth-child(1), .oll-list th:nth-child(1),
+     .pll-list td:nth-child(1), .oll-list td:nth-child(1) {
+       width: 15%; /* Case */
+     }
+
+     .pll-list th:nth-child(2), .oll-list th:nth-child(2),
+     .pll-list td:nth-child(2), .oll-list td:nth-child(2) {
+       width: 8%; /* Count */
+     }
+
+     .pll-list th:nth-child(3), .oll-list th:nth-child(3),
+     .pll-list td:nth-child(3), .oll-list td:nth-child(3),
+     .pll-list th:nth-child(4), .oll-list th:nth-child(4),
+     .pll-list td:nth-child(4), .oll-list td:nth-child(4) {
+       width: 10%; /* Frequency, Probability */
+     }
+
+     .pll-list th:nth-child(5), .oll-list th:nth-child(5),
+     .pll-list td:nth-child(5), .oll-list td:nth-child(5),
+     .pll-list th:nth-child(6), .oll-list th:nth-child(6),
+     .pll-list td:nth-child(6), .oll-list td:nth-child(6),
+     .pll-list th:nth-child(7), .oll-list th:nth-child(7),
+     .pll-list td:nth-child(7), .oll-list td:nth-child(7) {
+       width: 9%; /* Inspection, Execution, Time */
+     }
+
+     .pll-list th:nth-child(8), .oll-list th:nth-child(8),
+     .pll-list td:nth-child(8), .oll-list td:nth-child(8),
+     .pll-list th:nth-child(9), .oll-list th:nth-child(9),
+     .pll-list td:nth-child(9), .oll-list td:nth-child(9),
+     .pll-list th:nth-child(10), .oll-list th:nth-child(10),
+     .pll-list td:nth-child(10), .oll-list td:nth-child(10) {
+       width: 10%; /* QTM, TPS, eTPS */
+     }
+
     </style>
     <script>
      document.addEventListener('DOMContentLoaded', function() {
