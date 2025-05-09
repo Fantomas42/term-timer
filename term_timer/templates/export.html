@@ -648,7 +648,18 @@
              tension: 0.2,
              borderWidth: 2,
              pointRadius: 0,
-           }
+           },
+           {% endif %}
+           {% if stats.total >= 1000 %}
+           {
+             label: 'AO1000',
+             data: {{ trend.ao1000s|tojson }},
+             borderColor: '#F8FAFC',
+             backgroundColor: 'rgba(248, 250, 252, 0.3)',
+             tension: 0.2,
+             borderWidth: 2,
+             pointRadius: 0,
+           },
            {% endif %}
          ]
        };
@@ -977,6 +988,19 @@
               <div class="stat-meta">
                 <span class="stat-best">Best: {{ stats.best_ao100|format_time }}</span>
                 {% set delta = (stats.ao100 - stats.best_ao100)|format_delta %}
+                <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                  {{ delta }}
+                </span>
+              </div>
+            </div>
+          {% endif %}
+          {% if stats.total >= 1000 %}
+            <div class="stat-card">
+              <div class="stat-title">Current Ao1000</div>
+              <div class="stat-value">{{ stats.ao1000|format_time }}</div>
+              <div class="stat-meta">
+                <span class="stat-best">Best: {{ stats.best_ao1000|format_time }}</span>
+                {% set delta = (stats.ao1000 - stats.best_ao1000)|format_delta %}
                 <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
                   {{ delta }}
                 </span>

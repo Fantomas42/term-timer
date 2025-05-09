@@ -59,6 +59,7 @@ theme = {
     'ao5': 'bold #00FFFF',
     'ao12': 'bold #FF00FF',
     'ao100': f'bold { YELLOW }',
+    'ao1000': f'bold { RED }',
 
     'tps': 'bold #00DFFF',
     'tps_e': 'bold #00AAAA',

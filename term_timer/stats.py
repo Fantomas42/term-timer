@@ -122,6 +122,10 @@ class Statistics(StatisticsTools):
         return self.ao(100, self.stack_time)
 
     @cached_property
+    def ao1000(self) -> int:
+        return self.ao(1000, self.stack_time)
+
+    @cached_property
     def best_mo3(self) -> int:
         return self.best_mo(3)
 
@@ -136,6 +140,10 @@ class Statistics(StatisticsTools):
     @cached_property
     def best_ao100(self) -> int:
         return self.best_ao(100)
+
+    @cached_property
+    def best_ao1000(self) -> int:
+        return self.best_ao(1000)
 
     @cached_property
     def best(self) -> int:
@@ -293,6 +301,14 @@ class StatisticsReporter(Statistics):
                 '[stats]Best :[/stats]',
                 f'[result]{ format_time(self.best_ao100) }[/result]',
                 format_delta(self.ao100 - self.best_ao100),
+            )
+        if self.total >= 1000:
+            console.print(
+                f'[stats]{ prefix }Ao1000:[/stats]',
+                f'[ao1000]{ format_time(self.ao1000) }[/ao1000]',
+                '[stats]Best :[/stats]',
+                f'[result]{ format_time(self.best_ao1000) }[/result]',
+                format_delta(self.ao1000 - self.best_ao1000),
             )
 
         if self.total > 1:

@@ -50,6 +50,7 @@ class Exporter:
         ao5s = []
         ao12s = []
         ao100s = []
+        ao1000s = []
         times = []
         indices = []
 
@@ -62,10 +63,12 @@ class Exporter:
             ao5 = self.stats.ao(5, stack_time[:i + 1])
             ao12 = self.stats.ao(12, stack_time[:i + 1])
             ao100 = self.stats.ao(100, stack_time[:i + 1])
+            ao1000 = self.stats.ao(1000, stack_time[:i + 1])
 
             ao5s.append(ao5 / SECOND if ao5 > 0 else None)
             ao12s.append(ao12 / SECOND if ao12 > 0 else None)
             ao100s.append(ao100 / SECOND if ao100 > 0 else None)
+            ao1000s.append(ao1000 / SECOND if ao1000 > 0 else None)
 
         return {
             'indices': indices,
@@ -73,6 +76,7 @@ class Exporter:
             'ao5s': ao5s,
             'ao12s': ao12s,
             'ao100s': ao100s,
+            'ao1000s': ao1000s,
         }
 
     def compute_distribution(self):

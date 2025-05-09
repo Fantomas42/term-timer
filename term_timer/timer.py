@@ -567,6 +567,13 @@ class Timer:
                     format_delta(new_stats.ao100 - old_stats.best_ao100),
                 )
 
+            if new_stats.ao1000 < old_stats.best_ao1000:
+                console.print(
+                    f'[record]:trophy:{ "Best Ao1000".center(mc) }[/record]',
+                    f'[best]{ format_time(new_stats.ao1000) }[/best]',
+                    format_delta(new_stats.ao1000 - old_stats.best_ao1000),
+                )
+
     def set_state(self, state, extra=''):
         self.state = state
         logger.info('Passing to state %s %s', state.upper(), extra)
