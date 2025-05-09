@@ -211,10 +211,40 @@
 
      .solve-scramble {
        max-width: 300px;
-       overflow: hidden;
+       overflow-x: hidden;
        text-overflow: ellipsis;
        white-space: nowrap;
        color: var(--text-secondary);
+       position: relative;
+       cursor: pointer;
+     }
+
+     .copy-tooltip {
+       position: absolute;
+       background-color: var(--bg-main);
+       color: var(--light);
+       padding: 5px 10px;
+       border-radius: 4px;
+       font-size: 0.75rem;
+       z-index: 100;
+       opacity: 0;
+       transition: opacity 0.3s;
+       pointer-events: none;
+       white-space: nowrap;
+       top: -30px;
+       left: 20px;
+     }
+
+    .solve-scramble:hover .copy-tooltip {
+      opacity: 0.9;
+     }
+
+     .solve-scramble.copied .copy-tooltip:after {
+       content: 'Copied !';
+     }
+
+     .solve-scramble:not(.copied) .copy-tooltip:after {
+       content: 'Click to copy';
      }
 
      .solve-detail-btn {
@@ -564,6 +594,7 @@
        initializeProgressChart();
        initializeDistributionChart();
        initializeSortableTables();
+       initializeScrambleCopy();
      });
 
      function initializeProgressChart() {
@@ -738,6 +769,30 @@
              }
            }
          }
+       });
+     }
+
+     function initializeScrambleCopy() {
+       const scrambleCells = document.querySelectorAll('.solve-scramble');
+
+       scrambleCells.forEach(cell => {
+         const tooltip = document.createElement('span');
+         tooltip.className = 'copy-tooltip';
+         cell.appendChild(tooltip);
+
+         cell.addEventListener('click', function() {
+           const scrambleText = this.textContent.trim();
+           navigator.clipboard.writeText(scrambleText)
+                    .then(() => {
+                      this.classList.add('copied');
+                      setTimeout(() => {
+                        this.classList.remove('copied');
+                      }, 2000);
+                    })
+                    .catch(err => {
+                      console.error('Copy error: ', err);
+                    });
+         });
        });
      }
 
@@ -1158,7 +1213,7 @@
 
         <div class="footer-bottom">
           <div class="copyright">
-            © {{ now.strftime('%Y') }} Term Timer.
+            © {{ now.strftime('%Y') }} Term Timer
           </div>
         </div>
       </footer>
