@@ -125,20 +125,22 @@ community have been invaluable to this project.
 
 ```console
 Usage: term-timer [-h]
-                  {solve,sv,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d,import,im,i} ...
+                  {solve,sw,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d,import,im,i,export,ex,e}
+                  ...
 
 Speed cubing timer on your terminal.
 
 Positional Arguments:
-  {solve,sv,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d,import,im,i}
+  {solve,sw,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d,import,im,i,export,ex,e}
                         Available commands.
-    solve (sv, t)       Start the timer and record solves.
+    solve (sw, t)       Start the timer and record solves.
     list (ls, l)        Display recorded solves.
     stats (st, s)       Display statistics.
     graph (gr, g)       Display trend graph.
     cfop (op, c)        Display CFOP cases.
     detail (dt, d)      Display detailed information about solves.
     import (im, i)      Import external solves.
+    export (ex, e)      Export solves in HTML.
 
 Options:
   -h, --help            Show this help message and exit.
