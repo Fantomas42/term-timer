@@ -26,6 +26,7 @@
        --text-primary: #f8fafc;
        --text-secondary: #94a3b8;
        --border-color: #334155;
+       --header: #152b5c;
        --pastille: rgba(37, 99, 235, 0.3);
      }
 
@@ -416,7 +417,7 @@
      .table-container th {
        position: sticky;
        top: 0;
-       background-color: var(--primary);
+       background-color: var(--header);
        z-index: 1;
        font-weight: 500;
        cursor: pointer;
@@ -426,7 +427,7 @@
        background-color: rgba(255, 255, 255, 0.05);
      }
 
-     .table-container  tr:nth-of-type(odd) {
+     .table-container  tr:nth-of-type(even) {
        background-color: var(--pastille);
      }
 
