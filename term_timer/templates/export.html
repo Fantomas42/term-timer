@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Detailled statistics on {{ stats.cube_name }}">
+    <meta name="generator" content="Term Timer">
+    <meta name="pubdate" content="{{ now.strftime('%Y-%m-%d') }}">
     <title>Term Timer Statistics {{ stats.cube_name }}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
@@ -175,7 +178,7 @@
      }
 
      .tab.active {
-       color: var(--primary);
+       color: var(--info);
        border-bottom-color: var(--primary);
      }
 
@@ -193,12 +196,12 @@
      }
 
      .time-best {
-       color: var(--success);
+       color: var(--success) !important;
        font-weight: 600;
      }
 
      .time-worst {
-       color: var(--danger);
+       color: var(--danger) !important;
        font-weight: 600;
      }
 
@@ -248,11 +251,11 @@
      }
 
      .frequency-higher {
-       color: var(--success);
+       color: var(--success) !important;
      }
 
      .frequency-lower {
-       color: var(--danger);
+       color: var(--danger) !important;
      }
 
      .chart-container {
@@ -492,8 +495,8 @@
      }
      /* Table */
      .table-container {
-       max-height: 600px; /* Hauteur fixe du tableau */
-       overflow-y: auto; /* Ajoute une barre de défilement verticale si nécessaire */
+       max-height: 600px;
+       overflow-y: auto;
        margin-bottom: 20px;
      }
 
@@ -510,15 +513,36 @@
      }
 
      .table-container th {
-       position: sticky; /* En-têtes fixes pendant le défilement */
+       position: sticky;
        top: 0;
-       background-color: var(--secondary);
+       background-color: var(--primary);
        z-index: 1;
        font-weight: 500;
+       cursor: pointer;
      }
 
      .table-container tr:hover {
        background-color: rgba(255, 255, 255, 0.05);
+     }
+
+     .table-container th:after {
+       content: '';
+       position: absolute;
+       right: 5px;
+       top: 50%;
+       transform: translateY(-50%);
+     }
+
+     .table-container th.sort-asc:after {
+       content: '\25B2';
+       font-size: 0.7em;
+       color: var(--light);
+     }
+
+     .table-container th.sort-desc:after {
+       content: '\25BC';
+       font-size: 0.7em;
+       color: var(--light);
      }
     </style>
     <script>
@@ -539,6 +563,7 @@
 
        initializeProgressChart();
        initializeDistributionChart();
+       initializeSortableTables();
      });
 
      function initializeProgressChart() {
@@ -715,6 +740,70 @@
          }
        });
      }
+
+     function initializeSortableTables() {
+       const tables = document.querySelectorAll('.table-container table');
+
+       tables.forEach(table => {
+         const headers = table.querySelectorAll('th');
+
+         headers.forEach((header, index) => {
+           header.addEventListener('click', function() {
+             sortTable(table, index, this);
+           });
+         });
+       });
+     }
+
+     function sortTable(table, columnIndex, header) {
+       const rows = Array.from(table.querySelectorAll('tbody tr'));
+       const isAsc = !header.classList.contains('sort-asc');
+
+       table.querySelectorAll('th').forEach(th => {
+         th.classList.remove('sort-asc', 'sort-desc');
+       });
+
+       header.classList.add(isAsc ? 'sort-asc' : 'sort-desc');
+
+       rows.sort((a, b) => {
+         let valueA = a.cells[columnIndex].textContent.trim();
+         let valueB = b.cells[columnIndex].textContent.trim();
+
+         if (/^\d{1,2}:\d{2}\.\d{2}$/.test(valueA) || /^\d{1,2}\.\d{2}$/.test(valueA)) {
+           valueA = convertTimeToSeconds(valueA);
+           valueB = convertTimeToSeconds(valueB);
+           return isAsc ? valueA - valueB : valueB - valueA;
+         }
+
+         if (valueA.includes('%')) {
+           valueA = parseFloat(valueA);
+           valueB = parseFloat(valueB);
+           return isAsc ? valueA - valueB : valueB - valueA;
+         }
+
+         if (!isNaN(valueA) && !isNaN(valueB)) {
+           return isAsc ? valueA - valueB : valueB - valueA;
+         }
+
+         return isAsc
+              ? valueA.localeCompare(valueB)
+              : valueB.localeCompare(valueA);
+       });
+
+       const tbody = table.querySelector('tbody');
+       rows.forEach(row => tbody.appendChild(row));
+     }
+
+     function convertTimeToSeconds(timeStr) {
+       if (timeStr === '---') return Infinity;
+
+       if (timeStr.includes(':')) {
+         const [minutes, seconds] = timeStr.split(':');
+         return parseFloat(minutes) * 60 + parseFloat(seconds);
+       }
+
+       return parseFloat(timeStr);
+     }
     </script>
   </head>
   <body>
@@ -888,7 +977,7 @@
               {% for solve in stats.stack|reverse %}
               <tr>
                 <td>{{ stats.stack|length - loop.index0 }}</td>
-                <td class="time-best__">
+                <td class="{% if solve.time == stats.best %}time-best{% elif solve.time == stats.worst %}time-worst{% endif %}">
                   {{ solve.time|format_time }}
                 </td>
                 <td class="solve-date">
@@ -937,13 +1026,13 @@
                   <td>
                     <div class="cfop-case">
                       <div class="cfop-case-img">{{ name.split(" ")[0] }}</div>
-                      <div>{{ name }}</div>
+                        <div>{{ " ".join(name.split(" ")[1:]) }}</div>
                     </div>
                   </td>
                   <td>
                     {{ oll.count }}
                   </td>
-                  <td class="frequency-higher">
+                  <td class="{% if oll.frequency > oll.probability %}frequency-higher{% else %}frequency-lower{% endif %}">
                     {{ (oll.frequency * 100)|round(2) }}%
                   </td>
                   <td>
@@ -995,13 +1084,12 @@
                   <td>
                     <div class="cfop-case">
                       <div class="cfop-case-img">{{ name.split(" ")[0] }}</div>
-                      <div>{{ name }}</div>
                     </div>
                   </td>
                   <td>
                     {{ pll.count }}
                   </td>
-                  <td class="frequency-higher">
+                  <td class="{% if pll.frequency > pll.probability %}frequency-higher{% else %}frequency-lower{% endif %}">
                     {{ (pll.frequency * 100)|round(2) }}%
                   </td>
                   <td>
