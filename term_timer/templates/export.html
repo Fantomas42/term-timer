@@ -207,6 +207,7 @@
 
      .solve-date {
        color: var(--text-secondary);
+       position: relative;
      }
 
      .solve-scramble {
@@ -219,7 +220,7 @@
        cursor: pointer;
      }
 
-     .copy-tooltip {
+     .tooltip, .copy-tooltip {
        position: absolute;
        background-color: var(--bg-main);
        color: var(--light);
@@ -236,6 +237,10 @@
      }
 
     .solve-scramble:hover .copy-tooltip {
+      opacity: 0.9;
+     }
+
+    .solve-date:hover .tooltip {
       opacity: 0.9;
      }
 
@@ -651,6 +656,7 @@
 
      function initializeProgressChart() {
        const ctx = document.getElementById('progressChart');
+       const totalPoints = {{ trend.indices|length }};
 
        const progressData = {
          labels: {{ trend.indices|tojson }},
@@ -726,7 +732,12 @@
              },
              tooltip: {
                mode: 'index',
-               intersect: false
+               intersect: false,
+               callbacks: {
+                 title: function(tooltipItem) {
+                   return `Solve #${tooltipItem[0].label}`;
+                 }
+               }
              },
              /* zoom: {
               *   pan: {
@@ -753,7 +764,9 @@
                },
                grid: {
                  color: 'rgba(148, 163, 184, 0.1)'
-               }
+               },
+               min: totalPoints - 50,
+               max: totalPoints
              },
              y: {
                ticks: {
@@ -761,7 +774,7 @@
                },
                grid: {
                  color: 'rgba(148, 163, 184, 0.1)'
-               }
+               },
              }
            }
          }
@@ -1113,6 +1126,7 @@
                 </td>
                 <td class="solve-date">
                   {{ solve.datetime.strftime('%Y-%m-%d %H:%M') }}
+                  <span class="tooltip">Session {{ solve.session }}</span>
                 </td>
                 <td class="solve-scramble">
                   {{ solve.scramble }}
