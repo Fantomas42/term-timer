@@ -252,6 +252,11 @@ class GanGen3Driver(GanGen2Driver):
     state_characteristic_uid = GAN_GEN3_STATE_CHARACTERISTIC
     command_characteristic_uid = GAN_GEN3_COMMAND_CHARACTERISTIC
 
+    serial = -1
+    last_serial = -1
+    last_local_timestamp = None
+    move_buffer = []
+
     def send_command_handler(self, command: str):
         msg = bytearray(16)
 
@@ -293,6 +298,10 @@ class GanGen3Driver(GanGen2Driver):
             return events
 
         if event == 0x01:  # Move
+            if self.last_serial == -1:  # Block moves until facelets received
+                return []
+
+            self.last_local_timestamp = timestamp
             serial = msg.get_bit_word(56, 16, little_endian=True)
             cube_timestamp = msg.get_bit_word(24, 32, little_endian=True)
 
@@ -300,22 +309,36 @@ class GanGen3Driver(GanGen2Driver):
             face = [2, 32, 8, 1, 16, 4].index(msg.get_bit_word(74, 6))
             move = 'URFDLB'[face] + " '"[direction]
 
+            # Put move event into FIFO buffer
             if face >= 0:
-                payload = {
-                    'event': 'move',
-                    'clock': clock,
-                    'timestamp': timestamp,
-                    'serial': serial,
-                    'local_timestamp': timestamp,
-                    'cube_timestamp': cube_timestamp,
-                    'face': face,
-                    'direction': direction,
-                    'move': move.strip(),
-                }
-                self.add_event(events, payload)
+                self.move_buffer.append(
+                    {
+                        'event': 'move',
+                        'clock': clock,
+                        'timestamp': timestamp,
+                        'serial': serial,
+                        'local_timestamp': timestamp,
+                        'cube_timestamp': cube_timestamp,
+                        'face': face,
+                        'direction': direction,
+                        'move': move.strip(),
+                    },
+                )
+            self.add_event(events, self.evict_move_buffer())
 
         elif event == 0x02:  # Facelets
             serial = msg.get_bit_word(24, 16, little_endian=True)
+            self.serial = serial
+
+            # Also check and recovery missed moves
+            # using periodic facelets event sent by cube
+            if self.last_serial != 1:
+                # Debounce the facelet event if there are active cube moves
+                if (
+                        self.last_local_timestamp is not None
+                        and (timestamp - self.last_local_timestamp) > 500
+                ):
+                    await self.check_if_move_missed()
 
             if self.last_serial == -1:
                 self.last_serial = serial
@@ -360,21 +383,29 @@ class GanGen3Driver(GanGen2Driver):
             for i in range(count):
                 direction = msg.get_bit_word(35 + 4 * i, 1)
                 face = [1, 5, 3, 0, 4, 2].index(msg.get_bit_word(32 + 4 * i, 3))
-                move = 'URFDLB'[face] + " '"[direction]
 
                 if face >= 0:
-                    payload = {
-                        'event': 'move-history',
-                        'clock': clock,
-                        'timestamp': timestamp,
-                        'serial': (start_serial - i) & 0xFF,
-                        'local_timestamp': None,
-                        'cube_timestamp': None,
-                        'face': face,
-                        'direction': direction,
-                        'move': move.strip(),
-                    }
-                    self.add_event(events, payload)
+                    move = 'URFDLB'[face] + " '"[direction]
+
+                    self.inject_missed_move_to_buffer(
+                        {
+                            'event': 'move-history',
+                            'clock': clock,
+                            'timestamp': timestamp,
+                            'serial': (start_serial - i) & 0xFF,
+                            # Missed and recovered events
+                            # has no meaningful local timestamps
+                            'local_timestamp': None,
+                            # Cube hardware timestamp for missed move
+                            # you should interpolate using cubeTimestampLinearFit
+                            'cube_timestamp': None,
+                            'face': face,
+                            'direction': direction,
+                            'move': move.strip(),
+                        },
+                    )
+
+            self.add_event(events, self.evict_move_buffer())
 
         elif event == 0x07:  # Hardware
             sw_major = msg.get_bit_word(72, 4)
