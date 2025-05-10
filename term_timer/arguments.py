@@ -307,7 +307,7 @@ def cfop_arguments(subparsers):
         metavar='ORDER',
         help=(
             'Set the ordering attribute of the cases.\n'
-            'Default: as.'
+            'Default: asc.'
         ),
     )
 
