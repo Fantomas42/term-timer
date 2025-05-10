@@ -36,8 +36,6 @@ class GanGen2Driver(Driver):
     command_characteristic_uid = GAN_GEN2_COMMAND_CHARACTERISTIC
     encrypter = GanGen2CubeEncrypter
 
-    last_serial = -1
-
     def init_cypher(self):
         if self.device.name.startswith('AiCube'):
             return self.encrypter(
@@ -86,6 +84,7 @@ class GanGen2Driver(Driver):
         if event == 0x01:  # Gyroscope
             if self.disable_gyro:
                 return []
+
             # Orientation Quaternion
             qw = msg.get_bit_word(4, 16)
             qx = msg.get_bit_word(20, 16)
@@ -117,26 +116,35 @@ class GanGen2Driver(Driver):
             self.add_event(events, payload)
 
         elif event == 0x02:  # Moves
+            if self.last_serial == -1:  # Block moves until facelets received
+                return []
+
             serial = msg.get_bit_word(4, 8)
             diff = min((serial - self.last_serial) & 0xFF, 7)
+
             self.last_serial = serial
+
+            if diff <= 0:
+                return []
 
             for i in range(diff - 1, -1, -1):
                 face = msg.get_bit_word(12 + 5 * i, 4)
                 direction = msg.get_bit_word(16 + 5 * i, 1)
                 move = 'URFDLB'[face] + " '"[direction]
                 elapsed = msg.get_bit_word(47 + 16 * i, 16)
-                # if elapsed == 0:
-                #     # In case of 16-bit cube timestamp register overflow
-                #     elapsed = timestamp - self.last_move_timestamp
+
+                # In case of 16-bit cube timestamp register overflow
+                if elapsed == 0:
+                    elapsed = timestamp - self.last_move_timestamp
+
                 self.cube_timestamp += elapsed
                 payload = {
                     'event': 'move',
                     'clock': clock,
                     'timestamp': timestamp,
                     'serial': (serial - i) & 0xFF,
-                    # Missed and recovered events has no meaningful
-                    # local timestamps
+                    # Missed and recovered events
+                    # has no meaningful local timestamps
                     'localTimestamp': timestamp if i == 0 else None,
                     'cubeTimestamp': self.cube_timestamp,
                     'face': face,
