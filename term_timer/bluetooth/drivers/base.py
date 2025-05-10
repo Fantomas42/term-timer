@@ -22,5 +22,9 @@ class Driver:
         raise NotImplementedError
 
     def add_event(self, store, event):
-        store.append(event)
-        self.events.append(event)
+        if isinstance(event, list):
+            store.extend(event)
+            self.events.extend(event)
+        else:
+            store.append(event)
+            self.events.append(event)

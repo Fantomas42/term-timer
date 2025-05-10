@@ -1,3 +1,4 @@
+import logging
 import time
 from datetime import datetime
 from datetime import timezone
@@ -18,6 +19,8 @@ from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.facelets import to_kociemba_facelets
 from term_timer.bluetooth.message import GanProtocolMessage
 from term_timer.bluetooth.salt import get_salt
+
+logger = logging.getLogger(__name__)
 
 
 class GanGen2Driver(Driver):
@@ -280,6 +283,99 @@ class GanGen3Driver(GanGen2Driver):
 
         return self.cypher.encrypt(bytes(msg))
 
+    async def request_move_history(self, serial, count):
+        msg = bytearray(16)
+
+        # Move history response data is byte-aligned,
+        # and moves always starting with near-ceil odd serial number,
+        # regardless of requested.
+        # Adjust serial and count to get odd serial aligned history window
+        # with even number of moves inside.
+        if serial % 2 == 0:
+            serial = (serial - 1) & 0xFF
+        if count % 2 == 1:
+            count += 1
+
+        # Never overflow requested history window beyond
+        # the serial number cycle edge 255 -> 0.
+        # Because due to iCarry2 firmware bug the moves beyond the edge
+        # will be spoofed with 'D' (just zero bytes).
+        count = min(count, serial + 1)
+
+        msg[0] = 0x68
+        msg[1] = 0x03
+        msg[2] = serial
+        msg[4] = count
+
+        logger.debug('Sending : REQUEST_HISTORY')
+
+        await self.client.write_gatt_char(
+            self.command_characteristic_uid,
+            self.cypher.encrypt(bytes(msg)),
+        )
+
+    async def evict_move_buffer(self):
+        evicted_events = []
+
+        while len(self.move_buffer) > 0:
+            buffer_head = self.move_buffer[0]
+            diff = 1 if self.last_serial == -1 else (
+                buffer_head['serial'] - self.last_serial) & 0xFF
+            if diff > 1:
+                await self.request_move_history(buffer_head['serial'], diff)
+                break
+
+            evicted_events.append(self.move_buffer.pop(0))
+            self.last_serial = buffer_head['serial']
+
+        if len(self.move_buffer) > 16:
+            self.client.disconnect()
+
+        return evicted_events
+
+    def is_serial_in_range(self, start, end, serial,
+                           closed_start=False, closed_end=False):
+        return (
+            ((end - start) & 0xFF) >= ((serial - start) & 0xFF)
+            and (closed_start or ((start - serial) & 0xFF) > 0)
+            and (closed_end or ((end - serial) & 0xFF) > 0)
+        )
+
+    def inject_missed_move_to_buffer(self, move):
+        if len(self.move_buffer) > 0:
+            buffer_head = self.move_buffer[0]
+
+            if any(e['event'] == 'move' and e['serial'] == move['serial']
+                   for e in self.move_buffer):
+                return
+
+            if not self.is_serial_in_range(
+                    self.last_serial,
+                    buffer_head['serial'],
+                    move['serial'],
+            ):
+                return
+
+            if move['serial'] == ((buffer_head['serial'] - 1) & 0xFF):
+                self.move_buffer.insert(0, move)
+        elif self.is_serial_in_range(
+                self.last_serial,
+                self.serial,
+                move['serial'],
+                False, True,
+        ):
+                self.move_buffer.insert(0, move)
+
+    async def check_if_move_missed(self):
+        diff = (self.serial - self.last_serial) & 0xFF
+
+        if diff > 0 and self.serial != 0:
+            buffer_head = self.move_buffer[0] if self.move_buffer else None
+            start_serial = buffer_head['serial'] if buffer_head else (
+                self.serial + 1
+            ) & 0xFF
+            await self.request_move_history(start_serial, diff + 1)
+
     async def event_handler(self, sender, data):  # noqa: ARG002
         """Process notifications from the cube"""
         clock = time.perf_counter_ns()
@@ -324,7 +420,7 @@ class GanGen3Driver(GanGen2Driver):
                         'move': move.strip(),
                     },
                 )
-            self.add_event(events, self.evict_move_buffer())
+            self.add_event(events, await self.evict_move_buffer())
 
         elif event == 0x02:  # Facelets
             serial = msg.get_bit_word(24, 16, little_endian=True)
@@ -336,7 +432,9 @@ class GanGen3Driver(GanGen2Driver):
                 # Debounce the facelet event if there are active cube moves
                 if (
                         self.last_local_timestamp is not None
-                        and (timestamp - self.last_local_timestamp) > 500
+                        and (
+                            timestamp - self.last_local_timestamp
+                        ).total_seconds() > 0.5
                 ):
                     await self.check_if_move_missed()
 
@@ -405,7 +503,7 @@ class GanGen3Driver(GanGen2Driver):
                         },
                     )
 
-            self.add_event(events, self.evict_move_buffer())
+            self.add_event(events, await self.evict_move_buffer())
 
         elif event == 0x07:  # Hardware
             sw_major = msg.get_bit_word(72, 4)
