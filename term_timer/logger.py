@@ -1,16 +1,12 @@
 import logging
 import logging.config
-from datetime import datetime
-from datetime import timezone
 from pathlib import Path
 
 from term_timer.config import DEBUG
 
 LOGGING_DIR = Path(__file__).parent.parent / 'logs'
 
-LOGGING_FILE = datetime.now(
-    tz=timezone.utc,  # noqa: UP017
-).strftime('%Y%m%d_%H%M%S') + '.log'
+LOGGING_FILE = 'term-timer.log'
 
 LOGGING_PATH = LOGGING_DIR / LOGGING_FILE
 
