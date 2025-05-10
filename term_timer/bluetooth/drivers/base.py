@@ -10,10 +10,6 @@ class Driver:
         self.device = device
 
         self.events = []
-        self.last_serial = -1
-        self.cube_timestamp = 0
-        self.last_move_timestamp = 0
-
         self.cypher = self.init_cypher()
 
     def init_cypher(self):

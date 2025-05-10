@@ -36,6 +36,10 @@ class GanGen2Driver(Driver):
     command_characteristic_uid = GAN_GEN2_COMMAND_CHARACTERISTIC
     encrypter = GanGen2CubeEncrypter
 
+    last_serial = -1
+    cube_timestamp = 0
+    last_move_timestamp = 0
+
     def init_cypher(self):
         if self.device.name.startswith('AiCube'):
             return self.encrypter(
@@ -145,8 +149,8 @@ class GanGen2Driver(Driver):
                     'serial': (serial - i) & 0xFF,
                     # Missed and recovered events
                     # has no meaningful local timestamps
-                    'localTimestamp': timestamp if i == 0 else None,
-                    'cubeTimestamp': self.cube_timestamp,
+                    'local_timestamp': timestamp if i == 0 else None,
+                    'cube_timestamp': self.cube_timestamp,
                     'face': face,
                     'direction': direction,
                     'move': move.strip(),
@@ -302,8 +306,8 @@ class GanGen3Driver(GanGen2Driver):
                     'clock': clock,
                     'timestamp': timestamp,
                     'serial': serial,
-                    'localTimestamp': timestamp,
-                    'cubeTimestamp': cube_timestamp,
+                    'local_timestamp': timestamp,
+                    'cube_timestamp': cube_timestamp,
                     'face': face,
                     'direction': direction,
                     'move': move.strip(),
@@ -364,8 +368,8 @@ class GanGen3Driver(GanGen2Driver):
                         'clock': clock,
                         'timestamp': timestamp,
                         'serial': (start_serial - i) & 0xFF,
-                        'localTimestamp': None,
-                        'cubeTimestamp': None,
+                        'local_timestamp': None,
+                        'cube_timestamp': None,
                         'face': face,
                         'direction': direction,
                         'move': move.strip(),
@@ -480,8 +484,8 @@ class GanGen4Driver(GanGen2Driver):
                     'clock': clock,
                     'timestamp': timestamp,
                     'serial': serial,
-                    'localTimestamp': timestamp,
-                    'cubeTimestamp': cube_timestamp,
+                    'local_timestamp': timestamp,
+                    'cube_timestamp': cube_timestamp,
                     'face': face,
                     'direction': direction,
                     'move': move.strip(),
@@ -542,8 +546,8 @@ class GanGen4Driver(GanGen2Driver):
                         'clock': clock,
                         'timestamp': timestamp,
                         'serial': (start_serial - i) & 0xFF,
-                        'localTimestamp': None,
-                        'cubeTimestamp': None,
+                        'local_timestamp': None,
+                        'cube_timestamp': None,
                         'face': face,
                         'direction': direction,
                         'move': move.strip(),
