@@ -248,6 +248,29 @@ class GanGen3Driver(GanGen2Driver):
     state_characteristic_uid = GAN_GEN3_STATE_CHARACTERISTIC
     command_characteristic_uid = GAN_GEN3_COMMAND_CHARACTERISTIC
 
+    def send_command_handler(self, command: str):
+        msg = bytearray(16)
+
+        if command == 'REQUEST_FACELETS':
+            msg[0] = 0x68
+            msg[1] = 0x01
+        elif command == 'REQUEST_HARDWARE':
+            msg[0] = 0x68
+            msg[1] = 0x04
+        elif command == 'REQUEST_BATTERY':
+            msg[0] = 0x68
+            msg[1] = 0x07
+        elif command == 'REQUEST_RESET':
+            reset_sequence = [
+                0x68, 0x05, 0x05, 0x39, 0x77, 0x00, 0x00, 0x01,
+                0x23, 0x45, 0x67, 0x89, 0xAB, 0x00, 0x00, 0x00,
+            ]
+            msg = bytearray(reset_sequence)
+        else:
+            return False
+
+        return self.cypher.encrypt(bytes(msg))
+
     async def event_handler(self, sender, data):  # noqa: ARG002
         """Process notifications from the cube"""
         clock = time.perf_counter_ns()
@@ -393,29 +416,6 @@ class GanGen3Driver(GanGen2Driver):
 
         return events
 
-    def send_command_handler(self, command: str):
-        msg = bytearray(16)
-
-        if command == 'REQUEST_FACELETS':
-            msg[0] = 0x68
-            msg[1] = 0x01
-        elif command == 'REQUEST_HARDWARE':
-            msg[0] = 0x68
-            msg[1] = 0x04
-        elif command == 'REQUEST_BATTERY':
-            msg[0] = 0x68
-            msg[1] = 0x07
-        elif command == 'REQUEST_RESET':
-            reset_sequence = [
-                0x68, 0x05, 0x05, 0x39, 0x77, 0x00, 0x00, 0x01,
-                0x23, 0x45, 0x67, 0x89, 0xAB, 0x00, 0x00, 0x00,
-            ]
-            msg = bytearray(reset_sequence)
-        else:
-            return False
-
-        return self.cypher.encrypt(bytes(msg))
-
 
 class GanGen4Driver(GanGen2Driver):
     """
@@ -425,6 +425,33 @@ class GanGen4Driver(GanGen2Driver):
     service_uid = GAN_GEN4_SERVICE
     state_characteristic_uid = GAN_GEN4_STATE_CHARACTERISTIC
     command_characteristic_uid = GAN_GEN4_COMMAND_CHARACTERISTIC
+
+    def send_command_handler(self, command: str):
+        msg = bytearray(20)
+
+        if command == 'REQUEST_FACELETS':
+            values = [0xDD, 0x04, 0x00, 0xED, 0x00, 0x00]
+            for i, val in enumerate(values):
+                msg[i] = val
+        elif command == 'REQUEST_HARDWARE':
+            values = [0xDF, 0x03, 0x00, 0x00, 0x00]
+            for i, val in enumerate(values):
+                msg[i] = val
+        elif command == 'REQUEST_BATTERY':
+            values = [0xDD, 0x04, 0x00, 0xEF, 0x00, 0x00]
+            for i, val in enumerate(values):
+                msg[i] = val
+        elif command == 'REQUEST_RESET':
+            values = [
+                0xD2, 0x0D, 0x05, 0x39, 0x77, 0x00, 0x00, 0x01,
+                0x23, 0x45, 0x67, 0x89, 0xAB, 0x00, 0x00, 0x00,
+            ]
+            for i, val in enumerate(values):
+                msg[i] = val
+        else:
+            return False
+
+        return self.cypher.encrypt(bytes(msg))
 
     async def event_handler(self, sender, data):  # noqa: ARG002
         """Process notifications from the cube"""
@@ -624,30 +651,3 @@ class GanGen4Driver(GanGen2Driver):
             await self.client.disconnect()
 
         return events
-
-    def send_command_handler(self, command: str):
-        msg = bytearray(20)
-
-        if command == 'REQUEST_FACELETS':
-            values = [0xDD, 0x04, 0x00, 0xED, 0x00, 0x00]
-            for i, val in enumerate(values):
-                msg[i] = val
-        elif command == 'REQUEST_HARDWARE':
-            values = [0xDF, 0x03, 0x00, 0x00, 0x00]
-            for i, val in enumerate(values):
-                msg[i] = val
-        elif command == 'REQUEST_BATTERY':
-            values = [0xDD, 0x04, 0x00, 0xEF, 0x00, 0x00]
-            for i, val in enumerate(values):
-                msg[i] = val
-        elif command == 'REQUEST_RESET':
-            values = [
-                0xD2, 0x0D, 0x05, 0x39, 0x77, 0x00, 0x00, 0x01,
-                0x23, 0x45, 0x67, 0x89, 0xAB, 0x00, 0x00, 0x00,
-            ]
-            for i, val in enumerate(values):
-                msg[i] = val
-        else:
-            return False
-
-        return self.cypher.encrypt(bytes(msg))
