@@ -5,9 +5,9 @@ from bleak import BleakError
 from bleak import BleakScanner
 
 from term_timer.bluetooth.constants import PREFIX
-from term_timer.bluetooth.drivers.gan import GanGen2Driver
-from term_timer.bluetooth.drivers.gan import GanGen3Driver
-from term_timer.bluetooth.drivers.gan import GanGen4Driver
+from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
+from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
+from term_timer.bluetooth.drivers.gan_gen4 import GanGen4Driver
 
 logger = logging.getLogger(__name__)
 
