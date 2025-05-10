@@ -1,9 +1,6 @@
 import asyncio
 import logging
-import sys
-import termios
 import time
-import tty
 from datetime import datetime
 from datetime import timezone
 
@@ -25,6 +22,7 @@ from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.in_out import save_solves
+from term_timer.interface import Interface
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -32,7 +30,7 @@ from term_timer.stats import Statistics
 logger = logging.getLogger(__name__)
 
 
-class Timer:
+class Timer(Interface):
     def __init__(self, *, cube_size: int,
                  iterations: int, easy_cross: bool,
                  session: str, free_play: bool,
@@ -266,62 +264,6 @@ class Timer:
                 device_label += f' ({ battery_level }%)'
 
         return device_label
-
-    async def getch(self, timeout: float | None = None) -> str:
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        ch = ''
-
-        try:
-            tty.setcbreak(fd)
-
-            loop = asyncio.get_running_loop()
-            future = loop.create_future()
-
-            def stdin_callback() -> None:
-                try:
-                    ch = sys.stdin.read(1)
-                    if not future.done():
-                        future.set_result(ch)
-                except Exception as e:
-                    if not future.done():
-                        future.set_exception(e)
-
-            loop.add_reader(fd, stdin_callback)
-
-            try:
-                if timeout is not None:
-                    ch = await asyncio.wait_for(future, timeout)
-                else:
-                    ch = await future
-            except asyncio.TimeoutError:  # noqa UP041
-                ch = ''
-            except Exception as e:
-                logger.exception('Error in getch')
-                ch = ''
-            finally:
-                if loop.is_closed():
-                    pass
-                else:
-                    loop.remove_reader(fd)
-
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-
-        self.clear_line(full=True)
-
-        return ch
-
-    @staticmethod
-    def clear_line(full) -> None:
-        if full:
-            print(f'\r{ " " * 100}\r', flush=True, end='')
-        else:
-            print('\r', end='')
-
-    @staticmethod
-    def beep() -> None:
-        print('\a', end='', flush=True)
 
     async def inspection(self) -> None:
         self.clear_line(full=True)
