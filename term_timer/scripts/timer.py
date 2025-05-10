@@ -61,7 +61,7 @@ async def timer(options) -> int:
 
     if len(timer.stack) > 1:
         session_stats = StatisticsReporter(cube, timer.stack)
-        session_stats.resume('Session')
+        session_stats.resume('Session ')
 
     return 0
 
