@@ -13,6 +13,7 @@ dependencies = [
     "plotext==5.3.2",
     "rich==13.9.4",
     "bleak==0.22.3",
+    "Jinja2==3.1.6",
     "cryptography==44.0.2",
     "cubing_algs @ git+https://github.com/Fantomas42/cubing-algs.git",
 ]
@@ -33,8 +34,6 @@ two-phase = [
 [project.scripts]
 bc-info = "term_timer.scripts.bluetooth_info:main"
 term-timer = "term_timer.scripts.timer:main"
-cstimer_import = "term_timer.scripts.cstimer:main"
-cubeast_import = "term_timer.scripts.cubeast:main"
 
 [tool.setuptools]
 packages = ["term_timer"]

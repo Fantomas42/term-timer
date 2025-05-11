@@ -20,6 +20,7 @@ Practice your speed cubing skills on your terminal, for a full 80's vibe.
 - Easy white cross
 - Cube orientation control
 - Seed control
+- Full offline application
 - csTimer and Cubeast import
 
 ## Short demo
@@ -34,10 +35,10 @@ Start timing 3x3x3 solves :
 term-timer solve
 ```
 
-Start timing showing the scrambled cube :
+Start timing in Bluetooth showing the scrambled cube :
 
 ```console
-term-timer solve -p
+term-timer solve -bp
 ```
 
 Start timing 2 solves of 4x4x4 in free-play :
@@ -123,19 +124,23 @@ community have been invaluable to this project.
 ### General
 
 ```console
-Usage: term-timer [-h] {solve,sv,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d} ...
+Usage: term-timer [-h]
+                  {solve,sw,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d,import,im,i,export,ex,e}
+                  ...
 
 Speed cubing timer on your terminal.
 
 Positional Arguments:
-  {solve,sv,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d}
+  {solve,sw,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d,import,im,i,export,ex,e}
                         Available commands.
-    solve (sv, t)       Start the timer and record solves.
+    solve (sw, t)       Start the timer and record solves.
     list (ls, l)        Display recorded solves.
     stats (st, s)       Display statistics.
     graph (gr, g)       Display trend graph.
     cfop (op, c)        Display CFOP cases.
     detail (dt, d)      Display detailed information about solves.
+    import (im, i)      Import external solves.
+    export (ex, e)      Export solves in HTML.
 
 Options:
   -h, --help            Show this help message and exit.

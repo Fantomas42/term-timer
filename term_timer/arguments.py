@@ -7,12 +7,14 @@ from term_timer.config import TIMER_CONFIG
 from term_timer.constants import CUBE_SIZES
 
 COMMAND_ALIASES = {
-    'solve': ['sv', 't'],
+    'solve': ['sw', 't'],
     'list': ['ls', 'l'],
     'stats': ['st', 's'],
     'graph': ['gr', 'g'],
     'cfop': ['op', 'c'],
     'detail': ['dt', 'd'],
+    'import': ['im', 'i'],
+    'export': ['ex', 'e'],
 }
 
 COMMAND_RESOLUTIONS = {}
@@ -305,8 +307,36 @@ def cfop_arguments(subparsers):
         metavar='ORDER',
         help=(
             'Set the ordering attribute of the cases.\n'
-            'Default: as.'
+            'Default: asc.'
         ),
+    )
+
+    set_session_arguments(parser)
+
+    return parser
+
+
+def import_arguments(subparsers):
+    parser = subparsers.add_parser(
+        'import',
+        help='Import external solves',
+        description='Import solves recorded in csTimer or Cubeast.',
+        aliases=COMMAND_ALIASES['import'],
+    )
+    parser.add_argument(
+        'source',
+        help='Solve file to import',
+    )
+
+    return parser
+
+
+def export_arguments(subparsers):
+    parser = subparsers.add_parser(
+        'export',
+        help='Export solves in HTML',
+        description='Export HTML report about recorded solves.',
+        aliases=COMMAND_ALIASES['export'],
     )
 
     set_session_arguments(parser)
@@ -350,15 +380,8 @@ def detail_arguments(subparsers):
 
 def get_arguments() -> Any:
     parser = ArgumentParser(
-        add_help=False,
         description='Speed cubing timer on your terminal.',
         epilog='Have fun cubing !',
-    )
-
-    parser.add_argument(
-        '-h', '--help',
-        action='help',
-        help='Show this help message and exit.',
     )
 
     subparsers = parser.add_subparsers(
@@ -372,6 +395,8 @@ def get_arguments() -> Any:
     graph_arguments(subparsers)
     cfop_arguments(subparsers)
     detail_arguments(subparsers)
+    import_arguments(subparsers)
+    export_arguments(subparsers)
 
     args = parser.parse_args(sys.argv[1:])
 

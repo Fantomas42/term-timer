@@ -3,13 +3,13 @@ class Driver:
     state_characteristic_uid = ''
     command_characteristic_uid = ''
 
+    disable_gyro = True
+
     def __init__(self, client, device):
         self.client = client
         self.device = device
 
         self.events = []
-        self.cube_timestamp = 0
-
         self.cypher = self.init_cypher()
 
     def init_cypher(self):
@@ -22,5 +22,9 @@ class Driver:
         raise NotImplementedError
 
     def add_event(self, store, event):
-        store.append(event)
-        self.events.append(event)
+        if isinstance(event, list):
+            store.extend(event)
+            self.events.extend(event)
+        else:
+            store.append(event)
+            self.events.append(event)

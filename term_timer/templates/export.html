@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Detailled statistics on {{ stats.cube_name }}">
+    <meta name="generator" content="Term Timer">
+    <meta name="pubdate" content="{{ now.strftime('%Y-%m-%d') }}">
+    <title>Term Timer Statistics {{ stats.cube_name }}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
+    <style>
+     :root {
+       --primary: #2563eb;
+       --secondary: #64748b;
+       --success: #10b981;
+       --danger: #ef4444;
+       --warning: #f59e0b;
+       --info: #3b82f6;
+       --light: #f8fafc;
+       --dark: #1e293b;
+       --bg-main: #0f172a;
+       --card-bg: #1e293b;
+       --text-primary: #f8fafc;
+       --text-secondary: #94a3b8;
+       --border-color: #334155;
+       --header: #152b5c;
+       --pastille: rgba(37, 99, 235, 0.3);
+     }
+
+     * {
+       margin: 0;
+       padding: 0;
+       box-sizing: border-box;
+     }
+
+     body {
+       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+       background-color: var(--bg-main);
+       color: var(--text-primary);
+       line-height: 1.6;
+     }
+
+     .container {
+       /* max-width: 1200px; */
+       margin: 0 auto;
+       padding: 0 1rem;
+     }
+
+     header {
+       padding: 1.5rem 0;
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       border-bottom: 1px solid var(--border-color);
+       margin-bottom: 2rem;
+     }
+
+     .logo {
+       display: flex;
+       align-items: center;
+       gap: 1rem;
+     }
+
+     .logo h1 {
+       font-size: 1.8rem;
+       font-weight: 700;
+       color: var(--text-primary);
+     }
+
+     .logo i {
+       font-size: 2.5rem;
+       color: var(--primary);
+     }
+
+     .logo span {
+       font-size: 1.4rem;
+       color: var(--secondary);
+     }
+
+     .link {
+       color: var(--text-secondary);
+       text-decoration: none;
+       font-size: 0.875rem;
+       transition: color 0.2s;
+     }
+
+     .link:hover {
+       color: var(--primary);
+     }
+
+     .skip {
+       font-size: 0.875rem;
+       color: var(--success);
+     }
+
+     .card {
+       background-color: var(--card-bg);
+       border-radius: 0.5rem;
+       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+       padding: 1.5rem;
+       margin-bottom: 1.5rem;
+     }
+
+     .card-header {
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       margin-bottom: 1rem;
+       border-bottom: 1px solid var(--border-color);
+       padding-bottom: 0.75rem;
+     }
+
+     .card-title {
+       font-size: 1.25rem;
+       font-weight: 600;
+       color: var(--text-primary);
+     }
+
+     .stats-grid {
+       display: grid;
+       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+       gap: 1.5rem;
+     }
+
+     .stat-card {
+       display: flex;
+       flex-direction: column;
+       padding: 1rem;
+       background-color: rgba(255, 255, 255, 0.05);
+       border-radius: 0.375rem;
+       transition: transform 0.2s, background-color 0.2s;
+     }
+
+     .stat-card:hover {
+       transform: translateY(-5px);
+       background-color: rgba(255, 255, 255, 0.1);
+     }
+
+     .stat-title {
+       font-size: 0.875rem;
+       color: var(--text-secondary);
+       margin-bottom: 0.5rem;
+     }
+
+     .stat-value {
+       font-size: 1.5rem;
+       font-weight: 700;
+       color: var(--text-primary);
+     }
+
+     .stat-meta {
+       margin-top: 0.5rem;
+       display: flex;
+       align-items: center;
+       gap: 0.5rem;
+       font-size: 0.875rem;
+     }
+
+     .stat-best {
+       color: var(--success);
+     }
+     .stat-worst {
+       color: var(--danger);
+     }
+
+     .stat-delta.positive {
+       color: var(--danger);
+     }
+     .stat-delta.negative {
+       color: var(--success);
+     }
+
+     .tabs {
+       display: flex;
+       gap: 1rem;
+       margin-bottom: 1rem;
+       border-bottom: 1px solid var(--border-color);
+     }
+
+     .tab {
+       padding: 0.75rem 1rem;
+       cursor: pointer;
+       border-bottom: 2px solid transparent;
+       color: var(--text-secondary);
+       transition: all 0.2s;
+     }
+
+     .tab.active {
+       color: var(--info);
+       border-bottom-color: var(--primary);
+     }
+
+     .tab:hover:not(.active) {
+       color: var(--text-primary);
+       border-bottom-color: var(--text-primary);
+     }
+
+     .tab-content {
+       display: none;
+     }
+
+     .tab-content.active {
+       display: block;
+     }
+
+     .time-best {
+       color: var(--success) !important;
+       font-weight: 600;
+     }
+     .time-worst {
+       color: var(--danger) !important;
+       font-weight: 600;
+     }
+
+     .solve-date {
+       position: relative;
+     }
+
+     .solve-scramble {
+       max-width: 300px;
+       overflow-x: hidden;
+       text-overflow: ellipsis;
+       white-space: nowrap;
+       position: relative;
+       cursor: pointer;
+     }
+
+     .tooltip, .copy-tooltip {
+       position: absolute;
+       background-color: var(--bg-main);
+       color: var(--light);
+       padding: 5px 10px;
+       border-radius: 4px;
+       font-size: 0.75rem;
+       z-index: 100;
+       opacity: 0;
+       transition: opacity 0.3s;
+       pointer-events: none;
+       white-space: nowrap;
+       top: -30px;
+       left: 20px;
+     }
+
+    .solve-scramble:hover .copy-tooltip {
+      opacity: 0.9;
+     }
+
+    .solve-date:hover .tooltip {
+      opacity: 0.9;
+     }
+
+     .solve-scramble.copied .copy-tooltip:after {
+       content: 'Copied !';
+     }
+
+     .solve-scramble:not(.copied) .copy-tooltip:after {
+       content: 'Click to copy';
+     }
+
+     .solve-detail-btn {
+       background-color: var(--pastille);
+       color: var(--light);
+       border: none;
+       padding: 0.25rem 0.5rem;
+       border-radius: 0.25rem;
+       cursor: pointer;
+       transition: background-color 0.2s;
+       font-size: 0.875rem;
+       text-decoration: none;
+     }
+
+     .solve-detail-btn:hover {
+       background-color: var(--info)
+     }
+
+     .cfop-case {
+       display: flex;
+       align-items: center;
+       gap: 0.5rem;
+     }
+
+     .cfop-case-img {
+       width: 30px;
+       height: 30px;
+       background-color: rgba(255, 255, 255, 0.1);
+       border-radius: 4px;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       font-size: 0.75rem;
+     }
+
+     .frequency-higher {
+       color: var(--success) !important;
+     }
+     .frequency-lower {
+       color: var(--danger) !important;
+     }
+
+     .chart-container {
+       width: 100%;
+       height: 350px;
+       position: relative;
+     }
+
+     /* Footer */
+     .app-footer {
+       color: var(--text-secondary);
+     }
+
+     .footer-container {
+       display: grid;
+       grid-template-columns: repeat(2, 1fr);
+       gap: 2rem;
+       max-width: 1200px;
+       margin: 0 auto;
+       padding: 0 1rem;
+     }
+
+     .footer-section {
+       display: flex;
+       flex-direction: column;
+     }
+
+     .footer-title {
+       font-size: 1rem;
+       font-weight: 600;
+       color: var(--text-primary);
+       margin-bottom: 1rem;
+       padding-bottom: 0.5rem;
+       border-bottom: 1px solid var(--border-color);
+     }
+
+     .footer-info {
+       display: flex;
+       flex-direction: column;
+       gap: 0.5rem;
+     }
+
+     .info-item {
+       display: flex;
+       align-items: center;
+       gap: 0.5rem;
+     }
+
+     .info-item i {
+       color: var(--primary);
+       width: 1rem;
+       text-align: center;
+     }
+
+     .info-item .value {
+       color: var(--light);
+     }
+
+     .sessions-grid {
+       display: flex;
+       flex-wrap: wrap;
+       gap: 0.5rem;
+     }
+
+     .session-badge {
+       background-color: var(--pastille);
+       color: var(--light);
+       padding: 0.25rem 0.5rem;
+       border-radius: 4px;
+       font-size: 0.875rem;
+       display: flex;
+       align-items: center;
+       gap: 0.5rem;
+     }
+
+     .session-count {
+       background-color: var(--primary);
+       color: white;
+       font-size: 0.75rem;
+       padding: 0.125rem 0.375rem;
+       border-radius: 999px;
+     }
+
+     .footer-bottom {
+       max-width: 1200px;
+       margin: 0 auto;
+       padding: 1.5rem 1rem 0;
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       margin-top: 1.5rem;
+       border-top: 1px solid var(--border-color);
+     }
+
+     .copyright {
+       font-size: 0.875rem;
+     }
+
+     /* Table */
+     .table-container {
+       max-height: 600px;
+       overflow-y: auto;
+       margin-bottom: 20px;
+     }
+
+     .table-container table {
+       width: 100%;
+       border-collapse: collapse;
+     }
+
+     .table-container th, .table-container td {
+       padding: 0.75rem 1rem;
+       text-align: left;
+       color: var(--text-primary);
+     }
+
+     .table-container th {
+       position: sticky;
+       top: 0;
+       background-color: var(--header);
+       z-index: 1;
+       font-weight: 500;
+       cursor: pointer;
+     }
+
+     .table-container tr:hover {
+       background-color: rgba(255, 255, 255, 0.05);
+     }
+
+     .table-container  tr:nth-of-type(even) {
+       background-color: var(--bg-main);
+     }
+
+     .table-container th:after {
+       content: '';
+       position: absolute;
+       right: 5px;
+       top: 50%;
+       transform: translateY(-50%);
+     }
+
+     .table-container th.sort-asc:after {
+       content: '\25B2';
+       font-size: 0.7em;
+       color: var(--light);
+     }
+
+     .table-container th.sort-desc:after {
+       content: '\25BC';
+       font-size: 0.7em;
+       color: var(--light);
+     }
+     .pll-list, .oll-list {
+       table-layout: fixed;
+       width: 100%;
+     }
+
+     .pll-list th, .oll-list th,
+     .pll-list td, .oll-list td {
+       overflow: hidden;
+       text-overflow: ellipsis;
+       white-space: nowrap;
+     }
+
+     .pll-list th:nth-child(1), .oll-list th:nth-child(1),
+     .pll-list td:nth-child(1), .oll-list td:nth-child(1) {
+       width: 15%; /* Case */
+     }
+
+     .pll-list th:nth-child(2), .oll-list th:nth-child(2),
+     .pll-list td:nth-child(2), .oll-list td:nth-child(2) {
+       width: 8%; /* Count */
+     }
+
+     .pll-list th:nth-child(3), .oll-list th:nth-child(3),
+     .pll-list td:nth-child(3), .oll-list td:nth-child(3),
+     .pll-list th:nth-child(4), .oll-list th:nth-child(4),
+     .pll-list td:nth-child(4), .oll-list td:nth-child(4) {
+       width: 10%; /* Frequency, Probability */
+     }
+
+     .pll-list th:nth-child(5), .oll-list th:nth-child(5),
+     .pll-list td:nth-child(5), .oll-list td:nth-child(5),
+     .pll-list th:nth-child(6), .oll-list th:nth-child(6),
+     .pll-list td:nth-child(6), .oll-list td:nth-child(6),
+     .pll-list th:nth-child(7), .oll-list th:nth-child(7),
+     .pll-list td:nth-child(7), .oll-list td:nth-child(7) {
+       width: 9%; /* Inspection, Execution, Time */
+     }
+
+     .pll-list th:nth-child(8), .oll-list th:nth-child(8),
+     .pll-list td:nth-child(8), .oll-list td:nth-child(8),
+     .pll-list th:nth-child(9), .oll-list th:nth-child(9),
+     .pll-list td:nth-child(9), .oll-list td:nth-child(9),
+     .pll-list th:nth-child(10), .oll-list th:nth-child(10),
+     .pll-list td:nth-child(10), .oll-list td:nth-child(10) {
+       width: 10%; /* QTM, TPS, eTPS */
+     }
+
+     @media (max-width: 768px) {
+       .stats-grid {
+         grid-template-columns: repeat(2, 1fr);
+       }
+       .footer-container {
+         grid-template-columns: 1fr;
+         gap: 2rem;
+       }
+
+       .footer-bottom {
+         flex-direction: column;
+         gap: 1rem;
+         text-align: center;
+       }
+     }
+
+     @media (max-width: 480px) {
+       .stats-grid {
+         grid-template-columns: 1fr;
+       }
+     }
+    </style>
+    <script>
+     document.addEventListener('DOMContentLoaded', function() {
+       const tabs = document.querySelectorAll('.tab');
+       const tabContents = document.querySelectorAll('.tab-content');
+
+       tabs.forEach(tab => {
+         tab.addEventListener('click', function() {
+           tabs.forEach(t => t.classList.remove('active'));
+           this.classList.add('active');
+           tabContents.forEach(content => content.classList.remove('active'));
+
+           const tabId = this.getAttribute('data-tab');
+           document.getElementById(`${tabId}-tab`).classList.add('active');
+         });
+       });
+
+       initializeProgressChart();
+       initializeDistributionChart();
+       initializeSortableTables();
+       initializeScrambleCopy();
+     });
+
+     function initializeProgressChart() {
+       const ctx = document.getElementById('progressChart');
+       const totalPoints = {{ trend.indices|length }};
+
+       const progressData = {
+         labels: {{ trend.indices|tojson }},
+         datasets: [
+           {
+             label: 'Time',
+             data: {{ trend.times|tojson }},
+             borderColor: '#2563ec',
+             backgroundColor: 'rgba(37, 99, 236, 0.3)',
+             tension: 0.2,
+             borderWidth: 2,
+             pointRadius: 2,
+           },
+           {% if stats.total >= 5 %}
+           {
+             label: 'AO5',
+             data: {{ trend.ao5s|tojson }},
+             borderColor: '#EF4444',
+             backgroundColor: 'rgba(239, 68, 68, 0.3)',
+             tension: 0.2,
+             borderWidth: 2,
+             pointRadius: 0,
+           },
+           {% endif %}
+           {% if stats.total >= 12 %}
+           {
+             label: 'AO12',
+             data: {{ trend.ao12s|tojson }},
+             borderColor: '#10B981',
+             backgroundColor: 'rgba(16, 185, 129, 0.3)',
+             tension: 0.2,
+             borderWidth: 2,
+             pointRadius: 0,
+           },
+           {% endif %}
+           {% if stats.total >= 100 %}
+           {
+             label: 'AO100',
+             data: {{ trend.ao100s|tojson }},
+             borderColor: '#64748B',
+             backgroundColor: 'rgba(100, 116, 139, 0.3)',
+             tension: 0.2,
+             borderWidth: 2,
+             pointRadius: 0,
+           },
+           {% endif %}
+           {% if stats.total >= 1000 %}
+           {
+             label: 'AO1000',
+             data: {{ trend.ao1000s|tojson }},
+             borderColor: '#F8FAFC',
+             backgroundColor: 'rgba(248, 250, 252, 0.3)',
+             tension: 0.2,
+             borderWidth: 2,
+             pointRadius: 0,
+           },
+           {% endif %}
+         ]
+       };
+
+       new Chart(ctx, {
+         type: 'line',
+         data: progressData,
+         options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           plugins: {
+             legend: {
+               position: 'bottom',
+               labels: {
+                 color: '#94a3b8'
+               }
+             },
+             tooltip: {
+               mode: 'index',
+               intersect: false,
+               callbacks: {
+                 title: function(tooltipItem) {
+                   return `Solve #${tooltipItem[0].label}`;
+                 }
+               }
+             },
+             zoom: {
+               pan: {
+                 enabled: true,
+                 mode: 'x'
+               },
+               limits: {
+                 x: {
+                   max: totalPoints
+                 },
+                 y: {
+                   min: 0
+                 }
+               },
+               zoom: {
+                 wheel: {
+                   enabled: true
+                 },
+                 pinch: {
+                   enabled: true
+                 },
+                 mode: 'x'
+               }
+             }
+           },
+           scales: {
+             x: {
+               ticks: {
+                 color: '#94a3b8'
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)'
+               },
+               min: totalPoints - 50,
+               max: totalPoints
+             },
+             y: {
+               ticks: {
+                 color: '#94a3b8'
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)'
+               }
+             }
+           }
+         }
+       });
+     }
+
+     function initializeDistributionChart() {
+       const ctx = document.getElementById('timeDistributionChart');
+
+       const bins = {{ distribution.labels|tojson }};
+       const counts = {{ distribution.counts|tojson }};
+
+       new Chart(ctx, {
+         type: 'bar',
+         data: {
+           labels: bins,
+           datasets: [{
+             label: 'Solves',
+             data: counts,
+             borderColor: '#2563ec',
+             backgroundColor: 'rgba(37, 99, 236, 0.6)',
+             borderWidth: 1
+           }]
+         },
+         options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           plugins: {
+             legend: {
+               display: false
+             },
+             tooltip: {
+               callbacks: {
+                 title: function(tooltipItem) {
+                   return tooltipItem[0].label;
+                 },
+                 label: function(context) {
+                   return `${context.parsed.y} solves`;
+                 }
+               }
+             }
+           },
+           scales: {
+             x: {
+               title: {
+                 display: true,
+                 color: '#94a3b8'
+               },
+               ticks: {
+                 color: '#94a3b8'
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)'
+               }
+             },
+             y: {
+               title: {
+                 display: true,
+                 text: 'Count',
+                 color: '#94a3b8'
+               },
+               ticks: {
+                 color: '#94a3b8'
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)'
+               }
+             }
+           }
+         }
+       });
+     }
+
+     function initializeScrambleCopy() {
+       const scrambleCells = document.querySelectorAll('.solve-scramble');
+
+       scrambleCells.forEach(cell => {
+         const tooltip = document.createElement('span');
+         tooltip.className = 'copy-tooltip';
+         cell.appendChild(tooltip);
+
+         cell.addEventListener('click', function() {
+           const scrambleText = this.textContent.trim();
+           navigator.clipboard.writeText(scrambleText)
+                    .then(() => {
+                      this.classList.add('copied');
+                      setTimeout(() => {
+                        this.classList.remove('copied');
+                      }, 2000);
+                    })
+                    .catch(err => {
+                      console.error('Copy error: ', err);
+                    });
+         });
+       });
+     }
+
+     function initializeSortableTables() {
+       const tables = document.querySelectorAll('.table-container table');
+
+       tables.forEach(table => {
+         const headers = table.querySelectorAll('th');
+
+         headers.forEach((header, index) => {
+           header.addEventListener('click', function() {
+             sortTable(table, index, this);
+           });
+         });
+       });
+     }
+
+     function sortTable(table, columnIndex, header) {
+       const rows = Array.from(table.querySelectorAll('tbody tr'));
+       const isAsc = !header.classList.contains('sort-asc');
+
+       table.querySelectorAll('th').forEach(th => {
+         th.classList.remove('sort-asc', 'sort-desc');
+       });
+
+       header.classList.add(isAsc ? 'sort-asc' : 'sort-desc');
+
+       rows.sort((a, b) => {
+         let valueA = a.cells[columnIndex].textContent.trim();
+         let valueB = b.cells[columnIndex].textContent.trim();
+
+         if (/^\d{1,2}:\d{2}\.\d{2}$/.test(valueA) || /^\d{1,2}\.\d{2}$/.test(valueA)) {
+           valueA = convertTimeToSeconds(valueA);
+           valueB = convertTimeToSeconds(valueB);
+           return isAsc ? valueA - valueB : valueB - valueA;
+         }
+
+         if (valueA.includes('%')) {
+           valueA = parseFloat(valueA);
+           valueB = parseFloat(valueB);
+           return isAsc ? valueA - valueB : valueB - valueA;
+         }
+
+         if (!isNaN(valueA) && !isNaN(valueB)) {
+           return isAsc ? valueA - valueB : valueB - valueA;
+         }
+
+         return isAsc
+              ? valueA.localeCompare(valueB)
+              : valueB.localeCompare(valueA);
+       });
+
+       const tbody = table.querySelector('tbody');
+       rows.forEach(row => tbody.appendChild(row));
+     }
+
+     function convertTimeToSeconds(timeStr) {
+       if (timeStr === '---') return Infinity;
+
+       if (timeStr.includes(':')) {
+         const [minutes, seconds] = timeStr.split(':');
+         return parseFloat(minutes) * 60 + parseFloat(seconds);
+       }
+
+       return parseFloat(timeStr);
+     }
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo">
+          <i class="fas fa-cube"></i>
+          <h1>
+            Term Timer Stats
+            <span class="subtitle">{{ stats.cube_name }}</span>
+          </h1>
+        </div>
+      </header>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Key Statistics</h2>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-title">Total Solves</div>
+            <div class="stat-value">{{ stats.total }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Total Time</div>
+            <div class="stat-value">{{ stats.total_time|format_time }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Mean</div>
+            <div class="stat-value">{{ stats.mean|format_time }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Median</div>
+            <div class="stat-value">{{ stats.median|format_time }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Standard Deviation</div>
+            <div class="stat-value">{{ stats.stdev|format_time }}</div>
+          </div>
+          {% if stats.total >= 2 %}
+            <div class="stat-card">
+              <div class="stat-title">Best</div>
+              <div class="stat-value">{{ stats.best|format_time }}</div>
+              {% if stats.total >= 3 %}
+                <div class="stat-meta">
+                  <span class="stat-best">BPA: {{ stats.bpa|format_time }}</span>
+                  {% set delta = (stats.bpa - stats.best)|format_delta %}
+                  <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                    {{ delta }}
+                  </span>
+                </div>
+              {% endif %}
+            </div>
+            <div class="stat-card">
+              <div class="stat-title">Worst</div>
+              <div class="stat-value">{{ stats.worst|format_time }}</div>
+              {% if stats.total >= 3 %}
+                <div class="stat-meta">
+                  <span class="stat-worst">WPA: {{ stats.wpa|format_time }}</span>
+                  {% set delta = (stats.wpa - stats.worst)|format_delta %}
+                  <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                    {{ delta }}
+                  </span>
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+          {% if stats.total >= 3 %}
+            <div class="stat-card">
+              <div class="stat-title">Current Mo3</div>
+              <div class="stat-value">{{ stats.mo3|format_time }}</div>
+              <div class="stat-meta">
+                <span class="stat-best">Best: {{ stats.best_mo3|format_time }}</span>
+                {% set delta = (stats.mo3 - stats.best_mo3)|format_delta %}
+                <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                  {{ delta }}
+                </span>
+              </div>
+            </div>
+          {% endif %}
+          {% if stats.total >= 5 %}
+            <div class="stat-card">
+              <div class="stat-title">Current Ao5</div>
+              <div class="stat-value">{{ stats.ao5|format_time }}</div>
+              <div class="stat-meta">
+                <span class="stat-best">Best: {{ stats.best_ao5|format_time }}</span>
+                {% set delta = (stats.ao5 - stats.best_ao5)|format_delta %}
+                <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                  {{ delta }}
+                </span>
+              </div>
+            </div>
+          {% endif %}
+          {% if stats.total >= 12 %}
+            <div class="stat-card">
+              <div class="stat-title">Current Ao12</div>
+              <div class="stat-value">{{ stats.ao12|format_time }}</div>
+              <div class="stat-meta">
+                <span class="stat-best">Best: {{ stats.best_ao12|format_time }}</span>
+                {% set delta = (stats.ao12 - stats.best_ao12)|format_delta %}
+                <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                  {{ delta }}
+                </span>
+              </div>
+            </div>
+          {% endif %}
+          {% if stats.total >= 100 %}
+            <div class="stat-card">
+              <div class="stat-title">Current Ao100</div>
+              <div class="stat-value">{{ stats.ao100|format_time }}</div>
+              <div class="stat-meta">
+                <span class="stat-best">Best: {{ stats.best_ao100|format_time }}</span>
+                {% set delta = (stats.ao100 - stats.best_ao100)|format_delta %}
+                <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                  {{ delta }}
+                </span>
+              </div>
+            </div>
+          {% endif %}
+          {% if stats.total >= 1000 %}
+            <div class="stat-card">
+              <div class="stat-title">Current Ao1000</div>
+              <div class="stat-value">{{ stats.ao1000|format_time }}</div>
+              <div class="stat-meta">
+                <span class="stat-best">Best: {{ stats.best_ao1000|format_time }}</span>
+                {% set delta = (stats.ao1000 - stats.best_ao1000)|format_delta %}
+                <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                  {{ delta }}
+                </span>
+              </div>
+            </div>
+          {% endif %}
+          {% if cfop.total %}
+            <div class="stat-card">
+              <div class="stat-title">CFOP Grade</div>
+              <div class="stat-value">{{ cfop.mean|format_grade }}</div>
+              <div class="stat-meta">
+                <span class="stat-best">Mean: {{ cfop.mean|round(2) }}</span>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Progress Over Time</h2>
+        </div>
+        <div class="chart-container">
+          <canvas id="progressChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Time Distribution</h2>
+        </div>
+        <div class="chart-container">
+          <canvas id="timeDistributionChart"></canvas>
+        </div>
+      </div>
+
+
+      <div class="card">
+        <div class="tabs">
+          <div class="tab active" data-tab="solves">Solves</div>
+          <div class="tab" data-tab="oll">OLL</div>
+          <div class="tab" data-tab="pll">PLL</div>
+        </div>
+
+        <div class="tab-content active table-container" id="solves-tab">
+          <table class="solve-list">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Time</th>
+                <th>Date</th>
+                <th>Scramble</th>
+                <th>Flag</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for solve in stats.stack|reverse %}
+              <tr>
+                <td>{{ stats.stack|length - loop.index0 }}</td>
+                <td class="{% if solve.time == stats.best %}time-best{% elif solve.time == stats.worst %}time-worst{% endif %}">
+                  {{ solve.time|format_time }}
+                </td>
+                <td class="solve-date">
+                  {{ solve.datetime.strftime('%Y-%m-%d %H:%M') }}
+                  <span class="tooltip">Session {{ solve.session|default('default', true) }}</span>
+                </td>
+                <td class="solve-scramble">
+                  {{ solve.scramble }}
+                </td>
+                <td class="solve-flag">
+                  {{ solve.flag|default('---', true) }}
+                </td>
+                <td>
+                  {% if solve.raw_moves %}
+                    <a href="{{ solve.link }}" target="_blank" class="solve-detail-btn">
+                      Recons
+                    </a>
+                  {% else %}
+                    ---
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tab-content table-container" id="oll-tab">
+          <table class="oll-list">
+            <thead>
+              <tr>
+                <th>Case</th>
+                <th>Count</th>
+                <th>Frequency</th>
+                <th>Probability</th>
+                <th>Inspection</th>
+                <th>Execution</th>
+                <th>Time</th>
+                <th>QTM</th>
+                <th>TPS</th>
+                <th>eTPS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for name, oll in cfop.olls.items() %}
+                <tr>
+                  <td>
+                    <div class="cfop-case">
+                      {% set name_part = name.split(" ") %}
+                      <div class="cfop-case-img">{{ name_part[0] }}</div>
+                      {% if 'SKIP' not in name %}
+                        <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
+                           target="_blank" class="link">
+                          {{ " ".join(name_part[1:]) }}
+                        </a>
+                      {% else %}
+                        <span class="skip">SKIP</span>
+                      {% endif %}
+                    </div>
+                  </td>
+                  <td>
+                    {{ oll.count }}
+                  </td>
+                  <td class="frequency-{% if oll.frequency > oll.probability %}higher{% else %}lower{% endif %}">
+                    {{ (oll.frequency * 100)|round(2) }}%
+                  </td>
+                  <td>
+                    {{ (oll.probability * 100)|round(2) }}%
+                  </td>
+                  <td>
+                    {{ oll.inspection|format_duration }}
+                  </td>
+                  <td>
+                    {{ oll.execution|format_duration }}
+                  </td>
+                  <td>
+                    {{ oll.time|format_duration }}
+                  </td>
+                  <td>
+                    {{ oll.qtm|round(2) }}
+                  </td>
+                  <td>
+                    {{ oll.tps|round(2) }}
+                  </td>
+                  <td>
+                    {{ oll.etps|round(2) }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tab-content table-container" id="pll-tab">
+          <table class="pll-list">
+            <thead>
+              <tr>
+                <th>Case</th>
+                <th>Count</th>
+                <th>Frequency</th>
+                <th>Probability</th>
+                <th>Inspection</th>
+                <th>Execution</th>
+                <th>Time</th>
+                <th>QTM</th>
+                <th>TPS</th>
+                <th>eTPS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for name, pll in cfop.plls.items() %}
+                <tr>
+                  <td>
+                    <div class="cfop-case">
+                      {% set name_part = name.split(" ") %}
+                      <div class="cfop-case-img">{{ name_part[0] }}</div>
+                      {% if 'SKIP' not in name %}
+                        <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
+                           target="_blank" class="link">
+                          PLL {{ name }}
+                        </a>
+                      {% else %}
+                        <span class="skip">SKIP</span>
+                      {% endif %}
+                    </div>
+                  </td>
+                  <td>
+                    {{ pll.count }}
+                  </td>
+                  <td class="frequency-{% if pll.frequency > pll.probability %}higher{% else %}lower{% endif %}">
+                    {{ (pll.frequency * 100)|round(2) }}%
+                  </td>
+                  <td>
+                    {{ (pll.probability * 100)|round(2) }}%
+                  </td>
+                  <td>
+                    {{ pll.inspection|format_duration }}
+                  </td>
+                  <td>
+                    {{ pll.execution|format_duration }}
+                  </td>
+                  <td>
+                    {{ pll.time|format_duration }}
+                  </td>
+                  <td>
+                    {{ pll.qtm|round(2) }}
+                  </td>
+                  <td>
+                    {{ pll.tps|round(2) }}
+                  </td>
+                  <td>
+                    {{ pll.etps|round(2) }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <footer class="app-footer card">
+        <div class="footer-container">
+          <div class="footer-section">
+            <h3 class="footer-title">Report Informations</h3>
+            <div class="footer-info">
+              <div class="info-item">
+                <i class="fas fa-cube"></i>
+                <span class="key">Puzzle:</span>
+                <span class="value">{{ stats.cube_name }}</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-clock"></i>
+                <span class="key">Last solve:</span>
+                <span class="value">{{ stats.stack[-1].datetime.strftime('%c') }}</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="key">Generation date:</span>
+                <span class="value">{{ now.strftime('%c') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-title">Session{% if sessions|length > 1 %}s{% endif %}</h3>
+            <div class="sessions-grid">
+              {% for session, count in sessions.items() %}
+                <div class="session-badge">
+                  Session {{ session|default('default', true) }}
+                  <span class="session-count">{{ count }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div class="copyright">
+            © {{ now.strftime('%Y') }} Term Timer
+          </div>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -7,9 +7,13 @@ MS_TO_NS_FACTOR = 1_000_000
 STEP_BAR = 17
 
 SAVE_DIRECTORY = Path.home() / '.solves'
-SAVE_DIRECTORY.mkdir(exist_ok=True)
+
+EXPORT_DIRECTORY = SAVE_DIRECTORY / 'exports'
+EXPORT_DIRECTORY.mkdir(parents=True, exist_ok=True)
 
 CONFIG_FILE = Path('~/.term_timer').expanduser()
+
+TEMPLATES_DIRECTORY = Path(__file__).parent / 'templates'
 
 DNF = 'DNF'
 

@@ -1,3 +1,4 @@
+import os
 from importlib.util import find_spec
 from typing import Any
 
@@ -54,3 +55,5 @@ CUBE_ORIENTATION = parse_moves(
 )
 
 CUBE_METHOD = CUBE_CONFIG.get('method')
+
+DEBUG = bool(os.getenv('TERM_TIMER_DEBUG', None))

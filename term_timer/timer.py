@@ -1,8 +1,6 @@
 import asyncio
-import sys
-import termios
+import logging
 import time
-import tty
 from datetime import datetime
 from datetime import timezone
 
@@ -24,12 +22,15 @@ from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.in_out import save_solves
+from term_timer.interface import Interface
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 
+logger = logging.getLogger(__name__)
 
-class Timer:
+
+class Timer(Interface):
     def __init__(self, *, cube_size: int,
                  iterations: int, easy_cross: bool,
                  session: str, free_play: bool,
@@ -90,7 +91,7 @@ class Timer:
             console.print(
                 '[bluetooth]📡Bluetooth:[/bluetooth] '
                 'Scanning for Bluetooth cube for '
-                f'{ self.bluetooth_interface.scan_timeout}s...',
+                f'{ self.bluetooth_interface.scan_timeout }s...',
                 end='',
             )
 
@@ -246,6 +247,7 @@ class Timer:
                             self.end_time = event['clock']
                             self.stop_event.set()
                             self.solve_completed_event.set()
+                            logger.info('BT Stop: %s', self.end_time)
 
     @property
     def bluetooth_device_label(self):
@@ -263,105 +265,10 @@ class Timer:
 
         return device_label
 
-    async def getch(self, timeout: float | None = None) -> str:
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        ch = ''
-
-        try:
-            tty.setcbreak(fd)
-
-            loop = asyncio.get_running_loop()
-            future = loop.create_future()
-
-            def stdin_callback() -> None:
-                try:
-                    ch = sys.stdin.read(1)
-                    if not future.done():
-                        future.set_result(ch)
-                except Exception as e:
-                    if not future.done():
-                        future.set_exception(e)
-
-            loop.add_reader(fd, stdin_callback)
-
-            try:
-                if timeout is not None:
-                    ch = await asyncio.wait_for(future, timeout)
-                else:
-                    ch = await future
-            except asyncio.TimeoutError:  # noqa UP041
-                ch = ''
-            except Exception as e:
-                print(f'Error in getch: { e }')
-                ch = ''
-            finally:
-                if loop.is_closed():
-                    pass
-                else:
-                    loop.remove_reader(fd)
-
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-
-        self.clear_line(full=True)
-
-        return ch
-
-    @staticmethod
-    def clear_line(full) -> None:
-        if full:
-            print(f'\r{ " " * 100}\r', flush=True, end='')
-        else:
-            print('\r', end='')
-
-    @staticmethod
-    def beep() -> None:
-        print('\a', end='', flush=True)
-
-    def handle_scrambled(self):
-        if self.bluetooth_cube.state == self.facelets_scrambled:
-            self.scramble_completed_event.set()
-            self.beep()
-            out = (
-                '[result]Cube scrambled and ready to be solved ![/result] '
-                '[consign]Start solving to launch the timer.[/consign]'
-            )
-            full_clear = True
-        else:
-            out = ''
-            algo = self.reorient(
-                parse_moves(self.scrambled).transform(compress_moves),
-            )
-            p_algo = self.reorient(
-                parse_moves(self.scrambled[:-1]).transform(compress_moves),
-            )
-
-            on_good_way = True
-            for i, move in enumerate(algo):
-                expected = self.scramble_oriented[i]
-                style = 'move'
-                if expected != move or not on_good_way:
-                    on_good_way = False
-                    style = 'warning'
-                    if expected[0] == move[0]:
-                        style = 'caution'
-
-                out += f'[{ style }]{ move }[/{ style }] '
-            full_clear = len(algo) < len(p_algo) or len(algo) <= 1
-
-        self.clear_line(full=full_clear)
-
-        console.print(
-            f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
-            out,
-            end='',
-        )
-
     async def inspection(self) -> None:
         self.clear_line(full=True)
 
-        self.state = 'inspecting'
+        self.set_state('inspecting')
         self.stop_event.clear()
 
         state = 0
@@ -397,7 +304,7 @@ class Timer:
         self.end_time = 0
         self.elapsed_time = 0
         self.scrambled = []
-        self.state = 'solving'
+        self.set_state('solving', self.start_time)
 
         tempo_elapsed = 0
 
@@ -469,10 +376,10 @@ class Timer:
             )
 
     @staticmethod
-    def save_line() -> None:
+    def save_line(flag: str) -> None:
         console.print(
             'Press any key to save and continue,',
-            '[b](d)[/b] for DNF,',
+            '[b](d)[/b] for DNF,' if flag != DNF else '[b](o)[/b] for OK',
             '[b](2)[/b] for +2,',
             '[b](z)[/b] to cancel,',
             '[b](q)[/b] to save and quit.',
@@ -482,11 +389,50 @@ class Timer:
     def reorient(self, algorithm: Algorithm) -> Algorithm:
         if self.cube_orientation:
             new_algorithm = self.cube_orientation + algorithm
-            new_algorithm = new_algorithm.transform(
+            return new_algorithm.transform(
                 degrip_full_moves,
                 remove_final_rotations,
             )
-        return new_algorithm
+        return algorithm
+
+    def handle_scrambled(self):
+        if self.bluetooth_cube.state == self.facelets_scrambled:
+            self.scramble_completed_event.set()
+            self.beep()
+            out = (
+                '[result]Cube scrambled and ready to be solved ![/result] '
+                '[consign]Start solving to launch the timer.[/consign]'
+            )
+            full_clear = True
+        else:
+            out = ''
+            algo = self.reorient(
+                parse_moves(self.scrambled).transform(compress_moves),
+            )
+            p_algo = self.reorient(
+                parse_moves(self.scrambled[:-1]).transform(compress_moves),
+            )
+
+            on_good_way = True
+            for i, move in enumerate(algo):
+                expected = self.scramble_oriented[i]
+                style = 'move'
+                if expected != move or not on_good_way:
+                    on_good_way = False
+                    style = 'warning'
+                    if expected[0] == move[0]:
+                        style = 'caution'
+
+                out += f'[{ style }]{ move }[/{ style }] '
+            full_clear = len(algo) < len(p_algo) or len(algo) <= 1
+
+        self.clear_line(full=full_clear)
+
+        console.print(
+            f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
+            out,
+            end='',
+        )
 
     def handle_solve(self, solve: Solve) -> None:
         old_stats = Statistics(self.stack)
@@ -497,11 +443,19 @@ class Timer:
         self.clear_line(full=True)
 
         if solve.raw_moves:
-            console.print(solve.method_line, end='')
-            console.print(
-                f'[analysis]Analysis #{ len(self.stack) }:[/analysis] '
-                f'{ solve.report_line }',
-            )
+            if solve.flag != DNF:
+                console.print(solve.method_line, end='')
+                console.print(
+                    f'[analysis]Analysis #{ len(self.stack) }:[/analysis] '
+                    f'{ solve.report_line }',
+                )
+            else:
+                console.print(
+                    f'[duration]Duration #{ len(self.stack) }:[/duration]',
+                    f'[result]{ format_time(self.elapsed_time) }[/result]',
+                    '[dnf]DNF[/dnf]',
+                )
+                return
 
         extra = ''
         if new_stats.total > 1:
@@ -555,6 +509,17 @@ class Timer:
                     format_delta(new_stats.ao100 - old_stats.best_ao100),
                 )
 
+            if new_stats.ao1000 < old_stats.best_ao1000:
+                console.print(
+                    f'[record]:trophy:{ "Best Ao1000".center(mc) }[/record]',
+                    f'[best]{ format_time(new_stats.ao1000) }[/best]',
+                    format_delta(new_stats.ao1000 - old_stats.best_ao1000),
+                )
+
+    def set_state(self, state, extra=''):
+        self.state = state
+        logger.info('Passing to state %s %s', state.upper(), extra)
+
     async def start(self) -> bool:
         self.moves = []
 
@@ -574,7 +539,7 @@ class Timer:
             f'[moves]{ self.scramble_oriented }[/moves]',
         )
 
-        self.state = 'scrambling'
+        self.set_state('scrambling')
         self.scrambled = []
         self.start_line()
 
@@ -603,7 +568,7 @@ class Timer:
         if char == 'q':
             return False
 
-        self.state = 'scrambled'
+        self.set_state('scrambled')
         self.solve_started_event.clear()
 
         if self.countdown:
@@ -665,25 +630,32 @@ class Timer:
             if not self.stop_event.is_set():
                 self.end_time = time.perf_counter_ns()
                 self.stop_event.set()
+                logger.info('KB Stop: %s', self.end_time)
         else:
             await self.getch()
             self.end_time = time.perf_counter_ns()
             self.stop_event.set()
+            logger.info('KB Stop: %s', self.end_time)
 
         await stopwatch_task
 
         self.elapsed_time = self.end_time - self.start_time
 
+        flag = ''
         moves = []
         if self.moves:
+            first_time = self.moves[0]['time']
             for move in self.moves:
-                timing = int((move['time'] - self.start_time) / MS_TO_NS_FACTOR)
+                timing = int((move['time'] - first_time) / MS_TO_NS_FACTOR)
                 moves.append(f'{ move["move"] }@{ timing }')
+            if not self.bluetooth_cube.is_solved:
+                flag = DNF
 
         solve = Solve(
             datetime.now(tz=timezone.utc).timestamp(),  # noqa: UP017
             self.elapsed_time,
             str(self.scramble),
+            flag=flag,
             timer='Term-Timer',
             device=(
                 self.bluetooth_interface
@@ -695,12 +667,14 @@ class Timer:
         self.handle_solve(solve)
 
         if not self.free_play:
-            self.save_line()
+            self.save_line(flag)
 
             char = await self.getch()
 
             if char == 'd':
                 self.stack[-1].flag = DNF
+            elif char == 'o':
+                self.stack[-1].flag = ''
             elif char == '2':
                 self.stack[-1].flag = PLUS_TWO
             elif char == 'z':

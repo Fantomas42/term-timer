@@ -5,7 +5,7 @@ from term_timer.constants import SECOND
 
 def format_time(elapsed_ns: int) -> str:
     if not elapsed_ns:
-        return DNF
+        return f'{ DNF:>9}'
 
     elapsed_sec = elapsed_ns / SECOND
     mins, secs = divmod(int(elapsed_sec), 60)
@@ -59,7 +59,7 @@ def computing_padding(max_value: float) -> int:
 
 
 def format_grade(score):
-    if score == 20:
+    if score >= 20:
         return 'S'
     if score >= 18:
         return 'A+'

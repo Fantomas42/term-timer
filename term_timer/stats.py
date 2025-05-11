@@ -9,6 +9,8 @@ from rich.table import Table
 
 from term_timer.config import STATS_CONFIG
 from term_timer.console import console
+from term_timer.constants import DNF
+from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.constants import SECOND_BINS
 from term_timer.constants import STEP_BAR
@@ -31,7 +33,9 @@ class StatisticsTools:
         self.stack_time = [
             s.final_time for s in stack
         ]
-        self.stack_time_sorted = sorted(self.stack_time)
+        self.stack_time_sorted = sorted(
+            [s for s in self.stack_time if s],
+        )
 
     @staticmethod
     def mo(limit: int, stack_elapsed: list[int]) -> int:
@@ -118,6 +122,10 @@ class Statistics(StatisticsTools):
         return self.ao(100, self.stack_time)
 
     @cached_property
+    def ao1000(self) -> int:
+        return self.ao(1000, self.stack_time)
+
+    @cached_property
     def best_mo3(self) -> int:
         return self.best_mo(3)
 
@@ -132,6 +140,10 @@ class Statistics(StatisticsTools):
     @cached_property
     def best_ao100(self) -> int:
         return self.best_ao(100)
+
+    @cached_property
+    def best_ao1000(self) -> int:
+        return self.best_ao(1000)
 
     @cached_property
     def best(self) -> int:
@@ -290,6 +302,14 @@ class StatisticsReporter(Statistics):
                 f'[result]{ format_time(self.best_ao100) }[/result]',
                 format_delta(self.ao100 - self.best_ao100),
             )
+        if self.total >= 1000:
+            console.print(
+                f'[stats]{ prefix }Ao1000:[/stats]',
+                f'[ao1000]{ format_time(self.ao1000) }[/ao1000]',
+                '[stats]Best :[/stats]',
+                f'[result]{ format_time(self.best_ao1000) }[/result]',
+                format_delta(self.ao1000 - self.best_ao1000),
+            )
 
         if self.total > 1:
             max_count = computing_padding(
@@ -322,17 +342,25 @@ class StatisticsReporter(Statistics):
         max_count = computing_padding(size) + 1
 
         if not limit:
-            limit = size
+            s = slice(None, None)
+        elif limit > 0:
+            s = slice(None, limit)
+        else:
+            s = slice(limit, None)
+
+        indexed_solves = [
+            (size - i, self.stack[size - (i + 1)])
+            for i in range(size)
+        ]
+
+        indices = range(*s.indices(size))
 
         if sorting == 'time':
-            self.stack = sorted(self.stack, key=lambda x: x.time, reverse=True)
+            indexed_solves.sort(key=lambda x: x[1].time)
 
-        for i in range(limit):
-            if i >= size:
-                return
-
-            solve = self.stack[size - (i + 1)]
-            index = f'#{ size - i}'
+        for indice in indices:
+            original_index, solve = indexed_solves[indice]
+            index = f'#{ original_index }'
             date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
             header = f'[stats]{ index:{" "}>{max_count}}[/stats]'
@@ -348,12 +376,18 @@ class StatisticsReporter(Statistics):
             elif solve.time == self.worst:
                 time_class = 'warning'
 
+            flag_class = 'result'
+            if solve.flag == DNF:
+                flag_class = 'dnf'
+            if solve.flag == PLUS_TWO:
+                flag_class = 'plus_two'
+
             console.print(
                 header,
                 f'[{ time_class }]{ format_time(solve.time) }[/{ time_class }]',
                 f'[date]{ date }[/date]',
                 f'[consign]{ solve.scramble }[/consign]',
-                f'[result]{ solve.flag }[/result]',
+                f'[{ flag_class }]{ solve.flag }[/{ flag_class }]',
             )
 
     def detail(self, solve_id: int, method: str) -> None:
@@ -560,13 +594,7 @@ class StatisticsReporter(Statistics):
             )
         console.print(table)
 
-    def cfop(self, oll_only: bool = False, pll_only: bool = False,
-             sorting: str = 'count', ordering: str = 'asc') -> None:
-        console.print('Aggregating cases...', end='')
-
-        if sorting == 'case':
-            sorting = 'label'
-
+    def compute_cfop(self):
         num_processes = max(1, cpu_count() - 1)
 
         with Pool(processes=num_processes) as pool:
@@ -574,13 +602,13 @@ class StatisticsReporter(Statistics):
 
         olls = {}
         plls = {}
-        score_cfop = 0
+        score = 0
 
         for result in results:
             if not result:
                 continue
 
-            score_cfop += result['score_cfop']
+            score += result['score_cfop']
 
             oll_case = result['oll']['case']
             olls.setdefault(
@@ -651,14 +679,31 @@ class StatisticsReporter(Statistics):
             info['tps'] = sum(info['tpss']) / count
             info['etps'] = sum(info['etpss']) / count
 
+        return {
+            'olls': olls,
+            'plls': plls,
+            'total': total,
+            'score': score,
+            'mean': score / total,
+        }
+
+    def cfop(self, oll_only: bool = False, pll_only: bool = False,
+             sorting: str = 'count', ordering: str = 'asc') -> None:
+        if sorting == 'case':
+            sorting = 'label'
+
+        console.print('Aggregating cases...', end='')
+
+        cfop = self.compute_cfop()
+
         print('\r', end='')
 
         if not pll_only:
-            self.case_table('OLL', olls, sorting, ordering)
+            self.case_table('OLL', cfop['olls'], sorting, ordering)
         if not oll_only:
-            self.case_table('PLL', plls, sorting, ordering)
+            self.case_table('PLL', cfop['plls'], sorting, ordering)
 
-        mean = score_cfop / total
+        mean = cfop['mean']
         grade = format_grade(mean)
         grade_class = grade.lower()
         grade_line = (
