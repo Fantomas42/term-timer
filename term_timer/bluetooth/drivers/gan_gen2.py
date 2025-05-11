@@ -11,7 +11,7 @@ from term_timer.bluetooth.constants import GAN_ENCRYPTION_KEY
 from term_timer.bluetooth.constants import GAN_GEN2_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN2_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN2_STATE_CHARACTERISTIC
-from term_timer.bluetooth.constants import MOYU_ENCRYPTION_KEY
+from term_timer.bluetooth.constants import MOYU_AI_ENCRYPTION_KEY
 from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.facelets import to_kociemba_facelets
@@ -44,8 +44,8 @@ class GanGen2Driver(Driver):
     def init_cypher(self):
         if self.device.name.startswith('AiCube'):
             return self.encrypter(
-                MOYU_ENCRYPTION_KEY['key'],
-                MOYU_ENCRYPTION_KEY['iv'],
+                MOYU_AI_ENCRYPTION_KEY['key'],
+                MOYU_AI_ENCRYPTION_KEY['iv'],
                 get_salt(self.device.address),
             )
         return self.encrypter(
