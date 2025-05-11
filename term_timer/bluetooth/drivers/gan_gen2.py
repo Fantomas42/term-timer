@@ -1,3 +1,7 @@
+"""
+References :
+  - https://github.com/afedotov/gan-web-bluetooth
+"""
 import logging
 import time
 from datetime import datetime
