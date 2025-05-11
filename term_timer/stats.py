@@ -147,11 +147,15 @@ class Statistics(StatisticsTools):
 
     @cached_property
     def best(self) -> int:
-        return self.stack_time_sorted[0]
+        if self.stack_time_sorted:
+            return self.stack_time_sorted[0]
+        return 0
 
     @cached_property
     def worst(self) -> int:
-        return self.stack_time_sorted[-1]
+        if self.stack_time_sorted:
+            return self.stack_time_sorted[-1]
+        return 0
 
     @cached_property
     def mean(self) -> int:
