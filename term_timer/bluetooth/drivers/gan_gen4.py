@@ -187,7 +187,7 @@ class GanGen4Driver(GanGen3Driver):
 
                     self.inject_missed_move_to_buffer(
                         {
-                            'event': 'move-history',
+                            'event': 'move',
                             'clock': clock,
                             'timestamp': timestamp,
                             'serial': (start_serial - i) & 0xFF,
