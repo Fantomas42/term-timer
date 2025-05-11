@@ -155,42 +155,30 @@ class MoyuWeilong10Driver(Driver):
 
         elif event == 0xA3:  # Facelets
             serial = msg.get_bit_word(152, 8)
+            facelets = msg.get_bit_word(8, 144)
 
             if self.last_serial == -1:
                 self.last_serial = serial
 
-            # # Corner/Edge Permutation/Orientation
-            # cp = []
-            # co = []
-            # ep = []
-            # eo = []
-            # # Corners
-            # for i in range(7):
-            #     cp.append(msg.get_bit_word(12 + i * 3, 3))
-            #     co.append(msg.get_bit_word(33 + i * 2, 2))
-            # cp.append(28 - sum(cp))
-            # co.append((3 - (sum(co) % 3)) % 3)
-            # # Edges
-            # for i in range(11):
-            #     ep.append(msg.get_bit_word(47 + i * 4, 4))
-            #     eo.append(msg.get_bit_word(91 + i, 1))
-            # ep.append(66 - sum(ep))
-            # eo.append((2 - (sum(eo) % 2)) % 2)
+            state = []
+            # Parse in order URFDLB instead of FBUDLR
+            faces = [2, 5, 0, 3, 4, 1]
+            for i in range(6):
+                face = facelets[faces[i] * 24:(faces[i] * 24) + 24]
+                for j in range(8):
+                    #state.append('FBUDLR'[int(face[j * 3:(j * 3) + 3], 2)])
+                    state.append('FBUDLR'[face[j * 3:(j * 3) + 3]])
+                    if j == 3:
+                        state.append('FBUDLR'[faces[i]])
 
-            # payload = {
-            #     'event': 'facelets',
-            #     'clock': clock,
-            #     'timestamp': timestamp,
-            #     'serial': serial,
-            #     'facelets': to_kociemba_facelets(cp, co, ep, eo),
-            #     'state': {
-            #         'CP': cp,
-            #         'CO': co,
-            #         'EP': ep,
-            #         'EO': eo,
-            #     },
-            # }
-            # self.add_event(events, payload)
+            payload = {
+                'event': 'facelets',
+                'clock': clock,
+                'timestamp': timestamp,
+                'serial': serial,
+                'facelets': ''.join(state),
+            }
+            self.add_event(events, payload)
 
         elif event == 0xA1:  # Hardware
             hw_major = msg.get_bit_word(72, 8)
@@ -216,7 +204,7 @@ class MoyuWeilong10Driver(Driver):
                     bool(gyro_supported)
                     and bool(gyro_enabled)
                 ),
-                'serial': serial
+                'serial': serial,
             }
             self.add_event(events, payload)
 
