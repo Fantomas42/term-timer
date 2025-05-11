@@ -37,6 +37,11 @@ class MoyuWeilong10Driver(Driver):
             msg[0] = 0xA1
         elif command == 'REQUEST_BATTERY':
             msg[0] = 0xA4
+        elif command == 'REQUEST_ENABLE_GYRO':
+            msg[0] = 0xAC
+            msg[2] = 0x01
+        elif command == 'REQUEST_DISABLE_GYRO':
+            msg[0] = 0xAC
         elif command == 'REQUEST_RESET':
             reset_sequence = [
                 0xA2, 0x00, 0x00, 0x00, 0x24,
