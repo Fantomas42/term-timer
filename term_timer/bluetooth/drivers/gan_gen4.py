@@ -6,14 +6,14 @@ from datetime import timezone
 from term_timer.bluetooth.constants import GAN_GEN4_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN4_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN4_STATE_CHARACTERISTIC
-from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
+from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.facelets import to_kociemba_facelets
 from term_timer.bluetooth.message import GanProtocolMessage
 
 logger = logging.getLogger(__name__)
 
 
-class GanGen4Driver(GanGen2Driver):
+class GanGen4Driver(GanGen3Driver):
     """
     GAN12 ui Maglev
     GAN14 ui FreePlay
@@ -49,6 +49,37 @@ class GanGen4Driver(GanGen2Driver):
 
         return self.cypher.encrypt(bytes(msg))
 
+    async def request_move_history(self, serial, count):
+        msg = bytearray(20)
+
+        # Move history response data is byte-aligned,
+        # and moves always starting with near-ceil odd serial number,
+        # regardless of requested.
+        # Adjust serial and count to get odd serial aligned history window
+        # with even number of moves inside.
+        if serial % 2 == 0:
+            serial = (serial - 1) & 0xFF
+        if count % 2 == 1:
+            count += 1
+
+        # Never overflow requested history window beyond
+        # the serial number cycle edge 255 -> 0.
+        # Because due to firmware bug the moves beyond the edge
+        # will be spoofed with 'D' (just zero bytes).
+        count = min(count, serial + 1)
+
+        msg[0] = 0xD1
+        msg[1] = 0x04
+        msg[2] = serial
+        msg[4] = count
+
+        logger.debug('Sending : REQUEST_HISTORY')
+
+        await self.client.write_gatt_char(
+            self.command_characteristic_uid,
+            self.cypher.encrypt(bytes(msg)),
+        )
+
     async def event_handler(self, sender, data):  # noqa: ARG002
         """Process notifications from the cube"""
         clock = time.perf_counter_ns()
@@ -63,6 +94,10 @@ class GanGen4Driver(GanGen2Driver):
         data_size = msg.get_bit_word(8, 8)
 
         if event == 0x01:  # Move
+            if self.last_serial == -1:  # Block moves until facelets received
+                return []
+
+            self.last_local_timestamp = timestamp
             serial = msg.get_bit_word(48, 16, little_endian=True)
             cube_timestamp = msg.get_bit_word(16, 32, little_endian=True)
 
@@ -70,22 +105,38 @@ class GanGen4Driver(GanGen2Driver):
             face = [2, 32, 8, 1, 16, 4].index(msg.get_bit_word(66, 6))
             move = 'URFDLB'[face] + " '"[direction]
 
+            # Put move event into FIFO buffer
             if face >= 0:
-                payload = {
-                    'event': 'move',
-                    'clock': clock,
-                    'timestamp': timestamp,
-                    'serial': serial,
-                    'local_timestamp': timestamp,
-                    'cube_timestamp': cube_timestamp,
-                    'face': face,
-                    'direction': direction,
-                    'move': move.strip(),
-                }
-                self.add_event(events, payload)
+                self.move_buffer.append(
+                    {
+                        'event': 'move',
+                        'clock': clock,
+                        'timestamp': timestamp,
+                        'serial': serial,
+                        'local_timestamp': timestamp,
+                        'cube_timestamp': cube_timestamp,
+                        'face': face,
+                        'direction': direction,
+                        'move': move.strip(),
+                    },
+                )
+            self.add_event(events, await self.evict_move_buffer())
 
         elif event == 0xED:  # Facelets
             serial = msg.get_bit_word(16, 16, little_endian=True)
+            self.serial = serial
+
+            # Also check and recovery missed moves
+            # using periodic facelets event sent by cube
+            if self.last_serial != 1:
+                # Debounce the facelet event if there are active cube moves
+                if (
+                        self.last_local_timestamp is not None
+                        and (
+                            timestamp - self.last_local_timestamp
+                        ).total_seconds() > 0.5
+                ):
+                    await self.check_if_move_missed()
 
             if self.last_serial == -1:
                 self.last_serial = serial
@@ -130,21 +181,29 @@ class GanGen4Driver(GanGen2Driver):
             for i in range(count):
                 direction = msg.get_bit_word(27 + 4 * i, 1)
                 face = [1, 5, 3, 0, 4, 2].index(msg.get_bit_word(24 + 4 * i, 3))
-                move = 'URFDLB'[face] + " '"[direction]
 
                 if face >= 0:
-                    payload = {
-                        'event': 'move-history',
-                        'clock': clock,
-                        'timestamp': timestamp,
-                        'serial': (start_serial - i) & 0xFF,
-                        'local_timestamp': None,
-                        'cube_timestamp': None,
-                        'face': face,
-                        'direction': direction,
-                        'move': move.strip(),
-                    }
-                    self.add_event(events, payload)
+                    move = 'URFDLB'[face] + " '"[direction]
+
+                    self.inject_missed_move_to_buffer(
+                        {
+                            'event': 'move-history',
+                            'clock': clock,
+                            'timestamp': timestamp,
+                            'serial': (start_serial - i) & 0xFF,
+                            # Missed and recovered events
+                            # has no meaningful local timestamps
+                            'local_timestamp': None,
+                            # Cube hardware timestamp for missed move
+                            # you should interpolate using cubeTimestampLinearFit
+                            'cube_timestamp': None,
+                            'face': face,
+                            'direction': direction,
+                            'move': move.strip(),
+                        },
+                    )
+
+            self.add_event(events, await self.evict_move_buffer())
 
         elif event >= 0xFA and event <= 0xFE:  # Hardware
             if event == 0xFA:  # Product date
