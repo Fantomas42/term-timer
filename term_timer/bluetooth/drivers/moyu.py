@@ -38,7 +38,13 @@ class MoyuWeilong10Driver(Driver):
         elif command == 'REQUEST_BATTERY':
             msg[0] = 0xA4
         elif command == 'REQUEST_RESET':
-            return False
+            reset_sequence = [
+                0xA2, 0x00, 0x00, 0x00, 0x24,
+                0x92, 0x49, 0x49, 0x24, 0x92,
+                0x6D, 0xB6, 0xDB, 0x92, 0x49,
+                0x24, 0xB6, 0xDB, 0x6D, 0x02,
+            ]
+            msg = bytearray(reset_sequence)
         else:
             return False
 
