@@ -153,9 +153,7 @@ async def client_cb(queue, time):
         queue,
     )
 
-    device = await bluetooth_interface.scan()
-
-    await bluetooth_interface.__aenter__(device)  # noqa: PLC2801
+    await bluetooth_interface.__aenter__()  # noqa: PLC2801
 
     # Initialize/reset the cube
     await bluetooth_interface.send_command('REQUEST_HARDWARE')
