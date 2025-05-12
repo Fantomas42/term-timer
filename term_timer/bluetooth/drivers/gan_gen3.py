@@ -1,3 +1,7 @@
+"""
+References :
+  - https://github.com/afedotov/gan-web-bluetooth
+"""
 import logging
 import time
 from datetime import datetime
@@ -312,5 +316,10 @@ class GanGen3Driver(GanGen2Driver):
             self.add_event(events, payload)
 
             await self.client.disconnect()
+
+        else:
+            logger.debug(
+                'Unknown event type "%s": %s', event, msg,
+            )
 
         return events

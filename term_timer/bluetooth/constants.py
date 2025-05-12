@@ -4,6 +4,7 @@ PREFIX = [
     'GAN',
     'MG',
     'AiCube',
+    'WCU_MY32',
 ]
 
 # GAN Gen2 protocol BLE service
@@ -20,6 +21,11 @@ GAN_GEN3_COMMAND_CHARACTERISTIC = '8653000c-43e6-47b7-9cb0-5fc21d4ae340'
 GAN_GEN4_SERVICE =                '00000010-0000-fff7-fff6-fff5fff4fff0'
 GAN_GEN4_STATE_CHARACTERISTIC =   '0000fff6-0000-1000-8000-00805f9b34fb'
 GAN_GEN4_COMMAND_CHARACTERISTIC = '0000fff5-0000-1000-8000-00805f9b34fb'
+
+# Moyu Weilong v10 protocol BLE service
+MOYU_WEILONG_SERVICE =                '0783b03e-7735-b5a0-1760-a305d2795cb0'
+MOYU_WEILONG_STATE_CHARACTERISTIC =   '0783b03e-7735-b5a0-1760-a305d2795cb1'
+MOYU_WEILONG_COMMAND_CHARACTERISTIC = '0783b03e-7735-b5a0-1760-a305d2795cb2'
 
 # Key used by GAN Gen2, Gen3 and Gen4 cubes
 GAN_ENCRYPTION_KEY = {
@@ -38,7 +44,7 @@ GAN_ENCRYPTION_KEY = {
 }
 
 # Key used by MoYu AI 2023
-MOYU_ENCRYPTION_KEY = {
+MOYU_AI_ENCRYPTION_KEY = {
     'key': [
         0x05, 0x12, 0x02, 0x45,
         0x02, 0x01, 0x29, 0x56,
@@ -50,5 +56,22 @@ MOYU_ENCRYPTION_KEY = {
         0x86, 0x21, 0x22, 0x28,
         0x51, 0x05, 0x08, 0x31,
         0x82, 0x02, 0x21, 0x06,
+    ],
+}
+
+
+# Key used by MoYu Weilong v10
+MOYU_WEILONG_ENCRYPTION_KEY = {
+    'key': [
+        0x15, 0x77, 0x3A, 0x5C,
+        0x67, 0x0E, 0x2D, 0x1F,
+        0x17, 0x67, 0x2A, 0x13,
+        0x9B, 0x67, 0x52, 0x57,
+    ],
+    'iv': [
+        0x11, 0x23, 0x26, 0x25,
+        0x86, 0x2A, 0x2C, 0x3B,
+        0x55, 0x06, 0x7F, 0x31,
+        0x7E, 0x67, 0x21, 0x57,
     ],
 }
