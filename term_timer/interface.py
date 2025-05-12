@@ -75,7 +75,7 @@ class Interface:
         ch = ''
 
         try:
-            tty.setraw(fd)
+            tty.setcbreak(fd)
 
             loop = asyncio.get_running_loop()
             future = loop.create_future()
