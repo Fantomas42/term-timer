@@ -118,38 +118,40 @@ class MoyuWeilong10Driver(Driver):
                 return []
 
             serial = msg.get_bit_word(88, 8)
-            diff = min((serial - self.last_serial) & 0xFF, 7)
+            diff = min((serial - self.last_serial) & 0xFF, 5)
 
             self.last_serial = serial
 
+            logger.info('diff %s', diff)
             if diff <= 0:
                 return []
 
-            # for i in range(diff - 1, -1, -1):
-            #     face = msg.get_bit_word(12 + 5 * i, 4)
-            #     direction = msg.get_bit_word(16 + 5 * i, 1)
-            #     move = 'URFDLB'[face] + " '"[direction]
-            #     elapsed = msg.get_bit_word(47 + 16 * i, 16)
+            for i in range(diff - 1, -1, -1):
+                move_value = msg.get_bit_word(96 + i * 5, 5)
+                move = 'FBUDLR'[move_value >> 1] + " '"[move_value & 1]
+                elapsed = msg.get_bit_word(8 + i * 16, 16)
 
-            #     # In case of 16-bit cube timestamp register overflow
-            #     if elapsed == 0:
-            #         elapsed = timestamp - self.last_move_timestamp
+                # In case of 16-bit cube timestamp register overflow
+                if elapsed == 0:
+                    elapsed = (
+                        timestamp - self.last_move_timestamp
+                    ).total_seconds()
 
-            #     self.cube_timestamp += elapsed
-            #     payload = {
-            #         'event': 'move',
-            #         'clock': clock,
-            #         'timestamp': timestamp,
-            #         'serial': (serial - i) & 0xFF,
-            #         # Missed and recovered events
-            #         # has no meaningful local timestamps
-            #         'local_timestamp': timestamp if i == 0 else None,
-            #         'cube_timestamp': self.cube_timestamp,
-            #         'face': face,
-            #         'direction': direction,
-            #         'move': move.strip(),
-            #     }
-            #     self.add_event(events, payload)
+                self.cube_timestamp += elapsed
+                payload = {
+                    'event': 'move',
+                    'clock': clock,
+                    'timestamp': timestamp,
+                    'serial': (serial - i) & 0xFF,
+                    # Missed and recovered events
+                    # has no meaningful local timestamps
+                    'local_timestamp': timestamp if i == 0 else None,
+                    'cube_timestamp': self.cube_timestamp,
+                    'face': move_value,
+                    'direction': move_value,
+                    'move': move.strip(),
+                }
+                self.add_event(events, payload)
 
             self.last_move_timestamp = timestamp
 
@@ -208,7 +210,7 @@ class MoyuWeilong10Driver(Driver):
             }
             self.add_event(events, payload)
 
-        elif event == 0xAC:
+        elif event == 0xAC:  # Gyro config
             gyro_enabled = msg.get_bit_word(16, 8)
             gyro_supported = msg.get_bit_word(8, 8)
 
