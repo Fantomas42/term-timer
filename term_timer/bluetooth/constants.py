@@ -4,6 +4,7 @@ PREFIX = [
     'GAN',
     'MG',
     'AiCube',
+    'WCU_MY32',
 ]
 
 # GAN Gen2 protocol BLE service

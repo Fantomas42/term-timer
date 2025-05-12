@@ -133,7 +133,7 @@ class BluetoothInterface:
                         prefix, device.name, device.address,
                     )
                     selected_device = device
-                break
+                    break
             if selected_device:
                 break
 
