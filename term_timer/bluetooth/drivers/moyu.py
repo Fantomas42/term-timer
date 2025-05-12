@@ -32,6 +32,7 @@ class MoyuWeilong10Driver(Driver):
     last_serial = -1
     cube_timestamp = 0
     last_move_timestamp = 0
+    factor = pow(2, 30)
 
     def init_cypher(self):
         return self.encrypter(
@@ -83,35 +84,25 @@ class MoyuWeilong10Driver(Driver):
             if self.disable_gyro:
                 return []
 
-        #     # Orientation Quaternion
-        #     qw = msg.get_bit_word(4, 16)
-        #     qx = msg.get_bit_word(20, 16)
-        #     qy = msg.get_bit_word(36, 16)
-        #     qz = msg.get_bit_word(52, 16)
+            # Orientation Quaternion
+            qw = msg.get_bit_word(8, 32, little_endian=True)
+            qx = msg.get_bit_word(40, 32, little_endian=True)
+            qy = msg.get_bit_word(72, 32, little_endian=True)
+            qz = msg.get_bit_word(104, 32, little_endian=True)
 
-        #     # Angular Velocity
-        #     vx = msg.get_bit_word(68, 4)
-        #     vy = msg.get_bit_word(72, 4)
-        #     vz = msg.get_bit_word(76, 4)
+            payload = {
+                'event': 'gyro',
+                'clock': clock,
+                'timestamp': timestamp,
+                'quaternion': {
+                    'x': qx / self.factor,
+                    'y': qy / self.factor,
+                    'z': qz / self.factor,
+                    'w': qw / self.factor,
+                },
+            }
 
-        #     payload = {
-        #         'event': 'gyro',
-        #         'clock': clock,
-        #         'timestamp': timestamp,
-        #         'quaternion': {
-        #             'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
-        #             'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
-        #             'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
-        #             'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
-        #         },
-        #         'velocity': {
-        #             'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
-        #             'y': (1 - (vy >> 3) * 2) * (vy & 0x7),
-        #             'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
-        #         },
-        #     }
-
-        #     self.add_event(events, payload)
+            self.add_event(events, payload)
 
         elif event == 0xA5:  # Moves
             if self.last_serial == -1:  # Block moves until facelets received
