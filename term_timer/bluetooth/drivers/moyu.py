@@ -191,7 +191,9 @@ class MoyuWeilong10Driver(Driver):
             logger.info('GYRO SUPPORTED %s', gyro_supported)
             serial = msg.get_bit_word(109, 8)
 
-            hardware_name = msg.get_bit_word(8, 64)
+            hardware_name = ''
+            for i in range(8):
+                hardware_name += chr(msg.get_bit_word(i * 8 + 8, 8))
 
             payload = {
                 'event': 'hardware',
