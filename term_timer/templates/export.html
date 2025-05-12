@@ -215,7 +215,7 @@
        font-weight: 600;
      }
 
-     .solve-date {
+     .solve-time, .solve-date {
        position: relative;
      }
 
@@ -248,6 +248,7 @@
       opacity: 0.9;
      }
 
+    .solve-time:hover .tooltip,
     .solve-date:hover .tooltip {
       opacity: 0.9;
      }
@@ -1014,8 +1015,11 @@
               {% for solve in stats.stack|reverse %}
               <tr>
                 <td>{{ stats.stack|length - loop.index0 }}</td>
-                <td class="{% if solve.time == stats.best %}time-best{% elif solve.time == stats.worst %}time-worst{% endif %}">
+                <td class="solve-time {% if solve.time == stats.best %}time-best{% elif solve.time == stats.worst %}time-worst{% endif %}">
                   {{ solve.time|format_time }}
+                  {% if solve.device %}
+                    <span class="tooltip">{{ solve.device }}</span>
+                  {% endif %}
                 </td>
                 <td class="solve-date">
                   {{ solve.datetime.strftime('%Y-%m-%d %H:%M') }}
