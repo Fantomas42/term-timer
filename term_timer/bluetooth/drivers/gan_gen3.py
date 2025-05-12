@@ -317,4 +317,9 @@ class GanGen3Driver(GanGen2Driver):
 
             await self.client.disconnect()
 
+        else:
+            logger.debug(
+                'Unknown event type "%s": %s', event, msg,
+            )
+
         return events

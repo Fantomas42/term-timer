@@ -219,4 +219,9 @@ class MoyuWeilong10Driver(Driver):
             }
             self.add_event(events, payload)
 
+        else:
+            logger.debug(
+                'Unknown event type "%s": %s', event, msg,
+            )
+
         return events

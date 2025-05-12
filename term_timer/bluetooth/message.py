@@ -9,6 +9,9 @@ class GanProtocolMessage:
             for byte in message
         )
 
+    def __str__(self):
+        return self.bits
+
     def get_bit_word(self, start_bit, bit_length, *, little_endian=False):
         if bit_length <= 8:
             # For 8 bits or less, simply parse the binary substring
