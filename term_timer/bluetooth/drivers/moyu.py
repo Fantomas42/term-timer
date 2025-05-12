@@ -185,8 +185,6 @@ class MoyuWeilong10Driver(Driver):
             sw_minor = msg.get_bit_word(96, 8)
             gyro_enabled = msg.get_bit_word(105, 1)
             gyro_supported = msg.get_bit_word(106, 1)
-            logger.info('GYRO ENABLED %s', gyro_enabled)
-            logger.info('GYRO SUPPORTED %s', gyro_supported)
             serial = msg.get_bit_word(109, 8)
 
             hardware_name = ''
@@ -200,11 +198,30 @@ class MoyuWeilong10Driver(Driver):
                 'hardware_name': hardware_name,
                 'hardware_version': f'{ hw_major }.{ hw_minor }',
                 'software_version': f'{ sw_major }.{ sw_minor }',
+                'gyroscope_enabled': bool(gyro_enabled),
+                'gyroscope_support': bool(gyro_supported),
                 'gyroscope_supported': (
                     bool(gyro_supported)
                     and bool(gyro_enabled)
                 ),
                 'serial': serial,
+            }
+            self.add_event(events, payload)
+
+        elif event == 0xAC:
+            gyro_enabled = msg.get_bit_word(16, 8)
+            gyro_supported = msg.get_bit_word(8, 8)
+
+            payload = {
+                'event': 'gyro-config',
+                'clock': clock,
+                'timestamp': timestamp,
+                'gyroscope_enabled': bool(gyro_enabled),
+                'gyroscope_support': bool(gyro_supported),
+                'gyroscope_supported': (
+                    bool(gyro_supported)
+                    and bool(gyro_enabled)
+                ),
             }
             self.add_event(events, payload)
 
