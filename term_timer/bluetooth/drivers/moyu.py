@@ -122,7 +122,6 @@ class MoyuWeilong10Driver(Driver):
 
             self.last_serial = serial
 
-            logger.info('diff %s', diff)
             if diff <= 0:
                 return []
 
