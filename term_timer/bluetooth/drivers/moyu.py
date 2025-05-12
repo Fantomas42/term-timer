@@ -155,7 +155,6 @@ class MoyuWeilong10Driver(Driver):
 
         elif event == 0xA3:  # Facelets
             serial = msg.get_bit_word(152, 8)
-            facelets = msg.get_bit_word(8, 144)
 
             if self.last_serial == -1:
                 self.last_serial = serial
@@ -164,10 +163,9 @@ class MoyuWeilong10Driver(Driver):
             # Parse in order URFDLB instead of FBUDLR
             faces = [2, 5, 0, 3, 4, 1]
             for i in range(6):
-                face = facelets[faces[i] * 24:(faces[i] * 24) + 24]
                 for j in range(8):
-                    #state.append('FBUDLR'[int(face[j * 3:(j * 3) + 3], 2)])
-                    state.append('FBUDLR'[face[j * 3:(j * 3) + 3]])
+                    value = msg.get_bit_word(8 + (faces[i] * 24) + (j * 3), 3)
+                    state.append('FBUDLR'[value])
                     if j == 3:
                         state.append('FBUDLR'[faces[i]])
 
