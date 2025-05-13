@@ -10,7 +10,6 @@ if is_windows:
     import msvcrt
 else:
     import termios
-    import tty
 
 
 class Interface:
@@ -26,13 +25,17 @@ class Interface:
     def beep() -> None:
         print('\a', end='', flush=True)
 
-    async def getch(self, timeout: float | None = None) -> str:
+    async def getch(self, mode, timeout: float | None = None) -> str:
+        logger.info('Getch %s', mode)
+
         if is_windows:
             ch = await self.getch_windows(timeout)
         else:
             ch = await self.getch_unix(timeout)
 
         self.clear_line(full=True)
+
+        logger.info('Getched: *%s*', ch)
 
         return ch
 
@@ -63,7 +66,7 @@ class Interface:
                 ch = await future
         except asyncio.TimeoutError:  # noqa: UP041
             ch = ''
-        except Exception as e:
+        except Exception:
             logger.exception('Error in getch (Windows)')
             ch = ''
 
@@ -71,11 +74,17 @@ class Interface:
 
     async def getch_unix(self, timeout: float | None = None) -> str:
         fd = sys.stdin.fileno()
+
         old_settings = termios.tcgetattr(fd)
+        term = termios.tcgetattr(fd)
         ch = ''
 
         try:
-            tty.setcbreak(fd)
+            term[3] &= ~(
+                termios.ICANON | termios.ECHO |
+                termios.IGNBRK | termios.BRKINT
+            )
+            termios.tcsetattr(fd, termios.TCSAFLUSH, term)
 
             loop = asyncio.get_running_loop()
             future = loop.create_future()
@@ -98,13 +107,11 @@ class Interface:
                     ch = await future
             except asyncio.TimeoutError:  # noqa: UP041
                 ch = ''
-            except Exception as e:
+            except Exception:
                 logger.exception('Error in getch (Unix)')
                 ch = ''
             finally:
-                if loop.is_closed():
-                    pass
-                else:
+                if not loop.is_closed():
                     loop.remove_reader(fd)
 
         finally:
