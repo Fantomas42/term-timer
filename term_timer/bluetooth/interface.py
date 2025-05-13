@@ -85,7 +85,7 @@ class BluetoothInterface:
     async def notification_handler(self, sender, data):
         events = await self.driver.event_handler(sender, data)
         for event in events:
-            logger.debug('Event : %s', event['event'].upper())
+            logger.debug('Event: %s', event['event'].upper())
         await self.queue.put(events)
 
     async def send_command(self, command: str) -> bool:
@@ -94,7 +94,7 @@ class BluetoothInterface:
             logger.debug('Command not connected to cube')
             return False
 
-        logger.debug('Sending : %s', command)
+        logger.debug('Sending: %s', command)
         msg = self.driver.send_command_handler(command)
 
         if not msg:
