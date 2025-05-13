@@ -558,6 +558,8 @@ class Timer(Interface):
             for task in pending:
                 task.cancel()
 
+            await asyncio.gather(*pending, return_exceptions=True)
+
             char = ''
             if tasks[0] in done:
                 char = tasks[0].result()
@@ -587,6 +589,8 @@ class Timer(Interface):
                 for task in pending:
                     task.cancel()
 
+                await asyncio.gather(*pending, return_exceptions=True)
+
                 if not self.solve_started_event.is_set():
                     self.solve_started_event.set()
                 if not self.stop_event.is_set():
@@ -610,6 +614,8 @@ class Timer(Interface):
             for task in pending:
                 task.cancel()
 
+            await asyncio.gather(*pending, return_exceptions=True)
+
             if not self.solve_started_event.is_set():
                 self.solve_started_event.set()
 
@@ -626,6 +632,8 @@ class Timer(Interface):
 
             for task in pending:
                 task.cancel()
+
+            await asyncio.gather(*pending, return_exceptions=True)
 
             if not self.stop_event.is_set():
                 self.end_time = time.perf_counter_ns()
