@@ -11,6 +11,7 @@ from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.slice import reslice_moves
+from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
 from term_timer.bluetooth.facelets import to_magiccube_facelets
@@ -69,7 +70,8 @@ LOGGING_CONF = {
 
 
 async def consumer_cb(queue, show_cube):
-    internal_cube = None
+    visual_cube = None
+    virtual_cube = None
     moves = []
 
     def print_cube(cube):
@@ -109,14 +111,20 @@ async def consumer_cb(queue, show_cube):
                     'CONSUMER: Gyroscope event',
                 )
             elif event_name == 'facelets':
-                internal_cube = Cube(
-                    3,
-                    to_magiccube_facelets(event['facelets']),
-                )
                 logger.info(
                     'CONSUMER: Facelets received',
                 )
-                print_cube(internal_cube)
+                if virtual_cube:
+                    if virtual_cube.state != event['facelets']:
+                        logger.warning('FACELETS DESYNCHRONISED')
+                else:
+                    virtual_cube = VCube(event['facelets'])
+
+                visual_cube = Cube(
+                    3,
+                    to_magiccube_facelets(event['facelets']),
+                )
+                print_cube(visual_cube)
 
             elif event_name == 'move':
                 logger.info(
@@ -126,20 +134,24 @@ async def consumer_cb(queue, show_cube):
                     event['move'],
                 )
                 moves.append(event['move'])
-                if internal_cube:
-                    internal_cube.rotate(event['move'])
-                    print_cube(internal_cube)
 
-                    algo = parse_moves(moves)
-                    recon = algo.transform(
-                        reslice_moves,
-                        degrip_full_moves,
-                        remove_final_rotations,
-                        optimize_double_moves,
-                        to_fixpoint=True,
-                    )
-                    logger.info('MOVES: %s', algo)
-                    logger.info('RECON: %s', recon)
+                if virtual_cube:
+                    virtual_cube.rotate(event['move'])
+
+                if visual_cube:
+                    visual_cube.rotate(event['move'])
+                    print_cube(visual_cube)
+
+                algo = parse_moves(moves)
+                recon = algo.transform(
+                    reslice_moves,
+                    degrip_full_moves,
+                    remove_final_rotations,
+                    optimize_double_moves,
+                    to_fixpoint=True,
+                )
+                logger.info('MOVES: %s', algo)
+                logger.info('RECON: %s', recon)
             else:
                 logger.info(
                     'CONSUMER: UNKNOWN\n%s',
