@@ -34,7 +34,9 @@ class Timer(Interface):
     def __init__(self, *, cube_size: int,
                  iterations: int, easy_cross: bool,
                  session: str, free_play: bool,
-                 show_cube: bool, countdown: int,
+                 show_cube: bool,
+                 show_reconstruction: bool,
+                 countdown: int,
                  metronome: float,
                  stack: list[Solve]):
         self.start_time = 0
@@ -52,6 +54,7 @@ class Timer(Interface):
         self.iterations = iterations
         self.easy_cross = easy_cross
         self.show_cube = show_cube
+        self.show_reconstruction = show_reconstruction
         self.countdown = countdown
         self.metronome = metronome
 
@@ -444,7 +447,8 @@ class Timer(Interface):
 
         if solve.raw_moves:
             if solve.flag != DNF:
-                console.print(solve.method_line, end='')
+                if self.show_reconstruction:
+                    console.print(solve.method_line, end='')
                 console.print(
                     f'[analysis]Analysis #{ len(self.stack) }:[/analysis] '
                     f'{ solve.report_line }',

@@ -36,6 +36,7 @@ async def timer(options) -> int:
         session=options.session,
         free_play=free_play,
         show_cube=options.show_cube,
+        show_reconstruction=options.show_reconstruction,
         countdown=options.countdown,
         metronome=options.metronome,
         stack=stack,

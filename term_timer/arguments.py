@@ -110,6 +110,14 @@ def solve_arguments(subparsers):
             'Default: False.'
         ),
     )
+    config.add_argument(
+        '-s', '--show-reconstruction',
+        action='store_true',
+        help=(
+            'Display the reconstruction of the solve.\n'
+            'Default: False.'
+        ),
+    )
 
     session = parser.add_argument_group('Session')
     session.add_argument(
