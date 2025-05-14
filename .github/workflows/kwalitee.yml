@@ -32,4 +32,4 @@ jobs:
       continue-on-error: true
     - name: Running the tests
       run: |
-        export TWO_PHASE_ENABLED=0 && pytest term_timer
+        pytest term_timer

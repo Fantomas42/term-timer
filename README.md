@@ -77,18 +77,6 @@ term-timer list 10 -c 7
 pip install -e .
 ```
 
-If you want short and efficient scrambles for 3x3x3, please install with
-this optional dependency.
-
-``` console
-pip install -e .[two-phase]
-```
-
-> [!TIP]
-> Warning, with this dependency the first launch will intensively compute
-> the  resolution tables of the Twophase algorythm.
-> It will take several minutes, be patient.
-
 ## Acknowledgments
 
 I would like to express my sincere gratitude to the developers of the

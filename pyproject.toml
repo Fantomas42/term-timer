@@ -15,6 +15,7 @@ dependencies = [
     "bleak==0.22.3",
     "Jinja2==3.1.6",
     "cryptography==44.0.2",
+    "kociemba==1.2.1",
     "cubing_algs @ git+https://github.com/Fantomas42/cubing-algs.git",
 ]
 
@@ -24,10 +25,6 @@ dev = [
     "mypy",
     "pytest",
     "pytest-cov",
-    "RubikTwoPhase",
-]
-two-phase = [
-    "RubikTwoPhase",
 ]
 
 

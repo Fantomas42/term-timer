@@ -7,11 +7,10 @@ from cubing_algs.constants import OPPOSITE_FACES
 from cubing_algs.constants import OUTER_BASIC_MOVES
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
+from kociemba import solve
 
 from term_timer.constants import CUBE_SIZES
 from term_timer.magic_cube import Cube
-from term_timer.twophases import USE_TWO_PHASE
-from term_timer.twophases import solve
 
 FACE_REGEXP = re.compile(r'(F|R|U|B|L|D)')
 
@@ -103,7 +102,7 @@ def random_moves(cube_size: int, iterations: int,
 
     if not iterations:
         iterations_range = ITERATIONS_BY_CUBE[cube_size]
-        if cube_size == 3 and USE_TWO_PHASE:
+        if cube_size == 3:
             iterations_range = (25, 30)
         iterations = randint(*iterations_range)
 
@@ -118,14 +117,7 @@ def random_moves(cube_size: int, iterations: int,
 
 
 def solve_moves(state: str) -> Algorithm | None:
-    solution: str = solve(state, 0, 0.1)
-
-    if 'Error' in solution:
-        return None
-
-    solution = solution.split('(')[0]
-    solution = solution.replace('1', '')
-    solution = solution.replace('3', "'")
+    solution: str = solve(state)
 
     return parse_moves(solution)
 
@@ -141,7 +133,7 @@ def scrambler(cube_size: int, iterations: int,
 
     cube.rotate(scramble)
 
-    if cube_size != 3 or iterations or not USE_TWO_PHASE:
+    if cube_size != 3 or iterations:
         return scramble, cube
 
     solve = solve_moves(
