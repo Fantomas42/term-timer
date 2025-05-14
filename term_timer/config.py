@@ -20,6 +20,11 @@ metronome = 0.0
 orientation = []
 method = "cf4op"
 
+[display]
+scramble = true
+reconstruction = true
+timegraph = true
+
 [statistics]
 distribution = 0
 metrics = ["htm", "qtm", "stm"]
@@ -45,6 +50,8 @@ CONFIG = load_config()
 STATS_CONFIG = CONFIG.get('statistics', {})
 
 TIMER_CONFIG = CONFIG.get('timer', {})
+
+DISPLAY_CONFIG = CONFIG.get('display', {})
 
 UI_CONFIG = CONFIG.get('ui', {})
 

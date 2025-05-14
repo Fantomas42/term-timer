@@ -3,6 +3,7 @@ from typing import Any
 
 from term_timer.argparser import ArgumentParser
 from term_timer.config import CUBE_METHOD
+from term_timer.config import DISPLAY_CONFIG
 from term_timer.config import TIMER_CONFIG
 from term_timer.constants import CUBE_SIZES
 
@@ -74,6 +75,10 @@ def solve_arguments(subparsers):
     countdown = TIMER_CONFIG.get('countdown', 0.0)
     metronome = TIMER_CONFIG.get('metronome', 0.0)
 
+    show_cube = DISPLAY_CONFIG.get('scramble', True)
+    show_timegraph = DISPLAY_CONFIG.get('timegraph', True)
+    show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
+
     parser = subparsers.add_parser(
         'solve',
         help='Start the timer and record solves',
@@ -93,12 +98,16 @@ def solve_arguments(subparsers):
         ),
     )
 
+    mode = 'hide' if show_cube else 'show'
     parser.add_argument(
-        '-p', '--show-cube',
-        action='store_true',
+        '-p', f'--{ mode }-cube',
+        action='store_const',
+        const=not show_cube,
+        default=show_cube,
+        dest='show_cube',
         help=(
-            'Display the cube in its scrambled state.\n'
-            'Default: False.'
+            f'{ mode.title() } the cube in its scrambled state.\n'
+            'Default: False'
         ),
     )
 
@@ -111,19 +120,27 @@ def solve_arguments(subparsers):
             'Default: False.'
         ),
     )
+    mode = 'hide' if show_reconstruction else 'show'
     bluetooth.add_argument(
-        '-s', '--show-reconstruction',
-        action='store_true',
+        '-s', f'--{ mode }-reconstruction',
+        action='store_const',
+        const=not show_reconstruction,
+        default=show_reconstruction,
+        dest='show_reconstruction',
         help=(
-            'Display the reconstruction of the solve.\n'
-            'Default: False.'
+            f'{ mode.title() } the reconstruction of the solve.\n'
+            'Default: False'
         ),
     )
+    mode = 'hide' if show_timegraph else 'show'
     bluetooth.add_argument(
-        '-g', '--show-time-graph',
-        action='store_true',
+        '-g', f'--{ mode }-time-graph',
+        action='store_const',
+        const=not show_timegraph,
+        default=show_timegraph,
+        dest='show_time_graph',
         help=(
-            'Display the time scatter graph of the solve.\n'
+            f'{ mode.title() } the time scatter graph of the solve.\n'
             'Default: False.'
         ),
     )
