@@ -477,33 +477,7 @@ class StatisticsReporter(Statistics):
                 f'[link={ solve.link }]alg.cubing.net[/link][/extlink]',
             )
             console.print(solve.method_line, end='')
-
-            plt.scatter(
-                [m[1] / 1000 for m in solve.move_times],
-                marker='fhd',
-                label='Time',
-            )
-
-            yticks = []
-            xticks = []
-            xlabels = []
-            for s in solve.method_applied.summary:
-                if s['type'] not in {'skipped', 'virtual'}:
-                    index = s['index'][-1] + 1
-                    plt.vline(index, 'red')
-                    xticks.append(index)
-                    yticks.append(solve.move_times[index - 1][1] / 1000)
-                    xlabels.append(s['name'])
-
-            plt.xticks(xticks, xlabels)
-            plt.yticks(yticks)
-            plt.plot_size(height=20)
-            plt.canvas_color('default')
-            plt.axes_color('default')
-            plt.ticks_color((0, 175, 255))
-            plt.ticks_style('bold')
-
-            plt.show()
+            solve.time_graph  # noqa B018
 
     def analyze_solve_cases(self, solve):
         if not solve.raw_moves:

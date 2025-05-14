@@ -3,6 +3,7 @@ from datetime import datetime
 from datetime import timezone
 from functools import cached_property
 
+import plotext as plt
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
@@ -263,6 +264,38 @@ class Solve:
             )
 
         return line
+
+    @cached_property
+    def time_graph(self) -> str:
+        if not self.raw_moves:
+            return None
+
+        plt.scatter(
+            [m[1] / 1000 for m in self.move_times],
+            marker='fhd',
+            label='Time',
+        )
+
+        yticks = []
+        xticks = []
+        xlabels = []
+        for s in self.method_applied.summary:
+            if s['type'] not in {'skipped', 'virtual'}:
+                index = s['index'][-1] + 1
+                plt.vline(index, 'red')
+                xticks.append(index)
+                yticks.append(self.move_times[index - 1][1] / 1000)
+                xlabels.append(s['name'])
+
+        plt.xticks(xticks, xlabels)
+        plt.yticks(yticks)
+        plt.plot_size(height=20)
+        plt.canvas_color('default')
+        plt.axes_color('default')
+        plt.ticks_color((0, 175, 255))
+        plt.ticks_style('bold')
+
+        plt.show()
 
     @staticmethod
     def missed_moves_pair(algorithm) -> list[Algorithm, Algorithm]:
