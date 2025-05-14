@@ -36,6 +36,7 @@ class Timer(Interface):
                  session: str, free_play: bool,
                  show_cube: bool,
                  show_reconstruction: bool,
+                 show_time_graph: bool,
                  countdown: int,
                  metronome: float,
                  stack: list[Solve]):
@@ -55,6 +56,7 @@ class Timer(Interface):
         self.easy_cross = easy_cross
         self.show_cube = show_cube
         self.show_reconstruction = show_reconstruction
+        self.show_time_graph = show_time_graph
         self.countdown = countdown
         self.metronome = metronome
 
@@ -449,6 +451,8 @@ class Timer(Interface):
             if solve.flag != DNF:
                 if self.show_reconstruction:
                     console.print(solve.method_line, end='')
+                if self.show_time_graph:
+                    solve.time_graph  # noqa B018
                 console.print(
                     f'[analysis]Analysis #{ len(self.stack) }:[/analysis] '
                     f'{ solve.report_line }',
