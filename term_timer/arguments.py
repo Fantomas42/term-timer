@@ -93,16 +93,7 @@ def solve_arguments(subparsers):
         ),
     )
 
-    config = parser.add_argument_group('Configuration')
-    config.add_argument(
-        '-b', '--bluetooth',
-        action='store_true',
-        help=(
-            'Use a Bluetooth-connected cube.\n'
-            'Default: False.'
-        ),
-    )
-    config.add_argument(
+    parser.add_argument(
         '-p', '--show-cube',
         action='store_true',
         help=(
@@ -110,7 +101,17 @@ def solve_arguments(subparsers):
             'Default: False.'
         ),
     )
-    config.add_argument(
+
+    bluetooth = parser.add_argument_group('Bluetooth')
+    bluetooth.add_argument(
+        '-b', '--bluetooth',
+        action='store_true',
+        help=(
+            'Use a Bluetooth-connected cube.\n'
+            'Default: False.'
+        ),
+    )
+    bluetooth.add_argument(
         '-s', '--show-reconstruction',
         action='store_true',
         help=(
@@ -118,7 +119,7 @@ def solve_arguments(subparsers):
             'Default: False.'
         ),
     )
-    config.add_argument(
+    bluetooth.add_argument(
         '-g', '--show-time-graph',
         action='store_true',
         help=(
