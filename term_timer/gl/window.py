@@ -157,7 +157,7 @@ class Window:
         self.add_event(KEYDOWN, K_f, cube.animation, self, [('F', 1)])
         self.add_event(KEYDOWN, K_b, cube.animation, self, [('B', 1)])
 
-        self.add_event(KEYDOWN, K_x, cube.animation, self, [('x', 1)])
+        #self.add_event(KEYDOWN, K_x, cube.animation, self, [('x', 1)])
 
     def handle_events(self):
         for event in pygame.event.get():

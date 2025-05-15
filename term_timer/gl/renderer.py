@@ -222,7 +222,7 @@ def render(cube):
         render_piece(liste_coins[corner_p[i]], i, corner_o[i])
 
 
-def anim_rotation(fenetre, cube, face, power):
+def anim_rotation(window, cube, face, power):
     """ Affiche le cube pendant le mouvement (face, power) """
     moving_pieces, non_moving_pieces = get_moving_pieces(cube, face)
     axe, theta_max = get_rotation_param(face, power)
@@ -231,7 +231,7 @@ def anim_rotation(fenetre, cube, face, power):
     hiding_points = hide_coords[face]
     # Theta est l'angle de rotation variant entre 1 et 90 degrés
     for theta in range(1, theta_max, 3):   # vitesse (theta)
-        fenetre.prepare()
+        window.prepare()
 
         glMatrixMode(GL_MODELVIEW)
         # On affiche les pieces affectées en les pivotant
@@ -248,4 +248,4 @@ def anim_rotation(fenetre, cube, face, power):
             render_piece(piece, pos, ori)
         r_surface(hiding_points, NOIR)
 
-        fenetre.update()
+        window.update()
