@@ -10,10 +10,16 @@ def main(cube):
     )
     window.add_event_rotations(cube)
 
+    count = 0
+
     while True:
         window.prepare()
         render(cube)
         window.update()
+
+        if count < 2:
+            count += 1
+            window.queue_camera_animation(0, 0, 90)
 
     window.quit()
 
