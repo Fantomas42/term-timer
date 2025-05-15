@@ -39,6 +39,7 @@ from pygame import K_f
 from pygame import K_l
 from pygame import K_r
 from pygame import K_u
+from pygame import K_x
 
 from term_timer.gl.camera import Camera
 
@@ -155,6 +156,8 @@ class Window:
         self.add_event(KEYDOWN, K_l, cube.animation, self, [('L', 1)])
         self.add_event(KEYDOWN, K_f, cube.animation, self, [('F', 1)])
         self.add_event(KEYDOWN, K_b, cube.animation, self, [('B', 1)])
+
+        self.add_event(KEYDOWN, K_x, cube.animation, self, [('x', 1)])
 
     def handle_events(self):
         for event in pygame.event.get():
