@@ -6,8 +6,7 @@ ORANGE = (1, 0.5, 0)
 ROUGE = (1, 0, 0)
 NOIR = (0, 0, 0)
 
-liste_couleurs = [BLANC, JAUNE, ORANGE, BLEU, ROUGE, VERT]
-liste_couleurs = [BLANC, JAUNE, ORANGE, VERT, ROUGE, BLEU]
+liste_couleurs = [BLANC, JAUNE, ROUGE, VERT, ORANGE, BLEU]
 
 # Définit l'ordre associé à l'ensemble des centres
 # (peu utile sauf pour l'affichage)
