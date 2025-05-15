@@ -53,9 +53,6 @@ class Window:
         self.events = {}
         self.setup_events()
 
-        self.animation_queue = []
-        self.animation_active = False
-
         self.clock = pygame.time.Clock()
 
         self.horizontal_rotation = 0
@@ -158,9 +155,10 @@ class Window:
         self.add_event(KEYDOWN, K_f, cube.animation, self, [('F', 1)])
         self.add_event(KEYDOWN, K_b, cube.animation, self, [('B', 1)])
 
-        self.add_event(KEYDOWN, K_x, self.queue_camera_animation, 90, 0, 0)
-        self.add_event(KEYDOWN, K_y, self.queue_camera_animation, 0, 90, 0)
-        self.add_event(KEYDOWN, K_z, self.queue_camera_animation, 0, 0, 90)
+        # Enregistrement des événements pour l'animation de la caméra
+        self.add_event(KEYDOWN, K_x, self.camera.animation, 90, 0, 0)
+        self.add_event(KEYDOWN, K_y, self.camera.animation, 0, 90, 0)
+        self.add_event(KEYDOWN, K_z, self.camera.animation, 0, 0, 90)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -184,50 +182,12 @@ class Window:
         self.vertical_rotation += value
 
     def handle_camera(self):
+        # Appliquer les rotations continues basées sur les touches fléchées
         self.camera.increase_rotation(
             self.vertical_rotation,
             self.horizontal_rotation,
             0,
         )
 
-        # Gérer l'animation si elle est active
-        if self.animation_active:
-            if self.current_step < self.animation_steps:
-                # Appliquer une étape de l'animation
-                self.camera.increase_rotation(
-                    self.animation_x_step,
-                    self.animation_y_step,
-                    self.animation_z_step,
-                )
-                self.current_step += 1
-            else:
-                # Fin de l'animation actuelle
-                self.animation_active = False
-                # Démarrer la prochaine animation s'il y en a
-                self.start_next_animation()
-
+        # La mise à jour de la caméra (incluant les animations) se fait dans camera.update()
         self.camera.update()
-
-    def queue_camera_animation(self, x_angle, y_angle, z_angle):
-        # Ajouter l'animation à la file d'attente
-        self.animation_queue.append((x_angle, y_angle, z_angle))
-
-        # Si aucune animation n'est en cours, démarrer celle-ci
-        if not self.animation_active:
-            self.start_next_animation()
-
-    def start_next_animation(self):
-        # S'il y a des animations en attente, démarrer la prochaine
-        if self.animation_queue:
-            # Récupérer la prochaine animation
-            x_angle, y_angle, z_angle = self.animation_queue.pop(0)
-
-            # Configuration de l'animation
-            self.animation_active = True
-            self.animation_steps = 30  # Nombre total d'étapes pour l'animation
-            self.current_step = 0
-
-            # Angles à atteindre pour chaque étape
-            self.animation_x_step = x_angle / self.animation_steps
-            self.animation_y_step = y_angle / self.animation_steps
-            self.animation_z_step = z_angle / self.animation_steps
