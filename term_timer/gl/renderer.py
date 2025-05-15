@@ -229,8 +229,9 @@ def anim_rotation(window, cube, face, power):
     # On récupère les coords de la surface à tracer
     # pour cacher l'intérieur du cube
     hiding_points = hide_coords[face]
+    speed = 6  # 3
     # Theta est l'angle de rotation variant entre 1 et 90 degrés
-    for theta in range(1, theta_max, 3):   # vitesse (theta)
+    for theta in range(1, theta_max, speed):
         window.prepare()
 
         glMatrixMode(GL_MODELVIEW)
