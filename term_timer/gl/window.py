@@ -79,7 +79,7 @@ class Window:
         pygame.mouse.set_visible(True)
 
         glMatrixMode(GL_PROJECTION)
-        glClearColor(1.0, 1.0, 1.0, 1.0)
+        glClearColor(13 / 0xFF, 26 / 0xFF, 74 / 0xFF, 1.0)
         glLoadIdentity()
         gluPerspective(50, (self.display[0] / self.display[1]), 0.1, 50.0)
 
