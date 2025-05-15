@@ -38,6 +38,8 @@ from pygame import K_l
 from pygame import K_r
 from pygame import K_u
 from pygame import K_x
+from pygame import K_y
+from pygame import K_z
 
 from term_timer.gl.camera import Camera
 
@@ -153,7 +155,9 @@ class Window:
         self.add_event(KEYDOWN, K_f, cube.animation, self, [('F', 1)])
         self.add_event(KEYDOWN, K_b, cube.animation, self, [('B', 1)])
 
-        #self.add_event(KEYDOWN, K_x, cube.animation, self, [('x', 1)])
+        self.add_event(KEYDOWN, K_x, self.start_camera_animation, 90, 0, 0)
+        self.add_event(KEYDOWN, K_y, self.start_camera_animation, 0, 90, 0)
+        self.add_event(KEYDOWN, K_z, self.start_camera_animation, 0, 0, 90)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -182,4 +186,25 @@ class Window:
             self.horizontal_rotation,
             0,
         )
+
+        if hasattr(self, 'animation_active') and self.animation_active:
+            if self.current_step < self.animation_steps:
+                self.camera.increase_rotation(
+                    self.animation_x_step,
+                    self.animation_y_step,
+                    self.animation_z_step,
+                )
+                self.current_step += 1
+            else:
+                self.animation_active = False
+
         self.camera.update()
+
+    def start_camera_animation(self, x_angle, y_angle, z_angle):
+        self.animation_active = True
+        self.animation_steps = 30
+        self.current_step = 0
+
+        self.animation_x_step = x_angle / self.animation_steps
+        self.animation_y_step = y_angle / self.animation_steps
+        self.animation_z_step = z_angle / self.animation_steps
