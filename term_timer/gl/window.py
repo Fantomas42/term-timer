@@ -47,7 +47,7 @@ from term_timer.gl.camera import Camera
 class Window:
 
     def __init__(self, width=0, height=0,
-                 fps=60, fullscreen=False):
+                 fps=60, *, fullscreen=False):
         self.fps = fps
         self.camera = Camera()
         self.events = {}
@@ -98,7 +98,7 @@ class Window:
     def load_texture(self, filename):
         texture_surface = pygame.image.load(filename)
         texture_data = pygame.image.tostring(
-            texture_surface, 'RGBA', True,
+            texture_surface, 'RGBA', flipped=True,
         )
 
         self.texID = glGenTextures(1)
@@ -155,7 +155,6 @@ class Window:
         self.add_event(KEYDOWN, K_f, cube.animation, self, [('F', 1)])
         self.add_event(KEYDOWN, K_b, cube.animation, self, [('B', 1)])
 
-        # Enregistrement des événements pour l'animation de la caméra
         self.add_event(KEYDOWN, K_x, self.camera.animation, 90, 0, 0)
         self.add_event(KEYDOWN, K_y, self.camera.animation, 0, 90, 0)
         self.add_event(KEYDOWN, K_z, self.camera.animation, 0, 0, 90)
@@ -182,12 +181,10 @@ class Window:
         self.vertical_rotation += value
 
     def handle_camera(self):
-        # Appliquer les rotations continues basées sur les touches fléchées
         self.camera.increase_rotation(
             self.vertical_rotation,
             self.horizontal_rotation,
             0,
         )
 
-        # La mise à jour de la caméra (incluant les animations) se fait dans camera.update()
         self.camera.update()

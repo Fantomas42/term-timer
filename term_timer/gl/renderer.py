@@ -89,10 +89,8 @@ def r_cube(couleurs, echelle=1):
     Affiche un cube dont les faces ont des couleurs différentes.
     Ordre des couleurs : U, D, R, F, L, B
     """
-    if echelle == 1:
-        liste_sommets = s
-    else:
-        liste_sommets = sommets(float(echelle))
+    liste_sommets = s if echelle == 1 else sommets(float(echelle))
+
     for i in range(6):
         points = [liste_sommets[j] for j in indices[i]]
         r_surface(points, couleurs[i])
