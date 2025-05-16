@@ -1,23 +1,19 @@
 from datetime import datetime
 from datetime import timezone
 
-from jinja2 import Environment
-from jinja2 import FileSystemLoader
+from bottle import Bottle
+from bottle import TEMPLATE_PATH
+from bottle import static_file
+from bottle import jinja2_template as template
 
-from term_timer.console import console
-from term_timer.constants import EXPORT_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
+from term_timer.constants import STATIC_DIRECTORY
 from term_timer.constants import SECOND
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
-
-TEMPLATES = Environment(
-    loader=FileSystemLoader(TEMPLATES_DIRECTORY),
-    lstrip_blocks=True,
-    trim_blocks=True,
-    autoescape=True,
-)
+from term_timer.in_out import load_all_solves
+from term_timer.stats import StatisticsReporter
 
 
 def format_delta(delta: int) -> str:
@@ -28,12 +24,6 @@ def format_delta(delta: int) -> str:
         sign = '+'
 
     return f'{ sign }{ format_duration(delta) }'
-
-
-TEMPLATES.filters['format_delta'] = format_delta
-TEMPLATES.filters['format_duration'] = format_duration
-TEMPLATES.filters['format_grade'] = format_grade
-TEMPLATES.filters['format_time'] = format_time
 
 
 class Exporter:
@@ -92,6 +82,13 @@ class Exporter:
         }
 
     def get_context(self):
+        self.stats = StatisticsReporter(
+            3,
+            load_all_solves(
+                3, [], [], '',
+            ),
+        )
+
         return {
             'now': datetime.now(tz=timezone.utc),  # noqa UP017
             'stats': self.stats,
@@ -101,26 +98,36 @@ class Exporter:
             'distribution': self.compute_distribution(),
         }
 
-    def export_html(self, stats):
-        self.stats = stats
+    def run_server(self, debug):
+        TEMPLATE_PATH.insert(0, TEMPLATES_DIRECTORY)
 
-        timestamp = datetime.now(
-            tz=timezone.utc,  # noqa: UP017
-        ).strftime('%Y%m%d_%H%M%S')
+        app = self.create_app()
 
-        output_path = (
-            EXPORT_DIRECTORY /
-            f'{ stats.cube_name }_{ timestamp }.html'
+        app.run(
+            debug=debug,
+            reloader=debug,
         )
 
-        template = TEMPLATES.get_template('export.html')
-        context = self.get_context()
+    def create_app(self):
+        app = Bottle()
 
-        html = template.render(**context)
+        @app.route('/')
+        def index():
+            return template(
+                'export.html',
+                template_settings={
+                    'filters': {
+                        'format_delta': format_delta,
+                        'format_duration': format_duration,
+                        'format_grade': format_grade,
+                        'format_time': format_time,
+                    },
+                },
+                **self.get_context(),
+            )
 
-        with output_path.open('w+', encoding='utf-8') as fd:
-            fd.write(html)
+        @app.route('/static/<filepath:path>')
+        def serve_static(filepath):
+            return static_file(filepath, root=STATIC_DIRECTORY)
 
-        console.print(
-            f'[success]HTML report generated at :[/success] { output_path }',
-        )
+        return app

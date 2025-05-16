@@ -107,9 +107,6 @@ def tools(command, options):
         for solve_id in options.solves:
             session_stats.detail(solve_id, options.method)
 
-    if command == 'export':
-        Exporter().export_html(session_stats)
-
     return 0
 
 
@@ -124,6 +121,9 @@ def main() -> int:
             return asyncio.run(timer(options), debug=DEBUG)
         if command == 'import':
             Importer().import_file(options.source)
+            return 0
+        if command == 'serve':
+            Exporter().run_server(DEBUG)
             return 0
         tools(command, options)
         return 0

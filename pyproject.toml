@@ -14,6 +14,7 @@ dependencies = [
     "rich==13.9.4",
     "bleak==0.22.3",
     "Jinja2==3.1.6",
+    "bottle==0.13.3",
     "cryptography==44.0.2",
     "kociemba==1.2.1",
     "cubing_algs @ git+https://github.com/Fantomas42/cubing-algs.git",

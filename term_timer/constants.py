@@ -8,12 +8,11 @@ STEP_BAR = 17
 
 SAVE_DIRECTORY = Path.home() / '.solves'
 
-EXPORT_DIRECTORY = SAVE_DIRECTORY / 'exports'
-EXPORT_DIRECTORY.mkdir(parents=True, exist_ok=True)
-
 CONFIG_FILE = Path('~/.term_timer').expanduser()
 
 TEMPLATES_DIRECTORY = Path(__file__).parent / 'templates'
+
+STATIC_DIRECTORY = Path(__file__).parent / 'static'
 
 DNF = 'DNF'
 

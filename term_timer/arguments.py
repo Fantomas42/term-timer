@@ -15,7 +15,7 @@ COMMAND_ALIASES = {
     'cfop': ['op', 'c'],
     'detail': ['dt', 'd'],
     'import': ['im', 'i'],
-    'export': ['ex', 'e'],
+    'serve': ['se', 'h'],
 }
 
 COMMAND_RESOLUTIONS = {}
@@ -365,15 +365,13 @@ def import_arguments(subparsers):
     return parser
 
 
-def export_arguments(subparsers):
+def serve_arguments(subparsers):
     parser = subparsers.add_parser(
-        'export',
-        help='Export solves in HTML',
-        description='Export HTML report about recorded solves.',
-        aliases=COMMAND_ALIASES['export'],
+        'serve',
+        help='Serve solves in HTML',
+        description='Serve HTML reports about recorded solves.',
+        aliases=COMMAND_ALIASES['serve'],
     )
-
-    set_session_arguments(parser)
 
     return parser
 
@@ -430,7 +428,7 @@ def get_arguments() -> Any:
     cfop_arguments(subparsers)
     detail_arguments(subparsers)
     import_arguments(subparsers)
-    export_arguments(subparsers)
+    serve_arguments(subparsers)
 
     args = parser.parse_args(sys.argv[1:])
 
