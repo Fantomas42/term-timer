@@ -6,7 +6,7 @@ from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.config import DEBUG
 from term_timer.console import console
-from term_timer.exporters import Exporter
+from term_timer.server import Server
 from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
@@ -123,7 +123,7 @@ def main() -> int:
             Importer().import_file(options.source)
             return 0
         if command == 'serve':
-            Exporter().run_server(DEBUG)
+            Server().run_server(options.host, options.port, DEBUG)
             return 0
         tools(command, options)
         return 0

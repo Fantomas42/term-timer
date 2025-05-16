@@ -372,6 +372,23 @@ def serve_arguments(subparsers):
         description='Serve HTML reports about recorded solves.',
         aliases=COMMAND_ALIASES['serve'],
     )
+    parser.add_argument(
+        '--host',
+        default='localhost',
+        help=(
+            'Set the hostname of the server.\n'
+            'Default: localhost.'
+        ),
+    )
+    parser.add_argument(
+        '--port',
+        type=int,
+        default=8080,
+        help=(
+            'Set the port of the server.\n'
+            'Default: 8080.'
+        ),
+    )
 
     return parser
 

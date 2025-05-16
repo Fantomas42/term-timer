@@ -2,9 +2,9 @@ from datetime import datetime
 from datetime import timezone
 
 from bottle import Bottle
+from bottle import jinja2_template
 from bottle import TEMPLATE_PATH
 from bottle import static_file
-from bottle import jinja2_template as template
 
 from term_timer.constants import TEMPLATES_DIRECTORY
 from term_timer.constants import STATIC_DIRECTORY
@@ -26,7 +26,7 @@ def format_delta(delta: int) -> str:
     return f'{ sign }{ format_duration(delta) }'
 
 
-class Exporter:
+class Server:
 
     def compute_sessions(self):
         sessions = {}
@@ -98,12 +98,28 @@ class Exporter:
             'distribution': self.compute_distribution(),
         }
 
-    def run_server(self, debug):
+    def template(self, template_name, **context):
+        return jinja2_template(
+            template_name,
+            template_settings={
+                'filters': {
+                    'format_delta': format_delta,
+                    'format_duration': format_duration,
+                    'format_grade': format_grade,
+                    'format_time': format_time,
+                },
+            },
+            **context,
+        )
+
+    def run_server(self, host, port, debug):
         TEMPLATE_PATH.insert(0, TEMPLATES_DIRECTORY)
 
         app = self.create_app()
 
         app.run(
+            host=host,
+            port=port,
             debug=debug,
             reloader=debug,
         )
@@ -113,16 +129,8 @@ class Exporter:
 
         @app.route('/')
         def index():
-            return template(
+            return self.template(
                 'export.html',
-                template_settings={
-                    'filters': {
-                        'format_delta': format_delta,
-                        'format_duration': format_duration,
-                        'format_grade': format_grade,
-                        'format_time': format_time,
-                    },
-                },
                 **self.get_context(),
             )
 
