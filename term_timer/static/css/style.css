@@ -111,6 +111,10 @@ header {
     gap: 1.5rem;
 }
 
+.stats-grid a {
+    text-decoration: none;
+}
+
 .stat-card {
     display: flex;
     flex-direction: column;

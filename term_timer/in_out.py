@@ -1,6 +1,7 @@
 import json
 import operator
 
+from term_timer.constants import CUBE_SIZES
 from term_timer.constants import SAVE_DIRECTORY
 from term_timer.solve import Solve
 
@@ -80,3 +81,18 @@ def save_solves(cube: int, session: str, solves: list[Solve]) -> bool:
         json.dump(data, fd, indent=1)
 
     return True
+
+
+def list_sessions() -> dict[str, list[str]]:
+    sessions = {}
+
+    for cube in CUBE_SIZES:
+        prefix = f'{ cube }x{ cube }x{ cube }'
+
+        sessions[prefix] = [
+            f.name.replace('.json', '').replace(f'{ prefix }', '').replace('-', '')
+            for f in SAVE_DIRECTORY.iterdir()
+            if f.is_file() and f.name.startswith(prefix)
+        ]
+
+    return sessions

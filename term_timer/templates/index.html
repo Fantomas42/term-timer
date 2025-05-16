@@ -1,0 +1,30 @@
+{% extends "skeleton.html" %}
+
+{% block description %}Session list{% endblock %}
+
+{% block title %}Sessions{% endblock %}
+
+{% block subtitle %}Sessions{% endblock %}
+
+{% block body %}
+  {% for cube, sessions in sessions.items() %}
+    {% if sessions %}
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">{{ cube }}</h2>
+        </div>
+        <div class="stats-grid">
+          {% for session in sessions %}
+            <a href="/session/3x3x3/session/">
+              <div class="stat-card">
+                <div class="stat-title">
+                  {{ session|default('default', true)|title() }}
+                </div>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

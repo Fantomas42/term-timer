@@ -1,17 +1,19 @@
 from datetime import datetime
 from datetime import timezone
 
+import bottle
 from bottle import Bottle
 from bottle import jinja2_template
 from bottle import TEMPLATE_PATH
 from bottle import static_file
 
-from term_timer.constants import TEMPLATES_DIRECTORY
-from term_timer.constants import STATIC_DIRECTORY
 from term_timer.constants import SECOND
+from term_timer.constants import STATIC_DIRECTORY
+from term_timer.constants import TEMPLATES_DIRECTORY
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
+from term_timer.in_out import list_sessions
 from term_timer.in_out import load_all_solves
 from term_timer.stats import StatisticsReporter
 
@@ -81,7 +83,7 @@ class Server:
             'counts': dist_counts,
         }
 
-    def get_context(self):
+    def get_export_context(self):
         self.stats = StatisticsReporter(
             3,
             load_all_solves(
@@ -90,12 +92,19 @@ class Server:
         )
 
         return {
-            'now': datetime.now(tz=timezone.utc),  # noqa UP017
             'stats': self.stats,
             'sessions': self.compute_sessions(),
             'cfop': self.stats.compute_cfop(),
             'trend': self.compute_trend(),
             'distribution': self.compute_distribution(),
+        }
+
+    def get_index_context(self):
+        all_sessions = list_sessions()
+
+        return {
+            'now': datetime.now(tz=timezone.utc),  # noqa UP017
+            'sessions': all_sessions,
         }
 
     def template(self, template_name, **context):
@@ -127,11 +136,26 @@ class Server:
     def create_app(self):
         app = Bottle()
 
+        def context_processors():
+            bottle.BaseTemplate.defaults['now'] = datetime.now(tz=timezone.utc)  # noqa UP017
+
+        app.add_hook(
+            'before_request',
+            context_processors,
+        )
+
         @app.route('/')
         def index():
             return self.template(
+                'index.html',
+                **self.get_index_context(),
+            )
+
+        @app.route('/export/')
+        def export():
+            return self.template(
                 'export.html',
-                **self.get_context(),
+                **self.get_export_context(),
             )
 
         @app.route('/static/<filepath:path>')
