@@ -98,7 +98,7 @@ class Window:
     def load_texture(self, filename):
         texture_surface = pygame.image.load(filename)
         texture_data = pygame.image.tostring(
-            texture_surface, 'RGBA', flipped=True,
+            texture_surface, 'RGBA', True,  # noqa: FBT003
         )
 
         self.texID = glGenTextures(1)
