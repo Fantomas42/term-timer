@@ -11,14 +11,18 @@
     {% if sessions %}
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title">{{ cube }}</h2>
+          <h2 class="card-title">{{ cube }}x{{ cube }}x{{ cube }}</h2>
         </div>
         <div class="stats-grid">
-          {% for session in sessions %}
-            <a href="/session/3x3x3/session/">
+          {% for session, info in sessions.items() %}
+            <a href="/{{ cube }}/{{ session|default('default', true) }}/">
               <div class="stat-card">
                 <div class="stat-title">
                   {{ session|default('default', true)|title() }}
+                </div>
+                <div class="stat-value">{{ info.stats.total }}</div>
+                <div class="stat-meta">
+                  <span class="stat-best">Best: {{ info.stats.best|format_time }}</span>
                 </div>
               </div>
             </a>

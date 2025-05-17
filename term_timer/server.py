@@ -7,14 +7,15 @@ from bottle import jinja2_template
 from bottle import TEMPLATE_PATH
 from bottle import static_file
 
+from term_timer.constants import CUBE_SIZES
 from term_timer.constants import SECOND
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
-from term_timer.in_out import list_sessions
 from term_timer.in_out import load_all_solves
+from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
 
 
@@ -28,7 +29,100 @@ def format_delta(delta: int) -> str:
     return f'{ sign }{ format_duration(delta) }'
 
 
-class Server:
+class View:
+    template_name = ''
+
+    def get_context(self):
+        raise NotImplementedError
+
+    def as_view(self):
+        return self.template(
+            self.template_name,
+            **self.get_context(),
+        )
+
+    def template(self, template_name, **context):
+        return jinja2_template(
+            template_name,
+            template_settings={
+                'filters': {
+                    'format_delta': format_delta,
+                    'format_duration': format_duration,
+                    'format_grade': format_grade,
+                    'format_time': format_time,
+                },
+            },
+            **context,
+        )
+
+
+class IndexView(View):
+    template_name = 'index.html'
+
+    def get_context(self):
+        sessions = {}
+        for cube in CUBE_SIZES:
+            solves = load_all_solves(cube, [], [], '')
+            sessions[cube] = {}
+            for solve in solves:
+                sessions[cube].setdefault(
+                    solve.session, {},
+                ).setdefault(
+                    'solves', [],
+                ).append(
+                    solve,
+                )
+
+        for cube in CUBE_SIZES:
+            values = sessions[cube].values()
+            for info in values:
+                info['stats'] = Statistics(info['solves'])
+
+            if len(values) > 1:
+                all_solves = []
+                for info in values:
+                    all_solves.extend(info['solves'])
+                sessions[cube]['all'] = {
+                    'solves': all_solves,
+                    'stats': Statistics(all_solves),
+                }
+
+            sessions[cube] = dict(
+                sorted(
+                    sessions[cube].items(),
+                    key=lambda item: len(item[1]['solves']),
+                    reverse=True,
+                ),
+            )
+
+        return {
+            'sessions': sessions,
+        }
+
+
+class SessionView(View):
+    template_name = 'session.html'
+
+    def __init__(self, cube, session):
+        self.cube = cube
+        self.session = session
+        self.stats = StatisticsReporter(
+            cube,
+            load_all_solves(
+                cube, [session], [], '',
+            ),
+        )
+
+    def get_context(self):
+        return {
+            'cube': self.cube,
+            'session': self.session,
+            'stats': self.stats,
+            'sessions': self.compute_sessions(),
+            'cfop': self.stats.compute_cfop(),
+            'trend': self.compute_trend(),
+            'distribution': self.compute_distribution(),
+        }
 
     def compute_sessions(self):
         sessions = {}
@@ -83,43 +177,8 @@ class Server:
             'counts': dist_counts,
         }
 
-    def get_export_context(self):
-        self.stats = StatisticsReporter(
-            3,
-            load_all_solves(
-                3, [], [], '',
-            ),
-        )
 
-        return {
-            'stats': self.stats,
-            'sessions': self.compute_sessions(),
-            'cfop': self.stats.compute_cfop(),
-            'trend': self.compute_trend(),
-            'distribution': self.compute_distribution(),
-        }
-
-    def get_index_context(self):
-        all_sessions = list_sessions()
-
-        return {
-            'now': datetime.now(tz=timezone.utc),  # noqa UP017
-            'sessions': all_sessions,
-        }
-
-    def template(self, template_name, **context):
-        return jinja2_template(
-            template_name,
-            template_settings={
-                'filters': {
-                    'format_delta': format_delta,
-                    'format_duration': format_duration,
-                    'format_grade': format_grade,
-                    'format_time': format_time,
-                },
-            },
-            **context,
-        )
+class Server:
 
     def run_server(self, host, port, debug):
         TEMPLATE_PATH.insert(0, TEMPLATES_DIRECTORY)
@@ -136,6 +195,7 @@ class Server:
     def create_app(self):
         app = Bottle()
 
+        # TODO move
         def context_processors():
             bottle.BaseTemplate.defaults['now'] = datetime.now(tz=timezone.utc)  # noqa UP017
 
@@ -146,17 +206,11 @@ class Server:
 
         @app.route('/')
         def index():
-            return self.template(
-                'index.html',
-                **self.get_index_context(),
-            )
+            return IndexView().as_view()
 
-        @app.route('/export/')
-        def export():
-            return self.template(
-                'export.html',
-                **self.get_export_context(),
-            )
+        @app.route('/<cube:int>/<session:path>/')
+        def session(cube, session):
+            return SessionView(cube, session).as_view()
 
         @app.route('/static/<filepath:path>')
         def serve_static(filepath):
