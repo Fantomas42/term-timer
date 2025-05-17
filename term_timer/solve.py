@@ -130,6 +130,22 @@ class Solve:
         return self.method(self.scramble, self.move_times)
 
     @cached_property
+    def recognition_time(self):
+        return sum(
+            s['inspection']
+            for s in self.method_applied.summary
+            if s['type'] != 'virtual'
+        )
+
+    @cached_property
+    def execution_time(self):
+        return sum(
+            s['execution']
+            for s in self.method_applied.summary
+            if s['type'] != 'virtual'
+        )
+
+    @cached_property
     def report_line(self) -> str:
         if not self.raw_moves:
             return ''

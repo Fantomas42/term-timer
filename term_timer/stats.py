@@ -449,6 +449,15 @@ class StatisticsReporter(Statistics):
             )
             console.print(f'[stats]Grade      :[/stats]{ grade_line }')
 
+            console.print(
+                '[stats]Recognition:[/stats] '
+                f'[result]{ format_time(solve.recognition_time) }[/result]',
+            )
+            console.print(
+                '[stats]Execution  :[/stats] '
+                f'[result]{ format_time(solve.execution_time) }[/result]',
+            )
+
             metric_string = '[stats]Metrics    :[/stats] '
             for metric in STATS_CONFIG.get('metrics'):
                 value = solve.reconstructed.metrics[metric]
