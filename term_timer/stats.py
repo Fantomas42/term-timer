@@ -451,11 +451,13 @@ class StatisticsReporter(Statistics):
 
             console.print(
                 '[stats]Recognition:[/stats] '
-                f'[result]{ format_time(solve.recognition_time) }[/result]',
+                f'[result]{ format_time(solve.recognition_time) }[/result]'
+                f' { solve.recognition_time / solve.time * 100.0:.2f}%',
             )
             console.print(
                 '[stats]Execution  :[/stats] '
-                f'[result]{ format_time(solve.execution_time) }[/result]',
+                f'[result]{ format_time(solve.execution_time) }[/result]'
+                f' { solve.execution_time / solve.time * 100.0:.2f}%',
             )
 
             metric_string = '[stats]Metrics    :[/stats] '
