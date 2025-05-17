@@ -199,12 +199,21 @@ class SolveView(View):
         self.solve = self.solves[solve - 1]
 
     def get_context(self):
+        scatter = [
+            {
+                'y': self.solve.move_times[i][1] / 1000,
+                'x': i,
+             }
+            for i in range(len(self.solve.move_times))
+        ]
+
         return {
             'cube': self.cube,
             'session': self.session,
             'solve': self.solve,
             'solve_id': self.solve_id,
             'solves': self.solves,
+            'scatter': scatter,
         }
 
 
