@@ -210,6 +210,12 @@ header {
     font-weight: 600;
 }
 
+.solve-id a {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: bold;
+}
+
 .solve-time, .solve-date {
     position: relative;
 }

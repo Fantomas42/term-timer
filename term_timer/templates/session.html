@@ -495,7 +495,11 @@
         <tbody>
           {% for solve in stats.stack|reverse %}
             <tr>
-              <td>{{ stats.stack|length - loop.index0 }}</td>
+              <td class="solve-id">
+                <a href="/{{ cube }}/{{ session|default('default', true) }}/{{ stats.stack|length - loop.index0 }}/">
+                  #{{ stats.stack|length - loop.index0 }}
+                </a>
+              </td>
               <td class="solve-time {% if solve.time == stats.best %}time-best{% elif solve.time == stats.worst %}time-worst{% endif %}">
                 {{ solve.time|format_time }}
                 {% if solve.device %}

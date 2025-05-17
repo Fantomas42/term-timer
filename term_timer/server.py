@@ -182,6 +182,31 @@ class SessionView(View):
         }
 
 
+class SolveView(View):
+    template_name = 'solve.html'
+
+    def __init__(self, cube, session, solve):
+        self.cube = cube
+        self.session = session
+
+        solves = load_all_solves(
+            cube,
+            [] if session == 'all' else [session],
+            [], '',
+        )
+
+        self.solve_id = solve
+        self.solve = solves[solve - 1]
+
+    def get_context(self):
+        return {
+            'cube': self.cube,
+            'session': self.session,
+            'solve': self.solve,
+            'solve_id': self.solve_id,
+        }
+
+
 class Server:
 
     def run_server(self, host, port, debug):
@@ -202,6 +227,10 @@ class Server:
         @app.route('/')
         def index():
             return IndexView().as_view()
+
+        @app.route('/<cube:int>/<session:path>/<solve:int>/')
+        def solve(cube, session, solve):
+            return SolveView(cube, session, solve).as_view()
 
         @app.route('/<cube:int>/<session:path>/')
         def session(cube, session):
