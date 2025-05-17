@@ -45,7 +45,7 @@ class Solve:
         self.flag = flag
         self.timer = timer
         self.device = device
-        self.session = session
+        self.session = session or 'default'
         self.raw_moves = moves
 
         self.method_name = CUBE_METHOD
