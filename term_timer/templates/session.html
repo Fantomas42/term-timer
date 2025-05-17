@@ -673,12 +673,12 @@
           <div class="info-item">
             <i class="fas fa-clock"></i>
             <span class="key">Last solve:</span>
-            <span class="value">{{ stats.stack[-1].datetime.strftime('%c') }}</span>
+            <span class="value">{{ stats.stack[-1].datetime.strftime('%c %Z') }}</span>
           </div>
           <div class="info-item">
             <i class="fas fa-calendar-alt"></i>
             <span class="key">Generation date:</span>
-            <span class="value">{{ now.strftime('%c') }}</span>
+            <span class="value">{{ now.strftime('%c %Z') }}</span>
           </div>
         </div>
       </div>

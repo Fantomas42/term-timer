@@ -1,7 +1,6 @@
 from datetime import datetime
 from datetime import timezone
 
-import bottle
 from bottle import Bottle
 from bottle import jinja2_template
 from bottle import TEMPLATE_PATH
@@ -42,6 +41,8 @@ class View:
         )
 
     def template(self, template_name, **context):
+        context['now'] = datetime.now(tz=timezone.utc)  # noqa UP017
+
         return jinja2_template(
             template_name,
             template_settings={
@@ -197,15 +198,6 @@ class Server:
 
     def create_app(self):
         app = Bottle()
-
-        # TODO move
-        def context_processors():
-            bottle.BaseTemplate.defaults['now'] = datetime.now(tz=timezone.utc)  # noqa UP017
-
-        app.add_hook(
-            'before_request',
-            context_processors,
-        )
 
         @app.route('/')
         def index():
