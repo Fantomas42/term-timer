@@ -189,14 +189,14 @@ class SolveView(View):
         self.cube = cube
         self.session = session
 
-        solves = load_all_solves(
+        self.solves = load_all_solves(
             cube,
             [] if session == 'all' else [session],
             [], '',
         )
 
         self.solve_id = solve
-        self.solve = solves[solve - 1]
+        self.solve = self.solves[solve - 1]
 
     def get_context(self):
         return {
@@ -204,6 +204,7 @@ class SolveView(View):
             'session': self.session,
             'solve': self.solve,
             'solve_id': self.solve_id,
+            'solves': self.solves,
         }
 
 

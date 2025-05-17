@@ -13,5 +13,106 @@
 {% endblock %}
 
 {% block body %}
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Informations</h2>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Time</div>
+        <div class="stat-value">{{ solve.final_time|format_time }}</div>
+      </div>
+      {% if solve.flag %}
+        <div class="stat-card">
+          <div class="stat-title">Flag</div>
+          <div class="stat-value">{{ solve.flag }}</div>
+        </div>
+      {% endif %}
+      <div class="stat-card">
+        <div class="stat-title">Date</div>
+        <div class="stat-value">{{ solve.datetime.strftime('%Y-%m-%d %H:%M') }}</div>
+      </div>
+      {% if solve.device %}
+        <div class="stat-card">
+          <div class="stat-title">Cube</div>
+          <div class="stat-value">{{ solve.device }}</div>
+        </div>
+      {% endif %}
+
+      <div class="stat-card">
+        <div class="stat-title">Timer</div>
+        <div class="stat-value">{{ solve.timer }}</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Key Statistics</h2>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Grade</div>
+        <div class="stat-value">{{ solve.score|format_grade }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">TPS</div>
+        <div class="stat-value">{{ solve.reconstructed_tps|round(2) }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">HTM</div>
+        <div class="stat-value">{{ solve.reconstructed.metrics.htm }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">QTM</div>
+        <div class="stat-value">{{ solve.reconstructed.metrics.qtm }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">QSTM</div>
+        <div class="stat-value">{{ solve.reconstructed.metrics.qstm }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Missed Moves</div>
+        <div class="stat-value">{{ solve.all_missed_moves }}</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer card">
+    <div class="footer-container">
+      <div class="footer-section">
+        <h3 class="footer-title">Report Informations</h3>
+        <div class="footer-info">
+          <div class="info-item">
+            <i class="fas fa-cube"></i>
+            <span class="key">Puzzle:</span>
+            <span class="value">{{ cube }}x{{ cube }}x{{ cube }}</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-calendar-alt"></i>
+            <span class="key">Generation date:</span>
+            <span class="value">{{ now.strftime('%c %Z') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-section">
+        <h3 class="footer-title">Session</h3>
+        <div class="sessions-grid">
+          <a class="session-badge" href="/{{ cube }}/{{ session|default('default', true) }}/">
+            Session {{ session|default('default', true) }}
+            <span class="session-count">{{ solves|length }}</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="copyright">
+        © {{ now.strftime('%Y') }} Term Timer
+      </div>
+    </div>
+  </footer>
 
 {% endblock %}
