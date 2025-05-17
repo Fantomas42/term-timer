@@ -79,6 +79,70 @@
     </div>
   </div>
 
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Scramble</h2>
+    </div>
+    <p>{{ solve.scramble }}</p>
+    {# TODO copy #}
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Reconstruction</h2>
+    </div>
+    <div class="table-container">
+      <table class="reconstruction">
+        <thead>
+          <tr>
+            <th>Step</th>
+            <th>Case</th>
+            <th>Moves</th>
+            <th>Inspection</th>
+            <th>Execution</th>
+            <th>Time</th>
+            <th>Turn</th>
+            <th>TPS</th>
+            <th>eTPS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for info in solve.method_applied.summary %}
+            <tr>
+              <td class="recons-step">
+                {{ info.name }}
+              </td>
+              <td class="recons-case">
+                {{ info.cases[0]|default('---', true) }}
+              </td>
+              <td class="recons-moves">
+                {{ info.reconstruction }}
+              </td>
+              <td class="recons-inspection">
+                {{ info.inspection|format_duration }}
+              </td>
+              <td class="recons-execution">
+                {{ info.execution|format_duration }}
+              </td>
+              <td class="recons-total">
+                {{ info.total|format_duration }}
+              </td>
+              <td class="recons-turns">
+                {{ info.reconstruction|length }}
+              </td>
+              <td class="recons-tps">
+                {{ solve.tps(info.moves, info.total)|round(2) }}
+              </td>
+              <td class="recons-etps">
+                {{ solve.tps(info.moves, info.execution)|round(2) }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <footer class="app-footer card">
     <div class="footer-container">
       <div class="footer-section">
