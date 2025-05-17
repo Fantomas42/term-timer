@@ -539,7 +539,7 @@
             <th>Count</th>
             <th>Frequency</th>
             <th>Probability</th>
-            <th>Inspection</th>
+            <th>Recognition</th>
             <th>Execution</th>
             <th>Time</th>
             <th>QTM</th>
@@ -574,7 +574,7 @@
                 {{ (oll.probability * 100)|round(2) }}%
               </td>
               <td>
-                {{ oll.inspection|format_duration }}
+                {{ oll.recognition|format_duration }}
               </td>
               <td>
                 {{ oll.execution|format_duration }}
@@ -605,7 +605,7 @@
             <th>Count</th>
             <th>Frequency</th>
             <th>Probability</th>
-            <th>Inspection</th>
+            <th>Recognition</th>
             <th>Execution</th>
             <th>Time</th>
             <th>QTM</th>
@@ -640,7 +640,7 @@
                 {{ (pll.probability * 100)|round(2) }}%
               </td>
               <td>
-                {{ pll.inspection|format_duration }}
+                {{ pll.recognition|format_duration }}
               </td>
               <td>
                 {{ pll.execution|format_duration }}

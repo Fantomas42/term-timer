@@ -22,13 +22,14 @@ theme = {
 
     'analysis': f'bold { TEXT_LIGHT } on #4D0092',
     'inspection': f'{ TEXT_LIGHT } on #5F00D7',
+    'recognition': f'{ TEXT_LIGHT } on #5F00D7',
     'execution': f'{ TEXT_LIGHT } on #4D0092',
     'consign': '#CECECE',
     'step': 'bold #00AFFF',
     'substep': 'bold #00DFFF',
     'skipped': f'{ TEXT_DARK } on #5FFFAF',
 
-    'inspection_p': TEXT_LIGHT,
+    'recognition_p': TEXT_LIGHT,
     'execution_p': TEXT_LIGHT,
     'duration_p': TEXT_LIGHT,
 

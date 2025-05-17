@@ -500,7 +500,7 @@ class StatisticsReporter(Statistics):
                 'case': oll['cases'][0],
                 'time': oll['total'],
                 'execution': oll['execution'],
-                'inspection': oll['inspection'],
+                'recognition': oll['recognition'],
                 'moves': len(oll['moves']),
                 'tps': Solve.tps(oll['moves'], oll['total']),
                 'etps': Solve.tps(oll['moves'], oll['execution']),
@@ -509,7 +509,7 @@ class StatisticsReporter(Statistics):
                 'case': pll['cases'][0],
                 'time': pll['total'],
                 'execution': pll['execution'],
-                'inspection': pll['inspection'],
+                'recognition': pll['recognition'],
                 'moves': len(pll['moves']),
                 'tps': Solve.tps(pll['moves'], pll['total']),
                 'etps': Solve.tps(pll['moves'], pll['execution']),
@@ -523,7 +523,7 @@ class StatisticsReporter(Statistics):
         table.add_column('Σ', width=3)
         table.add_column('Freq.', width=5, justify='right')
         table.add_column('Prob.', width=5, justify='right')
-        table.add_column('Insp.', width=5, justify='right')
+        table.add_column('Reco.', width=5, justify='right')
         table.add_column('Exec.', width=5, justify='right')
         table.add_column('Time', width=5, justify='right')
         table.add_column('Ao12', width=5, justify='right')
@@ -560,9 +560,9 @@ class StatisticsReporter(Statistics):
                 '[percent]'
                 f'{ (info["probability"] * 100):.2f}%'
                 '[/percent]',
-                '[inspection]' +
-                format_duration(info['inspection']) +
-                '[/inspection]',
+                '[recognition]' +
+                format_duration(info['recognition']) +
+                '[/recognition]',
                 '[execution]' +
                 format_duration(info['execution']) +
                 '[/execution]',
@@ -600,7 +600,7 @@ class StatisticsReporter(Statistics):
             oll_case = result['oll']['case']
             olls.setdefault(
                 oll_case, {
-                    'inspections': [],
+                    'recognitions': [],
                     'executions': [],
                     'times': [],
                     'moves': [],
@@ -610,7 +610,7 @@ class StatisticsReporter(Statistics):
             )
             olls[oll_case]['times'].append(result['oll']['time'])
             olls[oll_case]['executions'].append(result['oll']['execution'])
-            olls[oll_case]['inspections'].append(result['oll']['inspection'])
+            olls[oll_case]['recognitions'].append(result['oll']['recognition'])
             olls[oll_case]['moves'].append(result['oll']['moves'])
             olls[oll_case]['tpss'].append(result['oll']['tps'])
             olls[oll_case]['etpss'].append(result['oll']['etps'])
@@ -619,7 +619,7 @@ class StatisticsReporter(Statistics):
             plls.setdefault(
                 pll_case,
                 {
-                    'inspections': [],
+                    'recognitions': [],
                     'executions': [],
                     'times': [],
                     'moves': [],
@@ -629,7 +629,7 @@ class StatisticsReporter(Statistics):
             )
             plls[pll_case]['times'].append(result['pll']['time'])
             plls[pll_case]['executions'].append(result['pll']['execution'])
-            plls[pll_case]['inspections'].append(result['pll']['inspection'])
+            plls[pll_case]['recognitions'].append(result['pll']['recognition'])
             plls[pll_case]['moves'].append(result['pll']['moves'])
             plls[pll_case]['tpss'].append(result['pll']['tps'])
             plls[pll_case]['etpss'].append(result['pll']['etps'])
@@ -642,7 +642,7 @@ class StatisticsReporter(Statistics):
             info['frequency'] = count / total
             info['probability'] = OLL_INFO[name]['probability']
             info['label'] = f'OLL { name.split(" ")[0] }'
-            info['inspection'] = sum(info['inspections']) / count
+            info['recognition'] = sum(info['recognitions']) / count
             info['execution'] = sum(info['executions']) / count
             info['time'] = sum(info['times']) / count
             info['ao5'] = self.ao(5, info['times'])
@@ -657,7 +657,7 @@ class StatisticsReporter(Statistics):
             info['frequency'] = count / total
             info['probability'] = PLL_INFO[name]['probability']
             info['label'] = f'PLL { name }'
-            info['inspection'] = sum(info['inspections']) / count
+            info['recognition'] = sum(info['recognitions']) / count
             info['execution'] = sum(info['executions']) / count
             info['time'] = sum(info['times']) / count
             info['ao5'] = self.ao(5, info['times'])

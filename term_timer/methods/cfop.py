@@ -164,10 +164,10 @@ class CFOPAnalyser(Analyser):
                     'total': 0,
                     'index': [],
                     'execution': 0,
-                    'inspection': 0,
+                    'recognition': 0,
                     'total_percent': 0,
                     'execution_percent': 0,
-                    'inspection_percent': 0,
+                    'recognition_percent': 0,
                     'reconstruction': Algorithm(),
                     'increment': 0,
                     'cases': ['SKIP'],
@@ -187,10 +187,10 @@ class CFOPAnalyser(Analyser):
                     'total': 0,
                     'index': [],
                     'execution': 0,
-                    'inspection': 0,
+                    'recognition': 0,
                     'total_percent': 0,
                     'execution_percent': 0,
-                    'inspection_percent': 0,
+                    'recognition_percent': 0,
                     'reconstruction': Algorithm(),
                     'increment': 0,
                     'cases': ['SKIP'],
@@ -316,10 +316,10 @@ class CF4OPAnalyser(CFOPAnalyser):
             'total': 0,
             'index': [],
             'execution': 0,
-            'inspection': 0,
+            'recognition': 0,
             'total_percent': 0,
             'execution_percent': 0,
-            'inspection_percent': 0,
+            'recognition_percent': 0,
             'reconstruction': Algorithm(),
             'increment': 0,
             'cases': [],
@@ -337,10 +337,10 @@ class CF4OPAnalyser(CFOPAnalyser):
                 f2l['index'].extend(info['index'])
                 f2l['total'] += info['total']
                 f2l['execution'] += info['execution']
-                f2l['inspection'] += info['inspection']
+                f2l['recognition'] += info['recognition']
                 f2l['total_percent'] += info['total_percent']
                 f2l['execution_percent'] += info['execution_percent']
-                f2l['inspection_percent'] += info['inspection_percent']
+                f2l['recognition_percent'] += info['recognition_percent']
                 f2l['reconstruction'].extend(info['reconstruction'])
 
         if insert_f2l:

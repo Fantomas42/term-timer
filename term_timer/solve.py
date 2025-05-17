@@ -132,7 +132,7 @@ class Solve:
     @cached_property
     def recognition_time(self):
         return sum(
-            s['inspection']
+            s['recognition']
             for s in self.method_applied.summary
             if s['type'] != 'virtual'
         )
@@ -206,16 +206,16 @@ class Solve:
             if info['type'] != 'virtual':
                 if info['total']:
                     ratio_execution = info['execution'] / info['total'] * 12
-                    ratio_inspection = info['inspection'] / info['total'] * 12
+                    ratio_recognition = info['recognition'] / info['total'] * 12
                 else:
                     ratio_execution = 0
-                    ratio_inspection = 0
+                    ratio_recognition = 0
 
                 footer += (
                     '\n'
-                    '[inspection]' +
-                    (round(ratio_inspection) * ' ') +
-                    '[/inspection]' +
+                    '[recognition]' +
+                    (round(ratio_recognition) * ' ') +
+                    '[/recognition]' +
                     (round(ratio_execution) * ' ') +
                     ' [consign]' +
                     self.missed_moves_line(info['reconstruction']) +
@@ -262,10 +262,10 @@ class Solve:
                 f'{ header }'
                 f'[{ move_klass }]'
                 f'{ len(info["reconstruction"]):>2} moves[/{ move_klass }] '
-                f'[inspection]'
-                f'{ format_duration(info["inspection"]):>5}s[/inspection] '
-                f'[inspection_p]'
-                f'{ info["inspection_percent"]:5.2f}%[/inspection_p] '
+                f'[recognition]'
+                f'{ format_duration(info["recognition"]):>5}s[/recognition] '
+                f'[recognition_p]'
+                f'{ info["recognition_percent"]:5.2f}%[/recognition_p] '
                 f'[execution]'
                 f'{ format_duration(info["execution"]):>5}s[/execution] '
                 f'[execution_p]'

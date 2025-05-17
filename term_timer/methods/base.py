@@ -220,11 +220,11 @@ class Analyser:
                 self.times[step_moves[-1]]
                 - self.times[step_moves[0]]
             ) * MS_TO_NS_FACTOR
-            inspection = (
+            recognition = (
                 self.times[step_moves[0]]
                 - ante_time
             ) * MS_TO_NS_FACTOR
-            total = execution + inspection
+            total = execution + recognition
 
             reconstruction = CUBE_ORIENTATION + moves
             reconstruction = reconstruction.transform(
@@ -241,10 +241,10 @@ class Analyser:
                     'total': total,
                     'index': step_moves,
                     'execution': execution,
-                    'inspection': inspection,
+                    'recognition': recognition,
                     'total_percent': (total / self.duration) * 100,
                     'execution_percent': (execution / self.duration) * 100,
-                    'inspection_percent': (inspection / self.duration) * 100,
+                    'recognition_percent': (recognition / self.duration) * 100,
                     'reconstruction': reconstruction,
                     'increment': info['increment'],
                     'cases': info['cases'],
@@ -293,7 +293,7 @@ class Analyser:
                 recons += (
                     f'{ info["reconstruction"]!s } // '
                     f'{ info["name"] }{ cases } '
-                    f'Insp: { format_duration(info["inspection"]) }s '
+                    f'Reco: { format_duration(info["recognition"]) }s '
                     f'Exec: { format_duration(info["execution"]) }s '
                     f'Moves: { len(info["reconstruction"]) }\n'
                 )
