@@ -106,10 +106,13 @@ class SessionView(View):
     def __init__(self, cube, session):
         self.cube = cube
         self.session = session
+
         self.stats = StatisticsReporter(
             cube,
             load_all_solves(
-                cube, [session], [], '',
+                cube,
+                [] if session == 'all' else [session],
+                [], '',
             ),
         )
 

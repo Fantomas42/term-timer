@@ -687,10 +687,10 @@
         <h3 class="footer-title">Session{% if sessions|length > 1 %}s{% endif %}</h3>
         <div class="sessions-grid">
           {% for session, count in sessions.items() %}
-            <div class="session-badge">
+            <a class="session-badge" href="/{{ cube }}/{{ session|default('default', true) }}/">
               Session {{ session|default('default', true) }}
               <span class="session-count">{{ count }}</span>
-            </div>
+            </a>
           {% endfor %}
         </div>
       </div>
