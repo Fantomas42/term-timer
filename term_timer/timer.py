@@ -24,6 +24,7 @@ from term_timer.formatter import format_time
 from term_timer.in_out import save_solves
 from term_timer.interface import Interface
 from term_timer.scrambler import scrambler
+from term_timer.scrambler import scramble_moves
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 
@@ -74,6 +75,10 @@ class Timer(Interface):
         self.scramble_completed_event = asyncio.Event()
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
+
+        self.save_moves = []
+        self.save_gesture = ''
+        self.save_gesture_event = asyncio.Event()
 
         self.facelets_received_event = asyncio.Event()
         self.hardware_received_event = asyncio.Event()
@@ -223,7 +228,7 @@ class Timer(Interface):
 
                     self.bluetooth_cube.rotate(event['move'])
 
-                    if self.state in {'init', 'scrambling'}:
+                    if self.state in {'start', 'scrambling'}:
                         self.scrambled.append(event['move'])
 
                         self.handle_scrambled()
@@ -253,6 +258,38 @@ class Timer(Interface):
                             self.stop_event.set()
                             self.solve_completed_event.set()
                             logger.info('BT Stop: %s', self.end_time)
+
+                    elif self.state == 'saving':
+                        move = self.reorient(event['move'])[0]
+                        self.save_moves.append(move)
+
+                        if len(self.save_moves) < 2:
+                            continue
+
+                        l_move = self.save_moves[-1]
+                        a_move = self.save_moves[-2]
+
+                        if l_move.base_move != a_move.base_move:
+                            continue
+
+                        if l_move == a_move:
+                            continue
+
+                        base_move = l_move.base_move
+                        if base_move in {'R', 'U'}:
+                            self.save_gesture = 'o'
+                        elif base_move == 'L':
+                            self.save_gesture = 'z'
+                        elif base_move == 'D':
+                            self.save_gesture = 'q'
+                        else:
+                            continue
+
+                        self.save_gesture_event.set()
+                        logger.info(
+                            'Save gesture: %s => %s',
+                            move, self.save_gesture,
+                        )
 
     @property
     def bluetooth_device_label(self):
@@ -352,6 +389,8 @@ class Timer(Interface):
             )
 
             await asyncio.sleep(0.01)
+
+        self.set_state('stop')
 
     def start_line(self) -> None:
         if self.bluetooth_interface:
@@ -529,6 +568,7 @@ class Timer(Interface):
         logger.info('Passing to state %s %s', state.upper(), extra)
 
     async def start(self) -> bool:
+        self.set_state('start')
         self.moves = []
 
         self.scramble, cube = scrambler(
@@ -536,7 +576,14 @@ class Timer(Interface):
             iterations=self.iterations,
             easy_cross=self.easy_cross,
         )
-        self.scramble_oriented = self.reorient(self.scramble)
+        if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
+            scramble = scramble_moves(
+                cube.get_kociemba_facelet_positions(),
+                self.bluetooth_cube.state,
+            )
+            self.scramble_oriented = self.reorient(scramble)
+        else:
+            self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.get_kociemba_facelet_positions()
 
         if self.show_cube:
@@ -687,18 +734,51 @@ class Timer(Interface):
         self.handle_solve(solve)
 
         if not self.free_play:
+            self.set_state('saving')
             self.save_line(flag)
 
-            char = await self.getch('save')
+            if self.bluetooth_interface:
+                self.save_gesture_event.clear()
 
+                tasks = [
+                    asyncio.create_task(self.getch('save')),
+                    asyncio.create_task(self.save_gesture_event.wait()),
+                ]
+                done, pending = await asyncio.wait(
+                    tasks,
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+
+                for task in pending:
+                    task.cancel()
+
+                await asyncio.gather(*pending, return_exceptions=True)
+
+                char = ''
+                if tasks[0] in done:
+                    char = tasks[0].result()
+                    self.save_gesture_event.set()
+                else:
+                    self.clear_line(full=True)
+                    char = self.save_gesture
+                self.save_moves = []
+                self.save_gesture = ''
+            else:
+                char = await self.getch('save')
+
+            save_string = ''
             if char == 'd':
                 self.stack[-1].flag = DNF
+                save_string = 'Solve marked as DNF'
             elif char == 'o':
                 self.stack[-1].flag = ''
+                save_string = 'Solve marked as OK'
             elif char == '2':
                 self.stack[-1].flag = PLUS_TWO
+                save_string = 'Solve marked as +2'
             elif char == 'z':
                 self.stack.pop()
+                save_string = 'Solve cancelled'
 
             save_solves(
                 self.cube_size,
@@ -706,6 +786,11 @@ class Timer(Interface):
                 self.stack,
             )
 
+            if save_string:
+                console.print(
+                    f'[duration]Duration #{ len(self.stack) }:[/duration] '
+                    f'[warning]{ save_string }[/warning]',
+                )
             if char == 'q':
                 return False
 

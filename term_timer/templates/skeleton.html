@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block description %}{% endblock %}">
+    <meta name="generator" content="Term Timer">
+    <meta name="pubdate" content="{{ now.strftime('%Y-%m-%d') }}">
+    <title>Term Timer - {% block title %}{% endblock %}</title>
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% block script %}
+    {% endblock %}
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo">
+          <i class="fas fa-cube"></i>
+          <h1>
+            <a href="/">
+              Term Timer
+            </a>
+            <span class="subtitle">{% block subtitle %}{% endblock %}</span>
+          </h1>
+        </div>
+      </header>
+      {% block body %}
+      {% endblock %}
+    </div>
+  </body>
+</html>
