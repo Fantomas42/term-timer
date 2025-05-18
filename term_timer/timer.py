@@ -75,6 +75,7 @@ class Timer(Interface):
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
 
+        self.save_moves = []
         self.save_gesture = ''
         self.save_gesture_event = asyncio.Event()
 
@@ -258,22 +259,36 @@ class Timer(Interface):
                             logger.info('BT Stop: %s', self.end_time)
 
                     elif self.state == 'saving':
-                        if self.bluetooth_cube.is_solved:
-                            move = self.reorient(event['move'])[0]
-                            if move.base_move in {'R', 'U'}:
-                                self.save_gesture = 'o'
-                            elif move.base_move == 'L':
-                                self.save_gesture = 'z'
-                            elif move.base_move == 'D':
-                                self.save_gesture = 'q'
-                            else:
-                                continue
+                        move = self.reorient(event['move'])[0]
+                        self.save_moves.append(move)
 
-                            self.save_gesture_event.set()
-                            logger.info(
-                                'Save gesture: %s => %s',
-                                move, self.save_gesture,
-                            )
+                        if len(self.save_moves) < 2:
+                            continue
+
+                        l_move = self.save_moves[-1]
+                        a_move = self.save_moves[-2]
+
+                        if l_move.base_move != a_move.base_move:
+                            continue
+
+                        if l_move == a_move:
+                            continue
+
+                        base_move = l_move.base_move
+                        if base_move in {'R', 'U'}:
+                            self.save_gesture = 'o'
+                        elif base_move == 'L':
+                            self.save_gesture = 'z'
+                        elif base_move == 'D':
+                            self.save_gesture = 'q'
+                        else:
+                            continue
+
+                        self.save_gesture_event.set()
+                        logger.info(
+                            'Save gesture: %s => %s',
+                            move, self.save_gesture,
+                        )
 
     @property
     def bluetooth_device_label(self):
@@ -739,7 +754,8 @@ class Timer(Interface):
                 else:
                     self.clear_line(full=True)
                     char = self.save_gesture
-                    self.save_gesture = ''
+                self.save_moves = []
+                self.save_gesture = ''
             else:
                 char = await self.getch('save')
 
