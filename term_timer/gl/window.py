@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pygame
 from OpenGL.GL import GL_BGRA
 from OpenGL.GL import GL_COLOR_BUFFER_BIT
@@ -93,7 +95,7 @@ class Window:
 
         glEnable(GL_DEPTH_TEST)
 
-        self.load_texture('facelet.bmp')
+        self.load_texture(Path(__file__).parent / 'facelet.bmp')
 
     def load_texture(self, filename):
         texture_surface = pygame.image.load(filename)
