@@ -260,12 +260,14 @@ class Timer(Interface):
                     elif self.state == 'saving':
                         if self.bluetooth_cube.is_solved:
                             move = self.reorient(event['move'])[0]
-                            if move.base_move == 'R':
+                            if move.base_move in {'R', 'U'}:
                                 self.save_gesture = 'o'
                             elif move.base_move == 'L':
                                 self.save_gesture = 'z'
                             elif move.base_move == 'D':
                                 self.save_gesture = 'q'
+                            else:
+                                continue
 
                             self.save_gesture_event.set()
                             logger.info(
@@ -736,6 +738,7 @@ class Timer(Interface):
                 else:
                     self.clear_line(full=True)
                     char = self.save_gesture
+                    self.save_gesture = ''
             else:
                 char = await self.getch('save')
 
