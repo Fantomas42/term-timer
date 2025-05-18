@@ -16,6 +16,7 @@ from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
+from term_timer.solve import Solve
 
 
 def format_delta(delta: int) -> str:
@@ -207,6 +208,7 @@ class SolveView(View):
             for i in range(len(self.solve.move_times))
         ]
 
+        tps = []
         steps = []
         for s in self.solve.method_applied.summary:
             if s['type'] not in {'skipped', 'virtual'}:
@@ -215,6 +217,13 @@ class SolveView(View):
                     {
                         'x': index,
                         'y': self.solve.move_times[index - 1][1] / 1000,
+                        'label': s['name'],
+                    },
+                )
+                tps.append(
+                    {
+                        'tps': Solve.tps(s['moves'], s['total']),
+                        'etps': Solve.tps(s['moves'], s['execution']),
                         'label': s['name'],
                     },
                 )
@@ -227,6 +236,7 @@ class SolveView(View):
             'solves': self.solves,
             'scatter': scatter,
             'steps': steps,
+            'tps': tps,
         }
 
 

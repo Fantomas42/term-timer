@@ -17,13 +17,73 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
   <script>
    document.addEventListener('DOMContentLoaded', function() {
-     initializeScatterChart();
+     initializeTimingChart();
+     initializeTPSChart();
    });
 
-   const steps = {{ steps|tojson }};
+   function initializeTPSChart() {
+     const ctx = document.getElementById('tpsChart');
+     const tps = {{ tps|tojson }};
 
-   function initializeScatterChart() {
-     const ctx = document.getElementById('scatterChart');
+     tpsChart = new Chart(ctx, {
+       type: 'line',
+       data: {
+         labels: tps.map(item => item.label),
+         datasets: [
+           {
+             label: 'TPS',
+             data: tps.map(item => item.tps),
+             borderColor: 'rgba(75, 192, 75, 0.6)',
+             tension: 0.1,
+             fill: false,
+             pointBackgroundColor: 'rgba(75, 192, 75, 0.6)',
+             pointRadius: 5,
+             pointHoverRadius: 7
+           },
+           {
+             label: 'eTPS',
+             data: tps.map(item => item.etps),
+             borderColor: 'rgba(37, 99, 236, 0.6)',
+             pointBackgroundColor: 'rgba(37, 99, 236, 0.6)',
+             tension: 0.1,
+             fill: false,
+             pointRadius: 5,
+             pointHoverRadius: 7
+           },
+         ]
+       },
+       options: {
+         responsive: true,
+         maintainAspectRatio: false,
+         plugins: {
+           legend: {
+             display: false
+           },
+         },
+         scales: {
+           y: {
+             beginAtZero: true,
+             title: {
+               display: true,
+               text: 'TPS (Turns Per Second)'
+             },
+             grid: {
+               color: 'rgba(148, 163, 184, 0.1)',
+             }
+           },
+           x: {
+             grid: {
+               color: 'rgba(148, 163, 184, 0.1)',
+             }
+           }
+         },
+       }
+     });
+   }
+
+   function initializeTimingChart() {
+     const ctx = document.getElementById('timingChart');
+     const steps = {{ steps|tojson }};
 
      new Chart(ctx, {
        type: 'scatter',
@@ -84,7 +144,7 @@
                return;
              },
              grid: {
-               color: 'rgba(148, 163, 184, 0.1)'
+               color: 'rgba(148, 163, 184, 0.1)',
              }
            },
            y: {
@@ -257,7 +317,16 @@
       <h2 class="card-title">Timing Chart</h2>
     </div>
     <div class="chart-container">
-      <canvas id="scatterChart"></canvas>
+      <canvas id="timingChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">TPS</h2>
+    </div>
+    <div class="chart-container">
+      <canvas id="tpsChart"></canvas>
     </div>
   </div>
 
