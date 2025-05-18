@@ -210,6 +210,7 @@ class SolveView(View):
 
         tps = []
         steps = []
+        recognitions = []
         for s in self.solve.method_applied.summary:
             if s['type'] not in {'skipped', 'virtual'}:
                 index = s['index'][-1] + 1
@@ -227,6 +228,13 @@ class SolveView(View):
                         'label': s['name'],
                     },
                 )
+                recognitions.append(
+                    {
+                        'recognition': s['recognition'] / SECOND,
+                        'execution': s['execution'] / SECOND,
+                        'label': s['name'],
+                    },
+                )
 
         return {
             'cube': self.cube,
@@ -237,6 +245,7 @@ class SolveView(View):
             'scatter': scatter,
             'steps': steps,
             'tps': tps,
+            'recognitions': recognitions,
         }
 
 

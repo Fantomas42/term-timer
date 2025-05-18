@@ -19,7 +19,72 @@
    document.addEventListener('DOMContentLoaded', function() {
      initializeTimingChart();
      initializeTPSChart();
+     initializeRecognitionChart();
    });
+
+   function initializeRecognitionChart() {
+     const ctx = document.getElementById('recognitionChart');
+     const recog = {{ recognitions|tojson }};
+
+
+     recogChart = new Chart(ctx, {
+       type: 'bar',
+       data: {
+         labels: recog.map(item => item.label),
+         datasets: [
+           {
+             label: 'Recognition',
+             data: recog.map(item => item.recognition),
+             backgroundColor: 'rgb(65, 131, 196)',
+             borderColor: 'rgb(65, 131, 196)',
+             borderWidth: 1
+           },
+           {
+             label: 'Execution',
+             data: recog.map(item => item.execution),
+             backgroundColor: 'rgb(231, 76, 31)',
+             borderColor: 'rgb(231, 76, 31)',
+             borderWidth: 1
+           }
+         ]
+       },
+       options: {
+         responsive: true,
+         maintainAspectRatio: false,
+         plugins: {
+           legend: {
+             display: false
+           }
+         },
+         scales: {
+           x: {
+             stacked: true,
+             ticks: {
+               color: '#94a3b8',
+             },
+             grid: {
+               display: false
+             }
+           },
+           y: {
+             stacked: true,
+             title: {
+               display: true,
+               text: 'Time',
+               color: '#94a3b8'
+             },
+             ticks: {
+               stepSize: 1.0,
+               color: '#94a3b8',
+             },
+             grid: {
+               color: 'rgba(148, 163, 184, 0.1)',
+             }
+           }
+         },
+       }
+     });
+   }
 
    function initializeTPSChart() {
      const ctx = document.getElementById('tpsChart');
@@ -61,21 +126,28 @@
            },
          },
          scales: {
-           y: {
-             beginAtZero: true,
-             title: {
-               display: true,
-               text: 'TPS (Turns Per Second)'
+           x: {
+             ticks: {
+               color: '#94a3b8',
              },
              grid: {
                color: 'rgba(148, 163, 184, 0.1)',
              }
            },
-           x: {
+           y: {
+             beginAtZero: true,
+             title: {
+               display: true,
+               text: 'TPS (Turns Per Second)',
+               color: '#94a3b8'
+             },
              grid: {
                color: 'rgba(148, 163, 184, 0.1)',
-             }
-           }
+             },
+             ticks: {
+               color: '#94a3b8',
+             },
+           },
          },
        }
      });
@@ -132,6 +204,7 @@
                display: true,
                autoSkip: false,
                major: true,
+               color: '#94a3b8',
                callback: function(value) {
                 const line = steps.find(l => l.x === value);
                 return line ? line.label : '';
@@ -155,7 +228,6 @@
                text: 'Time',
                color: '#94a3b8'
              },
-
              ticks: {
                color: '#94a3b8',
                major: true,
@@ -327,6 +399,15 @@
     </div>
     <div class="chart-container">
       <canvas id="tpsChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Recognition</h2>
+    </div>
+    <div class="chart-container">
+      <canvas id="recognitionChart"></canvas>
     </div>
   </div>
 
