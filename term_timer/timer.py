@@ -24,6 +24,7 @@ from term_timer.formatter import format_time
 from term_timer.in_out import save_solves
 from term_timer.interface import Interface
 from term_timer.scrambler import scrambler
+from term_timer.scrambler import scramble_moves
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 
@@ -574,9 +575,15 @@ class Timer(Interface):
             cube_size=self.cube_size,
             iterations=self.iterations,
             easy_cross=self.easy_cross,
-            facelets=(self.bluetooth_cube and self.bluetooth_cube.state) or '',
         )
-        self.scramble_oriented = self.reorient(self.scramble)
+        if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
+            scramble = scramble_moves(
+                cube.get_kociemba_facelet_positions(),
+                self.bluetooth_cube.state,
+            )
+            self.scramble_oriented = self.reorient(scramble)
+        else:
+            self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.get_kociemba_facelet_positions()
 
         if self.show_cube:

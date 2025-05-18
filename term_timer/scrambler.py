@@ -116,14 +116,14 @@ def random_moves(cube_size: int, iterations: int,
     return parse_moves(moves)
 
 
-def solve_moves(state: str, facelets: str) -> Algorithm | None:
+def scramble_moves(state: str, facelets: str = '') -> Algorithm:
     solution: str = solve(state, facelets) if facelets else solve(state)
 
-    return parse_moves(solution)
+    return parse_moves(solution).transform(mirror_moves)
 
 
 def scrambler(cube_size: int, iterations: int,
-              facelets: str, *, easy_cross: bool) -> tuple[Algorithm, Cube]:
+              *, easy_cross: bool) -> tuple[Algorithm, Cube]:
     cube = Cube(cube_size)
 
     scramble = random_moves(
@@ -136,14 +136,8 @@ def scrambler(cube_size: int, iterations: int,
     if cube_size != 3 or iterations:
         return scramble, cube
 
-    solve = solve_moves(
+    scramble = scramble_moves(
         cube.get_kociemba_facelet_positions(),
-        facelets,
     )
 
-    if solve:
-        scramble = solve.transform(mirror_moves)
-
-        return scramble, cube
-
-    return [], cube
+    return scramble, cube
