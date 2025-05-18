@@ -75,6 +75,9 @@ class Timer(Interface):
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
 
+        self.save_gesture = ''
+        self.save_gesture_event = asyncio.Event()
+
         self.facelets_received_event = asyncio.Event()
         self.hardware_received_event = asyncio.Event()
 
@@ -223,7 +226,7 @@ class Timer(Interface):
 
                     self.bluetooth_cube.rotate(event['move'])
 
-                    if self.state in {'init', 'scrambling'}:
+                    if self.state in {'start', 'scrambling'}:
                         self.scrambled.append(event['move'])
 
                         self.handle_scrambled()
@@ -253,6 +256,22 @@ class Timer(Interface):
                             self.stop_event.set()
                             self.solve_completed_event.set()
                             logger.info('BT Stop: %s', self.end_time)
+
+                    elif self.state == 'saving':
+                        if self.bluetooth_cube.is_solved:
+                            move = self.reorient(event['move'])[0]
+                            if move.base_move == 'R':
+                                self.save_gesture = 'o'
+                            elif move.base_move == 'L':
+                                self.save_gesture = 'z'
+                            elif move.base_move == 'D':
+                                self.save_gesture = 'q'
+
+                            self.save_gesture_event.set()
+                            logger.info(
+                                'Save gesture: %s => %s',
+                                move, self.save_gesture,
+                            )
 
     @property
     def bluetooth_device_label(self):
@@ -352,6 +371,8 @@ class Timer(Interface):
             )
 
             await asyncio.sleep(0.01)
+
+        self.set_state('stop')
 
     def start_line(self) -> None:
         if self.bluetooth_interface:
@@ -529,6 +550,7 @@ class Timer(Interface):
         logger.info('Passing to state %s %s', state.upper(), extra)
 
     async def start(self) -> bool:
+        self.set_state('start')
         self.moves = []
 
         self.scramble, cube = scrambler(
@@ -687,9 +709,35 @@ class Timer(Interface):
         self.handle_solve(solve)
 
         if not self.free_play:
+            self.set_state('saving')
             self.save_line(flag)
 
-            char = await self.getch('save')
+            if self.bluetooth_interface:
+                self.save_gesture_event.clear()
+
+                tasks = [
+                    asyncio.create_task(self.getch('save')),
+                    asyncio.create_task(self.save_gesture_event.wait()),
+                ]
+                done, pending = await asyncio.wait(
+                    tasks,
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+
+                for task in pending:
+                    task.cancel()
+
+                await asyncio.gather(*pending, return_exceptions=True)
+
+                char = ''
+                if tasks[0] in done:
+                    char = tasks[0].result()
+                    self.save_gesture_event.set()
+                else:
+                    self.clear_line(full=True)
+                    char = self.save_gesture
+            else:
+                char = await self.getch('save')
 
             if char == 'd':
                 self.stack[-1].flag = DNF
