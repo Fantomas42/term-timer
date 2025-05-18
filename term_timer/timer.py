@@ -742,14 +742,19 @@ class Timer(Interface):
             else:
                 char = await self.getch('save')
 
+            save_string = ''
             if char == 'd':
                 self.stack[-1].flag = DNF
+                save_string = 'Solve marked as DNF'
             elif char == 'o':
                 self.stack[-1].flag = ''
+                save_string = 'Solve marked as OK'
             elif char == '2':
                 self.stack[-1].flag = PLUS_TWO
+                save_string = 'Solve marked as +2'
             elif char == 'z':
                 self.stack.pop()
+                save_string = 'Solve cancelled'
 
             save_solves(
                 self.cube_size,
@@ -757,6 +762,11 @@ class Timer(Interface):
                 self.stack,
             )
 
+            if save_string:
+                console.print(
+                    f'[duration]Duration #{ len(self.stack) }:[/duration] '
+                    f'[warning]{ save_string }[/warning]',
+                )
             if char == 'q':
                 return False
 
