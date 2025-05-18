@@ -559,6 +559,7 @@ class Timer(Interface):
             cube_size=self.cube_size,
             iterations=self.iterations,
             easy_cross=self.easy_cross,
+            facelets=(self.bluetooth_cube and self.bluetooth_cube.state) or '',
         )
         self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.get_kociemba_facelet_positions()
