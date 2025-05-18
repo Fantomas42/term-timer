@@ -3,6 +3,7 @@ import logging
 import logging.config
 import os
 import sys
+import threading
 from contextlib import suppress
 from pprint import pformat
 
@@ -18,6 +19,7 @@ from term_timer.bluetooth.facelets import to_magiccube_facelets
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.console import console
+from term_timer.gl.thread import CubeGLThread
 from term_timer.magic_cube import Cube
 
 logger = logging.getLogger(__name__)
@@ -69,7 +71,7 @@ LOGGING_CONF = {
 }
 
 
-async def consumer_cb(queue, show_cube):
+async def consumer_cb(queue, cube_ready, gl_thread, show_cube):
     visual_cube = None
     virtual_cube = None
     moves = []
@@ -114,6 +116,10 @@ async def consumer_cb(queue, show_cube):
                 logger.info(
                     'CONSUMER: Facelets received',
                 )
+
+                if gl_thread:
+                    cube_ready.set()
+
                 if virtual_cube:
                     if virtual_cube.state != event['facelets']:
                         logger.warning('FACELETS DESYNCHRONISED')
@@ -142,6 +148,11 @@ async def consumer_cb(queue, show_cube):
                     visual_cube.rotate(event['move'])
                     print_cube(visual_cube)
 
+                if gl_thread and gl_thread.is_alive():
+                    direction = 3 if "'" in event['move'] else 1
+                    face = event['move'][0]
+                    gl_thread.add_move(face, direction)
+
                 algo = parse_moves(moves)
                 recon = algo.transform(
                     reslice_moves,
@@ -160,10 +171,7 @@ async def consumer_cb(queue, show_cube):
 
 
 async def client_cb(queue, time):
-
-    bluetooth_interface = BluetoothInterface(
-        queue,
-    )
+    bluetooth_interface = BluetoothInterface(queue)
 
     await bluetooth_interface.__aenter__()  # noqa: PLC2801
 
@@ -181,12 +189,27 @@ async def client_cb(queue, time):
 
 async def run(options):
     queue = asyncio.Queue()
+    cube_ready = threading.Event()
+
+    gl_thread = None
+    if options.use_opengl:
+        gl_thread = CubeGLThread(cube_ready, 800, 600, daemon=True)
 
     client = client_cb(queue, options.time)
-    consumer = consumer_cb(queue, options.show_cube)
+    consumer = consumer_cb(queue, cube_ready, gl_thread, options.show_cube)
 
-    with suppress(CubeNotFoundError):
-        await asyncio.gather(client, consumer)
+    try:
+        bluetooth_tasks = asyncio.gather(client, consumer)
+
+        if options.use_opengl and gl_thread:
+            gl_thread.start()
+
+        with suppress(CubeNotFoundError):
+            await bluetooth_tasks
+    finally:
+        if gl_thread and gl_thread.is_alive():
+            gl_thread.stop()
+            gl_thread.join(timeout=2)
 
     logger.info('Bye bye')
 
@@ -213,6 +236,14 @@ def main():
         action='store_true',
         help=(
             'Display the cube state.\n'
+            'Default: False.'
+        ),
+    )
+    parser.add_argument(
+        '-g', '--use-opengl',
+        action='store_true',
+        help=(
+            'Enable OpenGL visualization.\n'
             'Default: False.'
         ),
     )
