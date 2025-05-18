@@ -207,6 +207,18 @@ class SolveView(View):
             for i in range(len(self.solve.move_times))
         ]
 
+        steps = []
+        for s in self.solve.method_applied.summary:
+            if s['type'] not in {'skipped', 'virtual'}:
+                index = s['index'][-1] + 1
+                steps.append(
+                    {
+                        'x': index,
+                        'y': self.solve.move_times[index - 1][1] / 1000,
+                        'label': s['name'],
+                    },
+                )
+
         return {
             'cube': self.cube,
             'session': self.session,
@@ -214,6 +226,7 @@ class SolveView(View):
             'solve_id': self.solve_id,
             'solves': self.solves,
             'scatter': scatter,
+            'steps': steps,
         }
 
 

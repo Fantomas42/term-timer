@@ -14,10 +14,13 @@
 
 {% block script %}
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
   <script>
    document.addEventListener('DOMContentLoaded', function() {
      initializeScatterChart();
    });
+
+   const steps = {{ steps|tojson }};
 
    function initializeScatterChart() {
      const ctx = document.getElementById('scatterChart');
@@ -25,7 +28,6 @@
      new Chart(ctx, {
        type: 'scatter',
        data: {
-         //labels: bins,
          datasets: [{
            label: 'Moves',
            data: {{ scatter|tojson }},
@@ -47,32 +49,66 @@
                  return tooltipItem[0].label;
                },
                label: function(context) {
-                 return `${context.parsed.y}`;
+                 return `${context.parsed.y}s`;
                }
              }
-           }
+           },
+           annotation: {
+             annotations: steps.map(line => ({
+               type: 'line',
+               xMin: line.x,
+               xMax: line.x,
+               borderColor: 'rgba(255, 0, 0, 0.8)',
+               borderWidth: 2,
+             }))
+          },
          },
          scales: {
            x: {
-             title: {
-               display: true,
-               color: '#94a3b8'
-             },
+             type: 'linear',
+             min: 0,
+             max: {{ scatter|length }},
              ticks: {
-               color: '#94a3b8'
+               display: true,
+               autoSkip: false,
+               major: true,
+               callback: function(value) {
+                const line = steps.find(l => l.x === value);
+                return line ? line.label : '';
+               },
+             },
+             afterBuildTicks: (axis) => {
+               axis.ticks = steps.map(line => ({
+                 value: line.x,
+               }));
+               return;
              },
              grid: {
                color: 'rgba(148, 163, 184, 0.1)'
              }
            },
            y: {
+             min: 0,
+             max: {{ scatter[-1].y }},
              title: {
                display: true,
-               text: 'Count',
+               text: 'Time',
                color: '#94a3b8'
              },
+
              ticks: {
-               color: '#94a3b8'
+               color: '#94a3b8',
+               major: true,
+               callback: function(value) {
+                const line = steps.find(l => l.y === value);
+                return line ? line.y : '';
+               },
+             },
+             afterBuildTicks: (axis) => {
+               axis.ticks = steps.map(line => ({
+                 value: line.y,
+               }));
+               return;
              },
              grid: {
                color: 'rgba(148, 163, 184, 0.1)'
@@ -81,7 +117,7 @@
          }
        }
      });
-         }
+   }
   </script>
 {% endblock %}
 
@@ -218,7 +254,7 @@
 
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Scatter</h2>
+      <h2 class="card-title">Timing Chart</h2>
     </div>
     <div class="chart-container">
       <canvas id="scatterChart"></canvas>
