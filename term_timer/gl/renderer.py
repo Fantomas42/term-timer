@@ -44,35 +44,7 @@ from term_timer.gl.data import table_positions_coins
 from term_timer.gl.data import tex_map
 
 
-def repere(echelle=1):
-    """ Affiche le repère orthonormé direct """
-
-    glPushMatrix()
-    glDisable(GL_TEXTURE_2D)
-    glScale(echelle, echelle, echelle)
-    glBegin(GL_LINES)
-    # Axe X
-    glColor(BLEU)
-    glVertex3i(0, 0, 0)
-    glVertex3i(1, 0, 0)
-    # Axe Y
-    glColor(ROUGE)
-    glVertex3i(0, 0, 0)
-    glVertex3i(0, 1, 0)
-    # Axe Z
-    glColor(VERT)
-    glVertex3i(0, 0, 0)
-    glVertex3i(0, 0, 1)
-    glEnd()
-    glEnable(GL_TEXTURE_2D)
-    glPopMatrix()
-
-
 def r_surface(points, couleur):
-    """
-    Affiche une surface de la couleur spécifiée
-    (avec la texture préchargée dans la fenêtre)
-    """
     glEnable(GL_TEXTURE_2D)
     if couleur is not None:
         glColor3fv(couleur)
@@ -85,10 +57,6 @@ def r_surface(points, couleur):
 
 
 def r_cube(couleurs, echelle=1):
-    """
-    Affiche un cube dont les faces ont des couleurs différentes.
-    Ordre des couleurs : U, D, R, F, L, B
-    """
     liste_sommets = s if echelle == 1 else sommets(float(echelle))
 
     for i in range(6):
@@ -109,95 +77,68 @@ def get_orientation_param(piece, position, orientation):
 
 
 def render_piece(piece, position, orientation):
-    """
-    Affiche les facettes de la pièce et la positionne dans l'espace relativement
-    au centre du cube.
-    @param piece : Donne la chaîne de charactère correspondant à la position
-                   de la pièce dans un cube terminé
-    @param position : entier entre 0 et 5 pour un centre, 0 et 7 pour un coin
-                      et 0 et 11 pour une arête
-    @param orientation : entier dans {0,1,2} pour un coin, {0,1} pour une arête
-    """
-    # Couleurs setup
     c = [liste_couleurs[liste_centres.index(e)] for e in piece]
     couleurs = [None] * 6
-    # On récupère la position/orientation de la pièce par rapport au repère
+
     rot_x, rot_y, rot_z, theta = get_orientation_param(
         piece, position, orientation,
     )
-    # Centre
+
     if len(piece) == 1:
         d_x, d_y, d_z = table_positions_centres[position]
 
         for i in table_couleurs_centres[position]:
             couleurs[i] = c.pop(0)
-    # Arête
+
     elif len(piece) == 2:
         d_x, d_y, d_z = table_positions_aretes[position]
 
         for i in table_couleurs_aretes[position]:
             couleurs[i] = c.pop(0)
-    # Coin
+
     elif len(piece) == 3:
         d_x, d_y, d_z = table_positions_coins[position]
 
         for i in table_couleurs_coins[position]:
             couleurs[i] = c.pop(0)
-    # Autre ???
-    else:
-        msg = 'Unknown piece'
-        raise ValueError(msg)
 
-    # Let's OpenGL it !
     glMatrixMode(GL_MODELVIEW)
     glPushMatrix()
-    # On positionne d'abord le repère
+
     glRotatef(theta, rot_x, rot_y, rot_z)
     glTranslatef(d_x, d_y, d_z)
-    # Puis on affiche la pièce
+
     r_cube(couleurs)
     glPopMatrix()
 
 
 def get_moving_pieces(cube, face):
-    """
-    Renvoie les liste des pièces affectées et des pièces non affectées
-    par la rotation 'face'.
-    """
     moving_pieces, non_moving_pieces = [], []
     corner_p = cube.corner_permutation
     corner_o = cube.corners_orientations
     edge_p = cube.edge_permutation
     edge_o = cube.edges_orientations
-    # On compare les permutations de rotation de face avec les identités
-    # pour récupérer les coins et arêtes affectées
-    # Centres
+
     for i in range(6):
         if face == liste_centres[i]:
             moving_pieces.append((liste_centres[i], i, 0))
         else:
             non_moving_pieces.append((liste_centres[i], i, 0))
-    # Coins
+
     for i in range(8):
         if permutations_coins[face][i] != i:
-            # On récupère les coins qui sont affectés
             moving_pieces.append((liste_coins[corner_p[i]], i, corner_o[i]))
         else:
-            # On récupère les coins qui ne sont pas affectés
             non_moving_pieces.append((liste_coins[corner_p[i]], i, corner_o[i]))
-    # Arêtes
     for i in range(12):
         if permutations_aretes[face][i] != i:
-            # On récupère les arêtes qui sont affectées
             moving_pieces.append((liste_aretes[edge_p[i]], i, edge_o[i]))
         else:
-            # On récupère les arêtes qui ne sont pas affectées
             non_moving_pieces.append((liste_aretes[edge_p[i]], i, edge_o[i]))
     return moving_pieces, non_moving_pieces
 
 
 def get_rotation_param(face, power):
-    """ Renvoie le vecteur directeur de la rotation """
     axe = tuple(map(lambda x: -x, axe_rotation[face])) if power == 3 else axe_rotation[face]
     theta_max = 181 if power == 2 else 91
     return axe, theta_max
@@ -218,13 +159,10 @@ def render(cube):
     glRotatef(cube.rot_y, 0, 1, 0)  # Rotation autour de Y
     glRotatef(cube.rot_z, 0, 0, 1)  # Rotation autour de Z
 
-    # Centres
     for i in range(6):
         render_piece(liste_centres[i], i, 0)
-    # Arêtes
     for i in range(12):
         render_piece(liste_aretes[edge_p[i]], i, edge_o[i])
-    # Coins
     for i in range(8):
         render_piece(liste_coins[corner_p[i]], i, corner_o[i])
 
@@ -232,12 +170,11 @@ def render(cube):
 
 
 def animate_move(window, cube, face, power):
-    """ Affiche le cube pendant le mouvement (face, power) """
     moving_pieces, non_moving_pieces = get_moving_pieces(cube, face)
     axe, theta_max = get_rotation_param(face, power)
 
     hiding_points = hide_coords[face]
-    speed = 6  # 3
+    speed = 6
 
     for theta in range(1, theta_max, speed):
         window.prepare()
@@ -263,15 +200,30 @@ def animate_move(window, cube, face, power):
 def animate_rotation(window, cube, axis, angle):
     speed = 6
 
-    for theta in range(1, angle, speed):
+    original_rot_x = cube.rot_x
+    original_rot_y = cube.rot_y
+    original_rot_z = cube.rot_z
+
+    for theta in range(1, angle + 1, speed):
         window.prepare()
 
-        if axis == 'x':
-            cube.rotate_x(theta)
-        elif axis == 'y':
-            cube.rotate_y(theta)
-        elif axis == 'z':
-            cube.rotate_z(theta)
-        render(cube)
+        cube.rot_x = original_rot_x
+        cube.rot_y = original_rot_y
+        cube.rot_z = original_rot_z
 
+        if axis == 'x':
+            cube.rot_x = (original_rot_x + min(theta, angle)) % 360
+        elif axis == 'y':
+            cube.rot_y = (original_rot_y + min(theta, angle)) % 360
+        elif axis == 'z':
+            cube.rot_z = (original_rot_z + min(theta, angle)) % 360
+
+        render(cube)
         window.update()
+
+    if axis == 'x':
+        cube.rot_x = (original_rot_x + angle) % 360
+    elif axis == 'y':
+        cube.rot_y = (original_rot_y + angle) % 360
+    elif axis == 'z':
+        cube.rot_z = (original_rot_z + angle) % 360
