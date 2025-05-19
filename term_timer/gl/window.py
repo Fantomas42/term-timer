@@ -151,16 +151,16 @@ class Window:
         self.add_event(KEYUP, K_UP, self.set_vertical_rotation, -1)
         self.add_event(KEYUP, K_DOWN, self.set_vertical_rotation, 1)
 
-        self.add_event(KEYDOWN, K_u, cube.animation, self, [('U', 1)])
-        self.add_event(KEYDOWN, K_d, cube.animation, self, [('D', 1)])
-        self.add_event(KEYDOWN, K_r, cube.animation, self, [('R', 1)])
-        self.add_event(KEYDOWN, K_l, cube.animation, self, [('L', 1)])
-        self.add_event(KEYDOWN, K_f, cube.animation, self, [('F', 1)])
-        self.add_event(KEYDOWN, K_b, cube.animation, self, [('B', 1)])
+        self.add_event(KEYDOWN, K_u, cube.animate_moves, self, [('U', 1)])
+        self.add_event(KEYDOWN, K_d, cube.animate_moves, self, [('D', 1)])
+        self.add_event(KEYDOWN, K_r, cube.animate_moves, self, [('R', 1)])
+        self.add_event(KEYDOWN, K_l, cube.animate_moves, self, [('L', 1)])
+        self.add_event(KEYDOWN, K_f, cube.animate_moves, self, [('F', 1)])
+        self.add_event(KEYDOWN, K_b, cube.animate_moves, self, [('B', 1)])
 
-        self.add_event(KEYDOWN, K_x, self.camera.animation, 90, 0, 0)
-        self.add_event(KEYDOWN, K_y, self.camera.animation, 0, 90, 0)
-        self.add_event(KEYDOWN, K_z, self.camera.animation, 0, 0, 90)
+        self.add_event(KEYDOWN, K_x, cube.animate_rotations, self, 'x', 90)
+        self.add_event(KEYDOWN, K_y, cube.animate_rotations, self, 'y', 90)
+        self.add_event(KEYDOWN, K_z, cube.animate_rotations, self, 'z', 90)
 
     def handle_events(self):
         for event in pygame.event.get():

@@ -209,6 +209,15 @@ def render(cube):
     corner_o = cube.corners_orientations
     edge_p = cube.edge_permutation
     edge_o = cube.edges_orientations
+
+    # Application des rotations globales du cube
+    glMatrixMode(GL_MODELVIEW)
+    glPushMatrix()
+
+    glRotatef(cube.rot_x, 1, 0, 0)  # Rotation autour de X
+    glRotatef(cube.rot_y, 0, 1, 0)  # Rotation autour de Y
+    glRotatef(cube.rot_z, 0, 0, 1)  # Rotation autour de Z
+
     # Centres
     for i in range(6):
         render_piece(liste_centres[i], i, 0)
@@ -218,6 +227,8 @@ def render(cube):
     # Coins
     for i in range(8):
         render_piece(liste_coins[corner_p[i]], i, corner_o[i])
+
+    glPopMatrix()
 
 
 def anim_rotation(window, cube, face, power):

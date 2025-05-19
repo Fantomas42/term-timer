@@ -19,7 +19,7 @@ def main(cube):
 
         if count < 2:
             count += 1
-            window.camera.animation(0, 0, 90)
+            cube.animate_rotations(window, 'z', 90)
 
     window.quit()
 

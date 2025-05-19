@@ -3,6 +3,7 @@ from term_timer.gl.data import orientations_aretes
 from term_timer.gl.data import orientations_coins
 from term_timer.gl.data import permutations_aretes
 from term_timer.gl.data import permutations_coins
+from term_timer.gl.renderer import render
 
 
 def binomial(n, k):
@@ -30,6 +31,10 @@ class Cube:
 
         self.edges_orientations = [0] * 12
         self.corners_orientations = [0] * 8
+
+        self.rot_x = 0
+        self.rot_y = 0
+        self.rot_z = 0
 
     def __repr__(self):
         return (
@@ -87,7 +92,37 @@ class Cube:
                 self.move_corners(face)
                 self.move_edges(face)
 
-    def animation(self, window, moves):
+    def animate_moves(self, window, moves):
         for (face, power) in moves:
             renderer.anim_rotation(window, self, face, power)
             self.rotate([(face, power)])
+
+    def rotate_x(self, angle):
+        self.rot_x += angle
+        self.rot_x %= 360
+
+    def rotate_y(self, angle):
+        self.rot_y += angle
+        self.rot_y %= 360
+
+    def rotate_z(self, angle):
+        self.rot_z += angle
+        self.rot_z %= 360
+
+    def animate_rotations(self, window, axis, angle):
+        steps = 15
+        increment = angle / steps
+
+        for _ in range(steps):
+            window.prepare()
+
+            if axis == 'x':
+                self.rotate_x(increment)
+            elif axis == 'y':
+                self.rotate_y(increment)
+            elif axis == 'z':
+                self.rotate_z(increment)
+
+            render(self)
+
+            window.update()

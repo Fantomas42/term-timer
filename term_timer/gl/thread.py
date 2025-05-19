@@ -60,7 +60,7 @@ class CubeGLThread(threading.Thread):
         for face, direction in moves_to_process:
             logger.info(f"Thread OpenGL: Animation du mouvement {face}{'' if direction == 1 else '\''}")
 
-            self.cube.animation(self.window, [(face, direction)])
+            self.cube.animate_moves(self.window, [(face, direction)])
 
     def add_move(self, face, direction):
         with self.move_lock:
