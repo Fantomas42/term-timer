@@ -11,15 +11,6 @@ class Camera:
         self.x, self.y, self.z = 0, 0, 0
         self.rot_x, self.rot_y, self.rot_z = 0, 0, 0
 
-        # Attributs pour l'animation
-        self.animation_queue = []
-        self.animation_active = False
-        self.current_step = 0
-        self.animation_steps = 30  # Nombre d'étapes par défaut
-        self.animation_x_step = 0
-        self.animation_y_step = 0
-        self.animation_z_step = 0
-
     def get_position(self):
         return self.x, self.y, self.z
 
