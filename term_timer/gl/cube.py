@@ -86,16 +86,11 @@ class Cube:
             for i in range(12)
         ]
 
-    def rotate(self, move):
+    def move(self, move):
         for (face, power) in move:
             for _i in range(power):
                 self.move_corners(face)
                 self.move_edges(face)
-
-    def animate_moves(self, window, moves):
-        for (face, power) in moves:
-            renderer.anim_rotation(window, self, face, power)
-            self.rotate([(face, power)])
 
     def rotate_x(self, angle):
         self.rot_x += angle
@@ -109,20 +104,10 @@ class Cube:
         self.rot_z += angle
         self.rot_z %= 360
 
+    def animate_moves(self, window, moves):
+        for (face, power) in moves:
+            renderer.animate_move(window, self, face, power)
+            self.move([(face, power)])
+
     def animate_rotations(self, window, axis, angle):
-        steps = 15
-        increment = angle / steps
-
-        for _ in range(steps):
-            window.prepare()
-
-            if axis == 'x':
-                self.rotate_x(increment)
-            elif axis == 'y':
-                self.rotate_y(increment)
-            elif axis == 'z':
-                self.rotate_z(increment)
-
-            render(self)
-
-            window.update()
+        renderer.animate_rotation(window, self, axis, angle)

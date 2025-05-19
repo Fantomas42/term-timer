@@ -231,20 +231,19 @@ def render(cube):
     glPopMatrix()
 
 
-def anim_rotation(window, cube, face, power):
+def animate_move(window, cube, face, power):
     """ Affiche le cube pendant le mouvement (face, power) """
     moving_pieces, non_moving_pieces = get_moving_pieces(cube, face)
     axe, theta_max = get_rotation_param(face, power)
-    # On récupère les coords de la surface à tracer
-    # pour cacher l'intérieur du cube
+
     hiding_points = hide_coords[face]
     speed = 6  # 3
-    # Theta est l'angle de rotation variant entre 1 et 90 degrés
+
     for theta in range(1, theta_max, speed):
         window.prepare()
 
         glMatrixMode(GL_MODELVIEW)
-        # On affiche les pieces affectées en les pivotant
+
         glPushMatrix()
         glRotatef(theta, axe[0], axe[1], axe[2])
         for i in range(9):
@@ -252,10 +251,27 @@ def anim_rotation(window, cube, face, power):
             render_piece(piece, pos, ori)
         r_surface(hiding_points, NOIR)
         glPopMatrix()
-        # Puis on affiche les pièces immobiles
+
         for i in range(17):
             piece, pos, ori = non_moving_pieces[i]
             render_piece(piece, pos, ori)
         r_surface(hiding_points, NOIR)
+
+        window.update()
+
+
+def animate_rotation(window, cube, axis, angle):
+    speed = 6
+
+    for theta in range(1, angle, speed):
+        window.prepare()
+
+        if axis == 'x':
+            cube.rotate_x(theta)
+        elif axis == 'y':
+            cube.rotate_y(theta)
+        elif axis == 'z':
+            cube.rotate_z(theta)
+        render(cube)
 
         window.update()
