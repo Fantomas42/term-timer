@@ -8,7 +8,7 @@ def main(cube):
         1024, 720,
         fps=144,
     )
-    window.add_event_rotations(cube)
+    window.set_keyboard_events(cube)
 
     count = 0
 

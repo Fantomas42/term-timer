@@ -56,7 +56,6 @@ class Window:
         self.fps = fps
         self.camera = Camera()
         self.events = {}
-        self.setup_events()
 
         self.clock = pygame.time.Clock()
 
@@ -140,7 +139,7 @@ class Window:
     def quit(self):
         pygame.quit()
 
-    def setup_events(self):
+    def set_keyboard_events(self, cube):
         self.add_event(KEYDOWN, K_ESCAPE, self.quit)
         self.add_event(KEYDOWN, K_LEFT, self.set_horizontal_rotation, 1)
         self.add_event(KEYDOWN, K_RIGHT, self.set_horizontal_rotation, -1)
@@ -152,7 +151,6 @@ class Window:
         self.add_event(KEYUP, K_UP, self.set_vertical_rotation, -1)
         self.add_event(KEYUP, K_DOWN, self.set_vertical_rotation, 1)
 
-    def add_event_rotations(self, cube):
         self.add_event(KEYDOWN, K_u, cube.animation, self, [('U', 1)])
         self.add_event(KEYDOWN, K_d, cube.animation, self, [('D', 1)])
         self.add_event(KEYDOWN, K_r, cube.animation, self, [('R', 1)])

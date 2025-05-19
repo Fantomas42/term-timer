@@ -36,7 +36,7 @@ class CubeGLThread(threading.Thread):
         self.window = Window(width=self.width, height=self.height, fps=144)
         self.cube = Cube()
 
-        # self.window.add_event_rotations(self.cube)
+        # self.window.set_keyboard_events(self.cube)
 
         while self.running:
             # Traiter les mouvements provenant du Bluetooth (non-bloquant)
