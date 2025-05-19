@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 class CubeGLThread(threading.Thread):
-    def __init__(self, cube_ready_event, width=800, height=600, daemon=True):
+    def __init__(self, cube_ready_event, width=800, height=600,
+                 daemon=True):
         super().__init__()
 
         self.cube_ready_event = cube_ready_event
@@ -36,10 +37,7 @@ class CubeGLThread(threading.Thread):
         self.window = Window(width=self.width, height=self.height, fps=144)
         self.cube = Cube()
 
-        # self.window.set_keyboard_events(self.cube)
-
         while self.running:
-            # Traiter les mouvements provenant du Bluetooth (non-bloquant)
             self.process_moves()
 
             self.window.prepare()
@@ -49,7 +47,6 @@ class CubeGLThread(threading.Thread):
         self.window.quit()
 
     def process_moves(self):
-        """Traite les mouvements en attente de manière non-bloquante"""
         moves_to_process = []
 
         with self.move_lock:
@@ -58,8 +55,6 @@ class CubeGLThread(threading.Thread):
                 self.move_queue.clear()
 
         for face, direction in moves_to_process:
-            logger.info(f"Thread OpenGL: Animation du mouvement {face}{'' if direction == 1 else '\''}")
-
             self.cube.animate_moves(self.window, [(face, direction)])
 
     def add_move(self, face, direction):
