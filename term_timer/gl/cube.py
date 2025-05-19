@@ -1,26 +1,10 @@
+import math
+
 from term_timer.gl import renderer
 from term_timer.gl.data import orientations_aretes
 from term_timer.gl.data import orientations_coins
 from term_timer.gl.data import permutations_aretes
 from term_timer.gl.data import permutations_coins
-from term_timer.gl.renderer import render
-
-
-def binomial(n, k):
-    """
-    A fast way to calculate binomial coefficients by Andrew Dalke.
-    See http://stackoverflow.com/questions/3025162/statistics-combinations-in-python
-    """
-    if 0 <= k <= n:
-        ntok = 1
-        ktok = 1
-        for t in range(1, min(k, n - k) + 1):
-            ntok *= n
-            ktok *= t
-            n -= 1
-        return ntok // ktok
-
-    return 0
 
 
 class Cube:
@@ -32,9 +16,11 @@ class Cube:
         self.edges_orientations = [0] * 12
         self.corners_orientations = [0] * 8
 
-        self.rot_x = 0
-        self.rot_y = 0
-        self.rot_z = 0
+        self.rotation_matrix = [
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+        ]
 
     def __repr__(self):
         return (
@@ -92,17 +78,89 @@ class Cube:
                 self.move_corners(face)
                 self.move_edges(face)
 
+    def _rotation_matrix_x(self, angle_deg):
+        angle_rad = math.radians(angle_deg)
+        cos_a = math.cos(angle_rad)
+        sin_a = math.sin(angle_rad)
+        return [
+            [1.0, 0.0, 0.0],
+            [0.0, cos_a, -sin_a],
+            [0.0, sin_a, cos_a],
+        ]
+
+    def _rotation_matrix_y(self, angle_deg):
+        angle_rad = math.radians(angle_deg)
+        cos_a = math.cos(angle_rad)
+        sin_a = math.sin(angle_rad)
+        return [
+            [cos_a, 0.0, sin_a],
+            [0.0, 1.0, 0.0],
+            [-sin_a, 0.0, cos_a],
+        ]
+
+    def _rotation_matrix_z(self, angle_deg):
+        angle_rad = math.radians(angle_deg)
+        cos_a = math.cos(angle_rad)
+        sin_a = math.sin(angle_rad)
+        return [
+            [cos_a, -sin_a, 0.0],
+            [sin_a, cos_a, 0.0],
+            [0.0, 0.0, 1.0],
+        ]
+
+    def _matrix_multiply(self, a, b):
+        c = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+        for i in range(3):
+            for j in range(3):
+                for k in range(3):
+                    c[i][j] += a[i][k] * b[k][j]
+        return c
+
     def rotate_x(self, angle):
-        self.rot_x += angle
-        self.rot_x %= 360
+        rotation = self._rotation_matrix_x(-angle)
+        self.rotation_matrix = self._matrix_multiply(
+            rotation, self.rotation_matrix,
+        )
 
     def rotate_y(self, angle):
-        self.rot_y += angle
-        self.rot_y %= 360
+        rotation = self._rotation_matrix_y(-angle)
+        self.rotation_matrix = self._matrix_multiply(
+            rotation, self.rotation_matrix,
+        )
 
     def rotate_z(self, angle):
-        self.rot_z += angle
-        self.rot_z %= 360
+        rotation = self._rotation_matrix_z(-angle)
+        self.rotation_matrix = self._matrix_multiply(
+            rotation, self.rotation_matrix,
+        )
+
+    def get_euler_angles(self):
+        r = self.rotation_matrix
+
+        if abs(r[2][0]) != 1:
+            theta_y = -math.asin(r[2][0])
+            theta_x = math.atan2(
+                r[2][1] / math.cos(theta_y),
+                r[2][2] / math.cos(theta_y),
+            )
+            theta_z = math.atan2(
+                r[1][0] / math.cos(theta_y),
+                r[0][0] / math.cos(theta_y),
+            )
+        else:
+            theta_z = 0
+            if r[2][0] == -1:
+                theta_y = math.pi / 2
+                theta_x = theta_z + math.atan2(r[0][1], r[0][2])
+            else:
+                theta_y = -math.pi / 2
+                theta_x = -theta_z + math.atan2(-r[0][1], -r[0][2])
+
+        return (
+            math.degrees(theta_x),
+            math.degrees(theta_y),
+            math.degrees(theta_z),
+        )
 
     def animate_moves(self, window, moves):
         for (face, power) in moves:

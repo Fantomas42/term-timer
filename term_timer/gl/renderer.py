@@ -1,9 +1,7 @@
-from OpenGL.GL import GL_LINES
 from OpenGL.GL import GL_MODELVIEW
 from OpenGL.GL import GL_QUADS
 from OpenGL.GL import GL_TEXTURE_2D
 from OpenGL.GL import glBegin
-from OpenGL.GL import glColor
 from OpenGL.GL import glColor3fv
 from OpenGL.GL import glDisable
 from OpenGL.GL import glEnable
@@ -12,16 +10,11 @@ from OpenGL.GL import glMatrixMode
 from OpenGL.GL import glPopMatrix
 from OpenGL.GL import glPushMatrix
 from OpenGL.GL import glRotatef
-from OpenGL.GL import glScale
 from OpenGL.GL import glTexCoord2iv
 from OpenGL.GL import glTranslatef
 from OpenGL.GL import glVertex3fv
-from OpenGL.GL import glVertex3i
 
-from term_timer.gl.data import BLEU
 from term_timer.gl.data import NOIR
-from term_timer.gl.data import ROUGE
-from term_timer.gl.data import VERT
 from term_timer.gl.data import axe_rotation
 from term_timer.gl.data import hide_coords
 from term_timer.gl.data import indices
@@ -145,19 +138,19 @@ def get_rotation_param(face, power):
 
 
 def render(cube):
-    """ Rendu du cube en 3D """
     corner_p = cube.corner_permutation
     corner_o = cube.corners_orientations
     edge_p = cube.edge_permutation
     edge_o = cube.edges_orientations
 
-    # Application des rotations globales du cube
     glMatrixMode(GL_MODELVIEW)
     glPushMatrix()
 
-    glRotatef(cube.rot_x, 1, 0, 0)  # Rotation autour de X
-    glRotatef(cube.rot_y, 0, 1, 0)  # Rotation autour de Y
-    glRotatef(cube.rot_z, 0, 0, 1)  # Rotation autour de Z
+    rot_x, rot_y, rot_z = cube.get_euler_angles()
+
+    glRotatef(rot_z, 0, 0, 1)
+    glRotatef(rot_y, 0, 1, 0)
+    glRotatef(rot_x, 1, 0, 0)
 
     for i in range(6):
         render_piece(liste_centres[i], i, 0)
@@ -182,6 +175,12 @@ def animate_move(window, cube, face, power):
         glMatrixMode(GL_MODELVIEW)
 
         glPushMatrix()
+
+        rot_x, rot_y, rot_z = cube.get_euler_angles()
+        glRotatef(rot_z, 0, 0, 1)
+        glRotatef(rot_y, 0, 1, 0)
+        glRotatef(rot_x, 1, 0, 0)
+
         glRotatef(theta, axe[0], axe[1], axe[2])
         for i in range(9):
             piece, pos, ori = moving_pieces[i]
@@ -189,41 +188,46 @@ def animate_move(window, cube, face, power):
         r_surface(hiding_points, NOIR)
         glPopMatrix()
 
+        glPushMatrix()
+        glRotatef(rot_z, 0, 0, 1)
+        glRotatef(rot_y, 0, 1, 0)
+        glRotatef(rot_x, 1, 0, 0)
+
         for i in range(17):
             piece, pos, ori = non_moving_pieces[i]
             render_piece(piece, pos, ori)
         r_surface(hiding_points, NOIR)
+        glPopMatrix()
 
         window.update()
 
 
 def animate_rotation(window, cube, axis, angle):
     speed = 6
+    steps = range(1, angle + 1, speed)
 
-    original_rot_x = cube.rot_x
-    original_rot_y = cube.rot_y
-    original_rot_z = cube.rot_z
+    original_matrix = [row[:] for row in cube.rotation_matrix]
 
-    for theta in range(1, angle + 1, speed):
+    for step in steps:
         window.prepare()
 
-        cube.rot_x = original_rot_x
-        cube.rot_y = original_rot_y
-        cube.rot_z = original_rot_z
+        current_angle = min(step, angle)
 
         if axis == 'x':
-            cube.rot_x = (original_rot_x + min(theta, angle)) % 360
+            cube.rotate_x(current_angle)
         elif axis == 'y':
-            cube.rot_y = (original_rot_y + min(theta, angle)) % 360
+            cube.rotate_y(current_angle)
         elif axis == 'z':
-            cube.rot_z = (original_rot_z + min(theta, angle)) % 360
+            cube.rotate_z(current_angle)
 
         render(cube)
         window.update()
 
+        cube.rotation_matrix = [row[:] for row in original_matrix]
+
     if axis == 'x':
-        cube.rot_x = (original_rot_x + angle) % 360
+        cube.rotate_x(angle)
     elif axis == 'y':
-        cube.rot_y = (original_rot_y + angle) % 360
+        cube.rotate_y(angle)
     elif axis == 'z':
-        cube.rot_z = (original_rot_z + angle) % 360
+        cube.rotate_z(angle)

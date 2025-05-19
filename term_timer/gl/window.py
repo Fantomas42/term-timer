@@ -1,5 +1,5 @@
-from pathlib import Path
 from os import environ
+from pathlib import Path
 
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
