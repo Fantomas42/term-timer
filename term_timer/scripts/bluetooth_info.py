@@ -112,6 +112,10 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube):
                 logger.info(
                     'CONSUMER: Gyroscope event',
                 )
+                if gl_thread and gl_thread.is_alive():
+                    gl_thread.add_quaternion(
+                        event['quaternion'],
+                    )
             elif event_name == 'facelets':
                 logger.info(
                     'CONSUMER: Facelets received',
@@ -170,10 +174,13 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube):
                 )
 
 
-async def client_cb(queue, time):
+async def client_cb(queue, time, use_opengl):
     bluetooth_interface = BluetoothInterface(queue)
 
     await bluetooth_interface.__aenter__()  # noqa: PLC2801
+
+    if use_opengl:
+        bluetooth_interface.driver.disable_gyro = False
 
     # Initialize/reset the cube
     await bluetooth_interface.send_command('REQUEST_HARDWARE')
@@ -195,7 +202,7 @@ async def run(options):
     if options.use_opengl:
         gl_thread = CubeGLThread(cube_ready, 800, 600, daemon=True)
 
-    client = client_cb(queue, options.time)
+    client = client_cb(queue, options.time, options.use_opengl)
     consumer = consumer_cb(queue, cube_ready, gl_thread, options.show_cube)
 
     try:

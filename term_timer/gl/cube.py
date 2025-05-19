@@ -151,3 +151,12 @@ class Cube:
 
     def animate_rotations(self, window, axis, angle):
         renderer.animate_rotation(window, self, axis, angle)
+
+    def set_rotation_from_quaternion(self, q):
+        qw, qx, qy, qz = q['w'], q['x'], q['y'], q['z']
+
+        self.rotation_matrix = [
+            [1 - 2*qy*qy - 2*qz*qz, 2*qx*qy - 2*qz*qw, 2*qx*qz + 2*qy*qw],
+            [2*qx*qy + 2*qz*qw, 1 - 2*qx*qx - 2*qz*qz, 2*qy*qz - 2*qx*qw],
+            [2*qx*qz - 2*qy*qw, 2*qy*qz + 2*qx*qw, 1 - 2*qx*qx - 2*qy*qy]
+        ]
