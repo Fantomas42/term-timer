@@ -26,29 +26,11 @@ class Cube:
         return (
             'Cube('
             f'edge_permutation={ self.edge_permutation!s }, '
-            f'corner_permutation={ self.corner_permutation!s }, '
-            f'twist={ self.get_twist() }, '
-            f'flip={ self.get_flip() })'
+            f'corner_permutation={ self.corner_permutation!s }) '
         )
 
     def __str__(self):
         return self.__repr__()
-
-    def get_twist(self):
-        twist = 0
-        for i in range(7):
-            twist *= 3
-            twist += self.corners_orientations[i]
-
-        return twist
-
-    def get_flip(self):
-        flip = 0
-        for i in range(11):
-            flip *= 2
-            flip += self.edges_orientations[i]
-
-        return flip
 
     def move_corners(self, move):
         p = self.corner_permutation
