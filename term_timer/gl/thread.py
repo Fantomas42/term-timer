@@ -23,6 +23,7 @@ class CubeGLThread(threading.Thread):
         self.running = True
         self.daemon = daemon
 
+        self.title = ''
         self.move_queue = []
         self.move_lock = threading.Lock()
         self.last_quaternion = None
@@ -37,6 +38,7 @@ class CubeGLThread(threading.Thread):
         logger.info('Bluetooth connection established')
 
         self.window = Window(width=self.width, height=self.height, fps=144)
+        self.window.title_prefix = self.title
         self.cube = Cube()
 
         while self.running:
@@ -78,3 +80,10 @@ class CubeGLThread(threading.Thread):
         with self.move_lock:
             self.last_quaternion = quaternion
             self.has_new_quaternion = True
+
+    def set_title(self, title):
+        with self.move_lock:
+            self.title = title
+
+        if self.window:
+            self.window.title_prefix = self.title

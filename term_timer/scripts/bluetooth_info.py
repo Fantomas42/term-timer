@@ -75,6 +75,8 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube):
     visual_cube = None
     virtual_cube = None
     moves = []
+    hardware = ''
+    battery = ''
 
     def print_cube(cube):
         if show_cube:
@@ -103,11 +105,23 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube):
                         or 'w/o Gyroscope'
                     ),
                 )
+                hardware = (
+                    f'{ event["hardware_name"] } '
+                    f'{ event["hardware_version"] } '
+                    f'{ event["software_version"] }'
+                )
+                if gl_thread and gl_thread.is_alive():
+                    gl_thread.set_title(f'{ hardware } { battery }')
+
             elif event_name == 'battery':
                 logger.info(
                     'CONSUMER: Battery: %s%%',
                     event['level'],
                 )
+                battery = f'{ event["level"]}%'
+                if gl_thread and gl_thread.is_alive():
+                    gl_thread.set_title(f'{ hardware } { battery }')
+
             elif event_name == 'gyro':
                 logger.info(
                     'CONSUMER: Gyroscope event',

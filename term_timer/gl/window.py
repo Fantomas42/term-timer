@@ -62,6 +62,8 @@ class Window:
         self.horizontal_rotation = 0
         self.vertical_rotation = 0
 
+        self.title_prefix = 'Cube 3D'
+
         pygame.display.init()
 
         if (width, height) == (0, 0):
@@ -133,7 +135,7 @@ class Window:
         self.clock.tick(self.fps)
 
         pygame.display.set_caption(
-            'Cube 3D (FPS = ' + str(int(self.clock.get_fps())) + ')',
+            f'{ self.title_prefix } (FPS={ int(self.clock.get_fps())!s })',
         )
 
     def quit(self):
