@@ -10,9 +10,9 @@ SAVE_DIRECTORY = Path.home() / '.solves'
 
 CONFIG_FILE = Path('~/.term_timer').expanduser()
 
-TEMPLATES_DIRECTORY = Path(__file__).parent / 'templates'
+TEMPLATES_DIRECTORY = Path(__file__).parent / 'server' / 'templates'
 
-STATIC_DIRECTORY = Path(__file__).parent / 'static'
+STATIC_DIRECTORY = Path(__file__).parent / 'server' / 'static'
 
 DNF = 'DNF'
 

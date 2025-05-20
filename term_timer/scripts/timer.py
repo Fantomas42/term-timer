@@ -6,7 +6,7 @@ from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.config import DEBUG
 from term_timer.console import console
-from term_timer.server import Server
+from term_timer.server.app import Server
 from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
