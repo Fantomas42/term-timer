@@ -94,7 +94,7 @@ class Window:
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
         self.camera.increase_position(0, 0, 12)
-        self.camera.increase_rotation(-30, 30, 0)
+        self.camera.increase_rotation(-30, 0, 0)
         self.camera.update()
 
         glEnable(GL_DEPTH_TEST)
