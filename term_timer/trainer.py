@@ -12,5 +12,8 @@ class Trainer(Interface):
         self.mode = mode
         self.show_cube = show_cube
 
+    def handle_bluetooth_move(self, event):
+        ...
+
     def start(self):
         ...

@@ -9,10 +9,7 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.size import compress_moves
-from cubing_algs.vcube import VCube
 
-from term_timer.bluetooth.interface import BluetoothInterface
-from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.console import console
 from term_timer.constants import DNF
@@ -23,8 +20,8 @@ from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.in_out import save_solves
 from term_timer.interface import Interface
-from term_timer.scrambler import scrambler
 from term_timer.scrambler import scramble_moves
+from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 
@@ -61,12 +58,6 @@ class Timer(Interface):
         self.countdown = countdown
         self.metronome = metronome
 
-        self.bluetooth_cube = None
-        self.bluetooth_queue = None
-        self.bluetooth_interface = None
-        self.bluetooth_consumer_ref = None
-        self.bluetooth_hardware = {}
-
         self.stack = stack
         self.facelets_scrambled = ''
         self.cube_orientation = CUBE_ORIENTATION
@@ -80,9 +71,6 @@ class Timer(Interface):
         self.save_gesture = ''
         self.save_gesture_event = asyncio.Event()
 
-        self.facelets_received_event = asyncio.Event()
-        self.hardware_received_event = asyncio.Event()
-
         if self.free_play:
             console.print(
                 '🔒 Mode Free Play is active, '
@@ -90,222 +78,69 @@ class Timer(Interface):
                 style='warning',
             )
 
-    async def bluetooth_connect(self) -> bool:
-        self.bluetooth_queue = asyncio.Queue()
+    def handle_bluetooth_move(self, event):
+        if self.state in {'start', 'scrambling'}:
+            self.scrambled.append(event['move'])
 
-        try:
-            self.bluetooth_interface = BluetoothInterface(
-                self.bluetooth_queue,
+            self.handle_scrambled()
+
+        elif self.state in {'inspecting', 'scrambled'}:
+            self.moves.append(
+                {
+                    'move': event['move'],
+                    'time': event['clock'],
+                },
+            )
+            self.solve_started_event.set()
+
+        elif self.state == 'solving':
+            self.moves.append(
+                {
+                    'move': event['move'],
+                    'time': event['clock'],
+                },
             )
 
-            console.print(
-                '[bluetooth]📡Bluetooth:[/bluetooth] '
-                'Scanning for Bluetooth cube for '
-                f'{ self.bluetooth_interface.scan_timeout }s...',
-                end='',
-            )
+            if (
+                    not self.stop_event.is_set()
+                    and self.bluetooth_cube.is_solved
+            ):
+                self.end_time = event['clock']
+                self.stop_event.set()
+                self.solve_completed_event.set()
+                logger.info('BT Stop: %s', self.end_time)
 
-            device = await self.bluetooth_interface.scan()
+        elif self.state == 'saving':
+            move = self.reorient(event['move'])[0]
+            self.save_moves.append(move)
 
-            await self.bluetooth_interface.__aenter__(device)  # noqa: PLC2801
+            if len(self.save_moves) < 2:
+                return
 
-            self.clear_line(full=True)
-            console.print(
-                '[bluetooth]🔗Bluetooth:[/bluetooth] '
-                f'{ self.bluetooth_device_label } '
-                'connected successfully !',
-                end='',
-            )
+            l_move = self.save_moves[-1]
+            a_move = self.save_moves[-2]
 
-            self.facelets_received_event.clear()
-            self.hardware_received_event.clear()
+            if l_move.base_move != a_move.base_move:
+                return
 
-            self.bluetooth_consumer_ref = asyncio.create_task(
-                self.bluetooth_consumer(),
-            )
+            if l_move == a_move:
+                return
 
-            await self.bluetooth_interface.send_command('REQUEST_BATTERY')
-            await self.bluetooth_interface.send_command('REQUEST_HARDWARE')
-            await self.bluetooth_interface.send_command('REQUEST_FACELETS')
-
-            try:
-                await asyncio.wait_for(
-                    asyncio.gather(
-                        self.facelets_received_event.wait(),
-                        self.hardware_received_event.wait(),
-                    ),
-                    timeout=10.0,
-                )
-            except asyncio.TimeoutError:  # noqa: UP041
-                self.clear_line(full=True)
-                console.print(
-                    '[bluetooth]😱Bluetooth:[/bluetooth] '
-                    '[warning]Cube could not be initialized properly. '
-                    'Running in manual mode.[/warning]',
-                )
-                return False
-
-            self.clear_line(full=True)
-
-            console.print(
-                '[bluetooth]🤓Bluetooth:[/bluetooth] '
-                f'[result]{ self.bluetooth_device_label } '
-                'initialized successfully ![/result]',
-            )
-        except CubeNotFoundError:
-            self.clear_line(full=True)
-            console.print(
-                '[bluetooth]😥Bluetooth:[/bluetooth] '
-                '[warning]No Bluetooth cube could be found. '
-                'Running in manual mode.[/warning]',
-            )
-            return False
-        else:
-            return True
-
-    async def bluetooth_disconnect(self) -> None:
-        if self.bluetooth_interface and self.bluetooth_interface.device:
-            console.print(
-                '[bluetooth]🔗 Bluetooth[/bluetooth] '
-                f'{ self.bluetooth_device_label } disconnecting...',
-            )
-            await self.bluetooth_interface.__aexit__(None, None, None)
-
-    async def bluetooth_consumer(self) -> None:
-        while True:
-            events = await self.bluetooth_queue.get()
-
-            if events is None:
-                break
-
-            for event in events:
-                event_name = event['event']
-
-                if event_name == 'hardware':
-                    event.pop('event')
-                    event.pop('timestamp')
-                    self.bluetooth_hardware.update(event)
-                    self.hardware_received_event.set()
-
-                if event_name == 'battery':
-                    self.bluetooth_hardware['battery_level'] = event['level']
-
-                elif event_name == 'facelets':
-                    if self.facelets_received_event.is_set():
-                        continue
-
-                    self.bluetooth_cube = VCube(event['facelets'])
-
-                    if not self.bluetooth_cube.is_solved:
-                        self.clear_line(full=True)
-                        console.print(
-                            '[bluetooth]🫤Bluetooth:[/bluetooth] '
-                            '[warning]Cube is not in solved state[/warning]',
-                        )
-                        console.print(
-                            '[bluetooth]❓Bluetooth:[/bluetooth] '
-                            '[consign]Is the cube is really solved ? '
-                            '[b](y)[/b] to reset the cube.[/consign]',
-                        )
-                        char = await self.getch('reset cube')
-                        if char == 'y':
-                            for command in ['RESET', 'FACELETS']:
-                                await self.bluetooth_interface.send_command(
-                                    f'REQUEST_{ command }',
-                                )
-                            continue
-
-                        console.print(
-                            '[warning]Quit until solved[/warning]',
-                        )
-                        await self.bluetooth_queue.put(None)
-                        continue
-
-                    self.facelets_received_event.set()
-                elif event_name == 'move':
-                    if not self.bluetooth_cube:
-                        continue
-
-                    self.bluetooth_cube.rotate(event['move'])
-
-                    if self.state in {'start', 'scrambling'}:
-                        self.scrambled.append(event['move'])
-
-                        self.handle_scrambled()
-
-                    elif self.state in {'inspecting', 'scrambled'}:
-                        self.moves.append(
-                            {
-                                'move': event['move'],
-                                'time': event['clock'],
-                            },
-                        )
-                        self.solve_started_event.set()
-
-                    elif self.state == 'solving':
-                        self.moves.append(
-                            {
-                                'move': event['move'],
-                                'time': event['clock'],
-                            },
-                        )
-
-                        if (
-                                not self.stop_event.is_set()
-                                and self.bluetooth_cube.is_solved
-                        ):
-                            self.end_time = event['clock']
-                            self.stop_event.set()
-                            self.solve_completed_event.set()
-                            logger.info('BT Stop: %s', self.end_time)
-
-                    elif self.state == 'saving':
-                        move = self.reorient(event['move'])[0]
-                        self.save_moves.append(move)
-
-                        if len(self.save_moves) < 2:
-                            continue
-
-                        l_move = self.save_moves[-1]
-                        a_move = self.save_moves[-2]
-
-                        if l_move.base_move != a_move.base_move:
-                            continue
-
-                        if l_move == a_move:
-                            continue
-
-                        base_move = l_move.base_move
-                        if base_move in {'R', 'U'}:
-                            self.save_gesture = 'o'
-                        elif base_move == 'L':
-                            self.save_gesture = 'z'
-                        elif base_move == 'D':
-                            self.save_gesture = 'q'
-                        else:
-                            continue
-
-                        self.save_gesture_event.set()
-                        logger.info(
-                            'Save gesture: %s => %s',
-                            move, self.save_gesture,
-                        )
-
-    @property
-    def bluetooth_device_label(self):
-        device_label = self.bluetooth_interface.device.name
-
-        if 'hardware_version' in self.bluetooth_hardware:
-            device_label += f"v{ self.bluetooth_hardware['hardware_version'] }"
-
-        battery_level = self.bluetooth_hardware.get('battery_level')
-        if battery_level:
-            if battery_level <= 15:
-                device_label += f' ([warning]{ battery_level }[/warning]%)'
+            base_move = l_move.base_move
+            if base_move in {'R', 'U'}:
+                self.save_gesture = 'o'
+            elif base_move == 'L':
+                self.save_gesture = 'z'
+            elif base_move == 'D':
+                self.save_gesture = 'q'
             else:
-                device_label += f' ({ battery_level }%)'
+                return
 
-        return device_label
+            self.save_gesture_event.set()
+            logger.info(
+                'Save gesture: %s => %s',
+                move, self.save_gesture,
+            )
 
     async def inspection(self) -> None:
         self.clear_line(full=True)
