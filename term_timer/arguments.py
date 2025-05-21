@@ -16,6 +16,7 @@ COMMAND_ALIASES = {
     'detail': ['dt', 'd'],
     'import': ['im', 'i'],
     'serve': ['se', 'h'],
+    'train': ['tr', 'e'],
 }
 
 COMMAND_RESOLUTIONS = {}
@@ -224,6 +225,50 @@ def solve_arguments(subparsers):
             'Set a seed for random move generation '
             'to ensure repeatable scrambles.\n'
             'Default: None.'
+        ),
+    )
+
+    return parser
+
+
+def train_arguments(subparsers):
+    show_cube = DISPLAY_CONFIG.get('scramble', True)
+
+    parser = subparsers.add_parser(
+        'train',
+        help='Start training your OLL/PLL skills',
+        description='Start the trainer to improve your skills.',
+        aliases=COMMAND_ALIASES['train'],
+    )
+
+    parser.add_argument(
+        'mode',
+        nargs='+',
+        metavar='MODE',
+        choices={'oll', 'pll'},
+        help='Specify the training mode.',
+    )
+
+    mode = 'hide' if show_cube else 'show'
+    parser.add_argument(
+        '-p', f'--{ mode }-cube',
+        action='store_const',
+        const=not show_cube,
+        default=show_cube,
+        dest='show_cube',
+        help=(
+            f'{ mode.title() } the cube in its scrambled state.\n'
+            'Default: False'
+        ),
+    )
+
+    bluetooth = parser.add_argument_group('Bluetooth')
+    bluetooth.add_argument(
+        '-b', '--bluetooth',
+        action='store_true',
+        help=(
+            'Use a Bluetooth-connected cube.\n'
+            'Default: False.'
         ),
     )
 
@@ -439,13 +484,14 @@ def get_arguments() -> Any:
     )
 
     solve_arguments(subparsers)
+    train_arguments(subparsers)
+    detail_arguments(subparsers)
     list_arguments(subparsers)
     statistics_arguments(subparsers)
     graph_arguments(subparsers)
     cfop_arguments(subparsers)
-    detail_arguments(subparsers)
-    import_arguments(subparsers)
     serve_arguments(subparsers)
+    import_arguments(subparsers)
 
     args = parser.parse_args(sys.argv[1:])
 

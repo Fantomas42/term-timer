@@ -13,6 +13,7 @@ from term_timer.in_out import load_solves
 from term_timer.logger import configure_logging
 from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
+from term_timer.trainer import Trainer
 
 
 async def timer(options) -> int:
@@ -68,6 +69,28 @@ async def timer(options) -> int:
     return 0
 
 
+async def trainer(options) -> int:
+    trainer = Trainer(
+        mode=options.mode,
+        show_cube=options.show_cube,
+    )
+
+    if options.bluetooth:
+        await trainer.bluetooth_connect()
+
+    try:
+        while 42:
+            done = await trainer.start()
+
+            if not done:
+                break
+    finally:
+        if trainer.bluetooth_interface:
+            await trainer.bluetooth_disconnect()
+
+    return 0
+
+
 def tools(command, options):
     cube = options.cube
 
@@ -119,6 +142,8 @@ def main() -> int:
     with suppress(KeyboardInterrupt):
         if command == 'solve':
             return asyncio.run(timer(options), debug=DEBUG)
+        if command == 'train':
+            return asyncio.run(trainer(options), debug=DEBUG)
         if command == 'import':
             Importer().import_file(options.source)
             return 0
