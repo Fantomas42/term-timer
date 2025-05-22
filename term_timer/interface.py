@@ -2,10 +2,14 @@ import asyncio
 import logging
 import sys
 
+from cubing_algs.algorithm import Algorithm
+from cubing_algs.transform.degrip import degrip_full_moves
+from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.vcube import VCube
 
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
+from term_timer.config import CUBE_ORIENTATION
 from term_timer.console import console
 
 logger = logging.getLogger(__name__)
@@ -301,5 +305,29 @@ class Bluetooth:
         raise NotImplementedError
 
 
-class Interface(Terminal, Getcher, Bluetooth):
+class CubeOrienter:
+
+    cube_orientation = CUBE_ORIENTATION
+
+    def reorient(self, algorithm: Algorithm) -> Algorithm:
+        if self.cube_orientation:
+            new_algorithm = self.cube_orientation + algorithm
+            return new_algorithm.transform(
+                degrip_full_moves,
+                remove_final_rotations,
+            )
+        return algorithm
+
+
+class Stater:
+    state = 'init'
+
+    def set_state(self, state, extra=''):
+        self.state = state
+        logger.info('Passing to state %s %s', state.upper(), extra)
+
+
+class Interface(
+        Terminal, Getcher, CubeOrienter,
+        Stater, Bluetooth):
     ...

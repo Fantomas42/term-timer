@@ -4,13 +4,9 @@ import time
 from datetime import datetime
 from datetime import timezone
 
-from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
-from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.size import compress_moves
 
-from term_timer.config import CUBE_ORIENTATION
 from term_timer.console import console
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -45,7 +41,6 @@ class Timer(Interface):
         self.scramble_oriented = []
         self.scrambled = []
         self.moves = []
-        self.state = 'init'
 
         self.cube_size = cube_size
         self.session = session
@@ -60,7 +55,6 @@ class Timer(Interface):
 
         self.stack = stack
         self.facelets_scrambled = ''
-        self.cube_orientation = CUBE_ORIENTATION
 
         self.stop_event = asyncio.Event()
         self.scramble_completed_event = asyncio.Event()
@@ -265,15 +259,6 @@ class Timer(Interface):
             end='', style='consign',
         )
 
-    def reorient(self, algorithm: Algorithm) -> Algorithm:
-        if self.cube_orientation:
-            new_algorithm = self.cube_orientation + algorithm
-            return new_algorithm.transform(
-                degrip_full_moves,
-                remove_final_rotations,
-            )
-        return algorithm
-
     def handle_scrambled(self):
         if self.bluetooth_cube.state == self.facelets_scrambled:
             self.scramble_completed_event.set()
@@ -397,10 +382,6 @@ class Timer(Interface):
                     f'[best]{ format_time(new_stats.ao1000) }[/best]',
                     format_delta(new_stats.ao1000 - old_stats.best_ao1000),
                 )
-
-    def set_state(self, state, extra=''):
-        self.state = state
-        logger.info('Passing to state %s %s', state.upper(), extra)
 
     async def start(self) -> bool:
         self.set_state('start')
