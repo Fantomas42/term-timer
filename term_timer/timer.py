@@ -180,7 +180,7 @@ class Timer(Interface):
         self.start_time = time.perf_counter_ns()
         self.end_time = 0
         self.elapsed_time = 0
-        self.scrambled = []
+
         self.set_state('solving', self.start_time)
 
         tempo_elapsed = 0
