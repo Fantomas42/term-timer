@@ -1,7 +1,6 @@
 import asyncio
 import time
 
-from term_timer.console import console
 from term_timer.constants import SECOND
 
 
@@ -32,7 +31,7 @@ class Inspecter:
                     self.beep()
 
             self.clear_line(full=False)
-            console.print(
+            self.console.print(
                 '[inspection]Inspection :[/inspection]',
                 f'[result]{ remaining_time }[/result]',
                 end='',

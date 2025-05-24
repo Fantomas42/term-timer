@@ -1,7 +1,6 @@
 import asyncio
 import time
 
-from term_timer.console import console
 from term_timer.constants import SECOND
 from term_timer.formatter import format_time
 
@@ -60,7 +59,7 @@ class StopWatch:
                     self.beep()
 
             self.clear_line(full=False)
-            console.print(
+            self.console.print(
                 f'[{ style }]Go Go Go:[/{ style }]',
                 f'[result]{ format_time(elapsed_time) }[/result]',
                 end='',

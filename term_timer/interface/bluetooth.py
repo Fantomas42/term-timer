@@ -24,7 +24,7 @@ class Bluetooth:
                 self.bluetooth_queue,
             )
 
-            console.print(
+            self.console.print(
                 '[bluetooth]📡Bluetooth:[/bluetooth] '
                 'Scanning for Bluetooth cube for '
                 f'{ self.bluetooth_interface.scan_timeout }s...',
@@ -36,7 +36,7 @@ class Bluetooth:
             await self.bluetooth_interface.__aenter__(device)  # noqa: PLC2801
 
             self.clear_line(full=True)
-            console.print(
+            self.console.print(
                 '[bluetooth]🔗Bluetooth:[/bluetooth] '
                 f'{ self.bluetooth_device_label } '
                 'connected successfully !',
@@ -64,7 +64,7 @@ class Bluetooth:
                 )
             except asyncio.TimeoutError:  # noqa: UP041
                 self.clear_line(full=True)
-                console.print(
+                self.console.print(
                     '[bluetooth]😱Bluetooth:[/bluetooth] '
                     '[warning]Cube could not be initialized properly. '
                     'Running in manual mode.[/warning]',
@@ -73,14 +73,14 @@ class Bluetooth:
 
             self.clear_line(full=True)
 
-            console.print(
+            self.console.print(
                 '[bluetooth]🤓Bluetooth:[/bluetooth] '
                 f'[result]{ self.bluetooth_device_label } '
                 'initialized successfully ![/result]',
             )
         except CubeNotFoundError:
             self.clear_line(full=True)
-            console.print(
+            self.console.print(
                 '[bluetooth]😥Bluetooth:[/bluetooth] '
                 '[warning]No Bluetooth cube could be found. '
                 'Running in manual mode.[/warning]',
@@ -91,7 +91,7 @@ class Bluetooth:
 
     async def bluetooth_disconnect(self) -> None:
         if self.bluetooth_interface and self.bluetooth_interface.device:
-            console.print(
+            self.console.print(
                 '[bluetooth]🔗 Bluetooth[/bluetooth] '
                 f'{ self.bluetooth_device_label } disconnecting...',
             )
@@ -140,11 +140,11 @@ class Bluetooth:
 
                     if not self.bluetooth_cube.is_solved:
                         self.clear_line(full=True)
-                        console.print(
+                        self.console.print(
                             '[bluetooth]🫤Bluetooth:[/bluetooth] '
                             '[warning]Cube is not in solved state[/warning]',
                         )
-                        console.print(
+                        self.console.print(
                             '[bluetooth]❓Bluetooth:[/bluetooth] '
                             '[consign]Is the cube is really solved ? '
                             '[b](y)[/b] to reset the cube.[/consign]',
@@ -157,8 +157,9 @@ class Bluetooth:
                                 )
                             continue
 
-                        console.print(
-                            '[warning]Quit until solved[/warning]',
+                        self.console.print(
+                            'Quit until solved',
+                            style='warning',
                         )
                         await self.bluetooth_queue.put(None)
                         continue

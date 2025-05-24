@@ -4,9 +4,6 @@ import time
 from datetime import datetime
 from datetime import timezone
 
-from cubing_algs.parsing import parse_moves
-from cubing_algs.transform.size import compress_moves
-
 from term_timer.console import console
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -66,7 +63,7 @@ class Timer(Interface):
         self.save_gesture_event = asyncio.Event()
 
         if self.free_play:
-            console.print(
+            self.console.print(
                 '🔒 Mode Free Play is active, '
                 'solves will not be recorded !',
                 style='warning',
@@ -157,7 +154,7 @@ class Timer(Interface):
                     self.beep()
 
             self.clear_line(full=False)
-            console.print(
+            self.console.print(
                 '[inspection]Inspection :[/inspection]',
                 f'[result]{ remaining_time }[/result]',
                 end='',
@@ -168,25 +165,25 @@ class Timer(Interface):
     def start_line(self) -> None:
         if self.bluetooth_interface:
             if self.countdown:
-                console.print(
+                self.console.print(
                     'Apply the scramble on the cube to start the inspection,',
                     '[b](q)[/b] to quit.',
                     end='', style='consign',
                 )
             else:
-                console.print(
+                self.console.print(
                     'Apply the scramble on the cube to init the timer,',
                     '[b](q)[/b] to quit.',
                     end='', style='consign',
                 )
         elif self.countdown:
-            console.print(
+            self.console.print(
                 'Press any key once scrambled to start the inspection,',
                 '[b](q)[/b] to quit.',
                 end='', style='consign',
             )
         else:
-            console.print(
+            self.console.print(
                 'Press any key once scrambled to start/stop the timer,',
                 '[b](q)[/b] to quit.',
                 end='', style='consign',
@@ -194,52 +191,13 @@ class Timer(Interface):
 
     @staticmethod
     def save_line(flag: str) -> None:
-        console.print(
+        self.console.print(
             'Press any key to save and continue,',
             '[b](d)[/b] for DNF,' if flag != DNF else '[b](o)[/b] for OK',
             '[b](2)[/b] for +2,',
             '[b](z)[/b] to cancel,',
             '[b](q)[/b] to save and quit.',
             end='', style='consign',
-        )
-
-    def handle_scrambled(self):
-        if self.bluetooth_cube.state == self.facelets_scrambled:
-            self.scramble_completed_event.set()
-            self.beep()
-            out = (
-                '[result]Cube scrambled and ready to be solved ![/result] '
-                '[consign]Start solving to launch the timer.[/consign]'
-            )
-            full_clear = True
-        else:
-            out = ''
-            algo = self.reorient(
-                parse_moves(self.scrambled).transform(compress_moves),
-            )
-            p_algo = self.reorient(
-                parse_moves(self.scrambled[:-1]).transform(compress_moves),
-            )
-
-            on_good_way = True
-            for i, move in enumerate(algo):
-                expected = self.scramble_oriented[i]
-                style = 'move'
-                if expected != move or not on_good_way:
-                    on_good_way = False
-                    style = 'warning'
-                    if expected[0] == move[0]:
-                        style = 'caution'
-
-                out += f'[{ style }]{ move }[/{ style }] '
-            full_clear = len(algo) < len(p_algo) or len(algo) <= 1
-
-        self.clear_line(full=full_clear)
-
-        console.print(
-            f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
-            out,
-            end='',
         )
 
     def handle_solve(self, solve: Solve) -> None:
@@ -253,15 +211,15 @@ class Timer(Interface):
         if solve.raw_moves:
             if solve.flag != DNF:
                 if self.show_reconstruction:
-                    console.print(solve.method_line, end='')
+                    self.console.print(solve.method_line, end='')
                 if self.show_time_graph:
                     solve.time_graph  # noqa B018
-                console.print(
+                self.console.print(
                     f'[analysis]Analysis #{ len(self.stack) }:[/analysis] '
                     f'{ solve.report_line }',
                 )
             else:
-                console.print(
+                self.console.print(
                     f'[duration]Duration #{ len(self.stack) }:[/duration]',
                     f'[result]{ format_time(self.elapsed_time) }[/result]',
                     '[dnf]DNF[/dnf]',
@@ -284,7 +242,7 @@ class Timer(Interface):
                 ao12 = new_stats.ao12
                 extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
 
-        console.print(
+        self.console.print(
             f'[duration]Duration #{ len(self.stack) }:[/duration]',
             f'[result]{ format_time(self.elapsed_time) }[/result]',
             extra,
@@ -293,35 +251,35 @@ class Timer(Interface):
         if new_stats.total > 1:
             mc = 10 + len(str(len(self.stack))) - 1
             if new_stats.best < old_stats.best:
-                console.print(
+                self.console.print(
                     f'[record]:rocket:{ "New PB !".center(mc) }[/record]',
                     f'[best]{ format_time(new_stats.best) }[/best]',
                     format_delta(new_stats.best - old_stats.best),
                 )
 
             if new_stats.ao5 < old_stats.best_ao5:
-                console.print(
+                self.console.print(
                     f'[record]:boom:{ "Best Ao5".center(mc) }[/record]',
                     f'[best]{ format_time(new_stats.ao5) }[/best]',
                     format_delta(new_stats.ao5 - old_stats.best_ao5),
                 )
 
             if new_stats.ao12 < old_stats.best_ao12:
-                console.print(
+                self.console.print(
                     f'[record]:muscle:{ "Best Ao12".center(mc) }[/record]',
                     f'[best]{ format_time(new_stats.ao12) }[/best]',
                     format_delta(new_stats.ao12 - old_stats.best_ao12),
                 )
 
             if new_stats.ao100 < old_stats.best_ao100:
-                console.print(
+                self.console.print(
                     f'[record]:crown:{ "Best Ao100".center(mc) }[/record]',
                     f'[best]{ format_time(new_stats.ao100) }[/best]',
                     format_delta(new_stats.ao100 - old_stats.best_ao100),
                 )
 
             if new_stats.ao1000 < old_stats.best_ao1000:
-                console.print(
+                self.console.print(
                     f'[record]:trophy:{ "Best Ao1000".center(mc) }[/record]',
                     f'[best]{ format_time(new_stats.ao1000) }[/best]',
                     format_delta(new_stats.ao1000 - old_stats.best_ao1000),
@@ -347,9 +305,9 @@ class Timer(Interface):
         self.facelets_scrambled = cube.get_kociemba_facelet_positions()
 
         if self.show_cube:
-            console.print(str(cube), end='')
+            self.console.print(str(cube), end='')
 
-        console.print(
+        self.console.print(
             f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
             f'[moves]{ self.scramble_oriented }[/moves]',
         )
@@ -547,7 +505,7 @@ class Timer(Interface):
             )
 
             if save_string:
-                console.print(
+                self.console.print(
                     f'[duration]Duration #{ len(self.stack) }:[/duration] '
                     f'[warning]{ save_string }[/warning]',
                 )

@@ -3,6 +3,7 @@ from term_timer.interface.console import Console
 from term_timer.interface.cube import Orienter
 from term_timer.interface.getcher import Getcher
 from term_timer.interface.inspection import Inspecter
+from term_timer.interface.scrambler import Scrambler
 from term_timer.interface.state import State
 from term_timer.interface.stopwatch import StopWatch
 from term_timer.interface.terminal import Terminal
@@ -16,6 +17,7 @@ class Interface(
         Orienter,
         StopWatch,
         Inspecter,
+        Scrambler,
         Bluetooth,
 ):
     pass

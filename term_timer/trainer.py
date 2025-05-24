@@ -24,11 +24,6 @@ class Trainer(Interface):
         self.show_cube = show_cube
         self.metronome = metronome
 
-        self.facelets_scrambled = ''
-
-        self.scramble_completed_event = asyncio.Event()
-        self.solve_started_event = asyncio.Event()
-
     def handle_bluetooth_move(self, event):
         if self.state in {'start', 'scrambling'}:
             self.scrambled.append(event['move'])
@@ -94,13 +89,13 @@ class Trainer(Interface):
 
     def start_line(self) -> None:
         if self.bluetooth_interface:
-            console.print(
+            self.console.print(
                 'Apply the scramble on the cube to init the timer,',
                 '[b](q)[/b] to quit.',
                 end='', style='consign',
             )
         else:
-            console.print(
+            self.console.print(
                 'Press any key once scrambled to start/stop the timer,',
                 '[b](q)[/b] to quit.',
                 end='', style='consign',
@@ -122,9 +117,9 @@ class Trainer(Interface):
         self.facelets_scrambled = cube.get_kociemba_facelet_positions()
 
         if self.show_cube:
-            console.print(str(cube), end='')  # TODO special view
+            self.console.print(str(cube), end='')  # TODO special view
 
-        console.print(
+        self.console.print(
             f'[scramble]Training #{ self.trainings }:[/scramble]',
             f'[moves]{ self.scramble }[/moves]',
         )
