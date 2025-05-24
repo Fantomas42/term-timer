@@ -13,7 +13,7 @@ class Scrambler:
 
     scramble_completed_event = asyncio.Event()
 
-    def handle_scrambled(self):
+    def handle_scrambled(self, count):
         if self.bluetooth_cube.state == self.facelets_scrambled:
             self.scramble_completed_event.set()
             self.beep()
@@ -47,7 +47,7 @@ class Scrambler:
         self.clear_line(full=full_clear)
 
         self.console.print(
-            f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
+            f'[scramble]Scramble #{ count }:[/scramble]',
             out,
             end='',
         )
