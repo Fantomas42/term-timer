@@ -9,7 +9,7 @@ class Gesture:
     save_gesture = ''
     save_gesture_event = asyncio.Event()
 
-    def handle_save_gesture(self, move):
+    def handle_save_gestures(self, move):
         move = self.reorient(move)[0]
 
         self.save_moves.append(move)

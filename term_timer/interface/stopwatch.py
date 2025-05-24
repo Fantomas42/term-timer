@@ -20,8 +20,6 @@ class StopWatch:
         self.clear_line(full=True)
 
         tempo_elapsed = 0
-        self.end_time = 0
-        self.elapsed_time = 0
         self.start_time = time.perf_counter_ns()
 
         self.set_state('solving', self.start_time)

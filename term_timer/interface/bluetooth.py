@@ -45,16 +45,13 @@ class Bluetooth:
                 end='',
             )
 
-            self.facelets_received_event.clear()
-            self.hardware_received_event.clear()
-
             self.bluetooth_consumer_ref = asyncio.create_task(
                 self.bluetooth_consumer(),
             )
 
             await self.bluetooth_interface.send_command('REQUEST_FACELETS')
-            await self.bluetooth_interface.send_command('REQUEST_BATTERY')
             await self.bluetooth_interface.send_command('REQUEST_HARDWARE')
+            await self.bluetooth_interface.send_command('REQUEST_BATTERY')
 
             try:
                 await asyncio.wait_for(
@@ -104,7 +101,7 @@ class Bluetooth:
         device_label = self.bluetooth_interface.device.name
 
         if 'hardware_version' in self.bluetooth_hardware:
-            device_label += f"v{ self.bluetooth_hardware['hardware_version'] }"
+            device_label += f'v{ self.bluetooth_hardware["hardware_version"] }'
 
         battery_level = self.bluetooth_hardware.get('battery_level')
         if battery_level:

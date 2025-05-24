@@ -82,9 +82,17 @@ class Timer(Interface):
                 logger.info('Bluetooth Stop: %s', self.end_time)
 
         elif self.state == 'saving':
-            self.handle_save_gesture(event['move'])
+            self.handle_save_gestures(event['move'])
 
-    def start_line(self) -> None:
+    def start_line(self, cube) -> None:
+        if self.show_cube:
+            self.console.print(str(cube), end='')
+
+        self.console.print(
+            f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
+            f'[moves]{ self.scramble_oriented }[/moves]',
+        )
+
         if self.bluetooth_interface:
             if self.countdown:
                 self.console.print(
@@ -206,9 +214,29 @@ class Timer(Interface):
                     format_delta(new_stats.ao1000 - old_stats.best_ao1000),
                 )
 
+    def init_solve(self):
+        self.end_time = 0
+        self.start_time = 0
+        self.elapsed_time = 0
+
+        self.moves = []
+
+        self.save_moves = []
+        self.save_gesture = ''
+        self.save_gesture_event.clear()
+
+        self.scramble = []
+        self.scrambled = []
+        self.scramble_oriented = []
+        self.facelets_scrambled = ''
+        self.scramble_completed_event.clear()
+
+        self.solve_started_event.clear()
+        self.solve_completed_event.clear()
+
     async def start(self) -> bool:
         self.set_state('start')
-        self.moves = []
+        self.init_solve()
 
         self.scramble, cube = scrambler(
             cube_size=self.cube_size,
@@ -226,23 +254,14 @@ class Timer(Interface):
             self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.get_kociemba_facelet_positions()
 
-        if self.show_cube:
-            self.console.print(str(cube), end='')
-
-        self.console.print(
-            f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
-            f'[moves]{ self.scramble_oriented }[/moves]',
-        )
-
+        self.start_line(cube)
         self.set_state('scrambling')
-        self.scrambled = []
-        self.start_line()
 
         if self.bluetooth_interface:
-            self.scramble_completed_event.clear()
-
             tasks = [
-                asyncio.create_task(self.getch('scrambled')),
+                asyncio.create_task(
+                    self.getch('scrambled'),
+                ),
                 asyncio.create_task(self.scramble_completed_event.wait()),
             ]
             done, pending = await asyncio.wait(
@@ -258,7 +277,6 @@ class Timer(Interface):
             char = ''
             if tasks[0] in done:
                 char = tasks[0].result()
-                self.scramble_completed_event.set()
         else:
             char = await self.getch('scrambled')
 
@@ -266,23 +284,20 @@ class Timer(Interface):
             return False
 
         self.set_state('scrambled')
-        self.solve_started_event.clear()
 
         if self.countdown:
-            self.solve_started_event.clear()
             inspection_task = asyncio.create_task(self.inspection())
 
             if self.bluetooth_interface:
+                tasks = [
+                    asyncio.create_task(
+                        self.getch('inspected', self.countdown),
+                    ),
+                    asyncio.create_task(self.solve_started_event.wait()),
+                ]
 
                 _done, pending = await asyncio.wait(
-                    [
-                        asyncio.create_task(
-                            self.getch(
-                                'inspected', self.countdown,
-                            ),
-                        ),
-                        asyncio.create_task(self.solve_started_event.wait()),
-                    ],
+                    tasks,
                     return_when=asyncio.FIRST_COMPLETED,
                 )
 
@@ -291,23 +306,20 @@ class Timer(Interface):
 
                 await asyncio.gather(*pending, return_exceptions=True)
 
-                if not self.solve_started_event.is_set():
-                    self.solve_started_event.set()
-                else:
+                if self.solve_started_event.is_set():
                     self.inspection_completed_event.set()
             else:
                 await self.getch('inspected', self.countdown)
                 self.inspection_completed_event.set()
-                self.solve_started_event.set()
 
             await inspection_task
 
         elif self.bluetooth_interface:
-            self.solve_started_event.clear()
-
             _done, pending = await asyncio.wait(
                 [
-                    asyncio.create_task(self.getch('start')),
+                    asyncio.create_task(
+                        self.getch('start'),
+                    ),
                     asyncio.create_task(self.solve_started_event.wait()),
                 ],
                 return_when=asyncio.FIRST_COMPLETED,
@@ -318,14 +330,9 @@ class Timer(Interface):
 
             await asyncio.gather(*pending, return_exceptions=True)
 
-            if not self.solve_started_event.is_set():
-                self.solve_started_event.set()
-
         stopwatch_task = asyncio.create_task(self.stopwatch())
 
         if self.bluetooth_interface:
-            self.solve_completed_event.clear()
-
             _done, pending = await asyncio.wait(
                 [
                     asyncio.create_task(self.getch('stop')),
@@ -340,13 +347,12 @@ class Timer(Interface):
             await asyncio.gather(*pending, return_exceptions=True)
 
             if not self.solve_completed_event.is_set():
-                self.solve_completed_event.set()
                 self.end_time = time.perf_counter_ns()
+                self.solve_completed_event.set()
                 logger.info('Keyboard Stop: %s', self.end_time)
         else:
-            self.solve_completed_event.clear()
-
             await self.getch('stop')
+
             self.end_time = time.perf_counter_ns()
             self.solve_completed_event.set()
             logger.info('Keyboard Stop: %s', self.end_time)
@@ -358,12 +364,13 @@ class Timer(Interface):
         flag = ''
         moves = []
         if self.moves:
+            if not self.bluetooth_cube.is_solved:
+                flag = DNF
+
             first_time = self.moves[0]['time']
             for move in self.moves:
                 timing = int((move['time'] - first_time) / MS_TO_NS_FACTOR)
                 moves.append(f'{ move["move"] }@{ timing }')
-            if not self.bluetooth_cube.is_solved:
-                flag = DNF
 
         solve = Solve(
             datetime.now(tz=timezone.utc).timestamp(),  # noqa: UP017
@@ -385,8 +392,6 @@ class Timer(Interface):
             self.save_line(flag)
 
             if self.bluetooth_interface:
-                self.save_gesture_event.clear()
-
                 tasks = [
                     asyncio.create_task(self.getch('save')),
                     asyncio.create_task(self.save_gesture_event.wait()),
@@ -404,12 +409,9 @@ class Timer(Interface):
                 char = ''
                 if tasks[0] in done:
                     char = tasks[0].result()
-                    self.save_gesture_event.set()
                 else:
                     self.clear_line(full=True)
                     char = self.save_gesture
-                self.save_moves = []
-                self.save_gesture = ''
             else:
                 char = await self.getch('save')
 
