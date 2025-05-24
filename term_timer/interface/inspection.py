@@ -1,6 +1,7 @@
 import asyncio
 import time
 
+from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
 
 
@@ -37,4 +38,6 @@ class Inspecter:
                 end='',
             )
 
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(REFRESH)
+
+        self.set_state('inspected')

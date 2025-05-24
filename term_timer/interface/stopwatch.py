@@ -2,6 +2,7 @@ import asyncio
 import time
 
 from term_timer.constants import SECOND
+from term_timer.constants import REFRESH
 from term_timer.formatter import format_time
 
 
@@ -63,6 +64,6 @@ class StopWatch:
                 end='',
             )
 
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(REFRESH)
 
         self.set_state('stop')
