@@ -24,4 +24,25 @@ class Interface(
         Gesture,
         Bluetooth,
 ):
-    pass
+
+    def init_solve(self):
+        self.end_time = 0
+        self.start_time = 0
+        self.elapsed_time = 0
+
+        self.moves = []
+
+        self.save_moves = []
+        self.save_gesture = ''
+        self.save_gesture_event.clear()
+
+        self.scramble = []
+        self.scrambled = []
+        self.scramble_oriented = []
+        self.facelets_scrambled = ''
+        self.scramble_completed_event.clear()
+
+        self.solve_started_event.clear()
+        self.solve_completed_event.clear()
+
+        self.inspection_completed_event.clear()
