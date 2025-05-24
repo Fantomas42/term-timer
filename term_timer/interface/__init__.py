@@ -1,6 +1,7 @@
 from term_timer.interface.bluetooth import Bluetooth
 from term_timer.interface.console import Console
 from term_timer.interface.cube import Orienter
+from term_timer.interface.gesture import Gesture
 from term_timer.interface.getcher import Getcher
 from term_timer.interface.inspection import Inspecter
 from term_timer.interface.scrambler import Scrambler
@@ -18,6 +19,7 @@ class Interface(
         StopWatch,
         Inspecter,
         Scrambler,
+        Gesture,
         Bluetooth,
 ):
     pass

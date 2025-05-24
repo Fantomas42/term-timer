@@ -4,11 +4,9 @@ import time
 from datetime import datetime
 from datetime import timezone
 
-from term_timer.console import console
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
-from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.in_out import save_solves
@@ -31,13 +29,6 @@ class Timer(Interface):
                  countdown: int,
                  metronome: float,
                  stack: list[Solve]):
-        self.start_time = 0
-        self.end_time = 0
-        self.elapsed_time = 0
-        self.scramble = []
-        self.scramble_oriented = []
-        self.scrambled = []
-        self.moves = []
 
         self.cube_size = cube_size
         self.session = session
@@ -51,16 +42,6 @@ class Timer(Interface):
         self.metronome = metronome
 
         self.stack = stack
-        self.facelets_scrambled = ''
-
-        self.stop_event = asyncio.Event()
-        self.scramble_completed_event = asyncio.Event()
-        self.solve_started_event = asyncio.Event()
-        self.solve_completed_event = asyncio.Event()
-
-        self.save_moves = []
-        self.save_gesture = ''
-        self.save_gesture_event = asyncio.Event()
 
         if self.free_play:
             self.console.print(
@@ -72,7 +53,6 @@ class Timer(Interface):
     def handle_bluetooth_move(self, event):
         if self.state in {'start', 'scrambling'}:
             self.scrambled.append(event['move'])
-
             self.handle_scrambled()
 
         elif self.state in {'inspecting', 'scrambled'}:
@@ -93,74 +73,15 @@ class Timer(Interface):
             )
 
             if (
-                    not self.stop_event.is_set()
+                    not self.solve_completed_event.is_set()
                     and self.bluetooth_cube.is_solved
             ):
                 self.end_time = event['clock']
-                self.stop_event.set()
                 self.solve_completed_event.set()
                 logger.info('BT Stop: %s', self.end_time)
 
         elif self.state == 'saving':
-            move = self.reorient(event['move'])[0]
-            self.save_moves.append(move)
-
-            if len(self.save_moves) < 2:
-                return
-
-            l_move = self.save_moves[-1]
-            a_move = self.save_moves[-2]
-
-            if l_move.base_move != a_move.base_move:
-                return
-
-            if l_move == a_move:
-                return
-
-            base_move = l_move.base_move
-            if base_move in {'R', 'U'}:
-                self.save_gesture = 'o'
-            elif base_move == 'L':
-                self.save_gesture = 'z'
-            elif base_move == 'D':
-                self.save_gesture = 'q'
-            else:
-                return
-
-            self.save_gesture_event.set()
-            logger.info(
-                'Save gesture: %s => %s',
-                move, self.save_gesture,
-            )
-
-    async def inspection(self) -> None:
-        self.clear_line(full=True)
-
-        self.set_state('inspecting')
-        self.stop_event.clear()
-
-        state = 0
-        inspection_start_time = time.perf_counter_ns()
-
-        while not self.stop_event.is_set():
-            elapsed_time = time.perf_counter_ns() - inspection_start_time
-            elapsed_seconds = elapsed_time / SECOND
-
-            remaining_time = round(self.countdown - elapsed_seconds, 1)
-
-            if int(remaining_time // 1) != state:
-                state = int(remaining_time // 1)
-                if state in {2, 1, 0}:
-                    self.beep()
-
-            self.clear_line(full=False)
-            self.console.print(
-                '[inspection]Inspection :[/inspection]',
-                f'[result]{ remaining_time }[/result]',
-                end='',
-            )
-
-            await asyncio.sleep(0.01)
+            self.handle_save_gesture(event['move'])
 
     def start_line(self) -> None:
         if self.bluetooth_interface:
@@ -189,8 +110,7 @@ class Timer(Interface):
                 end='', style='consign',
             )
 
-    @staticmethod
-    def save_line(flag: str) -> None:
+    def save_line(self, flag: str) -> None:
         self.console.print(
             'Press any key to save and continue,',
             '[b](d)[/b] for DNF,' if flag != DNF else '[b](o)[/b] for OK',
@@ -294,6 +214,7 @@ class Timer(Interface):
             iterations=self.iterations,
             easy_cross=self.easy_cross,
         )
+
         if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
             scramble = scramble_moves(
                 cube.get_kociemba_facelet_positions(),
@@ -347,6 +268,7 @@ class Timer(Interface):
         self.solve_started_event.clear()
 
         if self.countdown:
+            self.solve_started_event.clear()
             inspection_task = asyncio.create_task(self.inspection())
 
             if self.bluetooth_interface:
@@ -370,16 +292,17 @@ class Timer(Interface):
 
                 if not self.solve_started_event.is_set():
                     self.solve_started_event.set()
-                if not self.stop_event.is_set():
-                    self.stop_event.set()
+                else:
+                    self.inspection_completed_event.set()
             else:
                 await self.getch('inspected', self.countdown)
                 self.solve_started_event.set()
-                self.stop_event.set()
 
             await inspection_task
 
         elif self.bluetooth_interface:
+            self.solve_started_event.clear()
+
             _done, pending = await asyncio.wait(
                 [
                     asyncio.create_task(self.getch('start')),
@@ -399,6 +322,8 @@ class Timer(Interface):
         stopwatch_task = asyncio.create_task(self.stopwatch())
 
         if self.bluetooth_interface:
+            self.solve_completed_event.clear()
+
             _done, pending = await asyncio.wait(
                 [
                     asyncio.create_task(self.getch('stop')),
@@ -412,14 +337,13 @@ class Timer(Interface):
 
             await asyncio.gather(*pending, return_exceptions=True)
 
-            if not self.stop_event.is_set():
+            if not self.solve_completed_event.is_set():
+                self.solve_completed_event.set()
                 self.end_time = time.perf_counter_ns()
-                self.stop_event.set()
                 logger.info('KB Stop: %s', self.end_time)
         else:
             await self.getch('stop')
             self.end_time = time.perf_counter_ns()
-            self.stop_event.set()
             logger.info('KB Stop: %s', self.end_time)
 
         await stopwatch_task

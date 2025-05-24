@@ -2,7 +2,6 @@ import asyncio
 import logging
 import time
 
-from term_timer.console import console
 from term_timer.interface import Interface
 from term_timer.scrambler import trainer
 from term_timer.scrambler import scramble_moves

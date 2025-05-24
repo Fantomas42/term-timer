@@ -18,8 +18,6 @@ class StopWatch:
     async def stopwatch(self) -> None:
         self.clear_line(full=True)
 
-        self.solve_completed_event.clear()
-
         tempo_elapsed = 0
         self.end_time = 0
         self.elapsed_time = 0

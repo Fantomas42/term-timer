@@ -7,6 +7,8 @@ from term_timer.bluetooth.interface import CubeNotFoundError
 
 
 class Bluetooth:
+    moves = []
+
     bluetooth_queue = None
     bluetooth_cube = None
     bluetooth_interface = None
