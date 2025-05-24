@@ -13,8 +13,6 @@ class Inspecter:
     async def inspection(self) -> None:
         self.clear_line(full=True)
 
-        self.inspection_completed_event.clear()
-
         state = 0
         inspection_start_time = time.perf_counter_ns()
 
@@ -24,6 +22,7 @@ class Inspecter:
             elapsed_time = time.perf_counter_ns() - inspection_start_time
             elapsed_seconds = elapsed_time / SECOND
 
+            klass = 'result'
             remaining_time = round(self.countdown - elapsed_seconds, 1)
 
             if int(remaining_time // 1) != state:
@@ -31,10 +30,15 @@ class Inspecter:
                 if state in {2, 1, 0}:
                     self.beep()
 
+            if remaining_time < 1:
+                klass = 'warning'
+            elif remaining_time < 3:
+                klass = 'caution'
+
             self.clear_line(full=False)
             self.console.print(
                 '[inspection]Inspection :[/inspection]',
-                f'[result]{ remaining_time }[/result]',
+                f'[{ klass }]{ remaining_time }[/{ klass }]',
                 end='',
             )
 
