@@ -1,20 +1,19 @@
 import asyncio
 import logging
-import time
 
-from term_timer.interface import Interface
+from term_timer.interface import SolveInterface
 from term_timer.scrambler import trainer
 from term_timer.scrambler import scramble_moves
 
 logger = logging.getLogger(__name__)
 
 
-class Trainer(Interface):
+class Trainer(SolveInterface):
     def __init__(self, *, mode: str,
                  show_cube: bool,
                  metronome: float):
 
-        self.set_state('init')
+        self.set_state('configure')
 
         self.mode = mode
         self.show_cube = show_cube
@@ -78,7 +77,6 @@ class Trainer(Interface):
             )
 
     async def start(self) -> bool:
-        self.set_state('start')
         self.init_solve()
 
         self.scramble, cube = trainer(self.mode)
@@ -92,58 +90,18 @@ class Trainer(Interface):
         self.facelets_scrambled = cube.get_kociemba_facelet_positions()
 
         self.start_line(cube)
-        self.set_state('scrambling')
 
-        if self.bluetooth_interface:
-            tasks = [
-                asyncio.create_task(self.getch('scrambled')),
-                asyncio.create_task(self.scramble_completed_event.wait()),
-            ]
-            await self.wait_control(tasks)
+        quit_solve = await self.scramble_solve()
 
-            char = ''
-            if not self.scramble_completed_event.is_set():
-                char = tasks[0].result()
-        else:
-            char = await self.getch('scrambled')
-
-        if char == 'q':
+        if quit_solve:
             return False
 
-        self.set_state('scrambled')
-
-        if self.bluetooth_interface:
-            tasks = [
-                asyncio.create_task(self.getch('start')),
-                asyncio.create_task(self.solve_started_event.wait()),
-            ]
-            await self.wait_control(tasks)
-
-        stopwatch_task = asyncio.create_task(self.stopwatch())
-
-        if self.bluetooth_interface:
-            tasks = [
-                asyncio.create_task(self.getch('stop')),
-                asyncio.create_task(self.solve_completed_event.wait()),
-            ]
-            await self.wait_control(tasks)
-
-            if not self.solve_completed_event.is_set():
-                self.end_time = time.perf_counter_ns()
-                self.solve_completed_event.set()
-                logger.info('Keyboard Stop: %s', self.end_time)
-        else:
-            await self.getch('stop')
-
-            self.end_time = time.perf_counter_ns()
-            self.solve_completed_event.set()
-            logger.info('Keyboard Stop: %s', self.end_time)
-
-        await stopwatch_task
+        await self.wait_solve()
+        await self.time_solve()
 
         self.elapsed_time = self.end_time - self.start_time
 
         self.trainings += 1
 
-        #self.handle_solve()
+        # self.solve_line()
         return True

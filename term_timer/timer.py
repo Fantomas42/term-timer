@@ -1,16 +1,12 @@
-import asyncio
 import logging
-import time
 from datetime import datetime
 from datetime import timezone
 
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
-from term_timer.constants import PLUS_TWO
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
-from term_timer.in_out import save_solves
-from term_timer.interface import Interface
+from term_timer.interface import SolveInterface
 from term_timer.scrambler import scramble_moves
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
@@ -19,7 +15,7 @@ from term_timer.stats import Statistics
 logger = logging.getLogger(__name__)
 
 
-class Timer(Interface):
+class Timer(SolveInterface):
     def __init__(self, *, cube_size: int,
                  iterations: int, easy_cross: bool,
                  session: str, free_play: bool,
@@ -30,7 +26,7 @@ class Timer(Interface):
                  metronome: float,
                  stack: list[Solve]):
 
-        self.set_state('init')
+        self.set_state('configure')
 
         self.cube_size = cube_size
         self.session = session
@@ -129,7 +125,7 @@ class Timer(Interface):
             end='', style='consign',
         )
 
-    def handle_solve(self, solve: Solve) -> None:
+    def solve_line(self, solve: Solve) -> None:
         old_stats = Statistics(self.stack)
 
         self.stack = [*self.stack, solve]
@@ -215,7 +211,6 @@ class Timer(Interface):
                 )
 
     async def start(self) -> bool:
-        self.set_state('start')
         self.init_solve()
 
         self.scramble, cube = scrambler(
@@ -235,74 +230,18 @@ class Timer(Interface):
         self.facelets_scrambled = cube.get_kociemba_facelet_positions()
 
         self.start_line(cube)
-        self.set_state('scrambling')
 
-        if self.bluetooth_interface:
-            tasks = [
-                asyncio.create_task(self.getch('scrambled')),
-                asyncio.create_task(self.scramble_completed_event.wait()),
-            ]
-            await self.wait_control(tasks)
+        quit_solve = await self.scramble_solve()
 
-            char = ''
-            if not self.scramble_completed_event.is_set():
-                char = tasks[0].result()
-        else:
-            char = await self.getch('scrambled')
-
-        if char == 'q':
+        if quit_solve:
             return False
 
-        self.set_state('scrambled')
-
         if self.countdown:
-            inspection_task = asyncio.create_task(self.inspection())
-
-            if self.bluetooth_interface:
-                tasks = [
-                    asyncio.create_task(
-                        self.getch('inspected', self.countdown),
-                    ),
-                    asyncio.create_task(self.solve_started_event.wait()),
-                ]
-                await self.wait_control(tasks)
-
-                if not self.inspection_completed_event.is_set():
-                    self.inspection_completed_event.set()
-            else:
-                await self.getch('inspected', self.countdown)
-                self.inspection_completed_event.set()
-
-            await inspection_task
-
-        elif self.bluetooth_interface:
-            tasks = [
-                asyncio.create_task(self.getch('start')),
-                asyncio.create_task(self.solve_started_event.wait()),
-            ]
-            await self.wait_control(tasks)
-
-        stopwatch_task = asyncio.create_task(self.stopwatch())
-
-        if self.bluetooth_interface:
-            tasks = [
-                asyncio.create_task(self.getch('stop')),
-                asyncio.create_task(self.solve_completed_event.wait()),
-            ]
-            await self.wait_control(tasks)
-
-            if not self.solve_completed_event.is_set():
-                self.end_time = time.perf_counter_ns()
-                self.solve_completed_event.set()
-                logger.info('Keyboard Stop: %s', self.end_time)
+            await self.inspect_solve()
         else:
-            await self.getch('stop')
+            await self.wait_solve()
 
-            self.end_time = time.perf_counter_ns()
-            self.solve_completed_event.set()
-            logger.info('Keyboard Stop: %s', self.end_time)
-
-        await stopwatch_task
+        await self.time_solve()
 
         self.elapsed_time = self.end_time - self.start_time
 
@@ -330,54 +269,14 @@ class Timer(Interface):
             moves=' '.join(moves),
         )
 
-        self.handle_solve(solve)
+        self.solve_line(solve)
 
         if not self.free_play:
-            self.set_state('saving')
             self.save_line(flag)
 
-            if self.bluetooth_interface:
-                tasks = [
-                    asyncio.create_task(self.getch('save')),
-                    asyncio.create_task(self.save_gesture_event.wait()),
-                ]
-                await self.wait_control(tasks)
+            quit_solve = await self.save_solve()
 
-                char = ''
-                if not self.save_gesture_event.is_set():
-                    char = tasks[0].result()
-                else:
-                    self.clear_line(full=True)
-                    char = self.save_gesture
-            else:
-                char = await self.getch('save')
-
-            save_string = ''
-            if char == 'd':
-                self.stack[-1].flag = DNF
-                save_string = 'Solve marked as DNF'
-            elif char == 'o':
-                self.stack[-1].flag = ''
-                save_string = 'Solve marked as OK'
-            elif char == '2':
-                self.stack[-1].flag = PLUS_TWO
-                save_string = 'Solve marked as +2'
-            elif char == 'z':
-                self.stack.pop()
-                save_string = 'Solve cancelled'
-
-            save_solves(
-                self.cube_size,
-                self.session,
-                self.stack,
-            )
-
-            if save_string:
-                self.console.print(
-                    f'[duration]Duration #{ len(self.stack) }:[/duration] '
-                    f'[warning]{ save_string }[/warning]',
-                )
-            if char == 'q':
+            if quit_solve:
                 return False
 
         return True
