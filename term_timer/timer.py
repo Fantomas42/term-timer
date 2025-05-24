@@ -30,6 +30,8 @@ class Timer(Interface):
                  metronome: float,
                  stack: list[Solve]):
 
+        self.set_state('init')
+
         self.cube_size = cube_size
         self.session = session
         self.free_play = free_play
@@ -40,7 +42,6 @@ class Timer(Interface):
         self.show_time_graph = show_time_graph
         self.countdown = countdown
         self.metronome = metronome
-
         self.stack = stack
 
         if self.free_play:
@@ -78,7 +79,7 @@ class Timer(Interface):
             ):
                 self.end_time = event['clock']
                 self.solve_completed_event.set()
-                logger.info('BT Stop: %s', self.end_time)
+                logger.info('Bluetooth Stop: %s', self.end_time)
 
         elif self.state == 'saving':
             self.handle_save_gesture(event['move'])
@@ -296,6 +297,7 @@ class Timer(Interface):
                     self.inspection_completed_event.set()
             else:
                 await self.getch('inspected', self.countdown)
+                self.inspection_completed_event.set()
                 self.solve_started_event.set()
 
             await inspection_task
@@ -340,11 +342,14 @@ class Timer(Interface):
             if not self.solve_completed_event.is_set():
                 self.solve_completed_event.set()
                 self.end_time = time.perf_counter_ns()
-                logger.info('KB Stop: %s', self.end_time)
+                logger.info('Keyboard Stop: %s', self.end_time)
         else:
+            self.solve_completed_event.clear()
+
             await self.getch('stop')
             self.end_time = time.perf_counter_ns()
-            logger.info('KB Stop: %s', self.end_time)
+            self.solve_completed_event.set()
+            logger.info('Keyboard Stop: %s', self.end_time)
 
         await stopwatch_task
 

@@ -8,7 +8,6 @@ from rich import box
 from rich.table import Table
 
 from term_timer.config import STATS_CONFIG
-from term_timer.console import console
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
@@ -20,6 +19,7 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
+from term_timer.interface.console import console
 from term_timer.magic_cube import Cube
 from term_timer.methods.cfop import OLL_INFO
 from term_timer.methods.cfop import PLL_INFO
