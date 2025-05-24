@@ -1,5 +1,6 @@
 from term_timer.interface.bluetooth import Bluetooth
 from term_timer.interface.console import Console
+from term_timer.interface.controler import Controler
 from term_timer.interface.cube import Orienter
 from term_timer.interface.gesture import Gesture
 from term_timer.interface.getcher import Getcher
@@ -14,6 +15,7 @@ class Interface(
         State,
         Terminal,
         Console,
+        Controler,
         Getcher,
         Orienter,
         StopWatch,

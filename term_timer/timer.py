@@ -261,23 +261,13 @@ class Timer(Interface):
 
         if self.bluetooth_interface:
             tasks = [
-                asyncio.create_task(
-                    self.getch('scrambled'),
-                ),
+                asyncio.create_task(self.getch('scrambled')),
                 asyncio.create_task(self.scramble_completed_event.wait()),
             ]
-            done, pending = await asyncio.wait(
-                tasks,
-                return_when=asyncio.FIRST_COMPLETED,
-            )
-
-            for task in pending:
-                task.cancel()
-
-            await asyncio.gather(*pending, return_exceptions=True)
+            await self.wait_control(tasks)
 
             char = ''
-            if tasks[0] in done:
+            if not self.scramble_completed_event.is_set():
                 char = tasks[0].result()
         else:
             char = await self.getch('scrambled')
@@ -297,16 +287,7 @@ class Timer(Interface):
                     ),
                     asyncio.create_task(self.solve_started_event.wait()),
                 ]
-
-                _done, pending = await asyncio.wait(
-                    tasks,
-                    return_when=asyncio.FIRST_COMPLETED,
-                )
-
-                for task in pending:
-                    task.cancel()
-
-                await asyncio.gather(*pending, return_exceptions=True)
+                await self.wait_control(tasks)
 
                 if not self.inspection_completed_event.is_set():
                     self.inspection_completed_event.set()
@@ -317,36 +298,20 @@ class Timer(Interface):
             await inspection_task
 
         elif self.bluetooth_interface:
-            _done, pending = await asyncio.wait(
-                [
-                    asyncio.create_task(
-                        self.getch('start'),
-                    ),
-                    asyncio.create_task(self.solve_started_event.wait()),
-                ],
-                return_when=asyncio.FIRST_COMPLETED,
-            )
-
-            for task in pending:
-                task.cancel()
-
-            await asyncio.gather(*pending, return_exceptions=True)
+            tasks = [
+                asyncio.create_task(self.getch('start')),
+                asyncio.create_task(self.solve_started_event.wait()),
+            ]
+            await self.wait_control(tasks)
 
         stopwatch_task = asyncio.create_task(self.stopwatch())
 
         if self.bluetooth_interface:
-            _done, pending = await asyncio.wait(
-                [
-                    asyncio.create_task(self.getch('stop')),
-                    asyncio.create_task(self.solve_completed_event.wait()),
-                ],
-                return_when=asyncio.FIRST_COMPLETED,
-            )
-
-            for task in pending:
-                task.cancel()
-
-            await asyncio.gather(*pending, return_exceptions=True)
+            tasks = [
+                asyncio.create_task(self.getch('stop')),
+                asyncio.create_task(self.solve_completed_event.wait()),
+            ]
+            await self.wait_control(tasks)
 
             if not self.solve_completed_event.is_set():
                 self.end_time = time.perf_counter_ns()
@@ -398,18 +363,10 @@ class Timer(Interface):
                     asyncio.create_task(self.getch('save')),
                     asyncio.create_task(self.save_gesture_event.wait()),
                 ]
-                done, pending = await asyncio.wait(
-                    tasks,
-                    return_when=asyncio.FIRST_COMPLETED,
-                )
-
-                for task in pending:
-                    task.cancel()
-
-                await asyncio.gather(*pending, return_exceptions=True)
+                await self.wait_control(tasks)
 
                 char = ''
-                if tasks[0] in done:
+                if not self.save_gesture_event.is_set():
                     char = tasks[0].result()
                 else:
                     self.clear_line(full=True)
