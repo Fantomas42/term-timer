@@ -5,12 +5,12 @@ from random import seed
 from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.config import DEBUG
-from term_timer.console import console
-from term_timer.server.app import Server
 from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
+from term_timer.interface.console import console
 from term_timer.logger import configure_logging
+from term_timer.server.app import Server
 from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
 from term_timer.trainer import Trainer
@@ -64,7 +64,7 @@ async def timer(options) -> int:
 
     if len(timer.stack) > 1:
         session_stats = StatisticsReporter(cube, timer.stack)
-        session_stats.resume('Session ')
+        session_stats.resume('Free Play ' if options.free_play else 'Session ')
 
     return 0
 
