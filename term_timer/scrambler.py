@@ -141,3 +141,21 @@ def scrambler(cube_size: int, iterations: int,
     )
 
     return scramble, cube
+
+
+def trainer(mode):
+    cube = Cube(3)
+
+    scramble = random_training(mode)
+
+    cube.rotate(scramble)
+
+    # scramble = scramble_moves(
+    #     cube.get_kociemba_facelet_positions(),
+    # )
+
+    return scramble, cube
+
+
+def random_training(mode):
+    return parse_moves("R' F R F' U2 R' F R F2 U2 F").transform(mirror_moves)

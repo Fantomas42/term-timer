@@ -73,6 +73,7 @@ async def trainer(options) -> int:
     trainer = Trainer(
         mode=options.mode,
         show_cube=options.show_cube,
+        metronome=options.metronome,
     )
 
     if options.bluetooth:

@@ -1,4 +1,4 @@
-from rich.console import Console
+from rich.console import Console as RichConsole
 from rich.theme import Theme
 
 from term_timer.config import UI_CONFIG
@@ -105,10 +105,14 @@ theme = {
 theme.update(UI_CONFIG)
 
 
-console = Console(highlighter=None, theme=Theme(theme))
+console = RichConsole(highlighter=None, theme=Theme(theme))
 
 if __name__ == '__main__':
     for name, color in theme.items():
         console.print(
             f'[{ name }]{ name:>15}[/{ name }] : { color }',
         )
+
+
+class Console:
+    console = console

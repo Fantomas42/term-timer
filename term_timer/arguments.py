@@ -233,6 +233,7 @@ def solve_arguments(subparsers):
 
 def train_arguments(subparsers):
     show_cube = DISPLAY_CONFIG.get('scramble', True)
+    metronome = TIMER_CONFIG.get('metronome', 0.0)
 
     parser = subparsers.add_parser(
         'train',
@@ -269,6 +270,18 @@ def train_arguments(subparsers):
         help=(
             'Use a Bluetooth-connected cube.\n'
             'Default: False.'
+        ),
+    )
+
+    timer = parser.add_argument_group('Timer')
+    timer.add_argument(
+        '-m', '--metronome',
+        type=float,
+        default=metronome,
+        metavar='TEMPO',
+        help=(
+            'Set a metronome beep at a specified tempo in seconds.\n'
+            f'Default: { metronome }.'
         ),
     )
 
