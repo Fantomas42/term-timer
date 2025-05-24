@@ -30,7 +30,7 @@ dev = [
 
 
 [project.scripts]
-bc-info = "term_timer.scripts.bluetooth_info:main"
+bt-info = "term_timer.scripts.bluetooth_info:main"
 term-timer = "term_timer.scripts.timer:main"
 
 [tool.setuptools]
