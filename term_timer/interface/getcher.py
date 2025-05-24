@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class Getcher:
 
     async def getch(self, mode, timeout: float | None = None) -> str:
-        logger.info('Getch %s', mode)
+        logger.info('Getch %s', mode.upper())
 
         if is_windows:
             ch = await self.getch_windows(timeout)
@@ -24,7 +24,7 @@ class Getcher:
 
         self.clear_line(full=True)
 
-        logger.info('Getched: *%s*', ch)
+        logger.info('Getched %s: %s', mode.upper(), repr(ch))
 
         return ch
 
