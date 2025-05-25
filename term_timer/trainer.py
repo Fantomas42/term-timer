@@ -21,7 +21,7 @@ class Trainer(SolveInterface):
             self.console.print(str(cube), end='')  # TODO special view
 
         self.console.print(
-            f'[scramble]Training #{ self.trainings }:[/scramble]',
+            f'[scramble]Training #{ self.counter }:[/scramble]',
             f'[moves]{ self.scramble }[/moves]',
         )
 

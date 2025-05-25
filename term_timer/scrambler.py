@@ -7,6 +7,7 @@ from cubing_algs.constants import OPPOSITE_FACES
 from cubing_algs.constants import OUTER_BASIC_MOVES
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
+from cubing_algs.transform.offset import offset_z2_moves
 from kociemba import solve
 
 from term_timer.constants import CUBE_SIZES
@@ -150,12 +151,13 @@ def trainer(mode):
 
     cube.rotate(scramble)
 
-    # scramble = scramble_moves(
-    #     cube.get_kociemba_facelet_positions(),
-    # )
-
     return scramble, cube
 
 
 def random_training(mode):
-    return parse_moves("R' F R F' U2 R' F R F2 U2 F").transform(mirror_moves)
+    return parse_moves(
+        "R' F R F' U2 R' F R F2 U2 F",
+    ).transform(
+        offset_z2_moves,
+        mirror_moves,
+    )
