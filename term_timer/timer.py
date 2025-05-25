@@ -1,6 +1,4 @@
 import logging
-from datetime import datetime
-from datetime import timezone
 
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -226,7 +224,7 @@ class Timer(SolveInterface):
                 moves.append(f'{ move["move"] }@{ timing }')
 
         solve = Solve(
-            datetime.now(tz=timezone.utc).timestamp(),  # noqa: UP017
+            self.date,
             self.elapsed_time,
             str(self.scramble),
             flag=flag,

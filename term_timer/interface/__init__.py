@@ -1,6 +1,8 @@
 import asyncio
 import logging
 import time
+from datetime import datetime
+from datetime import timezone
 
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
@@ -36,6 +38,7 @@ class SolveInterface(
 
     def init_solve(self):
         self.set_state('init')
+        self.date = datetime.now(tz=timezone.utc).timestamp()  # noqa: UP017
         self.end_time = 0
         self.start_time = 0
         self.elapsed_time = 0
