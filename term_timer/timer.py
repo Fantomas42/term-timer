@@ -40,6 +40,8 @@ class Timer(SolveInterface):
         self.metronome = metronome
         self.stack = stack
 
+        self.counter = len(stack) + 1
+
         if self.free_play:
             self.console.print(
                 '🔒 Mode Free Play is active, '
@@ -47,45 +49,12 @@ class Timer(SolveInterface):
                 style='warning',
             )
 
-    def handle_bluetooth_move(self, event):
-        if self.state in {'start', 'scrambling'}:
-            self.scrambled.append(event['move'])
-            self.handle_scrambled(len(self.stack) + 1)
-
-        elif self.state in {'inspecting', 'scrambled'}:
-            self.moves.append(
-                {
-                    'move': event['move'],
-                    'time': event['clock'],
-                },
-            )
-            self.solve_started_event.set()
-
-        elif self.state == 'solving':
-            self.moves.append(
-                {
-                    'move': event['move'],
-                    'time': event['clock'],
-                },
-            )
-
-            if (
-                    not self.solve_completed_event.is_set()
-                    and self.bluetooth_cube.is_solved
-            ):
-                self.end_time = event['clock']
-                self.solve_completed_event.set()
-                logger.info('Bluetooth Stop: %s', self.end_time)
-
-        elif self.state == 'saving':
-            self.handle_save_gestures(event['move'])
-
     def start_line(self, cube) -> None:
         if self.show_cube:
             self.console.print(str(cube), end='')
 
         self.console.print(
-            f'[scramble]Scramble #{ len(self.stack) + 1 }:[/scramble]',
+            f'[scramble]Scramble #{ self.counter }:[/scramble]',
             f'[moves]{ self.scramble_oriented }[/moves]',
         )
 
@@ -140,12 +109,12 @@ class Timer(SolveInterface):
                 if self.show_time_graph:
                     solve.time_graph  # noqa B018
                 self.console.print(
-                    f'[analysis]Analysis #{ len(self.stack) }:[/analysis] '
+                    f'[analysis]Analysis #{ self.counter }:[/analysis] '
                     f'{ solve.report_line }',
                 )
             else:
                 self.console.print(
-                    f'[duration]Duration #{ len(self.stack) }:[/duration]',
+                    f'[duration]Duration #{ self.counter }:[/duration]',
                     f'[result]{ format_time(self.elapsed_time) }[/result]',
                     '[dnf]DNF[/dnf]',
                 )
@@ -168,7 +137,7 @@ class Timer(SolveInterface):
                 extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
 
         self.console.print(
-            f'[duration]Duration #{ len(self.stack) }:[/duration]',
+            f'[duration]Duration #{ self.counter }:[/duration]',
             f'[result]{ format_time(self.elapsed_time) }[/result]',
             extra,
         )
@@ -278,5 +247,7 @@ class Timer(SolveInterface):
 
             if quit_solve:
                 return False
+
+        self.counter += 1
 
         return True

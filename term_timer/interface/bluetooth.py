@@ -1,9 +1,12 @@
 import asyncio
+import logging
 
 from cubing_algs.vcube import VCube
 
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
+
+logger = logging.getLogger(__name__)
 
 
 class Bluetooth:
@@ -174,4 +177,34 @@ class Bluetooth:
                     self.handle_bluetooth_move(event)
 
     def handle_bluetooth_move(self, event):
-        raise NotImplementedError
+        if self.state in {'start', 'scrambling'}:
+            self.scrambled.append(event['move'])
+            self.handle_scrambled()
+
+        elif self.state == 'scrambled':
+            self.moves.append(
+                {
+                    'move': event['move'],
+                    'time': event['clock'],
+                },
+            )
+            self.solve_started_event.set()
+
+        elif self.state == 'solving':
+            self.moves.append(
+                {
+                    'move': event['move'],
+                    'time': event['clock'],
+                },
+            )
+
+            if (
+                    not self.solve_completed_event.is_set()
+                    and self.bluetooth_cube.is_solved
+            ):
+                self.end_time = event['clock']
+                self.solve_completed_event.set()
+                logger.info('Bluetooth Stop: %s', self.end_time)
+
+        elif self.state == 'saving':
+            self.handle_save_gestures(event['move'])

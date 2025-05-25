@@ -74,11 +74,11 @@ class SolveInterface(
             char = await self.getch('scrambled')
 
         if char == 'q':
-            return False
+            return True
 
         self.set_state('scrambled')
 
-        return True
+        return False
 
     async def inspect_solve(self):
         inspection_task = asyncio.create_task(self.inspection())

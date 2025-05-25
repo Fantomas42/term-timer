@@ -1,11 +1,6 @@
-import asyncio
-import logging
-
 from term_timer.interface import SolveInterface
-from term_timer.scrambler import trainer
 from term_timer.scrambler import scramble_moves
-
-logger = logging.getLogger(__name__)
+from term_timer.scrambler import trainer
 
 
 class Trainer(SolveInterface):
@@ -19,40 +14,7 @@ class Trainer(SolveInterface):
         self.show_cube = show_cube
         self.metronome = metronome
 
-        self.trainings = 1
-
-    def handle_bluetooth_move(self, event):
-        if self.state in {'start', 'scrambling'}:
-            self.scrambled.append(event['move'])
-            self.handle_scrambled(self.trainings)  # TODO find a way
-
-        elif self.state == 'scrambled':
-            self.moves.append(
-                {
-                    'move': event['move'],
-                    'time': event['clock'],
-                },
-            )
-            self.solve_started_event.set()
-
-        elif self.state == 'solving':
-            self.moves.append(
-                {
-                    'move': event['move'],
-                    'time': event['clock'],
-                },
-            )
-
-            if (
-                    not self.solve_completed_event.is_set()
-                    and self.bluetooth_cube.is_solved
-            ):
-                self.end_time = event['clock']
-                self.solve_completed_event.set()
-                logger.info('Bluetooth Stop: %s', self.end_time)
-
-        elif self.state == 'saving':
-            self.handle_save_gestures(event['move'])
+        self.counter = 1
 
     def start_line(self, cube) -> None:
         if self.show_cube:
@@ -101,7 +63,8 @@ class Trainer(SolveInterface):
 
         self.elapsed_time = self.end_time - self.start_time
 
-        self.trainings += 1
+        self.counter += 1
 
         # self.solve_line()
+
         return True
