@@ -100,6 +100,7 @@ theme = {
     'face_r': f'{ TEXT_DARK } on { RED }',
     'face_g': f'{ TEXT_DARK } on { GREEN }',
     'face_o': f'{ TEXT_DARK } on { ORANGE }',
+    'face_h': f'{ TEXT_DARK } on #666666',
 }
 
 theme.update(UI_CONFIG)

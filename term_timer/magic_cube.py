@@ -10,7 +10,9 @@ class CubePrintRich:
         self.cube = cube
 
     @staticmethod
-    def _format_color(color: str) -> str:
+    def _format_color(color: str, oll=False) -> str:
+        if oll and color != 'Y':
+            color = 'H'
         return f'[face_{ color.lower() }] { color } [/face_{ color.lower() }]'
 
     def _print_top_down_face(self, face: Face) -> str:
@@ -26,6 +28,17 @@ class CubePrintRich:
             if index % cube.size == cube.size - 1:
                 result += (' ' * (2 * 3 * cube.size))
                 result += '\n'
+
+        return result
+
+    def _print_top_down_face_ll(self, face: Face, oll=False) -> str:
+        cube = self.cube
+
+        result = '   '
+        for color in cube.get_face_flat(face)[:3]:
+            result += self._format_color(color.name, oll)
+
+        result += '\n'
 
         return result
 
@@ -65,6 +78,34 @@ class CubePrintRich:
 
         return result
 
+    def print_top_face(self, oll=False):
+        cube = self.cube
+
+        result = self._print_top_down_face_ll(Face.B, oll)
+
+        for line in range(3):
+            color = cube.get_face(Face.L)[0][line]
+            result += self._format_color(color.name, oll)
+
+            for i in range(3):
+                color = cube.get_face(Face.U)[line][i]
+                result += self._format_color(color.name, oll)
+
+            color = cube.get_face(Face.R)[0][2 - line]
+            result += self._format_color(color.name, oll)
+
+            result += '\n'
+
+        result += self._print_top_down_face_ll(Face.F, oll)
+
+        return result
+
+    def print_oll(self):
+        return self.print_top_face(oll=True)
+
+    def print_pll(self):
+        return self.print_top_face(oll=False)
+
 
 class Cube(BaseCube):  # type: ignore[misc]
 
@@ -75,9 +116,17 @@ class Cube(BaseCube):  # type: ignore[misc]
         else:
             super().rotate(str(movements))
 
-    def printed(self, orientation: Algorithm):
+    def full_cube(self, orientation: Algorithm):
         printer = CubePrintRich(self)
         return printer.print_cube(orientation)
 
+    def oll(self):
+        printer = CubePrintRich(self)
+        return printer.print_oll()
+
+    def pll(self):
+        printer = CubePrintRich(self)
+        return printer.print_pll()
+
     def __str__(self) -> str:
-        return self.printed(CUBE_ORIENTATION)
+        return self.full_cube(CUBE_ORIENTATION)
