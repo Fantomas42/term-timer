@@ -1,10 +1,10 @@
 import math
 
-from term_timer.gl import renderer
-from term_timer.gl.data import orientations_aretes
-from term_timer.gl.data import orientations_coins
-from term_timer.gl.data import permutations_aretes
-from term_timer.gl.data import permutations_coins
+from term_timer.opengl import renderer
+from term_timer.opengl.data import orientations_aretes
+from term_timer.opengl.data import orientations_coins
+from term_timer.opengl.data import permutations_aretes
+from term_timer.opengl.data import permutations_coins
 
 
 class Cube:

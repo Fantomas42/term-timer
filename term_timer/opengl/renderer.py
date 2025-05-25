@@ -14,27 +14,27 @@ from OpenGL.GL import glTexCoord2iv
 from OpenGL.GL import glTranslatef
 from OpenGL.GL import glVertex3fv
 
-from term_timer.gl.data import NOIR
-from term_timer.gl.data import axe_rotation
-from term_timer.gl.data import hide_coords
-from term_timer.gl.data import indices
-from term_timer.gl.data import liste_aretes
-from term_timer.gl.data import liste_centres
-from term_timer.gl.data import liste_coins
-from term_timer.gl.data import liste_couleurs
-from term_timer.gl.data import permutations_aretes
-from term_timer.gl.data import permutations_coins
-from term_timer.gl.data import s
-from term_timer.gl.data import sommets
-from term_timer.gl.data import table_axe_orientation_aretes
-from term_timer.gl.data import table_axe_orientation_coins
-from term_timer.gl.data import table_couleurs_aretes
-from term_timer.gl.data import table_couleurs_centres
-from term_timer.gl.data import table_couleurs_coins
-from term_timer.gl.data import table_positions_aretes
-from term_timer.gl.data import table_positions_centres
-from term_timer.gl.data import table_positions_coins
-from term_timer.gl.data import tex_map
+from term_timer.opengl.data import NOIR
+from term_timer.opengl.data import axe_rotation
+from term_timer.opengl.data import hide_coords
+from term_timer.opengl.data import indices
+from term_timer.opengl.data import liste_aretes
+from term_timer.opengl.data import liste_centres
+from term_timer.opengl.data import liste_coins
+from term_timer.opengl.data import liste_couleurs
+from term_timer.opengl.data import permutations_aretes
+from term_timer.opengl.data import permutations_coins
+from term_timer.opengl.data import s
+from term_timer.opengl.data import sommets
+from term_timer.opengl.data import table_axe_orientation_aretes
+from term_timer.opengl.data import table_axe_orientation_coins
+from term_timer.opengl.data import table_couleurs_aretes
+from term_timer.opengl.data import table_couleurs_centres
+from term_timer.opengl.data import table_couleurs_coins
+from term_timer.opengl.data import table_positions_aretes
+from term_timer.opengl.data import table_positions_centres
+from term_timer.opengl.data import table_positions_coins
+from term_timer.opengl.data import tex_map
 
 
 def r_surface(points, couleur):

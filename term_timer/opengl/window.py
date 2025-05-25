@@ -46,7 +46,7 @@ from pygame import K_x
 from pygame import K_y
 from pygame import K_z
 
-from term_timer.gl.camera import Camera
+from term_timer.opengl.camera import Camera
 
 
 class Window:

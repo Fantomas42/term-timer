@@ -19,8 +19,8 @@ from term_timer.bluetooth.facelets import to_magiccube_facelets
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.console import console
-from term_timer.gl.thread import CubeGLThread
 from term_timer.magic_cube import Cube
+from term_timer.opengl.thread import CubeGLThread
 
 logger = logging.getLogger(__name__)
 

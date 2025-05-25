@@ -1,6 +1,6 @@
-from term_timer.gl.cube import Cube
-from term_timer.gl.renderer import render
-from term_timer.gl.window import Window
+from term_timer.opengl.cube import Cube
+from term_timer.opengl.renderer import render
+from term_timer.opengl.window import Window
 
 
 def main(cube):
