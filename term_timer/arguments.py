@@ -244,7 +244,6 @@ def train_arguments(subparsers):
 
     parser.add_argument(
         'mode',
-        nargs='+',
         metavar='MODE',
         choices={'oll', 'pll'},
         help='Specify the training mode.',
