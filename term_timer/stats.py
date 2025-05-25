@@ -14,7 +14,7 @@ from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.constants import SECOND_BINS
 from term_timer.constants import STEP_BAR
-from term_timer.formatter import computing_padding
+from term_timer.formatter import compute_padding
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
@@ -316,9 +316,10 @@ class StatisticsReporter(Statistics):
             )
 
         if self.total > 1:
-            max_count = computing_padding(
+            max_count = compute_padding(
                 max(c for c, e in self.repartition),
             )
+
             max_edge = max(e for c, e in self.repartition)
             total_percent = 0.0
             for count, edge in self.repartition:
@@ -343,7 +344,7 @@ class StatisticsReporter(Statistics):
         )
 
         size = len(self.stack)
-        max_count = computing_padding(size) + 1
+        max_count = compute_padding(size) + 1
 
         if not limit:
             s = slice(None, None)

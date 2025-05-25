@@ -46,13 +46,13 @@ def format_delta(delta: int) -> str:
     return f'[{ style }]{ sign }{ format_duration(delta) }[/{ style }]'
 
 
-def computing_padding(max_value: float) -> int:
+def compute_padding(max_value: float) -> int:
     padding = 1
-    if max_value > 1000:
+    if max_value >= 1000:
         padding = 4
-    elif max_value > 100:
+    elif max_value >= 100:
         padding = 3
-    elif max_value > 10:
+    elif max_value >= 10:
         padding = 2
 
     return padding
