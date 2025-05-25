@@ -139,7 +139,7 @@ class GanGen2Driver(Driver):
                 elapsed = msg.get_bit_word(47 + 16 * i, 16)
 
                 # In case of 16-bit cube timestamp register overflow
-                if elapsed == 0:
+                if elapsed == 0 and self.last_move_timestamp:
                     elapsed = (
                         timestamp - self.last_move_timestamp
                     ).total_seconds()
