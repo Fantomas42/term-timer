@@ -2,7 +2,7 @@ import unittest
 
 from term_timer.constants import DNF
 from term_timer.constants import SECOND
-from term_timer.formatter import computing_padding
+from term_timer.formatter import compute_padding
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
@@ -92,18 +92,18 @@ class TestFormatDelta(unittest.TestCase):
 
 class TestComputingPadding(unittest.TestCase):
 
-    def test_computing_padding_small(self):
+    def test_compute_padding_small(self):
         """Test computing padding for small values."""
-        self.assertEqual(computing_padding(5), 1)
+        self.assertEqual(compute_padding(5), 1)
 
-    def test_computing_padding_medium(self):
+    def test_compute_padding_medium(self):
         """Test computing padding for medium values."""
-        self.assertEqual(computing_padding(15), 2)
+        self.assertEqual(compute_padding(15), 2)
 
-    def test_computing_padding_large(self):
+    def test_compute_padding_large(self):
         """Test computing padding for large values."""
-        self.assertEqual(computing_padding(150), 3)
+        self.assertEqual(compute_padding(150), 3)
 
-    def test_computing_padding_very_large(self):
+    def test_compute_padding_very_large(self):
         """Test computing padding for very large values."""
-        self.assertEqual(computing_padding(1500), 4)
+        self.assertEqual(compute_padding(1500), 4)
