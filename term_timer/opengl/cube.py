@@ -5,6 +5,7 @@ from term_timer.opengl.data import orientations_aretes
 from term_timer.opengl.data import orientations_coins
 from term_timer.opengl.data import permutations_aretes
 from term_timer.opengl.data import permutations_coins
+from term_timer.opengl.window import Window
 
 
 class Cube:
@@ -160,3 +161,28 @@ class Cube:
             [2*qx*qy + 2*qz*qw, 1 - 2*qx*qx - 2*qz*qz, 2*qy*qz - 2*qx*qw],
             [2*qx*qz - 2*qy*qw, 2*qy*qz + 2*qx*qw, 1 - 2*qx*qx - 2*qy*qy]
         ]
+
+
+def main(cube):
+    window = Window(
+        1024, 720,
+        fps=144,
+    )
+    window.set_keyboard_events(cube)
+
+    count = 0
+
+    while True:
+        window.prepare()
+        renderer.render(cube)
+        window.update()
+
+        if count < 2:
+            count += 1
+            cube.animate_rotations(window, 'z', 90)
+
+    window.quit()
+
+
+if __name__ == '__main__':
+    main(Cube())
