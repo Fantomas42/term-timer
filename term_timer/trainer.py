@@ -18,7 +18,7 @@ class Trainer(SolveInterface):
 
     def start_line(self, cube) -> None:
         if self.show_cube:
-            self.console.print(str(cube), end='')  # TODO special view
+            self.console.print(cube.printed(''), end='')  # TODO special view
 
         self.console.print(
             f'[scramble]Training #{ self.counter }:[/scramble]',

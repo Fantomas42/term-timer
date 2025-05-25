@@ -149,6 +149,7 @@ def trainer(mode):
 
     scramble = random_training(mode)
 
+    cube.rotate('Z2')
     cube.rotate(scramble)
 
     return scramble, cube
@@ -158,6 +159,5 @@ def random_training(mode):
     return parse_moves(
         "R' F R F' U2 R' F R F2 U2 F",
     ).transform(
-        offset_z2_moves,
         mirror_moves,
     )
