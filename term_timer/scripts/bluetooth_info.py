@@ -198,8 +198,8 @@ async def client_cb(queue, time, use_opengl):
 
     # Initialize/reset the cube
     await bluetooth_interface.send_command('REQUEST_HARDWARE')
-    await bluetooth_interface.send_command('REQUEST_BATTERY')
     await bluetooth_interface.send_command('REQUEST_FACELETS')
+    await bluetooth_interface.send_command('REQUEST_BATTERY')
 
     logger.info('Free play for %ss', time)
     await asyncio.sleep(time)

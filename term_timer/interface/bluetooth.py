@@ -52,8 +52,8 @@ class Bluetooth:
                 self.bluetooth_consumer(),
             )
 
-            await self.bluetooth_interface.send_command('REQUEST_FACELETS')
             await self.bluetooth_interface.send_command('REQUEST_HARDWARE')
+            await self.bluetooth_interface.send_command('REQUEST_FACELETS')
             await self.bluetooth_interface.send_command('REQUEST_BATTERY')
 
             try:
@@ -131,7 +131,7 @@ class Bluetooth:
                     self.bluetooth_hardware.update(event)
                     self.hardware_received_event.set()
 
-                if event_name == 'battery':
+                elif event_name == 'battery':
                     self.bluetooth_hardware['battery_level'] = event['level']
 
                 elif event_name == 'facelets':
