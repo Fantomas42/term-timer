@@ -8,5 +8,9 @@ class Terminal:
             print('\r', end='')
 
     @staticmethod
+    def back(size) -> None:
+        print('\b' * size, end='')
+
+    @staticmethod
     def beep() -> None:
         print('\a', end='', flush=True)
