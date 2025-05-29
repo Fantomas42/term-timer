@@ -1,12 +1,5 @@
 {
     "01 Runway": {
-        "algoritms": [
-            "LF'L'FUF2R'F'RU'F'",
-            "LF'L'FU2LF'L'F2U2F'",
-            "FR'F'RU2FR'F'R2U2R'",
-            "FR'F'RUR2B'R'BU'R'",
-            "BL'B'LUL2F'L'FU'L'"
-        ],
         "probability": 0.009259259259259259,
         "rotations": {
             "": {
@@ -21,16 +14,16 @@
             "y2": {
                 "": "---------------DDD-------D-----D----------DDD-------D-"
             }
-        }
+        },
+        "setups": [
+            "LF'L'FUF2R'F'RU'F'",
+            "LF'L'FU2LF'L'F2U2F'",
+            "FR'F'RU2FR'F'R2U2R'",
+            "FR'F'RUR2B'R'BU'R'",
+            "BL'B'LUL2F'L'FU'L'"
+        ]
     },
     "02 Tie-Fighter": {
-        "algoritms": [
-            "RU2R2FRF'U2R'FRF'",
-            "L'U2L2F'L'FU2LF'L'F",
-            "F'U2F2R'F'RU2FR'F'R",
-            "FU2F2LFL'U2F'LFL'",
-            "FUMRU'R'UrU'R'F'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -45,16 +38,16 @@
             "y2": {
                 "": "----------------D--------DD----D----------DDD------DD-"
             }
-        }
+        },
+        "setups": [
+            "RU2R2FRF'U2R'FRF'",
+            "L'U2L2F'L'FU2LF'L'F",
+            "F'U2F2R'F'RU2FR'F'R",
+            "FU2F2LFL'U2F'LFL'",
+            "FUMRU'R'UrU'R'F'"
+        ]
     },
     "03 Anti-Nazi": {
-        "algoritms": [
-            "MU'rU2r'U'RU'R'M'",
-            "S'U'fU2f'U'FU'F'S",
-            "M'U'lU2l'U'LU'L'M",
-            "SU'bU2b'U'BU'B'S'",
-            "lL2U'LU'R'F2RU'M'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -69,16 +62,16 @@
             "y2": {
                 "": "---------------DD-------DD-----D---D------DD--------D-"
             }
-        }
+        },
+        "setups": [
+            "MU'rU2r'U'RU'R'M'",
+            "S'U'fU2f'U'FU'F'S",
+            "M'U'lU2l'U'LU'L'M",
+            "SU'bU2b'U'BU'B'S'",
+            "lL2U'LU'R'F2RU'M'"
+        ]
     },
     "04 Nazi": {
-        "algoritms": [
-            "MRUR'UrU2r'UM'",
-            "MUl'U2lUL'ULM'",
-            "S'FUF'UfU2f'US",
-            "SUf'U2fUF'UFS'",
-            "M'Ur'U2rUR'URM"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -93,16 +86,16 @@
             "y2": {
                 "": "----------------DD-------D---D-D-----------DD-------DD"
             }
-        }
+        },
+        "setups": [
+            "MRUR'UrU2r'UM'",
+            "MUl'U2lUL'ULM'",
+            "S'FUF'UfU2f'US",
+            "SUf'U2fUF'UFS'",
+            "M'Ur'U2rUR'URM"
+        ]
     },
     "05 RBWAS": {
-        "algoritms": [
-            "r'U'RU'R'U2r",
-            "f'U'FU'F'U2f",
-            "R'F'rU'r'F2R",
-            "l'U'LU'L'U2l",
-            "b'U'BU'B'U2b"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -117,16 +110,16 @@
             "y2": {
                 "": "---------------D--------DD-----DD-DD------DD----------"
             }
-        }
+        },
+        "setups": [
+            "r'U'RU'R'U2r",
+            "f'U'FU'F'U2f",
+            "R'F'rU'r'F2R",
+            "l'U'LU'L'U2l",
+            "b'U'BU'B'U2b"
+        ]
     },
     "06 RFWAS": {
-        "algoritms": [
-            "lUL'ULU2l'",
-            "fUF'UFU2f'",
-            "LFl'UlF2L'",
-            "rUR'URU2r'",
-            "bUB'UBU2b'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -141,16 +134,16 @@
             "y2": {
                 "": "----------------DD-------DD---DD-DD---------D---------"
             }
-        }
+        },
+        "setups": [
+            "lUL'ULU2l'",
+            "fUF'UFU2f'",
+            "LFl'UlF2L'",
+            "rUR'URU2r'",
+            "bUB'UBU2b'"
+        ]
     },
     "07 Lightning": {
-        "algoritms": [
-            "RU2R'U2R'FRF'",
-            "FU2F'U2F'LFL'",
-            "lU2L'U'LU'l'",
-            "LU2L'U2L'BLB'",
-            "BU2B'U2B'RBR'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -165,16 +158,16 @@
             "y2": {
                 "": "---------------DD-------D---D-DD-D-----------------DD-"
             }
-        }
+        },
+        "setups": [
+            "RU2R'U2R'FRF'",
+            "FU2F'U2F'LFL'",
+            "lU2L'U'LU'l'",
+            "LU2L'U2L'BLB'",
+            "BU2B'U2B'RBR'"
+        ]
     },
     "08 LWS": {
-        "algoritms": [
-            "r'U2RUR'Ur",
-            "f'U2FUF'Uf",
-            "R'F2rUr'FR",
-            "l'U2LUL'Ul",
-            "b'U2BUB'Ub"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -189,16 +182,16 @@
             "y2": {
                 "": "--------------------------D-D--DD--D-------DD-------DD"
             }
-        }
+        },
+        "setups": [
+            "r'U2RUR'Ur",
+            "f'U2FUF'Uf",
+            "R'F2rUr'FR",
+            "l'U2LUL'Ul",
+            "b'U2BUB'Ub"
+        ]
     },
     "09 Kite": {
-        "algoritms": [
-            "LF'L'U'LFL'F'UF",
-            "S'RUR'SURU2R'",
-            "BL'B'U'BLB'L'UL",
-            "FR'F'U'FRF'R'UR",
-            "MURUR'URU2R'M'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -213,16 +206,16 @@
             "y2": {
                 "": "----------------DD-------D---DDD--D---------D--------D"
             }
-        }
+        },
+        "setups": [
+            "LF'L'U'LFL'F'UF",
+            "S'RUR'SURU2R'",
+            "BL'B'U'BLB'L'UL",
+            "FR'F'U'FRF'R'UR",
+            "MURUR'URU2R'M'"
+        ]
     },
     "10 Anti-Kite": {
-        "algoritms": [
-            "R'FRUR'F'RFU'F'",
-            "B'RBUB'R'BRU'R'",
-            "SL'U'LS'U'L'U2L",
-            "F'LFUF'L'FLU'L'",
-            "L'BLUL'B'LBU'B'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -237,16 +230,16 @@
             "y2": {
                 "": "---------------D---------D-D---DD-D-------DD-------D--"
             }
-        }
+        },
+        "setups": [
+            "R'FRUR'F'RFU'F'",
+            "B'RBUB'R'BRU'R'",
+            "SL'U'LS'U'L'U2L",
+            "F'LFUF'L'FLU'L'",
+            "L'BLUL'B'LBU'B'"
+        ]
     },
     "11 Downstairs": {
-        "algoritms": [
-            "MU'RU2R'U'RU'R'M'",
-            "S'U'FU2F'U'FU'F'S",
-            "SU'BU2B'U'BU'B'S'",
-            "M'U'LU2L'U'LU'L'M",
-            "M'U'LU2L'U'LU'L2l"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -261,16 +254,16 @@
             "y2": {
                 "": "---------------DD--------D-D--DD--D-------D--------D--"
             }
-        }
+        },
+        "setups": [
+            "MU'RU2R'U'RU'R'M'",
+            "S'U'FU2F'U'FU'F'S",
+            "SU'BU2B'U'BU'B'S'",
+            "M'U'LU2L'U'LU'L'M",
+            "M'U'LU2L'U'LU'L2l"
+        ]
     },
     "12 Upstairs": {
-        "algoritms": [
-            "MUL'U2LUL'ULM'",
-            "SUF'U2FUF'UFS'",
-            "S'UB'U2BUB'UBS",
-            "M'UR'U2RUR'URM",
-            "M'UR'U2RUR'UR2r'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -285,16 +278,16 @@
             "y2": {
                 "": "-----------------D-------D---D-DD-D--------DD--------D"
             }
-        }
+        },
+        "setups": [
+            "MUL'U2LUL'ULM'",
+            "SUF'U2FUF'UFS'",
+            "S'UB'U2BUB'UBS",
+            "M'UR'U2RUR'URM",
+            "M'UR'U2RUR'UR2r'"
+        ]
     },
     "13 Gun": {
-        "algoritms": [
-            "F'U'FLF'L'ULFL'",
-            "L'U'LBL'B'UBLB'",
-            "FRU'R'URU2R'U'F'",
-            "R'U'RFR'F'UFRF'",
-            "B'U'BRB'R'URBR'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -309,16 +302,16 @@
             "y2": {
                 "": "------------------------DD---DDDD---------D--------DD-"
             }
-        }
+        },
+        "setups": [
+            "F'U'FLF'L'ULFL'",
+            "L'U'LBL'B'UBLB'",
+            "FRU'R'URU2R'U'F'",
+            "R'U'RFR'F'UFRF'",
+            "B'U'BRB'R'URBR'"
+        ]
     },
     "14 Anti-Gun": {
-        "algoritms": [
-            "RUR'F'Ur'F2rUF",
-            "FUF'R'FRU'R'F'R",
-            "RUR'B'RBU'B'R'B",
-            "LUL'F'LFU'F'L'F",
-            "F'L'ULU'L'U2LUF"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -333,16 +326,16 @@
             "y2": {
                 "": "-----------------D-------DDD--DDD-------------------DD"
             }
-        }
+        },
+        "setups": [
+            "RUR'F'Ur'F2rUF",
+            "FUF'R'FRU'R'F'R",
+            "RUR'B'RBU'B'R'B",
+            "LUL'F'LFU'F'L'F",
+            "F'L'ULU'L'U2LUF"
+        ]
     },
     "15 Squeegee": {
-        "algoritms": [
-            "l'U'lU'L'UM'Ul",
-            "f'U'fU'F'US'Uf",
-            "r'U'rU'R'UMUr",
-            "b'U'bU'B'USUb",
-            "R'F'RU'r'FM'FR"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -357,16 +350,16 @@
             "y2": {
                 "": "---------------D---------D-D--DDD---------D--------DD-"
             }
-        }
+        },
+        "setups": [
+            "l'U'lU'L'UM'Ul",
+            "f'U'fU'F'US'Uf",
+            "r'U'rU'R'UMUr",
+            "b'U'bU'B'USUb",
+            "R'F'RU'r'FM'FR"
+        ]
     },
     "16 Anti-Squeegee": {
-        "algoritms": [
-            "rUr'URU'R'rU'r'",
-            "fUf'UFU'F'fU'f'",
-            "lUl'ULU'L'lU'l'",
-            "bUb'UBU'B'bU'b'",
-            "rUr'URU'M'U'r'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -381,16 +374,16 @@
             "y2": {
                 "": "-----------------D-------D---DDDD-----------D-------DD"
             }
-        }
+        },
+        "setups": [
+            "rUr'URU'R'rU'r'",
+            "fUf'UFU'F'fU'f'",
+            "lUl'ULU'L'lU'l'",
+            "bUb'UBU'B'bU'b'",
+            "rUr'URU'M'U'r'"
+        ]
     },
     "17 Slash": {
-        "algoritms": [
-            "MURUR'U'M'R'FRF'",
-            "S'RUR'SU'R'FRF'",
-            "S'UFUF'U'SF'LFL'",
-            "M'FUF'MU'F'LFL'",
-            "FRUR'UF'U2F'LFL'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -405,16 +398,16 @@
             "y2": {
                 "": "----------------D--------DDD---D---D------DD--------D-"
             }
-        }
+        },
+        "setups": [
+            "MURUR'U'M'R'FRF'",
+            "S'RUR'SU'R'FRF'",
+            "S'UFUF'U'SF'LFL'",
+            "M'FUF'MU'F'LFL'",
+            "FRUR'UF'U2F'LFL'"
+        ]
     },
     "18 Crown": {
-        "algoritms": [
-            "LF'L'FU2FU'RU'R'F'",
-            "FR'F'RU2Rd'RU'R'F'",
-            "LF'L'FU2Fd'FU'F'L'",
-            "LF'L'FU2FU'lF'l'F'",
-            "FR'F'RU2RU'BU'B'R'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -429,16 +422,16 @@
             "y2": {
                 "": "---------------DDD-------D-D---D-D---------D--------D-"
             }
-        }
+        },
+        "setups": [
+            "LF'L'FU2FU'RU'R'F'",
+            "FR'F'RU2Rd'RU'R'F'",
+            "LF'L'FU2Fd'FU'F'L'",
+            "LF'L'FU2FU'lF'l'F'",
+            "FR'F'RU2RU'BU'B'R'"
+        ]
     },
     "19 Bunny": {
-        "algoritms": [
-            "FR'F'RUS'RU'R'S",
-            "LF'L'FUM'FU'F'M",
-            "FR'F'RMURU'R'U'M'",
-            "LF'L'FS'UFU'F'U'S",
-            "RB'R'BUMBU'B'M'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -453,16 +446,16 @@
             "y2": {
                 "": "----------------DD-------D-D-D-D----------DD--------D-"
             }
-        }
+        },
+        "setups": [
+            "FR'F'RUS'RU'R'S",
+            "LF'L'FUM'FU'F'M",
+            "FR'F'RMURU'R'U'M'",
+            "LF'L'FS'UFU'F'U'S",
+            "RB'R'BUMBU'B'M'"
+        ]
     },
     "20 X": {
-        "algoritms": [
-            "MURUR'U'M2URU'r'",
-            "rUR'U'M2URU'R'U'M'",
-            "S'UFUF'U'S2UFU'f'",
-            "fUF'U'S2UFU'F'U'S",
-            "lUL'U'M2ULU'L'U'M"
-        ],
         "probability": 0.004629629629629629,
         "rotations": {
             "": {
@@ -477,16 +470,16 @@
             "y2": {
                 "": "----------------D--------D-D-D-D-D-D-------D--------D-"
             }
-        }
+        },
+        "setups": [
+            "MURUR'U'M2URU'r'",
+            "rUR'U'M2URU'R'U'M'",
+            "S'UFUF'U'S2UFU'f'",
+            "fUF'U'S2UFU'F'U'S",
+            "lUL'U'M2ULU'L'U'M"
+        ]
     },
     "21 H": {
-        "algoritms": [
-            "RU2R'U'RUR'U'RU'R'",
-            "LU2L'U'LUL'U'LU'L'",
-            "RUR'URU'R'URU2R'",
-            "FU2F'U'FUF'U'FU'F'",
-            "L'U'LU'L'ULU'L'U2L"
-        ],
         "probability": 0.009259259259259259,
         "rotations": {
             "": {
@@ -501,16 +494,16 @@
             "y2": {
                 "": "------------------------D-D-D-DDD-D----------------D-D"
             }
-        }
+        },
+        "setups": [
+            "RU2R'U'RUR'U'RU'R'",
+            "LU2L'U'LUL'U'LU'L'",
+            "RUR'URU'R'URU2R'",
+            "FU2F'U'FUF'U'FU'F'",
+            "L'U'LU'L'ULU'L'U2L"
+        ]
     },
     "22 Pi": {
-        "algoritms": [
-            "R'U'RU'R'U'LU'RUL'",
-            "L'U'LU'L'U'RU'LUR'",
-            "F'U'FU'F'U'BU'FUB'",
-            "B'U'BU'B'U'FU'BUF'",
-            "R'U2R2UR2UR2U2R'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -525,16 +518,16 @@
             "y2": {
                 "": "--------------------------D-D-DDD-D-------D-D------D--"
             }
-        }
+        },
+        "setups": [
+            "R'U'RU'R'U'LU'RUL'",
+            "L'U'LU'L'U'RU'LUR'",
+            "F'U'FU'F'U'BU'FUB'",
+            "B'U'BU'B'U'FU'BUF'",
+            "R'U2R2UR2UR2U2R'"
+        ]
     },
     "23 Headlights": {
-        "algoritms": [
-            "R'U2R'D'RU2R'DR2",
-            "R'U2R'D'RU2R'uF2",
-            "LU2LDL'U2LD'L2",
-            "F'U2F'D'FU2F'DF2",
-            "FU2FDF'U2FD'F2"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -549,16 +542,16 @@
             "y2": {
                 "": "---------------------------DDDDDD-D----------------D-D"
             }
-        }
+        },
+        "setups": [
+            "R'U2R'D'RU2R'DR2",
+            "R'U2R'D'RU2R'uF2",
+            "LU2LDL'U2LD'L2",
+            "F'U2F'D'FU2F'DF2",
+            "FU2FDF'U2FD'F2"
+        ]
     },
     "24 T": {
-        "algoritms": [
-            "FR'F'LFRF'L'",
-            "F'LFR'F'L'FR",
-            "BL'B'RBLB'R'",
-            "B'RBL'B'R'BL",
-            "FR'F'LFRF'r'x"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -573,16 +566,16 @@
             "y2": {
                 "": "------------------------D---DDDDD-DD-----------------D"
             }
-        }
+        },
+        "setups": [
+            "FR'F'LFRF'L'",
+            "F'LFR'F'L'FR",
+            "BL'B'RBLB'R'",
+            "B'RBL'B'R'BL",
+            "FR'F'LFRF'r'x"
+        ]
     },
     "25 Bowtie": {
-        "algoritms": [
-            "F'L'FR'F'LFR",
-            "FRB'R'F'RBR'",
-            "B'R'FRBR'F'R",
-            "BLF'L'B'LFL'",
-            "F'L'BLFL'B'L"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -597,16 +590,16 @@
             "y2": {
                 "": "----------------------------DDDDDDD---------D------D--"
             }
-        }
+        },
+        "setups": [
+            "F'L'FR'F'LFR",
+            "FRB'R'F'RBR'",
+            "B'R'FRBR'F'R",
+            "BLF'L'B'LFL'",
+            "F'L'BLFL'B'L"
+        ]
     },
     "26 Anti-Sune": {
-        "algoritms": [
-            "L'U2LUL'UL",
-            "F'U2FUF'UF",
-            "B'U2BUB'UB",
-            "RUR'URU2R'",
-            "R'U2RUR'UR"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -621,16 +614,16 @@
             "y2": {
                 "": "-----------------D----------DDDDD-D---------D--------D"
             }
-        }
+        },
+        "setups": [
+            "L'U2LUL'UL",
+            "F'U2FUF'UF",
+            "B'U2BUB'UB",
+            "RUR'URU2R'",
+            "R'U2RUR'UR"
+        ]
     },
     "27 Sune": {
-        "algoritms": [
-            "RU2R'U'RU'R'",
-            "FU2F'U'FU'F'",
-            "BU2B'U'BU'B'",
-            "L'U'LU'L'U2L",
-            "R'U'RU'R'U2R"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -645,16 +638,16 @@
             "y2": {
                 "": "---------------D-----------DD-DDD-D-------D--------D--"
             }
-        }
+        },
+        "setups": [
+            "RU2R'U'RU'R'",
+            "FU2F'U'FU'F'",
+            "BU2B'U'BU'B'",
+            "L'U'LU'L'U2L",
+            "R'U'RU'R'U2R"
+        ]
     },
     "28 Stealth": {
-        "algoritms": [
-            "M'U'MU2M'U'M",
-            "MU'M'U2MU'M'",
-            "M'UMU2M'UM",
-            "MUM'U2MUM'",
-            "MUM'U2MUM'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -669,16 +662,16 @@
             "y2": {
                 "": "-------------------------D-D-D-DDDDD-------D----------"
             }
-        }
+        },
+        "setups": [
+            "M'U'MU2M'U'M",
+            "MU'M'U2MU'M'",
+            "M'UMU2M'UM",
+            "MUM'U2MUM'",
+            "MUM'U2MUM'"
+        ]
     },
     "29 Chameleon": {
-        "algoritms": [
-            "S'LF'L'FS2UFU'f'",
-            "MFR'F'RM2URU'r'",
-            "M'BL'B'LM2ULU'l'",
-            "SRB'R'BS2UBU'b'",
-            "FUR'U2R2UR2URF'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -693,16 +686,16 @@
             "y2": {
                 "": "----------------DD-------D-D-DDD--D-------D-----------"
             }
-        }
+        },
+        "setups": [
+            "S'LF'L'FS2UFU'f'",
+            "MFR'F'RM2URU'r'",
+            "M'BL'B'LM2ULU'l'",
+            "SRB'R'BS2UBU'b'",
+            "FUR'U2R2UR2URF'"
+        ]
     },
     "30 Anti-Chameleon": {
-        "algoritms": [
-            "MF'rUR2rU'r'FR",
-            "F2RU'R'URUR2F'RF'",
-            "B2LU'L'ULUL2B'LB'",
-            "S'L'fUF2fU'f'LF",
-            "L2FU'F'UFUF2L'FL'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -717,16 +710,16 @@
             "y2": {
                 "": "-----------------D-------D-D-D-DD-D-------DD----------"
             }
-        }
+        },
+        "setups": [
+            "MF'rUR2rU'r'FR",
+            "F2RU'R'URUR2F'RF'",
+            "B2LU'L'ULUL2B'LB'",
+            "S'L'fUF2fU'f'LF",
+            "L2FU'F'UFUF2L'FL'"
+        ]
     },
     "31 Couch": {
-        "algoritms": [
-            "R'FRUR'U'F'UR",
-            "F'UfURU'R'S'",
-            "F'LFUF'U'L'UF",
-            "L'UlUFU'F'M'",
-            "L'BLUL'U'B'UL"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -741,16 +734,16 @@
             "y2": {
                 "": "----------------D--------DDD--DD-DD----------------D--"
             }
-        }
+        },
+        "setups": [
+            "R'FRUR'U'F'UR",
+            "F'UfURU'R'S'",
+            "F'LFUF'U'L'UF",
+            "L'UlUFU'F'M'",
+            "L'BLUL'U'B'UL"
+        ]
     },
     "32 Anti-Couch": {
-        "algoritms": [
-            "LF'L'U'LUFU'L'",
-            "FU'f'U'L'ULS",
-            "FR'F'U'FURU'F'",
-            "RU'r'U'F'UFM'",
-            "RB'R'U'RUBU'R'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -765,16 +758,16 @@
             "y2": {
                 "": "------------------------DD---D-DD-DD-------D---------D"
             }
-        }
+        },
+        "setups": [
+            "LF'L'U'LUFU'L'",
+            "FU'f'U'L'ULS",
+            "FR'F'U'FURU'F'",
+            "RU'r'U'F'UFM'",
+            "RB'R'U'RUBU'R'"
+        ]
     },
     "33 Tying Shoelaces": {
-        "algoritms": [
-            "R'FRF'U'F'UF",
-            "FR'F'RURU'R'",
-            "LF'L'FUFU'F'",
-            "F'LFL'U'L'UL",
-            "B'RBR'U'R'UR"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -789,16 +782,16 @@
             "y2": {
                 "": "------------------------DD---DDDD--D----------------DD"
             }
-        }
+        },
+        "setups": [
+            "R'FRF'U'F'UF",
+            "FR'F'RURU'R'",
+            "LF'L'FUFU'F'",
+            "F'LFL'U'L'UL",
+            "B'RBR'U'R'UR"
+        ]
     },
     "34 City (C and T)": {
-        "algoritms": [
-            "SUFU'f'U'L'UL",
-            "S'U'b'RBURU'R'",
-            "M'URU'r'U'F'UF",
-            "M'U'r'FRUFU'F'",
-            "SU'f'LFULU'L'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -813,16 +806,16 @@
             "y2": {
                 "": "---------------D---------D----DDDD-D--------D-------D-"
             }
-        }
+        },
+        "setups": [
+            "SUFU'f'U'L'UL",
+            "S'U'b'RBURU'R'",
+            "M'URU'r'U'F'UF",
+            "M'U'r'FRUFU'F'",
+            "SU'f'LFULU'L'"
+        ]
     },
     "35 Killer whale": {
-        "algoritms": [
-            "R'U2lU'RUR'l'U2R",
-            "F'U2bU'FUF'b'U2F",
-            "RU2R'FR'F'R2U2R'",
-            "L'U2LF'LFL2U2L",
-            "F'U2FR'FRF2U2F"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -837,16 +830,16 @@
             "y2": {
                 "": "---------------D---------D-D---DD-DD-------D---------D"
             }
-        }
+        },
+        "setups": [
+            "R'U2lU'RUR'l'U2R",
+            "F'U2bU'FUF'b'U2F",
+            "RU2R'FR'F'R2U2R'",
+            "L'U2LF'LFL2U2L",
+            "F'U2FR'FRF2U2F"
+        ]
     },
     "36 Wario": {
-        "algoritms": [
-            "RU'R'U'F'U2FURU'R'",
-            "R'FRUR'U'F2UFR",
-            "FU'F'U'L'U2LUFU'F'",
-            "F'LFUF'U'L2ULF",
-            "LU'L'U'B'U2BULU'L'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -861,16 +854,16 @@
             "y2": {
                 "": "--------------------------DDD--DD--D------DD--------D-"
             }
-        }
+        },
+        "setups": [
+            "RU'R'U'F'U2FURU'R'",
+            "R'FRUR'U'F2UFR",
+            "FU'F'U'L'U2LUFU'F'",
+            "F'LFUF'U'L2ULF",
+            "LU'L'U'B'U2BULU'L'"
+        ]
     },
     "37 Turtle": {
-        "algoritms": [
-            "RUR'U'R'FRF'",
-            "L'U'LULF'L'F",
-            "F'U'FUFR'F'R",
-            "FUF'U'F'LFL'",
-            "R'U'RURB'R'B"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -885,16 +878,16 @@
             "y2": {
                 "": "---------------DD----------DD-DD---D----------------DD"
             }
-        }
+        },
+        "setups": [
+            "RUR'U'R'FRF'",
+            "L'U'LULF'L'F",
+            "F'U'FUFR'F'R",
+            "FUF'U'F'LFL'",
+            "R'U'RURB'R'B"
+        ]
     },
     "38 Mario": {
-        "algoritms": [
-            "fRU'R'US'RUR'F'",
-            "RUR'U2F'U'FU'RU'R'",
-            "FUF'U2L'U'LU'FU'F'",
-            "lFU'F'UM'FUF'L'",
-            "bLU'L'USLUL'B'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -909,16 +902,16 @@
             "y2": {
                 "": "----------------DD------D---DDDD-D------------------D-"
             }
-        }
+        },
+        "setups": [
+            "fRU'R'US'RUR'F'",
+            "RUR'U2F'U'FU'RU'R'",
+            "FUF'U2L'U'LU'FU'F'",
+            "lFU'F'UM'FUF'L'",
+            "bLU'L'USLUL'B'"
+        ]
     },
     "39 Snake": {
-        "algoritms": [
-            "S'L'U'LUfUF'",
-            "MF'U'FUrUR'",
-            "S'L'U'LUBLb'",
-            "MF'U'FULFl'",
-            "M'B'U'BUlUL'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -933,16 +926,16 @@
             "y2": {
                 "": "-----------------D------DD---DDDDD------------------D-"
             }
-        }
+        },
+        "setups": [
+            "S'L'U'LUfUF'",
+            "MF'U'FUrUR'",
+            "S'L'U'LUBLb'",
+            "MF'U'FULFl'",
+            "M'B'U'BUlUL'"
+        ]
     },
     "40 Anti-Snake": {
-        "algoritms": [
-            "SRUR'U'R'FRf'",
-            "F'U2FURU'R'F'UF",
-            "L'U2LUFU'F'L'UL",
-            "MFUF'U'F'LFl'",
-            "R'U2RUBU'B'R'UR"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -957,16 +950,16 @@
             "y2": {
                 "": "-------------------------DDD--DDD--D------D---------D-"
             }
-        }
+        },
+        "setups": [
+            "SRUR'U'R'FRf'",
+            "F'U2FURU'R'F'UF",
+            "L'U2LUFU'F'L'UL",
+            "MFUF'U'F'LFl'",
+            "R'U2RUBU'B'R'UR"
+        ]
     },
     "41 Awkward Fish": {
-        "algoritms": [
-            "MF'U'L'ULFUM'",
-            "SUF'U'L'ULF2f'",
-            "SUF'U'L'ULFS'",
-            "M'UR'U'F'UFRM",
-            "M'UR'U'F'UFR2r'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -981,16 +974,16 @@
             "y2": {
                 "": "-------------------------D-D-D-DD-D--------D-------D-D"
             }
-        }
+        },
+        "setups": [
+            "MF'U'L'ULFUM'",
+            "SUF'U'L'ULF2f'",
+            "SUF'U'L'ULFS'",
+            "M'UR'U'F'UFRM",
+            "M'UR'U'F'UFR2r'"
+        ]
     },
     "42 Lefty Awkward Fish": {
-        "algoritms": [
-            "MFURU'R'F'U'M'",
-            "S'U'FURU'R'F2f",
-            "M'U'LUFU'F'L2l",
-            "S'LUFU'F'L'U'S",
-            "M'BULU'L'B'U'M"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -1005,16 +998,16 @@
             "y2": {
                 "": "----------------D--------D-D-DDD--D----------------D-D"
             }
-        }
+        },
+        "setups": [
+            "MFURU'R'F'U'M'",
+            "S'U'FURU'R'F2f",
+            "M'U'LUFU'F'L2l",
+            "S'LUFU'F'L'U'S",
+            "M'BULU'L'B'U'M"
+        ]
     },
     "43 Anti-P": {
-        "algoritms": [
-            "F'L'U'LUF",
-            "R'F'U'FUR",
-            "B'R'U'RUB",
-            "L'B'U'BUL",
-            "f'U'L'ULf"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -1029,16 +1022,16 @@
             "y2": {
                 "": "---------------DDD-------D-D--DD-DD-------------------"
             }
-        }
+        },
+        "setups": [
+            "F'L'U'LUF",
+            "R'F'U'FUR",
+            "B'R'U'RUB",
+            "L'B'U'BUL",
+            "f'U'L'ULf"
+        ]
     },
     "44 P": {
-        "algoritms": [
-            "FRUR'U'F'",
-            "LFUF'U'L'",
-            "fURU'R'f'",
-            "FRUR'd'L'",
-            "RBUB'U'R'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -1053,16 +1046,16 @@
             "y2": {
                 "": "-------------------------D---D-DD-DD------DDD---------"
             }
-        }
+        },
+        "setups": [
+            "FRUR'U'F'",
+            "LFUF'U'L'",
+            "fURU'R'f'",
+            "FRUR'd'L'",
+            "RBUB'U'R'"
+        ]
     },
     "45 Suit up": {
-        "algoritms": [
-            "fRUR'U'f'",
-            "lFUF'U'l'",
-            "FURU'R'F'",
-            "bLUL'U'b'",
-            "rBUB'U'r'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -1077,16 +1070,16 @@
             "y2": {
                 "": "-------------------------D---DDDD--D------D-D-------D-"
             }
-        }
+        },
+        "setups": [
+            "fRUR'U'f'",
+            "lFUF'U'l'",
+            "FURU'R'F'",
+            "bLUL'U'b'",
+            "rBUB'U'r'"
+        ]
     },
     "46 Seein' Headlights": {
-        "algoritms": [
-            "FUR'FRF'U'F'",
-            "F'U'LF'L'FUF",
-            "R'U'FR'F'RUR",
-            "LUF'LFL'U'L'",
-            "RUB'RBR'U'R'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -1101,16 +1094,16 @@
             "y2": {
                 "": "---------------DDD---------DD--D-DD--------D----------"
             }
-        }
+        },
+        "setups": [
+            "FUR'FRF'U'F'",
+            "F'U'LF'L'FUF",
+            "R'U'FR'F'RUR",
+            "LUF'LFL'U'L'",
+            "RUB'RBR'U'R'"
+        ]
     },
     "47 Anti-Breakneck": {
-        "algoritms": [
-            "f'L'U'LUL'U'LUf",
-            "r'F'U'FUF'U'FUr",
-            "b'R'U'RUR'U'RUb",
-            "F'U'L'ULU'L'ULF",
-            "R'U'F'UFU'F'UFR"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -1125,16 +1118,16 @@
             "y2": {
                 "": "---------------D-D------D---D--DD----------D--------DD"
             }
-        }
+        },
+        "setups": [
+            "f'L'U'LUL'U'LUf",
+            "r'F'U'FUF'U'FUr",
+            "b'R'U'RUR'U'RUb",
+            "F'U'L'ULU'L'ULF",
+            "R'U'F'UFU'F'UFR"
+        ]
     },
     "48 Breakneck": {
-        "algoritms": [
-            "fRUR'U'RUR'U'f'",
-            "bLUL'U'LUL'U'b'",
-            "rBUB'U'BUB'U'r'",
-            "FURU'R'URU'R'F'",
-            "lFUF'U'FUF'U'l'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -1149,16 +1142,16 @@
             "y2": {
                 "": "----------------D---------D-D-DD----------D-D------DD-"
             }
-        }
+        },
+        "setups": [
+            "fRUR'U'RUR'U'f'",
+            "bLUL'U'LUL'U'b'",
+            "rBUB'U'BUB'U'r'",
+            "FURU'R'URU'R'F'",
+            "lFUF'U'FUF'U'l'"
+        ]
     },
     "49 Prof X": {
-        "algoritms": [
-            "F'RU2R'U2R'F2RF'",
-            "F'LF2L'U2L'U2LF'",
-            "R'FR2F'U2F'U2FR'",
-            "L'FU2F'U2F'L2FL'",
-            "B'RB2R'U2R'U2RB'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -1173,16 +1166,16 @@
             "y2": {
                 "": "---------------DD-----------D-DD------------D------DDD"
             }
-        }
+        },
+        "setups": [
+            "F'RU2R'U2R'F2RF'",
+            "F'LF2L'U2L'U2LF'",
+            "R'FR2F'U2F'U2FR'",
+            "L'FU2F'U2F'L2FL'",
+            "B'RB2R'U2R'U2RB'"
+        ]
     },
     "50 Anti-Prof X": {
-        "algoritms": [
-            "R'FRF'U2R2B'R'BR'",
-            "F'LFL'U2F2R'F'RF'",
-            "L'BLB'U2L2F'L'FL'",
-            "B'RBR'U2B2L'B'LB'",
-            "FR'F2RU2RU2R'F"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -1197,16 +1190,16 @@
             "y2": {
                 "": "---------------D------------D--DD----------DD------DDD"
             }
-        }
+        },
+        "setups": [
+            "R'FRF'U2R2B'R'BR'",
+            "F'LFL'U2F2R'F'RF'",
+            "L'BLB'U2L2F'L'FL'",
+            "B'RBR'U2B2L'B'LB'",
+            "FR'F2RU2RU2R'F"
+        ]
     },
     "51 Bottlecap": {
-        "algoritms": [
-            "FRUR'U'RUR'U'F'",
-            "F'L'U'LUL'U'LUF",
-            "R'F'U'FUF'U'FUR",
-            "RBUB'U'BUB'U'R'",
-            "fURU'R'URU'R'f'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -1221,16 +1214,16 @@
             "y2": {
                 "": "-------------------------DD---DDD---------D-D------DD-"
             }
-        }
+        },
+        "setups": [
+            "FRUR'U'RUR'U'F'",
+            "F'L'U'LUL'U'LUF",
+            "R'F'U'FUF'U'FUR",
+            "RBUB'U'BUB'U'R'",
+            "fURU'R'URU'R'f'"
+        ]
     },
     "52 Rice Cooker": {
-        "algoritms": [
-            "R'F'U'FU'RUR'UR",
-            "R'U'RU'R'UF'UFR",
-            "F'L'U'LU'FUF'UF",
-            "F'U'FU'F'UL'ULF",
-            "L'B'U'BU'LUL'UL"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -1245,16 +1238,16 @@
             "y2": {
                 "": "-----------------D------DDD---DDD---------D---------D-"
             }
-        }
+        },
+        "setups": [
+            "R'F'U'FU'RUR'UR",
+            "R'U'RU'R'UF'UFR",
+            "F'L'U'LU'FUF'UF",
+            "F'U'FU'F'UL'ULF",
+            "L'B'U'BU'LUL'UL"
+        ]
     },
     "53 Bearded": {
-        "algoritms": [
-            "r'U'RU'R'URU'R'U2r",
-            "FR'FRF2U2LF'L'F",
-            "RB'RBR2U2FR'F'R",
-            "FUF2LFL'ULF'L'F",
-            "BL'BLB2U2RB'R'B"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -1269,16 +1262,16 @@
             "y2": {
                 "": "---------------DDD----------D-DD----------D-D-------D-"
             }
-        }
+        },
+        "setups": [
+            "r'U'RU'R'URU'R'U2r",
+            "FR'FRF2U2LF'L'F",
+            "RB'RBR2U2FR'F'R",
+            "FUF2LFL'ULF'L'F",
+            "BL'BLB2U2RB'R'B"
+        ]
     },
     "54 Anti-Bearded": {
-        "algoritms": [
-            "F'LF'L'F2U2R'FRF'",
-            "L'BL'B'L2U2F'LFL'",
-            "BL2F'L'FLF'L'FL'B'",
-            "B'RB'R'B2U2L'BLB'",
-            "LF2R'F'RFR'F'RF'L'"
-        ],
         "probability": 0.018518518518518517,
         "rotations": {
             "": {
@@ -1293,82 +1286,88 @@
             "y2": {
                 "": "---------------D-D----------D--DD---------DDD-------D-"
             }
-        }
+        },
+        "setups": [
+            "F'LF'L'F2U2R'FRF'",
+            "L'BL'B'L2U2F'LFL'",
+            "BL2F'L'FLF'L'FL'B'",
+            "B'RB'R'B2U2L'BLB'",
+            "LF2R'F'RFR'F'RF'L'"
+        ]
     },
     "55 Highway": {
-        "algoritms": [
+        "probability": 0.009259259259259259,
+        "rotations": {
+            "": {
+                "": "------------------------DDD---DDD------------------DDD"
+            },
+            "y": {
+                "": "---------------DDD----------D--D--D-------DDD---------"
+            },
+            "y'": {
+                "": "---------------DDD----------D--D--D-------DDD---------"
+            },
+            "y2": {
+                "": "------------------------DDD---DDD------------------DDD"
+            }
+        },
+        "setups": [
             "FR'F'U2RUR'UR2U2R'",
             "LF'L'U2FUF'UF2U2F'",
             "B'UR2D'RU2R'DR2U'B",
             "BL'B'U2LUL'UL2U2L'",
             "RB'R'U2BUB'UB2U2B'"
-        ],
+        ]
+    },
+    "56 Streetlights": {
         "probability": 0.009259259259259259,
         "rotations": {
             "": {
-                "": "------------------------DDD---DDD------------------DDD"
+                "": "----------------D-------D-D-D--D--D--------D-------D-D"
             },
             "y": {
-                "": "---------------DDD----------D--D--D-------DDD---------"
+                "": "---------------D-D-------D----DDD---------D-D-------D-"
             },
             "y'": {
-                "": "---------------DDD----------D--D--D-------DDD---------"
+                "": "---------------D-D-------D----DDD---------D-D-------D-"
             },
             "y2": {
-                "": "------------------------DDD---DDD------------------DDD"
+                "": "----------------D-------D-D-D--D--D--------D-------D-D"
             }
-        }
-    },
-    "56 Streetlights": {
-        "algoritms": [
+        },
+        "setups": [
             "R'fRUR'f'R2BL'B'R'",
             "BLFL'B'LF'UFU'F'L'",
             "LFRF'L'FR'URU'R'F'",
             "RBLB'R'BL'ULU'L'B'",
             "L'bLUL'b'L2FR'F'L'"
-        ],
+        ]
+    },
+    "57 Mummy": {
         "probability": 0.009259259259259259,
         "rotations": {
             "": {
-                "": "----------------D-------D-D-D--D--D--------D-------D-D"
+                "": "-------------------------D-D-DDDDD-D----------------D-"
             },
             "y": {
-                "": "---------------D-D-------D----DDD---------D-D-------D-"
+                "": "----------------D----------DDD-D-DDD-------D----------"
             },
             "y'": {
-                "": "---------------D-D-------D----DDD---------D-D-------D-"
+                "": "----------------D----------DDD-D-DDD-------D----------"
             },
             "y2": {
-                "": "----------------D-------D-D-D--D--D--------D-------D-D"
+                "": "-------------------------D-D-DDDDD-D----------------D-"
             }
-        }
-    },
-    "57 Mummy": {
-        "algoritms": [
+        },
+        "setups": [
             "rUR'U'MURU'R'",
             "S'RUR'SRU'R'",
             "fUF'U'S'UFU'F'",
             "M'FUF'MFU'F'",
             "lUL'U'M'ULU'L'"
-        ],
-        "probability": 0.009259259259259259,
-        "rotations": {
-            "": {
-                "": "-------------------------D-D-DDDDD-D----------------D-"
-            },
-            "y": {
-                "": "----------------D----------DDD-D-DDD-------D----------"
-            },
-            "y'": {
-                "": "----------------D----------DDD-D-DDD-------D----------"
-            },
-            "y2": {
-                "": "-------------------------D-D-DDDDD-D----------------D-"
-            }
-        }
+        ]
     },
     "SKIP": {
-        "algoritms": [],
         "probability": 0.004629629629629629,
         "rotations": {
             "": {
@@ -1383,6 +1382,7 @@
             "y2": {
                 "": "---------------------------DDDDDDDDD------------------"
             }
-        }
+        },
+        "setups": []
     }
 }
