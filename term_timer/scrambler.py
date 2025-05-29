@@ -1,17 +1,21 @@
 import re
-from random import choices
+from random import choice
 from random import randint
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import OPPOSITE_FACES
 from cubing_algs.constants import OUTER_BASIC_MOVES
 from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.degrip import degrip_full_moves
+from cubing_algs.transform.fat import unfat_moves
 from cubing_algs.transform.mirror import mirror_moves
-from cubing_algs.transform.offset import offset_z2_moves
+from cubing_algs.transform.rotation import remove_final_rotations
 from kociemba import solve
 
 from term_timer.constants import CUBE_SIZES
 from term_timer.magic_cube import Cube
+from term_timer.methods.cfop import OLL_INFO
+from term_timer.methods.cfop import PLL_INFO
 
 FACE_REGEXP = re.compile(r'(F|R|U|B|L|D)')
 
@@ -97,7 +101,7 @@ def random_moves(cube_size: int, iterations: int,
         iterations = 10
         move_set = MOVES_EASY_CROSS
 
-    value = choices(move_set)[0]
+    value = choice(move_set)
     moves = [value]
     previous = value
 
@@ -109,7 +113,7 @@ def random_moves(cube_size: int, iterations: int,
 
     while len(moves) < iterations:
         while not is_valid_next_move(value, previous):
-            value = choices(move_set)[0]
+            value = choice(move_set)
 
         previous = value
         moves.append(value)
@@ -147,17 +151,24 @@ def scrambler(cube_size: int, iterations: int,
 def trainer(mode):
     cube = Cube(3)
 
-    scramble = random_training(mode)
+    case, scramble = random_training(mode)
 
     cube.rotate('Z2')
     cube.rotate(scramble)
 
-    return scramble, cube
+    return case, scramble, cube
 
 
 def random_training(mode):
-    return parse_moves(
-        "R' F R F' U2 R' F R F2 U2 F",
-    ).transform(
-        mirror_moves,
+    cases = OLL_INFO
+    if mode == 'pll':
+        cases = PLL_INFO
+
+    case = choice(list(cases.keys()))
+    algo = choice(cases[case]['setups'])
+
+    return case, parse_moves(algo).transform(
+        unfat_moves,
+        degrip_full_moves,
+        remove_final_rotations,
     )
