@@ -36,6 +36,7 @@ def load_and_fill(path, masks, info):
                         'alternative': alternative,
                     }
             info[kase] = {
+                'setups': data['setups'],
                 'probability': data['probability'],
             }
 
