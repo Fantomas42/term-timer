@@ -677,7 +677,7 @@ class StatisticsReporter(Statistics):
             'mean': score / total,
         }
 
-    def cfop(self, oll_only: bool = False, pll_only: bool = False,
+    def cfop(self, *, oll_only: bool = False, pll_only: bool = False,
              sorting: str = 'count', ordering: str = 'asc') -> None:
         if sorting == 'case':
             sorting = 'label'

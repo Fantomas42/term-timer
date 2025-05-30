@@ -120,8 +120,10 @@ def tools(command, options):
 
     if command == 'cfop':
         session_stats.cfop(
-            options.oll, options.pll,
-            options.sort, options.order,
+            oll_only=options.oll,
+            pll_only=options.pll,
+            sorting=options.sort,
+            ordering=options.order,
         )
 
     if command == 'graph':
