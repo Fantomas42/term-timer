@@ -29,8 +29,8 @@ class MoyuWeilong10Driver(Driver):
     encrypter = GanGen2CubeEncrypter
     factor = pow(2, 30)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, client, device):
+        super().__init__(client, device)
 
         self.last_serial = -1
         self.cube_timestamp = 0

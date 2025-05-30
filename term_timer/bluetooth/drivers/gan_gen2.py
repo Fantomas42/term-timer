@@ -37,8 +37,8 @@ class GanGen2Driver(Driver):
     command_characteristic_uid = GAN_GEN2_COMMAND_CHARACTERISTIC
     encrypter = GanGen2CubeEncrypter
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, client, device):
+        super().__init__(client, device)
 
         self.last_serial = -1
         self.cube_timestamp = 0
