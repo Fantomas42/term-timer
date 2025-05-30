@@ -5,9 +5,13 @@ logger = logging.getLogger(__name__)
 
 
 class Gesture:
-    save_moves = []
-    save_gesture = ''
-    save_gesture_event = asyncio.Event()
+
+    def __init__(self):
+        super().__init__()
+
+        self.save_moves = []
+        self.save_gesture = ''
+        self.save_gesture_event = asyncio.Event()
 
     def handle_save_gestures(self, move):
         move = self.reorient(move)[0]

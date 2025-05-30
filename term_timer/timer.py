@@ -23,6 +23,7 @@ class Timer(SolveInterface):
                  countdown: int,
                  metronome: float,
                  stack: list[Solve]):
+        super().__init__()
 
         self.set_state('configure')
 

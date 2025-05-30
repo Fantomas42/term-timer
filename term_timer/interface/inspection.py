@@ -6,9 +6,13 @@ from term_timer.constants import SECOND
 
 
 class Inspecter:
-    countdown = 0
 
-    inspection_completed_event = asyncio.Event()
+    def __init__(self):
+        super().__init__()
+
+        self.countdown = 0
+
+        self.inspection_completed_event = asyncio.Event()
 
     async def inspection(self) -> None:
         self.clear_line(full=True)

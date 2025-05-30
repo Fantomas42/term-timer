@@ -5,7 +5,11 @@ logger = logging.getLogger(__name__)
 
 
 class State:
-    state = ''
+
+    def __init__(self):
+        super().__init__()
+
+        self.state = ''
 
     def set_state(self, state, timestamp=None):
         self.state = state

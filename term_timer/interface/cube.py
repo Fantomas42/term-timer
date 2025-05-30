@@ -6,7 +6,11 @@ from term_timer.config import CUBE_ORIENTATION
 
 
 class Orienter:
-    cube_orientation = CUBE_ORIENTATION
+
+    def __init__(self):
+        super().__init__()
+
+        self.cube_orientation = CUBE_ORIENTATION
 
     def reorient(self, algorithm: Algorithm) -> Algorithm:
         if self.cube_orientation:

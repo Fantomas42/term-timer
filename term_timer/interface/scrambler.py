@@ -5,15 +5,19 @@ from cubing_algs.transform.size import compress_moves
 
 
 class Scrambler:
-    scramble = []
-    scrambled = []
-    scramble_oriented = []
 
-    counter = 0
+    def __init__(self):
+        super().__init__()
 
-    facelets_scrambled = ''
+        self.scramble = []
+        self.scrambled = []
+        self.scramble_oriented = []
 
-    scramble_completed_event = asyncio.Event()
+        self.counter = 0
+
+        self.facelets_scrambled = ''
+
+        self.scramble_completed_event = asyncio.Event()
 
     def handle_scrambled(self):
         if self.bluetooth_cube.state == self.facelets_scrambled:

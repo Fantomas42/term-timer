@@ -116,4 +116,8 @@ if __name__ == '__main__':
 
 
 class Console:
-    console = console
+
+    def __init__(self):
+        super().__init__()
+
+        self.console = console

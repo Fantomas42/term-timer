@@ -11,6 +11,7 @@ class Trainer(SolveInterface):
     def __init__(self, *, mode: str,
                  show_cube: bool,
                  metronome: float):
+        super().__init__()
 
         self.set_state('configure')
 

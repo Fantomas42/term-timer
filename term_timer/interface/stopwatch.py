@@ -7,14 +7,18 @@ from term_timer.formatter import format_time
 
 
 class StopWatch:
-    start_time = 0
-    end_time = 0
-    elapsed_time = 0
 
-    metronome = 0
+    def __init__(self):
+        super().__init__()
 
-    solve_started_event = asyncio.Event()
-    solve_completed_event = asyncio.Event()
+        self.start_time = 0
+        self.end_time = 0
+        self.elapsed_time = 0
+
+        self.metronome = 0
+
+        self.solve_started_event = asyncio.Event()
+        self.solve_completed_event = asyncio.Event()
 
     async def stopwatch(self) -> None:
         self.clear_line(full=True)

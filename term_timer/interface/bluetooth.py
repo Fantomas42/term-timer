@@ -10,16 +10,20 @@ logger = logging.getLogger(__name__)
 
 
 class Bluetooth:
-    moves = []
 
-    bluetooth_queue = None
-    bluetooth_cube = None
-    bluetooth_interface = None
-    bluetooth_consumer_ref = None
-    bluetooth_hardware = {}
+    def __init__(self):
+        super().__init__()
 
-    facelets_received_event = asyncio.Event()
-    hardware_received_event = asyncio.Event()
+        self.moves = []
+
+        self.bluetooth_queue = None
+        self.bluetooth_cube = None
+        self.bluetooth_interface = None
+        self.bluetooth_consumer_ref = None
+        self.bluetooth_hardware = {}
+
+        self.facelets_received_event = asyncio.Event()
+        self.hardware_received_event = asyncio.Event()
 
     async def bluetooth_connect(self) -> bool:
         self.bluetooth_queue = asyncio.Queue()
