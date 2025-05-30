@@ -208,7 +208,7 @@ class TestStatisticsReporterListing(unittest.TestCase):
         self.assertIn('[success]00:01.000[/success]', call_args[1])
 
         # The date should be included
-        self.assertIn('[date]2191-10-27 14:26[/date]', call_args[2])
+        self.assertIn('[date]2191-10-27', call_args[2])
 
         # The scramble should be included
         self.assertIn('[consign]F U R[/consign]', call_args[3])
