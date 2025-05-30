@@ -1,6 +1,5 @@
 import unittest
 
-from term_timer.constants import DNF
 from term_timer.constants import SECOND
 from term_timer.formatter import compute_padding
 from term_timer.formatter import format_delta

@@ -1,12 +1,8 @@
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock
-from unittest.mock import mock_open
 from unittest.mock import patch
 
 from term_timer.in_out import load_solves
-from term_timer.in_out import save_solves
-from term_timer.solve import Solve
 
 
 class TestInOut(unittest.TestCase):
