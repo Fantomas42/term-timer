@@ -10,7 +10,7 @@ class CubePrintRich:
         self.cube = cube
 
     @staticmethod
-    def _format_color(color: str, oll=False) -> str:
+    def _format_color(color: str, *, oll=False) -> str:
         if oll and color != 'Y':
             color = 'H'
         return f'[face_{ color.lower() }] { color } [/face_{ color.lower() }]'
@@ -31,7 +31,7 @@ class CubePrintRich:
 
         return result
 
-    def _print_top_down_face_ll(self, face: Face, oll=False) -> str:
+    def _print_top_down_face_ll(self, face: Face, *, oll=False) -> str:
         cube = self.cube
 
         result = '   '
@@ -78,25 +78,25 @@ class CubePrintRich:
 
         return result
 
-    def print_top_face(self, oll=False):
+    def print_top_face(self, *, oll=False):
         cube = self.cube
 
-        result = self._print_top_down_face_ll(Face.B, oll)
+        result = self._print_top_down_face_ll(Face.B, oll=oll)
 
         for line in range(3):
             color = cube.get_face(Face.L)[0][line]
-            result += self._format_color(color.name, oll)
+            result += self._format_color(color.name, oll=oll)
 
             for i in range(3):
                 color = cube.get_face(Face.U)[line][i]
-                result += self._format_color(color.name, oll)
+                result += self._format_color(color.name, oll=oll)
 
             color = cube.get_face(Face.R)[0][2 - line]
-            result += self._format_color(color.name, oll)
+            result += self._format_color(color.name, oll=oll)
 
             result += '\n'
 
-        result += self._print_top_down_face_ll(Face.F, oll)
+        result += self._print_top_down_face_ll(Face.F, oll=oll)
 
         return result
 
