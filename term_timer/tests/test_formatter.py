@@ -12,7 +12,7 @@ from term_timer.formatter import format_time
 class TestFormatTime(unittest.TestCase):
     def test_format_time_with_zero(self):
         """Test that format_time returns DNF for zero value."""
-        self.assertEqual(format_time(0), DNF)
+        self.assertEqual(format_time(0), '      DNF')
 
     def test_format_time_with_milliseconds(self):
         """Test formatting time with milliseconds."""

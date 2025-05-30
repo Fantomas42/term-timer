@@ -159,7 +159,7 @@ class TestStatisticsResumeReporter(unittest.TestCase):
         """Test the resume method which prints statistics summary."""
         stats = StatisticsReporter(self.puzzle, self.solves)
 
-        with patch('term_timer.console.console.print') as mock_print:
+        with patch('term_timer.interface.console.console.print') as mock_print:
             stats.resume('Test ')
 
             # Verify that console.print was called multiple times
@@ -169,7 +169,7 @@ class TestStatisticsResumeReporter(unittest.TestCase):
         """Test resume method with no solves."""
         empty_stats = StatisticsReporter(self.puzzle, [])
 
-        with patch('term_timer.console.console.print') as mock_print:
+        with patch('term_timer.interface.console.console.print') as mock_print:
             empty_stats.resume()
 
             # Should print a warning and return
@@ -189,36 +189,36 @@ class TestStatisticsReporterListing(unittest.TestCase):
         ]
         self.listing = StatisticsReporter(3, self.solves)
 
-    @patch('term_timer.console.console.print')
+    @patch('term_timer.interface.console.console.print')
     def test_resume_no_solves(self, mock_console):
         """Test that a warning is displayed when there are no solves."""
         empty_listing = StatisticsReporter(3, [])
-        empty_listing.listing(5)
+        empty_listing.listing(5, '')
 
         mock_console.assert_called_once_with(
             '[warning]No saved solves yet.[/warning]',
         )
 
-    @patch('term_timer.console.console.print')
+    @patch('term_timer.interface.console.console.print')
     def test_resume_with_limit(self, mock_console):
         """Test that resume respects the limit parameter."""
-        self.listing.listing(2)
+        self.listing.listing(2, '')
 
         # Should print 2 solves + title
         self.assertEqual(mock_console.call_count, 3)
 
-    @patch('term_timer.console.console.print')
+    @patch('term_timer.interface.console.console.print')
     def test_resume_limit_larger_than_stack(self, mock_console):
         """Test that resume handles limits larger than the stack size."""
-        self.listing.listing(10)
+        self.listing.listing(10, '')
 
         # Should only print 4 solves (the size of our stack) + title
         self.assertEqual(mock_console.call_count, 5)
 
-    @patch('term_timer.console.console.print')
+    @patch('term_timer.interface.console.console.print')
     def test_resume_format(self, mock_console):
         """Test the formatting of the resume output."""
-        self.listing.listing(1)
+        self.listing.listing(1, '')
 
         # Check the format of the most recent solve
         call_args = mock_console.call_args[0]
@@ -238,10 +238,10 @@ class TestStatisticsReporterListing(unittest.TestCase):
         # The flag should be included
         self.assertIn('[result]+2[/result]', call_args[4])
 
-    @patch('term_timer.console.console.print')
+    @patch('term_timer.interface.console.console.print')
     def test_resume_reverse_order(self, mock_console):
         """Test that solves are displayed in reverse order (newest first)."""
-        self.listing.listing(4)
+        self.listing.listing(4, '')
 
         # Get all the call arguments
         call_args_list = mock_console.call_args_list

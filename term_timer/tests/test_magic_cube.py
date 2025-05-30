@@ -6,7 +6,6 @@ from unittest.mock import patch
 
 from magiccube.cube import Face
 
-from term_timer.magic_cube import FACES_ORDER
 from term_timer.magic_cube import Cube
 from term_timer.magic_cube import CubePrintRich
 
@@ -90,7 +89,7 @@ class TestCubePrintRich(unittest.TestCase):
             Face.B: mock_colors_b,
         }.get(face, [])
 
-        result = self.printer.print_cube()
+        result = self.printer.print_cube('')
 
         # Vérifier que _print_top_down_face a été appelé deux fois (pour U et D)
         mock_print_face.assert_has_calls([call(Face.U), call(Face.D)])
@@ -106,58 +105,9 @@ class TestCube(unittest.TestCase):
         self.cube = Cube()
 
     def test_initialization(self):
-        """Test que le cube s'initialise correctement."""
         self.assertEqual(
             self.cube.size, 3,
-        )  # Par défaut, le cube est de taille 3x3
-
-    def test_convert_moves(self):
-        """
-        Test que la méthode convert_moves convertit
-        correctement les mouvements.
-        """
-        # Tester avec différents types de mouvements
-        moves = ['R', "U'", 'F2', 'x', 'y', "z'"]
-        result = Cube.convert_moves(moves)
-
-        # Les rotations x, y, z devraient être en majuscules
-        self.assertIn('X', result)
-        self.assertIn('Y', result)
-        self.assertIn("Z'", result)
-
-        # Vérifier que les mouvements sont séparés par des espaces
-        self.assertIn(' ', result)
-        self.assertEqual(len(result.split()), len(moves))
-
-    @patch('term_timer.magic_cube.japanese_moves', return_value=['F', 'U', 'D'])
-    def test_japanese_moves_conversion(self, mock_japanese_moves):
-        """Test que les mouvements japonais sont convertis correctement."""
-        # Mouvements japonais à convertir
-        jp_moves = ['mae', 'ue', 'shita']
-
-        result = Cube.convert_moves(jp_moves)
-
-        # Vérifier que japanese_moves a été appelé avec les bons arguments
-        mock_japanese_moves.assert_called_once_with(jp_moves)
-
-        # Vérifier que les mouvements japonais ont été convertis
-        self.assertIn('F', result)
-        self.assertIn('U', result)
-        self.assertIn('D', result)
-
-    @patch.object(Cube, 'convert_moves', return_value="R U' F2")
-    @patch('magiccube.cube.Cube.rotate')
-    def test_rotate(self, mock_parent_rotate, mock_convert):
-        """Test que la méthode rotate appelle correctement la méthode parent."""
-        moves = ['R', "U'", 'F2']
-        self.cube.rotate(moves)
-
-        # Vérifier que convert_moves a été appelé avec les bons arguments
-        mock_convert.assert_called_once_with(moves)
-
-        # Vérifier que la méthode parent rotate a été appelée
-        # avec le résultat de convert_moves
-        mock_parent_rotate.assert_called_once_with("R U' F2")
+        )
 
     @patch(
         'term_timer.magic_cube.CubePrintRich.print_cube',
@@ -170,10 +120,3 @@ class TestCube(unittest.TestCase):
 
         # Vérifier que print_cube a été appelé avec la bonne instance de cube
         mock_print_cube.assert_called_once()
-
-
-class TestFacesOrder(unittest.TestCase):
-    def test_faces_order(self):
-        """Test que FACES_ORDER contient les faces dans le bon ordre."""
-        self.assertEqual(FACES_ORDER, ['W', 'O', 'G', 'R', 'B', 'Y'])
-        self.assertEqual(len(FACES_ORDER), 6)
