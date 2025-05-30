@@ -87,7 +87,7 @@ LOGGING_CONF = {
     },
 }
 
-_log_listener = None
+log_listener = None
 
 
 def configure_logging() -> None:
@@ -109,8 +109,8 @@ def configure_logging() -> None:
             queue_handler = AsyncioLogHandler(log_queue)
             root_logger.addHandler(queue_handler)
 
-            _log_listener = AsyncioLogListener(log_queue, file_handler)
-            _log_listener.start()
+            log_listener = AsyncioLogListener(log_queue, file_handler)
+            log_listener.start()
 
             atexit.register(shutdown_logging)
 
@@ -119,8 +119,8 @@ def configure_logging() -> None:
 
 
 def shutdown_logging() -> None:
-    global _log_listener
+    global log_listener  # noqa PLW0603
 
-    if _log_listener:
-        _log_listener.stop()
-        _log_listener = None
+    if log_listener:
+        log_listener.stop()
+        log_listener = None
