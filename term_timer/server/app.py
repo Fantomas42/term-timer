@@ -1,9 +1,9 @@
 from datetime import datetime
 from datetime import timezone
 
+from bottle import TEMPLATE_PATH
 from bottle import Bottle
 from bottle import jinja2_template
-from bottle import TEMPLATE_PATH
 from bottle import static_file
 
 from term_timer.constants import CUBE_SIZES
@@ -14,9 +14,9 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
+from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
-from term_timer.solve import Solve
 
 
 def format_delta(delta: int) -> str:
