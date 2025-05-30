@@ -111,8 +111,14 @@ s = [
     (1, -1, -1),
 ]
 
+
 # Fonction qui permet de changer la taille du cube
-sommets = lambda x: [list(map(float.__mul__, [x] * 3, point)) for point in s]
+def sommets(x):
+    return [
+        list(map(float.__mul__, [x] * 3, point))
+        for point in s
+    ]
+
 
 indices = [
     (0, 1, 2, 3),

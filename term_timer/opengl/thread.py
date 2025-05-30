@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class CubeGLThread(threading.Thread):
     def __init__(self, cube_ready_event, width=800, height=600,
-                 daemon=True):
+                 *, daemon=True):
         super().__init__()
 
         self.cube_ready_event = cube_ready_event

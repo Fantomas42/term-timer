@@ -1,3 +1,5 @@
+from operator import neg
+
 from OpenGL.GL import GL_MODELVIEW
 from OpenGL.GL import GL_QUADS
 from OpenGL.GL import GL_TEXTURE_2D
@@ -132,8 +134,13 @@ def get_moving_pieces(cube, face):
 
 
 def get_rotation_param(face, power):
-    axe = tuple(map(lambda x: -x, axe_rotation[face])) if power == 3 else axe_rotation[face]
+    axe = tuple(
+        map(
+            neg, axe_rotation[face],
+        ),
+    ) if power == 3 else axe_rotation[face]
     theta_max = 181 if power == 2 else 91
+
     return axe, theta_max
 
 
