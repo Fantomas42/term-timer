@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from datetime import timezone
 
@@ -14,6 +15,7 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
+from term_timer.interface.console import console
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
@@ -256,11 +258,19 @@ class Server:
 
         app = self.create_app()
 
+        if not os.getenv('BOTTLE_CHILD'):
+            console.print(
+                '[server]Term Timer server is listening on [/server]'
+                f'[title]http://{ host }:{ port }/[/title]',
+            )
+            console.print('Hit Ctrl-C to quit.', style='comment')
+
         app.run(
             host=host,
             port=port,
-            debug=debug,
+            quiet=True,
             reloader=debug,
+            debug=debug,
         )
 
     def create_app(self):

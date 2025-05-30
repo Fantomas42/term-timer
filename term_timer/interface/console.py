@@ -33,6 +33,7 @@ theme = {
     'execution_p': TEXT_LIGHT,
     'duration_p': TEXT_LIGHT,
 
+    'server': 'bold #CECECE',
     'bluetooth': 'bold #FFFFFF on #133EBF',
     'extlink': 'bold #FFFFFF on #522081',
 
