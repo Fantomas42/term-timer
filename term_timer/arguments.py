@@ -83,7 +83,10 @@ def solve_arguments(subparsers):
     parser = subparsers.add_parser(
         'solve',
         help='Start the timer and record solves',
-        description='Start the speed cubing timer to record and time your solves.',
+        description=(
+            'Start the speed cubing timer '
+            'to record and time your solves.'
+        ),
         aliases=COMMAND_ALIASES['solve'],
     )
 

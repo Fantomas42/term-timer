@@ -7,6 +7,7 @@ import time
 from datetime import datetime
 from datetime import timezone
 
+from term_timer.bluetooth.constants import DEBOUNCE
 from term_timer.bluetooth.constants import GAN_GEN4_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN4_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN4_STATE_CHARACTERISTIC
@@ -132,17 +133,16 @@ class GanGen4Driver(GanGen3Driver):
 
             # Also check and recovery missed moves
             # using periodic facelets event sent by cube
-            if self.last_serial != 1:
+            if self.last_serial != -1:
                 # Debounce the facelet event if there are active cube moves
                 if (
                         self.last_local_timestamp is not None
                         and (
                             timestamp - self.last_local_timestamp
-                        ).total_seconds() > 0.5
+                        ).total_seconds() > DEBOUNCE
                 ):
                     await self.check_if_move_missed()
-
-            if self.last_serial == -1:
+            else:
                 self.last_serial = serial
 
             # Corner/Edge Permutation/Orientation
@@ -199,7 +199,8 @@ class GanGen4Driver(GanGen3Driver):
                             # has no meaningful local timestamps
                             'local_timestamp': None,
                             # Cube hardware timestamp for missed move
-                            # you should interpolate using cubeTimestampLinearFit
+                            # you should interpolate using
+                            # cubeTimestampLinearFit
                             'cube_timestamp': None,
                             'face': face,
                             'direction': direction,

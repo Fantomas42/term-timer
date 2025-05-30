@@ -42,7 +42,7 @@ class Getcher:
                         future.set_result(key_str)
                 else:
                     loop.call_later(0.01, windows_getch)
-            except Exception as e:
+            except Exception as e:  # noqa BLE001
                 if not future.done():
                     future.set_exception(e)
 
@@ -83,7 +83,7 @@ class Getcher:
                     ch = sys.stdin.read(1)
                     if not future.done():
                         future.set_result(ch)
-                except Exception as e:
+                except Exception as e:  # noqa BLE001
                     if not future.done():
                         future.set_exception(e)
 

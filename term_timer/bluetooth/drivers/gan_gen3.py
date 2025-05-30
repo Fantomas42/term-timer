@@ -7,6 +7,7 @@ import time
 from datetime import datetime
 from datetime import timezone
 
+from term_timer.bluetooth.constants import DEBOUNCE
 from term_timer.bluetooth.constants import GAN_GEN3_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN3_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN3_STATE_CHARACTERISTIC
@@ -104,7 +105,7 @@ class GanGen3Driver(GanGen2Driver):
         return evicted_events
 
     def is_serial_in_range(self, start, end, serial,
-                           closed_start=False, closed_end=False):
+                           *, closed_start=False, closed_end=False):
         return (
             ((end - start) & 0xFF) >= ((serial - start) & 0xFF)
             and (closed_start or ((start - serial) & 0xFF) > 0)
@@ -132,9 +133,10 @@ class GanGen3Driver(GanGen2Driver):
                 self.last_serial,
                 self.serial,
                 move['serial'],
-                False, True,
+                closed_start=False,
+                closed_end=True,
         ):
-                self.move_buffer.insert(0, move)
+            self.move_buffer.insert(0, move)
 
     async def check_if_move_missed(self):
         diff = (self.serial - self.last_serial) & 0xFF
@@ -204,11 +206,10 @@ class GanGen3Driver(GanGen2Driver):
                         self.last_local_timestamp is not None
                         and (
                             timestamp - self.last_local_timestamp
-                        ).total_seconds() > 0.5
+                        ).total_seconds() > DEBOUNCE
                 ):
                     await self.check_if_move_missed()
-
-            if self.last_serial == -1:
+            else:
                 self.last_serial = serial
 
             # Corner/Edge Permutation/Orientation
@@ -265,7 +266,8 @@ class GanGen3Driver(GanGen2Driver):
                             # has no meaningful local timestamps
                             'local_timestamp': None,
                             # Cube hardware timestamp for missed move
-                            # you should interpolate using cubeTimestampLinearFit
+                            # you should interpolate using
+                            # cubeTimestampLinearFit
                             'cube_timestamp': None,
                             'face': face,
                             'direction': direction,

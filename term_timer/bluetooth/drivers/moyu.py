@@ -13,7 +13,6 @@ from term_timer.bluetooth.constants import MOYU_WEILONG_SERVICE
 from term_timer.bluetooth.constants import MOYU_WEILONG_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
-from term_timer.bluetooth.facelets import to_kociemba_facelets
 from term_timer.bluetooth.message import GanProtocolMessage
 from term_timer.bluetooth.salt import get_salt
 

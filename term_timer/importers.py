@@ -3,11 +3,11 @@ import operator
 from datetime import datetime
 from pathlib import Path
 
-from term_timer.interface.console import console
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
+from term_timer.interface.console import console
 from term_timer.solve import Solve
 
 

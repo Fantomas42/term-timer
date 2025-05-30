@@ -1,5 +1,7 @@
 # ruff: noqa: E222
 
+DEBOUNCE = 0.5
+
 PREFIX = [
     'GAN',
     'MG',
