@@ -18,6 +18,8 @@ OLL_MASKS = {}
 PLL_MASKS = {}
 OLL_INFO = {}
 PLL_INFO = {}
+OLL_SETUPS = {}
+PLL_SETUPS = {}
 
 AUF_MOVE = (CUBE_ORIENTATION + 'U').transform(
     degrip_full_moves,
@@ -25,7 +27,7 @@ AUF_MOVE = (CUBE_ORIENTATION + 'U').transform(
 )[0].base_move
 
 
-def load_and_fill(path, masks, info):
+def load_and_fill(path, masks, info, setups):
     with path.open('r') as fd:
         for kase, data in json.load(fd).items():
             for rotation, alternatives in data['rotations'].items():
@@ -36,13 +38,14 @@ def load_and_fill(path, masks, info):
                         'alternative': alternative,
                     }
             info[kase] = {
-                'setups': data['setups'],
                 'probability': data['probability'],
             }
+            if data['setups']:
+                setups[kase] = data['setups']
 
 
-load_and_fill(OLL_PATH, OLL_MASKS, OLL_INFO)
-load_and_fill(PLL_PATH, PLL_MASKS, PLL_INFO)
+load_and_fill(OLL_PATH, OLL_MASKS, OLL_INFO, OLL_SETUPS)
+load_and_fill(PLL_PATH, PLL_MASKS, PLL_INFO, PLL_SETUPS)
 
 
 class CFOPAnalyser(Analyser):

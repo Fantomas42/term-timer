@@ -14,8 +14,8 @@ from kociemba import solve
 
 from term_timer.constants import CUBE_SIZES
 from term_timer.magic_cube import Cube
-from term_timer.methods.cfop import OLL_INFO
-from term_timer.methods.cfop import PLL_INFO
+from term_timer.methods.cfop import OLL_SETUPS
+from term_timer.methods.cfop import PLL_SETUPS
 
 FACE_REGEXP = re.compile(r'(F|R|U|B|L|D)')
 
@@ -160,12 +160,12 @@ def trainer(mode):
 
 
 def random_training(mode):
-    cases = OLL_INFO
+    cases = OLL_SETUPS
     if mode == 'pll':
-        cases = PLL_INFO
+        cases = PLL_SETUPS
 
     case = choice(list(cases.keys()))
-    algo = choice(cases[case]['setups'])
+    algo = choice(cases[case])
 
     return case, parse_moves(algo).transform(
         unfat_moves,
