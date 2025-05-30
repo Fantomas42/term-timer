@@ -27,11 +27,14 @@ class MoyuWeilong10Driver(Driver):
     state_characteristic_uid = MOYU_WEILONG_STATE_CHARACTERISTIC
     command_characteristic_uid = MOYU_WEILONG_COMMAND_CHARACTERISTIC
     encrypter = GanGen2CubeEncrypter
-
-    last_serial = -1
-    cube_timestamp = 0
-    last_move_timestamp = 0
     factor = pow(2, 30)
+
+    def __init__(self):
+        super().__init__()
+
+        self.last_serial = -1
+        self.cube_timestamp = 0
+        self.last_move_timestamp = 0
 
     def init_cypher(self):
         return self.encrypter(

@@ -26,10 +26,13 @@ class GanGen3Driver(GanGen2Driver):
     state_characteristic_uid = GAN_GEN3_STATE_CHARACTERISTIC
     command_characteristic_uid = GAN_GEN3_COMMAND_CHARACTERISTIC
 
-    serial = -1
-    last_serial = -1
-    last_local_timestamp = None
-    move_buffer = []
+    def __init__(self):
+        super().__init__()
+
+        self.serial = -1
+        self.last_serial = -1
+        self.last_local_timestamp = None
+        self.move_buffer = []
 
     def send_command_handler(self, command: str):
         msg = bytearray(16)

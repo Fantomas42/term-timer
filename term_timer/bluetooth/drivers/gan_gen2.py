@@ -37,9 +37,12 @@ class GanGen2Driver(Driver):
     command_characteristic_uid = GAN_GEN2_COMMAND_CHARACTERISTIC
     encrypter = GanGen2CubeEncrypter
 
-    last_serial = -1
-    cube_timestamp = 0
-    last_move_timestamp = 0
+    def __init__(self):
+        super().__init__()
+
+        self.last_serial = -1
+        self.cube_timestamp = 0
+        self.last_move_timestamp = 0
 
     def init_cypher(self):
         if self.device.name.startswith('AiCube'):
