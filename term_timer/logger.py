@@ -16,7 +16,7 @@ LOGGING_PATH = LOGGING_DIR / LOGGING_FILE
 
 
 class DbusSignalFilter(logging.Filter):
-    def filter(self, record):
+    def filter(self, record) -> bool:
         return record.funcName not in {'_parse_msg', 'write_gatt_char'}
 
 
@@ -34,17 +34,17 @@ class AsyncioLogListener:
         self._stop_event = threading.Event()
         self._thread = None
 
-    def start(self):
+    def start(self) -> None:
         self._thread = threading.Thread(target=self._process_logs)
         self._thread.daemon = True
         self._thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         self._stop_event.set()
         if self._thread and self._thread.is_alive():
             self._thread.join()
 
-    def _process_logs(self):
+    def _process_logs(self) -> None:
         while not self._stop_event.is_set():
             try:
                 record = self.queue.get(block=True, timeout=0.2)

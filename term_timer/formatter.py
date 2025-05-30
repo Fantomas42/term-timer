@@ -58,7 +58,7 @@ def compute_padding(max_value: float) -> int:
     return padding
 
 
-def format_grade(score):
+def format_grade(score: float) -> str:
     if score >= 20:
         return 'S'
     if score >= 18:

@@ -1,8 +1,10 @@
 import logging
+from asyncio import Queue
 
 from bleak import BleakClient
-from bleak import BleakError
 from bleak import BleakScanner
+from bleak.backends.device import BLEDevice
+from bleak.exc import BleakError
 
 from term_timer.bluetooth.constants import PREFIX
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
@@ -31,7 +33,7 @@ class BluetoothInterface:
 
     scan_timeout = 5
 
-    def __init__(self, queue):
+    def __init__(self, queue: Queue):
         self.queue = queue
 
     async def __aenter__(self, device=None) -> bool:
@@ -71,7 +73,7 @@ class BluetoothInterface:
 
         return self
 
-    async def __aexit__(self, exc_type, exc_value, exc_traceback):
+    async def __aexit__(self, exc_type, exc_value, exc_traceback) -> None:
         logger.debug('Disconnect from client')
         # Send an "exit command to the consumer"
         await self.queue.put(None)
@@ -82,7 +84,7 @@ class BluetoothInterface:
             )
             await self.client.disconnect()
 
-    async def notification_handler(self, sender, data):
+    async def notification_handler(self, sender, data) -> None:
         events = await self.driver.event_handler(sender, data)
         for event in events:
             logger.debug('Event: %s', event['event'].upper())
@@ -108,7 +110,7 @@ class BluetoothInterface:
 
         return True
 
-    async def scan(self):
+    async def scan(self) -> BLEDevice | None:
         logger.debug(
             'Scanning for cube during %ss...',
             self.scan_timeout,

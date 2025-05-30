@@ -104,7 +104,7 @@ class Bluetooth:
             await self.bluetooth_interface.__aexit__(None, None, None)
 
     @property
-    def bluetooth_device_label(self):
+    def bluetooth_device_label(self) -> str:
         device_label = self.bluetooth_interface.device.name
 
         if 'hardware_version' in self.bluetooth_hardware:
@@ -180,7 +180,7 @@ class Bluetooth:
 
                     self.handle_bluetooth_move(event)
 
-    def handle_bluetooth_move(self, event):
+    def handle_bluetooth_move(self, event) -> None:
         if self.state in {'start', 'scrambling'}:
             self.scrambled.append(event['move'])
             self.handle_scrambled()

@@ -66,7 +66,7 @@ class Solve:
         return self.time
 
     @cached_property
-    def move_times(self) -> list[str, int]:
+    def move_times(self) -> list[list[str | int]]:
         return [
             [
                 x if not x.isdigit() else int(x)
@@ -77,7 +77,7 @@ class Solve:
         ]
 
     @staticmethod
-    def tps(moves, time):
+    def tps(moves: list[str] | int, time: int) -> float:
         if not time:
             return 0
 
@@ -95,7 +95,7 @@ class Solve:
         return self.tps(self.solution, self.time)
 
     @cached_property
-    def reconstructed(self) -> list[str, int]:
+    def reconstructed(self) -> list[str]:
         applied = self.method_applied
 
         if applied:
@@ -130,7 +130,7 @@ class Solve:
         return self.method(self.scramble, self.move_times)
 
     @cached_property
-    def recognition_time(self):
+    def recognition_time(self) -> float:
         return sum(
             s['recognition']
             for s in self.method_applied.summary
@@ -138,7 +138,7 @@ class Solve:
         )
 
     @cached_property
-    def execution_time(self):
+    def execution_time(self) -> float:
         return sum(
             s['execution']
             for s in self.method_applied.summary
@@ -282,7 +282,7 @@ class Solve:
         return line
 
     @cached_property
-    def time_graph(self) -> str:
+    def time_graph(self) -> None:
         if not self.raw_moves:
             return None
 
@@ -313,8 +313,10 @@ class Solve:
 
         plt.show()
 
+        return None
+
     @staticmethod
-    def missed_moves_pair(algorithm) -> list[Algorithm, Algorithm]:
+    def missed_moves_pair(algorithm: Algorithm) -> list[Algorithm, Algorithm]:
         source = algorithm.transform(
             optimize_double_moves,
         )
@@ -370,13 +372,13 @@ class Solve:
         return ' '.join([str(m) for m in moves])
 
     @cached_property
-    def score(self):
+    def score(self) -> float:
         bonus = max((30 - (self.time / SECOND)) / 5, 0)
         final_score = self.method_applied.score - self.all_missed_moves + bonus
         return min(max(0, final_score), 20)
 
     @cached_property
-    def link(self):
+    def link(self) -> str:
         date = self.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
         return self.alg_cubing_url(
@@ -408,7 +410,7 @@ class Solve:
         )
 
     @property
-    def as_save(self):
+    def as_save(self) -> dict:
         return {
             'date': self.date,
             'time': self.time,
