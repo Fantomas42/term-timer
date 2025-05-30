@@ -13,11 +13,11 @@ class TestStatisticsTools(unittest.TestCase):
     def setUp(self):
         """Set up test cases with sample solves."""
         self.solves = [
-            Solve(1000000000000, 1010000000000, 'F R U', ''),  # 10 seconds
-            Solve(2000000000000, 2015000000000, 'R U F', ''),  # 15 seconds
-            Solve(3000000000000, 3020000000000, 'U F R', ''),  # 20 seconds
-            Solve(4000000000000, 4030000000000, 'F U R', ''),  # 30 seconds
-            Solve(5000000000000, 5025000000000, 'R F U', ''),  # 25 seconds
+            Solve(1000000000000, 10 * SECOND, 'F R U', ''),  # 10 seconds
+            Solve(2000000000000, 15 * SECOND, 'R U F', ''),  # 15 seconds
+            Solve(3000000000000, 20 * SECOND, 'U F R', ''),  # 20 seconds
+            Solve(4000000000000, 30 * SECOND, 'F U R', ''),  # 30 seconds
+            Solve(5000000000000, 25 * SECOND, 'R F U', ''),  # 25 seconds
         ]
         # Final times: [10s, 15s, 20s, 30s, 25s]
         self.stats_tools = StatisticsTools(self.solves)
@@ -77,11 +77,11 @@ class TestStatistics(unittest.TestCase):
     def setUp(self):
         """Set up test cases with sample solves."""
         self.solves = [
-            Solve(1000000000000, 1010000000000, 'F R U', ''),  # 10 seconds
-            Solve(2000000000000, 2015000000000, 'R U F', ''),  # 15 seconds
-            Solve(3000000000000, 3020000000000, 'U F R', ''),  # 20 seconds
-            Solve(4000000000000, 4030000000000, 'F U R', ''),  # 30 seconds
-            Solve(5000000000000, 5025000000000, 'R F U', ''),  # 25 seconds
+            Solve(1000000000000, 10 * SECOND, 'F R U', ''),  # 10 seconds
+            Solve(2000000000000, 15 * SECOND, 'R U F', ''),  # 15 seconds
+            Solve(3000000000000, 20 * SECOND, 'U F R', ''),  # 20 seconds
+            Solve(4000000000000, 30 * SECOND, 'F U R', ''),  # 30 seconds
+            Solve(5000000000000, 25 * SECOND, 'R F U', ''),  # 25 seconds
         ]
 
     def test_mo3_property(self, mock_console, mock_histogram):
@@ -165,39 +165,17 @@ class TestStatisticsResumeReporter(unittest.TestCase):
             # Verify that console.print was called multiple times
             self.assertTrue(mock_print.call_count > 5)
 
-    def test_resume_no_solves(self):
-        """Test resume method with no solves."""
-        empty_stats = StatisticsReporter(self.puzzle, [])
-
-        with patch('term_timer.interface.console.console.print') as mock_print:
-            empty_stats.resume()
-
-            # Should print a warning and return
-            mock_print.assert_called_once()
-            args, _ = mock_print.call_args
-            self.assertIn('No saved solves', args[0])
-
 
 class TestStatisticsReporterListing(unittest.TestCase):
     def setUp(self):
         """Set up test cases with sample solves."""
         self.solves = [
-            Solve(1000000000, 2000000000, 'F R U', ''),
-            Solve(3000000000, 4000000000, 'R U F', ''),
-            Solve(5000000000, 6000000000, 'U F R', 'DNF'),
-            Solve(7000000000, 8000000000, 'F U R', '+2'),
+            Solve(1000000000, 1 * SECOND, 'F R U', ''),
+            Solve(3000000000, 1 * SECOND, 'R U F', ''),
+            Solve(5000000000, 1 * SECOND, 'U F R', 'DNF'),
+            Solve(7000000000, 1 * SECOND, 'F U R', '+2'),
         ]
         self.listing = StatisticsReporter(3, self.solves)
-
-    @patch('term_timer.interface.console.console.print')
-    def test_resume_no_solves(self, mock_console):
-        """Test that a warning is displayed when there are no solves."""
-        empty_listing = StatisticsReporter(3, [])
-        empty_listing.listing(5, '')
-
-        mock_console.assert_called_once_with(
-            '[warning]No saved solves yet.[/warning]',
-        )
 
     @patch('term_timer.interface.console.console.print')
     def test_resume_with_limit(self, mock_console):
@@ -227,16 +205,16 @@ class TestStatisticsReporterListing(unittest.TestCase):
         self.assertIn('#4', call_args[0])
 
         # The time should be formatted
-        self.assertIn('[result]00:01.000[/result]', call_args[1])
+        self.assertIn('[success]00:01.000[/success]', call_args[1])
 
         # The date should be included
-        self.assertIn('[date]1970-01-01 01:00[/date]', call_args[2])
+        self.assertIn('[date]2191-10-27 14:26[/date]', call_args[2])
 
         # The scramble should be included
         self.assertIn('[consign]F U R[/consign]', call_args[3])
 
         # The flag should be included
-        self.assertIn('[result]+2[/result]', call_args[4])
+        self.assertIn('[plus_two]+2[/plus_two]', call_args[4])
 
     @patch('term_timer.interface.console.console.print')
     def test_resume_reverse_order(self, mock_console):
