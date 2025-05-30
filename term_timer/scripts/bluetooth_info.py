@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import logging.config
-import os
 import sys
 import threading
 from contextlib import suppress
@@ -19,6 +18,7 @@ from term_timer.bluetooth.facelets import to_magiccube_facelets
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.interface.console import console
+from term_timer.logger import LOGGING_DIR
 from term_timer.magic_cube import Cube
 from term_timer.opengl.thread import CubeGLThread
 
@@ -45,7 +45,7 @@ LOGGING_CONF = {
             'backupCount': 5,
             'maxBytes': 50000000,
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join('/tmp/', 'term-timer-debug.log'),
+            'filename': LOGGING_DIR / 'bt-info.log',
         },
         'consoleHandler': {
             'formatter': 'consoleFormatter',
