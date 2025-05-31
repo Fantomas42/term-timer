@@ -446,7 +446,7 @@
             {{ cfop.mean|format_grade }}
           </div>
           <div class="stat-meta">
-            <span class="stat-best">Mean: {{ cfop.mean|round(2) }}</span>
+            <span class="stat-best">Mean: {{ "%0.2f"|format(cfop.mean) }}</span>
           </div>
         </div>
       {% endif %}
@@ -488,6 +488,7 @@
             <th>Date</th>
             <th>Scramble</th>
             <th>Flag</th>
+            <th>Grade</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -507,13 +508,25 @@
               </td>
               <td class="solve-date">
                 {{ solve.datetime.strftime('%Y-%m-%d %H:%M') }}
-                <span class="tooltip">Session {{ solve.session|default('default', true) }}</span>
+                {% if session == 'all' %}
+                  <span class="tooltip">Session: {{ solve.session|default('default', true) }}</span>
+                {% endif %}
               </td>
               <td class="solve-scramble">
                 {{ solve.scramble }}
               </td>
               <td class="solve-flag">
                 {{ solve.flag|default('---', true) }}
+              </td>
+              <td class="solve-grade">
+                {% if solve.device %}
+                  <span class="grade-{{ solve.score|format_grade|lower|replace('+', 'plus') }}">
+                    {{ solve.score|format_grade }}
+                  </span>
+                  <span class="tooltip">{{ "%0.2f"|format(solve.score) }}</span>
+                {% else %}
+                  ---
+                {% endif %}
               </td>
               <td>
                 {% if solve.raw_moves %}
@@ -567,10 +580,10 @@
                 {{ oll.count }}
               </td>
               <td class="frequency-{% if oll.frequency > oll.probability %}higher{% else %}lower{% endif %}">
-                {{ (oll.frequency * 100)|round(2) }}%
+                {{ "%0.2f"|format(oll.frequency * 100) }}%
               </td>
               <td>
-                {{ (oll.probability * 100)|round(2) }}%
+                {{ "%0.2f"|format(oll.probability * 100) }}%
               </td>
               <td>
                 {{ oll.recognition|format_duration }}
@@ -582,13 +595,13 @@
                 {{ oll.time|format_duration }}
               </td>
               <td>
-                {{ oll.qtm|round(2) }}
+                {{ "%0.2f"|format(oll.qtm) }}
               </td>
               <td>
-                {{ oll.tps|round(2) }}
+                {{ "%0.2f"|format(oll.tps) }}
               </td>
               <td>
-                {{ oll.etps|round(2) }}
+                {{ "%0.2f"|format(oll.etps) }}
               </td>
             </tr>
           {% endfor %}
@@ -633,10 +646,10 @@
                 {{ pll.count }}
               </td>
               <td class="frequency-{% if pll.frequency > pll.probability %}higher{% else %}lower{% endif %}">
-                {{ (pll.frequency * 100)|round(2) }}%
+                {{ "%0.2f"|format(pll.frequency * 100) }}%
               </td>
               <td>
-                {{ (pll.probability * 100)|round(2) }}%
+                {{ "%0.2f"|format(pll.probability * 100) }}%
               </td>
               <td>
                 {{ pll.recognition|format_duration }}
@@ -648,13 +661,13 @@
                 {{ pll.time|format_duration }}
               </td>
               <td>
-                {{ pll.qtm|round(2) }}
+                {{ "%0.2f"|format(pll.qtm) }}
               </td>
               <td>
-                {{ pll.tps|round(2) }}
+                {{ "%0.2f"|format(pll.tps) }}
               </td>
               <td>
-                {{ pll.etps|round(2) }}
+                {{ "%0.2f"|format(pll.etps) }}
               </td>
             </tr>
           {% endfor %}

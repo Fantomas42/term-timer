@@ -210,8 +210,12 @@ header {
     font-weight: 600;
 }
 
-.solve-time, .solve-date {
+.solve-time, .solve-date, .solve-grade {
     position: relative;
+}
+
+.solve-grade {
+    font-weight: bold;
 }
 
 .solve-scramble {
@@ -229,7 +233,7 @@ header {
     color: var(--light);
     padding: 5px 10px;
     border-radius: 4px;
-    font-size: 0.75rem;
+    font-size: 1rem;
     z-index: 100;
     opacity: 0;
     transition: opacity 0.3s;
@@ -244,7 +248,8 @@ header {
 }
 
 .solve-time:hover .tooltip,
-.solve-date:hover .tooltip {
+.solve-date:hover .tooltip,
+.solve-grade:hover .tooltip {
     opacity: 0.9;
 }
 
