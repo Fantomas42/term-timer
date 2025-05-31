@@ -442,7 +442,9 @@
       {% if cfop.total %}
         <div class="stat-card">
           <div class="stat-title">CFOP Grade</div>
-          <div class="stat-value">{{ cfop.mean|format_grade }}</div>
+          <div class="stat-value grade-{{ cfop.mean|format_grade|lower|replace('+', 'plus') }}">
+            {{ cfop.mean|format_grade }}
+          </div>
           <div class="stat-meta">
             <span class="stat-best">Mean: {{ cfop.mean|round(2) }}</span>
           </div>

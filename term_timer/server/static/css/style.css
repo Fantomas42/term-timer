@@ -447,6 +447,19 @@ header {
     font-size: 0.7em;
     color: var(--light);
 }
+
+.grade-s { color: #FF7F7E; }
+.grade-aplus { color: #FFBF7F; }
+.grade-a { color: #FFBF7F; }
+.grade-bplus { color: #FFDF80; }
+.grade-b { color: #FFDF80; }
+.grade-cplus { color: #FEFF7F; }
+.grade-c { color: #FEFF7F; }
+.grade-d { color: #BEFF7F; }
+.grade-e { color: #7EFF80; }
+.grade-f { color: #7FFFFF; }
+
+
 .pll-list, .oll-list {
     table-layout: fixed;
     width: 100%;
