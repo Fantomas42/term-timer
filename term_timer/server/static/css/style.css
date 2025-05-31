@@ -13,7 +13,7 @@
     --text-primary: #F8FAFC;
     --text-secondary: #94A3B8;
     --border-color: #334155;
-    --header: #152B5C;
+    --header: #092155;
     --pastille: rgba(37, 99, 235, 0.3);
 }
 
@@ -423,6 +423,7 @@ header {
     z-index: 1;
     font-weight: 500;
     cursor: pointer;
+    padding: 0.5rem 1rem;
 }
 
 .table-container tr:hover {
