@@ -443,10 +443,10 @@ def serve_arguments(subparsers):
     parser.add_argument(
         '--port',
         type=int,
-        default=8080,
+        default=8333,
         help=(
             'Set the port of the server.\n'
-            'Default: 8080.'
+            'Default: 8333.'
         ),
     )
 
