@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
 from datetime import timezone
+from http import HTTPStatus
+from wsgiref.simple_server import WSGIRequestHandler
 
 from bottle import TEMPLATE_PATH
 from bottle import Bottle
@@ -29,6 +31,22 @@ def format_delta(delta: int) -> str:
         sign = '+'
 
     return f'{ sign }{ format_duration(delta) }'
+
+
+class RichHandler(WSGIRequestHandler):
+
+    def log_request(self, code, size):
+        if isinstance(code, HTTPStatus):
+            code = code.value
+
+        message = (
+            f'[server][{ self.log_date_time_string() }][/server] '
+            f'[green]{ code!s }[/green] '
+            f'[result]{ self.requestline }[/result] '
+            f'[comment]{ size!s }[/comment]'
+        )
+
+        console.print(message)
 
 
 class View:
@@ -261,7 +279,8 @@ class Server:
         if not os.getenv('BOTTLE_CHILD'):
             console.print(
                 '[server]Term Timer server is listening on [/server]'
-                f'[title]http://{ host }:{ port }/[/title]',
+                f'[extlink][link=http://{ host }:{ port }/]'
+                f'http://{ host }:{ port }/[/link][/extlink]',
             )
             console.print('Hit Ctrl-C to quit.', style='comment')
 
@@ -271,6 +290,8 @@ class Server:
             quiet=True,
             reloader=debug,
             debug=debug,
+            server='wsgiref',
+            handler_class=RichHandler,
         )
 
     def create_app(self):
