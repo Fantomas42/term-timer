@@ -1,18 +1,19 @@
 :root {
-    --primary: #2563eb;
-    --secondary: #64748b;
-    --success: #10b981;
-    --danger: #ef4444;
-    --warning: #f59e0b;
-    --info: #3b82f6;
-    --light: #f8fafc;
-    --dark: #1e293b;
-    --bg-main: #0f172a;
-    --card-bg: #1e293b;
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
+    --primary: #2563EB;
+    --secondary: #64748B;
+    --success: #10B981;
+    --danger: #EF4444;
+    --warning: #F59E0B;
+    --info: #3B82F6;
+    --link: #549EFF;
+    --light: #F8FAFC;
+    --dark: #1E293B;
+    --bg-main: #0F172A;
+    --card-bg: #1E293B;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
     --border-color: #334155;
-    --header: #152b5c;
+    --header: #152B5C;
     --pastille: rgba(37, 99, 235, 0.3);
 }
 
@@ -72,14 +73,13 @@ header {
 }
 
 .link {
-    color: var(--text-secondary);
+    color: var(--light);
     text-decoration: none;
-    font-size: 0.875rem;
-    transition: color 0.2s;
+    font-weight: bold;
 }
 
 .link:hover {
-    color: var(--primary);
+    color: var(--link);
 }
 
 .skip {
@@ -184,7 +184,7 @@ header {
 }
 
 .tab.active {
-    color: var(--info);
+    color: var(--light);
     border-bottom-color: var(--primary);
 }
 
@@ -208,12 +208,6 @@ header {
 .time-worst {
     color: var(--danger) !important;
     font-weight: 600;
-}
-
-.solve-id a {
-    color: var(--text-primary);
-    text-decoration: none;
-    font-weight: bold;
 }
 
 .solve-time, .solve-date {
