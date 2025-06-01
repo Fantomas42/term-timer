@@ -76,6 +76,10 @@ class Solve:
             if move_time
         ]
 
+    @cached_property
+    def advanced(self):
+        return bool(self.raw_moves)
+
     @staticmethod
     def tps(moves: list[str] | int, time: int) -> float:
         if not time:
@@ -373,6 +377,9 @@ class Solve:
 
     @cached_property
     def score(self) -> float:
+        if not self.method_applied:
+            return None
+
         bonus = max((30 - (self.time / SECOND)) / 5, 0)
         final_score = self.method_applied.score - self.all_missed_moves + bonus
         return min(max(0, final_score), 20)

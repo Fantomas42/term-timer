@@ -13,244 +13,246 @@
 {% endblock %}
 
 {% block script %}
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
-  <script>
-   document.addEventListener('DOMContentLoaded', function() {
-     initializeTimingChart();
-     initializeTPSChart();
-     initializeRecognitionChart();
-   });
+  {% if solve.advanced %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
+    <script>
+     document.addEventListener('DOMContentLoaded', function() {
+       initializeTimingChart();
+       initializeTPSChart();
+       initializeRecognitionChart();
+     });
 
-   function initializeRecognitionChart() {
-     const ctx = document.getElementById('recognitionChart');
-     const recog = {{ recognitions|tojson }};
+     function initializeRecognitionChart() {
+       const ctx = document.getElementById('recognitionChart');
+       const recog = {{ recognitions|tojson }};
 
 
-     recogChart = new Chart(ctx, {
-       type: 'bar',
-       data: {
-         labels: recog.map(item => item.label),
-         datasets: [
-           {
-             label: 'Recognition',
-             data: recog.map(item => item.recognition),
-             backgroundColor: 'rgb(65, 131, 196)',
-             borderColor: 'rgb(65, 131, 196)',
-             borderWidth: 1
-           },
-           {
-             label: 'Execution',
-             data: recog.map(item => item.execution),
-             backgroundColor: 'rgb(231, 76, 31)',
-             borderColor: 'rgb(231, 76, 31)',
-             borderWidth: 1
-           }
-         ]
-       },
-       options: {
-         responsive: true,
-         maintainAspectRatio: false,
-         plugins: {
-           legend: {
-             display: false
-           }
-         },
-         scales: {
-           x: {
-             stacked: true,
-             ticks: {
-               color: '#94a3b8',
+       recogChart = new Chart(ctx, {
+         type: 'bar',
+         data: {
+           labels: recog.map(item => item.label),
+           datasets: [
+             {
+               label: 'Recognition',
+               data: recog.map(item => item.recognition),
+               backgroundColor: 'rgb(65, 131, 196)',
+               borderColor: 'rgb(65, 131, 196)',
+               borderWidth: 1
              },
-             grid: {
+             {
+               label: 'Execution',
+               data: recog.map(item => item.execution),
+               backgroundColor: 'rgb(231, 76, 31)',
+               borderColor: 'rgb(231, 76, 31)',
+               borderWidth: 1
+             }
+           ]
+         },
+         options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           plugins: {
+             legend: {
                display: false
              }
            },
-           y: {
-             stacked: true,
-             title: {
-               display: true,
-               text: 'Time',
-               color: '#94a3b8'
-             },
-             ticks: {
-               stepSize: 1.0,
-               color: '#94a3b8',
-             },
-             grid: {
-               color: 'rgba(148, 163, 184, 0.1)',
-             }
-           }
-         },
-       }
-     });
-   }
-
-   function initializeTPSChart() {
-     const ctx = document.getElementById('tpsChart');
-     const tps = {{ tps|tojson }};
-
-     tpsChart = new Chart(ctx, {
-       type: 'line',
-       data: {
-         labels: tps.map(item => item.label),
-         datasets: [
-           {
-             label: 'TPS',
-             data: tps.map(item => item.tps),
-             borderColor: 'rgba(75, 192, 75, 0.6)',
-             tension: 0.1,
-             fill: false,
-             pointBackgroundColor: 'rgba(75, 192, 75, 0.6)',
-             pointRadius: 5,
-             pointHoverRadius: 7
-           },
-           {
-             label: 'eTPS',
-             data: tps.map(item => item.etps),
-             borderColor: 'rgba(37, 99, 236, 0.6)',
-             pointBackgroundColor: 'rgba(37, 99, 236, 0.6)',
-             tension: 0.1,
-             fill: false,
-             pointRadius: 5,
-             pointHoverRadius: 7
-           },
-         ]
-       },
-       options: {
-         responsive: true,
-         maintainAspectRatio: false,
-         plugins: {
-           legend: {
-             display: false
-           },
-         },
-         scales: {
-           x: {
-             ticks: {
-               color: '#94a3b8',
-             },
-             grid: {
-               color: 'rgba(148, 163, 184, 0.1)',
-             }
-           },
-           y: {
-             beginAtZero: true,
-             title: {
-               display: true,
-               text: 'TPS (Turns Per Second)',
-               color: '#94a3b8'
-             },
-             grid: {
-               color: 'rgba(148, 163, 184, 0.1)',
-             },
-             ticks: {
-               color: '#94a3b8',
-             },
-           },
-         },
-       }
-     });
-   }
-
-   function initializeTimingChart() {
-     const ctx = document.getElementById('timingChart');
-     const steps = {{ steps|tojson }};
-
-     new Chart(ctx, {
-       type: 'scatter',
-       data: {
-         datasets: [{
-           label: 'Moves',
-           data: {{ scatter|tojson }},
-           borderColor: '#2563ec',
-           backgroundColor: 'rgba(37, 99, 236, 0.6)',
-           borderWidth: 1
-         }]
-       },
-       options: {
-         responsive: true,
-         maintainAspectRatio: false,
-         plugins: {
-           legend: {
-             display: false
-           },
-           tooltip: {
-             callbacks: {
-               title: function(tooltipItem) {
-                 return tooltipItem[0].label;
+           scales: {
+             x: {
+               stacked: true,
+               ticks: {
+                 color: '#94a3b8',
                },
-               label: function(context) {
-                 return `${context.parsed.y}s`;
+               grid: {
+                 display: false
+               }
+             },
+             y: {
+               stacked: true,
+               title: {
+                 display: true,
+                 text: 'Time',
+                 color: '#94a3b8'
+               },
+               ticks: {
+                 stepSize: 1.0,
+                 color: '#94a3b8',
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)',
                }
              }
            },
-           annotation: {
-             annotations: steps.map(line => ({
-               type: 'line',
-               xMin: line.x,
-               xMax: line.x,
-               borderColor: 'rgba(255, 0, 0, 0.8)',
-               borderWidth: 2,
-             }))
-          },
+         }
+       });
+     }
+
+     function initializeTPSChart() {
+       const ctx = document.getElementById('tpsChart');
+       const tps = {{ tps|tojson }};
+
+       tpsChart = new Chart(ctx, {
+         type: 'line',
+         data: {
+           labels: tps.map(item => item.label),
+           datasets: [
+             {
+               label: 'TPS',
+               data: tps.map(item => item.tps),
+               borderColor: 'rgba(75, 192, 75, 0.6)',
+               tension: 0.1,
+               fill: false,
+               pointBackgroundColor: 'rgba(75, 192, 75, 0.6)',
+               pointRadius: 5,
+               pointHoverRadius: 7
+             },
+             {
+               label: 'eTPS',
+               data: tps.map(item => item.etps),
+               borderColor: 'rgba(37, 99, 236, 0.6)',
+               pointBackgroundColor: 'rgba(37, 99, 236, 0.6)',
+               tension: 0.1,
+               fill: false,
+               pointRadius: 5,
+               pointHoverRadius: 7
+             },
+           ]
          },
-         scales: {
-           x: {
-             type: 'linear',
-             min: 0,
-             max: {{ scatter|length }},
-             ticks: {
-               display: true,
-               autoSkip: false,
-               major: true,
-               color: '#94a3b8',
-               callback: function(value) {
-                const line = steps.find(l => l.x === value);
-                return line ? line.label : '';
-               },
+         options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           plugins: {
+             legend: {
+               display: false
              },
-             afterBuildTicks: (axis) => {
-               axis.ticks = steps.map(line => ({
-                 value: line.x,
-               }));
-               return;
-             },
-             grid: {
-               color: 'rgba(148, 163, 184, 0.1)',
-             }
            },
-           y: {
-             min: 0,
-             max: {{ scatter[-1].y }},
-             title: {
-               display: true,
-               text: 'Time',
-               color: '#94a3b8'
+           scales: {
+             x: {
+               ticks: {
+                 color: '#94a3b8',
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)',
+               }
              },
-             ticks: {
-               color: '#94a3b8',
-               major: true,
-               callback: function(value) {
-                const line = steps.find(l => l.y === value);
-                return line ? line.y : '';
+             y: {
+               beginAtZero: true,
+               title: {
+                 display: true,
+                 text: 'TPS (Turns Per Second)',
+                 color: '#94a3b8'
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)',
+               },
+               ticks: {
+                 color: '#94a3b8',
                },
              },
-             afterBuildTicks: (axis) => {
-               axis.ticks = steps.map(line => ({
-                 value: line.y,
-               }));
-               return;
+           },
+         }
+       });
+     }
+
+     function initializeTimingChart() {
+       const ctx = document.getElementById('timingChart');
+       const steps = {{ steps|tojson }};
+
+       new Chart(ctx, {
+         type: 'scatter',
+         data: {
+           datasets: [{
+             label: 'Moves',
+             data: {{ scatter|tojson }},
+             borderColor: '#2563ec',
+             backgroundColor: 'rgba(37, 99, 236, 0.6)',
+             borderWidth: 1
+           }]
+         },
+         options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           plugins: {
+             legend: {
+               display: false
              },
-             grid: {
-               color: 'rgba(148, 163, 184, 0.1)'
+             tooltip: {
+               callbacks: {
+                 title: function(tooltipItem) {
+                   return tooltipItem[0].label;
+                 },
+                 label: function(context) {
+                   return `${context.parsed.y}s`;
+                 }
+               }
+             },
+             annotation: {
+               annotations: steps.map(line => ({
+                 type: 'line',
+                 xMin: line.x,
+                 xMax: line.x,
+                 borderColor: 'rgba(255, 0, 0, 0.8)',
+                 borderWidth: 2,
+               }))
+             },
+           },
+           scales: {
+             x: {
+               type: 'linear',
+               min: 0,
+               max: {{ scatter|length }},
+               ticks: {
+                 display: true,
+                 autoSkip: false,
+                 major: true,
+                 color: '#94a3b8',
+                 callback: function(value) {
+                   const line = steps.find(l => l.x === value);
+                   return line ? line.label : '';
+                 },
+               },
+               afterBuildTicks: (axis) => {
+                 axis.ticks = steps.map(line => ({
+                   value: line.x,
+                 }));
+                 return;
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)',
+               }
+             },
+             y: {
+               min: 0,
+               max: {{ scatter[-1].y }},
+               title: {
+                 display: true,
+                 text: 'Time',
+                 color: '#94a3b8'
+               },
+               ticks: {
+                 color: '#94a3b8',
+                 major: true,
+                 callback: function(value) {
+                   const line = steps.find(l => l.y === value);
+                   return line ? line.y : '';
+                 },
+               },
+               afterBuildTicks: (axis) => {
+                 axis.ticks = steps.map(line => ({
+                   value: line.y,
+                 }));
+                 return;
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)'
+               }
              }
            }
          }
-       }
-     });
-   }
-  </script>
+       });
+     }
+    </script>
+  {% endif %}
 {% endblock %}
 
 {% block body %}
@@ -283,7 +285,6 @@
           <div class="stat-value">{{ solve.device }}</div>
         </div>
       {% endif %}
-
       <div class="stat-card">
         <div class="stat-title">Timer</div>
         <div class="stat-value">
@@ -301,50 +302,53 @@
         </div>
       </div>
     </div>
-
   </div>
 
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">Key Statistics</h2>
-    </div>
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-title">Grade</div>
-        <div class="stat-value grade-{{ solve.score|format_grade|lower|replace('+', 'plus') }}">
-          {{ solve.score|format_grade }}
-        </div>
+  {% if solve.advanced %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Key Statistics</h2>
       </div>
-      <div class="stat-card">
-        <div class="stat-title">TPS</div>
-        <div class="stat-value">{{ solve.reconstructed_tps|round(2) }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-title">HTM</div>
-        <div class="stat-value">{{ solve.reconstructed.metrics.htm }}</div>
-      </div>
-      {% if solve.reconstructed.metrics.htm != solve.reconstructed.metrics.qtm %}
+      <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-title">QTM</div>
-          <div class="stat-value">{{ solve.reconstructed.metrics.qtm }}</div>
-        </div>
-      {% endif %}
-      {% if solve.reconstructed.metrics.qtm != solve.reconstructed.metrics.qstm %}
-        <div class="stat-card">
-          <div class="stat-title">QSTM</div>
-          <div class="stat-value">{{ solve.reconstructed.metrics.qstm }}</div>
-        </div>
-      {% endif %}
-      {% if solve.all_missed_moves %}
-        <div class="stat-card">
-          <div class="stat-title">Missed Moves</div>
-          <div class="stat-value stat-{% if solve.all_missed_moves > 5 %}worst{% else %}warning{% endif %}">
-            {{ solve.all_missed_moves }}
+          <div class="stat-title">Grade</div>
+          <div class="stat-value grade-{{ solve.score|format_grade|lower|replace('+', 'plus') }}">
+            {{ solve.score|format_grade }}
           </div>
         </div>
-      {% endif %}
+        <div class="stat-card">
+          <div class="stat-title">TPS</div>
+          <div class="stat-value">
+            {{ "%0.2f"|format(solve.reconstructed_tps) }}
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">HTM</div>
+          <div class="stat-value">{{ solve.reconstructed.metrics.htm }}</div>
+        </div>
+        {% if solve.reconstructed.metrics.htm != solve.reconstructed.metrics.qtm %}
+          <div class="stat-card">
+            <div class="stat-title">QTM</div>
+            <div class="stat-value">{{ solve.reconstructed.metrics.qtm }}</div>
+          </div>
+        {% endif %}
+        {% if solve.reconstructed.metrics.qtm != solve.reconstructed.metrics.qstm %}
+          <div class="stat-card">
+            <div class="stat-title">QSTM</div>
+            <div class="stat-value">{{ solve.reconstructed.metrics.qstm }}</div>
+          </div>
+        {% endif %}
+        {% if solve.all_missed_moves %}
+          <div class="stat-card">
+            <div class="stat-title">Missed Moves</div>
+            <div class="stat-value stat-{% if solve.all_missed_moves > 5 %}worst{% else %}warning{% endif %}">
+              {{ solve.all_missed_moves }}
+            </div>
+          </div>
+        {% endif %}
+      </div>
     </div>
-  </div>
+  {% endif %}
 
   <div class="card">
     <div class="card-header">
@@ -361,88 +365,91 @@
     {# TODO copy #}
   </div>
 
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">Reconstruction</h2>
-    </div>
-    <div class="table-container">
-      <table class="reconstruction">
-        <thead>
-          <tr>
-            <th>Step</th>
-            <th>Case</th>
-            <th>Moves</th>
-            <th>Recognition</th>
-            <th>Execution</th>
-            <th>Time</th>
-            <th>Turn</th>
-            <th>TPS</th>
-            <th>eTPS</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for info in solve.method_applied.summary %}
+  {% if solve.advanced %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Reconstruction</h2>
+      </div>
+      <div class="table-container">
+        <table class="reconstruction">
+          <thead>
             <tr>
-              <td class="recons-step">
-                {{ info.name }}
-              </td>
-              <td class="recons-case">
-                {{ info.cases[0]|default('---', true) }}
-              </td>
-              <td class="recons-moves">
-                {{ info.reconstruction }}
-              </td>
-              <td class="recons-recognition">
-                {{ info.recognition|format_duration }}
-              </td>
-              <td class="recons-execution">
-                {{ info.execution|format_duration }}
-              </td>
-              <td class="recons-total">
-                {{ info.total|format_duration }}
-              </td>
-              <td class="recons-turns">
-                {{ info.reconstruction|length }}
-              </td>
-              <td class="recons-tps">
-                {{ solve.tps(info.moves, info.total)|round(2) }}
-              </td>
-              <td class="recons-etps">
-                {{ solve.tps(info.moves, info.execution)|round(2) }}
-              </td>
+              <th>Step</th>
+              <th>Case</th>
+              <th>Moves</th>
+              <th>Recognition</th>
+              <th>Execution</th>
+              <th>Time</th>
+              <th>Turn</th>
+              <th>TPS</th>
+              <th>eTPS</th>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {% for info in solve.method_applied.summary %}
+              <tr>
+                <td class="recons-step">
+                  {{ info.name }}
+                </td>
+                <td class="recons-case">
+                  {{ info.cases[0]|default('---', true) }}
+                </td>
+                <td class="recons-moves">
+                  {{ info.reconstruction }}
+                </td>
+                <td class="recons-recognition">
+                  {{ info.recognition|format_duration }}
+                </td>
+                <td class="recons-execution">
+                  {{ info.execution|format_duration }}
+                </td>
+                <td class="recons-total">
+                  {{ info.total|format_duration }}
+                </td>
+                <td class="recons-turns">
+                  {{ info.reconstruction|length }}
+                </td>
+                <td class="recons-tps">
+                  {{ solve.tps(info.moves, info.total)|round(2) }}
+                </td>
+                <td class="recons-etps">
+                  {{ solve.tps(info.moves, info.execution)|round(2) }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">Timing Chart</h2>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Timing Chart</h2>
+      </div>
+      <div class="chart-container">
+        <canvas id="timingChart"></canvas>
+      </div>
     </div>
-    <div class="chart-container">
-      <canvas id="timingChart"></canvas>
-    </div>
-  </div>
 
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">TPS</h2>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">TPS</h2>
+      </div>
+      <div class="chart-container">
+        <canvas id="tpsChart"></canvas>
+      </div>
     </div>
-    <div class="chart-container">
-      <canvas id="tpsChart"></canvas>
-    </div>
-  </div>
 
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">Recognition</h2>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Recognition</h2>
+      </div>
+      <div class="chart-container">
+        <canvas id="recognitionChart"></canvas>
+      </div>
     </div>
-    <div class="chart-container">
-      <canvas id="recognitionChart"></canvas>
-    </div>
-  </div>
+
+  {% endif %}
 
   <footer class="app-footer card">
     <div class="footer-container">
