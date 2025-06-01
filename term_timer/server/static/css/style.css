@@ -152,6 +152,7 @@ header {
     align-items: center;
     gap: 0.5rem;
     font-size: 0.875rem;
+    color: var(--text-secondary);
 }
 
 .stat-best {
@@ -160,12 +161,36 @@ header {
 .stat-worst {
     color: var(--danger);
 }
+.stat-warning {
+    color: var(--warning);
+}
 
 .stat-delta.positive {
     color: var(--danger);
 }
 .stat-delta.negative {
     color: var(--success);
+}
+
+.scramble-card {
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 0.375rem;
+}
+
+.scramble-card .move {
+    font-size: 1.3rem;
+    font-weight: bold;
+    background-color: var(--card-bg);
+    padding: 0.25em 0.5em;
+    border-radius: 0.375rem;
+}
+
+.scramble-card .scramble-footer {
+    padding-top: 1rem;
+    margin-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
 }
 
 .tabs {

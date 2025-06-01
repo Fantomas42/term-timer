@@ -271,7 +271,11 @@
       {% endif %}
       <div class="stat-card">
         <div class="stat-title">Date</div>
-        <div class="stat-value">{{ solve.datetime.strftime('%Y-%m-%d %H:%M') }}</div>
+        <div class="stat-value">{{ solve.datetime.strftime('%Y-%m-%d') }}
+            <div class="stat-meta">
+              {{ solve.datetime.strftime('%H:%M') }}
+            </div>
+        </div>
       </div>
       {% if solve.device %}
         <div class="stat-card">
@@ -282,7 +286,19 @@
 
       <div class="stat-card">
         <div class="stat-title">Timer</div>
-        <div class="stat-value">{{ solve.timer }}</div>
+        <div class="stat-value">
+          {% if solve.timer == "Cubeast" %}
+            <a href="https://app.cubeast.com/" target="_blank" class="link">
+              {{ solve.timer }}
+            </a>
+          {% elif solve.timer == "csTimer" %}
+            <a href="https://cstimer.net/" target="_blank" class="link">
+              {{ solve.timer }}
+            </a>
+          {% else %}
+            {{ solve.timer }}
+          {% endif %}
+        </div>
       </div>
     </div>
 
@@ -319,10 +335,14 @@
           <div class="stat-value">{{ solve.reconstructed.metrics.qstm }}</div>
         </div>
       {% endif %}
-      <div class="stat-card">
-        <div class="stat-title">Missed Moves</div>
-        <div class="stat-value">{{ solve.all_missed_moves }}</div>
-      </div>
+      {% if solve.all_missed_moves %}
+        <div class="stat-card">
+          <div class="stat-title">Missed Moves</div>
+          <div class="stat-value stat-{% if solve.all_missed_moves > 5 %}worst{% else %}warning{% endif %}">
+            {{ solve.all_missed_moves }}
+          </div>
+        </div>
+      {% endif %}
     </div>
   </div>
 
@@ -330,7 +350,14 @@
     <div class="card-header">
       <h2 class="card-title">Scramble</h2>
     </div>
-    <p>{{ solve.scramble }}</p>
+    <div class="scramble-card">
+      {% for m in solve.scramble.split(' ') %}
+        <span class="move">{{ m }}</span>
+      {% endfor %}
+      <div class="scramble-footer">
+        {{ solve.scramble.split(' ')|length }} moves - Computer generated
+      </div>
+    </div>
     {# TODO copy #}
   </div>
 
