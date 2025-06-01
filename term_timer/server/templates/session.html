@@ -450,6 +450,14 @@
           </div>
         </div>
       {% endif %}
+      {% if stats.advanced_solves %}
+        <div class="stat-card">
+          <div class="stat-title">Bluetooth Solves</div>
+          <div class="stat-value">
+            {{ "%0.2f"|format(stats.advanced_solves * 100) }}%
+          </div>
+        </div>
+      {% endif %}
     </div>
   </div>
 
@@ -475,8 +483,10 @@
   <div class="card">
     <div class="tabs">
       <div class="tab active" data-tab="solves">Solves</div>
-      <div class="tab" data-tab="oll">OLL</div>
-      <div class="tab" data-tab="pll">PLL</div>
+      {% if stats.advanced_solves %}
+        <div class="tab" data-tab="oll">OLL</div>
+        <div class="tab" data-tab="pll">PLL</div>
+      {% endif %}
     </div>
 
     <div class="tab-content active table-container" id="solves-tab">
@@ -543,138 +553,139 @@
       </table>
     </div>
 
-    <div class="tab-content table-container" id="oll-tab">
-      <table class="oll-list">
-        <thead>
-          <tr>
-            <th>Case</th>
-            <th>Count</th>
-            <th>Frequency</th>
-            <th>Probability</th>
-            <th>Recognition</th>
-            <th>Execution</th>
-            <th>Time</th>
-            <th>QTM</th>
-            <th>TPS</th>
-            <th>eTPS</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for name, oll in cfop.olls.items() %}
+    {% if stats.advanced_solves %}
+      <div class="tab-content table-container" id="oll-tab">
+        <table class="oll-list">
+          <thead>
             <tr>
-              <td>
-                <div class="cfop-case">
-                  {% set name_part = name.split(" ") %}
-                  <div class="cfop-case-img">{{ name_part[0] }}</div>
-                  {% if 'SKIP' not in name %}
-                    <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
-                       target="_blank" class="link">
-                      {{ " ".join(name_part[1:]) }}
-                    </a>
-                  {% else %}
-                    <span class="skip">SKIP</span>
-                  {% endif %}
-                </div>
-              </td>
-              <td>
-                {{ oll.count }}
-              </td>
-              <td class="frequency-{% if oll.frequency > oll.probability %}higher{% else %}lower{% endif %}">
-                {{ "%0.2f"|format(oll.frequency * 100) }}%
-              </td>
-              <td>
-                {{ "%0.2f"|format(oll.probability * 100) }}%
-              </td>
-              <td>
-                {{ oll.recognition|format_duration }}
-              </td>
-              <td>
-                {{ oll.execution|format_duration }}
-              </td>
-              <td>
-                {{ oll.time|format_duration }}
-              </td>
-              <td>
-                {{ "%0.2f"|format(oll.qtm) }}
-              </td>
-              <td>
-                {{ "%0.2f"|format(oll.tps) }}
-              </td>
-              <td>
-                {{ "%0.2f"|format(oll.etps) }}
-              </td>
+              <th>Case</th>
+              <th>Count</th>
+              <th>Frequency</th>
+              <th>Probability</th>
+              <th>Recognition</th>
+              <th>Execution</th>
+              <th>Time</th>
+              <th>QTM</th>
+              <th>TPS</th>
+              <th>eTPS</th>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {% for name, oll in cfop.olls.items() %}
+              <tr>
+                <td>
+                  <div class="cfop-case">
+                    {% set name_part = name.split(" ") %}
+                    <div class="cfop-case-img">{{ name_part[0] }}</div>
+                    {% if 'SKIP' not in name %}
+                      <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
+                         target="_blank" class="link">
+                        {{ " ".join(name_part[1:]) }}
+                      </a>
+                    {% else %}
+                      <span class="skip">SKIP</span>
+                    {% endif %}
+                  </div>
+                </td>
+                <td>
+                  {{ oll.count }}
+                </td>
+                <td class="frequency-{% if oll.frequency > oll.probability %}higher{% else %}lower{% endif %}">
+                  {{ "%0.2f"|format(oll.frequency * 100) }}%
+                </td>
+                <td>
+                  {{ "%0.2f"|format(oll.probability * 100) }}%
+                </td>
+                <td>
+                  {{ oll.recognition|format_duration }}
+                </td>
+                <td>
+                  {{ oll.execution|format_duration }}
+                </td>
+                <td>
+                  {{ oll.time|format_duration }}
+                </td>
+                <td>
+                  {{ "%0.2f"|format(oll.qtm) }}
+                </td>
+                <td>
+                  {{ "%0.2f"|format(oll.tps) }}
+                </td>
+                <td>
+                  {{ "%0.2f"|format(oll.etps) }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
-    <div class="tab-content table-container" id="pll-tab">
-      <table class="pll-list">
-        <thead>
-          <tr>
-            <th>Case</th>
-            <th>Count</th>
-            <th>Frequency</th>
-            <th>Probability</th>
-            <th>Recognition</th>
-            <th>Execution</th>
-            <th>Time</th>
-            <th>QTM</th>
-            <th>TPS</th>
-            <th>eTPS</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for name, pll in cfop.plls.items() %}
+      <div class="tab-content table-container" id="pll-tab">
+        <table class="pll-list">
+          <thead>
             <tr>
-              <td>
-                <div class="cfop-case">
-                  {% set name_part = name.split(" ") %}
-                  <div class="cfop-case-img">{{ name_part[0] }}</div>
-                  {% if 'SKIP' not in name %}
-                    <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
-                       target="_blank" class="link">
-                      PLL {{ name }}
-                    </a>
-                  {% else %}
-                    <span class="skip">SKIP</span>
-                  {% endif %}
-                </div>
-              </td>
-              <td>
-                {{ pll.count }}
-              </td>
-              <td class="frequency-{% if pll.frequency > pll.probability %}higher{% else %}lower{% endif %}">
-                {{ "%0.2f"|format(pll.frequency * 100) }}%
-              </td>
-              <td>
-                {{ "%0.2f"|format(pll.probability * 100) }}%
-              </td>
-              <td>
-                {{ pll.recognition|format_duration }}
-              </td>
-              <td>
-                {{ pll.execution|format_duration }}
-              </td>
-              <td>
-                {{ pll.time|format_duration }}
-              </td>
-              <td>
-                {{ "%0.2f"|format(pll.qtm) }}
-              </td>
-              <td>
-                {{ "%0.2f"|format(pll.tps) }}
-              </td>
-              <td>
-                {{ "%0.2f"|format(pll.etps) }}
-              </td>
+              <th>Case</th>
+              <th>Count</th>
+              <th>Frequency</th>
+              <th>Probability</th>
+              <th>Recognition</th>
+              <th>Execution</th>
+              <th>Time</th>
+              <th>QTM</th>
+              <th>TPS</th>
+              <th>eTPS</th>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+          </thead>
+          <tbody>
+            {% for name, pll in cfop.plls.items() %}
+              <tr>
+                <td>
+                  <div class="cfop-case">
+                    {% set name_part = name.split(" ") %}
+                    <div class="cfop-case-img">{{ name_part[0] }}</div>
+                    {% if 'SKIP' not in name %}
+                      <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
+                         target="_blank" class="link">
+                        PLL {{ name }}
+                      </a>
+                    {% else %}
+                      <span class="skip">SKIP</span>
+                    {% endif %}
+                  </div>
+                </td>
+                <td>
+                  {{ pll.count }}
+                </td>
+                <td class="frequency-{% if pll.frequency > pll.probability %}higher{% else %}lower{% endif %}">
+                  {{ "%0.2f"|format(pll.frequency * 100) }}%
+                </td>
+                <td>
+                  {{ "%0.2f"|format(pll.probability * 100) }}%
+                </td>
+                <td>
+                  {{ pll.recognition|format_duration }}
+                </td>
+                <td>
+                  {{ pll.execution|format_duration }}
+                </td>
+                <td>
+                  {{ pll.time|format_duration }}
+                </td>
+                <td>
+                  {{ "%0.2f"|format(pll.qtm) }}
+                </td>
+                <td>
+                  {{ "%0.2f"|format(pll.tps) }}
+                </td>
+                <td>
+                  {{ "%0.2f"|format(pll.etps) }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
 
   <footer class="app-footer card">
     <div class="footer-container">

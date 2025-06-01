@@ -185,6 +185,10 @@ class Statistics(StatisticsTools):
         return sum(self.stack_time)
 
     @cached_property
+    def advanced_solves(self) -> int:
+        return sum(1 for s in self.stack if s.advanced) / self.total
+
+    @cached_property
     def repartition(self) -> list[tuple[int, int]]:
         gap = (self.worst - self.best) / SECOND
 
@@ -593,11 +597,13 @@ class StatisticsReporter(Statistics):
         olls = {}
         plls = {}
         score = 0
+        total = 0
 
         for result in results:
             if not result:
                 continue
 
+            total += 1
             score += result['score_cfop']
 
             oll_case = result['oll']['case']
@@ -637,8 +643,6 @@ class StatisticsReporter(Statistics):
             plls[pll_case]['tpss'].append(result['pll']['tps'])
             plls[pll_case]['etpss'].append(result['pll']['etps'])
 
-        total = len(results)
-
         for name, info in olls.items():
             count = len(info['times'])
             info['count'] = count
@@ -674,7 +678,7 @@ class StatisticsReporter(Statistics):
             'plls': plls,
             'total': total,
             'score': score,
-            'mean': score / total,
+            'mean': score / total if total else 0,
         }
 
     def cfop(self, *, oll_only: bool = False, pll_only: bool = False,
