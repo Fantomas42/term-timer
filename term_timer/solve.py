@@ -128,7 +128,7 @@ class Solve:
 
     @cached_property
     def method_applied(self) -> dict[str, dict]:
-        if not self.raw_moves:
+        if not self.advanced:
             return None
 
         return self.method(self.scramble, self.move_times)
@@ -151,7 +151,7 @@ class Solve:
 
     @cached_property
     def report_line(self) -> str:
-        if not self.raw_moves:
+        if not self.advanced:
             return ''
 
         metric_string = ''
@@ -287,7 +287,7 @@ class Solve:
 
     @cached_property
     def time_graph(self) -> None:
-        if not self.raw_moves:
+        if not self.advanced:
             return None
 
         plt.scatter(

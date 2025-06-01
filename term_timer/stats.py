@@ -369,7 +369,7 @@ class StatisticsReporter(Statistics):
             date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
             header = f'[stats]{ index:{" "}>{max_count}}[/stats]'
-            if solve.raw_moves:
+            if solve.advanced:
                 header = (
                     f'[extlink][link={ solve.link }]'
                     f'{ index:{" "}>{max_count}}[/link][/extlink]'
@@ -439,7 +439,7 @@ class StatisticsReporter(Statistics):
                 f'[timer]{ solve.timer }[/timer]',
             )
 
-        if solve.raw_moves:
+        if solve.advanced:
             grade = format_grade(solve.score)
             grade_class = grade.lower()
             grade_line = (
@@ -482,7 +482,7 @@ class StatisticsReporter(Statistics):
         )
         console.print(cube.printed(None), end='')
 
-        if solve.raw_moves:
+        if solve.advanced:
             console.print(
                 f'[title]Reconstruction { solve.method.name }[/title]',
                 '[extlink]'
@@ -492,7 +492,7 @@ class StatisticsReporter(Statistics):
             solve.time_graph  # noqa B018
 
     def analyze_solve_cases(self, solve):
-        if not solve.raw_moves:
+        if not solve.advanced:
             return None
 
         analysis = CFOPAnalyser(solve.scramble, solve.move_times)
