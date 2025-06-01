@@ -39,9 +39,13 @@ class RichHandler(WSGIRequestHandler):
         if isinstance(code, HTTPStatus):
             code = code.value
 
+        klass = 'green'
+        if int(code) > 400:
+            klass = 'red'
+
         message = (
             f'[server][{ self.log_date_time_string() }][/server] '
-            f'[green]{ code!s }[/green] '
+            f'[{ klass }]{ code!s }[/{ klass }] '
             f'[result]{ self.requestline }[/result] '
             f'[comment]{ size!s }[/comment]'
         )
