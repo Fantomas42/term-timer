@@ -341,7 +341,7 @@
         {% if solve.all_missed_moves %}
           <div class="stat-card">
             <div class="stat-title">Missed Moves</div>
-            <div class="stat-value stat-{% if solve.all_missed_moves > 5 %}worst{% else %}warning{% endif %}">
+            <div class="stat-value stat-{% if solve.all_missed_moves > 3 %}worst{% else %}warning{% endif %}">
               {{ solve.all_missed_moves }}
             </div>
           </div>
@@ -380,7 +380,7 @@
               <th>Recognition</th>
               <th>Execution</th>
               <th>Time</th>
-              <th>Turn</th>
+              <th>QTM</th>
               <th>TPS</th>
               <th>eTPS</th>
             </tr>
@@ -388,11 +388,33 @@
           <tbody>
             {% for info in solve.method_applied.summary %}
               <tr>
-                <td class="recons-step">
+                <td class="recons-step{% if info.type == 'substep' %} substep{% endif %}">
                   {{ info.name }}
                 </td>
                 <td class="recons-case">
-                  {{ info.cases[0]|default('---', true) }}
+                  {% if info.cases %}
+                    <div class="cfop-case">
+                      {% set name_part = info.cases[0].split(" ") %}
+                      <div class="cfop-case-img">{{ name_part[0] }}</div>
+                      {% if 'SKIP' not in name %}
+                        {% if info.name == 'OLL' %}
+                          <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
+                             target="_blank" class="link">
+                            {{ " ".join(name_part[1:]) }}
+                          </a>
+                        {% elif info.name == 'PLL' %}
+                          <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
+                             target="_blank" class="link">
+                            PLL {{ name_part[0] }}
+                          </a>
+                        {% endif %}
+                      {% else %}
+                        <span class="skip">SKIP</span>
+                      {% endif %}
+                    </div>
+                  {% else %}
+                    ---
+                  {% endif %}
                 </td>
                 <td class="recons-moves">
                   {{ info.reconstruction }}
@@ -406,8 +428,8 @@
                 <td class="recons-total">
                   {{ info.total|format_duration }}
                 </td>
-                <td class="recons-turns">
-                  {{ info.reconstruction|length }}
+                <td class="recons-qtm">
+                  {{ info.moves|length }}
                 </td>
                 <td class="recons-tps">
                   {{ solve.tps(info.moves, info.total)|round(2) }}
