@@ -233,7 +233,7 @@ class SolveView(View):
             scatter = [
                 {
                     'y': self.solve.move_times[i][1] / 1000,
-                    'x': i,
+                    'x': i + 1,
                 }
                 for i in range(len(self.solve.move_times))
             ]

@@ -164,9 +164,12 @@
            datasets: [{
              label: 'Moves',
              data: {{ scatter|tojson }},
-             borderColor: '#2563ec',
+             borderColor: '#2563EC',
              backgroundColor: 'rgba(37, 99, 236, 0.6)',
-             borderWidth: 1
+             borderWidth: 2,
+             pointRadius: 2,
+             pointHoverRadius: 8,
+             pointHitRadius: 6,
            }]
          },
          options: {
@@ -179,7 +182,7 @@
              tooltip: {
                callbacks: {
                  title: function(tooltipItem) {
-                   return tooltipItem[0].label;
+                   return `Move #${tooltipItem[0].label}`;
                  },
                  label: function(context) {
                    return `${context.parsed.y}s`;
@@ -200,7 +203,7 @@
              x: {
                type: 'linear',
                min: 0,
-               max: {{ scatter|length }},
+               max: {{ scatter|length }} + 1,
                ticks: {
                  display: true,
                  autoSkip: false,
@@ -222,8 +225,8 @@
                }
              },
              y: {
-               min: 0,
-               max: {{ scatter[-1].y }},
+               min: -1,
+               max: Math.ceil({{ scatter[-1].y }}) + 1,
                title: {
                  display: true,
                  text: 'Time',
