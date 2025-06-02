@@ -484,7 +484,7 @@ class StatisticsReporter(Statistics):
             '[stats]Scramble   :[/stats] '
             f'[consign]{ solve.scramble }[/consign]',
         )
-        console.print(cube.printed(None), end='')
+        console.print(cube.full_cube(None), end='')
 
         if solve.advanced:
             console.print(
