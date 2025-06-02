@@ -38,24 +38,31 @@
                data: recog.map(item => item.recognition),
                backgroundColor: 'rgb(65, 131, 196)',
                borderColor: 'rgb(65, 131, 196)',
-               borderWidth: 1
+               borderWidth: 1,
              },
              {
                label: 'Execution',
                data: recog.map(item => item.execution),
                backgroundColor: 'rgb(231, 76, 31)',
                borderColor: 'rgb(231, 76, 31)',
-               borderWidth: 1
-             }
-           ]
+               borderWidth: 1,
+             },
+           ],
          },
          options: {
            responsive: true,
            maintainAspectRatio: false,
            plugins: {
              legend: {
-               display: false
-             }
+               display: false,
+             },
+             tooltip: {
+               callbacks: {
+                 label: function(context) {
+                   return `${context.dataset.label}: ${context.parsed.y}s`;
+                 },
+               },
+             },
            },
            scales: {
              x: {
@@ -64,15 +71,15 @@
                  color: '#94a3b8',
                },
                grid: {
-                 display: false
-               }
+                 display: false,
+               },
              },
              y: {
                stacked: true,
                title: {
                  display: true,
                  text: 'Time',
-                 color: '#94a3b8'
+                 color: '#94a3b8',
                },
                ticks: {
                  stepSize: 1.0,
@@ -80,10 +87,10 @@
                },
                grid: {
                  color: 'rgba(148, 163, 184, 0.1)',
-               }
-             }
+               },
+             },
            },
-         }
+         },
        });
      }
 
@@ -104,7 +111,8 @@
                fill: false,
                pointBackgroundColor: 'rgba(75, 192, 75, 0.6)',
                pointRadius: 5,
-               pointHoverRadius: 7
+               pointHitRadius: 5,
+               pointHoverRadius: 10,
              },
              {
                label: 'eTPS',
@@ -114,7 +122,8 @@
                tension: 0.1,
                fill: false,
                pointRadius: 5,
-               pointHoverRadius: 7
+               pointHitRadius: 5,
+               pointHoverRadius: 10,
              },
            ]
          },
@@ -168,8 +177,8 @@
              backgroundColor: 'rgba(37, 99, 236, 0.6)',
              borderWidth: 2,
              pointRadius: 2,
-             pointHoverRadius: 8,
              pointHitRadius: 6,
+             pointHoverRadius: 8,
            }]
          },
          options: {
@@ -186,8 +195,8 @@
                  },
                  label: function(context) {
                    return `${context.parsed.y}s`;
-                 }
-               }
+                 },
+               },
              },
              annotation: {
                annotations: steps.map(line => ({
@@ -362,7 +371,7 @@
         <span class="move">{{ m }}</span>
       {% endfor %}
       <div class="scramble-footer">
-        {{ solve.scramble.split(' ')|length }} moves - Computer generated
+        {{ solve.scramble.split(' ')|length }} HTM - Computer generated
       </div>
     </div>
     {# TODO copy #}

@@ -243,7 +243,7 @@ header {
     font-weight: bold;
 }
 
-.solve-scramble {
+.solve-scramble, .recons-moves {
     max-width: 300px;
     overflow-x: hidden;
     text-overflow: ellipsis;
@@ -433,12 +433,17 @@ header {
 .table-container table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .table-container th, .table-container td {
     padding: 0.75rem 1rem;
     text-align: left;
     color: var(--text-primary);
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .table-container th {
@@ -489,19 +494,6 @@ header {
 .grade-d { color: #BEFF7F; }
 .grade-e { color: #7EFF80; }
 .grade-f { color: #7FFFFF; }
-
-
-.pll-list, .oll-list {
-    table-layout: fixed;
-    width: 100%;
-}
-
-.pll-list th, .oll-list th,
-.pll-list td, .oll-list td {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
 
 .pll-list th:nth-child(1), .oll-list th:nth-child(1),
 .pll-list td:nth-child(1), .oll-list td:nth-child(1) {
