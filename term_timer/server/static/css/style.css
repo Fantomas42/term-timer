@@ -186,6 +186,10 @@ header {
     border-radius: 0.375rem;
 }
 
+.scramble-card .move:hover {
+    background-color: var(--pastille);
+}
+
 .scramble-card .scramble-footer {
     padding-top: 1rem;
     margin-top: 1rem;
@@ -301,6 +305,23 @@ header {
 .solve-detail-btn:hover {
     background-color: var(--info)
 }
+
+.scramble-copy {
+    background-color: var(--pastille);
+    color: var(--light);
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 0.875rem;
+    text-decoration: none;
+}
+
+.scramble-copy:hover {
+    background-color: var(--info);
+}
+
 
 .cfop-case {
     display: flex;

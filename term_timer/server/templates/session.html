@@ -239,16 +239,14 @@
 
        cell.addEventListener('click', function() {
          const scrambleText = this.textContent.trim();
-         navigator.clipboard.writeText(scrambleText)
-                  .then(() => {
-                    this.classList.add('copied');
-                    setTimeout(() => {
-                      this.classList.remove('copied');
-                    }, 2000);
-                  })
-                  .catch(err => {
-                    console.error('Copy error: ', err);
-                  });
+         navigator.clipboard.writeText(scrambleText).then(() => {
+           this.classList.add('copied');
+           setTimeout(() => {
+             this.classList.remove('copied');
+           }, 2000);
+         }).catch(err => {
+           console.error('Copy error: ', err);
+         });
        });
      });
    }

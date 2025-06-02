@@ -13,6 +13,21 @@
 {% endblock %}
 
 {% block script %}
+  <script>
+   document.addEventListener('DOMContentLoaded', function() {
+     document.querySelector('.scramble-copy').addEventListener('click', function() {
+       const scrambleText = document.querySelector('.scramble-content').textContent.trim().replace(/\s\s+/g, ' ');
+       navigator.clipboard.writeText(scrambleText).then(() => {
+         this.textContent = 'Copied !';
+         setTimeout(() => {
+           this.textContent = 'Copy';
+         }, 2000);
+       }).catch(err => {
+         console.error('Copy error: ', err);
+       });
+     });
+   });
+  </script>
   {% if solve.advanced %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
@@ -367,14 +382,17 @@
       <h2 class="card-title">Scramble</h2>
     </div>
     <div class="scramble-card">
+      <div class="scramble-content">
       {% for m in solve.scramble.split(' ') %}
         <span class="move">{{ m }}</span>
       {% endfor %}
+      </div>
       <div class="scramble-footer">
-        {{ solve.scramble.split(' ')|length }} HTM - Computer generated
+        {{ solve.scramble.split(' ')|length }} HTM - Computer generated -
+        <button class="scramble-copy">Copy</button>
       </div>
     </div>
-    {# TODO copy #}
+
   </div>
 
   {% if solve.advanced %}
