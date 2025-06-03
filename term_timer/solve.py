@@ -290,6 +290,7 @@ class Solve:
         if not self.advanced:
             return None
 
+        plt.clear_figure()
         plt.scatter(
             [m[1] / 1000 for m in self.move_times],
             marker='fhd',
@@ -313,7 +314,73 @@ class Solve:
         plt.canvas_color('default')
         plt.axes_color('default')
         plt.ticks_color((0, 175, 255))
-        plt.ticks_style('bold')
+
+        plt.show()
+
+        return None
+
+    @cached_property
+    def tps_graph(self) -> None:
+        if not self.advanced:
+            return None
+
+        plt.clear_figure()
+
+        tps = []
+        etps = []
+        labels = []
+        for s in self.method_applied.summary:
+            if s['type'] not in {'skipped', 'virtual'}:
+                tps.append(Solve.tps(s['moves'], s['total']),)
+                etps.append(Solve.tps(s['moves'], s['execution']),)
+                labels.append(s['name'])
+
+        # plt.plot(tps, marker='fhd')
+        # plt.plot(etps, marker='fhd')
+
+        # plt.xticks(tps, labels)
+        plt.stacked_bar(
+            labels,
+            [tps, etps],
+            labels=['TPS', 'eTPS'],
+            color=[119, 39],
+        )
+        plt.plot_size(height=20)
+        plt.canvas_color('default')
+        plt.axes_color('default')
+        plt.ticks_color((0, 175, 255))
+
+        plt.show()
+
+        return None
+
+    @cached_property
+    def recognition_graph(self) -> None:
+        if not self.advanced:
+            return None
+
+        plt.clear_figure()
+
+        labels = []
+        executions = []
+        recognitions = []
+        for s in self.method_applied.summary:
+            if s['type'] not in {'skipped', 'virtual'}:
+                labels.append(s['name'])
+                recognitions.append(s['recognition'] / SECOND)
+                executions.append(s['execution'] / SECOND)
+
+        plt.stacked_bar(
+            labels,
+            [recognitions, executions],
+            labels=['Recognition', 'Execution'],
+            color=[33, 202],
+        )
+
+        plt.plot_size(height=20)
+        plt.canvas_color('default')
+        plt.axes_color('default')
+        plt.ticks_color((0, 175, 255))
 
         plt.show()
 

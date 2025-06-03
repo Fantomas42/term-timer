@@ -494,6 +494,8 @@ class StatisticsReporter(Statistics):
             )
             console.print(solve.method_line, end='')
             solve.time_graph  # noqa B018
+            solve.tps_graph  # noqa B018
+            solve.recognition_graph  # noqa B018
 
     def analyze_solve_cases(self, solve):
         if not solve.advanced:
