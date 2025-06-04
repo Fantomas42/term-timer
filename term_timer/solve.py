@@ -326,30 +326,27 @@ class Solve:
 
         plt.clear_figure()
 
-        tps = []
-        etps = []
+        tpss = []
+        etpss = []
         labels = []
         for s in self.method_applied.summary:
             if s['type'] not in {'skipped', 'virtual'}:
-                tps.append(Solve.tps(s['moves'], s['total']),)
-                etps.append(Solve.tps(s['moves'], s['execution']),)
+                tps = Solve.tps(s['moves'], s['total'])
+                tpss.append(tps)
+                etpss.append(Solve.tps(s['moves'], s['execution']) - tps)
                 labels.append(s['name'])
 
-        # plt.plot(tps, marker='fhd')
-        # plt.plot(etps, marker='fhd')
-
-        # plt.xticks(tps, labels)
         plt.stacked_bar(
             labels,
-            [tps, etps],
+            [tpss, etpss],
             labels=['TPS', 'eTPS'],
             color=[119, 39],
         )
+        plt.hline(self.reconstructed_tps, 'red')
         plt.plot_size(height=20)
         plt.canvas_color('default')
         plt.axes_color('default')
         plt.ticks_color((0, 175, 255))
-
         plt.show()
 
         return None
