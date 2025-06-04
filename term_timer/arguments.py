@@ -480,6 +480,12 @@ def serve_arguments(subparsers):
 
 
 def detail_arguments(subparsers):
+    show_cube = DISPLAY_CONFIG.get('scramble', True)
+    show_tps_graph = DISPLAY_CONFIG.get('tps_graph', True)
+    show_time_graph = DISPLAY_CONFIG.get('time_graph', True)
+    show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
+    show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
+
     parser = subparsers.add_parser(
         'detail',
         help='Display detailed information about solves',
@@ -494,6 +500,20 @@ def detail_arguments(subparsers):
         metavar='SOLVE_ID',
         help='ID(s) of the solve(s) to display details for.',
     )
+
+    mode = 'hide' if show_cube else 'show'
+    parser.add_argument(
+        '-p', f'--{ mode }-cube',
+        action='store_const',
+        const=not show_cube,
+        default=show_cube,
+        dest='show_cube',
+        help=(
+            f'{ mode.title() } the cube in its scrambled state.\n'
+            'Default: False'
+        ),
+    )
+
     analyze = parser.add_argument_group('Analysis')
     analyze.add_argument(
         '-m', '--method',
@@ -505,6 +525,54 @@ def detail_arguments(subparsers):
         help=(
             'Set the method of analyse used.\n'
             f'Default: { CUBE_METHOD }.'
+        ),
+    )
+    mode = 'hide' if show_reconstruction else 'show'
+    analyze.add_argument(
+        '-s', f'--{ mode }-reconstruction',
+        action='store_const',
+        const=not show_reconstruction,
+        default=show_reconstruction,
+        dest='show_reconstruction',
+        help=(
+            f'{ mode.title() } the reconstruction of the solve.\n'
+            'Default: False'
+        ),
+    )
+    mode = 'hide' if show_time_graph else 'show'
+    analyze.add_argument(
+        '-t', f'--{ mode }-time-graph',
+        action='store_const',
+        const=not show_time_graph,
+        default=show_time_graph,
+        dest='show_time_graph',
+        help=(
+            f'{ mode.title() } the time scatter graph of the solve.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_tps_graph else 'show'
+    analyze.add_argument(
+        '-v', f'--{ mode }-tps-graph',
+        action='store_const',
+        const=not show_tps_graph,
+        default=show_tps_graph,
+        dest='show_tps_graph',
+        help=(
+            f'{ mode.title() } the TPS graph of the solve.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_recognition_graph else 'show'
+    analyze.add_argument(
+        '-w', f'--{ mode }-recognition-graph',
+        action='store_const',
+        const=not show_recognition_graph,
+        default=show_recognition_graph,
+        dest='show_recognition_graph',
+        help=(
+            f'{ mode.title() } the recognition graph of the solve.\n'
+            'Default: False.'
         ),
     )
 

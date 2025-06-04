@@ -399,7 +399,13 @@ class StatisticsReporter(Statistics):
                 f'[{ flag_class }]{ solve.flag }[/{ flag_class }]',
             )
 
-    def detail(self, solve_id: int, method: str) -> None:
+    def detail(self, solve_id: int, method: str,
+               *,
+               show_cube: bool,
+               show_reconstruction: bool,
+               show_tps_graph: bool,
+               show_time_graph: bool,
+               show_recognition_graph: bool) -> None:
         try:
             solve = self.stack[solve_id - 1]
         except IndexError:
@@ -484,18 +490,23 @@ class StatisticsReporter(Statistics):
             '[stats]Scramble   :[/stats] '
             f'[consign]{ solve.scramble }[/consign]',
         )
-        console.print(cube.full_cube(None), end='')
+        if show_cube:
+            console.print(cube.full_cube(None), end='')
 
         if solve.advanced:
-            console.print(
-                f'[title]Reconstruction { solve.method.name }[/title]',
-                '[extlink]'
-                f'[link={ solve.link }]alg.cubing.net[/link][/extlink]',
-            )
-            console.print(solve.method_line, end='')
-            solve.time_graph()
-            solve.tps_graph()
-            solve.recognition_graph()
+            if show_reconstruction:
+                console.print(
+                    f'[title]Reconstruction { solve.method.name }[/title]',
+                    '[extlink]'
+                    f'[link={ solve.link }]alg.cubing.net[/link][/extlink]',
+                )
+                console.print(solve.method_line, end='')
+            if show_time_graph:
+                solve.time_graph()
+            if show_tps_graph:
+                solve.tps_graph()
+            if show_recognition_graph:
+                solve.recognition_graph()
 
     def analyze_solve_cases(self, solve):
         if not solve.advanced:

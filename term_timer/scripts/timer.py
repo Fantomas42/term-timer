@@ -133,7 +133,15 @@ def tools(command, options):
 
     if command == 'detail':
         for solve_id in options.solves:
-            session_stats.detail(solve_id, options.method)
+            session_stats.detail(
+                solve_id,
+                options.method,
+                show_cube=options.show_cube,
+                show_reconstruction=options.show_reconstruction,
+                show_tps_graph=options.show_tps_graph,
+                show_time_graph=options.show_time_graph,
+                show_recognition_graph=options.show_recognition_graph,
+            )
 
     return 0
 
