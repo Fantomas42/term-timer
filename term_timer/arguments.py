@@ -77,7 +77,9 @@ def solve_arguments(subparsers):
     metronome = TIMER_CONFIG.get('metronome', 0.0)
 
     show_cube = DISPLAY_CONFIG.get('scramble', True)
-    show_timegraph = DISPLAY_CONFIG.get('timegraph', True)
+    show_tps_graph = DISPLAY_CONFIG.get('tps_graph', True)
+    show_time_graph = DISPLAY_CONFIG.get('time_graph', True)
+    show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
     show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
 
     parser = subparsers.add_parser(
@@ -136,15 +138,39 @@ def solve_arguments(subparsers):
             'Default: False'
         ),
     )
-    mode = 'hide' if show_timegraph else 'show'
+    mode = 'hide' if show_time_graph else 'show'
     bluetooth.add_argument(
-        '-g', f'--{ mode }-time-graph',
+        '-t', f'--{ mode }-time-graph',
         action='store_const',
-        const=not show_timegraph,
-        default=show_timegraph,
+        const=not show_time_graph,
+        default=show_time_graph,
         dest='show_time_graph',
         help=(
             f'{ mode.title() } the time scatter graph of the solve.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_tps_graph else 'show'
+    bluetooth.add_argument(
+        '-v', f'--{ mode }-tps-graph',
+        action='store_const',
+        const=not show_tps_graph,
+        default=show_tps_graph,
+        dest='show_tps_graph',
+        help=(
+            f'{ mode.title() } the TPS graph of the solve.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_recognition_graph else 'show'
+    bluetooth.add_argument(
+        '-w', f'--{ mode }-recognition-graph',
+        action='store_const',
+        const=not show_recognition_graph,
+        default=show_recognition_graph,
+        dest='show_recognition_graph',
+        help=(
+            f'{ mode.title() } the recognition graph of the solve.\n'
             'Default: False.'
         ),
     )

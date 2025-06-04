@@ -23,7 +23,9 @@ method = "cf4op"
 [display]
 scramble = true
 reconstruction = true
-timegraph = true
+time_graph = true
+tps_graph = true
+recognition_graph = true
 
 [statistics]
 distribution = 0

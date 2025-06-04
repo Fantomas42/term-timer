@@ -19,7 +19,9 @@ class Timer(SolveInterface):
                  session: str, free_play: bool,
                  show_cube: bool,
                  show_reconstruction: bool,
+                 show_tps_graph: bool,
                  show_time_graph: bool,
+                 show_recognition_graph: bool,
                  countdown: int,
                  metronome: float,
                  stack: list[Solve]):
@@ -34,7 +36,9 @@ class Timer(SolveInterface):
         self.easy_cross = easy_cross
         self.show_cube = show_cube
         self.show_reconstruction = show_reconstruction
+        self.show_tps_graph = show_tps_graph
         self.show_time_graph = show_time_graph
+        self.show_recognition_graph = show_recognition_graph
         self.countdown = countdown
         self.metronome = metronome
         self.stack = stack
@@ -107,6 +111,10 @@ class Timer(SolveInterface):
                     self.console.print(solve.method_line, end='')
                 if self.show_time_graph:
                     solve.time_graph  # noqa B018
+                if self.show_tps_graph:
+                    solve.tps_graph  # noqa B018
+                if self.show_recognition_graph:
+                    solve.recognition_graph  # noqa B018
                 self.console.print(
                     f'[analysis]Analysis #{ self.counter }:[/analysis] '
                     f'{ solve.report_line }',
