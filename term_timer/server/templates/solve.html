@@ -149,6 +149,15 @@
              legend: {
                display: false
              },
+             annotation: {
+               annotations: [{
+                 type: 'line',
+                 yMin: {{ solve.reconstructed_tps }},
+                 yMax: {{ solve.reconstructed_tps }},
+                 borderColor: 'rgba(255, 0, 0, 0.3)',
+                 borderWidth: 2,
+               }],
+             },
            },
            scales: {
              x: {
