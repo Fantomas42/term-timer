@@ -110,11 +110,11 @@ class Timer(SolveInterface):
                 if self.show_reconstruction:
                     self.console.print(solve.method_line, end='')
                 if self.show_time_graph:
-                    solve.time_graph  # noqa B018
+                    solve.time_graph()
                 if self.show_tps_graph:
-                    solve.tps_graph  # noqa B018
+                    solve.tps_graph()
                 if self.show_recognition_graph:
-                    solve.recognition_graph  # noqa B018
+                    solve.recognition_graph()
                 self.console.print(
                     f'[analysis]Analysis #{ self.counter }:[/analysis] '
                     f'{ solve.report_line }',

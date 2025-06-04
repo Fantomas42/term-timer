@@ -493,9 +493,9 @@ class StatisticsReporter(Statistics):
                 f'[link={ solve.link }]alg.cubing.net[/link][/extlink]',
             )
             console.print(solve.method_line, end='')
-            solve.time_graph  # noqa B018
-            solve.tps_graph  # noqa B018
-            solve.recognition_graph  # noqa B018
+            solve.time_graph()
+            solve.tps_graph()
+            solve.recognition_graph()
 
     def analyze_solve_cases(self, solve):
         if not solve.advanced:
@@ -715,6 +715,8 @@ class StatisticsReporter(Statistics):
         ao5s = []
         ao12s = []
         times = []
+
+        plt.clear_figure()
 
         for time in self.stack_time:
             seconds = time / SECOND

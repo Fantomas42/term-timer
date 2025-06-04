@@ -285,10 +285,9 @@ class Solve:
 
         return line
 
-    @cached_property
     def time_graph(self) -> None:
         if not self.advanced:
-            return None
+            return
 
         plt.clear_figure()
         plt.scatter(
@@ -317,12 +316,9 @@ class Solve:
 
         plt.show()
 
-        return None
-
-    @cached_property
     def tps_graph(self) -> None:
         if not self.advanced:
-            return None
+            return
 
         plt.clear_figure()
 
@@ -347,14 +343,12 @@ class Solve:
         plt.canvas_color('default')
         plt.axes_color('default')
         plt.ticks_color((0, 175, 255))
+
         plt.show()
 
-        return None
-
-    @cached_property
     def recognition_graph(self) -> None:
         if not self.advanced:
-            return None
+            return
 
         plt.clear_figure()
 
@@ -373,15 +367,12 @@ class Solve:
             labels=['Recognition', 'Execution'],
             color=[33, 202],
         )
-
         plt.plot_size(height=20)
         plt.canvas_color('default')
         plt.axes_color('default')
         plt.ticks_color((0, 175, 255))
 
         plt.show()
-
-        return None
 
     @staticmethod
     def missed_moves_pair(algorithm: Algorithm) -> list[Algorithm, Algorithm]:
