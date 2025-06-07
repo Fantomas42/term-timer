@@ -7,7 +7,7 @@ from cubing_algs.constants import OPPOSITE_FACES
 from cubing_algs.constants import OUTER_BASIC_MOVES
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.fat import unfat_moves
+from cubing_algs.transform.fat import unfat_rotation_moves
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from kociemba import solve
@@ -168,7 +168,7 @@ def random_training(mode):
     algo = choice(cases[case])
 
     return case, parse_moves(algo).transform(
-        unfat_moves,
+        unfat_rotation_moves,
         degrip_full_moves,
         remove_final_rotations,
     )
