@@ -427,6 +427,7 @@
               <th>Recognition</th>
               <th>Execution</th>
               <th>Time</th>
+              <th>HTM</th>
               <th>QTM</th>
               <th>TPS</th>
               <th>eTPS</th>
@@ -474,6 +475,9 @@
                 </td>
                 <td class="recons-total">
                   {{ info.total|format_duration }}
+                </td>
+                <td class="recons-htm">
+                  {{ info.reconstruction|length }}
                 </td>
                 <td class="recons-qtm">
                   {{ info.moves|length }}
