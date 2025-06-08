@@ -467,6 +467,14 @@ header {
     white-space: nowrap;
 }
 
+.table-container td.recons-step {
+    font-weight: bold;
+}
+
+.table-container td.substep {
+    padding-left: 2rem;
+}
+
 .table-container th {
     position: sticky;
     top: 0;
