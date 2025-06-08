@@ -374,10 +374,11 @@
       {% endif %}
       <div class="stat-card">
         <div class="stat-title">Date</div>
-        <div class="stat-value">{{ solve.datetime.strftime('%Y-%m-%d') }}
-            <div class="stat-meta">
-              {{ solve.datetime.strftime('%H:%M') }}
-            </div>
+        <div class="stat-value">
+          {{ solve.datetime.strftime('%Y-%m-%d') }}
+        </div>
+        <div class="stat-meta">
+          {{ solve.datetime.strftime('%H:%M') }}
         </div>
       </div>
       {% if solve.device %}
@@ -415,6 +416,9 @@
           <div class="stat-title">Grade</div>
           <div class="stat-value grade-{{ solve.score|format_grade|lower|replace('+', 'plus') }}">
             {{ solve.score|format_grade }}
+          </div>
+          <div class="stat-meta">
+            <span class="stat-best">{{ "%0.2f"|format(solve.score) }}</span>
           </div>
         </div>
         <div class="stat-card">
