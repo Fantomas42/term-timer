@@ -123,6 +123,22 @@ class Solve:
         return self.missed_moves(self.solution)
 
     @cached_property
+    def step_missed_moves(self) -> int:
+        return sum(
+            self.missed_moves(parse_moves(s['moves']))
+            for s in self.method_applied.summary
+            if s['type'] != 'virtual'
+        )
+
+    @cached_property
+    def execution_missed_moves(self) -> int:
+        return self.step_missed_moves
+
+    @cached_property
+    def transition_missed_moves(self) -> int:
+        return self.all_missed_moves - self.step_missed_moves
+
+    @cached_property
     def method(self):
         return METHODS.get(self.method_name, CF4OPAnalyser)
 
@@ -163,9 +179,13 @@ class Solve:
             )
 
         missed_moves = self.all_missed_moves
-        missed_line = f'[missed]{ missed_moves } missed moves[/missed]'
+        missed_line = (
+            '[exec_overhead]'
+            f'{ missed_moves } missed moves'
+            '[/exec_overhead]'
+        )
         if not missed_moves:
-            missed_line = '[green]No missed move[/green]'
+            missed_line = '[success]No missed move[/success]'
 
         grade = format_grade(self.score)
         grade_class = grade.lower()
@@ -436,7 +456,11 @@ class Solve:
             return None
 
         bonus = max((30 - (self.time / SECOND)) / 5, 0)
-        final_score = self.method_applied.score - self.all_missed_moves + bonus
+        malus = 0
+        malus += self.execution_missed_moves
+        malus += self.transition_missed_moves * 0.5
+
+        final_score = self.method_applied.score - malus + bonus
         return min(max(0, final_score), 20)
 
     @cached_property

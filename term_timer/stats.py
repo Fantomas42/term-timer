@@ -479,12 +479,32 @@ class StatisticsReporter(Statistics):
                 )
             metric_string += f'[tps]{ solve.reconstructed_tps:.2f} TPS[/tps] '
 
-            missed_moves = solve.all_missed_moves
-            missed_line = f'[missed]{ missed_moves } missed moves[/missed]'
-            if not missed_moves:
-                missed_line = '[green]No missed move[/green]'
+            console.print(metric_string)
 
-            console.print(metric_string + missed_line)
+            missed_string = '[stats]Overhead   :[/stats] '
+            all_missed_moves = solve.all_missed_moves
+            execution_missed_moves = solve.execution_missed_moves
+            transition_missed_moves = solve.transition_missed_moves
+            if all_missed_moves:
+                missed_string += (
+                    f'[warning]{ all_missed_moves } moves[/warning]'
+                )
+                if execution_missed_moves:
+                    missed_string += (
+                        ' [exec_overhead]'
+                        f'(+{ execution_missed_moves } execution)'
+                        '[/exec_overhead]'
+                    )
+                if transition_missed_moves:
+                    missed_string += (
+                        ' [trans_overhead]'
+                        f'(+{ transition_missed_moves } transition)'
+                        '[/trans_overhead]'
+                    )
+            else:
+                missed_string += '[success]Optimal execution[/success]'
+
+            console.print(missed_string)
 
         console.print(
             '[stats]Scramble   :[/stats] '

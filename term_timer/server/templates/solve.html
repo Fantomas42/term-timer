@@ -374,11 +374,19 @@
             <div class="stat-value">{{ solve.reconstructed.metrics.qstm }}</div>
           </div>
         {% endif %}
-        {% if solve.all_missed_moves %}
+        {% if solve.execution_missed_moves %}
           <div class="stat-card">
-            <div class="stat-title">Missed Moves</div>
-            <div class="stat-value stat-{% if solve.all_missed_moves > 3 %}worst{% else %}warning{% endif %}">
-              {{ solve.all_missed_moves }}
+            <div class="stat-title">Execution Overhead</div>
+            <div class="stat-value stat-{% if solve.execution_missed_moves > 3 %}worst{% else %}warning{% endif %}">
+              {{ solve.execution_missed_moves }}
+            </div>
+          </div>
+        {% endif %}
+        {% if solve.transition_missed_moves %}
+          <div class="stat-card">
+            <div class="stat-title">Transition Overhead</div>
+            <div class="stat-value stat-{% if solve.transition_missed_moves > 3 %}worst{% else %}warning{% endif %}">
+              {{ solve.transition_missed_moves }}
             </div>
           </div>
         {% endif %}

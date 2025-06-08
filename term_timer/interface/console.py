@@ -65,7 +65,8 @@ theme = {
 
     'tps': 'bold #00DFFF',
     'tps_e': 'bold #00AAAA',
-    'missed': 'bold #FF4444',
+    'exec_overhead': 'bold #FF4444',
+    'trans_overhead': 'bold #FF8844',
     'htm': 'bold #6EFFFF',
     'stm': 'bold #6EDFF6',
     'qtm': 'bold #99D799',
