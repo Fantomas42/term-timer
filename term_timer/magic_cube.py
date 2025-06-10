@@ -31,12 +31,16 @@ class CubePrintRich:
 
         return result
 
-    def _print_top_down_face_ll(self, face: Face, *, oll=False) -> str:
+    def _print_top_down_face_ll(self, face: Face, *,
+                                oll=False, top=False) -> str:
         cube = self.cube
 
         result = '   '
-        for color in cube.get_face_flat(face)[:3]:
-            result += self._format_color(color.name, oll)
+        colors = cube.get_face_flat(face)[:3]
+        if top:
+            colors = reversed(colors)
+        for color in colors:
+            result += self._format_color(color.name, oll=oll)
 
         result += '\n'
 
@@ -81,7 +85,7 @@ class CubePrintRich:
     def print_top_face(self, *, oll=False):
         cube = self.cube
 
-        result = self._print_top_down_face_ll(Face.B, oll=oll)
+        result = self._print_top_down_face_ll(Face.B, oll=oll, top=True)
 
         for line in range(3):
             color = cube.get_face(Face.L)[0][line]
@@ -96,7 +100,7 @@ class CubePrintRich:
 
             result += '\n'
 
-        result += self._print_top_down_face_ll(Face.F, oll=oll)
+        result += self._print_top_down_face_ll(Face.F, oll=oll, top=False)
 
         return result
 
