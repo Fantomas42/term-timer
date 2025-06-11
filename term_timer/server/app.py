@@ -33,6 +33,12 @@ def format_delta(delta: int) -> str:
     return f'{ sign }{ format_duration(delta) }'
 
 
+def normalize_value(value, method_applied, metric, name):
+    klass = method_applied.normalize_value(metric, name, value, '')
+
+    return f'<span class="metric-{ klass }">{ value }</span>'
+
+
 class RichHandler(WSGIRequestHandler):
 
     def log_request(self, code, size):
@@ -76,6 +82,7 @@ class View:
                     'format_duration': format_duration,
                     'format_grade': format_grade,
                     'format_time': format_time,
+                    'normalize_value': normalize_value,
                 },
             },
             **context,

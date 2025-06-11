@@ -546,7 +546,7 @@
                   {{ info.total|format_duration }}
                 </td>
                 <td class="recons-htm">
-                  {{ info.reconstruction|length }}
+                  {{ info.reconstruction|length|normalize_value(solve.method_applied, 'moves', info.name) }}
                 </td>
                 <td class="recons-qtm">
                   {{ info.moves|length }}

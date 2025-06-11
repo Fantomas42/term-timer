@@ -172,6 +172,21 @@ header {
     color: var(--success);
 }
 
+.metric-success {
+    color: var(--success);
+    font-weight: bold;
+}
+
+.metric-caution {
+    color: var(--warning);
+    font-weight: bold;
+}
+
+.metric-warning {
+    color: var(--danger);
+    font-weight: bold;
+}
+
 .scramble-card {
     padding: 1rem;
     background-color: rgba(255, 255, 255, 0.05);
