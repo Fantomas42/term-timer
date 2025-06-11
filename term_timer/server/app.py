@@ -39,6 +39,12 @@ def normalize_value(value, method_applied, metric, name):
     return f'<span class="metric-{ klass }">{ value }</span>'
 
 
+def normalize_percent(value, method_applied, metric, name):
+    klass = method_applied.normalize_value(metric, name, value, '')
+
+    return f'<span class="metric-{ klass }">{ value:.2f}%</span>'
+
+
 class RichHandler(WSGIRequestHandler):
 
     def log_request(self, code, size):
@@ -83,6 +89,7 @@ class View:
                     'format_grade': format_grade,
                     'format_time': format_time,
                     'normalize_value': normalize_value,
+                    'normalize_percent': normalize_percent,
                 },
             },
             **context,

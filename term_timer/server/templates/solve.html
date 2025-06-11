@@ -33,6 +33,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
     <script>
      document.addEventListener('DOMContentLoaded', function() {
+
+       const tabs = document.querySelectorAll('.tab');
+       const tabContents = document.querySelectorAll('.tab-content');
+
+       tabs.forEach(tab => {
+         tab.addEventListener('click', function() {
+           tabs.forEach(t => t.classList.remove('active'));
+           this.classList.add('active');
+           tabContents.forEach(content => content.classList.remove('active'));
+
+           const tabId = this.getAttribute('data-tab');
+           console.log(tabId);
+           document.getElementById(`${tabId}-tab`).classList.add('active');
+         });
+       });
+
        initializeTimingChart();
        initializeTPSChart();
        initializeRecognitionChart();
@@ -486,7 +502,13 @@
       <div class="card-header">
         <h2 class="card-title">Reconstruction</h2>
       </div>
-      <div class="table-container">
+
+      <div class="tabs">
+        <div class="tab active" data-tab="solve-time">Time</div>
+        <div class="tab" data-tab="solve-percent">Percent</div>
+      </div>
+
+      <div class="tab-content active table-container" id="solve-time-tab">
         <table class="reconstruction">
           <thead>
             <tr>
@@ -544,6 +566,83 @@
                 </td>
                 <td class="recons-total">
                   {{ info.total|format_duration }}
+                </td>
+                <td class="recons-htm">
+                  {{ info.reconstruction|length|normalize_value(solve.method_applied, 'moves', info.name) }}
+                </td>
+                <td class="recons-qtm">
+                  {{ info.moves|length }}
+                </td>
+                <td class="recons-tps">
+                  {{ solve.tps(info.moves, info.total)|round(2) }}
+                </td>
+                <td class="recons-etps">
+                  {{ solve.tps(info.moves, info.execution)|round(2) }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tab-content table-container" id="solve-percent-tab">
+        <table class="reconstruction">
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Case</th>
+              <th>Moves</th>
+              <th>Recognition</th>
+              <th>Execution</th>
+              <th>Time</th>
+              <th>HTM</th>
+              <th>QTM</th>
+              <th>TPS</th>
+              <th>eTPS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for info in solve.method_applied.summary %}
+              <tr>
+                <td class="recons-step{% if info.type == 'substep' %} substep{% endif %}">
+                  {{ info.name }}
+                </td>
+                <td class="recons-case">
+                  <div class="cfop-case">
+                    {% if info.cases %}
+                      {% set name_part = info.cases[0].split(" ") %}
+                      <div class="cfop-case-img">{{ name_part[0] }}</div>
+                      {% if 'SKIP' not in name %}
+                        {% if info.name == 'OLL' %}
+                          <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
+                             target="_blank" class="link">
+                            {{ " ".join(name_part[1:]) }}
+                          </a>
+                        {% elif info.name == 'PLL' %}
+                          <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
+                             target="_blank" class="link">
+                            PLL {{ name_part[0] }}
+                          </a>
+                        {% endif %}
+                      {% else %}
+                        <span class="skip">SKIP</span>
+                      {% endif %}
+                    {% else %}
+                      <div class="cfop-case-img">N/A</div>
+                    {% endif %}
+                  </div>
+                </td>
+                <td class="recons-moves">
+                  {{ info.reconstruction }}
+                </td>
+                <td class="recons-recognition">
+                  {{ "%0.2f"|format(info.recognition_percent) }}%
+                </td>
+                <td class="recons-execution">
+                  {{ "%0.2f"|format(info.execution_percent) }}%
+                </td>
+                <td class="recons-total">
+                  {{ info.total_percent|normalize_percent(solve.method_applied, 'percent', info.name) }}
                 </td>
                 <td class="recons-htm">
                   {{ info.reconstruction|length|normalize_value(solve.method_applied, 'moves', info.name) }}
