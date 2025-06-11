@@ -9,6 +9,7 @@ from bottle import Bottle
 from bottle import jinja2_template
 from bottle import static_file
 
+from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
 from term_timer.constants import SECOND
 from term_timer.constants import STATIC_DIRECTORY
@@ -287,6 +288,7 @@ class SolveView(View):
             'steps': steps,
             'tps': tps,
             'recognitions': recognitions,
+            'cube_orientation': CUBE_ORIENTATION,
         }
 
 
