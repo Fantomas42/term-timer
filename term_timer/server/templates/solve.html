@@ -459,6 +459,18 @@
             <div class="stat-value">{{ solve.reconstructed.metrics.qstm }}</div>
           </div>
         {% endif %}
+        <div class="stat-card">
+          <div class="stat-title">Recognition</div>
+          <div class="stat-value">
+            {{ solve.recognition_time|format_duration }}
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Execution</div>
+          <div class="stat-value">
+            {{ solve.execution_time|format_duration }}
+          </div>
+        </div>
         {% if solve.execution_missed_moves %}
           <div class="stat-card">
             <div class="stat-title">Execution Overhead</div>
