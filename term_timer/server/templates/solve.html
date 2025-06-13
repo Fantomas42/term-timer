@@ -419,6 +419,14 @@
           {% endif %}
         </div>
       </div>
+      <div class="stat-card">
+        <div class="stat-title">Session</div>
+        <div class="stat-value">
+          <a href="/{{ cube }}/{{ session|default('default', true) }}/" class="link">
+            {{ session|default('default', true)|title }}
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 
