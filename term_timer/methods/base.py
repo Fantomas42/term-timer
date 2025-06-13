@@ -6,6 +6,7 @@ from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.slice import reslice_m_moves
+from cubing_algs.transform.time import untime_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_ORIENTATION
@@ -140,17 +141,12 @@ class Analyser:
     step_list: tuple[str] = ()
     norms: ClassVar[dict[str, dict[str, float]]] = {}
 
-    def __init__(self, scramble, move_times):
+    def __init__(self, scramble, solution):
         self.scramble = scramble
-
-        self.moves = []
-        self.times = []
-        for move_time in move_times:
-            self.moves.append(move_time[0])
-            self.times.append(move_time[1])
+        self.solution = solution
 
         self.duration = (
-            self.times[-1] - self.times[0]
+            self.solution[-1].timed - self.solution[0].timed
         ) * MS_TO_NS_FACTOR
 
         self.steps = self.split_steps()
@@ -165,7 +161,7 @@ class Analyser:
         progress = 0
         step_moves = []
 
-        for move_index, move in enumerate(self.moves):
+        for move_index, move in enumerate(self.solution):
             current_progress, current_cases = self.compute_progress(cube.state)
 
             if current_progress > progress:
@@ -184,7 +180,7 @@ class Analyser:
                 cases.extend(cleaned_cases)
 
             step_moves.append(move_index)
-            cube.rotate(move)
+            cube.rotate(move.untimed)
 
         step_name = self.step_list[progress]
         steps[step_name] = {
@@ -209,19 +205,19 @@ class Analyser:
             info = self.steps[step]
             step_moves = info['moves']
 
-            moves = [self.moves[i] for i in step_moves]
-            times = [self.times[i] for i in step_moves]
+            moves = [self.solution[i] for i in step_moves]
+            times = [self.solution[i].timed for i in step_moves]
 
             ante_time = 0
             if step_moves[0]:
-                ante_time = self.times[step_moves[0] - 1]
+                ante_time = self.solution[step_moves[0] - 1].timed
 
             execution = (
-                self.times[step_moves[-1]]
-                - self.times[step_moves[0]]
+                self.solution[step_moves[-1]].timed
+                - self.solution[step_moves[0]].timed
             ) * MS_TO_NS_FACTOR
             recognition = (
-                self.times[step_moves[0]]
+                self.solution[step_moves[0]].timed
                 - ante_time
             ) * MS_TO_NS_FACTOR
             total = execution + recognition
@@ -245,7 +241,8 @@ class Analyser:
                     'total_percent': (total / self.duration) * 100,
                     'execution_percent': (execution / self.duration) * 100,
                     'recognition_percent': (recognition / self.duration) * 100,
-                    'reconstruction': reconstruction,
+                    'reconstruction': reconstruction.transform(untime_moves),
+                    'reconstruction_timed': reconstruction,
                     'increment': info['increment'],
                     'cases': info['cases'],
                     'facelets': info['facelets'],
@@ -307,6 +304,16 @@ class Analyser:
         for info in self.summary:
             if info['type'] != 'virtual':
                 recons += f'{ info["reconstruction"]!s } '
+
+        return parse_moves(recons)
+
+    @cached_property
+    def reconstruction_timed(self):
+        recons = ''
+
+        for info in self.summary:
+            if info['type'] != 'virtual':
+                recons += f'{ info["reconstruction_timed"]!s } '
 
         return parse_moves(recons)
 

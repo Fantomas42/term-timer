@@ -92,7 +92,7 @@ class Solve:
 
     @cached_property
     def solution(self) -> Algorithm:
-        return parse_moves([m[0] for m in self.move_times])
+        return parse_moves(self.raw_moves)
 
     @cached_property
     def solution_tps(self) -> float:
@@ -105,6 +105,10 @@ class Solve:
         if applied:
             return self.method_applied.reconstruction.copy()
 
+        return self.reconstructed_raw
+
+    @cached_property
+    def reconstructed_raw(self) -> list[str]:
         reconstruction = CUBE_ORIENTATION + self.solution
 
         return reconstruction.transform(
@@ -147,7 +151,7 @@ class Solve:
         if not self.advanced:
             return None
 
-        return self.method(self.scramble, self.move_times)
+        return self.method(self.scramble, self.solution)
 
     @cached_property
     def recognition_time(self) -> float:

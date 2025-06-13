@@ -173,6 +173,7 @@ class CFOPAnalyser(Analyser):
                     'execution_percent': 0,
                     'recognition_percent': 0,
                     'reconstruction': Algorithm(),
+                    'reconstruction_timed': Algorithm(),
                     'increment': 0,
                     'cases': ['SKIP'],
                     'facelets': '',
@@ -196,6 +197,7 @@ class CFOPAnalyser(Analyser):
                     'execution_percent': 0,
                     'recognition_percent': 0,
                     'reconstruction': Algorithm(),
+                    'reconstruction_timed': Algorithm(),
                     'increment': 0,
                     'cases': ['SKIP'],
                     'facelets': '',
@@ -325,6 +327,7 @@ class CF4OPAnalyser(CFOPAnalyser):
             'execution_percent': 0,
             'recognition_percent': 0,
             'reconstruction': Algorithm(),
+            'reconstruction_timed': Algorithm(),
             'increment': 0,
             'cases': [],
             'facelets': '',
@@ -346,6 +349,7 @@ class CF4OPAnalyser(CFOPAnalyser):
                 f2l['execution_percent'] += info['execution_percent']
                 f2l['recognition_percent'] += info['recognition_percent']
                 f2l['reconstruction'].extend(info['reconstruction'])
+                f2l['reconstruction_timed'].extend(info['reconstruction_timed'])
 
         if insert_f2l:
             if 'F2L' not in summary[0]['name']:

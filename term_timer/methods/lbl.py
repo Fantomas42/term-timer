@@ -48,6 +48,7 @@ class LBLAnalyser(Analyser):
                     'execution_percent': 0,
                     'recognition_percent': 0,
                     'reconstruction': Algorithm(),
+                    'reconstruction_timed': Algorithm(),
                     'increment': 0,
                     'cases': ['SKIP'],
                     'facelets': '',
