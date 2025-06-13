@@ -532,7 +532,7 @@ class StatisticsReporter(Statistics):
         if not solve.advanced:
             return None
 
-        analysis = CFOPAnalyser(solve.scramble, solve.move_times)
+        analysis = CFOPAnalyser(solve.scramble, solve.solution)
         oll, pll = analysis.summary[-2:]
 
         return {
