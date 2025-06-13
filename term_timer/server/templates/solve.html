@@ -438,6 +438,24 @@
           </div>
         </div>
         <div class="stat-card">
+          <div class="stat-title">Recognition</div>
+          <div class="stat-value">
+            {{ "%0.2f"|format(solve.recognition_time / solve.time * 100.0) }}%
+          </div>
+          <div class="stat-meta">
+            <span class="stat-best">{{ solve.recognition_time|format_duration }}s</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Execution</div>
+          <div class="stat-value">
+            {{ "%0.2f"|format(solve.execution_time / solve.time * 100.0) }}%
+          </div>
+          <div class="stat-meta">
+            <span class="stat-best">{{ solve.execution_time|format_duration }}s</span>
+          </div>
+        </div>
+        <div class="stat-card">
           <div class="stat-title">TPS</div>
           <div class="stat-value">
             {{ "%0.2f"|format(solve.reconstructed_tps) }}
@@ -460,15 +478,9 @@
           </div>
         {% endif %}
         <div class="stat-card">
-          <div class="stat-title">Recognition</div>
+          <div class="stat-title">Speed</div>
           <div class="stat-value">
-            {{ solve.recognition_time|format_duration }}
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">Execution</div>
-          <div class="stat-value">
-            {{ solve.execution_time|format_duration }}
+            {{ solve.move_speed|format_duration }}s
           </div>
         </div>
         {% if solve.execution_missed_moves %}

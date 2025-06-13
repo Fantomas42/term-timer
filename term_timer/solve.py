@@ -170,6 +170,10 @@ class Solve:
         )
 
     @cached_property
+    def move_speed(self) -> float:
+        return self.execution_time / len(self.solution)
+
+    @cached_property
     def report_line(self) -> str:
         if not self.advanced:
             return ''
