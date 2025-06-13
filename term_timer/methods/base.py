@@ -6,7 +6,7 @@ from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.slice import reslice_m_moves
-from cubing_algs.transform.time import untime_moves
+from cubing_algs.transform.timing import untime_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_ORIENTATION
