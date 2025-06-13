@@ -375,6 +375,26 @@ header {
     position: relative;
 }
 
+/* Twisty */
+twisty-player {
+    width: 100%;
+    min-height: 400px;
+    background-color: var(--card-bg);
+}
+
+twisty-alg-viewer {
+    font-size: 1.3rem;
+}
+
+.twisty-alg-move {
+    color: var(--light);
+    font-weight: bold;
+}
+
+.twisty-alg-line-comment {
+    color: var(--text-secondary);
+}
+
 /* Footer */
 .app-footer {
     color: var(--text-secondary);
