@@ -225,10 +225,14 @@ class Analyser:
                 self.solution[step_moves[0]].timed
                 - ante_time
             ) * MS_TO_NS_FACTOR
-            post_pause = (
-                post_time
-                - self.solution[step_moves[-1]].timed
-            ) * MS_TO_NS_FACTOR
+            post_pause = max(
+                (
+                    post_time
+                    - self.solution[step_moves[-1]].timed
+                ) * MS_TO_NS_FACTOR,
+                0,
+            )
+
             total = execution + recognition
 
             reconstruction = CUBE_ORIENTATION + moves
