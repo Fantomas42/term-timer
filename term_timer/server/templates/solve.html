@@ -507,6 +507,14 @@
             </div>
           </div>
         {% endif %}
+        {% if solve.execution_pauses %}
+          <div class="stat-card">
+            <div class="stat-title">Execution Pauses</div>
+            <div class="stat-value stat-{% if solve.execution_pauses > 3 %}worst{% else %}warning{% endif %}">
+              {{ solve.execution_pauses }}
+            </div>
+          </div>
+        {% endif %}
       </div>
     </div>
   {% endif %}

@@ -136,6 +136,18 @@ class Solve:
         )
 
     @cached_property
+    def step_pauses(self) -> int:
+        return sum(
+            self.pauses(s['reconstruction_timed'])
+            for s in self.method_applied.summary
+            if s['type'] != 'virtual'
+        )
+
+    @cached_property
+    def execution_pauses(self) -> int:
+        return self.step_pauses
+
+    @cached_property
     def execution_missed_moves(self) -> int:
         return self.step_missed_moves
 
@@ -319,7 +331,7 @@ class Solve:
         threshold = self.move_speed / MS_TO_NS_FACTOR * 2
         previous_time = step['reconstruction_timed'][0].timed
 
-        for index in range(len(step['reconstruction'])):
+        for index in range(len(step['reconstruction_timed'])):
             time = step['reconstruction_timed'][index].timed
             if time - previous_time > threshold:
                 paused.append('.' * int((time - previous_time) / threshold))
@@ -327,7 +339,10 @@ class Solve:
             previous_time = time
             paused.append(str(step['reconstruction'][index]))
 
-        paused.append('.' * int((step['post_pause'] / MS_TO_NS_FACTOR) / threshold))
+        paused.append(
+            '.' * int(
+                (step['post_pause'] / MS_TO_NS_FACTOR) / threshold),
+        )
 
         return ' '.join(paused)
 
@@ -504,6 +519,20 @@ class Solve:
 
         return ' '.join([str(m) for m in moves])
 
+    def pauses(self, algorithm) -> int:
+        pauses = 0
+        threshold = self.move_speed / MS_TO_NS_FACTOR * 2
+        previous_time = algorithm[0].timed
+
+        for move in algorithm:
+            time = move.timed
+            if time - previous_time > threshold:
+                pauses += 1
+
+            previous_time = time
+
+        return pauses
+
     @cached_property
     def score(self) -> float:
         if not self.method_applied:
@@ -513,8 +542,10 @@ class Solve:
         malus = 0
         malus += self.execution_missed_moves
         malus += self.transition_missed_moves * 0.5
+        malus += self.execution_pauses * 0.2
 
         final_score = self.method_applied.score - malus + bonus
+
         return min(max(0, final_score), 20)
 
     @cached_property

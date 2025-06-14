@@ -506,6 +506,16 @@ class StatisticsReporter(Statistics):
 
             console.print(missed_string)
 
+            pauses_string = '[stats]Pauses     :[/stats] '
+            if solve.execution_pauses:
+                pauses_string += (
+                    f'[warning]{ solve.execution_pauses }[/warning]'
+                )
+            else:
+                pauses_string += '[success]None[/success]'
+
+            console.print(pauses_string)
+
         console.print(
             '[stats]Scramble   :[/stats] '
             f'[consign]{ solve.scramble }[/consign]',
