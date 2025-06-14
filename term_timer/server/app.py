@@ -11,6 +11,7 @@ from bottle import static_file
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
+from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
@@ -278,6 +279,46 @@ class SolveView(View):
                         },
                     )
 
+            timing = []
+            speed = self.solve.move_speed / MS_TO_NS_FACTOR
+            threshold = speed * 2
+            previous_time = self.solve.reconstructed[0].timed
+
+            for move in self.solve.reconstructed:
+                time = move.timed
+                if time - previous_time > threshold:
+                    timing.extend(
+                        [int(time), time + speed],
+                    )
+                else:
+                    timing.append(time + speed)
+                previous_time = time
+
+            reconstruction = ''
+            for info in self.solve.method_applied.summary:
+                if info['type'] == 'virtual':
+                    continue
+
+                if info['type'] == 'skipped':
+                    reconstruction += f'// { info["name"] } SKIPPED\n'
+                    continue
+
+                cases = ''
+                if info['cases'] and info['cases'][0]:
+                    cases = f' ({ " ".join(info["cases"]) })'
+
+                recon = self.solve.reconstruction_step_pauses(
+                    info, multiple=False,
+                )
+
+                reconstruction += (
+                    f'{ recon } // '
+                    f'{ info["name"] }{ cases } '
+                    f'Reco: { format_duration(info["recognition"]) }s '
+                    f'Exec: { format_duration(info["execution"]) }s '
+                    f'Moves: { len(info["reconstruction"]) }\n'
+                )
+
         return {
             'cube': self.cube,
             'session': self.session,
@@ -289,6 +330,8 @@ class SolveView(View):
             'tps': tps,
             'recognitions': recognitions,
             'cube_orientation': CUBE_ORIENTATION,
+            'reconstruction': reconstruction,
+            'timing': timing,
         }
 
 

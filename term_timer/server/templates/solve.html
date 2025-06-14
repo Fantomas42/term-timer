@@ -29,6 +29,45 @@
    });
   </script>
   {% if solve.advanced %}
+    <script type="module">
+     import { Alg, Move, Pause } from "https://cdn.cubing.net/v0/js/cubing/alg";
+     import { TwistyAlgViewer, TwistyPlayer } from "https://cdn.cubing.net/v0/js/cubing/twisty";
+
+     const solutionString = `{{ reconstruction }}`;
+     const solutionMoveTimestamps = [0, {{ timing|join(', ') }}];
+
+     const duration = solutionMoveTimestamps.at(-1);
+     const parsedAlg = Alg.fromString(solutionString);
+
+     const moves = Array.from(parsedAlg.childAlgNodes()).filter((algNode) =>
+       algNode.is(Move) || algNode.is(Pause),
+     );
+
+     const animationTimelineLeaves = moves.map((move, i) => {
+       return {
+         animLeaf: move,
+         start: ((solutionMoveTimestamps[i] ?? 0) + solutionMoveTimestamps[i - 1] || 0) / 2,
+         end: (solutionMoveTimestamps[i] + (solutionMoveTimestamps[i + 1] ?? duration)) / 2,
+         /* start: solutionMoveTimestamps[i],
+          * end: solutionMoveTimestamps[i + 1] ?? duration + 1, */
+       };
+     });
+
+     const player = new TwistyPlayer({
+       alg: parsedAlg,
+       experimentalSetupAlg: "{{ cube_orientation }}",
+       experimentalSetupAnchor: "end",
+       viewerLink: "none",
+       puzzle: "{{ cube }}x{{ cube }}x{{ cube }}",
+       background: "none",
+     });
+     player.experimentalModel.animationTimelineLeavesRequest.set(
+       animationTimelineLeaves,
+     );
+     document.querySelector("#simulation").appendChild(player);
+     document.querySelector("#simulation").appendChild(new TwistyAlgViewer({ twistyPlayer: player }));
+    </script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
     <script>
@@ -538,6 +577,15 @@
   </div>
 
   {% if solve.advanced %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Simulation</h2>
+      </div>
+      <div class="simulation-container">
+        <div id="simulation"></div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">Reconstruction</h2>
