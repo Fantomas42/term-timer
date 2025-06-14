@@ -12,7 +12,6 @@ from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import MS_TO_NS_FACTOR
-from term_timer.formatter import format_duration
 
 INITIAL = ''
 for face in ['U', 'R', 'F', 'D', 'L', 'B']:
