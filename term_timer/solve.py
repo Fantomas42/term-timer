@@ -326,7 +326,7 @@ class Solve:
 
         return line
 
-    def reconstruction_alg_cubing_pauses(self, step):
+    def reconstruction_alg_cubing_pauses(self, step, *, multiple=True):
         paused = []
         threshold = self.move_speed / MS_TO_NS_FACTOR * 2
         previous_time = step['reconstruction_timed'][0].timed
@@ -334,15 +334,20 @@ class Solve:
         for index in range(len(step['reconstruction_timed'])):
             time = step['reconstruction_timed'][index].timed
             if time - previous_time > threshold:
-                paused.append('.' * int((time - previous_time) / threshold))
+                if multiple:
+                    paused.append('.' * int((time - previous_time) / threshold))
+                else:
+                    paused.append('.')
 
             previous_time = time
             paused.append(str(step['reconstruction'][index]))
 
-        paused.append(
-            '.' * int(
-                (step['post_pause'] / MS_TO_NS_FACTOR) / threshold),
-        )
+        post = int((step['post_pause'] / MS_TO_NS_FACTOR) / threshold)
+        if post:
+            if multiple:
+                paused.append('.' * post)
+            else:
+                paused.append('.')
 
         return ' '.join(paused)
 
@@ -364,8 +369,11 @@ class Solve:
                 if info['cases'] and info['cases'][0]:
                     cases = f' ({ " ".join(info["cases"]) })'
 
+                moves = self.reconstruction_alg_cubing_pauses(
+                    info, multiple=True,
+                )
                 recons += (
-                    f'{ self.reconstruction_alg_cubing_pauses(info) } // '
+                    f'{ moves } // '
                     f'{ info["name"] }{ cases } '
                     f'Reco: { format_duration(info["recognition"]) }s '
                     f'Exec: { format_duration(info["execution"]) }s '
