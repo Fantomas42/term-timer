@@ -326,7 +326,7 @@ class Solve:
 
         return line
 
-    def reconstruction_alg_cubing_pauses(self, step, *, multiple=True):
+    def reconstruction_step_pauses(self, step, *, multiple=True):
         paused = []
         threshold = self.move_speed / MS_TO_NS_FACTOR * 2
         previous_time = step['reconstruction_timed'][0].timed
@@ -369,7 +369,7 @@ class Solve:
                 if info['cases'] and info['cases'][0]:
                     cases = f' ({ " ".join(info["cases"]) })'
 
-                moves = self.reconstruction_alg_cubing_pauses(
+                moves = self.reconstruction_step_pauses(
                     info, multiple=True,
                 )
                 recons += (
