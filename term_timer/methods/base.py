@@ -280,45 +280,7 @@ class Analyser:
         return 'caution'
 
     @cached_property
-    def reconstruction_detailed(self):
-        recons = ''
-
-        if CUBE_ORIENTATION:
-            recons += f'{ CUBE_ORIENTATION!s } // Orientation\n'
-
-        for info in self.summary:
-            if info['type'] != 'virtual':
-
-                if info['type'] == 'skipped':
-                    recons += f'// { info["name"] } SKIPPED\n'
-                    continue
-
-                cases = ''
-                if info['cases'] and info['cases'][0]:
-                    cases = f' ({ " ".join(info["cases"]) })'
-
-                recons += (
-                    f'{ info["reconstruction"]!s } // '
-                    f'{ info["name"] }{ cases } '
-                    f'Reco: { format_duration(info["recognition"]) }s '
-                    f'Exec: { format_duration(info["execution"]) }s '
-                    f'Moves: { len(info["reconstruction"]) }\n'
-                )
-
-        return recons
-
-    @cached_property
     def reconstruction(self):
-        recons = ''
-
-        for info in self.summary:
-            if info['type'] != 'virtual':
-                recons += f'{ info["reconstruction"]!s } '
-
-        return parse_moves(recons)
-
-    @cached_property
-    def reconstruction_timed(self):
         recons = ''
 
         for info in self.summary:
