@@ -15,6 +15,7 @@ from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import STATS_CONFIG
 from term_timer.constants import DNF
+from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_duration
@@ -313,6 +314,51 @@ class Solve:
 
         return line
 
+    def reconstruction_alg_cubing_pauses(self, step):
+        paused = []
+        threshold = self.move_speed / MS_TO_NS_FACTOR * 2
+        previous_time = step['reconstruction_timed'][0].timed
+
+        for index in range(len(step['reconstruction'])):
+            time = step['reconstruction_timed'][index].timed
+            if time - previous_time > threshold:
+                paused.append('.' * int((time - previous_time) / threshold))
+
+            previous_time = time
+            paused.append(str(step['reconstruction'][index]))
+
+        paused.append('.' * int((step['post_pause'] / MS_TO_NS_FACTOR) / threshold))
+
+        return ' '.join(paused)
+
+    @cached_property
+    def reconstruction_alg_cubing(self):
+        recons = ''
+
+        if CUBE_ORIENTATION:
+            recons += f'{ CUBE_ORIENTATION!s } // Orientation\n'
+
+        for info in self.method_applied.summary:
+            if info['type'] != 'virtual':
+
+                if info['type'] == 'skipped':
+                    recons += f'// { info["name"] } SKIPPED\n'
+                    continue
+
+                cases = ''
+                if info['cases'] and info['cases'][0]:
+                    cases = f' ({ " ".join(info["cases"]) })'
+
+                recons += (
+                    f'{ self.reconstruction_alg_cubing_pauses(info) } // '
+                    f'{ info["name"] }{ cases } '
+                    f'Reco: { format_duration(info["recognition"]) }s '
+                    f'Exec: { format_duration(info["execution"]) }s '
+                    f'Moves: { len(info["reconstruction"]) }\n'
+                )
+
+        return recons
+
     def time_graph(self) -> None:
         if not self.advanced:
             return
@@ -478,7 +524,7 @@ class Solve:
         return self.alg_cubing_url(
             f'Solve { date }: { format_time(self.time) }'.replace(' ', '%20'),
             self.scramble,
-            self.method_applied.reconstruction_detailed,
+            self.reconstruction_alg_cubing,
         )
 
     @staticmethod
