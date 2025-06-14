@@ -1,3 +1,4 @@
+from contextlib import suppress
 from functools import cached_property
 from typing import ClassVar
 
@@ -212,6 +213,10 @@ class Analyser:
             if step_moves[0]:
                 ante_time = self.solution[step_moves[0] - 1].timed
 
+            post_time = 0
+            with suppress(IndexError):
+                post_time = self.solution[step_moves[-1] + 1].timed
+
             execution = (
                 self.solution[step_moves[-1]].timed
                 - self.solution[step_moves[0]].timed
@@ -219,6 +224,10 @@ class Analyser:
             recognition = (
                 self.solution[step_moves[0]].timed
                 - ante_time
+            ) * MS_TO_NS_FACTOR
+            post_pause = (
+                post_time
+                - self.solution[step_moves[-1]].timed
             ) * MS_TO_NS_FACTOR
             total = execution + recognition
 
@@ -238,6 +247,7 @@ class Analyser:
                     'index': step_moves,
                     'execution': execution,
                     'recognition': recognition,
+                    'post_pause': post_pause,
                     'total_percent': (total / self.duration) * 100,
                     'execution_percent': (execution / self.duration) * 100,
                     'recognition_percent': (recognition / self.duration) * 100,
