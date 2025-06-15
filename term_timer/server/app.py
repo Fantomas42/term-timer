@@ -247,6 +247,9 @@ class SolveView(View):
         timing = []
         reconstruction = ''
 
+        ranks = sorted([s.final_time for s in self.solves])
+        rank = ranks.index(self.solve.final_time) + 1
+
         if self.solve.advanced:
             scatter = [
                 {
@@ -332,6 +335,7 @@ class SolveView(View):
             'cube_orientation': CUBE_ORIENTATION,
             'reconstruction': reconstruction,
             'timing': timing,
+            'rank': rank,
         }
 
 

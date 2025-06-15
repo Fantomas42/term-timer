@@ -419,7 +419,10 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-title">Time</div>
-        <div class="stat-value">{{ solve.final_time|format_time }}</div>
+        <div class="stat-value {% if rank == 1 %}stat-best{% elif rank == solves|length %}stat-worst{% endif %}">{{ solve.final_time|format_time }}</div>
+        <div class="stat-meta">
+          #{{ rank }}
+        </div>
       </div>
       {% if solve.flag %}
         <div class="stat-card">
@@ -509,6 +512,12 @@
           </div>
         </div>
         <div class="stat-card">
+          <div class="stat-title">Move Speed</div>
+          <div class="stat-value">
+            {{ solve.move_speed|format_duration }}s
+          </div>
+        </div>
+        <div class="stat-card">
           <div class="stat-title">HTM</div>
           <div class="stat-value">{{ solve.reconstructed.metrics.htm }}</div>
         </div>
@@ -524,12 +533,6 @@
             <div class="stat-value">{{ solve.reconstructed.metrics.qstm }}</div>
           </div>
         {% endif %}
-        <div class="stat-card">
-          <div class="stat-title">Speed</div>
-          <div class="stat-value">
-            {{ solve.move_speed|format_duration }}s
-          </div>
-        </div>
         {% if solve.execution_missed_moves %}
           <div class="stat-card">
             <div class="stat-title">Execution Overhead</div>
@@ -549,7 +552,7 @@
         {% if solve.execution_pauses %}
           <div class="stat-card">
             <div class="stat-title">Execution Pauses</div>
-            <div class="stat-value stat-{% if solve.execution_pauses > 3 %}worst{% else %}warning{% endif %}">
+            <div class="stat-value stat-{% if solve.execution_pauses > 4 %}worst{% else %}warning{% endif %}">
               {{ solve.execution_pauses }}
             </div>
           </div>
