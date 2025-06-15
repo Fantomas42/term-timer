@@ -83,7 +83,6 @@
            tabContents.forEach(content => content.classList.remove('active'));
 
            const tabId = this.getAttribute('data-tab');
-           console.log(tabId);
            document.getElementById(`${tabId}-tab`).classList.add('active');
          });
        });
