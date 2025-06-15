@@ -377,7 +377,7 @@ class Solve:
                     f'{ info["name"] }{ cases } '
                     f'Reco: { format_duration(info["recognition"]) }s '
                     f'Exec: { format_duration(info["execution"]) }s '
-                    f'Moves: { len(info["reconstruction"]) }\n'
+                    f'HTM: { len(info["reconstruction"]) }\n'
                 )
 
         return recons
