@@ -244,6 +244,8 @@ class SolveView(View):
         steps = []
         scatter = []
         recognitions = []
+        timing = []
+        reconstruction = ''
 
         if self.solve.advanced:
             scatter = [
@@ -279,7 +281,6 @@ class SolveView(View):
                         },
                     )
 
-            timing = []
             speed = self.solve.move_speed / MS_TO_NS_FACTOR
             threshold = speed * 2
             previous_time = self.solve.reconstructed[0].timed
@@ -294,7 +295,6 @@ class SolveView(View):
                     timing.append(time + speed)
                 previous_time = time
 
-            reconstruction = ''
             for info in self.solve.method_applied.summary:
                 if info['type'] == 'virtual':
                     continue
