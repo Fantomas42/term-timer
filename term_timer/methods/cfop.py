@@ -64,6 +64,18 @@ class CFOPAnalyser(Analyser):
             'OLL': 16.5,
             'PLL': 21.5,
         },
+        'recognition': {
+            'Cross': 0.0,
+            'F2L': 40.0,
+            'OLL': 20.0,
+            'PLL': 10.0,
+        },
+        'execution': {
+            'Cross': 100.0,
+            'F2L': 60.0,
+            'OLL': 80.0,
+            'PLL': 90.0,
+        },
     }
 
     def compute_progress(self, facelets):
@@ -172,6 +184,8 @@ class CFOPAnalyser(Analyser):
                     'total_percent': 0,
                     'execution_percent': 0,
                     'recognition_percent': 0,
+                    'step_execution_percent': 0,
+                    'step_recognition_percent': 0,
                     'reconstruction': Algorithm(),
                     'reconstruction_timed': Algorithm(),
                     'increment': 0,
@@ -196,6 +210,8 @@ class CFOPAnalyser(Analyser):
                     'total_percent': 0,
                     'execution_percent': 0,
                     'recognition_percent': 0,
+                    'step_execution_percent': 0,
+                    'step_recognition_percent': 0,
                     'reconstruction': Algorithm(),
                     'reconstruction_timed': Algorithm(),
                     'increment': 0,
@@ -253,6 +269,26 @@ class CF4OPAnalyser(CFOPAnalyser):
             'F2L 4': 12.5,
             'OLL': 16.5,
             'PLL': 21.5,
+        },
+        'recognition': {
+            'Cross': 0.0,
+            'F2L': 40.0,
+            'F2L 1': 40.0,
+            'F2L 2': 40.0,
+            'F2L 3': 40.0,
+            'F2L 4': 40.0,
+            'OLL': 20.0,
+            'PLL': 10.0,
+        },
+        'execution': {
+            'Cross': 100.0,
+            'F2L': 60.0,
+            'F2L 1': 60.0,
+            'F2L 2': 60.0,
+            'F2L 3': 60.0,
+            'F2L 4': 60.0,
+            'OLL': 80.0,
+            'PLL': 90.0,
         },
     }
 
@@ -326,6 +362,8 @@ class CF4OPAnalyser(CFOPAnalyser):
             'total_percent': 0,
             'execution_percent': 0,
             'recognition_percent': 0,
+            'step_execution_percent': 0,
+            'step_recognition_percent': 0,
             'reconstruction': Algorithm(),
             'reconstruction_timed': Algorithm(),
             'increment': 0,
@@ -348,6 +386,8 @@ class CF4OPAnalyser(CFOPAnalyser):
                 f2l['total_percent'] += info['total_percent']
                 f2l['execution_percent'] += info['execution_percent']
                 f2l['recognition_percent'] += info['recognition_percent']
+                #f2l['step_execution_percent'] += info['step_execution_percent']
+                #f2l['step_recognition_percent'] += info['step_recognition_percent']  # noqa: E501
                 f2l['reconstruction'].extend(info['reconstruction'])
                 f2l['reconstruction_timed'].extend(info['reconstruction_timed'])
 

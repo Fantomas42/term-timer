@@ -254,6 +254,8 @@ class Analyser:
                     'total_percent': (total / self.duration) * 100,
                     'execution_percent': (execution / self.duration) * 100,
                     'recognition_percent': (recognition / self.duration) * 100,
+                    'step_execution_percent': (execution / total) * 100,
+                    'step_recognition_percent': (recognition / total) * 100,
                     'reconstruction': reconstruction.transform(untime_moves),
                     'reconstruction_timed': reconstruction,
                     'increment': info['increment'],

@@ -688,10 +688,8 @@
               <th>Recognition</th>
               <th>Execution</th>
               <th>Time</th>
-              <th>HTM</th>
-              <th>QTM</th>
-              <th>TPS</th>
-              <th>eTPS</th>
+              <th>Step Reco.</th>
+              <th>Step Exec.</th>
             </tr>
           </thead>
           <tbody>
@@ -737,17 +735,11 @@
                 <td class="recons-total">
                   {{ info.total_percent|normalize_percent(solve.method_applied, 'percent', info.name) }}
                 </td>
-                <td class="recons-htm">
-                  {{ info.reconstruction|length|normalize_value(solve.method_applied, 'moves', info.name) }}
+                <td class="recons-local-recognition">
+                  {{ info.step_recognition_percent|normalize_percent(solve.method_applied, 'recognition', info.name) }}
                 </td>
-                <td class="recons-qtm">
-                  {{ info.moves|length }}
-                </td>
-                <td class="recons-tps">
-                  {{ solve.tps(info.moves, info.total)|round(2) }}
-                </td>
-                <td class="recons-etps">
-                  {{ solve.tps(info.moves, info.execution)|round(2) }}
+                <td class="recons-local-execution">
+                  {{ info.step_execution_percent|normalize_percent(solve.method_applied, 'execution', info.name) }}
                 </td>
               </tr>
             {% endfor %}

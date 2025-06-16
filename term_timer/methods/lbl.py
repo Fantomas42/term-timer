@@ -47,6 +47,8 @@ class LBLAnalyser(Analyser):
                     'total_percent': 0,
                     'execution_percent': 0,
                     'recognition_percent': 0,
+                    'step_execution_percent': 0,
+                    'step_recognition_percent': 0,
                     'reconstruction': Algorithm(),
                     'reconstruction_timed': Algorithm(),
                     'increment': 0,
