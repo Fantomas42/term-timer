@@ -34,7 +34,7 @@
      import { TwistyAlgViewer, TwistyPlayer } from "https://cdn.cubing.net/v0/js/cubing/twisty";
 
      const solutionString = `{{ reconstruction }}`;
-     const solutionMoveTimestamps = [0, {{ timing|join(', ') }}];
+     const solutionMoveTimestamps = [{{ timing|join(', ') }}];
 
      const duration = solutionMoveTimestamps.at(-1);
      const parsedAlg = Alg.fromString(solutionString);
@@ -591,9 +591,11 @@
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">Reconstruction</h2>
-        <div class="orientation">
-          <span class="move">{{ cube_orientation }}</span>
-        </div>
+        {% if cube_orientation %}
+          <div class="orientation">
+            <span class="move">{{ cube_orientation }}</span>
+          </div>
+        {% endif %}
       </div>
 
       <div class="tabs">

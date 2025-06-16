@@ -244,7 +244,7 @@ class SolveView(View):
         steps = []
         scatter = []
         recognitions = []
-        timing = []
+        timing = [0]
         reconstruction = ''
 
         ranks = sorted([s.final_time for s in self.solves])
@@ -297,6 +297,12 @@ class SolveView(View):
                 else:
                     timing.append(time + speed)
                 previous_time = time
+
+            if CUBE_ORIENTATION:
+                reconstruction += f'{ CUBE_ORIENTATION!s } // Orientation\n'
+                orientation = 2 * speed
+                timing = [t + orientation for t in timing]
+                timing.insert(0, 0)
 
             for info in self.solve.method_applied.summary:
                 if info['type'] == 'virtual':
