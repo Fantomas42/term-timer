@@ -74,7 +74,9 @@ class StatisticsTools:
                 mos.append(mo)
             stack.pop()
 
-        return min(mos)
+        if mos:
+            return min(mos)
+        return 0
 
     def best_ao(self, limit: int) -> int:
         aos: list[int] = []
@@ -92,18 +94,24 @@ class StatisticsTools:
                 aos.append(ao)
             stack.pop()
 
-        return min(aos)
+        if aos:
+            return min(aos)
+        return 0
 
 
 class Statistics(StatisticsTools):
 
     @cached_property
     def bpa(self) -> int:
-        return int(np.mean(self.stack_time_sorted[:3]))
+        if self.stack_time_sorted:
+            return int(np.mean(self.stack_time_sorted[:3]))
+        return 0
 
     @cached_property
     def wpa(self) -> int:
-        return int(np.mean(self.stack_time_sorted[-3:]))
+        if self.stack_time_sorted:
+            return int(np.mean(self.stack_time_sorted[-3:]))
+        return 0
 
     @cached_property
     def mo3(self) -> int:
@@ -331,7 +339,7 @@ class StatisticsReporter(Statistics):
                 total_percent += percent
 
                 start = f'[stats]{ count!s:{" "}>{max_count}} '
-                start += f'([edge]+{ format_edge(edge, max_edge) }[/edge])'
+                start += f'([edge]{ format_edge(edge, max_edge) }[/edge])'
                 start = start.ljust(26 + len(prefix))
 
                 console.print(

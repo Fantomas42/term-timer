@@ -14,6 +14,8 @@ class TestTimerModule(unittest.TestCase):
             show_cube=False,
             show_reconstruction=False,
             show_time_graph=False,
+            show_tps_graph=False,
+            show_recognition_graph=False,
             countdown=0,
             metronome=0,
             stack=[],
