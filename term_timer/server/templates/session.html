@@ -7,9 +7,9 @@
 {% block subtitle %}{{ session|title() }} {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
 
 {% block script %}
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
+  <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+  <script src="/static/js/hammer.js/2.0.8/hammer.min.js"></script>
+  <script src="/static/js/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
   <script>
    document.addEventListener('DOMContentLoaded', function() {
      const tabs = document.querySelectorAll('.tab');
