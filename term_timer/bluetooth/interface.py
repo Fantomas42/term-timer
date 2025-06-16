@@ -120,7 +120,7 @@ class BluetoothInterface:
             devices = await BleakScanner.discover(
                 timeout=self.scan_timeout,
             )
-        except BleakError as error:
+        except (BleakError, OSError) as error:
             logger.debug(str(error))
             raise CubeNotFoundError from error
 
