@@ -371,6 +371,13 @@ class CF4OPAnalyser(CFOPAnalyser):
             'facelets': '',
         }
 
+        f2l_steps = len(
+            [
+                info for info in summary
+                if 'F2L ' in info['name']
+             ],
+        )
+
         insert_f2l = False
         for info in summary:
             if 'F2L ' in info['name']:
@@ -386,10 +393,13 @@ class CF4OPAnalyser(CFOPAnalyser):
                 f2l['total_percent'] += info['total_percent']
                 f2l['execution_percent'] += info['execution_percent']
                 f2l['recognition_percent'] += info['recognition_percent']
-                #f2l['step_execution_percent'] += info['step_execution_percent']
-                #f2l['step_recognition_percent'] += info['step_recognition_percent']  # noqa: E501
+                f2l['step_execution_percent'] += info['step_execution_percent']
+                f2l['step_recognition_percent'] += info['step_recognition_percent']  # noqa: E501
                 f2l['reconstruction'].extend(info['reconstruction'])
                 f2l['reconstruction_timed'].extend(info['reconstruction_timed'])
+
+        f2l['step_execution_percent'] /= f2l_steps
+        f2l['step_recognition_percent'] /= f2l_steps
 
         if insert_f2l:
             if 'F2L' not in summary[0]['name']:

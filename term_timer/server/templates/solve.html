@@ -739,7 +739,7 @@
                   {{ info.step_recognition_percent|normalize_percent(solve.method_applied, 'recognition', info.name) }}
                 </td>
                 <td class="recons-local-execution">
-                  {{ info.step_execution_percent|normalize_percent(solve.method_applied, 'execution', info.name) }}
+                  {{ "%0.2f"|format(info.step_execution_percent) }}%
                 </td>
               </tr>
             {% endfor %}
