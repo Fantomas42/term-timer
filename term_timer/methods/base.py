@@ -6,7 +6,7 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.rotation import remove_final_rotations
-from cubing_algs.transform.slice import reslice_m_moves
+from cubing_algs.transform.slice import reslice_moves
 from cubing_algs.transform.timing import untime_moves
 from cubing_algs.vcube import VCube
 
@@ -118,7 +118,7 @@ STEPS_CONFIG = {
     'PLL': {
         'mask': FULL_CUBE,
         'transformations': (
-            reslice_m_moves,
+            reslice_moves,
             degrip_full_moves,
             remove_final_rotations,
             optimize_double_moves,
@@ -127,7 +127,7 @@ STEPS_CONFIG = {
     'LL': {
         'mask': FULL_CUBE,
         'transformations': (
-            reslice_m_moves,
+            reslice_moves,
             degrip_full_moves,
             remove_final_rotations,
             optimize_double_moves,
