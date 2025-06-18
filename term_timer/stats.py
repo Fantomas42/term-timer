@@ -517,7 +517,7 @@ class StatisticsReporter(Statistics):
             pauses_string = '[stats]Pauses     :[/stats] '
             if solve.execution_pauses:
                 pauses_string += (
-                    f'[warning]{ solve.execution_pauses }[/warning]'
+                    f'[caution]{ solve.execution_pauses }[/caution]'
                 )
             else:
                 pauses_string += '[success]None[/success]'
