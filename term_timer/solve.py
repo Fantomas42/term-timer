@@ -288,7 +288,7 @@ class Solve:
 
             move_klass = self.method_applied.normalize_value(
                 'moves', info['name'],
-                len(info['reconstruction']),
+                info['reconstruction'].metrics['htm'],
                 'result',
             )
             percent_klass = self.method_applied.normalize_value(
@@ -306,7 +306,7 @@ class Solve:
             line += (
                 f'{ header }'
                 f'[{ move_klass }]'
-                f'{ len(info["reconstruction"]):>2} HTM[/{ move_klass }] '
+                f'{ info["reconstruction"].metrics["htm"]:>2} HTM[/{ move_klass }] '
                 f'[recognition]'
                 f'{ format_duration(info["recognition"]):>5}s[/recognition] '
                 f'[recognition_p]'
@@ -377,7 +377,7 @@ class Solve:
                     f'{ info["name"] }{ cases } '
                     f'Reco: { format_duration(info["recognition"]) }s '
                     f'Exec: { format_duration(info["execution"]) }s '
-                    f'HTM: { len(info["reconstruction"]) }\n'
+                    f'HTM: { info["reconstruction"].metrics["htm"] }\n'
                 )
 
         return recons

@@ -325,7 +325,7 @@ class SolveView(View):
                     f'{ info["name"] }{ cases } '
                     f'Reco: { format_duration(info["recognition"]) }s '
                     f'Exec: { format_duration(info["execution"]) }s '
-                    f'HTM: { len(info["reconstruction"]) }\n'
+                    f'HTM: { info["reconstruction"].metrics["htm"] }\n'
                 )
 
         return {

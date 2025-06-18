@@ -663,10 +663,10 @@
                   {{ info.total|format_duration }}
                 </td>
                 <td class="recons-htm">
-                  {{ info.reconstruction|length|normalize_value(solve.method_applied, 'moves', info.name) }}
+                  {{ info.reconstruction.metrics.htm|normalize_value(solve.method_applied, 'moves', info.name) }}
                 </td>
                 <td class="recons-qtm">
-                  {{ info.moves|length }}
+                  {{ info.reconstruction.metrics.qtm }}
                 </td>
                 <td class="recons-tps">
                   {{ solve.tps(info.moves, info.total)|round(2) }}
