@@ -521,6 +521,9 @@ class Solve:
         return ' '.join([str(m) for m in moves])
 
     def pauses(self, algorithm) -> int:
+        if not algorithm:
+            return 0
+
         pauses = 0
         threshold = self.move_speed / MS_TO_NS_FACTOR * 2
         previous_time = algorithm[0].timed
