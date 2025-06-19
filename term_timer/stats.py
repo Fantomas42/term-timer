@@ -468,6 +468,19 @@ class StatisticsReporter(Statistics):
             )
             console.print(f'[stats]Grade      :[/stats]{ grade_line }')
 
+            grade = format_grade(solve.method_applied.score)
+            grade_class = grade.lower()
+            grade_line = (
+                f' [grade_{ grade_class }]'
+                f'{ grade }'
+                f'[/grade_{ grade_class }]'
+                f' ({ solve.method_applied.score:.2f})'
+            )
+            console.print(
+                f'[stats]Grade { solve.method.name:<5}:[/stats]'
+                f'{ grade_line }',
+            )
+
             console.print(
                 '[stats]Recognition:[/stats] '
                 f'[result]{ format_time(solve.recognition_time) }[/result]'
