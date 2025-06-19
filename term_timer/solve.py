@@ -82,22 +82,15 @@ class Solve:
         return bool(self.raw_moves)
 
     @staticmethod
-    def tps(moves: list[str] | int, time: int) -> float:
+    def compute_tps(moves: int, time: int) -> float:
         if not time:
             return 0
-
-        if not isinstance(moves, int):
-            moves = len(moves)
 
         return moves / (time / SECOND)
 
     @cached_property
     def solution(self) -> Algorithm:
         return parse_moves(self.raw_moves)
-
-    @cached_property
-    def solution_tps(self) -> float:
-        return self.tps(self.solution, self.time)
 
     @cached_property
     def reconstructed(self) -> list[str]:
@@ -120,8 +113,8 @@ class Solve:
         )
 
     @cached_property
-    def reconstructed_tps(self) -> float:
-        return self.tps(self.reconstructed.metrics['qtm'], self.time)
+    def tps(self) -> float:
+        return self.compute_tps(len(self.solution), self.time)
 
     @cached_property
     def all_missed_moves(self) -> int:
@@ -184,7 +177,7 @@ class Solve:
 
     @cached_property
     def move_speed(self) -> float:
-        return self.execution_time / self.solution.metrics['qtm']
+        return self.execution_time / len(self.solution)
 
     @cached_property
     def report_line(self) -> str:
@@ -219,7 +212,7 @@ class Solve:
         return (
             f'[extlink][link={ self.link }]alg.cubing.net[/link][/extlink] '
             f'{ metric_string }'
-            f'[tps]{ self.reconstructed_tps:.2f} TPS[/tps] '
+            f'[tps]{ self.tps:.2f} TPS[/tps] '
             f'{ missed_line }{ grade_line }'
         )
 
@@ -297,11 +290,11 @@ class Solve:
                 'duration_p',
             )
 
-            tps = self.tps(info['reconstruction'], info['total'])
+            tps = self.compute_tps(info['qtm'], info['total'])
             if not info['execution']:
                 tps_exec = tps
             else:
-                tps_exec = self.tps(info['reconstruction'], info['execution'])
+                tps_exec = self.compute_tps(info['qtm'], info['execution'])
 
             line += (
                 f'{ header }'
@@ -424,9 +417,9 @@ class Solve:
         labels = []
         for s in self.method_applied.summary:
             if s['type'] not in {'skipped', 'virtual'}:
-                tps = Solve.tps(s['moves'], s['total'])
+                tps = Solve.compute_tps(s['qtm'], s['total'])
                 tpss.append(tps)
-                etpss.append(Solve.tps(s['moves'], s['execution']) - tps)
+                etpss.append(Solve.compute_tps(s['qtm'], s['execution']) - tps)
                 labels.append(s['name'])
 
         plt.stacked_bar(
@@ -435,7 +428,7 @@ class Solve:
             labels=['TPS', 'eTPS'],
             color=[119, 39],
         )
-        plt.hline(self.reconstructed_tps, 'red')
+        plt.hline(self.tps, 'red')
         plt.plot_size(height=20)
         plt.canvas_color('default')
         plt.axes_color('default')

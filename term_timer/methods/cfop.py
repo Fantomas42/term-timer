@@ -177,10 +177,12 @@ class CFOPAnalyser(Analyser):
                     'name': 'PLL',
                     'moves': [],
                     'times': [],
-                    'total': 0,
                     'index': [],
+                    'qtm': 0,
+                    'total': 0,
                     'execution': 0,
                     'recognition': 0,
+                    'post_pause': 0,
                     'total_percent': 0,
                     'execution_percent': 0,
                     'recognition_percent': 0,
@@ -203,10 +205,12 @@ class CFOPAnalyser(Analyser):
                     'name': 'OLL',
                     'moves': [],
                     'times': [],
-                    'total': 0,
                     'index': [],
+                    'qtm': 0,
+                    'total': 0,
                     'execution': 0,
                     'recognition': 0,
+                    'post_pause': 0,
                     'total_percent': 0,
                     'execution_percent': 0,
                     'recognition_percent': 0,
@@ -355,10 +359,12 @@ class CF4OPAnalyser(CFOPAnalyser):
             'name': 'F2L',
             'moves': [],
             'times': [],
-            'total': 0,
             'index': [],
+            'qtm': 0,
+            'total': 0,
             'execution': 0,
             'recognition': 0,
+            'post_pause': 0,
             'total_percent': 0,
             'execution_percent': 0,
             'recognition_percent': 0,
@@ -387,9 +393,11 @@ class CF4OPAnalyser(CFOPAnalyser):
                 f2l['moves'].extend(info['moves'])
                 f2l['times'].extend(info['times'])
                 f2l['index'].extend(info['index'])
+                f2l['qtm'] += info['qtm']
                 f2l['total'] += info['total']
                 f2l['execution'] += info['execution']
                 f2l['recognition'] += info['recognition']
+                f2l['post_pause'] += info['post_pause']
                 f2l['total_percent'] += info['total_percent']
                 f2l['execution_percent'] += info['execution_percent']
                 f2l['recognition_percent'] += info['recognition_percent']

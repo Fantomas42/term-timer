@@ -271,8 +271,8 @@
              annotation: {
                annotations: [{
                  type: 'line',
-                 yMin: {{ solve.reconstructed_tps }},
-                 yMax: {{ solve.reconstructed_tps }},
+                 yMin: {{ solve.tps }},
+                 yMax: {{ solve.tps }},
                  borderColor: 'rgba(255, 0, 0, 0.3)',
                  borderWidth: 2,
                }],
@@ -507,7 +507,7 @@
         <div class="stat-card">
           <div class="stat-title">TPS</div>
           <div class="stat-value">
-            {{ "%0.2f"|format(solve.reconstructed_tps) }}
+            {{ "%0.2f"|format(solve.tps) }}
           </div>
         </div>
         <div class="stat-card">
@@ -669,10 +669,10 @@
                   {{ info.reconstruction.metrics.qtm }}
                 </td>
                 <td class="recons-tps">
-                  {{ solve.tps(info.moves, info.total)|round(2) }}
+                  {{ solve.compute_tps(info.qtm, info.total)|round(2) }}
                 </td>
                 <td class="recons-etps">
-                  {{ solve.tps(info.moves, info.execution)|round(2) }}
+                  {{ solve.compute_tps(info.qtm, info.execution)|round(2) }}
                 </td>
               </tr>
             {% endfor %}

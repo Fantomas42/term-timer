@@ -485,7 +485,7 @@ class StatisticsReporter(Statistics):
                 metric_string += (
                     f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
                 )
-            metric_string += f'[tps]{ solve.reconstructed_tps:.2f} TPS[/tps] '
+            metric_string += f'[tps]{ solve.tps:.2f} TPS[/tps] '
 
             console.print(metric_string)
 
@@ -559,18 +559,18 @@ class StatisticsReporter(Statistics):
                 'time': oll['total'],
                 'execution': oll['execution'],
                 'recognition': oll['recognition'],
-                'moves': len(oll['moves']),
-                'tps': Solve.tps(oll['moves'], oll['total']),
-                'etps': Solve.tps(oll['moves'], oll['execution']),
+                'qtm': oll['qtm'],
+                'tps': Solve.compute_tps(oll['qtm'], oll['total']),
+                'etps': Solve.compute_tps(oll['qtm'], oll['execution']),
             },
             'pll': {
                 'case': pll['cases'][0],
                 'time': pll['total'],
                 'execution': pll['execution'],
                 'recognition': pll['recognition'],
-                'moves': len(pll['moves']),
-                'tps': Solve.tps(pll['moves'], pll['total']),
-                'etps': Solve.tps(pll['moves'], pll['execution']),
+                'qtm': pll['qtm'],
+                'tps': Solve.compute_tps(pll['qtm'], pll['total']),
+                'etps': Solve.compute_tps(pll['qtm'], pll['execution']),
             },
             'score_cfop': analysis.score,
         }
@@ -663,7 +663,7 @@ class StatisticsReporter(Statistics):
                     'recognitions': [],
                     'executions': [],
                     'times': [],
-                    'moves': [],
+                    'qtms': [],
                     'tpss': [],
                     'etpss': [],
                 },
@@ -671,7 +671,7 @@ class StatisticsReporter(Statistics):
             olls[oll_case]['times'].append(result['oll']['time'])
             olls[oll_case]['executions'].append(result['oll']['execution'])
             olls[oll_case]['recognitions'].append(result['oll']['recognition'])
-            olls[oll_case]['moves'].append(result['oll']['moves'])
+            olls[oll_case]['qtms'].append(result['oll']['qtm'])
             olls[oll_case]['tpss'].append(result['oll']['tps'])
             olls[oll_case]['etpss'].append(result['oll']['etps'])
 
@@ -682,7 +682,7 @@ class StatisticsReporter(Statistics):
                     'recognitions': [],
                     'executions': [],
                     'times': [],
-                    'moves': [],
+                    'qtms': [],
                     'tpss': [],
                     'etpss': [],
                  },
@@ -690,7 +690,7 @@ class StatisticsReporter(Statistics):
             plls[pll_case]['times'].append(result['pll']['time'])
             plls[pll_case]['executions'].append(result['pll']['execution'])
             plls[pll_case]['recognitions'].append(result['pll']['recognition'])
-            plls[pll_case]['moves'].append(result['pll']['moves'])
+            plls[pll_case]['qtms'].append(result['pll']['qtm'])
             plls[pll_case]['tpss'].append(result['pll']['tps'])
             plls[pll_case]['etpss'].append(result['pll']['etps'])
 
@@ -705,7 +705,7 @@ class StatisticsReporter(Statistics):
             info['time'] = sum(info['times']) / count
             info['ao5'] = self.ao(5, info['times'])
             info['ao12'] = self.ao(12, info['times'])
-            info['qtm'] = sum(info['moves']) / count
+            info['qtm'] = sum(info['qtms']) / count
             info['tps'] = sum(info['tpss']) / count
             info['etps'] = sum(info['etpss']) / count
 
@@ -720,7 +720,7 @@ class StatisticsReporter(Statistics):
             info['time'] = sum(info['times']) / count
             info['ao5'] = self.ao(5, info['times'])
             info['ao12'] = self.ao(12, info['times'])
-            info['qtm'] = sum(info['moves']) / count
+            info['qtm'] = sum(info['qtms']) / count
             info['tps'] = sum(info['tpss']) / count
             info['etps'] = sum(info['etpss']) / count
 

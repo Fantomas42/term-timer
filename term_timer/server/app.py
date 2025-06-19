@@ -271,8 +271,8 @@ class SolveView(View):
                     )
                     tps.append(
                         {
-                            'tps': Solve.tps(s['moves'], s['total']),
-                            'etps': Solve.tps(s['moves'], s['execution']),
+                            'tps': Solve.compute_tps(s['qtm'], s['total']),
+                            'etps': Solve.compute_tps(s['qtm'], s['execution']),
                             'label': s['name'],
                         },
                     )
