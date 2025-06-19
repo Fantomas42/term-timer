@@ -484,7 +484,7 @@ class Solve:
     def missed_moves(self, algorithm) -> int:
         source, compressed = self.missed_moves_pair(algorithm)
 
-        return len(source) - len(compressed)
+        return source.metrics['htm'] - compressed.metrics['htm']
 
     def missed_moves_line(self, algorithm) -> str:
         source, compressed = self.missed_moves_pair(algorithm)

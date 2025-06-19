@@ -156,7 +156,7 @@ class CFOPAnalyser(Analyser):
         if 'Cross' in step_one['name']:
             cross_norm = self.norms.get('moves', {}).get(step_one['name'], 0)
             if cross_norm:
-                malus += len(step_one['reconstruction']) - cross_norm
+                malus += step_one['reconstruction'].metrics['htm'] - cross_norm
 
         for info in self.summary:
             if len(info['cases']) > 1:
