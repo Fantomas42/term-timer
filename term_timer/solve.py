@@ -184,7 +184,7 @@ class Solve:
 
     @cached_property
     def move_speed(self) -> float:
-        return self.execution_time / len(self.solution)
+        return self.execution_time / self.solution.metrics['qtm']
 
     @cached_property
     def report_line(self) -> str:
