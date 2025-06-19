@@ -569,7 +569,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for name, oll in cfop.olls.items() %}
+            {% for name, oll in cfop.olls.items()|sort(attribute='1.count', reverse=True) %}
               <tr>
                 <td>
                   <div class="cfop-case">
@@ -635,7 +635,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for name, pll in cfop.plls.items() %}
+            {% for name, pll in cfop.plls.items()|sort(attribute='1.count', reverse=True) %}
               <tr>
                 <td>
                   <div class="cfop-case">
