@@ -76,6 +76,10 @@ class CFOPAnalyser(Analyser):
             'OLL': 80.0,
             'PLL': 90.0,
         },
+        'solve': {
+            'recognition': 30,
+            'execution': 70,
+        },
     }
 
     def compute_progress(self, facelets):
@@ -293,6 +297,10 @@ class CF4OPAnalyser(CFOPAnalyser):
             'F2L 4': 60.0,
             'OLL': 80.0,
             'PLL': 90.0,
+        },
+        'solve': {
+            'recognition': 30,
+            'execution': 70,
         },
     }
 

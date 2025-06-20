@@ -486,19 +486,30 @@ class StatisticsReporter(Statistics):
                 solve.recognition_time,
                 allow_dnf=False,
             )
+            recog_percent = solve.recognition_time / solve.time * 100.0
+            recog_class = solve.method_applied.normalize_value(
+                'solve', 'recognition',
+                recog_percent, 'recognition_p',
+            )
             console.print(
                 '[stats]Recognition:[/stats] '
                 f'[result]{ recognition_time }[/result]'
-                f' { solve.recognition_time / solve.time * 100.0:.2f}%',
+                f' [{ recog_class }]{ recog_percent:.2f}%[{ recog_class }]',
             )
+
             execution_time = format_time(
                 solve.execution_time,
                 allow_dnf=False,
             )
+            exec_percent = solve.execution_time / solve.time * 100.0
+            exec_class = solve.method_applied.normalize_value(
+                'solve', 'execution',
+                exec_percent, 'execution_p',
+            )
             console.print(
                 '[stats]Execution  :[/stats] '
                 f'[result]{ execution_time }[/result]'
-                f' { solve.execution_time / solve.time * 100.0:.2f}%',
+                f' [{ exec_class }]{ exec_percent:.2f}%[{ exec_class }]',
             )
 
             metric_string = '[stats]Metrics    :[/stats] '

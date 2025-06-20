@@ -18,6 +18,10 @@ class LBLAnalyser(Analyser):
             'F2L': 50.0,
             'LL': 38,
         },
+        'solve': {
+            'recognition': 20,
+            'execution': 80,
+        },
     }
 
     def compute_progress(self, facelets):
