@@ -7,6 +7,7 @@ from wsgiref.simple_server import WSGIRequestHandler
 from bottle import TEMPLATE_PATH
 from bottle import Bottle
 from bottle import jinja2_template
+from bottle import request
 from bottle import static_file
 
 from term_timer.config import CUBE_ORIENTATION
@@ -226,7 +227,7 @@ class SessionView(View):
 class SolveView(View):
     template_name = 'solve.html'
 
-    def __init__(self, cube, session, solve):
+    def __init__(self, cube, session, solve, method):
         self.cube = cube
         self.session = session
 
@@ -238,6 +239,9 @@ class SolveView(View):
 
         self.solve_id = solve
         self.solve = self.solves[solve - 1]
+
+        if method:
+            self.solve.method_name = method
 
     def get_context(self):
         tps = []
@@ -379,7 +383,10 @@ class Server:
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/')
         def solve(cube, session, solve):
-            return SolveView(cube, session, solve).as_view()
+            return SolveView(
+                cube, session, solve,
+                request.query.m or '',
+            ).as_view()
 
         @app.route('/<cube:int>/<session:path>/')
         def session(cube, session):
