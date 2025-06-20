@@ -19,8 +19,8 @@ class LBLAnalyser(Analyser):
             'LL': 38,
         },
         'solve': {
-            'recognition': 20,
-            'execution': 80,
+            'recognition': (20, 30),
+            'execution': (70, 80),
         },
     }
 

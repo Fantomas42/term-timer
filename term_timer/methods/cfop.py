@@ -77,8 +77,8 @@ class CFOPAnalyser(Analyser):
             'PLL': 90.0,
         },
         'solve': {
-            'recognition': 30,
-            'execution': 70,
+            'recognition': (10, 20),
+            'execution': (80, 100),
         },
     }
 
@@ -299,8 +299,8 @@ class CF4OPAnalyser(CFOPAnalyser):
             'PLL': 90.0,
         },
         'solve': {
-            'recognition': 30,
-            'execution': 70,
+            'recognition': (30, 40),
+            'execution': (60, 70),
         },
     }
 

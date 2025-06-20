@@ -287,13 +287,30 @@ class Analyser:
         if not norm:
             return default
 
-        if value <= norm:
-            return 'success'
+        if isinstance(norm, (int | float)):
+            if value <= norm:
+                return 'success'
 
-        if value >= norm * threshold:
-            return 'warning'
+            if value >= norm * threshold:
+                return 'warning'
 
-        return 'caution'
+            return 'caution'
+
+        if isinstance(norm, (tuple | list)) and len(norm) == 2:
+            threshold_down, threshold_up = norm
+
+            if threshold_down <= value <= threshold_up:
+                return 'success'
+
+            if (
+                    value < threshold_down * (2 - threshold)
+                    or value > threshold_up * threshold
+            ):
+                return 'warning'
+
+            return 'caution'
+
+        return default
 
     @cached_property
     def reconstruction(self):
