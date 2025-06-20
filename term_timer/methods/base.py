@@ -281,7 +281,8 @@ class Analyser:
     def correct_summary(self, summary):
         pass
 
-    def normalize_value(self, metric, name, value, default):
+    def normalize_value(self, metric, name, value, default,
+                        *, threshold=1.2):
         norm = self.norms.get(metric, {}).get(name)
         if not norm:
             return default
@@ -289,7 +290,7 @@ class Analyser:
         if value <= norm:
             return 'success'
 
-        if value >= norm * 1.2:
+        if value >= norm * threshold:
             return 'warning'
 
         return 'caution'
