@@ -1,6 +1,6 @@
-from term_timer.methods.base import Analyser
-
 from typing import ClassVar
+
+from term_timer.methods.base import Analyser
 
 
 class RawAnalyser(Analyser):
