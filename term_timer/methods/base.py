@@ -133,6 +133,15 @@ STEPS_CONFIG = {
             optimize_double_moves,
         ),
     },
+    'RAW': {
+        'mask': FULL_CUBE,
+        'transformations': (
+            reslice_moves,
+            degrip_full_moves,
+            remove_final_rotations,
+            optimize_double_moves,
+        ),
+    },
 }
 
 

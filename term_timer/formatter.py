@@ -3,8 +3,8 @@ from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 
 
-def format_time(elapsed_ns: int) -> str:
-    if not elapsed_ns:
+def format_time(elapsed_ns: int, *, allow_dnf: bool = True) -> str:
+    if not elapsed_ns and allow_dnf:
         return f'{ DNF:>9}'
 
     elapsed_sec = elapsed_ns / SECOND

@@ -519,7 +519,7 @@ def detail_arguments(subparsers):
         '-m', '--method',
         default=CUBE_METHOD,
         choices={
-            'lbl', 'cfop', 'cf4op',
+            'lbl', 'cfop', 'cf4op', 'raw',
         },
         metavar='METHOD',
         help=(

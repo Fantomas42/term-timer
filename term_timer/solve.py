@@ -24,11 +24,13 @@ from term_timer.formatter import format_time
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.methods.lbl import LBLAnalyser
+from term_timer.methods.raw import RawAnalyser
 
 METHODS = {
     'cfop': CFOPAnalyser,
     'cf4op': CF4OPAnalyser,
     'lbl': LBLAnalyser,
+    'raw': RawAnalyser,
 }
 
 
