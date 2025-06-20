@@ -301,7 +301,8 @@ class Solve:
             line += (
                 f'{ header }'
                 f'[{ move_klass }]'
-                f'{ info["reconstruction"].metrics["htm"]:>2} HTM[/{ move_klass }] '
+                f'{ info["reconstruction"].metrics["htm"]:>2} HTM'
+                f'[/{ move_klass }] '
                 f'[recognition]'
                 f'{ format_duration(info["recognition"]):>5}s[/recognition] '
                 f'[recognition_p]'

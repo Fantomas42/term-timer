@@ -481,14 +481,22 @@ class StatisticsReporter(Statistics):
                 f'{ grade_line }',
             )
 
+            recognition_time = format_time(
+                solve.recognition_time,
+                allow_dnf=False,
+            )
             console.print(
                 '[stats]Recognition:[/stats] '
-                f'[result]{ format_time(solve.recognition_time, allow_dnf=False) }[/result]'
+                f'[result]{ recognition_time }[/result]'
                 f' { solve.recognition_time / solve.time * 100.0:.2f}%',
+            )
+            execution_time = format_time(
+                solve.execution_time,
+                allow_dnf=False,
             )
             console.print(
                 '[stats]Execution  :[/stats] '
-                f'[result]{ format_time(solve.execution_time, allow_dnf=False) }[/result]'
+                f'[result]{ execution_time }[/result]'
                 f' { solve.execution_time / solve.time * 100.0:.2f}%',
             )
 
