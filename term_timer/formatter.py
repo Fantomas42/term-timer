@@ -49,6 +49,16 @@ def format_delta(delta: int) -> str:
     return f'[{ style }]{ sign }{ format_duration(delta) }[/{ style }]'
 
 
+def format_score(score: int) -> str:
+    style = 'green'
+    if score < 14:
+        style = 'orange'
+    if score < 8:
+        style = 'red'
+
+    return f'[{ style }]{ score:.2f}[/{ style }]'
+
+
 def compute_padding(max_value: float) -> int:
     padding = 1
     if max_value >= 1000:

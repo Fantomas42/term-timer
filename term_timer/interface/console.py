@@ -53,6 +53,7 @@ theme = {
 
     'red': f'{ RED }',
     'green': f'{ GREEN }',
+    'orange': f'{ ORANGE }',
 
     'dnf': f'bold { TEXT_LIGHT } on { RED }',
     'plus_two': f'bold { TEXT_DARK } on { ORANGE }',

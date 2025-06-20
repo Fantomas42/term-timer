@@ -18,6 +18,7 @@ from term_timer.formatter import format_delta
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_grade
+from term_timer.formatter import format_score
 from term_timer.formatter import format_time
 from term_timer.interface.console import console
 from term_timer.magic_cube import Cube
@@ -462,9 +463,9 @@ class StatisticsReporter(Statistics):
             grade_class = grade.lower()
             grade_line = (
                 f' [grade_{ grade_class }]'
-                f'{ grade }'
+                f'{ grade:<2}'
                 f'[/grade_{ grade_class }]'
-                f' ({ solve.score:.2f})'
+                f' { format_score(solve.score) }'
             )
             console.print(f'[stats]Grade      :[/stats]{ grade_line }')
 
@@ -472,9 +473,9 @@ class StatisticsReporter(Statistics):
             grade_class = grade.lower()
             grade_line = (
                 f' [grade_{ grade_class }]'
-                f'{ grade }'
+                f'{ grade:<2}'
                 f'[/grade_{ grade_class }]'
-                f' ({ solve.method_applied.score:.2f})'
+                f' { format_score(solve.method_applied.score) }'
             )
             console.print(
                 f'[stats]Grade { solve.method.name:<5}:[/stats]'
