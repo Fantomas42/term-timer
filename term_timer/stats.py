@@ -198,6 +198,10 @@ class Statistics(StatisticsTools):
         return sum(1 for s in self.stack if s.advanced) / self.total
 
     @cached_property
+    def score(self) -> int:
+        return sum(s.score for s in self.stack if s.advanced) / self.total
+
+    @cached_property
     def repartition(self) -> list[tuple[int, int]]:
         gap = (self.worst - self.best) / SECOND
 
