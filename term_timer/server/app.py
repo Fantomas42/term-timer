@@ -36,6 +36,16 @@ def format_delta(delta: int) -> str:
     return f'{ sign }{ format_duration(delta) }'
 
 
+def format_score(score: int, title: str = '') -> str:
+    klass = 'good'
+    if score < 14:
+        klass = 'danger'
+    if score < 8:
+        klass = 'warning'
+
+    return f'<span class="stat-{ klass }">{ title }{ score:.2f}</span>'
+
+
 def normalize_value(value, method_applied, metric, name):
     klass = method_applied.normalize_value(metric, name, value, '')
 
@@ -91,6 +101,7 @@ class View:
                     'format_duration': format_duration,
                     'format_grade': format_grade,
                     'format_time': format_time,
+                    'format_score': format_score,
                     'normalize_value': normalize_value,
                     'normalize_percent': normalize_percent,
                 },

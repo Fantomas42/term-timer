@@ -154,13 +154,13 @@ header {
     color: var(--text-secondary);
 }
 
-.stat-best {
+.stat-best, .stat-good {
     color: var(--success);
 }
 .stat-worst {
     color: var(--danger);
 }
-.stat-warning {
+.stat-warning, .stat-danger {
     color: var(--warning);
 }
 

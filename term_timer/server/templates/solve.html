@@ -483,13 +483,22 @@
             {{ solve.score|format_grade }}
           </div>
           <div class="stat-meta">
-            <span class="stat-best">{{ "%0.2f"|format(solve.score) }}</span>
+            {{ solve.score|format_score }}
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Grade {{ solve.method_name|upper  }}</div>
+          <div class="stat-value grade-{{ solve.method_applied.score|format_grade|lower|replace('+', 'plus') }}">
+            {{ solve.method_applied.score|format_grade }}
+          </div>
+          <div class="stat-meta">
+            {{ solve.method_applied.score|format_score }}
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-title">Recognition</div>
           <div class="stat-value">
-            {{ "%0.2f"|format(solve.recognition_time / solve.time * 100.0) }}%
+            {{ (solve.recognition_time / solve.time * 100.0)| normalize_percent(solve.method_applied, 'solve', 'recognition') }}
           </div>
           <div class="stat-meta">
             <span class="stat-best">{{ solve.recognition_time|format_duration }}s</span>
@@ -498,7 +507,7 @@
         <div class="stat-card">
           <div class="stat-title">Execution</div>
           <div class="stat-value">
-            {{ "%0.2f"|format(solve.execution_time / solve.time * 100.0) }}%
+            {{ (solve.execution_time / solve.time * 100.0)| normalize_percent(solve.method_applied, 'solve', 'execution') }}
           </div>
           <div class="stat-meta">
             <span class="stat-best">{{ solve.execution_time|format_duration }}s</span>

@@ -444,14 +444,14 @@
             {{ cfop.mean|format_grade }}
           </div>
           <div class="stat-meta">
-            <span class="stat-best">Mean: {{ "%0.2f"|format(cfop.mean) }}</span>
+            <span>{{ cfop.mean|format_score('Mean:') }}</span>
           </div>
         </div>
       {% endif %}
       {% if stats.advanced_solves %}
         <div class="stat-card">
           <div class="stat-title">Bluetooth Solves</div>
-          <div class="stat-value">
+          <div class="stat-value {% if stats.advanced_solves == 1 %}stat-best{% endif %}">
             {{ "%0.2f"|format(stats.advanced_solves * 100) }}%
           </div>
         </div>
@@ -527,7 +527,7 @@
                 {{ solve.flag|default('---', true) }}
               </td>
               <td class="solve-grade">
-                {% if solve.device %}
+                {% if solve.score %}
                   <span class="grade-{{ solve.score|format_grade|lower|replace('+', 'plus') }}">
                     {{ solve.score|format_grade }}
                   </span>
