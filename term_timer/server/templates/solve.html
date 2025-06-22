@@ -15,15 +15,19 @@
 {% block script %}
   <script>
    document.addEventListener('DOMContentLoaded', function() {
-     document.querySelector('.scramble-copy').addEventListener('click', function() {
-       const scrambleText = document.querySelector('.scramble-content').textContent.trim().replace(/\s\s+/g, ' ');
-       navigator.clipboard.writeText(scrambleText).then(() => {
-         this.textContent = 'Copied !';
-         setTimeout(() => {
-           this.textContent = 'Copy';
-         }, 2000);
-       }).catch(err => {
-         console.error('Copy error: ', err);
+     const copiers = document.querySelectorAll('.moves-copy');
+
+     copiers.forEach(copier => {
+       copier.addEventListener('click', function() {
+         const moves = copier.parentNode.parentNode.querySelector('.moves-content').textContent.trim().replace(/\s\s+/g, ' ');
+         navigator.clipboard.writeText(moves).then(() => {
+           this.textContent = 'Copied !';
+           setTimeout(() => {
+             this.textContent = 'Copy';
+           }, 2000);
+         }).catch(err => {
+           console.error('Copy error: ', err);
+         });
        });
      });
    });
@@ -64,8 +68,8 @@
      player.experimentalModel.animationTimelineLeavesRequest.set(
        animationTimelineLeaves,
      );
-     document.querySelector("#simulation").appendChild(player);
-     document.querySelector("#simulation").appendChild(new TwistyAlgViewer({ twistyPlayer: player }));
+     document.querySelector("#replay").appendChild(player);
+     document.querySelector("#replay").appendChild(new TwistyAlgViewer({ twistyPlayer: player }));
     </script>
 
     <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
@@ -573,27 +577,44 @@
     <div class="card-header">
       <h2 class="card-title">Scramble</h2>
     </div>
-    <div class="scramble-card">
-      <div class="scramble-content">
+    <div class="scramble-card moves-card">
+      <div class="moves-content">
       {% for m in solve.scramble.split(' ') %}
         <span class="move">{{ m }}</span>
       {% endfor %}
       </div>
-      <div class="scramble-footer">
+      <div class="moves-footer">
         {{ solve.scramble.split(' ')|length }} HTM - Computer generated -
-        <button class="scramble-copy">Copy</button>
+        <button class="moves-copy">Copy</button>
       </div>
     </div>
-
   </div>
 
   {% if solve.advanced %}
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Simulation</h2>
+        <h2 class="card-title">Solution</h2>
       </div>
-      <div class="simulation-container">
-        <div id="simulation"></div>
+      {% set solution = solve.solution|solution %}
+      <div class="solution-card moves-card">
+        <div class="moves-content">
+          {% for m in solution %}
+            <span class="move">{{ m }}</span>
+          {% endfor %}
+        </div>
+        <div class="moves-footer">
+          {{ solution.metrics.htm }} HTM - Human generated -
+          <button class="moves-copy">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Replay</h2>
+      </div>
+      <div class="replay-container">
+        <div id="replay"></div>
       </div>
     </div>
 
@@ -785,6 +806,25 @@
         <canvas id="recognitionChart"></canvas>
       </div>
     </div>
+
+    {% if DEBUG %}
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Raw Moves</h2>
+        </div>
+        <div class="solution-card moves-card">
+          <div class="moves-content">
+            {% for m in solve.solution %}
+              <span class="move">{{ m }}</span>
+            {% endfor %}
+          </div>
+          <div class="moves-footer">
+            {{ solve.solution.metrics.qtm }} QTM - Raw Moves -
+            <button class="moves-copy">Copy</button>
+          </div>
+        </div>
+      </div>
+    {% endif %}
 
   {% endif %}
 

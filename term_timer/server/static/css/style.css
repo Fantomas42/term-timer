@@ -185,13 +185,13 @@ header {
     font-weight: bold;
 }
 
-.scramble-card {
+.moves-card {
     padding: 1rem;
     background-color: rgba(255, 255, 255, 0.05);
     border-radius: 0.375rem;
 }
 
-.scramble-card .move,
+.moves-card .move,
 .orientation .move {
     font-size: 1.3rem;
     font-weight: bold;
@@ -205,12 +205,12 @@ header {
     background-color: var(--header);
 }
 
-.scramble-card .move:hover,
+.moves-card .move:hover,
 .orientation .move:hover {
     background-color: var(--primary);
 }
 
-.scramble-card .scramble-footer {
+.moves-card .moves-footer {
     padding-top: 1rem;
     margin-top: 1rem;
     border-top: 1px solid var(--border-color);
@@ -320,7 +320,7 @@ header {
     background-color: var(--info)
 }
 
-.scramble-copy {
+.moves-copy {
     background-color: var(--primary);
     color: var(--light);
     border: none;
@@ -332,7 +332,7 @@ header {
     text-decoration: none;
 }
 
-.scramble-copy:hover {
+.moves-copy:hover {
     background-color: var(--info);
 }
 

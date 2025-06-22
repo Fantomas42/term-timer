@@ -10,6 +10,9 @@ from bottle import jinja2_template
 from bottle import request
 from bottle import static_file
 
+from cubing_algs.transform.optimize import optimize_double_moves
+from cubing_algs.transform.timing import untime_moves
+
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -56,6 +59,14 @@ def normalize_percent(value, method_applied, metric, name):
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value:.2f}%</span>'
+
+
+def solution(value):
+    return value.transform(
+        untime_moves,
+        optimize_double_moves,
+        to_fixpoint=True,
+    )
 
 
 class RichHandler(WSGIRequestHandler):
@@ -105,6 +116,7 @@ class View:
                     'format_score': format_score,
                     'normalize_value': normalize_value,
                     'normalize_percent': normalize_percent,
+                    'solution': solution
                 },
             },
             **context,
