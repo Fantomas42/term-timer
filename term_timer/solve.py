@@ -95,16 +95,7 @@ class Solve:
         return parse_moves(self.raw_moves)
 
     @cached_property
-    def reconstructed(self) -> list[str]:
-        applied = self.method_applied
-
-        if applied:
-            return self.method_applied.reconstruction.copy()
-
-        return self.reconstructed_raw
-
-    @cached_property
-    def reconstructed_raw(self) -> list[str]:
+    def reconstruction(self) -> list[str]:
         reconstruction = CUBE_ORIENTATION + self.solution
 
         return reconstruction.transform(
@@ -189,7 +180,7 @@ class Solve:
         metric_string = ''
         metrics = STATS_CONFIG.get('metrics')
         for metric in metrics:
-            value = self.reconstructed.metrics[metric]
+            value = self.reconstruction.metrics[metric]
             metric_string += (
                 f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
             )

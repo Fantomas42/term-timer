@@ -313,16 +313,6 @@ class Analyser:
         return default
 
     @cached_property
-    def reconstruction(self):
-        recons = ''
-
-        for info in self.summary:
-            if info['type'] != 'virtual':
-                recons += f'{ info["reconstruction_timed"]!s } '
-
-        return parse_moves(recons)
-
-    @cached_property
     def score(self):
         return 20
 

@@ -531,18 +531,18 @@
         </div>
         <div class="stat-card">
           <div class="stat-title">HTM</div>
-          <div class="stat-value">{{ solve.reconstructed.metrics.htm }}</div>
+          <div class="stat-value">{{ solve.reconstruction.metrics.htm }}</div>
         </div>
-        {% if solve.reconstructed.metrics.htm != solve.reconstructed.metrics.qtm %}
+        {% if solve.reconstruction.metrics.htm != solve.reconstruction.metrics.qtm %}
           <div class="stat-card">
             <div class="stat-title">QTM</div>
-            <div class="stat-value">{{ solve.reconstructed.metrics.qtm }}</div>
+            <div class="stat-value">{{ solve.reconstruction.metrics.qtm }}</div>
           </div>
         {% endif %}
-        {% if solve.reconstructed.metrics.qtm != solve.reconstructed.metrics.qstm %}
+        {% if solve.reconstruction.metrics.qtm != solve.reconstruction.metrics.qstm %}
           <div class="stat-card">
             <div class="stat-title">QSTM</div>
-            <div class="stat-value">{{ solve.reconstructed.metrics.qstm }}</div>
+            <div class="stat-value">{{ solve.reconstruction.metrics.qstm }}</div>
           </div>
         {% endif %}
         {% if solve.execution_missed_moves %}

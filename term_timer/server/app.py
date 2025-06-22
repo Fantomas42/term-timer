@@ -314,9 +314,9 @@ class SolveView(View):
 
             speed = self.solve.move_speed / MS_TO_NS_FACTOR
             threshold = speed * 2
-            previous_time = self.solve.reconstructed[0].timed
+            previous_time = self.solve.reconstruction[0].timed
 
-            for move in self.solve.reconstructed:
+            for move in self.solve.reconstruction:
                 time = move.timed
                 if time - previous_time > threshold:
                     timing.extend(

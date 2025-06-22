@@ -518,7 +518,7 @@ class StatisticsReporter(Statistics):
 
             metric_string = '[stats]Metrics    :[/stats] '
             for metric in STATS_CONFIG.get('metrics'):
-                value = solve.reconstructed.metrics[metric]
+                value = solve.reconstruction.metrics[metric]
                 metric_string += (
                     f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
                 )
