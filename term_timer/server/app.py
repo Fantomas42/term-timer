@@ -84,9 +84,10 @@ class View:
     def get_context(self):
         raise NotImplementedError
 
-    def as_view(self):
+    def as_view(self, debug):
         return self.template(
             self.template_name,
+            DEBUG=debug,
             **self.get_context(),
         )
 
@@ -365,7 +366,7 @@ class Server:
     def run_server(self, host, port, debug):
         TEMPLATE_PATH.insert(0, TEMPLATES_DIRECTORY)
 
-        app = self.create_app()
+        app = self.create_app(debug)
 
         if not os.getenv('BOTTLE_CHILD'):
             console.print(
@@ -385,23 +386,25 @@ class Server:
             handler_class=RichHandler,
         )
 
-    def create_app(self):
+    def create_app(self, debug):
         app = Bottle()
 
         @app.route('/')
         def index():
-            return IndexView().as_view()
+            return IndexView().as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/')
         def solve(cube, session, solve):
             return SolveView(
                 cube, session, solve,
                 request.query.m or '',
-            ).as_view()
+            ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/')
         def session(cube, session):
-            return SessionView(cube, session).as_view()
+            return SessionView(
+                cube, session,
+            ).as_view(debug)
 
         @app.route('/static/<filepath:path>')
         def serve_static(filepath):
