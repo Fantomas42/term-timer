@@ -8,13 +8,12 @@
     --link: #549EFF;
     --light: #F8FAFC;
     --dark: #1E293B;
-    --bg-main: #0F172A;
+    --main-bg: #0F172A;
     --card-bg: #1E293B;
     --text-primary: #F8FAFC;
     --text-secondary: #94A3B8;
     --border-color: #334155;
     --header: #092155;
-    --pastille: rgba(37, 99, 235, 0.3);
 }
 
 * {
@@ -25,7 +24,7 @@
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    background-color: var(--bg-main);
+    background-color: var(--main-bg);
     color: var(--text-primary);
     line-height: 1.6;
 }
@@ -208,7 +207,7 @@ header {
 
 .scramble-card .move:hover,
 .orientation .move:hover {
-    background-color: var(--pastille);
+    background-color: var(--primary);
 }
 
 .scramble-card .scramble-footer {
@@ -270,16 +269,13 @@ header {
 
 .solve-scramble, .recons-moves {
     max-width: 300px;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     position: relative;
     cursor: pointer;
 }
 
 .tooltip, .copy-tooltip {
     position: absolute;
-    background-color: var(--bg-main);
+    background-color: var(--primary);
     color: var(--light);
     padding: 5px 10px;
     border-radius: 4px;
@@ -293,10 +289,7 @@ header {
     left: 20px;
 }
 
-.solve-scramble:hover .copy-tooltip {
-    opacity: 0.9;
-}
-
+.solve-scramble:hover .copy-tooltip,
 .solve-time:hover .tooltip,
 .solve-date:hover .tooltip,
 .solve-grade:hover .tooltip {
@@ -312,7 +305,7 @@ header {
 }
 
 .solve-detail-btn {
-    background-color: var(--pastille);
+    background-color: var(--primary);
     color: var(--light);
     border: none;
     padding: 0.25rem 0.5rem;
@@ -328,7 +321,7 @@ header {
 }
 
 .scramble-copy {
-    background-color: var(--pastille);
+    background-color: var(--primary);
     color: var(--light);
     border: none;
     padding: 0.25rem 0.5rem;
@@ -451,7 +444,7 @@ twisty-alg-viewer {
 }
 
 .session-badge {
-    background-color: var(--pastille);
+    background-color: var(--header);
     color: var(--light);
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
@@ -502,8 +495,7 @@ twisty-alg-viewer {
     padding: 0.75rem 1rem;
     text-align: left;
     color: var(--text-primary);
-
-    overflow: hidden;
+    overflow-x: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -531,7 +523,7 @@ twisty-alg-viewer {
 }
 
 .table-container  tr:nth-of-type(even) {
-    background-color: var(--bg-main);
+    background-color: var(--main-bg);
 }
 
 .table-container th:after {
