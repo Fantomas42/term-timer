@@ -91,3 +91,35 @@ def format_grade(score: float) -> str:
     if score >= 4:
         return 'E'
     return 'F'
+
+
+def clean_url(string: str) -> str:
+    return string.replace(
+        ' ', '_',
+    ).replace(
+        "'", '-',
+    ).replace(
+        '/', '%2F',
+    ).replace(
+        '\n', '%0A',
+    ).replace(
+        '+', '%26%232b%3B',
+    )
+
+
+def format_alg_cubing_url(title, setup, alg):
+    return (
+        'https://alg.cubing.net/'
+        f'?title={ title }'
+        f'&alg={ clean_url(alg) }'
+        f'&setup={ clean_url(setup) }'
+    )
+
+
+def format_cube_db_url(title, setup, alg):
+    return (
+        'https://cubedb.net/'
+        f'?title={ title }'
+        f'&alg={ clean_url(alg) }'
+        f'&scramble={ clean_url(setup) }'
+    )

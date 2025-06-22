@@ -18,6 +18,8 @@ from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
+from term_timer.formatter import format_alg_cubing_url
+from term_timer.formatter import format_cube_db_url
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
@@ -203,7 +205,8 @@ class Solve:
         )
 
         return (
-            f'[extlink][link={ self.link }]alg.cubing.net[/link][/extlink] '
+            f'[extlink][link={ self.link_alg_cubing }]'
+            'alg.cubing.net[/link][/extlink] '
             f'{ metric_string }'
             f'[tps]{ self.tps:.2f} TPS[/tps] '
             f'{ missed_line }{ grade_line }'
@@ -339,7 +342,7 @@ class Solve:
         return ' '.join(paused)
 
     @cached_property
-    def reconstruction_alg_cubing(self):
+    def method_text(self):
         recons = ''
 
         if CUBE_ORIENTATION:
@@ -547,35 +550,23 @@ class Solve:
         return min(max(0, final_score), 20)
 
     @cached_property
-    def link(self) -> str:
+    def link_alg_cubing(self) -> str:
         date = self.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
-        return self.alg_cubing_url(
-            f'Solve { date }: { format_time(self.time) }'.replace(' ', '%20'),
+        return format_alg_cubing_url(
+            f'Solve { date } : { format_time(self.time) }'.replace(' ', '%20'),
             self.scramble,
-            self.reconstruction_alg_cubing,
+            self.method_text,
         )
 
-    @staticmethod
-    def alg_cubing_url(title: str, setup: str, alg: str) -> str:
-        def clean(string: str) -> str:
-            return string.replace(
-                ' ', '_',
-            ).replace(
-                "'", '-',
-            ).replace(
-                '/', '%2F',
-            ).replace(
-                '\n', '%0A',
-            ).replace(
-                '+', '%26%232b%3B',
-            )
+    @cached_property
+    def link_cube_db(self) -> str:
+        date = self.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
-        return (
-            'https://alg.cubing.net/'
-            f'?title={ title }'
-            f'&alg={ clean(alg) }'
-            f'&setup={ clean(setup) }'
+        return format_cube_db_url(
+            f'Solve { date } : { format_time(self.time) }',
+            self.scramble,
+            self.method_text,
         )
 
     @property

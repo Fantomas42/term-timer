@@ -507,7 +507,7 @@
             <th>Scramble</th>
             <th>Flag</th>
             <th>Grade</th>
-            <th>Actions</th>
+            <th>Links</th>
           </tr>
         </thead>
         <tbody>
@@ -548,8 +548,12 @@
               </td>
               <td>
                 {% if solve.raw_moves %}
-                  <a href="{{ solve.link }}" target="_blank" class="solve-detail-btn">
-                    Recons
+                  <a href="{{ solve.link_alg_cubing }}" target="_blank" class="solve-detail-btn">
+                    Alg Cubing
+                  </a>
+                  &nbsp;
+                  <a href="{{ solve.link_cube_db }}" target="_blank" class="solve-detail-btn">
+                    Cube DB
                   </a>
                 {% else %}
                   ---

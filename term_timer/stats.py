@@ -388,7 +388,7 @@ class StatisticsReporter(Statistics):
             header = f'[stats]{ index:{" "}>{max_count}}[/stats]'
             if solve.advanced:
                 header = (
-                    f'[extlink][link={ solve.link }]'
+                    f'[extlink][link={ solve.link_alg_cubing }]'
                     f'{ index:{" "}>{max_count}}[/link][/extlink]'
                 )
 
@@ -573,7 +573,8 @@ class StatisticsReporter(Statistics):
                 console.print(
                     f'[title]Reconstruction { solve.method.name }[/title]',
                     '[extlink]'
-                    f'[link={ solve.link }]alg.cubing.net[/link][/extlink]',
+                    f'[link={ solve.link_alg_cubing }]'
+                    'alg.cubing.net[/link][/extlink]',
                 )
                 console.print(solve.method_line, end='')
             if show_time_graph:
