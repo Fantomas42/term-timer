@@ -472,6 +472,23 @@
           </a>
         </div>
       </div>
+      {% if solve.raw_moves %}
+        <div class="stat-card">
+          <div class="stat-title">Links</div>
+          <div class="stat-value">
+            <a href="{{ solve.link_alg_cubing }}" target="_blank"
+               title="View solution on alg.cubing.net"
+               class="solve-detail-btn alg-cubing">
+              Alg Cubing
+            </a>
+            <a href="{{ solve.link_cube_db }}" target="_blank"
+               title="View solution on cubedb.net"
+               class="solve-detail-btn cube-db">
+              Cube DB
+            </a>
+          </div>
+        </div>
+      {% endif %}
     </div>
   </div>
 

@@ -548,11 +548,14 @@
               </td>
               <td>
                 {% if solve.raw_moves %}
-                  <a href="{{ solve.link_alg_cubing }}" target="_blank" class="solve-detail-btn">
+                  <a href="{{ solve.link_alg_cubing }}" target="_blank"
+                     title="View solution on alg.cubing.net"
+                     class="solve-detail-btn alg-cubing">
                     Alg Cubing
                   </a>
-                  &nbsp;
-                  <a href="{{ solve.link_cube_db }}" target="_blank" class="solve-detail-btn">
+                  <a href="{{ solve.link_cube_db }}" target="_blank"
+                     title="View solution on cubedb.net"
+                     class="solve-detail-btn cube-db">
                     Cube DB
                   </a>
                 {% else %}
