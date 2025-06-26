@@ -8,6 +8,7 @@ from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
 
 DATA_DIRECTORY = Path(__file__).parent
@@ -163,6 +164,12 @@ class CFOPAnalyser(Analyser):
                 malus += step_one['reconstruction'].metrics['htm'] - cross_norm
 
         for info in self.summary:
+            if info['type'] != 'virtual':
+                if info['post_pause'] < SECOND * 0.5:
+                    bonus += 0.5
+                elif info['post_pause'] < SECOND:
+                    bonus += 0.25
+
             if len(info['cases']) > 1:
                 for kase in info['cases'][1:]:
                     if kase[0] == '+':
