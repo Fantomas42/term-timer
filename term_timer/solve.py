@@ -252,7 +252,11 @@ class Solve:
                     '[/recognition]' +
                     (round(ratio_execution) * ' ') +
                     ' [consign]' +
-                    self.missed_moves_line(info['reconstruction']) +
+                    self.missed_moves_line(
+                        self.reconstruction_step_pauses(
+                            info, multiple=False,
+                        ),
+                    ).replace('.', '[pause].[/pause]') +
                     '[/consign]'
                 )
                 if info['cases'] and info['cases'][0]:
@@ -339,7 +343,7 @@ class Solve:
             else:
                 paused.append('.')
 
-        return ' '.join(paused)
+        return parse_moves(paused)
 
     @cached_property
     def method_text(self):
@@ -478,6 +482,7 @@ class Solve:
 
     def missed_moves_line(self, algorithm) -> str:
         source, compressed = self.missed_moves_pair(algorithm)
+
         if source == compressed:
             return str(source)
 

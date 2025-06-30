@@ -46,6 +46,8 @@ theme = {
     'date': f'bold { GREEN}',
     'best': f'bold { GREEN}',
 
+    'pause': f'bold { ORANGE }',
+
     'edge': 'bold #00DFFF',
     'percent': 'bold #00DFFF',
     'stats': 'bold #00AFFF',
