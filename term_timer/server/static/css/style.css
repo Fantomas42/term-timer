@@ -604,6 +604,18 @@ twisty-alg-viewer {
     width: 10%; /* QTM, TPS, eTPS */
 }
 
+.reconstruction th:nth-child(1), .reconstruction td:nth-child(1) {
+    width: 7%; /* Step */
+}
+
+.reconstruction th:nth-child(2), .reconstruction td:nth-child(2) {
+    width: 8%; /* Case */
+}
+
+.reconstruction th:nth-child(3), .reconstruction td:nth-child(3) {
+    width: 33%; /* Moves */
+}
+
 @media (max-width: 768px) {
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
