@@ -412,7 +412,7 @@ class CF4OPAnalyser(CFOPAnalyser):
                 f2l['total'] += info['total']
                 f2l['execution'] += info['execution']
                 f2l['recognition'] += info['recognition']
-                f2l['post_pause'] += info['post_pause']
+                f2l['post_pause'] = info['post_pause']
                 f2l['total_percent'] += info['total_percent']
                 f2l['execution_percent'] += info['execution_percent']
                 f2l['recognition_percent'] += info['recognition_percent']

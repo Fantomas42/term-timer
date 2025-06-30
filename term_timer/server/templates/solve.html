@@ -648,6 +648,7 @@
       <div class="tabs">
         <div class="tab active" data-tab="solve-time">Time</div>
         <div class="tab" data-tab="solve-percent">Percent</div>
+        <div class="tab" data-tab="solve-issues">Issues</div>
       </div>
 
       <div class="tab-content active table-container" id="solve-time-tab">
@@ -795,6 +796,69 @@
           </tbody>
         </table>
       </div>
+
+      <div class="tab-content table-container" id="solve-issues-tab">
+        <table class="reconstruction">
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Case</th>
+              <th>Moves</th>
+              <th>Overhead</th>
+              <th>Pauses</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for info in solve.method_applied.summary %}
+              <tr>
+                <td class="recons-step{% if info.type == 'substep' %} substep{% endif %}">
+                  {{ info.name }}
+                </td>
+                <td class="recons-case">
+                  <div class="cfop-case">
+                    {% if info.cases %}
+                      {% set name_part = info.cases[0].split(" ") %}
+                      <div class="cfop-case-img">{{ name_part[0] }}</div>
+                      {% if 'SKIP' not in name %}
+                        {% if info.name == 'OLL' %}
+                          <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
+                             target="_blank" class="link">
+                            {{ " ".join(name_part[1:]) }}
+                          </a>
+                        {% elif info.name == 'PLL' %}
+                          <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
+                             target="_blank" class="link">
+                            PLL {{ name_part[0] }}
+                          </a>
+                        {% endif %}
+                      {% else %}
+                        <span class="skip">SKIP</span>
+                      {% endif %}
+                    {% else %}
+                      <div class="cfop-case-img">N/A</div>
+                    {% endif %}
+                  </div>
+                </td>
+                <td class="recons-moves">
+                  {{ solve.reconstruction_step_pauses(info, multiple=True) }}
+                </td>
+                <td class="recons-overhead">
+                  {% set missed_moves = solve.missed_moves(info.reconstruction) %}
+                  <span class="metric-{% if missed_moves > 2 %}warning{% elif missed_moves %}caution{% else %}success{% endif %}">
+                  {{ missed_moves }}
+                </td>
+                <td class="recons-pauses">
+                  {% set pauses = solve.pauses(info.reconstruction_timed) %}
+                  <span class="metric-{% if pauses >= 2 %}warning{% elif pauses %}caution{% else %}success{% endif %}">
+                    {{ pauses }}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
     </div>
 
     <div class="card">
