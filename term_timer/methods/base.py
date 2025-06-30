@@ -2,7 +2,6 @@ from contextlib import suppress
 from functools import cached_property
 from typing import ClassVar
 
-from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.rotation import remove_final_rotations

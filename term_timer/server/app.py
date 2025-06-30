@@ -9,7 +9,6 @@ from bottle import Bottle
 from bottle import jinja2_template
 from bottle import request
 from bottle import static_file
-
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.timing import untime_moves
 
@@ -69,6 +68,20 @@ def solution(value):
     )
 
 
+def style_issues(value):
+    return value.replace(
+        '[red]', '<span class="metric-warning">',
+    ).replace(
+        '[/red]', '</span>',
+    ).replace(
+        '[green]', '<span class="metric-success">',
+    ).replace(
+        '[/green]', '</span>',
+    ).replace(
+        '.', '<span class="metric-caution">.</span>',
+    )
+
+
 class RichHandler(WSGIRequestHandler):
 
     def log_request(self, code, size):
@@ -116,7 +129,8 @@ class View:
                     'format_score': format_score,
                     'normalize_value': normalize_value,
                     'normalize_percent': normalize_percent,
-                    'solution': solution
+                    'style_issues': style_issues,
+                    'solution': solution,
                 },
             },
             **context,
