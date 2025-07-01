@@ -14,6 +14,7 @@
     --text-secondary: #94A3B8;
     --border-color: #334155;
     --header: #092155;
+    --square-size: 1.5rem;
 }
 
 * {
@@ -616,6 +617,143 @@ twisty-alg-viewer {
     width: 33%; /* Moves */
 }
 
+/* PunchCard */
+
+.year-selector {
+    position: relative;
+}
+
+.year-selector select {
+    background-color: var(--main-bg);
+    border: 1px solid var(--border-color);
+    color: var(--light);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    outline: none;
+}
+
+.year-selector select:hover {
+    border-color: var(--info);
+}
+
+.punchcard-container {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    overflow-x: auto;
+    margin-top: 2em;
+}
+
+.punchcard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.contributions-text {
+    color: var(--text-primary);
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+
+.legend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-primary);
+}
+
+.legend-item {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 2px;
+}
+
+.months {
+    display: grid;
+    grid-template-columns: 40px repeat(53, var(--square-size));
+    gap: 3px;
+    margin-bottom: 8px;
+}
+
+.month-label {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-align: center;
+    grid-column: span 4;
+}
+
+.days-container {
+    display: flex;
+}
+
+.days-labels {
+    display: flex;
+    flex-direction: column;
+    width: 40px;
+    gap: 3px;
+}
+
+.day-label {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-align: right;
+    padding-right: 8px;
+    height: var(--square-size);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.days-grid {
+    display: grid;
+    grid-template-columns: repeat(53, var(--square-size));
+    grid-template-rows: repeat(7, var(--square-size));
+    gap: 3px;
+    grid-auto-flow: column;
+}
+
+.day-square {
+    width: var(--square-size);
+    height: var(--square-size);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.day-square:hover {
+    border: 1px solid var(--info);
+}
+
+.level-0 { background-color: #10141b; }
+.level-1 { background-color: #2c4e74; }
+.level-2 { background-color: #549eff; }
+.level-3 { background-color: #7bb4ff; }
+.level-4 { background-color: #a2caff; }
+
+.punchcard-tooltip {
+    position: fixed;
+    background-color: var(--main-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 1rem;
+    color: var(--text-primary);
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.punchcard-tooltip.visible {
+    opacity: 1;
+}
+
+/* Media Queries */
+
 @media (max-width: 768px) {
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -624,7 +762,9 @@ twisty-alg-viewer {
         grid-template-columns: 1fr;
         gap: 2rem;
     }
-
+    .punchcard-container {
+        padding: 0.75rem;
+    }
     .footer-bottom {
         flex-direction: column;
         gap: 1rem;

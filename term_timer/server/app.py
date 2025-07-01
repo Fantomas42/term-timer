@@ -206,6 +206,7 @@ class SessionView(View):
             'cfop': self.stats.compute_cfop(),
             'trend': self.compute_trend(),
             'distribution': self.compute_distribution(),
+            'punchcard': self.compute_punchcard(),
         }
 
     def compute_sessions(self):
@@ -260,6 +261,18 @@ class SessionView(View):
             'labels': dist_labels,
             'counts': dist_counts,
         }
+
+    def compute_punchcard(self):
+        punchcard = {}
+        for solve in self.stats.stack:
+            dt = solve.datetime.astimezone()
+            year = dt.strftime('%Y')
+            date = dt.strftime('%Y-%m-%d')
+
+            punchcard.setdefault(year, {}).setdefault(date, 0)
+            punchcard[year][date] += 1
+
+        return punchcard
 
 
 class SolveView(View):

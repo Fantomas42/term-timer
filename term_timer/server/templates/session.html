@@ -11,7 +11,17 @@
   <script src="/static/js/hammer.js/2.0.8/hammer.min.js"></script>
   <script src="/static/js/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
   <script>
+   const PunchData = {{ punchcard|tojson }};
+   const monthNames = [
+     'Jan', 'Feb', 'Mar',
+     'Apr', 'May', 'Jun',
+     'Jul', 'Aug', 'Sep',
+     'Oct', 'Nov', 'Dec',
+   ];
+   let currentYear = {{ punchcard.keys()|max }};
+
    document.addEventListener('DOMContentLoaded', function() {
+     const tooltip = document.getElementById('tooltip');
      const tabs = document.querySelectorAll('.tab');
      const tabContents = document.querySelectorAll('.tab-content');
 
@@ -26,11 +36,169 @@
        });
      });
 
+     generatePunchcard();
+     initializeYearSelector();
      initializeProgressChart();
      initializeDistributionChart();
      initializeSortableTables();
      initializeScrambleCopy();
    });
+
+   function getDateString(date) {
+     return date.toISOString().split('T')[0];
+   }
+
+   function getActivityLevel(count) {
+     if (count === 0) return 0;
+     if (count <= 3) return 1;
+     if (count <= 8) return 2;
+     if (count <= 15) return 3;
+     return 4;
+   }
+
+   function calculateStats(data) {
+     const values = Object.values(data);
+     const total = values.reduce((sum, val) => sum + val, 0);
+     const activeDays = values.length;
+     const avgPerDay = activeDays > 0 ? (total / 365).toFixed(1) : 0;
+     const bestDay = values.length > 0 ? Math.max(...values) : 0;
+
+     return { total, activeDays, avgPerDay, bestDay };
+   }
+
+   function updateStats(data) {
+     const stats = calculateStats(data);
+
+     document.getElementById('totalSolves').textContent = stats.total;
+     document.getElementById('avgPerDay').textContent = stats.avgPerDay;
+     document.getElementById('bestDay').textContent = stats.bestDay;
+     document.getElementById('activeDays').textContent = stats.activeDays;
+     document.getElementById('contributionsText').textContent =
+       `${stats.total} solves in ${currentYear}`;
+   }
+
+   function generateMonthsHeader() {
+     const monthsContainer = document.getElementById('monthsContainer');
+     monthsContainer.innerHTML = '<div></div>'; // Space for day's labels
+
+     const startDate = new Date(currentYear, 0, 1);
+     const startDay = startDate.getDay();
+
+     for (let month = 0; month < 12; month++) {
+       const monthDate = new Date(currentYear, month, 1);
+       const monthLabel = document.createElement('div');
+       monthLabel.className = 'month-label';
+       monthLabel.textContent = monthNames[month];
+
+       // Compute start position of the month
+       const daysFromStart = Math.floor((monthDate - startDate) / (1000 * 60 * 60 * 24));
+       const weekFromStart = Math.floor((daysFromStart + startDay) / 7);
+
+       monthLabel.style.gridColumnStart = weekFromStart + 2;
+       monthLabel.style.gridColumnEnd = weekFromStart + 6;
+
+       monthsContainer.appendChild(monthLabel);
+     }
+   }
+
+   function generatePunchcard() {
+     const data = PunchData[currentYear] || {};
+     const daysGrid = document.getElementById('daysGrid');
+     const daysLabels = document.getElementById('daysLabels');
+
+     daysGrid.innerHTML = '';
+     daysLabels.innerHTML = '';
+
+     const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+     dayLabels.forEach((label, index) => {
+       const dayLabel = document.createElement('div');
+       dayLabel.className = 'day-label';
+       dayLabel.textContent = index % 2 === 0 && index < 7 ? label : '';
+       daysLabels.appendChild(dayLabel);
+     });
+
+     const startDate = new Date(currentYear, 0, 1);
+     const endDate = new Date(currentYear, 11, 31);
+     let startDay = startDate.getDay();
+
+     // Adjust for Monday be 0 instead of Sunday
+     startDay = startDay === 0 ? 6 : startDay - 1;
+
+     // Add empty square to align the first day
+     for (let i = 0; i < startDay; i++) {
+       const emptySquare = document.createElement('div');
+       emptySquare.className = 'day-square level-0';
+       daysGrid.appendChild(emptySquare);
+     }
+
+     // Generate all the days of the year
+     for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+       const dateString = getDateString(date);
+       const count = data[dateString] || 0;
+       const level = getActivityLevel(count);
+
+       const daySquare = document.createElement('div');
+       daySquare.className = `day-square level-${level}`;
+       daySquare.dataset.date = dateString;
+       daySquare.dataset.count = count;
+
+       daySquare.addEventListener('mouseenter', showTooltip);
+       daySquare.addEventListener('mouseleave', hideTooltip);
+       daySquare.addEventListener('mousemove', moveTooltip);
+
+       daysGrid.appendChild(daySquare);
+     }
+
+     generateMonthsHeader();
+     updateStats(data);
+   }
+
+   function showTooltip(e) {
+     const date = e.target.dataset.date;
+     const count = e.target.dataset.count;
+     const formattedDate = new Date(date).toLocaleDateString('fr-FR', {
+       weekday: 'long',
+       year: 'numeric',
+       month: 'long',
+       day: 'numeric'
+     });
+
+     tooltip.innerHTML = `
+       <strong>${count} solve${count > 1 ? 's' : ''}</strong><br>
+       ${formattedDate}
+     `;
+     tooltip.classList.add('visible');
+     moveTooltip(e);
+   }
+
+   function hideTooltip() {
+     tooltip.classList.remove('visible');
+   }
+
+   function moveTooltip(e) {
+     const rect = e.target.getBoundingClientRect();
+     tooltip.style.left = (rect.left + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
+     tooltip.style.top = (rect.top - tooltip.offsetHeight - 8) + 'px';
+   }
+
+
+   function initializeYearSelector() {
+     const yearSelect = document.getElementById('yearSelect');
+     const years = Object.keys(PunchData).sort((a, b) => b - a);
+
+     years.forEach(year => {
+       const option = document.createElement('option');
+       option.value = year;
+       option.textContent = year;
+       if (year == currentYear) option.selected = true;
+       yearSelect.appendChild(option);
+     });
+
+     yearSelect.addEventListener('change', (e) => {
+       currentYear = parseInt(e.target.value);
+       generatePunchcard();
+     });
+   }
 
    function initializeProgressChart() {
      const ctx = document.getElementById('progressChart');
@@ -467,6 +635,60 @@
         </div>
       {% endif %}
     </div>
+  </div>
+
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Activity</h2>
+      <div class="year-selector">
+        <select id="yearSelect">
+        </select>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Total solves</div>
+        <div class="stat-value" id="totalSolves">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Average per day</div>
+        <div class="stat-value" id="avgPerDay">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Best day</div>
+        <div class="stat-value" id="bestDay">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Active days</div>
+        <div class="stat-value" id="activeDays">0</div>
+      </div>
+    </div>
+
+    <div class="punchcard-container">
+      <div class="punchcard-header">
+        <span class="contributions-text" id="contributionsText"></span>
+        <div class="legend">
+          <span>Less</span>
+          <div class="legend-item level-0"></div>
+          <div class="legend-item level-1"></div>
+          <div class="legend-item level-2"></div>
+          <div class="legend-item level-3"></div>
+          <div class="legend-item level-4"></div>
+          <span>More</span>
+        </div>
+      </div>
+
+      <div class="punchcard">
+        <div class="months" id="monthsContainer"></div>
+        <div class="days-container">
+          <div class="days-labels" id="daysLabels"></div>
+          <div class="days-grid" id="daysGrid"></div>
+        </div>
+      </div>
+    </div>
+    <div class="punchcard-tooltip" id="tooltip"></div>
   </div>
 
   <div class="card">
