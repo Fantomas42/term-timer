@@ -152,15 +152,19 @@ class SolveInterface(
             char = await self.getch('save')
 
         save_string = ''
+        save_style = 'warning'
         if char == 'd':
             self.stack[-1].flag = DNF
             save_string = 'Solve marked as DNF'
+            save_style = 'caution'
         elif char == 'o':
             self.stack[-1].flag = ''
             save_string = 'Solve marked as OK'
+            save_style = 'success'
         elif char == '2':
             self.stack[-1].flag = PLUS_TWO
             save_string = 'Solve marked as +2'
+            save_style = 'caution'
         elif char == 'z':
             self.stack.pop()
             save_string = 'Solve cancelled'
@@ -174,7 +178,7 @@ class SolveInterface(
         if save_string:
             self.console.print(
                 f'[duration]Duration #{ len(self.stack) }:[/duration] '
-                f'[warning]{ save_string }[/warning]',
+                f'[{ save_style }]{ save_string }[/{ save_style }]',
             )
 
         return char == 'q'
