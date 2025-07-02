@@ -732,6 +732,7 @@ twisty-alg-viewer {
 .level-2 { background-color: #549eff; }
 .level-3 { background-color: #7bb4ff; }
 .level-4 { background-color: #a2caff; }
+.level-disabled { background-color: var(--card-bg); }
 
 .punchcard-tooltip {
     position: fixed;

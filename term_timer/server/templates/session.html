@@ -127,7 +127,7 @@
      // Add empty square to align the first day
      for (let i = 0; i < startDay; i++) {
        const emptySquare = document.createElement('div');
-       emptySquare.className = 'day-square level-0';
+       emptySquare.className = 'day-square level-disabled';
        daysGrid.appendChild(emptySquare);
      }
 
@@ -147,6 +147,17 @@
        daySquare.addEventListener('mousemove', moveTooltip);
 
        daysGrid.appendChild(daySquare);
+     }
+
+     let endDay = endDate.getDay();
+     // Adjust for Monday be 0 instead of Sunday
+     endDay = endDay === 0 ? 6 : endDay - 1;
+
+     // Add empty square to align the last day
+     for (let i = endDay; i < 6; i++) {
+       const emptySquare = document.createElement('div');
+       emptySquare.className = 'day-square level-disabled';
+       daysGrid.appendChild(emptySquare);
      }
 
      generateMonthsHeader();
