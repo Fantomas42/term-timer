@@ -117,8 +117,9 @@
        daysLabels.appendChild(dayLabel);
      });
 
-     const startDate = new Date(currentYear, 0, 1);
-     const endDate = new Date(currentYear, 11, 31);
+     const startDate = new Date(Date.UTC(currentYear, 0, 1));
+     const endDate = new Date(Date.UTC(currentYear, 11, 31));
+
      let startDay = startDate.getDay();
 
      // Adjust for Monday be 0 instead of Sunday
@@ -167,7 +168,7 @@
    function showTooltip(e) {
      const date = e.target.dataset.date;
      const count = e.target.dataset.count;
-     const formattedDate = new Date(date).toLocaleDateString('fr-FR', {
+     const formattedDate = new Date(date).toLocaleDateString('en', {
        weekday: 'long',
        year: 'numeric',
        month: 'long',
