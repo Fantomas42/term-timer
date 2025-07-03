@@ -78,7 +78,9 @@ def style_issues(value):
     ).replace(
         '[/green]', '</span>',
     ).replace(
-        '.', '<span class="metric-caution">.</span>',
+        '[pause]', '<span class="metric-caution">',
+    ).replace(
+        '[/pause]', '</span>',
     )
 
 

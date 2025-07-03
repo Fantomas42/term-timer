@@ -1,4 +1,3 @@
-import difflib
 from datetime import datetime
 from datetime import timezone
 from functools import cached_property
@@ -8,8 +7,10 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves
+from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.size import compress_moves
+from cubing_algs.transform.timing import untime_moves
 
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
@@ -19,6 +20,7 @@ from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_alg_cubing_url
+from term_timer.formatter import format_alg_diff
 from term_timer.formatter import format_cube_db_url
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
@@ -175,6 +177,10 @@ class Solve:
         return self.execution_time / len(self.solution)
 
     @cached_property
+    def pause_threshold(self) -> float:
+        return self.move_speed * 2
+
+    @cached_property
     def report_line(self) -> str:
         if not self.advanced:
             return ''
@@ -252,11 +258,7 @@ class Solve:
                     '[/recognition]' +
                     (round(ratio_execution) * ' ') +
                     ' [consign]' +
-                    self.missed_moves_line(
-                        self.reconstruction_step_pauses(
-                            info, multiple=False,
-                        ),
-                    ).replace('.', '[pause].[/pause]') +
+                    self.reconstruction_step_line(info) +
                     '[/consign]'
                 )
                 if info['cases'] and info['cases'][0]:
@@ -319,6 +321,33 @@ class Solve:
             )
 
         return line
+
+    def reconstruction_step_line(self, step) -> str:
+        source, compressed = self.missed_moves_pair(
+            step['reconstruction_timed'],
+        )
+        source_paused = source.transform(
+            pause_moves(self.move_speed / MS_TO_NS_FACTOR),
+            untime_moves,
+        )
+        compressed_paused = compressed.transform(
+            pause_moves(self.move_speed / MS_TO_NS_FACTOR),
+            untime_moves,
+        )
+
+        reconstruction = format_alg_diff(
+            source_paused,
+            compressed_paused,
+        )
+
+        post = int(step['post_pause'] / self.pause_threshold)
+        if post:
+            reconstruction += ' .'
+
+        return reconstruction.replace(
+            '.',
+            '[pause].[/pause]',
+        )
 
     def reconstruction_step_pauses(self, step, *, multiple=True):
         paused = []
@@ -480,54 +509,12 @@ class Solve:
 
         return source.metrics['htm'] - compressed.metrics['htm']
 
-    def missed_moves_line(self, algorithm) -> str:
-        source, compressed = self.missed_moves_pair(algorithm)
-
-        if source == compressed:
-            return str(source)
-
-        moves = []
-        matcher = difflib.SequenceMatcher(None, source, compressed)
-        for opcode, i1, i2, j1, j2 in matcher.get_opcodes():
-            if opcode == 'equal':
-                moves.extend(source[i1:i2])
-            elif opcode == 'delete':
-                moves.extend(
-                    [
-                        f'[red]{ item }[/red]'
-                        for item in source[i1:i2]
-                    ],
-                )
-            elif opcode == 'insert':
-                moves.extend(
-                    [
-                        f'[green]{ item }[/green]'
-                        for item in compressed[j1:j2]
-                    ],
-                )
-
-            elif opcode == 'replace':
-                moves.extend(
-                    [
-                        f'[red]{ item }[/red]'
-                        for item in source[i1:i2]
-                    ],
-                )
-                moves.extend(
-                    [
-                        f'[green]{ item }[/green]'
-                        for item in compressed[j1:j2]
-                    ],
-                )
-
-        return ' '.join([str(m) for m in moves])
-
     def pauses(self, algorithm) -> int:
         if not algorithm:
             return 0
 
         pauses = 0
-        threshold = self.move_speed / MS_TO_NS_FACTOR * 2
+        threshold = self.pause_threshold / MS_TO_NS_FACTOR
         previous_time = algorithm[0].timed
 
         for move in algorithm:

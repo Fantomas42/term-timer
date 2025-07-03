@@ -1,3 +1,5 @@
+import difflib
+
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
@@ -107,7 +109,7 @@ def clean_url(string: str) -> str:
     )
 
 
-def format_alg_cubing_url(title, setup, alg):
+def format_alg_cubing_url(title: str, setup, alg) -> str:
     return (
         'https://alg.cubing.net/'
         f'?title={ title }'
@@ -116,10 +118,49 @@ def format_alg_cubing_url(title, setup, alg):
     )
 
 
-def format_cube_db_url(title, setup, alg):
+def format_cube_db_url(title: str, setup, alg) -> str:
     return (
         'https://cubedb.net/'
         f'?title={ title }'
         f'&alg={ clean_url(alg) }'
         f'&scramble={ clean_url(setup) }'
     )
+
+
+def format_alg_diff(algo_a, algo_b) -> str:
+    moves = []
+    matcher = difflib.SequenceMatcher(None, algo_a, algo_b)
+
+    for opcode, i1, i2, j1, j2 in matcher.get_opcodes():
+        if opcode == 'equal':
+            moves.extend(algo_a[i1:i2])
+        elif opcode == 'delete':
+            moves.extend(
+                [
+                    f'[red]{ item }[/red]'
+                    for item in algo_a[i1:i2]
+                ],
+            )
+        elif opcode == 'insert':
+            moves.extend(
+                [
+                    f'[green]{ item }[/green]'
+                    for item in algo_b[j1:j2]
+                ],
+            )
+
+        elif opcode == 'replace':
+            moves.extend(
+                [
+                    f'[red]{ item }[/red]'
+                    for item in algo_a[i1:i2]
+                ],
+            )
+            moves.extend(
+                [
+                    f'[green]{ item }[/green]'
+                    for item in algo_b[j1:j2]
+                ],
+            )
+
+    return ' '.join([str(m) for m in moves])
