@@ -840,7 +840,7 @@
                   </div>
                 </td>
                 <td class="recons-moves">
-                  {{ solve.reconstruction_step_line(info)|style_issues }}
+                  {{ solve.reconstruction_step_line(info, multiple=True)|style_issues }}
                 </td>
                 <td class="recons-overhead">
                   {% set missed_moves = solve.missed_moves(info.reconstruction) %}

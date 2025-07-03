@@ -259,7 +259,7 @@ class Solve:
                     '[/recognition]' +
                     (round(ratio_execution) * ' ') +
                     ' [consign]' +
-                    self.reconstruction_step_line(info) +
+                    self.reconstruction_step_line(info, multiple=False) +
                     '[/consign]'
                 )
                 if info['cases'] and info['cases'][0]:
@@ -323,7 +323,7 @@ class Solve:
 
         return line
 
-    def reconstruction_step_line(self, step) -> str:
+    def reconstruction_step_line(self, step, *, multiple=False) -> str:
         source, compressed = self.missed_moves_pair(
             step['reconstruction_timed'],
         )
@@ -331,6 +331,7 @@ class Solve:
             pause_moves(
                 self.move_speed / MS_TO_NS_FACTOR,
                 PAUSE_FACTOR,
+                multiple=multiple,
             ),
             untime_moves,
         )
@@ -338,6 +339,7 @@ class Solve:
             pause_moves(
                 self.move_speed / MS_TO_NS_FACTOR,
                 PAUSE_FACTOR,
+                multiple=multiple,
             ),
             untime_moves,
         )
@@ -349,14 +351,17 @@ class Solve:
 
         post = int(step['post_pause'] / self.pause_threshold)
         if post:
-            reconstruction += ' .'
+            if multiple:
+                reconstruction += ' .' * post
+            else:
+                reconstruction += ' .'
 
         return reconstruction.replace(
             '.',
             '[pause].[/pause]',
         )
 
-    def reconstruction_step_text(self, step, *, multiple=True) -> str:
+    def reconstruction_step_text(self, step, *, multiple=False) -> str:
         source_paused = step['reconstruction_timed'].transform(
             pause_moves(
                 self.move_speed / MS_TO_NS_FACTOR,
