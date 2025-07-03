@@ -669,8 +669,8 @@
           </thead>
           <tbody>
             {% for info in solve.method_applied.summary %}
-              <tr>
-                <td class="recons-step{% if info.type == 'substep' %} substep{% endif %}">
+              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
+                <td class="recons-step">
                   {{ info.name }}
                 </td>
                 <td class="recons-case">
@@ -744,8 +744,8 @@
           </thead>
           <tbody>
             {% for info in solve.method_applied.summary %}
-              <tr>
-                <td class="recons-step{% if info.type == 'substep' %} substep{% endif %}">
+              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
+                <td class="recons-step">
                   {{ info.name }}
                 </td>
                 <td class="recons-case">
@@ -810,8 +810,8 @@
           </thead>
           <tbody>
             {% for info in solve.method_applied.summary %}
-              <tr>
-                <td class="recons-step{% if info.type == 'substep' %} substep{% endif %}">
+              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
+                <td class="recons-step">
                   {{ info.name }}
                 </td>
                 <td class="recons-case">

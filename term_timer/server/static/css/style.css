@@ -517,7 +517,11 @@ twisty-alg-viewer {
     font-weight: bold;
 }
 
-.table-container td.substep {
+.table-container tr.substep td {
+    background-color: rgba(60, 130, 246, 0.1);
+}
+
+.table-container tr.substep td.recons-step {
     padding-left: 2rem;
 }
 
@@ -531,7 +535,8 @@ twisty-alg-viewer {
     padding: 0.5rem 1rem;
 }
 
-.table-container tr:hover {
+.table-container tr:hover,
+.table-container  tr:nth-of-type(even):hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
