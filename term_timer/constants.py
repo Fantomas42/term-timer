@@ -4,6 +4,8 @@ SECOND = 1_000_000_000  # In nano seconds
 
 MS_TO_NS_FACTOR = 1_000_000
 
+PAUSE_FACTOR = 2
+
 STEP_BAR = 17
 
 SAVE_DIRECTORY = Path.home() / '.solves'

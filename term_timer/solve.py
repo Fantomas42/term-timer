@@ -17,6 +17,7 @@ from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import STATS_CONFIG
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.constants import PAUSE_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_alg_cubing_url
@@ -178,7 +179,7 @@ class Solve:
 
     @cached_property
     def pause_threshold(self) -> float:
-        return self.move_speed * 2
+        return self.move_speed * PAUSE_FACTOR
 
     @cached_property
     def report_line(self) -> str:
@@ -327,11 +328,17 @@ class Solve:
             step['reconstruction_timed'],
         )
         source_paused = source.transform(
-            pause_moves(self.move_speed / MS_TO_NS_FACTOR),
+            pause_moves(
+                self.move_speed / MS_TO_NS_FACTOR,
+                PAUSE_FACTOR,
+            ),
             untime_moves,
         )
         compressed_paused = compressed.transform(
-            pause_moves(self.move_speed / MS_TO_NS_FACTOR),
+            pause_moves(
+                self.move_speed / MS_TO_NS_FACTOR,
+                PAUSE_FACTOR,
+            ),
             untime_moves,
         )
 
@@ -349,30 +356,24 @@ class Solve:
             '[pause].[/pause]',
         )
 
-    def reconstruction_step_pauses(self, step, *, multiple=True):
-        paused = []
-        threshold = self.move_speed / MS_TO_NS_FACTOR * 2
-        previous_time = step['reconstruction_timed'][0].timed
+    def reconstruction_step_text(self, step, *, multiple=True) -> str:
+        source_paused = step['reconstruction_timed'].transform(
+            pause_moves(
+                self.move_speed / MS_TO_NS_FACTOR,
+                PAUSE_FACTOR,
+                multiple=multiple,
+            ),
+            untime_moves,
+        )
 
-        for index in range(len(step['reconstruction_timed'])):
-            time = step['reconstruction_timed'][index].timed
-            if time - previous_time > threshold:
-                if multiple:
-                    paused.append('.' * int((time - previous_time) / threshold))
-                else:
-                    paused.append('.')
-
-            previous_time = time
-            paused.append(str(step['reconstruction'][index]))
-
-        post = int((step['post_pause'] / MS_TO_NS_FACTOR) / threshold)
+        post = int(step['post_pause'] / self.pause_threshold)
         if post:
             if multiple:
-                paused.append('.' * post)
+                source_paused += ' .' * post
             else:
-                paused.append('.')
+                source_paused += ' .'
 
-        return parse_moves(paused)
+        return source_paused
 
     @cached_property
     def method_text(self):
@@ -392,7 +393,7 @@ class Solve:
                 if info['cases'] and info['cases'][0]:
                     cases = f' ({ " ".join(info["cases"]) })'
 
-                moves = self.reconstruction_step_pauses(
+                moves = self.reconstruction_step_text(
                     info, multiple=True,
                 )
                 recons += (

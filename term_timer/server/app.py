@@ -14,6 +14,7 @@ from cubing_algs.transform.timing import untime_moves
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
+from term_timer.constants import PAUSE_FACTOR
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 from term_timer.constants import STATIC_DIRECTORY
@@ -342,7 +343,7 @@ class SolveView(View):
                     )
 
             speed = self.solve.move_speed / MS_TO_NS_FACTOR
-            threshold = speed * 2
+            threshold = speed * PAUSE_FACTOR
             previous_time = self.solve.reconstruction[0].timed
 
             for move in self.solve.reconstruction:
@@ -373,7 +374,7 @@ class SolveView(View):
                 if info['cases'] and info['cases'][0]:
                     cases = f' ({ " ".join(info["cases"]) })'
 
-                recon = self.solve.reconstruction_step_pauses(
+                recon = self.solve.reconstruction_step_text(
                     info, multiple=False,
                 )
 
