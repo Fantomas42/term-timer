@@ -11,7 +11,11 @@
     {% if sessions %}
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title">{{ cube }}x{{ cube }}x{{ cube }}</h2>
+          <h2 class="card-title">
+            <a href="#{{ cube }}x{{ cube }}x{{ cube }}" id="{{ cube }}x{{ cube }}x{{ cube }}">
+              {{ cube }}x{{ cube }}x{{ cube }}
+            </a>
+          </h2>
         </div>
         <div class="stats-grid">
           {% for session, info in sessions.items() %}

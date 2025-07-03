@@ -109,6 +109,11 @@ header {
     color: var(--text-primary);
 }
 
+.card-title a {
+    text-decoration: none;
+    color: var(--text-primary);
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -608,6 +613,27 @@ twisty-alg-viewer {
 .pll-list th:nth-child(10), .oll-list th:nth-child(10),
 .pll-list td:nth-child(10), .oll-list td:nth-child(10) {
     width: 10%; /* QTM, TPS, eTPS */
+}
+
+.solve-list th:nth-child(1), .solve-list td:nth-child(1) {
+    width: 6%; /* # */
+}
+
+.solve-list th:nth-child(2), .solve-list td:nth-child(2) {
+    width: 10%; /* Time */
+}
+
+.solve-list th:nth-child(3), .solve-list td:nth-child(3) {
+    width: 14%; /* Date */
+}
+
+.solve-list th:nth-child(4), .solve-list td:nth-child(4) {
+    width: 40%; /* Scramble */
+}
+
+.solve-list th:nth-child(5), .solve-list td:nth-child(5),
+.solve-list th:nth-child(6), .solve-list td:nth-child(6) {
+    width: 5%; /* Flag, Grade */
 }
 
 .reconstruction th:nth-child(1), .reconstruction td:nth-child(1) {

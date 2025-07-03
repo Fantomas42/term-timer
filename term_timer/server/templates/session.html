@@ -501,7 +501,9 @@
 
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Key Statistics</h2>
+      <h2 class="card-title">
+        <a href="#statistics" id="statistics">Key Statistics</a>
+      </h2>
     </div>
     <div class="stats-grid">
       <div class="stat-card">
@@ -652,7 +654,9 @@
 
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Activity</h2>
+      <h2 class="card-title">
+        <a href="#activity" id="activity">Activity</a>
+      </h2>
       <div class="year-selector">
         <select id="yearSelect">
         </select>
@@ -705,7 +709,9 @@
 
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Progress Over Time</h2>
+      <h2 class="card-title">
+        <a href="#progress-over-time" id="progress-over-time">Progress Over Time</a>
+      </h2>
     </div>
     <div class="chart-container">
       <canvas id="progressChart"></canvas>
@@ -714,7 +720,9 @@
 
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Time Distribution</h2>
+      <h2 class="card-title">
+        <a href="#time-distribution" id="time-distribution">Time Distribution</a>
+      </h2>
     </div>
     <div class="chart-container">
       <canvas id="timeDistributionChart"></canvas>
@@ -723,6 +731,12 @@
 
 
   <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <a href="#solves" id="solves">Solves</a>
+      </h2>
+    </div>
+
     <div class="tabs">
       <div class="tab active" data-tab="solves">Solves</div>
       {% if stats.advanced_solves %}

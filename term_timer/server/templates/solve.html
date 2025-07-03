@@ -68,8 +68,8 @@
      player.experimentalModel.animationTimelineLeavesRequest.set(
        animationTimelineLeaves,
      );
-     document.querySelector("#replay").appendChild(player);
-     document.querySelector("#replay").appendChild(new TwistyAlgViewer({ twistyPlayer: player }));
+     document.querySelector("#replayer").appendChild(player);
+     document.querySelector("#replayer").appendChild(new TwistyAlgViewer({ twistyPlayer: player }));
     </script>
 
     <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
@@ -417,7 +417,9 @@
 {% block body %}
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Informations</h2>
+      <h2 class="card-title">
+        <a href="#informations" id="informations">Informations</a>
+      </h2>
     </div>
     <div class="stats-grid">
       <div class="stat-card">
@@ -495,7 +497,9 @@
   {% if solve.advanced %}
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Key Statistics</h2>
+        <h2 class="card-title">
+          <a href="#statistics" id="statistics">Key Statistics</a>
+        </h2>
       </div>
       <div class="stats-grid">
         <div class="stat-card">
@@ -592,7 +596,9 @@
 
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Scramble</h2>
+      <h2 class="card-title">
+        <a href="#scramble" id="scramble">Scramble</a>
+      </h2>
     </div>
     <div class="scramble-card moves-card">
       <div class="moves-content">
@@ -610,7 +616,9 @@
   {% if solve.advanced %}
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Solution</h2>
+        <h2 class="card-title">
+          <a href="#solution" id="solution">Solution</a>
+        </h2>
       </div>
       {% set solution = solve.solution|solution %}
       <div class="solution-card moves-card">
@@ -628,16 +636,20 @@
 
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Replay</h2>
+        <h2 class="card-title">
+          <a href="#replay" id="replay">Replay</a>
+        </h2>
       </div>
       <div class="replay-container">
-        <div id="replay"></div>
+        <div id="replayer"></div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Reconstruction</h2>
+        <h2 class="card-title">
+          <a href="#reconstruction" id="reconstruction">Reconstruction</a>
+        </h2>
         {% if cube_orientation %}
           <div class="orientation">
             <span class="move">{{ cube_orientation }}</span>
@@ -863,7 +875,9 @@
 
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Timing Chart</h2>
+        <h2 class="card-title">
+          <a href="#timing-chart" id="timing-chart">Timing Chart</a>
+        </h2>
       </div>
       <div class="chart-container">
         <canvas id="timingChart"></canvas>
@@ -872,7 +886,9 @@
 
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">TPS</h2>
+        <h2 class="card-title">
+          <a href="#tps" id="tps">TPS</a>
+        </h2>
       </div>
       <div class="chart-container">
         <canvas id="tpsChart"></canvas>
@@ -881,7 +897,9 @@
 
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Recognition</h2>
+        <h2 class="card-title">
+          <a href="#recognition" id="recognition">Recognition</a>
+        </h2>
       </div>
       <div class="chart-container">
         <canvas id="recognitionChart"></canvas>
@@ -891,7 +909,9 @@
     {% if DEBUG %}
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title">Raw Moves</h2>
+          <h2 class="card-title">
+            <a href="#raw-moves" id="raw-moves">Raw Moves</a>
+          </h2>
         </div>
         <div class="solution-card moves-card">
           <div class="moves-content">
