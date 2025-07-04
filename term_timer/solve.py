@@ -4,6 +4,7 @@ from functools import cached_property
 
 import plotext as plt
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.constants import PAUSE_CHAR
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves
@@ -352,9 +353,9 @@ class Solve:
         post = int(step['post_pause'] / self.pause_threshold)
         if post:
             if multiple:
-                reconstruction += ' .' * post
+                reconstruction += f' { PAUSE_CHAR }' * post
             else:
-                reconstruction += ' .'
+                reconstruction += f' { PAUSE_CHAR }'
 
         return reconstruction.replace(
             '.',
@@ -374,9 +375,9 @@ class Solve:
         post = int(step['post_pause'] / self.pause_threshold)
         if post:
             if multiple:
-                source_paused += ' .' * post
+                source_paused += f' { PAUSE_CHAR }' * post
             else:
-                source_paused += ' .'
+                source_paused += f' { PAUSE_CHAR }'
 
         return source_paused
 
