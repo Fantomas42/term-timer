@@ -358,7 +358,7 @@ class SolveView(View):
 
             if CUBE_ORIENTATION:
                 reconstruction += f'{ CUBE_ORIENTATION!s } // Orientation\n'
-                orientation = 2 * speed
+                orientation = CUBE_ORIENTATION.metrics['rtm'] * speed
                 timing = [t + orientation for t in timing]
                 timing.insert(0, 0)
 
