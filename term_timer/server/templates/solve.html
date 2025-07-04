@@ -50,10 +50,8 @@
      const animationTimelineLeaves = moves.map((move, i) => {
        return {
          animLeaf: move,
-         start: ((solutionMoveTimestamps[i] ?? 0) + solutionMoveTimestamps[i - 1] || 0) / 2,
-         end: (solutionMoveTimestamps[i] + (solutionMoveTimestamps[i + 1] ?? duration)) / 2,
-         /* start: solutionMoveTimestamps[i],
-          * end: solutionMoveTimestamps[i + 1] ?? duration + 1, */
+         start: solutionMoveTimestamps[i],
+         end: solutionMoveTimestamps[i + 1] ?? duration + 1,
        };
      });
 

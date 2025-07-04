@@ -350,16 +350,16 @@ class SolveView(View):
                 time = move.timed
                 if time - previous_time > threshold:
                     timing.extend(
-                        [int(time), time + speed],
+                        [int(time), int(time + speed)],
                     )
                 else:
-                    timing.append(time + speed)
+                    timing.append(int(time + speed))
                 previous_time = time
 
             if CUBE_ORIENTATION:
                 reconstruction += f'{ CUBE_ORIENTATION!s } // Orientation\n'
                 orientation = CUBE_ORIENTATION.metrics['rtm'] * speed
-                timing = [t + orientation for t in timing]
+                timing = [int(t + orientation) for t in timing]
                 timing.insert(0, 0)
 
             for info in self.solve.method_applied.summary:
