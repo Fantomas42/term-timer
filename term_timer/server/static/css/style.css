@@ -191,6 +191,11 @@ header {
     font-weight: bold;
 }
 
+.recognition-pause {
+    color: var(--secondary);
+    font-weight: bold;
+}
+
 .moves-card {
     padding: 1rem;
     background-color: rgba(255, 255, 255, 0.05);

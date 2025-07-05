@@ -82,6 +82,10 @@ def style_issues(value):
         '[pause]', '<span class="metric-caution">',
     ).replace(
         '[/pause]', '</span>',
+    ).replace(
+        '[reco_pause]', '<span class="recognition-pause">',
+    ).replace(
+        '[/reco_pause]', '</span>',
     )
 
 

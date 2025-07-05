@@ -233,21 +233,21 @@ class TestSolve54(unittest.TestCase):
         ]
         outputs = [
             "R2 [pause].[/pause] U [pause].[/pause] F L [pause].[/pause] "
-            "U F2 U' B2 [pause].[/pause]",
+            "U F2 U' B2 [reco_pause].[/reco_pause]",
 
-            "U' R U R' U B U' B' [pause].[/pause]",
+            "U' R U R' U B U' B' [reco_pause].[/reco_pause]",
 
-            "U F' U F U' F U F' [pause].[/pause]",
+            "U F' U F U' F U F' [reco_pause].[/reco_pause]",
 
             "U2 [pause].[/pause] R [red]U'[/red] [red]R'[/red] "
             "[green].[/green] U [red].[/red] "
             "[red]U'[/red] [red]R[/red] [red]U2[/red] "
-            "R' U F' U' F [pause].[/pause]",
+            "R' U F' U' F [reco_pause].[/reco_pause]",
 
-            "U L U' L' U' B' U B [pause].[/pause]",
+            "U L U' L' U' B' U B [reco_pause].[/reco_pause]",
 
             "U' [pause].[/pause] R L' U B U' [pause].[/pause] "
-            "B' U' L U R' [pause].[/pause]",
+            "B' U' L U R' [reco_pause].[/reco_pause]",
 
             "R U R' U' R' F R2 U' R' U' R U [red]R'[/red] "
             "[pause].[/pause] [red]R[/red] R' F' U2",
@@ -267,25 +267,30 @@ class TestSolve54(unittest.TestCase):
         ]
         outputs = [
             "R2 [pause].[/pause] U [pause].[/pause] F L [pause].[/pause] "
-            "[pause].[/pause] U F2 U' B2 [pause].[/pause] [pause].[/pause]",
+            "[pause].[/pause] U F2 U' B2 "
+            "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause]",
 
-            "U' R U R' U B U' B' [pause].[/pause] [pause].[/pause] "
-            "[pause].[/pause] [pause].[/pause] [pause].[/pause]",
+            "U' R U R' U B U' B' "
+            "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause] "
+            "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause] "
+            "[reco_pause].[/reco_pause]",
 
-            "U F' U F U' F U F' [pause].[/pause] [pause].[/pause]",
+            "U F' U F U' F U F' "
+            "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause]",
 
             "U2 [pause].[/pause] R [red]U'[/red] [red]R'[/red] "
             "[green].[/green] [green].[/green] "
             "[green].[/green] U [red].[/red] "
             "[red]U'[/red] [red]R[/red] [red]U2[/red] R' U F' U' F "
-            "[pause].[/pause] [pause].[/pause] [pause].[/pause] "
-            "[pause].[/pause]",
+            "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause] "
+            "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause]",
 
-            "U L U' L' U' B' U B [pause].[/pause]",
+            "U L U' L' U' B' U B [reco_pause].[/reco_pause]",
 
             "U' [pause].[/pause] R L' U B U' [pause].[/pause] "
-            "B' U' L U R' [pause].[/pause] [pause].[/pause] "
-            "[pause].[/pause] [pause].[/pause]",
+            "B' U' L U R' "
+            "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause] "
+            "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause]",
 
             "R U R' U' R' F R2 U' R' U' R U [red]R'[/red] [pause].[/pause] "
             "[red]R[/red] R' F' U2",

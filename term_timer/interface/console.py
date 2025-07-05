@@ -47,6 +47,7 @@ theme = {
     'best': f'bold { GREEN}',
 
     'pause': f'bold { ORANGE }',
+    'reco_pause': 'bold #00FFCC',
 
     'edge': 'bold #00DFFF',
     'percent': 'bold #00DFFF',

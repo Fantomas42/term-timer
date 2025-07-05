@@ -350,10 +350,9 @@ class Solve:
 
         post = int(step['post_pause'] / self.pause_threshold)
         if post:
-            if multiple:
-                reconstruction += f' { PAUSE_CHAR }' * post
-            else:
-                reconstruction += f' { PAUSE_CHAR }'
+            reconstruction += f' [reco_pause]{ PAUSE_CHAR }[/reco_pause]' * (
+                post if multiple else 1
+            )
 
         return reconstruction.replace(
             ' .',
@@ -373,10 +372,9 @@ class Solve:
 
         post = int(step['post_pause'] / self.pause_threshold)
         if post:
-            if multiple:
-                source_paused += f' { PAUSE_CHAR }' * post
-            else:
-                source_paused += f' { PAUSE_CHAR }'
+            source_paused += f' { PAUSE_CHAR }' * (
+                post if multiple else 1
+            )
 
         return str(source_paused)
 
