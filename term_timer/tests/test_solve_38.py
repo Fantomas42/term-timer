@@ -11,7 +11,6 @@ class TestSolve38(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
-        """Test initialization of a Solve object."""
         self.date = 1748280849
         self.time = 29818126171
         self.scramble = "D2 R2 D2 U' R2 U R2 F2 R' B2 F' L F' R F U2 B L'"
