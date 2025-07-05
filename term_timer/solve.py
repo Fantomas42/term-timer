@@ -512,7 +512,7 @@ class Solve:
     def missed_moves(self, algorithm) -> int:
         source, compressed = self.missed_moves_pair(algorithm)
 
-        return source.metrics['htm'] - compressed.metrics['htm']
+        return source.metrics['qtm'] - compressed.metrics['qtm']
 
     def pauses(self, algorithm) -> int:
         if not algorithm:
