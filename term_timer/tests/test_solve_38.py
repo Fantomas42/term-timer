@@ -278,7 +278,7 @@ class TestSolve38(unittest.TestCase):
             "[pause].[/pause] [pause].[/pause]",
 
             "U2 B U B' [red]U'[/red] [pause].[/pause] [red]U[/red] "
-            "[green][pause].[/pause][/green] R' U' R "
+            "[green].[/green] R' U' R "
             "U2 L U L' [pause].[/pause]",
 
             "U [pause].[/pause] U R' U R U' R' U' R [pause].[/pause]",

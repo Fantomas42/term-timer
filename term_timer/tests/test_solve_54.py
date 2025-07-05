@@ -240,7 +240,7 @@ class TestSolve54(unittest.TestCase):
             "U F' U F U' F U F' [pause].[/pause]",
 
             "U2 [pause].[/pause] R [red]U'[/red] [red]R'[/red] "
-            "[green][pause].[/pause][/green] U [red][pause].[/pause][/red] "
+            "[green].[/green] U [red].[/red] "
             "[red]U'[/red] [red]R[/red] [red]U2[/red] "
             "R' U F' U' F [pause].[/pause]",
 
@@ -275,8 +275,8 @@ class TestSolve54(unittest.TestCase):
             "U F' U F U' F U F' [pause].[/pause] [pause].[/pause]",
 
             "U2 [pause].[/pause] R [red]U'[/red] [red]R'[/red] "
-            "[green][pause].[/pause][/green] [green][pause].[/pause][/green] "
-            "[green][pause].[/pause][/green] U [red][pause].[/pause][/red] "
+            "[green].[/green] [green].[/green] "
+            "[green].[/green] U [red].[/red] "
             "[red]U'[/red] [red]R[/red] [red]U2[/red] R' U F' U' F "
             "[pause].[/pause] [pause].[/pause] [pause].[/pause] "
             "[pause].[/pause]",

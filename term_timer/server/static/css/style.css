@@ -186,14 +186,6 @@ header {
     font-weight: bold;
 }
 
-.metric-success .metric-caution {
-    color: var(--success);
-}
-
-.metric-warning .metric-caution {
-    color: var(--danger);
-}
-
 .metric-warning {
     color: var(--danger);
     font-weight: bold;

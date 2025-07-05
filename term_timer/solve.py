@@ -356,8 +356,8 @@ class Solve:
                 reconstruction += f' { PAUSE_CHAR }'
 
         return reconstruction.replace(
-            '.',
-            '[pause].[/pause]',
+            ' .',
+            ' [pause].[/pause]',
         )
 
     def reconstruction_step_text(self, step, *, multiple=False) -> str:
