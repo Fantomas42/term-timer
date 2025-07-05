@@ -532,7 +532,7 @@ class StatisticsReporter(Statistics):
             transition_missed_moves = solve.transition_missed_moves
             if all_missed_moves:
                 missed_string += (
-                    f'[warning]{ all_missed_moves } moves[/warning]'
+                    f'[warning]{ all_missed_moves } QTM[/warning]'
                 )
                 if execution_missed_moves:
                     missed_string += (

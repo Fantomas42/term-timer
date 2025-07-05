@@ -178,13 +178,13 @@ class TestSolve38(unittest.TestCase):
     def test_step_pauses(self):
         self.assertEqual(
             self.solve.step_pauses,
-            9,
+            8,
         )
 
     def test_execution_pauses(self):
         self.assertEqual(
             self.solve.execution_pauses,
-            9,
+            8,
         )
 
     def test_execution_missed_moves(self):
@@ -232,7 +232,7 @@ class TestSolve38(unittest.TestCase):
     def test_score(self):
         self.assertEqual(
             self.solve.score,
-            13.486374765799999,
+            13.6863747658,
         )
 
     def test_reconstruction_step_line(self):
@@ -245,20 +245,19 @@ class TestSolve38(unittest.TestCase):
             "B L' [pause].[/pause] U F2 [pause].[/pause]",
 
             "U2 B U B' [red]U'[/red] [pause].[/pause] [red]U[/red] R' U' R "
-            "[pause].[/pause] U2 L U L' [pause].[/pause]",
+            "U2 L U L' [pause].[/pause]",
 
-            "U2 R' U R U' R' U' R [pause].[/pause]",
+            "U [pause].[/pause] U R' U R U' R' U' R [pause].[/pause]",
 
             "R U R' [red]U'[/red] [pause].[/pause] [red]U[/red] U' "
-            "[pause].[/pause] F U2 F' [pause].[/pause] U2 F U' F' "
-            "[pause].[/pause]",
+            "[pause].[/pause] F U2 F' U2 F U' F' [pause].[/pause]",
 
             "U2 [pause].[/pause] F' U F U' F' U' F [pause].[/pause]",
 
-            "U2 [pause].[/pause] L' R L' B2 L B L' B L B R' L [pause].[/pause]",
+            "U' [pause].[/pause] U' [pause].[/pause] "
+            "L' R L' B2 L B L' B L B R' L [pause].[/pause]",
 
-            "U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R "
-            "[pause].[/pause] U2",
+            "U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R U2",
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
@@ -279,23 +278,23 @@ class TestSolve38(unittest.TestCase):
             "[pause].[/pause] [pause].[/pause]",
 
             "U2 B U B' [red]U'[/red] [pause].[/pause] [red]U[/red] "
-            "[green][pause].[/pause][/green] R' U' R [pause].[/pause] "
+            "[green][pause].[/pause][/green] R' U' R "
             "U2 L U L' [pause].[/pause]",
 
-            "U2 R' U R U' R' U' R [pause].[/pause]",
+            "U [pause].[/pause] U R' U R U' R' U' R [pause].[/pause]",
 
             "R U R' [red]U'[/red] [pause].[/pause] [pause].[/pause] "
-            "[red]U[/red] U' [pause].[/pause] F U2 F' [pause].[/pause] "
-            "U2 F U' F' [pause].[/pause] [pause].[/pause] "
+            "[red]U[/red] U' [pause].[/pause] F U2 F' U2 F U' F' "
+            "[pause].[/pause] [pause].[/pause] "
             "[pause].[/pause] [pause].[/pause]",
 
             "U2 [pause].[/pause] F' U F U' F' U' F [pause].[/pause] "
             "[pause].[/pause]",
 
-            "U2 [pause].[/pause] L' R L' B2 L B L' B L B R' L [pause].[/pause]",
+            "U' [pause].[/pause] U' [pause].[/pause] "
+            "L' R L' B2 L B L' B L B R' L [pause].[/pause]",
 
-            "U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R "
-            "[pause].[/pause] U2",
+            "U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R U2",
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
@@ -313,17 +312,17 @@ class TestSolve38(unittest.TestCase):
         outputs = [
             "B L' . U F2 .",
 
-            "U2 B U B' U' . U R' U' R . U2 L U L' .",
+            "U2 B U B' U' . U R' U' R U2 L U L' .",
 
-            "U2 R' U R U' R' U' R .",
+            "U . U R' U R U' R' U' R .",
 
-            "R U R' U' . U U' . F U2 F' . U2 F U' F' .",
+            "R U R' U' . U U' . F U2 F' U2 F U' F' .",
 
             "U2 . F' U F U' F' U' F .",
 
-            "U2 . L' R L' B2 L B L' B L B R' L .",
+            "U' . U' . L' R L' B2 L B L' B L B R' L .",
 
-            "U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R . U2",
+            "U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R U2",
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
@@ -341,17 +340,17 @@ class TestSolve38(unittest.TestCase):
         outputs = [
             "B L' . . U F2 . . . .",
 
-            "U2 B U B' U' . U R' U' R . U2 L U L' .",
+            "U2 B U B' U' . U R' U' R U2 L U L' .",
 
-            "U2 R' U R U' R' U' R .",
+            "U . U R' U R U' R' U' R .",
 
-            "R U R' U' . . U U' . F U2 F' . U2 F U' F' . . . .",
+            "R U R' U' . . U U' . F U2 F' U2 F U' F' . . . .",
 
             "U2 . F' U F U' F' U' F . .",
 
-            "U2 . L' R L' B2 L B L' B L B R' L .",
+            "U' . U' . L' R L' B2 L B L' B L B R' L .",
 
-            "U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R . U2",
+            "U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R U2",
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):

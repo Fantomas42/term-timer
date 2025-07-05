@@ -7,10 +7,12 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import PAUSE_CHAR
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
+from cubing_algs.transform.optimize import optimize_do_undo_moves
 from cubing_algs.transform.optimize import optimize_double_moves
+from cubing_algs.transform.optimize import optimize_repeat_three_moves
+from cubing_algs.transform.optimize import optimize_triple_moves
 from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.rotation import remove_final_rotations
-from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.timing import untime_moves
 
 from term_timer.config import CUBE_METHOD
@@ -192,7 +194,7 @@ class Solve:
         missed_moves = self.all_missed_moves
         missed_line = (
             '[exec_overhead]'
-            f'{ missed_moves } missed moves'
+            f'{ missed_moves } missed QTM'
             '[/exec_overhead]'
         )
         if not missed_moves:
@@ -329,6 +331,7 @@ class Solve:
                 multiple=multiple,
             ),
             untime_moves,
+            optimize_double_moves,
         )
         compressed_paused = compressed.transform(
             pause_moves(
@@ -337,6 +340,7 @@ class Solve:
                 multiple=multiple,
             ),
             untime_moves,
+            optimize_double_moves,
         )
 
         reconstruction = format_alg_diff(
@@ -364,6 +368,7 @@ class Solve:
                 multiple=multiple,
             ),
             untime_moves,
+            optimize_double_moves,
         )
 
         post = int(step['post_pause'] / self.pause_threshold)
@@ -497,13 +502,12 @@ class Solve:
 
     @staticmethod
     def missed_moves_pair(algorithm: Algorithm) -> list[Algorithm, Algorithm]:
-        source = algorithm.transform(
-            optimize_double_moves,
+        compressed = algorithm.transform(
+            optimize_do_undo_moves,
+            optimize_repeat_three_moves,
+            optimize_triple_moves,
         )
-        compressed = source.transform(
-            compress_moves,
-        )
-        return source, compressed
+        return algorithm, compressed
 
     def missed_moves(self, algorithm) -> int:
         source, compressed = self.missed_moves_pair(algorithm)

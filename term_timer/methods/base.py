@@ -34,7 +34,6 @@ STEPS_CONFIG = {
         'transformations': (
             degrip_full_moves,
             remove_final_rotations,
-            optimize_double_moves,
         ),
     },
     'F1L': {
@@ -45,7 +44,6 @@ STEPS_CONFIG = {
         'transformations': (
             degrip_full_moves,
             remove_final_rotations,
-            optimize_double_moves,
         ),
     },
     'F2L 1': {  # FR Pair
@@ -56,7 +54,6 @@ STEPS_CONFIG = {
         'transformations': (
             degrip_full_moves,
             remove_final_rotations,
-            optimize_double_moves,
         ),
     },
     'F2L 2': {  # FL Pair
@@ -67,7 +64,6 @@ STEPS_CONFIG = {
         'transformations': (
             degrip_full_moves,
             remove_final_rotations,
-            optimize_double_moves,
         ),
     },
     'F2L 3': {  # BR Pair
@@ -78,7 +74,6 @@ STEPS_CONFIG = {
         'transformations': (
             degrip_full_moves,
             remove_final_rotations,
-            optimize_double_moves,
         ),
     },
     'F2L 4': {  # BL Pair
@@ -89,7 +84,6 @@ STEPS_CONFIG = {
         'transformations': (
             degrip_full_moves,
             remove_final_rotations,
-            optimize_double_moves,
         ),
     },
     'F2L': {
@@ -100,7 +94,6 @@ STEPS_CONFIG = {
         'transformations': (
             degrip_full_moves,
             remove_final_rotations,
-            optimize_double_moves,
         ),
     },
     'OLL': {
@@ -111,7 +104,6 @@ STEPS_CONFIG = {
         'transformations': (
             degrip_full_moves,
             remove_final_rotations,
-            optimize_double_moves,
         ),
     },
     'PLL': {
@@ -120,7 +112,6 @@ STEPS_CONFIG = {
             reslice_moves,
             degrip_full_moves,
             remove_final_rotations,
-            optimize_double_moves,
         ),
     },
     'LL': {
@@ -129,7 +120,6 @@ STEPS_CONFIG = {
             reslice_moves,
             degrip_full_moves,
             remove_final_rotations,
-            optimize_double_moves,
         ),
     },
     'RAW': {
@@ -138,7 +128,6 @@ STEPS_CONFIG = {
             reslice_moves,
             degrip_full_moves,
             remove_final_rotations,
-            optimize_double_moves,
         ),
     },
 }
@@ -252,6 +241,7 @@ class Analyser:
                 {
                     'type': 'step',
                     'name': step,
+                    # TODO(me): parse_moves + fix step_missed_moves
                     'moves': moves,
                     'times': times,
                     'index': step_moves,
@@ -265,7 +255,10 @@ class Analyser:
                     'recognition_percent': (recognition / self.duration) * 100,
                     'step_execution_percent': (execution / total) * 100,
                     'step_recognition_percent': (recognition / total) * 100,
-                    'reconstruction': reconstruction.transform(untime_moves),
+                    'reconstruction': reconstruction.transform(
+                        optimize_double_moves,
+                        untime_moves,
+                    ),
                     'reconstruction_timed': reconstruction,
                     'increment': info['increment'],
                     'cases': info['cases'],

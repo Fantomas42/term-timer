@@ -814,8 +814,8 @@
               <th>Step</th>
               <th>Case</th>
               <th>Moves</th>
-              <th>Overhead</th>
-              <th>Pauses</th>
+              <th>QTM Overhead</th>
+              <th>Execution Pauses</th>
             </tr>
           </thead>
           <tbody>
@@ -853,7 +853,7 @@
                   {{ solve.reconstruction_step_line(info, multiple=True)|style_issues }}
                 </td>
                 <td class="recons-overhead">
-                  {% set missed_moves = solve.missed_moves(info.reconstruction) %}
+                  {% set missed_moves = solve.missed_moves(info.reconstruction_timed) %}
                   <span class="metric-{% if missed_moves > 2 %}warning{% elif missed_moves %}caution{% else %}success{% endif %}">
                   {{ missed_moves }}
                 </td>

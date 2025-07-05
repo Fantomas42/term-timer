@@ -14,8 +14,8 @@ from cubing_algs.transform.timing import untime_moves
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
-from term_timer.constants import PAUSE_FACTOR
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.constants import PAUSE_FACTOR
 from term_timer.constants import SECOND
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
