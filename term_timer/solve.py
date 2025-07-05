@@ -47,7 +47,7 @@ class Solve:
                  timer: str = '',
                  device: str = '',
                  session: str = '',
-                 moves: list[str] | None = None):
+                 moves: str | None = None):
         self.date = int(date)
         self.time = int(time)
         self.scramble = scramble
@@ -58,6 +58,7 @@ class Solve:
         self.raw_moves = moves
 
         self.method_name = CUBE_METHOD
+        self.orientation = CUBE_ORIENTATION
 
     @cached_property
     def datetime(self) -> datetime:
@@ -76,14 +77,7 @@ class Solve:
 
     @cached_property
     def move_times(self) -> list[list[str | int]]:
-        return [
-            [
-                x if not x.isdigit() else int(x)
-                for x in move_time.split('@')
-            ]
-            for move_time in self.raw_moves.split(' ')
-            if move_time
-        ]
+        return [[m.untimed, m.timed] for m in self.solution]
 
     @cached_property
     def advanced(self):
@@ -102,7 +96,7 @@ class Solve:
 
     @cached_property
     def reconstruction(self) -> list[str]:
-        reconstruction = CUBE_ORIENTATION + self.solution
+        reconstruction = self.orientation + self.solution
 
         return reconstruction.transform(
             degrip_full_moves,
@@ -227,7 +221,7 @@ class Solve:
 
         line = (
             '[step]Orientation:[/step] '
-            f'[consign]{ CUBE_ORIENTATION!s }[/consign]\n'
+            f'[consign]{ self.orientation!s }[/consign]\n'
         )
 
         for info in self.method_applied.summary:
@@ -379,14 +373,14 @@ class Solve:
             else:
                 source_paused += f' { PAUSE_CHAR }'
 
-        return source_paused
+        return str(source_paused)
 
     @cached_property
     def method_text(self):
         recons = ''
 
-        if CUBE_ORIENTATION:
-            recons += f'{ CUBE_ORIENTATION!s } // Orientation\n'
+        if self.orientation:
+            recons += f'{ self.orientation!s } // Orientation\n'
 
         for info in self.method_applied.summary:
             if info['type'] != 'virtual':
