@@ -118,7 +118,7 @@ class Solve:
     @cached_property
     def step_missed_moves(self) -> int:
         return sum(
-            self.missed_moves(parse_moves(s['moves']))
+            self.missed_moves(s['moves'])
             for s in self.method_applied.summary
             if s['type'] != 'virtual'
         )

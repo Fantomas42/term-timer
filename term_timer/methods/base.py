@@ -2,6 +2,7 @@ from contextlib import suppress
 from functools import cached_property
 from typing import ClassVar
 
+from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.rotation import remove_final_rotations
@@ -202,7 +203,7 @@ class Analyser:
             info = self.steps[step]
             step_moves = info['moves']
 
-            moves = [self.solution[i] for i in step_moves]
+            moves = parse_moves([self.solution[i] for i in step_moves])
             times = [self.solution[i].timed for i in step_moves]
 
             ante_time = 0
@@ -241,7 +242,6 @@ class Analyser:
                 {
                     'type': 'step',
                     'name': step,
-                    # TODO(me): parse_moves + fix step_missed_moves
                     'moves': moves,
                     'times': times,
                     'index': step_moves,
