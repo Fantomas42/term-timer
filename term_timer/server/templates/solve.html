@@ -600,12 +600,12 @@
     </div>
     <div class="scramble-card moves-card">
       <div class="moves-content">
-      {% for m in solve.scramble.split(' ') %}
+      {% for m in solve.scramble %}
         <span class="move">{{ m }}</span>
       {% endfor %}
       </div>
       <div class="moves-footer">
-        {{ solve.scramble.split(' ')|length }} HTM - Computer generated -
+        {{ solve.scramble.metrics.htm }} HTM - Computer generated -
         <button class="moves-copy">Copy</button>
       </div>
     </div>

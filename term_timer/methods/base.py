@@ -2,6 +2,7 @@ from contextlib import suppress
 from functools import cached_property
 from typing import ClassVar
 
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves
@@ -139,7 +140,7 @@ class Analyser:
     step_list: tuple[str] = ()
     norms: ClassVar[dict[str, dict[str, float]]] = {}
 
-    def __init__(self, scramble, solution):
+    def __init__(self, scramble: Algorithm, solution: Algorithm):
         self.scramble = scramble
         self.solution = solution
 
@@ -152,7 +153,7 @@ class Analyser:
 
     def split_steps(self):
         cube = VCube()
-        facelets = cube.rotate(self.scramble)
+        facelets = cube.rotate(str(self.scramble))
 
         steps = {}
         cases = []

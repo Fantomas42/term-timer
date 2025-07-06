@@ -109,7 +109,7 @@ def clean_url(string: str) -> str:
     )
 
 
-def format_alg_cubing_url(title: str, setup, alg) -> str:
+def format_alg_cubing_url(title: str, setup: str, alg: str) -> str:
     return (
         'https://alg.cubing.net/'
         f'?title={ title }'
@@ -118,7 +118,7 @@ def format_alg_cubing_url(title: str, setup, alg) -> str:
     )
 
 
-def format_cube_db_url(title: str, setup, alg) -> str:
+def format_cube_db_url(title: str, setup: str, alg: str) -> str:
     return (
         'https://cubedb.net/'
         f'?title={ title }'

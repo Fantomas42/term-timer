@@ -52,12 +52,19 @@ class Solve:
                  moves: str | None = None):
         self.date = int(date)
         self.time = int(time)
-        self.scramble = scramble
         self.flag = flag
         self.timer = timer
         self.device = device
         self.session = session or 'default'
+
         self.raw_moves = moves
+        self.raw_scramble = scramble
+
+        self.scramble = parse_moves(self.raw_scramble)
+        self.solution = None
+
+        if self.raw_moves:
+            self.solution = parse_moves(self.raw_moves)
 
         self.method_name = CUBE_METHOD
         self.orientation = CUBE_ORIENTATION
@@ -91,10 +98,6 @@ class Solve:
             return 0
 
         return moves / (time / SECOND)
-
-    @cached_property
-    def solution(self) -> Algorithm:
-        return parse_moves(self.raw_moves)
 
     @cached_property
     def reconstruction(self) -> list[str]:
@@ -550,7 +553,7 @@ class Solve:
 
         return format_alg_cubing_url(
             f'Solve { date } : { format_time(self.time) }'.replace(' ', '%20'),
-            self.scramble,
+            str(self.scramble),
             self.method_text,
         )
 
@@ -560,7 +563,7 @@ class Solve:
 
         return format_cube_db_url(
             f'Solve { date } : { format_time(self.time) }',
-            self.scramble,
+            str(self.scramble),
             self.method_text,
         )
 

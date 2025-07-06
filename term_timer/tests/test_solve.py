@@ -17,7 +17,7 @@ class TestSolveModule(unittest.TestCase):
 
         self.assertEqual(solve.date, date)
         self.assertEqual(solve.time, time)
-        self.assertEqual(solve.scramble, scramble)
+        self.assertEqual(str(solve.scramble), scramble)
         self.assertEqual(solve.flag, '')
 
     def test_solve_with_string(self):
