@@ -51,6 +51,7 @@ class LBLAnalyser(Analyser):
                     'execution': 0,
                     'recognition': 0,
                     'post_pause': 0,
+                    'aufs': [None, None],
                     'total_percent': 0,
                     'execution_percent': 0,
                     'recognition_percent': 0,

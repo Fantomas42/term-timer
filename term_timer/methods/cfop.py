@@ -4,10 +4,7 @@ from pathlib import Path
 from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.rotation import remove_final_rotations
 
-from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
 
@@ -21,11 +18,6 @@ OLL_INFO = {}
 PLL_INFO = {}
 OLL_SETUPS = {}
 PLL_SETUPS = {}
-
-AUF_MOVE = (CUBE_ORIENTATION + 'U').transform(
-    degrip_full_moves,
-    remove_final_rotations,
-)[0].base_move
 
 
 def load_and_fill(path, masks, info, setups):
@@ -52,6 +44,11 @@ load_and_fill(PLL_PATH, PLL_MASKS, PLL_INFO, PLL_SETUPS)
 class CFOPAnalyser(Analyser):
     name = 'CFOP'
     step_list = ('Cross', 'F2L', 'OLL', 'PLL')
+    aufs: ClassVar[dict[str, tuple[bool, bool]]] = {
+        'F2L': [True, False],
+        'OLL': [True, False],
+        'PLL': [True, True],
+    }
     norms: ClassVar[dict[str, dict[str, float]]] = {
         'moves': {
             'Cross': 6,
@@ -131,24 +128,6 @@ class CFOPAnalyser(Analyser):
 
         return ''
 
-    def get_auf(self, sequence, mode):
-        auf = 0
-
-        moves = sequence
-        if mode == 'post':
-            moves = reversed(sequence)
-
-        for move in moves:
-            if move[0] == AUF_MOVE:
-                auf += (move.endswith('2') and 2) or 1
-            else:
-                break
-
-        if not auf:
-            return ''
-
-        return f'+{ auf } { mode } AUF'
-
     @cached_property
     def score(self):
         bonus = 0
@@ -194,6 +173,7 @@ class CFOPAnalyser(Analyser):
                     'execution': 0,
                     'recognition': 0,
                     'post_pause': 0,
+                    'aufs': [None, None],
                     'total_percent': 0,
                     'execution_percent': 0,
                     'recognition_percent': 0,
@@ -222,6 +202,7 @@ class CFOPAnalyser(Analyser):
                     'execution': 0,
                     'recognition': 0,
                     'post_pause': 0,
+                    'aufs': [None, None],
                     'total_percent': 0,
                     'execution_percent': 0,
                     'recognition_percent': 0,
@@ -241,28 +222,24 @@ class CFOPAnalyser(Analyser):
                 facelets = info['facelets']
                 if facelets:
                     info['cases'] = [self.get_oll_case(facelets)]
-                auf = self.get_auf(info['moves'], 'pre')
-                if auf:
-                    info['cases'].append(auf)
-                auf = self.get_auf(info['moves'], 'post')
-                if auf:
-                    info['cases'].append(auf)
 
             elif info['name'] == 'PLL':
                 facelets = info['facelets']
                 if facelets:
                     info['cases'] = [self.get_pll_case(facelets)]
-                auf = self.get_auf(info['moves'], 'pre')
-                if auf:
-                    info['cases'].append(auf)
-                auf = self.get_auf(info['moves'], 'post')
-                if auf:
-                    info['cases'].append(auf)
 
 
 class CF4OPAnalyser(CFOPAnalyser):
     name = 'CF4OP'
     step_list = ('Cross', 'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4', 'OLL', 'PLL')
+    aufs: ClassVar[dict[str, tuple[bool, bool]]] = {
+        'F2L 1': [True, False],
+        'F2L 2': [True, False],
+        'F2L 3': [True, False],
+        'F2L 4': [True, False],
+        'OLL': [True, True],
+        'PLL': [True, True],
+    }
     norms: ClassVar[dict[str, dict[str, float]]] = {
         'moves': {
             'Cross': 6,
@@ -380,6 +357,7 @@ class CF4OPAnalyser(CFOPAnalyser):
             'execution': 0,
             'recognition': 0,
             'post_pause': 0,
+            'aufs': [0, 0],
             'total_percent': 0,
             'execution_percent': 0,
             'recognition_percent': 0,
@@ -413,6 +391,10 @@ class CF4OPAnalyser(CFOPAnalyser):
                 f2l['execution'] += info['execution']
                 f2l['recognition'] += info['recognition']
                 f2l['post_pause'] = info['post_pause']
+                if info['aufs'][0]:
+                    f2l['aufs'][0] += info['aufs'][0]
+                if info['aufs'][1]:
+                    f2l['aufs'][1] += info['aufs'][1]
                 f2l['total_percent'] += info['total_percent']
                 f2l['execution_percent'] += info['execution_percent']
                 f2l['recognition_percent'] += info['recognition_percent']
@@ -423,6 +405,11 @@ class CF4OPAnalyser(CFOPAnalyser):
 
         f2l['step_execution_percent'] /= f2l_steps
         f2l['step_recognition_percent'] /= f2l_steps
+
+        if not f2l['aufs'][0]:
+            f2l['aufs'][0] = None
+        if not f2l['aufs'][1]:
+            f2l['aufs'][1] = None
 
         if insert_f2l:
             if 'F2L' not in summary[0]['name']:

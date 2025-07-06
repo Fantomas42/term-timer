@@ -816,6 +816,8 @@
               <th>Moves</th>
               <th>QTM Overhead</th>
               <th>Execution Pauses</th>
+              <th>QTM Pre AUF</th>
+              <th>QTM Post AUF</th>
             </tr>
           </thead>
           <tbody>
@@ -862,6 +864,24 @@
                   <span class="metric-{% if pauses >= 2 %}warning{% elif pauses %}caution{% else %}success{% endif %}">
                     {{ pauses }}
                   </span>
+                </td>
+                <td class="recons-pre-aufs">
+                  {% if info.aufs.0 is none %}
+                    ---
+                  {% else %}
+                    <span class="metric-{% if info.aufs.0 > 2 %}warning{% elif info.aufs.0 %}caution{% else %}success{% endif %}">
+                      {{ info.aufs.0 }}
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="recons-post-aufs">
+                  {% if info.aufs.1 is none %}
+                    ---
+                  {% else %}
+                    <span class="metric-{% if info.aufs.1 > 2 %}warning{% elif info.aufs.1 %}caution{% else %}success{% endif %}">
+                      {{ info.aufs.1 }}
+                    </span>
+                  {% endif %}
                 </td>
               </tr>
             {% endfor %}

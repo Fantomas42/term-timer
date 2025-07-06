@@ -27,6 +27,11 @@ F2L_FACE     = '111111000'  # noqa: E221
 FULL_FACE    = '1' * 9      # noqa: E221
 FULL_CUBE    = '1' * 54     # noqa: E221
 
+AUF_MOVE = (CUBE_ORIENTATION + 'U').transform(
+    degrip_full_moves,
+    remove_final_rotations,
+)[0].base_move
+
 STEPS_CONFIG = {
     'Cross': {
         'mask': (
@@ -139,6 +144,7 @@ class Analyser:
     name = ''
     step_list: tuple[str] = ()
     norms: ClassVar[dict[str, dict[str, float]]] = {}
+    aufs: ClassVar[dict[str, tuple[bool, bool]]] = {}
 
     def __init__(self, scramble: Algorithm, solution: Algorithm):
         self.scramble = scramble
@@ -239,6 +245,8 @@ class Analyser:
                 to_fixpoint=True,
             )
 
+            aufs = self.get_aufs(step, moves)
+
             summary.append(
                 {
                     'type': 'step',
@@ -251,6 +259,7 @@ class Analyser:
                     'execution': execution,
                     'recognition': recognition,
                     'post_pause': post_pause,
+                    'aufs': aufs,
                     'total_percent': (total / self.duration) * 100,
                     'execution_percent': (execution / self.duration) * 100,
                     'recognition_percent': (recognition / self.duration) * 100,
@@ -270,6 +279,33 @@ class Analyser:
         self.correct_summary(summary)
 
         return summary
+
+    def get_aufs(self, name: str, moves: Algorithm) -> list[
+            int | None, int | None]:
+        pre_auf, post_auf = None, None
+        pre, post = self.aufs.get(name, [False, False])
+
+        if pre:
+            pre_auf = self.get_auf(moves, 'pre')
+
+        if post:
+            post_auf = self.get_auf(moves, 'post')
+
+        return [pre_auf, post_auf]
+
+    def get_auf(self, moves: Algorithm, mode):
+        auf = 0
+
+        if mode == 'post':
+            moves = reversed(moves)
+
+        for move in moves:
+            if move[0] == AUF_MOVE:
+                auf += 1
+            else:
+                break
+
+        return auf
 
     def correct_summary(self, summary):
         pass
