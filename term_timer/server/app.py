@@ -70,20 +70,27 @@ def solution(value):
 
 
 def style_issues(value):
-    return value.replace(
-        '[red]', '<span class="metric-warning">',
+    v = ''
+    for m in value.split(' '):
+        if not m.startswith('['):
+            v += f'<span class="move">{ m }</span>'
+        else:
+            v += f' { m }'
+
+    return v.replace(
+        '[red]', '<span class="move deletion">',
     ).replace(
         '[/red]', '</span>',
     ).replace(
-        '[green]', '<span class="metric-success">',
+        '[green]', '<span class="move addition">',
     ).replace(
         '[/green]', '</span>',
     ).replace(
-        '[pause]', '<span class="metric-caution">',
+        '[pause]', '<span class="move pause">',
     ).replace(
         '[/pause]', '</span>',
     ).replace(
-        '[reco_pause]', '<span class="recognition-pause">',
+        '[reco_pause]', '<span class="move recognition-pause">',
     ).replace(
         '[/reco_pause]', '</span>',
     )

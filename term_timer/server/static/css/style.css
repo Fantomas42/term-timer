@@ -4,6 +4,7 @@
     --success: #10B981;
     --danger: #EF4444;
     --warning: #F59E0B;
+    --recognition: #5D3FD3;
     --info: #3B82F6;
     --link: #549EFF;
     --light: #F8FAFC;
@@ -191,11 +192,6 @@ header {
     font-weight: bold;
 }
 
-.recognition-pause {
-    color: var(--secondary);
-    font-weight: bold;
-}
-
 .moves-card {
     padding: 1rem;
     background-color: rgba(255, 255, 255, 0.05);
@@ -240,6 +236,22 @@ header {
     color: var(--dark);
 }
 
+.recons-moves .deletion {
+    background-color: var(--danger);
+}
+
+.recons-moves .addition {
+    background-color: var(--success);
+}
+
+.recons-moves .pause {
+    color: var(--dark);
+    background-color: var(--warning);
+}
+
+.recons-moves .recognition-pause {
+    background-color: var(--recognition);
+}
 
 .moves-card .moves-footer {
     padding-top: 1rem;
@@ -675,6 +687,10 @@ twisty-alg-viewer {
 
 .reconstruction th:nth-child(3), .reconstruction td:nth-child(3) {
     width: 33%; /* Moves */
+}
+
+.reconstruction.issues th:nth-child(3), .reconstruction.issues td:nth-child(3) {
+    width: 60%; /* Moves */
 }
 
 /* PunchCard */
