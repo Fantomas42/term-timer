@@ -588,6 +588,14 @@
             </div>
           </div>
         {% endif %}
+        {% if solve.aufs %}
+          <div class="stat-card">
+            <div class="stat-title">AUFs</div>
+            <div class="stat-value stat-{% if solve.aufs > 5 %}worst{% elif solve.aufs > 2 %}caution{% else %}success{% endif %}">
+              {{ solve.aufs }}
+            </div>
+          </div>
+        {% endif %}
       </div>
     </div>
   {% endif %}

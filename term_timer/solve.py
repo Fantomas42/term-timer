@@ -115,6 +115,14 @@ class Solve:
         return self.compute_tps(len(self.solution), self.time)
 
     @cached_property
+    def aufs(self) -> int:
+        return sum(
+            (s['aufs'][0] or 0) + (s['aufs'][1] or 0)
+            for s in self.method_applied.summary
+            if s['type'] != 'virtual'
+        )
+
+    @cached_property
     def all_missed_moves(self) -> int:
         return self.missed_moves(self.solution)
 
