@@ -212,14 +212,34 @@ header {
     cursor: pointer;
 }
 
-.orientation .move {
-    background-color: var(--header);
-}
-
 .moves-card .move:hover,
 .orientation .move:hover {
     background-color: var(--primary);
 }
+
+.orientation .move {
+    background-color: var(--header);
+}
+
+.recons-moves .move,
+.solve-scramble .move {
+    font-weight: bold;
+    background-color: var(--primary);
+    padding: 0.25em 0;
+    margin-right: 0.3em;
+    min-width: 2em;
+    display: inline-block;
+    border-radius: 0.375rem;
+    text-align: center;
+    cursor: pointer;
+}
+
+.recons-moves .move:hover,
+.solve-scramble .move:hover {
+    background-color: var(--link);
+    color: var(--dark);
+}
+
 
 .moves-card .moves-footer {
     padding-top: 1rem;
@@ -276,12 +296,6 @@ header {
 
 .solve-grade {
     font-weight: bold;
-}
-
-.solve-scramble, .recons-moves {
-    max-width: 300px;
-    position: relative;
-    cursor: pointer;
 }
 
 .tooltip, .copy-tooltip {
@@ -525,6 +539,16 @@ twisty-alg-viewer {
 
 .table-container td.recons-step {
     font-weight: bold;
+
+}
+
+.table-container td.solve-scramble,
+.table-container td.recons-moves {
+    max-width: 300px;
+    position: relative;
+    cursor: pointer;
+    overflow-x: clip;
+    text-overflow: clip;
 }
 
 .table-container tr.substep td {

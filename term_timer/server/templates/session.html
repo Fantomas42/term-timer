@@ -779,7 +779,7 @@
                 {% endif %}
               </td>
               <td class="solve-scramble">
-                {{ solve.scramble }}
+                {% for m in solve.scramble %}<span class="move">{{ m }}</span>{% endfor %}
               </td>
               <td class="solve-flag">
                 {{ solve.flag|default('---', true) }}

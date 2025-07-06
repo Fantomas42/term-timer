@@ -600,9 +600,9 @@
     </div>
     <div class="scramble-card moves-card">
       <div class="moves-content">
-      {% for m in solve.scramble %}
-        <span class="move">{{ m }}</span>
-      {% endfor %}
+        {% for m in solve.scramble %}
+          <span class="move">{{ m }}</span>
+        {% endfor %}
       </div>
       <div class="moves-footer">
         {{ solve.scramble.metrics.htm }} HTM - Computer generated -
@@ -709,7 +709,7 @@
                   </div>
                 </td>
                 <td class="recons-moves">
-                  {{ info.reconstruction }}
+                  {% for m in info.reconstruction %}<span class="move">{{ m }}</span>{% endfor %}
                 </td>
                 <td class="recons-recognition">
                   {{ info.recognition|format_duration }}
@@ -784,7 +784,7 @@
                   </div>
                 </td>
                 <td class="recons-moves">
-                  {{ info.reconstruction }}
+                  {% for m in info.reconstruction %}<span class="move">{{ m }}</span>{% endfor %}
                 </td>
                 <td class="recons-recognition">
                   {{ "%0.2f"|format(info.recognition_percent) }}%
