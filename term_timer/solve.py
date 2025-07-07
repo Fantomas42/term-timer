@@ -46,26 +46,28 @@ METHODS = {
 class Solve:
     def __init__(self,
                  date: int, time: int,
-                 scramble: str, flag: str = '',
+                 scramble: Algorithm | str,
+                 flag: str = '',
                  timer: str = '',
                  device: str = '',
                  session: str = '',
                  moves: str | None = None):
         self.date = int(date)
         self.time = int(time)
+        self.scramble = scramble
         self.flag = flag
         self.timer = timer
         self.device = device
         self.session = session or 'default'
 
         self.raw_moves = moves
-        self.raw_scramble = scramble
-
-        self.scramble = parse_moves(self.raw_scramble)
         self.solution = None
 
         if self.raw_moves:
             self.solution = parse_moves(self.raw_moves)
+
+        if not isinstance(self.scramble, Algorithm):
+            self.scramble = parse_moves(self.scramble)
 
         self.method_name = CUBE_METHOD
         self.orientation = CUBE_ORIENTATION
@@ -603,7 +605,7 @@ class Solve:
         return {
             'date': self.date,
             'time': self.time,
-            'scramble': self.scramble,
+            'scramble': str(self.scramble),
             'flag': self.flag,
             'timer': self.timer,
             'device': self.device,

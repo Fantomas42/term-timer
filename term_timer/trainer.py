@@ -107,7 +107,7 @@ class Trainer(SolveInterface):
         solve = Solve(
             self.date,
             self.elapsed_time,
-            str(self.scramble),
+            self.scramble,
             flag=flag,
             timer='Term-Timer',
             device=(
