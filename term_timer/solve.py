@@ -414,9 +414,9 @@ class Solve:
 
                 aufs = ''
                 if info['aufs'][0]:
-                    aufs += f'Pre-AUF : +{ info["aufs"][0] } '
+                    aufs += f'Pre-AUF: +{ info["aufs"][0] } '
                 if info['aufs'][1]:
-                    aufs += f'Post-AUF +{ info["aufs"][1] } '
+                    aufs += f'Post-AUF: +{ info["aufs"][1] } '
                 aufs = aufs.strip()
 
                 moves = self.reconstruction_step_text(

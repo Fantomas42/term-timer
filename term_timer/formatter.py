@@ -106,6 +106,8 @@ def clean_url(string: str) -> str:
         '\n', '%0A',
     ).replace(
         '+', '%26%232b%3B',
+    ).replace(
+        '-AUF', '%26%2345%3BAUF',
     )
 
 
