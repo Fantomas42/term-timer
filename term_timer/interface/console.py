@@ -36,8 +36,8 @@ theme = {
     'server': 'bold #00DFFF',
     'bluetooth': 'bold #FFFFFF on #133EBF',
     'localhost': 'bold #FFFFFF on #522081',
-    'algcubing': f'bold { TEXT_DARK } on #FFF5EB',
-    'cubedb': f'bold { TEXT_LIGHT } on #222222',
+    'algcubing': f'bold { TEXT_DARK } on #D0B0B0',
+    'cubedb': f'bold { TEXT_LIGHT } on #444444',
     'cubingfache': 'bold #FFFFFF on #2052CC',
 
     'timer': f'bold { ORANGE }',

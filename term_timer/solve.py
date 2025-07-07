@@ -584,7 +584,7 @@ class Solve:
         date = self.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
         return format_cube_db_url(
-            f'Solve { date } : { format_time(self.time) }',
+            f'Solve { date } : { format_time(self.time) }'.replace(' ', '%20'),
             str(self.scramble),
             self.method_text,
         )
