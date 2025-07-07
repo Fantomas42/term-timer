@@ -385,6 +385,13 @@ class SolveView(View):
                 if info['cases'] and info['cases'][0]:
                     cases = f' ({ " ".join(info["cases"]) })'
 
+                aufs = ''
+                if info['aufs'][0]:
+                    aufs += f'Pre-AUF : +{ info["aufs"][0] } '
+                if info['aufs'][1]:
+                    aufs += f'Post-AUF +{ info["aufs"][1] } '
+                aufs = aufs.strip()
+
                 recon = self.solve.reconstruction_step_text(
                     info, multiple=False,
                 )
@@ -394,7 +401,8 @@ class SolveView(View):
                     f'{ info["name"] }{ cases } '
                     f'Reco: { format_duration(info["recognition"]) }s '
                     f'Exec: { format_duration(info["execution"]) }s '
-                    f'HTM: { info["reconstruction"].metrics["htm"] }\n'
+                    f'HTM: { info["reconstruction"].metrics["htm"] } '
+                    f'{ aufs }\n'
                 )
 
         return {

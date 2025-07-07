@@ -271,6 +271,12 @@ class Solve:
                     '[/consign]'
                 )
                 if info['cases'] and info['cases'][0]:
+                    aufs = ''
+                    if info['aufs'][0]:
+                        aufs += f' +{ info["aufs"][0] } pre-AUF'
+                    if info['aufs'][1]:
+                        aufs += f' +{ info["aufs"][1] } post-AUF'
+
                     if info['name'] in {'OLL', 'PLL'}:
                         link = (
                             'https://cubing.fache.fr/'
@@ -279,14 +285,13 @@ class Solve:
                         )
                         footer += (
                             ' [comment]// '
-                            f'[link={ link }]{ info["cases"][0] }[/link] ' +
-                            ' '.join(info['cases'][1:]) +
-                            '[/comment]'
+                            f'[link={ link }]{ info["cases"][0] }[/link]'
+                            f'{ aufs }[/comment]'
                         )
                     else:
                         footer += (
                             ' [comment]// ' +
-                            ' '.join(info['cases']) +
+                            ' '.join(info['cases']) + aufs +
                             '[/comment]'
                         )
 
@@ -407,6 +412,13 @@ class Solve:
                 if info['cases'] and info['cases'][0]:
                     cases = f' ({ " ".join(info["cases"]) })'
 
+                aufs = ''
+                if info['aufs'][0]:
+                    aufs += f'Pre-AUF : +{ info["aufs"][0] } '
+                if info['aufs'][1]:
+                    aufs += f'Post-AUF +{ info["aufs"][1] } '
+                aufs = aufs.strip()
+
                 moves = self.reconstruction_step_text(
                     info, multiple=True,
                 )
@@ -415,7 +427,8 @@ class Solve:
                     f'{ info["name"] }{ cases } '
                     f'Reco: { format_duration(info["recognition"]) }s '
                     f'Exec: { format_duration(info["execution"]) }s '
-                    f'HTM: { info["reconstruction"].metrics["htm"] }\n'
+                    f'HTM: { info["reconstruction"].metrics["htm"] } '
+                    f'{ aufs }\n'
                 )
 
         return recons
