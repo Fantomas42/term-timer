@@ -387,9 +387,11 @@ class StatisticsReporter(Statistics):
 
             header = f'[stats]{ index:{" "}>{max_count}}[/stats]'
             if solve.advanced:
+                url = solve.link_term_timer(self.cube_size, original_index)
                 header = (
-                    f'[extlink][link={ solve.link_alg_cubing }]'
-                    f'{ index:{" "}>{max_count}}[/link][/extlink]'
+                    f'[localhost][link={ url }]'
+                    f'{ index:{" "}>{max_count}}'
+                    '[/link][/localhost]'
                 )
 
             time_class = 'result'
@@ -588,11 +590,15 @@ class StatisticsReporter(Statistics):
 
         if solve.advanced:
             if show_reconstruction:
+                url = solve.link_term_timer(self.cube_size, solve_id)
                 console.print(
                     f'[title]Reconstruction { solve.method.name }[/title]',
-                    '[extlink]'
-                    f'[link={ solve.link_alg_cubing }]'
-                    'alg.cubing.net[/link][/extlink]',
+                    f'[localhost][link={ url }]'
+                    'Term-Timer[/link][/localhost]',
+                    f'[algcubing][link={ solve.link_alg_cubing }]'
+                    'alg.cubing.net[/link][/algcubing]',
+                    f'[cubedb][link={ solve.link_cube_db }]'
+                    'cubedb.net[/link][/cubedb]',
                 )
                 console.print(solve.method_line, end='')
             if show_time_graph:
@@ -656,9 +662,9 @@ class StatisticsReporter(Statistics):
             ) or 'red'
 
             head = (
-                '[extlink][link=https://cubing.fache.fr/'
+                '[cubingfache][link=https://cubing.fache.fr/'
                 f'{ title }/{ name.split(" ")[0] }.html]{ info["label"] }'
-                '[/link][/extlink]'
+                '[/link][/cubingfache]'
             )
             if 'SKIP' in info['label']:
                 head = f'[skipped]{ info["label"] }[/skipped]'

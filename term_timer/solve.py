@@ -18,6 +18,7 @@ from cubing_algs.transform.timing import untime_moves
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import STATS_CONFIG
+from term_timer.config import SERVER_CONFIG
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PAUSE_FACTOR
@@ -220,8 +221,8 @@ class Solve:
         )
 
         return (
-            f'[extlink][link={ self.link_alg_cubing }]'
-            'alg.cubing.net[/link][/extlink] '
+            f'[algcubing][link={ self.link_alg_cubing }]'
+            'alg.cubing.net[/link][/algcubing] '
             f'{ metric_string }'
             f'[tps]{ self.tps:.2f} TPS[/tps] '
             f'{ missed_line }{ grade_line }'
@@ -586,6 +587,15 @@ class Solve:
             f'Solve { date } : { format_time(self.time) }',
             str(self.scramble),
             self.method_text,
+        )
+
+    def link_term_timer(self, cube_size, solve_id) -> str:
+        domain = SERVER_CONFIG.get('domain', 'localhost')
+        port = SERVER_CONFIG.get('port', 8333)
+
+        return (
+            f'http://{ domain }:{ port }'
+            f'/{ cube_size }/{ self.session }/{ solve_id }/'
         )
 
     @property

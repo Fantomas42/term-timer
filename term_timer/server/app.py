@@ -432,8 +432,8 @@ class Server:
         if not os.getenv('BOTTLE_CHILD'):
             console.print(
                 '[server]Term Timer server is listening on [/server]'
-                f'[extlink][link=http://{ host }:{ port }/]'
-                f'http://{ host }:{ port }/[/link][/extlink]',
+                f'[localhost][link=http://{ host }:{ port }/]'
+                f'http://{ host }:{ port }/[/link][/localhost]',
             )
             console.print('Hit Ctrl-C to quit.', style='comment')
 
