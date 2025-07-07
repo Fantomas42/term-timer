@@ -561,6 +561,24 @@ class StatisticsReporter(Statistics):
 
             console.print(pauses_string)
 
+            aufs_string = '[stats]Adjusts UF :[/stats] '
+            if solve.aufs > 5:
+                aufs_string += (
+                    f'[warning]{ solve.aufs }[/warning]'
+                )
+            elif solve.aufs > 2:
+                aufs_string += (
+                    f'[caution]{ solve.aufs }[/caution]'
+                )
+            elif solve.aufs:
+                aufs_string += (
+                    f'[success]{ solve.aufs }[/success]'
+                )
+            else:
+                aufs_string += '[success]None[/success]'
+
+            console.print(aufs_string)
+
         console.print(
             '[stats]Scramble   :[/stats] '
             f'[consign]{ solve.scramble }[/consign]',
