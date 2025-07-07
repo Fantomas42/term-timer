@@ -157,7 +157,7 @@ class SolveInterface(
             self.stack[-1].flag = DNF
             save_string = 'Solve marked as DNF'
             save_style = 'caution'
-        elif char == 'o':
+        elif char in {'o', 'q'}:
             self.stack[-1].flag = ''
             save_string = 'Solve marked as OK'
             save_style = 'success'
