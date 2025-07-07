@@ -5,6 +5,7 @@ from term_timer.argparser import ArgumentParser
 from term_timer.config import CUBE_METHOD
 from term_timer.config import DISPLAY_CONFIG
 from term_timer.config import TIMER_CONFIG
+from term_timer.config import SERVER_CONFIG
 from term_timer.constants import CUBE_SIZES
 
 COMMAND_ALIASES = {
@@ -452,6 +453,9 @@ def import_arguments(subparsers):
 
 
 def serve_arguments(subparsers):
+    domain = SERVER_CONFIG.get('domain', 'localhost')
+    port = SERVER_CONFIG.get('port', 8333)
+
     parser = subparsers.add_parser(
         'serve',
         help='Serve solves in HTML',
@@ -460,19 +464,19 @@ def serve_arguments(subparsers):
     )
     parser.add_argument(
         '--host',
-        default='localhost',
+        default=domain,
         help=(
             'Set the hostname of the server.\n'
-            'Default: localhost.'
+            f'Default: { domain }.'
         ),
     )
     parser.add_argument(
         '--port',
         type=int,
-        default=8333,
+        default=port,
         help=(
             'Set the port of the server.\n'
-            'Default: 8333.'
+            f'Default: { port }.'
         ),
     )
 

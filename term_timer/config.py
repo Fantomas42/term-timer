@@ -31,6 +31,10 @@ recognition_graph = true
 distribution = 0
 metrics = ["htm", "qtm", "stm"]
 
+[server]
+domain = "localhost"
+port = 8333
+
 [ui]
 
 """
@@ -58,6 +62,8 @@ DISPLAY_CONFIG = CONFIG.get('display', {})
 UI_CONFIG = CONFIG.get('ui', {})
 
 CUBE_CONFIG = CONFIG.get('cube', {})
+
+SERVER_CONFIG = CONFIG.get('server', {})
 
 CUBE_ORIENTATION = parse_moves(
     CUBE_CONFIG.get('orientation'),
