@@ -149,12 +149,10 @@ class CFOPAnalyser(Analyser):
                 elif info['post_pause'] < SECOND:
                     bonus += 0.25
 
-            if len(info['cases']) > 1:
-                for kase in info['cases'][1:]:
-                    if kase[0] == '+':
-                        if info['name'] == 'PLL' and 'pre' in kase:
-                            continue
-                        malus += int(kase[1])
+                if info['name'] in {'OLL', 'PLL'}:
+                    for auf in info['aufs']:
+                        if auf:
+                            malus += int(auf)
 
         return 20 + bonus - malus
 

@@ -225,6 +225,12 @@ class TestSolve54(unittest.TestCase):
             5.9284010814000005,
         )
 
+    def test_method_score(self):
+        self.assertEqual(
+            self.solve.method_applied.score,
+            16.0,
+        )
+
     def test_reconstruction_step_line(self):
         inputs = [
             info

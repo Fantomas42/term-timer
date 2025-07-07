@@ -232,7 +232,13 @@ class TestSolve38(unittest.TestCase):
     def test_score(self):
         self.assertEqual(
             self.solve.score,
-            13.6863747658,
+            12.6863747658,
+        )
+
+    def test_method_score(self):
+        self.assertEqual(
+            self.solve.method_applied.score,
+            18.25,
         )
 
     def test_reconstruction_step_line(self):
