@@ -17,8 +17,8 @@ from cubing_algs.transform.timing import untime_moves
 
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
-from term_timer.config import STATS_CONFIG
 from term_timer.config import SERVER_CONFIG
+from term_timer.config import STATS_CONFIG
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PAUSE_FACTOR

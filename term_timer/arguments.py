@@ -4,8 +4,8 @@ from typing import Any
 from term_timer.argparser import ArgumentParser
 from term_timer.config import CUBE_METHOD
 from term_timer.config import DISPLAY_CONFIG
-from term_timer.config import TIMER_CONFIG
 from term_timer.config import SERVER_CONFIG
+from term_timer.config import TIMER_CONFIG
 from term_timer.constants import CUBE_SIZES
 
 COMMAND_ALIASES = {
