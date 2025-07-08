@@ -351,6 +351,9 @@ class Solve:
         return line
 
     def reconstruction_step_line(self, step, *, multiple=False) -> str:
+        if not step['reconstruction_timed']:
+            return ''
+
         source, compressed = self.missed_moves_pair(
             step['reconstruction_timed'],
         )
