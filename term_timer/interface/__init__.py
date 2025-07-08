@@ -177,7 +177,7 @@ class SolveInterface(
 
         if save_string:
             self.console.print(
-                f'[duration]Duration #{ len(self.stack) }:[/duration] '
+                f'[duration]Duration #{ self.counter }:[/duration] '
                 f'[{ save_style }]{ save_string }[/{ save_style }]',
             )
 
