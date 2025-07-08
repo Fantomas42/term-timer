@@ -401,8 +401,9 @@ class CF4OPAnalyser(CFOPAnalyser):
                 f2l['reconstruction'].extend(info['reconstruction'])
                 f2l['reconstruction_timed'].extend(info['reconstruction_timed'])
 
-        f2l['step_execution_percent'] /= f2l_steps
-        f2l['step_recognition_percent'] /= f2l_steps
+        if f2l_steps:
+            f2l['step_execution_percent'] /= f2l_steps
+            f2l['step_recognition_percent'] /= f2l_steps
 
         if not f2l['aufs'][0]:
             f2l['aufs'][0] = None
