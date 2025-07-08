@@ -6,6 +6,7 @@ from wsgiref.simple_server import WSGIRequestHandler
 
 from bottle import TEMPLATE_PATH
 from bottle import Bottle
+from bottle import abort
 from bottle import jinja2_template
 from bottle import request
 from bottle import static_file
@@ -191,6 +192,34 @@ class View:
         )
 
 
+class Error404View(View):
+    template_name = '404.html'
+
+    def __init__(self, error):
+        self.error = error
+
+    def get_context(self):
+        return {
+            'error': self.error,
+            'message': self.error.body,
+        }
+
+
+class Error500View(View):
+    template_name = '500.html'
+
+    def __init__(self, error):
+        self.error = error
+
+    def get_context(self):
+        return {
+            'error': self.error,
+            'message': self.error.body,
+            'exception': self.error.exception,
+            'traceback': self.error.traceback,
+        }
+
+
 class IndexView(View):
     template_name = 'index.html'
 
@@ -343,7 +372,10 @@ class SolveView(View):
         )
 
         self.solve_id = solve
-        self.solve = self.solves[solve - 1]
+        try:
+            self.solve = self.solves[solve - 1]
+        except IndexError:
+            abort(404, 'Invalid solve ID')
 
         if method:
             self.solve.method_name = method
@@ -510,5 +542,13 @@ class Server:
         @app.route('/static/<filepath:path>')
         def serve_static(filepath):
             return static_file(filepath, root=STATIC_DIRECTORY)
+
+        @app.error(404)
+        def error404(error):
+            return Error404View(error).as_view(debug)
+
+        @app.error(500)
+        def error500(error):
+            return Error500View(error).as_view(debug)
 
         return app
