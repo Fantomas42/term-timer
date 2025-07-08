@@ -717,7 +717,7 @@
                   </div>
                 </td>
                 <td class="recons-moves">
-                  {% for m in info.reconstruction %}<span class="move">{{ m }}</span>{% endfor %}
+                  {{ info|reconstruction_step }}
                 </td>
                 <td class="recons-recognition">
                   {{ info.recognition|format_duration }}
@@ -792,7 +792,7 @@
                   </div>
                 </td>
                 <td class="recons-moves">
-                  {% for m in info.reconstruction %}<span class="move">{{ m }}</span>{% endfor %}
+                  {{ info|reconstruction_step }}
                 </td>
                 <td class="recons-recognition">
                   {{ "%0.2f"|format(info.recognition_percent) }}%

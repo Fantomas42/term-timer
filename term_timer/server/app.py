@@ -24,6 +24,7 @@ from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.interface.console import console
+from term_timer.methods.base import AUF
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
@@ -66,6 +67,36 @@ def solution(value):
         untime_moves,
         optimize_double_moves,
         to_fixpoint=True,
+    )
+
+
+def reconstruction_step(step):
+    reconstruction_classes = {
+        i: {
+            'classes': 'move',
+            'move': step['reconstruction'][i],
+        }
+        for i in range(len(step['reconstruction']))
+    }
+
+    if step['aufs'][0]:
+        for info in reconstruction_classes.values():
+            if info['move'][0] == AUF:
+                info['classes'] += ' pre-auf'
+            else:
+                break
+    if step['aufs'][1]:
+        for info in reversed(reconstruction_classes.values()):
+            if info['move'][0] == AUF:
+                info['classes'] += ' post-auf'
+            else:
+                break
+
+    return ''.join(
+        [
+            f'<span class="{ info['classes'] }">{ info['move'] }</span>'
+            for info in reconstruction_classes.values()
+        ],
     )
 
 
@@ -152,6 +183,7 @@ class View:
                     'normalize_value': normalize_value,
                     'normalize_percent': normalize_percent,
                     'style_issues': style_issues,
+                    'reconstruction_step': reconstruction_step,
                     'solution': solution,
                 },
             },
