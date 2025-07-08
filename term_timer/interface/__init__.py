@@ -181,4 +181,7 @@ class SolveInterface(
                 f'[{ save_style }]{ save_string }[/{ save_style }]',
             )
 
+        if char != 'z':
+            self.counter += 1
+
         return char == 'q'
