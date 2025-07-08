@@ -228,12 +228,17 @@ class Solve:
             f'[/grade_{ grade_class }]'
         )
 
+        if self.execution_pauses:
+            pause_line = (
+                f' [caution]{ self.execution_pauses } Pauses[/caution]'
+            )
+        else:
+            pause_line += ' [success]No Pauses[/success]'
+
         return (
-            f'[algcubing][link={ self.link_alg_cubing }]'
-            'alg.cubing.net[/link][/algcubing] '
             f'{ metric_string }'
             f'[tps]{ self.tps:.2f} TPS[/tps] '
-            f'{ missed_line }{ grade_line }'
+            f'{ missed_line }{ pause_line }{ grade_line }'
         )
 
     @cached_property

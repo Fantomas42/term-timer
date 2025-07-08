@@ -116,7 +116,8 @@ class Timer(SolveInterface):
                 if self.show_recognition_graph:
                     solve.recognition_graph()
                 self.console.print(
-                    f'[analysis]Analysis #{ self.counter }:[/analysis] '
+                    f'[localhost][link={ solve.link_term_timer }]'
+                    f'Analysis #{ self.counter }:[/link][/localhost] '
                     f'{ solve.report_line }',
                 )
             else:
