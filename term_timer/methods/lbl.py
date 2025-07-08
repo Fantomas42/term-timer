@@ -43,7 +43,7 @@ class LBLAnalyser(Analyser):
                 {
                     'type': 'skipped',
                     'name': 'F1L',
-                    'moves': [],
+                    'moves': Algorithm(),
                     'times': [],
                     'index': [],
                     'qtm': 0,

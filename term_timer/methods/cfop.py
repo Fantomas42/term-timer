@@ -163,7 +163,7 @@ class CFOPAnalyser(Analyser):
                 {
                     'type': 'skipped',
                     'name': 'PLL',
-                    'moves': [],
+                    'moves': Algorithm(),
                     'times': [],
                     'index': [],
                     'qtm': 0,
@@ -192,7 +192,7 @@ class CFOPAnalyser(Analyser):
                 {
                     'type': 'skipped',
                     'name': 'OLL',
-                    'moves': [],
+                    'moves': Algorithm(),
                     'times': [],
                     'index': [],
                     'qtm': 0,
@@ -347,7 +347,7 @@ class CF4OPAnalyser(CFOPAnalyser):
         f2l = {
             'type': 'virtual',
             'name': 'F2L',
-            'moves': [],
+            'moves': Algorithm(),
             'times': [],
             'index': [],
             'qtm': 0,
