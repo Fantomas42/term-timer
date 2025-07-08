@@ -31,8 +31,10 @@ class Gesture:
             return
 
         base_move = l_move.base_move
-        if base_move in {'R', 'U'}:
+        if base_move == 'U':
             self.save_gesture = 'o'
+        elif base_move == 'R':
+            self.save_gesture = 'd'
         elif base_move == 'L':
             self.save_gesture = 'z'
         elif base_move == 'D':
