@@ -51,6 +51,8 @@ class Solve:
                  timer: str = '',
                  device: str = '',
                  session: str = '',
+                 solve_id: int = 0,
+                 cube_size: int = 3,
                  moves: str | None = None):
         self.date = int(date)
         self.time = int(time)
@@ -58,7 +60,10 @@ class Solve:
         self.flag = flag
         self.timer = timer
         self.device = device
+
         self.session = session or 'default'
+        self.solve_id = solve_id
+        self.cube_size = cube_size
 
         self.raw_moves = moves
         self.solution = None
@@ -609,13 +614,14 @@ class Solve:
             self.method_text,
         )
 
-    def link_term_timer(self, cube_size, solve_id) -> str:
+    @cached_property
+    def link_term_timer(self) -> str:
         domain = SERVER_CONFIG.get('domain', 'localhost')
         port = SERVER_CONFIG.get('port', 8333)
 
         return (
             f'http://{ domain }:{ port }'
-            f'/{ cube_size }/{ self.session }/{ solve_id }/'
+            f'/{ self.cube_size }/{ self.session }/{ self.solve_id }/'
         )
 
     @property

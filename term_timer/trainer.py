@@ -115,6 +115,8 @@ class Trainer(SolveInterface):
                 and self.bluetooth_interface.device.name
             ) or '',
             session='training',
+            solve_id=self.counter,
+            cube_size=3,
             moves=' '.join(moves),
         )
 

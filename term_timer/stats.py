@@ -387,9 +387,8 @@ class StatisticsReporter(Statistics):
 
             header = f'[stats]{ index:{" "}>{max_count}}[/stats]'
             if solve.advanced:
-                url = solve.link_term_timer(self.cube_size, original_index)
                 header = (
-                    f'[localhost][link={ url }]'
+                    f'[localhost][link={ solve.link_term_timer }]'
                     f'{ index:{" "}>{max_count}}'
                     '[/link][/localhost]'
                 )
@@ -590,10 +589,9 @@ class StatisticsReporter(Statistics):
 
         if solve.advanced:
             if show_reconstruction:
-                url = solve.link_term_timer(self.cube_size, solve_id)
                 console.print(
                     f'[title]Reconstruction { solve.method.name }[/title]',
-                    f'[localhost][link={ url }]'
+                    f'[localhost][link={ solve.link_term_timer }]'
                     'Term-Timer[/link][/localhost]',
                     f'[algcubing][link={ solve.link_alg_cubing }]'
                     'alg.cubing.net[/link][/algcubing]',

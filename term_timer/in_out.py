@@ -18,8 +18,13 @@ def load_solves(cube: int, session: str) -> list[Solve]:
             datas = json.load(fd)
 
         return [
-            Solve(**data, session=session)
-            for data in datas
+            Solve(
+                **data,
+                session=session,
+                cube_size=cube,
+                solve_id=i + 1,
+            )
+            for i, data in enumerate(datas)
         ]
 
     return []
