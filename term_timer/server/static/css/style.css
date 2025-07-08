@@ -5,6 +5,8 @@
     --danger: #EF4444;
     --warning: #F59E0B;
     --recognition: #5D3FD3;
+    --pre-auf: #5F5F8E;
+    --post-auf: #003D80;
     --info: #3B82F6;
     --link: #549EFF;
     --light: #F8FAFC;
@@ -251,6 +253,14 @@ header {
 
 .recons-moves .recognition-pause {
     background-color: var(--recognition);
+}
+
+.recons-moves .pre-auf {
+    background-color: var(--pre-auf);
+}
+
+.recons-moves .post-auf {
+    background-color: var(--post-auf);
 }
 
 .moves-card .moves-footer {

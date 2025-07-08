@@ -51,6 +51,8 @@ theme = {
 
     'pause': f'bold { ORANGE }',
     'reco_pause': 'bold #00FFCC',
+    'pre-auf': f'bold { TEXT_LIGHT } on #5F5F8E',
+    'post-auf': f'bold { TEXT_LIGHT } on  #003D80',
 
     'edge': 'bold #00DFFF',
     'percent': 'bold #00DFFF',

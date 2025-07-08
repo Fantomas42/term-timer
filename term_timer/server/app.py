@@ -93,6 +93,14 @@ def style_issues(value):
         '[reco_pause]', '<span class="move recognition-pause">',
     ).replace(
         '[/reco_pause]', '</span>',
+    ).replace(
+        '[pre-auf]', '<span class="move pre-auf">',
+    ).replace(
+        '[/pre-auf]', '</span>',
+    ).replace(
+        '[post-auf]', '<span class="move post-auf">',
+    ).replace(
+        '[/post-auf]', '</span>',
     )
 
 

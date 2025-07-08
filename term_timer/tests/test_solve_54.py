@@ -241,22 +241,27 @@ class TestSolve54(unittest.TestCase):
             "R2 [pause].[/pause] U [pause].[/pause] F L [pause].[/pause] "
             "U F2 U' B2 [reco_pause].[/reco_pause]",
 
-            "U' R U R' U B U' B' [reco_pause].[/reco_pause]",
+            "[pre-auf]U'[/pre-auf] R U R' U B U' B' "
+            "[reco_pause].[/reco_pause]",
 
-            "U F' U F U' F U F' [reco_pause].[/reco_pause]",
+            "[pre-auf]U[/pre-auf] F' U F U' F U F' "
+            "[reco_pause].[/reco_pause]",
 
-            "U2 [pause].[/pause] R [red]U'[/red] [red]R'[/red] "
+            "[pre-auf]U2[/pre-auf] [pause].[/pause] "
+            "R [red]U'[/red] [red]R'[/red] "
             "[green].[/green] U [red].[/red] "
             "[red]U'[/red] [red]R[/red] [red]U2[/red] "
             "R' U F' U' F [reco_pause].[/reco_pause]",
 
-            "U L U' L' U' B' U B [reco_pause].[/reco_pause]",
+            "[pre-auf]U[/pre-auf] L U' L' U' B' U B "
+            "[reco_pause].[/reco_pause]",
 
-            "U' [pause].[/pause] R L' U B U' [pause].[/pause] "
+            "[pre-auf]U'[/pre-auf] [pause].[/pause] "
+            "R L' U B U' [pause].[/pause] "
             "B' U' L U R' [reco_pause].[/reco_pause]",
 
             "R U R' U' R' F R2 U' R' U' R U [red]R'[/red] "
-            "[pause].[/pause] [red]R[/red] R' F' U2",
+            "[pause].[/pause] [red]R[/red] R' F' [post-auf]U2[/post-auf]",
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
@@ -276,30 +281,32 @@ class TestSolve54(unittest.TestCase):
             "[pause].[/pause] U F2 U' B2 "
             "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause]",
 
-            "U' R U R' U B U' B' "
+            "[pre-auf]U'[/pre-auf] R U R' U B U' B' "
             "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause] "
             "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause] "
             "[reco_pause].[/reco_pause]",
 
-            "U F' U F U' F U F' "
+            "[pre-auf]U[/pre-auf] F' U F U' F U F' "
             "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause]",
 
-            "U2 [pause].[/pause] R [red]U'[/red] [red]R'[/red] "
+            "[pre-auf]U2[/pre-auf] [pause].[/pause] "
+            "R [red]U'[/red] [red]R'[/red] "
             "[green].[/green] [green].[/green] "
             "[green].[/green] U [red].[/red] "
             "[red]U'[/red] [red]R[/red] [red]U2[/red] R' U F' U' F "
             "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause] "
             "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause]",
 
-            "U L U' L' U' B' U B [reco_pause].[/reco_pause]",
+            "[pre-auf]U[/pre-auf] L U' L' U' B' U B [reco_pause].[/reco_pause]",
 
-            "U' [pause].[/pause] R L' U B U' [pause].[/pause] "
+            "[pre-auf]U'[/pre-auf] [pause].[/pause] "
+            "R L' U B U' [pause].[/pause] "
             "B' U' L U R' "
             "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause] "
             "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause]",
 
             "R U R' U' R' F R2 U' R' U' R U [red]R'[/red] [pause].[/pause] "
-            "[red]R[/red] R' F' U2",
+            "[red]R[/red] R' F' [post-auf]U2[/post-auf]",
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):

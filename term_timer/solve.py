@@ -367,6 +367,24 @@ class Solve:
             compressed_paused,
         )
 
+        if step['aufs'][0]:
+            reconstruction_parts = reconstruction.split(' ')
+            for i, move in enumerate(reconstruction_parts):
+                if move[0] == 'U':
+                    reconstruction_parts[i] = f'[pre-auf]{ move }[/pre-auf]'
+                elif move != '.':
+                    break
+            reconstruction = ' '.join(reconstruction_parts)
+
+        if step['aufs'][1]:
+            reconstruction_parts = list(reversed(reconstruction.split(' ')))
+            for i, move in enumerate(reconstruction_parts):
+                if move[0] == 'U':
+                    reconstruction_parts[i] = f'[post-auf]{ move }[/post-auf]'
+                elif move != '.':
+                    break
+            reconstruction = ' '.join(reversed(reconstruction_parts))
+
         post = int(step['post_pause'] / self.pause_threshold)
         if post:
             reconstruction += f' [reco_pause]{ PAUSE_CHAR }[/reco_pause]' * (
