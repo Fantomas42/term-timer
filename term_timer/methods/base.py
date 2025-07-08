@@ -27,7 +27,9 @@ F2L_FACE     = '111111000'  # noqa: E221
 FULL_FACE    = '1' * 9      # noqa: E221
 FULL_CUBE    = '1' * 54     # noqa: E221
 
-AUF_MOVE = (CUBE_ORIENTATION + 'U').transform(
+AUF = 'U'
+
+AUF_MOVE = (CUBE_ORIENTATION + AUF).transform(
     degrip_full_moves,
     remove_final_rotations,
 )[0].base_move

@@ -30,6 +30,7 @@ from term_timer.formatter import format_cube_db_url
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
+from term_timer.methods.base import AUF
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.methods.lbl import LBLAnalyser
@@ -375,18 +376,18 @@ class Solve:
         if step['aufs'][0]:
             reconstruction_parts = reconstruction.split(' ')
             for i, move in enumerate(reconstruction_parts):
-                if move[0] == 'U':
+                if move[0] == AUF:
                     reconstruction_parts[i] = f'[pre-auf]{ move }[/pre-auf]'
-                elif move != '.':
+                elif move != PAUSE_CHAR:
                     break
             reconstruction = ' '.join(reconstruction_parts)
 
         if step['aufs'][1]:
             reconstruction_parts = list(reversed(reconstruction.split(' ')))
             for i, move in enumerate(reconstruction_parts):
-                if move[0] == 'U':
+                if move[0] == AUF:
                     reconstruction_parts[i] = f'[post-auf]{ move }[/post-auf]'
-                elif move != '.':
+                elif move != PAUSE_CHAR:
                     break
             reconstruction = ' '.join(reversed(reconstruction_parts))
 
