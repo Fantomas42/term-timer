@@ -114,6 +114,7 @@ class Trainer(SolveInterface):
                 self.bluetooth_interface
                 and self.bluetooth_interface.device.name
             ) or '',
+            session='training',
             moves=' '.join(moves),
         )
 

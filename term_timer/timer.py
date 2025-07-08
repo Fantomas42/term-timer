@@ -242,6 +242,7 @@ class Timer(SolveInterface):
                 self.bluetooth_interface
                 and self.bluetooth_interface.device.name
             ) or '',
+            session=self.session,
             moves=' '.join(moves),
         )
 
