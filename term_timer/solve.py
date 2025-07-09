@@ -411,6 +411,9 @@ class Solve:
         )
 
     def reconstruction_step_text(self, step, *, multiple=False) -> str:
+        if not step['reconstruction_timed']:
+            return ''
+
         source_paused = step['reconstruction_timed'].transform(
             pause_moves(
                 self.move_speed / MS_TO_NS_FACTOR,
