@@ -695,8 +695,8 @@
                   <div class="cfop-case">
                     {% if info.cases %}
                       {% set name_part = info.cases[0].split(" ") %}
-                      <div class="cfop-case-img">{{ name_part[0] }}</div>
-                      {% if 'SKIP' not in name %}
+                      {% if 'SKIP' not in name_part[0] %}
+                        <div class="cfop-case-img">{{ name_part[0] }}</div>
                         {% if info.name == 'OLL' %}
                           <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
                              target="_blank" class="link">
@@ -770,8 +770,8 @@
                   <div class="cfop-case">
                     {% if info.cases %}
                       {% set name_part = info.cases[0].split(" ") %}
-                      <div class="cfop-case-img">{{ name_part[0] }}</div>
-                      {% if 'SKIP' not in name %}
+                      {% if 'SKIP' not in name_part[0] %}
+                        <div class="cfop-case-img">{{ name_part[0] }}</div>
                         {% if info.name == 'OLL' %}
                           <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
                              target="_blank" class="link">
@@ -838,8 +838,8 @@
                   <div class="cfop-case">
                     {% if info.cases %}
                       {% set name_part = info.cases[0].split(" ") %}
-                      <div class="cfop-case-img">{{ name_part[0] }}</div>
-                      {% if 'SKIP' not in name %}
+                      {% if 'SKIP' not in name_part[0] %}
+                        <div class="cfop-case-img">{{ name_part[0] }}</div>
                         {% if info.name == 'OLL' %}
                           <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
                              target="_blank" class="link">
