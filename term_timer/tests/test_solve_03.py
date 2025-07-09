@@ -155,8 +155,27 @@ class TestSolve03(unittest.TestCase):
     def test_method_score(self):
         self.assertEqual(
             self.solve.method_applied.score,
-            22.5,
+            50,
         )
+
+    def test_summary(self):
+        inputs = self.solve.method_applied.summary
+        outputs = [
+            ('Full Cube', 'step'),
+            ('F2L', 'skipped'),
+            ('OLL', 'skipped'),
+            ('PLL', 'skipped'),
+        ]
+
+        for source, expected in zip(inputs, outputs, strict=True):
+            self.assertEqual(
+                source['name'],
+                expected[0],
+            )
+            self.assertEqual(
+                source['type'],
+                expected[1],
+            )
 
     def test_reconstruction_step_line(self):
         inputs = [
@@ -166,6 +185,7 @@ class TestSolve03(unittest.TestCase):
         ]
         outputs = [
             "U R2 U L2 [pause].[/pause] B'",
+            '',
             '',
             '',
         ]
@@ -186,6 +206,7 @@ class TestSolve03(unittest.TestCase):
             "U R2 U L2 [pause].[/pause] B'",
             '',
             '',
+            '',
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
@@ -204,6 +225,7 @@ class TestSolve03(unittest.TestCase):
             "U R2 U L2 . B'",
             '',
             '',
+            '',
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
@@ -220,6 +242,7 @@ class TestSolve03(unittest.TestCase):
         ]
         outputs = [
             "U R2 U L2 . B'",
+            '',
             '',
             '',
         ]

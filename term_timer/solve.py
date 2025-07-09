@@ -469,6 +469,9 @@ class Solve:
                     f'{ aufs }\n'
                 )
 
+                if info['name'] == 'Full Cube':
+                    return recons
+
         return recons
 
     def time_graph(self) -> None:

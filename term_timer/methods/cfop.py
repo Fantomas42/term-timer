@@ -136,6 +136,9 @@ class CFOPAnalyser(Analyser):
         if 'XCross' in step_one['name']:
             bonus = 2 * step_one['name'].count('X')
 
+        elif 'Full Cube' in step_one['name']:
+            return 50
+
         malus = 0
         if 'Cross' in step_one['name']:
             cross_norm = self.norms.get('moves', {}).get(step_one['name'], 0)
@@ -143,7 +146,7 @@ class CFOPAnalyser(Analyser):
                 malus += step_one['reconstruction'].metrics['htm'] - cross_norm
 
         for info in self.summary:
-            if info['type'] != 'virtual':
+            if info['type'] != 'virtual' and info['moves']:
                 if info['post_pause'] < SECOND * 0.5:
                     bonus += 0.5
                 elif info['post_pause'] < SECOND:
@@ -192,6 +195,35 @@ class CFOPAnalyser(Analyser):
                 {
                     'type': 'skipped',
                     'name': 'OLL',
+                    'moves': Algorithm(),
+                    'times': [],
+                    'index': [],
+                    'qtm': 0,
+                    'total': 0,
+                    'execution': 0,
+                    'recognition': 0,
+                    'post_pause': 0,
+                    'aufs': [None, None],
+                    'total_percent': 0,
+                    'execution_percent': 0,
+                    'recognition_percent': 0,
+                    'step_execution_percent': 0,
+                    'step_recognition_percent': 0,
+                    'reconstruction': Algorithm(),
+                    'reconstruction_timed': Algorithm(),
+                    'increment': 0,
+                    'cases': ['SKIP'],
+                    'facelets': '',
+                },
+            )
+
+        # Skipped F2L insert
+        if 'F2L' not in summary[1]['name']:
+            summary.insert(
+                1,
+                {
+                    'type': 'skipped',
+                    'name': 'F2L',
                     'moves': Algorithm(),
                     'times': [],
                     'index': [],
@@ -320,6 +352,9 @@ class CF4OPAnalyser(CFOPAnalyser):
 
         elif summary[0]['name'] == 'F2L 4':
             summary[0]['name'] = 'XXXXCross'
+
+        elif len(summary) == 1:
+            summary[0]['name'] = 'Full Cube'
 
         # Merge double F2L inserts
         cases = []

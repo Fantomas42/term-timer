@@ -480,6 +480,9 @@ class SolveView(View):
                     f'{ aufs }\n'
                 )
 
+                if info['name'] == 'Full Cube':
+                    break
+
         return {
             'cube': self.cube,
             'session': self.session,
