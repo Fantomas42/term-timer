@@ -233,7 +233,7 @@ class Solve:
                 f' [caution]{ self.execution_pauses } Pauses[/caution]'
             )
         else:
-            pause_line += ' [success]No Pauses[/success]'
+            pause_line = ' [success]No Pauses[/success]'
 
         return (
             f'{ metric_string }'
