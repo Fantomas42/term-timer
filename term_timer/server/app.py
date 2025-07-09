@@ -102,6 +102,9 @@ def reconstruction_step(step):
 
 
 def style_issues(value):
+    if not value:
+        return ''
+
     v = ''
     for m in value.split(' '):
         if not m.startswith('['):
