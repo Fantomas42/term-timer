@@ -12,6 +12,8 @@ from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from kociemba import solve
 
+from term_timer.config import DEBUG
+from term_timer.config import SCRAMBLE_ITERATIONS
 from term_timer.constants import CUBE_SIZES
 from term_timer.magic_cube import Cube
 from term_timer.methods.cfop import OLL_SETUPS
@@ -110,6 +112,9 @@ def random_moves(cube_size: int, iterations: int,
         if cube_size == 3:
             iterations_range = (25, 30)
         iterations = randint(*iterations_range)
+
+    if DEBUG and SCRAMBLE_ITERATIONS:
+        iterations = SCRAMBLE_ITERATIONS
 
     while len(moves) < iterations:
         while not is_valid_next_move(value, previous):
