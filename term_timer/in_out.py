@@ -81,7 +81,9 @@ def save_solves(cube: int, session: str, solves: list[Solve]) -> bool:
     for s in solves:
         data.append(s.as_save)
 
+    dumped = json.dumps(data, indent=1)
+
     with source.open('w+') as fd:
-        json.dump(data, fd, indent=1)
+        fd.write(dumped)
 
     return True
