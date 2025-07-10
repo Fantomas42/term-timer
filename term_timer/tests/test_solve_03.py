@@ -177,6 +177,12 @@ class TestSolve03(unittest.TestCase):
                 expected[1],
             )
 
+    def test_timeline_inputs(self):
+        self.assertEqual(
+            self.solve.timeline_inputs,
+            [0, 728, 1092, 1602, 2111, 2497, 2861, 3279, 3643],
+        )
+
     def test_reconstruction_step_line(self):
         inputs = [
             info

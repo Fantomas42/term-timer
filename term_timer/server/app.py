@@ -15,8 +15,6 @@ from cubing_algs.transform.timing import untime_moves
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
-from term_timer.constants import MS_TO_NS_FACTOR
-from term_timer.constants import PAUSE_FACTOR
 from term_timer.constants import SECOND
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
@@ -388,7 +386,6 @@ class SolveView(View):
         steps = []
         scatter = []
         recognitions = []
-        timing = [0]
         reconstruction = ''
 
         ranks = sorted([s.final_time for s in self.solves])
@@ -428,25 +425,8 @@ class SolveView(View):
                         },
                     )
 
-            speed = self.solve.move_speed / MS_TO_NS_FACTOR
-            threshold = speed * PAUSE_FACTOR
-            previous_time = self.solve.reconstruction[0].timed
-
-            for move in self.solve.reconstruction:
-                time = move.timed
-                if time - previous_time > threshold:
-                    timing.extend(
-                        [int(time), int(time + speed)],
-                    )
-                else:
-                    timing.append(int(time + speed))
-                previous_time = time
-
             if CUBE_ORIENTATION:
                 reconstruction += f'{ CUBE_ORIENTATION!s } // Orientation\n'
-                orientation = CUBE_ORIENTATION.metrics['rtm'] * speed
-                timing = [int(t + orientation) for t in timing]
-                timing.insert(0, 0)
 
             for info in self.solve.method_applied.summary:
                 if info['type'] == 'virtual':
@@ -495,7 +475,7 @@ class SolveView(View):
             'recognitions': recognitions,
             'cube_orientation': CUBE_ORIENTATION,
             'reconstruction': reconstruction,
-            'timing': timing,
+            'timing': self.solve.timeline_inputs,
             'rank': rank,
         }
 

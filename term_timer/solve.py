@@ -639,6 +639,34 @@ class Solve:
             f'/{ self.cube_size }/{ self.session }/{ self.solve_id }/'
         )
 
+    @cached_property
+    def timeline_inputs(self):
+        if not self.advanced:
+            return []
+
+        speed = self.move_speed / MS_TO_NS_FACTOR
+        threshold = self.pause_threshold / MS_TO_NS_FACTOR
+
+        previous_time = self.reconstruction[0].timed
+        timing = [0]
+
+        for move in self.reconstruction:
+            time = move.timed
+            if time - previous_time > threshold:
+                timing.extend(
+                    [int(time), int(time + speed)],
+                )
+            else:
+                timing.append(int(time + speed))
+            previous_time = time
+
+        if CUBE_ORIENTATION:
+            orientation = CUBE_ORIENTATION.metrics['rtm'] * speed
+            timing = [int(t + orientation) for t in timing]
+            timing.insert(0, 0)
+
+        return timing
+
     @property
     def as_save(self) -> dict:
         return {
