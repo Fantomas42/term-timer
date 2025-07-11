@@ -180,7 +180,15 @@ class TestSolve03(unittest.TestCase):
     def test_timeline_inputs(self):
         self.assertEqual(
             self.solve.timeline_inputs,
-            [0, 728, 1092, 1602, 2111, 2497, 2861, 3279, 3643],
+            [
+                [0, 728],
+                [728, 1092],
+                [1092, 1602],
+                [1746, 2111],
+                [2277, 2861],
+                [2887, 3252],
+                [3278, 3643],
+            ],
         )
 
     def test_reconstruction_step_line(self):

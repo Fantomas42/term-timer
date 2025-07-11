@@ -38,7 +38,10 @@
      import { TwistyAlgViewer, TwistyPlayer } from "https://cdn.cubing.net/v0/js/cubing/twisty";
 
      const solutionString = `{{ reconstruction }}`;
-     const solutionMoveTimestamps = [{{ timing|join(', ') }}];
+     const solutionMoveTimestamps = [
+       {% for times in timing %}[{{ times.0 }}, {{ times.1 }}],
+       {% endfor %}
+     ];
 
      const duration = solutionMoveTimestamps.at(-1);
      const parsedAlg = Alg.fromString(solutionString);
@@ -50,8 +53,8 @@
      const animationTimelineLeaves = moves.map((move, i) => {
        return {
          animLeaf: move,
-         start: solutionMoveTimestamps[i],
-         end: solutionMoveTimestamps[i + 1] ?? duration + 1,
+         start: solutionMoveTimestamps[i][0],
+         end: solutionMoveTimestamps[i][1],
        };
      });
 

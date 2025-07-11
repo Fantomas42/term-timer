@@ -645,25 +645,44 @@ class Solve:
             return []
 
         speed = self.move_speed / MS_TO_NS_FACTOR
-        threshold = self.pause_threshold / MS_TO_NS_FACTOR
 
-        previous_time = self.reconstruction[0].timed
-        timing = [0]
-
-        for move in self.reconstruction:
-            time = move.timed
-            if time - previous_time > threshold:
-                timing.extend(
-                    [int(time), int(time + speed)],
-                )
-            else:
-                timing.append(int(time + speed))
-            previous_time = time
+        timing = []
+        previous_time = 0
+        orientation_offset = 0
 
         if CUBE_ORIENTATION:
-            orientation = CUBE_ORIENTATION.metrics['rtm'] * speed
-            timing = [int(t + orientation) for t in timing]
-            timing.insert(0, 0)
+            orientation_offset = int(CUBE_ORIENTATION.metrics['rtm'] * speed)
+            timing.append([0, orientation_offset])
+            previous_time = orientation_offset
+
+        solution = self.solution.transform(
+            pause_moves(
+                self.move_speed / MS_TO_NS_FACTOR,
+                PAUSE_FACTOR,
+                multiple=False,
+            ),
+        )
+
+        for move in solution.transform(
+                optimize_double_moves,
+                to_fixpoint=True,
+        ):
+            time = int(move.timed + orientation_offset + speed)
+            starting = max(
+                int(time - (speed * (1.6 if move.is_double else 1))),
+                previous_time,
+            )
+            if time - previous_time < 10:
+                time = timing[-1][1]
+                starting = timing[-1][0]
+
+            timing.append(
+                [
+                    starting,
+                    time,
+                ],
+            )
+            previous_time = time
 
         return timing
 
