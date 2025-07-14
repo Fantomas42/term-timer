@@ -146,7 +146,7 @@ class Solve:
     @cached_property
     def step_pauses(self) -> int:
         return sum(
-            self.pauses(s['reconstruction_timed'])
+            self.pauses(s['moves'])
             for s in self.method_applied.summary
             if s['type'] != 'virtual'
         )
