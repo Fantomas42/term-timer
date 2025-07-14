@@ -13,6 +13,7 @@ from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.transform import reorient_moves
 
 INITIAL = ''
 for face in ['U', 'R', 'F', 'D', 'L', 'B']:
@@ -29,10 +30,7 @@ FULL_CUBE    = '1' * 54     # noqa: E221
 
 AUF = 'U'
 
-AUF_MOVE = (CUBE_ORIENTATION + AUF).transform(
-    degrip_full_moves,
-    remove_final_rotations,
-)[0].base_move
+AUF_MOVE = reorient_moves(CUBE_ORIENTATION, AUF)[0].base_move
 
 STEPS_CONFIG = {
     'Cross': {
