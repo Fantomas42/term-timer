@@ -167,6 +167,9 @@ class CFOPAnalyser(Analyser):
                     'type': 'skipped',
                     'name': 'PLL',
                     'moves': Algorithm(),
+                    'moves_reoriented': Algorithm(),
+                    'moves_humanized': Algorithm(),
+                    'moves_prettified': Algorithm(),
                     'times': [],
                     'index': [],
                     'qtm': 0,
@@ -196,6 +199,9 @@ class CFOPAnalyser(Analyser):
                     'type': 'skipped',
                     'name': 'OLL',
                     'moves': Algorithm(),
+                    'moves_reoriented': Algorithm(),
+                    'moves_humanized': Algorithm(),
+                    'moves_prettified': Algorithm(),
                     'times': [],
                     'index': [],
                     'qtm': 0,
@@ -225,6 +231,9 @@ class CFOPAnalyser(Analyser):
                     'type': 'skipped',
                     'name': 'F2L',
                     'moves': Algorithm(),
+                    'moves_reoriented': Algorithm(),
+                    'moves_humanized': Algorithm(),
+                    'moves_prettified': Algorithm(),
                     'times': [],
                     'index': [],
                     'qtm': 0,
@@ -383,6 +392,9 @@ class CF4OPAnalyser(CFOPAnalyser):
             'type': 'virtual',
             'name': 'F2L',
             'moves': Algorithm(),
+            'moves_reoriented': Algorithm(),
+            'moves_humanized': Algorithm(),
+            'moves_prettified': Algorithm(),
             'times': [],
             'index': [],
             'qtm': 0,
@@ -417,6 +429,9 @@ class CF4OPAnalyser(CFOPAnalyser):
 
                 insert_f2l = True
                 f2l['moves'].extend(info['moves'])
+                f2l['moves_reoriented'].extend(info['moves_reoriented'])
+                f2l['moves_humanized'].extend(info['moves_humanized'])
+                f2l['moves_prettified'].extend(info['moves_prettified'])
                 f2l['times'].extend(info['times'])
                 f2l['index'].extend(info['index'])
                 f2l['qtm'] += info['qtm']

@@ -13,6 +13,8 @@ from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.transform import humanize_moves
+from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
 
 INITIAL = ''
@@ -245,6 +247,10 @@ class Analyser:
                 to_fixpoint=True,
             )
 
+            reorientation = reorient_moves(CUBE_ORIENTATION, moves)
+            humanization = humanize_moves(reorientation)
+            prettyfication = prettify_moves(humanization)
+
             aufs = self.get_aufs(step, moves)
 
             summary.append(
@@ -252,6 +258,9 @@ class Analyser:
                     'type': 'step',
                     'name': step,
                     'moves': moves,
+                    'moves_reoriented': reorientation,
+                    'moves_humanized': humanization,
+                    'moves_prettified': prettyfication,
                     'times': times,
                     'index': step_moves,
                     'qtm': len(moves),
