@@ -430,43 +430,47 @@ class Solve:
 
     @cached_property
     def method_text(self):
+        return self.method_text_builder(multiple=True)
+
+    def method_text_builder(self, *, multiple):
         recons = ''
 
         if self.orientation:
             recons += f'{ self.orientation!s } // Orientation\n'
 
         for info in self.method_applied.summary:
-            if info['type'] != 'virtual':
+            if info['type'] == 'virtual':
+                continue
 
-                if info['type'] == 'skipped':
-                    recons += f'// { info["name"] } SKIPPED\n'
-                    continue
+            if info['type'] == 'skipped':
+                recons += f'// { info["name"] } SKIPPED\n'
+                continue
 
-                cases = ''
-                if info['cases'] and info['cases'][0]:
-                    cases = f' ({ " ".join(info["cases"]) })'
+            cases = ''
+            if info['cases'] and info['cases'][0]:
+                cases = f' ({ " ".join(info["cases"]) })'
 
-                aufs = ''
-                if info['aufs'][0]:
-                    aufs += f'Pre-AUF: +{ info["aufs"][0] } '
-                if info['aufs'][1]:
-                    aufs += f'Post-AUF: +{ info["aufs"][1] } '
-                aufs = aufs.strip()
+            aufs = ''
+            if info['aufs'][0]:
+                aufs += f'Pre-AUF: +{ info["aufs"][0] } '
+            if info['aufs'][1]:
+                aufs += f'Post-AUF: +{ info["aufs"][1] } '
+            aufs = aufs.strip()
 
-                moves = self.reconstruction_step_text(
-                    info, multiple=True,
-                )
-                recons += (
-                    f'{ moves } // '
-                    f'{ info["name"] }{ cases } '
-                    f'Reco: { format_duration(info["recognition"]) }s '
-                    f'Exec: { format_duration(info["execution"]) }s '
-                    f'HTM: { info["moves_prettified"].metrics["htm"] } '
-                    f'{ aufs }\n'
-                )
+            moves = self.reconstruction_step_text(
+                info, multiple=multiple,
+            )
+            recons += (
+                f'{ moves } // '
+                f'{ info["name"] }{ cases } '
+                f'Reco: { format_duration(info["recognition"]) }s '
+                f'Exec: { format_duration(info["execution"]) }s '
+                f'HTM: { info["moves_prettified"].metrics["htm"] } '
+                f'{ aufs }\n'
+            )
 
-                if info['name'] == 'Full Cube':
-                    return recons
+            if info['name'] == 'Full Cube':
+                return recons
 
         return recons
 

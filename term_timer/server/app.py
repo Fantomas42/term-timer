@@ -377,7 +377,6 @@ class SolveView(View):
         steps = []
         scatter = []
         recognitions = []
-        reconstruction = ''
 
         ranks = sorted([s.final_time for s in self.solves])
         rank = ranks.index(self.solve.final_time) + 1
@@ -416,44 +415,6 @@ class SolveView(View):
                         },
                     )
 
-            if CUBE_ORIENTATION:
-                reconstruction += f'{ CUBE_ORIENTATION!s } // Orientation\n'
-
-            for info in self.solve.method_applied.summary:
-                if info['type'] == 'virtual':
-                    continue
-
-                if info['type'] == 'skipped':
-                    reconstruction += f'// { info["name"] } SKIPPED\n'
-                    continue
-
-                cases = ''
-                if info['cases'] and info['cases'][0]:
-                    cases = f' ({ " ".join(info["cases"]) })'
-
-                aufs = ''
-                if info['aufs'][0]:
-                    aufs += f'Pre-AUF: +{ info["aufs"][0] } '
-                if info['aufs'][1]:
-                    aufs += f'Post-AUF: +{ info["aufs"][1] } '
-                aufs = aufs.strip()
-
-                recon = self.solve.reconstruction_step_text(
-                    info, multiple=False,
-                )
-
-                reconstruction += (
-                    f'{ recon } // '
-                    f'{ info["name"] }{ cases } '
-                    f'Reco: { format_duration(info["recognition"]) }s '
-                    f'Exec: { format_duration(info["execution"]) }s '
-                    f'HTM: { info["moves_prettified"].metrics["htm"] } '
-                    f'{ aufs }\n'
-                )
-
-                if info['name'] == 'Full Cube':
-                    break
-
         return {
             'cube': self.cube,
             'session': self.session,
@@ -465,7 +426,7 @@ class SolveView(View):
             'tps': tps,
             'recognitions': recognitions,
             'cube_orientation': CUBE_ORIENTATION,
-            'reconstruction': reconstruction,
+            'reconstruction': self.solve.method_text_builder(multiple=False),
             'timing': self.solve.timeline_inputs,
             'rank': rank,
         }
