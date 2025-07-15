@@ -71,7 +71,7 @@ class TestSolve03(unittest.TestCase):
     def test_reconstruction(self):
         self.assertEqual(
             str(self.solve.reconstruction),
-            "U@0 R2@510 U@1019 L2@1769 B'@2551",
+            "U R2 U L2 B'",
         )
 
     def test_tps(self):

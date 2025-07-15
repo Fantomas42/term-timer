@@ -24,6 +24,7 @@ def humanize_moves(algorithm: Algorithm) -> Algorithm:
         reslice_moves,
         degrip_full_moves,
         refat_moves,
+        remove_final_rotations,
         to_fixpoint=True,
     )
 

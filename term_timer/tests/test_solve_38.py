@@ -154,7 +154,7 @@ class TestSolve38(unittest.TestCase):
     def test_reconstruction(self):
         self.assertEqual(
             str(self.solve.reconstruction),
-            "B@0 L'@389 U@1561 F2@1890 U2@4440 B@4830 U@4951 B'@5040 U'@5131 U@5730 R'@6061 U'@6390 R@6721 U2@7290 L@7650 U@8010 L'@8430 U2@10050 R'@10290 U@10440 R@10800 U'@11010 R'@11310 U'@11610 R2@12510 U@12570 R'@12660 U'@12750 U@13920 U'@14100 F@14820 U2@15210 F'@15270 U2@15840 F@15960 U'@15990 F'@16170 U2@18571 F'@19110 U@19260 F@19621 U'@19831 F'@20099 U'@20371 F@20610 U2@22590 L'@23160 R@23161 L'@23490 B2@23910 L@24091 B@24212 L'@24331 B@24450 L@24571 B@24750 R'@25199 L@25200 U@25920 R'@26342 U'@26461 F'@26790 R@27180 U@27301 R'@27360 U'@27481 R'@27660 F@27750 R2@28020 U'@28110 R'@28260 U'@28410 R@28620 U@28771 R'@28800 U@29161 R@29280 U2@29820",  # noqa: E501
+            "B L' U F2 U2 B U B' U' U R' U' R U2 L U L' U2 R' U R U' R' U' R2 U R' U' U U' F U2 F' U2 F U' F' U2 F' U F U' F' U' F U2 L' R L' B2 L B L' B L B R' L U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R U2",  # noqa: E501
         )
 
     def test_tps(self):
@@ -265,7 +265,7 @@ class TestSolve38(unittest.TestCase):
 
             "[pre-auf]U'[/pre-auf] [pause].[/pause] [pre-auf]U'[/pre-auf] "
             "[pause].[/pause] "
-            "L' R L' B2 L B L' B L B R' L [reco_pause].[/reco_pause]",
+            "M L' U2 L U L' U L U M' [reco_pause].[/reco_pause]",
 
             "[pre-auf]U[/pre-auf] R' U' F' R U R' U' "
             "R' F R2 U' R' U' R U R' U R [post-auf]U2[/post-auf]",
@@ -307,7 +307,7 @@ class TestSolve38(unittest.TestCase):
 
             "[pre-auf]U'[/pre-auf] [pause].[/pause] "
             "[pre-auf]U'[/pre-auf] [pause].[/pause] "
-            "L' R L' B2 L B L' B L B R' L [reco_pause].[/reco_pause]",
+            "M L' U2 L U L' U L U M' [reco_pause].[/reco_pause]",
 
             "[pre-auf]U[/pre-auf] R' U' F' R U R' U' R' "
             "F R2 U' R' U' R U R' U R [post-auf]U2[/post-auf]",
@@ -336,7 +336,7 @@ class TestSolve38(unittest.TestCase):
 
             "U2 . F' U F U' F' U' F .",
 
-            "U' . U' . L' R L' B2 L B L' B L B R' L .",
+            "U' . U' . M L' U2 L U L' U L U M' .",
 
             "U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R U2",
         ]
@@ -364,7 +364,7 @@ class TestSolve38(unittest.TestCase):
 
             "U2 . F' U F U' F' U' F . .",
 
-            "U' . U' . L' R L' B2 L B L' B L B R' L .",
+            "U' . U' . M L' U2 L U L' U L U M' .",
 
             "U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R U2",
         ]
@@ -378,13 +378,13 @@ class TestSolve38(unittest.TestCase):
     def test_link_alg_cubing(self):
         self.assertEqual(
             self.solve.link_alg_cubing,
-            'https://alg.cubing.net/?title=Solve%202025-05-26%2019:34%20:%2000:29.818&alg=z2_%2F%2F_Orientation%0AB_L-_._._U_F2_._._._._%2F%2F_Cross_Reco:_0.00s_Exec:_1.89s_HTM:_4_%0AU2_B_U_B-_U-_._U_R-_U-_R_U2_L_U_L-_._%2F%2F_F2L_1_(BL)_Reco:_2.34s_Exec:_4.20s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_._U_R-_U_R_U-_R-_U-_R_._%2F%2F_F2L_2_(BR)_Reco:_0.96s_Exec:_2.46s_HTM:_8_Pre%26%2345%3BAUF:_%26%232b%3B2%0AR_U_R-_U-_._._U_U-_._F_U2_F-_U2_F_U-_F-_._._._._%2F%2F_F2L_3_(FL)_Reco:_0.66s_Exec:_3.66s_HTM:_13_%0AU2_._F-_U_F_U-_F-_U-_F_._._%2F%2F_F2L_4_(FR)_Reco:_2.16s_Exec:_2.28s_HTM:_8_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU-_._U-_._L-_R_L-_B2_L_B_L-_B_L_B_R-_L_._%2F%2F_OLL_(10_Anti-Kite)_Reco:_1.20s_Exec:_3.39s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_R-_U-_F-_R_U_R-_U-_R-_F_R2_U-_R-_U-_R_U_R-_U_R_U2_%2F%2F_PLL_(F)_Reco:_0.72s_Exec:_3.90s_HTM:_20_Pre%26%2345%3BAUF:_%26%232b%3B1_Post%26%2345%3BAUF:_%26%232b%3B2%0A&setup=D2_R2_D2_U-_R2_U_R2_F2_R-_B2_F-_L_F-_R_F_U2_B_L-',
+            'https://alg.cubing.net/?title=Solve%202025-05-26%2019:34%20:%2000:29.818&alg=z2_%2F%2F_Orientation%0AB_L-_._._U_F2_._._._._%2F%2F_Cross_Reco:_0.00s_Exec:_1.89s_HTM:_4_%0AU2_B_U_B-_U-_._U_R-_U-_R_U2_L_U_L-_._%2F%2F_F2L_1_(BL)_Reco:_2.34s_Exec:_4.20s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_._U_R-_U_R_U-_R-_U-_R_._%2F%2F_F2L_2_(BR)_Reco:_0.96s_Exec:_2.46s_HTM:_8_Pre%26%2345%3BAUF:_%26%232b%3B2%0AR_U_R-_U-_._._U_U-_._F_U2_F-_U2_F_U-_F-_._._._._%2F%2F_F2L_3_(FL)_Reco:_0.66s_Exec:_3.66s_HTM:_13_%0AU2_._F-_U_F_U-_F-_U-_F_._._%2F%2F_F2L_4_(FR)_Reco:_2.16s_Exec:_2.28s_HTM:_8_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU-_._U-_._M_L-_U2_L_U_L-_U_L_U_M-_._%2F%2F_OLL_(10_Anti-Kite)_Reco:_1.20s_Exec:_3.39s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_R-_U-_F-_R_U_R-_U-_R-_F_R2_U-_R-_U-_R_U_R-_U_R_U2_%2F%2F_PLL_(F)_Reco:_0.72s_Exec:_3.90s_HTM:_20_Pre%26%2345%3BAUF:_%26%232b%3B1_Post%26%2345%3BAUF:_%26%232b%3B2%0A&setup=D2_R2_D2_U-_R2_U_R2_F2_R-_B2_F-_L_F-_R_F_U2_B_L-',
         )
 
     def test_link_cube_db(self):
         self.assertEqual(
             self.solve.link_cube_db,
-            'https://cubedb.net/?title=Solve%202025-05-26%2019:34%20:%2000:29.818&alg=z2_%2F%2F_Orientation%0AB_L-_._._U_F2_._._._._%2F%2F_Cross_Reco:_0.00s_Exec:_1.89s_HTM:_4_%0AU2_B_U_B-_U-_._U_R-_U-_R_U2_L_U_L-_._%2F%2F_F2L_1_(BL)_Reco:_2.34s_Exec:_4.20s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_._U_R-_U_R_U-_R-_U-_R_._%2F%2F_F2L_2_(BR)_Reco:_0.96s_Exec:_2.46s_HTM:_8_Pre%26%2345%3BAUF:_%26%232b%3B2%0AR_U_R-_U-_._._U_U-_._F_U2_F-_U2_F_U-_F-_._._._._%2F%2F_F2L_3_(FL)_Reco:_0.66s_Exec:_3.66s_HTM:_13_%0AU2_._F-_U_F_U-_F-_U-_F_._._%2F%2F_F2L_4_(FR)_Reco:_2.16s_Exec:_2.28s_HTM:_8_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU-_._U-_._L-_R_L-_B2_L_B_L-_B_L_B_R-_L_._%2F%2F_OLL_(10_Anti-Kite)_Reco:_1.20s_Exec:_3.39s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_R-_U-_F-_R_U_R-_U-_R-_F_R2_U-_R-_U-_R_U_R-_U_R_U2_%2F%2F_PLL_(F)_Reco:_0.72s_Exec:_3.90s_HTM:_20_Pre%26%2345%3BAUF:_%26%232b%3B1_Post%26%2345%3BAUF:_%26%232b%3B2%0A&scramble=D2_R2_D2_U-_R2_U_R2_F2_R-_B2_F-_L_F-_R_F_U2_B_L-',
+            'https://cubedb.net/?title=Solve%202025-05-26%2019:34%20:%2000:29.818&alg=z2_%2F%2F_Orientation%0AB_L-_._._U_F2_._._._._%2F%2F_Cross_Reco:_0.00s_Exec:_1.89s_HTM:_4_%0AU2_B_U_B-_U-_._U_R-_U-_R_U2_L_U_L-_._%2F%2F_F2L_1_(BL)_Reco:_2.34s_Exec:_4.20s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_._U_R-_U_R_U-_R-_U-_R_._%2F%2F_F2L_2_(BR)_Reco:_0.96s_Exec:_2.46s_HTM:_8_Pre%26%2345%3BAUF:_%26%232b%3B2%0AR_U_R-_U-_._._U_U-_._F_U2_F-_U2_F_U-_F-_._._._._%2F%2F_F2L_3_(FL)_Reco:_0.66s_Exec:_3.66s_HTM:_13_%0AU2_._F-_U_F_U-_F-_U-_F_._._%2F%2F_F2L_4_(FR)_Reco:_2.16s_Exec:_2.28s_HTM:_8_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU-_._U-_._M_L-_U2_L_U_L-_U_L_U_M-_._%2F%2F_OLL_(10_Anti-Kite)_Reco:_1.20s_Exec:_3.39s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_R-_U-_F-_R_U_R-_U-_R-_F_R2_U-_R-_U-_R_U_R-_U_R_U2_%2F%2F_PLL_(F)_Reco:_0.72s_Exec:_3.90s_HTM:_20_Pre%26%2345%3BAUF:_%26%232b%3B1_Post%26%2345%3BAUF:_%26%232b%3B2%0A&scramble=D2_R2_D2_U-_R2_U_R2_F2_R-_B2_F-_L_F-_R_F_U2_B_L-',
         )
 
     def test_timeline_inputs(self):
