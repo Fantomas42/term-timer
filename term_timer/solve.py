@@ -111,9 +111,9 @@ class Solve:
 
     @cached_property
     def reconstruction(self) -> list[str]:
-        reorientation = reorient_moves(self.orientation, self.solution)
-        humanization = humanize_moves(reorientation)
-        return prettify_moves(humanization)
+        return prettify_moves(
+            reorient_moves(self.orientation, self.solution),
+        )
 
     @cached_property
     def tps(self) -> float:
