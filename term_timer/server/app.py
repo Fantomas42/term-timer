@@ -61,7 +61,7 @@ def normalize_percent(value, method_applied, metric, name):
 
 
 def reconstruction_step(step):
-    reconstruction_classes = {
+    move_classes = {
         i: {
             'classes': 'move',
             'move': step['moves_prettified'][i],
@@ -70,13 +70,13 @@ def reconstruction_step(step):
     }
 
     if step['aufs'][0]:
-        for info in reconstruction_classes.values():
+        for info in move_classes.values():
             if info['move'][0] == AUF:
                 info['classes'] += ' pre-auf'
             else:
                 break
     if step['aufs'][1]:
-        for info in reversed(reconstruction_classes.values()):
+        for info in reversed(move_classes.values()):
             if info['move'][0] == AUF:
                 info['classes'] += ' post-auf'
             else:
@@ -85,7 +85,7 @@ def reconstruction_step(step):
     return ''.join(
         [
             f'<span class="{ info['classes'] }">{ info['move'] }</span>'
-            for info in reconstruction_classes.values()
+            for info in move_classes.values()
         ],
     )
 

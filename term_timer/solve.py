@@ -372,36 +372,36 @@ class Solve:
             optimize_double_moves,
         )
 
-        reconstruction = format_alg_diff(
+        algorithm = format_alg_diff(
             source_paused,
             compressed_paused,
         )
 
         if step['aufs'][0]:
-            reconstruction_parts = reconstruction.split(' ')
-            for i, move in enumerate(reconstruction_parts):
+            algorithm_parts = algorithm.split(' ')
+            for i, move in enumerate(algorithm_parts):
                 if move[0] == AUF:
-                    reconstruction_parts[i] = f'[pre-auf]{ move }[/pre-auf]'
+                    algorithm_parts[i] = f'[pre-auf]{ move }[/pre-auf]'
                 elif move != PAUSE_CHAR:
                     break
-            reconstruction = ' '.join(reconstruction_parts)
+            algorithm = ' '.join(algorithm_parts)
 
         if step['aufs'][1]:
-            reconstruction_parts = list(reversed(reconstruction.split(' ')))
-            for i, move in enumerate(reconstruction_parts):
+            algorithm_parts = list(reversed(algorithm.split(' ')))
+            for i, move in enumerate(algorithm_parts):
                 if move[0] == AUF:
-                    reconstruction_parts[i] = f'[post-auf]{ move }[/post-auf]'
+                    algorithm_parts[i] = f'[post-auf]{ move }[/post-auf]'
                 elif move != PAUSE_CHAR:
                     break
-            reconstruction = ' '.join(reversed(reconstruction_parts))
+            algorithm = ' '.join(reversed(algorithm_parts))
 
         post = int(step['post_pause'] / self.pause_threshold)
         if post:
-            reconstruction += f' [reco_pause]{ PAUSE_CHAR }[/reco_pause]' * (
+            algorithm += f' [reco_pause]{ PAUSE_CHAR }[/reco_pause]' * (
                 post if multiple else 1
             )
 
-        return reconstruction.replace(
+        return algorithm.replace(
             ' .',
             ' [pause].[/pause]',
         )
