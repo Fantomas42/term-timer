@@ -629,7 +629,7 @@
           <a href="#solution" id="solution">Solution</a>
         </h2>
       </div>
-      {% set solution = solve.solution|solution %}
+      {% set solution = solve.solution|prettify %}
       <div class="solution-card moves-card">
         <div class="moves-content">
           {% for m in solution %}
@@ -732,10 +732,10 @@
                   {{ info.total|format_duration }}
                 </td>
                 <td class="recons-htm">
-                  {{ info.reconstruction.metrics.htm|normalize_value(solve.method_applied, 'moves', info.name) }}
+                  {{ info.moves_prettified.metrics.htm|normalize_value(solve.method_applied, 'moves', info.name) }}
                 </td>
                 <td class="recons-qtm">
-                  {{ info.reconstruction.metrics.qtm }}
+                  {{ info.moves_prettified.metrics.qtm }}
                 </td>
                 <td class="recons-tps">
                   {{ solve.compute_tps(info.qtm, info.total)|round(2) }}
@@ -866,12 +866,12 @@
                   {{ solve.reconstruction_step_line(info, multiple=True)|style_issues }}
                 </td>
                 <td class="recons-overhead">
-                  {% set missed_moves = solve.missed_moves(info.reconstruction_timed) %}
+                  {% set missed_moves = solve.missed_moves(info.moves_humanized) %}
                   <span class="metric-{% if missed_moves > 2 %}warning{% elif missed_moves %}caution{% else %}success{% endif %}">
                   {{ missed_moves }}
                 </td>
                 <td class="recons-pauses">
-                  {% set pauses = solve.pauses(info.reconstruction_timed) %}
+                  {% set pauses = solve.pauses(info.moves_humanized) %}
                   <span class="metric-{% if pauses >= 2 %}warning{% elif pauses %}caution{% else %}success{% endif %}">
                     {{ pauses }}
                   </span>

@@ -10,8 +10,6 @@ from bottle import abort
 from bottle import jinja2_template
 from bottle import request
 from bottle import static_file
-from cubing_algs.transform.optimize import optimize_double_moves
-from cubing_algs.transform.timing import untime_moves
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
@@ -27,6 +25,7 @@ from term_timer.methods.base import AUF
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
+from term_timer.transform import prettify_moves
 
 
 def format_delta(delta: int) -> str:
@@ -61,21 +60,13 @@ def normalize_percent(value, method_applied, metric, name):
     return f'<span class="metric-{ klass }">{ value:.2f}%</span>'
 
 
-def solution(value):
-    return value.transform(
-        untime_moves,
-        optimize_double_moves,
-        to_fixpoint=True,
-    )
-
-
 def reconstruction_step(step):
     reconstruction_classes = {
         i: {
             'classes': 'move',
-            'move': step['reconstruction'][i],
+            'move': step['moves_prettified'][i],
         }
-        for i in range(len(step['reconstruction']))
+        for i in range(len(step['moves_prettified']))
     }
 
     if step['aufs'][0]:
@@ -186,7 +177,7 @@ class View:
                     'normalize_percent': normalize_percent,
                     'style_issues': style_issues,
                     'reconstruction_step': reconstruction_step,
-                    'solution': solution,
+                    'prettify': prettify_moves,
                 },
             },
             **context,
@@ -456,7 +447,7 @@ class SolveView(View):
                     f'{ info["name"] }{ cases } '
                     f'Reco: { format_duration(info["recognition"]) }s '
                     f'Exec: { format_duration(info["execution"]) }s '
-                    f'HTM: { info["reconstruction"].metrics["htm"] } '
+                    f'HTM: { info["moves_prettified"].metrics["htm"] } '
                     f'{ aufs }\n'
                 )
 

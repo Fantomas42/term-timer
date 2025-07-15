@@ -6,13 +6,11 @@ import plotext as plt
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import PAUSE_CHAR
 from cubing_algs.parsing import parse_moves
-from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_do_undo_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.optimize import optimize_repeat_three_moves
 from cubing_algs.transform.optimize import optimize_triple_moves
 from cubing_algs.transform.pause import pause_moves
-from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.timing import untime_moves
 
 from term_timer.config import CUBE_METHOD
@@ -35,6 +33,9 @@ from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.methods.lbl import LBLAnalyser
 from term_timer.methods.raw import RawAnalyser
+from term_timer.transform import humanize_moves
+from term_timer.transform import prettify_moves
+from term_timer.transform import reorient_moves
 
 METHODS = {
     'cfop': CFOPAnalyser,
@@ -110,14 +111,9 @@ class Solve:
 
     @cached_property
     def reconstruction(self) -> list[str]:
-        reconstruction = self.orientation + self.solution
-
-        return reconstruction.transform(
-            degrip_full_moves,
-            remove_final_rotations,
-            optimize_double_moves,
-            to_fixpoint=True,
-        )
+        reorientation = reorient_moves(self.orientation, self.solution)
+        humanization = humanize_moves(reorientation)
+        return prettify_moves(humanization)
 
     @cached_property
     def tps(self) -> float:
@@ -311,7 +307,7 @@ class Solve:
 
             move_klass = self.method_applied.normalize_value(
                 'moves', info['name'],
-                info['reconstruction'].metrics['htm'],
+                info['moves_prettified'].metrics['htm'],
                 'result',
             )
             percent_klass = self.method_applied.normalize_value(
@@ -329,7 +325,7 @@ class Solve:
             line += (
                 f'{ header }'
                 f'[{ move_klass }]'
-                f'{ info["reconstruction"].metrics["htm"]:>2} HTM'
+                f'{ info["moves_prettified"].metrics["htm"]:>2} HTM'
                 f'[/{ move_klass }] '
                 f'[recognition]'
                 f'{ format_duration(info["recognition"]):>5}s[/recognition] '
@@ -351,11 +347,11 @@ class Solve:
         return line
 
     def reconstruction_step_line(self, step, *, multiple=False) -> str:
-        if not step['reconstruction_timed']:
+        if not step['moves']:
             return ''
 
         source, compressed = self.missed_moves_pair(
-            step['reconstruction_timed'],
+            step['moves_humanized'],
         )
         source_paused = source.transform(
             pause_moves(
@@ -411,10 +407,10 @@ class Solve:
         )
 
     def reconstruction_step_text(self, step, *, multiple=False) -> str:
-        if not step['reconstruction_timed']:
+        if not step['moves']:
             return ''
 
-        source_paused = step['reconstruction_timed'].transform(
+        source_paused = step['moves_humanized'].transform(
             pause_moves(
                 self.move_speed / MS_TO_NS_FACTOR,
                 PAUSE_FACTOR,
@@ -465,7 +461,7 @@ class Solve:
                     f'{ info["name"] }{ cases } '
                     f'Reco: { format_duration(info["recognition"]) }s '
                     f'Exec: { format_duration(info["execution"]) }s '
-                    f'HTM: { info["reconstruction"].metrics["htm"] } '
+                    f'HTM: { info["moves_prettified"].metrics["htm"] } '
                     f'{ aufs }\n'
                 )
 
@@ -655,6 +651,7 @@ class Solve:
             timing.append([0, orientation_offset])
             previous_time = orientation_offset
 
+        # TODO fix
         solution = self.solution.transform(
             pause_moves(
                 self.move_speed / MS_TO_NS_FACTOR,

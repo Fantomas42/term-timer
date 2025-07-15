@@ -143,7 +143,10 @@ class CFOPAnalyser(Analyser):
         if 'Cross' in step_one['name']:
             cross_norm = self.norms.get('moves', {}).get(step_one['name'], 0)
             if cross_norm:
-                malus += step_one['reconstruction'].metrics['htm'] - cross_norm
+                malus += (
+                    step_one['moves_prettified'].metrics['htm']
+                    - cross_norm
+                )
 
         for info in self.summary:
             if info['type'] != 'virtual' and info['moves']:
@@ -183,8 +186,6 @@ class CFOPAnalyser(Analyser):
                     'recognition_percent': 0,
                     'step_execution_percent': 0,
                     'step_recognition_percent': 0,
-                    'reconstruction': Algorithm(),
-                    'reconstruction_timed': Algorithm(),
                     'increment': 0,
                     'cases': ['SKIP'],
                     'facelets': '',
@@ -215,8 +216,6 @@ class CFOPAnalyser(Analyser):
                     'recognition_percent': 0,
                     'step_execution_percent': 0,
                     'step_recognition_percent': 0,
-                    'reconstruction': Algorithm(),
-                    'reconstruction_timed': Algorithm(),
                     'increment': 0,
                     'cases': ['SKIP'],
                     'facelets': '',
@@ -247,8 +246,6 @@ class CFOPAnalyser(Analyser):
                     'recognition_percent': 0,
                     'step_execution_percent': 0,
                     'step_recognition_percent': 0,
-                    'reconstruction': Algorithm(),
-                    'reconstruction_timed': Algorithm(),
                     'increment': 0,
                     'cases': ['SKIP'],
                     'facelets': '',
@@ -408,8 +405,6 @@ class CF4OPAnalyser(CFOPAnalyser):
             'recognition_percent': 0,
             'step_execution_percent': 0,
             'step_recognition_percent': 0,
-            'reconstruction': Algorithm(),
-            'reconstruction_timed': Algorithm(),
             'increment': 0,
             'cases': [],
             'facelets': '',
@@ -448,8 +443,6 @@ class CF4OPAnalyser(CFOPAnalyser):
                 f2l['recognition_percent'] += info['recognition_percent']
                 f2l['step_execution_percent'] += info['step_execution_percent']
                 f2l['step_recognition_percent'] += info['step_recognition_percent']  # noqa: E501
-                f2l['reconstruction'].extend(info['reconstruction'])
-                f2l['reconstruction_timed'].extend(info['reconstruction_timed'])
 
         if f2l_steps:
             f2l['step_execution_percent'] /= f2l_steps
