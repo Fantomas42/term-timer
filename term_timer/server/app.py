@@ -426,8 +426,10 @@ class SolveView(View):
             'tps': tps,
             'recognitions': recognitions,
             'cube_orientation': CUBE_ORIENTATION,
-            'reconstruction': self.solve.method_text_builder(multiple=False),
-            'timing': self.solve.timeline_inputs,
+            'reconstruction_text': self.solve.method_text_builder(
+                multiple=False,
+            ),
+            'reconstruction_timing': self.solve.reconstruction_steps_timing,
             'rank': rank,
         }
 

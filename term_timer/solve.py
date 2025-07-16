@@ -33,7 +33,6 @@ from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.methods.lbl import LBLAnalyser
 from term_timer.methods.raw import RawAnalyser
-from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
 
@@ -640,7 +639,7 @@ class Solve:
         )
 
     @cached_property
-    def timeline_inputs(self):
+    def reconstruction_steps_timing(self):
         if not self.advanced:
             return []
 
@@ -652,22 +651,25 @@ class Solve:
 
         if CUBE_ORIENTATION:
             orientation_offset = int(CUBE_ORIENTATION.metrics['rtm'] * speed)
-            timing.append([0, orientation_offset])
+            timing.append([0, orientation_offset, str(CUBE_ORIENTATION)])
             previous_time = orientation_offset
 
-        # TODO fix
-        solution = self.solution.transform(
+        full_algo = ''
+        for info in self.method_applied.summary:
+            if info['type'] == 'virtual':
+                continue
+            full_algo += str(info['moves_humanized'])
+
+        moves = parse_moves(full_algo).transform(
             pause_moves(
                 self.move_speed / MS_TO_NS_FACTOR,
                 PAUSE_FACTOR,
                 multiple=False,
             ),
+            optimize_double_moves,
         )
 
-        for move in solution.transform(
-                optimize_double_moves,
-                to_fixpoint=True,
-        ):
+        for move in moves:
             time = int(move.timed + orientation_offset + speed)
             starting = max(
                 int(time - (speed * (1.6 if move.is_double else 1))),
@@ -681,6 +683,7 @@ class Solve:
                 [
                     starting,
                     time,
+                    move.untimed,
                 ],
             )
             previous_time = time

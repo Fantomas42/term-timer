@@ -37,9 +37,9 @@
      import { Alg, Move, Pause } from "https://cdn.cubing.net/v0/js/cubing/alg";
      import { TwistyAlgViewer, TwistyPlayer } from "https://cdn.cubing.net/v0/js/cubing/twisty";
 
-     const solutionString = `{{ reconstruction }}`;
+     const solutionString = `{{ reconstruction_text }}`;
      const solutionMoveTimestamps = [
-       {% for times in timing %}[{{ times.0 }}, {{ times.1 }}],
+       {% for times in reconstruction_timing %}[{{ times.0 }}, {{ times.1 }}, "{{ times.2 }}"],
        {% endfor %}
      ];
 

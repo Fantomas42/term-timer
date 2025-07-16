@@ -177,17 +177,17 @@ class TestSolve03(unittest.TestCase):
                 expected[1],
             )
 
-    def test_timeline_inputs(self):
+    def test_reconstruction_steps_timing(self):
         self.assertEqual(
-            self.solve.timeline_inputs,
+            self.solve.reconstruction_steps_timing,
             [
-                [0, 728],
-                [728, 1092],
-                [1092, 1602],
-                [1746, 2111],
-                [2277, 2861],
-                [2887, 3252],
-                [3278, 3643],
+                [0, 728, 'z2'],
+                [728, 1092, 'U'],
+                [1092, 1602, 'R2'],
+                [1746, 2111, 'U'],
+                [2277, 2861, 'L2'],
+                [2887, 3252, '.'],
+                [3278, 3643, "B'"],
             ],
         )
 
