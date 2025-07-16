@@ -720,7 +720,9 @@
                   </div>
                 </td>
                 <td class="recons-moves">
-                  {{ info|reconstruction_step }}
+                  {% if not info.type == 'virtual' %}
+                    {{ info|reconstruction_step }}
+                  {% endif %}
                 </td>
                 <td class="recons-recognition">
                   {{ info.recognition|format_duration }}
@@ -795,7 +797,9 @@
                   </div>
                 </td>
                 <td class="recons-moves">
-                  {{ info|reconstruction_step }}
+                  {% if not info.type == 'virtual' %}
+                    {{ info|reconstruction_step }}
+                  {% endif %}
                 </td>
                 <td class="recons-recognition">
                   {{ "%0.2f"|format(info.recognition_percent) }}%
@@ -863,7 +867,9 @@
                   </div>
                 </td>
                 <td class="recons-moves">
-                  {{ solve.reconstruction_step_line(info, multiple=True)|style_issues }}
+                  {% if not info.type == 'virtual' %}
+                    {{ solve.reconstruction_step_line(info, multiple=True)|style_issues }}
+                  {% endif %}
                 </td>
                 <td class="recons-overhead">
                   {% set missed_moves = solve.missed_moves(info.moves_humanized) %}
