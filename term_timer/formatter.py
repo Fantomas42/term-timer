@@ -1,8 +1,15 @@
 import difflib
 
+from cubing_algs.constants import INNER_MOVES
+from cubing_algs.constants import OUTER_WIDE_MOVES
+from cubing_algs.constants import PAUSE_CHAR
+from cubing_algs.constants import ROTATIONS
+
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
+from term_timer.methods.base import AUF
+from term_timer.triggers import TRIGGERS_REGEX
 
 
 def format_time(elapsed_ns: int, *, allow_dnf: bool = True) -> str:
@@ -139,14 +146,14 @@ def format_alg_diff(algo_a, algo_b) -> str:
         elif opcode == 'delete':
             moves.extend(
                 [
-                    f'[red]{ item }[/red]'
+                    f'[deletion]{ item }[/deletion]'
                     for item in algo_a[i1:i2]
                 ],
             )
         elif opcode == 'insert':
             moves.extend(
                 [
-                    f'[green]{ item }[/green]'
+                    f'[addition]{ item }[/addition]'
                     for item in algo_b[j1:j2]
                 ],
             )
@@ -154,15 +161,67 @@ def format_alg_diff(algo_a, algo_b) -> str:
         elif opcode == 'replace':
             moves.extend(
                 [
-                    f'[red]{ item }[/red]'
+                    f'[deletion]{ item }[/deletion]'
                     for item in algo_a[i1:i2]
                 ],
             )
             moves.extend(
                 [
-                    f'[green]{ item }[/green]'
+                    f'[addition]{ item }[/addition]'
                     for item in algo_b[j1:j2]
                 ],
             )
 
     return ' '.join([str(m) for m in moves])
+
+
+def format_alg_triggers(algorithm: str, trigger_names: list[str]) -> str:
+    for trigger_name in trigger_names:
+        regex = TRIGGERS_REGEX[trigger_name]
+
+        def replacer(matchobj):
+            return (
+                f'[{ trigger_name }]'   # noqa: B023
+                f'{ matchobj.group(0) }'
+                f'[/{ trigger_name }]'  # noqa: B023
+            )
+
+        algorithm = regex.sub(replacer, algorithm)
+
+    return algorithm
+
+
+def format_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
+    if pre_auf:
+        algorithm_parts = algorithm.split(' ')
+        for i, move in enumerate(algorithm_parts):
+            if move[0] == AUF:
+                algorithm_parts[i] = f'[pre-auf]{ move }[/pre-auf]'
+            elif move != PAUSE_CHAR:
+                break
+        algorithm = ' '.join(algorithm_parts)
+
+    if post_auf:
+        algorithm_parts = list(reversed(algorithm.split(' ')))
+        for i, move in enumerate(algorithm_parts):
+            if move[0] == AUF:
+                algorithm_parts[i] = f'[post-auf]{ move }[/post-auf]'
+            elif move != PAUSE_CHAR:
+                break
+        algorithm = ' '.join(reversed(algorithm_parts))
+
+    return algorithm
+
+
+def format_moves(algorithm: str) -> str:
+    algorithm_parts = algorithm.split(' ')
+
+    for i, move in enumerate(algorithm_parts):
+        if move[0] in OUTER_WIDE_MOVES:
+            algorithm_parts[i] = f'[wide]{ move }[/wide]'
+        elif move[0] in INNER_MOVES:
+            algorithm_parts[i] = f'[slice]{ move }[/slice]'
+        elif move[0] in ROTATIONS:
+            algorithm_parts[i] = f'[rotation]{ move }[/rotation]'
+
+    return ' '.join(algorithm_parts)

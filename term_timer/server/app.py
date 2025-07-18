@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 from datetime import timezone
 from http import HTTPStatus
@@ -16,16 +17,35 @@ from term_timer.constants import CUBE_SIZES
 from term_timer.constants import SECOND
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
+from term_timer.formatter import format_alg_triggers
+from term_timer.formatter import format_aufs
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
+from term_timer.formatter import format_moves
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.interface.console import console
-from term_timer.methods.base import AUF
+from term_timer.methods.base import STEPS_CONFIG
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
 from term_timer.transform import prettify_moves
+
+SPAN_REGEX = re.compile(r'(<span[^>]*>.*?</span>)')
+BLOCK_REGEX = re.compile(r'\[([\w-]+)\](.*?)\[/([\w-]+)\]')
+
+CLASS_CONVERTION = {
+    'red': 'deletion',
+    'green': 'addition',
+}
+
+LEGENDS = {
+    'pair-ie': 'Pair insertion/extraction',
+    'sexy-move': 'Sexy Move',
+    'pre-auf': 'Pre-AUF',
+    'post-auf': 'Post-AUF',
+    'reco-pause': 'Recognition pause',
+}
 
 
 def format_delta(delta: int) -> str:
@@ -48,6 +68,42 @@ def format_score(score: int, title: str = '') -> str:
     return f'<span class="stat-{ klass }">{ title }{ score:.2f}</span>'
 
 
+def format_line(value):
+    if not value:
+        return ''
+
+    def replacer(matchobj):
+        moves = matchobj.group(2)
+        markup = matchobj.group(1)
+        legend = LEGENDS.get(markup, markup.title())
+
+        klass = 'move'
+        if len(moves.split(' ')) > 1:
+            klass = 'trigger'
+
+        return (
+            f'<span class="{ klass } { markup }" title="{ legend }">'
+            + moves +
+            '</span>'
+        )
+
+    result = BLOCK_REGEX.sub(replacer, value)
+
+    processed_parts = []
+    for part in SPAN_REGEX.split(result):
+        if part.startswith('<span'):
+            processed_parts.append(part)
+        else:
+            moves = part.split()
+            for move in moves:
+                if move.strip():
+                    processed_parts.append(
+                        f'<span class="move">{ move }</span>',
+                    )
+
+    return ' '.join(processed_parts)
+
+
 def normalize_value(value, method_applied, metric, name):
     klass = method_applied.normalize_value(metric, name, value, '')
 
@@ -61,71 +117,19 @@ def normalize_percent(value, method_applied, metric, name):
 
 
 def reconstruction_step(step):
-    move_classes = {
-        i: {
-            'classes': 'move',
-            'move': step['moves_prettified'][i],
-        }
-        for i in range(len(step['moves_prettified']))
-    }
+    algorithm = str(step['moves_prettified'])
 
-    if step['aufs'][0]:
-        for info in move_classes.values():
-            if info['move'][0] == AUF:
-                info['classes'] += ' pre-auf'
-            else:
-                break
-    if step['aufs'][1]:
-        for info in reversed(move_classes.values()):
-            if info['move'][0] == AUF:
-                info['classes'] += ' post-auf'
-            else:
-                break
-
-    return ''.join(
-        [
-            f'<span class="{ info['classes'] }">{ info['move'] }</span>'
-            for info in move_classes.values()
-        ],
+    algorithm = format_alg_triggers(
+        format_moves(
+            format_aufs(
+                algorithm,
+                *step['aufs'],
+            ),
+        ),
+        STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
     )
 
-
-def style_issues(value):
-    if not value:
-        return ''
-
-    v = ''
-    for m in value.split(' '):
-        if not m.startswith('['):
-            v += f'<span class="move">{ m }</span>'
-        else:
-            v += f' { m }'
-
-    return v.replace(
-        '[red]', '<span class="move deletion">',
-    ).replace(
-        '[/red]', '</span>',
-    ).replace(
-        '[green]', '<span class="move addition">',
-    ).replace(
-        '[/green]', '</span>',
-    ).replace(
-        '[pause]', '<span class="move pause">',
-    ).replace(
-        '[/pause]', '</span>',
-    ).replace(
-        '[reco_pause]', '<span class="move recognition-pause">',
-    ).replace(
-        '[/reco_pause]', '</span>',
-    ).replace(
-        '[pre-auf]', '<span class="move pre-auf">',
-    ).replace(
-        '[/pre-auf]', '</span>',
-    ).replace(
-        '[post-auf]', '<span class="move post-auf">',
-    ).replace(
-        '[/post-auf]', '</span>',
-    )
+    return format_line(algorithm)
 
 
 class RichHandler(WSGIRequestHandler):
@@ -173,9 +177,9 @@ class View:
                     'format_grade': format_grade,
                     'format_time': format_time,
                     'format_score': format_score,
+                    'format_line': format_line,
                     'normalize_value': normalize_value,
                     'normalize_percent': normalize_percent,
-                    'style_issues': style_issues,
                     'reconstruction_step': reconstruction_step,
                     'prettify': prettify_moves,
                 },

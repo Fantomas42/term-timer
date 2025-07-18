@@ -24,11 +24,14 @@ from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_alg_cubing_url
 from term_timer.formatter import format_alg_diff
+from term_timer.formatter import format_alg_triggers
+from term_timer.formatter import format_aufs
 from term_timer.formatter import format_cube_db_url
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
+from term_timer.formatter import format_moves
 from term_timer.formatter import format_time
-from term_timer.methods.base import AUF
+from term_timer.methods.base import STEPS_CONFIG
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.methods.lbl import LBLAnalyser
@@ -208,9 +211,9 @@ class Solve:
 
         missed_moves = self.all_missed_moves
         missed_line = (
-            '[exec_overhead]'
+            '[exec-overhead]'
             f'{ missed_moves } missed QTM'
-            '[/exec_overhead]'
+            '[/exec-overhead]'
         )
         if not missed_moves:
             missed_line = '[success]No missed move[/success]'
@@ -312,7 +315,7 @@ class Solve:
             percent_klass = self.method_applied.normalize_value(
                 'percent', info['name'],
                 info['total_percent'],
-                'duration_p',
+                'duration-p',
             )
 
             tps = self.compute_tps(info['qtm'], info['total'])
@@ -328,18 +331,18 @@ class Solve:
                 f'[/{ move_klass }] '
                 f'[recognition]'
                 f'{ format_duration(info["recognition"]):>5}s[/recognition] '
-                f'[recognition_p]'
-                f'{ info["recognition_percent"]:5.2f}%[/recognition_p] '
+                f'[recognition-p]'
+                f'{ info["recognition_percent"]:5.2f}%[/recognition-p] '
                 f'[execution]'
                 f'{ format_duration(info["execution"]):>5}s[/execution] '
-                f'[execution_p]'
-                f'{ info["execution_percent"]:5.2f}%[/execution_p] '
+                f'[execution-p]'
+                f'{ info["execution_percent"]:5.2f}%[/execution-p] '
                 f'[duration]'
                 f'{ format_duration(info["total"]):>5}s[/duration] '
                 f'[{ percent_klass }]'
                 f'{ info["total_percent"]:5.2f}%[/{ percent_klass }] '
                 f'[tps]{ tps:.2f} TPS[/tps] '
-                f'[tps_e]{ tps_exec:.2f} eTPS[/tps_e]'
+                f'[tps-e]{ tps_exec:.2f} eTPS[/tps-e]'
                 f'{ footer }\n'
             )
 
@@ -371,32 +374,22 @@ class Solve:
             optimize_double_moves,
         )
 
-        algorithm = format_alg_diff(
-            source_paused,
-            compressed_paused,
+        algorithm = format_alg_triggers(
+            format_moves(
+                format_aufs(
+                    format_alg_diff(
+                        source_paused,
+                        compressed_paused,
+                    ),
+                    *step['aufs'],
+                ),
+            ),
+            STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
         )
-
-        if step['aufs'][0]:
-            algorithm_parts = algorithm.split(' ')
-            for i, move in enumerate(algorithm_parts):
-                if move[0] == AUF:
-                    algorithm_parts[i] = f'[pre-auf]{ move }[/pre-auf]'
-                elif move != PAUSE_CHAR:
-                    break
-            algorithm = ' '.join(algorithm_parts)
-
-        if step['aufs'][1]:
-            algorithm_parts = list(reversed(algorithm.split(' ')))
-            for i, move in enumerate(algorithm_parts):
-                if move[0] == AUF:
-                    algorithm_parts[i] = f'[post-auf]{ move }[/post-auf]'
-                elif move != PAUSE_CHAR:
-                    break
-            algorithm = ' '.join(reversed(algorithm_parts))
 
         post = int(step['post_pause'] / self.pause_threshold)
         if post:
-            algorithm += f' [reco_pause]{ PAUSE_CHAR }[/reco_pause]' * (
+            algorithm += f' [reco-pause]{ PAUSE_CHAR }[/reco-pause]' * (
                 post if multiple else 1
             )
 

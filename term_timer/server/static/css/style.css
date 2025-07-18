@@ -219,6 +219,7 @@ header {
     background-color: var(--header);
 }
 
+.recons-moves .trigger,
 .recons-moves .move,
 .solve-scramble .move {
     font-weight: bold;
@@ -232,6 +233,11 @@ header {
     cursor: pointer;
 }
 
+.recons-moves .trigger {
+    padding: 0.25em 0.6em;
+}
+
+.recons-moves .trigger:hover,
 .recons-moves .move:hover,
 .solve-scramble .move:hover {
     background-color: var(--link);
@@ -251,7 +257,7 @@ header {
     background-color: var(--warning);
 }
 
-.recons-moves .recognition-pause {
+.recons-moves .reco-pause {
     background-color: var(--recognition);
 }
 
@@ -261,6 +267,31 @@ header {
 
 .recons-moves .post-auf {
     background-color: var(--post-auf);
+}
+
+.recons-moves .pair-ie {
+    color: var(--dark);
+    background-color: #66FF66;
+}
+
+.recons-moves .sexy-move {
+    background-color: #FF6666;
+}
+
+.recons-moves .sledgehammer {
+    color: var(--dark);
+    background-color: #88CCFF;
+}
+
+.recons-moves .wide,
+.recons-moves .slice {
+    color: var(--dark);
+    background-color: var(--link);
+}
+
+.recons-moves .rotation {
+    color: var(--dark);
+    background-color: var(--success);
 }
 
 .moves-card .moves-footer {

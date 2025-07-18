@@ -868,7 +868,7 @@
                 </td>
                 <td class="recons-moves">
                   {% if not info.type == 'virtual' %}
-                    {{ solve.reconstruction_step_line(info, multiple=True)|style_issues }}
+                    {{ solve.reconstruction_step_line(info, multiple=True)|format_line }}
                   {% endif %}
                 </td>
                 <td class="recons-overhead">
