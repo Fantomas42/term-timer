@@ -38,6 +38,17 @@ CLASS_CONVERTION = {
     'green': 'addition',
 }
 
+LEGENDS = {
+    'pair-ie': 'Pair insertion/extraction',
+    'sexy-move': 'Sexy Move',
+    'pre-auf': 'Pre-AUF',
+    'post-auf': 'Post-AUF',
+    'pause': 'Pause',
+    'reco-pause': 'Recognition pause',
+    'red': 'Deletion',
+    'green': 'Addition',
+}
+
 
 def format_delta(delta: int) -> str:
     if delta == 0:
@@ -66,13 +77,18 @@ def format_line(value):
     def replacer(matchobj):
         moves = matchobj.group(2)
         markup = matchobj.group(1)
+        legend = LEGENDS.get(markup, markup)
         markup = CLASS_CONVERTION.get(markup, markup)
 
         klass = 'move'
         if len(moves.split(' ')) > 1:
             klass = 'trigger'
 
-        return f'<span class="{ klass } { markup }">{ moves }</span>'
+        return (
+            f'<span class="{ klass } { markup }" title="{ legend }">'
+            + moves +
+            '</span>'
+        )
 
     result = BLOCK_REGEX.sub(replacer, value)
 
