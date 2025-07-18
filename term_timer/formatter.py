@@ -3,6 +3,7 @@ import difflib
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
+from term_timer.triggers import TRIGGERS_REGEX
 
 
 def format_time(elapsed_ns: int, *, allow_dnf: bool = True) -> str:
@@ -166,3 +167,19 @@ def format_alg_diff(algo_a, algo_b) -> str:
             )
 
     return ' '.join([str(m) for m in moves])
+
+
+def format_alg_triggers(algorithm: str, trigger_names: list[str]) -> str:
+    for trigger_name in trigger_names:
+        regex = TRIGGERS_REGEX[trigger_name]
+
+        def replacer(matchobj):
+            return (
+                f'[{ trigger_name }]'   # noqa: B023
+                f'{ matchobj.group(0) }'
+                f'[/{ trigger_name }]'  # noqa: B023
+            )
+
+        algorithm = regex.sub(replacer, algorithm)
+
+    return algorithm

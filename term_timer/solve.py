@@ -24,11 +24,13 @@ from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.formatter import format_alg_cubing_url
 from term_timer.formatter import format_alg_diff
+from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_cube_db_url
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
 from term_timer.methods.base import AUF
+from term_timer.methods.base import STEPS_CONFIG
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.methods.lbl import LBLAnalyser
@@ -371,9 +373,12 @@ class Solve:
             optimize_double_moves,
         )
 
-        algorithm = format_alg_diff(
-            source_paused,
-            compressed_paused,
+        algorithm = format_alg_triggers(
+            format_alg_diff(
+                source_paused,
+                compressed_paused,
+            ),
+            STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
         )
 
         if step['aufs'][0]:
@@ -396,7 +401,7 @@ class Solve:
 
         post = int(step['post_pause'] / self.pause_threshold)
         if post:
-            algorithm += f' [reco_pause]{ PAUSE_CHAR }[/reco_pause]' * (
+            algorithm += f' [reco-pause]{ PAUSE_CHAR }[/reco-pause]' * (
                 post if multiple else 1
             )
 

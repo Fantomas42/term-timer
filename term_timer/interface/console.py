@@ -50,9 +50,13 @@ theme = {
     'best': f'bold { GREEN}',
 
     'pause': f'bold { ORANGE }',
-    'reco_pause': 'bold #00FFCC',
+    'reco-pause': 'bold #00FFCC',
     'pre-auf': f'bold { TEXT_LIGHT } on #5F5F8E',
     'post-auf': f'bold { TEXT_LIGHT } on  #003D80',
+
+    'sexy-move': f'{ TEXT_DARK } on #FF6666',
+    'sledgehammer': f'{ TEXT_DARK } on #6699FF',
+    'pair-ie': f'{ TEXT_DARK } on #FF8433',
 
     'edge': 'bold #00DFFF',
     'percent': 'bold #00DFFF',
