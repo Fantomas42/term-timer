@@ -29,6 +29,8 @@ AUF = 'U'
 
 AUF_MOVE = reorient_moves(CUBE_ORIENTATION, AUF)[0].base_move
 
+DEFAULT_TRIGGERS = ['sexy-move', 'sledgehammer', 'pair-ie']
+
 STEPS_CONFIG = {
     'Cross': {
         'mask': (
@@ -41,61 +43,61 @@ STEPS_CONFIG = {
             FULL_FACE + (F1L_FACE * 2)
             + CENTER_PIECE + (F1L_FACE * 2)
         ),
-        'triggers': ['sexy-move', 'sledgehammer', 'pair-ie'],
+        'triggers': DEFAULT_TRIGGERS,
     },
     'F2L 1': {  # FR Pair
         'mask':  (
             '010111011' + LEFT_FACE + RIGHT_FACE
             + CENTER_PIECE + CROSS_PIECE + CROSS_PIECE
         ),
-        'triggers': ['sexy-move', 'sledgehammer', 'pair-ie'],
+        'triggers': DEFAULT_TRIGGERS,
     },
     'F2L 2': {  # FL Pair
         'mask': (
             '010111110' + CROSS_PIECE + LEFT_FACE
             + CENTER_PIECE + RIGHT_FACE + CROSS_PIECE
         ),
-        'triggers': ['sexy-move', 'sledgehammer', 'pair-ie'],
+        'triggers': DEFAULT_TRIGGERS,
     },
     'F2L 3': {  # BR Pair
         'mask':  (
             '011111010' + RIGHT_FACE + CROSS_PIECE
             + CENTER_PIECE + CROSS_PIECE + LEFT_FACE
         ),
-        'triggers': ['sexy-move', 'sledgehammer', 'pair-ie'],
+        'triggers': DEFAULT_TRIGGERS,
     },
     'F2L 4': {  # BL Pair
         'mask':  (
             '110111010' + CROSS_PIECE + CROSS_PIECE
             + CENTER_PIECE + LEFT_FACE + RIGHT_FACE
         ),
-        'triggers': ['sexy-move', 'sledgehammer', 'pair-ie'],
+        'triggers': DEFAULT_TRIGGERS,
     },
     'F2L': {
         'mask': (
             FULL_FACE + (F2L_FACE * 2)
             + CENTER_PIECE + (F2L_FACE * 2)
         ),
-        'triggers': ['sexy-move', 'sledgehammer', 'pair-ie'],
+        'triggers': DEFAULT_TRIGGERS,
     },
     'OLL': {
         'mask': (
             FULL_FACE + (F2L_FACE * 2)
             + FULL_FACE + (F2L_FACE * 2)
         ),
-        'triggers': ['sexy-move', 'sledgehammer'],
+        'triggers': DEFAULT_TRIGGERS,
     },
     'PLL': {
         'mask': FULL_CUBE,
-        'triggers': ['sexy-move', 'sledgehammer'],  # TODO pair-ie ?
+        'triggers': DEFAULT_TRIGGERS,
     },
     'LL': {
         'mask': FULL_CUBE,
-        'triggers': ['sexy-move', 'sledgehammer'],
+        'triggers': DEFAULT_TRIGGERS,
     },
     'RAW': {
         'mask': FULL_CUBE,
-        'triggers': ['sexy-move', 'sledgehammer'],
+        'triggers': DEFAULT_TRIGGERS,
     },
 }
 
