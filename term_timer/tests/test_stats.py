@@ -214,7 +214,7 @@ class TestStatisticsReporterListing(unittest.TestCase):
         self.assertIn('[consign]F U R[/consign]', call_args[3])
 
         # The flag should be included
-        self.assertIn('[plus_two]+2[/plus_two]', call_args[4])
+        self.assertIn('[plus-two]+2[/plus-two]', call_args[4])
 
     @patch('term_timer.interface.console.console.print')
     def test_resume_reverse_order(self, mock_console):

@@ -29,9 +29,9 @@ theme = {
     'substep': 'bold #00DFFF',
     'skipped': f'{ TEXT_DARK } on #5FFFAF',
 
-    'recognition_p': TEXT_LIGHT,
-    'execution_p': TEXT_LIGHT,
-    'duration_p': TEXT_LIGHT,
+    'recognition-p': TEXT_LIGHT,
+    'execution-p': TEXT_LIGHT,
+    'duration-p': TEXT_LIGHT,
 
     'server': 'bold #00DFFF',
     'bluetooth': 'bold #FFFFFF on #133EBF',
@@ -68,7 +68,7 @@ theme = {
     'orange': f'{ ORANGE }',
 
     'dnf': f'bold { TEXT_LIGHT } on { RED }',
-    'plus_two': f'bold { TEXT_DARK } on { ORANGE }',
+    'plus-two': f'bold { TEXT_DARK } on { ORANGE }',
 
     'mo3': f'bold { ORANGE }',
     'ao5': 'bold #00FFFF',
@@ -77,9 +77,9 @@ theme = {
     'ao1000': f'bold { RED }',
 
     'tps': 'bold #00DFFF',
-    'tps_e': 'bold #00AAAA',
-    'exec_overhead': 'bold #FF4444',
-    'trans_overhead': 'bold #FF8844',
+    'tps-e': 'bold #00AAAA',
+    'exec-overhead': 'bold #FF4444',
+    'trans-overhead': 'bold #FF8844',
     'htm': 'bold #6EFFFF',
     'stm': 'bold #6EDFF6',
     'qtm': 'bold #99D799',

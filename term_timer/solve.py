@@ -210,9 +210,9 @@ class Solve:
 
         missed_moves = self.all_missed_moves
         missed_line = (
-            '[exec_overhead]'
+            '[exec-overhead]'
             f'{ missed_moves } missed QTM'
-            '[/exec_overhead]'
+            '[/exec-overhead]'
         )
         if not missed_moves:
             missed_line = '[success]No missed move[/success]'
@@ -314,7 +314,7 @@ class Solve:
             percent_klass = self.method_applied.normalize_value(
                 'percent', info['name'],
                 info['total_percent'],
-                'duration_p',
+                'duration-p',
             )
 
             tps = self.compute_tps(info['qtm'], info['total'])
@@ -330,18 +330,18 @@ class Solve:
                 f'[/{ move_klass }] '
                 f'[recognition]'
                 f'{ format_duration(info["recognition"]):>5}s[/recognition] '
-                f'[recognition_p]'
-                f'{ info["recognition_percent"]:5.2f}%[/recognition_p] '
+                f'[recognition-p]'
+                f'{ info["recognition_percent"]:5.2f}%[/recognition-p] '
                 f'[execution]'
                 f'{ format_duration(info["execution"]):>5}s[/execution] '
-                f'[execution_p]'
-                f'{ info["execution_percent"]:5.2f}%[/execution_p] '
+                f'[execution-p]'
+                f'{ info["execution_percent"]:5.2f}%[/execution-p] '
                 f'[duration]'
                 f'{ format_duration(info["total"]):>5}s[/duration] '
                 f'[{ percent_klass }]'
                 f'{ info["total_percent"]:5.2f}%[/{ percent_klass }] '
                 f'[tps]{ tps:.2f} TPS[/tps] '
-                f'[tps_e]{ tps_exec:.2f} eTPS[/tps_e]'
+                f'[tps-e]{ tps_exec:.2f} eTPS[/tps-e]'
                 f'{ footer }\n'
             )
 

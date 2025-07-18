@@ -403,7 +403,7 @@ class StatisticsReporter(Statistics):
             if solve.flag == DNF:
                 flag_class = 'dnf'
             if solve.flag == PLUS_TWO:
-                flag_class = 'plus_two'
+                flag_class = 'plus-two'
 
             console.print(
                 header,
@@ -494,7 +494,7 @@ class StatisticsReporter(Statistics):
             recog_percent = solve.recognition_time / solve.time * 100.0
             recog_class = solve.method_applied.normalize_value(
                 'solve', 'recognition',
-                recog_percent, 'recognition_p',
+                recog_percent, 'recognition-p',
             )
             console.print(
                 '[stats]Recognition:[/stats] '
@@ -509,7 +509,7 @@ class StatisticsReporter(Statistics):
             exec_percent = solve.execution_time / solve.time * 100.0
             exec_class = solve.method_applied.normalize_value(
                 'solve', 'execution',
-                exec_percent, 'execution_p',
+                exec_percent, 'execution-p',
             )
             console.print(
                 '[stats]Execution  :[/stats] '
@@ -537,15 +537,15 @@ class StatisticsReporter(Statistics):
                 )
                 if execution_missed_moves:
                     missed_string += (
-                        ' [exec_overhead]'
+                        ' [exec-overhead]'
                         f'(+{ execution_missed_moves } execution)'
-                        '[/exec_overhead]'
+                        '[/exec-overhead]'
                     )
                 if transition_missed_moves:
                     missed_string += (
-                        ' [trans_overhead]'
+                        ' [trans-overhead]'
                         f'(+{ transition_missed_moves } transition)'
-                        '[/trans_overhead]'
+                        '[/trans-overhead]'
                     )
             else:
                 missed_string += '[success]Optimal execution[/success]'
@@ -695,7 +695,7 @@ class StatisticsReporter(Statistics):
                 '[/ao5]',
                 f'[moves]{ info["qtm"]:.2f}[/moves]',
                 f'[tps]{ info["tps"]:.2f}[/tps]',
-                f'[tps_e]{ info["etps"]:.2f}[/tps_e]',
+                f'[tps-e]{ info["etps"]:.2f}[/tps-e]',
             )
         console.print(table)
 
