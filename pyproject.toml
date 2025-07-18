@@ -136,7 +136,12 @@ addopts = "--cov=term_timer"
 
 [tool.coverage.run]
 branch = true
-omit = ["term_timer/tests/*", "term_timer/poc/*"]
+omit = [
+  "term_timer/tests/*",
+  "term_timer/poc/*",
+  "term_timer/scripts/*",
+  "term_timer/opengl/*",
+]
 
 [tool.coverage.report]
 show_missing = true
