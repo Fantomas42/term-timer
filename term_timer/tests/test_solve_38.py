@@ -248,27 +248,36 @@ class TestSolve38(unittest.TestCase):
             if info['type'] != 'virtual'
         ]
         outputs = [
-            "B L' [pause].[/pause] U F2 [reco_pause].[/reco_pause]",
+            "B L' [pause].[/pause] U F2 [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U2[/pre-auf] B U B' "
-            "[red]U'[/red] [pause].[/pause] [red]U[/red] R' U' R "
-            "U2 L U L' [reco_pause].[/reco_pause]",
+            "[pre-auf]U2[/pre-auf] [pair-ie]B U B'[/pair-ie] "
+            "[deletion]U'[/deletion] "
+            "[pause].[/pause] [deletion]U[/deletion] "
+            "[pair-ie]R' U' R[/pair-ie] "
+            "U2 [pair-ie]L U L'[/pair-ie] [reco-pause].[/reco-pause]",
 
             "[pre-auf]U[/pre-auf] [pause].[/pause] [pre-auf]U[/pre-auf] "
-            "R' U R U' R' U' R [reco_pause].[/reco_pause]",
+            "[pair-ie]R' U R[/pair-ie] U' "
+            "[pair-ie]R' U' R[/pair-ie] [reco-pause].[/reco-pause]",
 
-            "R U R' [red]U'[/red] [pause].[/pause] [red]U[/red] U' "
-            "[pause].[/pause] F U2 F' U2 F U' F' [reco_pause].[/reco_pause]",
+            "[pair-ie]R U R'[/pair-ie] [deletion]U'[/deletion] "
+            "[pause].[/pause] [deletion]U[/deletion] U' "
+            "[pause].[/pause] F U2 F' U2 [pair-ie]F U' F'[/pair-ie] "
+            "[reco-pause].[/reco-pause]",
 
             "[pre-auf]U2[/pre-auf] [pause].[/pause] "
-            "F' U F U' F' U' F [reco_pause].[/reco_pause]",
+            "[pair-ie]F' U F[/pair-ie] U' "
+            "[pair-ie]F' U' F[/pair-ie] [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U'[/pre-auf] [pause].[/pause] [pre-auf]U'[/pre-auf] "
-            "[pause].[/pause] "
-            "M L' U2 L U L' U L U M' [reco_pause].[/reco_pause]",
+            "[pre-auf]U'[/pre-auf] [pause].[/pause] "
+            "[pre-auf]U'[/pre-auf] [pause].[/pause] "
+            "[slice]M[/slice] L' U2 [pair-ie]L U L'[/pair-ie] "
+            "U L U [slice]M'[/slice] [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U[/pre-auf] R' U' F' R U R' U' "
-            "R' F R2 U' R' U' R U R' U R [post-auf]U2[/post-auf]",
+            "[pre-auf]U[/pre-auf] R' U' F' "
+            "[sexy-move]R U R' U'[/sexy-move] R' F R2 U' "
+            "[sexy-move]R' U' R U[/sexy-move] [pair-ie]R' U R[/pair-ie] "
+            "[post-auf]U2[/post-auf]",
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
@@ -285,32 +294,40 @@ class TestSolve38(unittest.TestCase):
         ]
         outputs = [
             "B L' [pause].[/pause] [pause].[/pause] U F2 "
-            "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause] "
-            "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause]",
+            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
+            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U2[/pre-auf] B U B' [red]U'[/red] "
-            "[pause].[/pause] [red]U[/red] "
-            "[green].[/green] R' U' R "
-            "U2 L U L' [reco_pause].[/reco_pause]",
+            "[pre-auf]U2[/pre-auf] [pair-ie]B U B'[/pair-ie] "
+            "[deletion]U'[/deletion] "
+            "[pause].[/pause] [deletion]U[/deletion] "
+            "[addition].[/addition] [pair-ie]R' U' R[/pair-ie] "
+            "U2 [pair-ie]L U L'[/pair-ie] [reco-pause].[/reco-pause]",
 
             "[pre-auf]U[/pre-auf] [pause].[/pause] [pre-auf]U[/pre-auf] "
-            "R' U R U' R' U' R [reco_pause].[/reco_pause]",
+            "[pair-ie]R' U R[/pair-ie] U' "
+            "[pair-ie]R' U' R[/pair-ie] [reco-pause].[/reco-pause]",
 
-            "R U R' [red]U'[/red] [pause].[/pause] [pause].[/pause] "
-            "[red]U[/red] U' [pause].[/pause] F U2 F' U2 F U' F' "
-            "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause] "
-            "[reco_pause].[/reco_pause] [reco_pause].[/reco_pause]",
+            "[pair-ie]R U R'[/pair-ie] [deletion]U'[/deletion] "
+            "[pause].[/pause] [pause].[/pause] "
+            "[deletion]U[/deletion] U' [pause].[/pause] "
+            "F U2 F' U2 [pair-ie]F U' F'[/pair-ie] "
+            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
+            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
 
             "[pre-auf]U2[/pre-auf] [pause].[/pause] "
-            "F' U F U' F' U' F [reco_pause].[/reco_pause] "
-            "[reco_pause].[/reco_pause]",
+            "[pair-ie]F' U F[/pair-ie] U' "
+            "[pair-ie]F' U' F[/pair-ie] [reco-pause].[/reco-pause] "
+            "[reco-pause].[/reco-pause]",
 
             "[pre-auf]U'[/pre-auf] [pause].[/pause] "
             "[pre-auf]U'[/pre-auf] [pause].[/pause] "
-            "M L' U2 L U L' U L U M' [reco_pause].[/reco_pause]",
+            "[slice]M[/slice] L' U2 [pair-ie]L U L'[/pair-ie] "
+            "U L U [slice]M'[/slice] [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U[/pre-auf] R' U' F' R U R' U' R' "
-            "F R2 U' R' U' R U R' U R [post-auf]U2[/post-auf]",
+            "[pre-auf]U[/pre-auf] R' U' F' "
+            "[sexy-move]R U R' U'[/sexy-move] R' F R2 U' "
+            "[sexy-move]R' U' R U[/sexy-move] [pair-ie]R' U R[/pair-ie] "
+            "[post-auf]U2[/post-auf]",
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
