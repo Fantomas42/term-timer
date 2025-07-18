@@ -11,6 +11,9 @@ from bottle import abort
 from bottle import jinja2_template
 from bottle import request
 from bottle import static_file
+from cubing_algs.constants import INNER_MOVES
+from cubing_algs.constants import OUTER_WIDE_MOVES
+from cubing_algs.constants import ROTATIONS
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
@@ -96,8 +99,15 @@ def format_line(value):
             words = part.split()
             for word in words:
                 if word.strip():
+                    klass = ''
+                    if word[0] in OUTER_WIDE_MOVES:
+                        klass = ' wide'
+                    elif word[0] in INNER_MOVES:
+                        klass = ' slice'
+                    elif word[0] in ROTATIONS:
+                        klass = ' rotation'
                     processed_parts.append(
-                        f'<span class="move">{ word }</span>',
+                        f'<span class="move{ klass }">{ word }</span>',
                     )
 
     return ' '.join(processed_parts)

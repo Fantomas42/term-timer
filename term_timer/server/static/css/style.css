@@ -283,6 +283,17 @@ header {
     background-color: #88CCFF;
 }
 
+.recons-moves .wide,
+.recons-moves .slice {
+    color: var(--dark);
+    background-color: var(--link);
+}
+
+.recons-moves .rotation {
+    color: var(--dark);
+    background-color: var(--success);
+}
+
 .moves-card .moves-footer {
     padding-top: 1rem;
     margin-top: 1rem;
