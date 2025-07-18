@@ -29,6 +29,7 @@ from term_timer.formatter import format_aufs
 from term_timer.formatter import format_cube_db_url
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
+from term_timer.formatter import format_moves
 from term_timer.formatter import format_time
 from term_timer.methods.base import STEPS_CONFIG
 from term_timer.methods.cfop import CF4OPAnalyser
@@ -374,12 +375,14 @@ class Solve:
         )
 
         algorithm = format_alg_triggers(
-            format_aufs(
-                format_alg_diff(
-                    source_paused,
-                    compressed_paused,
+            format_moves(
+                format_aufs(
+                    format_alg_diff(
+                        source_paused,
+                        compressed_paused,
+                    ),
+                    *step['aufs'],
                 ),
-                *step['aufs'],
             ),
             STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
         )

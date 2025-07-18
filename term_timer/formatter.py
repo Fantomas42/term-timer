@@ -1,6 +1,9 @@
 import difflib
 
+from cubing_algs.constants import INNER_MOVES
+from cubing_algs.constants import OUTER_WIDE_MOVES
 from cubing_algs.constants import PAUSE_CHAR
+from cubing_algs.constants import ROTATIONS
 
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -208,3 +211,17 @@ def format_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
         algorithm = ' '.join(reversed(algorithm_parts))
 
     return algorithm
+
+
+def format_moves(algorithm: str) -> str:
+    algorithm_parts = algorithm.split(' ')
+
+    for i, move in enumerate(algorithm_parts):
+        if move[0] in OUTER_WIDE_MOVES:
+            algorithm_parts[i] = f'[wide]{ move }[/wide]'
+        elif move[0] in INNER_MOVES:
+            algorithm_parts[i] = f'[slice]{ move }[/slice]'
+        elif move[0] in ROTATIONS:
+            algorithm_parts[i] = f'[rotation]{ move }[/rotation]'
+
+    return ' '.join(algorithm_parts)

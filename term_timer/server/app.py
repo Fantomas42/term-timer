@@ -11,9 +11,6 @@ from bottle import abort
 from bottle import jinja2_template
 from bottle import request
 from bottle import static_file
-from cubing_algs.constants import INNER_MOVES
-from cubing_algs.constants import OUTER_WIDE_MOVES
-from cubing_algs.constants import ROTATIONS
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
@@ -24,6 +21,7 @@ from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_aufs
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
+from term_timer.formatter import format_moves
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.interface.console import console
@@ -96,18 +94,11 @@ def format_line(value):
         if part.startswith('<span'):
             processed_parts.append(part)
         else:
-            words = part.split()
-            for word in words:
-                if word.strip():
-                    klass = ''
-                    if word[0] in OUTER_WIDE_MOVES:
-                        klass = ' wide'
-                    elif word[0] in INNER_MOVES:
-                        klass = ' slice'
-                    elif word[0] in ROTATIONS:
-                        klass = ' rotation'
+            moves = part.split()
+            for move in moves:
+                if move.strip():
                     processed_parts.append(
-                        f'<span class="move{ klass }">{ word }</span>',
+                        f'<span class="move">{ move }</span>',
                     )
 
     return ' '.join(processed_parts)
@@ -129,9 +120,11 @@ def reconstruction_step(step):
     algorithm = str(step['moves_prettified'])
 
     algorithm = format_alg_triggers(
-        format_aufs(
-            algorithm,
-            *step['aufs'],
+        format_moves(
+            format_aufs(
+                algorithm,
+                *step['aufs'],
+            ),
         ),
         STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
     )
