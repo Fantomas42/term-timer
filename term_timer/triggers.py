@@ -7,7 +7,11 @@ from cubing_algs.transform.offset import offset_yprime_moves
 
 BASE_TRIGGERS = {
     "RUR'U'": 'sexy-move',
+    "L'U'LU": 'sexy-move',
+
     "R'FRF'": 'sledgehammer',
+    "LF'L'F": 'sledgehammer',
+
     "RUR'": 'pair-ie',
     "RU'R'": 'pair-ie',
     "R'UR": 'pair-ie',
@@ -29,6 +33,8 @@ for algo_string, name in BASE_TRIGGERS.items():
 
 
 TRIGGERS_REGEX = {
-    name: re.compile(rf'(?<!\])({ "|".join(algos) })')
+    name: re.compile(rf'(?<!\])({ "|".join(algos) })(?!2)')
     for name, algos in TRIGGERS.items()
 }
+
+print(TRIGGERS_REGEX)
