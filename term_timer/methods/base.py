@@ -28,7 +28,10 @@ FULL_CUBE    = '1' * 54     # noqa: E221
 
 AUF = 'U'
 
-AUF_MOVE = reorient_moves(CUBE_ORIENTATION, AUF)[0].base_move
+AUF_MOVE = reorient_moves(
+    CUBE_ORIENTATION,
+    parse_moves(AUF),
+)[0].base_move
 
 STEPS_CONFIG = {
     'Cross': {
