@@ -143,14 +143,14 @@ def format_alg_diff(algo_a, algo_b) -> str:
         elif opcode == 'delete':
             moves.extend(
                 [
-                    f'[red]{ item }[/red]'
+                    f'[deletion]{ item }[/deletion]'
                     for item in algo_a[i1:i2]
                 ],
             )
         elif opcode == 'insert':
             moves.extend(
                 [
-                    f'[green]{ item }[/green]'
+                    f'[addition]{ item }[/addition]'
                     for item in algo_b[j1:j2]
                 ],
             )
@@ -158,13 +158,13 @@ def format_alg_diff(algo_a, algo_b) -> str:
         elif opcode == 'replace':
             moves.extend(
                 [
-                    f'[red]{ item }[/red]'
+                    f'[deletion]{ item }[/deletion]'
                     for item in algo_a[i1:i2]
                 ],
             )
             moves.extend(
                 [
-                    f'[green]{ item }[/green]'
+                    f'[addition]{ item }[/addition]'
                     for item in algo_b[j1:j2]
                 ],
             )

@@ -43,10 +43,7 @@ LEGENDS = {
     'sexy-move': 'Sexy Move',
     'pre-auf': 'Pre-AUF',
     'post-auf': 'Post-AUF',
-    'pause': 'Pause',
     'reco-pause': 'Recognition pause',
-    'red': 'Deletion',
-    'green': 'Addition',
 }
 
 
@@ -77,8 +74,7 @@ def format_line(value):
     def replacer(matchobj):
         moves = matchobj.group(2)
         markup = matchobj.group(1)
-        legend = LEGENDS.get(markup, markup)
-        markup = CLASS_CONVERTION.get(markup, markup)
+        legend = LEGENDS.get(markup, markup.title())
 
         klass = 'move'
         if len(moves.split(' ')) > 1:

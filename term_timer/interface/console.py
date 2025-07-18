@@ -63,6 +63,9 @@ theme = {
     'stats': 'bold #00AFFF',
     'bar': f'on { GREEN }',
 
+    'addition': f'{ GREEN }',
+    'deletion': f'{ RED }',
+
     'red': f'{ RED }',
     'green': f'{ GREEN }',
     'orange': f'{ ORANGE }',
