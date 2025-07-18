@@ -33,8 +33,6 @@ for algo_string, name in BASE_TRIGGERS.items():
 
 
 TRIGGERS_REGEX = {
-    name: re.compile(rf'(?<!\])({ "|".join(algos) })(?!2)')
+    name: re.compile(rf'(?<!\])({ "|".join(algos) })(?![2\'])')
     for name, algos in TRIGGERS.items()
 }
-
-print(TRIGGERS_REGEX)
