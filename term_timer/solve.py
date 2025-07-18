@@ -25,11 +25,11 @@ from term_timer.constants import SECOND
 from term_timer.formatter import format_alg_cubing_url
 from term_timer.formatter import format_alg_diff
 from term_timer.formatter import format_alg_triggers
+from term_timer.formatter import format_aufs
 from term_timer.formatter import format_cube_db_url
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
-from term_timer.methods.base import AUF
 from term_timer.methods.base import STEPS_CONFIG
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.methods.cfop import CFOPAnalyser
@@ -374,30 +374,15 @@ class Solve:
         )
 
         algorithm = format_alg_triggers(
-            format_alg_diff(
-                source_paused,
-                compressed_paused,
+            format_aufs(
+                format_alg_diff(
+                    source_paused,
+                    compressed_paused,
+                ),
+                *step['aufs'],
             ),
             STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
         )
-
-        if step['aufs'][0]:
-            algorithm_parts = algorithm.split(' ')
-            for i, move in enumerate(algorithm_parts):
-                if move[0] == AUF:
-                    algorithm_parts[i] = f'[pre-auf]{ move }[/pre-auf]'
-                elif move != PAUSE_CHAR:
-                    break
-            algorithm = ' '.join(algorithm_parts)
-
-        if step['aufs'][1]:
-            algorithm_parts = list(reversed(algorithm.split(' ')))
-            for i, move in enumerate(algorithm_parts):
-                if move[0] == AUF:
-                    algorithm_parts[i] = f'[post-auf]{ move }[/post-auf]'
-                elif move != PAUSE_CHAR:
-                    break
-            algorithm = ' '.join(reversed(algorithm_parts))
 
         post = int(step['post_pause'] / self.pause_threshold)
         if post:

@@ -11,7 +11,6 @@ from bottle import abort
 from bottle import jinja2_template
 from bottle import request
 from bottle import static_file
-from cubing_algs.constants import PAUSE_CHAR
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
@@ -19,12 +18,12 @@ from term_timer.constants import SECOND
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
 from term_timer.formatter import format_alg_triggers
+from term_timer.formatter import format_aufs
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.interface.console import console
-from term_timer.methods.base import AUF
 from term_timer.methods.base import STEPS_CONFIG
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -107,58 +106,15 @@ def normalize_percent(value, method_applied, metric, name):
 def reconstruction_step(step):
     algorithm = str(step['moves_prettified'])
 
-    if step['aufs'][0]:
-        algorithm_parts = algorithm.split(' ')
-        for i, move in enumerate(algorithm_parts):
-            if move[0] == AUF:
-                algorithm_parts[i] = f'[pre-auf]{ move }[/pre-auf]'
-            elif move != PAUSE_CHAR:
-                break
-        algorithm = ' '.join(algorithm_parts)
-
-    if step['aufs'][1]:
-        algorithm_parts = list(reversed(algorithm.split(' ')))
-        for i, move in enumerate(algorithm_parts):
-            if move[0] == AUF:
-                algorithm_parts[i] = f'[post-auf]{ move }[/post-auf]'
-            elif move != PAUSE_CHAR:
-                break
-        algorithm = ' '.join(reversed(algorithm_parts))
-
     algorithm = format_alg_triggers(
-        algorithm,
+        format_aufs(
+            algorithm,
+            *step['aufs'],
+        ),
         STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
     )
 
     return format_line(algorithm)
-
-    move_classes = {
-        i: {
-            'classes': 'move',
-            'move': step['moves_prettified'][i],
-        }
-        for i in range(len(step['moves_prettified']))
-    }
-
-    if step['aufs'][0]:
-        for info in move_classes.values():
-            if info['move'][0] == AUF:
-                info['classes'] += ' pre-auf'
-            else:
-                break
-    if step['aufs'][1]:
-        for info in reversed(move_classes.values()):
-            if info['move'][0] == AUF:
-                info['classes'] += ' post-auf'
-            else:
-                break
-
-    return ''.join(
-        [
-            f'<span class="{ info['classes'] }">{ info['move'] }</span>'
-            for info in move_classes.values()
-        ],
-    )
 
 
 class RichHandler(WSGIRequestHandler):

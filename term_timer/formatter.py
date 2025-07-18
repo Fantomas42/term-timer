@@ -1,8 +1,11 @@
 import difflib
 
+from cubing_algs.constants import PAUSE_CHAR
+
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
+from term_timer.methods.base import AUF
 from term_timer.triggers import TRIGGERS_REGEX
 
 
@@ -181,5 +184,27 @@ def format_alg_triggers(algorithm: str, trigger_names: list[str]) -> str:
             )
 
         algorithm = regex.sub(replacer, algorithm)
+
+    return algorithm
+
+
+def format_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
+    if pre_auf:
+        algorithm_parts = algorithm.split(' ')
+        for i, move in enumerate(algorithm_parts):
+            if move[0] == AUF:
+                algorithm_parts[i] = f'[pre-auf]{ move }[/pre-auf]'
+            elif move != PAUSE_CHAR:
+                break
+        algorithm = ' '.join(algorithm_parts)
+
+    if post_auf:
+        algorithm_parts = list(reversed(algorithm.split(' ')))
+        for i, move in enumerate(algorithm_parts):
+            if move[0] == AUF:
+                algorithm_parts[i] = f'[post-auf]{ move }[/post-auf]'
+            elif move != PAUSE_CHAR:
+                break
+        algorithm = ' '.join(reversed(algorithm_parts))
 
     return algorithm
