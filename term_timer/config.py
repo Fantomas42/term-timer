@@ -17,7 +17,7 @@ countdown = 0.0
 metronome = 0.0
 
 [cube]
-orientation = []
+orientation = ["z2"]
 method = "cf4op"
 
 [display]
