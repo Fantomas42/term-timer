@@ -57,9 +57,9 @@ theme = {
     'sexy-move': f'{ TEXT_DARK } on #FF6666',
     'sledgehammer': f'{ TEXT_DARK } on #88CCFF',
     'pair-ie': f'{ TEXT_DARK } on #66FF66',
-    'wide': TEXT_LIGHT,
-    'slice': TEXT_LIGHT,
-    'rotation': ORANGE,
+    'wide': 'bold #FF00FF',
+    'slice': 'bold #00DFFF',
+    'rotation': f'bold { ORANGE }',
 
     'edge': 'bold #00DFFF',
     'percent': 'bold #00DFFF',
