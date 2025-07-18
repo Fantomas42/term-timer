@@ -12,7 +12,7 @@ BASE_TRIGGERS = {
     "RU'R'": 'pair-ie',
     "R'UR": 'pair-ie',
     "R'U'R": 'pair-ie',
-    # Add chaise
+    # TODO: Add chaise
 }
 
 
@@ -29,6 +29,6 @@ for algo_string, name in BASE_TRIGGERS.items():
 
 
 TRIGGERS_REGEX = {
-    name: re.compile(f'({ "|".join(algos) })')
+    name: re.compile(rf'(?<!\])({ "|".join(algos) })')
     for name, algos in TRIGGERS.items()
 }
