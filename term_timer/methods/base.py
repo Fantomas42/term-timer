@@ -11,6 +11,7 @@ from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
+from term_timer.triggers import DEFAULT_TRIGGERS
 
 INITIAL = ''
 for face in ['U', 'R', 'F', 'D', 'L', 'B']:
@@ -28,8 +29,6 @@ FULL_CUBE    = '1' * 54     # noqa: E221
 AUF = 'U'
 
 AUF_MOVE = reorient_moves(CUBE_ORIENTATION, AUF)[0].base_move
-
-DEFAULT_TRIGGERS = ['sexy-move', 'sledgehammer', 'pair-ie']
 
 STEPS_CONFIG = {
     'Cross': {

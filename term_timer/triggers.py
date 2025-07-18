@@ -36,3 +36,5 @@ TRIGGERS_REGEX = {
     name: re.compile(rf'(?<!\])({ "|".join(algos) })(?![2\'])')
     for name, algos in TRIGGERS.items()
 }
+
+DEFAULT_TRIGGERS = ['sexy-move', 'sledgehammer', 'pair-ie']
