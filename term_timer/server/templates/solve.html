@@ -670,6 +670,7 @@
         <div class="tab active" data-tab="solve-time">Time</div>
         <div class="tab" data-tab="solve-percent">Percent</div>
         <div class="tab" data-tab="solve-issues">Issues</div>
+        <div class="tab" data-tab="solve-optimized">Optimized</div>
       </div>
 
       <div class="tab-content active table-container" id="solve-time-tab">
@@ -898,6 +899,71 @@
                     <span class="metric-{% if info.aufs.1 > 2 %}warning{% elif info.aufs.1 %}caution{% else %}success{% endif %}">
                       {{ info.aufs.1 }}
                     </span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tab-content table-container" id="solve-optimized-tab">
+        <table class="reconstruction optimized">
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Case</th>
+              <th>Moves</th>
+              <th>HTM</th>
+              <th>Gains</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for info in solve.method_applied.summary %}
+              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
+                <td class="recons-step">
+                  {{ info.name }}
+                </td>
+                <td class="recons-case">
+                  <div class="cfop-case">
+                    {% if info.cases %}
+                      {% set name_part = info.cases[0].split(" ") %}
+                      {% if 'SKIP' not in name_part[0] %}
+                        <div class="cfop-case-img">{{ name_part[0] }}</div>
+                        {% if info.name == 'OLL' %}
+                          <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
+                             target="_blank" class="link">
+                            {{ " ".join(name_part[1:]) }}
+                          </a>
+                        {% elif info.name == 'PLL' %}
+                          <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
+                             target="_blank" class="link">
+                            PLL {{ name_part[0] }}
+                          </a>
+                        {% endif %}
+                      {% else %}
+                        <span class="skip">SKIP</span>
+                      {% endif %}
+                    {% else %}
+                      <div class="cfop-case-img">N/A</div>
+                    {% endif %}
+                  </div>
+                </td>
+                {% set optimized_string, optimized_algorithm = info|optimized_step %}
+                <td class="recons-moves">
+                  {% if not info.type == 'virtual' %}
+                    {{ optimized_string }}
+                  {% endif %}
+                </td>
+                <td class="recons-htm">
+                  {{ optimized_algorithm.metrics.htm|normalize_value(solve.method_applied, 'moves', info.name) }}
+                </td>
+                <td class="recons-gains">
+                  {% set delta = info.moves_prettified.metrics.htm - optimized_algorithm.metrics.htm %}
+                  {% if delta %}
+                    <span class="metric-success">{{ delta }}</span>
+                  {% else %}
+                    0
                   {% endif %}
                 </td>
               </tr>

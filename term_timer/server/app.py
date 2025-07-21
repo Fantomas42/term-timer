@@ -30,6 +30,7 @@ from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
 from term_timer.transform import prettify_moves
+from term_timer.transform import optimize_moves
 
 SPAN_REGEX = re.compile(r'(<span[^>]*>.*?</span>)')
 BLOCK_REGEX = re.compile(r'\[([\w-]+)\](.*?)\[/([\w-]+)\]')
@@ -132,6 +133,27 @@ def reconstruction_step(step):
     return format_line(algorithm)
 
 
+def optimized_step(step):
+    # TODO skip cross and f2l
+
+    # TODO use humanized ?
+    algorithm = optimize_moves(
+        step['moves_reoriented'],
+    )
+
+    algorithm_string = format_alg_triggers(
+        format_moves(
+            format_aufs(
+                str(algorithm),
+                *step['aufs'],
+            ),
+        ),
+        STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
+    )
+
+    return format_line(algorithm_string), algorithm
+
+
 class RichHandler(WSGIRequestHandler):
 
     def log_request(self, code, size):
@@ -181,6 +203,7 @@ class View:
                     'normalize_value': normalize_value,
                     'normalize_percent': normalize_percent,
                     'reconstruction_step': reconstruction_step,
+                    'optimized_step': optimized_step,
                     'prettify': prettify_moves,
                 },
             },
