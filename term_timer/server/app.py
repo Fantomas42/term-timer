@@ -11,6 +11,8 @@ from bottle import abort
 from bottle import jinja2_template
 from bottle import request
 from bottle import static_file
+from cubing_algs.transform.size import compress_moves
+from cubing_algs.transform.timing import untime_moves
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
@@ -30,7 +32,6 @@ from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
 from term_timer.transform import prettify_moves
-from term_timer.transform import optimize_moves
 
 SPAN_REGEX = re.compile(r'(<span[^>]*>.*?</span>)')
 BLOCK_REGEX = re.compile(r'\[([\w-]+)\](.*?)\[/([\w-]+)\]')
@@ -134,12 +135,14 @@ def reconstruction_step(step):
 
 
 def optimized_step(step):
-    # TODO skip cross and f2l
+    optimizers = []
 
-    # TODO use humanized ?
-    algorithm = optimize_moves(
-        step['moves_reoriented'],
-    )
+    if not step['cases'] or 'SKIP' not in step['cases'][0]:
+        optimizers = STEPS_CONFIG.get(step['name'], {}).get('optimizers', [])
+
+    optimizers.extend([compress_moves, untime_moves])
+
+    algorithm = step['moves_reoriented'].transform(*optimizers)
 
     algorithm_string = format_alg_triggers(
         format_moves(

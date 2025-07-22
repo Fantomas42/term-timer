@@ -4,6 +4,7 @@ from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_ORIENTATION
@@ -88,14 +89,17 @@ STEPS_CONFIG = {
             + FULL_FACE + (F2L_FACE * 2)
         ),
         'triggers': DEFAULT_TRIGGERS,
+        'optimizers': [remove_auf_moves],
     },
     'PLL': {
         'mask': FULL_CUBE,
         'triggers': DEFAULT_TRIGGERS,
+        'optimizers': [remove_auf_moves],
     },
     'LL': {
         'mask': FULL_CUBE,
         'triggers': DEFAULT_TRIGGERS,
+        'optimizers': [remove_auf_moves],
     },
     'RAW': {
         'mask': FULL_CUBE,

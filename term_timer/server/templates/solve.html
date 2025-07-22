@@ -915,7 +915,7 @@
               <th>Case</th>
               <th>Moves</th>
               <th>HTM</th>
-              <th>Gains</th>
+              <th>Gains QTM</th>
             </tr>
           </thead>
           <tbody>
@@ -959,9 +959,9 @@
                   {{ optimized_algorithm.metrics.htm|normalize_value(solve.method_applied, 'moves', info.name) }}
                 </td>
                 <td class="recons-gains">
-                  {% set delta = info.moves_prettified.metrics.htm - optimized_algorithm.metrics.htm %}
+                  {% set delta = info.moves_prettified.metrics.qtm - optimized_algorithm.metrics.qtm %}
                   {% if delta %}
-                    <span class="metric-success">{{ delta }}</span>
+                    <span class="metric-success">-{{ delta }}</span>
                   {% else %}
                     0
                   {% endif %}

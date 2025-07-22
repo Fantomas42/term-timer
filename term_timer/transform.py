@@ -4,7 +4,6 @@ from cubing_algs.transform.fat import refat_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.rotation import compress_final_rotations
 from cubing_algs.transform.rotation import remove_final_rotations
-from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.slice import reslice_moves
 from cubing_algs.transform.timing import untime_moves
 
@@ -40,11 +39,4 @@ def prettify_moves(algorithm: Algorithm) -> Algorithm:
     return algorithm.transform(
         untime_moves,
         optimize_double_moves,
-    )
-
-
-def optimize_moves(algorithm: Algorithm) -> Algorithm:
-    return algorithm.transform(
-        compress_moves,
-        untime_moves,
     )
