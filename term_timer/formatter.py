@@ -192,7 +192,7 @@ def format_alg_triggers(algorithm: str, trigger_names: list[str]) -> str:
 
 
 def format_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
-    if pre_auf:
+    if pre_auf and algorithm:
         algorithm_parts = algorithm.split(' ')
         for i, move in enumerate(algorithm_parts):
             if move[0] == AUF:
@@ -201,7 +201,7 @@ def format_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
                 break
         algorithm = ' '.join(algorithm_parts)
 
-    if post_auf:
+    if post_auf and algorithm:
         algorithm_parts = list(reversed(algorithm.split(' ')))
         for i, move in enumerate(algorithm_parts):
             if move[0] == AUF:
@@ -214,6 +214,9 @@ def format_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
 
 
 def format_moves(algorithm: str) -> str:
+    if not algorithm:
+        return ''
+
     algorithm_parts = algorithm.split(' ')
 
     for i, move in enumerate(algorithm_parts):
