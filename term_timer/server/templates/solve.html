@@ -42,6 +42,7 @@
        {% for times in reconstruction_timing %}[{{ times.0 }}, {{ times.1 }}, "{{ times.2 }}"],
        {% endfor %}
      ];
+     const solutionIndex = {{ reconstruction_index|tojson }};
 
      const duration = solutionMoveTimestamps.at(-1);
      const parsedAlg = Alg.fromString(solutionString);
@@ -69,8 +70,15 @@
      player.experimentalModel.animationTimelineLeavesRequest.set(
        animationTimelineLeaves,
      );
+     const viewer = new TwistyAlgViewer({ twistyPlayer: player });
      document.querySelector("#replayer").appendChild(player);
-     document.querySelector("#replayer").appendChild(new TwistyAlgViewer({ twistyPlayer: player }));
+     document.querySelector("#replayer").appendChild(viewer);
+
+     function gotoStep(step) {
+       document.getElementById('replay').scrollIntoView();
+       viewer.jumpToIndex(solutionIndex[step] - 1, false);
+     }
+     window.gotoStep = gotoStep;
     </script>
 
     <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
@@ -693,7 +701,7 @@
             {% for info in solve.method_applied.summary %}
               <tr class="{% if info.type == 'substep' %}substep{% endif %}">
                 <td class="recons-step">
-                  {{ info.name }}
+                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
                 </td>
                 <td class="recons-case">
                   <div class="cfop-case">
@@ -770,7 +778,7 @@
             {% for info in solve.method_applied.summary %}
               <tr class="{% if info.type == 'substep' %}substep{% endif %}">
                 <td class="recons-step">
-                  {{ info.name }}
+                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
                 </td>
                 <td class="recons-case">
                   <div class="cfop-case">
@@ -840,7 +848,7 @@
             {% for info in solve.method_applied.summary %}
               <tr class="{% if info.type == 'substep' %}substep{% endif %}">
                 <td class="recons-step">
-                  {{ info.name }}
+                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
                 </td>
                 <td class="recons-case">
                   <div class="cfop-case">
@@ -922,7 +930,7 @@
             {% for info in solve.method_applied.summary %}
               <tr class="{% if info.type == 'substep' %}substep{% endif %}">
                 <td class="recons-step">
-                  {{ info.name }}
+                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
                 </td>
                 <td class="recons-case">
                   <div class="cfop-case">

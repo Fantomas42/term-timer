@@ -445,6 +445,29 @@ class SolveView(View):
                         },
                     )
 
+        reconstruction_text = self.solve.method_text_builder(
+            multiple=False,
+        )
+        step_index = {}
+        index = 0
+        for line in reconstruction_text.split('\n'):
+            if not line:
+                continue
+            moves, comment = line.split('//')
+            name = comment
+            if 'Reco' in name:
+                name = name.split('Reco')[0]
+            if '(' in name:
+                name = name.split('(')[0]
+            name = name.strip()
+            step_index[name] = index
+            if ' ' in name:
+                name = name.split(' ')[0]
+                if name not in step_index:
+                    step_index[name] = index
+
+            index += len(moves.strip().split(' '))
+
         return {
             'cube': self.cube,
             'session': self.session,
@@ -456,10 +479,9 @@ class SolveView(View):
             'tps': tps,
             'recognitions': recognitions,
             'cube_orientation': CUBE_ORIENTATION,
-            'reconstruction_text': self.solve.method_text_builder(
-                multiple=False,
-            ),
+            'reconstruction_text': reconstruction_text,
             'reconstruction_timing': self.solve.reconstruction_steps_timing,
+            'reconstruction_index': step_index,
             'rank': rank,
         }
 

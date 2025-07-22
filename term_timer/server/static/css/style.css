@@ -592,7 +592,10 @@ twisty-alg-viewer {
 
 .table-container td.recons-step {
     font-weight: bold;
+}
 
+.table-container td.recons-step a {
+    cursor: pointer;
 }
 
 .table-container td.solve-scramble,
