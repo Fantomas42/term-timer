@@ -7,20 +7,20 @@ from contextlib import suppress
 from pprint import pformat
 
 from cubing_algs.parsing import parse_moves
-from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.optimize import optimize_double_moves
-from cubing_algs.transform.rotation import remove_final_rotations
-from cubing_algs.transform.slice import reslice_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
 from term_timer.bluetooth.facelets import to_magiccube_facelets
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
+from term_timer.config import CUBE_ORIENTATION
 from term_timer.interface.console import console
 from term_timer.logger import LOGGING_DIR
 from term_timer.magic_cube import Cube
 from term_timer.opengl.thread import CubeGLThread
+from term_timer.transform import humanize_moves
+from term_timer.transform import prettify_moves
+from term_timer.transform import reorient_moves
 
 logger = logging.getLogger(__name__)
 
@@ -172,13 +172,15 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube):
                     gl_thread.add_move(face, direction)
 
                 algo = parse_moves(moves)
-                recon = algo.transform(
-                    reslice_moves,
-                    degrip_full_moves,
-                    remove_final_rotations,
-                    optimize_double_moves,
-                    to_fixpoint=True,
+                recon = prettify_moves(
+                    humanize_moves(
+                        reorient_moves(
+                            CUBE_ORIENTATION,
+                            algo,
+                        ),
+                    ),
                 )
+
                 logger.info('MOVES: %s', algo)
                 logger.info('RECON: %s', recon)
             else:
