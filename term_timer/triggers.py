@@ -15,7 +15,9 @@ BASE_TRIGGERS = {
 
     "RUR'U": 'su',
     "RU'R'U'": 'sa',
+
     "RU2R'": 'ne',
+    "R'U2R": 'ne',
 
     "RUR'": 'pair-ie',
     "RU'R'": 'pair-ie',
