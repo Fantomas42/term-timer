@@ -767,7 +767,7 @@
             <tr>
               <td class="solve-id">
                 <a href="/{{ solve.cube_size }}/{{ solve.session }}/{{ solve.solve_id }}/" class="link">
-                  #{{ solve.solve_id }}
+                  #{{ stats.stack|length - loop.index0 }}
                 </a>
               </td>
               <td class="solve-time {% if solve.time == stats.best %}time-best{% elif solve.time == stats.worst %}time-worst{% endif %}">
