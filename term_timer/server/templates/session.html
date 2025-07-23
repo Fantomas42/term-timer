@@ -766,7 +766,7 @@
           {% for solve in stats.stack|reverse %}
             <tr>
               <td class="solve-id">
-                <a href="/{{ cube }}/{{ session|default('default', true) }}/{{ solve.solve_id }}/" class="link">
+                <a href="/{{ solve.cube_size }}/{{ solve.session }}/{{ solve.solve_id }}/" class="link">
                   #{{ solve.solve_id }}
                 </a>
               </td>
