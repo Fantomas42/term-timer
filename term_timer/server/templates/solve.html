@@ -679,6 +679,9 @@
         <div class="tab" data-tab="solve-percent">Percent</div>
         <div class="tab" data-tab="solve-issues">Issues</div>
         <div class="tab" data-tab="solve-optimized">Optimized</div>
+        {% if DEBUG %}
+          <div class="tab" data-tab="solve-raw">Raw</div>
+        {% endif %}
       </div>
 
       <div class="tab-content active table-container" id="solve-time-tab">
@@ -979,6 +982,61 @@
           </tbody>
         </table>
       </div>
+
+      {% if DEBUG %}
+      <div class="tab-content table-container" id="solve-raw-tab">
+        <table class="reconstruction raw">
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Case</th>
+              <th>Moves</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for info in solve.method_applied.summary %}
+              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
+                <td class="recons-step">
+                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
+                </td>
+                <td class="recons-case">
+                  <div class="cfop-case">
+                    {% if info.cases %}
+                      {% set name_part = info.cases[0].split(" ") %}
+                      {% if 'SKIP' not in name_part[0] %}
+                        <div class="cfop-case-img">{{ name_part[0] }}</div>
+                        {% if info.name == 'OLL' %}
+                          <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
+                             target="_blank" class="link">
+                            {{ " ".join(name_part[1:]) }}
+                          </a>
+                        {% elif info.name == 'PLL' %}
+                          <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
+                             target="_blank" class="link">
+                            PLL {{ name_part[0] }}
+                          </a>
+                        {% endif %}
+                      {% else %}
+                        <span class="skip">SKIP</span>
+                      {% endif %}
+                    {% else %}
+                      <div class="cfop-case-img">N/A</div>
+                    {% endif %}
+                  </div>
+                </td>
+                <td class="recons-moves">
+                  {% if not info.type == 'virtual' %}
+                    {% for m in info.moves_reoriented %}
+                      <span class="move">{{ m.untimed }}</span>
+                    {% endfor %}
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
 
     </div>
 
