@@ -28,6 +28,7 @@ from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.interface.console import console
 from term_timer.methods.base import STEPS_CONFIG
+from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
@@ -289,17 +290,36 @@ class IndexView(View):
 class SessionView(View):
     template_name = 'session.html'
 
-    def __init__(self, cube, session):
+    def __init__(self, cube, session, oll, pll):
         self.cube = cube
         self.session = session
 
-        self.stats = StatisticsReporter(
+        solves = load_all_solves(
             cube,
-            load_all_solves(
-                cube,
-                [] if session == 'all' else [session],
-                [], '',
-            ),
+            [] if session == 'all' else [session],
+            [], '',
+        )
+
+        self.oll = oll
+        self.pll = pll
+
+        if oll or pll:
+            filtered_solves = []
+            for solve in solves:
+                analysis = CFOPAnalyser(solve.scramble, solve.solution)
+                step_oll, step_pll = analysis.summary[-2:]
+
+                if (
+                        (oll and step_oll['cases'][0].split(' ')[0] == oll)
+                        or
+                        (pll and step_pll['cases'][0].split(' ')[0] == pll)
+                ):
+                    filtered_solves.append(solve)
+
+            solves = filtered_solves
+
+        self.stats = StatisticsReporter(
+            cube, solves,
         )
 
     def get_context(self):
@@ -312,6 +332,8 @@ class SessionView(View):
             'trend': self.compute_trend(),
             'distribution': self.compute_distribution(),
             'punchcard': self.compute_punchcard(),
+            'oll': self.oll,
+            'pll': self.pll,
         }
 
     def compute_sessions(self):
@@ -529,6 +551,8 @@ class Server:
         def session(cube, session):
             return SessionView(
                 cube, session,
+                request.query.oll or '',
+                request.query.pll or '',
             ).as_view(debug)
 
         @app.route('/static/<filepath:path>')

@@ -4,7 +4,11 @@
 
 {% block title %}{{ session|title() }} {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
 
-{% block subtitle %}{{ session|title() }} {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
+{% block subtitle %}
+  {{ session|title() }} {{ cube }}x{{ cube }}x{{ cube }}
+  {% if oll %}OLL {{ oll }}{% endif %}
+  {% if pll %}PLL {{ pll }}{% endif %}
+{% endblock %}
 
 {% block script %}
   <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
@@ -839,7 +843,11 @@
                 <td>
                   <div class="cfop-case">
                     {% set name_part = name.split(" ") %}
-                    <div class="cfop-case-img">{{ name_part[0] }}</div>
+                    <div class="cfop-case-img">
+                      <a href="?oll={{ name_part[0] }}">
+                         {{ name_part[0] }}
+                      </a>
+                    </div>
                     {% if 'SKIP' not in name %}
                       <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
                          target="_blank" class="link">
@@ -905,7 +913,11 @@
                 <td>
                   <div class="cfop-case">
                     {% set name_part = name.split(" ") %}
-                    <div class="cfop-case-img">{{ name_part[0] }}</div>
+                    <div class="cfop-case-img">
+                      <a href="?pll={{ name_part[0] }}">
+                         {{ name_part[0] }}
+                      </a>
+                    </div>
                     {% if 'SKIP' not in name %}
                       <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
                          target="_blank" class="link">

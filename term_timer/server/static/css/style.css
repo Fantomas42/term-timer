@@ -444,6 +444,11 @@ header {
     font-size: 0.75rem;
 }
 
+.cfop-case-img a {
+    color: var(--light);
+    text-decoration: none;
+}
+
 .frequency-higher {
     color: var(--success) !important;
 }
