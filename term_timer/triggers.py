@@ -4,38 +4,37 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.offset import offset_y2_moves
 from cubing_algs.transform.offset import offset_y_moves
 from cubing_algs.transform.offset import offset_yprime_moves
+from cubing_algs.transform.symmetry import symmetry_m_moves
 
 BASE_TRIGGERS = {
+    # "RU2R'U'RU'R'": 'chair',
+
     "RUR'U'": 'sexy-move',
-    "L'U'LU": 'sexy-move',
 
     "R'FRF'": 'sledgehammer',
-    "LF'L'F": 'sledgehammer',
 
     "RUR'U": 'su',
-    "L'U'LU'": 'su',
 
     "RU2R'": 'ne',
-    "L'U2L": 'ne',
 
     "RUR'": 'pair-ie',
     "RU'R'": 'pair-ie',
-    "R'UR": 'pair-ie',
-    "R'U'R": 'pair-ie',
-    # TODO: Add chaise
 }
 
 
 TRIGGERS = {}
 for algo_string, name in BASE_TRIGGERS.items():
-    algo = parse_moves(algo_string)
+    source_algo = parse_moves(algo_string)
+    anti_algo = source_algo.transform(
+        symmetry_m_moves,
+    )
 
     TRIGGERS.setdefault(name, [])
-
-    TRIGGERS[name].append(str(algo))
-    TRIGGERS[name].append(str(algo.transform(offset_y_moves)))
-    TRIGGERS[name].append(str(algo.transform(offset_yprime_moves)))
-    TRIGGERS[name].append(str(algo.transform(offset_y2_moves)))
+    for algo in [source_algo, anti_algo]:
+        TRIGGERS[name].append(str(algo))
+        TRIGGERS[name].append(str(algo.transform(offset_y_moves)))
+        TRIGGERS[name].append(str(algo.transform(offset_yprime_moves)))
+        TRIGGERS[name].append(str(algo.transform(offset_y2_moves)))
 
 
 TRIGGERS_REGEX = {
@@ -43,4 +42,10 @@ TRIGGERS_REGEX = {
     for name, algos in TRIGGERS.items()
 }
 
-DEFAULT_TRIGGERS = ['sexy-move', 'sledgehammer', 'su', 'ne', 'pair-ie']
+DEFAULT_TRIGGERS = [
+    # 'chair',
+    'sexy-move',
+    'sledgehammer',
+    'su', 'ne',
+    'pair-ie',
+]
