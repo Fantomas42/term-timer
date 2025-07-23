@@ -1,4 +1,5 @@
 {% extends "skeleton.html" %}
+{% from 'macros/step.html' import step_case %}
 
 {% block description %}
   Solve #{{ solve_id }} from session {{ session }} on {{ cube }}x{{ cube }}x{{ cube }}
@@ -707,29 +708,7 @@
                   <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
                 </td>
                 <td class="recons-case">
-                  <div class="cfop-case">
-                    {% if info.cases %}
-                      {% set name_part = info.cases[0].split(" ") %}
-                      {% if 'SKIP' not in name_part[0] %}
-                        <div class="cfop-case-img">{{ name_part[0] }}</div>
-                        {% if info.name == 'OLL' %}
-                          <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
-                             target="_blank" class="link">
-                            {{ " ".join(name_part[1:]) }}
-                          </a>
-                        {% elif info.name == 'PLL' %}
-                          <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
-                             target="_blank" class="link">
-                            PLL {{ name_part[0] }}
-                          </a>
-                        {% endif %}
-                      {% else %}
-                        <span class="skip">SKIP</span>
-                      {% endif %}
-                    {% else %}
-                      <div class="cfop-case-img">N/A</div>
-                    {% endif %}
-                  </div>
+                  {{ step_case(info) }}
                 </td>
                 <td class="recons-moves">
                   {% if not info.type == 'virtual' %}
@@ -784,29 +763,7 @@
                   <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
                 </td>
                 <td class="recons-case">
-                  <div class="cfop-case">
-                    {% if info.cases %}
-                      {% set name_part = info.cases[0].split(" ") %}
-                      {% if 'SKIP' not in name_part[0] %}
-                        <div class="cfop-case-img">{{ name_part[0] }}</div>
-                        {% if info.name == 'OLL' %}
-                          <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
-                             target="_blank" class="link">
-                            {{ " ".join(name_part[1:]) }}
-                          </a>
-                        {% elif info.name == 'PLL' %}
-                          <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
-                             target="_blank" class="link">
-                            PLL {{ name_part[0] }}
-                          </a>
-                        {% endif %}
-                      {% else %}
-                        <span class="skip">SKIP</span>
-                      {% endif %}
-                    {% else %}
-                      <div class="cfop-case-img">N/A</div>
-                    {% endif %}
-                  </div>
+                  {{ step_case(info) }}
                 </td>
                 <td class="recons-moves">
                   {% if not info.type == 'virtual' %}
@@ -854,29 +811,7 @@
                   <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
                 </td>
                 <td class="recons-case">
-                  <div class="cfop-case">
-                    {% if info.cases %}
-                      {% set name_part = info.cases[0].split(" ") %}
-                      {% if 'SKIP' not in name_part[0] %}
-                        <div class="cfop-case-img">{{ name_part[0] }}</div>
-                        {% if info.name == 'OLL' %}
-                          <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
-                             target="_blank" class="link">
-                            {{ " ".join(name_part[1:]) }}
-                          </a>
-                        {% elif info.name == 'PLL' %}
-                          <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
-                             target="_blank" class="link">
-                            PLL {{ name_part[0] }}
-                          </a>
-                        {% endif %}
-                      {% else %}
-                        <span class="skip">SKIP</span>
-                      {% endif %}
-                    {% else %}
-                      <div class="cfop-case-img">N/A</div>
-                    {% endif %}
-                  </div>
+                  {{ step_case(info) }}
                 </td>
                 <td class="recons-moves">
                   {% if not info.type == 'virtual' %}
@@ -936,29 +871,7 @@
                   <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
                 </td>
                 <td class="recons-case">
-                  <div class="cfop-case">
-                    {% if info.cases %}
-                      {% set name_part = info.cases[0].split(" ") %}
-                      {% if 'SKIP' not in name_part[0] %}
-                        <div class="cfop-case-img">{{ name_part[0] }}</div>
-                        {% if info.name == 'OLL' %}
-                          <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
-                             target="_blank" class="link">
-                            {{ " ".join(name_part[1:]) }}
-                          </a>
-                        {% elif info.name == 'PLL' %}
-                          <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
-                             target="_blank" class="link">
-                            PLL {{ name_part[0] }}
-                          </a>
-                        {% endif %}
-                      {% else %}
-                        <span class="skip">SKIP</span>
-                      {% endif %}
-                    {% else %}
-                      <div class="cfop-case-img">N/A</div>
-                    {% endif %}
-                  </div>
+                  {{ step_case(info) }}
                 </td>
                 {% set optimized_string, optimized_algorithm = info|optimized_step %}
                 <td class="recons-moves">
@@ -1000,29 +913,7 @@
                   <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
                 </td>
                 <td class="recons-case">
-                  <div class="cfop-case">
-                    {% if info.cases %}
-                      {% set name_part = info.cases[0].split(" ") %}
-                      {% if 'SKIP' not in name_part[0] %}
-                        <div class="cfop-case-img">{{ name_part[0] }}</div>
-                        {% if info.name == 'OLL' %}
-                          <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
-                             target="_blank" class="link">
-                            {{ " ".join(name_part[1:]) }}
-                          </a>
-                        {% elif info.name == 'PLL' %}
-                          <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
-                             target="_blank" class="link">
-                            PLL {{ name_part[0] }}
-                          </a>
-                        {% endif %}
-                      {% else %}
-                        <span class="skip">SKIP</span>
-                      {% endif %}
-                    {% else %}
-                      <div class="cfop-case-img">N/A</div>
-                    {% endif %}
-                  </div>
+                  {{ step_case(info) }}
                 </td>
                 <td class="recons-moves">
                   {% if not info.type == 'virtual' %}

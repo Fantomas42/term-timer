@@ -1,0 +1,25 @@
+{% macro step_case(step) %}
+  <div class="cfop-case">
+    {% if step.cases %}
+      {% set name_part = step.cases[0].split(" ") %}
+      {% if 'SKIP' not in name_part[0] %}
+        <div class="cfop-case-img">{{ name_part[0] }}</div>
+        {% if step.name == 'OLL' %}
+          <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
+             target="_blank" class="link">
+            {{ " ".join(name_part[1:]) }}
+          </a>
+        {% elif step.name == 'PLL' %}
+          <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
+             target="_blank" class="link">
+            PLL {{ name_part[0] }}
+          </a>
+        {% endif %}
+      {% else %}
+        <span class="skip">SKIP</span>
+      {% endif %}
+    {% else %}
+      <div class="cfop-case-img">N/A</div>
+    {% endif %}
+  </div>
+{% endmacro %}
