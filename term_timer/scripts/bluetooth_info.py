@@ -214,9 +214,91 @@ async def client_cb(queue, time, use_opengl):
     logger.warning('Interface disconnected')
 
 
+def linear_regression(X, Y):
+    """
+    Calcule la régression linéaire simple entre deux listes de valeurs.
+
+    Args:
+        X: Liste des valeurs x (peut contenir None)
+        Y: Liste des valeurs y (peut contenir None)
+
+    Returns:
+        Tuple contenant (pente, ordonnée_à_l_origine)
+    """
+    sum_x = 0.0
+    sum_y = 0.0
+    sum_xy = 0.0
+    sum_xx = 0.0
+    sum_yy = 0.0
+    n = 0
+
+    for i in range(len(X)):
+        x = X[i]
+        y = Y[i]
+        if x is None or y is None:
+            continue
+
+        n += 1
+        sum_x += x
+        sum_y += y
+        sum_xy += x * y
+        sum_xx += x * x
+        sum_yy += y * y
+
+    var_x = n * sum_xx - sum_x * sum_x
+    cov_xy = n * sum_xy - sum_x * sum_y
+
+    slope = 1.0 if var_x < 1e-3 else cov_xy / var_x
+    intercept = 0.0 if n < 1 else sum_y / n - slope * sum_x / n
+
+    return (slope, intercept)
+
+
 def resume(events):
+    cube_timestamps = []
+    local_timestamps = []
+
     for event in events:
-        print(pformat(event))
+        if event['event'] != 'move':
+            continue
+        print('Move:', event['move'], 'Serial:', event['serial'])
+        if event['timestamp'] != event['local_timestamp']:
+            print(' -> Difference in timestamp', event['local_timestamp'])
+        cube_timestamps.append(
+            event['cube_timestamp'],
+        )
+        local_timestamps.append(
+            event['local_timestamp'].timestamp(),
+        )
+
+    skew_slope, skew_intercept = linear_regression(
+        local_timestamps,
+        cube_timestamps,
+    )
+
+    skew_percent = (skew_slope - 1) * 100_000 / 1000
+    print('Skew percent', skew_percent, '%')
+
+    slope, intercept = linear_regression(
+        cube_timestamps,
+        local_timestamps,
+    )
+
+    first_cube_timestamp = cube_timestamps[0]
+    first_local_timestamp = local_timestamps[0]
+
+    first_cube_timestamp_corrected = slope * first_cube_timestamp + intercept
+
+    for cube_timestamp, local_timestamp in zip(cube_timestamps, local_timestamps, strict=True):
+        print(
+            cube_timestamp,
+            'Delta Cube:',
+            cube_timestamp - first_cube_timestamp,
+            'Delta Local:',
+            int((local_timestamp - first_local_timestamp) * 1000),
+            'Corrected:',
+            int(((slope * cube_timestamp + intercept) - first_cube_timestamp_corrected) * 1000),
+        )
 
 
 async def run(options):
