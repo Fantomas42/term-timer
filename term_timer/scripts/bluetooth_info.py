@@ -71,7 +71,7 @@ LOGGING_CONF = {
 }
 
 
-async def consumer_cb(queue, cube_ready, gl_thread, show_cube):
+async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
     visual_cube = None
     virtual_cube = None
     moves = []
@@ -86,6 +86,7 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube):
         events = await queue.get()
 
         if events is None:
+            print('\a', end='', flush=True)
             logger.info(
                 'CONSUMER: Got message from client about disconnection. '
                 'Exiting consumer loop...',
@@ -93,6 +94,7 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube):
             break
 
         for event in events:
+            event_collector.append(event)
             event_name = event['event']
             if event_name == 'hardware':
                 logger.info(
@@ -183,6 +185,7 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube):
 
                 logger.info('MOVES: %s', algo)
                 logger.info('RECON: %s', recon)
+
             else:
                 logger.info(
                     'CONSUMER: UNKNOWN\n%s',
@@ -204,13 +207,20 @@ async def client_cb(queue, time, use_opengl):
     await bluetooth_interface.send_command('REQUEST_BATTERY')
 
     logger.info('Free play for %ss', time)
+    print('\a', end='', flush=True)
     await asyncio.sleep(time)
 
     await bluetooth_interface.__aexit__(None, None, None)
     logger.warning('Interface disconnected')
 
 
+def resume(events):
+    for event in events:
+        print(pformat(event))
+
+
 async def run(options):
+    event_collector = []
     queue = asyncio.Queue()
     cube_ready = threading.Event()
 
@@ -218,8 +228,13 @@ async def run(options):
     if options.use_opengl:
         gl_thread = CubeGLThread(cube_ready, 800, 600, daemon=True)
 
-    client = client_cb(queue, options.time, options.use_opengl)
-    consumer = consumer_cb(queue, cube_ready, gl_thread, options.show_cube)
+    client = client_cb(
+        queue, options.time, options.use_opengl,
+    )
+    consumer = consumer_cb(
+        queue, cube_ready, gl_thread,
+        options.show_cube, event_collector,
+    )
 
     try:
         bluetooth_tasks = asyncio.gather(client, consumer)
@@ -233,6 +248,8 @@ async def run(options):
         if gl_thread and gl_thread.is_alive():
             gl_thread.stop()
             gl_thread.join(timeout=2)
+
+    resume(event_collector)
 
     logger.info('Bye bye')
 
