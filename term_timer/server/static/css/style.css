@@ -288,6 +288,11 @@ header {
     background-color: #AA3333;
 }
 
+.recons-moves .sa {
+    color: var(--dark);
+    background-color: #FF8888;
+}
+
 .recons-moves .ne {
     color: var(--dark);
     background-color: #33FFAA;

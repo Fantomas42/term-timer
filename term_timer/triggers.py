@@ -14,7 +14,7 @@ BASE_TRIGGERS = {
     "R'FRF'": 'sledgehammer',
 
     "RUR'U": 'su',
-
+    "RU'R'U'": 'sa',
     "RU2R'": 'ne',
 
     "RUR'": 'pair-ie',
@@ -46,6 +46,8 @@ DEFAULT_TRIGGERS = [
     # 'chair',
     'sexy-move',
     'sledgehammer',
-    'su', 'ne',
+    'su',
+    'sa',
+    'ne',
     'pair-ie',
 ]
