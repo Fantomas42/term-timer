@@ -243,7 +243,7 @@ class Error500View(View):
         }
 
 
-class IndexView(View):
+class SessionListView(View):
     template_name = 'index.html'
 
     def get_context(self):
@@ -287,7 +287,7 @@ class IndexView(View):
         }
 
 
-class SessionView(View):
+class SessionDetailView(View):
     template_name = 'session.html'
 
     def __init__(self, cube, session, oll, pll):
@@ -402,7 +402,7 @@ class SessionView(View):
         return punchcard
 
 
-class SolveView(View):
+class SolveDetailView(View):
     template_name = 'solve.html'
 
     def __init__(self, cube, session, solve, method):
@@ -508,6 +508,15 @@ class SolveView(View):
         }
 
 
+class SolveUpdateView(SolveDetailView):
+
+    def get_context(self):
+        ...
+        # edit solve
+        # save
+        # redirect
+
+
 class Server:
 
     def run_server(self, host, port, debug):
@@ -537,34 +546,40 @@ class Server:
         app = Bottle()
 
         @app.route('/')
-        def index():
-            return IndexView().as_view(debug)
+        def session_list():
+            return SessionListView().as_view(debug)
+
+        @app.route('/<cube:int>/<session:path>/<solve:int>/update/')
+        def solve_update(cube, session, solve):
+            return SolveUpdateView(
+                cube, session, solve, '',
+            ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/')
-        def solve(cube, session, solve):
-            return SolveView(
+        def solve_detail(cube, session, solve):
+            return SolveDetailView(
                 cube, session, solve,
                 request.query.m or '',
             ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/')
-        def session(cube, session):
-            return SessionView(
+        def session_detail(cube, session):
+            return SessionDetailView(
                 cube, session,
                 request.query.oll or '',
                 request.query.pll or '',
             ).as_view(debug)
 
         @app.route('/static/<filepath:path>')
-        def serve_static(filepath):
+        def static_serve(filepath):
             return static_file(filepath, root=STATIC_DIRECTORY)
 
         @app.error(404)
-        def error404(error):
+        def error_404(error):
             return Error404View(error).as_view(debug)
 
         @app.error(500)
-        def error500(error):
+        def error_500(error):
             return Error500View(error).as_view(debug)
 
         return app
