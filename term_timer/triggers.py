@@ -12,6 +12,12 @@ BASE_TRIGGERS = {
     "R'FRF'": 'sledgehammer',
     "LF'L'F": 'sledgehammer',
 
+    "RUR'U": 'su',
+    "L'U'LU'": 'su',
+
+    "RU2R'": 'ne',
+    "L'U2L": 'ne',
+
     "RUR'": 'pair-ie',
     "RU'R'": 'pair-ie',
     "R'UR": 'pair-ie',
@@ -37,4 +43,4 @@ TRIGGERS_REGEX = {
     for name, algos in TRIGGERS.items()
 }
 
-DEFAULT_TRIGGERS = ['sexy-move', 'sledgehammer', 'pair-ie']
+DEFAULT_TRIGGERS = ['sexy-move', 'sledgehammer', 'su', 'ne', 'pair-ie']

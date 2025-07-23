@@ -283,6 +283,16 @@ header {
     background-color: #88CCFF;
 }
 
+.recons-moves .su {
+    color: var(--light);
+    background-color: #AA3333;
+}
+
+.recons-moves .ne {
+    color: var(--dark);
+    background-color: #33FFAA;
+}
+
 .recons-moves .wide,
 .recons-moves .slice {
     color: var(--dark);
@@ -607,7 +617,6 @@ twisty-alg-viewer {
 .table-container td.recons-moves {
     max-width: 300px;
     position: relative;
-    cursor: pointer;
     overflow-x: clip;
     text-overflow: clip;
 }
