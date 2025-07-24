@@ -561,6 +561,7 @@ class Solve:
             optimize_do_undo_moves,
             optimize_repeat_three_moves,
             optimize_triple_moves,
+            to_fixpoint=True,
         )
         return algorithm, compressed
 

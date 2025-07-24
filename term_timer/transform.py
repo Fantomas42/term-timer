@@ -20,7 +20,7 @@ def reorient_moves(orientation: Algorithm, algorithm: Algorithm) -> Algorithm:
 
 
 def humanize_moves(algorithm: Algorithm) -> Algorithm:
-    # Note this will work until orientation move are implemented
+    # Note: this will work until orientation move are implemented
     humanized = algorithm.transform(
         reslice_moves,
         degrip_full_moves,
