@@ -47,7 +47,7 @@ class Trainer(SolveInterface):
     def solve_line(self, solve: Solve) -> None:
         self.clear_line(full=True)
 
-        if solve.raw_moves:
+        if solve.advanced:
             if solve.flag != DNF:
                 self.console.print(solve.method_line, end='')
                 self.console.print(
