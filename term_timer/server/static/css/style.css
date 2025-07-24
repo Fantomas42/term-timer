@@ -246,10 +246,12 @@ header {
 
 .recons-moves .deletion {
     background-color: var(--danger);
+    border: 1px dashed var(--light);
 }
 
 .recons-moves .addition {
     background-color: var(--success);
+    border: 1px dashed var(--light);
 }
 
 .recons-moves .pause {
