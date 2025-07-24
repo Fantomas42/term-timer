@@ -17,7 +17,8 @@ COMMAND_ALIASES = {
     'detail': ['dt', 'd'],
     'import': ['im', 'i'],
     'serve': ['se', 'h'],
-    'train': ['tr', 'e'],
+    'train': ['tr', 'w'],
+    'edit': ['ed', 'e'],
 }
 
 COMMAND_RESOLUTIONS = {}
@@ -585,6 +586,34 @@ def detail_arguments(subparsers):
     return parser
 
 
+def edit_arguments(subparsers):
+    parser = subparsers.add_parser(
+        'edit',
+        help='Edit state solves',
+        description='Edit status on specific solves.',
+        aliases=COMMAND_ALIASES['edit'],
+    )
+
+    parser.add_argument(
+        'solves',
+        nargs='+',
+        type=int,
+        metavar='SOLVE_ID',
+        help='ID(s) of the solve(s) to edit state for.',
+    )
+
+    parser.add_argument(
+        'state',
+        metavar='STATE',
+        choices={'OK', '+2', 'DNF'},
+        help='State to set the solve(s) for.',
+    )
+
+    set_session_arguments(parser)
+
+    return parser
+
+
 def get_arguments() -> Any:
     parser = ArgumentParser(
         description='Speed cubing timer on your terminal.',
@@ -599,6 +628,7 @@ def get_arguments() -> Any:
     solve_arguments(subparsers)
     train_arguments(subparsers)
     detail_arguments(subparsers)
+    # edit_arguments(subparsers)
     list_arguments(subparsers)
     statistics_arguments(subparsers)
     graph_arguments(subparsers)
