@@ -54,6 +54,7 @@ theme = {
     'pre-auf': f'bold { TEXT_LIGHT } on #5F5F8E',
     'post-auf': f'bold { TEXT_LIGHT } on  #003D80',
 
+    'chair': f'{ TEXT_DARK } on #20C997',
     'sexy-move': f'{ TEXT_DARK } on #FF6666',
     'sledgehammer': f'{ TEXT_DARK } on #88CCFF',
     'pair-ie': f'{ TEXT_DARK } on #66FF66',

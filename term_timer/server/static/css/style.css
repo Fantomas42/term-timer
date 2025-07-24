@@ -298,6 +298,11 @@ header {
     background-color: #33FFAA;
 }
 
+.recons-moves .chair {
+    color: var(--dark);
+    background-color: #20C997;
+}
+
 .recons-moves .wide,
 .recons-moves .slice {
     color: var(--dark);

@@ -6,8 +6,10 @@ from cubing_algs.transform.offset import offset_y_moves
 from cubing_algs.transform.offset import offset_yprime_moves
 from cubing_algs.transform.symmetry import symmetry_m_moves
 
+BLOCK_PATTERN = re.compile(r'\[[^\]]+\].*?\[/[^\]]+\]')
+
 BASE_TRIGGERS = {
-    # "RU2R'U'RU'R'": 'chair',
+    "RU2R'U'RU'R'": 'chair',
 
     "RUR'U'": 'sexy-move',
 
@@ -40,12 +42,12 @@ for algo_string, name in BASE_TRIGGERS.items():
 
 
 TRIGGERS_REGEX = {
-    name: re.compile(rf'(?<!\])({ "|".join(algos) })(?![2\'])')
+    name: re.compile(rf'({ "|".join(algos) })(?![2\'])')
     for name, algos in TRIGGERS.items()
 }
 
 DEFAULT_TRIGGERS = [
-    # 'chair',
+    'chair',
     'sexy-move',
     'sledgehammer',
     'su',
@@ -53,3 +55,27 @@ DEFAULT_TRIGGERS = [
     'ne',
     'pair-ie',
 ]
+
+
+def apply_trigger_outside_blocks(algorithm: str, regex, replacement_func):
+
+    blocks = []
+    for match in re.finditer(BLOCK_PATTERN, algorithm):
+        blocks.append((match.start(), match.end(), match.group(0)))
+
+    result = ''
+    last_end = 0
+
+    for start, end, block_content in blocks:
+        segment_before = algorithm[last_end:start]
+        processed_segment = regex.sub(replacement_func, segment_before)
+        result += processed_segment
+
+        result += block_content
+        last_end = end
+
+    final_segment = algorithm[last_end:]
+    processed_final = regex.sub(replacement_func, final_segment)
+    result += processed_final
+
+    return result

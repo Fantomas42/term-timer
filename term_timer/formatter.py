@@ -10,6 +10,7 @@ from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 from term_timer.methods.base import AUF
 from term_timer.triggers import TRIGGERS_REGEX
+from term_timer.triggers import apply_trigger_outside_blocks
 
 
 def format_time(elapsed_ns: int, *, allow_dnf: bool = True) -> str:
@@ -186,7 +187,9 @@ def format_alg_triggers(algorithm: str, trigger_names: list[str]) -> str:
                 f'[/{ trigger_name }]'  # noqa: B023
             )
 
-        algorithm = regex.sub(replacer, algorithm)
+        algorithm = apply_trigger_outside_blocks(
+            algorithm, regex, replacer,
+        )
 
     return algorithm
 
