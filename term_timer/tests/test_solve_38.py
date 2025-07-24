@@ -256,23 +256,25 @@ class TestSolve38(unittest.TestCase):
             "[pair-ie]R' U' R[/pair-ie] "
             "U2 [pair-ie]L U L'[/pair-ie] [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U[/pre-auf] [pause].[/pause] [pre-auf]U[/pre-auf] "
-            "[pair-ie]R' U R[/pair-ie] U' "
-            "[pair-ie]R' U' R[/pair-ie] [reco-pause].[/reco-pause]",
+            "[pre-auf]U[/pre-auf] [pause].[/pause] "
+            "[pre-auf]U[/pre-auf] R' U [sa]R U' R' U'[/sa] "
+            "R [reco-pause].[/reco-pause]",
 
             "[pair-ie]R U R'[/pair-ie] [deletion]U'[/deletion] "
             "[pause].[/pause] [deletion]U[/deletion] U' "
-            "[pause].[/pause] F U2 F' U2 [pair-ie]F U' F'[/pair-ie] "
-            "[reco-pause].[/reco-pause]",
+            "[pause].[/pause] [ne]F U2 F'[/ne] "
+            "U2 [pair-ie]F U' F'[/pair-ie] [reco-pause].[/reco-pause]",
 
             "[pre-auf]U2[/pre-auf] [pause].[/pause] "
-            "[pair-ie]F' U F[/pair-ie] U' "
-            "[pair-ie]F' U' F[/pair-ie] [reco-pause].[/reco-pause]",
+            "F' U [sa]F U' F' U'[/sa] F [reco-pause].[/reco-pause]",
 
             "[pre-auf]U'[/pre-auf] [pause].[/pause] "
             "[pre-auf]U'[/pre-auf] [pause].[/pause] "
-            "[slice]M[/slice] L' U2 [pair-ie]L U L'[/pair-ie] "
-            "U L U [slice]M'[/slice] [reco-pause].[/reco-pause]",
+            "[slice]M[/slice] "
+            "[chair]L' U2 L U L' U L[/chair] "
+            "U "
+            "[slice]M'[/slice] "
+            "[reco-pause].[/reco-pause]",
 
             "[pre-auf]U[/pre-auf] R' U' F' "
             "[sexy-move]R U R' U'[/sexy-move] R' F R2 U' "
@@ -303,26 +305,28 @@ class TestSolve38(unittest.TestCase):
             "[addition].[/addition] [pair-ie]R' U' R[/pair-ie] "
             "U2 [pair-ie]L U L'[/pair-ie] [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U[/pre-auf] [pause].[/pause] [pre-auf]U[/pre-auf] "
-            "[pair-ie]R' U R[/pair-ie] U' "
-            "[pair-ie]R' U' R[/pair-ie] [reco-pause].[/reco-pause]",
+            "[pre-auf]U[/pre-auf] [pause].[/pause] "
+            "[pre-auf]U[/pre-auf] R' U [sa]R U' R' U'[/sa] "
+            "R [reco-pause].[/reco-pause]",
 
             "[pair-ie]R U R'[/pair-ie] [deletion]U'[/deletion] "
-            "[pause].[/pause] [pause].[/pause] "
-            "[deletion]U[/deletion] U' [pause].[/pause] "
-            "F U2 F' U2 [pair-ie]F U' F'[/pair-ie] "
+            "[pause].[/pause] [pause].[/pause] [deletion]U[/deletion] "
+            "U' [pause].[/pause] "
+            "[ne]F U2 F'[/ne] U2 [pair-ie]F U' F'[/pair-ie] "
             "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
             "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
 
             "[pre-auf]U2[/pre-auf] [pause].[/pause] "
-            "[pair-ie]F' U F[/pair-ie] U' "
-            "[pair-ie]F' U' F[/pair-ie] [reco-pause].[/reco-pause] "
-            "[reco-pause].[/reco-pause]",
+            "F' U [sa]F U' F' U'[/sa] F "
+            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
 
             "[pre-auf]U'[/pre-auf] [pause].[/pause] "
             "[pre-auf]U'[/pre-auf] [pause].[/pause] "
-            "[slice]M[/slice] L' U2 [pair-ie]L U L'[/pair-ie] "
-            "U L U [slice]M'[/slice] [reco-pause].[/reco-pause]",
+            "[slice]M[/slice] "
+            "[chair]L' U2 L U L' U L[/chair] "
+            "U "
+            "[slice]M'[/slice] "
+            "[reco-pause].[/reco-pause]",
 
             "[pre-auf]U[/pre-auf] R' U' F' "
             "[sexy-move]R U R' U'[/sexy-move] R' F R2 U' "

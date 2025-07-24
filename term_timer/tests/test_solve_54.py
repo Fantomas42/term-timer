@@ -241,11 +241,14 @@ class TestSolve54(unittest.TestCase):
             "R2 [pause].[/pause] U [pause].[/pause] F L [pause].[/pause] "
             "U F2 U' B2 [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U'[/pre-auf] [pair-ie]R U R'[/pair-ie] "
-            "U [pair-ie]B U' B'[/pair-ie] "
+            "[pre-auf]U'[/pre-auf] "
+            "[su]R U R' U[/su] "
+            "[pair-ie]B U' B'[/pair-ie] "
             "[reco-pause].[/reco-pause]",
 
-            "[pre-auf]U[/pre-auf] [pair-ie]F' U F[/pair-ie] U' "
+            "[pre-auf]U[/pre-auf] "
+            "[pair-ie]F' U F[/pair-ie] "
+            "U' "
             "[pair-ie]F U F'[/pair-ie] "
             "[reco-pause].[/reco-pause]",
 
@@ -256,8 +259,9 @@ class TestSolve54(unittest.TestCase):
             "[deletion]U2[/deletion] R' U [pair-ie]F' U' F[/pair-ie] "
             "[reco-pause].[/reco-pause]",
 
-            "[pre-auf]U[/pre-auf] [pair-ie]L U' L'[/pair-ie] "
-            "U' [pair-ie]B' U B[/pair-ie] "
+            "[pre-auf]U[/pre-auf] "
+            "[sa]L U' L' U'[/sa] "
+            "[pair-ie]B' U B[/pair-ie] "
             "[reco-pause].[/reco-pause]",
 
             "[pre-auf]U'[/pre-auf] [pause].[/pause] "
@@ -288,13 +292,16 @@ class TestSolve54(unittest.TestCase):
             "[pause].[/pause] U F2 U' B2 "
             "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U'[/pre-auf] [pair-ie]R U R'[/pair-ie] "
-            "U [pair-ie]B U' B'[/pair-ie] "
+            "[pre-auf]U'[/pre-auf] "
+            "[su]R U R' U[/su] "
+            "[pair-ie]B U' B'[/pair-ie] "
             "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
             "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
             "[reco-pause].[/reco-pause]",
 
-            "[pre-auf]U[/pre-auf] [pair-ie]F' U F[/pair-ie] U' "
+            "[pre-auf]U[/pre-auf] "
+            "[pair-ie]F' U F[/pair-ie] "
+            "U' "
             "[pair-ie]F U F'[/pair-ie] "
             "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
 
@@ -307,8 +314,10 @@ class TestSolve54(unittest.TestCase):
             "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
             "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U[/pre-auf] [pair-ie]L U' L'[/pair-ie] "
-            "U' [pair-ie]B' U B[/pair-ie] [reco-pause].[/reco-pause]",
+            "[pre-auf]U[/pre-auf] "
+            "[sa]L U' L' U'[/sa] "
+            "[pair-ie]B' U B[/pair-ie] "
+            "[reco-pause].[/reco-pause]",
 
             "[pre-auf]U'[/pre-auf] [pause].[/pause] "
             "[slice]M[/slice] [pair-ie]F U F'[/pair-ie] "
