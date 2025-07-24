@@ -158,7 +158,7 @@ class Importer:
 
         return solves
 
-    def import_file(self, source: str) -> None:
+    def import_file(self, source: str) -> int:
         source_path = Path(source)
 
         solves = None
@@ -180,10 +180,12 @@ class Importer:
 
         if solves is None:
             console.print('Invalid export format', style='warning')
-            return
+            return 1
 
         solves = sorted(solves, key=operator.itemgetter('date'))
 
         out = json.dumps(solves, indent=1)
 
         print(out)
+
+        return 0

@@ -10,6 +10,7 @@ from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
 from term_timer.interface.console import console
 from term_timer.logger import configure_logging
+from term_timer.manage import SolveManager
 from term_timer.server.app import Server
 from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
@@ -146,6 +147,21 @@ def tools(command, options):
     return 0
 
 
+def manage(command, options):
+    cube = options.cube
+
+    if command == 'edit':
+        for solve_id in options.solves:
+            manager = SolveManager(cube, options.session, solve_id)
+            manager.update(options.flag)
+
+    if command == 'delete':
+        manager = SolveManager(cube, options.session, options.solve)
+        manager.delete()
+
+    return 0
+
+
 def main() -> int:
     configure_logging()
 
@@ -158,10 +174,10 @@ def main() -> int:
         if command == 'train':
             return asyncio.run(trainer(options), debug=DEBUG)
         if command == 'import':
-            Importer().import_file(options.source)
-            return 0
+            return Importer().import_file(options.source)
         if command == 'serve':
             Server().run_server(options.host, options.port, DEBUG)
             return 0
-        tools(command, options)
-        return 0
+        if command in {'edit', 'delete'}:
+            return manage(command, options)
+        return tools(command, options)

@@ -105,7 +105,7 @@ class Timer(SolveInterface):
 
         self.clear_line(full=True)
 
-        if solve.raw_moves:
+        if solve.advanced:
             if solve.flag != DNF:
                 if self.show_reconstruction:
                     self.console.print(solve.method_line, end='')

@@ -590,8 +590,8 @@ def detail_arguments(subparsers):
 def edit_arguments(subparsers):
     parser = subparsers.add_parser(
         'edit',
-        help='Edit state solves',
-        description='Edit status on specific solves.',
+        help="Edit solves' flag",
+        description='Edit flag status on specific solves.',
         aliases=COMMAND_ALIASES['edit'],
     )
 
@@ -604,13 +604,33 @@ def edit_arguments(subparsers):
     )
 
     parser.add_argument(
-        'state',
-        metavar='STATE',
+        'flag',
+        metavar='FLAG',
         choices={'OK', '+2', 'DNF'},
-        help='State to set the solve(s) for.',
+        help='Flag to set the solve(s) for.',
     )
 
-    set_session_arguments(parser)
+    session = parser.add_argument_group('Session')
+    session.add_argument(
+        '-c', '--cube',
+        type=int,
+        choices=CUBE_SIZES,
+        default=3,
+        metavar='CUBE',
+        help=(
+            'Set the size of the cube (from 2 to 7).\n'
+            'Default: 3.'
+        ),
+    )
+    session.add_argument(
+        '-u', '--session',
+        default='',
+        metavar='SESSION',
+        help=(
+            'Name of the session for solves.\n'
+            'Default: None.'
+        ),
+    )
 
     return parser
 
@@ -624,14 +644,33 @@ def delete_arguments(subparsers):
     )
 
     parser.add_argument(
-        'solves',
-        nargs='+',
+        'solve',
         type=int,
         metavar='SOLVE_ID',
-        help='ID(s) of the solve(s) to delete.',
+        help='ID of the solve to delete.',
     )
 
-    set_session_arguments(parser)
+    session = parser.add_argument_group('Session')
+    session.add_argument(
+        '-c', '--cube',
+        type=int,
+        choices=CUBE_SIZES,
+        default=3,
+        metavar='CUBE',
+        help=(
+            'Set the size of the cube (from 2 to 7).\n'
+            'Default: 3.'
+        ),
+    )
+    session.add_argument(
+        '-u', '--session',
+        default='',
+        metavar='SESSION',
+        help=(
+            'Name of the session for solves.\n'
+            'Default: None.'
+        ),
+    )
 
     return parser
 
@@ -650,8 +689,8 @@ def get_arguments() -> Any:
     solve_arguments(subparsers)
     train_arguments(subparsers)
     detail_arguments(subparsers)
-    # edit_arguments(subparsers)
-    # delete_arguments(subparsers)
+    edit_arguments(subparsers)
+    delete_arguments(subparsers)
     list_arguments(subparsers)
     statistics_arguments(subparsers)
     graph_arguments(subparsers)
