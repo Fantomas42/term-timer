@@ -19,6 +19,7 @@ COMMAND_ALIASES = {
     'serve': ['se', 'h'],
     'train': ['tr', 'w'],
     'edit': ['ed', 'e'],
+    'delete': ['rm', 'r'],
 }
 
 COMMAND_RESOLUTIONS = {}
@@ -614,6 +615,27 @@ def edit_arguments(subparsers):
     return parser
 
 
+def delete_arguments(subparsers):
+    parser = subparsers.add_parser(
+        'delete',
+        help='Delete solves',
+        description='Delete specific solves.',
+        aliases=COMMAND_ALIASES['delete'],
+    )
+
+    parser.add_argument(
+        'solves',
+        nargs='+',
+        type=int,
+        metavar='SOLVE_ID',
+        help='ID(s) of the solve(s) to delete.',
+    )
+
+    set_session_arguments(parser)
+
+    return parser
+
+
 def get_arguments() -> Any:
     parser = ArgumentParser(
         description='Speed cubing timer on your terminal.',
@@ -629,6 +651,7 @@ def get_arguments() -> Any:
     train_arguments(subparsers)
     detail_arguments(subparsers)
     # edit_arguments(subparsers)
+    # delete_arguments(subparsers)
     list_arguments(subparsers)
     statistics_arguments(subparsers)
     graph_arguments(subparsers)
