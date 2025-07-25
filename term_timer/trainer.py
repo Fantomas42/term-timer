@@ -57,14 +57,14 @@ class Trainer(SolveInterface):
             else:
                 self.console.print(
                     f'[duration]Duration #{ self.counter }:[/duration]',
-                    f'[result]{ format_time(self.elapsed_time) }[/result]',
+                    f'[time]{ format_time(self.elapsed_time) }[/time]',
                     '[dnf]DNF[/dnf]',
                 )
                 return
 
         self.console.print(
             f'[duration]Duration #{ self.counter }:[/duration]',
-            f'[result]{ format_time(self.elapsed_time) }[/result]',
+            f'[time]{ format_time(self.elapsed_time) }[/time]',
         )
 
     async def start(self) -> bool:

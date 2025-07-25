@@ -46,7 +46,7 @@ class SolveManager:
 
         console.print(
             header,
-            f'[result]{ format_time(self.solve.time) }[/result]',
+            f'[time]{ format_time(self.solve.time) }[/time]',
             f'[date]{ date }[/date]',
             f'[{ flag_class }]{ self.solve.flag }[/{ flag_class }]',
         )

@@ -135,7 +135,7 @@ class Timer(SolveInterface):
             else:
                 self.console.print(
                     f'[duration]Duration #{ self.counter }:[/duration]',
-                    f'[result]{ format_time(self.elapsed_time) }[/result]',
+                    f'[time]{ format_time(self.elapsed_time) }[/time]',
                     '[dnf]DNF[/dnf]',
                 )
                 return
@@ -158,7 +158,7 @@ class Timer(SolveInterface):
 
         self.console.print(
             f'[duration]Duration #{ self.counter }:[/duration]',
-            f'[result]{ format_time(self.elapsed_time) }[/result]',
+            f'[time]{ format_time(self.elapsed_time) }[/time]',
             extra,
         )
 

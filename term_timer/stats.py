@@ -441,7 +441,7 @@ class StatisticsReporter(Statistics):
         )
         console.print(
             '[stats]Time       :[/stats] '
-            f'[result]{ format_time(solve.time) }[/result]'
+            f'[time]{ format_time(solve.time) }[/time]'
             f'[result]{ solve.flag }[/result]',
         )
         console.print(
