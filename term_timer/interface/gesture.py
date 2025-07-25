@@ -2,7 +2,6 @@ import asyncio
 import logging
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.rotation import compress_final_rotations
 from cubing_algs.transform.slice import reslice_moves
@@ -27,7 +26,7 @@ class Gesture:
         if len(self.save_moves) < 2:
             return
 
-        algo = parse_moves(self.save_moves).transform(
+        algo = self.save_moves.transform(
             reslice_moves,
             degrip_full_moves,
             compress_final_rotations,
