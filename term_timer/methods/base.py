@@ -127,7 +127,7 @@ class Analyser:
 
     def split_steps(self):
         cube = VCube()
-        facelets = cube.rotate(str(self.scramble))
+        facelets = cube.rotate(str(self.scramble))  # TODO: Should be handled natively
 
         steps = {}
         cases = []

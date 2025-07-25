@@ -10,8 +10,8 @@ class Scrambler:
     def __init__(self):
         super().__init__()
 
-        self.scramble = []
-        self.scrambled = []
+        self.scramble = Algorithm()
+        self.scrambled = []  # TODO: Use algorithm
         self.scramble_oriented = Algorithm()
 
         self.counter = 0
@@ -31,6 +31,7 @@ class Scrambler:
             full_clear = True
         else:
             out = ''
+            # TODO: optimize
             algo = self.reorient(
                 parse_moves(self.scrambled).transform(compress_moves),
             )
