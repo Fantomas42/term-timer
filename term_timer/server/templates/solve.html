@@ -32,6 +32,30 @@
        });
      });
    });
+
+   function handleOK() {
+     if (confirm('Mark this solve as OK ?')) {
+       alert('Solve marqué comme DNF');
+     }
+   }
+
+   function handleDNF() {
+     if (confirm('Mark this solve as DNF ?')) {
+       alert('Solve marqué comme DNF');
+     }
+   }
+
+   function handlePlus2() {
+     if (confirm('Mark this solve with a +2s penality ?')) {
+       alert('Pénalité +2 ajoutée');
+     }
+   }
+
+   function handleDelete() {
+     if (confirm('Are you sure you want to permanently delete this solve ?')) {
+       alert('Solve supprimé');
+     }
+   }
   </script>
   {% if solve.advanced %}
     <script type="module">
@@ -422,6 +446,19 @@
      }
     </script>
   {% endif %}
+{% endblock %}
+
+{% block actions %}
+  {% if solve.flag %}
+    <button class="action-btn btn-ok" onclick="handleOK()">OK</button>
+  {% endif %}
+  {% if solve.flag != 'DNF' %}
+    <button class="action-btn btn-dnf" onclick="handleDNF()">DNF</button>
+  {% endif %}
+  {% if solve.flag != '+2' %}
+    <button class="action-btn btn-plus2" onclick="handlePlus2()">+2</button>
+  {% endif %}
+  <button class="action-btn btn-delete" onclick="handleDelete()">Delete</button>
 {% endblock %}
 
 {% block body %}
