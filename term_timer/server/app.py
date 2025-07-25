@@ -9,6 +9,7 @@ from bottle import TEMPLATE_PATH
 from bottle import Bottle
 from bottle import abort
 from bottle import jinja2_template
+from bottle import redirect
 from bottle import request
 from bottle import static_file
 from cubing_algs.transform.size import compress_moves
@@ -26,6 +27,7 @@ from term_timer.formatter import format_grade
 from term_timer.formatter import format_moves
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
+from term_timer.in_out import save_solves
 from term_timer.interface.console import console
 from term_timer.methods.base import STEPS_CONFIG
 from term_timer.methods.cfop import CFOPAnalyser
@@ -416,8 +418,9 @@ class SolveDetailView(View):
         )
 
         self.solve_id = solve
+        self.solve_index = solve - 1
         try:
-            self.solve = self.solves[solve - 1]
+            self.solve = self.solves[self.solve_index]
         except IndexError:
             abort(404, 'Invalid solve ID')
 
@@ -508,13 +511,55 @@ class SolveDetailView(View):
         }
 
 
-class SolveUpdateView(SolveDetailView):
+class SolveUpdateView:
 
-    def get_context(self):
-        ...
-        # edit solve
-        # save
-        # redirect
+    def __init__(self, cube, session, solve_id, flag):
+        self.cube = cube
+        self.session = session
+        self.solve_id = solve_id
+        self.flag = flag
+
+        self.solves = load_all_solves(
+            cube,
+            [] if session == 'all' else [session],
+            [], '',
+        )
+
+        self.solve_index = solve_id - 1
+        try:
+            self.solve = self.solves[self.solve_index]
+        except IndexError:
+            abort(404, 'Invalid solve ID')
+
+        self.solves[self.solve_index].flag = flag
+        save_solves(cube, session, self.solves)
+
+        redirect(f'/{ cube }/{ session }/{ solve_id }/')
+
+
+class SolveDeleteView:
+
+    def __init__(self, cube, session, solve_id):
+        self.cube = cube
+        self.session = session
+        self.solve_id = solve_id
+
+        self.solves = load_all_solves(
+            cube,
+            [] if session == 'all' else [session],
+            [], '',
+        )
+
+        self.solve_index = solve_id - 1
+        try:
+            self.solve = self.solves[self.solve_index]
+        except IndexError:
+            abort(404, 'Invalid solve ID')
+
+        self.solves.pop(self.solve_index)
+        save_solves(cube, session, self.solves)
+
+        redirect(f'/{ cube }/{ session }/')
 
 
 class Server:
@@ -549,25 +594,34 @@ class Server:
         def session_list():
             return SessionListView().as_view(debug)
 
-        @app.route('/<cube:int>/<session:path>/<solve:int>/update/')
+        @app.route('/<cube:int>/<session:path>/<solve:int>/update/',
+                   method='POST')
         def solve_update(cube, session, solve):
             return SolveUpdateView(
-                cube, session, solve, '',
+                cube, session, solve,
+                request.POST.flag,
+            ).as_view(debug)
+
+        @app.route('/<cube:int>/<session:path>/<solve:int>/delete/',
+                   method='POST')
+        def solve_delete(cube, session, solve):
+            return SolveDeleteView(
+                cube, session, solve,
             ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/')
         def solve_detail(cube, session, solve):
             return SolveDetailView(
                 cube, session, solve,
-                request.query.m or '',
+                request.GET.m or '',
             ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/')
         def session_detail(cube, session):
             return SessionDetailView(
                 cube, session,
-                request.query.oll or '',
-                request.query.pll or '',
+                request.GET.oll or '',
+                request.GET.pll or '',
             ).as_view(debug)
 
         @app.route('/static/<filepath:path>')
