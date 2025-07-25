@@ -78,7 +78,7 @@ class SolveInterface(
         else:
             char = await self.getch('scrambled')
 
-        if char == 'q':
+        if char in {'q', '\x1b'}:
             return True
 
         self.set_state('scrambled')
@@ -186,4 +186,4 @@ class SolveInterface(
         if char != 'z':
             self.counter += 1
 
-        return char == 'q'
+        return char in {'q', '\x1b'}
