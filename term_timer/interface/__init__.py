@@ -53,7 +53,7 @@ class SolveInterface(
 
         self.scramble = []
         self.scrambled = []
-        self.scramble_oriented = []
+        self.scramble_oriented = Algorithm()
         self.facelets_scrambled = ''
         self.scramble_completed_event.clear()
 

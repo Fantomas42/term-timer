@@ -1,5 +1,6 @@
 import asyncio
 
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.size import compress_moves
 
@@ -11,7 +12,7 @@ class Scrambler:
 
         self.scramble = []
         self.scrambled = []
-        self.scramble_oriented = []
+        self.scramble_oriented = Algorithm()
 
         self.counter = 0
 
