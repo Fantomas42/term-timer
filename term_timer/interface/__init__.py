@@ -4,6 +4,8 @@ import time
 from datetime import datetime
 from datetime import timezone
 
+from cubing_algs.algorithm import Algorithm
+
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.in_out import save_solves
@@ -45,7 +47,7 @@ class SolveInterface(
 
         self.moves = []
 
-        self.save_moves = []
+        self.save_moves = Algorithm()
         self.save_gesture = ''
         self.save_gesture_event.clear()
 
@@ -157,7 +159,7 @@ class SolveInterface(
             self.stack[-1].flag = DNF
             save_string = 'Solve marked as DNF'
             save_style = 'caution'
-        elif char in {'o', 'q'}:
+        elif char == 'o':
             self.stack[-1].flag = ''
             save_string = 'Solve marked as OK'
             save_style = 'success'
