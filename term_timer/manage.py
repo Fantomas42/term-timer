@@ -66,7 +66,7 @@ class SolveManager:
         if not self.solve:
             return
 
-        if self.confirm(f'Are you sure to flag this solve as "{ flag }" ?'):
+        if self.confirm(f'Are you sure to mark this solve as "{ flag }" ?'):
             if flag == 'OK':
                 flag = ''
 
@@ -87,7 +87,9 @@ class SolveManager:
         if not self.solve:
             return
 
-        if self.confirm('Are you sure to delete this solve ?'):
+        if self.confirm(
+                'Are you sure you want to permanently delete this solve ?',
+        ):
             self.stack.pop(self.solve_index)
             self.save()
 

@@ -32,6 +32,62 @@
        });
      });
    });
+
+   function update(url, body) {
+     const form = document.createElement('form');
+     form.method = 'POST';
+     form.action = url;
+     form.style.display = 'none';
+
+     for (const [key, value] of Object.entries(body)) {
+       const input = document.createElement('input');
+       input.type = 'hidden';
+       input.name = key;
+       input.value = value;
+       form.appendChild(input);
+     }
+
+     document.body.appendChild(form);
+     form.submit();
+
+     document.body.removeChild(form);
+   }
+
+
+   function handleOK() {
+     if (confirm('Mark this solve as OK ?')) {
+       update(
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/update/",
+         {flag: ''},
+       )
+     }
+   }
+
+   function handleDNF() {
+     if (confirm('Mark this solve as DNF ?')) {
+       update(
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/update/",
+         {flag: 'DNF'},
+       )
+     }
+   }
+
+   function handlePlus2() {
+     if (confirm('Mark this solve with a +2s penality ?')) {
+       update(
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/update/",
+         {flag: '+2'},
+       )
+     }
+   }
+
+   function handleDelete() {
+     if (confirm('Are you sure you want to permanently delete this solve ?')) {
+       update(
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/delete/", '',
+       )
+     }
+   }
   </script>
   {% if solve.advanced %}
     <script type="module">
@@ -422,6 +478,19 @@
      }
     </script>
   {% endif %}
+{% endblock %}
+
+{% block actions %}
+  {% if solve.flag %}
+    <button class="action-btn btn-ok" onclick="handleOK();">OK</button>
+  {% endif %}
+  {% if solve.flag != 'DNF' %}
+    <button class="action-btn btn-dnf" onclick="handleDNF();">DNF</button>
+  {% endif %}
+  {% if solve.flag != '+2' %}
+    <button class="action-btn btn-plus2" onclick="handlePlus2();">+2</button>
+  {% endif %}
+  <button class="action-btn btn-delete" onclick="handleDelete();">Delete</button>
 {% endblock %}
 
 {% block body %}

@@ -74,6 +74,64 @@ header {
     color: var(--secondary);
 }
 
+/* Actions header */
+.actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 0.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 4rem;
+}
+
+.btn-dnf {
+    background: #e53e3e;
+    color: white;
+    border: 1px solid #FF9999;
+}
+
+.btn-dnf:hover {
+    background: #c53030;
+}
+
+.btn-ok {
+    background: #1eb51e;
+    color: white;
+    border: 1px solid #44DD44;
+}
+
+.btn-ok:hover {
+    background: #30c530;
+}
+
+.btn-plus2 {
+    background: #ed8936;
+    color: white;
+    border: 1px solid #FdAA66;
+}
+
+.btn-plus2:hover {
+    background: #dd6b20;
+}
+
+.btn-delete {
+    background: #4a5568;
+    color: white;
+    border: 1px solid #718096;
+}
+
+.btn-delete:hover {
+    background: #2d3748;
+    border-color: #a0aec0;
+}
+
+
 .link {
     color: var(--light);
     text-decoration: none;
@@ -205,7 +263,7 @@ header {
     font-size: 1.3rem;
     font-weight: bold;
     background-color: var(--card-bg);
-    padding: 0.25em 0.5em;
+    padding: 0.5em;
     border-radius: 0.375rem;
     cursor: pointer;
 }
