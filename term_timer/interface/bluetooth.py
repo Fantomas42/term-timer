@@ -182,7 +182,7 @@ class Bluetooth:
 
     def handle_bluetooth_move(self, event) -> None:
         if self.state in {'start', 'scrambling'}:
-            self.scrambled.append(event['move'])
+            self.scrambled += event['move']
             self.handle_scrambled()
 
         elif self.state == 'scrambled':

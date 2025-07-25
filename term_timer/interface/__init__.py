@@ -52,7 +52,7 @@ class SolveInterface(
         self.save_gesture_event.clear()
 
         self.scramble = Algorithm()
-        self.scrambled = []
+        self.scrambled = Algorithm()
         self.scramble_oriented = Algorithm()
         self.facelets_scrambled = ''
         self.scramble_completed_event.clear()

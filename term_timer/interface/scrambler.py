@@ -1,7 +1,6 @@
 import asyncio
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.size import compress_moves
 
 
@@ -11,7 +10,7 @@ class Scrambler:
         super().__init__()
 
         self.scramble = Algorithm()
-        self.scrambled = []  # TODO: Use algorithm
+        self.scrambled = Algorithm()
         self.scramble_oriented = Algorithm()
 
         self.counter = 0
@@ -31,13 +30,10 @@ class Scrambler:
             full_clear = True
         else:
             out = ''
-            # TODO: optimize
             algo = self.reorient(
-                parse_moves(self.scrambled).transform(compress_moves),
+                self.scrambled.transform(compress_moves),
             )
-            p_algo = self.reorient(
-                parse_moves(self.scrambled[:-1]).transform(compress_moves),
-            )
+            p_algo = algo[:-1]
 
             on_good_way = True
             for i, move in enumerate(algo):
