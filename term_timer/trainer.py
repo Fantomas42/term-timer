@@ -34,13 +34,13 @@ class Trainer(SolveInterface):
         if self.bluetooth_interface:
             self.console.print(
                 'Apply the scramble on the cube to init the timer,',
-                '[b](q)[/b] to quit.',
+                '[key](q)[/key] to quit.',
                 end='', style='consign',
             )
         else:
             self.console.print(
                 'Press any key once scrambled to start/stop the timer,',
-                '[b](q)[/b] to quit.',
+                '[key](q)[/key] to quit.',
                 end='', style='consign',
             )
 

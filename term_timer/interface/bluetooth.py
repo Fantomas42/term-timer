@@ -153,7 +153,7 @@ class Bluetooth:
                         self.console.print(
                             '[bluetooth]❓Bluetooth:[/bluetooth] '
                             '[consign]Is the cube is really solved ? '
-                            '[b](y)[/b] to reset the cube.[/consign]',
+                            '[key](y)[/key] to reset the cube.[/consign]',
                         )
                         char = await self.getch('reset cube')
                         if char == 'y':

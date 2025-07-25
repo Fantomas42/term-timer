@@ -65,35 +65,35 @@ class Timer(SolveInterface):
             if self.countdown:
                 self.console.print(
                     'Apply the scramble on the cube to start the inspection,',
-                    '[b](q)[/b] to quit.',
+                    '[key](q)[/key] to quit.',
                     end='', style='consign',
                 )
             else:
                 self.console.print(
                     'Apply the scramble on the cube to init the timer,',
-                    '[b](q)[/b] to quit.',
+                    '[key](q)[/key] to quit.',
                     end='', style='consign',
                 )
         elif self.countdown:
             self.console.print(
                 'Press any key once scrambled to start the inspection,',
-                '[b](q)[/b] to quit.',
+                '[key](q)[/key] to quit.',
                 end='', style='consign',
             )
         else:
             self.console.print(
                 'Press any key once scrambled to start/stop the timer,',
-                '[b](q)[/b] to quit.',
+                '[key](q)[/key] to quit.',
                 end='', style='consign',
             )
 
     def save_line(self, flag: str) -> None:
         self.console.print(
             'Press any key to save and continue,',
-            '[b](d)[/b] for DNF,' if flag != DNF else '[b](o)[/b] for OK',
-            '[b](2)[/b] for +2,',
-            '[b](z)[/b] to cancel,',
-            '[b](q)[/b] to save and quit.',
+            '[key](d)[/key] for DNF,' if flag != DNF else '[key](o)[/key] for OK',
+            '[key](2)[/key] for +2,',
+            '[key](z)[/key] to cancel,',
+            '[key](q)[/key] to save and quit.',
             end='', style='consign',
         )
 

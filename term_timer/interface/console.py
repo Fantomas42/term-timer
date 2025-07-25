@@ -25,6 +25,7 @@ theme = {
     'recognition': f'{ TEXT_LIGHT } on #5F00D7',
     'execution': f'{ TEXT_LIGHT } on #4D0092',
     'consign': '#CECECE',
+    'key':  f'bold { TEXT_LIGHT }',
     'confirm': TEXT_LIGHT,
     'step': 'bold #00AFFF',
     'substep': 'bold #00DFFF',
