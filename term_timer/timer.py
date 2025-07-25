@@ -88,14 +88,26 @@ class Timer(SolveInterface):
             )
 
     def save_line(self, flag: str) -> None:
-        self.console.print(
-            'Press any key to save and continue,',
-            '[key](d)[/key] for DNF,' if flag != DNF else '[key](o)[/key] for OK',
-            '[key](2)[/key] for +2,',
-            '[key](z)[/key] to cancel,',
-            '[key](q)[/key] to save and quit.',
-            end='', style='consign',
-        )
+        if self.bluetooth_interface:
+            self.console.print(
+                'Press any key to save and continue,',
+                '[key](z)[/key] to cancel,',
+                '[key](q)[/key] to save and quit.',
+                end='', style='consign',
+            )
+        else:
+            self.console.print(
+                'Press any key to save and continue,',
+                (
+                    '[key](d)[/key] for DNF,'
+                    if flag != DNF
+                    else '[key](o)[/key] for OK'
+                ),
+                '[key](2)[/key] for +2,',
+                '[key](z)[/key] to cancel,',
+                '[key](q)[/key] to save and quit.',
+                end='', style='consign',
+            )
 
     def solve_line(self, solve: Solve) -> None:
         old_stats = Statistics(self.stack)
