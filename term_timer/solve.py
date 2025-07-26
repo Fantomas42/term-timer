@@ -427,8 +427,11 @@ class Solve:
     def method_text(self):
         return self.method_text_builder(multiple=True)
 
-    def method_text_builder(self, *, multiple):
+    def method_text_builder(self, *, multiple) -> str:
         recons = ''
+
+        if not self.advanced:
+            return recons
 
         if self.orientation:
             recons += f'{ self.orientation!s } // Orientation\n'
