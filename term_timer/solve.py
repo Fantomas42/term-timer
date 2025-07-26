@@ -60,7 +60,6 @@ class Solve:
                  moves: str | None = None):
         self.date = int(date)
         self.time = int(time)
-        self.scramble = scramble
         self.flag = flag
         self.timer = timer
         self.device = device
@@ -70,16 +69,20 @@ class Solve:
         self.cube_size = cube_size
 
         self.raw_moves = moves
-        self.solution = None
-
-        if self.raw_moves:
-            self.solution = parse_moves(self.raw_moves)
-
-        if not isinstance(self.scramble, Algorithm):
-            self.scramble = parse_moves(self.scramble)
+        self.raw_scramble = scramble
 
         self.method_name = CUBE_METHOD
         self.orientation = CUBE_ORIENTATION
+
+    @cached_property
+    def solution(self):
+        return parse_moves(self.raw_moves)
+
+    @cached_property
+    def scramble(self):
+        if not isinstance(self.raw_scramble, Algorithm):
+            return parse_moves(self.raw_scramble)
+        return self.raw_scramble
 
     @cached_property
     def datetime(self) -> datetime:
