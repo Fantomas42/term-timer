@@ -22,7 +22,7 @@
      'Jul', 'Aug', 'Sep',
      'Oct', 'Nov', 'Dec',
    ];
-   let currentYear = {{ punchcard.keys()|max }};
+   let currentYear = {{ punchcard.keys()|max|default(2025) }};
 
    document.addEventListener('DOMContentLoaded', function() {
      const tooltip = document.getElementById('tooltip');
