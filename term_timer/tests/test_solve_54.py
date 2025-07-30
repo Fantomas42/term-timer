@@ -189,9 +189,9 @@ class TestSolve54(unittest.TestCase):
             2,
         )
 
-    def test_method(self):
+    def test_method_analyser(self):
         self.assertEqual(
-            self.solve.method,
+            self.solve.method_analyser,
             CF4OPAnalyser,
         )
 

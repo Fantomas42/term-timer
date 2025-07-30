@@ -590,7 +590,8 @@ class StatisticsReporter(Statistics):
         if solve.advanced:
             if show_reconstruction:
                 console.print(
-                    f'[title]Reconstruction { solve.method_analyser.name }[/title]',
+                    '[title]Reconstruction '
+                    f'{ solve.method_analyser.name }[/title]',
                     f'[localhost][link={ solve.link_term_timer }]'
                     'Term-Timer[/link][/localhost]',
                     f'[algcubing][link={ solve.link_alg_cubing }]'
