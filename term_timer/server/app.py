@@ -357,7 +357,7 @@ class SessionListView(View):
 class SessionDetailView(View):
     template_name = 'session.html'
 
-    def __init__(self, cube, session, method_name, oll, pll):
+    def __init__(self, cube, session, method_name, step, case_uid):
         self.cube = cube
         self.session = session
 
@@ -369,27 +369,25 @@ class SessionDetailView(View):
         if not method_name:
             method_name = CUBE_METHOD
 
-        self.oll = oll
-        self.pll = pll
+        self.step = step.strip().lower()
+        self.case_uid = case_uid.strip().lower()
         self.method_aggregator = get_method_aggregator(method_name)
 
-        if oll or pll:
+        if self.step and self.case_uid:
             filtered_solves = []
+
             for solve in solves:
                 analysis = self.method_aggregator(
                     solve.scramble,
                     solve.solution,
                 )
-                step_oll, step_pll = analysis.summary[-2:]
-
-                if (
-                        (oll and step_oll['cases']
-                         and step_oll['cases'][0].split(' ')[0] == oll)
-                        or
-                        (pll and step_pll['cases']
-                         and step_pll['cases'][0].split(' ')[0] == pll)
-                ):
-                    filtered_solves.append(solve)
+                for s_step in reversed(analysis.summary):
+                    if s_step['name'].lower() == self.step:
+                        if s_step['cases']:
+                            step_case = s_step['cases'][0].split(' ')[0].lower()
+                            if step_case == self.case_uid:
+                                filtered_solves.append(solve)
+                        break
 
             solves = filtered_solves
 
@@ -410,8 +408,8 @@ class SessionDetailView(View):
             'trend': self.compute_trend(),
             'distribution': self.compute_distribution(),
             'punchcard': self.compute_punchcard(),
-            'oll': self.oll,
-            'pll': self.pll,
+            'step': self.step,
+            'case_uid': self.case_uid,
             'method_aggregator': self.method_aggregator,
         }
 
@@ -698,8 +696,8 @@ class Server:
             return SessionDetailView(
                 cube, session,
                 request.GET.m or '',
-                request.GET.oll or '',
-                request.GET.pll or '',
+                request.GET.step or '',
+                request.GET.case_uid or '',
             ).as_view(debug)
 
         @app.route('/static/<filepath:path>')

@@ -767,7 +767,7 @@
             <tr>
               <td class="solve-id">
                 <a href="/{{ solve.cube_size }}/{{ solve.session }}/{{ solve.solve_id }}/" class="link">
-                  {% if not pll and not oll %}
+                  {% if not case_uid %}
                     #{{ stats.stack|length - loop.index0 }}
                   {% else %}
                     #{{ solve.solve_id }}
@@ -848,7 +848,7 @@
                   <div class="cfop-case">
                     {% set name_part = name.split(" ") %}
                     <div class="cfop-case-img">
-                      <a href="?m={{ method_aggregator.name.lower() }}&oll={{ name_part[0] }}">
+                      <a href="?m={{ method_aggregator.name.lower() }}&step=oll&case_uid={{ name_part[0] }}">
                          {{ name_part[0] }}
                       </a>
                     </div>
@@ -918,7 +918,7 @@
                   <div class="cfop-case">
                     {% set name_part = name.split(" ") %}
                     <div class="cfop-case-img">
-                      <a href="?m={{ method_aggregator.name.lower() }}&pll={{ name_part[0] }}">
+                      <a href="?m={{ method_aggregator.name.lower() }}&step=pll&case_uid={{ name_part[0] }}">
                          {{ name_part[0] }}
                       </a>
                     </div>
