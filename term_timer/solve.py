@@ -31,7 +31,7 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_moves
 from term_timer.formatter import format_time
-from term_timer.methods.base import STEPS_CONFIG
+from term_timer.methods.base import get_step_config
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.methods.lbl import LBLAnalyser
@@ -387,7 +387,7 @@ class Solve:
                     *step['aufs'],
                 ),
             ),
-            STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
+            get_step_config(step['name'], 'triggers', []),
         )
 
         post = int(step['post_pause'] / self.pause_threshold)

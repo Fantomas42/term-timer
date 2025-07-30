@@ -321,11 +321,17 @@ class Analyser:
         return ''.join(masked)
 
     def check_step(self, step, facelets):
+        mask = get_step_config(step, 'mask')
+
         matching = self.build_facelets_masked(
-            STEPS_CONFIG[step]['mask'],
+            mask,
             INITIAL,
         )
         return matching == self.build_facelets_masked(
-            STEPS_CONFIG[step]['mask'],
+            mask,
             facelets,
         )
+
+
+def get_step_config(step_name, value, default=None):
+    return STEPS_CONFIG.get(step_name, {}).get(value, default)

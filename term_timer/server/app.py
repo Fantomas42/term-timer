@@ -29,7 +29,7 @@ from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import save_solves
 from term_timer.interface.console import console
-from term_timer.methods.base import STEPS_CONFIG
+from term_timer.methods.base import get_step_config
 from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -131,7 +131,7 @@ def reconstruction_step(step):
                 *step['aufs'],
             ),
         ),
-        STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
+        get_step_config(step['name'], 'triggers', []),
     )
 
     return format_line(algorithm)
@@ -141,7 +141,7 @@ def optimized_step(step):
     optimizers = []
 
     if not step['cases'] or 'SKIP' not in step['cases'][0]:
-        optimizers = STEPS_CONFIG.get(step['name'], {}).get('optimizers', [])
+        optimizers = get_step_config(step['name'], 'optimizers', [])
 
     optimizers.extend([compress_moves, untime_moves])
 
@@ -154,7 +154,7 @@ def optimized_step(step):
                 *step['aufs'],
             ),
         ),
-        STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
+        get_step_config(step['name'], 'triggers', []),
     )
 
     return format_line(algorithm_string), algorithm
