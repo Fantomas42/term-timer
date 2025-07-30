@@ -22,14 +22,15 @@ from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PAUSE_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
+from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_cubing_url
 from term_timer.formatter import format_alg_diff
+from term_timer.formatter import format_alg_moves
+from term_timer.formatter import format_alg_pauses
 from term_timer.formatter import format_alg_triggers
-from term_timer.formatter import format_aufs
 from term_timer.formatter import format_cube_db_url
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
-from term_timer.formatter import format_moves
 from term_timer.formatter import format_time
 from term_timer.methods.base import get_step_config
 from term_timer.methods.cfop import CF4OPAnalyser
@@ -377,28 +378,20 @@ class Solve:
             optimize_double_moves,
         )
 
-        algorithm = format_alg_triggers(
-            format_moves(
-                format_aufs(
-                    format_alg_diff(
-                        source_paused,
-                        compressed_paused,
+        return format_alg_pauses(
+            format_alg_triggers(
+                format_alg_moves(
+                    format_alg_aufs(
+                        format_alg_diff(
+                            source_paused,
+                            compressed_paused,
+                        ),
+                        *step['aufs'],
                     ),
-                    *step['aufs'],
                 ),
+                get_step_config(step['name'], 'triggers', []),
             ),
-            get_step_config(step['name'], 'triggers', []),
-        )
-
-        post = int(step['post_pause'] / self.pause_threshold)
-        if post:
-            algorithm += f' [reco-pause]{ PAUSE_CHAR }[/reco-pause]' * (
-                post if multiple else 1
-            )
-
-        return algorithm.replace(
-            ' .',
-            ' [pause].[/pause]',
+            self, step, multiple,
         )
 
     def reconstruction_step_text(self, step, *, multiple=False) -> str:

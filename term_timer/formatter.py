@@ -194,7 +194,7 @@ def format_alg_triggers(algorithm: str, trigger_names: list[str]) -> str:
     return algorithm
 
 
-def format_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
+def format_alg_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
     if pre_auf and algorithm:
         algorithm_parts = algorithm.split(' ')
         for i, move in enumerate(algorithm_parts):
@@ -216,7 +216,20 @@ def format_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
     return algorithm
 
 
-def format_moves(algorithm: str) -> str:
+def format_alg_pauses(algorithm: str, solve, step, multiple) -> str:
+    post = int(step['post_pause'] / solve.pause_threshold)
+    if post:
+        algorithm += f' [reco-pause]{ PAUSE_CHAR }[/reco-pause]' * (
+            post if multiple else 1
+        )
+
+    return algorithm.replace(
+        ' .',
+        ' [pause].[/pause]',
+    )
+
+
+def format_alg_moves(algorithm: str) -> str:
     if not algorithm:
         return ''
 
