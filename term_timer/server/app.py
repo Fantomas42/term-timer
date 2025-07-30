@@ -383,13 +383,18 @@ class SessionDetailView(View):
                 step_oll, step_pll = analysis.summary[-2:]
 
                 if (
-                        (oll and step_oll['cases'][0].split(' ')[0] == oll)
+                        (oll and step_oll['cases']
+                         and step_oll['cases'][0].split(' ')[0] == oll)
                         or
-                        (pll and step_pll['cases'][0].split(' ')[0] == pll)
+                        (pll and step_pll['cases']
+                         and step_pll['cases'][0].split(' ')[0] == pll)
                 ):
                     filtered_solves.append(solve)
 
             solves = filtered_solves
+
+        if not solves:
+            abort(404, 'No solve to display')
 
         self.stats = StatisticsReporter(
             cube, solves,
