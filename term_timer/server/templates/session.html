@@ -635,7 +635,7 @@
         </div>
 
         <div class="stat-card">
-          <div class="stat-title">CFOP Grade</div>
+          <div class="stat-title">{{ method_aggregator.name }} Grade</div>
           <div class="stat-value grade-{{ cfop.mean|format_grade|lower|replace('+', 'plus') }}">
             {{ cfop.mean|format_grade }}
           </div>
@@ -848,7 +848,7 @@
                   <div class="cfop-case">
                     {% set name_part = name.split(" ") %}
                     <div class="cfop-case-img">
-                      <a href="?oll={{ name_part[0] }}">
+                      <a href="?m={{ method_aggregator.name.lower() }}&oll={{ name_part[0] }}">
                          {{ name_part[0] }}
                       </a>
                     </div>
@@ -918,7 +918,7 @@
                   <div class="cfop-case">
                     {% set name_part = name.split(" ") %}
                     <div class="cfop-case-img">
-                      <a href="?pll={{ name_part[0] }}">
+                      <a href="?m={{ method_aggregator.name.lower() }}&pll={{ name_part[0] }}">
                          {{ name_part[0] }}
                       </a>
                     </div>

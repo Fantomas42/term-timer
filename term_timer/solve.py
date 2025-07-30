@@ -32,20 +32,10 @@ from term_timer.formatter import format_cube_db_url
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
+from term_timer.methods import get_method_analyser
 from term_timer.methods.base import get_step_config
-from term_timer.methods.cfop import CF4OPAnalyser
-from term_timer.methods.cfop import CFOPAnalyser
-from term_timer.methods.lbl import LBLAnalyser
-from term_timer.methods.raw import RawAnalyser
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
-
-METHODS = {
-    'cfop': CFOPAnalyser,
-    'cf4op': CF4OPAnalyser,
-    'lbl': LBLAnalyser,
-    'raw': RawAnalyser,
-}
 
 
 class Solve:
@@ -166,15 +156,17 @@ class Solve:
         return self.all_missed_moves - self.step_missed_moves
 
     @cached_property
-    def method(self):
-        return METHODS.get(self.method_name, CF4OPAnalyser)
+    def method_analyser(self):
+        return get_method_analyser(
+            self.method_name,
+        )
 
     @cached_property
     def method_applied(self) -> dict[str, dict]:
         if not self.advanced:
             return None
 
-        return self.method(self.scramble, self.solution)
+        return self.method_analyser(self.scramble, self.solution)
 
     @cached_property
     def recognition_time(self) -> float:

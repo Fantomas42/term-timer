@@ -483,7 +483,7 @@ class StatisticsReporter(Statistics):
                 f' { format_score(solve.method_applied.score) }'
             )
             console.print(
-                f'[stats]Grade { solve.method.name:<5}:[/stats]'
+                f'[stats]Grade { solve.method_analyser.name:<5}:[/stats]'
                 f'{ grade_line }',
             )
 
@@ -590,7 +590,7 @@ class StatisticsReporter(Statistics):
         if solve.advanced:
             if show_reconstruction:
                 console.print(
-                    f'[title]Reconstruction { solve.method.name }[/title]',
+                    f'[title]Reconstruction { solve.method_analyser.name }[/title]',
                     f'[localhost][link={ solve.link_term_timer }]'
                     'Term-Timer[/link][/localhost]',
                     f'[algcubing][link={ solve.link_alg_cubing }]'

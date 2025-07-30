@@ -17,6 +17,7 @@ from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.timing import untime_moves
 
+from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -35,8 +36,8 @@ from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import save_solves
 from term_timer.interface.console import console
+from term_timer.methods import get_method_aggregator
 from term_timer.methods.base import get_step_config
-from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
@@ -356,7 +357,7 @@ class SessionListView(View):
 class SessionDetailView(View):
     template_name = 'session.html'
 
-    def __init__(self, cube, session, oll, pll):
+    def __init__(self, cube, session, method_name, oll, pll):
         self.cube = cube
         self.session = session
 
@@ -365,14 +366,20 @@ class SessionDetailView(View):
             [] if session == 'all' else [session],
             [], '',
         )
+        if not method_name:
+            method_name = CUBE_METHOD
 
         self.oll = oll
         self.pll = pll
+        self.method_aggregator = get_method_aggregator(method_name)
 
         if oll or pll:
             filtered_solves = []
             for solve in solves:
-                analysis = CFOPAnalyser(solve.scramble, solve.solution)
+                analysis = self.method_aggregator(
+                    solve.scramble,
+                    solve.solution,
+                )
                 step_oll, step_pll = analysis.summary[-2:]
 
                 if (
@@ -400,6 +407,7 @@ class SessionDetailView(View):
             'punchcard': self.compute_punchcard(),
             'oll': self.oll,
             'pll': self.pll,
+            'method_aggregator': self.method_aggregator,
         }
 
     def compute_sessions(self):
@@ -471,7 +479,7 @@ class SessionDetailView(View):
 class SolveDetailView(View):
     template_name = 'solve.html'
 
-    def __init__(self, cube, session, solve, method):
+    def __init__(self, cube, session, solve, method_name):
         self.cube = cube
         self.session = session
 
@@ -488,8 +496,8 @@ class SolveDetailView(View):
         except IndexError:
             abort(404, 'Invalid solve ID')
 
-        if method:
-            self.solve.method_name = method
+        if method_name:
+            self.solve.method_name = method_name
 
     def get_context(self):
         tps = []
@@ -684,6 +692,7 @@ class Server:
         def session_detail(cube, session):
             return SessionDetailView(
                 cube, session,
+                request.GET.m or '',
                 request.GET.oll or '',
                 request.GET.pll or '',
             ).as_view(debug)
