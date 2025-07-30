@@ -12,19 +12,25 @@ from bottle import jinja2_template
 from bottle import redirect
 from bottle import request
 from bottle import static_file
+from cubing_algs.transform.optimize import optimize_double_moves
+from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.timing import untime_moves
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
+from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.constants import PAUSE_FACTOR
 from term_timer.constants import SECOND
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
+from term_timer.formatter import format_alg_aufs
+from term_timer.formatter import format_alg_diff
+from term_timer.formatter import format_alg_moves
+from term_timer.formatter import format_alg_pauses
 from term_timer.formatter import format_alg_triggers
-from term_timer.formatter import format_aufs
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
-from term_timer.formatter import format_moves
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import save_solves
@@ -125,8 +131,8 @@ def reconstruction_step(step):
     algorithm = str(step['moves_prettified'])
 
     algorithm = format_alg_triggers(
-        format_moves(
-            format_aufs(
+        format_alg_moves(
+            format_alg_aufs(
                 algorithm,
                 *step['aufs'],
             ),
@@ -135,6 +141,62 @@ def reconstruction_step(step):
     )
 
     return format_line(algorithm)
+
+
+def reconstruction_overheads(step, solve):
+    source, compressed = solve.missed_moves_pair(
+        step['moves_humanized'],
+    )
+    source_paused = source.transform(
+        untime_moves,
+        optimize_double_moves,
+    )
+    compressed_paused = compressed.transform(
+        untime_moves,
+        optimize_double_moves,
+    )
+
+    algo = format_alg_triggers(
+        format_alg_moves(
+            format_alg_aufs(
+                format_alg_diff(
+                    source_paused,
+                    compressed_paused,
+                ),
+                *step['aufs'],
+            ),
+        ),
+        get_step_config(step['name'], 'triggers', []),
+    )
+
+    return format_line(algo)
+
+
+def reconstruction_pauses(step, solve):
+    source_paused = step['moves_humanized'].transform(
+        pause_moves(
+            solve.move_speed / MS_TO_NS_FACTOR,
+            PAUSE_FACTOR,
+            multiple=True,
+        ),
+        untime_moves,
+        optimize_double_moves,
+    )
+
+    source_paused = format_alg_pauses(
+        format_alg_triggers(
+            format_alg_moves(
+                format_alg_aufs(
+                    str(source_paused),
+                    *step['aufs'],
+                ),
+            ),
+            get_step_config(step['name'], 'triggers', []),
+        ),
+        solve, step, multiple=True,
+    )
+
+    return format_line(source_paused)
 
 
 def optimized_step(step):
@@ -148,8 +210,8 @@ def optimized_step(step):
     algorithm = step['moves_reoriented'].transform(*optimizers)
 
     algorithm_string = format_alg_triggers(
-        format_moves(
-            format_aufs(
+        format_alg_moves(
+            format_alg_aufs(
                 str(algorithm),
                 *step['aufs'],
             ),
@@ -209,6 +271,8 @@ class View:
                     'normalize_value': normalize_value,
                     'normalize_percent': normalize_percent,
                     'reconstruction_step': reconstruction_step,
+                    'reconstruction_overheads': reconstruction_overheads,
+                    'reconstruction_pauses': reconstruction_pauses,
                     'optimized_step': optimized_step,
                     'prettify': prettify_moves,
                 },

@@ -216,7 +216,7 @@ def format_alg_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
     return algorithm
 
 
-def format_alg_pauses(algorithm: str, solve, step, multiple) -> str:
+def format_alg_pauses(algorithm: str, solve, step, *, multiple=False) -> str:
     post = int(step['post_pause'] / solve.pause_threshold)
     if post:
         algorithm += f' [reco-pause]{ PAUSE_CHAR }[/reco-pause]' * (

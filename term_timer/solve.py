@@ -391,7 +391,7 @@ class Solve:
                 ),
                 get_step_config(step['name'], 'triggers', []),
             ),
-            self, step, multiple,
+            self, step, multiple=multiple,
         )
 
     def reconstruction_step_text(self, step, *, multiple=False) -> str:
