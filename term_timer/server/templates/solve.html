@@ -747,10 +747,10 @@
       <div class="tabs">
         <div class="tab active" data-tab="solve-time">Time</div>
         <div class="tab" data-tab="solve-percent">Percent</div>
-        <div class="tab" data-tab="solve-issues">Issues</div>
         <div class="tab" data-tab="solve-overheads">Overheads</div>
         <div class="tab" data-tab="solve-pauses">Pauses</div>
         <div class="tab" data-tab="solve-optimized">Optimized</div>
+        <div class="tab" data-tab="solve-issues">Issues</div>
         {% if DEBUG %}
           <div class="tab" data-tab="solve-raw">Raw</div>
         {% endif %}
@@ -855,68 +855,6 @@
                 </td>
                 <td class="recons-local-execution">
                   {{ info.step_execution_percent|normalize_percent(solve.method_applied, 'execution', info.name) }}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="tab-content table-container" id="solve-issues-tab">
-        <table class="reconstruction issues">
-          <thead>
-            <tr>
-              <th>Step</th>
-              <th>Case</th>
-              <th>Moves</th>
-              <th>QTM Overhead</th>
-              <th>Execution Pauses</th>
-              <th>QTM Pre-AUF</th>
-              <th>QTM Post-AUF</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for info in solve.method_applied.summary %}
-              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
-                <td class="recons-step">
-                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
-                </td>
-                <td class="recons-case">
-                  {{ step_case(info) }}
-                </td>
-                <td class="recons-moves">
-                  {% if not info.type == 'virtual' %}
-                    {{ solve.reconstruction_step_line(info, multiple=True)|format_line }}
-                  {% endif %}
-                </td>
-                <td class="recons-overhead">
-                  {% set missed_moves = solve.missed_moves(info.moves_humanized) %}
-                  <span class="metric-{% if missed_moves > 2 %}warning{% elif missed_moves %}caution{% else %}success{% endif %}">
-                  {{ missed_moves }}
-                </td>
-                <td class="recons-pauses">
-                  {% set pauses = solve.pauses(info.moves_humanized) %}
-                  <span class="metric-{% if pauses >= 2 %}warning{% elif pauses %}caution{% else %}success{% endif %}">
-                    {{ pauses }}
-                  </span>
-                </td>
-                <td class="recons-pre-aufs">
-                  {% if info.aufs.0 is none %}
-                    ---
-                  {% else %}
-                    <span class="metric-{% if info.aufs.0 > 2 %}warning{% elif info.aufs.0 %}caution{% else %}success{% endif %}">
-                      {{ info.aufs.0 }}
-                    </span>
-                  {% endif %}
-                </td>
-                <td class="recons-post-aufs">
-                  {% if info.aufs.1 is none %}
-                    ---
-                  {% else %}
-                    <span class="metric-{% if info.aufs.1 > 2 %}warning{% elif info.aufs.1 %}caution{% else %}success{% endif %}">
-                      {{ info.aufs.1 }}
-                    </span>
-                  {% endif %}
                 </td>
               </tr>
             {% endfor %}
@@ -1034,6 +972,68 @@
                     <span class="metric-success">-{{ delta }}</span>
                   {% else %}
                     0
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tab-content table-container" id="solve-issues-tab">
+        <table class="reconstruction issues">
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Case</th>
+              <th>Moves</th>
+              <th>QTM Overhead</th>
+              <th>Execution Pauses</th>
+              <th>QTM Pre-AUF</th>
+              <th>QTM Post-AUF</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for info in solve.method_applied.summary %}
+              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
+                <td class="recons-step">
+                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
+                </td>
+                <td class="recons-case">
+                  {{ step_case(info) }}
+                </td>
+                <td class="recons-moves">
+                  {% if not info.type == 'virtual' %}
+                    {{ solve.reconstruction_step_line(info, multiple=True)|format_line }}
+                  {% endif %}
+                </td>
+                <td class="recons-overhead">
+                  {% set missed_moves = solve.missed_moves(info.moves_humanized) %}
+                  <span class="metric-{% if missed_moves > 2 %}warning{% elif missed_moves %}caution{% else %}success{% endif %}">
+                  {{ missed_moves }}
+                </td>
+                <td class="recons-pauses">
+                  {% set pauses = solve.pauses(info.moves_humanized) %}
+                  <span class="metric-{% if pauses >= 2 %}warning{% elif pauses %}caution{% else %}success{% endif %}">
+                    {{ pauses }}
+                  </span>
+                </td>
+                <td class="recons-pre-aufs">
+                  {% if info.aufs.0 is none %}
+                    ---
+                  {% else %}
+                    <span class="metric-{% if info.aufs.0 > 2 %}warning{% elif info.aufs.0 %}caution{% else %}success{% endif %}">
+                      {{ info.aufs.0 }}
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="recons-post-aufs">
+                  {% if info.aufs.1 is none %}
+                    ---
+                  {% else %}
+                    <span class="metric-{% if info.aufs.1 > 2 %}warning{% elif info.aufs.1 %}caution{% else %}success{% endif %}">
+                      {{ info.aufs.1 }}
+                    </span>
                   {% endif %}
                 </td>
               </tr>
