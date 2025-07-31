@@ -1,3 +1,4 @@
+import gc
 import os
 import re
 from datetime import datetime
@@ -250,11 +251,16 @@ class View:
         raise NotImplementedError
 
     def as_view(self, debug):
-        return self.template(
+        context = self.get_context()
+
+        content = self.template(
             self.template_name,
             DEBUG=debug,
-            **self.get_context(),
+            **context,
         )
+        gc.collect()
+
+        return content
 
     def template(self, template_name, **context):
         context['now'] = datetime.now(tz=timezone.utc)  # noqa UP017
