@@ -79,6 +79,10 @@ class CFOPAnalyser(Analyser):
             'execution': (80, 100),
         },
     }
+    aggregate: ClassVar[dict[str, int]] = {
+        'oll': -2,
+        'pll': -1,
+    }
 
     def compute_progress(self, facelets):
         progress = 0

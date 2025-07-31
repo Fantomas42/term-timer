@@ -113,6 +113,7 @@ class Analyser:
     step_list: tuple[str] = ()
     norms: ClassVar[dict[str, dict[str, float]]] = {}
     aufs: ClassVar[dict[str, tuple[bool, bool]]] = {}
+    aggregate: ClassVar[dict[str, int]] = {}
 
     def __init__(self, scramble: Algorithm, solution: Algorithm):
         self.scramble = scramble

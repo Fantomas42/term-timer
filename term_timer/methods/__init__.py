@@ -10,17 +10,6 @@ METHOD_ANALYSERS = {
     'raw': RawAnalyser,
 }
 
-METHOD_AGGREGATORS = {
-    'cfop': CFOPAnalyser,
-    'cf4op': CFOPAnalyser,
-    'lbl': LBLAnalyser,
-    'raw': RawAnalyser,
-}
-
 
 def get_method_analyser(method_name):
     return METHOD_ANALYSERS.get(method_name, CF4OPAnalyser)
-
-
-def get_method_aggregator(method_name):
-    return METHOD_AGGREGATORS.get(method_name, CFOPAnalyser)
