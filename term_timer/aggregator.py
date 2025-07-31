@@ -2,24 +2,23 @@ import time
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 
+from term_timer.methods import get_method_analyser
 from term_timer.solve import Solve
 from term_timer.stats import StatisticsTools
-from term_timer.methods import METHOD_ANALYSERS
 
 
 class SolvesMethodAggregator:
 
     def __init__(self, method_name, stack, *, full=True):
         self.stack = stack
-        self.method_name = method_name
         self.full = full
 
-        if self.method_name not in METHOD_ANALYSERS:
-            self.method_name = 'cf4op'
+        self.analyser = get_method_analyser(method_name)
+        self.method_name = self.analyser.name
 
         self.results = self.aggregate()
 
-    def analyze_solve(self, solve: Solve):
+    def analyse_solve(self, solve: Solve):
         if not solve.advanced:
             return None
 
@@ -53,7 +52,7 @@ class SolvesMethodAggregator:
         num_processes = max(1, cpu_count() - 1)
 
         with Pool(processes=num_processes) as pool:
-            return pool.map(self.analyze_solve, self.stack)
+            return pool.map(self.analyse_solve, self.stack)
 
     def aggregate(self):
         start = time.time()
@@ -84,6 +83,15 @@ class SolvesMethodAggregator:
                         'qtms': [],
                         'tpss': [],
                         'etpss': [],
+                        'probability': (
+                            self.analyser.infos.get(
+                                step_name, {},
+                            ).get(
+                                step_case, {},
+                            ).get(
+                                'probability', 0,
+                            )
+                        ),
                     },
                 )
 
@@ -99,7 +107,6 @@ class SolvesMethodAggregator:
                 count = len(info['times'])
                 info['count'] = count
                 info['frequency'] = count / total
-                info['probability'] = 0#OLL_INFO[name]['probability']
                 info['label'] = f'TODO { name.split(" ")[0] }' #f'OLL { name.split(" ")[0] }'
                 info['recognition'] = sum(info['recognitions']) / count
                 info['execution'] = sum(info['executions']) / count

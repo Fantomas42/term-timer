@@ -83,6 +83,10 @@ class CFOPAnalyser(Analyser):
         'oll': -2,
         'pll': -1,
     }
+    infos: ClassVar[dict[str, dict[str, float]]] = {
+        'oll': OLL_INFO,
+        'pll': PLL_INFO,
+    }
 
     def compute_progress(self, facelets):
         progress = 0
