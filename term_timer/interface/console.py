@@ -86,8 +86,8 @@ theme = {
     'mo3': f'bold { ORANGE }',
     'ao5': 'bold #00FFFF',
     'ao12': 'bold #FF00FF',
-    'ao100': f'bold { YELLOW }',
-    'ao1000': f'bold { RED }',
+    'ao100': 'bold #FFCC99',
+    'ao1000': 'bold #CCFF99',
 
     'tps': 'bold #00DFFF',
     'tps-e': 'bold #00AAAA',
