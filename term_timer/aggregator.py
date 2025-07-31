@@ -103,11 +103,10 @@ class SolvesMethodAggregator:
                 resume[step_name][step_case]['etpss'].append(step['etps'])
 
         for step_cases in resume.values():
-            for name, info in step_cases.items():
+            for info in step_cases.values():
                 count = len(info['times'])
                 info['count'] = count
                 info['frequency'] = count / total
-                info['label'] = f'TODO { name.split(" ")[0] }' #f'OLL { name.split(" ")[0] }'
                 info['recognition'] = sum(info['recognitions']) / count
                 info['execution'] = sum(info['executions']) / count
                 info['time'] = sum(info['times']) / count

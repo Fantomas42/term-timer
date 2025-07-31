@@ -827,20 +827,16 @@
               <tr>
                 <td>
                   <div class="step-case">
-                    {% set name_part = name.split(" ") %}
+                    {% set code, case_name = name|parse_case_name(step.upper()) %}
                     <div class="step-case-img">
-                      <a href="?m={{ method_aggregation.method_name }}&step={{ step }}&case_uid={{ name_part[0] }}">
-                         {{ name_part[0] }}
+                      <a href="?m={{ method_aggregation.method_name }}&step={{ step }}&case_uid={{ code }}">
+                         {{ code }}
                       </a>
                     </div>
-                    {% if 'SKIP' not in name %}
-                      <a href="https://cubing.fache.fr/{{ step.upper() }}/{{ name_part[0] }}.html"
+                    {% if 'SKIP' not in code %}
+                      <a href="https://cubing.fache.fr/{{ step.upper() }}/{{ code }}.html"
                          target="_blank" class="link">
-                        {% if name_part|length > 1 %}
-                          {{ " ".join(name_part[1:]) }}
-                        {% else %}
-                          {{ step.upper() }} {{ name }}
-                        {% endif %}
+                        {{ case_name }}
                       </a>
                     {% else %}
                       <span class="skip">SKIP</span>

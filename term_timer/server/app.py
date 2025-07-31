@@ -117,6 +117,17 @@ def format_line(value):
     return ' '.join(processed_parts)
 
 
+def parse_case_name(value, step):
+    try:
+        code, name = value.split(' ', 1)
+    except ValueError:
+        if step == 'PLL':
+            return value, f'{ step } { value }'
+        return value, ''
+    else:
+        return code, name
+
+
 def normalize_value(value, method_applied, metric, name):
     klass = method_applied.normalize_value(metric, name, value, '')
 
@@ -275,6 +286,7 @@ class View:
                     'format_time': format_time,
                     'format_score': format_score,
                     'format_line': format_line,
+                    'parse_case_name': parse_case_name,
                     'normalize_value': normalize_value,
                     'normalize_percent': normalize_percent,
                     'reconstruction_step': reconstruction_step,
