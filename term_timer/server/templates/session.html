@@ -634,7 +634,7 @@
       </div>
 
       <div class="stat-card">
-        <div class="stat-title">{{ method_aggregation.method_name|upper }} Grade</div>
+        <div class="stat-title">{{ method_aggregation.analyser.name|upper }} Grade</div>
         <div class="stat-value grade-{{ method_aggregation.results.mean|format_grade|lower|replace('+', 'plus') }}">
           {{ method_aggregation.results.mean|format_grade }}
         </div>
@@ -829,7 +829,7 @@
                   <div class="step-case">
                     {% set code, case_name = name|parse_case_name(step.upper()) %}
                     <div class="step-case-img">
-                      <a href="?m={{ method_aggregation.method_name }}&step={{ step }}&case_uid={{ code }}">
+                      <a href="?m={{ method_aggregation.analyser.name.lower() }}&step={{ step }}&case_uid={{ code }}">
                          {{ code }}
                       </a>
                     </div>

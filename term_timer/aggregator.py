@@ -13,8 +13,8 @@ class SolvesMethodAggregator:
         self.stack = stack
         self.full = full
 
-        self.analyser = get_method_analyser(method_name)
-        self.method_name = self.analyser.name
+        self.method_name = method_name
+        self.analyser = get_method_analyser(self.method_name)
 
         self.results = self.aggregate()
 
