@@ -3,6 +3,7 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 from term_timer.solve import Solve
+from term_timer.stats import StatisticsTools
 from term_timer.methods import METHOD_ANALYSERS
 
 
@@ -18,7 +19,7 @@ class SolvesMethodAggregator:
 
         self.results = self.aggregate()
 
-    def analyze_solve(self, solve):
+    def analyze_solve(self, solve: Solve):
         if not solve.advanced:
             return None
 
@@ -103,8 +104,8 @@ class SolvesMethodAggregator:
                 info['recognition'] = sum(info['recognitions']) / count
                 info['execution'] = sum(info['executions']) / count
                 info['time'] = sum(info['times']) / count
-                info['ao5'] = 0#self.ao(5, info['times'])
-                info['ao12'] = 0#self.ao(12, info['times'])
+                info['ao5'] = StatisticsTools.ao(5, info['times'])
+                info['ao12'] = StatisticsTools.ao(12, info['times'])
                 info['qtm'] = sum(info['qtms']) / count
                 info['tps'] = sum(info['tpss']) / count
                 info['etps'] = sum(info['etpss']) / count
