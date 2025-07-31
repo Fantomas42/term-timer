@@ -622,27 +622,27 @@
           </div>
         </div>
       {% endif %}
-      {% if cfop.total %}
-        <div class="stat-card">
-          <div class="stat-title">Grade</div>
-          <div class="stat-value grade-{{ stats.score|format_grade|lower|replace('+', 'plus') }}">
-            {{ stats.score|format_grade }}
-          </div>
-          <div class="stat-meta">
-            <span>{{ stats.score|format_score('Mean:') }}</span>
-          </div>
-        </div>
 
-        <div class="stat-card">
-          <div class="stat-title">{{ method_aggregator.name }} Grade</div>
-          <div class="stat-value grade-{{ cfop.mean|format_grade|lower|replace('+', 'plus') }}">
-            {{ cfop.mean|format_grade }}
-          </div>
-          <div class="stat-meta">
-            <span>{{ cfop.mean|format_score('Mean:') }}</span>
-          </div>
+      <div class="stat-card">
+        <div class="stat-title">Grade</div>
+        <div class="stat-value grade-{{ stats.score|format_grade|lower|replace('+', 'plus') }}">
+          {{ stats.score|format_grade }}
         </div>
-      {% endif %}
+        <div class="stat-meta">
+          <span>{{ stats.score|format_score('Mean:') }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-title">{{ method_aggregation.method_name|upper }} Grade</div>
+        <div class="stat-value grade-{{ method_aggregation.results.mean|format_grade|lower|replace('+', 'plus') }}">
+          {{ method_aggregation.results.mean|format_grade }}
+        </div>
+        <div class="stat-meta">
+          <span>{{ method_aggregation.results.mean|format_score('Mean:') }}</span>
+        </div>
+      </div>
+
       {% if stats.advanced_solves %}
         <div class="stat-card">
           <div class="stat-title">Bluetooth Solves</div>
@@ -742,10 +742,9 @@
 
     <div class="tabs">
       <div class="tab active" data-tab="solves">Solves</div>
-      {% if stats.advanced_solves %}
-        <div class="tab" data-tab="oll">OLL</div>
-        <div class="tab" data-tab="pll">PLL</div>
-      {% endif %}
+      {% for step in method_aggregation.results.resume.keys() %}
+        <div class="tab" data-tab="{{ step }}">{{ step.upper() }}</div>
+      {% endfor %}
     </div>
 
     <div class="tab-content active table-container" id="solves-tab">
@@ -758,7 +757,6 @@
             <th>Scramble</th>
             <th>Flag</th>
             <th>Grade</th>
-            <th>Links</th>
           </tr>
         </thead>
         <tbody>
@@ -801,31 +799,15 @@
                   ---
                 {% endif %}
               </td>
-              <td>
-                {% if solve.advanced %}
-                  <a href="{{ solve.link_alg_cubing }}" target="_blank"
-                     title="View solution on alg.cubing.net"
-                     class="solve-detail-btn alg-cubing">
-                    Alg Cubing
-                  </a>
-                  <a href="{{ solve.link_cube_db }}" target="_blank"
-                     title="View solution on cubedb.net"
-                     class="solve-detail-btn cube-db">
-                    Cube DB
-                  </a>
-                {% else %}
-                  ---
-                {% endif %}
-              </td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
 
-    {% if stats.advanced_solves %}
-      <div class="tab-content table-container" id="oll-tab">
-        <table class="oll-list">
+    {% for step, cases in method_aggregation.results.resume.items() %}
+      <div class="tab-content table-container" id="{{ step }}-tab">
+        <table class="{{ step }}-list">
           <thead>
             <tr>
               <th>Case</th>
@@ -841,20 +823,24 @@
             </tr>
           </thead>
           <tbody>
-            {% for name, oll in cfop.olls.items()|sort(attribute='1.count', reverse=True) %}
+            {% for name, case in cases.items()|sort(attribute='1.count', reverse=True) %}
               <tr>
                 <td>
-                  <div class="cfop-case">
+                  <div class="step-case">
                     {% set name_part = name.split(" ") %}
-                    <div class="cfop-case-img">
-                      <a href="?m={{ method_aggregator.name.lower() }}&step=oll&case_uid={{ name_part[0] }}">
+                    <div class="step-case-img">
+                      <a href="?m={{ method_aggregation.method_name }}&step={{ step }}&case_uid={{ name_part[0] }}">
                          {{ name_part[0] }}
                       </a>
                     </div>
                     {% if 'SKIP' not in name %}
-                      <a href="https://cubing.fache.fr/OLL/{{ name_part[0] }}.html"
+                      <a href="https://cubing.fache.fr/{{ step.upper() }}/{{ name_part[0] }}.html"
                          target="_blank" class="link">
-                        {{ " ".join(name_part[1:]) }}
+                        {% if name_part|length > 1 %}
+                          {{ " ".join(name_part[1:]) }}
+                        {% else %}
+                          {{ step.upper() }} {{ name }}
+                        {% endif %}
                       </a>
                     {% else %}
                       <span class="skip">SKIP</span>
@@ -862,108 +848,38 @@
                   </div>
                 </td>
                 <td>
-                  {{ oll.count }}
+                  {{ case.count }}
                 </td>
-                <td class="frequency-{% if oll.frequency > oll.probability %}higher{% else %}lower{% endif %}">
-                  {{ "%0.2f"|format(oll.frequency * 100) }}%
-                </td>
-                <td>
-                  {{ "%0.2f"|format(oll.probability * 100) }}%
+                <td class="frequency-{% if case.frequency > case.probability %}higher{% else %}lower{% endif %}">
+                  {{ "%0.2f"|format(case.frequency * 100) }}%
                 </td>
                 <td>
-                  {{ oll.recognition|format_duration }}
+                  {{ "%0.2f"|format(case.probability * 100) }}%
                 </td>
                 <td>
-                  {{ oll.execution|format_duration }}
+                  {{ case.recognition|format_duration }}
                 </td>
                 <td>
-                  {{ oll.time|format_duration }}
+                  {{ case.execution|format_duration }}
                 </td>
                 <td>
-                  {{ "%0.2f"|format(oll.qtm) }}
+                  {{ case.time|format_duration }}
                 </td>
                 <td>
-                  {{ "%0.2f"|format(oll.tps) }}
+                  {{ "%0.2f"|format(case.qtm) }}
                 </td>
                 <td>
-                  {{ "%0.2f"|format(oll.etps) }}
+                  {{ "%0.2f"|format(case.tps) }}
+                </td>
+                <td>
+                  {{ "%0.2f"|format(case.etps) }}
                 </td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-
-      <div class="tab-content table-container" id="pll-tab">
-        <table class="pll-list">
-          <thead>
-            <tr>
-              <th>Case</th>
-              <th>Count</th>
-              <th>Frequency</th>
-              <th>Probability</th>
-              <th>Recognition</th>
-              <th>Execution</th>
-              <th>Time</th>
-              <th>QTM</th>
-              <th>TPS</th>
-              <th>eTPS</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for name, pll in cfop.plls.items()|sort(attribute='1.count', reverse=True) %}
-              <tr>
-                <td>
-                  <div class="cfop-case">
-                    {% set name_part = name.split(" ") %}
-                    <div class="cfop-case-img">
-                      <a href="?m={{ method_aggregator.name.lower() }}&step=pll&case_uid={{ name_part[0] }}">
-                         {{ name_part[0] }}
-                      </a>
-                    </div>
-                    {% if 'SKIP' not in name %}
-                      <a href="https://cubing.fache.fr/PLL/{{ name_part[0] }}.html"
-                         target="_blank" class="link">
-                        PLL {{ name }}
-                      </a>
-                    {% else %}
-                      <span class="skip">SKIP</span>
-                    {% endif %}
-                  </div>
-                </td>
-                <td>
-                  {{ pll.count }}
-                </td>
-                <td class="frequency-{% if pll.frequency > pll.probability %}higher{% else %}lower{% endif %}">
-                  {{ "%0.2f"|format(pll.frequency * 100) }}%
-                </td>
-                <td>
-                  {{ "%0.2f"|format(pll.probability * 100) }}%
-                </td>
-                <td>
-                  {{ pll.recognition|format_duration }}
-                </td>
-                <td>
-                  {{ pll.execution|format_duration }}
-                </td>
-                <td>
-                  {{ pll.time|format_duration }}
-                </td>
-                <td>
-                  {{ "%0.2f"|format(pll.qtm) }}
-                </td>
-                <td>
-                  {{ "%0.2f"|format(pll.tps) }}
-                </td>
-                <td>
-                  {{ "%0.2f"|format(pll.etps) }}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% endif %}
+    {% endfor %}
   </div>
 
   <footer class="app-footer card">

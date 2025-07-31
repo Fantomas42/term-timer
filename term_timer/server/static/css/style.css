@@ -507,13 +507,13 @@ header {
 }
 
 
-.cfop-case {
+.step-case {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.cfop-case-img {
+.step-case-img {
     width: 30px;
     height: 30px;
     background-color: rgba(255, 255, 255, 0.1);
@@ -524,7 +524,7 @@ header {
     font-size: 0.75rem;
 }
 
-.cfop-case-img a {
+.step-case-img a {
     color: var(--light);
     text-decoration: none;
 }

@@ -17,6 +17,7 @@ from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.timing import untime_moves
 
+from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
@@ -36,7 +37,6 @@ from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import save_solves
 from term_timer.interface.console import console
-from term_timer.methods import get_method_aggregator
 from term_timer.methods.base import get_step_config
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -371,17 +371,22 @@ class SessionDetailView(View):
 
         self.step = step.strip().lower()
         self.case_uid = case_uid.strip().lower()
-        self.method_aggregator = get_method_aggregator(method_name)
+        self.method_name = method_name.strip().lower()
+
+        self.method_aggregation = SolvesMethodAggregator(
+            self.method_name, solves, full=True,
+        )
+
+        solves = self.method_aggregation.results['stack']
 
         if self.step and self.case_uid:
             filtered_solves = []
 
             for solve in solves:
-                analysis = self.method_aggregator(
-                    solve.scramble,
-                    solve.solution,
-                )
-                for s_step in reversed(analysis.summary):
+                if not solve.advanced:
+                    continue
+
+                for s_step in reversed(solve.method_applied.summary):
                     if s_step['name'].lower() == self.step:
                         if s_step['cases']:
                             step_case = s_step['cases'][0].split(' ')[0].lower()
@@ -404,13 +409,12 @@ class SessionDetailView(View):
             'session': self.session,
             'stats': self.stats,
             'sessions': self.compute_sessions(),
-            'cfop': self.stats.compute_cfop(),
             'trend': self.compute_trend(),
             'distribution': self.compute_distribution(),
             'punchcard': self.compute_punchcard(),
             'step': self.step,
             'case_uid': self.case_uid,
-            'method_aggregator': self.method_aggregator,
+            'method_aggregation': self.method_aggregation,
         }
 
     def compute_sessions(self):
@@ -499,6 +503,7 @@ class SolveDetailView(View):
         except IndexError:
             abort(404, 'Invalid solve ID')
 
+        method_name = method_name.strip().lower()
         if method_name:
             self.solve.method_name = method_name
 
