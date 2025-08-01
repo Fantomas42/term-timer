@@ -363,7 +363,11 @@ header {
     background-color: #20C997;
 }
 
-.recons-moves .wide,
+.recons-moves .wide {
+    color: var(--dark);
+    background-color: #33F4F3;
+}
+
 .recons-moves .slice {
     color: var(--light);
     background-color: #9400D3;
