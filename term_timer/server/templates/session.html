@@ -6,7 +6,7 @@
 
 {% block subtitle %}
   {{ session|title() }} {{ cube }}x{{ cube }}x{{ cube }}
-  {% if case_uid %}{{ step.upper() }}: {{ case_uid }}{% endif %}
+  {% if case_uid %}{{ step.upper() }}: {{ case_uid.title() }}{% endif %}
 {% endblock %}
 
 {% block script %}
