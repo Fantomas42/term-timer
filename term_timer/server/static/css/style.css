@@ -817,10 +817,6 @@ twisty-alg-viewer {
     width: 33%; /* Moves */
 }
 
-.reconstruction.issues th:nth-child(3), .reconstruction.issues td:nth-child(3) {
-    width: 60%; /* Moves */
-}
-
 /* PunchCard */
 
 .year-selector {
