@@ -1,10 +1,42 @@
 import time
+from functools import partial
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 from term_timer.methods import get_method_analyser
 from term_timer.solve import Solve
 from term_timer.stats import StatisticsTools
+
+
+def analyse_solve_worker(solve, method_name, full):
+    if not solve.advanced:
+        return None
+
+    solve.method_name = method_name
+
+    if full:
+        _ = solve.score
+
+    analysis = solve.method_applied
+
+    steps = {}
+    for step_name, step_index in solve.method_analyser.aggregate.items():
+        step = analysis.summary[step_index]
+        steps[step_name] = {
+            'case': step['cases'][0],
+            'time': step['total'],
+            'execution': step['execution'],
+            'recognition': step['recognition'],
+            'qtm': step['qtm'],
+            'tps': Solve.compute_tps(step['qtm'], step['total']),
+            'etps': Solve.compute_tps(step['qtm'], step['execution']),
+        }
+
+    return {
+        'steps': steps,
+        'score': analysis.score,
+        'solve': solve if full else None,
+    }
 
 
 class SolvesMethodAggregator:
@@ -18,45 +50,17 @@ class SolvesMethodAggregator:
 
         self.results = self.aggregate()
 
-    def analyse_solve(self, solve: Solve):
-        if not solve.advanced:
-            return None
-
-        solve.method_name = self.method_name
-
-        if self.full:
-            solve.score  # noqa: B018
-
-        analysis = solve.method_applied
-
-        steps = {}
-        for step_name, step_index in solve.method_analyser.aggregate.items():
-            step = analysis.summary[step_index]
-            steps[step_name] = {
-                'case': step['cases'][0],
-                'time': step['total'],
-                'execution': step['execution'],
-                'recognition': step['recognition'],
-                'qtm': step['qtm'],
-                'tps': Solve.compute_tps(step['qtm'], step['total']),
-                'etps': Solve.compute_tps(step['qtm'], step['execution']),
-            }
-
-        analyse = {
-            'steps': steps,
-            'score': analysis.score,
-            'solve': None,
-        }
-        if self.full:
-            analyse['solve'] = solve
-
-        return analyse
-
     def collect_analyses(self):
         num_processes = max(1, cpu_count() - 1)
 
+        worker_func = partial(
+            analyse_solve_worker,
+            method_name=self.method_name,
+            full=self.full,
+        )
+
         with Pool(processes=num_processes) as pool:
-            return pool.map(self.analyse_solve, self.stack)
+            return pool.map(worker_func, self.stack)
 
     def aggregate(self):
         start = time.time()
