@@ -93,7 +93,7 @@ header {
 .btn-dnf {
     background: #e53e3e;
     color: white;
-    border: 1px solid #FF9999;
+    border: 1px solid #AA9999;
 }
 
 .btn-dnf:hover {
@@ -113,7 +113,7 @@ header {
 .btn-plus2 {
     background: #ed8936;
     color: white;
-    border: 1px solid #FdAA66;
+    border: 1px solid #FFBB99;
 }
 
 .btn-plus2:hover {
@@ -365,8 +365,8 @@ header {
 
 .recons-moves .wide,
 .recons-moves .slice {
-    color: var(--dark);
-    background-color: var(--link);
+    color: var(--light);
+    background-color: #9400D3;
 }
 
 .recons-moves .rotation {
