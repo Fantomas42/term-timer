@@ -42,11 +42,15 @@ class SolvesMethodAggregator:
                 'etps': Solve.compute_tps(step['qtm'], step['execution']),
             }
 
-        return {
+        analyse = {
             'steps': steps,
             'score': analysis.score,
-            'solve': solve,
+            'solve': None,
         }
+        if self.full:
+            analyse['solve'] = solve
+
+        return analyse
 
     def collect_analyses(self):
         num_processes = max(1, cpu_count() - 1)
@@ -57,7 +61,7 @@ class SolvesMethodAggregator:
     def aggregate(self):
         start = time.time()
         analyses = self.collect_analyses()
-        print(time.time() - start)
+        print('=>', time.time() - start)
 
         score = 0
         total = 0

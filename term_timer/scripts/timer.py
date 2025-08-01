@@ -2,6 +2,7 @@ import asyncio
 from contextlib import suppress
 from random import seed
 
+from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.config import DEBUG
@@ -9,6 +10,7 @@ from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
 from term_timer.interface.console import console
+from term_timer.interface.terminal import Terminal
 from term_timer.logger import configure_logging
 from term_timer.manage import SolveManager
 from term_timer.server.app import Server
@@ -98,14 +100,16 @@ async def trainer(options) -> int:
 def tools(command, options):
     cube = options.cube
 
+    stack = load_all_solves(
+        cube,
+        options.include_sessions,
+        options.exclude_sessions,
+        options.devices,
+    )
+
     session_stats = StatisticsReporter(
         cube,
-        load_all_solves(
-            cube,
-            options.include_sessions,
-            options.exclude_sessions,
-            options.devices,
-        ),
+        stack,
     )
 
     if not session_stats.stack:
@@ -121,16 +125,23 @@ def tools(command, options):
     if command == 'stats':
         session_stats.resume('Global ', show_title=True)
 
+    if command == 'graph':
+        session_stats.graph()
+
     if command == 'cfop':
+        console.print('Aggregating cases...', end='')
+
+        analyses = SolvesMethodAggregator('cfop', stack, full=False).results
+
+        Terminal.clear_line(full=False)
+
         session_stats.cfop(
+            analyses,
             oll_only=options.oll,
             pll_only=options.pll,
             sorting=options.sort,
             ordering=options.order,
         )
-
-    if command == 'graph':
-        session_stats.graph()
 
     if command == 'detail':
         for solve_id in options.solves:
