@@ -4,7 +4,9 @@ import logging
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.rotation import compress_final_rotations
-from cubing_algs.transform.slice import reslice_moves
+from cubing_algs.transform.slice import reslice_timed_moves
+
+from term_timer.constants import RESLICE_THRESHOLD
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,7 @@ class Gesture:
             return
 
         algo = self.save_moves.transform(
-            reslice_moves,
+            reslice_timed_moves(RESLICE_THRESHOLD),
             degrip_full_moves,
             compress_final_rotations,
         )
