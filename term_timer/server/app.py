@@ -15,6 +15,7 @@ from bottle import request
 from bottle import static_file
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.pause import pause_moves
+from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.timing import untime_moves
 
 from term_timer.aggregator import SolvesMethodAggregator
@@ -102,9 +103,8 @@ def format_line(value):
             )
 
         return (
-            f'<span class="{ klass } { markup } { move_name }" title="{ legend }">'
-            + moves +
-            '</span>'
+            f'<span class="{ klass } { markup } { move_name }"'
+            f' title="{ legend }">{ moves }</span>'
         )
 
     result = BLOCK_REGEX.sub(replacer, value)
@@ -225,10 +225,11 @@ def optimized_step(step):
     if not step['cases'] or 'SKIP' not in step['cases'][0]:
         optimizers = get_step_config(step['name'], 'optimizers', [])
 
-    algorithm = prettify_moves(
-        humanize_moves(
-            step['moves_reoriented'].transform(*optimizers),
-        ),
+    algorithm = humanize_moves(
+        step['moves_reoriented'].transform(*optimizers),
+    ).transform(
+        compress_moves,
+        untime_moves,
     )
 
     algorithm_string = format_alg_triggers(
