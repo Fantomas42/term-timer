@@ -20,3 +20,31 @@ class TransformSliceTestCase(unittest.TestCase):
             result,
             expect,
         )
+
+
+class TransformHumanizeTestCase(unittest.TestCase):
+
+    def test_humanize_moves_issue_01(self):
+        provide = parse_moves(
+            "R'@23249 L@23279 "
+            "R'@23520 L@23520 "
+            "U@23789 "
+            "B@24060 F'@24060 "
+            "F'@24300 B@24301 "
+            "D'@24809 "
+            "B'@25499 F@25529 "
+            "U@26309 D'@26311 "
+            "D'@26639 U@26640 "
+            "F@27089 B'@27090",
+        )
+
+        expect = parse_moves("M2 D S2 D' S M2 S'")
+
+        result = prettify_moves(
+            humanize_moves(provide),
+        )
+
+        self.assertEqual(
+            result,
+            expect,
+        )
