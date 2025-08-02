@@ -73,7 +73,7 @@ class TestFormatEdge(unittest.TestCase):
         """Test formatting edge value with 0."""
         edge_ns = 0
 
-        expected = 'DNF'
+        expected = '+00:00'
         self.assertEqual(format_edge(edge_ns, 605), expected)
 
 

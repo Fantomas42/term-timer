@@ -207,7 +207,7 @@ class Statistics(StatisticsTools):
                     best_bin = second
                     break
 
-        values = [st / SECOND for st in self.stack_time]
+        values = [st / SECOND for st in self.stack_time_sorted]
 
         min_val = int((np.min(values) // best_bin) * best_bin)
         max_val = int(((np.max(values) // best_bin) + 1) * best_bin)

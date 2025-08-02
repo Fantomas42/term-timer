@@ -31,9 +31,6 @@ def format_duration(elapsed_ns: int) -> str:
 
 
 def format_edge(edge: int, max_edge: int) -> str:
-    if not edge:
-        return DNF
-
     mins, secs = divmod(int(edge), 60)
 
     if max_edge < 60:
