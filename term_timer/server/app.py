@@ -91,11 +91,18 @@ def format_line(value):
         legend = LEGENDS.get(markup, markup.title())
 
         klass = 'move'
+        move_name = ''
         if len(moves.split(' ')) > 1:
             klass = 'trigger'
+        else:
+            move_name = moves.lower().replace(
+                "'", '',
+            ).replace(
+                '2', '',
+            )
 
         return (
-            f'<span class="{ klass } { markup }" title="{ legend }">'
+            f'<span class="{ klass } { markup } { move_name }" title="{ legend }">'
             + moves +
             '</span>'
         )

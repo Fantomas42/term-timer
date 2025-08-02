@@ -374,6 +374,11 @@ header {
     background-color: #9400D3;
 }
 
+.recons-moves .m {
+    color: var(--dark);
+    background-color: #00DFDF;
+}
+
 .recons-moves .rotation {
     color: var(--dark);
     background-color: var(--success);
