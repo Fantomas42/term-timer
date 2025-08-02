@@ -1025,7 +1025,7 @@
                   <td class="recons-moves">
                     {% if not info.type == 'virtual' %}
                       {% for m in info.moves_reoriented %}
-                        <span class="move">{{ m.untimed }}</span>
+                        <span class="move" title="{{ m.timed }}">{{ m.untimed }}</span>
                       {% endfor %}
                     {% endif %}
                   </td>
