@@ -15,7 +15,6 @@ from bottle import request
 from bottle import static_file
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.pause import pause_moves
-from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.timing import untime_moves
 
 from term_timer.aggregator import SolvesMethodAggregator
@@ -42,6 +41,7 @@ from term_timer.methods.base import get_step_config
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
+from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 
 SPAN_REGEX = re.compile(r'(<span[^>]*>.*?</span>)')
@@ -225,9 +225,11 @@ def optimized_step(step):
     if not step['cases'] or 'SKIP' not in step['cases'][0]:
         optimizers = get_step_config(step['name'], 'optimizers', [])
 
-    optimizers.extend([compress_moves, untime_moves])
-
-    algorithm = step['moves_reoriented'].transform(*optimizers)
+    algorithm = prettify_moves(
+        humanize_moves(
+            step['moves_reoriented'].transform(*optimizers),
+        ),
+    )
 
     algorithm_string = format_alg_triggers(
         format_alg_moves(
