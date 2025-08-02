@@ -58,8 +58,8 @@ DEFAULT_TRIGGERS = [
 
 
 def apply_trigger_outside_blocks(algorithm: str, regex, replacement_func):
-
     blocks = []
+
     for match in re.finditer(BLOCK_PATTERN, algorithm):
         blocks.append((match.start(), match.end(), match.group(0)))
 
