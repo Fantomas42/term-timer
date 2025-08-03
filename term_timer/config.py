@@ -20,6 +20,10 @@ metronome = 0.0
 orientation = ["z2"]
 method = "cf4op"
 
+[trainer]
+orientation = ["z2"]
+step = "oll"
+
 [display]
 scramble = true
 reconstruction = true
@@ -63,6 +67,8 @@ UI_CONFIG = CONFIG.get('ui', {})
 
 CUBE_CONFIG = CONFIG.get('cube', {})
 
+TRAINER_CONFIG = CONFIG.get('trainer', {})
+
 SERVER_CONFIG = CONFIG.get('server', {})
 
 CUBE_ORIENTATION = parse_moves(
@@ -70,6 +76,12 @@ CUBE_ORIENTATION = parse_moves(
 )
 
 CUBE_METHOD = CUBE_CONFIG.get('method')
+
+TRAINER_ORIENTATION = parse_moves(
+    TRAINER_CONFIG.get('orientation'),
+)
+
+TRAINER_STEP = TRAINER_CONFIG.get('step')
 
 DEBUG = bool(os.getenv('TERM_TIMER_DEBUG', None))
 

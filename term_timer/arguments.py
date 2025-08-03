@@ -6,6 +6,7 @@ from term_timer.config import CUBE_METHOD
 from term_timer.config import DISPLAY_CONFIG
 from term_timer.config import SERVER_CONFIG
 from term_timer.config import TIMER_CONFIG
+from term_timer.config import TRAINER_STEP
 from term_timer.constants import CUBE_SIZES
 
 COMMAND_ALIASES = {
@@ -276,12 +277,12 @@ def train_arguments(subparsers):
 
     parser.add_argument(
         '-s', '--step',
-        default='oll',
+        default=TRAINER_STEP,
         choices={'oll', 'pll'},
-        metavar='MODE',
+        metavar='STEP',
         help=(
             'Specify the training mode.\n'
-            'Default: oll.'
+            f'Default: { TRAINER_STEP }.'
         ),
     )
 
