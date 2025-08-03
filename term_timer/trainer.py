@@ -27,7 +27,7 @@ class Trainer(SolveInterface):
 
         self.console.print(
             f'[scramble]Training #{ self.counter }:[/scramble]',
-            f'[moves]{ self.scramble }[/moves]',
+            f'[moves]{ self.scramble_oriented }[/moves]',
             f'[comment]// { case }[/comment]',
         )
 
@@ -77,8 +77,9 @@ class Trainer(SolveInterface):
                 cube.get_kociemba_facelet_positions(),
                 self.bluetooth_cube.state,
             )
-            self.scramble = scramble
-        self.scramble_oriented = self.reorient(self.scramble)
+            self.scramble_oriented = self.reorient(scramble)
+        else:
+            self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.get_kociemba_facelet_positions()
 
         self.start_line(cube, case)
