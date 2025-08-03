@@ -21,7 +21,7 @@ orientation = ["z2"]
 method = "cf4op"
 
 [trainer]
-orientation = ["z2"]
+ll_orientation = ["z2"]
 step = "oll"
 
 [display]
@@ -77,8 +77,8 @@ CUBE_ORIENTATION = parse_moves(
 
 CUBE_METHOD = CUBE_CONFIG.get('method')
 
-TRAINER_ORIENTATION = parse_moves(
-    TRAINER_CONFIG.get('orientation'),
+LL_ORIENTATION = parse_moves(
+    TRAINER_CONFIG.get('ll_orientation'),
 )
 
 TRAINER_STEP = TRAINER_CONFIG.get('step')
