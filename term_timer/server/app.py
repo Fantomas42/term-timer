@@ -698,6 +698,18 @@ class Server:
     def create_app(self, debug):
         app = Bottle()
 
+        @app.hook('before_request')
+        def add_trailing_slash():
+            path = request.environ.get('PATH_INFO', '')
+
+            if (
+                    path != '/'
+                    and not path.endswith('/')
+                    and '.' not in path.split('/')[-1]
+            ):
+                new_url = request.url + '/'
+                redirect(new_url, code=301)
+
         @app.route('/')
         def session_list():
             return SessionListView().as_view(debug)
