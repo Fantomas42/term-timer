@@ -97,8 +97,7 @@
      const solutionString = `{{ reconstruction_text }}`;
      const solutionMoveTimestamps = [
        {% for times in reconstruction_timing %}[{{ times.0 }}, {{ times.1 }}, "{{ times.2 }}"],
-       {% endfor %}
-     ];
+       {% endfor %}];
      const solutionIndex = {{ reconstruction_index|tojson }};
 
      const duration = solutionMoveTimestamps.at(-1);
