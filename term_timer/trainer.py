@@ -8,14 +8,14 @@ from term_timer.solve import Solve
 
 
 class Trainer(SolveInterface):
-    def __init__(self, *, mode: str,
+    def __init__(self, *, step: str,
                  show_cube: bool,
                  metronome: float):
         super().__init__()
 
         self.set_state('configure')
 
-        self.mode = mode
+        self.step = step
         self.show_cube = show_cube
         self.metronome = metronome
 
@@ -23,7 +23,7 @@ class Trainer(SolveInterface):
 
     def start_line(self, cube, case) -> None:
         if self.show_cube:
-            self.console.print(getattr(cube, self.mode)(), end='')
+            self.console.print(getattr(cube, self.step)(), end='')
 
         self.console.print(
             f'[scramble]Training #{ self.counter }:[/scramble]',
@@ -70,7 +70,7 @@ class Trainer(SolveInterface):
     async def start(self) -> bool:
         self.init_solve()
 
-        case, self.scramble, cube = trainer(self.mode)
+        case, self.scramble, cube = trainer(self.step)
 
         if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
             scramble = scramble_moves(

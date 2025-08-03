@@ -275,10 +275,14 @@ def train_arguments(subparsers):
     )
 
     parser.add_argument(
-        'mode',
-        metavar='MODE',
+        '-s', '--step',
+        default='oll',
         choices={'oll', 'pll'},
-        help='Specify the training mode.',
+        metavar='MODE',
+        help=(
+            'Specify the training mode.\n'
+            'Default: oll.'
+        ),
     )
 
     mode = 'hide' if show_cube else 'show'

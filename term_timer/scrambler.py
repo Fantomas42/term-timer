@@ -153,10 +153,10 @@ def scrambler(cube_size: int, iterations: int,
     return scramble, cube
 
 
-def trainer(mode):
+def trainer(step):
     cube = Cube(3)
 
-    case, scramble = random_training(mode)
+    case, scramble = random_training(step)
 
     cube.rotate('Z2')
     cube.rotate(scramble)
@@ -164,9 +164,9 @@ def trainer(mode):
     return case, scramble, cube
 
 
-def random_training(mode):
+def random_training(step):
     cases = OLL_SETUPS
-    if mode == 'pll':
+    if step == 'pll':
         cases = PLL_SETUPS
 
     case = choice(list(cases.keys()))
