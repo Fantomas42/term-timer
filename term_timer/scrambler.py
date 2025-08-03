@@ -20,6 +20,11 @@ from term_timer.magic_cube import Cube
 from term_timer.methods.cfop import OLL_SETUPS
 from term_timer.methods.cfop import PLL_SETUPS
 
+
+class InvalidCaseError(Exception):
+    ...
+
+
 FACE_REGEXP = re.compile(r'(F|R|U|B|L|D)')
 
 MOVES_EASY_CROSS = [
@@ -154,25 +159,31 @@ def scrambler(cube_size: int, iterations: int,
     return scramble, cube
 
 
-def trainer(step):
+def trainer(step, cases):
     cube = Cube(3)
 
-    case, scramble = random_training(step)
+    case_name, scramble = random_training(step, cases)
 
     cube.rotate(scramble)
 
-    return case, scramble, cube
+    return case_name, scramble, cube
 
 
-def random_training(step):
+def random_training(step, selected_cases):
     cases = OLL_SETUPS
     if step == 'pll':
         cases = PLL_SETUPS
 
-    case = choice(list(cases.keys()))
-    algo = LL_ORIENTATION + choice(cases[case])
+    case = choice(selected_cases or list(cases.keys()))
 
-    return case, parse_moves(algo).transform(
+    if case not in cases:
+        error_string = f'Invalid case { case } for { step.upper() }'
+        raise InvalidCaseError(error_string)
+
+    algo = LL_ORIENTATION + choice(cases[case]['setups'])
+    case_name = cases[case]['name']
+
+    return case_name, parse_moves(algo).transform(
         unfat_rotation_moves,
         degrip_full_moves,
         compress_final_rotations,

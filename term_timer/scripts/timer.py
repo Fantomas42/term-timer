@@ -13,6 +13,7 @@ from term_timer.interface.console import console
 from term_timer.interface.terminal import Terminal
 from term_timer.logger import configure_logging
 from term_timer.manage import SolveManager
+from term_timer.scrambler import InvalidCaseError
 from term_timer.server.app import Server
 from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
@@ -77,6 +78,7 @@ async def timer(options) -> int:
 async def trainer(options) -> int:
     trainer = Trainer(
         step=options.step,
+        cases=options.case,
         show_cube=options.show_cube,
         metronome=options.metronome,
     )
@@ -90,6 +92,8 @@ async def trainer(options) -> int:
 
             if not done:
                 break
+    except InvalidCaseError as error:
+        console.print(str(error), style='warning')
     finally:
         if trainer.bluetooth_interface:
             await trainer.bluetooth_disconnect()

@@ -286,6 +286,17 @@ def train_arguments(subparsers):
         ),
     )
 
+    parser.add_argument(
+        '-c', '--case',
+        nargs='*',
+        default=[],
+        metavar='CASE',
+        help=(
+            'Names of the step cases to solve.\n'
+            'Default: All.'
+        ),
+    )
+
     mode = 'hide' if show_cube else 'show'
     parser.add_argument(
         '-p', f'--{ mode }-cube',

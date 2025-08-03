@@ -9,6 +9,7 @@ from term_timer.solve import Solve
 
 class Trainer(SolveInterface):
     def __init__(self, *, step: str,
+                 cases: list[str],
                  show_cube: bool,
                  metronome: float):
         super().__init__()
@@ -18,6 +19,7 @@ class Trainer(SolveInterface):
         self.step = step
         self.show_cube = show_cube
         self.metronome = metronome
+        self.cases = cases
 
         self.counter = 1
 
@@ -70,7 +72,7 @@ class Trainer(SolveInterface):
     async def start(self) -> bool:
         self.init_solve()
 
-        case, self.scramble, cube = trainer(self.step)
+        case, self.scramble, cube = trainer(self.step, self.cases)
 
         if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
             scramble = scramble_moves(

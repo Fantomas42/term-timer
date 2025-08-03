@@ -34,7 +34,10 @@ def load_and_fill(path, masks, info, setups):
                 'probability': data['probability'],
             }
             if data['setups']:
-                setups[kase] = data['setups']
+                setups[kase.split(' ')[0]] = {
+                    'name': kase,
+                    'setups': data['setups'],
+                }
 
 
 load_and_fill(OLL_PATH, OLL_MASKS, OLL_INFO, OLL_SETUPS)
