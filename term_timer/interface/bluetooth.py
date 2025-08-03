@@ -211,4 +211,7 @@ class Bluetooth:
                 logger.info('Bluetooth Stop: %s', self.end_time)
 
         elif self.state == 'saving':
-            self.handle_save_gestures(event['move'])
+            self.handle_save_gestures(
+                event['move'],
+                event['clock'],
+            )
