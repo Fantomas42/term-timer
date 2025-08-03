@@ -6,7 +6,6 @@ from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.rotation import compress_final_rotations
 from cubing_algs.transform.slice import reslice_timed_moves
 
-from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import RESLICE_THRESHOLD
 
 logger = logging.getLogger(__name__)
@@ -21,10 +20,10 @@ class Gesture:
         self.save_gesture = ''
         self.save_gesture_event = asyncio.Event()
 
-    def handle_save_gestures(self, move, time):
+    def handle_save_gestures(self, move):
         move = self.reorient(move)
 
-        self.save_moves += f'{ move }@{ int(time / MS_TO_NS_FACTOR) }'
+        self.save_moves += move
 
         if len(self.save_moves) < 2:
             return

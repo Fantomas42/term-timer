@@ -5,6 +5,7 @@ from cubing_algs.vcube import VCube
 
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
+from term_timer.constants import MS_TO_NS_FACTOR
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +182,12 @@ class Bluetooth:
                     self.handle_bluetooth_move(event)
 
     def handle_bluetooth_move(self, event) -> None:
+        timed_move = (
+            f"{ event['move'] }@"
+            f"{ int(event['clock'] / MS_TO_NS_FACTOR) }"
+        )
+        logger.info('Tmove: %s', timed_move)
+
         if self.state in {'start', 'scrambling'}:
             self.scrambled += event['move']
             self.handle_scrambled()
@@ -211,7 +218,4 @@ class Bluetooth:
                 logger.info('Bluetooth Stop: %s', self.end_time)
 
         elif self.state == 'saving':
-            self.handle_save_gestures(
-                event['move'],
-                event['clock'],
-            )
+            self.handle_save_gestures(timed_move)
