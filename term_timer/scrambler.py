@@ -9,7 +9,7 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.fat import unfat_rotation_moves
 from cubing_algs.transform.mirror import mirror_moves
-from cubing_algs.transform.rotation import remove_final_rotations
+from cubing_algs.transform.rotation import compress_final_rotations
 from kociemba import solve
 
 from term_timer.config import DEBUG
@@ -175,5 +175,5 @@ def random_training(step):
     return case, parse_moves(algo).transform(
         unfat_rotation_moves,
         degrip_full_moves,
-        remove_final_rotations,
+        compress_final_rotations,
     )
