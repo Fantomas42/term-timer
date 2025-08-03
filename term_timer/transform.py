@@ -31,7 +31,7 @@ def humanize_moves(algorithm: Algorithm) -> Algorithm:
         to_fixpoint=True,
     )
 
-    if humanized[-1].is_rotation_move:
+    if humanized and humanized[-1].is_rotation_move:
         return algorithm
 
     return humanized
