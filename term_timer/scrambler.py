@@ -13,6 +13,7 @@ from cubing_algs.transform.rotation import compress_final_rotations
 from kociemba import solve
 
 from term_timer.config import DEBUG
+from term_timer.config import LL_ORIENTATION
 from term_timer.config import SCRAMBLE_ITERATIONS
 from term_timer.constants import CUBE_SIZES
 from term_timer.magic_cube import Cube
@@ -158,7 +159,6 @@ def trainer(step):
 
     case, scramble = random_training(step)
 
-    cube.rotate('Z2')
     cube.rotate(scramble)
 
     return case, scramble, cube
@@ -170,7 +170,7 @@ def random_training(step):
         cases = PLL_SETUPS
 
     case = choice(list(cases.keys()))
-    algo = choice(cases[case])
+    algo = LL_ORIENTATION + choice(cases[case])
 
     return case, parse_moves(algo).transform(
         unfat_rotation_moves,
