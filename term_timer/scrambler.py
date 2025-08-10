@@ -102,7 +102,7 @@ def is_valid_next_move(current: str, previous: str) -> bool:
 
 
 def random_moves(cube_size: int, iterations: int,
-                 *, easy_cross: bool) -> Algorithm:
+                 *, easy_cross: bool) -> tuple[Algorithm, int]:
     move_set = MOVES_BY_CUBE[cube_size]
 
     if easy_cross:
@@ -129,7 +129,7 @@ def random_moves(cube_size: int, iterations: int,
         previous = value
         moves.append(value)
 
-    return parse_moves(moves)
+    return parse_moves(moves), iterations
 
 
 def scramble_moves(state: str, facelets: str = '') -> Algorithm:
@@ -142,7 +142,7 @@ def scrambler(cube_size: int, iterations: int,
               *, easy_cross: bool) -> tuple[Algorithm, Cube]:
     cube = Cube(cube_size)
 
-    scramble = random_moves(
+    scramble, iterations = random_moves(
         cube_size, iterations,
         easy_cross=easy_cross,
     )
