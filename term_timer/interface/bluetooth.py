@@ -145,32 +145,6 @@ class Bluetooth:
 
                     self.bluetooth_cube = VCube(event['facelets'])
 
-                    if not self.bluetooth_cube.is_solved:
-                        self.clear_line(full=True)
-                        self.console.print(
-                            '[bluetooth]🫤Bluetooth:[/bluetooth] '
-                            '[warning]Cube is not in solved state[/warning]',
-                        )
-                        self.console.print(
-                            '[bluetooth]❓Bluetooth:[/bluetooth] '
-                            '[consign]Is the cube is really solved ? '
-                            '[key](y)[/key] to reset the cube.[/consign]',
-                        )
-                        char = await self.getch('reset cube')
-                        if char == 'y':
-                            for command in ['RESET', 'FACELETS']:
-                                await self.bluetooth_interface.send_command(
-                                    f'REQUEST_{ command }',
-                                )
-                            continue
-
-                        self.console.print(
-                            'Quit until solved',
-                            style='warning',
-                        )
-                        await self.bluetooth_queue.put(None)
-                        continue
-
                     self.facelets_received_event.set()
 
                 elif event_name == 'move':
