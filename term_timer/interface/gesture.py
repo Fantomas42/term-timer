@@ -34,8 +34,8 @@ class Gesture:
             compress_final_rotations,
         )
 
-        l_move = algo[-1]
-        a_move = algo[-2]
+        l_move = algo[-1].untimed
+        a_move = algo[-2].untimed
 
         if l_move.base_move != a_move.base_move:
             return
