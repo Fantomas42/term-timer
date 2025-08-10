@@ -33,7 +33,7 @@ class Scrambler:
             algo = self.reorient(
                 self.scrambled.transform(compress_moves),
             )
-            p_algo = algo[:-1]
+            p_algo = self.scrambled[:-1].transform(compress_moves)
 
             on_good_way = True
             for i, move in enumerate(algo):
