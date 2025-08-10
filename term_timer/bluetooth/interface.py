@@ -27,7 +27,6 @@ class CubeNotFoundError(Exception):
 
 
 class BluetoothInterface:
-    device = None
     client = None
     driver = None
 
@@ -47,8 +46,7 @@ class BluetoothInterface:
             )
             raise CubeNotFoundError
 
-        self.device = device
-        self.client = BleakClient(self.device.address)
+        self.client = BleakClient(device.address)
         await self.client.connect()
 
         logger.debug(' * Connected: %r', self.client.is_connected)
@@ -57,7 +55,7 @@ class BluetoothInterface:
             for driver in DRIVERS:
                 if service.uuid == driver.service_uid:
                     logger.debug(' * Using %s driver', driver.__name__)
-                    self.driver = driver(self.client, self.device)
+                    self.driver = driver(self.client)
                     break
             if self.driver:
                 break

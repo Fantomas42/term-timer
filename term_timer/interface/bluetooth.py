@@ -97,7 +97,7 @@ class Bluetooth:
             return True
 
     async def bluetooth_disconnect(self) -> None:
-        if self.bluetooth_interface and self.bluetooth_interface.device:
+        if self.bluetooth_interface and self.bluetooth_interface.client:
             self.console.print(
                 '[bluetooth]🔗 Bluetooth[/bluetooth] '
                 f'{ self.bluetooth_device_label } disconnecting...',
@@ -106,7 +106,7 @@ class Bluetooth:
 
     @property
     def bluetooth_device_label(self) -> str:
-        device_label = self.bluetooth_interface.device.name
+        device_label = self.bluetooth_interface.client.name
 
         if 'hardware_version' in self.bluetooth_hardware:
             device_label += f'v{ self.bluetooth_hardware["hardware_version"] }'

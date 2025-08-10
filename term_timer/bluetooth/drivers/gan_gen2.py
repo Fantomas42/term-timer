@@ -37,24 +37,24 @@ class GanGen2Driver(Driver):
     command_characteristic_uid = GAN_GEN2_COMMAND_CHARACTERISTIC
     encrypter = GanGen2CubeEncrypter
 
-    def __init__(self, client, device):
-        super().__init__(client, device)
+    def __init__(self, client):
+        super().__init__(client)
 
         self.last_serial = -1
         self.cube_timestamp = 0
         self.last_move_timestamp = 0
 
     def init_cypher(self):
-        if self.device.name.startswith('AiCube'):
+        if self.client.name.startswith('AiCube'):  # noqa: SLF001
             return self.encrypter(
                 MOYU_AI_ENCRYPTION_KEY['key'],
                 MOYU_AI_ENCRYPTION_KEY['iv'],
-                get_salt(self.device.address),
+                get_salt(self.client.address),
             )
         return self.encrypter(
             GAN_ENCRYPTION_KEY['key'],
             GAN_ENCRYPTION_KEY['iv'],
-            get_salt(self.device.address),
+            get_salt(self.client.address),
         )
 
     def send_command_handler(self, command: str):

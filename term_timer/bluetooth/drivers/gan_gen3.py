@@ -26,8 +26,8 @@ class GanGen3Driver(GanGen2Driver):
     state_characteristic_uid = GAN_GEN3_STATE_CHARACTERISTIC
     command_characteristic_uid = GAN_GEN3_COMMAND_CHARACTERISTIC
 
-    def __init__(self, client, device):
-        super().__init__(client, device)
+    def __init__(self, client):
+        super().__init__(client)
 
         self.serial = -1
         self.last_serial = -1
