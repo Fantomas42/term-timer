@@ -7,7 +7,7 @@ name = "term-timer"
 version = "1.0"
 description = "Speed Cubing Timer on your Terminal"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "magiccube==1.2.0",
     "plotext==5.3.2",
