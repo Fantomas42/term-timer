@@ -7,6 +7,7 @@ from datetime import timezone
 from cubing_algs.algorithm import Algorithm
 
 from term_timer.constants import DNF
+from term_timer.constants import ESCAPE_CHAR
 from term_timer.constants import PLUS_TWO
 from term_timer.in_out import save_solves
 from term_timer.interface.bluetooth import Bluetooth
@@ -78,7 +79,7 @@ class SolveInterface(
         else:
             char = await self.getch('scrambled')
 
-        if char in {'q', '\x1b'}:
+        if char in {'q', ESCAPE_CHAR}:
             return True
 
         self.set_state('scrambled')
@@ -186,4 +187,4 @@ class SolveInterface(
         if char != 'z':
             self.counter += 1
 
-        return char in {'q', '\x1b'}
+        return char in {'q', ESCAPE_CHAR}
