@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import sys
 
 is_windows = sys.platform in {'win32', 'cygwin'}
@@ -80,7 +81,8 @@ class Getcher:
 
             def stdin_callback() -> None:
                 try:
-                    ch = sys.stdin.read(1)
+                    ch_bytes = os.read(fd, 3)
+                    ch = ch_bytes.decode('utf-8', errors='replace')
                     if not future.done():
                         future.set_result(ch)
                 except Exception as e:  # noqa BLE001
