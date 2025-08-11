@@ -45,7 +45,7 @@ class GanGen2Driver(Driver):
         self.last_move_timestamp = 0
 
     def init_cypher(self):
-        if self.client.name.startswith('AiCube'):  # noqa: SLF001
+        if self.client.name.startswith('AiCube'):
             return self.encrypter(
                 MOYU_AI_ENCRYPTION_KEY['key'],
                 MOYU_AI_ENCRYPTION_KEY['iv'],
