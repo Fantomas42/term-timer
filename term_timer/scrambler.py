@@ -119,9 +119,6 @@ def random_moves(cube_size: int, iterations: int,
             iterations_range = (25, 30)
         iterations = randint(*iterations_range)
 
-    if DEBUG and SCRAMBLE_ITERATIONS:
-        iterations = SCRAMBLE_ITERATIONS
-
     while len(moves) < iterations:
         while not is_valid_next_move(value, previous):
             value = choice(move_set)
@@ -129,7 +126,7 @@ def random_moves(cube_size: int, iterations: int,
         previous = value
         moves.append(value)
 
-    return parse_moves(moves), iterations
+    return parse_moves(moves)
 
 
 def scramble_moves(state: str, facelets: str = '') -> Algorithm:
@@ -142,7 +139,10 @@ def scrambler(cube_size: int, iterations: int,
               *, easy_cross: bool) -> tuple[Algorithm, Cube]:
     cube = Cube(cube_size)
 
-    scramble, iterations = random_moves(
+    if DEBUG and SCRAMBLE_ITERATIONS:
+        iterations = SCRAMBLE_ITERATIONS
+
+    scramble = random_moves(
         cube_size, iterations,
         easy_cross=easy_cross,
     )
