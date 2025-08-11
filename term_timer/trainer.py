@@ -115,7 +115,7 @@ class Trainer(SolveInterface):
             timer='Term-Timer',
             device=(
                 self.bluetooth_interface
-                and self.bluetooth_interface.device.name
+                and self.bluetooth_interface.client.name
             ) or '',
             session='training',
             solve_id=self.counter,
