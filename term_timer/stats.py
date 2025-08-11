@@ -426,9 +426,6 @@ class StatisticsReporter(Statistics):
 
         solve.method_name = method
 
-        cube = Cube(self.cube_size)
-        cube.rotate(solve.scramble)
-
         date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
         console.print(
@@ -580,6 +577,9 @@ class StatisticsReporter(Statistics):
             f'[consign]{ solve.scramble }[/consign]',
         )
         if show_cube:
+            cube = Cube(self.cube_size)
+            cube.rotate(solve.scramble)
+
             console.print(cube.full_cube(None), end='')
 
         if solve.advanced:
