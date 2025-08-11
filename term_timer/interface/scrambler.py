@@ -1,7 +1,12 @@
 import asyncio
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.size import compress_moves
+from cubing_algs.transform.slice import reslice_timed_moves
+from cubing_algs.transform.timing import untime_moves
+
+from term_timer.constants import RESLICE_THRESHOLD
 
 
 class Scrambler:
@@ -19,7 +24,9 @@ class Scrambler:
 
         self.scramble_completed_event = asyncio.Event()
 
-    def handle_scrambled(self):
+    def handle_scrambled(self, timed_move):
+        self.scrambled += timed_move
+
         if self.bluetooth_cube.state == self.facelets_scrambled:
             self.scramble_completed_event.set()
             self.beep()
@@ -31,9 +38,18 @@ class Scrambler:
         else:
             out = ''
             algo = self.reorient(
-                self.scrambled.transform(compress_moves),
+                self.scrambled.transform(
+                    reslice_timed_moves(RESLICE_THRESHOLD),
+                    degrip_full_moves,
+                    compress_moves,
+                    untime_moves,
+                ),
             )
-            p_algo = self.scrambled[:-1].transform(compress_moves)
+            p_algo = self.scrambled[:-1].transform(
+                reslice_timed_moves(RESLICE_THRESHOLD),
+                degrip_full_moves,
+                compress_moves,
+            )
 
             on_good_way = True
             for i, move in enumerate(algo):

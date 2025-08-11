@@ -156,9 +156,16 @@ class Bluetooth:
                     self.handle_bluetooth_move(event)
 
     def handle_bluetooth_move(self, event) -> None:
+        timed_move = (
+            f"{ event['move'] }@"
+            f"{ int(event['clock'] / MS_TO_NS_FACTOR) }"
+        )
+
         if self.state in {'start', 'scrambling'}:
-            self.scrambled += event['move']
-            self.handle_scrambled()
+            self.handle_scrambled(timed_move)
+
+        elif self.state == 'saving':
+            self.handle_save_gestures(timed_move)
 
         elif self.state == 'scrambled':
             self.moves.append(
@@ -184,11 +191,3 @@ class Bluetooth:
                 self.end_time = event['clock']
                 self.solve_completed_event.set()
                 logger.info('Bluetooth Stop: %s', self.end_time)
-
-        elif self.state == 'saving':
-            timed_move = (
-                f"{ event['move'] }@"
-                f"{ int(event['clock'] / MS_TO_NS_FACTOR) }"
-            )
-
-            self.handle_save_gestures(timed_move)
