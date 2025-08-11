@@ -5,6 +5,7 @@ from cubing_algs.vcube import VCube
 
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
+from term_timer.config import BLUETOOTH_CONFIG
 from term_timer.constants import MS_TO_NS_FACTOR
 
 logger = logging.getLogger(__name__)
@@ -27,23 +28,33 @@ class Bluetooth:
         self.hardware_received_event = asyncio.Event()
 
     async def bluetooth_connect(self) -> bool:
+        address = BLUETOOTH_CONFIG.get('address', '')
+
         self.bluetooth_queue = asyncio.Queue()
 
         try:
             self.bluetooth_interface = BluetoothInterface(
                 self.bluetooth_queue,
             )
+            if not address:
+                self.console.print(
+                    '[bluetooth]📡Bluetooth:[/bluetooth] '
+                    'Scanning for Bluetooth cube for '
+                    f'{ self.bluetooth_interface.scan_timeout }s...',
+                    end='',
+                )
 
-            self.console.print(
-                '[bluetooth]📡Bluetooth:[/bluetooth] '
-                'Scanning for Bluetooth cube for '
-                f'{ self.bluetooth_interface.scan_timeout }s...',
-                end='',
-            )
+                device = await self.bluetooth_interface.scan()
+                address = device.address
+            else:
+                self.console.print(
+                    '[bluetooth]📡Bluetooth:[/bluetooth] '
+                    'Connecting to Bluetooth cube address '
+                    f'{ address }...',
+                    end='',
+                )
 
-            device = await self.bluetooth_interface.scan()
-
-            await self.bluetooth_interface.__aenter__(device)  # noqa: PLC2801
+            await self.bluetooth_interface.__aenter__(address)  # noqa: PLC2801
 
             self.clear_line(full=True)
             self.console.print(
@@ -97,7 +108,10 @@ class Bluetooth:
             return True
 
     async def bluetooth_disconnect(self) -> None:
-        if self.bluetooth_interface and self.bluetooth_interface.client:
+        if (
+                self.bluetooth_interface
+                and self.bluetooth_interface.client.is_connected
+        ):
             self.console.print(
                 '[bluetooth]🔗 Bluetooth[/bluetooth] '
                 f'{ self.bluetooth_device_label } disconnecting...',

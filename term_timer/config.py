@@ -31,6 +31,9 @@ time_graph = true
 tps_graph = true
 recognition_graph = true
 
+[bluetooth]
+address = ""
+
 [statistics]
 distribution = 0
 metrics = ["htm", "qtm", "stm"]
@@ -64,6 +67,8 @@ TIMER_CONFIG = CONFIG.get('timer', {})
 DISPLAY_CONFIG = CONFIG.get('display', {})
 
 UI_CONFIG = CONFIG.get('ui', {})
+
+BLUETOOTH_CONFIG = CONFIG.get('bluetooth', {})
 
 CUBE_CONFIG = CONFIG.get('cube', {})
 
