@@ -3,7 +3,7 @@ import logging
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.rotation import compress_final_rotations
+from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.slice import reslice_timed_moves
 
 from term_timer.constants import RESLICE_THRESHOLD
@@ -31,8 +31,11 @@ class Gesture:
         algo = self.save_moves.transform(
             reslice_timed_moves(RESLICE_THRESHOLD),
             degrip_full_moves,
-            compress_final_rotations,
+            remove_final_rotations,
         )
+
+        if len(algo) < 2:
+            return
 
         l_move = algo[-1].untimed
         a_move = algo[-2].untimed
