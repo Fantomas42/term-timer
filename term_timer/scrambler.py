@@ -12,7 +12,6 @@ from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.transform.rotation import compress_final_rotations
 from kociemba import solve
 
-from term_timer.config import DEBUG
 from term_timer.config import LL_ORIENTATION
 from term_timer.constants import CUBE_SIZES
 from term_timer.magic_cube import Cube

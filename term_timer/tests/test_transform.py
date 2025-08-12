@@ -4,6 +4,35 @@ from cubing_algs.parsing import parse_moves
 
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
+from term_timer.transform import reorient_moves
+
+
+class TransformReorientTestCase(unittest.TestCase):
+
+    def test_reorient_moves_with_orientation(self):
+        orientation = parse_moves('x y')
+        algorithm = parse_moves("R U R'")
+        expect = parse_moves("U F U'")
+
+        result = reorient_moves(orientation, algorithm)
+
+        self.assertEqual(result, expect)
+
+    def test_reorient_moves_without_orientation(self):
+        orientation = parse_moves('')
+        algorithm = parse_moves("R U R'")
+
+        result = reorient_moves(orientation, algorithm)
+
+        self.assertEqual(result, algorithm)
+
+    def test_reorient_moves_none_orientation(self):
+        orientation = None
+        algorithm = parse_moves("R U R'")
+
+        result = reorient_moves(orientation, algorithm)
+
+        self.assertEqual(result, algorithm)
 
 
 class TransformSliceTestCase(unittest.TestCase):
@@ -22,7 +51,41 @@ class TransformSliceTestCase(unittest.TestCase):
         )
 
 
+class TransformPrettiyTestCase(unittest.TestCase):
+
+    def test_prettify_moves_with_double_moves(self):
+        algorithm = parse_moves('R R U U')
+        expect = parse_moves('R2 U2')
+
+        result = prettify_moves(algorithm)
+
+        self.assertEqual(result, expect)
+
+
 class TransformHumanizeTestCase(unittest.TestCase):
+
+    def test_humanize_moves_with_rotation_at_end(self):
+        algorithm = parse_moves("R U R' y")
+
+        result = humanize_moves(algorithm)
+
+        # Should return original if ends with rotation
+        self.assertEqual(result, algorithm)
+
+    def test_humanize_moves_with_rotation_at_end_fat(self):
+        algorithm = parse_moves("R U R' x")
+        expect = parse_moves("R U l'")
+
+        result = humanize_moves(algorithm)
+
+        self.assertEqual(result, expect)
+
+    def test_humanize_moves_empty_algorithm(self):
+        algorithm = parse_moves('')
+
+        result = humanize_moves(algorithm)
+
+        self.assertEqual(algorithm, result)
 
     def test_humanize_moves_issue_01(self):
         provide = parse_moves(

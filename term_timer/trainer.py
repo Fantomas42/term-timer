@@ -8,7 +8,8 @@ from term_timer.solve import Solve
 
 
 class Trainer(SolveInterface):
-    def __init__(self, *, step: str,
+    def __init__(self, *,
+                 step: str,
                  cases: list[str],
                  show_cube: bool,
                  metronome: float):
