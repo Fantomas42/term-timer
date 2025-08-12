@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 
 def analyse_solve_worker(solve, method_name, full):
     if not solve.advanced:
-        return None
+        return {
+            'solve': solve if full else None,
+        }
 
     solve.method_name = method_name
 
@@ -81,12 +83,13 @@ class SolvesMethodAggregator:
         stack = []
 
         for analyse in analyses:
-            if not analyse:
+            stack.append(analyse['solve'])
+
+            if 'score' not in analyse:
                 continue
 
             total += 1
             score += analyse['score']
-            stack.append(analyse['solve'])
 
             for step_name, step in analyse['steps'].items():
                 step_case = step['case']
