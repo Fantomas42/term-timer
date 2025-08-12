@@ -149,7 +149,7 @@ def scrambler(cube_size: int, iterations: int,
 
     cube.rotate(scramble)
 
-    if cube_size != 3 or iterations:
+    if cube_size != 3 or iterations or easy_cross:
         return scramble, cube
 
     scramble = scramble_moves(
