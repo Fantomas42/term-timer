@@ -136,20 +136,25 @@ def scramble_moves(state: str, facelets: str = '') -> Algorithm:
 
 
 def scrambler(cube_size: int, iterations: int,
-              *, easy_cross: bool) -> tuple[Algorithm, Cube]:
+              *,
+              easy_cross: bool,
+              raw_scramble: str = '') -> tuple[Algorithm, Cube]:
     cube = Cube(cube_size)
 
     if DEBUG and SCRAMBLE_ITERATIONS:
         iterations = SCRAMBLE_ITERATIONS
 
-    scramble = random_moves(
-        cube_size, iterations,
-        easy_cross=easy_cross,
-    )
+    if raw_scramble:
+        scramble = parse_moves(raw_scramble)
+    else:
+        scramble = random_moves(
+            cube_size, iterations,
+            easy_cross=easy_cross,
+        )
 
     cube.rotate(scramble)
 
-    if cube_size != 3 or iterations or easy_cross:
+    if cube_size != 3 or iterations or easy_cross or scramble:
         return scramble, cube
 
     scramble = scramble_moves(

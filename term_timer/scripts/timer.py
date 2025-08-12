@@ -26,12 +26,14 @@ async def timer(options) -> int:
     session_parts = []
     if options.session:
         session_parts.append(options.session)
-    if options.seed:
-        session_parts.append(f'seed-{ options.seed }')
-    if options.easy_cross:
-        session_parts.append('easy-cross')
-    elif options.iterations:
-        session_parts.append(f'iterations-{ options.iterations }')
+
+    if not options.scramble:
+        if options.seed:
+            session_parts.append(f'seed-{ options.seed }')
+        if options.easy_cross:
+            session_parts.append('easy-cross')
+        elif options.iterations:
+            session_parts.append(f'iterations-{ options.iterations }')
 
     session = '-'.join(session_parts)
 
@@ -46,6 +48,7 @@ async def timer(options) -> int:
         cube_size=cube,
         iterations=options.iterations,
         easy_cross=options.easy_cross,
+        scramble=options.scramble,
         session=session,
         free_play=options.free_play,
         show_cube=options.show_cube,

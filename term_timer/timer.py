@@ -14,9 +14,13 @@ logger = logging.getLogger(__name__)
 
 
 class Timer(SolveInterface):
-    def __init__(self, *, cube_size: int,
-                 iterations: int, easy_cross: bool,
-                 session: str, free_play: bool,
+    def __init__(self, *,
+                 cube_size: int,
+                 iterations: int,
+                 easy_cross: bool,
+                 scramble: str,
+                 session: str,
+                 free_play: bool,
                  show_cube: bool,
                  show_reconstruction: bool,
                  show_tps_graph: bool,
@@ -34,6 +38,7 @@ class Timer(SolveInterface):
         self.free_play = free_play
         self.iterations = iterations
         self.easy_cross = easy_cross
+        self.raw_scramble = scramble
         self.show_cube = show_cube
         self.show_reconstruction = show_reconstruction
         self.show_tps_graph = show_tps_graph
@@ -206,6 +211,7 @@ class Timer(SolveInterface):
             cube_size=self.cube_size,
             iterations=self.iterations,
             easy_cross=self.easy_cross,
+            raw_scramble=self.raw_scramble,
         )
 
         if self.bluetooth_cube and not self.bluetooth_cube.is_solved:

@@ -260,6 +260,15 @@ def solve_arguments(subparsers):
             'Default: None.'
         ),
     )
+    scramble.add_argument(
+        '-x', '--scramble',
+        default='',
+        metavar='SCRAMBLE',
+        help=(
+            'Set the scramble to use for solving.\n'
+            'Default: None.'
+        ),
+    )
 
     return parser
 
