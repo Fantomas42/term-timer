@@ -1,3 +1,4 @@
+import logging
 import time
 from functools import partial
 from multiprocessing import Pool
@@ -6,6 +7,8 @@ from multiprocessing import cpu_count
 from term_timer.methods import get_method_analyser
 from term_timer.solve import Solve
 from term_timer.stats import StatisticsTools
+
+logger = logging.getLogger(__name__)
 
 
 def analyse_solve_worker(solve, method_name, full):
@@ -65,7 +68,12 @@ class SolvesMethodAggregator:
     def aggregate(self):
         start = time.time()
         analyses = self.collect_analyses()
-        print('=>', time.time() - start)
+
+        msg = (
+            f'Aggregating { len(self.stack) } '
+            f'solves in { (time.time() - start):.3f}s'
+        )
+        logger.info(msg)
 
         score = 0
         total = 0
