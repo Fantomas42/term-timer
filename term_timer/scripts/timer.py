@@ -23,11 +23,19 @@ from term_timer.trainer import Trainer
 async def timer(options) -> int:
     cube = options.cube
 
-    free_play = options.free_play
-    if options.seed or options.iterations or options.easy_cross:
-        free_play = True
+    session_parts = []
+    if options.session:
+        session_parts.append(options.session)
+    if options.seed:
+        session_parts.append(f'seed-{ options.seed }')
+    if options.easy_cross:
+        session_parts.append('easy-cross')
+    elif options.iterations:
+        session_parts.append(f'iterations-{ options.iterations }')
 
-    stack = [] if free_play else load_solves(cube, options.session)
+    session = '-'.join(session_parts)
+
+    stack = [] if options.free_play else load_solves(cube, session)
 
     if options.seed:
         seed(options.seed)
@@ -38,8 +46,8 @@ async def timer(options) -> int:
         cube_size=cube,
         iterations=options.iterations,
         easy_cross=options.easy_cross,
-        session=options.session,
-        free_play=free_play,
+        session=session,
+        free_play=options.free_play,
         show_cube=options.show_cube,
         show_reconstruction=options.show_reconstruction,
         show_tps_graph=options.show_tps_graph,
