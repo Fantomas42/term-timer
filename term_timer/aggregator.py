@@ -11,7 +11,7 @@ from term_timer.stats import StatisticsTools
 logger = logging.getLogger(__name__)
 
 
-def analyse_solve_worker(solve, method_name, full):
+def analyse_solve_worker(solve, method_name, *, full=False):
     if not solve.advanced:
         return {
             'solve': solve if full else None,
