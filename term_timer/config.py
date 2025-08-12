@@ -89,5 +89,3 @@ LL_ORIENTATION = parse_moves(
 TRAINER_STEP = TRAINER_CONFIG.get('step')
 
 DEBUG = bool(os.getenv('TERM_TIMER_DEBUG', None))
-
-SCRAMBLE_ITERATIONS = int(os.getenv('TERM_TIMER_SCRAMBLE_ITERATIONS', '0'))

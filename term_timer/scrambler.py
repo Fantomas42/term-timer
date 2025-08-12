@@ -14,7 +14,6 @@ from kociemba import solve
 
 from term_timer.config import DEBUG
 from term_timer.config import LL_ORIENTATION
-from term_timer.config import SCRAMBLE_ITERATIONS
 from term_timer.constants import CUBE_SIZES
 from term_timer.magic_cube import Cube
 from term_timer.methods.cfop import OLL_SETUPS
@@ -140,9 +139,6 @@ def scrambler(cube_size: int, iterations: int,
               easy_cross: bool,
               raw_scramble: str = '') -> tuple[Algorithm, Cube]:
     cube = Cube(cube_size)
-
-    if DEBUG and SCRAMBLE_ITERATIONS:
-        iterations = SCRAMBLE_ITERATIONS
 
     if raw_scramble:
         scramble = parse_moves(raw_scramble)
