@@ -2,6 +2,8 @@ import asyncio
 from contextlib import suppress
 from random import seed
 
+from cubing_algs.move import InvalidMoveError
+
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
@@ -75,6 +77,8 @@ async def timer(options) -> int:
                     break
             else:
                 break
+    except InvalidMoveError as error:
+        console.print('😱', str(error), style='warning')
     finally:
         if timer.bluetooth_interface:
             await timer.bluetooth_disconnect()
@@ -104,7 +108,7 @@ async def trainer(options) -> int:
             if not done:
                 break
     except InvalidCaseError as error:
-        console.print(str(error), style='warning')
+        console.print('😱', str(error), style='warning')
     finally:
         if trainer.bluetooth_interface:
             await trainer.bluetooth_disconnect()

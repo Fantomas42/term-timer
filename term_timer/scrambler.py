@@ -140,7 +140,7 @@ def scrambler(cube_size: int, iterations: int,
     cube = Cube(cube_size)
 
     if raw_scramble:
-        scramble = parse_moves(raw_scramble)
+        scramble = parse_moves(raw_scramble, secure=False)
     else:
         scramble = random_moves(
             cube_size, iterations,
