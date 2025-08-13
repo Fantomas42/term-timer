@@ -87,10 +87,10 @@ class MoyuWeilong10Driver(Driver):
                 return []
 
             # Orientation Quaternion
-            qw = msg.get_bit_word(8, 32, little_endian=True)
-            qx = msg.get_bit_word(40, 32, little_endian=True)
-            qy = msg.get_bit_word(72, 32, little_endian=True)
-            qz = msg.get_bit_word(104, 32, little_endian=True)
+            qw = msg.get_bit_word(8, 32, little_endian=True, signed=True)
+            qx = msg.get_bit_word(40, 32, little_endian=True, signed=True)
+            qy = msg.get_bit_word(72, 32, little_endian=True, signed=True)
+            qz = msg.get_bit_word(104, 32, little_endian=True, signed=True)
 
             payload = {
                 'event': 'gyro',
