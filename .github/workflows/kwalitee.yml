@@ -1,0 +1,38 @@
+name: Kwalitee
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: ["develop"]
+  pull_request:
+    branches: ["develop"]
+
+
+jobs:
+  Kwalitee:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install .[dev]
+    - name: Analysing the code with Mypy
+      run: |
+        mypy term_timer --strict
+      continue-on-error: true
+    - name: Analysing the code with Ruff
+      run: |
+        ruff check $(git ls-files 'term_timer/*.py')
+      continue-on-error: true
+    - name: Running the tests
+      run: |
+        pytest term_timer

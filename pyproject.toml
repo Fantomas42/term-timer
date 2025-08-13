@@ -4,27 +4,127 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "term-timer"
-version = "1.0"
+dynamic = ["version"]
 description = "Speed Cubing Timer on your Terminal"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.9"
 dependencies = [
-    "magiccube",
+    "magiccube==1.2.0",
+    "plotext==5.3.2",
+    "rich==13.9.4",
+    "bleak==1.1.0",
+    "Jinja2==3.1.6",
+    "bottle==0.13.3",
+    "cryptography==44.0.2",
+    "kociemba==1.2.1",
+    "cubing_algs @ git+https://github.com/Fantomas42/cubing-algs.git",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "ruff==0.11.12",
+    "mypy==1.16.0",
+    "pytest==8.3.5",
+    "pytest-cov==6.1.1",
+]
+
+
+[project.scripts]
+bt-info = "term_timer.scripts.bluetooth_info:main"
+term-timer = "term_timer.scripts.timer:main"
 
 [tool.setuptools]
-packages = ["term-timer"]
+packages = ["term_timer"]
+
+[tool.setuptools.dynamic]
+version = {attr = "term_timer.__version__"}
 
 [tool.ruff]
+line-length = 80
+indent-width = 4
 target-version = "py312"
+show-fixes = true
 
 [tool.ruff.lint]
-ignore = [
-       "PLR0904",
-       "RUF021",
-       "TD003",
-       "UP031",
+preview = true
+fixable = ["ALL"]
+select = [
+       "A",
+       "ARG",
+       "B",
+       "BLE",
+       "C4",
+       #"C90",
+       "COM",
+       #"D",
+       "DJ",
+       "DTZ",
+       "E",
+       "EM",
+       "ERA",
+       "EXE",
+       "F",
+       "FBT",
+       "FIX",
+       "FLY",
+       "FURB",
+       "G",
+       "I",
+       "ICN",
+       "INP",
+       "INT",
+       "ISC",
+       "LOG",
+       "N",
+       "PIE",
+       "PL",
+       "PTH",
+       "Q",
+       "RET",
+       "RSE",
+       "RUF",
+       "S",
+       "SIM",
+       "SLF",
+       "T10",
+       "T20",
+       "TD",
+       "TRY",
+       "UP",
+       "W",
 ]
+ignore = [
+       "S311",
+       "TD003",
+       "T201",
+       "PLR0904",
+       "PLR0911",
+       "PLR0912",
+       "PLR0913",
+       "PLR0914",
+       "PLR0915",
+       "PLR0917",
+       "PLR1702",
+       "PLR6301",
+]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false
+docstring-code-line-length = "dynamic"
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "single"
+
+[tool.ruff.lint.flake8-import-conventions.extend-aliases]
+"term_timer.colors.Color" = "C"
+
+[tool.ruff.lint.isort]
+force-single-line = true
 
 [tool.ruff.lint.pylint]
 allow-magic-value-types = ["str", "int"]
@@ -33,3 +133,18 @@ allow-magic-value-types = ["str", "int"]
 disable_error_code = ["import-untyped"]
 exclude = ["tests"]
 python_version = 3.12
+
+[tool.pytest.ini_options]
+addopts = "--cov=term_timer"
+
+[tool.coverage.run]
+branch = true
+omit = [
+  "term_timer/tests/*",
+  "term_timer/poc/*",
+  "term_timer/scripts/*",
+  "term_timer/opengl/*",
+]
+
+[tool.coverage.report]
+show_missing = true

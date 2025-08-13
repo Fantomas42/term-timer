@@ -1,0 +1,923 @@
+{% extends "skeleton.html" %}
+
+{% block description %}Detailled statistics for session {{ session|title() }} on {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
+
+{% block title %}{{ session|title() }} {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
+
+{% block subtitle %}
+  {{ session|title() }} {{ cube }}x{{ cube }}x{{ cube }}
+  {% if case_uid %}{{ step.upper() }}: {{ case_uid.title() }}{% endif %}
+{% endblock %}
+
+{% block script %}
+  <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+  <script src="/static/js/hammer.js/2.0.8/hammer.min.js"></script>
+  <script src="/static/js/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"></script>
+  <script>
+   const PunchData = {{ punchcard|tojson }};
+   const monthNames = [
+     'Jan', 'Feb', 'Mar',
+     'Apr', 'May', 'Jun',
+     'Jul', 'Aug', 'Sep',
+     'Oct', 'Nov', 'Dec',
+   ];
+   let currentYear = {{ punchcard.keys()|max|default(2025) }};
+
+   document.addEventListener('DOMContentLoaded', function() {
+     const tooltip = document.getElementById('tooltip');
+     const tabs = document.querySelectorAll('.tab');
+     const tabContents = document.querySelectorAll('.tab-content');
+
+     tabs.forEach(tab => {
+       tab.addEventListener('click', function() {
+         tabs.forEach(t => t.classList.remove('active'));
+         this.classList.add('active');
+         tabContents.forEach(content => content.classList.remove('active'));
+
+         const tabId = this.getAttribute('data-tab');
+         document.getElementById(`${tabId}-tab`).classList.add('active');
+       });
+     });
+
+     generatePunchcard();
+     initializeYearSelector();
+     initializeProgressChart();
+     initializeDistributionChart();
+     initializeSortableTables();
+     initializeScrambleCopy();
+   });
+
+   function getDateString(date) {
+     return date.toISOString().split('T')[0];
+   }
+
+   function getActivityLevel(count) {
+     if (count === 0) return 0;
+     if (count <= 3) return 1;
+     if (count <= 8) return 2;
+     if (count <= 15) return 3;
+     return 4;
+   }
+
+   function calculateStats(data) {
+     const values = Object.values(data);
+     const total = values.reduce((sum, val) => sum + val, 0);
+     const activeDays = values.length;
+     const avgPerDay = activeDays > 0 ? (total / 365).toFixed(1) : 0;
+     const bestDay = values.length > 0 ? Math.max(...values) : 0;
+
+     return { total, activeDays, avgPerDay, bestDay };
+   }
+
+   function updateStats(data) {
+     const stats = calculateStats(data);
+
+     document.getElementById('totalSolves').textContent = stats.total;
+     document.getElementById('avgPerDay').textContent = stats.avgPerDay;
+     document.getElementById('bestDay').textContent = stats.bestDay;
+     document.getElementById('activeDays').textContent = stats.activeDays;
+     document.getElementById('contributionsText').textContent =
+       `${stats.total} solves in ${currentYear}`;
+   }
+
+   function generateMonthsHeader() {
+     const monthsContainer = document.getElementById('monthsContainer');
+     monthsContainer.innerHTML = '<div></div>'; // Space for day's labels
+
+     const startDate = new Date(currentYear, 0, 1);
+     const startDay = startDate.getDay();
+
+     for (let month = 0; month < 12; month++) {
+       const monthDate = new Date(currentYear, month, 1);
+       const monthLabel = document.createElement('div');
+       monthLabel.className = 'month-label';
+       monthLabel.textContent = monthNames[month];
+
+       // Compute start position of the month
+       const daysFromStart = Math.floor((monthDate - startDate) / (1000 * 60 * 60 * 24));
+       const weekFromStart = Math.floor((daysFromStart + startDay) / 7);
+
+       monthLabel.style.gridColumnStart = weekFromStart + 2;
+       monthLabel.style.gridColumnEnd = weekFromStart + 6;
+
+       monthsContainer.appendChild(monthLabel);
+     }
+   }
+
+   function generatePunchcard() {
+     const data = PunchData[currentYear] || {};
+     const daysGrid = document.getElementById('daysGrid');
+     const daysLabels = document.getElementById('daysLabels');
+
+     daysGrid.innerHTML = '';
+     daysLabels.innerHTML = '';
+
+     const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+     dayLabels.forEach((label, index) => {
+       const dayLabel = document.createElement('div');
+       dayLabel.className = 'day-label';
+       dayLabel.textContent = index % 2 === 0 && index < 7 ? label : '';
+       daysLabels.appendChild(dayLabel);
+     });
+
+     const startDate = new Date(Date.UTC(currentYear, 0, 1, 12, 0));
+     const endDate = new Date(Date.UTC(currentYear, 11, 31, 12, 0));
+
+     let startDay = startDate.getDay();
+
+     // Adjust for Monday be 0 instead of Sunday
+     startDay = startDay === 0 ? 6 : startDay - 1;
+
+     // Add empty square to align the first day
+     for (let i = 0; i < startDay; i++) {
+       const emptySquare = document.createElement('div');
+       emptySquare.className = 'day-square level-disabled';
+       daysGrid.appendChild(emptySquare);
+     }
+
+     // Generate all the days of the year
+     for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+       const dateString = getDateString(date);
+       const count = data[dateString] || 0;
+       const level = getActivityLevel(count);
+
+       const daySquare = document.createElement('div');
+       daySquare.className = `day-square level-${level}`;
+       daySquare.dataset.date = dateString;
+       daySquare.dataset.count = count;
+
+       daySquare.addEventListener('mouseenter', showTooltip);
+       daySquare.addEventListener('mouseleave', hideTooltip);
+       daySquare.addEventListener('mousemove', moveTooltip);
+
+       daysGrid.appendChild(daySquare);
+     }
+
+     let endDay = endDate.getDay();
+     // Adjust for Monday be 0 instead of Sunday
+     endDay = endDay === 0 ? 6 : endDay - 1;
+
+     // Add empty square to align the last day
+     for (let i = endDay; i < 6; i++) {
+       const emptySquare = document.createElement('div');
+       emptySquare.className = 'day-square level-disabled';
+       daysGrid.appendChild(emptySquare);
+     }
+
+     generateMonthsHeader();
+     updateStats(data);
+   }
+
+   function showTooltip(e) {
+     const date = e.target.dataset.date;
+     const count = e.target.dataset.count;
+     const formattedDate = new Date(date).toLocaleDateString('en', {
+       weekday: 'long',
+       year: 'numeric',
+       month: 'long',
+       day: 'numeric'
+     });
+
+     tooltip.innerHTML = `
+       <strong>${count} solve${count > 1 ? 's' : ''}</strong><br>
+       ${formattedDate}
+     `;
+     tooltip.classList.add('visible');
+     moveTooltip(e);
+   }
+
+   function hideTooltip() {
+     tooltip.classList.remove('visible');
+   }
+
+   function moveTooltip(e) {
+     const rect = e.target.getBoundingClientRect();
+     tooltip.style.left = (rect.left + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
+     tooltip.style.top = (rect.top - tooltip.offsetHeight - 8) + 'px';
+   }
+
+
+   function initializeYearSelector() {
+     const yearSelect = document.getElementById('yearSelect');
+     const years = Object.keys(PunchData).sort((a, b) => b - a);
+
+     years.forEach(year => {
+       const option = document.createElement('option');
+       option.value = year;
+       option.textContent = year;
+       if (year == currentYear) option.selected = true;
+       yearSelect.appendChild(option);
+     });
+
+     yearSelect.addEventListener('change', (e) => {
+       currentYear = parseInt(e.target.value);
+       generatePunchcard();
+     });
+   }
+
+   function initializeProgressChart() {
+     const ctx = document.getElementById('progressChart');
+     const totalPoints = {{ trend.indices|length }};
+
+     const progressData = {
+       labels: {{ trend.indices|tojson }},
+       datasets: [
+         {
+           label: 'Time',
+           data: {{ trend.times|tojson }},
+           borderColor: '#2563EC',
+           backgroundColor: 'rgba(37, 99, 236, 0.3)',
+           tension: 0.2,
+           borderWidth: 2,
+           pointRadius: 2,
+           pointHoverRadius: 12,
+           pointHitRadius: 12,
+         },
+         {% if stats.total >= 5 %}
+         {
+           label: 'AO5',
+           data: {{ trend.ao5s|tojson }},
+           borderColor: '#EF4444',
+           backgroundColor: 'rgba(239, 68, 68, 0.3)',
+           tension: 0.2,
+           borderWidth: 2,
+           pointRadius: 0,
+         },
+         {% endif %}
+         {% if stats.total >= 12 %}
+         {
+           label: 'AO12',
+           data: {{ trend.ao12s|tojson }},
+           borderColor: '#10B981',
+           backgroundColor: 'rgba(16, 185, 129, 0.3)',
+           tension: 0.2,
+           borderWidth: 2,
+           pointRadius: 0,
+         },
+         {% endif %}
+         {% if stats.total >= 100 %}
+         {
+           label: 'AO100',
+           data: {{ trend.ao100s|tojson }},
+           borderColor: '#64748B',
+           backgroundColor: 'rgba(100, 116, 139, 0.3)',
+           tension: 0.2,
+           borderWidth: 2,
+           pointRadius: 0,
+         },
+         {% endif %}
+         {% if stats.total >= 1000 %}
+         {
+           label: 'AO1000',
+           data: {{ trend.ao1000s|tojson }},
+           borderColor: '#F8FAFC',
+           backgroundColor: 'rgba(248, 250, 252, 0.3)',
+           tension: 0.2,
+           borderWidth: 2,
+           pointRadius: 0,
+         },
+         {% endif %}
+       ]
+     };
+
+     new Chart(ctx, {
+       type: 'line',
+       data: progressData,
+       options: {
+         responsive: true,
+         maintainAspectRatio: false,
+         plugins: {
+           legend: {
+             position: 'bottom',
+             labels: {
+               color: '#94a3b8'
+             }
+           },
+           tooltip: {
+             mode: 'index',
+             intersect: false,
+             callbacks: {
+               title: function(tooltipItem) {
+                 return `Solve #${tooltipItem[0].label}`;
+               }
+             }
+           },
+           zoom: {
+             pan: {
+               enabled: true,
+               mode: 'x'
+             },
+             limits: {
+               x: {
+                 max: totalPoints
+               },
+               y: {
+                 min: 0
+               }
+             },
+             zoom: {
+               wheel: {
+                 enabled: true
+               },
+               pinch: {
+                 enabled: true
+               },
+               mode: 'x'
+             }
+           }
+         },
+         scales: {
+           x: {
+             ticks: {
+               color: '#94a3b8'
+             },
+             grid: {
+               color: 'rgba(148, 163, 184, 0.1)'
+             },
+             min: totalPoints - 50,
+             max: totalPoints
+           },
+           y: {
+             ticks: {
+               color: '#94a3b8'
+             },
+             grid: {
+               color: 'rgba(148, 163, 184, 0.1)'
+             }
+           }
+         }
+       }
+     });
+   }
+
+   function initializeDistributionChart() {
+     const ctx = document.getElementById('timeDistributionChart');
+
+     const bins = {{ distribution.labels|tojson }};
+     const counts = {{ distribution.counts|tojson }};
+
+     new Chart(ctx, {
+       type: 'bar',
+       data: {
+         labels: bins,
+         datasets: [{
+           data: counts,
+           backgroundColor: 'rgb(37, 99, 236, 0.6)',
+           hoverBackgroundColor: 'rgb(37, 236, 99, 0.5)',
+         }]
+       },
+       options: {
+         responsive: true,
+         maintainAspectRatio: false,
+         plugins: {
+           legend: {
+             display: false
+           },
+           tooltip: {
+             callbacks: {
+               label: function(context) {
+                 return `${context.parsed.y} solves`;
+               }
+             }
+           }
+         },
+         scales: {
+           x: {
+             title: {
+               display: true,
+               color: '#94a3b8'
+             },
+             ticks: {
+               color: '#94a3b8'
+             },
+             grid: {
+               color: 'rgba(148, 163, 184, 0.1)'
+             }
+           },
+           y: {
+             title: {
+               display: true,
+               text: 'Count',
+               color: '#94a3b8'
+             },
+             ticks: {
+               color: '#94a3b8'
+             },
+             grid: {
+               color: 'rgba(148, 163, 184, 0.1)'
+             }
+           }
+         }
+       }
+     });
+   }
+
+   function initializeScrambleCopy() {
+     const scrambleCells = document.querySelectorAll('.solve-scramble');
+
+     scrambleCells.forEach(cell => {
+       const tooltip = document.createElement('span');
+       tooltip.className = 'copy-tooltip';
+       cell.appendChild(tooltip);
+
+       cell.addEventListener('click', function() {
+         const scrambleText = this.textContent.trim();
+         navigator.clipboard.writeText(scrambleText).then(() => {
+           this.classList.add('copied');
+           setTimeout(() => {
+             this.classList.remove('copied');
+           }, 2000);
+         }).catch(err => {
+           console.error('Copy error: ', err);
+         });
+       });
+     });
+   }
+
+   function initializeSortableTables() {
+     const tables = document.querySelectorAll('.table-container table');
+
+     tables.forEach(table => {
+       const headers = table.querySelectorAll('th');
+
+       headers.forEach((header, index) => {
+         header.addEventListener('click', function() {
+           sortTable(table, index, this);
+         });
+       });
+     });
+   }
+
+   function sortTable(table, columnIndex, header) {
+     const rows = Array.from(table.querySelectorAll('tbody tr'));
+     const isAsc = !header.classList.contains('sort-asc');
+
+     table.querySelectorAll('th').forEach(th => {
+       th.classList.remove('sort-asc', 'sort-desc');
+     });
+
+     header.classList.add(isAsc ? 'sort-asc' : 'sort-desc');
+
+     rows.sort((a, b) => {
+       let valueA = a.cells[columnIndex].textContent.trim();
+       let valueB = b.cells[columnIndex].textContent.trim();
+
+       if (/^\d{1,2}:\d{2}\.\d{2}$/.test(valueA) || /^\d{1,2}\.\d{2}$/.test(valueA)) {
+         valueA = convertTimeToSeconds(valueA);
+         valueB = convertTimeToSeconds(valueB);
+         return isAsc ? valueA - valueB : valueB - valueA;
+       }
+
+       if (valueA.includes('%')) {
+         valueA = parseFloat(valueA);
+         valueB = parseFloat(valueB);
+         return isAsc ? valueA - valueB : valueB - valueA;
+       }
+
+       if (!isNaN(valueA) && !isNaN(valueB)) {
+         return isAsc ? valueA - valueB : valueB - valueA;
+       }
+
+       return isAsc
+            ? valueA.localeCompare(valueB)
+            : valueB.localeCompare(valueA);
+     });
+
+     const tbody = table.querySelector('tbody');
+     rows.forEach(row => tbody.appendChild(row));
+   }
+
+   function convertTimeToSeconds(timeStr) {
+     if (timeStr === '---') return Infinity;
+
+     if (timeStr.includes(':')) {
+       const [minutes, seconds] = timeStr.split(':');
+       return parseFloat(minutes) * 60 + parseFloat(seconds);
+     }
+
+     return parseFloat(timeStr);
+   }
+  </script>
+{% endblock %}
+
+{% block body %}
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <a href="#statistics" id="statistics">Key Statistics</a>
+      </h2>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Total Solves</div>
+        <div class="stat-value">{{ stats.total }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Total Time</div>
+        <div class="stat-value">{{ stats.total_time|format_time }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Mean</div>
+        <div class="stat-value">{{ stats.mean|format_time }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Median</div>
+        <div class="stat-value">{{ stats.median|format_time }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Standard Deviation</div>
+        <div class="stat-value">{{ stats.stdev|format_time }}</div>
+      </div>
+      {% if stats.total >= 2 %}
+        <div class="stat-card">
+          <div class="stat-title">Best</div>
+          <div class="stat-value">{{ stats.best|format_time }}</div>
+          {% if stats.total >= 3 %}
+            <div class="stat-meta">
+              <span class="stat-best">BPA: {{ stats.bpa|format_time }}</span>
+              {% set delta = (stats.bpa - stats.best)|format_delta %}
+              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                {{ delta }}
+              </span>
+            </div>
+          {% endif %}
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Worst</div>
+          <div class="stat-value">{{ stats.worst|format_time }}</div>
+          {% if stats.total >= 3 %}
+            <div class="stat-meta">
+              <span class="stat-worst">WPA: {{ stats.wpa|format_time }}</span>
+              {% set delta = (stats.wpa - stats.worst)|format_delta %}
+              <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+                {{ delta }}
+              </span>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+      {% if stats.total >= 3 %}
+        <div class="stat-card">
+          <div class="stat-title">Current Mo3</div>
+          <div class="stat-value">{{ stats.mo3|format_time }}</div>
+          <div class="stat-meta">
+            <span class="stat-best">Best: {{ stats.best_mo3|format_time }}</span>
+            {% set delta = (stats.mo3 - stats.best_mo3)|format_delta %}
+            <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+              {{ delta }}
+            </span>
+          </div>
+        </div>
+      {% endif %}
+      {% if stats.total >= 5 %}
+        <div class="stat-card">
+          <div class="stat-title">Current Ao5</div>
+          <div class="stat-value">{{ stats.ao5|format_time }}</div>
+          <div class="stat-meta">
+            <span class="stat-best">Best: {{ stats.best_ao5|format_time }}</span>
+            {% set delta = (stats.ao5 - stats.best_ao5)|format_delta %}
+            <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+              {{ delta }}
+            </span>
+          </div>
+        </div>
+      {% endif %}
+      {% if stats.total >= 12 %}
+        <div class="stat-card">
+          <div class="stat-title">Current Ao12</div>
+          <div class="stat-value">{{ stats.ao12|format_time }}</div>
+          <div class="stat-meta">
+            <span class="stat-best">Best: {{ stats.best_ao12|format_time }}</span>
+            {% set delta = (stats.ao12 - stats.best_ao12)|format_delta %}
+            <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+              {{ delta }}
+            </span>
+          </div>
+        </div>
+      {% endif %}
+      {% if stats.total >= 100 %}
+        <div class="stat-card">
+          <div class="stat-title">Current Ao100</div>
+          <div class="stat-value">{{ stats.ao100|format_time }}</div>
+          <div class="stat-meta">
+            <span class="stat-best">Best: {{ stats.best_ao100|format_time }}</span>
+            {% set delta = (stats.ao100 - stats.best_ao100)|format_delta %}
+            <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+              {{ delta }}
+            </span>
+          </div>
+        </div>
+      {% endif %}
+      {% if stats.total >= 1000 %}
+        <div class="stat-card">
+          <div class="stat-title">Current Ao1000</div>
+          <div class="stat-value">{{ stats.ao1000|format_time }}</div>
+          <div class="stat-meta">
+            <span class="stat-best">Best: {{ stats.best_ao1000|format_time }}</span>
+            {% set delta = (stats.ao1000 - stats.best_ao1000)|format_delta %}
+            <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
+              {{ delta }}
+            </span>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="stat-card">
+        <div class="stat-title">Grade</div>
+        <div class="stat-value grade-{{ stats.score|format_grade|lower|replace('+', 'plus') }}">
+          {{ stats.score|format_grade }}
+        </div>
+        <div class="stat-meta">
+          <span>{{ stats.score|format_score('Mean:') }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-title">{{ method_aggregation.analyser.name|upper }} Grade</div>
+        <div class="stat-value grade-{{ method_aggregation.results.mean|format_grade|lower|replace('+', 'plus') }}">
+          {{ method_aggregation.results.mean|format_grade }}
+        </div>
+        <div class="stat-meta">
+          <span>{{ method_aggregation.results.mean|format_score('Mean:') }}</span>
+        </div>
+      </div>
+
+      {% if stats.advanced_solves %}
+        <div class="stat-card">
+          <div class="stat-title">Bluetooth Solves</div>
+          <div class="stat-value {% if stats.advanced_solves == 1 %}stat-best{% endif %}">
+            {{ "%0.2f"|format(stats.advanced_solves * 100) }}%
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <a href="#activity" id="activity">Activity</a>
+      </h2>
+      <div class="year-selector">
+        <select id="yearSelect">
+        </select>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Total solves</div>
+        <div class="stat-value" id="totalSolves">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Average per day</div>
+        <div class="stat-value" id="avgPerDay">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Best day</div>
+        <div class="stat-value" id="bestDay">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Active days</div>
+        <div class="stat-value" id="activeDays">0</div>
+      </div>
+    </div>
+
+    <div class="punchcard-container">
+      <div class="punchcard-header">
+        <span class="contributions-text" id="contributionsText"></span>
+        <div class="legend">
+          <span>Less</span>
+          <div class="legend-item level-0"></div>
+          <div class="legend-item level-1"></div>
+          <div class="legend-item level-2"></div>
+          <div class="legend-item level-3"></div>
+          <div class="legend-item level-4"></div>
+          <span>More</span>
+        </div>
+      </div>
+
+      <div class="punchcard">
+        <div class="months" id="monthsContainer"></div>
+        <div class="days-container">
+          <div class="days-labels" id="daysLabels"></div>
+          <div class="days-grid" id="daysGrid"></div>
+        </div>
+      </div>
+    </div>
+    <div class="punchcard-tooltip" id="tooltip"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <a href="#progress-over-time" id="progress-over-time">Progress Over Time</a>
+      </h2>
+    </div>
+    <div class="chart-container">
+      <canvas id="progressChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <a href="#time-distribution" id="time-distribution">Time Distribution</a>
+      </h2>
+    </div>
+    <div class="chart-container">
+      <canvas id="timeDistributionChart"></canvas>
+    </div>
+  </div>
+
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <a href="#solves" id="solves">Solves</a>
+      </h2>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="solves">Solves</div>
+      {% for step in method_aggregation.results.resume.keys() %}
+        <div class="tab" data-tab="{{ step }}">{{ step.upper() }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="tab-content active table-container" id="solves-tab">
+      <table class="solve-list">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Time</th>
+            <th>Date</th>
+            <th>Scramble</th>
+            <th>Flag</th>
+            <th>Grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for solve in stats.stack|reverse %}
+            <tr>
+              <td class="solve-id">
+                <a href="/{{ solve.cube_size }}/{{ solve.session }}/{{ solve.solve_id }}/" class="link">
+                  {% if not case_uid %}
+                    #{{ stats.stack|length - loop.index0 }}
+                  {% else %}
+                    #{{ solve.solve_id }}
+                  {% endif %}
+                </a>
+              </td>
+              <td class="solve-time {% if solve.time == stats.best %}time-best{% elif solve.time == stats.worst %}time-worst{% endif %}">
+                {{ solve.time|format_time }}
+                {% if solve.device %}
+                  <span class="tooltip">{{ solve.device }}</span>
+                {% endif %}
+              </td>
+              <td class="solve-date">
+                {{ solve.datetime.strftime('%Y-%m-%d %H:%M') }}
+                {% if session == 'all' %}
+                  <span class="tooltip">Session: {{ solve.session|default('default', true) }}</span>
+                {% endif %}
+              </td>
+              <td class="solve-scramble">
+                {% for m in solve.raw_scramble.split(' ') %}<span class="move">{{ m }}</span>{% endfor %}
+              </td>
+              <td class="solve-flag">
+                {{ solve.flag|default('---', true) }}
+              </td>
+              <td class="solve-grade">
+                {% if solve.score %}
+                  <span class="grade-{{ solve.score|format_grade|lower|replace('+', 'plus') }}">
+                    {{ solve.score|format_grade }}
+                  </span>
+                  <span class="tooltip">{{ "%0.2f"|format(solve.score) }}</span>
+                {% else %}
+                  ---
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% for step, cases in method_aggregation.results.resume.items() %}
+      <div class="tab-content table-container" id="{{ step }}-tab">
+        <table class="{{ step }}-list">
+          <thead>
+            <tr>
+              <th>Case</th>
+              <th>Count</th>
+              <th>Frequency</th>
+              <th>Probability</th>
+              <th>Recognition</th>
+              <th>Execution</th>
+              <th>Time</th>
+              <th>QTM</th>
+              <th>TPS</th>
+              <th>eTPS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for name, case in cases.items()|sort(attribute='1.count', reverse=True) %}
+              <tr>
+                <td>
+                  <div class="step-case">
+                    {% set code, case_name = name|parse_case_name(step.upper()) %}
+                    <div class="step-case-img">
+                      <a href="?m={{ method_aggregation.analyser.name.lower() }}&step={{ step }}&case_uid={{ code }}">
+                         {{ code }}
+                      </a>
+                    </div>
+                    {% if 'SKIP' not in code %}
+                      <a href="https://cubing.fache.fr/{{ step.upper() }}/{{ code }}.html"
+                         target="_blank" class="link">
+                        {{ case_name }}
+                      </a>
+                    {% else %}
+                      <span class="skip">SKIP</span>
+                    {% endif %}
+                  </div>
+                </td>
+                <td>
+                  {{ case.count }}
+                </td>
+                <td class="frequency-{% if case.frequency > case.probability %}higher{% else %}lower{% endif %}">
+                  {{ "%0.2f"|format(case.frequency * 100) }}%
+                </td>
+                <td>
+                  {{ "%0.2f"|format(case.probability * 100) }}%
+                </td>
+                <td>
+                  {{ case.recognition|format_duration }}
+                </td>
+                <td>
+                  {{ case.execution|format_duration }}
+                </td>
+                <td>
+                  {{ case.time|format_duration }}
+                </td>
+                <td>
+                  {{ "%0.2f"|format(case.qtm) }}
+                </td>
+                <td>
+                  {{ "%0.2f"|format(case.tps) }}
+                </td>
+                <td>
+                  {{ "%0.2f"|format(case.etps) }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endfor %}
+  </div>
+
+  <footer class="app-footer card">
+    <div class="footer-container">
+      <div class="footer-section">
+        <h3 class="footer-title">Report Informations</h3>
+        <div class="footer-info">
+          <div class="info-item">
+            <i class="fas fa-cube"></i>
+            <span class="key">Puzzle:</span>
+            <span class="value">{{ stats.cube_name }}</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-clock"></i>
+            <span class="key">Last solve:</span>
+            <span class="value">{{ stats.stack[-1].datetime.strftime('%c %Z') }}</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-calendar-alt"></i>
+            <span class="key">Generation date:</span>
+            <span class="value">{{ now.strftime('%c %Z') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-section">
+        <h3 class="footer-title">Session{% if sessions|length > 1 %}s{% endif %}</h3>
+        <div class="sessions-grid">
+          {% for session, count in sessions.items() %}
+            <a class="session-badge" href="/{{ cube }}/{{ session|default('default', true) }}/">
+              Session {{ session|default('default', true) }}
+              <span class="session-count">{{ count }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="copyright">
+        © {{ now.strftime('%Y') }} Term Timer
+      </div>
+    </div>
+  </footer>
+{% endblock %}
