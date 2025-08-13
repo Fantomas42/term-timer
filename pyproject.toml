@@ -9,7 +9,7 @@ description = "Speed Cubing Timer on your Terminal"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {file = "LICENSE"}
-keywords = ["rubick", "cube" "speedcubing", "solve", "timer"]
+keywords = ["rubick", "cube", "speedcubing", "solve", "timer"]
 authors = [{name = "Fantomas42", email = "fantomas42@gmail.com"}]
 classifiers = [
   "Programming Language :: Python"
