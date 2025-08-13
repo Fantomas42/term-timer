@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "term-timer"
-version = "1.0"
+dynamic = ["version"]
 description = "Speed Cubing Timer on your Terminal"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -35,6 +35,9 @@ term-timer = "term_timer.scripts.timer:main"
 
 [tool.setuptools]
 packages = ["term_timer"]
+
+[tool.setuptools.dynamic]
+version = {attr = "term_timer.__version__"}
 
 [tool.ruff]
 line-length = 80
