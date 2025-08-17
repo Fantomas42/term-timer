@@ -10,13 +10,10 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
-from term_timer.bluetooth.facelets import to_magiccube_facelets
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.config import CUBE_ORIENTATION
-from term_timer.interface.console import console
 from term_timer.logger import LOGGING_DIR
-from term_timer.magic_cube import Cube
 from term_timer.opengl.thread import CubeGLThread
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
@@ -72,7 +69,6 @@ LOGGING_CONF = {
 
 
 async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
-    visual_cube = None
     virtual_cube = None
     moves = []
     hardware = ''
@@ -80,7 +76,7 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
 
     def print_cube(cube):
         if show_cube:
-            console.print(str(cube), end='')
+            cube.display()
 
     while True:
         events = await queue.get()
@@ -146,11 +142,7 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
                 else:
                     virtual_cube = VCube(event['facelets'])
 
-                visual_cube = Cube(
-                    3,
-                    to_magiccube_facelets(event['facelets']),
-                )
-                print_cube(visual_cube)
+                print_cube(virtual_cube)
 
             elif event_name == 'move':
                 logger.info(
@@ -163,10 +155,7 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
 
                 if virtual_cube:
                     virtual_cube.rotate(event['move'])
-
-                if visual_cube:
-                    visual_cube.rotate(event['move'])
-                    print_cube(visual_cube)
+                    print_cube(virtual_cube)
 
                 if gl_thread and gl_thread.is_alive():
                     direction = 3 if "'" in event['move'] else 1
