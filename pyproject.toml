@@ -23,7 +23,7 @@ dependencies = [
     "bottle==0.13.3",
     "cryptography==44.0.2",
     "kociemba==1.2.1",
-    "cubing_algs==1.0.0",
+    "cubing_algs==1.0.1",
 ]
 
 [project.urls]
