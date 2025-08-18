@@ -8,7 +8,7 @@ from cubing_algs.algorithm import Algorithm
 from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
 
-DATA_DIRECTORY = Path(__file__).parent
+DATA_DIRECTORY = Path(__file__).parent / 'cases'
 OLL_PATH = DATA_DIRECTORY / 'oll.json'
 PLL_PATH = DATA_DIRECTORY / 'pll.json'
 
