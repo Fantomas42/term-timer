@@ -16,11 +16,11 @@
             }
         },
         "setups": [
+            "R'FRF'U2R'FRF2U2F",
             "LF'L'FUF2R'F'RU'F'",
             "LF'L'FU2LF'L'F2U2F'",
             "FR'F'RU2FR'F'R2U2R'",
-            "FR'F'RUR2B'R'BU'R'",
-            "BL'B'LUL2F'L'FU'L'"
+            "F'LFL'U2F'LFL2U2L"
         ]
     },
     "02 Tie-Fighter": {
@@ -40,11 +40,11 @@
             }
         },
         "setups": [
-            "RU2R2FRF'U2R'FRF'",
-            "L'U2L2F'L'FU2LF'L'F",
-            "F'U2F2R'F'RU2FR'F'R",
-            "FU2F2LFL'U2F'LFL'",
-            "FUMRU'R'UrU'R'F'"
+            "L'U'LFL'U'LFRUR'F'RUR'F'",
+            "F'U'FRF'U'FRBUB'R'BUB'R'",
+            "B'U'BLB'U'BLFUF'L'FUF'L'",
+            "FRUR'U'F'U2FURU'R'F'",
+            "FRU'R'FRU'R'U2RUR'F'RUR'F'"
         ]
     },
     "03 Anti-Nazi": {
@@ -64,11 +64,11 @@
             }
         },
         "setups": [
-            "MU'rU2r'U'RU'R'M'",
-            "S'U'fU2f'U'FU'F'S",
-            "M'U'lU2l'U'LU'L'M",
-            "SU'bU2b'U'BU'B'S'",
-            "lL2U'LU'R'F2RU'M'"
+            "FR'F'RURU'R'URUR'U'R'FRF'",
+            "FURU'R'F'U'FRUR'U'F'",
+            "FU'RU'R'U'R'FRF'U2F'",
+            "LF'L'FUFU'F'UFUF'U'F'LFL'",
+            "LUFU'F'L'U'LFUF'U'L'"
         ]
     },
     "04 Nazi": {
@@ -88,11 +88,11 @@
             }
         },
         "setups": [
-            "MRUR'UrU2r'UM'",
-            "MUl'U2lUL'ULM'",
-            "S'FUF'UfU2f'US",
-            "SUf'U2fUF'UFS'",
-            "M'Ur'U2rUR'URM"
+            "FURU'R'F'UFRUR'U'F'",
+            "FRUR'U'F'RUR'F'U2FRU'R'",
+            "F'U'L'ULFU'FRUR'U'F'",
+            "LUFU'F'L'ULFUF'U'L'",
+            "FURU'R'F'U'F'L'U'LUF"
         ]
     },
     "05 RBWAS": {
@@ -112,11 +112,11 @@
             }
         },
         "setups": [
-            "r'U'RU'R'U2r",
-            "f'U'FU'F'U2f",
-            "R'F'rU'r'F2R",
-            "l'U'LU'L'U2l",
-            "b'U'BU'B'U2b"
+            "FURU'R'F'UFURU'R'F'",
+            "LUFU'F'L'ULUFU'F'L'",
+            "BU'L2DL'U'LD'L2UB'",
+            "R'F'LF'L'F2R",
+            "B'R'FR'F'R2B"
         ]
     },
     "06 RFWAS": {
@@ -136,11 +136,11 @@
             }
         },
         "setups": [
-            "lUL'ULU2l'",
-            "fUF'UFU2f'",
-            "LFl'UlF2L'",
-            "rUR'URU2r'",
-            "bUB'UBU2b'"
+            "F'U'L'ULFU'F'U'L'ULF",
+            "R'U'F'UFRU'R'U'F'UFR",
+            "FU2F'L2BLB'L",
+            "BU2B'R2FRF'R",
+            "RU2R'F2LFL'F"
         ]
     },
     "07 Lightning": {
@@ -161,10 +161,10 @@
         },
         "setups": [
             "RU2R'U2R'FRF'",
+            "R'FRF'U2F'U2F",
+            "F'LFL'U2L'U2L",
             "FU2F'U2F'LFL'",
-            "lU2L'U'LU'l'",
-            "LU2L'U2L'BLB'",
-            "BU2B'U2B'RBR'"
+            "B'RBR'U2R'U2R"
         ]
     },
     "08 LWS": {
@@ -184,11 +184,11 @@
             }
         },
         "setups": [
-            "r'U2RUR'Ur",
-            "f'U2FUF'Uf",
-            "R'F2rUr'FR",
-            "l'U2LUL'Ul",
-            "b'U2BUB'Ub"
+            "L'U2LU2LF'L'F",
+            "LF'L'FU2FU2F'",
+            "FR'F'RU2RU2R'",
+            "F'U2FU2FR'F'R",
+            "R'U2RU2RB'R'B"
         ]
     },
     "09 Kite": {
@@ -208,11 +208,11 @@
             }
         },
         "setups": [
-            "LF'L'U'LFL'F'UF",
-            "S'RUR'SURU2R'",
-            "BL'B'U'BLB'L'UL",
-            "FR'F'U'FRF'R'UR",
-            "MURUR'URU2R'M'"
+            "F'U2FR'FRF'UF'UF",
+            "RU2R'U'RUR'U'RUR'U2R'FRF'",
+            "F'U2FUF'UL'U'LUF",
+            "L'U2LF'LFL'UL'UL",
+            "R'U2RUR'UF'U'FUR"
         ]
     },
     "10 Anti-Kite": {
@@ -232,11 +232,11 @@
             }
         },
         "setups": [
-            "R'FRUR'F'RFU'F'",
-            "B'RBUB'R'BRU'R'",
-            "SL'U'LS'U'L'U2L",
-            "F'LFUF'L'FLU'L'",
-            "L'BLUL'B'LBU'B'"
+            "RU2R'U'RU'R'UFRUR'U'F'",
+            "FU2F'U'FU'F'ULFUF'U'L'",
+            "R'U2RUR'U'RUR'U'RU2RB'R'B",
+            "RU2R'FR'F'RU'RU'R'",
+            "FU2F'LF'L'FU'FU'F'"
         ]
     },
     "11 Downstairs": {
@@ -256,11 +256,11 @@
             }
         },
         "setups": [
-            "MU'RU2R'U'RU'R'M'",
-            "S'U'FU2F'U'FU'F'S",
-            "SU'BU2B'U'BU'B'S'",
-            "M'U'LU2L'U'LU'L'M",
-            "M'U'LU2L'U'LU'L2l"
+            "R'U'F'UFRUR'U'F'UFR",
+            "F'U'L'ULFUF'U'L'ULF",
+            "F'LFL'U'L'ULFR'F'RURU'R'",
+            "R'FRF'U'F'UFRB'R'BUBU'B'",
+            "F'L'U'LUL'ULUL'U2LUF"
         ]
     },
     "12 Upstairs": {
@@ -280,11 +280,11 @@
             }
         },
         "setups": [
-            "MUL'U2LUL'ULM'",
-            "SUF'U2FUF'UFS'",
-            "S'UB'U2BUB'UBS",
-            "M'UR'U2RUR'URM",
-            "M'UR'U2RUR'UR2r'"
+            "FURU'R'F'U'FURU'R'F'",
+            "LUFU'F'L'U'LUFU'F'L'",
+            "FRUR'U'RU'R'U'RU2R'U'F'",
+            "FR'F'RURU'R'U'FR'F'RURU'R'",
+            "LF'L'FUFU'F'U'LF'L'FUFU'F'"
         ]
     },
     "13 Gun": {
@@ -304,11 +304,11 @@
             }
         },
         "setups": [
-            "F'U'FLF'L'ULFL'",
-            "L'U'LBL'B'UBLB'",
-            "FRU'R'URU2R'U'F'",
-            "R'U'RFR'F'UFRF'",
-            "B'U'BRB'R'URBR'"
+            "RU2R'U'RU'R'FR'F'RURU'R'",
+            "FU2F'U'FU'F'LF'L'FUFU'F'",
+            "R'FRF'LF'L'FUFU'F'U'RU'R'",
+            "BU2B'U'BU'B'RB'R'BUBU'B'",
+            "RUR'U'RU'R'F'LFL'URU'R'U'L'UL"
         ]
     },
     "14 Anti-Gun": {
@@ -328,11 +328,11 @@
             }
         },
         "setups": [
-            "RUR'F'Ur'F2rUF",
-            "FUF'R'FRU'R'F'R",
-            "RUR'B'RBU'B'R'B",
-            "LUL'F'LFU'F'L'F",
-            "F'L'ULU'L'U2LUF"
+            "L'U2LUL'ULF'LFL'U'L'UL",
+            "F'U2FUF'UFR'FRF'U'F'UF",
+            "L'U'LUBLUL'U'B'L'UL",
+            "RU2R'FR'F'RU'RUR'U'RU'R'",
+            "F'U'FULFUF'U'L'F'UF"
         ]
     },
     "15 Squeegee": {
@@ -352,11 +352,11 @@
             }
         },
         "setups": [
-            "l'U'lU'L'UM'Ul",
-            "f'U'fU'F'US'Uf",
-            "r'U'rU'R'UMUr",
-            "b'U'bU'B'USUb",
-            "R'F'RU'r'FM'FR"
+            "RU'R'UF'UFUF'U'FR'FRF'",
+            "R'FRUR'U'F'RU'R'U2R",
+            "FU'F'UL'ULUL'U'LF'LFL'",
+            "BU'B'UR'URUR'U'RB'RBR'",
+            "FR'F'RU2RU'R'URU'R'URU2R'"
         ]
     },
     "16 Anti-Squeegee": {
@@ -376,11 +376,11 @@
             }
         },
         "setups": [
-            "rUr'URU'R'rU'r'",
-            "fUf'UFU'F'fU'f'",
-            "lUl'ULU'L'lU'l'",
-            "bUb'UBU'B'bU'b'",
-            "rUr'URU'M'U'r'"
+            "L'ULU'FU'F'U'FUF'LF'L'F",
+            "F'UFU'RU'R'U'RUR'FR'F'R",
+            "B'UBU'LU'L'U'LUL'BL'B'L",
+            "RUR'URU2R'FURU'R'F'",
+            "R'U2RUR'FURU'R'F'R"
         ]
     },
     "17 Slash": {
@@ -400,11 +400,11 @@
             }
         },
         "setups": [
-            "MURUR'U'M'R'FRF'",
-            "S'RUR'SU'R'FRF'",
-            "S'UFUF'U'SF'LFL'",
-            "M'FUF'MU'F'LFL'",
-            "FRUR'UF'U2F'LFL'"
+            "R'FRF'U2R'FRF'UF'UF",
+            "LF'L'FU2LF'L'FU'FU'F'",
+            "FRU'R'FR'F'RURUR'U'F'",
+            "LF'L'FUFU'F2L'U'LUF",
+            "R'U'F'UF2RUR'U'F'UR"
         ]
     },
     "18 Crown": {
@@ -424,11 +424,11 @@
             }
         },
         "setups": [
+            "RUR'UR'FRF'U2R'FRF'",
+            "L'U'LU'LF'L'FU2LF'L'F",
+            "FURU'R'F'U'RUR'U'R'FRF'",
             "LF'L'FU2FU'RU'R'F'",
-            "FR'F'RU2Rd'RU'R'F'",
-            "LF'L'FU2Fd'FU'F'L'",
-            "LF'L'FU2FU'lF'l'F'",
-            "FR'F'RU2RU'BU'B'R'"
+            "F'U'FU'FR'F'RU2FR'F'R"
         ]
     },
     "19 Bunny": {
@@ -448,11 +448,11 @@
             }
         },
         "setups": [
-            "FR'F'RUS'RU'R'S",
-            "LF'L'FUM'FU'F'M",
-            "FR'F'RMURU'R'U'M'",
-            "LF'L'FS'UFU'F'U'S",
-            "RB'R'BUMBU'B'M'"
+            "FURU'R'U'R'FRF'RUR'F'",
+            "FURU'R'F'URUR'U'R'FRF'",
+            "LUFU'F'U'F'LFL'FUF'L'",
+            "LUFU'F'L'UFUF'U'F'LFL'",
+            "R'U'F'UFR2UR'U'R'FRF'"
         ]
     },
     "20 X": {
@@ -472,11 +472,11 @@
             }
         },
         "setups": [
-            "MURUR'U'M2URU'r'",
-            "rUR'U'M2URU'R'U'M'",
-            "S'UFUF'U'S2UFU'f'",
-            "fUF'U'S2UFU'F'U'S",
-            "lUL'U'M2ULU'L'U'M"
+            "R'U'FR'F'RURU2FRUR'U'F'",
+            "F'U'LF'L'FUFU2LFUF'U'L'",
+            "L'U'BL'B'LULU2BLUL'U'B'",
+            "B'U'RB'R'BUBU2RBUB'U'R'",
+            "RU2R'FR'F'R2U2R'FR'F'RURU'R'"
         ]
     },
     "21 H": {
@@ -496,11 +496,11 @@
             }
         },
         "setups": [
+            "FRUR'U'RUR'U'RUR'U'F'",
             "RU2R'U'RUR'U'RU'R'",
-            "LU2L'U'LUL'U'LU'L'",
-            "RUR'URU'R'URU2R'",
-            "FU2F'U'FUF'U'FU'F'",
-            "L'U'LU'L'ULU'L'U2L"
+            "R'U2RUR'U'RUR'UR",
+            "L'U2LUL'U'LUL'UL",
+            "LU2L'U'LUL'U'LU'L'"
         ]
     },
     "22 Pi": {
@@ -520,11 +520,11 @@
             }
         },
         "setups": [
-            "R'U'RU'R'U'LU'RUL'",
-            "L'U'LU'L'U'RU'LUR'",
-            "F'U'FU'F'U'BU'FUB'",
-            "B'U'BU'B'U'FU'BUF'",
-            "R'U2R2UR2UR2U2R'"
+            "RU2R'U'RU'R'U'RU2R'U'RU'R'",
+            "RU2R'U'RU'R'URU2R'U'RU'R'",
+            "FU2F'U'FU'F'U'FU2F'U'FU'F'",
+            "FU2F'U'FU'F'UFU2F'U'FU'F'",
+            "BU2B'U'BU'B'U'BU2B'U'BU'B'"
         ]
     },
     "23 Headlights": {
@@ -544,11 +544,11 @@
             }
         },
         "setups": [
-            "R'U2R'D'RU2R'DR2",
-            "R'U2R'D'RU2R'uF2",
-            "LU2LDL'U2LD'L2",
-            "F'U2F'D'FU2F'DF2",
-            "FU2FDF'U2FD'F2"
+            "L'U2LUL'ULU2RU2R'U'RU'R'",
+            "B'U2BUB'UBU2FU2F'U'FU'F'",
+            "F'U2FUF'UFU2BU2B'U'BU'B'",
+            "RUR'URU2R'U'RU2R'U'RU'R'",
+            "RU2R'U'RU'R'URUR'URU2R'"
         ]
     },
     "24 T": {
@@ -568,11 +568,11 @@
             }
         },
         "setups": [
-            "FR'F'LFRF'L'",
-            "F'LFR'F'L'FR",
-            "BL'B'RBLB'R'",
-            "B'RBL'B'R'BL",
-            "FR'F'LFRF'r'x"
+            "L'U2LUL'ULRU2R'U'RU'R'",
+            "L'RUR'U'LURU'R'",
+            "F'U2FUF'UFBU2B'U'BU'B'",
+            "B'U2BUB'UBFU2F'U'FU'F'",
+            "F'U2FUF'UFU2FU2F'U'FU'F'"
         ]
     },
     "25 Bowtie": {
@@ -592,11 +592,11 @@
             }
         },
         "setups": [
-            "F'L'FR'F'LFR",
-            "FRB'R'F'RBR'",
-            "B'R'FRBR'F'R",
-            "BLF'L'B'LFL'",
-            "F'L'BLFL'B'L"
+            "RUR'U'L'URU'R'L",
+            "RU2R'U'RUR'U'RUR'U'RU'R'",
+            "L'U'LURU'L'ULR'",
+            "R'U2RUR'U'RUR'U'RUR'UR",
+            "L'U2LUL'U'LUL'U'LUL'UL"
         ]
     },
     "26 Anti-Sune": {
@@ -620,7 +620,7 @@
             "F'U2FUF'UF",
             "B'U2BUB'UB",
             "RUR'URU2R'",
-            "R'U2RUR'UR"
+            "LD2L'U2LUL'ULD2U2L'"
         ]
     },
     "27 Sune": {
@@ -664,11 +664,11 @@
             }
         },
         "setups": [
-            "M'U'MU2M'U'M",
-            "MU'M'U2MU'M'",
-            "M'UMU2M'UM",
-            "MUM'U2MUM'",
-            "MUM'U2MUM'"
+            "F'U'L'ULF2URU'R'F'",
+            "FURU'R'F'U2FURU'R'F'",
+            "LUFU'F'L'U2LUFU'F'L'",
+            "R'U'F'UFR2UBU'B'R'",
+            "L'U'B'UBL2UFU'F'L'"
         ]
     },
     "29 Chameleon": {
@@ -688,11 +688,11 @@
             }
         },
         "setups": [
-            "S'LF'L'FS2UFU'f'",
-            "MFR'F'RM2URU'r'",
-            "M'BL'B'LM2ULU'l'",
-            "SRB'R'BS2UBU'b'",
-            "FUR'U2R2UR2URF'"
+            "FR'F'RURU'R'U'RU2R'U'RU'R'",
+            "L'ULUFU2F'LF'L'F",
+            "LF'L'FUFU'F'U'FU2F'U'FU'F'",
+            "RU'R'F'UFRUR'URU'R'",
+            "F'UFURU2R'FR'F'R"
         ]
     },
     "30 Anti-Chameleon": {
@@ -712,11 +712,11 @@
             }
         },
         "setups": [
-            "MF'rUR2rU'r'FR",
-            "F2RU'R'URUR2F'RF'",
-            "B2LU'L'ULUL2B'LB'",
-            "S'L'fUF2fU'f'LF",
-            "L2FU'F'UFUF2L'FL'"
+            "FRUR'U'RUR'U'RU'R'U'RUR'F'",
+            "RU'R'U'F'U2FR'FRF'",
+            "RUR'UF'UFUR'FRF'",
+            "RU2R'U'F'UFRUR'U'RU'R'",
+            "FU'F'U'L'U2LF'LFL'"
         ]
     },
     "31 Couch": {
@@ -736,11 +736,11 @@
             }
         },
         "setups": [
-            "R'FRUR'U'F'UR",
-            "F'UfURU'R'S'",
-            "F'LFUF'U'L'UF",
-            "L'UlUFU'F'M'",
-            "L'BLUL'U'B'UL"
+            "F'U'FRUR'U'F'U2F",
+            "L'U'LFUF'U'L'U2L",
+            "RUR'URU'R'U'R'FRF'",
+            "RU2R'FR'F'RU2R'FRF'",
+            "FU2F'LF'L'FU2F'LFL'"
         ]
     },
     "32 Anti-Couch": {
@@ -760,11 +760,11 @@
             }
         },
         "setups": [
-            "LF'L'U'LUFU'L'",
-            "FU'f'U'L'ULS",
-            "FR'F'U'FURU'F'",
-            "RU'r'U'F'UFM'",
-            "RB'R'U'RUBU'R'"
+            "RUR'F'U'FURU2R'",
+            "FUF'L'U'LUFU2F'",
+            "FUF2L'U'LUF2U2F'",
+            "L'U'LU'L'ULULF'L'F",
+            "LUL'B'U'BULU2L'"
         ]
     },
     "33 Tying Shoelaces": {
@@ -788,7 +788,7 @@
             "FR'F'RURU'R'",
             "LF'L'FUFU'F'",
             "F'LFL'U'L'UL",
-            "B'RBR'U'R'UR"
+            "FRU'R'U'RUR'F'"
         ]
     },
     "34 City (C and T)": {
@@ -808,11 +808,11 @@
             }
         },
         "setups": [
-            "SUFU'f'U'L'UL",
-            "S'U'b'RBURU'R'",
-            "M'URU'r'U'F'UF",
-            "M'U'r'FRUFU'F'",
-            "SU'f'LFULU'L'"
+            "RU2R'U'RU'R'U'FR'F'RURU'R'",
+            "LR'FRF'L'U'F'UF",
+            "B'FR'F'RBURU'R'",
+            "R'LF'L'FRUFU'F'",
+            "FU2F'U'FU'F'U'LF'L'FUFU'F'"
         ]
     },
     "35 Killer whale": {
@@ -832,11 +832,11 @@
             }
         },
         "setups": [
-            "R'U2lU'RUR'l'U2R",
-            "F'U2bU'FUF'b'U2F",
+            "FURU'R'F'U2RUR'URU2R'",
             "RU2R'FR'F'R2U2R'",
-            "L'U2LF'LFL2U2L",
-            "F'U2FR'FRF2U2F"
+            "FURU'R'F'U2R'U'RU'R'U2R",
+            "L'ULU2L'U'LU2L'BL'B'L2",
+            "L'U2LF'LFL2U2L"
         ]
     },
     "36 Wario": {
@@ -856,11 +856,11 @@
             }
         },
         "setups": [
-            "RU'R'U'F'U2FURU'R'",
-            "R'FRUR'U'F2UFR",
-            "FU'F'U'L'U2LUFU'F'",
-            "F'LFUF'U'L2ULF",
-            "LU'L'U'B'U2BULU'L'"
+            "F'LFL'U'L'U'LUL'UL",
+            "R'FRF'U'F'U'FUF'UF",
+            "FUF'UFU2RUR'U'F'",
+            "RUR'UF'UFU2RU'R'",
+            "RU2R'FRUR'U'F'URUR'"
         ]
     },
     "37 Turtle": {
@@ -904,11 +904,11 @@
             }
         },
         "setups": [
-            "fRU'R'US'RUR'F'",
+            "FR'F'RURUR'U'RU'R'",
+            "LF'L'FUFUF'U'FU'F'",
+            "FURU'R'F'U'RU2R'U'RU'R'",
             "RUR'U2F'U'FU'RU'R'",
-            "FUF'U2L'U'LU'FU'F'",
-            "lFU'F'UM'FUF'L'",
-            "bLU'L'USLUL'B'"
+            "RB'R'BUBUB'U'BU'B'"
         ]
     },
     "39 Snake": {
@@ -928,11 +928,11 @@
             }
         },
         "setups": [
-            "S'L'U'LUfUF'",
-            "MF'U'FUrUR'",
-            "S'L'U'LUBLb'",
-            "MF'U'FULFl'",
-            "M'B'U'BUlUL'"
+            "L'U2LUL'ULF'U'L'ULF",
+            "RU2R'U'F'UFRU'R'",
+            "FRUR'U'F'RUR'URU2R'",
+            "L'U2LUL'ULBULU'L'B'",
+            "FU2F'U'L'ULFU'F'"
         ]
     },
     "40 Anti-Snake": {
@@ -952,11 +952,11 @@
             }
         },
         "setups": [
-            "SRUR'U'R'FRf'",
+            "RU2R'U'RU'R'FURU'R'F'",
+            "RUR'URU'R'F'UFRU'R'",
             "F'U2FURU'R'F'UF",
             "L'U2LUFU'F'L'UL",
-            "MFUF'U'F'LFl'",
-            "R'U2RUBU'B'R'UR"
+            "FU2F'U'FU'F'LUFU'F'L'"
         ]
     },
     "41 Awkward Fish": {
@@ -976,11 +976,11 @@
             }
         },
         "setups": [
-            "MF'U'L'ULFUM'",
-            "SUF'U'L'ULF2f'",
-            "SUF'U'L'ULFS'",
-            "M'UR'U'F'UFRM",
-            "M'UR'U'F'UFR2r'"
+            "RU2R'U'RU'R'U'FRUR'U'F'",
+            "FR'F'RURUR'U'RUR'U'RU'R'",
+            "FURU'R'F'RU2R'U'RU'R'",
+            "FU2F'U'FU'F'U'LFUF'U'L'",
+            "FURUR'U'F'U2FUF'"
         ]
     },
     "42 Lefty Awkward Fish": {
@@ -1000,11 +1000,11 @@
             }
         },
         "setups": [
-            "MFURU'R'F'U'M'",
-            "S'U'FURU'R'F2f",
-            "M'U'LUFU'F'L2l",
-            "S'LUFU'F'L'U'S",
-            "M'BULU'L'B'U'M"
+            "F'LFL'U'L'U'LUL'U'LUL'UL",
+            "R'FRF'U'F'U'FUF'U'FUF'UF",
+            "F'U'L'ULFL'U2LUL'UL",
+            "RU'R'URU'R'FR'F'RFR'F'R",
+            "F'U'L'U'LUFU2F'U'F"
         ]
     },
     "43 Anti-P": {
@@ -1025,10 +1025,10 @@
         },
         "setups": [
             "F'L'U'LUF",
+            "RUR'F'L'U'LF",
             "R'F'U'FUR",
-            "B'R'U'RUB",
-            "L'B'U'BUL",
-            "f'U'L'ULf"
+            "R'U'R'FRF'UR",
+            "RUR'F'U2FRU'R'"
         ]
     },
     "44 P": {
@@ -1049,10 +1049,10 @@
         },
         "setups": [
             "FRUR'U'F'",
+            "L'U'LFRUR'F'",
             "LFUF'U'L'",
-            "fURU'R'f'",
-            "FRUR'd'L'",
-            "RBUB'U'R'"
+            "FRU'R'U2RUR'F'",
+            "LULF'L'FU'L'"
         ]
     },
     "45 Suit up": {
@@ -1072,11 +1072,11 @@
             }
         },
         "setups": [
-            "fRUR'U'f'",
-            "lFUF'U'l'",
             "FURU'R'F'",
-            "bLUL'U'b'",
-            "rBUB'U'r'"
+            "F'U'L'ULF",
+            "R'U'F'UFR",
+            "LUFU'F'L'",
+            "RUBU'B'R'"
         ]
     },
     "46 Seein' Headlights": {
@@ -1098,9 +1098,9 @@
         "setups": [
             "FUR'FRF'U'F'",
             "F'U'LF'L'FUF",
+            "RU2R'U'RU'R'UFURU'R'F'",
             "R'U'FR'F'RUR",
-            "LUF'LFL'U'L'",
-            "RUB'RBR'U'R'"
+            "LUF'LFL'U'L'"
         ]
     },
     "47 Anti-Breakneck": {
@@ -1120,11 +1120,11 @@
             }
         },
         "setups": [
-            "f'L'U'LUL'U'LUf",
-            "r'F'U'FUF'U'FUr",
-            "b'R'U'RUR'U'RUb",
-            "F'U'L'ULU'L'ULF",
-            "R'U'F'UFU'F'UFR"
+            "RU2R'U'RU'R'FRUR'U'F'",
+            "FU2F'U'FU'F'LFUF'U'L'",
+            "F'U'LF'L'FLF'L'FUF",
+            "RU2R'U'RUR'U2R'FRF'",
+            "LU2L'U'LUL'U2L'BLB'"
         ]
     },
     "48 Breakneck": {
@@ -1144,11 +1144,11 @@
             }
         },
         "setups": [
-            "fRUR'U'RUR'U'f'",
-            "bLUL'U'LUL'U'b'",
-            "rBUB'U'BUB'U'r'",
+            "FURU'R'F'URU2R'U'RU'R'",
             "FURU'R'URU'R'F'",
-            "lFUF'U'FUF'U'l'"
+            "FR'F'RU2RU'R'URU2R'",
+            "FUF'UFU2F2L'U'LUF",
+            "RUR'URU2R2F'U'FUR"
         ]
     },
     "49 Prof X": {
@@ -1168,11 +1168,11 @@
             }
         },
         "setups": [
-            "F'RU2R'U2R'F2RF'",
-            "F'LF2L'U2L'U2LF'",
-            "R'FR2F'U2F'U2FR'",
-            "L'FU2F'U2F'L2FL'",
-            "B'RB2R'U2R'U2RB'"
+            "F'U2FUF'UFLFUF'U'L'",
+            "L'U2LUL'ULBLUL'U'B'",
+            "F'L'U'LUL'ULU'L'U'LF",
+            "F'L'U'LUF2URU'R'F'",
+            "B'U2BUB'UBRBUB'U'R'"
         ]
     },
     "50 Anti-Prof X": {
@@ -1192,11 +1192,11 @@
             }
         },
         "setups": [
-            "R'FRF'U2R2B'R'BR'",
-            "F'LFL'U2F2R'F'RF'",
-            "L'BLB'U2L2F'L'FL'",
-            "B'RBR'U2B2L'B'LB'",
-            "FR'F2RU2RU2R'F"
+            "FRUR'U'RU'R'URUR'F'",
+            "RU2R'U'RU'R'B'R'U'RUB",
+            "FU2F'U'FU'F'R'F'U'FUR",
+            "FRUR'U'F2U'L'ULF",
+            "BU2B'U'BU'B'L'B'U'BUL"
         ]
     },
     "51 Bottlecap": {
@@ -1219,8 +1219,8 @@
             "FRUR'U'RUR'U'F'",
             "F'L'U'LUL'U'LUF",
             "R'F'U'FUF'U'FUR",
-            "RBUB'U'BUB'U'R'",
-            "fURU'R'URU'R'f'"
+            "R'U'R'FRF'RU'R'U2R",
+            "RBUB'U'BUB'U'R'"
         ]
     },
     "52 Rice Cooker": {
@@ -1240,11 +1240,11 @@
             }
         },
         "setups": [
-            "R'F'U'FU'RUR'UR",
-            "R'U'RU'R'UF'UFR",
-            "F'L'U'LU'FUF'UF",
-            "F'U'FU'F'UL'ULF",
-            "L'B'U'BU'LUL'UL"
+            "FRUR'U'F'U'RU2R'U'RU'R'",
+            "R'U'R'FRF'R'FRF'UR",
+            "LFUF'U'L'U'FU2F'U'FU'F'",
+            "RU2R'U'RU'R'U2FURU'R'F'",
+            "RU2R'U'RU'R'BULU'L'B'"
         ]
     },
     "53 Bearded": {
@@ -1264,11 +1264,11 @@
             }
         },
         "setups": [
-            "r'U'RU'R'URU'R'U2r",
-            "FR'FRF2U2LF'L'F",
-            "RB'RBR2U2FR'F'R",
-            "FUF2LFL'ULF'L'F",
-            "BL'BLB2U2RB'R'B"
+            "FRU'R'U'RUR'URU'R'F'",
+            "F'L'U'LUF2URU'R'URU'R'F'",
+            "FR'F'RURU'R'FURU'R'F'",
+            "LF'L'FU2FUB'UF'U'B",
+            "LF'L'FUFU'F'LUFU'F'L'"
         ]
     },
     "54 Anti-Bearded": {
@@ -1288,11 +1288,11 @@
             }
         },
         "setups": [
-            "F'LF'L'F2U2R'FRF'",
-            "L'BL'B'L2U2F'LFL'",
-            "BL2F'L'FLF'L'FL'B'",
-            "B'RB'R'B2U2L'BLB'",
-            "LF2R'F'RFR'F'RF'L'"
+            "R'FRF'U2F'U'BU'FUB'",
+            "B'R'URUR'U'RU'R'URB",
+            "R'FRF'U'F'UFR'U'F'UFR",
+            "F'LFL'U'L'ULF'U'L'ULF",
+            "F'L'ULUL'U'LU'L'ULF"
         ]
     },
     "55 Highway": {
@@ -1312,11 +1312,11 @@
             }
         },
         "setups": [
-            "FR'F'U2RUR'UR2U2R'",
-            "LF'L'U2FUF'UF2U2F'",
-            "B'UR2D'RU2R'DR2U'B",
-            "BL'B'U2LUL'UL2U2L'",
-            "RB'R'U2BUB'UB2U2B'"
+            "R'FRUR'U'F'R'FRF'UR",
+            "F'LFUF'U'L'F'LFL'UF",
+            "L'BLUL'U'B'L'BLB'UL",
+            "B'RBUB'U'R'B'RBR'UB",
+            "FR'F'RUR'F'RURU'R'FRUR'U'RU'R'"
         ]
     },
     "56 Streetlights": {
@@ -1336,11 +1336,11 @@
             }
         },
         "setups": [
-            "R'fRUR'f'R2BL'B'R'",
-            "BLFL'B'LF'UFU'F'L'",
-            "LFRF'L'FR'URU'R'F'",
-            "RBLB'R'BL'ULU'L'B'",
-            "L'bLUL'b'L2FR'F'L'"
+            "R'F'RL'U'LUL'U'LUR'FR",
+            "RU2R'U'R'F'U'FURU'RU'R'",
+            "FU2F'U'F'L'U'LUFU'FU'F'",
+            "B'R'BF'U'FUF'U'FUB'RB",
+            "LU2L'U'L'B'U'BULU'LU'L'"
         ]
     },
     "57 Mummy": {
@@ -1360,11 +1360,11 @@
             }
         },
         "setups": [
-            "rUR'U'MURU'R'",
-            "S'RUR'SRU'R'",
-            "fUF'U'S'UFU'F'",
-            "M'FUF'MFU'F'",
-            "lUL'U'M'ULU'L'"
+            "FR'F'RL'URU'R'L",
+            "LF'L'FB'UFU'F'B",
+            "LF'L'FB'UFU'BF'",
+            "FR'F'RL'URU'LR'",
+            "BL'B'LR'ULU'L'R"
         ]
     },
     "SKIP": {

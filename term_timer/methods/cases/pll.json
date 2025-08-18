@@ -28,11 +28,11 @@
             }
         },
         "setups": [
-            "F2R2FLF'R2FL'F",
-            "F2R2FLF'R2FL'bz",
-            "R2B2RFR'B2RF'R",
-            "L2F2LBL'F2LB'L",
-            "R2B2RFR'B2RF'lx"
+            "F'L'R'FRF'LFR'F'RF",
+            "RFR'F'RBR'FRF'B'R'",
+            "FLF'L'FRF'LFL'R'F'",
+            "L'B'F'LFL'BLF'L'FL",
+            "L'R'D2RUR'D2RU'L"
         ]
     },
     "Ab": {
@@ -64,11 +64,11 @@
             }
         },
         "setups": [
-            "R'FR'f2rU'r'f2R2",
-            "F'LF'l2fU'f'l2F2",
-            "L'BL'b2lU'l'b2L2",
-            "B'RB'r2bU'b'r2B2",
-            "F2L2F'R'FL2F'RF'"
+            "F'R'FRF'L'FR'F'RLF",
+            "L'F'LFL'B'LF'L'FBL",
+            "R'B'RBR'F'RB'R'BFR",
+            "B'L'BLB'R'BL'B'LRB",
+            "FU2R'D'RU'R'DRU'F'"
         ]
     },
     "E": {
@@ -100,11 +100,11 @@
             }
         },
         "setups": [
-            "RU'LD2L'ULR'U'RD2R'UL'",
-            "LU'RD2R'URL'U'LD2L'UR'",
-            "F'r'U'rFr'R'D'RUR'DRr",
-            "FU'BD2B'UBF'U'FD2F'UB'",
-            "BU'FD2F'UFB'U'BD2B'UF'"
+            "R2U2BRUR'U'RUR'U'RUR'U'B'U2R2",
+            "R2U2BRUR'U'RUR'U'RUR'U'B'U2R2U'",
+            "L2UB'UL'U'LUL'U'LUL'U'LBU'L2",
+            "LU'FU'F'U2FU'F'UF'U2FUF'UFL'",
+            "BU'LU'L'U2LU'L'UL'U2LUL'ULB'"
         ]
     },
     "F": {
@@ -136,11 +136,11 @@
             }
         },
         "setups": [
-            "R2F2RMFr'F2RU'rU2M'",
-            "MU2r'UR'F2rF'rR2F2R2",
-            "L2F2L2lF'lF2L'UR'F2M'x",
-            "F2R2F2fR'fR2F'UB'R2S'z'",
-            "S'U2f'UF'L2fL'fF2L2F2"
+            "RUR'U'R'UL'U'LRU2L'U'LU'RU'R'",
+            "F'UFU'F2L'U'LUFLF'L'F2",
+            "RUR'U'RUR'U2LU'RUL'R'U'RU'R'",
+            "LUL'UR'UL'U'LRU2L'U'LULU'L'",
+            "RUR'UL'UR'U'RLU2R'U'RURU'R'"
         ]
     },
     "Ga": {
@@ -172,11 +172,11 @@
             }
         },
         "setups": [
-            "L'U'LF2uF'UFU'Fu'F2",
+            "DL'U'LUD'L2UL'ULU'LU'L2",
             "L'U'LF2DR'URU'RD'F2",
             "R'U'RB2DL'ULU'LD'B2",
-            "B'U'BL2uL'ULU'Lu'L2",
-            "B'U'fU2rU'RUR'Ur'U2z'"
+            "R'U2RU'FRUR'U'R'F'U'RURU'R'",
+            "B'U'BL2DF'UFU'FD'L2"
         ]
     },
     "Gb": {
@@ -208,11 +208,11 @@
             }
         },
         "setups": [
-            "L2DF'UF'U'Fu'F2L'UL",
+            "RUR'F'RUR'U'R'FRU'R'FR2U'R'U'RUR'F'",
             "F2DR'UR'U'RD'F2L'UL",
-            "R2uR'UR'U'RD'F2L'UL",
-            "L2uL'UL'U'LD'B2R'UR",
-            "B2DL'UL'U'LD'B2R'UR"
+            "B2DL'UL'U'LD'B2R'UR",
+            "B2R2UB2RUR'B2RU'R'U'R2B2",
+            "RUR'U'R'UFRURU'R'F'UR'U2R"
         ]
     },
     "Gc": {
@@ -244,11 +244,11 @@
             }
         },
         "setups": [
-            "RUR'F2D'LU'L'UL'DF2",
-            "LUL'B2D'RU'R'UR'DB2",
-            "fRf'R2u'RU'R'UR'uR2",
-            "BUB'R2D'FU'F'UF'DR2",
-            "FUF'L2D'BU'B'UB'DL2"
+            "L'RUR'U'LU2RU2R'U'RU2R'U'RU'R'",
+            "D'RUR'U'DR2U'RU'R'UR'UR2",
+            "RUR'U'DR2U'RU'R'UR'UR2D'",
+            "B'FUF'U'BU2FU2F'U'FU2F'U'FU'F'",
+            "R2UR2UR2U2R2U2R'FRF'R'FRF'R'FRF'"
         ]
     },
     "Gd": {
@@ -280,11 +280,11 @@
             }
         },
         "setups": [
-            "R2D'FU'FUF'uF2RU'R'",
+            "RUR'URU'R'U2RUR'U'F'RU2R'U'RU'R'F",
+            "FUF'UFU'F'U2FUF'U'L'FU2F'U'FU'F'L",
             "F2D'LU'LUL'DF2RU'R'",
             "B2D'RU'RUR'DB2LU'L'",
-            "B2D'RU'RUR'uR2BU'B'",
-            "F2D'LU'LUL'uL2FU'F'"
+            "BUB'UBU'B'U2BUB'U'R'BU2B'U'BU'B'R"
         ]
     },
     "H": {
@@ -316,11 +316,11 @@
             }
         },
         "setups": [
-            "M2U'M2U2M2U'M2",
-            "M2U'M2U2M2U'M2",
-            "M2UM2U2M2UM2",
-            "M2UM2U2M2UM2",
-            "M2U2M2UM2U2M2"
+            "RU2R'URUR'U2RUR'URUR'U2RU'R'",
+            "LU2L'ULUL'U2LUL'ULUL'U2LU'L'",
+            "FU2F'UFUF'U2FUF'UFUF'U2FU'F'",
+            "BU2B'UBUB'U2BUB'UBUB'U2BU'B'",
+            "RU2R2U2R2UR2URURU2R'"
         ]
     },
     "Ja": {
@@ -352,11 +352,11 @@
             }
         },
         "setups": [
-            "L'R'U2RUR'U2LU'R",
-            "R'UL'U2RU'R'U2RL",
-            "R'UL'U2RU'R'U2LR",
-            "B'F'U2FUF'U2BU'F",
-            "F'UB'U2FU'F'U2FB"
+            "L'U'LFL'U'LULF'L2UL",
+            "L'U'F'U'FLF'UFL'UL",
+            "B'U'L'U'LBL'ULB'UB",
+            "F'U'FRF'U'FUFR'F2UF",
+            "R'ULU'RUL'U'L'U2LUL'UL"
         ]
     },
     "Jb": {
@@ -388,11 +388,11 @@
             }
         },
         "setups": [
-            "LRU2L'U'LU2R'UL'",
-            "LU'RU2L'ULU2R'L'",
-            "RLU2L'U'LU2R'UL'",
-            "FBU2F'U'FU2B'UF'",
-            "FU'BU2F'UFU2B'F'"
+            "RUR'F'RUR'U'R'FR2U'R'",
+            "FUF'L'FUF'U'F'LF2U'F'",
+            "L2D'L'DL'F2RU'R'F2",
+            "F2RUR'F2LD'LDL2",
+            "LRU2L'U'LU2R'UL'"
         ]
     },
     "Na": {
@@ -424,11 +424,11 @@
             }
         },
         "setups": [
-            "FU'fR2F'RS'U'fR2F'Rf'",
-            "LU'lF2L'FM'U'lF2L'Fl'",
-            "RU'rB2R'BMU'rB2R'Br'",
-            "BU'bL2B'LSU'bL2B'Lb'",
-            "F'UF2R2UF'R2FU'R2F2U'F"
+            "LU'LF'L'FL'ULFU'F'L'U'LUL'",
+            "FU'FR'F'RF'UFRU'R'F'U'FUF'",
+            "BU'BL'B'LB'UBLU'L'B'U'BUB'",
+            "F'RUR'U'R'FR2FU'R'U'RUF'R'",
+            "L'FUF'U'F'LF2LU'F'U'FUL'F'"
         ]
     },
     "Nb": {
@@ -460,11 +460,11 @@
             }
         },
         "setups": [
-            "r'FR'F2rU'MFR'F2rU'R",
-            "f'LF'L2fU'S'LF'L2fU'F",
-            "l'BL'B2lU'M'BL'B2lU'L",
-            "b'RB'R2bU'SRB'R2bU'B",
-            "RU'R2F2U'RF2R'UF2R2UR'"
+            "R'UR'FRF'RU'R'F'UFRUR'U'R",
+            "F'UF'LFL'FU'F'L'ULFUF'U'F",
+            "R'URU'R'F'U'FRUR'FR'F'RU'R",
+            "F'UFU'F'L'U'LFUF'LF'L'FU'F",
+            "L'U'LUR'L'U2RUR'U2LU'RL'UL"
         ]
     },
     "Ra": {
@@ -497,10 +497,10 @@
         },
         "setups": [
             "R2F2URUR'U'R'U'F2R'UR'",
-            "F2L2UFUF'U'F'U'L2F'UF'",
-            "RU'RF2URURU'R'U'F2R2",
-            "L2B2ULUL'U'L'U'B2L'UL'",
-            "B2R2UBUB'U'B'U'R2B'UB'"
+            "RU2R'F'L'ULUFUR'FRF'",
+            "LU2L'U2LF'L'U'LULFL2",
+            "LU'L'U'LULDL'U'LD'L'U2L'",
+            "F2L2UFUF'U'F'U'L2F'UF'"
         ]
     },
     "Rb": {
@@ -532,11 +532,11 @@
             }
         },
         "setups": [
+            "L2F2U'L'U'LULUF2LU'L",
+            "R'URUR'U'R'D'RUR'DRU2R",
             "R'U2RU2R'FRUR'U'R'F'R2",
-            "F'U2FU2F'LFUF'U'F'L'F2",
-            "L'U2LU2L'BLUL'U'L'B'L2",
-            "B'U2BU2B'RBUB'U'B'R'B2",
-            "R2FRURU'R'F'RU2R'U2R"
+            "F2R2U'F'U'FUFUR2FU'F",
+            "F'U2FU2F'LFUF'U'F'L'F2"
         ]
     },
     "SKIP": {
@@ -586,11 +586,11 @@
             }
         },
         "setups": [
-            "L2U'L2DF2R2UR2D'F2",
-            "F2D'L2UL2F2DR2U'R2",
-            "r2D'r2DF2R2UR2D'F2",
-            "f2D'f2DL2F2UF2D'L2",
-            "F2U'F2DR2B2UB2D'R2"
+            "L'U'LULF'L'FLF'L'FUFU'F'",
+            "F'U'FUFR'F'RFR'F'RURU'R'",
+            "RUR'U'R'FR2U'R'U'RUR'F'",
+            "R'U'RURB'R'BRB'R'BUBU'B'",
+            "B'U'BUBL'B'LBL'B'LULU'L'"
         ]
     },
     "Ua": {
@@ -622,11 +622,11 @@
             }
         },
         "setups": [
-            "F2UM'U2MUF2",
-            "M2U'MU2M'U'M2",
-            "M2U'M'U2MU'M2",
-            "M2U'M'U2MU'M2",
-            "M2U'MU2M'U'M2"
+            "RU2R'U'RU'R'UL'U2LUL'UL",
+            "R2URUR'U'R'U'R'UR'",
+            "BU2B'U'BU'B'UF'U2FUF'UF",
+            "FU2F'U'FU'F'UB'U2BUB'UB",
+            "L'U'LURUR'U2L'ULURU'R'"
         ]
     },
     "Ub": {
@@ -658,11 +658,11 @@
             }
         },
         "setups": [
-            "F2UM'U2MUF2",
-            "F2U'M'U2MU'F2",
-            "M2UMU2M'UM2",
-            "M2UM'U2MUM2",
-            "R2US'U2SUR2"
+            "L'U2LUL'ULU'RU2R'U'RU'R'",
+            "F'U2FUF'UFU'BU2B'U'BU'B'",
+            "B'U2BUB'UBU'FU2F'U'FU'F'",
+            "L2U'L'U'LULULU'L",
+            "RUR'U'L'U'LU2RU'R'U'L'UL"
         ]
     },
     "V": {
@@ -694,11 +694,11 @@
             }
         },
         "setups": [
-            "F'R'F'RU'RUR2FRUFU'F",
-            "FLFL'UL'U'L2F'L'U'F'UF'",
-            "L'UL'U'F'L'F2U'F'UF'LFL",
-            "BRBR'UR'U'R2B'R'U'B'UB'",
-            "R'UR'U'B'R'B2U'B'UB'RBR"
+            "RU2R'L'U2RU2R'U2LU'RUR'U'RU'R'",
+            "FU2F'B'U2FU2F'U2BU'FUF'U'FU'F'",
+            "RU'RUR'DRD'RF2UF2U'R2",
+            "BU2B'F'U2BU2B'U2FU'BUB'U'BU'B'",
+            "L'UL'U'LD'L'DL'F2U'F2UL2"
         ]
     },
     "Y": {
@@ -730,11 +730,11 @@
             }
         },
         "setups": [
-            "B2U'B2U'B2URUR'B2RU'R'",
-            "RUR'B2RU'R'U'B2UB2UB2",
-            "R2U'R2U'R2UFUF'R2FU'F'",
-            "FUF'R2FU'F'U'R2UR2UR2",
-            "F2U'F2U'F2ULUL'F2LU'L'"
+            "FRU'R'U'RUR'F'RUR'U'R'FRF'",
+            "F'LFL'U'L'ULU2RUR'U'R'FRF'",
+            "LF'L'FUFU'F'UL'U'LULF'L'F",
+            "FR'F'RURU'R'UF'U'FUFR'F'R",
+            "R'FRF'U'F'UFU2BUB'U'B'RBR'"
         ]
     },
     "Z": {
@@ -766,11 +766,11 @@
             }
         },
         "setups": [
-            "SM2S'uM2u'M2",
-            "S'M2SuM2u'M2",
-            "M2uM2u'SM2S'",
-            "M2uM2u'S'M2S",
-            "MS2M'uS2u'S2"
+            "R'U'R2URUR'U'RURU'RU'R'",
+            "RUR2U'R'U'RUR'U'R'UR'UR",
+            "L'U'L2ULUL'U'LULU'LU'L'",
+            "LUL2U'L'U'LUL'U'L'UL'UL",
+            "F'U'F2UFUF'U'FUFU'FU'F'"
         ]
     }
 }
