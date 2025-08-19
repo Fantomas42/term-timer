@@ -200,8 +200,11 @@ class Bluetooth:
 
             if (
                     not self.solve_completed_event.is_set()
-                    and self.bluetooth_cube.is_solved
+                    and self.cube_is_solved()
             ):
                 self.end_time = event['clock']
                 self.solve_completed_event.set()
                 logger.info('Bluetooth Stop: %s', self.end_time)
+
+    def cube_is_solved(self):
+        return self.bluetooth_cube.is_solved

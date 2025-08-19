@@ -47,23 +47,14 @@ class Trainer(SolveInterface):
                 end='', style='consign',
             )
 
-    def solve_line(self, solve: Solve) -> None:
-        self.clear_line(full=True)
+    def cube_is_solved(self):
+        if self.step == 'oll':
+            return self.bluetooth_cube.get_face('D') == 'D' * 9
 
-        if solve.advanced:
-            if solve.flag != DNF:
-                self.console.print(solve.method_line, end='')
-                self.console.print(
-                    f'[analysis]Analysis #{ self.counter }:[/analysis] '
-                    f'{ solve.report_line }',
-                )
-            else:
-                self.console.print(
-                    f'[duration]Duration #{ self.counter }:[/duration]',
-                    f'[time]{ format_time(self.elapsed_time) }[/time]',
-                    '[dnf]DNF[/dnf]',
-                )
-                return
+        return super().cube_is_solved()
+
+    def solve_line(self) -> None:
+        self.clear_line(full=True)
 
         self.console.print(
             f'[duration]Duration #{ self.counter }:[/duration]',
@@ -124,7 +115,7 @@ class Trainer(SolveInterface):
             moves=' '.join(moves),
         )
 
-        self.solve_line(solve)
+        self.solve_line()
 
         self.counter += 1
 
