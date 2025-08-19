@@ -3,6 +3,8 @@ from functools import cached_property
 from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.constants import AUF_CHAR
+from cubing_algs.constants import FACE_ORDER
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
@@ -15,7 +17,7 @@ from term_timer.transform import reorient_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 
 INITIAL = ''
-for face in ['U', 'R', 'F', 'D', 'L', 'B']:
+for face in FACE_ORDER:
     INITIAL += face * 9
 
 CENTER_PIECE = '000010000'
@@ -27,11 +29,9 @@ F2L_FACE     = '111111000'  # noqa: E221
 FULL_FACE    = '1' * 9      # noqa: E221
 FULL_CUBE    = '1' * 54     # noqa: E221
 
-AUF = 'U'
-
 AUF_MOVE = reorient_moves(
     CUBE_ORIENTATION,
-    parse_moves(AUF),
+    parse_moves(AUF_CHAR),
 )[0].base_move
 
 STEPS_CONFIG = {
