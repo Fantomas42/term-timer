@@ -7,7 +7,6 @@ from cubing_algs.constants import OPPOSITE_FACES
 from cubing_algs.constants import OUTER_BASIC_MOVES
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.fat import unfat_rotation_moves
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.transform.rotation import compress_final_rotations
 from kociemba import solve
@@ -180,11 +179,10 @@ def random_training(step, selected_cases):
         error_string = f'Invalid case { case } for { step.upper() }'
         raise InvalidCaseError(error_string)
 
-    algo = LL_ORIENTATION + choice(cases[case]['setups'])
+    algo = LL_ORIENTATION + choice(cases[case]['setups']) + LL_ORIENTATION
     case_name = cases[case]['name']
 
     return case_name, parse_moves(algo).transform(
-        unfat_rotation_moves,
         degrip_full_moves,
         compress_final_rotations,
     )
