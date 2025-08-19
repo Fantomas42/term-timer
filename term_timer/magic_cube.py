@@ -3,6 +3,7 @@ from magiccube.cube import Cube as BaseCube
 from magiccube.cube import Face
 
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.config import LL_ORIENTATION
 
 COLOR_TO_FACE = {
     'R': 'R',
@@ -62,7 +63,7 @@ class CubePrintRich:
         cube = self.cube
 
         if orientation:
-            cube.rotate(str(orientation).upper())
+            cube.rotate(str(orientation))
 
         # Flatten middle layer
         print_order_mid = zip(
@@ -94,8 +95,11 @@ class CubePrintRich:
 
         return result
 
-    def print_top_face(self, *, oll=False):
+    def print_top_face(self, orientation: Algorithm, *, oll=False):
         cube = self.cube
+
+        if orientation:
+            cube.rotate(str(orientation))
 
         result = self._print_top_down_face_ll(Face.B, oll=oll, top=True)
 
@@ -114,13 +118,17 @@ class CubePrintRich:
 
         result += self._print_top_down_face_ll(Face.F, oll=oll, top=False)
 
+        if orientation:
+            for _ in orientation:
+                cube.undo()
+
         return result
 
-    def print_oll(self):
-        return self.print_top_face(oll=True)
+    def print_oll(self, orientation: Algorithm):
+        return self.print_top_face(orientation, oll=True)
 
-    def print_pll(self):
-        return self.print_top_face(oll=False)
+    def print_pll(self, orientation: Algorithm):
+        return self.print_top_face(orientation, oll=False)
 
 
 class Cube(BaseCube):  # type: ignore[misc]
@@ -138,11 +146,11 @@ class Cube(BaseCube):  # type: ignore[misc]
 
     def oll(self):
         printer = CubePrintRich(self)
-        return printer.print_oll()
+        return printer.print_oll(LL_ORIENTATION)
 
     def pll(self):
         printer = CubePrintRich(self)
-        return printer.print_pll()
+        return printer.print_pll(LL_ORIENTATION)
 
     def __str__(self) -> str:
         return self.full_cube(CUBE_ORIENTATION)

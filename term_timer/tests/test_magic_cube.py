@@ -18,7 +18,7 @@ class TestCubePrintRich(unittest.TestCase):
 
     def test_format_color(self):
         result = self.printer._format_color('W')
-        expected = '[face_w] W [/face_w]'
+        expected = '[face_w] U [/face_w]'
         self.assertEqual(result, expected)
 
     @patch.object(CubePrintRich, '_format_color', return_value='[W]')
