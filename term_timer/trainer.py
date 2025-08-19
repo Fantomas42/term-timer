@@ -2,6 +2,7 @@ from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
+from term_timer.methods.base import FaceletAnalyser
 from term_timer.scrambler import scramble_moves
 from term_timer.scrambler import trainer
 from term_timer.solve import Solve
@@ -48,10 +49,10 @@ class Trainer(SolveInterface):
             )
 
     def cube_is_solved(self):
-        if self.step == 'oll':
-            return self.bluetooth_cube.get_face('D') == 'D' * 9
-
-        return super().cube_is_solved()
+        return FaceletAnalyser().check_step(
+            self.step.upper(),
+            self.bluetooth_cube.state,
+        )
 
     def solve_line(self) -> None:
         self.clear_line(full=True)

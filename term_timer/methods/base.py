@@ -108,7 +108,33 @@ STEPS_CONFIG = {
 }
 
 
-class Analyser:
+class FaceletAnalyser:
+
+    @staticmethod
+    def build_facelets_masked(mask: str, facelets: str) -> str:
+        masked = []
+        for i, value in enumerate(facelets):
+            if mask[i] == '0':
+                masked.append('-')
+            else:
+                masked.append(value)
+
+        return ''.join(masked)
+
+    def check_step(self, step, facelets):
+        mask = get_step_config(step, 'mask')
+
+        matching = self.build_facelets_masked(
+            mask,
+            INITIAL,
+        )
+        return matching == self.build_facelets_masked(
+            mask,
+            facelets,
+        )
+
+
+class Analyser(FaceletAnalyser):
     name = ''
     step_list: tuple[str] = ()
     norms: ClassVar[dict[str, dict[str, float]]] = {}
@@ -310,29 +336,6 @@ class Analyser:
     @cached_property
     def score(self):
         return 20
-
-    @staticmethod
-    def build_facelets_masked(mask: str, facelets: str) -> str:
-        masked = []
-        for i, value in enumerate(facelets):
-            if mask[i] == '0':
-                masked.append('-')
-            else:
-                masked.append(value)
-
-        return ''.join(masked)
-
-    def check_step(self, step, facelets):
-        mask = get_step_config(step, 'mask')
-
-        matching = self.build_facelets_masked(
-            mask,
-            INITIAL,
-        )
-        return matching == self.build_facelets_masked(
-            mask,
-            facelets,
-        )
 
 
 def get_step_config(step_name, value, default=None):
