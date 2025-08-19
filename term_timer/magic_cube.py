@@ -4,6 +4,15 @@ from magiccube.cube import Face
 
 from term_timer.config import CUBE_ORIENTATION
 
+COLOR_TO_FACE = {
+    'R': 'R',
+    'B': 'B',
+    'Y': 'D',
+    'G': 'F',
+    'W': 'U',
+    'O': 'L',
+}
+
 
 class CubePrintRich:
     def __init__(self, cube: 'Cube'):
@@ -11,9 +20,12 @@ class CubePrintRich:
 
     @staticmethod
     def _format_color(color: str, *, oll=False) -> str:
+        face = COLOR_TO_FACE[color]
+
         if oll and color != 'Y':
             color = 'H'
-        return f'[face_{ color.lower() }] { color } [/face_{ color.lower() }]'
+
+        return f'[face_{ color.lower() }] { face } [/face_{ color.lower() }]'
 
     def _print_top_down_face(self, face: Face) -> str:
         result = ''
