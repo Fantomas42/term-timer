@@ -27,13 +27,19 @@ class Trainer(SolveInterface):
 
     def start_line(self, cube, case) -> None:
         if self.show_cube:
-            self.console.print(getattr(cube, self.step)(), end='')
+            if self.step == 'cross':
+                self.console.print(str(cube), end='')
+            else:
+                self.console.print(getattr(cube, self.step)(), end='')
 
-        link = (
-            'https://cubing.fache.fr/'
-            f'{ self.step.upper() }/'
-            f'{ case.split(" ")[0] }.html'
-        )
+        if self.step == 'cross':
+            link = ''
+        else:
+            link = (
+                'https://cubing.fache.fr/'
+                f'{ self.step.upper() }/'
+                f'{ case.split(" ")[0] }.html'
+            )
 
         self.console.print(
             f'[scramble]Training #{ self.counter }:[/scramble]',
@@ -55,8 +61,12 @@ class Trainer(SolveInterface):
             )
 
     def cube_is_solved(self):
+        step = self.step.upper()
+        if self.step == 'cross':
+            step = 'Cross'
+
         return FaceletAnalyser().check_step(
-            self.step.upper(),
+            step,
             self.bluetooth_cube.state,
         )
 

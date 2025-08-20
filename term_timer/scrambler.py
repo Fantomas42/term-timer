@@ -159,9 +159,12 @@ def scrambler(cube_size: int, iterations: int,
 
 
 def trainer(step, cases):
-    cube = Cube(3)
-
-    case_name, scramble = random_training(step, cases)
+    if step == 'cross':
+        case_name = 'Cross'
+        scramble, cube = scrambler(3, 0, easy_cross=True)
+    else:
+        cube = Cube(3)
+        case_name, scramble = random_training(step, cases)
 
     cube.rotate(scramble)
 
