@@ -206,6 +206,9 @@ class Analyser(FaceletAnalyser):
             info = self.steps[step]
             step_moves = info['moves']
 
+            if not step_moves:
+                continue
+
             moves = parse_moves([self.solution[i] for i in step_moves])
             times = [self.solution[i].timed for i in step_moves]
 

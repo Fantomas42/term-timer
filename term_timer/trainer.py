@@ -29,10 +29,16 @@ class Trainer(SolveInterface):
         if self.show_cube:
             self.console.print(getattr(cube, self.step)(), end='')
 
+        link = (
+            'https://cubing.fache.fr/'
+            f'{ self.step.upper() }/'
+            f'{ case.split(" ")[0] }.html'
+        )
+
         self.console.print(
             f'[scramble]Training #{ self.counter }:[/scramble]',
             f'[moves]{ self.scramble_oriented }[/moves]',
-            f'[comment]// { case }[/comment]',
+            f'[comment]// [link={ link }]{ case }[/link][/comment]',
         )
 
         if self.bluetooth_interface:
@@ -54,12 +60,22 @@ class Trainer(SolveInterface):
             self.bluetooth_cube.state,
         )
 
-    def solve_line(self) -> None:
+    def solve_line(self, solve: Solve) -> None:
         self.clear_line(full=True)
+
+        if solve.advanced:
+            self.console.print(
+                f'[analysis]Executed #{ self.counter }:[/analysis] [consign]' +
+                solve.reconstruction_step_line(
+                    solve.method_applied.summary[0],
+                    multiple=True) +
+                '[/consign]',
+            )
 
         self.console.print(
             f'[duration]Duration #{ self.counter }:[/duration]',
             f'[time]{ format_time(self.elapsed_time) }[/time]',
+            f'{ solve.trainer_line }',
         )
 
     async def start(self) -> bool:
@@ -115,8 +131,9 @@ class Trainer(SolveInterface):
             cube_size=3,
             moves=' '.join(moves),
         )
+        solve.method_name = 'cfop'
 
-        self.solve_line()
+        self.solve_line(solve)
 
         self.counter += 1
 

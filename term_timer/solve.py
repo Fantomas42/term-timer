@@ -236,6 +236,40 @@ class Solve:
         )
 
     @cached_property
+    def trainer_line(self) -> str:
+        if not self.advanced:
+            return ''
+
+        metric_string = ''
+        metrics = STATS_CONFIG.get('metrics')
+        for metric in metrics:
+            value = self.reconstruction.metrics[metric]
+            metric_string += (
+                f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
+            )
+
+        missed_line = ''
+        missed_moves = self.all_missed_moves
+        if missed_line:
+            missed_line = (
+                '[exec-overhead]'
+                f'{ missed_moves } missed QTM'
+                '[/exec-overhead] '
+            )
+
+        pause_line = ''
+        if self.execution_pauses:
+            pause_line = (
+                f'[caution]{ self.execution_pauses } Pauses[/caution]'
+            )
+
+        return (
+            f'{ metric_string }'
+            f'[tps]{ self.tps:.2f} TPS[/tps] '
+            f'{ missed_line }{ pause_line }'
+        )
+
+    @cached_property
     def method_line(self) -> str:
         if not self.method_applied:
             return ''
