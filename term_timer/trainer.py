@@ -23,6 +23,10 @@ class Trainer(SolveInterface):
         self.metronome = metronome
         self.cases = cases
 
+        self.step_code = self.step.upper()
+        if self.step == 'cross':
+            self.step_code = 'Cross'
+
         self.counter = 1
 
     def start_line(self, cube, case) -> None:
@@ -37,7 +41,7 @@ class Trainer(SolveInterface):
         else:
             link = (
                 'https://cubing.fache.fr/'
-                f'{ self.step.upper() }/'
+                f'{ self.step_code }/'
                 f'{ case.split(" ")[0] }.html'
             )
 
@@ -61,12 +65,8 @@ class Trainer(SolveInterface):
             )
 
     def cube_is_solved(self):
-        step = self.step.upper()
-        if self.step == 'cross':
-            step = 'Cross'
-
         return FaceletAnalyser().check_step(
-            step,
+            self.step_code,
             self.bluetooth_cube.state,
         )
 
