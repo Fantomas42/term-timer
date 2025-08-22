@@ -50,7 +50,7 @@ class Bluetooth:
                 self.console.print(
                     '[bluetooth]📡Bluetooth:[/bluetooth] '
                     'Connecting to Bluetooth cube address '
-                    f'{ address }...',
+                    f'[b]{ address }[/b]...',
                     end='',
                 )
 
