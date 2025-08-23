@@ -287,10 +287,10 @@ def train_arguments(subparsers):
     parser.add_argument(
         '-s', '--step',
         default=TRAINER_STEP,
-        choices={'cross', 'oll', 'pll'},
+        choices={'cross', 'f2l', 'af2l', 'oll', 'pll'},
         metavar='STEP',
         help=(
-            'Specify the training mode : cross, oll or pll.\n'
+            'Specify the training mode : cross, f2l, af2l, oll or pll.\n'
             f'Default: { TRAINER_STEP }.'
         ),
     )

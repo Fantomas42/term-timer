@@ -9,13 +9,23 @@ from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
 
 DATA_DIRECTORY = Path(__file__).parent / 'cases'
+AF2L_PATH = DATA_DIRECTORY / 'af2l.json'
+F2L_PATH = DATA_DIRECTORY / 'f2l.json'
 OLL_PATH = DATA_DIRECTORY / 'oll.json'
 PLL_PATH = DATA_DIRECTORY / 'pll.json'
 
+AF2L_MASKS = {}
+F2L_MASKS = {}
 OLL_MASKS = {}
 PLL_MASKS = {}
+
+AF2L_INFO = {}
+F2L_INFO = {}
 OLL_INFO = {}
 PLL_INFO = {}
+
+AF2L_SETUPS = {}
+F2L_SETUPS = {}
 OLL_SETUPS = {}
 PLL_SETUPS = {}
 
@@ -40,6 +50,8 @@ def load_and_fill(path, masks, info, setups):
                 }
 
 
+load_and_fill(AF2L_PATH, AF2L_MASKS, AF2L_INFO, AF2L_SETUPS)
+load_and_fill(F2L_PATH, F2L_MASKS, F2L_INFO, F2L_SETUPS)
 load_and_fill(OLL_PATH, OLL_MASKS, OLL_INFO, OLL_SETUPS)
 load_and_fill(PLL_PATH, PLL_MASKS, PLL_INFO, PLL_SETUPS)
 

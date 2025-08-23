@@ -1,0 +1,1483 @@
+{
+    "01": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUULUURRRRRR---FFFDFF---FDDFDDRDDLLDLLB---BBBBBB---",
+                "y": "UUUUUUFUUBBBBBB---RRRDRR---RDDRDDBDDFFDFFL---LLLLLL---",
+                "y'": "UUUUUUBUUFFFFFF---LLLDLL---LDDLDDFDDBBDBBR---RRRRRR---",
+                "y2": "UUUUUURUULLLLLL---BBBDBB---BDDBDDLDDRRDRRF---FFFFFF---"
+            },
+            "y": {
+                "": "LUUUUUUUUBBBBBB---RRRRRR---DDDDDDFFRFFFDFF---LLDLLB---",
+                "y": "FUUUUUUUULLLLLL---BBBBBB---DDDDDDRRBRRRDRR---FFDFFL---",
+                "y'": "BUUUUUUUURRRRRR---FFFFFF---DDDDDDLLFLLLDLL---BBDBBR---",
+                "y2": "RUUUUUUUUFFFFFF---LLLLLL---DDDDDDBBLBBBDBB---RRDRRF---"
+            },
+            "y'": {
+                "": "UUUUUUUULFFFDFF---LLDLLB---RFFDDDDDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUFRRRDRR---FFDFFL---BRRDDDDDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUBLLLDLL---BBDBBR---FLLDDDDDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUURBBBDBB---RRDRRF---LBBDDDDDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UULUUUUUULLDLLB---BBBBBB---DDRDDFDDFRRRRRR---FFFDFF---",
+                "y": "UUFUUUUUUFFDFFL---LLLLLL---DDBDDRDDRBBBBBB---RRRDRR---",
+                "y'": "UUBUUUUUUBBDBBR---RRRRRR---DDFDDLDDLFFFFFF---LLLDLL---",
+                "y2": "UURUUUUUURRDRRF---FFFFFF---DDLDDBDDBLLLLLL---BBBDBB---"
+            }
+        },
+        "setups": [
+            "RUR'U'",
+            "LF'L'F",
+            "FUF'U'",
+            "FR'F'R",
+            "LUL'U'"
+        ]
+    },
+    "02": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUFUURRRRRR---DFFDFF---LLBFDDFDDLLLLLL---BBBBBB---",
+                "y": "UUUUUURUUBBBBBB---DRRDRR---FFLRDDRDDFFFFFF---LLLLLL---",
+                "y'": "UUUUUULUUFFFFFF---DLLDLL---BBRLDDLDDBBBBBB---RRRRRR---",
+                "y2": "UUUUUUBUULLLLLL---DBBDBB---RRFBDDBDDRRRRRR---FFFFFF---"
+            },
+            "y": {
+                "": "FUUUUUUUUBBBBBB---RRRRRR---BDDLDDLFFDFFDFF---LLLLLL---",
+                "y": "RUUUUUUUULLLLLL---BBBBBB---LDDFDDFRRDRRDRR---FFFFFF---",
+                "y'": "LUUUUUUUURRRRRR---FFFFFF---RDDBDDBLLDLLDLL---BBBBBB---",
+                "y2": "BUUUUUUUUFFFFFF---LLLLLL---FDDRDDRBBDBBDBB---RRRRRR---"
+            },
+            "y'": {
+                "": "UUUUUUUUFDFFDFF---LLLLLL---FFLDDLDDBBBBBBB---RRRRRR---",
+                "y": "UUUUUUUURDRRDRR---FFFFFF---RRFDDFDDLLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUULDLLDLL---BBBBBB---LLBDDBDDRRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUBDBBDBB---RRRRRR---BBRDDRDDFFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUFUUUUUULLLLLL---BBBBBB---DDFDDFBLLRRRRRR---DFFDFF---",
+                "y": "UURUUUUUUFFFFFF---LLLLLL---DDRDDRLFFBBBBBB---DRRDRR---",
+                "y'": "UULUUUUUUBBBBBB---RRRRRR---DDLDDLRBBFFFFFF---DLLDLL---",
+                "y2": "UUBUUUUUURRRRRR---FFFFFF---DDBDDBFRRLLLLLL---DBBDBB---"
+            }
+        },
+        "setups": [
+            "L'U'LU",
+            "R'FRF'",
+            "F'U'FU",
+            "F'LFL'",
+            "R'U'RU"
+        ]
+    },
+    "03": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUBUURRRRRR---LFFLFF---FDDDDLDDLLLDLLD---BBBBBB---",
+                "y": "UUUUUULUUBBBBBB---FRRFRR---RDDDDFDDFFFDFFD---LLLLLL---",
+                "y'": "UUUUUURUUFFFFFF---BLLBLL---LDDDDBDDBBBDBBD---RRRRRR---",
+                "y2": "UUUUUUFUULLLLLL---RBBRBB---BDDDDRDDRRRDRRD---FFFFFF---"
+            },
+            "y": {
+                "": "BUUUUUUUUBBBBBB---RRRRRR---DLLDDDFDDLFFLFF---LLDLLD---",
+                "y": "LUUUUUUUULLLLLL---BBBBBB---DFFDDDRDDFRRFRR---FFDFFD---",
+                "y'": "RUUUUUUUURRRRRR---FFFFFF---DBBDDDLDDBLLBLL---BBDBBD---",
+                "y2": "FUUUUUUUUFFFFFF---LLLLLL---DRRDDDBDDRBBRBB---RRDRRD---"
+            },
+            "y'": {
+                "": "UUUUUUUUBLFFLFF---LLDLLD---DDFDDDLLDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUULFRRFRR---FFDFFD---DDRDDDFFDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUURBLLBLL---BBDBBD---DDLDDDBBDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUFRBBRBB---RRDRRD---DDBDDDRRDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUBUUUUUULLDLLD---BBBBBB---LDDLDDDDFRRRRRR---LFFLFF---",
+                "y": "UULUUUUUUFFDFFD---LLLLLL---FDDFDDDDRBBBBBB---FRRFRR---",
+                "y'": "UURUUUUUUBBDBBD---RRRRRR---BDDBDDDDLFFFFFF---BLLBLL---",
+                "y2": "UUFUUUUUURRDRRD---FFFFFF---RDDRDDDDBLLLLLL---RBBRBB---"
+            }
+        },
+        "setups": [
+            "L'UL",
+            "F'UF",
+            "R'UR",
+            "B'UB"
+        ]
+    },
+    "04": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUURUURRRRRR---DFFDFF---LDDDDDDFFLLFLLF---BBBBBB---",
+                "y": "UUUUUUBUUBBBBBB---DRRDRR---FDDDDDDRRFFRFFR---LLLLLL---",
+                "y'": "UUUUUUFUUFFFFFF---DLLDLL---BDDDDDDLLBBLBBL---RRRRRR---",
+                "y2": "UUUUUULUULLLLLL---DBBDBB---RDDDDDDBBRRBRRB---FFFFFF---"
+            },
+            "y": {
+                "": "RUUUUUUUUBBBBBB---RRRRRR---DDFDDFLDDDFFDFF---LLFLLF---",
+                "y": "BUUUUUUUULLLLLL---BBBBBB---DDRDDRFDDDRRDRR---FFRFFR---",
+                "y'": "FUUUUUUUURRRRRR---FFFFFF---DDLDDLBDDDLLDLL---BBLBBL---",
+                "y2": "LUUUUUUUUFFFFFF---LLLLLL---DDBDDBRDDDBBDBB---RRBRRB---"
+            },
+            "y'": {
+                "": "UUUUUUUURDFFDFF---LLFLLF---DDLFDDFDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUBDRRDRR---FFRFFR---DDFRDDRDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUFDLLDLL---BBLBBL---DDBLDDLDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUULDBBDBB---RRBRRB---DDRBDDBDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UURUUUUUULLFLLF---BBBBBB---FFDDDDDDLRRRRRR---DFFDFF---",
+                "y": "UUBUUUUUUFFRFFR---LLLLLL---RRDDDDDDFBBBBBB---DRRDRR---",
+                "y'": "UUFUUUUUUBBLBBL---RRRRRR---LLDDDDDDBFFFFFF---DLLDLL---",
+                "y2": "UULUUUUUURRBRRB---FFFFFF---BBDDDDDDRLLLLLL---DBBDBB---"
+            }
+        },
+        "setups": [
+            "RU'R'",
+            "FU'F'",
+            "LU'L'",
+            "BU'B'"
+        ]
+    },
+    "05": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUULUURRRRRR---DFFDFF---FDDDDDRFRLLBLLR---BBBBBB---",
+                "y": "UUUUUUFUUBBBBBB---DRRDRR---RDDDDDBRBFFLFFB---LLLLLL---",
+                "y'": "UUUUUUBUUFFFFFF---DLLDLL---LDDDDDFLFBBRBBF---RRRRRR---",
+                "y2": "UUUUUURUULLLLLL---DBBDBB---BDDDDDLBLRRFRRL---FFFFFF---"
+            },
+            "y": {
+                "": "LUUUUUUUUBBBBBB---RRRRRR---DDRDDFFDRDFFDFF---LLBLLR---",
+                "y": "FUUUUUUUULLLLLL---BBBBBB---DDBDDRRDBDRRDRR---FFLFFB---",
+                "y'": "BUUUUUUUURRRRRR---FFFFFF---DDFDDLLDFDLLDLL---BBRBBF---",
+                "y2": "RUUUUUUUUFFFFFF---LLLLLL---DDLDDBBDLDBBDBB---RRFRRL---"
+            },
+            "y'": {
+                "": "UUUUUUUULDFFDFF---LLBLLR---RDFFDDRDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUFDRRDRR---FFLFFB---BDRRDDBDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUBDLLDLL---BBRBBF---FDLLDDFDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUURDBBDBB---RRFRRL---LDBBDDLDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UULUUUUUULLBLLR---BBBBBB---RFRDDDDDFRRRRRR---DFFDFF---",
+                "y": "UUFUUUUUUFFLFFB---LLLLLL---BRBDDDDDRBBBBBB---DRRDRR---",
+                "y'": "UUBUUUUUUBBRBBF---RRRRRR---FLFDDDDDLFFFFFF---DLLDLL---",
+                "y2": "UURUUUUUURRFRRL---FFFFFF---LBLDDDDDBLLLLLL---DBBDBB---"
+            }
+        },
+        "setups": [
+            "RUR'U2RU'R'U",
+            "F2U'L'ULF2",
+            "RU2R'URU'R'U",
+            "R2U'F'UFR2",
+            "FUF'U2FU'F'U"
+        ]
+    },
+    "06": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUURUURRRRRR---BFFDFF---LDBDDLFFDLLDLLL---BBBBBB---",
+                "y": "UUUUUUBUUBBBBBB---LRRDRR---FDLDDFRRDFFDFFF---LLLLLL---",
+                "y'": "UUUUUUFUUFFFFFF---RLLDLL---BDRDDBLLDBBDBBB---RRRRRR---",
+                "y2": "UUUUUULUULLLLLL---FBBDBB---RDFDDRBBDRRDRRR---FFFFFF---"
+            },
+            "y": {
+                "": "RUUUUUUUUBBBBBB---RRRRRR---BLDDDFLDFBFFDFF---LLDLLL---",
+                "y": "BUUUUUUUULLLLLL---BBBBBB---LFDDDRFDRLRRDRR---FFDFFF---",
+                "y'": "FUUUUUUUURRRRRR---FFFFFF---RBDDDLBDLRLLDLL---BBDBBB---",
+                "y2": "LUUUUUUUUFFFFFF---LLLLLL---FRDDDBRDBFBBDBB---RRDRRR---"
+            },
+            "y'": {
+                "": "UUUUUUUURBFFDFF---LLDLLL---FDLFDDDLBBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUBLRRDRR---FFDFFF---RDFRDDDFLLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUFRLLDLL---BBDBBB---LDBLDDDBRRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUULFBBDBB---RRDRRR---BDRBDDDRFFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UURUUUUUULLDLLL---BBBBBB---DFFLDDBDLRRRRRR---BFFDFF---",
+                "y": "UUBUUUUUUFFDFFF---LLLLLL---DRRFDDLDFBBBBBB---LRRDRR---",
+                "y'": "UUFUUUUUUBBDBBB---RRRRRR---DLLBDDRDBFFFFFF---RLLDLL---",
+                "y2": "UULUUUUUURRDRRR---FFFFFF---DBBRDDFDRLLLLLL---FBBDBB---"
+            }
+        },
+        "setups": [
+            "L'U'LU2L'ULU'",
+            "F'U'FU2F'UFU'",
+            "B'U'BU2B'UBU'",
+            "R'U'RU2R'URU'"
+        ]
+    },
+    "07": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUULUURRRRRR---FFFDFF---FDRDDFDDLLLDLLB---BBBBBB---",
+                "y": "UUUUUUFUUBBBBBB---RRRDRR---RDBDDRDDFFFDFFL---LLLLLL---",
+                "y'": "UUUUUUBUUFFFFFF---LLLDLL---LDFDDLDDBBBDBBR---RRRRRR---",
+                "y2": "UUUUUURUULLLLLL---BBBDBB---BDLDDBDDRRRDRRF---FFFFFF---"
+            },
+            "y": {
+                "": "LUUUUUUUUBBBBBB---RRRRRR---RFLDDDFDDFFFDFF---LLDLLB---",
+                "y": "FUUUUUUUULLLLLL---BBBBBB---BRFDDDRDDRRRDRR---FFDFFL---",
+                "y'": "BUUUUUUUURRRRRR---FFFFFF---FLBDDDLDDLLLDLL---BBDBBR---",
+                "y2": "RUUUUUUUUFFFFFF---LLLLLL---LBRDDDBDDBBBDBB---RRDRRF---"
+            },
+            "y'": {
+                "": "UUUUUUUULFFFDFF---LLDLLB---DDFDDDLFRBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUFRRRDRR---FFDFFL---DDRDDDFRBLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUBLLLDLL---BBDBBR---DDLDDDBLFRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUURBBBDBB---RRDRRF---DDBDDDRBLFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UULUUUUUULLDLLB---BBBBBB---LDDFDDRDFRRRRRR---FFFDFF---",
+                "y": "UUFUUUUUUFFDFFL---LLLLLL---FDDRDDBDRBBBBBB---RRRDRR---",
+                "y'": "UUBUUUUUUBBDBBR---RRRRRR---BDDLDDFDLFFFFFF---LLLDLL---",
+                "y2": "UURUUUUUURRDRRF---FFFFFF---RDDBDDLDBLLLLLL---BBBDBB---"
+            }
+        },
+        "setups": [
+            "LF'L'FU'FU2F'U",
+            "RUR'U2RU2R'U",
+            "FR'F'RU'RU2R'U",
+            "LU2L'ULU2L'U",
+            "FUF'U2FU2F'U"
+        ]
+    },
+    "08": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUBUURRRRRR---DFFDFF---LDBDDBLLDLLRLLR---BBBBBB---",
+                "y": "UUUUUULUUBBBBBB---DRRDRR---FDLDDLFFDFFBFFB---LLLLLL---",
+                "y'": "UUUUUURUUFFFFFF---DLLDLL---BDRDDRBBDBBFBBF---RRRRRR---",
+                "y2": "UUUUUUFUULLLLLL---DBBDBB---RDFDDFRRDRRLRRL---FFFFFF---"
+            },
+            "y": {
+                "": "BUUUUUUUUBBBBBB---RRRRRR---BBDDDLLDLDFFDFF---LLRLLR---",
+                "y": "LUUUUUUUULLLLLL---BBBBBB---LLDDDFFDFDRRDRR---FFBFFB---",
+                "y'": "RUUUUUUUURRRRRR---FFFFFF---RRDDDBBDBDLLDLL---BBFBBF---",
+                "y2": "FUUUUUUUUFFFFFF---LLLLLL---FFDDDRRDRDBBDBB---RRLRRL---"
+            },
+            "y'": {
+                "": "UUUUUUUUBDFFDFF---LLRLLR---LDLLDDDBBBBBBBB---RRRRRR---",
+                "y": "UUUUUUUULDRRDRR---FFBFFB---FDFFDDDLLLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUURDLLDLL---BBFBBF---BDBBDDDRRRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUFDBBDBB---RRLRRL---RDRRDDDFFFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUBUUUUUULLRLLR---BBBBBB---DLLBDDBDLRRRRRR---DFFDFF---",
+                "y": "UULUUUUUUFFBFFB---LLLLLL---DFFLDDLDFBBBBBB---DRRDRR---",
+                "y'": "UURUUUUUUBBFBBF---RRRRRR---DBBRDDRDBFFFFFF---DLLDLL---",
+                "y2": "UUFUUUUUURRLRRL---FFFFFF---DRRFDDFDRLLLLLL---DBBDBB---"
+            }
+        },
+        "setups": []
+    },
+    "09": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUFUURRRRRR---RFFDFF---FDRDDLLLLLLDLLB---BBBBBB---",
+                "y": "UUUUUURUUBBBBBB---BRRDRR---RDBDDFFFFFFDFFL---LLLLLL---",
+                "y'": "UUUUUULUUFFFFFF---FLLDLL---LDFDDBBBBBBDBBR---RRRRRR---",
+                "y2": "UUUUUUBUULLLLLL---LBBDBB---BDLDDRRRRRRDRRF---FFFFFF---"
+            },
+            "y": {
+                "": "FUUUUUUUUBBBBBB---RRRRRR---RLLDDLFDLRFFDFF---LLDLLB---",
+                "y": "RUUUUUUUULLLLLL---BBBBBB---BFFDDFRDFBRRDRR---FFDFFL---",
+                "y'": "LUUUUUUUURRRRRR---FFFFFF---FBBDDBLDBFLLDLL---BBDBBR---",
+                "y2": "BUUUUUUUUFFFFFF---LLLLLL---LRRDDRBDRLBBDBB---RRDRRF---"
+            },
+            "y'": {
+                "": "UUUUUUUUFRFFDFF---LLDLLB---LDFLDDLLRBBBBBB---RRRRRR---",
+                "y": "UUUUUUUURBRRDRR---FFDFFL---FDRFDDFFBLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUULFLLDLL---BBDBBR---BDLBDDBBFRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUBLBBDBB---RRDRRF---RDBRDDRRLFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUFUUUUUULLDLLB---BBBBBB---LLLLDDRDFRRRRRR---RFFDFF---",
+                "y": "UURUUUUUUFFDFFL---LLLLLL---FFFFDDBDRBBBBBB---BRRDRR---",
+                "y'": "UULUUUUUUBBDBBR---RRRRRR---BBBBDDFDLFFFFFF---FLLDLL---",
+                "y2": "UUBUUUUUURRDRRF---FFFFFF---RRRRDDLDBLLLLLL---LBBDBB---"
+            }
+        },
+        "setups": [
+            "F'UFU'RUR'U",
+            "RUR'FURU'R'F'",
+            "L'ULU'FUF'U",
+            "FUF'LUFU'F'L'",
+            "R'URU'BUB'U"
+        ]
+    },
+    "10": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUULUURRRRRR---FFFDFF---LDFDDFBDDLLDLLB---BBBBBB---",
+                "y": "UUUUUUFUUBBBBBB---RRRDRR---FDRDDRLDDFFDFFL---LLLLLL---",
+                "y'": "UUUUUUBUUFFFFFF---LLLDLL---BDLDDLRDDBBDBBR---RRRRRR---",
+                "y2": "UUUUUURUULLLLLL---BBBDBB---RDBDDBFDDRRDRRF---FFFFFF---"
+            },
+            "y": {
+                "": "LUUUUUUUUBBBBBB---RRRRRR---FFDDDDLDBFFFDFF---LLDLLB---",
+                "y": "FUUUUUUUULLLLLL---BBBBBB---RRDDDDFDLRRRDRR---FFDFFL---",
+                "y'": "BUUUUUUUURRRRRR---FFFFFF---LLDDDDBDRLLLDLL---BBDBBR---",
+                "y2": "RUUUUUUUUFFFFFF---LLLLLL---BBDDDDRDFBBBDBB---RRDRRF---"
+            },
+            "y'": {
+                "": "UUUUUUUULFFFDFF---LLDLLB---BDLDDDDFFBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUFRRRDRR---FFDFFL---LDFDDDDRRLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUBLLLDLL---BBDBBR---RDBDDDDLLRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUURBBBDBB---RRDRRF---FDRDDDDBBFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UULUUUUUULLDLLB---BBBBBB---DDBFDDFDLRRRRRR---FFFDFF---",
+                "y": "UUFUUUUUUFFDFFL---LLLLLL---DDLRDDRDFBBBBBB---RRRDRR---",
+                "y'": "UUBUUUUUUBBDBBR---RRRRRR---DDRLDDLDBFFFFFF---LLLDLL---",
+                "y2": "UURUUUUUURRDRRF---FFFFFF---DDFBDDBDRLLLLLL---BBBDBB---"
+            }
+        },
+        "setups": [
+            "RU'R'U'RU'R'U",
+            "RU'R'URUR'U2",
+            "FU'F'UFUF'U2",
+            "LU'L'U'LU'L'U",
+            "LU'L'ULUL'U2"
+        ]
+    },
+    "11": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUBUURRRRRR---DFFDFF---FDFLDDLLRLLRLLR---BBBBBB---",
+                "y": "UUUUUULUUBBBBBB---DRRDRR---RDRFDDFFBFFBFFB---LLLLLL---",
+                "y'": "UUUUUURUUFFFFFF---DLLDLL---LDLBDDBBFBBFBBF---RRRRRR---",
+                "y2": "UUUUUUFUULLLLLL---DBBDBB---BDBRDDRRLRRLRRL---FFFFFF---"
+            },
+            "y": {
+                "": "BUUUUUUUUBBBBBB---RRRRRR---FDRDDLFLLDFFDFF---LLRLLR---",
+                "y": "LUUUUUUUULLLLLL---BBBBBB---RDBDDFRFFDRRDRR---FFBFFB---",
+                "y'": "RUUUUUUUURRRRRR---FFFFFF---LDFDDBLBBDLLDLL---BBFBBF---",
+                "y2": "FUUUUUUUUFFFFFF---LLLLLL---BDLDDRBRRDBBDBB---RRLRRL---"
+            },
+            "y'": {
+                "": "UUUUUUUUBDFFDFF---LLRLLR---LLFLDDRDFBBBBBB---RRRRRR---",
+                "y": "UUUUUUUULDRRDRR---FFBFFB---FFRFDDBDRLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUURDLLDLL---BBFBBF---BBLBDDFDLRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUFDBBDBB---RRLRRL---RRBRDDLDBFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUBUUUUUULLRLLR---BBBBBB---RLLDDLFDFRRRRRR---DFFDFF---",
+                "y": "UULUUUUUUFFBFFB---LLLLLL---BFFDDFRDRBBBBBB---DRRDRR---",
+                "y'": "UURUUUUUUBBFBBF---RRRRRR---FBBDDBLDLFFFFFF---DLLDLL---",
+                "y2": "UUFUUUUUURRLRRL---FFFFFF---LRRDDRBDBLLLLLL---DBBDBB---"
+            }
+        },
+        "setups": [
+            "L'ULU'FU2F'U",
+            "F'UFU'RU2R'U",
+            "R'URU'BU2B'U",
+            "B'UBU'LU2L'U",
+            "F'U2L'U2LU'F"
+        ]
+    },
+    "12": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUDUURRRRRR---LFFDFF---LFRDDDBDDLLFLLF---BBBBBB---",
+                "y": "UUUUUUDUUBBBBBB---FRRDRR---FRBDDDLDDFFRFFR---LLLLLL---",
+                "y'": "UUUUUUDUUFFFFFF---BLLDLL---BLFDDDRDDBBLBBL---RRRRRR---",
+                "y2": "UUUUUUDUULLLLLL---RBBDBB---RBLDDDFDDRRBRRB---FFFFFF---"
+            },
+            "y": {
+                "": "DUUUUUUUUBBBBBB---RRRRRR---RDDFDDLDBLFFDFF---LLFLLF---",
+                "y": "DUUUUUUUULLLLLL---BBBBBB---BDDRDDFDLFRRDRR---FFRFFR---",
+                "y'": "DUUUUUUUURRRRRR---FFFFFF---FDDLDDBDRBLLDLL---BBLBBL---",
+                "y2": "DUUUUUUUUFFFFFF---LLLLLL---LDDBDDRDFRBBDBB---RRBRRB---"
+            },
+            "y'": {
+                "": "UUUUUUUUDLFFDFF---LLFLLF---BDLDDFDDRBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUDFRRDRR---FFRFFR---LDFDDRDDBLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUDBLLDLL---BBLBBL---RDBDDLDDFRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUDRBBDBB---RRBRRB---FDRDDBDDLFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUDUUUUUULLFLLF---BBBBBB---DDBDDDRFLRRRRRR---LFFDFF---",
+                "y": "UUDUUUUUUFFRFFR---LLLLLL---DDLDDDBRFBBBBBB---FRRDRR---",
+                "y'": "UUDUUUUUUBBLBBL---RRRRRR---DDRDDDFLBFFFFFF---BLLDLL---",
+                "y2": "UUDUUUUUURRBRRB---FFFFFF---DDFDDDLBRLLLLLL---RBBDBB---"
+            }
+        },
+        "setups": [
+            "RUR'U2RUR'U'RUR'",
+            "RU'R'URU'R'URUR'U'",
+            "LUL'U2LUL'U'LUL'",
+            "BUB'U2BUB'U'BUB'",
+            "FUF'U2FUF'U'FUF'"
+        ]
+    },
+    "13": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUDUURRRRRR---BFFDFF---FLDLDDFDDLLLLLB---BBBBBB---",
+                "y": "UUUUUUDUUBBBBBB---LRRDRR---RFDFDDRDDFFFFFL---LLLLLL---",
+                "y'": "UUUUUUDUUFFFFFF---RLLDLL---LBDBDDLDDBBBBBR---RRRRRR---",
+                "y2": "UUUUUUDUULLLLLL---FBBDBB---BRDRDDBDDRRRRRF---FFFFFF---"
+            },
+            "y": {
+                "": "DUUUUUUUUBBBBBB---RRRRRR---DDDLDDFLFBFFDFF---LLLLLB---",
+                "y": "DUUUUUUUULLLLLL---BBBBBB---DDDFDDRFRLRRDRR---FFFFFL---",
+                "y'": "DUUUUUUUURRRRRR---FFFFFF---DDDBDDLBLRLLDLL---BBBBBR---",
+                "y2": "DUUUUUUUUFFFFFF---LLLLLL---DDDRDDBRBFBBDBB---RRRRRF---"
+            },
+            "y'": {
+                "": "UUUUUUUUDBFFDFF---LLLLLB---FLFDDLDDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUDLRRDRR---FFFFFL---RFRDDFDDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUDRLLDLL---BBBBBR---LBLDDBDDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUDFBBDBB---RRRRRF---BRBDDRDDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUDUUUUUULLLLLB---BBBBBB---DDFDDLDLFRRRRRR---BFFDFF---",
+                "y": "UUDUUUUUUFFFFFL---LLLLLL---DDRDDFDFRBBBBBB---LRRDRR---",
+                "y'": "UUDUUUUUUBBBBBR---RRRRRR---DDLDDBDBLFFFFFF---RLLDLL---",
+                "y2": "UUDUUUUUURRRRRF---FFFFFF---DDBDDRDRBLLLLLL---FBBDBB---"
+            }
+        },
+        "setups": [
+            "RUR'FR'F'RU'RUR'",
+            "FUF'LF'L'FU'FUF'",
+            "LUL'BL'B'LU'LUL'",
+            "BUB'RB'R'BU'BUB'"
+        ]
+    },
+    "14": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUURUURRRRRR---BFFDFF---LDBFDDFDDLLDLLL---BBBBBB---",
+                "y": "UUUUUUBUUBBBBBB---LRRDRR---FDLRDDRDDFFDFFF---LLLLLL---",
+                "y'": "UUUUUUFUUFFFFFF---RLLDLL---BDRLDDLDDBBDBBB---RRRRRR---",
+                "y2": "UUUUUULUULLLLLL---FBBDBB---RDFBDDBDDRRDRRR---FFFFFF---"
+            },
+            "y": {
+                "": "RUUUUUUUUBBBBBB---RRRRRR---BDDDDDLFFBFFDFF---LLDLLL---",
+                "y": "BUUUUUUUULLLLLL---BBBBBB---LDDDDDFRRLRRDRR---FFDFFF---",
+                "y'": "FUUUUUUUURRRRRR---FFFFFF---RDDDDDBLLRLLDLL---BBDBBB---",
+                "y2": "LUUUUUUUUFFFFFF---LLLLLL---FDDDDDRBBFBBDBB---RRDRRR---"
+            },
+            "y'": {
+                "": "UUUUUUUURBFFDFF---LLDLLL---FFLDDDDDBBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUBLRRDRR---FFDFFF---RRFDDDDDLLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUFRLLDLL---BBDBBB---LLBDDDDDRRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUULFBBDBB---RRDRRR---BBRDDDDDFFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UURUUUUUULLDLLL---BBBBBB---DDFDDFBDLRRRRRR---BFFDFF---",
+                "y": "UUBUUUUUUFFDFFF---LLLLLL---DDRDDRLDFBBBBBB---LRRDRR---",
+                "y'": "UUFUUUUUUBBDBBB---RRRRRR---DDLDDLRDBFFFFFF---RLLDLL---",
+                "y2": "UULUUUUUURRDRRR---FFFFFF---DDBDDBFDRLLLLLL---FBBDBB---"
+            }
+        },
+        "setups": [
+            "LU'L'U'LUL'U",
+            "RU'R'U'RUR'U",
+            "FU'F'U'FUF'U",
+            "BU'B'U'BUB'U",
+            "RUR'U2RU'R'U2RU2R'"
+        ]
+    },
+    "15": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUBUURRRRRR---DFFDFF---FFDDDDDDDLLRLLB---BBBBBB---",
+                "y": "UUUUUULUUBBBBBB---DRRDRR---RRDDDDDDDFFBFFL---LLLLLL---",
+                "y'": "UUUUUURUUFFFFFF---DLLDLL---LLDDDDDDDBBFBBR---RRRRRR---",
+                "y2": "UUUUUUFUULLLLLL---DBBDBB---BBDDDDDDDRRLRRF---FFFFFF---"
+            },
+            "y": {
+                "": "BUUUUUUUUBBBBBB---RRRRRR---DDDFDDFDDDFFDFF---LLRLLB---",
+                "y": "LUUUUUUUULLLLLL---BBBBBB---DDDRDDRDDDRRDRR---FFBFFL---",
+                "y'": "RUUUUUUUURRRRRR---FFFFFF---DDDLDDLDDDLLDLL---BBFBBR---",
+                "y2": "FUUUUUUUUFFFFFF---LLLLLL---DDDBDDBDDDBBDBB---RRLRRF---"
+            },
+            "y'": {
+                "": "UUUUUUUUBDFFDFF---LLRLLB---DDFDDFDDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUULDRRDRR---FFBFFL---DDRDDRDDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUURDLLDLL---BBFBBR---DDLDDLDDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUFDBBDBB---RRLRRF---DDBDDBDDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUBUUUUUULLRLLB---BBBBBB---DDDDDDDFFRRRRRR---DFFDFF---",
+                "y": "UULUUUUUUFFBFFL---LLLLLL---DDDDDDDRRBBBBBB---DRRDRR---",
+                "y'": "UURUUUUUUBBFBBR---RRRRRR---DDDDDDDLLFFFFFF---DLLDLL---",
+                "y2": "UUFUUUUUURRLRRF---FFFFFF---DDDDDDDBBLLLLLL---DBBDBB---"
+            }
+        },
+        "setups": [
+            "RUR'U'RUR'U2RU'R'",
+            "RUR'U'R'D'RUR'DR",
+            "RU'R'U'FR'F'RU'",
+            "FU'F'U'LF'L'FU'",
+            "LUL'U'LUL'U2LU'L'"
+        ]
+    },
+    "16": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUFUURRRRRR---DFFDFF---LLLLDDDDDLLLLLF---BBBBBB---",
+                "y": "UUUUUURUUBBBBBB---DRRDRR---FFFFDDDDDFFFFFR---LLLLLL---",
+                "y'": "UUUUUULUUFFFFFF---DLLDLL---BBBBDDDDDBBBBBL---RRRRRR---",
+                "y2": "UUUUUUBUULLLLLL---DBBDBB---RRRRDDDDDRRRRRB---FFFFFF---"
+            },
+            "y": {
+                "": "FUUUUUUUUBBBBBB---RRRRRR---LDDLDDLLDDFFDFF---LLLLLF---",
+                "y": "RUUUUUUUULLLLLL---BBBBBB---FDDFDDFFDDRRDRR---FFFFFR---",
+                "y'": "LUUUUUUUURRRRRR---FFFFFF---BDDBDDBBDDLLDLL---BBBBBL---",
+                "y2": "BUUUUUUUUFFFFFF---LLLLLL---RDDRDDRRDDBBDBB---RRRRRB---"
+            },
+            "y'": {
+                "": "UUUUUUUUFDFFDFF---LLLLLF---DLLDDLDDLBBBBBB---RRRRRR---",
+                "y": "UUUUUUUURDRRDRR---FFFFFR---DFFDDFDDFLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUULDLLDLL---BBBBBL---DBBDDBDDBRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUBDBBDBB---RRRRRB---DRRDDRDDRFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUFUUUUUULLLLLF---BBBBBB---DDDDDLLLLRRRRRR---DFFDFF---",
+                "y": "UURUUUUUUFFFFFR---LLLLLL---DDDDDFFFFBBBBBB---DRRDRR---",
+                "y'": "UULUUUUUUBBBBBL---RRRRRR---DDDDDBBBBFFFFFF---DLLDLL---",
+                "y2": "UUBUUUUUURRRRRB---FFFFFF---DDDDDRRRRLLLLLL---DBBDBB---"
+            }
+        },
+        "setups": [
+            "RU'R'FRUR'U'F'U'",
+            "F'UFU2RUR'",
+            "L'ULU2FUF'",
+            "FU'F'LFUF'U'L'U'",
+            "R'URU2BUB'"
+        ]
+    },
+    "17": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUBUURRRRRR---DFFDFF---UDLFDDFDDLLRLLR---BBBBBB---",
+                "y": "UUUUUULUUBBBBBB---DRRDRR---UDFRDDRDDFFBFFB---LLLLLL---",
+                "y'": "UUUUUURUUFFFFFF---DLLDLL---UDBLDDLDDBBFBBF---RRRRRR---",
+                "y2": "UUUUUUFUULLLLLL---DBBDBB---UDRBDDBDDRRLRRL---FFFFFF---"
+            },
+            "y": {
+                "": "BUUUUUUUUBBBBBB---RRRRRR---LDDDDDUFFDFFDFF---LLRLLR---",
+                "y": "LUUUUUUUULLLLLL---BBBBBB---FDDDDDURRDRRDRR---FFBFFB---",
+                "y'": "RUUUUUUUURRRRRR---FFFFFF---BDDDDDULLDLLDLL---BBFBBF---",
+                "y2": "FUUUUUUUUFFFFFF---LLLLLL---RDDDDDUBBDBBDBB---RRLRRL---"
+            },
+            "y'": {
+                "": "UUUUUUUUBDFFDFF---LLRLLR---FFUDDDDDLBBBBBB---RRRRRR---",
+                "y": "UUUUUUUULDRRDRR---FFBFFB---RRUDDDDDFLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUURDLLDLL---BBFBBF---LLUDDDDDBRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUFDBBDBB---RRLRRL---BBUDDDDDRFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUBUUUUUULLRLLR---BBBBBB---DDFDDFLDURRRRRR---DFFDFF---",
+                "y": "UULUUUUUUFFBFFB---LLLLLL---DDRDDRFDUBBBBBB---DRRDRR---",
+                "y'": "UURUUUUUUBBFBBF---RRRRRR---DDLDDLBDUFFFFFF---DLLDLL---",
+                "y2": "UUFUUUUUURRLRRL---FFFFFF---DDBDDBRDULLLLLL---DBBDBB---"
+            }
+        },
+        "setups": [
+            "RU'R'URU2R'",
+            "LU'L'ULU2L'",
+            "RU'R'U2RU2R'URU'R'",
+            "BU'B'UBU2B'",
+            "FU'F'UFU2F'"
+        ]
+    },
+    "18": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUULUURRRRRR---DFFBFF---ULDDDDLDDLLBLLD---BBBBBB---",
+                "y": "UUUUUUFUUBBBBBB---DRRLRR---UFDDDDFDDFFLFFD---LLLLLL---",
+                "y'": "UUUUUUBUUFFFFFF---DLLRLL---UBDDDDBDDBBRBBD---RRRRRR---",
+                "y2": "UUUUUURUULLLLLL---DBBFBB---URDDDDRDDRRFRRD---FFFFFF---"
+            },
+            "y": {
+                "": "LUUUUUUUUBBBBBB---RRRRRR---DDDLDDUDLDFFBFF---LLBLLD---",
+                "y": "FUUUUUUUULLLLLL---BBBBBB---DDDFDDUDFDRRLRR---FFLFFD---",
+                "y'": "BUUUUUUUURRRRRR---FFFFFF---DDDBDDUDBDLLRLL---BBRBBD---",
+                "y2": "RUUUUUUUUFFFFFF---LLLLLL---DDDRDDUDRDBBFBB---RRFRRD---"
+            },
+            "y'": {
+                "": "UUUUUUUULDFFBFF---LLBLLD---LDUDDLDDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUFDRRLRR---FFLFFD---FDUDDFDDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUBDLLRLL---BBRBBD---BDUDDBDDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUURDBBFBB---RRFRRD---RDUDDRDDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UULUUUUUULLBLLD---BBBBBB---DDLDDDDLURRRRRR---DFFBFF---",
+                "y": "UUFUUUUUUFFLFFD---LLLLLL---DDFDDDDFUBBBBBB---DRRLRR---",
+                "y'": "UUBUUUUUUBBRBBD---RRRRRR---DDBDDDDBUFFFFFF---DLLRLL---",
+                "y2": "UURUUUUUURRFRRD---FFFFFF---DDRDDDDRULLLLLL---DBBFBB---"
+            }
+        },
+        "setups": [
+            "RUR'U'RUR'FR'F'R",
+            "FUF'U'FUF'LF'L'F",
+            "LUL'U'LUL'BL'B'L",
+            "BUB'U'BUB'RB'R'B",
+            "BL'B'L2U2L'U'LUL2BLB'"
+        ]
+    },
+    "19": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUULUURRRRRR---DFFDFF---UDFDDDFFRLLBLLR---BBBBBB---",
+                "y": "UUUUUUFUUBBBBBB---DRRDRR---UDRDDDRRBFFLFFB---LLLLLL---",
+                "y'": "UUUUUUBUUFFFFFF---DLLDLL---UDLDDDLLFBBRBBF---RRRRRR---",
+                "y2": "UUUUUURUULLLLLL---DBBDBB---UDBDDDBBLRRFRRL---FFFFFF---"
+            },
+            "y": {
+                "": "LUUUUUUUUBBBBBB---RRRRRR---FDRDDFUDFDFFDFF---LLBLLR---",
+                "y": "FUUUUUUUULLLLLL---BBBBBB---RDBDDRUDRDRRDRR---FFLFFB---",
+                "y'": "BUUUUUUUURRRRRR---FFFFFF---LDFDDLUDLDLLDLL---BBRBBF---",
+                "y2": "RUUUUUUUUFFFFFF---LLLLLL---BDLDDBUDBDBBDBB---RRFRRL---"
+            },
+            "y'": {
+                "": "UUUUUUUULDFFDFF---LLBLLR---FDUFDDRDFBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUFDRRDRR---FFLFFB---RDURDDBDRLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUBDLLDLL---BBRBBF---LDULDDFDLRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUURDBBDBB---RRFRRL---BDUBDDLDBFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UULUUUUUULLBLLR---BBBBBB---RFFDDDFDURRRRRR---DFFDFF---",
+                "y": "UUFUUUUUUFFLFFB---LLLLLL---BRRDDDRDUBBBBBB---DRRDRR---",
+                "y'": "UUBUUUUUUBBRBBF---RRRRRR---FLLDDDLDUFFFFFF---DLLDLL---",
+                "y2": "UURUUUUUURRFRRL---FFFFFF---LBBDDDBDULLLLLL---DBBDBB---"
+            }
+        },
+        "setups": [
+            "LU'L'U'LUL'U'LUL'",
+            "RUR'U'RU2R'U'",
+            "RU'R'U'RUR'U'RUR'",
+            "FU'F'U'FUF'U'FUF'",
+            "FUF'U'FU2F'U'"
+        ]
+    },
+    "20": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUDUURRRRRR---LFFDFF---UDFDDLLLDLLFLLR---BBBBBB---",
+                "y": "UUUUUUDUUBBBBBB---FRRDRR---UDRDDFFFDFFRFFB---LLLLLL---",
+                "y'": "UUUUUUDUUFFFFFF---BLLDLL---UDLDDBBBDBBLBBF---RRRRRR---",
+                "y2": "UUUUUUDUULLLLLL---RBBDBB---UDBDDRRRDRRBRRL---FFFFFF---"
+            },
+            "y": {
+                "": "DUUUUUUUUBBBBBB---RRRRRR---FLDDDLUDLLFFDFF---LLFLLR---",
+                "y": "DUUUUUUUULLLLLL---BBBBBB---RFDDDFUDFFRRDRR---FFRFFB---",
+                "y'": "DUUUUUUUURRRRRR---FFFFFF---LBDDDBUDBBLLDLL---BBLBBF---",
+                "y2": "DUUUUUUUUFFFFFF---LLLLLL---BRDDDRUDRRBBDBB---RRBRRL---"
+            },
+            "y'": {
+                "": "UUUUUUUUDLFFDFF---LLFLLR---LDULDDDLFBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUDFRRDRR---FFRFFB---FDUFDDDFRLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUDBLLDLL---BBLBBF---BDUBDDDBLRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUDRBBDBB---RRBRRL---RDURDDDRBFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUDUUUUUULLFLLR---BBBBBB---DLLLDDFDURRRRRR---LFFDFF---",
+                "y": "UUDUUUUUUFFRFFB---LLLLLL---DFFFDDRDUBBBBBB---FRRDRR---",
+                "y'": "UUDUUUUUUBBLBBF---RRRRRR---DBBBDDLDUFFFFFF---BLLDLL---",
+                "y2": "UUDUUUUUURRBRRL---FFFFFF---DRRRDDBDULLLLLL---RBBDBB---"
+            }
+        },
+        "setups": [
+            "RUR'FR'F'R2UR'U",
+            "FUF'LF'L'F2UF'U",
+            "LUL'BL'B'L2UL'U",
+            "BUB'RB'R'B2UB'U"
+        ]
+    },
+    "21": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUURUURRRRRR---DFFDFF---UDRDDFDDDLLFLLF---BBBBBB---",
+                "y": "UUUUUUBUUBBBBBB---DRRDRR---UDBDDRDDDFFRFFR---LLLLLL---",
+                "y'": "UUUUUUFUUFFFFFF---DLLDLL---UDFDDLDDDBBLBBL---RRRRRR---",
+                "y2": "UUUUUULUULLLLLL---DBBDBB---UDLDDBDDDRRBRRB---FFFFFF---"
+            },
+            "y": {
+                "": "RUUUUUUUUBBBBBB---RRRRRR---RFDDDDUDDDFFDFF---LLFLLF---",
+                "y": "BUUUUUUUULLLLLL---BBBBBB---BRDDDDUDDDRRDRR---FFRFFR---",
+                "y'": "FUUUUUUUURRRRRR---FFFFFF---FLDDDDUDDDLLDLL---BBLBBL---",
+                "y2": "LUUUUUUUUFFFFFF---LLLLLL---LBDDDDUDDDBBDBB---RRBRRB---"
+            },
+            "y'": {
+                "": "UUUUUUUURDFFDFF---LLFLLF---DDUDDDDFRBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUBDRRDRR---FFRFFR---DDUDDDDRBLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUFDLLDLL---BBLBBL---DDUDDDDLFRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUULDBBDBB---RRBRRB---DDUDDDDBLFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UURUUUUUULLFLLF---BBBBBB---DDDFDDRDURRRRRR---DFFDFF---",
+                "y": "UUBUUUUUUFFRFFR---LLLLLL---DDDRDDBDUBBBBBB---DRRDRR---",
+                "y'": "UUFUUUUUUBBLBBL---RRRRRR---DDDLDDFDUFFFFFF---DLLDLL---",
+                "y2": "UULUUUUUURRBRRB---FFFFFF---DDDBDDLDULLLLLL---DBBDBB---"
+            }
+        },
+        "setups": [
+            "RUR'U'RU'R'U2",
+            "RU'R'U2RUR'",
+            "FUF'U'FU'F'U2",
+            "FU'F'U2FUF'",
+            "BUB'U'BU'B'U2"
+        ]
+    },
+    "22": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUDUURRRRRR---LFFBFF---ULDFDDDLDLLFLLD---BBBBBB---",
+                "y": "UUUUUUDUUBBBBBB---FRRLRR---UFDRDDDFDFFRFFD---LLLLLL---",
+                "y'": "UUUUUUDUUFFFFFF---BLLRLL---UBDLDDDBDBBLBBD---RRRRRR---",
+                "y2": "UUUUUUDUULLLLLL---RBBFBB---URDBDDDRDRRBRRD---FFFFFF---"
+            },
+            "y": {
+                "": "DUUUUUUUUBBBBBB---RRRRRR---DDDLDLUFDLFFBFF---LLFLLD---",
+                "y": "DUUUUUUUULLLLLL---BBBBBB---DDDFDFURDFRRLRR---FFRFFD---",
+                "y'": "DUUUUUUUURRRRRR---FFFFFF---DDDBDBULDBLLRLL---BBLBBD---",
+                "y2": "DUUUUUUUUFFFFFF---LLLLLL---DDDRDRUBDRBBFBB---RRBRRD---"
+            },
+            "y'": {
+                "": "UUUUUUUUDLFFBFF---LLFLLD---DFULDLDDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUDFRRLRR---FFRFFD---DRUFDFDDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUDBLLRLL---BBLBBD---DLUBDBDDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUDRBBFBB---RRBRRD---DBURDRDDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUDUUUUUULLFLLD---BBBBBB---DLDDDFDLURRRRRR---LFFBFF---",
+                "y": "UUDUUUUUUFFRFFD---LLLLLL---DFDDDRDFUBBBBBB---FRRLRR---",
+                "y'": "UUDUUUUUUBBLBBD---RRRRRR---DBDDDLDBUFFFFFF---BLLRLL---",
+                "y2": "UUDUUUUUURRBRRD---FFFFFF---DRDDDBDRULLLLLL---RBBFBB---"
+            }
+        },
+        "setups": [
+            "F'L'U2LF",
+            "R'F'U2FR",
+            "B'R'U2RB",
+            "L'B'U2BL"
+        ]
+    },
+    "23": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUBUURRRRRR---DFFDFF---UFBDDDDDDLLRLLF---BBBBBB---",
+                "y": "UUUUUULUUBBBBBB---DRRDRR---URLDDDDDDFFBFFR---LLLLLL---",
+                "y'": "UUUUUURUUFFFFFF---DLLDLL---ULRDDDDDDBBFBBL---RRRRRR---",
+                "y2": "UUUUUUFUULLLLLL---DBBDBB---UBFDDDDDDRRLRRB---FFFFFF---"
+            },
+            "y": {
+                "": "BUUUUUUUUBBBBBB---RRRRRR---BDDFDDUDDDFFDFF---LLRLLF---",
+                "y": "LUUUUUUUULLLLLL---BBBBBB---LDDRDDUDDDRRDRR---FFBFFR---",
+                "y'": "RUUUUUUUURRRRRR---FFFFFF---RDDLDDUDDDLLDLL---BBFBBL---",
+                "y2": "FUUUUUUUUFFFFFF---LLLLLL---FDDBDDUDDDBBDBB---RRLRRB---"
+            },
+            "y'": {
+                "": "UUUUUUUUBDFFDFF---LLRLLF---DDUDDFDDBBBBBBB---RRRRRR---",
+                "y": "UUUUUUUULDRRDRR---FFBFFR---DDUDDRDDLLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUURDLLDLL---BBFBBL---DDUDDLDDRRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUFDBBDBB---RRLRRB---DDUDDBDDFFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUBUUUUUULLRLLF---BBBBBB---DDDDDDBFURRRRRR---DFFDFF---",
+                "y": "UULUUUUUUFFBFFR---LLLLLL---DDDDDDLRUBBBBBB---DRRDRR---",
+                "y'": "UURUUUUUUBBFBBL---RRRRRR---DDDDDDRLUFFFFFF---DLLDLL---",
+                "y2": "UUFUUUUUURRLRRB---FFFFFF---DDDDDDFBULLLLLL---DBBDBB---"
+            }
+        },
+        "setups": [
+            "RUR'U'RUR'URUR'U'",
+            "RU'R'U'R'FRF'U'",
+            "RU'R'URU'R'U2RU'R'",
+            "FUF'U'FUF'UFUF'U'",
+            "FU'F'U'F'LFL'U'"
+        ]
+    },
+    "24": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUULUURRRRRR---FFFDFF---URRLDDFDDLLDLLB---BBBBBB---",
+                "y": "UUUUUUFUUBBBBBB---RRRDRR---UBBFDDRDDFFDFFL---LLLLLL---",
+                "y'": "UUUUUUBUUFFFFFF---LLLDLL---UFFBDDLDDBBDBBR---RRRRRR---",
+                "y2": "UUUUUURUULLLLLL---BBBDBB---ULLRDDBDDRRDRRF---FFFFFF---"
+            },
+            "y": {
+                "": "LUUUUUUUUBBBBBB---RRRRRR---RDDRDDULFFFFDFF---LLDLLB---",
+                "y": "FUUUUUUUULLLLLL---BBBBBB---BDDBDDUFRRRRDRR---FFDFFL---",
+                "y'": "BUUUUUUUURRRRRR---FFFFFF---FDDFDDUBLLLLDLL---BBDBBR---",
+                "y2": "RUUUUUUUUFFFFFF---LLLLLL---LDDLDDURBBBBDBB---RRDRRF---"
+            },
+            "y'": {
+                "": "UUUUUUUULFFFDFF---LLDLLB---FLUDDRDDRBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUFRRRDRR---FFDFFL---RFUDDBDDBLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUBLLLDLL---BBDBBR---LBUDDFDDFRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUURBBBDBB---RRDRRF---BRUDDLDDLFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UULUUUUUULLDLLB---BBBBBB---DDFDDLRRURRRRRR---FFFDFF---",
+                "y": "UUFUUUUUUFFDFFL---LLLLLL---DDRDDFBBUBBBBBB---RRRDRR---",
+                "y'": "UUBUUUUUUBBDBBR---RRRRRR---DDLDDBFFUFFFFFF---LLLDLL---",
+                "y2": "UURUUUUUURRDRRF---FFFFFF---DDBDDRLLULLLLLL---BBBDBB---"
+            }
+        },
+        "setups": [
+            "RUR'FRUR'U'F'",
+            "FUF'LFUF'U'L'",
+            "LUL'BLUL'U'B'",
+            "BUB'RBUB'U'R'",
+            "RUR'FR'F'R2U'R'U"
+        ]
+    },
+    "25": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUUUURRRRRR---FFFRFF---BDDFDLFDLLLLLLD---BBBBBB---",
+                "y": "UUUUUUUUUBBBBBB---RRRBRR---LDDRDFRDFFFFFFD---LLLLLL---",
+                "y'": "UUUUUUUUUFFFFFF---LLLFLL---RDDLDBLDBBBBBBD---RRRRRR---",
+                "y2": "UUUUUUUUULLLLLL---BBBLBB---FDDBDRBDRRRRRRD---FFFFFF---"
+            },
+            "y": {
+                "": "UUUUUUUUUBBBBBB---RRRRRR---DLLDDDBFFFFFRFF---LLLLLD---",
+                "y": "UUUUUUUUULLLLLL---BBBBBB---DFFDDDLRRRRRBRR---FFFFFD---",
+                "y'": "UUUUUUUUURRRRRR---FFFFFF---DBBDDDRLLLLLFLL---BBBBBD---",
+                "y2": "UUUUUUUUUFFFFFF---LLLLLL---DRRDDDFBBBBBLBB---RRRRRD---"
+            },
+            "y'": {
+                "": "UUUUUUUUUFFFRFF---LLLLLD---FFBDDDLLDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUURRRBRR---FFFFFD---RRLDDDFFDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUULLLFLL---BBBBBD---LLRDDDBBDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUUBBBLBB---RRRRRD---BBFDDDRRDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUUUUUUUULLLLLD---BBBBBB---LDFLDFDDBRRRRRR---FFFRFF---",
+                "y": "UUUUUUUUUFFFFFD---LLLLLL---FDRFDRDDLBBBBBB---RRRBRR---",
+                "y'": "UUUUUUUUUBBBBBD---RRRRRR---BDLBDLDDRFFFFFF---LLLFLL---",
+                "y2": "UUUUUUUUURRRRRD---FFFFFF---RDBRDBDDFLLLLLL---BBBLBB---"
+            }
+        },
+        "setups": [
+            "RUR'U'F'U'FU",
+            "FUF'U'L'U'LU",
+            "BUB'U'R'U'RU",
+            "LUL'U'B'U'BU",
+            "RU'R'FR'F'RU"
+        ]
+    },
+    "26": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUUUURRRRRR---FFFDFF---DLBDDDRFFLLLLLB---BBBBBB---",
+                "y": "UUUUUUUUUBBBBBB---RRRDRR---DFLDDDBRRFFFFFL---LLLLLL---",
+                "y'": "UUUUUUUUUFFFFFF---LLLDLL---DBRDDDFLLBBBBBR---RRRRRR---",
+                "y2": "UUUUUUUUULLLLLL---BBBDBB---DRFDDDLBBRRRRRF---FFFFFF---"
+            },
+            "y": {
+                "": "UUUUUUUUUBBBBBB---RRRRRR---BDFLDFDDRFFFDFF---LLLLLB---",
+                "y": "UUUUUUUUULLLLLL---BBBBBB---LDRFDRDDBRRRDRR---FFFFFL---",
+                "y'": "UUUUUUUUURRRRRR---FFFFFF---RDLBDLDDFLLLDLL---BBBBBR---",
+                "y2": "UUUUUUUUUFFFFFF---LLLLLL---FDBRDBDDLBBBDBB---RRRRRF---"
+            },
+            "y'": {
+                "": "UUUUUUUUUFFFDFF---LLLLLB---RDDFDLFDBBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUURRRDRR---FFFFFL---BDDRDFRDLLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUULLLDLL---BBBBBR---FDDLDBLDRRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUUBBBDBB---RRRRRF---LDDBDRBDFFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUUUUUUUULLLLLB---BBBBBB---FFRDDDBLDRRRRRR---FFFDFF---",
+                "y": "UUUUUUUUUFFFFFL---LLLLLL---RRBDDDLFDBBBBBB---RRRDRR---",
+                "y'": "UUUUUUUUUBBBBBR---RRRRRR---LLFDDDRBDFFFFFF---LLLDLL---",
+                "y2": "UUUUUUUUURRRRRF---FFFFFF---BBLDDDFRDLLLLLL---BBBDBB---"
+            }
+        },
+        "setups": [
+            "R'FRF'RUR'U'",
+            "F'U'FURUR'U'",
+            "L'U'LUFUF'U'",
+            "F'LFL'FUF'U'",
+            "R'U'RUBUB'U'"
+        ]
+    },
+    "27": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUULUURRRRRR---UFFDFF---BDFFDDRDDLLFLLL---BBBBBB---",
+                "y": "UUUUUUFUUBBBBBB---URRDRR---LDRRDDBDDFFRFFF---LLLLLL---",
+                "y'": "UUUUUUBUUFFFFFF---ULLDLL---RDLLDDFDDBBLBBB---RRRRRR---",
+                "y2": "UUUUUURUULLLLLL---UBBDBB---FDBBDDLDDRRBRRR---FFFFFF---"
+            },
+            "y": {
+                "": "LUUUUUUUUBBBBBB---RRRRRR---FDDDDDBFRUFFDFF---LLFLLL---",
+                "y": "FUUUUUUUULLLLLL---BBBBBB---RDDDDDLRBURRDRR---FFRFFF---",
+                "y'": "BUUUUUUUURRRRRR---FFFFFF---LDDDDDRLFULLDLL---BBLBBB---",
+                "y2": "RUUUUUUUUFFFFFF---LLLLLL---BDDDDDFBLUBBDBB---RRBRRR---"
+            },
+            "y'": {
+                "": "UUUUUUUULUFFDFF---LLFLLL---RFBDDDDDFBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUFURRDRR---FFRFFF---BRLDDDDDRLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUBULLDLL---BBLBBB---FLRDDDDDLRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUURUBBDBB---RRBRRR---LBFDDDDDBFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UULUUUUUULLFLLL---BBBBBB---DDRDDFFDBRRRRRR---UFFDFF---",
+                "y": "UUFUUUUUUFFRFFF---LLLLLL---DDBDDRRDLBBBBBB---URRDRR---",
+                "y'": "UUBUUUUUUBBLBBB---RRRRRR---DDFDDLLDRFFFFFF---ULLDLL---",
+                "y2": "UURUUUUUURRBRRR---FFFFFF---DDLDDBBDFLLLLLL---UBBDBB---"
+            }
+        },
+        "setups": [
+            "RUR'U'RUR'",
+            "LUL'U'LUL'",
+            "FUF'U'FUF'",
+            "RUR'U2F'UF",
+            "BUB'U'BUB'"
+        ]
+    },
+    "28": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUFUURRRRRR---LFFFFF---LLBDDDDDDLLULLD---BBBBBB---",
+                "y": "UUUUUURUUBBBBBB---FRRRRR---FFLDDDDDDFFUFFD---LLLLLL---",
+                "y'": "UUUUUULUUFFFFFF---BLLLLL---BBRDDDDDDBBUBBD---RRRRRR---",
+                "y2": "UUUUUUBUULLLLLL---RBBBBB---RRFDDDDDDRRURRD---FFFFFF---"
+            },
+            "y": {
+                "": "FUUUUUUUUBBBBBB---RRRRRR---BDDLDDLDDLFFFFF---LLULLD---",
+                "y": "RUUUUUUUULLLLLL---BBBBBB---LDDFDDFDDFRRRRR---FFUFFD---",
+                "y'": "LUUUUUUUURRRRRR---FFFFFF---RDDBDDBDDBLLLLL---BBUBBD---",
+                "y2": "BUUUUUUUUFFFFFF---LLLLLL---FDDRDDRDDRBBBBB---RRURRD---"
+            },
+            "y'": {
+                "": "UUUUUUUUFLFFFFF---LLULLD---DDLDDLDDBBBBBBB---RRRRRR---",
+                "y": "UUUUUUUURFRRRRR---FFUFFD---DDFDDFDDLLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUULBLLLLL---BBUBBD---DDBDDBDDRRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUBRBBBBB---RRURRD---DDRDDRDDFFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUFUUUUUULLULLD---BBBBBB---DDDDDDBLLRRRRRR---LFFFFF---",
+                "y": "UURUUUUUUFFUFFD---LLLLLL---DDDDDDLFFBBBBBB---FRRRRR---",
+                "y'": "UULUUUUUUBBUBBD---RRRRRR---DDDDDDRBBFFFFFF---BLLLLL---",
+                "y2": "UUBUUUUUURRURRD---FFFFFF---DDDDDDFRRLLLLLL---RBBBBB---"
+            }
+        },
+        "setups": [
+            "R'U'RUR'U'R",
+            "L'U'LUL'U'L",
+            "R'FRF'URU'R'",
+            "F'U'FUF'U'F",
+            "F'LFL'UFU'F'"
+        ]
+    },
+    "29": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUULUURRRRRR---UFFFFF---FLDDDDRDDLLFLLD---BBBBBB---",
+                "y": "UUUUUUFUUBBBBBB---URRRRR---RFDDDDBDDFFRFFD---LLLLLL---",
+                "y'": "UUUUUUBUUFFFFFF---ULLLLL---LBDDDDFDDBBLBBD---RRRRRR---",
+                "y2": "UUUUUURUULLLLLL---UBBBBB---BRDDDDLDDRRBRRD---FFFFFF---"
+            },
+            "y": {
+                "": "LUUUUUUUUBBBBBB---RRRRRR---DDDLDDFDRUFFFFF---LLFLLD---",
+                "y": "FUUUUUUUULLLLLL---BBBBBB---DDDFDDRDBURRRRR---FFRFFD---",
+                "y'": "BUUUUUUUURRRRRR---FFFFFF---DDDBDDLDFULLLLL---BBLBBD---",
+                "y2": "RUUUUUUUUFFFFFF---LLLLLL---DDDRDDBDLUBBBBB---RRBRRD---"
+            },
+            "y'": {
+                "": "UUUUUUUULUFFFFF---LLFLLD---RDFDDLDDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUFURRRRR---FFRFFD---BDRDDFDDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUBULLLLL---BBLBBD---FDLDDBDDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUURUBBBBB---RRBRRD---LDBDDRDDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UULUUUUUULLFLLD---BBBBBB---DDRDDDDLFRRRRRR---UFFFFF---",
+                "y": "UUFUUUUUUFFRFFD---LLLLLL---DDBDDDDFRBBBBBB---URRRRR---",
+                "y'": "UUBUUUUUUBBLBBD---RRRRRR---DDFDDDDBLFFFFFF---ULLLLL---",
+                "y2": "UURUUUUUURRBRRD---FFFFFF---DDLDDDDRBLLLLLL---UBBBBB---"
+            }
+        },
+        "setups": [
+            "RUR'U'FR'F'R",
+            "LF'L'FLF'L'F",
+            "FUF'U'LF'L'F",
+            "FR'F'RFR'F'R",
+            "LUL'U'BL'B'L"
+        ]
+    },
+    "30": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUFUURRRRRR---LFFDFF---FDDFDDFDLLLULLL---BBBBBB---",
+                "y": "UUUUUURUUBBBBBB---FRRDRR---RDDRDDRDFFFUFFF---LLLLLL---",
+                "y'": "UUUUUULUUFFFFFF---BLLDLL---LDDLDDLDBBBUBBB---RRRRRR---",
+                "y2": "UUUUUUBUULLLLLL---RBBDBB---BDDBDDBDRRRURRR---FFFFFF---"
+            },
+            "y": {
+                "": "FUUUUUUUUBBBBBB---RRRRRR---DDLDDDFFFLFFDFF---LLULLL---",
+                "y": "RUUUUUUUULLLLLL---BBBBBB---DDFDDDRRRFRRDRR---FFUFFF---",
+                "y'": "LUUUUUUUURRRRRR---FFFFFF---DDBDDDLLLBLLDLL---BBUBBB---",
+                "y2": "BUUUUUUUUFFFFFF---LLLLLL---DDRDDDBBBRBBDBB---RRURRR---"
+            },
+            "y'": {
+                "": "UUUUUUUUFLFFDFF---LLULLL---FFFDDDLDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUURFRRDRR---FFUFFF---RRRDDDFDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUULBLLDLL---BBUBBB---LLLDDDBDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUBRBBDBB---RRURRR---BBBDDDRDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUFUUUUUULLULLL---BBBBBB---LDFDDFDDFRRRRRR---LFFDFF---",
+                "y": "UURUUUUUUFFUFFF---LLLLLL---FDRDDRDDRBBBBBB---FRRDRR---",
+                "y'": "UULUUUUUUBBUBBB---RRRRRR---BDLDDLDDLFFFFFF---BLLDLL---",
+                "y2": "UUBUUUUUURRURRR---FFFFFF---RDBDDBDDBLLLLLL---RBBDBB---"
+            }
+        },
+        "setups": [
+            "R'FRF'R'FRF'",
+            "F'LFL'F'LFL'",
+            "RU'R'URU'R'",
+            "B'RBR'B'RBR'",
+            "L'BLB'L'BLB'"
+        ]
+    },
+    "31": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUBUURRRRRR---DFFLFF---UDFDDLDDLLLRLLF---BBBBBB---",
+                "y": "UUUUUULUUBBBBBB---DRRFRR---UDRDDFDDFFFBFFR---LLLLLL---",
+                "y'": "UUUUUURUUFFFFFF---DLLBLL---UDLDDBDDBBBFBBL---RRRRRR---",
+                "y2": "UUUUUUFUULLLLLL---DBBRBB---UDBDDRDDRRRLRRB---FFFFFF---"
+            },
+            "y": {
+                "": "BUUUUUUUUBBBBBB---RRRRRR---FLLDDDUDDDFFLFF---LLRLLF---",
+                "y": "LUUUUUUUULLLLLL---BBBBBB---RFFDDDUDDDRRFRR---FFBFFR---",
+                "y'": "RUUUUUUUURRRRRR---FFFFFF---LBBDDDUDDDLLBLL---BBFBBL---",
+                "y2": "FUUUUUUUUFFFFFF---LLLLLL---BRRDDDUDDDBBRBB---RRLRRB---"
+            },
+            "y'": {
+                "": "UUUUUUUUBDFFLFF---LLRLLF---DDUDDDLLFBBBBBB---RRRRRR---",
+                "y": "UUUUUUUULDRRFRR---FFBFFR---DDUDDDFFRLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUURDLLBLL---BBFBBL---DDUDDDBBLRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUFDBBRBB---RRLRRB---DDUDDDRRBFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUBUUUUUULLRLLF---BBBBBB---LDDLDDFDURRRRRR---DFFLFF---",
+                "y": "UULUUUUUUFFBFFR---LLLLLL---FDDFDDRDUBBBBBB---DRRFRR---",
+                "y'": "UURUUUUUUBBFBBL---RRRRRR---BDDBDDLDUFFFFFF---DLLBLL---",
+                "y2": "UUFUUUUUURRLRRB---FFFFFF---RDDRDDBDULLLLLL---DBBRBB---"
+            }
+        },
+        "setups": [
+            "R'FRF'U2RUR'",
+            "RUR'FR'F'RU",
+            "FUF'LF'L'FU",
+            "F'LFL'U2FUF'",
+            "LUL'BL'B'LU"
+        ]
+    },
+    "32": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUDUURRRRRR---LFFFFF---UDDDDDBDBLLFLLL---BBBBBB---",
+                "y": "UUUUUUDUUBBBBBB---FRRRRR---UDDDDDLDLFFRFFF---LLLLLL---",
+                "y'": "UUUUUUDUUFFFFFF---BLLLLL---UDDDDDRDRBBLBBB---RRRRRR---",
+                "y2": "UUUUUUDUULLLLLL---RBBBBB---UDDDDDFDFRRBRRR---FFFFFF---"
+            },
+            "y": {
+                "": "DUUUUUUUUBBBBBB---RRRRRR---DDBDDDUDBLFFFFF---LLFLLL---",
+                "y": "DUUUUUUUULLLLLL---BBBBBB---DDLDDDUDLFRRRRR---FFRFFF---",
+                "y'": "DUUUUUUUURRRRRR---FFFFFF---DDRDDDUDRBLLLLL---BBLBBB---",
+                "y2": "DUUUUUUUUFFFFFF---LLLLLL---DDFDDDUDFRBBBBB---RRBRRR---"
+            },
+            "y'": {
+                "": "UUUUUUUUDLFFFFF---LLFLLL---BDUDDDBDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUDFRRRRR---FFRFFF---LDUDDDLDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUDBLLLLL---BBLBBB---RDUDDDRDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUDRBBBBB---RRBRRR---FDUDDDFDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUDUUUUUULLFLLL---BBBBBB---BDBDDDDDURRRRRR---LFFFFF---",
+                "y": "UUDUUUUUUFFRFFF---LLLLLL---LDLDDDDDUBBBBBB---FRRRRR---",
+                "y'": "UUDUUUUUUBBLBBB---RRRRRR---RDRDDDDDUFFFFFF---BLLLLL---",
+                "y2": "UUDUUUUUURRBRRR---FFFFFF---FDFDDDDDULLLLLL---RBBBBB---"
+            }
+        },
+        "setups": [
+            "RUR'U'RUR'U'RUR'U'",
+            "RU'R'UR'FRF'U",
+            "LUL'U'LUL'U'LUL'U'",
+            "BUB'U'BUB'U'BUB'U'",
+            "RU'R'URU'R'URU'R'"
+        ]
+    },
+    "33": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUFUURRRRRR---RFFFFF---FDBDDDDDFLLDLLL---BBBBBB---",
+                "y": "UUUUUURUUBBBBBB---BRRRRR---RDLDDDDDRFFDFFF---LLLLLL---",
+                "y'": "UUUUUULUUFFFFFF---FLLLLL---LDRDDDDDLBBDBBB---RRRRRR---",
+                "y2": "UUUUUUBUULLLLLL---LBBBBB---BDFDDDDDBRRDRRR---FFFFFF---"
+            },
+            "y": {
+                "": "FUUUUUUUUBBBBBB---RRRRRR---BDFDDDFDDRFFFFF---LLDLLL---",
+                "y": "RUUUUUUUULLLLLL---BBBBBB---LDRDDDRDDBRRRRR---FFDFFF---",
+                "y'": "LUUUUUUUURRRRRR---FFFFFF---RDLDDDLDDFLLLLL---BBDBBB---",
+                "y2": "BUUUUUUUUFFFFFF---LLLLLL---FDBDDDBDDLBBBBB---RRDRRR---"
+            },
+            "y'": {
+                "": "UUUUUUUUFRFFFFF---LLDLLL---DDFDDDFDBBBBBBB---RRRRRR---",
+                "y": "UUUUUUUURBRRRRR---FFDFFF---DDRDDDRDLLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUULFLLLLL---BBDBBB---DDLDDDLDRRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUBLBBBBB---RRDRRR---DDBDDDBDFFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUFUUUUUULLDLLL---BBBBBB---FDDDDDBDFRRRRRR---RFFFFF---",
+                "y": "UURUUUUUUFFDFFF---LLLLLL---RDDDDDLDRBBBBBB---BRRRRR---",
+                "y'": "UULUUUUUUBBDBBB---RRRRRR---LDDDDDRDLFFFFFF---FLLLLL---",
+                "y2": "UUBUUUUUURRDRRR---FFFFFF---BDDDDDFDBLLLLLL---LBBBBB---"
+            }
+        },
+        "setups": [
+            "RUR'U'RUR'URU'R'",
+            "RUR'U2RUR'U",
+            "FR'F'RU'RUR'U",
+            "LF'L'FU'FUF'U",
+            "LUL'U'LUL'ULU'L'"
+        ]
+    },
+    "34": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUULUURRRRRR---DFFFFF---LDLDDDFDDLLBLLL---BBBBBB---",
+                "y": "UUUUUUFUUBBBBBB---DRRRRR---FDFDDDRDDFFLFFF---LLLLLL---",
+                "y'": "UUUUUUBUUFFFFFF---DLLLLL---BDBDDDLDDBBRBBB---RRRRRR---",
+                "y2": "UUUUUURUULLLLLL---DBBBBB---RDRDDDBDDRRFRRR---FFFFFF---"
+            },
+            "y": {
+                "": "LUUUUUUUUBBBBBB---RRRRRR---LDDDDDLDFDFFFFF---LLBLLL---",
+                "y": "FUUUUUUUULLLLLL---BBBBBB---FDDDDDFDRDRRRRR---FFLFFF---",
+                "y'": "BUUUUUUUURRRRRR---FFFFFF---BDDDDDBDLDLLLLL---BBRBBB---",
+                "y2": "RUUUUUUUUFFFFFF---LLLLLL---RDDDDDRDBDBBBBB---RRFRRR---"
+            },
+            "y'": {
+                "": "UUUUUUUULDFFFFF---LLBLLL---FDLDDDDDLBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUFDRRRRR---FFLFFF---RDFDDDDDFLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUBDLLLLL---BBRBBB---LDBDDDDDBRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUURDBBBBB---RRFRRR---BDRDDDDDRFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UULUUUUUULLBLLL---BBBBBB---DDFDDDLDLRRRRRR---DFFFFF---",
+                "y": "UUFUUUUUUFFLFFF---LLLLLL---DDRDDDFDFBBBBBB---DRRRRR---",
+                "y'": "UUBUUUUUUBBRBBB---RRRRRR---DDLDDDBDBFFFFFF---DLLLLL---",
+                "y2": "UURUUUUUURRFRRR---FFFFFF---DDBDDDRDRLLLLLL---DBBBBB---"
+            }
+        },
+        "setups": [
+            "RU'R'U2RU'R'U'",
+            "RU'R'U'RU2R'U",
+            "FU'F'U2FU'F'U'",
+            "R'D'RUR'DRU'",
+            "LU'L'U'LU2L'U"
+        ]
+    },
+    "35": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUDUURRRRRR---LFFLFF---FDDLDDRDDLLFLLF---BBBBBB---",
+                "y": "UUUUUUDUUBBBBBB---FRRFRR---RDDFDDBDDFFRFFR---LLLLLL---",
+                "y'": "UUUUUUDUUFFFFFF---BLLBLL---LDDBDDFDDBBLBBL---RRRRRR---",
+                "y2": "UUUUUUDUULLLLLL---RBBRBB---BDDRDDLDDRRBRRB---FFFFFF---"
+            },
+            "y": {
+                "": "DUUUUUUUUBBBBBB---RRRRRR---DDDDDDFLRLFFLFF---LLFLLF---",
+                "y": "DUUUUUUUULLLLLL---BBBBBB---DDDDDDRFBFRRFRR---FFRFFR---",
+                "y'": "DUUUUUUUURRRRRR---FFFFFF---DDDDDDLBFBLLBLL---BBLBBL---",
+                "y2": "DUUUUUUUUFFFFFF---LLLLLL---DDDDDDBRLRBBRBB---RRBRRB---"
+            },
+            "y'": {
+                "": "UUUUUUUUDLFFLFF---LLFLLF---RLFDDDDDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUDFRRFRR---FFRFFR---BFRDDDDDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUDBLLBLL---BBLBBL---FBLDDDDDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUDRBBRBB---RRBRRB---LRBDDDDDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUDUUUUUULLFLLF---BBBBBB---DDRDDLDDFRRRRRR---LFFLFF---",
+                "y": "UUDUUUUUUFFRFFR---LLLLLL---DDBDDFDDRBBBBBB---FRRFRR---",
+                "y'": "UUDUUUUUUBBLBBL---RRRRRR---DDFDDBDDLFFFFFF---BLLBLL---",
+                "y2": "UUDUUUUUURRBRRB---FFFFFF---DDLDDRDDBLLLLLL---RBBRBB---"
+            }
+        },
+        "setups": [
+            "R'FRF'RU'R'U2",
+            "F'LFL'FU'F'U2",
+            "F'UFU'RU'R'U",
+            "L'ULU'FU'F'U",
+            "L'BLB'LU'L'U2"
+        ]
+    },
+    "36": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUDUURRRRRR---LFFLFF---LFBDDDDDDLLFLLF---BBBBBB---",
+                "y": "UUUUUUDUUBBBBBB---FRRFRR---FRLDDDDDDFFRFFR---LLLLLL---",
+                "y'": "UUUUUUDUUFFFFFF---BLLBLL---BLRDDDDDDBBLBBL---RRRRRR---",
+                "y2": "UUUUUUDUULLLLLL---RBBRBB---RBFDDDDDDRRBRRB---FFFFFF---"
+            },
+            "y": {
+                "": "DUUUUUUUUBBBBBB---RRRRRR---BDDFDDLDDLFFLFF---LLFLLF---",
+                "y": "DUUUUUUUULLLLLL---BBBBBB---LDDRDDFDDFRRFRR---FFRFFR---",
+                "y'": "DUUUUUUUURRRRRR---FFFFFF---RDDLDDBDDBLLBLL---BBLBBL---",
+                "y2": "DUUUUUUUUFFFFFF---LLLLLL---FDDBDDRDDRBBRBB---RRBRRB---"
+            },
+            "y'": {
+                "": "UUUUUUUUDLFFLFF---LLFLLF---DDLDDFDDBBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUDFRRFRR---FFRFFR---DDFDDRDDLLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUDBLLBLL---BBLBBL---DDBDDLDDRRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUDRBBRBB---RRBRRB---DDRDDBDDFFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUDUUUUUULLFLLF---BBBBBB---DDDDDDBFLRRRRRR---LFFLFF---",
+                "y": "UUDUUUUUUFFRFFR---LLLLLL---DDDDDDLRFBBBBBB---FRRFRR---",
+                "y'": "UUDUUUUUUBBLBBL---RRRRRR---DDDDDDRLBFFFFFF---BLLBLL---",
+                "y2": "UUDUUUUUURRBRRB---FFFFFF---DDDDDDFBRLLLLLL---RBBRBB---"
+            }
+        },
+        "setups": [
+            "RU'R'U2FR'F'RU2",
+            "FU'F'U2LF'L'FU2",
+            "RU'R'UF'UFU'",
+            "FU'F'UL'ULU'",
+            "F'UFURU'R'U'RU'R'"
+        ]
+    },
+    "37": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUUUURRRRRR---FFFLFF---FDDDDDDFBLLLLLF---BBBBBB---",
+                "y": "UUUUUUUUUBBBBBB---RRRFRR---RDDDDDDRLFFFFFR---LLLLLL---",
+                "y'": "UUUUUUUUUFFFFFF---LLLBLL---LDDDDDDLRBBBBBL---RRRRRR---",
+                "y2": "UUUUUUUUULLLLLL---BBBRBB---BDDDDDDBFRRRRRB---FFFFFF---"
+            },
+            "y": {
+                "": "UUUUUUUUUBBBBBB---RRRRRR---DDBDDFFDDFFFLFF---LLLLLF---",
+                "y": "UUUUUUUUULLLLLL---BBBBBB---DDLDDRRDDRRRFRR---FFFFFR---",
+                "y'": "UUUUUUUUURRRRRR---FFFFFF---DDRDDLLDDLLLBLL---BBBBBL---",
+                "y2": "UUUUUUUUUFFFFFF---LLLLLL---DDFDDBBDDBBBRBB---RRRRRB---"
+            },
+            "y'": {
+                "": "UUUUUUUUUFFFLFF---LLLLLF---DDFFDDBDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUURRRFRR---FFFFFR---DDRRDDLDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUULLLBLL---BBBBBL---DDLLDDRDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUUBBBRBB---RRRRRB---DDBBDDFDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUUUUUUUULLLLLF---BBBBBB---BFDDDDDDFRRRRRR---FFFLFF---",
+                "y": "UUUUUUUUUFFFFFR---LLLLLL---LRDDDDDDRBBBBBB---RRRFRR---",
+                "y'": "UUUUUUUUUBBBBBL---RRRRRR---RLDDDDDDLFFFFFF---LLLBLL---",
+                "y2": "UUUUUUUUURRRRRB---FFFFFF---FBDDDDDDBLLLLLL---BBBRBB---"
+            }
+        },
+        "setups": [
+            "RUR'U2RUR'U'RUR'FR'F'R",
+            "F'U'F2U'F2U2FLF'L'F",
+            "FUF'U2FUF'U'FUF'LF'L'F",
+            "BUB'U2BUB'U'BUB'RB'R'B",
+            "LUL'U2LUL'U'LUL'BL'B'L"
+        ]
+    },
+    "38": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUULUURRRRRR---UFFFFF---BDDDDDRDDLLFLLL---BBBBBB---",
+                "y": "UUUUUUFUUBBBBBB---URRRRR---LDDDDDBDDFFRFFF---LLLLLL---",
+                "y'": "UUUUUUBUUFFFFFF---ULLLLL---RDDDDDFDDBBLBBB---RRRRRR---",
+                "y2": "UUUUUURUULLLLLL---UBBBBB---FDDDDDLDDRRBRRR---FFFFFF---"
+            },
+            "y": {
+                "": "LUUUUUUUUBBBBBB---RRRRRR---DDDDDDBDRUFFFFF---LLFLLL---",
+                "y": "FUUUUUUUULLLLLL---BBBBBB---DDDDDDLDBURRRRR---FFRFFF---",
+                "y'": "BUUUUUUUURRRRRR---FFFFFF---DDDDDDRDFULLLLL---BBLBBB---",
+                "y2": "RUUUUUUUUFFFFFF---LLLLLL---DDDDDDFDLUBBBBB---RRBRRR---"
+            },
+            "y'": {
+                "": "UUUUUUUULUFFFFF---LLFLLL---RDBDDDDDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUFURRRRR---FFRFFF---BDLDDDDDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUBULLLLL---BBLBBB---FDRDDDDDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUURUBBBBB---RRBRRR---LDFDDDDDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UULUUUUUULLFLLL---BBBBBB---DDRDDDDDBRRRRRR---UFFFFF---",
+                "y": "UUFUUUUUUFFRFFF---LLLLLL---DDBDDDDDLBBBBBB---URRRRR---",
+                "y'": "UUBUUUUUUBBLBBB---RRRRRR---DDFDDDDDRFFFFFF---ULLLLL---",
+                "y2": "UURUUUUUURRBRRR---FFFFFF---DDLDDDDDFLLLLLL---UBBBBB---"
+            }
+        },
+        "setups": [
+            "RUR'U2RU'R'URUR'",
+            "RU2R'URU'R'URUR'",
+            "RU'R'URU2R'URU'R'",
+            "FUF'U2FU'F'UFUF'",
+            "RU2RUR'URU2R2"
+        ]
+    },
+    "39": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUFUURRRRRR---LFFFFF---BDDDDDFDFLLULLL---BBBBBB---",
+                "y": "UUUUUURUUBBBBBB---FRRRRR---LDDDDDRDRFFUFFF---LLLLLL---",
+                "y'": "UUUUUULUUFFFFFF---BLLLLL---RDDDDDLDLBBUBBB---RRRRRR---",
+                "y2": "UUUUUUBUULLLLLL---RBBBBB---FDDDDDBDBRRURRR---FFFFFF---"
+            },
+            "y": {
+                "": "FUUUUUUUUBBBBBB---RRRRRR---DDFDDDBDFLFFFFF---LLULLL---",
+                "y": "RUUUUUUUULLLLLL---BBBBBB---DDRDDDLDRFRRRRR---FFUFFF---",
+                "y'": "LUUUUUUUURRRRRR---FFFFFF---DDLDDDRDLBLLLLL---BBUBBB---",
+                "y2": "BUUUUUUUUFFFFFF---LLLLLL---DDBDDDFDBRBBBBB---RRURRR---"
+            },
+            "y'": {
+                "": "UUUUUUUUFLFFFFF---LLULLL---FDBDDDFDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUURFRRRRR---FFUFFF---RDLDDDRDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUULBLLLLL---BBUBBB---LDRDDDLDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUBRBBBBB---RRURRR---BDFDDDBDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUFUUUUUULLULLL---BBBBBB---FDFDDDDDBRRRRRR---LFFFFF---",
+                "y": "UURUUUUUUFFUFFF---LLLLLL---RDRDDDDDLBBBBBB---FRRRRR---",
+                "y'": "UULUUUUUUBBUBBB---RRRRRR---LDLDDDDDRFFFFFF---BLLLLL---",
+                "y2": "UUBUUUUUURRURRR---FFFFFF---BDBDDDDDFLLLLLL---RBBBBB---"
+            }
+        },
+        "setups": [
+            "RU'R'U'RUR'U'RU2R'",
+            "RUR'U'RU2R'U'RUR'",
+            "FUF'U'FU2F'U'FUF'",
+            "LU'L'U'LUL'U'LU2L'",
+            "LUL'U'LU2L'U'LUL'"
+        ]
+    },
+    "40": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUULUURRRRRR---UFFLFF---RLDRDDFFDLLFLLF---BBBBBB---",
+                "y": "UUUUUUFUUBBBBBB---URRFRR---BFDBDDRRDFFRFFR---LLLLLL---",
+                "y'": "UUUUUUBUUFFFFFF---ULLBLL---FBDFDDLLDBBLBBL---RRRRRR---",
+                "y2": "UUUUUURUULLLLLL---UBBRBB---LRDLDDBBDRRBRRB---FFFFFF---"
+            },
+            "y": {
+                "": "LUUUUUUUUBBBBBB---RRRRRR---DDDLDFRRFUFFLFF---LLFLLF---",
+                "y": "FUUUUUUUULLLLLL---BBBBBB---DDDFDRBBRURRFRR---FFRFFR---",
+                "y'": "BUUUUUUUURRRRRR---FFFFFF---DDDBDLFFLULLBLL---BBLBBL---",
+                "y2": "RUUUUUUUUFFFFFF---LLLLLL---DDDRDBLLBUBBRBB---RRBRRB---"
+            },
+            "y'": {
+                "": "UUUUUUUULUFFLFF---LLFLLF---FRRFDLDDDBBBBBB---RRRRRR---",
+                "y": "UUUUUUUUFURRFRR---FFRFFR---RBBRDFDDDLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUUBULLBLL---BBLBBL---LFFLDBDDDRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUURUBBRBB---RRBRRB---BLLBDRDDDFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UULUUUUUULLFLLF---BBBBBB---DFFDDRDLRRRRRRR---UFFLFF---",
+                "y": "UUFUUUUUUFFRFFR---LLLLLL---DRRDDBDFBBBBBBB---URRFRR---",
+                "y'": "UUBUUUUUUBBLBBL---RRRRRR---DLLDDFDBFFFFFFF---ULLBLL---",
+                "y2": "UURUUUUUURRBRRB---FFFFFF---DBBDDLDRLLLLLLL---UBBRBB---"
+            }
+        },
+        "setups": [
+            "RU'R'F'L'U2LF",
+            "RUR'FURU'R'F'RUR'",
+            "FU'F'L'B'U2BL",
+            "BU'B'R'F'U2FR",
+            "LU'L'B'R'U2RB"
+        ]
+    },
+    "41": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUFUURRRRRR---LFFLFF---BBLFDLDDDLLULLF---BBBBBB---",
+                "y": "UUUUUURUUBBBBBB---FRRFRR---LLFRDFDDDFFUFFR---LLLLLL---",
+                "y'": "UUUUUULUUFFFFFF---BLLBLL---RRBLDBDDDBBUBBL---RRRRRR---",
+                "y2": "UUUUUUBUULLLLLL---RBBRBB---FFRBDRDDDRRURRB---FFFFFF---"
+            },
+            "y": {
+                "": "FUUUUUUUUBBBBBB---RRRRRR---LLDBDDBFDLFFLFF---LLULLF---",
+                "y": "RUUUUUUUULLLLLL---BBBBBB---FFDLDDLRDFRRFRR---FFUFFR---",
+                "y'": "LUUUUUUUURRRRRR---FFFFFF---BBDRDDRLDBLLBLL---BBUBBL---",
+                "y2": "BUUUUUUUUFFFFFF---LLLLLL---RRDFDDFBDRBBRBB---RRURRB---"
+            },
+            "y'": {
+                "": "UUUUUUUUFLFFLFF---LLULLF---DFBDDBDLLBBBBBB---RRRRRR---",
+                "y": "UUUUUUUURFRRFRR---FFUFFR---DRLDDLDFFLLLLLL---BBBBBB---",
+                "y'": "UUUUUUUULBLLBLL---BBUBBL---DLRDDRDBBRRRRRR---FFFFFF---",
+                "y2": "UUUUUUUUBRBBRBB---RRURRB---DBFDDFDRRFFFFFF---LLLLLL---"
+            },
+            "y2": {
+                "": "UUFUUUUUULLULLF---BBBBBB---DDDLDFLBBRRRRRR---LFFLFF---",
+                "y": "UURUUUUUUFFUFFR---LLLLLL---DDDFDRFLLBBBBBB---FRRFRR---",
+                "y'": "UULUUUUUUBBUBBL---RRRRRR---DDDBDLBRRFFFFFF---BLLBLL---",
+                "y2": "UUBUUUUUURRURRB---FFFFFF---DDDRDBRFFLLLLLL---RBBRBB---"
+            }
+        },
+        "setups": [
+            "F'L'U2LFRUR'",
+            "L'B'U2BLFUF'",
+            "R'F'U2FRBUB'",
+            "B'R'U2RBLUL'"
+        ]
+    },
+    "SKIP": {
+        "probability": 0.023809523809523808,
+        "rotations": {
+            "": {
+                "": "UUUUUUUUURRRRRR---FFFFFF---DDDDDDDDDLLLLLL---BBBBBB---"
+            },
+            "y": {
+                "": "UUUUUUUUUBBBBBB---RRRRRR---DDDDDDDDDFFFFFF---LLLLLL---"
+            },
+            "y'": {
+                "": "UUUUUUUUUFFFFFF---LLLLLL---DDDDDDDDDBBBBBB---RRRRRR---"
+            },
+            "y2": {
+                "": "UUUUUUUUULLLLLL---BBBBBB---DDDDDDDDDRRRRRR---FFFFFF---"
+            }
+        },
+        "setups": []
+    }
+}

@@ -14,6 +14,8 @@ from kociemba import solve
 from term_timer.config import LL_ORIENTATION
 from term_timer.constants import CUBE_SIZES
 from term_timer.magic_cube import Cube
+from term_timer.methods.cfop import AF2L_SETUPS
+from term_timer.methods.cfop import F2L_SETUPS
 from term_timer.methods.cfop import OLL_SETUPS
 from term_timer.methods.cfop import PLL_SETUPS
 
@@ -175,6 +177,10 @@ def random_training(step, selected_cases):
     cases = OLL_SETUPS
     if step == 'pll':
         cases = PLL_SETUPS
+    elif step == 'f2l':
+        cases = F2L_SETUPS
+    elif step == 'af2l':
+        cases = AF2L_SETUPS
 
     case = choice(selected_cases or list(cases.keys()))
 
