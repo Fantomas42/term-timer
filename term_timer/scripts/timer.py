@@ -94,6 +94,7 @@ async def trainer(options) -> int:
     trainer = Trainer(
         step=options.step,
         cases=options.case,
+        show_solution=options.show_solution,
         show_cube=options.show_cube,
         metronome=options.metronome,
     )

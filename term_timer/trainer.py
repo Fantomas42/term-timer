@@ -12,6 +12,7 @@ class Trainer(SolveInterface):
     def __init__(self, *,
                  step: str,
                  cases: list[str],
+                 show_solution: bool,
                  show_cube: bool,
                  metronome: float):
         super().__init__()
@@ -19,6 +20,7 @@ class Trainer(SolveInterface):
         self.set_state('configure')
 
         self.step = step
+        self.show_solution = show_solution
         self.show_cube = show_cube
         self.metronome = metronome
         self.cases = cases
@@ -49,8 +51,13 @@ class Trainer(SolveInterface):
             f'[scramble]Training #{ self.counter }:[/scramble]',
             f'[moves]{ self.scramble_oriented }[/moves]',
             f'[comment]// [link={ link }]{ case }[/link][/comment]',
-            f'[solution]{ main_algorithm }[/solution]',
         )
+
+        if self.show_solution:
+            self.console.print(
+                f'[solution]Solution #{ self.counter }:[/solution]',
+                f'[moves]{ main_algorithm }[/moves]',
+            )
 
         if self.bluetooth_interface:
             self.console.print(
@@ -92,7 +99,9 @@ class Trainer(SolveInterface):
     async def start(self) -> bool:
         self.init_solve()
 
-        case, main_algorithm, self.scramble, cube = trainer(self.step, self.cases)
+        case, main_algorithm, self.scramble, cube = trainer(
+                self.step, self.cases,
+        )
 
         if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
             scramble = scramble_moves(

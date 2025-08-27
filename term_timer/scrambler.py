@@ -184,7 +184,7 @@ def random_training(step, selected_cases):
     case_name = cases[case]['name']
     main_algorithm = cases[case]['main']
 
-    return case_name, main_algorithm, parse_moves(algo).transform(
+    return case_name, parse_moves(main_algorithm), parse_moves(algo).transform(
         degrip_full_moves,
         compress_final_rotations,
     )

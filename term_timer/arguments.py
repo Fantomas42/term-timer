@@ -306,6 +306,16 @@ def train_arguments(subparsers):
         ),
     )
 
+    parser.add_argument(
+        '-v', '--solution',
+        action='store_true',
+        dest='show_solution',
+        help=(
+            'Show the main solution of the case.\n'
+            'Default: False.'
+        ),
+    )
+
     mode = 'hide' if show_cube else 'show'
     parser.add_argument(
         '-p', f'--{ mode }-cube',

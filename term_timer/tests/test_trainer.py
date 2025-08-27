@@ -8,6 +8,7 @@ class TestTrainerModule(unittest.TestCase):
         timer = Trainer(
             step='oll',
             cases=['01', '02'],
+            show_solution=False,
             show_cube=False,
             metronome=0,
         )

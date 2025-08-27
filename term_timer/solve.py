@@ -162,7 +162,7 @@ class Solve:
         )
 
     @cached_property
-    def method_applied(self) -> dict[str, dict]:
+    def method_applied(self) -> dict[str, dict] | None:
         if not self.advanced:
             return None
 
