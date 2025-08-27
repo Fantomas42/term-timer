@@ -161,13 +161,14 @@ def trainer(step, cases):
     if step == 'cross':
         case_name = 'Cross'
         scramble, cube = scrambler(3, 0, easy_cross=True)
+        main_algorithm = ''
     else:
         cube = Cube(3)
-        case_name, scramble = random_training(step, cases)
+        case_name, main_algorithm, scramble = random_training(step, cases)
 
     cube.rotate(scramble)
 
-    return case_name, scramble, cube
+    return case_name, main_algorithm, scramble, cube
 
 
 def random_training(step, selected_cases):
@@ -181,8 +182,9 @@ def random_training(step, selected_cases):
 
     algo = LL_ORIENTATION + choice(cases[case]['setups']) + LL_ORIENTATION
     case_name = cases[case]['name']
+    main_algorithm = cases[case]['main']
 
-    return case_name, parse_moves(algo).transform(
+    return case_name, main_algorithm, parse_moves(algo).transform(
         degrip_full_moves,
         compress_final_rotations,
     )

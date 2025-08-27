@@ -29,7 +29,7 @@ class Trainer(SolveInterface):
 
         self.counter = 1
 
-    def start_line(self, cube, case) -> None:
+    def start_line(self, cube, case, main_algorithm) -> None:
         if self.show_cube:
             if self.step in {'cross', 'af2l', 'f2l'}:
                 self.console.print(str(cube), end='')
@@ -49,6 +49,7 @@ class Trainer(SolveInterface):
             f'[scramble]Training #{ self.counter }:[/scramble]',
             f'[moves]{ self.scramble_oriented }[/moves]',
             f'[comment]// [link={ link }]{ case }[/link][/comment]',
+            f'[solution]{ main_algorithm }[/solution]',
         )
 
         if self.bluetooth_interface:
@@ -91,7 +92,7 @@ class Trainer(SolveInterface):
     async def start(self) -> bool:
         self.init_solve()
 
-        case, self.scramble, cube = trainer(self.step, self.cases)
+        case, main_algorithm, self.scramble, cube = trainer(self.step, self.cases)
 
         if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
             scramble = scramble_moves(
@@ -103,7 +104,7 @@ class Trainer(SolveInterface):
             self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.get_kociemba_facelet_positions()
 
-        self.start_line(cube, case)
+        self.start_line(cube, case, main_algorithm)
 
         quit_solve = await self.scramble_solve()
 
