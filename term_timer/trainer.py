@@ -1,11 +1,14 @@
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.formatter import format_alg_moves
+from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
 from term_timer.methods.base import FaceletAnalyser
 from term_timer.scrambler import scramble_moves
 from term_timer.scrambler import trainer
 from term_timer.solve import Solve
+from term_timer.triggers import DEFAULT_TRIGGERS
 
 
 class Trainer(SolveInterface):
@@ -54,6 +57,13 @@ class Trainer(SolveInterface):
         )
 
         if self.show_solution:
+            main_algorithm = format_alg_triggers(
+                format_alg_moves(
+                    str(main_algorithm),
+                ),
+                DEFAULT_TRIGGERS,
+            )
+
             self.console.print(
                 f'[solution]Solution #{ self.counter }:[/solution]',
                 f'[moves]{ main_algorithm }[/moves]',
