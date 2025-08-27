@@ -148,17 +148,8 @@ class TestSolvesMethodAggregator(unittest.TestCase):
         mock_pool_class.assert_called_once_with(processes=3)
         mock_pool.map.assert_called_once()
 
-    @patch('term_timer.aggregator.get_method_analyser')
     @patch('term_timer.aggregator.StatisticsTools.ao')
-    def test_aggregate_with_advanced_solves(self, mock_ao, mock_get_analyser):
-        mock_analyser = Mock()
-        mock_analyser.infos = {
-            'step1': {
-                'case_a': {'probability': 0.8},
-            },
-        }
-        mock_get_analyser.return_value = mock_analyser
-
+    def test_aggregate_with_advanced_solves(self, mock_ao):
         mock_ao.side_effect = lambda n, times: \
             sum(times[:n]) / min(n, len(times)) if times else 0
 
@@ -185,7 +176,6 @@ class TestSolvesMethodAggregator(unittest.TestCase):
 
         aggregator = SolvesMethodAggregator.__new__(SolvesMethodAggregator)
         aggregator.stack = self.stack
-        aggregator.analyser = mock_analyser
 
         with patch.object(aggregator, 'collect_analyses',
                           return_value=analyses):
@@ -205,7 +195,6 @@ class TestSolvesMethodAggregator(unittest.TestCase):
         self.assertEqual(case_data['qtm'], 20)
         self.assertEqual(case_data['tps'], 2.0)
         self.assertEqual(case_data['etps'], 2.5)
-        self.assertEqual(case_data['probability'], 0.8)
 
     @patch('term_timer.aggregator.get_method_analyser')
     def test_aggregate_empty_stack(self, mock_get_analyser):

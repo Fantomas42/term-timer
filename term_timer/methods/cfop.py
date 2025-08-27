@@ -1,70 +1,22 @@
-import json
 from functools import cached_property
-from pathlib import Path
 from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
 
 from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
-
-DATA_DIRECTORY = Path(__file__).parent / 'cases'
-AF2L_PATH = DATA_DIRECTORY / 'af2l.json'
-F2L_PATH = DATA_DIRECTORY / 'f2l.json'
-OLL_PATH = DATA_DIRECTORY / 'oll.json'
-PLL_PATH = DATA_DIRECTORY / 'pll.json'
-
-AF2L_MASKS = {}
-F2L_MASKS = {}
-OLL_MASKS = {}
-PLL_MASKS = {}
-
-AF2L_INFO = {}
-F2L_INFO = {}
-OLL_INFO = {}
-PLL_INFO = {}
-
-AF2L_SETUPS = {}
-F2L_SETUPS = {}
-OLL_SETUPS = {}
-PLL_SETUPS = {}
-
-
-def load_and_fill(path, masks, info, setups):
-    with path.open('r') as fd:
-        for kase, data in json.load(fd).items():
-            for rotation, alternatives in data['rotations'].items():
-                for alternative, hashed in alternatives.items():
-                    masks[hashed] = {
-                        'case': kase,
-                        'rotation': rotation,
-                        'alternative': alternative,
-                    }
-            info[kase] = {
-                'probability': data['probability'],
-            }
-            if data['setups']:
-                setups[kase.split(' ')[0]] = {
-                    'name': kase,
-                    'setups': data['setups'],
-                }
-
-
-load_and_fill(AF2L_PATH, AF2L_MASKS, AF2L_INFO, AF2L_SETUPS)
-load_and_fill(F2L_PATH, F2L_MASKS, F2L_INFO, F2L_SETUPS)
-load_and_fill(OLL_PATH, OLL_MASKS, OLL_INFO, OLL_SETUPS)
-load_and_fill(PLL_PATH, PLL_MASKS, PLL_INFO, PLL_SETUPS)
+from term_timer.methods.cases import CASES_MASKS
 
 
 class CFOPAnalyser(Analyser):
     name = 'CFOP'
     step_list = ('Cross', 'F2L', 'OLL', 'PLL')
     aufs: ClassVar[dict[str, tuple[bool, bool]]] = {
-        'F2L': [True, False],
-        'OLL': [True, False],
-        'PLL': [True, True],
+        'F2L': (True, False),
+        'OLL': (True, False),
+        'PLL': (True, True),
     }
-    norms: ClassVar[dict[str, dict[str, float]]] = {
+    norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
         'moves': {
             'Cross': 6,
             'F2L': 30,
@@ -98,10 +50,6 @@ class CFOPAnalyser(Analyser):
         'oll': -2,
         'pll': -1,
     }
-    infos: ClassVar[dict[str, dict[str, float]]] = {
-        'oll': OLL_INFO,
-        'pll': PLL_INFO,
-    }
 
     def compute_progress(self, facelets):
         progress = 0
@@ -134,8 +82,8 @@ class CFOPAnalyser(Analyser):
 
         masked = ''.join(masked)
 
-        if masked in OLL_MASKS:
-            return OLL_MASKS[masked]['case']
+        if masked in CASES_MASKS['oll']:
+            return CASES_MASKS['oll'][masked]['case']
 
         return ''
 
@@ -146,8 +94,8 @@ class CFOPAnalyser(Analyser):
             facelets,
         )
 
-        if masked in PLL_MASKS:
-            return PLL_MASKS[masked]['case']
+        if masked in CASES_MASKS['pll']:
+            return CASES_MASKS['pll'][masked]['case']
 
         return ''
 

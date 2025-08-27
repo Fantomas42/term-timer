@@ -8,7 +8,7 @@ from term_timer.methods.base import Analyser
 class LBLAnalyser(Analyser):
     name = 'LBL'
     step_list = ('Cross', 'F1L', 'F2L', 'LL')
-    norms: ClassVar[dict[str, dict[str, float]]] = {
+    norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
         'moves': {
             'Cross': 6,
             'F2L': 30,

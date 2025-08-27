@@ -6,7 +6,7 @@ from term_timer.methods.base import Analyser
 class RawAnalyser(Analyser):
     name = 'Raw'
     step_list = ('RAW',)
-    norms: ClassVar[dict[str, dict[str, float]]] = {
+    norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
         'solve': {
             'recognition': 0,
             'execution': 100,

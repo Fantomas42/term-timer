@@ -5,6 +5,7 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 from term_timer.methods import get_method_analyser
+from term_timer.methods.cases import CASES
 from term_timer.solve import Solve
 from term_timer.stats import StatisticsTools
 
@@ -92,7 +93,7 @@ class SolvesMethodAggregator:
             score += analyse['score']
 
             for step_name, step in analyse['steps'].items():
-                step_case = step['case']
+                step_case = step['case'].split(' ')[0]
                 resume.setdefault(step_name, {})
                 resume[step_name].setdefault(
                     step_case, {
@@ -103,7 +104,7 @@ class SolvesMethodAggregator:
                         'tpss': [],
                         'etpss': [],
                         'probability': (
-                            self.analyser.infos.get(
+                            CASES.get(
                                 step_name, {},
                             ).get(
                                 step_case, {},

@@ -137,10 +137,9 @@ class FaceletAnalyser:
 class Analyser(FaceletAnalyser):
     name = ''
     step_list: tuple[str] = ()
-    norms: ClassVar[dict[str, dict[str, float]]] = {}
+    norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {}
     aufs: ClassVar[dict[str, tuple[bool, bool]]] = {}
     aggregate: ClassVar[dict[str, int]] = {}
-    infos: ClassVar[dict[str, dict[str, float]]] = {}
 
     def __init__(self, scramble: Algorithm, solution: Algorithm):
         self.scramble = scramble
