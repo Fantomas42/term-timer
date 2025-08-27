@@ -1,5 +1,6 @@
 {
     "01": {
+        "main": "SR'S'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -35,6 +36,7 @@
         ]
     },
     "01a": {
+        "main": "U'RUR2U'RU'R'UR",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -71,6 +73,7 @@
         ]
     },
     "02": {
+        "main": "LF'U2FL'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -107,6 +110,7 @@
         ]
     },
     "02a": {
+        "main": "R'FRF'LU2L'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -143,6 +147,7 @@
         ]
     },
     "03": {
+        "main": "RU'R'UF'rUr'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -178,6 +183,7 @@
         ]
     },
     "03a": {
+        "main": "R'FR2U'R'UF'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -214,6 +220,7 @@
         ]
     },
     "04": {
+        "main": "FR'F'RUR'U2R",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -249,6 +256,7 @@
         ]
     },
     "04a": {
+        "main": "URUR2U2R",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -285,6 +293,7 @@
         ]
     },
     "05": {
+        "main": "RUR'ULUL'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -321,6 +330,7 @@
         ]
     },
     "05a": {
+        "main": "UlU'F2Ul'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -356,6 +366,7 @@
         ]
     },
     "06": {
+        "main": "RUR'FUF'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -392,6 +403,7 @@
         ]
     },
     "06a": {
+        "main": "URL'ULR'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -428,6 +440,7 @@
         ]
     },
     "07": {
+        "main": "U'F'U'fRS'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -458,6 +471,7 @@
         "setups": []
     },
     "07a": {
+        "main": "RU2R'UR'U'R",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -494,6 +508,7 @@
         ]
     },
     "08": {
+        "main": "U'F'U2LUL'F",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -530,6 +545,7 @@
         ]
     },
     "08a": {
+        "main": "RU2R'f'L'f",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -560,6 +576,7 @@
         "setups": []
     },
     "09": {
+        "main": "UR'F'RF'R'FR",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -596,6 +613,7 @@
         ]
     },
     "09a": {
+        "main": "U2RU'R'L'UL",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -632,6 +650,7 @@
         ]
     },
     "10": {
+        "main": "U'RUR2U'R",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -668,6 +687,7 @@
         ]
     },
     "10a": {
+        "main": "U'RU'R'UfR'f'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -698,6 +718,7 @@
         "setups": []
     },
     "11": {
+        "main": "U'RU'R'LU'L'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -733,6 +754,7 @@
         ]
     },
     "11a": {
+        "main": "U2LU'F'UFL'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -768,6 +790,7 @@
         ]
     },
     "12": {
+        "main": "U2RUR'L'UL",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -804,6 +827,7 @@
         ]
     },
     "12a": {
+        "main": "U'RU'R'U2F'rUr'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -834,6 +858,7 @@
         "setups": []
     },
     "13": {
+        "main": "UR'FRF'R'U'R",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -869,6 +894,7 @@
         ]
     },
     "14": {
+        "main": "U2r2UB2U'r2",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -905,6 +931,7 @@
         ]
     },
     "15": {
+        "main": "UR'FR2U'R'U2F'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -941,6 +968,7 @@
         ]
     },
     "16": {
+        "main": "U'F'R'U'RF",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -976,6 +1004,7 @@
         ]
     },
     "17": {
+        "main": "U2RB'U'BR'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1011,6 +1040,7 @@
         ]
     },
     "18": {
+        "main": "UF'U2FL'U'L",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1047,6 +1077,7 @@
         ]
     },
     "19": {
+        "main": "U'RU2R'fRf'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1082,6 +1113,7 @@
         ]
     },
     "20": {
+        "main": "URUR'LUL'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1118,6 +1150,7 @@
         ]
     },
     "21": {
+        "main": "URFUF'R'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1154,6 +1187,7 @@
         ]
     },
     "22": {
+        "main": "RU'R2UR",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1190,6 +1224,7 @@
         ]
     },
     "23": {
+        "main": "LF'UFL'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1225,6 +1260,7 @@
         ]
     },
     "24": {
+        "main": "RU'R'U2L'UL",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1261,6 +1297,7 @@
         ]
     },
     "25": {
+        "main": "F'UR'U2RF",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1297,6 +1334,7 @@
         ]
     },
     "26": {
+        "main": "LRU2R'L'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1333,6 +1371,7 @@
         ]
     },
     "27": {
+        "main": "R'FR2UR'F'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1369,6 +1408,7 @@
         ]
     },
     "28": {
+        "main": "RU'R2U'RU'R'U'R",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1405,6 +1445,7 @@
         ]
     },
     "29": {
+        "main": "F'UL'ULU'LUL'F",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1440,6 +1481,7 @@
         ]
     },
     "30": {
+        "main": "RU'R'U'RU'R'U2L'U'L",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1476,6 +1518,7 @@
         ]
     },
     "31": {
+        "main": "RU'R'UR'U'RU'R'UR",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1512,6 +1555,7 @@
         ]
     },
     "32": {
+        "main": "RUR'U'RU'R'f'L'f",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1547,6 +1591,7 @@
         ]
     },
     "33": {
+        "main": "RU'R'U'L'U'LU'L'UL",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1583,6 +1628,7 @@
         ]
     },
     "34": {
+        "main": "F'R'URU'R'U'RF",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1618,6 +1664,7 @@
         ]
     },
     "35": {
+        "main": "RU'R'U'RUR'LU'L'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1654,6 +1701,7 @@
         ]
     },
     "36": {
+        "main": "R'FR2U'R'U'RUR'U2F'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1690,6 +1738,7 @@
         ]
     },
     "37": {
+        "main": "RUR'U2RU'R'fRf'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1725,6 +1774,7 @@
         ]
     },
     "38": {
+        "main": "RU'R'URU2R'LU2L'",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1761,6 +1811,7 @@
         ]
     },
     "39": {
+        "main": "RUR'L'ULU'LF'L'FL'UL",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1796,6 +1847,7 @@
         ]
     },
     "40": {
+        "main": "RU'R2U2RUR'U2R",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1832,6 +1884,7 @@
         ]
     },
     "41": {
+        "main": "F'U2L'U2L2UL'F",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1867,6 +1920,7 @@
         ]
     },
     "42": {
+        "main": "RU'R'U2L'U2LU2L'UL",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
@@ -1902,6 +1956,7 @@
         ]
     },
     "SKIP": {
+        "main": "",
         "probability": 0.023809523809523808,
         "rotations": {
             "": {
