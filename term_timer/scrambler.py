@@ -173,10 +173,11 @@ def trainer(step, cases):
 
 def random_training(step, selected_cases):
     cases = CASES[step]
+    valid_cases = {k: v for k, v in cases.items() if v.get('setups')}
 
-    case = choice(selected_cases or list(cases.keys()))
+    case = choice(selected_cases or list(valid_cases.keys()))
 
-    if case not in cases:
+    if case not in valid_cases:
         error_string = f'Invalid case { case } for { step.upper() }'
         raise InvalidCaseError(error_string)
 
