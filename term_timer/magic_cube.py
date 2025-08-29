@@ -20,23 +20,31 @@ class CubePrintRich:
         self.cube = cube
 
     @staticmethod
-    def _format_color(color: str, *, oll=False) -> str:
+    def _format_color(color: str, *, oll=False, masked=False) -> str:
         face = COLOR_TO_FACE[color]
 
-        if oll and color != 'Y':
+        if masked or (oll and color != 'Y'):
             color = 'H'
 
         return f'[face_{ color.lower() }] { face } [/face_{ color.lower() }]'
 
-    def _print_top_down_face(self, face: Face) -> str:
+    def _print_top_down_face(self, face: Face,
+                             cube_mask: BaseCube | None = None) -> str:
         result = ''
         cube = self.cube
+
+        if cube_mask:
+            flat_mask = cube_mask.get_face_flat(face)
 
         for index, color in enumerate(cube.get_face_flat(face)):
             if index % cube.size == 0:
                 result += (' ' * (3 * cube.size))
 
-            result += self._format_color(color.name)
+            masked = False
+            if cube_mask and color != flat_mask[index]:
+                masked = True
+
+            result += self._format_color(color.name, masked=masked)
 
             if index % cube.size == cube.size - 1:
                 result += (' ' * (2 * 3 * cube.size))
@@ -59,11 +67,14 @@ class CubePrintRich:
 
         return result
 
-    def print_cube(self, orientation: Algorithm) -> str:
+    def print_cube(self, orientation: Algorithm,
+                   cube_mask: BaseCube | None = None) -> str:
         cube = self.cube
 
         if orientation:
             cube.rotate(str(orientation))
+            if cube_mask:
+                cube_mask.rotate(str(orientation))
 
         # Flatten middle layer
         print_order_mid = zip(
@@ -74,20 +85,36 @@ class CubePrintRich:
             strict=True,
         )
 
+        if cube_mask:
+            print_order_mid_mask = list(zip(
+                cube_mask.get_face(Face.L),
+                cube_mask.get_face(Face.F),
+                cube_mask.get_face(Face.R),
+                cube_mask.get_face(Face.B),
+                strict=True,
+            ))
+
         # Top
-        result = self._print_top_down_face(Face.U)
+        result = self._print_top_down_face(Face.U, cube_mask)
         # Middle
-        for line in print_order_mid:
-            for line_index, face_line in enumerate(line):
+        for order_mid_index, order_mid in enumerate(print_order_mid):
+            for line_index, face_line in enumerate(order_mid):
                 for face_line_index, color in enumerate(face_line):
-                    result += self._format_color(color.name)
+
+                    masked = False
+                    if cube_mask and color != print_order_mid_mask[
+                            order_mid_index
+                    ][line_index][face_line_index]:
+                        masked = True
+
+                    result += self._format_color(color.name, masked=masked)
 
                     if face_line_index % cube.size == cube.size - 1:
                         result += ''
                 if line_index == 3:
                     result += '\n'
         # Bottom
-        result += self._print_top_down_face(Face.D)
+        result += self._print_top_down_face(Face.D, cube_mask)
 
         if orientation:
             for _ in orientation:
@@ -124,6 +151,9 @@ class CubePrintRich:
 
         return result
 
+    def print_f2l(self, orientation: Algorithm):
+        return self.print_cube(orientation, cube_mask=BaseCube())
+
     def print_oll(self, orientation: Algorithm):
         return self.print_top_face(orientation, oll=True)
 
@@ -143,6 +173,14 @@ class Cube(BaseCube):  # type: ignore[misc]
     def full_cube(self, orientation: Algorithm):
         printer = CubePrintRich(self)
         return printer.print_cube(orientation)
+
+    def af2l(self):
+        printer = CubePrintRich(self)
+        return printer.print_f2l(LL_ORIENTATION)
+
+    def f2l(self):
+        printer = CubePrintRich(self)
+        return printer.print_f2l(LL_ORIENTATION)
 
     def oll(self):
         printer = CubePrintRich(self)

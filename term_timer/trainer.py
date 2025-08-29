@@ -37,7 +37,7 @@ class Trainer(SolveInterface):
 
     def start_line(self, cube, case, main_algorithm) -> None:
         if self.show_cube:
-            if self.step in {'cross', 'af2l', 'f2l'}:
+            if self.step == 'cross':
                 self.console.print(str(cube), end='')
             else:
                 self.console.print(getattr(cube, self.step)(), end='')
