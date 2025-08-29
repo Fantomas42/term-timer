@@ -1,5 +1,6 @@
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_time
@@ -59,7 +60,11 @@ class Trainer(SolveInterface):
         if self.show_solution:
             main_algorithm = format_alg_triggers(
                 format_alg_moves(
-                    str(main_algorithm),
+                    format_alg_aufs(
+                        str(main_algorithm),
+                        pre_auf=True,
+                        post_auf=True,
+                    ),
                 ),
                 DEFAULT_TRIGGERS,
             )
