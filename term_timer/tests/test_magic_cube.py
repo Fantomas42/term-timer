@@ -92,7 +92,9 @@ class TestCubePrintRich(unittest.TestCase):
         result = self.printer.print_cube('')
 
         # Vérifier que _print_top_down_face a été appelé deux fois (pour U et D)
-        mock_print_face.assert_has_calls([call(Face.U), call(Face.D)])
+        mock_print_face.assert_has_calls(
+            [call(Face.U, None), call(Face.D, None)],
+        )
 
         # Vérifier que le résultat contient les parties attendues
         self.assertIn('TOP', result)
