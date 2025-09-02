@@ -177,6 +177,7 @@ class GanGen2Driver(Driver):
             co = []
             ep = []
             eo = []
+            so = [0, 1, 2, 3, 4, 5]
             # Corners
             for i in range(7):
                 cp.append(msg.get_bit_word(12 + i * 3, 3))
@@ -195,7 +196,7 @@ class GanGen2Driver(Driver):
                 'clock': clock,
                 'timestamp': timestamp,
                 'serial': serial,
-                'facelets': cubies_to_facelets(cp, co, ep, eo),
+                'facelets': cubies_to_facelets(cp, co, ep, eo, so),
                 'state': {
                     'CP': cp,
                     'CO': co,
