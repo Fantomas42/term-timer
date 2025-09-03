@@ -98,7 +98,7 @@ def is_valid_next_move(current: str, previous: str) -> bool:
 
 
 def random_moves(cube_size: int, iterations: int,
-                 *, easy_cross: bool) -> tuple[Algorithm, int]:
+                 *, easy_cross: bool) -> Algorithm:
     move_set = MOVES_BY_CUBE[cube_size]
 
     if easy_cross:
