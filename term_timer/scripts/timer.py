@@ -2,7 +2,7 @@ import asyncio
 from contextlib import suppress
 from random import seed
 
-from cubing_algs.move import InvalidMoveError
+from cubing_algs.exceptions import InvalidMoveError
 
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.arguments import COMMAND_RESOLUTIONS
