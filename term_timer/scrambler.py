@@ -61,7 +61,7 @@ def trainer(step, cases):
 
     if step == 'cross':
         case_name = 'Cross'
-        main_algorithm = ''
+        main_algorithm = Algorithm()
         scramble = scramble_easy_cross()
     else:
         case_name, main_algorithm, scramble = random_training(step, cases)

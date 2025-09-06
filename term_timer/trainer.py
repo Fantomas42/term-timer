@@ -54,7 +54,7 @@ class Trainer(SolveInterface):
             f'[comment]// [link={ link }]{ case }[/link][/comment]',
         )
 
-        if self.show_solution:
+        if self.show_solution and main_algorithm:
             main_algorithm = format_alg_triggers(
                 format_alg_moves(
                     format_alg_aufs(
