@@ -3,15 +3,6 @@ from magiccube.cube import Cube as BaseCube
 
 from term_timer.config import CUBE_ORIENTATION
 
-COLOR_TO_FACE = {
-    'R': 'R',
-    'B': 'B',
-    'Y': 'D',
-    'G': 'F',
-    'W': 'U',
-    'O': 'L',
-}
-
 
 # Patch VCubeDisplay
 def display_rich_facelet(_, facelet: str, mask: str = '') -> str:
