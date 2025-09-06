@@ -123,13 +123,13 @@ theme = {
     'timer_45': f'{ TEXT_LIGHT } on #CC00FF',
     'timer_50': f'{ TEXT_LIGHT } on #FF00FF',
 
-    'face_w': f'{ TEXT_DARK } on #E4E4E4',
-    'face_y': f'{ TEXT_DARK } on { YELLOW }',
+    'face_u': f'{ TEXT_DARK } on #E4E4E4',
+    'face_d': f'{ TEXT_DARK } on { YELLOW }',
     'face_b': f'{ TEXT_LIGHT } on #0000FF',
     'face_r': f'{ TEXT_DARK } on { RED }',
-    'face_g': f'{ TEXT_DARK } on { GREEN }',
-    'face_o': f'{ TEXT_DARK } on { ORANGE }',
-    'face_h': f'{ TEXT_DARK } on #666666',
+    'face_f': f'{ TEXT_DARK } on { GREEN }',
+    'face_l': f'{ TEXT_DARK } on { ORANGE }',
+    'face_hide': '#D0D0D0 on #444444',
 }
 
 theme.update(UI_CONFIG)

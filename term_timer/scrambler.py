@@ -10,7 +10,7 @@ from cubing_algs.transform.rotation import compress_final_rotations
 from cubing_algs.vcube import VCube
 from kociemba import solve
 
-from term_timer.config import LL_ORIENTATION
+from term_timer.config import CUBE_ORIENTATION
 from term_timer.magic_cube import Cube
 from term_timer.methods.cases import CASES
 
@@ -81,7 +81,7 @@ def random_training(step, selected_cases):
         error_string = f'Invalid case { case } for { step.upper() }'
         raise InvalidCaseError(error_string)
 
-    algo = LL_ORIENTATION + choice(cases[case]['setups']) + LL_ORIENTATION
+    algo = CUBE_ORIENTATION + choice(cases[case]['setups']) + CUBE_ORIENTATION
     case_name = cases[case]['name']
     main_algorithm = cases[case]['main']
 

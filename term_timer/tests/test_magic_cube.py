@@ -18,7 +18,7 @@ class TestCubePrintRich(unittest.TestCase):
 
     def test_format_color(self):
         result = self.printer._format_color('W')
-        expected = '[face_w] U [/face_w]'
+        expected = '[face_u] U [/face_u]'
         self.assertEqual(result, expected)
 
     @patch.object(CubePrintRich, '_format_color', return_value='[W]')
@@ -93,7 +93,7 @@ class TestCubePrintRich(unittest.TestCase):
 
         # Vérifier que _print_top_down_face a été appelé deux fois (pour U et D)
         mock_print_face.assert_has_calls(
-            [call(Face.U, None), call(Face.D, None)],
+            [call(Face.U), call(Face.D)],
         )
 
         # Vérifier que le résultat contient les parties attendues
