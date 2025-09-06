@@ -580,7 +580,7 @@ class StatisticsReporter(Statistics):
             cube = Cube(self.cube_size)
             cube.rotate(solve.scramble)
 
-            console.print(cube.full_cube(None), end='')
+            console.print(str(cube), end='')
 
         if solve.advanced:
             if show_reconstruction:

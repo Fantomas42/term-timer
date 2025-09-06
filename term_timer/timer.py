@@ -216,13 +216,13 @@ class Timer(SolveInterface):
 
         if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
             scramble = state_to_scramble(
-                cube.get_kociemba_facelet_positions(),
+                cube.state,
                 self.bluetooth_cube.state,
             )
             self.scramble_oriented = self.reorient(scramble)
         else:
             self.scramble_oriented = self.reorient(self.scramble)
-        self.facelets_scrambled = cube.get_kociemba_facelet_positions()
+        self.facelets_scrambled = cube.state
 
         self.start_line(cube)
 

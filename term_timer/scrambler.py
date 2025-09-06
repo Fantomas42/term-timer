@@ -49,9 +49,7 @@ def scrambler(cube_size: int, iterations: int,
     if cube_size != 3 or iterations or easy_cross or scrambled:
         return scrambled, cube
 
-    scrambled = state_to_scramble(
-        cube.get_kociemba_facelet_positions(),
-    )
+    scrambled = state_to_scramble(cube.state)
 
     return scrambled, cube
 
