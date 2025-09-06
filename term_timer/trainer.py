@@ -6,7 +6,7 @@ from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
 from term_timer.methods.base import FaceletAnalyser
-from term_timer.scrambler import scramble_moves
+from term_timer.scrambler import state_to_scramble
 from term_timer.scrambler import trainer
 from term_timer.solve import Solve
 from term_timer.triggers import DEFAULT_TRIGGERS
@@ -119,7 +119,7 @@ class Trainer(SolveInterface):
         )
 
         if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
-            scramble = scramble_moves(
+            scramble = state_to_scramble(
                 cube.get_kociemba_facelet_positions(),
                 self.bluetooth_cube.state,
             )

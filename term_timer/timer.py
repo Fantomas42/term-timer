@@ -5,8 +5,8 @@ from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
-from term_timer.scrambler import scramble_moves
 from term_timer.scrambler import scrambler
+from term_timer.scrambler import state_to_scramble
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 
@@ -215,7 +215,7 @@ class Timer(SolveInterface):
         )
 
         if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
-            scramble = scramble_moves(
+            scramble = state_to_scramble(
                 cube.get_kociemba_facelet_positions(),
                 self.bluetooth_cube.state,
             )

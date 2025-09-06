@@ -18,7 +18,10 @@ class InvalidCaseError(Exception):
     ...
 
 
-def scramble_moves(state: str, facelets: str = '') -> Algorithm:
+def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
+    """
+    Return algorithm to reach a certain state
+    """
     solution: str = solve(state, facelets) if facelets else solve(state)
 
     return parse_moves(solution).transform(mirror_moves)
@@ -45,7 +48,7 @@ def scrambler(cube_size: int, iterations: int,
     if cube_size != 3 or iterations or easy_cross or scrambled:
         return scrambled, cube
 
-    scrambled = scramble_moves(
+    scrambled = state_to_scramble(
         cube.get_kociemba_facelet_positions(),
     )
 
