@@ -17,7 +17,9 @@ COLOR_TO_FACE = {
 
 # Patch VCubeDisplay
 def display_rich_facelet(_, facelet: str, mask: str = '') -> str:
-    face_color = 'hide' if mask == '0' else facelet.lower()
+    face_color = facelet.lower()
+    if mask == '0':
+        face_color += '_hidden'
 
     return (
         f'[face_{ face_color }]'

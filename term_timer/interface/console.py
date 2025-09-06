@@ -9,6 +9,7 @@ ORANGE = '#FF8700'
 YELLOW = '#FFFF00'
 TEXT_DARK = '#080808'
 TEXT_LIGHT = '#FFFFD7'
+BG_HIDDEN = '#333333'
 
 theme = {
     'warning': f'bold { RED }',
@@ -129,7 +130,13 @@ theme = {
     'face_r': f'{ TEXT_DARK } on { RED }',
     'face_f': f'{ TEXT_DARK } on { GREEN }',
     'face_l': f'{ TEXT_DARK } on { ORANGE }',
-    'face_hide': '#D0D0D0 on #444444',
+
+    'face_u_hidden': f'#E4E4E4 on { BG_HIDDEN }',
+    'face_d_hidden': f'{ YELLOW } on { BG_HIDDEN }',
+    'face_b_hidden': f'#00AFFF on { BG_HIDDEN }',
+    'face_r_hidden': f'{ RED } on { BG_HIDDEN }',
+    'face_f_hidden': f'{ GREEN } on { BG_HIDDEN }',
+    'face_l_hidden': f'{ ORANGE } on { BG_HIDDEN }',
 }
 
 theme.update(UI_CONFIG)
