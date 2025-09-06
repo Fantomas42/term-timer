@@ -37,10 +37,7 @@ class Trainer(SolveInterface):
 
     def start_line(self, cube, case, main_algorithm) -> None:
         if self.show_cube:
-            if self.step == 'cross':
-                self.console.print(str(cube), end='')
-            else:
-                self.console.print(getattr(cube, self.step)(), end='')
+            cube.show(self.step)
 
         if self.step == 'cross':
             link = ''
@@ -120,13 +117,13 @@ class Trainer(SolveInterface):
 
         if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
             scramble = state_to_scramble(
-                cube.get_kociemba_facelet_positions(),
+                cube.state,
                 self.bluetooth_cube.state,
             )
             self.scramble_oriented = self.reorient(scramble)
         else:
             self.scramble_oriented = self.reorient(self.scramble)
-        self.facelets_scrambled = cube.get_kociemba_facelet_positions()
+        self.facelets_scrambled = cube.state
 
         self.start_line(cube, case, main_algorithm)
 

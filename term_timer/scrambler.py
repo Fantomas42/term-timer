@@ -7,6 +7,7 @@ from cubing_algs.scrambler import scramble_easy_cross
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.transform.rotation import compress_final_rotations
+from cubing_algs.vcube import VCube
 from kociemba import solve
 
 from term_timer.config import LL_ORIENTATION
@@ -56,12 +57,13 @@ def scrambler(cube_size: int, iterations: int,
 
 
 def trainer(step, cases):
+    cube = VCube()
+
     if step == 'cross':
         case_name = 'Cross'
-        scramble, cube = scrambler(3, 0, easy_cross=True)
         main_algorithm = ''
+        scramble = scramble_easy_cross()
     else:
-        cube = Cube(3)
         case_name, main_algorithm, scramble = random_training(step, cases)
 
     cube.rotate(scramble)
