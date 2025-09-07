@@ -8,6 +8,7 @@ Set TypingSpeed 75ms
 Set FontSize 32
 Set Width 2200
 Set Height 700
+Set PlaybackSpeed 0.8
 
 Type "term-timer list 10" Enter
 

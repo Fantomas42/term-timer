@@ -8,8 +8,9 @@ Set TypingSpeed 75ms
 Set FontSize 32
 Set Width 2200
 Set Height 1200
+Set PlaybackSpeed 0.7
 
-Type "term-timer solve -p 1" Sleep 500ms  Enter
+Type "term-timer solve 1" Sleep 500ms  Enter
 
 Sleep 2s  # Inspect
 
