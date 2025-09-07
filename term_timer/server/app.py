@@ -82,7 +82,7 @@ def format_score(score: int, title: str = '') -> str:
     return f'<span class="stat-{ klass }">{ title }{ score:.2f}</span>'
 
 
-def format_line(value):
+def format_line(value: str) -> str:
     if not value:
         return ''
 
@@ -135,19 +135,19 @@ def parse_case_name(value, step):
         return code, name
 
 
-def normalize_value(value, method_applied, metric, name):
+def normalize_value(value, method_applied, metric, name) -> str:
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value }</span>'
 
 
-def normalize_percent(value, method_applied, metric, name):
+def normalize_percent(value, method_applied, metric, name) -> str:
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value:.2f}%</span>'
 
 
-def reconstruction_step(step):
+def reconstruction_step(step) -> str:
     algorithm = str(step['moves_prettified'])
 
     algorithm = format_alg_triggers(
@@ -163,7 +163,7 @@ def reconstruction_step(step):
     return format_line(algorithm)
 
 
-def reconstruction_overheads(step, solve):
+def reconstruction_overheads(step, solve: Solve) -> str:
     source, compressed = solve.missed_moves_pair(
         step['moves_humanized'],
     )
@@ -192,7 +192,7 @@ def reconstruction_overheads(step, solve):
     return format_line(algo)
 
 
-def reconstruction_pauses(step, solve):
+def reconstruction_pauses(step, solve: Solve) -> str:
     source_paused = step['moves_humanized'].transform(
         pause_moves(
             solve.move_speed / MS_TO_NS_FACTOR,
@@ -271,7 +271,7 @@ class View:
     def get_context(self):
         raise NotImplementedError
 
-    def as_view(self, debug):
+    def as_view(self, debug: bool) -> str:  # noqa: FBT001
         context = self.get_context()
 
         content = self.template(
@@ -284,7 +284,7 @@ class View:
         return content
 
     def template(self, template_name, **context):
-        context['now'] = datetime.now(tz=timezone.utc)  # noqa UP017
+        context['now'] = datetime.now(tz=timezone.utc)  # noqa: UP017
 
         return jinja2_template(
             template_name,

@@ -12,7 +12,9 @@ from term_timer.stats import StatisticsTools
 logger = logging.getLogger(__name__)
 
 
-def analyse_solve_worker(solve, method_name, *, full=False):
+def analyse_solve_worker(solve: Solve,
+                         method_name: str, *,
+                         full: bool = False) -> dict:
     if not solve.advanced:
         return {
             'solve': solve if full else None,
@@ -47,7 +49,7 @@ def analyse_solve_worker(solve, method_name, *, full=False):
 
 class SolvesMethodAggregator:
 
-    def __init__(self, method_name, stack, *, full=True):
+    def __init__(self, method_name: str, stack, *, full: bool = True) -> None:
         self.stack = stack
         self.full = full
 
@@ -68,7 +70,7 @@ class SolvesMethodAggregator:
         with Pool(processes=num_processes) as pool:
             return pool.map(worker_func, self.stack)
 
-    def aggregate(self):
+    def aggregate(self) -> dict:
         start = time.time()
         analyses = self.collect_analyses()
 

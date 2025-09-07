@@ -11,10 +11,10 @@ from term_timer.methods.cases import CASES_MASKS
 class CFOPAnalyser(Analyser):
     name = 'CFOP'
     step_list = ('Cross', 'F2L', 'OLL', 'PLL')
-    aufs: ClassVar[dict[str, tuple[bool, bool]]] = {
-        'F2L': (True, False),
-        'OLL': (True, False),
-        'PLL': (True, True),
+    aufs: ClassVar[dict[str, list[bool]]] = {
+        'F2L': [True, False],
+        'OLL': [True, False],
+        'PLL': [True, True],
     }
     norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
         'moves': {
@@ -239,7 +239,7 @@ class CFOPAnalyser(Analyser):
 class CF4OPAnalyser(CFOPAnalyser):
     name = 'CF4OP'
     step_list = ('Cross', 'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4', 'OLL', 'PLL')
-    aufs: ClassVar[dict[str, tuple[bool, bool]]] = {
+    aufs: ClassVar[dict[str, list[bool]]] = {
         'F2L 1': [True, False],
         'F2L 2': [True, False],
         'F2L 3': [True, False],
@@ -247,7 +247,7 @@ class CF4OPAnalyser(CFOPAnalyser):
         'OLL': [True, True],
         'PLL': [True, True],
     }
-    norms: ClassVar[dict[str, dict[str, float]]] = {
+    norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
         'moves': {
             'Cross': 6,
             'XCross': 8,

@@ -86,7 +86,7 @@ class Trainer(SolveInterface):
                 end='', style='consign',
             )
 
-    def cube_is_solved(self):
+    def cube_is_solved(self) -> bool:
         return FaceletAnalyser().check_step(
             self.step_code,
             self.bluetooth_cube.state,

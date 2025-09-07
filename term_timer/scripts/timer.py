@@ -117,7 +117,7 @@ async def trainer(options) -> int:
     return 0
 
 
-def tools(command, options):
+def tools(command: str, options) -> int:
     cube = options.cube
 
     stack = load_all_solves(
@@ -178,7 +178,7 @@ def tools(command, options):
     return 0
 
 
-def manage(command, options):
+def manage(command: str, options) -> int:
     cube = options.cube
 
     if command == 'edit':
@@ -212,3 +212,5 @@ def main() -> int:
         if command in {'edit', 'delete'}:
             return manage(command, options)
         return tools(command, options)
+
+    return 0

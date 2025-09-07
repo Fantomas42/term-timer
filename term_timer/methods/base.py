@@ -136,9 +136,9 @@ class FaceletAnalyser:
 
 class Analyser(FaceletAnalyser):
     name = ''
-    step_list: tuple[str] = ()
+    step_list: tuple[str, ...] = ()
     norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {}
-    aufs: ClassVar[dict[str, tuple[bool, bool]]] = {}
+    aufs: ClassVar[dict[str, list[bool]]] = {}
     aggregate: ClassVar[dict[str, int]] = {}
 
     def __init__(self, scramble: Algorithm, solution: Algorithm):
@@ -274,8 +274,7 @@ class Analyser(FaceletAnalyser):
 
         return summary
 
-    def get_aufs(self, name: str, moves: Algorithm) -> list[
-            int | None, int | None]:
+    def get_aufs(self, name: str, moves: Algorithm) -> list[int | None]:
         pre_auf, post_auf = None, None
         pre, post = self.aufs.get(name, [False, False])
 
@@ -287,7 +286,7 @@ class Analyser(FaceletAnalyser):
 
         return [pre_auf, post_auf]
 
-    def get_auf(self, moves: Algorithm, mode):
+    def get_auf(self, moves: Algorithm, mode: str) -> int:
         auf = 0
 
         if mode == 'post':

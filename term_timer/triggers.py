@@ -26,7 +26,7 @@ BASE_TRIGGERS = {
 }
 
 
-TRIGGERS = {}
+TRIGGERS: dict[str, list[str]] = {}
 for algo_string, name in BASE_TRIGGERS.items():
     source_algo = parse_moves(algo_string)
     anti_algo = source_algo.transform(
@@ -57,7 +57,8 @@ DEFAULT_TRIGGERS = [
 ]
 
 
-def apply_trigger_outside_blocks(algorithm: str, regex, replacement_func):
+def apply_trigger_outside_blocks(
+        algorithm: str, regex, replacement_func) -> str:
     blocks = []
 
     for match in re.finditer(BLOCK_PATTERN, algorithm):
