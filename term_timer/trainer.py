@@ -38,7 +38,7 @@ class Trainer(SolveInterface):
     def start_line(self, cube, case, main_algorithm) -> None:
         if self.show_cube:
             self.console.print(
-                cube.display('f2l' if self.step == 'af2l' else self.step),
+                cube.display(self.step),
             )
 
         if self.step == 'cross':
