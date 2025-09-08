@@ -3,14 +3,12 @@ from functools import cached_property
 from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.constants import AUF_CHAR
 from cubing_algs.constants import INITIAL_STATE
 from cubing_algs.masks import FULL_MASK
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
 
-from term_timer.config import CUBE_ORIENTATION_MOVES
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
@@ -25,10 +23,7 @@ F1L_FACE     = '111010000'  # noqa: E221
 F2L_FACE     = '111111000'  # noqa: E221
 FULL_FACE    = '1' * 9      # noqa: E221
 
-AUF_MOVE = reorient_moves(
-    CUBE_ORIENTATION_MOVES,
-    parse_moves(AUF_CHAR),
-)[0].base_move
+AUF_MOVE = 'D'  # Because actually AUF is based on a URFDLB cube and moves
 
 STEPS_CONFIG = {
     'Cross': {

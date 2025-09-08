@@ -2,6 +2,7 @@ import os
 from importlib.util import find_spec
 from typing import Any
 
+from cubing_algs.constants import OPPOSITE_FACES
 from cubing_algs.parsing import parse_moves
 from cubing_algs.vcube import VCube
 
@@ -83,6 +84,8 @@ CUBE_ORIENTATION_MOVES = parse_moves(
 )
 
 CUBE_METHOD = CUBE_CONFIG.get('method')
+
+AUF_MOVE = OPPOSITE_FACES[CUBE_ORIENTATION[0]]
 
 TRAINER_STEP = TRAINER_CONFIG.get('step')
 
