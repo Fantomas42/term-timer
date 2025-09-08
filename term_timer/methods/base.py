@@ -4,7 +4,8 @@ from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import AUF_CHAR
-from cubing_algs.constants import FACE_ORDER
+from cubing_algs.constants import INITIAL_STATE
+from cubing_algs.masks import FULL_MASK
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
@@ -16,10 +17,6 @@ from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 
-INITIAL = ''
-for face in FACE_ORDER:
-    INITIAL += face * 9
-
 CENTER_PIECE = '000010000'
 CROSS_PIECE  = '010010000'  # noqa: E221
 LEFT_FACE    = '110110000'  # noqa: E221
@@ -27,7 +24,6 @@ RIGHT_FACE   = '011011000'  # noqa: E221
 F1L_FACE     = '111010000'  # noqa: E221
 F2L_FACE     = '111111000'  # noqa: E221
 FULL_FACE    = '1' * 9      # noqa: E221
-FULL_CUBE    = '1' * 54     # noqa: E221
 
 AUF_MOVE = reorient_moves(
     CUBE_ORIENTATION,
@@ -92,17 +88,17 @@ STEPS_CONFIG = {
         'optimizers': [remove_auf_moves],
     },
     'PLL': {
-        'mask': FULL_CUBE,
+        'mask': FULL_MASK,
         'triggers': DEFAULT_TRIGGERS,
         'optimizers': [remove_auf_moves],
     },
     'LL': {
-        'mask': FULL_CUBE,
+        'mask': FULL_MASK,
         'triggers': DEFAULT_TRIGGERS,
         'optimizers': [remove_auf_moves],
     },
     'RAW': {
-        'mask': FULL_CUBE,
+        'mask': FULL_MASK,
         'triggers': DEFAULT_TRIGGERS,
     },
 }
@@ -126,7 +122,7 @@ class FaceletAnalyser:
 
         matching = self.build_facelets_masked(
             mask,
-            INITIAL,
+            INITIAL_STATE,
         )
         return matching == self.build_facelets_masked(
             mask,
