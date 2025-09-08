@@ -12,7 +12,7 @@ from cubing_algs.vcube import VCube
 from term_timer.argparser import ArgumentParser
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
-from term_timer.config import CUBE_ORIENTATION
+from term_timer.config import CUBE_ORIENTATION_MOVES
 from term_timer.logger import LOGGING_DIR
 from term_timer.opengl.thread import CubeGLThread
 from term_timer.transform import humanize_moves
@@ -166,7 +166,7 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
                 recon = prettify_moves(
                     humanize_moves(
                         reorient_moves(
-                            CUBE_ORIENTATION,
+                            CUBE_ORIENTATION_MOVES,
                             algo,
                         ),
                     ),

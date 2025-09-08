@@ -1,6 +1,6 @@
 from cubing_algs.algorithm import Algorithm
 
-from term_timer.config import CUBE_ORIENTATION
+from term_timer.config import CUBE_ORIENTATION_MOVES
 from term_timer.transform import reorient_moves
 
 
@@ -9,7 +9,7 @@ class Orienter:
     def __init__(self):
         super().__init__()
 
-        self.cube_orientation = CUBE_ORIENTATION
+        self.cube_orientation_moves = CUBE_ORIENTATION_MOVES
 
     def reorient(self, algorithm: Algorithm) -> Algorithm:
-        return reorient_moves(self.cube_orientation, algorithm)
+        return reorient_moves(self.cube_orientation_moves, algorithm)

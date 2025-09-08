@@ -32,7 +32,7 @@ class TestTimerModule(unittest.TestCase):
                 'facelets_received_event',
                 'hardware_received_event',
                 'console',
-                'cube_orientation',
+                'cube_orientation_moves',
                 'save_moves',
                 'save_gesture',
                 'save_gesture_event',

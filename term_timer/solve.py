@@ -14,7 +14,7 @@ from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.timing import untime_moves
 
 from term_timer.config import CUBE_METHOD
-from term_timer.config import CUBE_ORIENTATION
+from term_timer.config import CUBE_ORIENTATION_MOVES
 from term_timer.config import SERVER_CONFIG
 from term_timer.config import STATS_CONFIG
 from term_timer.constants import DNF
@@ -63,7 +63,7 @@ class Solve:
         self.raw_scramble = scramble
 
         self.method_name = CUBE_METHOD
-        self.orientation = CUBE_ORIENTATION
+        self.orientation = CUBE_ORIENTATION_MOVES
 
     @cached_property
     def solution(self):
@@ -668,9 +668,11 @@ class Solve:
         previous_time = 0
         orientation_offset = 0
 
-        if CUBE_ORIENTATION:
-            orientation_offset = int(CUBE_ORIENTATION.metrics['rtm'] * speed)
-            timing.append([0, orientation_offset, str(CUBE_ORIENTATION)])
+        if CUBE_ORIENTATION_MOVES:
+            orientation_offset = int(
+                CUBE_ORIENTATION_MOVES.metrics['rtm'] * speed,
+            )
+            timing.append([0, orientation_offset, str(CUBE_ORIENTATION_MOVES)])
             previous_time = orientation_offset
 
         full_algo = ''

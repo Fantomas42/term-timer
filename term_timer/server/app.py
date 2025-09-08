@@ -21,6 +21,7 @@ from cubing_algs.transform.timing import untime_moves
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.config import CUBE_ORIENTATION_MOVES
 from term_timer.constants import CUBE_SIZES
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PAUSE_FACTOR
@@ -612,6 +613,7 @@ class SolveDetailView(View):
             'tps': tps,
             'recognitions': recognitions,
             'cube_orientation': CUBE_ORIENTATION,
+            'cube_orientation_moves': CUBE_ORIENTATION_MOVES,
             'reconstruction_text': reconstruction_text,
             'reconstruction_timing': self.solve.reconstruction_steps_timing,
             'reconstruction_index': step_index,

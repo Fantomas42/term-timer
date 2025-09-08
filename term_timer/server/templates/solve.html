@@ -117,7 +117,7 @@
 
      const player = new TwistyPlayer({
        alg: parsedAlg,
-       experimentalSetupAlg: "{{ cube_orientation }}",
+       experimentalSetupAlg: "{{ cube_orientation_moves }}",
        experimentalSetupAnchor: "end",
        viewerLink: "none",
        puzzle: "{{ cube }}x{{ cube }}x{{ cube }}",
@@ -738,9 +738,9 @@
             Reconstruction {{ solve.method_analyser.name }}
           </a>
         </h2>
-        {% if cube_orientation %}
+        {% if cube_orientation_moves %}
           <div class="orientation">
-            <span class="move">{{ cube_orientation }}</span>
+            <span class="move">{{ cube_orientation_moves }}</span>
           </div>
         {% endif %}
       </div>

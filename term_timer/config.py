@@ -3,6 +3,7 @@ from importlib.util import find_spec
 from typing import Any
 
 from cubing_algs.parsing import parse_moves
+from cubing_algs.vcube import VCube
 
 from term_timer.constants import CONFIG_FILE
 
@@ -17,7 +18,7 @@ countdown = 0.0
 metronome = 0.0
 
 [cube]
-orientation = ["z2"]
+orientation = "DF"
 method = "cf4op"
 
 [trainer]
@@ -75,8 +76,10 @@ TRAINER_CONFIG = CONFIG.get('trainer', {})
 
 SERVER_CONFIG = CONFIG.get('server', {})
 
-CUBE_ORIENTATION = parse_moves(
-    CUBE_CONFIG.get('orientation'),
+CUBE_ORIENTATION = CUBE_CONFIG.get('orientation')
+
+CUBE_ORIENTATION_MOVES = parse_moves(
+    VCube().compute_orientation_moves(CUBE_ORIENTATION),
 )
 
 CUBE_METHOD = CUBE_CONFIG.get('method')
