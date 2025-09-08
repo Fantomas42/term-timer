@@ -61,7 +61,8 @@ class LBLAnalyser(Analyser):
                     'step_execution_percent': 0,
                     'step_recognition_percent': 0,
                     'increment': 0,
-                    'cases': ['SKIP'],
+                    'case': 'SKIP',
+                    'case_infos': [],
                     'facelets': '',
                 },
             )

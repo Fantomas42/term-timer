@@ -31,14 +31,14 @@ class TestAnalyseSolveWorker(unittest.TestCase):
         solve.method_analyser.aggregate = {'step1': 0, 'step2': 1}
         solve.method_applied.summary = [
             {
-                'cases': ['case_a'],
+                'case': 'case_a',
                 'total': 10.5,
                 'execution': 8.0,
                 'recognition': 2.5,
                 'qtm': 20,
             },
             {
-                'cases': ['case_b'],
+                'case': 'case_b',
                 'total': 15.0,
                 'execution': 12.0,
                 'recognition': 3.0,
@@ -84,7 +84,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
         solve.advanced = True
         solve.method_analyser.aggregate = {'step1': 0}
         solve.method_applied.summary = [{
-            'cases': ['case_a'],
+            'case': 'case_a',
             'total': 10.5,
             'execution': 8.0,
             'recognition': 2.5,

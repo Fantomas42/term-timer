@@ -830,7 +830,7 @@
                     {% set code, case_name = name|parse_case_name(step.upper()) %}
                     <div class="step-case-img">
                       <a href="?m={{ method_aggregation.analyser.name.lower() }}&step={{ step }}&case_uid={{ code }}">
-                         {{ code }}
+                        {{ code }}
                       </a>
                     </div>
                     {% if 'SKIP' not in code %}

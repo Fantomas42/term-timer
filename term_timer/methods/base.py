@@ -150,27 +150,31 @@ class Analyser(FaceletAnalyser):
         facelets = cube.rotate(self.scramble)
 
         steps = {}
-        cases = []
         progress = 0
+        case_infos = []
         step_moves = []
 
         for move_index, move in enumerate(self.solution):
-            current_progress, current_cases = self.compute_progress(cube.state)
+            current_progress, current_case_infos = self.compute_progress(
+                cube.state,
+            )
 
             if current_progress > progress:
                 step_name = self.step_list[current_progress - 1]
-                cleaned_cases = list(set(current_cases) - set(cases))
+                cleaned_case_infos = list(
+                    set(current_case_infos) - set(case_infos),
+                )
 
                 steps[step_name] = {
                     'moves': step_moves.copy(),
                     'increment': current_progress - progress,
-                    'cases': cleaned_cases,
+                    'case_infos': cleaned_case_infos,
                     'facelets': facelets,
                 }
                 step_moves = []
                 facelets = cube.state
                 progress = current_progress
-                cases.extend(cleaned_cases)
+                case_infos.extend(cleaned_case_infos)
 
             step_moves.append(move_index)
             cube.rotate(move.untimed)
@@ -179,7 +183,7 @@ class Analyser(FaceletAnalyser):
         steps[step_name] = {
             'moves': step_moves.copy(),
             'increment': 1,
-            'cases': [],
+            'case_infos': [],
             'facelets': facelets,
         }
 
@@ -258,7 +262,8 @@ class Analyser(FaceletAnalyser):
                     'step_execution_percent': (execution / total) * 100,
                     'step_recognition_percent': (recognition / total) * 100,
                     'increment': info['increment'],
-                    'cases': info['cases'],
+                    'case': '',
+                    'case_infos': info['case_infos'],
                     'facelets': info['facelets'],
                 },
             )

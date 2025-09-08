@@ -223,9 +223,10 @@ def reconstruction_pauses(step, solve: Solve) -> str:
 def optimized_step(step):
     optimizers = []
 
-    if not step['cases'] or 'SKIP' not in step['cases'][0]:
+    if 'SKIP' not in step['case']:
         optimizers = get_step_config(step['name'], 'optimizers', [])
 
+    print(step['case'], step['name'], optimizers)
     algorithm = humanize_moves(
         step['moves_reoriented'].transform(*optimizers),
     ).transform(
@@ -417,8 +418,8 @@ class SessionDetailView(View):
 
                 for s_step in reversed(solve.method_applied.summary):
                     if s_step['name'].lower() == self.step:
-                        if s_step['cases']:
-                            step_case = s_step['cases'][0].split(' ')[0].lower()
+                        if s_step['case']:
+                            step_case = s_step['case'].split(' ')[0].lower()
                             if step_case == self.case_uid:
                                 filtered_solves.append(solve)
                         break

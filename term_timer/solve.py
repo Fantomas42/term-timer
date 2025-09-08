@@ -315,30 +315,34 @@ class Solve:
                     self.reconstruction_step_line(info, multiple=False) +
                     '[/consign]'
                 )
-                if info['cases'] and info['cases'][0]:
+                if info['case']:
                     aufs = ''
                     if info['aufs'][0]:
                         aufs += f' +{ info["aufs"][0] } pre-AUF'
                     if info['aufs'][1]:
                         aufs += f' +{ info["aufs"][1] } post-AUF'
 
-                    if info['name'] in {'OLL', 'PLL'}:
-                        link = (
-                            'https://cubing.fache.fr/'
-                            f'{ info["name"] }/'
-                            f'{ info["cases"][0].split(" ")[0] }.html'
-                        )
-                        footer += (
-                            ' [comment]// '
-                            f'[link={ link }]{ info["cases"][0] }[/link]'
-                            f'{ aufs }[/comment]'
-                        )
-                    else:
-                        footer += (
-                            ' [comment]// ' +
-                            ' '.join(info['cases']) + aufs +
-                            '[/comment]'
-                        )
+                    link = (
+                        'https://cubing.fache.fr/'
+                        f'{ info["name"] }/'
+                        f'{ info["case"].split(" ")[0] }.html'
+                    )
+                    details = ''
+                    if info['case_infos']:
+                        details += f' { " ".join(info["case_infos"]) }'
+
+                    footer += (
+                        ' [comment]// '
+                        f'[link={ link }]{ info["case"] }[/link]'
+                        f'{ details }{ aufs }[/comment]'
+                    )
+
+                elif info['case_infos']:
+                    footer += (
+                        ' [comment]// ' +
+                        ' '.join(info['case_infos']) +
+                        '[/comment]'
+                    )
 
             move_klass = self.method_applied.normalize_value(
                 'moves', info['name'],
@@ -466,9 +470,13 @@ class Solve:
                 recons += f'// { info["name"] } SKIPPED\n'
                 continue
 
-            cases = ''
-            if info['cases'] and info['cases'][0]:
-                cases = f' ({ " ".join(info["cases"]) })'
+            detail_list = list(info['case_infos'])
+            if info['case']:
+                detail_list.insert(0, info['case'])
+
+            details = ''
+            if detail_list:
+                details = f' ({ " ".join(detail_list) })'
 
             aufs = ''
             if info['aufs'][0]:
@@ -482,7 +490,7 @@ class Solve:
             )
             recons += (
                 f'{ moves } // '
-                f'{ info["name"] }{ cases } '
+                f'{ info["name"] }{ details } '
                 f'Reco: { format_duration(info["recognition"]) }s '
                 f'Exec: { format_duration(info["execution"]) }s '
                 f'HTM: { info["moves_prettified"].metrics["htm"] } '

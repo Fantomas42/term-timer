@@ -31,7 +31,7 @@ def analyse_solve_worker(solve: Solve,
     for step_name, step_index in solve.method_analyser.aggregate.items():
         step = analysis.summary[step_index]
         steps[step_name] = {
-            'case': step['cases'][0],
+            'case': step['case'],
             'time': step['total'],
             'execution': step['execution'],
             'recognition': step['recognition'],
@@ -95,7 +95,7 @@ class SolvesMethodAggregator:
             score += analyse['score']
 
             for step_name, step in analyse['steps'].items():
-                step_case = step['case'].split(' ')[0]
+                step_case = step['case']
                 resume.setdefault(step_name, {})
                 resume[step_name].setdefault(
                     step_case, {

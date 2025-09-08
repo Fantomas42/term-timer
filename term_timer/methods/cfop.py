@@ -64,9 +64,7 @@ class CFOPAnalyser(Analyser):
 
     def correct_summary(self, summary):
         # Fix OLL SKIP instead of F2L
-        cases = []
         for info in summary:
-            cases.extend(info['cases'])
             if info['increment'] > 1 and 'OLL' in info['name']:
                 info['name'] = 'F2L'
 
@@ -158,7 +156,8 @@ class CFOPAnalyser(Analyser):
                     'step_execution_percent': 0,
                     'step_recognition_percent': 0,
                     'increment': 0,
-                    'cases': ['SKIP'],
+                    'case': 'SKIP',
+                    'case_infos': [],
                     'facelets': '',
                 },
             )
@@ -188,7 +187,8 @@ class CFOPAnalyser(Analyser):
                     'step_execution_percent': 0,
                     'step_recognition_percent': 0,
                     'increment': 0,
-                    'cases': ['SKIP'],
+                    'case': 'SKIP',
+                    'case_infos': [],
                     'facelets': '',
                 },
             )
@@ -218,7 +218,8 @@ class CFOPAnalyser(Analyser):
                     'step_execution_percent': 0,
                     'step_recognition_percent': 0,
                     'increment': 0,
-                    'cases': ['SKIP'],
+                    'case': 'SKIP',
+                    'case_infos': [],
                     'facelets': '',
                 },
             )
@@ -228,12 +229,12 @@ class CFOPAnalyser(Analyser):
             if info['name'] == 'OLL':
                 facelets = info['facelets']
                 if facelets:
-                    info['cases'] = [self.get_oll_case(facelets)]
+                    info['case'] = self.get_oll_case(facelets)
 
             elif info['name'] == 'PLL':
                 facelets = info['facelets']
                 if facelets:
-                    info['cases'] = [self.get_pll_case(facelets)]
+                    info['case'] = self.get_pll_case(facelets)
 
 
 class CF4OPAnalyser(CFOPAnalyser):
@@ -334,9 +335,9 @@ class CF4OPAnalyser(CFOPAnalyser):
             summary[0]['name'] = 'Full Cube'
 
         # Merge double F2L inserts
-        cases = []
+        case_infos = []
         for i, info in enumerate(summary):
-            cases.extend(info['cases'])
+            case_infos.extend(info['case_infos'])
             if info['increment'] > 1:
                 if 'F2L ' in info['name']:
                     previous = summary[i - 1]
@@ -348,9 +349,9 @@ class CF4OPAnalyser(CFOPAnalyser):
 
                 if 'OLL' in info['name']:
                     info['name'] = 'F2L 4'
-                    info['cases'] = list(
+                    info['case_infos'] = list(
                         {'FR', 'FL', 'BR', 'BL'} -
-                        set(cases),
+                        set(case_infos),
                     )
 
         self.correct_summary_cfop(summary)
@@ -377,7 +378,8 @@ class CF4OPAnalyser(CFOPAnalyser):
             'step_execution_percent': 0,
             'step_recognition_percent': 0,
             'increment': 0,
-            'cases': [],
+            'case': '',
+            'cases_info': [],
             'facelets': '',
         }
 
