@@ -1,3 +1,4 @@
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.display import VCubeDisplay
 from magiccube.cube import Cube as BaseCube
 
@@ -33,17 +34,20 @@ class Cube(BaseCube):  # type: ignore[misc]
             super().rotate(str(movements))
 
     @property
-    def state(self):
+    def state(self) -> str:
         return self.get_kociemba_facelet_positions()
 
-    def __str__(self) -> str:
-        if CUBE_ORIENTATION_MOVES:
-            self.rotate(str(CUBE_ORIENTATION_MOVES))
+    def display(self, orientation: Algorithm = None) -> str:
+        if orientation:
+            self.rotate(orientation)
 
         display = VCubeDisplay(self).display()
 
-        if CUBE_ORIENTATION_MOVES:
-            for _ in CUBE_ORIENTATION_MOVES:
+        if orientation:
+            for _ in orientation:
                 self.undo()
 
         return display
+
+    def __str__(self) -> str:
+        return self.display(CUBE_ORIENTATION_MOVES)
