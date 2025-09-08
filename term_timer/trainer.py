@@ -6,7 +6,6 @@ from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
 from term_timer.methods.base import FaceletAnalyser
-from term_timer.scrambler import state_to_scramble
 from term_timer.scrambler import trainer
 from term_timer.solve import Solve
 from term_timer.triggers import DEFAULT_TRIGGERS
@@ -115,16 +114,10 @@ class Trainer(SolveInterface):
 
         case, main_algorithm, self.scramble, cube = trainer(
                 self.step, self.cases,
+                self.bluetooth_cube,
         )
 
-        if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
-            scramble = state_to_scramble(
-                cube.state,
-                self.bluetooth_cube.state,
-            )
-            self.scramble_oriented = self.reorient(scramble)
-        else:
-            self.scramble_oriented = self.reorient(self.scramble)
+        self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.state
 
         self.start_line(cube, case, main_algorithm)

@@ -54,8 +54,8 @@ def scrambler(cube_size: int, iterations: int,
     return scrambled, cube
 
 
-def trainer(step, cases):
-    cube = VCube()
+def trainer(step, cases, bluetooth_cube: VCube | None = None):
+    cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube()
 
     if step == 'cross':
         case_name = 'Cross'
