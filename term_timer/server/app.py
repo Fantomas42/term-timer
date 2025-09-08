@@ -226,7 +226,6 @@ def optimized_step(step):
     if 'SKIP' not in step['case']:
         optimizers = get_step_config(step['name'], 'optimizers', [])
 
-    print(step['case'], step['name'], optimizers)
     algorithm = humanize_moves(
         step['moves_reoriented'].transform(*optimizers),
     ).transform(
