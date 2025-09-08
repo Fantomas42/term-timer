@@ -315,13 +315,14 @@ class Solve:
                     self.reconstruction_step_line(info, multiple=False) +
                     '[/consign]'
                 )
-                if info['case']:
-                    aufs = ''
-                    if info['aufs'][0]:
-                        aufs += f' +{ info["aufs"][0] } pre-AUF'
-                    if info['aufs'][1]:
-                        aufs += f' +{ info["aufs"][1] } post-AUF'
 
+                aufs = ''
+                if info['aufs'][0]:
+                    aufs += f' +{ info["aufs"][0] } pre-AUF'
+                if info['aufs'][1]:
+                    aufs += f' +{ info["aufs"][1] } post-AUF'
+
+                if info['case']:
                     link = (
                         'https://cubing.fache.fr/'
                         f'{ info["name"] }/'
@@ -341,7 +342,7 @@ class Solve:
                     footer += (
                         ' [comment]// ' +
                         ' '.join(info['case_infos']) +
-                        '[/comment]'
+                        f'{ aufs }[/comment]'
                     )
 
             move_klass = self.method_applied.normalize_value(
