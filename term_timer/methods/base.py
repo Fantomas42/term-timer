@@ -137,9 +137,11 @@ class Analyser(FaceletAnalyser):
     aufs: ClassVar[dict[str, list[bool]]] = {}
     aggregate: ClassVar[dict[str, int]] = {}
 
-    def __init__(self, scramble: Algorithm, solution: Algorithm):
+    def __init__(self, scramble: Algorithm, solution: Algorithm,
+                 orientation_moves: Algorithm):
         self.scramble = scramble
         self.solution = solution
+        self.orientation_moves = orientation_moves
 
         self.duration = (
             self.solution[-1].timed - self.solution[0].timed
@@ -233,7 +235,7 @@ class Analyser(FaceletAnalyser):
 
             total = execution + recognition
 
-            reorientation = reorient_moves(CUBE_ORIENTATION_MOVES, moves)
+            reorientation = reorient_moves(self.orientation_moves, moves)
             humanization = humanize_moves(reorientation)
             prettyfication = prettify_moves(humanization)
 

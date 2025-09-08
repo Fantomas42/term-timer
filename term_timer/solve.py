@@ -166,7 +166,10 @@ class Solve:
         if not self.advanced:
             return None
 
-        return self.method_analyser(self.scramble, self.solution)
+        return self.method_analyser(
+            self.scramble, self.solution,
+            self.orientation_moves,
+        )
 
     @cached_property
     def recognition_time(self) -> float:
