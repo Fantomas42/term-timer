@@ -12,7 +12,6 @@ class CFOPAnalyser(Analyser):
     name = 'CFOP'
     step_list = ('Cross', 'F2L', 'OLL', 'PLL')
     aufs: ClassVar[dict[str, list[bool]]] = {
-        'F2L': [True, False],
         'OLL': [True, False],
         'PLL': [True, True],
     }
@@ -241,10 +240,6 @@ class CF4OPAnalyser(CFOPAnalyser):
     name = 'CF4OP'
     step_list = ('Cross', 'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4', 'OLL', 'PLL')
     aufs: ClassVar[dict[str, list[bool]]] = {
-        'F2L 1': [True, False],
-        'F2L 2': [True, False],
-        'F2L 3': [True, False],
-        'F2L 4': [True, False],
         'OLL': [True, True],
         'PLL': [True, True],
     }
