@@ -3,8 +3,6 @@ from magiccube.cube import Cube as BaseCube
 
 from term_timer.config import CUBE_ORIENTATION_MOVES
 
-# TODO use CUBE_ORIENTATION only
-
 
 # Patch VCubeDisplay
 def display_rich_facelet(_, facelet: str, mask: str = '') -> str:
