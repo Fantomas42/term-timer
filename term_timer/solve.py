@@ -63,7 +63,7 @@ class Solve:
         self.raw_scramble = scramble
 
         self.method_name = CUBE_METHOD
-        self.orientation = CUBE_ORIENTATION_MOVES
+        self.orientation_moves = CUBE_ORIENTATION_MOVES
 
     @cached_property
     def solution(self):
@@ -108,7 +108,7 @@ class Solve:
     @cached_property
     def reconstruction(self) -> list[str]:
         return prettify_moves(
-            reorient_moves(self.orientation, self.solution),
+            reorient_moves(self.orientation_moves, self.solution),
         )
 
     @cached_property
@@ -276,7 +276,7 @@ class Solve:
 
         line = (
             '[step]Orientation:[/step] '
-            f'[consign]{ self.orientation!s }[/consign]\n'
+            f'[consign]{ self.orientation_moves!s }[/consign]\n'
         )
 
         for info in self.method_applied.summary:
@@ -452,8 +452,8 @@ class Solve:
         if not self.advanced:
             return recons
 
-        if self.orientation:
-            recons += f'{ self.orientation!s } // Orientation\n'
+        if self.orientation_moves:
+            recons += f'{ self.orientation_moves!s } // Orientation\n'
 
         for info in self.method_applied.summary:
             if info['type'] == 'virtual':
@@ -668,11 +668,11 @@ class Solve:
         previous_time = 0
         orientation_offset = 0
 
-        if CUBE_ORIENTATION_MOVES:
+        if self.orientation_moves:
             orientation_offset = int(
-                CUBE_ORIENTATION_MOVES.metrics['rtm'] * speed,
+                self.orientation_moves.metrics['rtm'] * speed,
             )
-            timing.append([0, orientation_offset, str(CUBE_ORIENTATION_MOVES)])
+            timing.append([0, orientation_offset, str(self.orientation_moves)])
             previous_time = orientation_offset
 
         full_algo = ''
