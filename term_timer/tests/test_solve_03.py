@@ -26,7 +26,7 @@ class TestSolve03(unittest.TestCase):
         )
 
         self.solve.method_name = 'cf4op'
-        self.solve.orientation = parse_moves('z2')
+        self.solve.orientation_moves = parse_moves('z2')
 
     def test_datetime(self):
         self.assertEqual(
