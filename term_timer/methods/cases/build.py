@@ -214,16 +214,26 @@ def main() -> None:
         metavar='SOURCE',
         help='Source to use for build',
     )
+    parser.add_argument(
+        '-m', '--mode',
+        metavar='MODE',
+        default='all',
+        help='Mode cases to build\nDefault: all',
+    )
 
     args = parser.parse_args(sys.argv[1:])
 
     with Path.open(args.source) as fd:
         data = json.load(fd)
 
-    build(data, 'OLL')
-    build(data, 'PLL')
-    build(data, 'F2L')
-    build(data, 'AF2L')
+    mode = args.mode.upper()
+    all_modes = ['OLL', 'PLL', 'F2L', 'AF2L']
+
+    if mode == 'ALL':
+        for mode in all_modes:
+            build(data, mode)
+    elif mode in all_modes:
+        build(data, mode)
 
 
 if __name__ == '__main__':
