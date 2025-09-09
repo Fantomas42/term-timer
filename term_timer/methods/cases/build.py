@@ -14,7 +14,6 @@ from term_timer.argparser import ArgumentParser
 from term_timer.config import DEBUG
 from term_timer.methods.base import FaceletAnalyser
 
-
 SKIPPED = {
     'OLL': {
         'probability': 1 / 216,
@@ -135,16 +134,17 @@ def format_case(mode: str, code: str, info: dict[str, Any],
     case_data = data.setdefault(name, {})
 
     setups = []
-    for algorithm in info['algos'][:5]:
+    for algorithm in info['algorithms'][:10]:
         setups.append(
             str(
-                parse_moves(algorithm['moves']).transform(
+                parse_moves(algorithm).transform(
                     mirror_moves,
                 ),
             ).replace(' ', ''),
         )
 
-    main_algorithm = ''.join(info['algos'][0]['moves'])
+    main_algorithm = ''.join(info['main'])
+    setups.insert(0, main_algorithm)
 
     if 'F2L' in mode:
         case_data['probability'] = 1 / 42
