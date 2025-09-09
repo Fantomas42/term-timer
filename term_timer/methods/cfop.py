@@ -96,6 +96,9 @@ class CFOPAnalyser(Analyser):
 
         return ''
 
+    def get_f2l_case(self, _facelets, _case_infos):
+        return ''
+
     @cached_property
     def score(self):
         bonus = 0
@@ -234,6 +237,13 @@ class CFOPAnalyser(Analyser):
                 facelets = info['facelets']
                 if facelets:
                     info['case'] = self.get_pll_case(facelets)
+
+            elif info['name'].startswith('F2L'):
+                facelets = info['facelets']
+                if facelets:
+                    info['case'] = self.get_f2l_case(
+                        facelets, info['case_infos'],
+                    )
 
 
 class CF4OPAnalyser(CFOPAnalyser):

@@ -325,7 +325,7 @@ class Solve:
                 if info['case']:
                     link = (
                         'https://cubing.fache.fr/'
-                        f'{ info["name"] }/'
+                        f'{ info["name"].split(" ")[0] }/'
                         f'{ info["case"].split(" ")[0] }.html'
                     )
                     details = ''
