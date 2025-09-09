@@ -87,8 +87,8 @@ class CFOPAnalyser(Analyser):
     def get_pll_case(self, facelets):
         mask = ('0' * 9) + ('000000111' * 2) + ('0' * 9) + ('000000111' * 2)
         masked = self.build_facelets_masked(
-            mask,
             facelets,
+            mask,
         )
 
         if masked in CASES_MASKS['pll']:

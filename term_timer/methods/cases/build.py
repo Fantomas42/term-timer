@@ -12,6 +12,8 @@ from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
 from term_timer.config import DEBUG
+from term_timer.methods.base import FaceletAnalyser
+
 
 SKIPPED = {
     'OLL': {
@@ -55,23 +57,15 @@ def translate(value: str) -> str:
     return TRANSLATIONS.get(value, value)
 
 
-def facelets_masked(mask: str) -> str:
-    facelets: list[str] = []
-
-    for i in range(len(INITIAL_STATE)):
-        if mask[i] == '0':
-            facelets.append('-')
-        else:
-            facelets.append(INITIAL_STATE[i])
-
-    return ''.join(facelets)
-
-
 def select_mask(mode: str, _scheme_name: str) -> str:
     if mode == 'OLL':
-        return facelets_masked(OLL_MASK)
+        return FaceletAnalyser.build_facelets_masked(
+            INITIAL_STATE, OLL_MASK,
+        )
     if mode == 'PLL':
-        return facelets_masked(PLL_MASK)
+        return FaceletAnalyser.build_facelets_masked(
+            INITIAL_STATE, PLL_MASK,
+        )
 
     return ''
 

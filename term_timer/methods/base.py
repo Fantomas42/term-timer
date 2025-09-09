@@ -102,7 +102,7 @@ STEPS_CONFIG = {
 class FaceletAnalyser:
 
     @staticmethod
-    def build_facelets_masked(mask: str, facelets: str) -> str:
+    def build_facelets_masked(facelets: str, mask: str) -> str:
         masked = []
         for i, value in enumerate(facelets):
             if mask[i] == '0':
@@ -116,12 +116,12 @@ class FaceletAnalyser:
         mask = get_step_config(step, 'mask')
 
         matching = self.build_facelets_masked(
-            mask,
             INITIAL_STATE,
+            mask,
         )
         return matching == self.build_facelets_masked(
-            mask,
             facelets,
+            mask,
         )
 
 
