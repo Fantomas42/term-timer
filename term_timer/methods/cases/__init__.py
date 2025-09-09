@@ -26,12 +26,12 @@ def load_cases(path):
                 'setups': data['setups'],
             }
 
-            for rotation, alternatives in data['rotations'].items():
-                for alternative, hashed in alternatives.items():
+            for scheme, orientations in data['rotations'].items():
+                for orientation, hashed in orientations.items():
                     cases_masks[hashed] = {
                         'case': case_name,
-                        'rotation': rotation,
-                        'alternative': alternative,
+                        'scheme': scheme,
+                        'orientation': orientation,
                     }
 
             case_id = case_name.split(' ')[0]
