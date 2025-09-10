@@ -1,6 +1,7 @@
 from functools import cached_property
 from typing import ClassVar
 
+from cubing_algs.masks import PLL_MASK
 from cubing_algs.algorithm import Algorithm
 
 from term_timer.constants import SECOND
@@ -85,10 +86,9 @@ class CFOPAnalyser(Analyser):
         return ''
 
     def get_pll_case(self, facelets):
-        mask = ('0' * 9) + ('000000111' * 2) + ('0' * 9) + ('000000111' * 2)
         masked = self.build_facelets_masked(
             facelets,
-            mask,
+            PLL_MASK,
         )
 
         if masked in CASES_MASKS['pll']:
