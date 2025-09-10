@@ -125,7 +125,7 @@ def compute_masks(name: str, moves: str, mode: str,
 def format_case(mode: str, code: str, info: dict[str, Any],
                 data: dict[str, Any], *, debug: bool = False) -> None:
     name = code.split(' ')[1]
-    if info['aliases']:
+    if info['aliases'] and mode == 'OLL':
         name += f' { translate(info["aliases"][0]) }'
 
     case_data = data.setdefault(name, {})
