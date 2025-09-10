@@ -16,20 +16,16 @@ from term_timer.methods.base import FaceletAnalyser
 
 SKIPPED = {
     'OLL': {
-        'probability': 1 / 216,
-        'probability_label': '1/216',
+        'probability': '1/216',
     },
     'PLL': {
-        'probability': 1 / 72,
-        'probability_label': '1/72',
+        'probability': '1/72',
     },
     'F2L': {
-        'probability': 1 / 42,
-        'probability_label': '1/42',
+        'probability': '1/42',
     },
     'AF2L': {
-        'probability': 1 / 42,
-        'probability_label': '1/42',
+        'probability': '1/42',
     },
 }
 
@@ -96,14 +92,15 @@ def compute_masks(name: str, moves: str, mode: str,
             algorithm = parse_moves(moves).transform(
                 mirror_moves,
             )
-
             # Orient scheme for having multiple colors,
             # apply reverse algorithm,
             # offset Y to capture all angular variations,
             # restore to URF state
             algorithm = (
-                scheme_moves + algorithm
-                + orientation_move + scheme_moves
+                scheme_moves
+                + algorithm
+                + orientation_move
+                + scheme_moves
             )
 
             mask = select_mask(mode, scheme_name)
@@ -169,14 +166,17 @@ def format_cases(cases: dict[str, dict[str, Any]], mode: str,
         format_case(mode, code, info, data, debug=debug)
 
     if mode in SKIPPED:
-        case_data = data.setdefault('SKIP', {})
-        case_data.update(SKIPPED[mode])
-        case_data.update(
+        source = SKIPPED[mode]
+        source.update(
             {
+                'aliases': [],
+                'algorithms': [],
                 'main': '',
-                'setups': [],
-                'rotations': {},
             },
+        )
+        format_case(
+            mode, f'{ mode } SKIP', source,
+            data, debug=debug,
         )
 
     return data
