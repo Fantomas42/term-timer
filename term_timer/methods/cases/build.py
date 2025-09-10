@@ -110,7 +110,7 @@ def compute_masks(name: str, moves: str, mode: str,
 
             if debug:
                 print(
-                    f'{ name } "{ scheme_name or "?"}-'
+                    f'{ name } "{ scheme_name or "?" }-'
                     f'{ orientation_move or "?" }" : { algorithm }',
                 )
                 cube.show()
@@ -165,7 +165,7 @@ def format_cases(cases: dict[str, dict[str, Any]], mode: str,
     for code, info in cases.items():
         format_case(mode, code, info, data, debug=debug)
 
-    if mode in SKIPPED:
+    if mode in SKIPPED and len(cases) > 1:
         source = SKIPPED[mode]
         source.update(
             {
@@ -199,7 +199,7 @@ def build(data: dict[str, dict[str, Any]], mode: str, case: str) -> None:
 
     formatted_cases = format_cases(cases, mode, debug=bool(case))
 
-    output_path = Path(__file__).parent / f'{ mode.lower()}.json'
+    output_path = Path(__file__).parent / f'{ mode.lower() }.json'
 
     if not case:
         with output_path.open('w+', encoding='utf8') as fd:
