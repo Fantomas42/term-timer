@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [project.urls]
-repository = "https://github.com/Fantomas/term-timer"
+repository = "https://github.com/Fantomas42/term-timer"
 
 [project.optional-dependencies]
 dev = [
