@@ -11,7 +11,7 @@ from term_timer.methods.cases import CASES_MASKS
 
 class CFOPAnalyser(Analyser):
     name = 'CFOP'
-    step_list = ('Cross', 'F2L', 'OLL', 'PLL')
+    step_list: tuple[str, ...] = ('Cross', 'F2L', 'OLL', 'PLL')
     aufs: ClassVar[dict[str, list[bool]]] = {
         'OLL': [True, False],
         'PLL': [True, True],
@@ -239,16 +239,20 @@ class CFOPAnalyser(Analyser):
                     info['case'] = self.get_pll_case(facelets)
 
             elif info['name'].startswith('F2L'):
-                facelets = info['facelets']
-                if facelets:
+                moves = info['moves']
+                if moves:
                     info['case'] = self.get_f2l_case(
-                        facelets, info['case_infos'],
+                        moves, info['case_infos'][0],
                     )
 
 
 class CF4OPAnalyser(CFOPAnalyser):
     name = 'CF4OP'
-    step_list = ('Cross', 'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4', 'OLL', 'PLL')
+    step_list: tuple[str, ...] = (
+        'Cross',
+        'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4',
+        'OLL', 'PLL',
+    )
     aufs: ClassVar[dict[str, list[bool]]] = {
         'OLL': [True, True],
         'PLL': [True, True],
