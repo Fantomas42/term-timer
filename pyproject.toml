@@ -23,7 +23,7 @@ dependencies = [
     "bottle==0.13.3",
     "cryptography==44.0.2",
     "kociemba==1.2.1",
-    "cubing_algs==1.0.6",
+    "cubing_algs==1.0.7",
 ]
 
 [project.urls]
@@ -140,7 +140,7 @@ allow-magic-value-types = ["str", "int"]
 
 [tool.mypy]
 disable_error_code = ["import-untyped"]
-exclude = ["tests"]
+exclude = ["tests", "poc"]
 python_version = 3.12
 
 [tool.pytest.ini_options]
