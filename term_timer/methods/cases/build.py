@@ -13,19 +13,32 @@ from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
 from term_timer.methods.base import FaceletAnalyser
+from term_timer.methods.base import get_step_config
 
 SKIPPED = {
     'OLL': {
         'probability': '1/216',
+        'aliases': [],
+        'algorithms': [],
+        'main': '',
     },
     'PLL': {
         'probability': '1/72',
+        'aliases': [],
+        'algorithms': [],
+        'main': '',
     },
     'F2L': {
         'probability': '1/42',
+        'aliases': [],
+        'algorithms': [],
+        'main': '',
     },
     'AF2L': {
         'probability': '1/42',
+        'aliases': [],
+        'algorithms': [],
+        'main': '',
     },
 }
 
@@ -52,7 +65,7 @@ def translate(value: str) -> str:
     return TRANSLATIONS.get(value, value)
 
 
-def select_mask(mode: str, _scheme_name: str) -> str:
+def select_mask(mode: str, scheme_name: str) -> str:
     if mode == 'OLL':
         return FaceletAnalyser.build_facelets_masked(
             INITIAL_STATE, OLL_MASK,
@@ -61,12 +74,28 @@ def select_mask(mode: str, _scheme_name: str) -> str:
         return FaceletAnalyser.build_facelets_masked(
             INITIAL_STATE, PLL_MASK,
         )
+    if mode == 'F2L':
+        name = {
+            'FR': 'F2L 1',
+            'FL': 'F2L 2',
+            'BR': 'F2L 3',
+            'BL': 'F2L 4',
+        }[scheme_name]
+
+        return FaceletAnalyser.build_facelets_masked(
+            INITIAL_STATE, get_step_config(
+                name, 'mask',
+            ),
+        )
 
     return ''
 
 
 def compute_masks(name: str, moves: str, mode: str,
                   *, debug: bool = False) -> dict[str, dict[str, str]]:
+    if mode == 'AF2L':
+        return {}
+
     masks: dict[str, dict[str, str]] = {}
 
     # For URF format
@@ -141,7 +170,8 @@ def format_case(mode: str, code: str, info: dict[str, Any],
         )
 
     main_algorithm = ''.join(info['main'])
-    setups.insert(0, main_algorithm)
+    if main_algorithm:
+        setups.insert(0, main_algorithm)
 
     if 'F2L' in mode:
         case_data['probability'] = 1 / 42
@@ -167,13 +197,6 @@ def format_cases(cases: dict[str, dict[str, Any]], mode: str,
 
     if mode in SKIPPED and len(cases) > 1:
         source = SKIPPED[mode]
-        source.update(
-            {
-                'aliases': [],
-                'algorithms': [],
-                'main': '',
-            },
-        )
         format_case(
             mode, f'{ mode } SKIP', source,
             data, debug=debug,
