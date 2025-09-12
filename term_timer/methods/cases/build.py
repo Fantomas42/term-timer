@@ -70,6 +70,10 @@ def compute_masks(name: str, moves: str, mode: str,
 
     masks: dict[str, dict[str, str]] = {}
 
+    algorithm = parse_moves(moves).transform(
+        mirror_moves,
+    )
+
     # For URF format
     initial_schemes = ['FR', 'FL', 'BR', 'BL']
     # Apply z2 because algorithms are designed to be applied with D on top
@@ -91,14 +95,11 @@ def compute_masks(name: str, moves: str, mode: str,
         scheme_mask = masks.setdefault(scheme_name, {})
 
         for orientation_move in orientation_moves:
-            algorithm = parse_moves(moves).transform(
-                mirror_moves,
-            )
             # Orient scheme for having multiple colors,
             # apply reverse algorithm,
             # offset Y to capture all angular variations,
             # restore to URF state
-            algorithm = (
+            case_algorithm = (
                 scheme_moves
                 + algorithm
                 + orientation_move
@@ -115,7 +116,7 @@ def compute_masks(name: str, moves: str, mode: str,
             )
 
             cube = VCube(state_mask, check=False)
-            cube.rotate(algorithm)
+            cube.rotate(case_algorithm)
 
             if debug:
                 print(
