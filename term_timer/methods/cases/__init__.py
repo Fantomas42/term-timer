@@ -13,7 +13,7 @@ CASES_MASKS: dict[str, dict[str, str]] = {}
 
 
 def load_cases(path):
-    case_type = path.name.replace('.json', '')
+    case_type = path.name.replace('.json', '').upper()
     cases = CASES.setdefault(case_type, {})
     cases_masks = CASES_MASKS.setdefault(case_type, {})
 

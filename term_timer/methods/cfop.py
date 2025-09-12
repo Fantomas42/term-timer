@@ -2,12 +2,25 @@ from functools import cached_property
 from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.masks import F2L_BL_MASK
+from cubing_algs.masks import F2L_BR_MASK
+from cubing_algs.masks import F2L_FL_MASK
+from cubing_algs.masks import F2L_FR_MASK
 from cubing_algs.masks import OLL_MASK
 from cubing_algs.masks import PLL_MASK
 
 from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
 from term_timer.methods.base import get_step_config
+
+CFOP_CASE_MASKS = {
+    'OLL': OLL_MASK,
+    'PLL': PLL_MASK,
+    'F2L FR': F2L_FR_MASK,
+    'F2L FL': F2L_FL_MASK,
+    'F2L BR': F2L_BR_MASK,
+    'F2L BL': F2L_BL_MASK,
+}
 
 
 class CFOPAnalyser(Analyser):
@@ -73,14 +86,14 @@ class CFOPAnalyser(Analyser):
 
     def get_f2l_case(self, facelets, case_infos):
         name = {
-            'FR': 'F2L 2',
-            'FL': 'F2L 1',
+            'FR': 'F2L 1',
+            'FL': 'F2L 2',
             'BR': 'F2L 3',
             'BL': 'F2L 4',
         }[case_infos]
 
         return self.get_step_case(
-            'f2l', facelets,
+            'F2L', facelets,
             get_step_config(
                 name, 'mask',
             ),
@@ -219,20 +232,22 @@ class CFOPAnalyser(Analyser):
                 facelets = info['facelets']
                 if facelets:
                     info['case'] = self.get_step_case(
-                        'oll', facelets,
-                        OLL_MASK,
+                        'OLL', facelets,
+                        CFOP_CASE_MASKS['OLL'],
                     )
 
             elif info['name'] == 'PLL':
                 facelets = info['facelets']
                 if facelets:
                     info['case'] = self.get_step_case(
-                        'pll', facelets,
-                        PLL_MASK,
+                        'PLL', facelets,
+                        CFOP_CASE_MASKS['PLL'],
                     )
 
             elif info['name'].startswith('F2L'):
                 facelets = info['facelets']
+                if not info['case_infos']:
+                    continue  # TODO(me): handle
                 if facelets:
                     info['case'] = self.get_f2l_case(
                         facelets,
@@ -305,7 +320,7 @@ class CF4OPAnalyser(CFOPAnalyser):
 
         if not self.check_step('OLL', facelets):
             name = ['F2L 1', 'F2L 2', 'F2L 3', 'F2L 4']
-            pair = ['FL', 'FR', 'BL', 'BR']
+            pair = ['FR', 'FL', 'BR', 'BL']  # UF orientation
 
             score = 1
             pairs = []

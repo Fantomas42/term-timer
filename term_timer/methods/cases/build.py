@@ -5,15 +5,13 @@ from pprint import pformat
 from typing import Any
 
 from cubing_algs.constants import INITIAL_STATE
-from cubing_algs.masks import OLL_MASK
-from cubing_algs.masks import PLL_MASK
 from cubing_algs.masks import state_masked
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
-from term_timer.methods.base import get_step_config
+from term_timer.methods.cfop import CFOP_CASE_MASKS
 
 SKIPPED = {
     'OLL': {
@@ -65,26 +63,6 @@ def translate(value: str) -> str:
     return TRANSLATIONS.get(value, value)
 
 
-def select_mask(mode: str, scheme_name: str) -> str:
-    if mode == 'OLL':
-        return OLL_MASK
-    if mode == 'PLL':
-        return PLL_MASK
-    if mode == 'F2L':
-        name = {
-            'FR': 'F2L 1',
-            'FL': 'F2L 2',
-            'BR': 'F2L 3',
-            'BL': 'F2L 4',
-        }[scheme_name]
-
-        return get_step_config(
-            name, 'mask',
-        )
-
-    return ''
-
-
 def compute_masks(name: str, moves: str, mode: str,
                   *, debug: bool = False) -> dict[str, dict[str, str]]:
     if mode == 'AF2L':
@@ -127,9 +105,13 @@ def compute_masks(name: str, moves: str, mode: str,
                 + scheme_moves
             )
 
+            mode_key = mode
+            if mode == 'F2L':
+                mode_key += f' { scheme_name }'
+
             state_mask = state_masked(
                 INITIAL_STATE,
-                select_mask(mode, scheme_name),
+                CFOP_CASE_MASKS[mode_key],
             )
 
             cube = VCube(state_mask, check=False)
