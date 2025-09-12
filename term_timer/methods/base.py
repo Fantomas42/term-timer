@@ -5,11 +5,14 @@ from typing import ClassVar
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import INITIAL_STATE
 from cubing_algs.masks import FULL_MASK
+from cubing_algs.masks import facelets_masked
+from cubing_algs.masks import state_masked
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.methods.cases import CASES_MASKS
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
@@ -101,25 +104,22 @@ STEPS_CONFIG = {
 
 class FaceletAnalyser:
 
-    @staticmethod
-    def build_facelets_masked(facelets: str, mask: str) -> str:
-        masked = []
-        for i, value in enumerate(facelets):
-            if mask[i] == '0':
-                masked.append('-')
-            else:
-                masked.append(value)
+    def get_step_case(self, step, facelets, mask):
+        masked = state_masked(facelets, mask)
 
-        return ''.join(masked)
+        if masked in CASES_MASKS[step]:
+            return CASES_MASKS[step][masked]['case']
+
+        return ''
 
     def check_step(self, step, facelets):
         mask = get_step_config(step, 'mask')
 
-        matching = self.build_facelets_masked(
+        matching = facelets_masked(
             INITIAL_STATE,
             mask,
         )
-        return matching == self.build_facelets_masked(
+        return matching == facelets_masked(
             facelets,
             mask,
         )

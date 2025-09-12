@@ -1,12 +1,13 @@
 from functools import cached_property
 from typing import ClassVar
 
-from cubing_algs.masks import PLL_MASK
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.masks import OLL_MASK
+from cubing_algs.masks import PLL_MASK
 
 from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
-from term_timer.methods.cases import CASES_MASKS
+from term_timer.methods.base import get_step_config
 
 
 class CFOPAnalyser(Analyser):
@@ -70,34 +71,20 @@ class CFOPAnalyser(Analyser):
 
         self.correct_summary_cfop(summary)
 
-    def get_oll_case(self, facelets):
-        masked = []
-        for value in facelets:
-            if value != 'D':
-                masked.append('-')
-            else:
-                masked.append(value)
+    def get_f2l_case(self, facelets, case_infos):
+        name = {
+            'FR': 'F2L 2',
+            'FL': 'F2L 1',
+            'BR': 'F2L 3',
+            'BL': 'F2L 4',
+        }[case_infos]
 
-        masked = ''.join(masked)
-
-        if masked in CASES_MASKS['oll']:
-            return CASES_MASKS['oll'][masked]['case']
-
-        return ''
-
-    def get_pll_case(self, facelets):
-        masked = self.build_facelets_masked(
-            facelets,
-            PLL_MASK,
+        return self.get_step_case(
+            'f2l', facelets,
+            get_step_config(
+                name, 'mask',
+            ),
         )
-
-        if masked in CASES_MASKS['pll']:
-            return CASES_MASKS['pll'][masked]['case']
-
-        return ''
-
-    def get_f2l_case(self, _facelets, _case_infos):
-        return ''
 
     @cached_property
     def score(self):
@@ -231,18 +218,25 @@ class CFOPAnalyser(Analyser):
             if info['name'] == 'OLL':
                 facelets = info['facelets']
                 if facelets:
-                    info['case'] = self.get_oll_case(facelets)
+                    info['case'] = self.get_step_case(
+                        'oll', facelets,
+                        OLL_MASK,
+                    )
 
             elif info['name'] == 'PLL':
                 facelets = info['facelets']
                 if facelets:
-                    info['case'] = self.get_pll_case(facelets)
+                    info['case'] = self.get_step_case(
+                        'pll', facelets,
+                        PLL_MASK,
+                    )
 
             elif info['name'].startswith('F2L'):
-                moves = info['moves']
-                if moves:
+                facelets = info['facelets']
+                if facelets:
                     info['case'] = self.get_f2l_case(
-                        moves, info['case_infos'][0],
+                        facelets,
+                        info['case_infos'][0],
                     )
 
 
