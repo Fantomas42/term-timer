@@ -7,12 +7,12 @@ from typing import Any
 from cubing_algs.constants import INITIAL_STATE
 from cubing_algs.masks import OLL_MASK
 from cubing_algs.masks import PLL_MASK
+from cubing_algs.masks import state_masked
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
-from term_timer.methods.base import FaceletAnalyser
 from term_timer.methods.base import get_step_config
 
 SKIPPED = {
@@ -67,13 +67,9 @@ def translate(value: str) -> str:
 
 def select_mask(mode: str, scheme_name: str) -> str:
     if mode == 'OLL':
-        return FaceletAnalyser.build_facelets_masked(
-            INITIAL_STATE, OLL_MASK,
-        )
+        return OLL_MASK
     if mode == 'PLL':
-        return FaceletAnalyser.build_facelets_masked(
-            INITIAL_STATE, PLL_MASK,
-        )
+        return PLL_MASK
     if mode == 'F2L':
         name = {
             'FR': 'F2L 1',
@@ -82,10 +78,8 @@ def select_mask(mode: str, scheme_name: str) -> str:
             'BL': 'F2L 4',
         }[scheme_name]
 
-        return FaceletAnalyser.build_facelets_masked(
-            INITIAL_STATE, get_step_config(
-                name, 'mask',
-            ),
+        return get_step_config(
+            name, 'mask',
         )
 
     return ''
@@ -107,6 +101,7 @@ def compute_masks(name: str, moves: str, mode: str,
     orientation_moves = ['', 'y', "y'", 'y2']
 
     # In OLL other facelets than D are useless to track
+    # so we don't have to track others colors scheme
     if mode == 'OLL':
         orientation_moves = ['']
 
@@ -132,9 +127,12 @@ def compute_masks(name: str, moves: str, mode: str,
                 + scheme_moves
             )
 
-            mask = select_mask(mode, scheme_name)
+            state_mask = state_masked(
+                INITIAL_STATE,
+                select_mask(mode, scheme_name),
+            )
 
-            cube = VCube(mask, check=False)
+            cube = VCube(state_mask, check=False)
             cube.rotate(algorithm)
 
             if debug:
