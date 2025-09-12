@@ -11,7 +11,6 @@ from cubing_algs.masks import PLL_MASK
 
 from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
-from term_timer.methods.base import get_step_config
 
 CFOP_CASE_MASKS = {
     'OLL': OLL_MASK,
@@ -83,21 +82,6 @@ class CFOPAnalyser(Analyser):
                 info['name'] = 'F2L'
 
         self.correct_summary_cfop(summary)
-
-    def get_f2l_case(self, facelets, case_infos):
-        name = {
-            'FR': 'F2L 1',
-            'FL': 'F2L 2',
-            'BR': 'F2L 3',
-            'BL': 'F2L 4',
-        }[case_infos]
-
-        return self.get_step_case(
-            'F2L', facelets,
-            get_step_config(
-                name, 'mask',
-            ),
-        )
 
     @cached_property
     def score(self):
@@ -249,9 +233,9 @@ class CFOPAnalyser(Analyser):
                 if not info['case_infos']:
                     continue  # TODO(me): handle
                 if facelets:
-                    info['case'] = self.get_f2l_case(
-                        facelets,
-                        info['case_infos'][0],
+                    info['case'] = self.get_step_case(
+                        'F2L', facelets,
+                        CFOP_CASE_MASKS[f'F2L { info["case_infos"][0] }'],
                     )
 
 
