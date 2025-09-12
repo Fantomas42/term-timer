@@ -1,11 +1,18 @@
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.display import VCubeDisplay
+from cubing_algs.vcube import VCube
 from magiccube.cube import Cube as BaseCube
 
 from term_timer.config import CUBE_ORIENTATION_MOVES
+from term_timer.interface.console import console
 
 
-# Patch VCubeDisplay
+# Patch VCube + VCubeDisplay
+def show_rich(self, mode: str = '', orientation: str = '',
+              mask: str = '') -> None:
+    console.print(self.display(mode, orientation, mask), end='')
+
+
 def display_rich_facelet(_, facelet: str, mask: str = '') -> str:
     face_color = facelet.lower()
     if mask == '0':
@@ -18,6 +25,7 @@ def display_rich_facelet(_, facelet: str, mask: str = '') -> str:
     )
 
 
+VCube.show = show_rich
 VCubeDisplay.display_facelet = display_rich_facelet
 
 # End patch
