@@ -82,6 +82,18 @@ def compute_masks(name: str, moves: str, mode: str,
     # Angular orientations
     orientation_moves = ['', 'y', "y'", 'y2']
 
+    # F2L cases also need to have AUF move to catch correctly all cases
+    # Need to optimize this
+    if mode == 'F2L':
+        auf_moves = ['U', "U'", 'U2']
+        new_orientations = orientation_moves.copy()
+        for auf_move in auf_moves:
+            for orientation_move in orientation_moves:
+                new_orientations.append(
+                    f'{ auf_move } { orientation_move }'.strip(),
+                )
+        orientation_moves = new_orientations
+
     # In OLL other facelets than D are useless to track
     # so we don't have to track others colors scheme
     if mode == 'OLL':
