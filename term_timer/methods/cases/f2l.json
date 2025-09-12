@@ -2,1522 +2,1538 @@
     "01": {
         "main": "URU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUULUURRRRRR---FFFDFF---FDDFDDRDDLLDLLB---BBBBBB---",
-                "y": "UUUUUUFUUBBBBBB---RRRDRR---RDDRDDBDDFFDFFL---LLLLLL---",
-                "y'": "UUUUUUBUUFFFFFF---LLLDLL---LDDLDDFDDBBDBBR---RRRRRR---",
-                "y2": "UUUUUURUULLLLLL---BBBDBB---BDDBDDLDDRRDRRF---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--------D-LL--L--L-U---B--B--BB",
+                "y": "-U-UUU-U--F--F-----L--L-U--L--LD-----B--B--BB-R--R----",
+                "y'": "-U-UUU-U--B--B--BB-R--R--------DL--L-F--F-----L--L-U--",
+                "y2": "-U-UUU-U--L--L-U---B--B--BB-LL-D-----R--R-----F--F----"
             },
-            "y": {
-                "": "LUUUUUUUUBBBBBB---RRRRRR---DDDDDDFFRFFFDFF---LLDLLB---",
-                "y": "FUUUUUUUULLLLLL---BBBBBB---DDDDDDRRBRRRDRR---FFDFFL---",
-                "y'": "BUUUUUUUURRRRRR---FFFFFF---DDDDDDLLFLLLDLL---BBDBBR---",
-                "y2": "RUUUUUUUUFFFFFF---LLLLLL---DDDDDDBBLBBBDBB---RRDRRF---"
+            "BR": {
+                "": "-U-UUU-U--R--R--RR-F--F--------DB--B-L--L-----B--B-U--",
+                "y": "-U-UUU-U--F--F-----L--L--------D-BB--B--B-U---R--R--RR",
+                "y'": "-U-UUU-U--B--B-U---R--R--RR-BB-D-----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-U--B--BD-----R--R--RR-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUULFFFDFF---LLDLLB---RFFDDDDDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUFRRRDRR---FFDFFL---BRRDDDDDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUBLLLDLL---BBDBBR---FLLDDDDDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUURBBBDBB---RRDRRF---LBBDDDDDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-U--F--FD-----L--L--LL-B--B----",
+                "y": "-U-UUU-U--F--F-U---L--L--LL-FF-D-----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R--------D-FF--F--F-U---L--L--LL",
+                "y2": "-U-UUU-U--L--L--LL-B--B--------DF--F-R--R-----F--F-U--"
             },
-            "y2": {
-                "": "UULUUUUUULLDLLB---BBBBBB---DDRDDFDDFRRRRRR---FFFDFF---",
-                "y": "UUFUUUUUUFFDFFL---LLLLLL---DDBDDRDDRBBBBBB---RRRDRR---",
-                "y'": "UUBUUUUUUBBDBBR---RRRRRR---DDFDDLDDLFFFFFF---LLLDLL---",
-                "y2": "UURUUUUUURRDRRF---FFFFFF---DDLDDBDDBLLLLLL---BBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-U---F--F--FF-RR-D-----L--L-----B--B----",
+                "y": "-U-UUU-U--F--F--FF-L--L--------DR--R-B--B-----R--R-U--",
+                "y'": "-U-UUU-U--B--B-----R--R-U--R--RD-----F--F--FF-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--------D-RR--R--R-U---F--F--FF"
             }
         },
         "setups": [
-            "RUR'U'",
-            "LF'L'F",
-            "FUF'U'",
+            "URU'R'",
             "FR'F'R",
-            "LUL'U'"
+            "rUR'U'M",
+            "MU'R'Ury"
         ]
     },
     "02": {
         "main": "FR'F'R",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUFUURRRRRR---DFFDFF---LLBFDDFDDLLLLLL---BBBBBB---",
-                "y": "UUUUUURUUBBBBBB---DRRDRR---FFLRDDRDDFFFFFF---LLLLLL---",
-                "y'": "UUUUUULUUFFFFFF---DLLDLL---BBRLDDLDDBBBBBB---RRRRRR---",
-                "y2": "UUUUUUBUULLLLLL---DBBDBB---RRFBDDBDDRRRRRR---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F-------BD-B---L--L-LL--B--B---U",
+                "y": "-U-UUU-U--F--F-----L--L-LL-BB--D-----B--B---U-R--R----",
+                "y'": "-U-UUU-U--B--B---U-R--R--------D--BB-F--F-----L--L-LL-",
+                "y2": "-U-UUU-U--L--L-LL--B--B---U--B-DB----R--R-----F--F----"
             },
-            "y": {
-                "": "FUUUUUUUUBBBBBB---RRRRRR---BDDLDDLFFDFFDFF---LLLLLL---",
-                "y": "RUUUUUUUULLLLLL---BBBBBB---LDDFDDFRRDRRDRR---FFFFFF---",
-                "y'": "LUUUUUUUURRRRRR---FFFFFF---RDDBDDBLLDLLDLL---BBBBBB---",
-                "y2": "BUUUUUUUUFFFFFF---LLLLLL---FDDRDDRBBDBBDBB---RRRRRR---"
+            "BR": {
+                "": "-U-UUU-U--R--R---U-F--F--------D--RR-L--L-----B--B-BB-",
+                "y": "-U-UUU-U--F--F-----L--L-------RD-R---B--B-BB--R--R---U",
+                "y'": "-U-UUU-U--B--B-BB--R--R---U--R-DR----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-BB-RR--D-----R--R---U-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUFDFFDFF---LLLLLL---FFLDDLDDBBBBBBB---RRRRRR---",
-                "y": "UUUUUUUURDRRDRR---FFFFFF---RRFDDFDDLLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUULDLLDLL---BBBBBB---LLBDDBDDRRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUBDBBDBB---RRRRRR---BBRDDRDDFFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-FF-LL--D-----L--L---U-B--B----",
+                "y": "-U-UUU-U--F--F-FF--L--L---U--L-DL----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R-------LD-L---F--F-FF--L--L---U",
+                "y2": "-U-UUU-U--L--L---U-B--B--------D--LL-R--R-----F--F-FF-"
             },
-            "y2": {
-                "": "UUFUUUUUULLLLLL---BBBBBB---DDFDDFBLLRRRRRR---DFFDFF---",
-                "y": "UURUUUUUUFFFFFF---LLLLLL---DDRDDRLFFBBBBBB---DRRDRR---",
-                "y'": "UULUUUUUUBBBBBB---RRRRRR---DDLDDLRBBFFFFFF---DLLDLL---",
-                "y2": "UUBUUUUUURRRRRR---FFFFFF---DDBDDBFRRLLLLLL---DBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-RR--F--F---U--F-DF----L--L-----B--B----",
+                "y": "-U-UUU-U--F--F---U-L--L--------D--FF-B--B-----R--R-RR-",
+                "y'": "-U-UUU-U--B--B-----R--R-RR-FF--D-----F--F---U-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-------FD-F---R--R-RR--F--F---U"
             }
         },
         "setups": [
-            "L'U'LU",
-            "R'FRF'",
-            "F'U'FU",
-            "F'LFL'",
-            "R'U'RU"
+            "FR'F'R",
+            "F'U'FU"
         ]
     },
     "03": {
         "main": "F'U'F",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUBUURRRRRR---LFFLFF---FDDDDLDDLLLDLLD---BBBBBB---",
-                "y": "UUUUUULUUBBBBBB---FRRFRR---RDDDDFDDFFFDFFD---LLLLLL---",
-                "y'": "UUUUUURUUFFFFFF---BLLBLL---LDDDDBDDBBBDBBD---RRRRRR---",
-                "y2": "UUUUUUFUULLLLLL---RBBRBB---BDDDDRDDRRRDRRD---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--L--B--D-L---L--L-U---B--B---B",
+                "y": "-U-UUU-U--F--F--L--L--L-U--L---DB----B--B---B-R--R----",
+                "y'": "-U-UUU-U--B--B---B-R--R-------BD---L-F--F--L--L--L-U--",
+                "y2": "-U-UUU-U--L--L-U---B--B---B--L-D--B--R--R-----F--F--L-"
             },
-            "y": {
-                "": "BUUUUUUUUBBBBBB---RRRRRR---DLLDDDFDDLFFLFF---LLDLLD---",
-                "y": "LUUUUUUUULLLLLL---BBBBBB---DFFDDDRDDFRRFRR---FFDFFD---",
-                "y'": "RUUUUUUUURRRRRR---FFFFFF---DBBDDDLDDBLLBLL---BBDBBD---",
-                "y2": "FUUUUUUUUFFFFFF---LLLLLL---DRRDDDBDDRBBRBB---RRDRRD---"
+            "BR": {
+                "": "-U-UUU-U--R--R---R-F--F-------RD---B-L--L--B--B--B-U--",
+                "y": "-U-UUU-U--F--F-----L--L--B--R--D-B---B--B-U---R--R---R",
+                "y'": "-U-UUU-U--B--B-U---R--R---R--B-D--R--F--F-----L--L--B-",
+                "y2": "-U-UUU-U--L--L--B--B--B-U--B---DR----R--R---R-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUBLFFLFF---LLDLLD---DDFDDDLLDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUULFRRFRR---FFDFFD---DDRDDDFFDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUURBLLBLL---BBDBBD---DDLDDDBBDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUFRBBRBB---RRDRRD---DDBDDDRRDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R--F--F--F-U--F---DL----L--L---L-B--B----",
+                "y": "-U-UUU-U--F--F-U---L--L---L--F-D--L--B--B-----R--R--F-",
+                "y'": "-U-UUU-U--B--B-----R--R--F--L--D-F---F--F-U---L--L---L",
+                "y2": "-U-UUU-U--L--L---L-B--B-------LD---F-R--R--F--F--F-U--"
             },
-            "y2": {
-                "": "UUBUUUUUULLDLLD---BBBBBB---LDDLDDDDFRRRRRR---LFFLFF---",
-                "y": "UULUUUUUUFFDFFD---LLLLLL---FDDFDDDDRBBBBBB---FRRFRR---",
-                "y'": "UURUUUUUUBBDBBD---RRRRRR---BDDBDDDDLFFFFFF---BLLBLL---",
-                "y2": "UUFUUUUUURRDRRD---FFFFFF---RDDRDDDDBLLLLLL---RBBRBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-U---F--F---F--R-D--F--L--L-----B--B--R-",
+                "y": "-U-UUU-U--F--F---F-L--L-------FD---R-B--B--R--R--R-U--",
+                "y'": "-U-UUU-U--B--B--R--R--R-U--R---DF----F--F---F-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--R--F--D-R---R--R-U---F--F---F"
             }
         },
         "setups": [
-            "L'UL",
-            "F'UF",
-            "R'UR",
-            "B'UB"
+            "F'U'F",
+            "R'URy",
+            "SRUR'U'S'"
         ]
     },
     "04": {
         "main": "RUR'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUURUURRRRRR---DFFDFF---LDDDDDDFFLLFLLF---BBBBBB---",
-                "y": "UUUUUUBUUBBBBBB---DRRDRR---FDDDDDDRRFFRFFR---LLLLLL---",
-                "y'": "UUUUUUFUUFFFFFF---DLLDLL---BDDDDDDLLBBLBBL---RRRRRR---",
-                "y2": "UUUUUULUULLLLLL---DBBDBB---RDDDDDDBBRRBRRB---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R--B--F--F--------DLB---L--L-L---B--B---U",
+                "y": "-U-UUU-U--F--F-----L--L-L--B---D--L--B--B---U-R--R--B-",
+                "y'": "-U-UUU-U--B--B---U-R--R--B--L--D---B-F--F-----L--L-L--",
+                "y2": "-U-UUU-U--L--L-L---B--B---U--BLD-----R--R--B--F--F----"
             },
-            "y": {
-                "": "RUUUUUUUUBBBBBB---RRRRRR---DDFDDFLDDDFFDFF---LLFLLF---",
-                "y": "BUUUUUUUULLLLLL---BBBBBB---DDRDDRFDDDRRDRR---FFRFFR---",
-                "y'": "FUUUUUUUURRRRRR---FFFFFF---DDLDDLBDDDLLDLL---BBLBBL---",
-                "y2": "LUUUUUUUUFFFFFF---LLLLLL---DDBDDBRDDDBBDBB---RRBRRB---"
+            "BR": {
+                "": "-U-UUU-U--R--R---U-F--F--R--B--D---R-L--L-----B--B-B--",
+                "y": "-U-UUU-U--F--F--R--L--L--------DBR---B--B-B---R--R---U",
+                "y'": "-U-UUU-U--B--B-B---R--R---U--RBD-----F--F--R--L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-B--R---D--B--R--R---U-F--F--R-"
             },
-            "y'": {
-                "": "UUUUUUUURDFFDFF---LLFLLF---DDLFDDFDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUBDRRDRR---FFRFFR---DDFRDDRDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUFDLLDLL---BBLBBL---DDBLDDLDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUULDBBDBB---RRBRRB---DDRBDDBDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-F--L---D--F--L--L---U-B--B--L-",
+                "y": "-U-UUU-U--F--F-F---L--L---U--LFD-----B--B--L--R--R----",
+                "y'": "-U-UUU-U--B--B--L--R--R--------DFL---F--F-F---L--L---U",
+                "y2": "-U-UUU-U--L--L---U-B--B--L--F--D---L-R--R-----F--F-F--"
             },
-            "y2": {
-                "": "UURUUUUUULLFLLF---BBBBBB---FFDDDDDDLRRRRRR---DFFDFF---",
-                "y": "UUBUUUUUUFFRFFR---LLLLLL---RRDDDDDDFBBBBBB---DRRDRR---",
-                "y'": "UUFUUUUUUBBLBBL---RRRRRR---LLDDDDDDBFFFFFF---DLLDLL---",
-                "y2": "UULUUUUUURRBRRB---FFFFFF---BBDDDDDDRLLLLLL---DBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-R---F--F---U--FRD-----L--L--F--B--B----",
+                "y": "-U-UUU-U--F--F---U-L--L--F--R--D---F-B--B-----R--R-R--",
+                "y'": "-U-UUU-U--B--B-----R--R-R--F---D--R--F--F---U-L--L--F-",
+                "y2": "-U-UUU-U--L--L--F--B--B--------DRF---R--R-R---F--F---U"
             }
         },
         "setups": [
-            "RU'R'",
-            "FU'F'",
-            "LU'L'",
-            "BU'B'"
+            "RUR'",
+            "FU'F'y'",
+            "fR'f'y"
         ]
     },
     "05": {
         "main": "U'RUR'U2RU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUULUURRRRRR---DFFDFF---FDDDDDRFRLLBLLR---BBBBBB---",
-                "y": "UUUUUUFUUBBBBBB---DRRDRR---RDDDDDBRBFFLFFB---LLLLLL---",
-                "y'": "UUUUUUBUUFFFFFF---DLLDLL---LDDDDDFLFBBRBBF---RRRRRR---",
-                "y2": "UUUUUURUULLLLLL---DBBDBB---BDDDDDLBLRRFRRL---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R--B--F--F--------DLL---L--L-U---B--B---B",
+                "y": "-U-UUU-U--F--F-----L--L-U--L---D--L--B--B---B-R--R--B-",
+                "y'": "-U-UUU-U--B--B---B-R--R--B--L--D---L-F--F-----L--L-U--",
+                "y2": "-U-UUU-U--L--L-U---B--B---B--LLD-----R--R--B--F--F----"
             },
-            "y": {
-                "": "LUUUUUUUUBBBBBB---RRRRRR---DDRDDFFDRDFFDFF---LLBLLR---",
-                "y": "FUUUUUUUULLLLLL---BBBBBB---DDBDDRRDBDRRDRR---FFLFFB---",
-                "y'": "BUUUUUUUURRRRRR---FFFFFF---DDFDDLLDFDLLDLL---BBRBBF---",
-                "y2": "RUUUUUUUUFFFFFF---LLLLLL---DDLDDBBDLDBBDBB---RRFRRL---"
+            "BR": {
+                "": "-U-UUU-U--R--R---R-F--F--R--B--D---B-L--L-----B--B-U--",
+                "y": "-U-UUU-U--F--F--R--L--L--------DBB---B--B-U---R--R---R",
+                "y'": "-U-UUU-U--B--B-U---R--R---R--BBD-----F--F--R--L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-U--B---D--B--R--R---R-F--F--R-"
             },
-            "y'": {
-                "": "UUUUUUUULDFFDFF---LLBLLR---RDFFDDRDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUFDRRDRR---FFLFFB---BDRRDDBDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUBDLLDLL---BBRBBF---FDLLDDFDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUURDBBDBB---RRFRRL---LDBBDDLDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-U--F---D--F--L--L---L-B--B--L-",
+                "y": "-U-UUU-U--F--F-U---L--L---L--FFD-----B--B--L--R--R----",
+                "y'": "-U-UUU-U--B--B--L--R--R--------DFF---F--F-U---L--L---L",
+                "y2": "-U-UUU-U--L--L---L-B--B--L--F--D---F-R--R-----F--F-U--"
             },
-            "y2": {
-                "": "UULUUUUUULLBLLR---BBBBBB---RFRDDDDDFRRRRRR---DFFDFF---",
-                "y": "UUFUUUUUUFFLFFB---LLLLLL---BRBDDDDDRBBBBBB---DRRDRR---",
-                "y'": "UUBUUUUUUBBRBBF---RRRRRR---FLFDDDDDLFFFFFF---DLLDLL---",
-                "y2": "UURUUUUUURRFRRL---FFFFFF---LBLDDDDDBLLLLLL---DBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-U---F--F---F--RRD-----L--L--F--B--B----",
+                "y": "-U-UUU-U--F--F---F-L--L--F--R--D---R-B--B-----R--R-U--",
+                "y'": "-U-UUU-U--B--B-----R--R-U--R---D--R--F--F---F-L--L--F-",
+                "y2": "-U-UUU-U--L--L--F--B--B--------DRR---R--R-U---F--F---F"
             }
         },
         "setups": [
-            "RUR'U2RU'R'U",
+            "U'RUR'U2RU'R'",
             "F2U'L'ULF2",
             "RU2R'URU'R'U",
-            "R2U'F'UFR2",
-            "FUF'U2FU'F'U"
+            "LUL'U2LU'L'Uy2"
         ]
     },
     "06": {
         "main": "U'rU'R'URUr'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUURUURRRRRR---BFFDFF---LDBDDLFFDLLDLLL---BBBBBB---",
-                "y": "UUUUUUBUUBBBBBB---LRRDRR---FDLDDFRRDFFDFFF---LLLLLL---",
-                "y'": "UUUUUUFUUFFFFFF---RLLDLL---BDRDDBLLDBBDBBB---RRRRRR---",
-                "y2": "UUUUUULUULLLLLL---FBBDBB---RDFDDRBBDRRDRRR---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--L--B--D-B---L--L-L---B--B---U",
+                "y": "-U-UUU-U--F--F--L--L--L-L--B---DB----B--B---U-R--R----",
+                "y'": "-U-UUU-U--B--B---U-R--R-------BD---B-F--F--L--L--L-L--",
+                "y2": "-U-UUU-U--L--L-L---B--B---U--B-D--B--R--R-----F--F--L-"
             },
-            "y": {
-                "": "RUUUUUUUUBBBBBB---RRRRRR---BLDDDFLDFBFFDFF---LLDLLL---",
-                "y": "BUUUUUUUULLLLLL---BBBBBB---LFDDDRFDRLRRDRR---FFDFFF---",
-                "y'": "FUUUUUUUURRRRRR---FFFFFF---RBDDDLBDLRLLDLL---BBDBBB---",
-                "y2": "LUUUUUUUUFFFFFF---LLLLLL---FRDDDBRDBFBBDBB---RRDRRR---"
+            "BR": {
+                "": "-U-UUU-U--R--R---U-F--F-------RD---R-L--L--B--B--B-B--",
+                "y": "-U-UUU-U--F--F-----L--L--B--R--D-R---B--B-B---R--R---U",
+                "y'": "-U-UUU-U--B--B-B---R--R---U--R-D--R--F--F-----L--L--B-",
+                "y2": "-U-UUU-U--L--L--B--B--B-B--R---DR----R--R---U-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUURBFFDFF---LLDLLL---FDLFDDDLBBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUBLRRDRR---FFDFFF---RDFRDDDFLLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUFRLLDLL---BBDBBB---LDBLDDDBRRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUULFBBDBB---RRDRRR---BDRBDDDRFFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R--F--F--F-F--L---DL----L--L---U-B--B----",
+                "y": "-U-UUU-U--F--F-F---L--L---U--L-D--L--B--B-----R--R--F-",
+                "y'": "-U-UUU-U--B--B-----R--R--F--L--D-L---F--F-F---L--L---U",
+                "y2": "-U-UUU-U--L--L---U-B--B-------LD---L-R--R--F--F--F-F--"
             },
-            "y2": {
-                "": "UURUUUUUULLDLLL---BBBBBB---DFFLDDBDLRRRRRR---BFFDFF---",
-                "y": "UUBUUUUUUFFDFFF---LLLLLL---DRRFDDLDFBBBBBB---LRRDRR---",
-                "y'": "UUFUUUUUUBBDBBB---RRRRRR---DLLBDDRDBFFFFFF---RLLDLL---",
-                "y2": "UULUUUUUURRDRRR---FFFFFF---DBBRDDFDRLLLLLL---FBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-R---F--F---U--F-D--F--L--L-----B--B--R-",
+                "y": "-U-UUU-U--F--F---U-L--L-------FD---F-B--B--R--R--R-R--",
+                "y'": "-U-UUU-U--B--B--R--R--R-R--F---DF----F--F---U-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--R--F--D-F---R--R-R---F--F---U"
             }
         },
         "setups": [
-            "L'U'LU2L'ULU'",
+            "U'rU'R'URUr'",
             "F'U'FU2F'UFU'",
-            "B'U'BU2B'UBU'",
-            "R'U'RU2R'URU'"
+            "R'U'RU2R'URd'"
         ]
     },
     "07": {
         "main": "U'RU2R'U'RU2R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUULUURRRRRR---FFFDFF---FDRDDFDDLLLDLLB---BBBBBB---",
-                "y": "UUUUUUFUUBBBBBB---RRRDRR---RDBDDRDDFFFDFFL---LLLLLL---",
-                "y'": "UUUUUUBUUFFFFFF---LLLDLL---LDFDDLDDBBBDBBR---RRRRRR---",
-                "y2": "UUUUUURUULLLLLL---BBBDBB---BDLDDBDDRRRDRRF---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--B--L--D-L---L--L-U---B--B---B",
+                "y": "-U-UUU-U--F--F--B--L--L-U--L---DL----B--B---B-R--R----",
+                "y'": "-U-UUU-U--B--B---B-R--R-------LD---L-F--F--B--L--L-U--",
+                "y2": "-U-UUU-U--L--L-U---B--B---B--L-D--L--R--R-----F--F--B-"
             },
-            "y": {
-                "": "LUUUUUUUUBBBBBB---RRRRRR---RFLDDDFDDFFFDFF---LLDLLB---",
-                "y": "FUUUUUUUULLLLLL---BBBBBB---BRFDDDRDDRRRDRR---FFDFFL---",
-                "y'": "BUUUUUUUURRRRRR---FFFFFF---FLBDDDLDDLLLDLL---BBDBBR---",
-                "y2": "RUUUUUUUUFFFFFF---LLLLLL---LBRDDDBDDBBBDBB---RRDRRF---"
+            "BR": {
+                "": "-U-UUU-U--R--R---R-F--F-------BD---B-L--L--R--B--B-U--",
+                "y": "-U-UUU-U--F--F-----L--L--R--B--D-B---B--B-U---R--R---R",
+                "y'": "-U-UUU-U--B--B-U---R--R---R--B-D--B--F--F-----L--L--R-",
+                "y2": "-U-UUU-U--L--L--R--B--B-U--B---DB----R--R---R-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUULFFFDFF---LLDLLB---DDFDDDLFRBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUFRRRDRR---FFDFFL---DDRDDDFRBLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUBLLLDLL---BBDBBR---DDLDDDBLFRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUURBBBDBB---RRDRRF---DDBDDDRBLFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R--L--F--F-U--F---DF----L--L---L-B--B----",
+                "y": "-U-UUU-U--F--F-U---L--L---L--F-D--F--B--B-----R--R--L-",
+                "y'": "-U-UUU-U--B--B-----R--R--L--F--D-F---F--F-U---L--L---L",
+                "y2": "-U-UUU-U--L--L---L-B--B-------FD---F-R--R--L--F--F-U--"
             },
-            "y2": {
-                "": "UULUUUUUULLDLLB---BBBBBB---LDDFDDRDFRRRRRR---FFFDFF---",
-                "y": "UUFUUUUUUFFDFFL---LLLLLL---FDDRDDBDRBBBBBB---RRRDRR---",
-                "y'": "UUBUUUUUUBBDBBR---RRRRRR---BDDLDDFDLFFFFFF---LLLDLL---",
-                "y2": "UURUUUUUURRDRRF---FFFFFF---RDDBDDLDBLLLLLL---BBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-U---F--F---F--R-D--R--L--L-----B--B--F-",
+                "y": "-U-UUU-U--F--F---F-L--L-------RD---R-B--B--F--R--R-U--",
+                "y'": "-U-UUU-U--B--B--F--R--R-U--R---DR----F--F---F-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--F--R--D-R---R--R-U---F--F---F"
             }
         },
         "setups": [
-            "LF'L'FU'FU2F'U",
+            "U'RU2R'U'RU2R'",
+            "rUr'U2M'UM",
             "RUR'U2RU2R'U",
-            "FR'F'RU'RU2R'U",
-            "LU2L'ULU2L'U",
-            "FUF'U2FU2F'U"
+            "FR'F'RU'RU2R'U"
         ]
     },
     "08": {
         "main": "r'U2R2UR2Ur",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUBUURRRRRR---DFFDFF---LDBDDBLLDLLRLLR---BBBBBB---",
-                "y": "UUUUUULUUBBBBBB---DRRDRR---FDLDDLFFDFFBFFB---LLLLLL---",
-                "y'": "UUUUUURUUFFFFFF---DLLDLL---BDRDDRBBDBBFBBF---RRRRRR---",
-                "y2": "UUUUUUFUULLLLLL---DBBDBB---RDFDDFRRDRRLRRL---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R--L--F--F--------DBB---L--L-L---B--B---U",
+                "y": "-U-UUU-U--F--F-----L--L-L--B---D--B--B--B---U-R--R--L-",
+                "y'": "-U-UUU-U--B--B---U-R--R--L--B--D---B-F--F-----L--L-L--",
+                "y2": "-U-UUU-U--L--L-L---B--B---U--BBD-----R--R--L--F--F----"
             },
-            "y": {
-                "": "BUUUUUUUUBBBBBB---RRRRRR---BBDDDLLDLDFFDFF---LLRLLR---",
-                "y": "LUUUUUUUULLLLLL---BBBBBB---LLDDDFFDFDRRDRR---FFBFFB---",
-                "y'": "RUUUUUUUURRRRRR---FFFFFF---RRDDDBBDBDLLDLL---BBFBBF---",
-                "y2": "FUUUUUUUUFFFFFF---LLLLLL---FFDDDRRDRDBBDBB---RRLRRL---"
+            "BR": {
+                "": "-U-UUU-U--R--R---U-F--F--B--R--D---R-L--L-----B--B-B--",
+                "y": "-U-UUU-U--F--F--B--L--L--------DRR---B--B-B---R--R---U",
+                "y'": "-U-UUU-U--B--B-B---R--R---U--RRD-----F--F--B--L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-B--R---D--R--R--R---U-F--F--B-"
             },
-            "y'": {
-                "": "UUUUUUUUBDFFDFF---LLRLLR---LDLLDDDBBBBBBBB---RRRRRR---",
-                "y": "UUUUUUUULDRRDRR---FFBFFB---FDFFDDDLLLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUURDLLDLL---BBFBBF---BDBBDDDRRRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUFDBBDBB---RRLRRL---RDRRDDDFFFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-F--L---D--L--L--L---U-B--B--F-",
+                "y": "-U-UUU-U--F--F-F---L--L---U--LLD-----B--B--F--R--R----",
+                "y'": "-U-UUU-U--B--B--F--R--R--------DLL---F--F-F---L--L---U",
+                "y2": "-U-UUU-U--L--L---U-B--B--F--L--D---L-R--R-----F--F-F--"
             },
-            "y2": {
-                "": "UUBUUUUUULLRLLR---BBBBBB---DLLBDDBDLRRRRRR---DFFDFF---",
-                "y": "UULUUUUUUFFBFFB---LLLLLL---DFFLDDLDFBBBBBB---DRRDRR---",
-                "y'": "UURUUUUUUBBFBBF---RRRRRR---DBBRDDRDBFFFFFF---DLLDLL---",
-                "y2": "UUFUUUUUURRLRRL---FFFFFF---DRRFDDFDRLLLLLL---DBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-R---F--F---U--FFD-----L--L--R--B--B----",
+                "y": "-U-UUU-U--F--F---U-L--L--R--F--D---F-B--B-----R--R-R--",
+                "y'": "-U-UUU-U--B--B-----R--R-R--F---D--F--F--F---U-L--L--R-",
+                "y2": "-U-UUU-U--L--L--R--B--B--------DFF---R--R-R---F--F---U"
             }
         },
-        "setups": []
+        "setups": [
+            "r'U2R2UR2Ur",
+            "r'U'R2U'R2U2r",
+            "R'U'RU2R'U2RU'y"
+        ]
     },
     "09": {
         "main": "U'RU'R'UF'U'F",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUFUURRRRRR---RFFDFF---FDRDDLLLLLLDLLB---BBBBBB---",
-                "y": "UUUUUURUUBBBBBB---BRRDRR---RDBDDFFFFFFDFFL---LLLLLL---",
-                "y'": "UUUUUULUUFFFFFF---FLLDLL---LDFDDBBBBBBDBBR---RRRRRR---",
-                "y2": "UUUUUUBUULLLLLL---LBBDBB---BDLDDRRRRRRDRRF---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R--L--F--F--------DBL---L--L-U---B--B---B",
+                "y": "-U-UUU-U--F--F-----L--L-U--L---D--B--B--B---B-R--R--L-",
+                "y'": "-U-UUU-U--B--B---B-R--R--L--B--D---L-F--F-----L--L-U--",
+                "y2": "-U-UUU-U--L--L-U---B--B---B--LBD-----R--R--L--F--F----"
             },
-            "y": {
-                "": "FUUUUUUUUBBBBBB---RRRRRR---RLLDDLFDLRFFDFF---LLDLLB---",
-                "y": "RUUUUUUUULLLLLL---BBBBBB---BFFDDFRDFBRRDRR---FFDFFL---",
-                "y'": "LUUUUUUUURRRRRR---FFFFFF---FBBDDBLDBFLLDLL---BBDBBR---",
-                "y2": "BUUUUUUUUFFFFFF---LLLLLL---LRRDDRBDRLBBDBB---RRDRRF---"
+            "BR": {
+                "": "-U-UUU-U--R--R---R-F--F--B--R--D---B-L--L-----B--B-U--",
+                "y": "-U-UUU-U--F--F--B--L--L--------DRB---B--B-U---R--R---R",
+                "y'": "-U-UUU-U--B--B-U---R--R---R--BRD-----F--F--B--L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-U--B---D--R--R--R---R-F--F--B-"
             },
-            "y'": {
-                "": "UUUUUUUUFRFFDFF---LLDLLB---LDFLDDLLRBBBBBB---RRRRRR---",
-                "y": "UUUUUUUURBRRDRR---FFDFFL---FDRFDDFFBLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUULFLLDLL---BBDBBR---BDLBDDBBFRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUBLBBDBB---RRDRRF---RDBRDDRRLFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-U--F---D--L--L--L---L-B--B--F-",
+                "y": "-U-UUU-U--F--F-U---L--L---L--FLD-----B--B--F--R--R----",
+                "y'": "-U-UUU-U--B--B--F--R--R--------DLF---F--F-U---L--L---L",
+                "y2": "-U-UUU-U--L--L---L-B--B--F--L--D---F-R--R-----F--F-U--"
             },
-            "y2": {
-                "": "UUFUUUUUULLDLLB---BBBBBB---LLLLDDRDFRRRRRR---RFFDFF---",
-                "y": "UURUUUUUUFFDFFL---LLLLLL---FFFFDDBDRBBBBBB---BRRDRR---",
-                "y'": "UULUUUUUUBBDBBR---RRRRRR---BBBBDDFDLFFFFFF---FLLDLL---",
-                "y2": "UUBUUUUUURRDRRF---FFFFFF---RRRRDDLDBLLLLLL---LBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-U---F--F---F--RFD-----L--L--R--B--B----",
+                "y": "-U-UUU-U--F--F---F-L--L--R--F--D---R-B--B-----R--R-U--",
+                "y'": "-U-UUU-U--B--B-----R--R-U--R---D--F--F--F---F-L--L--R-",
+                "y2": "-U-UUU-U--L--L--R--B--B--------DFR---R--R-U---F--F---F"
             }
         },
         "setups": [
-            "F'UFU'RUR'U",
-            "RUR'FURU'R'F'",
-            "L'ULU'FUF'U",
-            "FUF'LUFU'F'L'",
-            "R'URU'BUB'U"
+            "U'RU'R'UF'U'F",
+            "R'URd'RUR'U",
+            "R'URUR'URd'",
+            "RUR'FURU'R'F'"
         ]
     },
     "10": {
         "main": "U'RUR'URUR'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUULUURRRRRR---FFFDFF---LDFDDFBDDLLDLLB---BBBBBB---",
-                "y": "UUUUUUFUUBBBBBB---RRRDRR---FDRDDRLDDFFDFFL---LLLLLL---",
-                "y'": "UUUUUUBUUFFFFFF---LLLDLL---BDLDDLRDDBBDBBR---RRRRRR---",
-                "y2": "UUUUUURUULLLLLL---BBBDBB---RDBDDBFDDRRDRRF---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--B--L--D-B---L--L-L---B--B---U",
+                "y": "-U-UUU-U--F--F--B--L--L-L--B---DL----B--B---U-R--R----",
+                "y'": "-U-UUU-U--B--B---U-R--R-------LD---B-F--F--B--L--L-L--",
+                "y2": "-U-UUU-U--L--L-L---B--B---U--B-D--L--R--R-----F--F--B-"
             },
-            "y": {
-                "": "LUUUUUUUUBBBBBB---RRRRRR---FFDDDDLDBFFFDFF---LLDLLB---",
-                "y": "FUUUUUUUULLLLLL---BBBBBB---RRDDDDFDLRRRDRR---FFDFFL---",
-                "y'": "BUUUUUUUURRRRRR---FFFFFF---LLDDDDBDRLLLDLL---BBDBBR---",
-                "y2": "RUUUUUUUUFFFFFF---LLLLLL---BBDDDDRDFBBBDBB---RRDRRF---"
+            "BR": {
+                "": "-U-UUU-U--R--R---U-F--F-------BD---R-L--L--R--B--B-B--",
+                "y": "-U-UUU-U--F--F-----L--L--R--B--D-R---B--B-B---R--R---U",
+                "y'": "-U-UUU-U--B--B-B---R--R---U--R-D--B--F--F-----L--L--R-",
+                "y2": "-U-UUU-U--L--L--R--B--B-B--R---DB----R--R---U-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUULFFFDFF---LLDLLB---BDLDDDDFFBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUFRRRDRR---FFDFFL---LDFDDDDRRLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUBLLLDLL---BBDBBR---RDBDDDDLLRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUURBBBDBB---RRDRRF---FDRDDDDBBFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R--L--F--F-F--L---DF----L--L---U-B--B----",
+                "y": "-U-UUU-U--F--F-F---L--L---U--L-D--F--B--B-----R--R--L-",
+                "y'": "-U-UUU-U--B--B-----R--R--L--F--D-L---F--F-F---L--L---U",
+                "y2": "-U-UUU-U--L--L---U-B--B-------FD---L-R--R--L--F--F-F--"
             },
-            "y2": {
-                "": "UULUUUUUULLDLLB---BBBBBB---DDBFDDFDLRRRRRR---FFFDFF---",
-                "y": "UUFUUUUUUFFDFFL---LLLLLL---DDLRDDRDFBBBBBB---RRRDRR---",
-                "y'": "UUBUUUUUUBBDBBR---RRRRRR---DDRLDDLDBFFFFFF---LLLDLL---",
-                "y2": "UURUUUUUURRDRRF---FFFFFF---DDFBDDBDRLLLLLL---BBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-R---F--F---U--F-D--R--L--L-----B--B--F-",
+                "y": "-U-UUU-U--F--F---U-L--L-------RD---F-B--B--F--R--R-R--",
+                "y'": "-U-UUU-U--B--B--F--R--R-R--F---DR----F--F---U-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--F--R--D-F---R--R-R---F--F---U"
             }
         },
         "setups": [
-            "RU'R'U'RU'R'U",
+            "U'RUR'URUR'",
             "RU'R'URUR'U2",
-            "FU'F'UFUF'U2",
-            "LU'L'U'LU'L'U",
-            "LU'L'ULUL'U2"
+            "RU'R'dR'U'Rd'",
+            "fR'f'UR'U'RU'y"
         ]
     },
     "11": {
         "main": "U'RU2R'UF'U'F",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUBUURRRRRR---DFFDFF---FDFLDDLLRLLRLLR---BBBBBB---",
-                "y": "UUUUUULUUBBBBBB---DRRDRR---RDRFDDFFBFFBFFB---LLLLLL---",
-                "y'": "UUUUUURUUFFFFFF---DLLDLL---LDLBDDBBFBBFBBF---RRRRRR---",
-                "y2": "UUUUUUFUULLLLLL---DBBDBB---BDBRDDRRLRRLRRL---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--------D-LB--L--L-U---B--B--LB",
+                "y": "-U-UUU-U--F--F-----L--L-U--L--BD-----B--B--LB-R--R----",
+                "y'": "-U-UUU-U--B--B--LB-R--R--------DB--L-F--F-----L--L-U--",
+                "y2": "-U-UUU-U--L--L-U---B--B--LB-BL-D-----R--R-----F--F----"
             },
-            "y": {
-                "": "BUUUUUUUUBBBBBB---RRRRRR---FDRDDLFLLDFFDFF---LLRLLR---",
-                "y": "LUUUUUUUULLLLLL---BBBBBB---RDBDDFRFFDRRDRR---FFBFFB---",
-                "y'": "RUUUUUUUURRRRRR---FFFFFF---LDFDDBLBBDLLDLL---BBFBBF---",
-                "y2": "FUUUUUUUUFFFFFF---LLLLLL---BDLDDRBRRDBBDBB---RRLRRL---"
+            "BR": {
+                "": "-U-UUU-U--R--R--BR-F--F--------DR--B-L--L-----B--B-U--",
+                "y": "-U-UUU-U--F--F-----L--L--------D-BR--B--B-U---R--R--BR",
+                "y'": "-U-UUU-U--B--B-U---R--R--BR-RB-D-----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-U--B--RD-----R--R--BR-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUBDFFDFF---LLRLLR---LLFLDDRDFBBBBBB---RRRRRR---",
-                "y": "UUUUUUUULDRRDRR---FFBFFB---FFRFDDBDRLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUURDLLDLL---BBFBBF---BBLBDDFDLRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUFDBBDBB---RRLRRL---RRBRDDLDBFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-U--F--LD-----L--L--FL-B--B----",
+                "y": "-U-UUU-U--F--F-U---L--L--FL-LF-D-----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R--------D-FL--F--F-U---L--L--FL",
+                "y2": "-U-UUU-U--L--L--FL-B--B--------DL--F-R--R-----F--F-U--"
             },
-            "y2": {
-                "": "UUBUUUUUULLRLLR---BBBBBB---RLLDDLFDFRRRRRR---DFFDFF---",
-                "y": "UULUUUUUUFFBFFB---LLLLLL---BFFDDFRDRBBBBBB---DRRDRR---",
-                "y'": "UURUUUUUUBBFBBF---RRRRRR---FBBDDBLDLFFFFFF---DLLDLL---",
-                "y2": "UUFUUUUUURRLRRL---FFFFFF---LRRDDRBDBLLLLLL---DBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-U---F--F--RF-FR-D-----L--L-----B--B----",
+                "y": "-U-UUU-U--F--F--RF-L--L--------DF--R-B--B-----R--R-U--",
+                "y'": "-U-UUU-U--B--B-----R--R-U--R--FD-----F--F--RF-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--------D-RF--R--R-U---F--F--RF"
             }
         },
         "setups": [
-            "L'ULU'FU2F'U",
+            "U'RU2R'UF'U'F",
+            "F'U2L'U2LU'F",
             "F'UFU'RU2R'U",
-            "R'URU'BU2B'U",
-            "B'UBU'LU2L'U",
-            "F'U2L'U2LU'F"
+            "R'URd'RU2R'U"
         ]
     },
     "12": {
         "main": "RU'R'URU'R'U2RU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUDUURRRRRR---LFFDFF---LFRDDDBDDLLFLLF---BBBBBB---",
-                "y": "UUUUUUDUUBBBBBB---FRRDRR---FRBDDDLDDFFRFFR---LLLLLL---",
-                "y'": "UUUUUUDUUFFFFFF---BLLDLL---BLFDDDRDDBBLBBL---RRRRRR---",
-                "y2": "UUUUUUDUULLLLLL---RBBDBB---RBLDDDFDDRRBRRB---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F-------LD-B---L--L-LB--B--B---U",
+                "y": "-U-UUU-U--F--F-----L--L-LB-BL--D-----B--B---U-R--R----",
+                "y'": "-U-UUU-U--B--B---U-R--R--------D--LB-F--F-----L--L-LB-",
+                "y2": "-U-UUU-U--L--L-LB--B--B---U--B-DL----R--R-----F--F----"
             },
-            "y": {
-                "": "DUUUUUUUUBBBBBB---RRRRRR---RDDFDDLDBLFFDFF---LLFLLF---",
-                "y": "DUUUUUUUULLLLLL---BBBBBB---BDDRDDFDLFRRDRR---FFRFFR---",
-                "y'": "DUUUUUUUURRRRRR---FFFFFF---FDDLDDBDRBLLDLL---BBLBBL---",
-                "y2": "DUUUUUUUUFFFFFF---LLLLLL---LDDBDDRDFRBBDBB---RRBRRB---"
+            "BR": {
+                "": "-U-UUU-U--R--R---U-F--F--------D--BR-L--L-----B--B-BR-",
+                "y": "-U-UUU-U--F--F-----L--L-------BD-R---B--B-BR--R--R---U",
+                "y'": "-U-UUU-U--B--B-BR--R--R---U--R-DB----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-BR-RB--D-----R--R---U-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUDLFFDFF---LLFLLF---BDLDDFDDRBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUDFRRDRR---FFRFFR---LDFDDRDDBLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUDBLLDLL---BBLBBL---RDBDDLDDFRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUDRBBDBB---RRBRRB---FDRDDBDDLFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-FL-LF--D-----L--L---U-B--B----",
+                "y": "-U-UUU-U--F--F-FL--L--L---U--L-DF----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R-------FD-L---F--F-FL--L--L---U",
+                "y2": "-U-UUU-U--L--L---U-B--B--------D--FL-R--R-----F--F-FL-"
             },
-            "y2": {
-                "": "UUDUUUUUULLFLLF---BBBBBB---DDBDDDRFLRRRRRR---LFFDFF---",
-                "y": "UUDUUUUUUFFRFFR---LLLLLL---DDLDDDBRFBBBBBB---FRRDRR---",
-                "y'": "UUDUUUUUUBBLBBL---RRRRRR---DDRDDDFLBFFFFFF---BLLDLL---",
-                "y2": "UUDUUUUUURRBRRB---FFFFFF---DDFDDDLBRLLLLLL---RBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-RF--F--F---U--F-DR----L--L-----B--B----",
+                "y": "-U-UUU-U--F--F---U-L--L--------D--RF-B--B-----R--R-RF-",
+                "y'": "-U-UUU-U--B--B-----R--R-RF-FR--D-----F--F---U-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-------RD-F---R--R-RF--F--F---U"
             }
         },
         "setups": [
-            "RUR'U2RUR'U'RUR'",
-            "RU'R'URU'R'URUR'U'",
-            "LUL'U2LUL'U'LUL'",
-            "BUB'U2BUB'U'BUB'",
-            "FUF'U2FUF'U'FUF'"
+            "RU'R'URU'R'U2RU'R'",
+            "R'U'R2U'R2U2R",
+            "RU'R2D'RU2R'DR",
+            "RU'R'URU'R'URUR'U'"
         ]
     },
     "13": {
         "main": "RU'R'UR'FRF'RU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUDUURRRRRR---BFFDFF---FLDLDDFDDLLLLLB---BBBBBB---",
-                "y": "UUUUUUDUUBBBBBB---LRRDRR---RFDFDDRDDFFFFFL---LLLLLL---",
-                "y'": "UUUUUUDUUFFFFFF---RLLDLL---LBDBDDLDDBBBBBR---RRRRRR---",
-                "y2": "UUUUUUDUULLLLLL---FBBDBB---BRDRDDBDDRRRRRF---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F-------BD-L---L--L-UL--B--B---B",
+                "y": "-U-UUU-U--F--F-----L--L-UL-LB--D-----B--B---B-R--R----",
+                "y'": "-U-UUU-U--B--B---B-R--R--------D--BL-F--F-----L--L-UL-",
+                "y2": "-U-UUU-U--L--L-UL--B--B---B--L-DB----R--R-----F--F----"
             },
-            "y": {
-                "": "DUUUUUUUUBBBBBB---RRRRRR---DDDLDDFLFBFFDFF---LLLLLB---",
-                "y": "DUUUUUUUULLLLLL---BBBBBB---DDDFDDRFRLRRDRR---FFFFFL---",
-                "y'": "DUUUUUUUURRRRRR---FFFFFF---DDDBDDLBLRLLDLL---BBBBBR---",
-                "y2": "DUUUUUUUUFFFFFF---LLLLLL---DDDRDDBRBFBBDBB---RRRRRF---"
+            "BR": {
+                "": "-U-UUU-U--R--R---R-F--F--------D--RB-L--L-----B--B-UB-",
+                "y": "-U-UUU-U--F--F-----L--L-------RD-B---B--B-UB--R--R---R",
+                "y'": "-U-UUU-U--B--B-UB--R--R---R--B-DR----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-UB-BR--D-----R--R---R-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUDBFFDFF---LLLLLB---FLFDDLDDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUDLRRDRR---FFFFFL---RFRDDFDDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUDRLLDLL---BBBBBR---LBLDDBDDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUDFBBDBB---RRRRRF---BRBDDRDDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-UF-FL--D-----L--L---L-B--B----",
+                "y": "-U-UUU-U--F--F-UF--L--L---L--F-DL----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R-------LD-F---F--F-UF--L--L---L",
+                "y2": "-U-UUU-U--L--L---L-B--B--------D--LF-R--R-----F--F-UF-"
             },
-            "y2": {
-                "": "UUDUUUUUULLLLLB---BBBBBB---DDFDDLDLFRRRRRR---BFFDFF---",
-                "y": "UUDUUUUUUFFFFFL---LLLLLL---DDRDDFDFRBBBBBB---LRRDRR---",
-                "y'": "UUDUUUUUUBBBBBR---RRRRRR---DDLDDBDBLFFFFFF---RLLDLL---",
-                "y2": "UUDUUUUUURRRRRF---FFFFFF---DDBDDRDRBLLLLLL---FBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-UR--F--F---F--R-DF----L--L-----B--B----",
+                "y": "-U-UUU-U--F--F---F-L--L--------D--FR-B--B-----R--R-UR-",
+                "y'": "-U-UUU-U--B--B-----R--R-UR-RF--D-----F--F---F-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-------FD-R---R--R-UR--F--F---F"
             }
         },
         "setups": [
-            "RUR'FR'F'RU'RUR'",
-            "FUF'LF'L'FU'FUF'",
-            "LUL'BL'B'LU'LUL'",
-            "BUB'RB'R'BU'BUB'"
+            "RU'R'UR'FRF'RU'R'",
+            "R'URUR'U'Rd'",
+            "rUR'U2RU'R'UM",
+            "RUR'FR'F'RU'RUR'"
         ]
     },
     "14": {
         "main": "U'RU'R'URUR'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUURUURRRRRR---BFFDFF---LDBFDDFDDLLDLLL---BBBBBB---",
-                "y": "UUUUUUBUUBBBBBB---LRRDRR---FDLRDDRDDFFDFFF---LLLLLL---",
-                "y'": "UUUUUUFUUFFFFFF---RLLDLL---BDRLDDLDDBBDBBB---RRRRRR---",
-                "y2": "UUUUUULUULLLLLL---FBBDBB---RDFBDDBDDRRDRRR---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--------D-BL--L--L-L---B--B--BU",
+                "y": "-U-UUU-U--F--F-----L--L-L--B--LD-----B--B--BU-R--R----",
+                "y'": "-U-UUU-U--B--B--BU-R--R--------DL--B-F--F-----L--L-L--",
+                "y2": "-U-UUU-U--L--L-L---B--B--BU-LB-D-----R--R-----F--F----"
             },
-            "y": {
-                "": "RUUUUUUUUBBBBBB---RRRRRR---BDDDDDLFFBFFDFF---LLDLLL---",
-                "y": "BUUUUUUUULLLLLL---BBBBBB---LDDDDDFRRLRRDRR---FFDFFF---",
-                "y'": "FUUUUUUUURRRRRR---FFFFFF---RDDDDDBLLRLLDLL---BBDBBB---",
-                "y2": "LUUUUUUUUFFFFFF---LLLLLL---FDDDDDRBBFBBDBB---RRDRRR---"
+            "BR": {
+                "": "-U-UUU-U--R--R--RU-F--F--------DB--R-L--L-----B--B-B--",
+                "y": "-U-UUU-U--F--F-----L--L--------D-RB--B--B-B---R--R--RU",
+                "y'": "-U-UUU-U--B--B-B---R--R--RU-BR-D-----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-B--R--BD-----R--R--RU-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUURBFFDFF---LLDLLL---FFLDDDDDBBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUBLRRDRR---FFDFFF---RRFDDDDDLLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUFRLLDLL---BBDBBB---LLBDDDDDRRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUULFBBDBB---RRDRRR---BBRDDDDDFFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-F--L--FD-----L--L--LU-B--B----",
+                "y": "-U-UUU-U--F--F-F---L--L--LU-FL-D-----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R--------D-LF--F--F-F---L--L--LU",
+                "y2": "-U-UUU-U--L--L--LU-B--B--------DF--L-R--R-----F--F-F--"
             },
-            "y2": {
-                "": "UURUUUUUULLDLLL---BBBBBB---DDFDDFBDLRRRRRR---BFFDFF---",
-                "y": "UUBUUUUUUFFDFFF---LLLLLL---DDRDDRLDFBBBBBB---LRRDRR---",
-                "y'": "UUFUUUUUUBBDBBB---RRRRRR---DDLDDLRDBFFFFFF---RLLDLL---",
-                "y2": "UULUUUUUURRDRRR---FFFFFF---DDBDDBFDRLLLLLL---FBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-R---F--F--FU-RF-D-----L--L-----B--B----",
+                "y": "-U-UUU-U--F--F--FU-L--L--------DR--F-B--B-----R--R-R--",
+                "y'": "-U-UUU-U--B--B-----R--R-R--F--RD-----F--F--FU-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--------D-FR--R--R-R---F--F--FU"
             }
         },
         "setups": [
-            "LU'L'U'LUL'U",
-            "RU'R'U'RUR'U",
-            "FU'F'U'FUF'U",
-            "BU'B'U'BUB'U",
+            "U'RU'R'URUR'",
+            "R2U2R'U'RU'R2U2",
+            "R'FRURU'R2F'RU",
             "RUR'U2RU'R'U2RU2R'"
         ]
     },
     "15": {
         "main": "R'D'RU'R'DRURU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUBUURRRRRR---DFFDFF---FFDDDDDDDLLRLLB---BBBBBB---",
-                "y": "UUUUUULUUBBBBBB---DRRDRR---RRDDDDDDDFFBFFL---LLLLLL---",
-                "y'": "UUUUUURUUFFFFFF---DLLDLL---LLDDDDDDDBBFBBR---RRRRRR---",
-                "y2": "UUUUUUFUULLLLLL---DBBDBB---BBDDDDDDDRRLRRF---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F-------LD-L---L--L-UB--B--B---B",
+                "y": "-U-UUU-U--F--F-----L--L-UB-LL--D-----B--B---B-R--R----",
+                "y'": "-U-UUU-U--B--B---B-R--R--------D--LL-F--F-----L--L-UB-",
+                "y2": "-U-UUU-U--L--L-UB--B--B---B--L-DL----R--R-----F--F----"
             },
-            "y": {
-                "": "BUUUUUUUUBBBBBB---RRRRRR---DDDFDDFDDDFFDFF---LLRLLB---",
-                "y": "LUUUUUUUULLLLLL---BBBBBB---DDDRDDRDDDRRDRR---FFBFFL---",
-                "y'": "RUUUUUUUURRRRRR---FFFFFF---DDDLDDLDDDLLDLL---BBFBBR---",
-                "y2": "FUUUUUUUUFFFFFF---LLLLLL---DDDBDDBDDDBBDBB---RRLRRF---"
+            "BR": {
+                "": "-U-UUU-U--R--R---R-F--F--------D--BB-L--L-----B--B-UR-",
+                "y": "-U-UUU-U--F--F-----L--L-------BD-B---B--B-UR--R--R---R",
+                "y'": "-U-UUU-U--B--B-UR--R--R---R--B-DB----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-UR-BB--D-----R--R---R-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUBDFFDFF---LLRLLB---DDFDDFDDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUULDRRDRR---FFBFFL---DDRDDRDDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUURDLLDLL---BBFBBR---DDLDDLDDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUFDBBDBB---RRLRRF---DDBDDBDDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-UL-FF--D-----L--L---L-B--B----",
+                "y": "-U-UUU-U--F--F-UL--L--L---L--F-DF----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R-------FD-F---F--F-UL--L--L---L",
+                "y2": "-U-UUU-U--L--L---L-B--B--------D--FF-R--R-----F--F-UL-"
             },
-            "y2": {
-                "": "UUBUUUUUULLRLLB---BBBBBB---DDDDDDDFFRRRRRR---DFFDFF---",
-                "y": "UULUUUUUUFFBFFL---LLLLLL---DDDDDDDRRBBBBBB---DRRDRR---",
-                "y'": "UURUUUUUUBBFBBR---RRRRRR---DDDDDDDLLFFFFFF---DLLDLL---",
-                "y2": "UUFUUUUUURRLRRF---FFFFFF---DDDDDDDBBLLLLLL---DBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-UF--F--F---F--R-DR----L--L-----B--B----",
+                "y": "-U-UUU-U--F--F---F-L--L--------D--RR-B--B-----R--R-UF-",
+                "y'": "-U-UUU-U--B--B-----R--R-UF-RR--D-----F--F---F-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-------RD-R---R--R-UF--F--F---F"
             }
         },
         "setups": [
-            "RUR'U'RUR'U2RU'R'",
-            "RUR'U'R'D'RUR'DR",
+            "R'D'RU'R'DRURU'R'",
+            "MUrUr'U'M'",
             "RU'R'U'FR'F'RU'",
-            "FU'F'U'LF'L'FU'",
-            "LUL'U'LUL'U2LU'L'"
+            "RUR'U'RUR'U2RU'R'"
         ]
     },
     "16": {
         "main": "RU'R'U2F'U'F",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUFUURRRRRR---DFFDFF---LLLLDDDDDLLLLLF---BBBBBB---",
-                "y": "UUUUUURUUBBBBBB---DRRDRR---FFFFDDDDDFFFFFR---LLLLLL---",
-                "y'": "UUUUUULUUFFFFFF---DLLDLL---BBBBDDDDDBBBBBL---RRRRRR---",
-                "y2": "UUUUUUBUULLLLLL---DBBDBB---RRRRDDDDDRRRRRB---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--------D-BB--L--L-L---B--B--LU",
+                "y": "-U-UUU-U--F--F-----L--L-L--B--BD-----B--B--LU-R--R----",
+                "y'": "-U-UUU-U--B--B--LU-R--R--------DB--B-F--F-----L--L-L--",
+                "y2": "-U-UUU-U--L--L-L---B--B--LU-BB-D-----R--R-----F--F----"
             },
-            "y": {
-                "": "FUUUUUUUUBBBBBB---RRRRRR---LDDLDDLLDDFFDFF---LLLLLF---",
-                "y": "RUUUUUUUULLLLLL---BBBBBB---FDDFDDFFDDRRDRR---FFFFFR---",
-                "y'": "LUUUUUUUURRRRRR---FFFFFF---BDDBDDBBDDLLDLL---BBBBBL---",
-                "y2": "BUUUUUUUUFFFFFF---LLLLLL---RDDRDDRRDDBBDBB---RRRRRB---"
+            "BR": {
+                "": "-U-UUU-U--R--R--BU-F--F--------DR--R-L--L-----B--B-B--",
+                "y": "-U-UUU-U--F--F-----L--L--------D-RR--B--B-B---R--R--BU",
+                "y'": "-U-UUU-U--B--B-B---R--R--BU-RR-D-----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-B--R--RD-----R--R--BU-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUFDFFDFF---LLLLLF---DLLDDLDDLBBBBBB---RRRRRR---",
-                "y": "UUUUUUUURDRRDRR---FFFFFR---DFFDDFDDFLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUULDLLDLL---BBBBBL---DBBDDBDDBRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUBDBBDBB---RRRRRB---DRRDDRDDRFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-F--L--LD-----L--L--FU-B--B----",
+                "y": "-U-UUU-U--F--F-F---L--L--FU-LL-D-----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R--------D-LL--F--F-F---L--L--FU",
+                "y2": "-U-UUU-U--L--L--FU-B--B--------DL--L-R--R-----F--F-F--"
             },
-            "y2": {
-                "": "UUFUUUUUULLLLLF---BBBBBB---DDDDDLLLLRRRRRR---DFFDFF---",
-                "y": "UURUUUUUUFFFFFR---LLLLLL---DDDDDFFFFBBBBBB---DRRDRR---",
-                "y'": "UULUUUUUUBBBBBL---RRRRRR---DDDDDBBBBFFFFFF---DLLDLL---",
-                "y2": "UUBUUUUUURRRRRB---FFFFFF---DDDDDRRRRLLLLLL---DBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-R---F--F--RU-FF-D-----L--L-----B--B----",
+                "y": "-U-UUU-U--F--F--RU-L--L--------DF--F-B--B-----R--R-R--",
+                "y'": "-U-UUU-U--B--B-----R--R-R--F--FD-----F--F--RU-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--------D-FF--R--R-R---F--F--RU"
             }
         },
         "setups": [
+            "RU'R'U2F'U'F",
+            "R'URyU2RUR'",
             "RU'R'FRUR'U'F'U'",
-            "F'UFU2RUR'",
-            "L'ULU2FUF'",
-            "FU'F'LFUF'U'L'U'",
-            "R'URU2BUB'"
+            "RU'R'UrUR'U'MU'"
         ]
     },
     "17": {
         "main": "RU2R'U'RUR'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUBUURRRRRR---DFFDFF---UDLFDDFDDLLRLLR---BBBBBB---",
-                "y": "UUUUUULUUBBBBBB---DRRDRR---UDFRDDRDDFFBFFB---LLLLLL---",
-                "y'": "UUUUUURUUFFFFFF---DLLDLL---UDBLDDLDDBBFBBF---RRRRRR---",
-                "y2": "UUUUUUFUULLLLLL---DBBDBB---UDRBDDBDDRRLRRL---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--------D-UL--L--L-B---B--B--BL",
+                "y": "-U-UUU-U--F--F-----L--L-B--U--LD-----B--B--BL-R--R----",
+                "y'": "-U-UUU-U--B--B--BL-R--R--------DL--U-F--F-----L--L-B--",
+                "y2": "-U-UUU-U--L--L-B---B--B--BL-LU-D-----R--R-----F--F----"
             },
-            "y": {
-                "": "BUUUUUUUUBBBBBB---RRRRRR---LDDDDDUFFDFFDFF---LLRLLR---",
-                "y": "LUUUUUUUULLLLLL---BBBBBB---FDDDDDURRDRRDRR---FFBFFB---",
-                "y'": "RUUUUUUUURRRRRR---FFFFFF---BDDDDDULLDLLDLL---BBFBBF---",
-                "y2": "FUUUUUUUUFFFFFF---LLLLLL---RDDDDDUBBDBBDBB---RRLRRL---"
+            "BR": {
+                "": "-U-UUU-U--R--R--RB-F--F--------DB--U-L--L-----B--B-R--",
+                "y": "-U-UUU-U--F--F-----L--L--------D-UB--B--B-R---R--R--RB",
+                "y'": "-U-UUU-U--B--B-R---R--R--RB-BU-D-----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-R--U--BD-----R--R--RB-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUBDFFDFF---LLRLLR---FFUDDDDDLBBBBBB---RRRRRR---",
-                "y": "UUUUUUUULDRRDRR---FFBFFB---RRUDDDDDFLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUURDLLDLL---BBFBBF---LLUDDDDDBRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUFDBBDBB---RRLRRL---BBUDDDDDRFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-L--U--FD-----L--L--LF-B--B----",
+                "y": "-U-UUU-U--F--F-L---L--L--LF-FU-D-----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R--------D-UF--F--F-L---L--L--LF",
+                "y2": "-U-UUU-U--L--L--LF-B--B--------DF--U-R--R-----F--F-L--"
             },
-            "y2": {
-                "": "UUBUUUUUULLRLLR---BBBBBB---DDFDDFLDURRRRRR---DFFDFF---",
-                "y": "UULUUUUUUFFBFFB---LLLLLL---DDRDDRFDUBBBBBB---DRRDRR---",
-                "y'": "UURUUUUUUBBFBBF---RRRRRR---DDLDDLBDUFFFFFF---DLLDLL---",
-                "y2": "UUFUUUUUURRLRRL---FFFFFF---DDBDDBRDULLLLLL---DBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-F---F--F--FR-RU-D-----L--L-----B--B----",
+                "y": "-U-UUU-U--F--F--FR-L--L--------DR--U-B--B-----R--R-F--",
+                "y'": "-U-UUU-U--B--B-----R--R-F--U--RD-----F--F--FR-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--------D-UR--R--R-F---F--F--FR"
             }
         },
         "setups": [
-            "RU'R'URU2R'",
-            "LU'L'ULU2L'",
+            "RU2R'U'RUR'",
+            "LU'L'ULU2L'y2",
             "RU'R'U2RU2R'URU'R'",
-            "BU'B'UBU2B'",
-            "FU'F'UFU2F'"
+            "L'U'LUL'U'LF'LFL'y'"
         ]
     },
     "18": {
         "main": "R'FRF'RU'R'URU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUULUURRRRRR---DFFBFF---ULDDDDLDDLLBLLD---BBBBBB---",
-                "y": "UUUUUUFUUBBBBBB---DRRLRR---UFDDDDFDDFFLFFD---LLLLLL---",
-                "y'": "UUUUUUBUUFFFFFF---DLLRLL---UBDDDDBDDBBRBBD---RRRRRR---",
-                "y2": "UUUUUURUULLLLLL---DBBFBB---URDDDDRDDRRFRRD---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F-------BD-U---L--L-BL--B--B---L",
+                "y": "-U-UUU-U--F--F-----L--L-BL-UB--D-----B--B---L-R--R----",
+                "y'": "-U-UUU-U--B--B---L-R--R--------D--BU-F--F-----L--L-BL-",
+                "y2": "-U-UUU-U--L--L-BL--B--B---L--U-DB----R--R-----F--F----"
             },
-            "y": {
-                "": "LUUUUUUUUBBBBBB---RRRRRR---DDDLDDUDLDFFBFF---LLBLLD---",
-                "y": "FUUUUUUUULLLLLL---BBBBBB---DDDFDDUDFDRRLRR---FFLFFD---",
-                "y'": "BUUUUUUUURRRRRR---FFFFFF---DDDBDDUDBDLLRLL---BBRBBD---",
-                "y2": "RUUUUUUUUFFFFFF---LLLLLL---DDDRDDUDRDBBFBB---RRFRRD---"
+            "BR": {
+                "": "-U-UUU-U--R--R---B-F--F--------D--RU-L--L-----B--B-RB-",
+                "y": "-U-UUU-U--F--F-----L--L-------RD-U---B--B-RB--R--R---B",
+                "y'": "-U-UUU-U--B--B-RB--R--R---B--U-DR----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-RB-UR--D-----R--R---B-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUULDFFBFF---LLBLLD---LDUDDLDDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUFDRRLRR---FFLFFD---FDUDDFDDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUBDLLRLL---BBRBBD---BDUDDBDDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUURDBBFBB---RRFRRD---RDUDDRDDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-LF-UL--D-----L--L---F-B--B----",
+                "y": "-U-UUU-U--F--F-LF--L--L---F--U-DL----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R-------LD-U---F--F-LF--L--L---F",
+                "y2": "-U-UUU-U--L--L---F-B--B--------D--LU-R--R-----F--F-LF-"
             },
-            "y2": {
-                "": "UULUUUUUULLBLLD---BBBBBB---DDLDDDDLURRRRRR---DFFBFF---",
-                "y": "UUFUUUUUUFFLFFD---LLLLLL---DDFDDDDFUBBBBBB---DRRLRR---",
-                "y'": "UUBUUUUUUBBRBBD---RRRRRR---DDBDDDDBUFFFFFF---DLLRLL---",
-                "y2": "UURUUUUUURRFRRD---FFFFFF---DDRDDDDRULLLLLL---DBBFBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-FR--F--F---R--U-DF----L--L-----B--B----",
+                "y": "-U-UUU-U--F--F---R-L--L--------D--FU-B--B-----R--R-FR-",
+                "y'": "-U-UUU-U--B--B-----R--R-FR-UF--D-----F--F---R-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-------FD-U---R--R-FR--F--F---R"
             }
         },
         "setups": [
+            "R'FRF'RU'R'URU'R'",
+            "L'ULU'L'U2Ly'",
             "RUR'U'RUR'FR'F'R",
-            "FUF'U'FUF'LF'L'F",
-            "LUL'U'LUL'BL'B'L",
-            "BUB'U'BUB'RB'R'B",
-            "BL'B'L2U2L'U'LUL2BLB'"
+            "FR'F'R2U2R'U'RUR2FRF'"
         ]
     },
     "19": {
         "main": "URU2R'URU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUULUURRRRRR---DFFDFF---UDFDDDFFRLLBLLR---BBBBBB---",
-                "y": "UUUUUUFUUBBBBBB---DRRDRR---UDRDDDRRBFFLFFB---LLLLLL---",
-                "y'": "UUUUUUBUUFFFFFF---DLLDLL---UDLDDDLLFBBRBBF---RRRRRR---",
-                "y2": "UUUUUURUULLLLLL---DBBDBB---UDBDDDBBLRRFRRL---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R--B--F--F--------DLU---L--L-B---B--B---L",
+                "y": "-U-UUU-U--F--F-----L--L-B--U---D--L--B--B---L-R--R--B-",
+                "y'": "-U-UUU-U--B--B---L-R--R--B--L--D---U-F--F-----L--L-B--",
+                "y2": "-U-UUU-U--L--L-B---B--B---L--ULD-----R--R--B--F--F----"
             },
-            "y": {
-                "": "LUUUUUUUUBBBBBB---RRRRRR---FDRDDFUDFDFFDFF---LLBLLR---",
-                "y": "FUUUUUUUULLLLLL---BBBBBB---RDBDDRUDRDRRDRR---FFLFFB---",
-                "y'": "BUUUUUUUURRRRRR---FFFFFF---LDFDDLUDLDLLDLL---BBRBBF---",
-                "y2": "RUUUUUUUUFFFFFF---LLLLLL---BDLDDBUDBDBBDBB---RRFRRL---"
+            "BR": {
+                "": "-U-UUU-U--R--R---B-F--F--R--B--D---U-L--L-----B--B-R--",
+                "y": "-U-UUU-U--F--F--R--L--L--------DBU---B--B-R---R--R---B",
+                "y'": "-U-UUU-U--B--B-R---R--R---B--UBD-----F--F--R--L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-R--U---D--B--R--R---B-F--F--R-"
             },
-            "y'": {
-                "": "UUUUUUUULDFFDFF---LLBLLR---FDUFDDRDFBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUFDRRDRR---FFLFFB---RDURDDBDRLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUBDLLDLL---BBRBBF---LDULDDFDLRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUURDBBDBB---RRFRRL---BDUBDDLDBFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-L--U---D--F--L--L---F-B--B--L-",
+                "y": "-U-UUU-U--F--F-L---L--L---F--UFD-----B--B--L--R--R----",
+                "y'": "-U-UUU-U--B--B--L--R--R--------DFU---F--F-L---L--L---F",
+                "y2": "-U-UUU-U--L--L---F-B--B--L--F--D---U-R--R-----F--F-L--"
             },
-            "y2": {
-                "": "UULUUUUUULLBLLR---BBBBBB---RFFDDDFDURRRRRR---DFFDFF---",
-                "y": "UUFUUUUUUFFLFFB---LLLLLL---BRRDDDRDUBBBBBB---DRRDRR---",
-                "y'": "UUBUUUUUUBBRBBF---RRRRRR---FLLDDDLDUFFFFFF---DLLDLL---",
-                "y2": "UURUUUUUURRFRRL---FFFFFF---LBBDDDBDULLLLLL---DBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-F---F--F---R--URD-----L--L--F--B--B----",
+                "y": "-U-UUU-U--F--F---R-L--L--F--R--D---U-B--B-----R--R-F--",
+                "y'": "-U-UUU-U--B--B-----R--R-F--U---D--R--F--F---R-L--L--F-",
+                "y2": "-U-UUU-U--L--L--F--B--B--------DRU---R--R-F---F--F---R"
             }
         },
         "setups": [
-            "LU'L'U'LUL'U'LUL'",
-            "RUR'U'RU2R'U'",
-            "RU'R'U'RUR'U'RUR'",
-            "FU'F'U'FUF'U'FUF'",
-            "FUF'U'FU2F'U'"
+            "URU2R'URU'R'",
+            "FR'F'R2U2R'U'",
+            "fRf'U'fR2f'yU'",
+            "RU'R'U'RUR'U'RUR'"
         ]
     },
     "20": {
         "main": "U'RU'R2FRF'RU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUDUURRRRRR---LFFDFF---UDFDDLLLDLLFLLR---BBBBBB---",
-                "y": "UUUUUUDUUBBBBBB---FRRDRR---UDRDDFFFDFFRFFB---LLLLLL---",
-                "y'": "UUUUUUDUUFFFFFF---BLLDLL---UDLDDBBBDBBLBBF---RRRRRR---",
-                "y2": "UUUUUUDUULLLLLL---RBBDBB---UDBDDRRRDRRBRRL---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--L--B--D-U---L--L-B---B--B---L",
+                "y": "-U-UUU-U--F--F--L--L--L-B--U---DB----B--B---L-R--R----",
+                "y'": "-U-UUU-U--B--B---L-R--R-------BD---U-F--F--L--L--L-B--",
+                "y2": "-U-UUU-U--L--L-B---B--B---L--U-D--B--R--R-----F--F--L-"
             },
-            "y": {
-                "": "DUUUUUUUUBBBBBB---RRRRRR---FLDDDLUDLLFFDFF---LLFLLR---",
-                "y": "DUUUUUUUULLLLLL---BBBBBB---RFDDDFUDFFRRDRR---FFRFFB---",
-                "y'": "DUUUUUUUURRRRRR---FFFFFF---LBDDDBUDBBLLDLL---BBLBBF---",
-                "y2": "DUUUUUUUUFFFFFF---LLLLLL---BRDDDRUDRRBBDBB---RRBRRL---"
+            "BR": {
+                "": "-U-UUU-U--R--R---B-F--F-------RD---U-L--L--B--B--B-R--",
+                "y": "-U-UUU-U--F--F-----L--L--B--R--D-U---B--B-R---R--R---B",
+                "y'": "-U-UUU-U--B--B-R---R--R---B--U-D--R--F--F-----L--L--B-",
+                "y2": "-U-UUU-U--L--L--B--B--B-R--U---DR----R--R---B-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUDLFFDFF---LLFLLR---LDULDDDLFBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUDFRRDRR---FFRFFB---FDUFDDDFRLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUDBLLDLL---BBLBBF---BDUBDDDBLRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUDRBBDBB---RRBRRL---RDURDDDRBFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R--F--F--F-L--U---DL----L--L---F-B--B----",
+                "y": "-U-UUU-U--F--F-L---L--L---F--U-D--L--B--B-----R--R--F-",
+                "y'": "-U-UUU-U--B--B-----R--R--F--L--D-U---F--F-L---L--L---F",
+                "y2": "-U-UUU-U--L--L---F-B--B-------LD---U-R--R--F--F--F-L--"
             },
-            "y2": {
-                "": "UUDUUUUUULLFLLR---BBBBBB---DLLLDDFDURRRRRR---LFFDFF---",
-                "y": "UUDUUUUUUFFRFFB---LLLLLL---DFFFDDRDUBBBBBB---FRRDRR---",
-                "y'": "UUDUUUUUUBBLBBF---RRRRRR---DBBBDDLDUFFFFFF---BLLDLL---",
-                "y2": "UUDUUUUUURRBRRL---FFFFFF---DRRRDDBDULLLLLL---RBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-F---F--F---R--U-D--F--L--L-----B--B--R-",
+                "y": "-U-UUU-U--F--F---R-L--L-------FD---U-B--B--R--R--R-F--",
+                "y'": "-U-UUU-U--B--B--R--R--R-F--U---DF----F--F---R-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--R--F--D-U---R--R-F---F--F---R"
             }
         },
         "setups": [
+            "U'RU'R2FRF'RU'R'",
+            "L'U'LUL'U2Ld",
             "RUR'FR'F'R2UR'U",
-            "FUF'LF'L'F2UF'U",
-            "LUL'BL'B'L2UL'U",
-            "BUB'RB'R'B2UB'U"
+            "L'U'LUL'U2LUy'"
         ]
     },
     "21": {
         "main": "U2RUR'URU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUURUURRRRRR---DFFDFF---UDRDDFDDDLLFLLF---BBBBBB---",
-                "y": "UUUUUUBUUBBBBBB---DRRDRR---UDBDDRDDDFFRFFR---LLLLLL---",
-                "y'": "UUUUUUFUUFFFFFF---DLLDLL---UDFDDLDDDBBLBBL---RRRRRR---",
-                "y2": "UUUUUULUULLLLLL---DBBDBB---UDLDDBDDDRRBRRB---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--B--L--D-U---L--L-B---B--B---L",
+                "y": "-U-UUU-U--F--F--B--L--L-B--U---DL----B--B---L-R--R----",
+                "y'": "-U-UUU-U--B--B---L-R--R-------LD---U-F--F--B--L--L-B--",
+                "y2": "-U-UUU-U--L--L-B---B--B---L--U-D--L--R--R-----F--F--B-"
             },
-            "y": {
-                "": "RUUUUUUUUBBBBBB---RRRRRR---RFDDDDUDDDFFDFF---LLFLLF---",
-                "y": "BUUUUUUUULLLLLL---BBBBBB---BRDDDDUDDDRRDRR---FFRFFR---",
-                "y'": "FUUUUUUUURRRRRR---FFFFFF---FLDDDDUDDDLLDLL---BBLBBL---",
-                "y2": "LUUUUUUUUFFFFFF---LLLLLL---LBDDDDUDDDBBDBB---RRBRRB---"
+            "BR": {
+                "": "-U-UUU-U--R--R---B-F--F-------BD---U-L--L--R--B--B-R--",
+                "y": "-U-UUU-U--F--F-----L--L--R--B--D-U---B--B-R---R--R---B",
+                "y'": "-U-UUU-U--B--B-R---R--R---B--U-D--B--F--F-----L--L--R-",
+                "y2": "-U-UUU-U--L--L--R--B--B-R--U---DB----R--R---B-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUURDFFDFF---LLFLLF---DDUDDDDFRBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUBDRRDRR---FFRFFR---DDUDDDDRBLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUFDLLDLL---BBLBBL---DDUDDDDLFRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUULDBBDBB---RRBRRB---DDUDDDDBLFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R--L--F--F-L--U---DF----L--L---F-B--B----",
+                "y": "-U-UUU-U--F--F-L---L--L---F--U-D--F--B--B-----R--R--L-",
+                "y'": "-U-UUU-U--B--B-----R--R--L--F--D-U---F--F-L---L--L---F",
+                "y2": "-U-UUU-U--L--L---F-B--B-------FD---U-R--R--L--F--F-L--"
             },
-            "y2": {
-                "": "UURUUUUUULLFLLF---BBBBBB---DDDFDDRDURRRRRR---DFFDFF---",
-                "y": "UUBUUUUUUFFRFFR---LLLLLL---DDDRDDBDUBBBBBB---DRRDRR---",
-                "y'": "UUFUUUUUUBBLBBL---RRRRRR---DDDLDDFDUFFFFFF---DLLDLL---",
-                "y2": "UULUUUUUURRBRRB---FFFFFF---DDDBDDLDULLLLLL---DBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-F---F--F---R--U-D--R--L--L-----B--B--F-",
+                "y": "-U-UUU-U--F--F---R-L--L-------RD---U-B--B--F--R--R-F--",
+                "y'": "-U-UUU-U--B--B--F--R--R-F--U---DR----F--F---R-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--F--R--D-U---R--R-F---F--F---R"
             }
         },
         "setups": [
-            "RUR'U'RU'R'U2",
+            "U2RUR'URU'R'",
+            "RBU2B'R'",
             "RU'R'U2RUR'",
-            "FUF'U'FU'F'U2",
-            "FU'F'U2FUF'",
-            "BUB'U'BU'B'U2"
+            "fR'f'U2fRf'y"
         ]
     },
     "22": {
         "main": "rU'r'U2rUr'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUDUURRRRRR---LFFBFF---ULDFDDDLDLLFLLD---BBBBBB---",
-                "y": "UUUUUUDUUBBBBBB---FRRLRR---UFDRDDDFDFFRFFD---LLLLLL---",
-                "y'": "UUUUUUDUUFFFFFF---BLLRLL---UBDLDDDBDBBLBBD---RRRRRR---",
-                "y2": "UUUUUUDUULLLLLL---RBBFBB---URDBDDDRDRRBRRD---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R--L--F--F--------DBU---L--L-B---B--B---L",
+                "y": "-U-UUU-U--F--F-----L--L-B--U---D--B--B--B---L-R--R--L-",
+                "y'": "-U-UUU-U--B--B---L-R--R--L--B--D---U-F--F-----L--L-B--",
+                "y2": "-U-UUU-U--L--L-B---B--B---L--UBD-----R--R--L--F--F----"
             },
-            "y": {
-                "": "DUUUUUUUUBBBBBB---RRRRRR---DDDLDLUFDLFFBFF---LLFLLD---",
-                "y": "DUUUUUUUULLLLLL---BBBBBB---DDDFDFURDFRRLRR---FFRFFD---",
-                "y'": "DUUUUUUUURRRRRR---FFFFFF---DDDBDBULDBLLRLL---BBLBBD---",
-                "y2": "DUUUUUUUUFFFFFF---LLLLLL---DDDRDRUBDRBBFBB---RRBRRD---"
+            "BR": {
+                "": "-U-UUU-U--R--R---B-F--F--B--R--D---U-L--L-----B--B-R--",
+                "y": "-U-UUU-U--F--F--B--L--L--------DRU---B--B-R---R--R---B",
+                "y'": "-U-UUU-U--B--B-R---R--R---B--URD-----F--F--B--L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-R--U---D--R--R--R---B-F--F--B-"
             },
-            "y'": {
-                "": "UUUUUUUUDLFFBFF---LLFLLD---DFULDLDDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUDFRRLRR---FFRFFD---DRUFDFDDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUDBLLRLL---BBLBBD---DLUBDBDDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUDRBBFBB---RRBRRD---DBURDRDDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-L--U---D--L--L--L---F-B--B--F-",
+                "y": "-U-UUU-U--F--F-L---L--L---F--ULD-----B--B--F--R--R----",
+                "y'": "-U-UUU-U--B--B--F--R--R--------DLU---F--F-L---L--L---F",
+                "y2": "-U-UUU-U--L--L---F-B--B--F--L--D---U-R--R-----F--F-L--"
             },
-            "y2": {
-                "": "UUDUUUUUULLFLLD---BBBBBB---DLDDDFDLURRRRRR---LFFBFF---",
-                "y": "UUDUUUUUUFFRFFD---LLLLLL---DFDDDRDFUBBBBBB---FRRLRR---",
-                "y'": "UUDUUUUUUBBLBBD---RRRRRR---DBDDDLDBUFFFFFF---BLLRLL---",
-                "y2": "UUDUUUUUURRBRRD---FFFFFF---DRDDDBDRULLLLLL---RBBFBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-F---F--F---R--UFD-----L--L--R--B--B----",
+                "y": "-U-UUU-U--F--F---R-L--L--R--F--D---U-B--B-----R--R-F--",
+                "y'": "-U-UUU-U--B--B-----R--R-F--U---D--F--F--F---R-L--L--R-",
+                "y2": "-U-UUU-U--L--L--R--B--B--------DFU---R--R-F---F--F---R"
             }
         },
         "setups": [
+            "rU'r'U2rUr'",
             "F'L'U2LF",
-            "R'F'U2FR",
-            "B'R'U2RB",
-            "L'B'U2BL"
+            "R'U'RUR'URU2y"
         ]
     },
     "23": {
         "main": "URU'R'U'RU'R'URU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUBUURRRRRR---DFFDFF---UFBDDDDDDLLRLLF---BBBBBB---",
-                "y": "UUUUUULUUBBBBBB---DRRDRR---URLDDDDDDFFBFFR---LLLLLL---",
-                "y'": "UUUUUURUUFFFFFF---DLLDLL---ULRDDDDDDBBFBBL---RRRRRR---",
-                "y2": "UUUUUUFUULLLLLL---DBBDBB---UBFDDDDDDRRLRRB---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F-------LD-U---L--L-BB--B--B---L",
+                "y": "-U-UUU-U--F--F-----L--L-BB-UL--D-----B--B---L-R--R----",
+                "y'": "-U-UUU-U--B--B---L-R--R--------D--LU-F--F-----L--L-BB-",
+                "y2": "-U-UUU-U--L--L-BB--B--B---L--U-DL----R--R-----F--F----"
             },
-            "y": {
-                "": "BUUUUUUUUBBBBBB---RRRRRR---BDDFDDUDDDFFDFF---LLRLLF---",
-                "y": "LUUUUUUUULLLLLL---BBBBBB---LDDRDDUDDDRRDRR---FFBFFR---",
-                "y'": "RUUUUUUUURRRRRR---FFFFFF---RDDLDDUDDDLLDLL---BBFBBL---",
-                "y2": "FUUUUUUUUFFFFFF---LLLLLL---FDDBDDUDDDBBDBB---RRLRRB---"
+            "BR": {
+                "": "-U-UUU-U--R--R---B-F--F--------D--BU-L--L-----B--B-RR-",
+                "y": "-U-UUU-U--F--F-----L--L-------BD-U---B--B-RR--R--R---B",
+                "y'": "-U-UUU-U--B--B-RR--R--R---B--U-DB----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-RR-UB--D-----R--R---B-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUBDFFDFF---LLRLLF---DDUDDFDDBBBBBBB---RRRRRR---",
-                "y": "UUUUUUUULDRRDRR---FFBFFR---DDUDDRDDLLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUURDLLDLL---BBFBBL---DDUDDLDDRRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUFDBBDBB---RRLRRB---DDUDDBDDFFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-LL-UF--D-----L--L---F-B--B----",
+                "y": "-U-UUU-U--F--F-LL--L--L---F--U-DF----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R-------FD-U---F--F-LL--L--L---F",
+                "y2": "-U-UUU-U--L--L---F-B--B--------D--FU-R--R-----F--F-LL-"
             },
-            "y2": {
-                "": "UUBUUUUUULLRLLF---BBBBBB---DDDDDDBFURRRRRR---DFFDFF---",
-                "y": "UULUUUUUUFFBFFR---LLLLLL---DDDDDDLRUBBBBBB---DRRDRR---",
-                "y'": "UURUUUUUUBBFBBL---RRRRRR---DDDDDDRLUFFFFFF---DLLDLL---",
-                "y2": "UUFUUUUUURRLRRB---FFFFFF---DDDDDDFBULLLLLL---DBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-FF--F--F---R--U-DR----L--L-----B--B----",
+                "y": "-U-UUU-U--F--F---R-L--L--------D--RU-B--B-----R--R-FF-",
+                "y'": "-U-UUU-U--B--B-----R--R-FF-UR--D-----F--F---R-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-------RD-U---R--R-FF--F--F---R"
             }
         },
         "setups": [
-            "RUR'U'RUR'URUR'U'",
+            "URU'R'U'RU'R'URU'R'",
             "RU'R'U'R'FRF'U'",
-            "RU'R'URU'R'U2RU'R'",
-            "FUF'U'FUF'UFUF'U'",
-            "FU'F'U'F'LFL'U'"
+            "R'D'RU2R'DR2UR'",
+            "RU'R'URU'R'U2RU'R'"
         ]
     },
     "24": {
         "main": "FURU'R'F'RU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUULUURRRRRR---FFFDFF---URRLDDFDDLLDLLB---BBBBBB---",
-                "y": "UUUUUUFUUBBBBBB---RRRDRR---UBBFDDRDDFFDFFL---LLLLLL---",
-                "y'": "UUUUUUBUUFFFFFF---LLLDLL---UFFBDDLDDBBDBBR---RRRRRR---",
-                "y2": "UUUUUURUULLLLLL---BBBDBB---ULLRDDBDDRRDRRF---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--------D-UB--L--L-B---B--B--LL",
+                "y": "-U-UUU-U--F--F-----L--L-B--U--BD-----B--B--LL-R--R----",
+                "y'": "-U-UUU-U--B--B--LL-R--R--------DB--U-F--F-----L--L-B--",
+                "y2": "-U-UUU-U--L--L-B---B--B--LL-BU-D-----R--R-----F--F----"
             },
-            "y": {
-                "": "LUUUUUUUUBBBBBB---RRRRRR---RDDRDDULFFFFDFF---LLDLLB---",
-                "y": "FUUUUUUUULLLLLL---BBBBBB---BDDBDDUFRRRRDRR---FFDFFL---",
-                "y'": "BUUUUUUUURRRRRR---FFFFFF---FDDFDDUBLLLLDLL---BBDBBR---",
-                "y2": "RUUUUUUUUFFFFFF---LLLLLL---LDDLDDURBBBBDBB---RRDRRF---"
+            "BR": {
+                "": "-U-UUU-U--R--R--BB-F--F--------DR--U-L--L-----B--B-R--",
+                "y": "-U-UUU-U--F--F-----L--L--------D-UR--B--B-R---R--R--BB",
+                "y'": "-U-UUU-U--B--B-R---R--R--BB-RU-D-----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B-R--U--RD-----R--R--BB-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUULFFFDFF---LLDLLB---FLUDDRDDRBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUFRRRDRR---FFDFFL---RFUDDBDDBLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUBLLLDLL---BBDBBR---LBUDDFDDFRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUURBBBDBB---RRDRRF---BRUDDLDDLFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F--F-L--U--LD-----L--L--FF-B--B----",
+                "y": "-U-UUU-U--F--F-L---L--L--FF-LU-D-----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R--------D-UL--F--F-L---L--L--FF",
+                "y2": "-U-UUU-U--L--L--FF-B--B--------DL--U-R--R-----F--F-L--"
             },
-            "y2": {
-                "": "UULUUUUUULLDLLB---BBBBBB---DDFDDLRRURRRRRR---FFFDFF---",
-                "y": "UUFUUUUUUFFDFFL---LLLLLL---DDRDDFBBUBBBBBB---RRRDRR---",
-                "y'": "UUBUUUUUUBBDBBR---RRRRRR---DDLDDBFFUFFFFFF---LLLDLL---",
-                "y2": "UURUUUUUURRDRRF---FFFFFF---DDBDDRLLULLLLLL---BBBDBB---"
+            "FR": {
+                "": "-U-UUU-U--R--R-F---F--F--RR-FU-D-----L--L-----B--B----",
+                "y": "-U-UUU-U--F--F--RR-L--L--------DF--U-B--B-----R--R-F--",
+                "y'": "-U-UUU-U--B--B-----R--R-F--U--FD-----F--F--RR-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--------D-UF--R--R-F---F--F--RR"
             }
         },
         "setups": [
-            "RUR'FRUR'U'F'",
-            "FUF'LFUF'U'L'",
-            "LUL'BLUL'U'B'",
-            "BUB'RBUB'U'R'",
-            "RUR'FR'F'R2U'R'U"
+            "FURU'R'F'RU'R'",
+            "RUR'FR'F'R2U'R'U",
+            "R'URU'R'URU2R'URy",
+            "L'U'LUL'U'LU'L'U'LUy'"
         ]
     },
     "25": {
         "main": "U'R'FRF'RUR'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUUUURRRRRR---FFFRFF---BDDFDLFDLLLLLLD---BBBBBB---",
-                "y": "UUUUUUUUUBBBBBB---RRRBRR---LDDRDFRDFFFFFFD---LLLLLL---",
-                "y'": "UUUUUUUUUFFFFFF---LLLFLL---RDDLDBLDBBBBBBD---RRRRRR---",
-                "y2": "UUUUUUUUULLLLLL---BBBLBB---FDDBDRBDRRRRRRD---FFFFFF---"
+            "BL": {
+                "": "UU-UUU-U--R--R-----F--F--------D--L-LL--L-----BB-B--B-",
+                "y": "-U-UUUUU--F--F----LL--L-------LD-----BB-B--B--R--R----",
+                "y'": "-UUUUU-U--BB-B--B--R--R--------DL----F--F----LL--L----",
+                "y2": "-U-UUU-UULL--L-----BB-B--B--L--D-----R--R-----F--F----"
             },
-            "y": {
-                "": "UUUUUUUUUBBBBBB---RRRRRR---DLLDDDBFFFFFRFF---LLLLLD---",
-                "y": "UUUUUUUUULLLLLL---BBBBBB---DFFDDDLRRRRRBRR---FFFFFD---",
-                "y'": "UUUUUUUUURRRRRR---FFFFFF---DBBDDDRLLLLLFLL---BBBBBD---",
-                "y2": "UUUUUUUUUFFFFFF---LLLLLL---DRRDDDFBBBBBLBB---RRRRRD---"
+            "BR": {
+                "": "-UUUUU-U--RR-R--R--F--F--------DB----L--L----BB--B----",
+                "y": "UU-UUU-U--F--F-----L--L--------D--B-BB--B-----RR-R--R-",
+                "y'": "-U-UUU-UUBB--B-----RR-R--R--B--D-----F--F-----L--L----",
+                "y2": "-U-UUUUU--L--L----BB--B-------BD-----RR-R--R--F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUUFFFRFF---LLLLLD---FFBDDDLLDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUURRRBRR---FFFFFD---RRLDDDFFDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUULLLFLL---BBBBBD---LLRDDDBBDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUUBBBLBB---RRRRRD---BBFDDDRRDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUUUU--R--R----FF--F-------FD-----LL-L--L--B--B----",
+                "y": "-U-UUU-UUFF--F-----LL-L--L--F--D-----B--B-----R--R----",
+                "y'": "UU-UUU-U--B--B-----R--R--------D--F-FF--F-----LL-L--L-",
+                "y2": "-UUUUU-U--LL-L--L--B--B--------DF----R--R----FF--F----"
             },
-            "y2": {
-                "": "UUUUUUUUULLLLLD---BBBBBB---LDFLDFDDBRRRRRR---FFFRFF---",
-                "y": "UUUUUUUUUFFFFFD---LLLLLL---FDRFDRDDLBBBBBB---RRRBRR---",
-                "y'": "UUUUUUUUUBBBBBD---RRRRRR---BDLBDLDDRFFFFFF---LLLFLL---",
-                "y2": "UUUUUUUUURRRRRD---FFFFFF---RDBRDBDDFLLLLLL---BBBLBB---"
+            "FR": {
+                "": "-U-UUU-UURR--R-----FF-F--F--R--D-----L--L-----B--B----",
+                "y": "-UUUUU-U--FF-F--F--L--L--------DR----B--B----RR--R----",
+                "y'": "-U-UUUUU--B--B----RR--R-------RD-----FF-F--F--L--L----",
+                "y2": "UU-UUU-U--L--L-----B--B--------D--R-RR--R-----FF-F--F-"
             }
         },
         "setups": [
+            "U'R'FRF'RUR'",
             "RUR'U'F'U'FU",
-            "FUF'U'L'U'LU",
-            "BUB'U'R'U'RU",
-            "LUL'U'B'U'BU",
-            "RU'R'FR'F'RU"
+            "F'RUR'U'R'FR",
+            "R'F'RURU'R'FU"
         ]
     },
     "26": {
         "main": "URU'R'FR'F'R",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUUUURRRRRR---FFFDFF---DLBDDDRFFLLLLLB---BBBBBB---",
-                "y": "UUUUUUUUUBBBBBB---RRRDRR---DFLDDDBRRFFFFFL---LLLLLL---",
-                "y'": "UUUUUUUUUFFFFFF---LLLDLL---DBRDDDFLLBBBBBR---RRRRRR---",
-                "y2": "UUUUUUUUULLLLLL---BBBDBB---DRFDDDLBBRRRRRF---FFFFFF---"
+            "BL": {
+                "": "UU-UUU-U--R--R-----F--F-------BD----LL--L--L--BB-B----",
+                "y": "-U-UUUUU--F--F----LL--L--L--B--D-----BB-B-----R--R----",
+                "y'": "-UUUUU-U--BB-B-----R--R--------D--B--F--F----LL--L--L-",
+                "y2": "-U-UUU-UULL--L--L--BB-B--------DB----R--R-----F--F----"
             },
-            "y": {
-                "": "UUUUUUUUUBBBBBB---RRRRRR---BDFLDFDDRFFFDFF---LLLLLB---",
-                "y": "UUUUUUUUULLLLLL---BBBBBB---LDRFDRDDBRRRDRR---FFFFFL---",
-                "y'": "UUUUUUUUURRRRRR---FFFFFF---RDLBDLDDFLLLDLL---BBBBBR---",
-                "y2": "UUUUUUUUUFFFFFF---LLLLLL---FDBRDBDDLBBBDBB---RRRRRF---"
+            "BR": {
+                "": "-UUUUU-U--RR-R-----F--F--------D--R--L--L----BB--B--B-",
+                "y": "UU-UUU-U--F--F-----L--L-------RD----BB--B--B--RR-R----",
+                "y'": "-U-UUU-UUBB--B--B--RR-R--------DR----F--F-----L--L----",
+                "y2": "-U-UUUUU--L--L----BB--B--B--R--D-----RR-R-----F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUUFFFDFF---LLLLLB---RDDFDLFDBBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUURRRDRR---FFFFFL---BDDRDFRDLLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUULLLDLL---BBBBBR---FDDLDBLDRRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUUBBBDBB---RRRRRF---LDDBDRBDFFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUUUU--R--R----FF--F--F--L--D-----LL-L-----B--B----",
+                "y": "-U-UUU-UUFF--F--F--LL-L--------DL----B--B-----R--R----",
+                "y'": "UU-UUU-U--B--B-----R--R-------LD----FF--F--F--LL-L----",
+                "y2": "-UUUUU-U--LL-L-----B--B--------D--L--R--R----FF--F--F-"
             },
-            "y2": {
-                "": "UUUUUUUUULLLLLB---BBBBBB---FFRDDDBLDRRRRRR---FFFDFF---",
-                "y": "UUUUUUUUUFFFFFL---LLLLLL---RRBDDDLFDBBBBBB---RRRDRR---",
-                "y'": "UUUUUUUUUBBBBBR---RRRRRR---LLFDDDRBDFFFFFF---LLLDLL---",
-                "y2": "UUUUUUUUURRRRRF---FFFFFF---BBLDDDFRDLLLLLL---BBBDBB---"
+            "FR": {
+                "": "-U-UUU-UURR--R--R--FF-F--------DF----L--L-----B--B----",
+                "y": "-UUUUU-U--FF-F-----L--L--------D--F--B--B----RR--R--R-",
+                "y'": "-U-UUUUU--B--B----RR--R--R--F--D-----FF-F-----L--L----",
+                "y2": "UU-UUU-U--L--L-----B--B-------FD----RR--R--R--FF-F----"
             }
         },
         "setups": [
-            "R'FRF'RUR'U'",
+            "URU'R'FR'F'R",
             "F'U'FURUR'U'",
-            "L'U'LUFUF'U'",
-            "F'LFL'FUF'U'",
-            "R'U'RUBUB'U'"
+            "RS'R'U'RSR'",
+            "RURUR'U'R'U'R'y"
         ]
     },
     "27": {
         "main": "RU'R'URU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUULUURRRRRR---UFFDFF---BDFFDDRDDLLFLLL---BBBBBB---",
-                "y": "UUUUUUFUUBBBBBB---URRDRR---LDRRDDBDDFFRFFF---LLLLLL---",
-                "y'": "UUUUUUBUUFFFFFF---ULLDLL---RDLLDDFDDBBLBBB---RRRRRR---",
-                "y2": "UUUUUURUULLLLLL---UBBDBB---FDBBDDLDDRRBRRR---FFFFFF---"
+            "BL": {
+                "": "BU-UUU-U--R--R-----F--F--------D--L-UL--L-----BL-B--B-",
+                "y": "-U-UUUBU--F--F----UL--L-------LD-----BL-B--B--R--R----",
+                "y'": "-UBUUU-U--BL-B--B--R--R--------DL----F--F----UL--L----",
+                "y2": "-U-UUU-UBUL--L-----BL-B--B--L--D-----R--R-----F--F----"
             },
-            "y": {
-                "": "LUUUUUUUUBBBBBB---RRRRRR---FDDDDDBFRUFFDFF---LLFLLL---",
-                "y": "FUUUUUUUULLLLLL---BBBBBB---RDDDDDLRBURRDRR---FFRFFF---",
-                "y'": "BUUUUUUUURRRRRR---FFFFFF---LDDDDDRLFULLDLL---BBLBBB---",
-                "y2": "RUUUUUUUUFFFFFF---LLLLLL---BDDDDDFBLUBBDBB---RRBRRR---"
+            "BR": {
+                "": "-URUUU-U--RB-R--R--F--F--------DB----L--L----UB--B----",
+                "y": "RU-UUU-U--F--F-----L--L--------D--B-UB--B-----RB-R--R-",
+                "y'": "-U-UUU-URUB--B-----RB-R--R--B--D-----F--F-----L--L----",
+                "y2": "-U-UUURU--L--L----UB--B-------BD-----RB-R--R--F--F----"
             },
-            "y'": {
-                "": "UUUUUUUULUFFDFF---LLFLLL---RFBDDDDDFBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUFURRDRR---FFRFFF---BRLDDDDDRLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUBULLDLL---BBLBBB---FLRDDDDDLRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUURUBBDBB---RRBRRR---LBFDDDDDBFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUULU--R--R----UF--F-------FD-----LF-L--L--B--B----",
+                "y": "-U-UUU-ULUF--F-----LF-L--L--F--D-----B--B-----R--R----",
+                "y'": "LU-UUU-U--B--B-----R--R--------D--F-UF--F-----LF-L--L-",
+                "y2": "-ULUUU-U--LF-L--L--B--B--------DF----R--R----UF--F----"
             },
-            "y2": {
-                "": "UULUUUUUULLFLLL---BBBBBB---DDRDDFFDBRRRRRR---UFFDFF---",
-                "y": "UUFUUUUUUFFRFFF---LLLLLL---DDBDDRRDLBBBBBB---URRDRR---",
-                "y'": "UUBUUUUUUBBLBBB---RRRRRR---DDFDDLLDRFFFFFF---ULLDLL---",
-                "y2": "UURUUUUUURRBRRR---FFFFFF---DDLDDBBDFLLLLLL---UBBDBB---"
+            "FR": {
+                "": "-U-UUU-UFUR--R-----FR-F--F--R--D-----L--L-----B--B----",
+                "y": "-UFUUU-U--FR-F--F--L--L--------DR----B--B----UR--R----",
+                "y'": "-U-UUUFU--B--B----UR--R-------RD-----FR-F--F--L--L----",
+                "y2": "FU-UUU-U--L--L-----B--B--------D--R-UR--R-----FR-F--F-"
             }
         },
         "setups": [
-            "RUR'U'RUR'",
-            "LUL'U'LUL'",
-            "FUF'U'FUF'",
+            "RU'R'URU'R'",
             "RUR'U2F'UF",
-            "BUB'U'BUB'"
+            "fRf'U'fRf'y",
+            "MU'R'UrfRf'y"
         ]
     },
     "28": {
         "main": "RUR'U'FR'F'R",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUFUURRRRRR---LFFFFF---LLBDDDDDDLLULLD---BBBBBB---",
-                "y": "UUUUUURUUBBBBBB---FRRRRR---FFLDDDDDDFFUFFD---LLLLLL---",
-                "y'": "UUUUUULUUFFFFFF---BLLLLL---BBRDDDDDDBBUBBD---RRRRRR---",
-                "y2": "UUUUUUBUULLLLLL---RBBBBB---RRFDDDDDDRRURRD---FFFFFF---"
+            "BL": {
+                "": "LU-UUU-U--R--R-----F--F-------BD----BL--L--L--BU-B----",
+                "y": "-U-UUULU--F--F----BL--L--L--B--D-----BU-B-----R--R----",
+                "y'": "-ULUUU-U--BU-B-----R--R--------D--B--F--F----BL--L--L-",
+                "y2": "-U-UUU-ULBL--L--L--BU-B--------DB----R--R-----F--F----"
             },
-            "y": {
-                "": "FUUUUUUUUBBBBBB---RRRRRR---BDDLDDLDDLFFFFF---LLULLD---",
-                "y": "RUUUUUUUULLLLLL---BBBBBB---LDDFDDFDDFRRRRR---FFUFFD---",
-                "y'": "LUUUUUUUURRRRRR---FFFFFF---RDDBDDBDDBLLLLL---BBUBBD---",
-                "y2": "BUUUUUUUUFFFFFF---LLLLLL---FDDRDDRDDRBBBBB---RRURRD---"
+            "BR": {
+                "": "-UBUUU-U--RU-R-----F--F--------D--R--L--L----RB--B--B-",
+                "y": "BU-UUU-U--F--F-----L--L-------RD----RB--B--B--RU-R----",
+                "y'": "-U-UUU-UBRB--B--B--RU-R--------DR----F--F-----L--L----",
+                "y2": "-U-UUUBU--L--L----RB--B--B--R--D-----RU-R-----F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUFLFFFFF---LLULLD---DDLDDLDDBBBBBBB---RRRRRR---",
-                "y": "UUUUUUUURFRRRRR---FFUFFD---DDFDDFDDLLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUULBLLLLL---BBUBBD---DDBDDBDDRRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUBRBBBBB---RRURRD---DDRDDRDDFFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUUFU--R--R----LF--F--F--L--D-----LU-L-----B--B----",
+                "y": "-U-UUU-UFLF--F--F--LU-L--------DL----B--B-----R--R----",
+                "y'": "FU-UUU-U--B--B-----R--R-------LD----LF--F--F--LU-L----",
+                "y2": "-UFUUU-U--LU-L-----B--B--------D--L--R--R----LF--F--F-"
             },
-            "y2": {
-                "": "UUFUUUUUULLULLD---BBBBBB---DDDDDDBLLRRRRRR---LFFFFF---",
-                "y": "UURUUUUUUFFUFFD---LLLLLL---DDDDDDLFFBBBBBB---FRRRRR---",
-                "y'": "UULUUUUUUBBUBBD---RRRRRR---DDDDDDRBBFFFFFF---BLLLLL---",
-                "y2": "UUBUUUUUURRURRD---FFFFFF---DDDDDDFRRLLLLLL---RBBBBB---"
+            "FR": {
+                "": "-U-UUU-URFR--R--R--FU-F--------DF----L--L-----B--B----",
+                "y": "-URUUU-U--FU-F-----L--L--------D--F--B--B----FR--R--R-",
+                "y'": "-U-UUURU--B--B----FR--R--R--F--D-----FU-F-----L--L----",
+                "y2": "RU-UUU-U--L--L-----B--B-------FD----FR--R--R--FU-F----"
             }
         },
         "setups": [
-            "R'U'RUR'U'R",
-            "L'U'LUL'U'L",
-            "R'FRF'URU'R'",
-            "F'U'FUF'U'F",
-            "F'LFL'UFU'F'"
+            "RUR'U'FR'F'R",
+            "F'U'FUF'U'F"
         ]
     },
     "29": {
         "main": "R'FRF'URU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUULUURRRRRR---UFFFFF---FLDDDDRDDLLFLLD---BBBBBB---",
-                "y": "UUUUUUFUUBBBBBB---URRRRR---RFDDDDBDDFFRFFD---LLLLLL---",
-                "y'": "UUUUUUBUUFFFFFF---ULLLLL---LBDDDDFDDBBLBBD---RRRRRR---",
-                "y2": "UUUUUURUULLLLLL---UBBBBB---BRDDDDLDDRRBRRD---FFFFFF---"
+            "BL": {
+                "": "BU-UUU-U--R--R-----F--F-------BD----UL--L--L--BL-B----",
+                "y": "-U-UUUBU--F--F----UL--L--L--B--D-----BL-B-----R--R----",
+                "y'": "-UBUUU-U--BL-B-----R--R--------D--B--F--F----UL--L--L-",
+                "y2": "-U-UUU-UBUL--L--L--BL-B--------DB----R--R-----F--F----"
             },
-            "y": {
-                "": "LUUUUUUUUBBBBBB---RRRRRR---DDDLDDFDRUFFFFF---LLFLLD---",
-                "y": "FUUUUUUUULLLLLL---BBBBBB---DDDFDDRDBURRRRR---FFRFFD---",
-                "y'": "BUUUUUUUURRRRRR---FFFFFF---DDDBDDLDFULLLLL---BBLBBD---",
-                "y2": "RUUUUUUUUFFFFFF---LLLLLL---DDDRDDBDLUBBBBB---RRBRRD---"
+            "BR": {
+                "": "-URUUU-U--RB-R-----F--F--------D--R--L--L----UB--B--B-",
+                "y": "RU-UUU-U--F--F-----L--L-------RD----UB--B--B--RB-R----",
+                "y'": "-U-UUU-URUB--B--B--RB-R--------DR----F--F-----L--L----",
+                "y2": "-U-UUURU--L--L----UB--B--B--R--D-----RB-R-----F--F----"
             },
-            "y'": {
-                "": "UUUUUUUULUFFFFF---LLFLLD---RDFDDLDDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUFURRRRR---FFRFFD---BDRDDFDDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUBULLLLL---BBLBBD---FDLDDBDDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUURUBBBBB---RRBRRD---LDBDDRDDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUULU--R--R----UF--F--F--L--D-----LF-L-----B--B----",
+                "y": "-U-UUU-ULUF--F--F--LF-L--------DL----B--B-----R--R----",
+                "y'": "LU-UUU-U--B--B-----R--R-------LD----UF--F--F--LF-L----",
+                "y2": "-ULUUU-U--LF-L-----B--B--------D--L--R--R----UF--F--F-"
             },
-            "y2": {
-                "": "UULUUUUUULLFLLD---BBBBBB---DDRDDDDLFRRRRRR---UFFFFF---",
-                "y": "UUFUUUUUUFFRFFD---LLLLLL---DDBDDDDFRBBBBBB---URRRRR---",
-                "y'": "UUBUUUUUUBBLBBD---RRRRRR---DDFDDDDBLFFFFFF---ULLLLL---",
-                "y2": "UURUUUUUURRBRRD---FFFFFF---DDLDDDDRBLLLLLL---UBBBBB---"
+            "FR": {
+                "": "-U-UUU-UFUR--R--R--FR-F--------DF----L--L-----B--B----",
+                "y": "-UFUUU-U--FR-F-----L--L--------D--F--B--B----UR--R--R-",
+                "y'": "-U-UUUFU--B--B----UR--R--R--F--D-----FR-F-----L--L----",
+                "y2": "FU-UUU-U--L--L-----B--B-------FD----UR--R--R--FR-F----"
             }
         },
         "setups": [
-            "RUR'U'FR'F'R",
-            "LF'L'FLF'L'F",
-            "FUF'U'LF'L'F",
+            "R'FRF'URU'R'",
             "FR'F'RFR'F'R",
-            "LUL'U'BL'B'L"
+            "R'URU'R'URy"
         ]
     },
     "30": {
         "main": "RUR'U'RUR'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUFUURRRRRR---LFFDFF---FDDFDDFDLLLULLL---BBBBBB---",
-                "y": "UUUUUURUUBBBBBB---FRRDRR---RDDRDDRDFFFUFFF---LLLLLL---",
-                "y'": "UUUUUULUUFFFFFF---BLLDLL---LDDLDDLDBBBUBBB---RRRRRR---",
-                "y2": "UUUUUUBUULLLLLL---RBBDBB---BDDBDDBDRRRURRR---FFFFFF---"
+            "BL": {
+                "": "LU-UUU-U--R--R-----F--F--------D--L-BL--L-----BU-B--B-",
+                "y": "-U-UUULU--F--F----BL--L-------LD-----BU-B--B--R--R----",
+                "y'": "-ULUUU-U--BU-B--B--R--R--------DL----F--F----BL--L----",
+                "y2": "-U-UUU-ULBL--L-----BU-B--B--L--D-----R--R-----F--F----"
             },
-            "y": {
-                "": "FUUUUUUUUBBBBBB---RRRRRR---DDLDDDFFFLFFDFF---LLULLL---",
-                "y": "RUUUUUUUULLLLLL---BBBBBB---DDFDDDRRRFRRDRR---FFUFFF---",
-                "y'": "LUUUUUUUURRRRRR---FFFFFF---DDBDDDLLLBLLDLL---BBUBBB---",
-                "y2": "BUUUUUUUUFFFFFF---LLLLLL---DDRDDDBBBRBBDBB---RRURRR---"
+            "BR": {
+                "": "-UBUUU-U--RU-R--R--F--F--------DB----L--L----RB--B----",
+                "y": "BU-UUU-U--F--F-----L--L--------D--B-RB--B-----RU-R--R-",
+                "y'": "-U-UUU-UBRB--B-----RU-R--R--B--D-----F--F-----L--L----",
+                "y2": "-U-UUUBU--L--L----RB--B-------BD-----RU-R--R--F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUFLFFDFF---LLULLL---FFFDDDLDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUURFRRDRR---FFUFFF---RRRDDDFDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUULBLLDLL---BBUBBB---LLLDDDBDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUBRBBDBB---RRURRR---BBBDDDRDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUUFU--R--R----LF--F-------FD-----LU-L--L--B--B----",
+                "y": "-U-UUU-UFLF--F-----LU-L--L--F--D-----B--B-----R--R----",
+                "y'": "FU-UUU-U--B--B-----R--R--------D--F-LF--F-----LU-L--L-",
+                "y2": "-UFUUU-U--LU-L--L--B--B--------DF----R--R----LF--F----"
             },
-            "y2": {
-                "": "UUFUUUUUULLULLL---BBBBBB---LDFDDFDDFRRRRRR---LFFDFF---",
-                "y": "UURUUUUUUFFUFFF---LLLLLL---FDRDDRDDRBBBBBB---FRRDRR---",
-                "y'": "UULUUUUUUBBUBBB---RRRRRR---BDLDDLDDLFFFFFF---BLLDLL---",
-                "y2": "UUBUUUUUURRURRR---FFFFFF---RDBDDBDDBLLLLLL---RBBDBB---"
+            "FR": {
+                "": "-U-UUU-URFR--R-----FU-F--F--R--D-----L--L-----B--B----",
+                "y": "-URUUU-U--FU-F--F--L--L--------DR----B--B----FR--R----",
+                "y'": "-U-UUURU--B--B----FR--R-------RD-----FU-F--F--L--L----",
+                "y2": "RU-UUU-U--L--L-----B--B--------D--R-FR--R-----FU-F--F-"
             }
         },
         "setups": [
+            "RUR'U'RUR'",
+            "RU'R2FRF'U",
             "R'FRF'R'FRF'",
-            "F'LFL'F'LFL'",
-            "RU'R'URU'R'",
-            "B'RBR'B'RBR'",
-            "L'BLB'L'BLB'"
+            "RU'R'U2RU2R'U"
         ]
     },
     "31": {
         "main": "U'R'FRF'RU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUBUURRRRRR---DFFLFF---UDFDDLDDLLLRLLF---BBBBBB---",
-                "y": "UUUUUULUUBBBBBB---DRRFRR---UDRDDFDDFFFBFFR---LLLLLL---",
-                "y'": "UUUUUURUUFFFFFF---DLLBLL---UDLDDBDDBBBFBBL---RRRRRR---",
-                "y2": "UUUUUUFUULLLLLL---DBBRBB---UDBDDRDDRRRLRRB---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--------D-U---L-BL-B---B--BL--L",
+                "y": "-U-UUU-U--F--F-----L-BL-B--U---D-----B--BL--L-R--R----",
+                "y'": "-U-UUU-U--B--BL--L-R--R--------D---U-F--F-----L-BL-B--",
+                "y2": "-U-UUU-U--L-BL-B---B--BL--L--U-D-----R--R-----F--F----"
             },
-            "y": {
-                "": "BUUUUUUUUBBBBBB---RRRRRR---FLLDDDUDDDFFLFF---LLRLLF---",
-                "y": "LUUUUUUUULLLLLL---BBBBBB---RFFDDDUDDDRRFRR---FFBFFR---",
-                "y'": "RUUUUUUUURRRRRR---FFFFFF---LBBDDDUDDDLLBLL---BBFBBL---",
-                "y2": "FUUUUUUUUFFFFFF---LLLLLL---BRRDDDUDDDBBRBB---RRLRRB---"
+            "BR": {
+                "": "-U-UUU-U--R--RB--B-F--F--------D---U-L--L-----B-RB-R--",
+                "y": "-U-UUU-U--F--F-----L--L--------D-U---B-RB-R---R--RB--B",
+                "y'": "-U-UUU-U--B-RB-R---R--RB--B--U-D-----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B-RB-R--U---D-----R--RB--B-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUBDFFLFF---LLRLLF---DDUDDDLLFBBBBBB---RRRRRR---",
-                "y": "UUUUUUUULDRRFRR---FFBFFR---DDUDDDFFRLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUURDLLBLL---BBFBBL---DDUDDDBBLRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUFDBBRBB---RRLRRB---DDUDDDRRBFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F-LF-L--U---D-----L--LF--F-B--B----",
+                "y": "-U-UUU-U--F-LF-L---L--LF--F--U-D-----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R--------D-U---F-LF-L---L--LF--F",
+                "y2": "-U-UUU-U--L--LF--F-B--B--------D---U-R--R-----F-LF-L--"
             },
-            "y2": {
-                "": "UUBUUUUUULLRLLF---BBBBBB---LDDLDDFDURRRRRR---DFFLFF---",
-                "y": "UULUUUUUUFFBFFR---LLLLLL---FDDFDDRDUBBBBBB---DRRFRR---",
-                "y'": "UURUUUUUUBBFBBL---RRRRRR---BDDBDDLDUFFFFFF---DLLBLL---",
-                "y2": "UUFUUUUUURRLRRB---FFFFFF---RDDRDDBDULLLLLL---DBBRBB---"
+            "FR": {
+                "": "-U-UUU-U--R-FR-F---F--FR--R--U-D-----L--L-----B--B----",
+                "y": "-U-UUU-U--F--FR--R-L--L--------D---U-B--B-----R-FR-F--",
+                "y'": "-U-UUU-U--B--B-----R-FR-F--U---D-----F--FR--R-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--------D-U---R-FR-F---F--FR--R"
             }
         },
         "setups": [
+            "U'R'FRF'RU'R'",
+            "lU'RUl'UR'",
             "R'FRF'U2RUR'",
-            "RUR'FR'F'RU",
-            "FUF'LF'L'FU",
-            "F'LFL'U2FUF'",
-            "LUL'BL'B'LU"
+            "R'U'RyU'RUR'"
         ]
     },
     "32": {
         "main": "URU'R'URU'R'URU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUDUURRRRRR---LFFFFF---UDDDDDBDBLLFLLL---BBBBBB---",
-                "y": "UUUUUUDUUBBBBBB---FRRRRR---UDDDDDLDLFFRFFF---LLLLLL---",
-                "y'": "UUUUUUDUUFFFFFF---BLLLLL---UDDDDDRDRBBLBBB---RRRRRR---",
-                "y2": "UUUUUUDUULLLLLL---RBBBBB---UDDDDDFDFRRBRRR---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--------D-U---L-LL-B---B--BB--L",
+                "y": "-U-UUU-U--F--F-----L-LL-B--U---D-----B--BB--L-R--R----",
+                "y'": "-U-UUU-U--B--BB--L-R--R--------D---U-F--F-----L-LL-B--",
+                "y2": "-U-UUU-U--L-LL-B---B--BB--L--U-D-----R--R-----F--F----"
             },
-            "y": {
-                "": "DUUUUUUUUBBBBBB---RRRRRR---DDBDDDUDBLFFFFF---LLFLLL---",
-                "y": "DUUUUUUUULLLLLL---BBBBBB---DDLDDDUDLFRRRRR---FFRFFF---",
-                "y'": "DUUUUUUUURRRRRR---FFFFFF---DDRDDDUDRBLLLLL---BBLBBB---",
-                "y2": "DUUUUUUUUFFFFFF---LLLLLL---DDFDDDUDFRBBBBB---RRBRRR---"
+            "BR": {
+                "": "-U-UUU-U--R--RR--B-F--F--------D---U-L--L-----B-BB-R--",
+                "y": "-U-UUU-U--F--F-----L--L--------D-U---B-BB-R---R--RR--B",
+                "y'": "-U-UUU-U--B-BB-R---R--RR--B--U-D-----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B-BB-R--U---D-----R--RR--B-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUDLFFFFF---LLFLLL---BDUDDDBDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUDFRRRRR---FFRFFF---LDUDDDLDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUDBLLLLL---BBLBBB---RDUDDDRDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUDRBBBBB---RRBRRR---FDUDDDFDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F-FF-L--U---D-----L--LL--F-B--B----",
+                "y": "-U-UUU-U--F-FF-L---L--LL--F--U-D-----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R--------D-U---F-FF-L---L--LL--F",
+                "y2": "-U-UUU-U--L--LL--F-B--B--------D---U-R--R-----F-FF-L--"
             },
-            "y2": {
-                "": "UUDUUUUUULLFLLL---BBBBBB---BDBDDDDDURRRRRR---LFFFFF---",
-                "y": "UUDUUUUUUFFRFFF---LLLLLL---LDLDDDDDUBBBBBB---FRRRRR---",
-                "y'": "UUDUUUUUUBBLBBB---RRRRRR---RDRDDDDDUFFFFFF---BLLLLL---",
-                "y2": "UUDUUUUUURRBRRR---FFFFFF---FDFDDDDDULLLLLL---RBBBBB---"
+            "FR": {
+                "": "-U-UUU-U--R-RR-F---F--FF--R--U-D-----L--L-----B--B----",
+                "y": "-U-UUU-U--F--FF--R-L--L--------D---U-B--B-----R-RR-F--",
+                "y'": "-U-UUU-U--B--B-----R-RR-F--U---D-----F--FF--R-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--------D-U---R-RR-F---F--FF--R"
             }
         },
         "setups": [
-            "RUR'U'RUR'U'RUR'U'",
+            "URU'R'URU'R'URU'R'",
+            "R2U2R2U'R2U'R2",
             "RU'R'UR'FRF'U",
-            "LUL'U'LUL'U'LUL'U'",
-            "BUB'U'BUB'U'BUB'U'",
             "RU'R'URU'R'URU'R'"
         ]
     },
     "33": {
         "main": "U'RU'R'U2RU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUFUURRRRRR---RFFFFF---FDBDDDDDFLLDLLL---BBBBBB---",
-                "y": "UUUUUURUUBBBBBB---BRRRRR---RDLDDDDDRFFDFFF---LLLLLL---",
-                "y'": "UUUUUULUUFFFFFF---FLLLLL---LDRDDDDDLBBDBBB---RRRRRR---",
-                "y2": "UUUUUUBUULLLLLL---LBBBBB---BDFDDDDDBRRDRRR---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--------D-L---L-LL-U---B--BB--B",
+                "y": "-U-UUU-U--F--F-----L-LL-U--L---D-----B--BB--B-R--R----",
+                "y'": "-U-UUU-U--B--BB--B-R--R--------D---L-F--F-----L-LL-U--",
+                "y2": "-U-UUU-U--L-LL-U---B--BB--B--L-D-----R--R-----F--F----"
             },
-            "y": {
-                "": "FUUUUUUUUBBBBBB---RRRRRR---BDFDDDFDDRFFFFF---LLDLLL---",
-                "y": "RUUUUUUUULLLLLL---BBBBBB---LDRDDDRDDBRRRRR---FFDFFF---",
-                "y'": "LUUUUUUUURRRRRR---FFFFFF---RDLDDDLDDFLLLLL---BBDBBB---",
-                "y2": "BUUUUUUUUFFFFFF---LLLLLL---FDBDDDBDDLBBBBB---RRDRRR---"
+            "BR": {
+                "": "-U-UUU-U--R--RR--R-F--F--------D---B-L--L-----B-BB-U--",
+                "y": "-U-UUU-U--F--F-----L--L--------D-B---B-BB-U---R--RR--R",
+                "y'": "-U-UUU-U--B-BB-U---R--RR--R--B-D-----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B-BB-U--B---D-----R--RR--R-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUFRFFFFF---LLDLLL---DDFDDDFDBBBBBBB---RRRRRR---",
-                "y": "UUUUUUUURBRRRRR---FFDFFF---DDRDDDRDLLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUULFLLLLL---BBDBBB---DDLDDDLDRRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUBLBBBBB---RRDRRR---DDBDDDBDFFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F-FF-U--F---D-----L--LL--L-B--B----",
+                "y": "-U-UUU-U--F-FF-U---L--LL--L--F-D-----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R--------D-F---F-FF-U---L--LL--L",
+                "y2": "-U-UUU-U--L--LL--L-B--B--------D---F-R--R-----F-FF-U--"
             },
-            "y2": {
-                "": "UUFUUUUUULLDLLL---BBBBBB---FDDDDDBDFRRRRRR---RFFFFF---",
-                "y": "UURUUUUUUFFDFFF---LLLLLL---RDDDDDLDRBBBBBB---BRRRRR---",
-                "y'": "UULUUUUUUBBDBBB---RRRRRR---LDDDDDRDLFFFFFF---FLLLLL---",
-                "y2": "UUBUUUUUURRDRRR---FFFFFF---BDDDDDFDBLLLLLL---LBBBBB---"
+            "FR": {
+                "": "-U-UUU-U--R-RR-U---F--FF--F--R-D-----L--L-----B--B----",
+                "y": "-U-UUU-U--F--FF--F-L--L--------D---R-B--B-----R-RR-U--",
+                "y'": "-U-UUU-U--B--B-----R-RR-U--R---D-----F--FF--F-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--------D-R---R-RR-U---F--FF--F"
             }
         },
         "setups": [
-            "RUR'U'RUR'URU'R'",
-            "RUR'U2RUR'U",
+            "U'RU'R'U2RU'R'",
             "FR'F'RU'RUR'U",
-            "LF'L'FU'FUF'U",
-            "LUL'U'LUL'ULU'L'"
+            "L'ULU2L'ULy'U",
+            "RUR'U'RUR'URU'R'"
         ]
     },
     "34": {
         "main": "URUR'U2RUR'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUULUURRRRRR---DFFFFF---LDLDDDFDDLLBLLL---BBBBBB---",
-                "y": "UUUUUUFUUBBBBBB---DRRRRR---FDFDDDRDDFFLFFF---LLLLLL---",
-                "y'": "UUUUUUBUUFFFFFF---DLLLLL---BDBDDDLDDBBRBBB---RRRRRR---",
-                "y2": "UUUUUURUULLLLLL---DBBBBB---RDRDDDBDDRRFRRR---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--------D-B---L-LL-L---B--BB--U",
+                "y": "-U-UUU-U--F--F-----L-LL-L--B---D-----B--BB--U-R--R----",
+                "y'": "-U-UUU-U--B--BB--U-R--R--------D---B-F--F-----L-LL-L--",
+                "y2": "-U-UUU-U--L-LL-L---B--BB--U--B-D-----R--R-----F--F----"
             },
-            "y": {
-                "": "LUUUUUUUUBBBBBB---RRRRRR---LDDDDDLDFDFFFFF---LLBLLL---",
-                "y": "FUUUUUUUULLLLLL---BBBBBB---FDDDDDFDRDRRRRR---FFLFFF---",
-                "y'": "BUUUUUUUURRRRRR---FFFFFF---BDDDDDBDLDLLLLL---BBRBBB---",
-                "y2": "RUUUUUUUUFFFFFF---LLLLLL---RDDDDDRDBDBBBBB---RRFRRR---"
+            "BR": {
+                "": "-U-UUU-U--R--RR--U-F--F--------D---R-L--L-----B-BB-B--",
+                "y": "-U-UUU-U--F--F-----L--L--------D-R---B-BB-B---R--RR--U",
+                "y'": "-U-UUU-U--B-BB-B---R--RR--U--R-D-----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B-BB-B--R---D-----R--RR--U-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUULDFFFFF---LLBLLL---FDLDDDDDLBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUFDRRRRR---FFLFFF---RDFDDDDDFLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUBDLLLLL---BBRBBB---LDBDDDDDBRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUURDBBBBB---RRFRRR---BDRDDDDDRFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F-FF-F--L---D-----L--LL--U-B--B----",
+                "y": "-U-UUU-U--F-FF-F---L--LL--U--L-D-----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R--------D-L---F-FF-F---L--LL--U",
+                "y2": "-U-UUU-U--L--LL--U-B--B--------D---L-R--R-----F-FF-F--"
             },
-            "y2": {
-                "": "UULUUUUUULLBLLL---BBBBBB---DDFDDDLDLRRRRRR---DFFFFF---",
-                "y": "UUFUUUUUUFFLFFF---LLLLLL---DDRDDDFDFBBBBBB---DRRRRR---",
-                "y'": "UUBUUUUUUBBRBBB---RRRRRR---DDLDDDBDBFFFFFF---DLLLLL---",
-                "y2": "UURUUUUUURRFRRR---FFFFFF---DDBDDDRDRLLLLLL---DBBBBB---"
+            "FR": {
+                "": "-U-UUU-U--R-RR-R---F--FF--U--F-D-----L--L-----B--B----",
+                "y": "-U-UUU-U--F--FF--U-L--L--------D---F-B--B-----R-RR-R--",
+                "y'": "-U-UUU-U--B--B-----R-RR-R--F---D-----F--FF--U-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--------D-F---R-RR-R---F--FF--U"
             }
         },
         "setups": [
-            "RU'R'U2RU'R'U'",
+            "URUR'U2RUR'",
             "RU'R'U'RU2R'U",
-            "FU'F'U2FU'F'U'",
             "R'D'RUR'DRU'",
-            "LU'L'U'LU2L'U"
+            "L'U'LU2L'U'LU'y'"
         ]
     },
     "35": {
         "main": "U'RUR'UF'U'F",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUDUURRRRRR---LFFLFF---FDDLDDRDDLLFLLF---BBBBBB---",
-                "y": "UUUUUUDUUBBBBBB---FRRFRR---RDDFDDBDDFFRFFR---LLLLLL---",
-                "y'": "UUUUUUDUUFFFFFF---BLLBLL---LDDBDDFDDBBLBBL---RRRRRR---",
-                "y2": "UUUUUUDUULLLLLL---RBBRBB---BDDRDDLDDRRBRRB---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--------D-L---L-BL-U---B--BL--B",
+                "y": "-U-UUU-U--F--F-----L-BL-U--L---D-----B--BL--B-R--R----",
+                "y'": "-U-UUU-U--B--BL--B-R--R--------D---L-F--F-----L-BL-U--",
+                "y2": "-U-UUU-U--L-BL-U---B--BL--B--L-D-----R--R-----F--F----"
             },
-            "y": {
-                "": "DUUUUUUUUBBBBBB---RRRRRR---DDDDDDFLRLFFLFF---LLFLLF---",
-                "y": "DUUUUUUUULLLLLL---BBBBBB---DDDDDDRFBFRRFRR---FFRFFR---",
-                "y'": "DUUUUUUUURRRRRR---FFFFFF---DDDDDDLBFBLLBLL---BBLBBL---",
-                "y2": "DUUUUUUUUFFFFFF---LLLLLL---DDDDDDBRLRBBRBB---RRBRRB---"
+            "BR": {
+                "": "-U-UUU-U--R--RB--R-F--F--------D---B-L--L-----B-RB-U--",
+                "y": "-U-UUU-U--F--F-----L--L--------D-B---B-RB-U---R--RB--R",
+                "y'": "-U-UUU-U--B-RB-U---R--RB--R--B-D-----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B-RB-U--B---D-----R--RB--R-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUDLFFLFF---LLFLLF---RLFDDDDDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUDFRRFRR---FFRFFR---BFRDDDDDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUDBLLBLL---BBLBBL---FBLDDDDDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUDRBBRBB---RRBRRB---LRBDDDDDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F-LF-U--F---D-----L--LF--L-B--B----",
+                "y": "-U-UUU-U--F-LF-U---L--LF--L--F-D-----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R--------D-F---F-LF-U---L--LF--L",
+                "y2": "-U-UUU-U--L--LF--L-B--B--------D---F-R--R-----F-LF-U--"
             },
-            "y2": {
-                "": "UUDUUUUUULLFLLF---BBBBBB---DDRDDLDDFRRRRRR---LFFLFF---",
-                "y": "UUDUUUUUUFFRFFR---LLLLLL---DDBDDFDDRBBBBBB---FRRFRR---",
-                "y'": "UUDUUUUUUBBLBBL---RRRRRR---DDFDDBDDLFFFFFF---BLLBLL---",
-                "y2": "UUDUUUUUURRBRRB---FFFFFF---DDLDDRDDBLLLLLL---RBBRBB---"
+            "FR": {
+                "": "-U-UUU-U--R-FR-U---F--FR--F--R-D-----L--L-----B--B----",
+                "y": "-U-UUU-U--F--FR--F-L--L--------D---R-B--B-----R-FR-U--",
+                "y'": "-U-UUU-U--B--B-----R-FR-U--R---D-----F--FR--F-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--------D-R---R-FR-U---F--FR--F"
             }
         },
         "setups": [
+            "U'RUR'UF'U'F",
             "R'FRF'RU'R'U2",
-            "F'LFL'FU'F'U2",
-            "F'UFU'RU'R'U",
-            "L'ULU'FU'F'U",
-            "L'BLB'LU'L'U2"
+            "R'URd'RU'R'U",
+            "R'U'RUyRU'R'U2"
         ]
     },
     "36": {
         "main": "UF'U'FU'RUR'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUDUURRRRRR---LFFLFF---LFBDDDDDDLLFLLF---BBBBBB---",
-                "y": "UUUUUUDUUBBBBBB---FRRFRR---FRLDDDDDDFFRFFR---LLLLLL---",
-                "y'": "UUUUUUDUUFFFFFF---BLLBLL---BLRDDDDDDBBLBBL---RRRRRR---",
-                "y2": "UUUUUUDUULLLLLL---RBBRBB---RBFDDDDDDRRBRRB---FFFFFF---"
+            "BL": {
+                "": "-U-UUU-U--R--R-----F--F--------D-B---L-BL-L---B--BL--U",
+                "y": "-U-UUU-U--F--F-----L-BL-L--B---D-----B--BL--U-R--R----",
+                "y'": "-U-UUU-U--B--BL--U-R--R--------D---B-F--F-----L-BL-L--",
+                "y2": "-U-UUU-U--L-BL-L---B--BL--U--B-D-----R--R-----F--F----"
             },
-            "y": {
-                "": "DUUUUUUUUBBBBBB---RRRRRR---BDDFDDLDDLFFLFF---LLFLLF---",
-                "y": "DUUUUUUUULLLLLL---BBBBBB---LDDRDDFDDFRRFRR---FFRFFR---",
-                "y'": "DUUUUUUUURRRRRR---FFFFFF---RDDLDDBDDBLLBLL---BBLBBL---",
-                "y2": "DUUUUUUUUFFFFFF---LLLLLL---FDDBDDRDDRBBRBB---RRBRRB---"
+            "BR": {
+                "": "-U-UUU-U--R--RB--U-F--F--------D---R-L--L-----B-RB-B--",
+                "y": "-U-UUU-U--F--F-----L--L--------D-R---B-RB-B---R--RB--U",
+                "y'": "-U-UUU-U--B-RB-B---R--RB--U--R-D-----F--F-----L--L----",
+                "y2": "-U-UUU-U--L--L-----B-RB-B--R---D-----R--RB--U-F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUDLFFLFF---LLFLLF---DDLDDFDDBBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUDFRRFRR---FFRFFR---DDFDDRDDLLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUDBLLBLL---BBLBBL---DDBDDLDDRRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUDRBBRBB---RRBRRB---DDRDDBDDFFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUU-U--R--R-----F-LF-F--L---D-----L--LF--U-B--B----",
+                "y": "-U-UUU-U--F-LF-F---L--LF--U--L-D-----B--B-----R--R----",
+                "y'": "-U-UUU-U--B--B-----R--R--------D-L---F-LF-F---L--LF--U",
+                "y2": "-U-UUU-U--L--LF--U-B--B--------D---L-R--R-----F-LF-F--"
             },
-            "y2": {
-                "": "UUDUUUUUULLFLLF---BBBBBB---DDDDDDBFLRRRRRR---LFFLFF---",
-                "y": "UUDUUUUUUFFRFFR---LLLLLL---DDDDDDLRFBBBBBB---FRRFRR---",
-                "y'": "UUDUUUUUUBBLBBL---RRRRRR---DDDDDDRLBFFFFFF---BLLBLL---",
-                "y2": "UUDUUUUUURRBRRB---FFFFFF---DDDDDDFBRLLLLLL---RBBRBB---"
+            "FR": {
+                "": "-U-UUU-U--R-FR-R---F--FR--U--F-D-----L--L-----B--B----",
+                "y": "-U-UUU-U--F--FR--U-L--L--------D---F-B--B-----R-FR-R--",
+                "y'": "-U-UUU-U--B--B-----R-FR-R--F---D-----F--FR--U-L--L----",
+                "y2": "-U-UUU-U--L--L-----B--B--------D-F---R-FR-R---F--FR--U"
             }
         },
         "setups": [
+            "UF'U'FU'RUR'",
             "RU'R'U2FR'F'RU2",
-            "FU'F'U2LF'L'FU2",
-            "RU'R'UF'UFU'",
-            "FU'F'UL'ULU'",
+            "RU'RuURU'R'u'R2",
             "F'UFURU'R'U'RU'R'"
         ]
     },
     "37": {
         "main": "R2U2FR2F'U2R'UR'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUUUURRRRRR---FFFLFF---FDDDDDDFBLLLLLF---BBBBBB---",
-                "y": "UUUUUUUUUBBBBBB---RRRFRR---RDDDDDDRLFFFFFR---LLLLLL---",
-                "y'": "UUUUUUUUUFFFFFF---LLLBLL---LDDDDDDLRBBBBBL---RRRRRR---",
-                "y2": "UUUUUUUUULLLLLL---BBBRBB---BDDDDDDBFRRRRRB---FFFFFF---"
+            "BL": {
+                "": "UU-UUU-U--R--R-----F--F--------D----LL-BL-----BB-BL---",
+                "y": "-U-UUUUU--F--F----LL-BL--------D-----BB-BL----R--R----",
+                "y'": "-UUUUU-U--BB-BL----R--R--------D-----F--F----LL-BL----",
+                "y2": "-U-UUU-UULL-BL-----BB-BL-------D-----R--R-----F--F----"
             },
-            "y": {
-                "": "UUUUUUUUUBBBBBB---RRRRRR---DDBDDFFDDFFFLFF---LLLLLF---",
-                "y": "UUUUUUUUULLLLLL---BBBBBB---DDLDDRRDDRRRFRR---FFFFFR---",
-                "y'": "UUUUUUUUURRRRRR---FFFFFF---DDRDDLLDDLLLBLL---BBBBBL---",
-                "y2": "UUUUUUUUUFFFFFF---LLLLLL---DDFDDBBDDBBBRBB---RRRRRB---"
+            "BR": {
+                "": "-UUUUU-U--RR-RB----F--F--------D-----L--L----BB-RB----",
+                "y": "UU-UUU-U--F--F-----L--L--------D----BB-RB-----RR-RB---",
+                "y'": "-U-UUU-UUBB-RB-----RR-RB-------D-----F--F-----L--L----",
+                "y2": "-U-UUUUU--L--L----BB-RB--------D-----RR-RB----F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUUFFFLFF---LLLLLF---DDFFDDBDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUURRRFRR---FFFFFR---DDRRDDLDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUULLLBLL---BBBBBL---DDLLDDRDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUUBBBRBB---RRRRRB---DDBBDDFDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUUUU--R--R----FF-LF--------D-----LL-LF----B--B----",
+                "y": "-U-UUU-UUFF-LF-----LL-LF-------D-----B--B-----R--R----",
+                "y'": "UU-UUU-U--B--B-----R--R--------D----FF-LF-----LL-LF---",
+                "y2": "-UUUUU-U--LL-LF----B--B--------D-----R--R----FF-LF----"
             },
-            "y2": {
-                "": "UUUUUUUUULLLLLF---BBBBBB---BFDDDDDDFRRRRRR---FFFLFF---",
-                "y": "UUUUUUUUUFFFFFR---LLLLLL---LRDDDDDDRBBBBBB---RRRFRR---",
-                "y'": "UUUUUUUUUBBBBBL---RRRRRR---RLDDDDDDLFFFFFF---LLLBLL---",
-                "y2": "UUUUUUUUURRRRRB---FFFFFF---FBDDDDDDBLLLLLL---BBBRBB---"
+            "FR": {
+                "": "-U-UUU-UURR-FR-----FF-FR-------D-----L--L-----B--B----",
+                "y": "-UUUUU-U--FF-FR----L--L--------D-----B--B----RR-FR----",
+                "y'": "-U-UUUUU--B--B----RR-FR--------D-----FF-FR----L--L----",
+                "y2": "UU-UUU-U--L--L-----B--B--------D----RR-FR-----FF-FR---"
             }
         },
         "setups": [
-            "RUR'U2RUR'U'RUR'FR'F'R",
-            "F'U'F2U'F2U2FLF'L'F",
-            "FUF'U2FUF'U'FUF'LF'L'F",
-            "BUB'U2BUB'U'BUB'RB'R'B",
-            "LUL'U2LUL'U'LUL'BL'B'L"
+            "R2U2FR2F'U2R'UR'",
+            "R'U'R2U'R2U2RFR'F'R",
+            "R'URyU'RU2R'U2RU'R'",
+            "RUR'U2RUR'U'RUR'FR'F'R"
         ]
     },
     "38": {
         "main": "RU'R'U'RUR'U2RU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUULUURRRRRR---UFFFFF---BDDDDDRDDLLFLLL---BBBBBB---",
-                "y": "UUUUUUFUUBBBBBB---URRRRR---LDDDDDBDDFFRFFF---LLLLLL---",
-                "y'": "UUUUUUBUUFFFFFF---ULLLLL---RDDDDDFDDBBLBBB---RRRRRR---",
-                "y2": "UUUUUURUULLLLLL---UBBBBB---FDDDDDLDDRRBRRR---FFFFFF---"
+            "BL": {
+                "": "BU-UUU-U--R--R-----F--F--------D----UL-LL-----BL-BB---",
+                "y": "-U-UUUBU--F--F----UL-LL--------D-----BL-BB----R--R----",
+                "y'": "-UBUUU-U--BL-BB----R--R--------D-----F--F----UL-LL----",
+                "y2": "-U-UUU-UBUL-LL-----BL-BB-------D-----R--R-----F--F----"
             },
-            "y": {
-                "": "LUUUUUUUUBBBBBB---RRRRRR---DDDDDDBDRUFFFFF---LLFLLL---",
-                "y": "FUUUUUUUULLLLLL---BBBBBB---DDDDDDLDBURRRRR---FFRFFF---",
-                "y'": "BUUUUUUUURRRRRR---FFFFFF---DDDDDDRDFULLLLL---BBLBBB---",
-                "y2": "RUUUUUUUUFFFFFF---LLLLLL---DDDDDDFDLUBBBBB---RRBRRR---"
+            "BR": {
+                "": "-URUUU-U--RB-RR----F--F--------D-----L--L----UB-BB----",
+                "y": "RU-UUU-U--F--F-----L--L--------D----UB-BB-----RB-RR---",
+                "y'": "-U-UUU-URUB-BB-----RB-RR-------D-----F--F-----L--L----",
+                "y2": "-U-UUURU--L--L----UB-BB--------D-----RB-RR----F--F----"
             },
-            "y'": {
-                "": "UUUUUUUULUFFFFF---LLFLLL---RDBDDDDDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUFURRRRR---FFRFFF---BDLDDDDDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUBULLLLL---BBLBBB---FDRDDDDDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUURUBBBBB---RRBRRR---LDFDDDDDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUULU--R--R----UF-FF--------D-----LF-LL----B--B----",
+                "y": "-U-UUU-ULUF-FF-----LF-LL-------D-----B--B-----R--R----",
+                "y'": "LU-UUU-U--B--B-----R--R--------D----UF-FF-----LF-LL---",
+                "y2": "-ULUUU-U--LF-LL----B--B--------D-----R--R----UF-FF----"
             },
-            "y2": {
-                "": "UULUUUUUULLFLLL---BBBBBB---DDRDDDDDBRRRRRR---UFFFFF---",
-                "y": "UUFUUUUUUFFRFFF---LLLLLL---DDBDDDDDLBBBBBB---URRRRR---",
-                "y'": "UUBUUUUUUBBLBBB---RRRRRR---DDFDDDDDRFFFFFF---ULLLLL---",
-                "y2": "UURUUUUUURRBRRR---FFFFFF---DDLDDDDDFLLLLLL---UBBBBB---"
+            "FR": {
+                "": "-U-UUU-UFUR-RR-----FR-FF-------D-----L--L-----B--B----",
+                "y": "-UFUUU-U--FR-FF----L--L--------D-----B--B----UR-RR----",
+                "y'": "-U-UUUFU--B--B----UR-RR--------D-----FR-FF----L--L----",
+                "y2": "FU-UUU-U--L--L-----B--B--------D----UR-RR-----FR-FF---"
             }
         },
         "setups": [
-            "RUR'U2RU'R'URUR'",
+            "RU'R'U'RUR'U2RU'R'",
+            "RU2RUR'URU2R2",
             "RU2R'URU'R'URUR'",
-            "RU'R'URU2R'URU'R'",
-            "FUF'U2FU'F'UFUF'",
-            "RU2RUR'URU2R2"
+            "RU'R'URU2R'URU'R'"
         ]
     },
     "39": {
         "main": "RU'R'URU2R'URU'R'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUFUURRRRRR---LFFFFF---BDDDDDFDFLLULLL---BBBBBB---",
-                "y": "UUUUUURUUBBBBBB---FRRRRR---LDDDDDRDRFFUFFF---LLLLLL---",
-                "y'": "UUUUUULUUFFFFFF---BLLLLL---RDDDDDLDLBBUBBB---RRRRRR---",
-                "y2": "UUUUUUBUULLLLLL---RBBBBB---FDDDDDBDBRRURRR---FFFFFF---"
+            "BL": {
+                "": "LU-UUU-U--R--R-----F--F--------D----BL-LL-----BU-BB---",
+                "y": "-U-UUULU--F--F----BL-LL--------D-----BU-BB----R--R----",
+                "y'": "-ULUUU-U--BU-BB----R--R--------D-----F--F----BL-LL----",
+                "y2": "-U-UUU-ULBL-LL-----BU-BB-------D-----R--R-----F--F----"
             },
-            "y": {
-                "": "FUUUUUUUUBBBBBB---RRRRRR---DDFDDDBDFLFFFFF---LLULLL---",
-                "y": "RUUUUUUUULLLLLL---BBBBBB---DDRDDDLDRFRRRRR---FFUFFF---",
-                "y'": "LUUUUUUUURRRRRR---FFFFFF---DDLDDDRDLBLLLLL---BBUBBB---",
-                "y2": "BUUUUUUUUFFFFFF---LLLLLL---DDBDDDFDBRBBBBB---RRURRR---"
+            "BR": {
+                "": "-UBUUU-U--RU-RR----F--F--------D-----L--L----RB-BB----",
+                "y": "BU-UUU-U--F--F-----L--L--------D----RB-BB-----RU-RR---",
+                "y'": "-U-UUU-UBRB-BB-----RU-RR-------D-----F--F-----L--L----",
+                "y2": "-U-UUUBU--L--L----RB-BB--------D-----RU-RR----F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUFLFFFFF---LLULLL---FDBDDDFDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUURFRRRRR---FFUFFF---RDLDDDRDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUULBLLLLL---BBUBBB---LDRDDDLDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUBRBBBBB---RRURRR---BDFDDDBDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUUFU--R--R----LF-FF--------D-----LU-LL----B--B----",
+                "y": "-U-UUU-UFLF-FF-----LU-LL-------D-----B--B-----R--R----",
+                "y'": "FU-UUU-U--B--B-----R--R--------D----LF-FF-----LU-LL---",
+                "y2": "-UFUUU-U--LU-LL----B--B--------D-----R--R----LF-FF----"
             },
-            "y2": {
-                "": "UUFUUUUUULLULLL---BBBBBB---FDFDDDDDBRRRRRR---LFFFFF---",
-                "y": "UURUUUUUUFFUFFF---LLLLLL---RDRDDDDDLBBBBBB---FRRRRR---",
-                "y'": "UULUUUUUUBBUBBB---RRRRRR---LDLDDDDDRFFFFFF---BLLLLL---",
-                "y2": "UUBUUUUUURRURRR---FFFFFF---BDBDDDDDFLLLLLL---RBBBBB---"
+            "FR": {
+                "": "-U-UUU-URFR-RR-----FU-FF-------D-----L--L-----B--B----",
+                "y": "-URUUU-U--FU-FF----L--L--------D-----B--B----FR-RR----",
+                "y'": "-U-UUURU--B--B----FR-RR--------D-----FU-FF----L--L----",
+                "y2": "RU-UUU-U--L--L-----B--B--------D----FR-RR-----FU-FF---"
             }
         },
         "setups": [
-            "RU'R'U'RUR'U'RU2R'",
-            "RUR'U'RU2R'U'RUR'",
-            "FUF'U'FU2F'U'FUF'",
-            "LU'L'U'LUL'U'LU2L'",
-            "LUL'U'LU2L'U'LUL'"
+            "RU'R'URU2R'URU'R'",
+            "R2U2R'U'RU'R'U2R'",
+            "RU'R'U'RUR'U2RU'R'",
+            "RU'R'U'RUR'U'RU2R'"
         ]
     },
     "40": {
         "main": "rU'r'U2rUr'RUR'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUULUURRRRRR---UFFLFF---RLDRDDFFDLLFLLF---BBBBBB---",
-                "y": "UUUUUUFUUBBBBBB---URRFRR---BFDBDDRRDFFRFFR---LLLLLL---",
-                "y'": "UUUUUUBUUFFFFFF---ULLBLL---FBDFDDLLDBBLBBL---RRRRRR---",
-                "y2": "UUUUUURUULLLLLL---UBBRBB---LRDLDDBBDRRBRRB---FFFFFF---"
+            "BL": {
+                "": "BU-UUU-U--R--R-----F--F--------D----UL-BL-----BL-BL---",
+                "y": "-U-UUUBU--F--F----UL-BL--------D-----BL-BL----R--R----",
+                "y'": "-UBUUU-U--BL-BL----R--R--------D-----F--F----UL-BL----",
+                "y2": "-U-UUU-UBUL-BL-----BL-BL-------D-----R--R-----F--F----"
             },
-            "y": {
-                "": "LUUUUUUUUBBBBBB---RRRRRR---DDDLDFRRFUFFLFF---LLFLLF---",
-                "y": "FUUUUUUUULLLLLL---BBBBBB---DDDFDRBBRURRFRR---FFRFFR---",
-                "y'": "BUUUUUUUURRRRRR---FFFFFF---DDDBDLFFLULLBLL---BBLBBL---",
-                "y2": "RUUUUUUUUFFFFFF---LLLLLL---DDDRDBLLBUBBRBB---RRBRRB---"
+            "BR": {
+                "": "-URUUU-U--RB-RB----F--F--------D-----L--L----UB-RB----",
+                "y": "RU-UUU-U--F--F-----L--L--------D----UB-RB-----RB-RB---",
+                "y'": "-U-UUU-URUB-RB-----RB-RB-------D-----F--F-----L--L----",
+                "y2": "-U-UUURU--L--L----UB-RB--------D-----RB-RB----F--F----"
             },
-            "y'": {
-                "": "UUUUUUUULUFFLFF---LLFLLF---FRRFDLDDDBBBBBB---RRRRRR---",
-                "y": "UUUUUUUUFURRFRR---FFRFFR---RBBRDFDDDLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUUBULLBLL---BBLBBL---LFFLDBDDDRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUURUBBRBB---RRBRRB---BLLBDRDDDFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUULU--R--R----UF-LF--------D-----LF-LF----B--B----",
+                "y": "-U-UUU-ULUF-LF-----LF-LF-------D-----B--B-----R--R----",
+                "y'": "LU-UUU-U--B--B-----R--R--------D----UF-LF-----LF-LF---",
+                "y2": "-ULUUU-U--LF-LF----B--B--------D-----R--R----UF-LF----"
             },
-            "y2": {
-                "": "UULUUUUUULLFLLF---BBBBBB---DFFDDRDLRRRRRRR---UFFLFF---",
-                "y": "UUFUUUUUUFFRFFR---LLLLLL---DRRDDBDFBBBBBBB---URRFRR---",
-                "y'": "UUBUUUUUUBBLBBL---RRRRRR---DLLDDFDBFFFFFFF---ULLBLL---",
-                "y2": "UURUUUUUURRBRRB---FFFFFF---DBBDDLDRLLLLLLL---UBBRBB---"
+            "FR": {
+                "": "-U-UUU-UFUR-FR-----FR-FR-------D-----L--L-----B--B----",
+                "y": "-UFUUU-U--FR-FR----L--L--------D-----B--B----UR-FR----",
+                "y'": "-U-UUUFU--B--B----UR-FR--------D-----FR-FR----L--L----",
+                "y2": "FU-UUU-U--L--L-----B--B--------D----UR-FR-----FR-FR---"
             }
         },
         "setups": [
+            "rU'r'U2rUr'RUR'",
             "RU'R'F'L'U2LF",
             "RUR'FURU'R'F'RUR'",
-            "FU'F'L'B'U2BL",
-            "BU'B'R'F'U2FR",
-            "LU'L'B'R'U2RB"
+            "R'URyU'RUR'URUR'"
         ]
     },
     "41": {
         "main": "RU'R'rU'r'U2rUr'",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUFUURRRRRR---LFFLFF---BBLFDLDDDLLULLF---BBBBBB---",
-                "y": "UUUUUURUUBBBBBB---FRRFRR---LLFRDFDDDFFUFFR---LLLLLL---",
-                "y'": "UUUUUULUUFFFFFF---BLLBLL---RRBLDBDDDBBUBBL---RRRRRR---",
-                "y2": "UUUUUUBUULLLLLL---RBBRBB---FFRBDRDDDRRURRB---FFFFFF---"
+            "BL": {
+                "": "LU-UUU-U--R--R-----F--F--------D----BL-BL-----BU-BL---",
+                "y": "-U-UUULU--F--F----BL-BL--------D-----BU-BL----R--R----",
+                "y'": "-ULUUU-U--BU-BL----R--R--------D-----F--F----BL-BL----",
+                "y2": "-U-UUU-ULBL-BL-----BU-BL-------D-----R--R-----F--F----"
             },
-            "y": {
-                "": "FUUUUUUUUBBBBBB---RRRRRR---LLDBDDBFDLFFLFF---LLULLF---",
-                "y": "RUUUUUUUULLLLLL---BBBBBB---FFDLDDLRDFRRFRR---FFUFFR---",
-                "y'": "LUUUUUUUURRRRRR---FFFFFF---BBDRDDRLDBLLBLL---BBUBBL---",
-                "y2": "BUUUUUUUUFFFFFF---LLLLLL---RRDFDDFBDRBBRBB---RRURRB---"
+            "BR": {
+                "": "-UBUUU-U--RU-RB----F--F--------D-----L--L----RB-RB----",
+                "y": "BU-UUU-U--F--F-----L--L--------D----RB-RB-----RU-RB---",
+                "y'": "-U-UUU-UBRB-RB-----RU-RB-------D-----F--F-----L--L----",
+                "y2": "-U-UUUBU--L--L----RB-RB--------D-----RU-RB----F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUFLFFLFF---LLULLF---DFBDDBDLLBBBBBB---RRRRRR---",
-                "y": "UUUUUUUURFRRFRR---FFUFFR---DRLDDLDFFLLLLLL---BBBBBB---",
-                "y'": "UUUUUUUULBLLBLL---BBUBBL---DLRDDRDBBRRRRRR---FFFFFF---",
-                "y2": "UUUUUUUUBRBBRBB---RRURRB---DBFDDFDRRFFFFFF---LLLLLL---"
+            "FL": {
+                "": "-U-UUUFU--R--R----LF-LF--------D-----LU-LF----B--B----",
+                "y": "-U-UUU-UFLF-LF-----LU-LF-------D-----B--B-----R--R----",
+                "y'": "FU-UUU-U--B--B-----R--R--------D----LF-LF-----LU-LF---",
+                "y2": "-UFUUU-U--LU-LF----B--B--------D-----R--R----LF-LF----"
             },
-            "y2": {
-                "": "UUFUUUUUULLULLF---BBBBBB---DDDLDFLBBRRRRRR---LFFLFF---",
-                "y": "UURUUUUUUFFUFFR---LLLLLL---DDDFDRFLLBBBBBB---FRRFRR---",
-                "y'": "UULUUUUUUBBUBBL---RRRRRR---DDDBDLBRRFFFFFF---BLLBLL---",
-                "y2": "UUBUUUUUURRURRB---FFFFFF---DDDRDBRFFLLLLLL---RBBRBB---"
+            "FR": {
+                "": "-U-UUU-URFR-FR-----FU-FR-------D-----L--L-----B--B----",
+                "y": "-URUUU-U--FU-FR----L--L--------D-----B--B----FR-FR----",
+                "y'": "-U-UUURU--B--B----FR-FR--------D-----FU-FR----L--L----",
+                "y2": "RU-UUU-U--L--L-----B--B--------D----FR-FR-----FU-FR---"
             }
         },
         "setups": [
+            "RU'R'rU'r'U2rUr'",
             "F'L'U2LFRUR'",
-            "L'B'U2BLFUF'",
-            "R'F'U2FRBUB'",
-            "B'R'U2RBLUL'"
+            "R'URyU2RUR'URU'R'",
+            "MU'R'F'RUM'y'URU'R'"
         ]
     },
     "SKIP": {
         "main": "",
         "probability": 0.023809523809523808,
+        "probability_label": "1/42",
         "rotations": {
-            "": {
-                "": "UUUUUUUUURRRRRR---FFFFFF---DDDDDDDDDLLLLLL---BBBBBB---"
+            "BL": {
+                "": "UU-UUU-U--R--R-----F--F--------D----LL-LL-----BB-BB---",
+                "y": "-U-UUUUU--F--F----LL-LL--------D-----BB-BB----R--R----",
+                "y'": "-UUUUU-U--BB-BB----R--R--------D-----F--F----LL-LL----",
+                "y2": "-U-UUU-UULL-LL-----BB-BB-------D-----R--R-----F--F----"
             },
-            "y": {
-                "": "UUUUUUUUUBBBBBB---RRRRRR---DDDDDDDDDFFFFFF---LLLLLL---"
+            "BR": {
+                "": "-UUUUU-U--RR-RR----F--F--------D-----L--L----BB-BB----",
+                "y": "UU-UUU-U--F--F-----L--L--------D----BB-BB-----RR-RR---",
+                "y'": "-U-UUU-UUBB-BB-----RR-RR-------D-----F--F-----L--L----",
+                "y2": "-U-UUUUU--L--L----BB-BB--------D-----RR-RR----F--F----"
             },
-            "y'": {
-                "": "UUUUUUUUUFFFFFF---LLLLLL---DDDDDDDDDBBBBBB---RRRRRR---"
+            "FL": {
+                "": "-U-UUUUU--R--R----FF-FF--------D-----LL-LL----B--B----",
+                "y": "-U-UUU-UUFF-FF-----LL-LL-------D-----B--B-----R--R----",
+                "y'": "UU-UUU-U--B--B-----R--R--------D----FF-FF-----LL-LL---",
+                "y2": "-UUUUU-U--LL-LL----B--B--------D-----R--R----FF-FF----"
             },
-            "y2": {
-                "": "UUUUUUUUULLLLLL---BBBBBB---DDDDDDDDDRRRRRR---FFFFFF---"
+            "FR": {
+                "": "-U-UUU-UURR-RR-----FF-FF-------D-----L--L-----B--B----",
+                "y": "-UUUUU-U--FF-FF----L--L--------D-----B--B----RR-RR----",
+                "y'": "-U-UUUUU--B--B----RR-RR--------D-----FF-FF----L--L----",
+                "y2": "UU-UUU-U--L--L-----B--B--------D----RR-RR-----FF-FF---"
             }
         },
         "setups": []

@@ -2,1442 +2,1832 @@
     "01 Runway": {
         "main": "RU2R'R'FRF'U2R'FRF'",
         "probability": 0.009259259259259259,
+        "probability_label": "1/108",
         "rotations": {
-            "": {
-                "": "---------------DDD-------D-----D----------DDD-------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D-------DDD----D-----------D-------DDD"
             },
-            "y'": {
-                "": "----------------D-------DDD----D-----------D-------DDD"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------DDD-------D-----D----------DDD-------D-"
+            },
+            "FL": {
+                "": "---------------DDD-------D-----D----------DDD-------D-"
+            },
+            "FR": {
+                "": "----------------D-------DDD----D-----------D-------DDD"
             }
         },
         "setups": [
-            "R'FRF'U2R'FRF2U2F",
+            "RU2R'R'FRF'U2R'FRF'",
             "LF'L'FUF2R'F'RU'F'",
-            "LF'L'FU2LF'L'F2U2F'",
             "FR'F'RU2FR'F'R2U2R'",
-            "F'LFL'U2F'LFL2U2L"
+            "f'UfR'U'R2FRF'UR",
+            "RU'R2D'rUr'DR2UR'",
+            "R'UR2Dr'U'rD'R2U'R",
+            "F'LFL'U2F'LFL2U2L",
+            "FR'F'RURlU'R'UF'l'",
+            "fR2U'R2UR2UR2F'U'S'",
+            "FR'F'RU2Fl'U'lRU2R'",
+            "FR'F'RURlU'l'BU'R'"
         ]
     },
     "02 Tie-Fighter": {
         "main": "FRUR'U'F'fRUR'U'f'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------DDD------DD-----D-----------D--------DD"
-            },
-            "y": {
+            "BL": {
                 "": "----------------DD------DDD----D----------DD--------D-"
             },
-            "y'": {
-                "": "---------------DD--------D-----D-----------DD------DDD"
-            },
-            "y2": {
+            "BR": {
                 "": "----------------D--------DD----D----------DDD------DD-"
+            },
+            "FL": {
+                "": "---------------DDD------DD-----D-----------D--------DD"
+            },
+            "FR": {
+                "": "---------------DD--------D-----D-----------DD------DDD"
             }
         },
         "setups": [
-            "L'U'LFL'U'LFRUR'F'RUR'F'",
-            "F'U'FRF'U'FRBUB'R'BUB'R'",
-            "B'U'BLB'U'BLFUF'L'FUF'L'",
-            "FRUR'U'F'U2FURU'R'F'",
-            "FRU'R'FRU'R'U2RUR'F'RUR'F'"
+            "FRUR'U'F'fRUR'U'f'",
+            "FUMRU'R'UrU'R'F'",
+            "F'U2F2R'F'RU2FR'F'R",
+            "RU2R2FRF'U2R'FRF'",
+            "R'F'RU2L'U2LU2R'FR",
+            "fURU'R'S'URU'R'F'",
+            "FRUR'U'SRUR'U'f'",
+            "R'U'SRU'R'Uf'UFR",
+            "RfRF'UR'U'RS'U'R'",
+            "RU'R2D'rU'r'DR2UR'",
+            "LFL'U2RU2R'U2LF'L'"
         ]
     },
     "03 Anti-Nazi": {
         "main": "fRUR'U'f'U'FRUR'U'F'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------DD--------D-D---D----------DD-------DD-"
-            },
-            "y": {
+            "BL": {
                 "": "---------------DD-------DD-----D-D---------D-------DD-"
             },
-            "y'": {
-                "": "----------------D-------DD---D-D----------DD-------DD-"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------DD-------DD-----D---D------DD--------D-"
+            },
+            "FL": {
+                "": "---------------DD--------D-D---D----------DD-------DD-"
+            },
+            "FR": {
+                "": "----------------D-------DD---D-D----------DD-------DD-"
             }
         },
         "setups": [
-            "FR'F'RURU'R'URUR'U'R'FRF'",
-            "FURU'R'F'U'FRUR'U'F'",
+            "fRUR'U'f'U'FRUR'U'F'",
+            "MU'rU2r'U'RU'R'M'",
+            "lL2U'LU'R'F2RU'M'",
+            "MU'rU2r'U'RU'R2r",
+            "rR2U'RU'r'U2rU'M",
+            "ML'U'LU'l'U2lU'M'",
+            "ML'U'LU'R'F2RU'R'r",
+            "FURU'R'F'R'F'U'FUR",
+            "Rr2F'rU'R'F2RU'rR'",
             "FU'RU'R'U'R'FRF'U2F'",
-            "LF'L'FUFU'F'UFUF'U'F'LFL'",
-            "LUFU'F'L'U'LFUF'U'L'"
+            "R'U2R'FRF'U'F'U'FU'R"
         ]
     },
     "04 Nazi": {
         "main": "fRUR'U'f'UFRUR'U'F'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "----------------DD-------DD----D-D---------DD-------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D--------DD----D---D-------DD-------DD"
             },
-            "y'": {
-                "": "----------------DD-------DDD---D-----------D--------DD"
-            },
-            "y2": {
+            "BR": {
                 "": "----------------DD-------D---D-D-----------DD-------DD"
+            },
+            "FL": {
+                "": "----------------DD-------DD----D-D---------DD-------D-"
+            },
+            "FR": {
+                "": "----------------DD-------DDD---D-----------D--------DD"
             }
         },
         "setups": [
-            "FURU'R'F'UFRUR'U'F'",
-            "FRUR'U'F'RUR'F'U2FRU'R'",
-            "F'U'L'ULFU'FRUR'U'F'",
-            "LUFU'F'L'ULFUF'U'L'",
-            "FURU'R'F'U'F'L'U'LUF"
+            "fRUR'U'f'UFRUR'U'F'",
+            "MRUR'UrU2r'UM'",
+            "M'Ur'U2rUR'URM",
+            "M'Ur'U2rUR'UMR",
+            "MUR'F2RUr'Fr2R'",
+            "MUR'F2RUr'FrM'",
+            "r'R2UR'ULF2L'UM'",
+            "r'R2UR'UrU2r'UM'",
+            "M'Ur'U2rUR'UR2r'",
+            "MRUR'ULF2L'ULl'",
+            "R'U'F'UFRFRUR'U'F'"
         ]
     },
     "05 RBWAS": {
         "main": "FRUR'U'F'U'FRUR'U'F'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------DD----------DD-DD----------D--------DD-"
-            },
-            "y": {
+            "BL": {
                 "": "---------------DD-------DD----DD-DD----------------D--"
             },
-            "y'": {
-                "": "------------------------D---DD-DD---------DD-------DD-"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------D--------DD-----DD-DD------DD----------"
+            },
+            "FL": {
+                "": "---------------DD----------DD-DD----------D--------DD-"
+            },
+            "FR": {
+                "": "------------------------D---DD-DD---------DD-------DD-"
             }
         },
         "setups": [
-            "FURU'R'F'UFURU'R'F'",
-            "LUFU'F'L'ULUFU'F'L'",
-            "BU'L2DL'U'LD'L2UB'",
+            "FRUR'U'F'U'FRUR'U'F'",
             "R'F'LF'L'F2R",
-            "B'R'FR'F'R2B"
+            "r'U'RU'R'U2r",
+            "R'F'rU'r'F2R",
+            "F'r'Ur'F'r2F",
+            "FUF2LFL2UL",
+            "r'F2rF2R'F'RF'",
+            "RB'RBR2dR'UR",
+            "RUR'Uy'R2FRF'R",
+            "FU'R2DR'U'RD'R2UF'",
+            "FURU'R'F'UFURU'R'F'"
         ]
     },
     "06 RFWAS": {
         "main": "F'L'U'LUFUF'L'U'LUF",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "-----------------D----------DD-DD----------DD-------DD"
-            },
-            "y": {
+            "BL": {
                 "": "----------------DD--------DDD-DD--------------------DD"
             },
-            "y'": {
-                "": "-------------------------DD----DD-DD-------DD--------D"
-            },
-            "y2": {
+            "BR": {
                 "": "----------------DD-------DD---DD-DD---------D---------"
+            },
+            "FL": {
+                "": "-----------------D----------DD-DD----------DD-------DD"
+            },
+            "FR": {
+                "": "-------------------------DD----DD-DD-------DD--------D"
             }
         },
         "setups": [
-            "F'U'L'ULFU'F'U'L'ULF",
-            "R'U'F'UFRU'R'U'F'UFR",
-            "FU2F'L2BLB'L",
+            "F'L'U'LUFUF'L'U'LUF",
+            "LFR'FRF2L'",
+            "rUR'URU2r'",
+            "LFl'UlF2L'",
+            "F'U'F2R'F'R2U'R'",
+            "BrU'rBr2B'",
             "BU2B'R2FRF'R",
-            "RU2R'F2LFL'F"
+            "R'FR'F'R2yU'RU'R'",
+            "FU'R2DR'URD'R2UF'",
+            "rU'r'UrUr'U2RUR'",
+            "fR'F'RURU'R'S'y'FR'F'RURU'R'"
         ]
     },
     "07 Lightning": {
         "main": "L'U2LU2LF'L'F",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "------------------------DD---D-DD-D-------DD-------D--"
-            },
-            "y": {
+            "BL": {
                 "": "---------------D-----------DD--DD---------DD-------DD-"
             },
-            "y'": {
-                "": "---------------DD-------DD----DD--DD------D-----------"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------DD-------D---D-DD-D-----------------DD-"
+            },
+            "FL": {
+                "": "------------------------DD---D-DD-D-------DD-------D--"
+            },
+            "FR": {
+                "": "---------------DD-------DD----DD--DD------D-----------"
             }
         },
         "setups": [
+            "L'U2LU2LF'L'F",
+            "LF2R'F'RF'L'",
+            "rU2R'U'RU'r'",
             "RU2R'U2R'FRF'",
-            "R'FRF'U2F'U2F",
             "F'LFL'U2L'U2L",
-            "FU2F'U2F'LFL'",
-            "B'RBR'U2R'U2R"
+            "f'UfR'U2R'U2R",
+            "F'LFL'U2r'F2r",
+            "F'LFl'U2L'U2l",
+            "x2Fr2F'r'Dr'F'x2",
+            "rUr'RUR'U'rU'r'",
+            "S'U'RU2R'U'RU'R'S"
         ]
     },
     "08 LWS": {
         "main": "RU2R'U2R'FRF'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "----------------DD-------DDD--DD--D------------------D"
-            },
-            "y": {
+            "BL": {
                 "": "-----------------D-------DD----DDDD--------DD---------"
             },
-            "y'": {
-                "": "----------------DD----------DDDD------------D-------DD"
-            },
-            "y2": {
+            "BR": {
                 "": "--------------------------D-D--DD--D-------DD-------DD"
+            },
+            "FL": {
+                "": "----------------DD-------DDD--DD--D------------------D"
+            },
+            "FR": {
+                "": "----------------DD----------DDDD------------D-------DD"
             }
         },
         "setups": [
-            "L'U2LU2LF'L'F",
-            "LF'L'FU2FU2F'",
+            "RU2R'U2R'FRF'",
+            "R'F2LFL'FR",
+            "r'U2RUR'Ur",
+            "R'F2rUr'FR",
+            "l'U2LUr'FR",
             "FR'F'RU2RU2R'",
-            "F'U2FU2FR'F'R",
-            "R'U2RU2RB'R'B"
+            "L'U2LU2LF'L'F",
+            "FR'F'rU2RU2r'",
+            "R'F'RL'U'LUR'FR",
+            "r'U'rR'U'RUr'Ur",
+            "x2B'r2BrD'rBx2"
         ]
     },
     "09 Kite": {
         "main": "MRU2R'U'RU'R'U'M'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "-----------------D--------D-D--DDD---------DD-------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D---------D-D-DD---D--------D-------DD"
             },
-            "y'": {
-                "": "-----------------D-------DDD---DD-D--------D---------D"
-            },
-            "y2": {
+            "BR": {
                 "": "----------------DD-------D---DDD--D---------D--------D"
+            },
+            "FL": {
+                "": "-----------------D--------D-D--DDD---------DD-------D-"
+            },
+            "FR": {
+                "": "-----------------D-------DDD---DD-D--------D---------D"
             }
         },
         "setups": [
-            "F'U2FR'FRF'UF'UF",
-            "RU2R'U'RUR'U'RUR'U2R'FRF'",
-            "F'U2FUF'UL'U'LUF",
-            "L'U2LF'LFL'UL'UL",
-            "R'U2RUR'UF'U'FUR"
+            "MRU2R'U'RU'R'U'M'",
+            "FR'F'U'FRF'R'UR",
+            "MURUR'URU2R'M'",
+            "S'RUR'SURU2R'",
+            "M'U'RUR'UMRU2R'",
+            "rU'r'U'rUr'F'UF",
+            "MURUR'URU2R2r",
+            "M'U'RUR'UR2r'U2R'",
+            "FURU'R2F'RURU'R'",
+            "R'U2RUR'UF'U'FUR",
+            "M'URUR'URU2R'UM"
         ]
     },
     "10 Anti-Kite": {
         "main": "ML'U2LUL'ULUM'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------DD-------D---D-DD---D------D---------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D-------DD---DDD--D-------D--------D--"
             },
-            "y'": {
-                "": "---------------D--------D---D--DDD---------D-------DD-"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------D---------D-D---DD-D-------DD-------D--"
+            },
+            "FL": {
+                "": "---------------DD-------D---D-DD---D------D---------D-"
+            },
+            "FR": {
+                "": "---------------D--------D---D--DDD---------D-------DD-"
             }
         },
         "setups": [
-            "RU2R'U'RU'R'UFRUR'U'F'",
-            "FU2F'U'FU'F'ULFUF'U'L'",
-            "R'U2RUR'U'RUR'U'RU2RB'R'B",
+            "ML'U2LUL'ULUM'",
+            "R'FRUR'F'RFU'F'",
+            "M'U'R'U'RU'R'U2RM",
+            "S'R'U'RSU'R'U2R",
+            "MUR'U'RU'M'R'U2R",
+            "M'U'R'U'RU'R'U2R2r'",
+            "MUR'U'RU'rR2U2R",
+            "MUR'U'RU'R2rU2R",
             "RU2R'FR'F'RU'RU'R'",
-            "FU2F'LF'L'FU'FU'F'"
+            "l'UlUl'U'lFU'F'",
+            "RU2R'UF'U'FU'RU'R'"
         ]
     },
     "11 Downstairs": {
         "main": "F'L'U'LUFU'F'L'U'LUF",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------D--------D---D--DD--D------DD--------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D-------D---DDDD----------D--------DD-"
             },
-            "y'": {
-                "": "---------------D--------DD-----DDDD--------D-------D--"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------DD--------D-D--DD--D-------D--------D--"
+            },
+            "FL": {
+                "": "---------------D--------D---D--DD--D------DD--------D-"
+            },
+            "FR": {
+                "": "---------------D--------DD-----DDDD--------D-------D--"
             }
         },
         "setups": [
-            "R'U'F'UFRUR'U'F'UFR",
-            "F'U'L'ULFUF'U'L'ULF",
-            "F'LFL'U'L'ULFR'F'RURU'R'",
-            "R'FRF'U'F'UFRB'R'BUBU'B'",
-            "F'L'U'LUL'ULUL'U2LUF"
+            "F'L'U'LUFU'F'L'U'LUF",
+            "MU'RU2R'U'RU'R'M'",
+            "MU'RU2R'U'RU'R2r",
+            "MU'RU2R'U'RU'rR2",
+            "MUL'U2LUL'ULM'",
+            "rU2R'FR'F'RU'RU'r'",
+            "SRU2R'U'RU'R'U'S'",
+            "R'rUR'U2RUR'URM",
+            "LF2R'DR'D'RF'RF'L'",
+            "SU2RU2R'U'RU'R'S'",
+            "S'RU2R'U'RU'R'U2S"
         ]
     },
     "12 Upstairs": {
         "main": "FRUR'U'F'UFRUR'U'F'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "----------------DD--------D-D-DD-D----------D-------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D--------DD---DD--DD--------D--------D"
             },
-            "y'": {
-                "": "-----------------D--------DDD--DD----------D--------DD"
-            },
-            "y2": {
+            "BR": {
                 "": "-----------------D-------D---D-DD-D--------DD--------D"
+            },
+            "FL": {
+                "": "----------------DD--------D-D-DD-D----------D-------D-"
+            },
+            "FR": {
+                "": "-----------------D--------DDD--DD----------D--------DD"
             }
         },
         "setups": [
-            "FURU'R'F'U'FURU'R'F'",
-            "LUFU'F'L'U'LUFU'F'L'",
-            "FRUR'U'RU'R'U'RU2R'U'F'",
-            "FR'F'RURU'R'U'FR'F'RURU'R'",
-            "LF'L'FUFU'F'U'LF'L'FUFU'F'"
+            "FRUR'U'F'UFRUR'U'F'",
+            "M'UR'U2RUR'URM",
+            "M'UR'U2RUR'UR2r'",
+            "M'UR'U2RUR'Ur'R2",
+            "MUr'F2rUr'Fr2R'",
+            "SR'U2RUR'URUS'",
+            "M'U'R'U2RUR'URU'M",
+            "rR'UR'U2RUR'UMR",
+            "rR'UR'U2RUR'URM",
+            "R'rUR'U2RUR'URM",
+            "R'LFR'F2RFR'FR2L'"
         ]
     },
     "13 Gun": {
         "main": "L'U'LULF'L'FL'U2LUL'UL",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------D--------DD----DDDD-----------------DD-"
-            },
-            "y": {
+            "BL": {
                 "": "---------------DD-------D---D--D--DD------DD----------"
             },
-            "y'": {
-                "": "---------------DD----------DD--D--D-------DD-------D--"
-            },
-            "y2": {
+            "BR": {
                 "": "------------------------DD---DDDD---------D--------DD-"
+            },
+            "FL": {
+                "": "---------------D--------DD----DDDD-----------------DD-"
+            },
+            "FR": {
+                "": "---------------DD----------DD--D--D-------DD-------D--"
             }
         },
         "setups": [
-            "RU2R'U'RU'R'FR'F'RURU'R'",
-            "FU2F'U'FU'F'LF'L'FUFU'F'",
-            "R'FRF'LF'L'FUFU'F'U'RU'R'",
-            "BU2B'U'BU'B'RB'R'BUBU'B'",
-            "RUR'U'RU'R'F'LFL'URU'R'U'L'UL"
+            "L'U'LULF'L'FL'U2LUL'UL",
+            "FRU'R'URU2R'U'F'",
+            "R'U'RFR'UR2U'R'F'",
+            "F'U'FLF'L'ULFL'",
+            "fUR'U'RUR2U'R'f'",
+            "F'U'FrU'r'UrUr'",
+            "FU'R'FRF'RU2R'U'F'",
+            "RUR'U'R'FR2UR'U'F'",
+            "f'L'fRB'R'URBR'",
+            "f'L'flU'l'UlUl'",
+            "rU2R2U'R2U'r'UR'UR"
         ]
     },
     "14 Anti-Gun": {
         "main": "RUR'U'R'FRF'RU2R'U'RU'R'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "-------------------------DD---DDD--D--------D-------DD"
-            },
-            "y": {
+            "BL": {
                 "": "----------------DD----------DD-D--D--------DD--------D"
             },
-            "y'": {
-                "": "----------------DD--------D-D--D-DD--------DD---------"
-            },
-            "y2": {
+            "BR": {
                 "": "-----------------D-------DDD--DDD-------------------DD"
+            },
+            "FL": {
+                "": "-------------------------DD---DDD--D--------D-------DD"
+            },
+            "FR": {
+                "": "----------------DD--------D-D--D-DD--------DD---------"
             }
         },
         "setups": [
-            "L'U2LUL'ULF'LFL'U'L'UL",
-            "F'U2FUF'UFR'FRF'U'F'UF",
-            "L'U'LUBLUL'U'B'L'UL",
-            "RU2R'FR'F'RU'RUR'U'RU'R'",
-            "F'U'FULFUF'U'L'F'UF"
+            "RUR'U'R'FRF'RU2R'U'RU'R'",
+            "FUF'R'FRU'R'F'R",
+            "F'L'ULU'L'U2LUF",
+            "RUR'F'Ur'F2rUF",
+            "FUF'l'UlU'R'F'R",
+            "LUL'f'LU'L2ULf",
+            "FUF'l'UlU'l'U'l",
+            "fRf'r'UrU'r'U'r",
+            "bLb'R'FRU'R'F'R",
+            "FURU'R2F'rURU'r'",
+            "L'U'LULF'L2U'LUF"
         ]
     },
     "15 Squeegee": {
         "main": "l'U'lL'U'LUl'Ul",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------D--------DD----DDD--D------D---------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D-------D---DD-D--D-------DD-------D--"
             },
-            "y'": {
-                "": "---------------DD-------D---D--D-DD--------D-------D--"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------D---------D-D--DDD---------D--------DD-"
+            },
+            "FL": {
+                "": "---------------D--------DD----DDD--D------D---------D-"
+            },
+            "FR": {
+                "": "---------------DD-------D---D--D-DD--------D-------D--"
             }
         },
         "setups": [
-            "RU'R'UF'UFUF'U'FR'FRF'",
-            "R'FRUR'U'F'RU'R'U2R",
-            "FU'F'UL'ULUL'U'LF'LFL'",
-            "BU'B'UR'URUR'U'RB'RBR'",
-            "FR'F'RU2RU'R'URU'R'URU2R'"
+            "l'U'lL'U'LUl'Ul",
+            "R'F'RU'r'FM'FR",
+            "R'F'RU'L'UM'Ul",
+            "r'U'rU'R'UMUr",
+            "R'F'RU'L'ULR'FR",
+            "R'F'RU'L'UR'LFR",
+            "R'F'RU'r'FrR'FR",
+            "R'F'RU'L'UrR'Ul",
+            "R'F'RU'L'ULl'Ul",
+            "r'U'rU'R'URr'Ur",
+            "R'fRUR'f'RfU'f'"
         ]
     },
     "16 Anti-Squeegee": {
         "main": "rUr'RUR'U'rU'r'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "-----------------D-------DD---DDDD----------D-------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D---------D-D--D--DD-------DD--------D"
             },
-            "y'": {
-                "": "----------------DD--------DDD--D--D--------D---------D"
-            },
-            "y2": {
+            "BR": {
                 "": "-----------------D-------D---DDDD-----------D-------DD"
+            },
+            "FL": {
+                "": "-----------------D-------DD---DDDD----------D-------D-"
+            },
+            "FR": {
+                "": "----------------DD--------DDD--D--D--------D---------D"
             }
         },
         "setups": [
-            "L'ULU'FU'F'U'FUF'LF'L'F",
-            "F'UFU'RU'R'U'RUR'FR'F'R",
-            "B'UBU'LU'L'U'LUL'BL'B'L",
+            "rUr'RUR'U'rU'r'",
+            "rUr'URU'M'U'r'",
+            "LFL'URU'R'LF'L'",
+            "rUr'URU'R'rU'r'",
+            "RSRUR'U'R'FRf'R'",
+            "RBR'UrB'r'RB'R'",
+            "FRF'UBU'S'U'F'z",
+            "R'U2RUR'FURU'R'F'R",
+            "z'fR'U'F'URzf'R'FR",
             "RUR'URU2R'FURU'R'F'",
-            "R'U2RUR'FURU'R'F'R"
+            "xUr'U'B'UrU'r'Brx'"
         ]
     },
     "17 Slash": {
         "main": "RUR'UR'FRF'U2R'FRF'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------DD--------D-D---D---D-------D--------DD"
-            },
-            "y": {
+            "BL": {
                 "": "----------------DD------DD---D-D-D---------D--------D-"
             },
-            "y'": {
-                "": "----------------D--------D---D-D-D---------DD------DD-"
-            },
-            "y2": {
+            "BR": {
                 "": "----------------D--------DDD---D---D------DD--------D-"
+            },
+            "FL": {
+                "": "---------------DD--------D-D---D---D-------D--------DD"
+            },
+            "FR": {
+                "": "----------------D--------D---D-D-D---------DD------DD-"
             }
         },
         "setups": [
-            "R'FRF'U2R'FRF'UF'UF",
-            "LF'L'FU2LF'L'FU'FU'F'",
-            "FRU'R'FR'F'RURUR'U'F'",
-            "LF'L'FUFU'F2L'U'LUF",
-            "R'U'F'UF2RUR'U'F'UR"
+            "RUR'UR'FRF'U2R'FRF'",
+            "S'RUR'SU'R'FRF'",
+            "FRUR'UF'U2F'LFL'",
+            "MURUR'U'M'R'FRF'",
+            "FRUR'UF'U2F'rUr'",
+            "R'U2FRUR'U'F2U2FR",
+            "MURUR'U'rR2FRF'",
+            "FU2R'F'U'FUR2U2R'F'",
+            "R'U'FUrU2MUR'F'R",
+            "SL'U'LS'UrU'r'F",
+            "r'U'F'UF'rU2rU'r'F"
         ]
     },
     "18 Crown": {
         "main": "FRUR'U'F'U2FRUR'U'RUR'U'F'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "----------------D--------D---D-D---D------DDD-------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D--------D-D-D-D-----------D-------DDD"
             },
-            "y'": {
-                "": "----------------D-------DDD----D-D-D-------D--------D-"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------DDD-------D-D---D-D---------D--------D-"
+            },
+            "FL": {
+                "": "----------------D--------D---D-D---D------DDD-------D-"
+            },
+            "FR": {
+                "": "----------------D-------DDD----D-D-D-------D--------D-"
             }
         },
         "setups": [
-            "RUR'UR'FRF'U2R'FRF'",
-            "L'U'LU'LF'L'FU2LF'L'F",
-            "FURU'R'F'U'RUR'U'R'FRF'",
+            "FRUR'U'F'U2FRUR'U'RUR'U'F'",
             "LF'L'FU2FU'RU'R'F'",
-            "F'U'FU'FR'F'RU2FR'F'R"
+            "FR'F'RU2Rd'RU'R'F'",
+            "FR'F'RU2RU'fR'f'R'",
+            "rU'r'FU2FU'RU'R'F'",
+            "f'UfR'U2R'UF'UFR",
+            "RU2R'F'L'U2LFRU2R'",
+            "LFRU2R'U2RU2R'F'L'",
+            "FURU'R'UF'U'F'rUr'",
+            "FURU2R'S'RUR'SF'",
+            "FS'RU'R'SRU2R'U'F'"
         ]
     },
     "19 Bunny": {
         "main": "MURUR'U'M'R'FRF'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------DD--------D-----D-D-D-------DD-------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D-------DD---D-D---D-------D--------DD"
             },
-            "y'": {
-                "": "----------------D--------DDD---D-D---------D-------DD-"
-            },
-            "y2": {
+            "BR": {
                 "": "----------------DD-------D-D-D-D----------DD--------D-"
+            },
+            "FL": {
+                "": "---------------DD--------D-----D-D-D-------DD-------D-"
+            },
+            "FR": {
+                "": "----------------D--------DDD---D-D---------D-------DD-"
             }
         },
         "setups": [
-            "FURU'R'U'R'FRF'RUR'F'",
-            "FURU'R'F'URUR'U'R'FRF'",
-            "LUFU'F'U'F'LFL'FUF'L'",
-            "LUFU'F'L'UFUF'U'F'LFL'",
-            "R'U'F'UFR2UR'U'R'FRF'"
+            "MURUR'U'M'R'FRF'",
+            "FR'F'RMURU'R'U'M'",
+            "FR'F'RUS'RU'R'S",
+            "R'F'U2F2URU'R'F'U2R",
+            "FR'F'R2r'URU'R'U'M'",
+            "FRU2R2U'F'UFRU2F'",
+            "F'LFL'MU'L'ULUM'",
+            "fUFR2F'RU'f'R'U2R",
+            "R'U'FURU'R'F2U'FUR",
+            "FUR'U'F'UFR2UR'U'F'",
+            "F'rUr'U'Sr'FrS'"
         ]
     },
     "20 X": {
         "main": "MURUR'U'M2URU'r'",
         "probability": 0.004629629629629629,
+        "probability_label": "1/216",
         "rotations": {
-            "": {
+            "BL": {
                 "": "----------------D--------D-D-D-D-D-D-------D--------D-"
             },
-            "y": {
+            "BR": {
                 "": "----------------D--------D-D-D-D-D-D-------D--------D-"
             },
-            "y'": {
+            "FL": {
                 "": "----------------D--------D-D-D-D-D-D-------D--------D-"
             },
-            "y2": {
+            "FR": {
                 "": "----------------D--------D-D-D-D-D-D-------D--------D-"
             }
         },
         "setups": [
-            "R'U'FR'F'RURU2FRUR'U'F'",
-            "F'U'LF'L'FUFU2LFUF'U'L'",
-            "L'U'BL'B'LULU2BLUL'U'B'",
-            "B'U'RB'R'BUBU2RBUB'U'R'",
-            "RU2R'FR'F'R2U2R'FR'F'RURU'R'"
+            "MURUR'U'M2URU'r'",
+            "FR'F'M2FRF'M'U'M'",
+            "rUR'U'M2URU'R'U'M'",
+            "MURUR'U'M2URU'r'",
+            "r'U'RUM2U'R'URUM",
+            "MU'L'U'LUM2U'L'Ul",
+            "R2SR2US2UR2SR2",
+            "SR'U'RURURU'R'S'",
+            "SU'RUR'S2RU'R'S",
+            "S'RUR'S2RU'R'US'",
+            "SRUR'U'R'U'R'URS'"
         ]
     },
     "21 H": {
         "main": "FRUR'U'RUR'U'RUR'U'F'",
         "probability": 0.009259259259259259,
+        "probability_label": "1/108",
         "rotations": {
-            "": {
-                "": "------------------------D-D-D-DDD-D----------------D-D"
-            },
-            "y": {
+            "BL": {
                 "": "---------------D-D----------D-DDD-D-------D-D---------"
             },
-            "y'": {
-                "": "---------------D-D----------D-DDD-D-------D-D---------"
-            },
-            "y2": {
+            "BR": {
                 "": "------------------------D-D-D-DDD-D----------------D-D"
+            },
+            "FL": {
+                "": "------------------------D-D-D-DDD-D----------------D-D"
+            },
+            "FR": {
+                "": "---------------D-D----------D-DDD-D-------D-D---------"
             }
         },
         "setups": [
             "FRUR'U'RUR'U'RUR'U'F'",
+            "RUR'URU'R'URU2R'",
+            "R'U'RU'R'URU'R'U2R",
             "RU2R'U'RUR'U'RU'R'",
             "R'U2RUR'U'RUR'UR",
-            "L'U2LUL'U'LUL'UL",
-            "LU2L'U'LUL'U'LU'L'"
+            "L'URU'LU'R'U'RU'R'",
+            "r'FRF'rU'R'U'RU'R'",
+            "RUR'UF'RU2R'U2R'FR",
+            "R'F2R2U2R'F2RU2R2F2R",
+            "LUF'UL2U'L2U'FL2U2L",
+            "SRURU'R'FR'URU'R'f'"
         ]
     },
     "22 Pi": {
         "main": "RU2R2U'R2U'R2U2R",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------D-D------D---D-DDD-D------------------D"
-            },
-            "y": {
+            "BL": {
                 "": "-----------------D------D-D-D-DDD-D-------D-----------"
             },
-            "y'": {
-                "": "---------------D------------D-DDD-D---------D------D-D"
-            },
-            "y2": {
+            "BR": {
                 "": "--------------------------D-D-DDD-D-------D-D------D--"
+            },
+            "FL": {
+                "": "---------------D-D------D---D-DDD-D------------------D"
+            },
+            "FR": {
+                "": "---------------D------------D-DDD-D---------D------D-D"
             }
         },
         "setups": [
-            "RU2R'U'RU'R'U'RU2R'U'RU'R'",
-            "RU2R'U'RU'R'URU2R'U'RU'R'",
-            "FU2F'U'FU'F'U'FU2F'U'FU'F'",
-            "FU2F'U'FU'F'UFU2F'U'FU'F'",
-            "BU2B'U'BU'B'U'BU2B'U'BU'B'"
+            "RU2R2U'R2U'R2U2R",
+            "R'U2R2UR2UR2U2R'",
+            "RU2R2U'R2U'R2U2R",
+            "R'U'RU'R'U'LU'RUL'",
+            "RUR'URUL'UR'U'L",
+            "RUR'URUr'FR'F'r",
+            "fR2S'U'R2U'R2UR2F'",
+            "FURU'R'SURU'R'f'",
+            "fRUR'U'S'RUR'U'F'",
+            "rB2r2F'r2B'r2F2r",
+            "FURU'R'F'fURU'R'f'"
         ]
     },
     "23 Headlights": {
         "main": "R2DR'U2RD'R'U2R'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "------------------------D-D-D-DDDDDD------------------"
-            },
-            "y": {
+            "BL": {
                 "": "----------------------------DDDDD-DD------D-D---------"
             },
-            "y'": {
-                "": "---------------D-D---------DD-DDDDD-------------------"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------------------DDDDDD-D----------------D-D"
+            },
+            "FL": {
+                "": "------------------------D-D-D-DDDDDD------------------"
+            },
+            "FR": {
+                "": "---------------D-D---------DD-DDDDD-------------------"
             }
         },
         "setups": [
-            "L'U2LUL'ULU2RU2R'U'RU'R'",
-            "B'U2BUB'UBU2FU2F'U'FU'F'",
-            "F'U2FUF'UFU2BU2B'U'BU'B'",
-            "RUR'URU2R'U'RU2R'U'RU'R'",
-            "RU2R'U'RU'R'URUR'URU2R'"
+            "R2DR'U2RD'R'U2R'",
+            "R'U2R'D'RU2R'DR2",
+            "RU2RDR'U2RD'R2",
+            "R'U2R'D'RU2R'uF2",
+            "R'UFU'F'U'RFU2F'",
+            "FU'R'URUF'R'U2R",
+            "x2R'D2R'U'RD2R'Ul2",
+            "F'R'FU2F'RFR'U2R",
+            "RUR'U2LU'RUL'UR'",
+            "L'U2RUR'U2LU'RU2R'",
+            "R'U2RUR2D'RUR'DR2"
         ]
     },
     "24 T": {
         "main": "rUR'U'r'FRF'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "--------------------------DDD-DDDDD----------------D--"
-            },
-            "y": {
+            "BL": {
                 "": "---------------D------------D-DDDDDD--------D---------"
             },
-            "y'": {
-                "": "-----------------D---------DDDDDD-D-------D-----------"
-            },
-            "y2": {
+            "BR": {
                 "": "------------------------D---DDDDD-DD-----------------D"
+            },
+            "FL": {
+                "": "--------------------------DDD-DDDDD----------------D--"
+            },
+            "FR": {
+                "": "-----------------D---------DDDDDD-D-------D-----------"
             }
         },
         "setups": [
-            "L'U2LUL'ULRU2R'U'RU'R'",
-            "L'RUR'U'LURU'R'",
-            "F'U2FUF'UFBU2B'U'BU'B'",
-            "B'U2BUB'UBFU2F'U'FU'F'",
-            "F'U2FUF'UFU2FU2F'U'FU'F'"
+            "rUR'U'r'FRF'",
+            "FR'F'LFRF'L'",
+            "F'LFR'F'L'FR",
+            "xUR'U'LURU'r'",
+            "FR'F'rURU'r'",
+            "rURU'r'FR'F'",
+            "F'rUR'U'r'FR",
+            "xU'LUR'U'L'Ul",
+            "xD'R'U'RDR'Ul",
+            "Fl'U'LURU'r'",
+            "F'rUR'U'L'Ul"
         ]
     },
     "25 Bowtie": {
         "main": "F'rUR'U'r'FR",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "-----------------D------D---DDDDDDD-------------------"
-            },
-            "y": {
+            "BL": {
                 "": "--------------------------DDD-DDD-DD------D-----------"
             },
-            "y'": {
-                "": "---------------D-----------DD-DDD-DD-----------------D"
-            },
-            "y2": {
+            "BR": {
                 "": "----------------------------DDDDDDD---------D------D--"
+            },
+            "FL": {
+                "": "-----------------D------D---DDDDDDD-------------------"
+            },
+            "FR": {
+                "": "---------------D-----------DD-DDD-DD-----------------D"
             }
         },
         "setups": [
-            "RUR'U'L'URU'R'L",
-            "RU2R'U'RUR'U'RUR'U'RU'R'",
-            "L'U'LURU'L'ULR'",
-            "R'U2RUR'U'RUR'U'RUR'UR",
-            "L'U2LUL'U'LUL'U'LUL'UL"
+            "F'rUR'U'r'FR",
+            "LFR'F'L'FRF'",
+            "R'F'LFRF'L'F",
+            "F'L'FR'F'LFR",
+            "FRF'LFR'F'L'",
+            "xR'U'LURU'r'F",
+            "R'F'rURU'r'F",
+            "rUR'U'r'FRF'",
+            "FRF'rUR'U'r'",
+            "x'DRU'R'D'RUl'",
+            "xD'R'URDR'U'l"
         ]
     },
     "26 Anti-Sune": {
         "main": "RU2R'U'RU'R'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "-----------------D--------D-D-DDDDD---------D---------"
-            },
-            "y": {
+            "BL": {
                 "": "--------------------------D-D-DDD-DD--------D--------D"
             },
-            "y'": {
-                "": "-----------------D--------DDD-DDD-D------------------D"
-            },
-            "y2": {
+            "BR": {
                 "": "-----------------D----------DDDDD-D---------D--------D"
+            },
+            "FL": {
+                "": "-----------------D--------D-D-DDDDD---------D---------"
+            },
+            "FR": {
+                "": "-----------------D--------DDD-DDD-D------------------D"
             }
         },
         "setups": [
-            "L'U2LUL'UL",
-            "F'U2FUF'UF",
-            "B'U2BUB'UB",
+            "RU2R'U'RU'R'",
             "RUR'URU2R'",
-            "LD2L'U2LUL'ULD2U2L'"
+            "R'U2RUR'UR",
+            "RU'L'UR'U'L",
+            "r'F2rUr'Fr",
+            "rU'r'FR'F'rUM",
+            "RD2R'U2RUR'URD2U2R'"
         ]
     },
     "27 Sune": {
         "main": "L'U2LUL'UL",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------D--------D---D-DDD-DD------D-----------"
-            },
-            "y": {
+            "BL": {
                 "": "------------------------D---DDDDD-D-------D--------D--"
             },
-            "y'": {
-                "": "---------------D--------D---D-DDDDD----------------D--"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------D-----------DD-DDD-D-------D--------D--"
+            },
+            "FL": {
+                "": "---------------D--------D---D-DDD-DD------D-----------"
+            },
+            "FR": {
+                "": "---------------D--------D---D-DDDDD----------------D--"
             }
         },
         "setups": [
+            "L'U2LUL'UL",
             "RU2R'U'RU'R'",
-            "FU2F'U'FU'F'",
-            "BU2B'U'BU'B'",
-            "L'U'LU'L'U2L",
-            "R'U'RU'R'U2R"
+            "R'U'RU'R'U2R",
+            "L'URU'LUR'",
+            "r'FRF'rUR'",
+            "L'U'LU'r'F2r",
+            "M'U'r'FRF'rUr'",
+            "RU2R'U2r'FRF'M'",
+            "MF'LFl'U2L'U2L",
+            "RU'R'URUR'URUR'URUR'"
         ]
     },
     "28 Stealth": {
         "main": "M'UMU2M'UM",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "----------------D----------DDDDD-D-D----------------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D--------D-D-DDD-DDD------------------"
             },
-            "y'": {
-                "": "---------------------------DDD-DDD-D-------D--------D-"
-            },
-            "y2": {
+            "BR": {
                 "": "-------------------------D-D-D-DDDDD-------D----------"
+            },
+            "FL": {
+                "": "----------------D----------DDDDD-D-D----------------D-"
+            },
+            "FR": {
+                "": "---------------------------DDD-DDD-D-------D--------D-"
             }
         },
         "setups": [
-            "F'U'L'ULF2URU'R'F'",
-            "FURU'R'F'U2FURU'R'F'",
-            "LUFU'F'L'U2LUFU'F'L'",
-            "R'U'F'UFR2UBU'B'R'",
-            "L'U'B'UBL2UFU'F'L'"
+            "M'UMU2M'UM",
+            "M'U'MU2M'U'M",
+            "M'UMU2M'UM",
+            "MUM'U2MUM'",
+            "RUR'U'M'URU'r'",
+            "RUR'S'RU'R'S",
+            "RU'R'S'RUR'S",
+            "R'U'RUMU'R'Ur",
+            "SR'FRS'R'F'R",
+            "RUR'U'R'rURU'r'",
+            "R'D2r2F'D2r2D2F'R'"
         ]
     },
     "29 Chameleon": {
         "main": "MURUR'U'R'FRF'M'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------D------------D--DDD-D-------DD-------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D-------D---DDDD---D----------------DD"
             },
-            "y'": {
-                "": "-------------------------DDD---DDDD--------D-------D--"
-            },
-            "y2": {
+            "BR": {
                 "": "----------------DD-------D-D-DDD--D-------D-----------"
+            },
+            "FL": {
+                "": "---------------D------------D--DDD-D-------DD-------D-"
+            },
+            "FR": {
+                "": "-------------------------DDD---DDDD--------D-------D--"
             }
         },
         "setups": [
-            "FR'F'RURU'R'U'RU2R'U'RU'R'",
-            "L'ULUFU2F'LF'L'F",
-            "LF'L'FUFU'F'U'FU2F'U'FU'F'",
-            "RU'R'F'UFRUR'URU'R'",
-            "F'UFURU2R'FR'F'R"
+            "MURUR'U'R'FRF'M'",
+            "FUR'U2R2UR2URF'",
+            "MFR'F'RM2URU'r'",
+            "MFR'F'rM'URU'r'",
+            "MFR'F'r2R'URU'r'",
+            "xMUR'U'l'L2URU'r'",
+            "fRU'R2U2RU2RUf'",
+            "F'UFURU2R'FR'F'R",
+            "MFR'F'RURU'R'U'M'",
+            "R'FRUR2U'RF'R'UR2",
+            "FR'F'U2RURU'R2U2R"
         ]
     },
     "30 Anti-Chameleon": {
         "main": "MU'L'U'LULF'L'FM'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------DD-----------D-DD-D-D--------D-------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D-------DD---DDD--DD-----------------D"
             },
-            "y'": {
-                "": "--------------------------DDD--DDD---------D-------DD-"
-            },
-            "y2": {
+            "BR": {
                 "": "-----------------D-------D-D-D-DD-D-------DD----------"
+            },
+            "FL": {
+                "": "---------------DD-----------D-DD-D-D--------D-------D-"
+            },
+            "FR": {
+                "": "--------------------------DDD--DDD---------D-------DD-"
             }
         },
         "setups": [
-            "FRUR'U'RUR'U'RU'R'U'RUR'F'",
-            "RU'R'U'F'U2FR'FRF'",
-            "RUR'UF'UFUR'FRF'",
-            "RU2R'U'F'UFRUR'U'RU'R'",
-            "FU'F'U'L'U2LF'LFL'"
+            "MU'L'U'LULF'L'FM'",
+            "MF'rUR'M'U'r'FR",
+            "MF'rUR2rU'r'FR",
+            "F2RU'R'URUR2F'RF'",
+            "FURU2R'URU2R'U'F'",
+            "FU'F'U'L'U2LF'LFL'",
+            "MF'LFL'U'L'ULUM'",
+            "fRUR2U'RUR2U'R'f'",
+            "R'F'rURU2r'F2RU2R'",
+            "LF'L'U'L2UL'FLU'L2",
+            "fRU'R'U'RUR'F'U2S'"
         ]
     },
     "31 Couch": {
         "main": "S'L'U'LULF'L'f",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "------------------------D---DD-DD--D-------D--------DD"
-            },
-            "y": {
+            "BL": {
                 "": "----------------DD---------DDDDD----------D---------D-"
             },
-            "y'": {
-                "": "---------------D---------D-----DDDDD-------DD---------"
-            },
-            "y2": {
+            "BR": {
                 "": "----------------D--------DDD--DD-DD----------------D--"
+            },
+            "FL": {
+                "": "------------------------D---DD-DD--D-------D--------DD"
+            },
+            "FR": {
+                "": "---------------D---------D-----DDDDD-------DD---------"
             }
         },
         "setups": [
-            "F'U'FRUR'U'F'U2F",
-            "L'U'LFUF'U'L'U2L",
-            "RUR'URU'R'U'R'FRF'",
-            "RU2R'FR'F'RU2R'FRF'",
-            "FU2F'LF'L'FU2F'LFL'"
+            "S'L'U'LULF'L'f",
+            "R'UrUfR'f'M",
+            "F'UfURU'R'S'",
+            "R'FRUR'U'F'UR",
+            "R'FRUR'd'L'dR",
+            "r'UrUr'F'U'Fr",
+            "R'F'U'F2URU'R'F'R",
+            "r'UrUL'd'R'dL",
+            "f'LFL'U'L'ULS",
+            "R'U2fURU'R'f'U'R",
+            "L'U'LFUF'U'L'U2L"
         ]
     },
     "32 Anti-Couch": {
         "main": "SRUR'U'R'FRf'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "----------------D---------DDD-DD-D-----------------DD-"
-            },
-            "y": {
+            "BL": {
                 "": "---------------DD--------D----DD-DDD--------D---------"
             },
-            "y'": {
-                "": "-----------------D---------DDD-DD---------DD--------D-"
-            },
-            "y2": {
+            "BR": {
                 "": "------------------------DD---D-DD-DD-------D---------D"
+            },
+            "FL": {
+                "": "----------------D---------DDD-DD-D-----------------DD-"
+            },
+            "FR": {
+                "": "-----------------D---------DDD-DD---------DD--------D-"
             }
         },
         "setups": [
+            "SRUR'U'R'FRf'",
+            "FR'F'U'FURU'F'",
+            "FU'f'U'L'ULS",
+            "FU'f'U'r'FrS",
+            "rU'r'U'LUFU'L'",
+            "lU'R'F'RFUF'l'",
+            "fR'F'RURU'R'S'",
+            "LF'L'U'LdRd'L'",
             "RUR'F'U'FURU2R'",
-            "FUF'L'U'LUFU2F'",
-            "FUF2L'U'LUF2U2F'",
-            "L'U'LU'L'ULULF'L'F",
-            "LUL'B'U'BULU2L'"
+            "lU'l'U'lFUF'l'",
+            "lU'l'U'RdLd'R'"
         ]
     },
     "33 Tying Shoelaces": {
         "main": "RUR'U'R'FRF'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "-------------------------DDD--DDDD-----------------DD-"
-            },
-            "y": {
+            "BL": {
                 "": "---------------DD-----------D--D-DDD-------DD---------"
             },
-            "y'": {
-                "": "----------------DD---------DDD-D--D-------DD----------"
-            },
-            "y2": {
+            "BR": {
                 "": "------------------------DD---DDDD--D----------------DD"
+            },
+            "FL": {
+                "": "-------------------------DDD--DDDD-----------------DD-"
+            },
+            "FR": {
+                "": "----------------DD---------DDD-D--D-------DD----------"
             }
         },
         "setups": [
-            "R'FRF'U'F'UF",
+            "RUR'U'R'FRF'",
             "FR'F'RURU'R'",
-            "LF'L'FUFU'F'",
             "F'LFL'U'L'UL",
-            "FRU'R'U'RUR'F'"
+            "rU'r'FUFU'F'",
+            "f'UfR'U'R'UR",
+            "F'rUr'U'r'Fr",
+            "FRU'R'U'RUR'F'",
+            "RUR'F'UFRU'R'",
+            "F'L'ULUL'U'LF",
+            "F'ULF'L'F2RU'R'",
+            "r2D'rU'r'DrUr"
         ]
     },
     "34 City (C and T)": {
         "main": "RUR'U'B'R'FRF'B",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "-----------------D-------D-D-DDDD---------D---------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D---------DDD--D-DD--------D-------D--"
             },
-            "y'": {
-                "": "----------------D-------D---DD-D--DD-------D---------D"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------D---------D----DDDD-D--------D-------D-"
+            },
+            "FL": {
+                "": "-----------------D-------D-D-DDDD---------D---------D-"
+            },
+            "FR": {
+                "": "----------------D-------D---DD-D--DD-------D---------D"
             }
         },
         "setups": [
-            "RU2R'U'RU'R'U'FR'F'RURU'R'",
-            "LR'FRF'L'U'F'UF",
-            "B'FR'F'RBURU'R'",
+            "RUR'U'B'R'FRF'B",
+            "M'URU'r'U'F'UF",
+            "M'U'r'FRUFU'F'",
+            "MU'R'UrUfR'f'",
+            "S'U'F'UfURU'R'",
+            "M'U'L'UldRU'R'",
+            "S'UfR'F'U'R'UR",
+            "MULU'l'U'f'Lf",
             "R'LF'L'FRUFU'F'",
-            "FU2F'U'FU'F'U'LF'L'FUFU'F'"
+            "zS'R'F'RBURU'R'",
+            "M'U2F'UFUMRU'R'"
         ]
     },
     "35 Killer whale": {
         "main": "RU2R'R'FRF'RU2R'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "----------------D---------DDD-DD---D------D---------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D--------D---DDD-DD---------D------D--"
             },
-            "y'": {
-                "": "-----------------D------D---DD-DDD---------D--------D-"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------D---------D-D---DD-DD-------D---------D"
+            },
+            "FL": {
+                "": "----------------D---------DDD-DD---D------D---------D-"
+            },
+            "FR": {
+                "": "-----------------D------D---DD-DDD---------D--------D-"
             }
         },
         "setups": [
-            "FURU'R'F'U2RUR'URU2R'",
+            "RU2R'R'FRF'RU2R'",
             "RU2R'FR'F'R2U2R'",
-            "FURU'R'F'U2R'U'RU'R'U2R",
-            "L'ULU2L'U'LU2L'BL'B'L2",
-            "L'U2LF'LFL2U2L"
+            "F'U2FR'FRF2U2F",
+            "R'U2lU'RUR'l'U2R",
+            "R'U2lU'RUl'R'U2R",
+            "R'FRUR'F'RdRU2R'",
+            "rU'r'U'rUr'U'F'U2F",
+            "MU'RUrDr'U'rD'R2",
+            "RU2R'U'RU'R'fURU'R'f'",
+            "R'URU2R'U'RU2R'FR'F'R2",
+            "r'UrUr'U'ryURU2R'"
         ]
     },
     "36 Wario": {
         "main": "L'U'LU'L'ULULF'L'F",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------DD--------D-D--DD--DD-----------------D"
-            },
-            "y": {
+            "BL": {
                 "": "-----------------D------DD---D-DDDD--------D----------"
             },
-            "y'": {
-                "": "----------------D-----------DDDD-D----------D------DD-"
-            },
-            "y2": {
+            "BR": {
                 "": "--------------------------DDD--DD--D------DD--------D-"
+            },
+            "FL": {
+                "": "---------------DD--------D-D--DD--DD-----------------D"
+            },
+            "FR": {
+                "": "----------------D-----------DDDD-D----------D------DD-"
             }
         },
         "setups": [
-            "F'LFL'U'L'U'LUL'UL",
-            "R'FRF'U'F'U'FUF'UF",
-            "FUF'UFU2RUR'U'F'",
+            "L'U'LU'L'ULULF'L'F",
+            "R'FRUR'U'F2UFR",
+            "RU2R2U'F'UFR2U'R'",
+            "RU'R'U'F'U2FURU'R'",
+            "R'U'F'UFU2RUR'UR",
             "RUR'UF'UFU2RU'R'",
-            "RU2R'FRUR'U'F'URUR'"
+            "F'rU2R'Ur'F2R2U2R'",
+            "RrDr'U2rD'r'U2R'",
+            "rRDr'U2rD'r'U2R'",
+            "fR2D'R2UR2U'R2Df'",
+            "RU'R'd'L'U2LdRU'R'"
         ]
     },
     "37 Turtle": {
         "main": "R'FRF'U'F'UF",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "-------------------------DDD---DD-DD------DD----------"
-            },
-            "y": {
+            "BL": {
                 "": "----------------------------DD-DDD---------DD------DD-"
             },
-            "y'": {
-                "": "----------------DD------DD---DDD-DD-------------------"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------DD----------DD-DD---D----------------DD"
+            },
+            "FL": {
+                "": "-------------------------DDD---DD-DD------DD----------"
+            },
+            "FR": {
+                "": "----------------DD------DD---DDD-DD-------------------"
             }
         },
         "setups": [
-            "RUR'U'R'FRF'",
-            "L'U'LULF'L'F",
+            "R'FRF'U'F'UF",
             "F'U'FUFR'F'R",
-            "FUF'U'F'LFL'",
-            "R'U'RURB'R'B"
+            "RUR'U'R'FRF'",
+            "RUR'd'F'rUr'",
+            "r'F'rUrU'r'F",
+            "FRU'R'URUR'F'",
+            "RUR'F'U'FRU'R'",
+            "R'F'UFU'F'U'FR",
+            "RU2R2FRF'RU2R'",
+            "LF'L'FUFRU'R'F'",
+            "rU'r'FUFRU'R'F'"
         ]
     },
     "38 Mario": {
         "main": "RUR'URU'R'U'R'FRF'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "-------------------------D---D-DDDD--------DD------D--"
-            },
-            "y": {
+            "BL": {
                 "": "---------------D-----------DD--DD--D-------D--------DD"
             },
-            "y'": {
-                "": "----------------D--------DDD--DD--DD------D-----------"
-            },
-            "y2": {
+            "BR": {
                 "": "----------------DD------D---DDDD-D------------------D-"
+            },
+            "FL": {
+                "": "-------------------------D---D-DDDD--------DD------D--"
+            },
+            "FR": {
+                "": "----------------D--------DDD--DD--DD------D-----------"
             }
         },
         "setups": [
-            "FR'F'RURUR'U'RU'R'",
-            "LF'L'FUFUF'U'FU'F'",
-            "FURU'R'F'U'RU2R'U'RU'R'",
+            "RUR'URU'R'U'R'FRF'",
+            "fRU'R'US'RUR'F'",
             "RUR'U2F'U'FU'RU'R'",
-            "RB'R'BUBUB'U'BU'B'"
+            "r'R'D'rU2r'DrU2R",
+            "L'ULUFU2F'U'L'UL",
+            "R'U2R2UBU'B'R2UR",
+            "FR'F'RURUR'U'RU'R'",
+            "L'l'D'lU2l'DlU2L",
+            "r'FrUFU2F'U'r'Fr",
+            "FRUR'U'R'F'rURU'r'",
+            "FR'F'rURUR'U'RU'r'"
         ]
     },
     "39 Snake": {
         "main": "LF'L'U'LUFU'L'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "-------------------------D---DDDDD----------D------DD-"
-            },
-            "y": {
+            "BL": {
                 "": "---------------DD----------DD--D--DD-------D---------D"
             },
-            "y'": {
-                "": "----------------D---------DDD--D--DD------DD----------"
-            },
-            "y2": {
+            "BR": {
                 "": "-----------------D------DD---DDDDD------------------D-"
+            },
+            "FL": {
+                "": "-------------------------D---DDDDD----------D------DD-"
+            },
+            "FR": {
+                "": "----------------D---------DDD--D--DD------DD----------"
             }
         },
         "setups": [
-            "L'U2LUL'ULF'U'L'ULF",
+            "LF'L'U'LUFU'L'",
+            "MF'U'FUrUR'",
+            "SR'U'RUFRf'",
+            "FUR'U'F'UFRF'",
+            "LUF'U'L'UrUr'",
+            "SR'U'RURf'U'F",
+            "LdR'd'L'ULFL'",
             "RU2R'U'F'UFRU'R'",
-            "FRUR'U'F'RUR'URU2R'",
-            "L'U2LUL'ULBULU'L'B'",
-            "FU2F'U'L'ULFU'F'"
+            "rfR'f'r'UrUr'",
+            "S'L'U'LULF'L'f",
+            "FURU'F'rUR'U'r'"
         ]
     },
     "40 Anti-Snake": {
         "main": "R'FRUR'U'F'UR",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------D---------D-D--DDD--D----------------DD"
-            },
-            "y": {
+            "BL": {
                 "": "----------------DD------D---DD-D-DD--------D----------"
             },
-            "y'": {
-                "": "----------------D-----------DD-D-DD--------DD------D--"
-            },
-            "y2": {
+            "BR": {
                 "": "-------------------------DDD--DDD--D------D---------D-"
+            },
+            "FL": {
+                "": "---------------D---------D-D--DDD--D----------------DD"
+            },
+            "FR": {
+                "": "----------------D-----------DD-D-DD--------DD------D--"
             }
         },
         "setups": [
-            "RU2R'U'RU'R'FURU'R'F'",
-            "RUR'URU'R'F'UFRU'R'",
-            "F'U2FURU'R'F'UF",
+            "R'FRUR'U'F'UR",
+            "R'U'FURU'R'F'R",
+            "SRUR'U'R'FRf'",
             "L'U2LUFU'F'L'UL",
-            "FU2F'U'FU'F'LUFU'F'L'"
+            "R'U'FUF'RFRU'R'F'",
+            "RUrDr'U'rD'r'R'",
+            "R'd'Ly'URU'R'F'R",
+            "SlFl'U'l'Ulf'",
+            "SRUR'U'R'FRF'S'",
+            "z'SUrB'r'zf'U'F",
+            "MU'L'U'LULF'L'FM'"
         ]
     },
     "41 Awkward Fish": {
         "main": "fRUR'U'f'L'U2LUL'UL",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "----------------D-------D-D-D-DD-D-D----------------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D--------D---DDD--DD------D-D---------"
             },
-            "y'": {
-                "": "---------------D-D---------DD--DDD---------D--------D-"
-            },
-            "y2": {
+            "BR": {
                 "": "-------------------------D-D-D-DD-D--------D-------D-D"
+            },
+            "FL": {
+                "": "----------------D-------D-D-D-DD-D-D----------------D-"
+            },
+            "FR": {
+                "": "---------------D-D---------DD--DDD---------D--------D-"
             }
         },
         "setups": [
-            "RU2R'U'RU'R'U'FRUR'U'F'",
-            "FR'F'RURUR'U'RUR'U'RU'R'",
-            "FURU'R'F'RU2R'U'RU'R'",
-            "FU2F'U'FU'F'U'LFUF'U'L'",
-            "FURUR'U'F'U2FUF'"
+            "fRUR'U'f'L'U2LUL'UL",
+            "M'UR'U'F'UFRM",
+            "MF'U'L'ULFUM'",
+            "M'UR'U'F'UFR2r'",
+            "M'UR'U'F'UFM2r",
+            "MUr'F'U'FURM2",
+            "MUr'F'U'FUR'r2",
+            "rR'UR'U'F'UFRM",
+            "FR2DR'URD'R2U'F'",
+            "S'Uf'L'U'LdR'r2",
+            "S'R'U'RSR'F'UFR"
         ]
     },
     "42 Lefty Awkward Fish": {
         "main": "f'L'U'LUfRU2R'U'RU'R'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "------------------------D-D-D--DDD-D-------D--------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D-----------DDDD---D------D-D-------D-"
             },
-            "y'": {
-                "": "---------------D-D-------D-D---DDDD--------D----------"
-            },
-            "y2": {
+            "BR": {
                 "": "----------------D--------D-D-DDD--D----------------D-D"
+            },
+            "FL": {
+                "": "------------------------D-D-D--DDD-D-------D--------D-"
+            },
+            "FR": {
+                "": "---------------D-D-------D-D---DDDD--------D----------"
             }
         },
         "setups": [
-            "F'LFL'U'L'U'LUL'U'LUL'UL",
-            "R'FRF'U'F'U'FUF'U'FUF'UF",
-            "F'U'L'ULFL'U2LUL'UL",
-            "RU'R'URU'R'FR'F'RFR'F'R",
-            "F'U'L'U'LUFU2F'U'F"
+            "f'L'U'LUfRU2R'U'RU'R'",
+            "MFURU'R'F'U'M'",
+            "MU'RUfR'f'rR2",
+            "S'U'FURU'R'F2f",
+            "S'U'FURU'R'F'S",
+            "S'U'FURU'R'SF'",
+            "rR'fRUR'U'f'U'M",
+            "R'M'F'UFRMfR'f'",
+            "S'UR'F'UFRfR'F'",
+            "R'F2u'RU'R'uF2UR",
+            "F'L2D'LU'L'DL2UF"
         ]
     },
     "43 Anti-P": {
         "main": "f'L'U'LUf",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "----------------------------DD-DD--D------DDD-------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D----------DDDDD-------------------DDD"
             },
-            "y'": {
-                "": "------------------------DDD----DDDDD-------D----------"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------DDD-------D-D--DD-DD-------------------"
+            },
+            "FL": {
+                "": "----------------------------DD-DD--D------DDD-------D-"
+            },
+            "FR": {
+                "": "------------------------DDD----DDDDD-------D----------"
             }
         },
         "setups": [
-            "F'L'U'LUF",
-            "RUR'F'L'U'LF",
+            "f'L'U'LUf",
             "R'F'U'FUR",
+            "r'U'F'UFr",
+            "F'r'F'rUF",
+            "F'L'U'LdR",
             "R'U'R'FRF'UR",
-            "RUR'F'U2FRU'R'"
+            "F'L'ULFRU'R'",
+            "RUR'F'L'U'LF",
+            "r'U'FR'F'RUr",
+            "RUR'F'U2FRU'R'",
+            "RUR'U'F'U2FURUR'"
         ]
     },
     "44 P": {
         "main": "fRUR'U'f'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------DDD---------DD-DD-D------------------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D-------DDD---DD-DDD------------------"
             },
-            "y'": {
-                "": "---------------------------DDD-DD----------D-------DDD"
-            },
-            "y2": {
+            "BR": {
                 "": "-------------------------D---D-DD-DD------DDD---------"
+            },
+            "FL": {
+                "": "---------------DDD---------DD-DD-D------------------D-"
+            },
+            "FR": {
+                "": "---------------------------DDD-DD----------D-------DDD"
             }
         },
         "setups": [
+            "fRUR'U'f'",
             "FRUR'U'F'",
+            "fURU'R'f'",
+            "FRUR'd'L'",
+            "FRU'R'F'L'UL",
             "L'U'LFRUR'F'",
-            "LFUF'U'L'",
+            "bULU'L'F'z",
+            "RURB'R'BU'R'",
             "FRU'R'U2RUR'F'",
-            "LULF'L'FU'L'"
+            "rUB'RBR'U'r'",
+            "RUR'UFR'F'R2U2R'"
         ]
     },
     "45 Suit up": {
         "main": "FRUR'U'F'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------D-D-------D-D--DDDD------------------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D-------D-D-D--D-DDD-------D----------"
             },
-            "y'": {
-                "": "----------------D----------DDD-D--D--------D-------D-D"
-            },
-            "y2": {
+            "BR": {
                 "": "-------------------------D---DDDD--D------D-D-------D-"
+            },
+            "FL": {
+                "": "---------------D-D-------D-D--DDDD------------------D-"
+            },
+            "FR": {
+                "": "----------------D----------DDD-D--D--------D-------D-D"
             }
         },
         "setups": [
+            "FRUR'U'F'",
             "FURU'R'F'",
-            "F'U'L'ULF",
             "R'U'F'UFR",
-            "LUFU'F'L'",
-            "RUBU'B'R'"
+            "fRUR'U'f'",
+            "r'F'U'FUr",
+            "FUR2DR'U'RD'R2F'"
         ]
     },
     "46 Seein' Headlights": {
         "main": "R'U'R'FRF'UR",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "----------------D-----------DD-D--DD------DDD---------"
-            },
-            "y": {
+            "BL": {
                 "": "-------------------------D-D-DDDD------------------DDD"
             },
-            "y'": {
-                "": "------------------------DDD---DDDD-D----------------D-"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------DDD---------DD--D-DD--------D----------"
+            },
+            "FL": {
+                "": "----------------D-----------DD-D--DD------DDD---------"
+            },
+            "FR": {
+                "": "------------------------DDD---DDDD-D----------------D-"
             }
         },
         "setups": [
-            "FUR'FRF'U'F'",
-            "F'U'LF'L'FUF",
-            "RU2R'U'RU'R'UFURU'R'F'",
+            "R'U'R'FRF'UR",
             "R'U'FR'F'RUR",
-            "LUF'LFL'U'L'"
+            "FUR'FRF'U'F'",
+            "LFRU'R'UF'L'",
+            "r'U'R'FRF'Ur",
+            "r'F'UL'U'LFr",
+            "r'F'Ur'F'rFr",
+            "R'U2RUR'F'UFR",
+            "RU2R'd'FRU'R'F'",
+            "R'U'xUR'U'lUR",
+            "rUR'UFR'F'R2U2r'"
         ]
     },
     "47 Anti-Breakneck": {
         "main": "F'L'U'LUL'U'LUF",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "----------------D--------DD---DD--D-------D-D------D--"
-            },
-            "y": {
+            "BL": {
                 "": "---------------D---------D-----DD-D--------DD------D-D"
             },
-            "y'": {
-                "": "----------------DD------D-D-D-DD----------D---------D-"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------D-D------D---D--DD----------D--------DD"
+            },
+            "FL": {
+                "": "----------------D--------DD---DD--D-------D-D------D--"
+            },
+            "FR": {
+                "": "----------------DD------D-D-D-DD----------D---------D-"
             }
         },
         "setups": [
-            "RU2R'U'RU'R'FRUR'U'F'",
-            "FU2F'U'FU'F'LFUF'U'L'",
-            "F'U'LF'L'FLF'L'FUF",
+            "F'L'U'LUL'U'LUF",
+            "R'U'F'UFU'F'UFR",
+            "f'L'U'LUL'U'LUf",
+            "F'U'r'FrU'r'FrF",
+            "R'U'FR'F'RFR'F'RUR",
+            "R'U2R2UR'URU2f'U'f",
+            "FR'F'U2RU2RU2f'U'f",
             "RU2R'U'RUR'U2R'FRF'",
-            "LU2L'U'LUL'U2L'BLB'"
+            "R'U'RU'R'URfURU'f'",
+            "R'U'FR'F'RFURU'R'F'R",
+            "F'LFL'U2L'ULU'L'U2L"
         ]
     },
     "48 Breakneck": {
         "main": "FRUR'U'RUR'U'F'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------D-D------DD-----DD-D--------D---------D"
-            },
-            "y": {
+            "BL": {
                 "": "-----------------D------D-D-D--DD---------DD--------D-"
             },
-            "y'": {
-                "": "---------------DD--------D----DD--D---------D------D-D"
-            },
-            "y2": {
+            "BR": {
                 "": "----------------D---------D-D-DD----------D-D------DD-"
+            },
+            "FL": {
+                "": "---------------D-D------DD-----DD-D--------D---------D"
+            },
+            "FR": {
+                "": "---------------DD--------D----DD--D---------D------D-D"
             }
         },
         "setups": [
-            "FURU'R'F'URU2R'U'RU'R'",
+            "FRUR'U'RUR'U'F'",
             "FURU'R'URU'R'F'",
+            "fRUR'U'RUR'U'f'",
+            "RU2R2U'RU'R'U2FRF'",
             "FR'F'RU2RU'R'URU2R'",
-            "FUF'UFU2F2L'U'LUF",
-            "RUR'URU2R2F'U'FUR"
+            "R'U'F'UFR2U2R'U'RU'R'",
+            "RUR'URU2R2F'U'FUR",
+            "FR'F'rU2RU'R'URU2r'",
+            "bLUL'U'LUL'U'F'z",
+            "r'F2rUr'F'rU2rU'r'F",
+            "FURU'R'F'URU2R'U'RU'R'"
         ]
     },
     "49 Prof X": {
         "main": "L'U2LUL'ULF'L'U'LUF",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "-----------------D------DDD----DD-D-------DD----------"
-            },
-            "y": {
+            "BL": {
                 "": "--------------------------D-D--DD---------DDD------DD-"
             },
-            "y'": {
-                "": "---------------DDD------DD----DD--D------------------D"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------DD-----------D-DD------------D------DDD"
+            },
+            "FL": {
+                "": "-----------------D------DDD----DD-D-------DD----------"
+            },
+            "FR": {
+                "": "---------------DDD------DD----DD--D------------------D"
             }
         },
         "setups": [
-            "F'U2FUF'UFLFUF'U'L'",
-            "L'U2LUL'ULBLUL'U'B'",
-            "F'L'U'LUL'ULU'L'U'LF",
+            "L'U2LUL'ULF'L'U'LUF",
+            "F'RU2R'U2R'F2RF'",
+            "F'LF2L'U2L'U2LF'",
+            "F'rU2R'U2r'F2RF'",
+            "R'FR2f'U2F'U2fR'",
+            "FR'F'RU2F2LFL'F",
+            "R'FR2B'R2F'R2BR'",
+            "r'Ur2U'r2U'r2Ur'",
+            "R'U2RrUR2UR2U2r'",
             "F'L'U'LUF2URU'R'F'",
-            "B'U2BUB'UBRBUB'U'R'"
+            "FR'F'Ryd2R2FRF'R"
         ]
     },
     "50 Anti-Prof X": {
         "main": "RU2R'U'RU'R'FRUR'U'F'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "----------------DD------DDD---DD--D-------D-----------"
-            },
-            "y": {
+            "BL": {
                 "": "-------------------------DD----DD-D-------DDD------D--"
             },
-            "y'": {
-                "": "---------------DDD------D---D-DD--------------------DD"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------D------------D--DD----------DD------DDD"
+            },
+            "FL": {
+                "": "----------------DD------DDD---DD--D-------D-----------"
+            },
+            "FR": {
+                "": "---------------DDD------D---D-DD--------------------DD"
             }
         },
         "setups": [
-            "FRUR'U'RU'R'URUR'F'",
-            "RU2R'U'RU'R'B'R'U'RUB",
-            "FU2F'U'FU'F'R'F'U'FUR",
+            "RU2R'U'RU'R'FRUR'U'F'",
+            "FR'F2RU2RU2R'F",
+            "FR'F2rU2RU2r'F",
+            "F'LFL'U2F2R'F'RF'",
+            "RB'R2FR2BR2F'R",
+            "rU'r2Ur2Ur2U'r",
+            "R'FRF'U'FR'F'R2U'R'",
             "FRUR'U'F2U'L'ULF",
-            "BU2B'U'BU'B'L'B'U'BUL"
+            "LU2L'l'U'L2U'L2U2l",
+            "R'U2R2uR'URU'Ru'R'",
+            "R'FURU'R2F'R2UR'U'R"
         ]
     },
     "51 Bottlecap": {
         "main": "fRUR'U'RUR'U'f'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------D-D------DD----DDD-------------------DD"
-            },
-            "y": {
+            "BL": {
                 "": "----------------DD------D-D-D--D--D-------DD----------"
             },
-            "y'": {
-                "": "---------------DD-----------D--D--D--------DD------D-D"
-            },
-            "y2": {
+            "BR": {
                 "": "-------------------------DD---DDD---------D-D------DD-"
+            },
+            "FL": {
+                "": "---------------D-D------DD----DDD-------------------DD"
+            },
+            "FR": {
+                "": "---------------DD-----------D--D--D--------DD------D-D"
             }
         },
         "setups": [
+            "fRUR'U'RUR'U'f'",
             "FRUR'U'RUR'U'F'",
-            "F'L'U'LUL'U'LUF",
             "R'F'U'FUF'U'FUR",
+            "fURU'R'URU'R'f'",
+            "r'U'F'UFU'F'UFr",
+            "R'U2RUR'FR'F'RUR",
             "R'U'R'FRF'RU'R'U2R",
-            "RBUB'U'BUB'U'R'"
+            "FURU'R2F'RU2RU2R'",
+            "LU2L'U'LF'LFL'U'L'",
+            "FURU'R'URU'R'URU'R'URU'R'F'",
+            "FR'F'RU'RU'R'FRU'R'URUR2F'RURU'R'URU'R'"
         ]
     },
     "52 Rice Cooker": {
         "main": "R'FRF'U2RUR'U'R'FRF'RU'R'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------D---------D----DDD-----------D------DDD"
-            },
-            "y": {
+            "BL": {
                 "": "---------------DDD------D---D--D--D--------D---------D"
             },
-            "y'": {
-                "": "----------------D---------D-D--D--D-------DDD------D--"
-            },
-            "y2": {
+            "BR": {
                 "": "-----------------D------DDD---DDD---------D---------D-"
+            },
+            "FL": {
+                "": "---------------D---------D----DDD-----------D------DDD"
+            },
+            "FR": {
+                "": "----------------D---------D-D--D--D-------DDD------D--"
             }
         },
         "setups": [
-            "FRUR'U'F'U'RU2R'U'RU'R'",
-            "R'U'R'FRF'R'FRF'UR",
-            "LFUF'U'L'U'FU2F'U'FU'F'",
-            "RU2R'U'RU'R'U2FURU'R'F'",
-            "RU2R'U'RU'R'BULU'L'B'"
+            "R'FRF'U2RUR'U'R'FRF'RU'R'",
+            "R'F'U'FU'RUR'UR",
+            "R'U'RU'R'UF'UFR",
+            "R'F'LF'L'FU'FUR",
+            "FRUR'dR'U'RU'R'",
+            "RUR'URd'RU'R'F'",
+            "LFUF'UL'U'LU'L'",
+            "RfRf'UR'U'RU'R'",
+            "RUR'URU'fR'f'R'",
+            "B'R'U'Rd'RUR'UR",
+            "FURU2R'U2RU2R'U'F'"
         ]
     },
     "53 Bearded": {
         "main": "FRUR'U'F'RUR'U'R'FRF'",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------D-D-------D-----DD-D-------DDD---------"
-            },
-            "y": {
+            "BL": {
                 "": "------------------------D-D-D--DD----------D-------DDD"
             },
-            "y'": {
-                "": "----------------D-------DDD---DD--D----------------D-D"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------DDD----------D-DD----------D-D-------D-"
+            },
+            "FL": {
+                "": "---------------D-D-------D-----DD-D-------DDD---------"
+            },
+            "FR": {
+                "": "----------------D-------DDD---DD--D----------------D-D"
             }
         },
         "setups": [
-            "FRU'R'U'RUR'URU'R'F'",
-            "F'L'U'LUF2URU'R'URU'R'F'",
-            "FR'F'RURU'R'FURU'R'F'",
-            "LF'L'FU2FUB'UF'U'B",
-            "LF'L'FUFU'F'LUFU'F'L'"
+            "FRUR'U'F'RUR'U'R'FRF'",
+            "FR'FRF2U2LF'L'F",
+            "RUR2FRF'UFR'F'R",
+            "r'U'RU'R'URU'R'U2r",
+            "r'U2RUR'U'RUR'Ur",
+            "lU'RUR'l'U2FR'F'R",
+            "R'F2rUL'U'LUr'FR",
+            "R'F2rUr'F'rUr'FR",
+            "R'F'rU'r'FrU'r'F2R",
+            "FR'F'RU2RUL'UR'U'L",
+            "FRU'R'U'RUR'URU'R'F'"
         ]
     },
     "54 Anti-Bearded": {
         "main": "F'L'U'LUFL'U'LULF'L'F",
         "probability": 0.018518518518518517,
+        "probability_label": "1/54",
         "rotations": {
-            "": {
-                "": "---------------DDD-------D----DD--D-------D-D---------"
-            },
-            "y": {
+            "BL": {
                 "": "------------------------DDD----DD-D--------D-------D-D"
             },
-            "y'": {
-                "": "----------------D-------D-D-D-DD-------------------DDD"
-            },
-            "y2": {
+            "BR": {
                 "": "---------------D-D----------D--DD---------DDD-------D-"
+            },
+            "FL": {
+                "": "---------------DDD-------D----DD--D-------D-D---------"
+            },
+            "FR": {
+                "": "----------------D-------D-D-D-DD-------------------DDD"
             }
         },
         "setups": [
-            "R'FRF'U2F'U'BU'FUB'",
-            "B'R'URUR'U'RU'R'URB",
-            "R'FRF'U'F'UFR'U'F'UFR",
+            "F'L'U'LUFL'U'LULF'L'F",
+            "F'LF'L'F2U2R'FRF'",
+            "r'Ur'F'r2U2F'rUr'",
+            "rUR'URU'R'URU2r'",
+            "rU2R'U'RUR'U'RU'r'",
+            "F'LFL'U2L'U'RU'LUR'",
+            "x'DRU'RUR'U'RUR2D'x",
+            "F'L'ULUL'U'LU'L'ULF",
             "F'LFL'U'L'ULF'U'L'ULF",
-            "F'L'ULUL'U'LU'L'ULF"
+            "MURU2R'U'RUR'U'RU'R'M'",
+            "rUr'URU'R'URU'R'rU'r'"
         ]
     },
     "55 Highway": {
         "main": "FRUR'U'SRUR'U'S'RUR'U'F'",
         "probability": 0.009259259259259259,
+        "probability_label": "1/108",
         "rotations": {
-            "": {
-                "": "------------------------DDD---DDD------------------DDD"
-            },
-            "y": {
+            "BL": {
                 "": "---------------DDD----------D--D--D-------DDD---------"
             },
-            "y'": {
-                "": "---------------DDD----------D--D--D-------DDD---------"
-            },
-            "y2": {
+            "BR": {
                 "": "------------------------DDD---DDD------------------DDD"
+            },
+            "FL": {
+                "": "------------------------DDD---DDD------------------DDD"
+            },
+            "FR": {
+                "": "---------------DDD----------D--D--D-------DDD---------"
             }
         },
         "setups": [
-            "R'FRUR'U'F'R'FRF'UR",
-            "F'LFUF'U'L'F'LFL'UF",
-            "L'BLUL'U'B'L'BLB'UL",
-            "B'RBUB'U'R'B'RBR'UB",
-            "FR'F'RUR'F'RURU'R'FRUR'U'RU'R'"
+            "FRUR'U'SRUR'U'S'RUR'U'F'",
+            "FR'F'U2RUR'UR2U2R'",
+            "R'UF2D'FU2F'DF2U'R",
+            "FU'R2DR'U2RD'R2UF'",
+            "FR'F'rU2FR'F'R2U2r'",
+            "F'LFU2L'U'LU'L2U2L",
+            "R'URU'R2FR2UR'U'F'R",
+            "B'UR2D'RU2R'DR2d'R",
+            "R'DR2U'BU2B'UR2D'R",
+            "rUr'URU'R'M'URU2r'",
+            "R'FRUR'U'F'R'FRF'UR"
         ]
     },
     "56 Streetlights": {
         "main": "FRUR'U'RUR'U'SRUR'U'f'",
         "probability": 0.009259259259259259,
+        "probability_label": "1/108",
         "rotations": {
-            "": {
-                "": "----------------D-------D-D-D--D--D--------D-------D-D"
-            },
-            "y": {
+            "BL": {
                 "": "---------------D-D-------D----DDD---------D-D-------D-"
             },
-            "y'": {
-                "": "---------------D-D-------D----DDD---------D-D-------D-"
-            },
-            "y2": {
+            "BR": {
                 "": "----------------D-------D-D-D--D--D--------D-------D-D"
+            },
+            "FL": {
+                "": "----------------D-------D-D-D--D--D--------D-------D-D"
+            },
+            "FR": {
+                "": "---------------D-D-------D----DDD---------D-D-------D-"
             }
         },
         "setups": [
-            "R'F'RL'U'LUL'U'LUR'FR",
-            "RU2R'U'R'F'U'FURU'RU'R'",
-            "FU2F'U'F'L'U'LUFU'FU'F'",
-            "B'R'BF'U'FUF'U'FUB'RB",
-            "LU2L'U'L'B'U'BULU'LU'L'"
+            "FRUR'U'RUR'U'SRUR'U'f'",
+            "LFRF'L'FR'URU'R'F'",
+            "rURU'r'FR'URU'R'F'",
+            "R'fRUR'f'R2BL'B'R'",
+            "rU2R'U'MRUR'U'rU'r'",
+            "R'F2rUMr'F'rUR'FR",
+            "xUR'URU2RB'r'UR'U2L",
+            "RU'R2rU'RUR'UMRUR'",
+            "l'U2LUML'U'LUl'Ul",
+            "rUMUR'U'RUR'U'rU'r'",
+            "R'F'MF'rUr'F'rUR'FR"
         ]
     },
     "57 Mummy": {
         "main": "L'RUR'U'LR'FRF'",
         "probability": 0.009259259259259259,
+        "probability_label": "1/108",
         "rotations": {
-            "": {
-                "": "-------------------------D-D-DDDDD-D----------------D-"
-            },
-            "y": {
+            "BL": {
                 "": "----------------D----------DDD-D-DDD-------D----------"
             },
-            "y'": {
-                "": "----------------D----------DDD-D-DDD-------D----------"
-            },
-            "y2": {
+            "BR": {
                 "": "-------------------------D-D-DDDDD-D----------------D-"
+            },
+            "FL": {
+                "": "-------------------------D-D-DDDDD-D----------------D-"
+            },
+            "FR": {
+                "": "----------------D----------DDD-D-DDD-------D----------"
             }
         },
         "setups": [
+            "L'RUR'U'LR'FRF'",
+            "FR'F'MFRF'M'",
+            "rUR'U'MURU'R'",
+            "S'RUR'SRU'R'",
+            "S'RU'R'SRUR'",
+            "r'U'RUM'U'R'UR",
+            "R'FRSR'F'RS'",
+            "R'F'rUMU'r'Fr",
+            "rUR'U'MUlF'l'",
             "FR'F'RL'URU'R'L",
-            "LF'L'FB'UFU'F'B",
-            "LF'L'FB'UFU'BF'",
-            "FR'F'RL'URU'LR'",
-            "BL'B'LR'ULU'L'R"
+            "FR'F'RL'URU'LR'"
         ]
     },
     "SKIP": {
         "main": "",
         "probability": 0.004629629629629629,
+        "probability_label": "1/216",
         "rotations": {
-            "": {
+            "BL": {
                 "": "---------------------------DDDDDDDDD------------------"
             },
-            "y": {
+            "BR": {
                 "": "---------------------------DDDDDDDDD------------------"
             },
-            "y'": {
+            "FL": {
                 "": "---------------------------DDDDDDDDD------------------"
             },
-            "y2": {
+            "FR": {
                 "": "---------------------------DDDDDDDDD------------------"
             }
         },
