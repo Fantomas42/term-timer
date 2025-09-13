@@ -133,15 +133,11 @@ def compute_masks(name: str, moves: str, mode: str,
             encoded_case = CFOP_CASE_ENCODERS[mode_key](cube.state)
 
             mask_infos = masks.setdefault(
-                encoded_case,
-                {
-                    'schemes': [],
-                    'orientations': [],
-                },
+                encoded_case, [],
             )
-            mask_infos['schemes'].append(scheme_name)
-            if orientation_move not in mask_infos['orientations']:
-                mask_infos['orientations'].append(orientation_move)
+            configuration = f'{ scheme_name } { orientation_move }'.strip()
+            if configuration not in mask_infos:
+                mask_infos.append(configuration)
 
     return masks
 

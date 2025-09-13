@@ -27,8 +27,10 @@ def load_cases(path):
             }
 
             for mask, mask_info in data['masks'].items():
-                cases_masks[mask] = mask_info
-                cases_masks[mask]['case'] = case_name
+                cases_masks[mask] = {
+                    'case': case_name,
+                    'configurations': mask_info,
+                }
 
             case_id = case_name.split(' ')[0]
             cases[case_id] = case_info
