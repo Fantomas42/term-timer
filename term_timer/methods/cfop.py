@@ -6,19 +6,76 @@ from cubing_algs.masks import F2L_BL_MASK
 from cubing_algs.masks import F2L_BR_MASK
 from cubing_algs.masks import F2L_FL_MASK
 from cubing_algs.masks import F2L_FR_MASK
-from cubing_algs.masks import OLL_MASK
-from cubing_algs.masks import PLL_MASK
+from cubing_algs.masks import state_masked
 
 from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
 
-CFOP_CASE_MASKS = {
-    'OLL': OLL_MASK,
-    'PLL': PLL_MASK,
-    'F2L FR': F2L_FR_MASK,
-    'F2L FL': F2L_FL_MASK,
-    'F2L BR': F2L_BR_MASK,
-    'F2L BL': F2L_BL_MASK,
+
+def oll_case_encoder(facelets):
+    facelets_fingerprint = (
+        facelets[15:18]
+        + facelets[24:36]
+        + facelets[42:45]
+        + facelets[51:54]
+    )
+
+    center = facelets_fingerprint[10]
+    fingerprint = [''] * 21
+    for i, facelet in enumerate(facelets_fingerprint):
+        fingerprint[i] = '1' if facelet == center else '0'
+
+    return ''.join(fingerprint)
+
+
+def pll_case_encoder(facelets):
+    facelets_fingerprint = (
+        facelets[15:18]
+        + facelets[24:27]
+        + facelets[42:45]
+        + facelets[51:54]
+    )
+    facelet_encoder = {}
+    for face in facelets_fingerprint:
+        if face not in facelet_encoder:
+            facelet_encoder[face] = str(len(facelet_encoder))
+        if len(facelet_encoder) == 4:
+            break
+
+    fingerprint = [''] * 21
+    for i, facelet in enumerate(facelets_fingerprint):
+        fingerprint[i] = facelet_encoder[facelet]
+
+    return ''.join(fingerprint)
+
+
+def f2l_case_encoder(mask):
+    def encoder(facelets):
+        facelets = state_masked(facelets, mask)
+
+        facelet_encoder = {}
+        for face in facelets:
+            if face not in facelet_encoder:
+                facelet_encoder[face] = str(len(facelet_encoder))
+            if len(facelet_encoder) == 9:
+                break
+
+        fingerprint = [''] * 54
+        for i, facelet in enumerate(facelets):
+            fingerprint[i] = facelet_encoder[facelet]
+
+        return ''.join(fingerprint)
+
+    return encoder
+
+
+CFOP_CASE_ENCODERS = {
+    'OLL': oll_case_encoder,
+    'PLL': pll_case_encoder,
+    'F2L FR': f2l_case_encoder(F2L_FR_MASK),
+    'F2L FL': f2l_case_encoder(F2L_FL_MASK),
+    'F2L BR': f2l_case_encoder(F2L_BR_MASK),
+    'F2L BL': f2l_case_encoder(F2L_BL_MASK),
 }
 
 
@@ -217,7 +274,7 @@ class CFOPAnalyser(Analyser):
                 if facelets:
                     info['case'] = self.get_step_case(
                         'OLL', facelets,
-                        CFOP_CASE_MASKS['OLL'],
+                        CFOP_CASE_ENCODERS['OLL'],
                     )
 
             elif info['name'] == 'PLL':
@@ -225,7 +282,7 @@ class CFOPAnalyser(Analyser):
                 if facelets:
                     info['case'] = self.get_step_case(
                         'PLL', facelets,
-                        CFOP_CASE_MASKS['PLL'],
+                        CFOP_CASE_ENCODERS['PLL'],
                     )
 
             elif info['name'].startswith('F2L'):
@@ -235,7 +292,7 @@ class CFOPAnalyser(Analyser):
                 if facelets:
                     info['case'] = self.get_step_case(
                         'F2L', facelets,
-                        CFOP_CASE_MASKS[f'F2L { info["case_infos"][0] }'],
+                        CFOP_CASE_ENCODERS[f'F2L { info["case_infos"][0] }'],
                     )
 
 

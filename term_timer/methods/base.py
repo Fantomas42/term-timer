@@ -6,7 +6,6 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import INITIAL_STATE
 from cubing_algs.masks import FULL_MASK
 from cubing_algs.masks import facelets_masked
-from cubing_algs.masks import state_masked
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
@@ -104,11 +103,11 @@ STEPS_CONFIG = {
 
 class FaceletAnalyser:
 
-    def get_step_case(self, step, facelets, mask):
-        masked = state_masked(facelets, mask)
+    def get_step_case(self, step, facelets, encoder):
+        encoded = encoder(facelets)
 
-        if masked in CASES_MASKS[step]:
-            return CASES_MASKS[step][masked]['case']
+        if encoded in CASES_MASKS[step]:
+            return CASES_MASKS[step][encoded]['case']
 
         return ''
 

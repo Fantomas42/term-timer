@@ -4,14 +4,12 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any
 
-from cubing_algs.constants import INITIAL_STATE
-from cubing_algs.masks import state_masked
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
-from term_timer.methods.cfop import CFOP_CASE_MASKS
+from term_timer.methods.cfop import CFOP_CASE_ENCODERS
 
 SKIPPED = {
     'OLL': {
@@ -104,8 +102,6 @@ def compute_masks(name: str, moves: str, mode: str,
             initial_schemes_moves,
             strict=True,
     ):
-        scheme_mask = masks.setdefault(scheme_name, {})
-
         for orientation_move in orientation_moves:
             # Orient scheme for having multiple colors,
             # apply reverse algorithm,
@@ -122,12 +118,7 @@ def compute_masks(name: str, moves: str, mode: str,
             if mode == 'F2L':
                 mode_key += f' { scheme_name }'
 
-            state_mask = state_masked(
-                INITIAL_STATE,
-                CFOP_CASE_MASKS[mode_key],
-            )
-
-            cube = VCube(state_mask, check=False)
+            cube = VCube()
             cube.rotate(case_algorithm)
 
             if debug:
@@ -139,7 +130,18 @@ def compute_masks(name: str, moves: str, mode: str,
                 print(f'{ name } { mode } mode')
                 cube.show(mode=mode.lower())
 
-            scheme_mask[orientation_move] = cube.state
+            encoded_case = CFOP_CASE_ENCODERS[mode_key](cube.state)
+
+            mask_infos = masks.setdefault(
+                encoded_case,
+                {
+                    'schemes': [],
+                    'orientations': [],
+                },
+            )
+            mask_infos['schemes'].append(scheme_name)
+            if orientation_move not in mask_infos['orientations']:
+                mask_infos['orientations'].append(orientation_move)
 
     return masks
 
@@ -175,7 +177,7 @@ def format_case(mode: str, code: str, info: dict[str, Any],
 
     case_data['main'] = main_algorithm
     case_data['setups'] = setups
-    case_data['rotations'] = compute_masks(
+    case_data['masks'] = compute_masks(
         name, main_algorithm, mode,
         debug=debug,
     )

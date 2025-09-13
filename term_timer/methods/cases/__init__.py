@@ -26,13 +26,9 @@ def load_cases(path):
                 'setups': data['setups'],
             }
 
-            for scheme, orientations in data['rotations'].items():
-                for orientation, hashed in orientations.items():
-                    cases_masks[hashed] = {
-                        'case': case_name,
-                        'scheme': scheme,
-                        'orientation': orientation,
-                    }
+            for mask, mask_info in data['masks'].items():
+                cases_masks[mask] = mask_info
+                cases_masks[mask]['case'] = case_name
 
             case_id = case_name.split(' ')[0]
             cases[case_id] = case_info
