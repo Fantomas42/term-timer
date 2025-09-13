@@ -107,7 +107,7 @@ class SolvesMethodAggregator:
                         'etpss': [],
                         'probability': (
                             CASES.get(
-                                step_name, {},
+                                step_name.upper(), {},
                             ).get(
                                 step_case, {},
                             ).get(
