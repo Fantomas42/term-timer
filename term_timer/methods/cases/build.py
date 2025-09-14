@@ -122,12 +122,14 @@ def compute_masks(name: str, moves: str, mode: str,
             cube.rotate(case_algorithm)
 
             if debug:
-                print(
-                    f'{ name } "{ scheme_name or "?" }-'
-                    f'{ orientation_move or "?" }" : { algorithm }',
+                config = (
+                    f'"{ scheme_name or "?" }-{ orientation_move or "?" }" '
+                    f': { algorithm }'
                 )
+                print('*' * 25)
+                print(f'{ name } { config }')
                 cube.show()
-                print(f'{ name } { mode } mode')
+                print(f'{ name } { mode } { config }')
                 cube.show(mode=mode.lower())
 
             encoded_case = CFOP_CASE_ENCODERS[mode_key](cube.state)
