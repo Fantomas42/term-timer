@@ -4,8 +4,18 @@ from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import INITIAL_STATE
+from cubing_algs.masks import CENTERS_MASK
+from cubing_algs.masks import CROSS_MASK
+from cubing_algs.masks import F2L_BL_MASK
+from cubing_algs.masks import F2L_BR_MASK
+from cubing_algs.masks import F2L_FL_MASK
+from cubing_algs.masks import F2L_FR_MASK
+from cubing_algs.masks import F2L_MASK
 from cubing_algs.masks import FULL_MASK
+from cubing_algs.masks import L1_MASK
+from cubing_algs.masks import OLL_MASK
 from cubing_algs.masks import facelets_masked
+from cubing_algs.masks import union_masks
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
@@ -17,70 +27,40 @@ from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 
-CENTER_PIECE = '000010000'
-CROSS_PIECE  = '010010000'  # noqa: E221
-LEFT_FACE    = '110110000'  # noqa: E221
-RIGHT_FACE   = '011011000'  # noqa: E221
-F1L_FACE     = '111010000'  # noqa: E221
-F2L_FACE     = '111111000'  # noqa: E221
-FULL_FACE    = '1' * 9      # noqa: E221
-
 AUF_MOVE = 'D'  # Because actually AUF is based on a URFDLB cube and moves
+
+CROSS_CENTER_MASK = union_masks(CROSS_MASK, CENTERS_MASK)
 
 STEPS_CONFIG = {
     'Cross': {
-        'mask': (
-            '010111010' + (CROSS_PIECE * 2)
-            + CENTER_PIECE + (CROSS_PIECE * 2)
-        ),
+        'mask': CROSS_CENTER_MASK,
     },
     'F1L': {
-        'mask': (
-            FULL_FACE + (F1L_FACE * 2)
-            + CENTER_PIECE + (F1L_FACE * 2)
-        ),
-        'triggers': DEFAULT_TRIGGERS,
-    },
-    'F2L 1': {  # FR Pair
-        'mask':  (
-            '010111011' + LEFT_FACE + RIGHT_FACE
-            + CENTER_PIECE + CROSS_PIECE + CROSS_PIECE
-        ),
-        'triggers': DEFAULT_TRIGGERS,
-    },
-    'F2L 2': {  # FL Pair
-        'mask': (
-            '010111110' + CROSS_PIECE + LEFT_FACE
-            + CENTER_PIECE + RIGHT_FACE + CROSS_PIECE
-        ),
-        'triggers': DEFAULT_TRIGGERS,
-    },
-    'F2L 3': {  # BR Pair
-        'mask':  (
-            '011111010' + RIGHT_FACE + CROSS_PIECE
-            + CENTER_PIECE + CROSS_PIECE + LEFT_FACE
-        ),
-        'triggers': DEFAULT_TRIGGERS,
-    },
-    'F2L 4': {  # BL Pair
-        'mask':  (
-            '110111010' + CROSS_PIECE + CROSS_PIECE
-            + CENTER_PIECE + LEFT_FACE + RIGHT_FACE
-        ),
+        'mask': union_masks(CENTERS_MASK, L1_MASK),
         'triggers': DEFAULT_TRIGGERS,
     },
     'F2L': {
-        'mask': (
-            FULL_FACE + (F2L_FACE * 2)
-            + CENTER_PIECE + (F2L_FACE * 2)
-        ),
+        'mask': union_masks(CENTERS_MASK, F2L_MASK),
+        'triggers': DEFAULT_TRIGGERS,
+    },
+    'F2L 1': {  # FR Pair
+        'mask': union_masks(CROSS_CENTER_MASK, F2L_FR_MASK),
+        'triggers': DEFAULT_TRIGGERS,
+    },
+    'F2L 2': {  # FL Pair
+        'mask': union_masks(CROSS_CENTER_MASK, F2L_FL_MASK),
+        'triggers': DEFAULT_TRIGGERS,
+    },
+    'F2L 3': {  # BR Pair
+        'mask': union_masks(CROSS_CENTER_MASK, F2L_BR_MASK),
+        'triggers': DEFAULT_TRIGGERS,
+    },
+    'F2L 4': {  # BL Pair
+        'mask': union_masks(CROSS_CENTER_MASK, F2L_BL_MASK),
         'triggers': DEFAULT_TRIGGERS,
     },
     'OLL': {
-        'mask': (
-            FULL_FACE + (F2L_FACE * 2)
-            + FULL_FACE + (F2L_FACE * 2)
-        ),
+        'mask': union_masks(OLL_MASK, F2L_MASK),
         'triggers': DEFAULT_TRIGGERS,
         'optimizers': [remove_auf_moves],
     },
