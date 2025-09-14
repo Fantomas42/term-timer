@@ -13,7 +13,7 @@ CASES_MASKS: dict[str, dict[str, str]] = {}
 
 
 def load_cases(path):
-    case_type = path.name.replace('.json', '')
+    case_type = path.name.replace('.json', '').upper()
     cases = CASES.setdefault(case_type, {})
     cases_masks = CASES_MASKS.setdefault(case_type, {})
 
@@ -26,13 +26,11 @@ def load_cases(path):
                 'setups': data['setups'],
             }
 
-            for rotation, alternatives in data['rotations'].items():
-                for alternative, hashed in alternatives.items():
-                    cases_masks[hashed] = {
-                        'case': case_name,
-                        'rotation': rotation,
-                        'alternative': alternative,
-                    }
+            for mask, mask_info in data['masks'].items():
+                cases_masks[mask] = {
+                    'case': case_name,
+                    'configurations': mask_info,
+                }
 
             case_id = case_name.split(' ')[0]
             cases[case_id] = case_info

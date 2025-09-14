@@ -2,15 +2,30 @@ from functools import cached_property
 from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.masks import F2L_BL_MASK
+from cubing_algs.masks import F2L_BR_MASK
+from cubing_algs.masks import F2L_FL_MASK
+from cubing_algs.masks import F2L_FR_MASK
 
 from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
-from term_timer.methods.cases import CASES_MASKS
+from term_timer.methods.cases.encoders import f2l_case_encoder
+from term_timer.methods.cases.encoders import oll_case_encoder
+from term_timer.methods.cases.encoders import pll_case_encoder
+
+CFOP_CASE_ENCODERS = {
+    'OLL': oll_case_encoder,
+    'PLL': pll_case_encoder,
+    'F2L FR': f2l_case_encoder(F2L_FR_MASK),
+    'F2L FL': f2l_case_encoder(F2L_FL_MASK),
+    'F2L BR': f2l_case_encoder(F2L_BR_MASK),
+    'F2L BL': f2l_case_encoder(F2L_BL_MASK),
+}
 
 
 class CFOPAnalyser(Analyser):
     name = 'CFOP'
-    step_list = ('Cross', 'F2L', 'OLL', 'PLL')
+    step_list: tuple[str, ...] = ('Cross', 'F2L', 'OLL', 'PLL')
     aufs: ClassVar[dict[str, list[bool]]] = {
         'OLL': [True, False],
         'PLL': [True, True],
@@ -68,33 +83,6 @@ class CFOPAnalyser(Analyser):
                 info['name'] = 'F2L'
 
         self.correct_summary_cfop(summary)
-
-    def get_oll_case(self, facelets):
-        masked = []
-        for value in facelets:
-            if value != 'D':
-                masked.append('-')
-            else:
-                masked.append(value)
-
-        masked = ''.join(masked)
-
-        if masked in CASES_MASKS['oll']:
-            return CASES_MASKS['oll'][masked]['case']
-
-        return ''
-
-    def get_pll_case(self, facelets):
-        mask = ('0' * 9) + ('000000111' * 2) + ('0' * 9) + ('000000111' * 2)
-        masked = self.build_facelets_masked(
-            mask,
-            facelets,
-        )
-
-        if masked in CASES_MASKS['pll']:
-            return CASES_MASKS['pll'][masked]['case']
-
-        return ''
 
     @cached_property
     def score(self):
@@ -228,17 +216,35 @@ class CFOPAnalyser(Analyser):
             if info['name'] == 'OLL':
                 facelets = info['facelets']
                 if facelets:
-                    info['case'] = self.get_oll_case(facelets)
+                    info['case'] = self.get_step_case(
+                        'OLL', facelets,
+                        CFOP_CASE_ENCODERS['OLL'],
+                    )
 
             elif info['name'] == 'PLL':
                 facelets = info['facelets']
                 if facelets:
-                    info['case'] = self.get_pll_case(facelets)
+                    info['case'] = self.get_step_case(
+                        'PLL', facelets,
+                        CFOP_CASE_ENCODERS['PLL'],
+                    )
+
+            elif info['name'].startswith('F2L '):
+                facelets = info['facelets']
+                if facelets:
+                    info['case'] = self.get_step_case(
+                        'F2L', facelets,
+                        CFOP_CASE_ENCODERS[f'F2L { info["case_infos"][0] }'],
+                    )
 
 
 class CF4OPAnalyser(CFOPAnalyser):
     name = 'CF4OP'
-    step_list = ('Cross', 'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4', 'OLL', 'PLL')
+    step_list: tuple[str, ...] = (
+        'Cross',
+        'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4',
+        'OLL', 'PLL',
+    )
     aufs: ClassVar[dict[str, list[bool]]] = {
         'OLL': [True, True],
         'PLL': [True, True],
@@ -297,7 +303,7 @@ class CF4OPAnalyser(CFOPAnalyser):
 
         if not self.check_step('OLL', facelets):
             name = ['F2L 1', 'F2L 2', 'F2L 3', 'F2L 4']
-            pair = ['FL', 'FR', 'BL', 'BR']
+            pair = ['FR', 'FL', 'BR', 'BL']  # UF orientation
 
             score = 1
             pairs = []

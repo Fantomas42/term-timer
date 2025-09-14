@@ -130,10 +130,12 @@ def parse_case_name(value, step):
         code, name = value.split(' ', 1)
     except ValueError:
         if step == 'PLL':
-            return value, f'{ step } { value }'
-        return value, ''
+            return value, f'PLL { value }', 'PLL'
+        if step.startswith('F2L'):
+            return value, f'F2L { value }', 'F2L'
+        return value, '', ''
     else:
-        return code, name
+        return code, name, 'OLL'
 
 
 def normalize_value(value, method_applied, metric, name) -> str:

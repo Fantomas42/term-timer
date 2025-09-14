@@ -1,10 +1,10 @@
 {% macro step_case(step) %}
   <div class="step-case">
     {% if step.case %}
-      {% set code, name = step.case|parse_case_name(step.name) %}
+      {% set code, name, section = step.case|parse_case_name(step.name) %}
       {% if 'SKIP' not in code %}
-        <div class="step-case-img">{{ code }}</div>
-        <a href="https://cubing.fache.fr/{{ step.name.upper() }}/{{ code }}.html"
+        <div class="step-case-img">{{ step.case_infos.0 or code }}</div>
+        <a href="https://cubing.fache.fr/{{ section }}/{{ code }}.html"
            target="_blank" class="link">
           {{ name }}
         </a>

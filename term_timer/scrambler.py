@@ -70,7 +70,7 @@ def trainer(step, cases, bluetooth_cube: VCube | None = None):
 
 
 def random_training(step, selected_cases):
-    cases = CASES[step]
+    cases = CASES[step.upper()]
     valid_cases = {k: v for k, v in cases.items() if v.get('setups')}
 
     case = choice(selected_cases or list(valid_cases.keys()))

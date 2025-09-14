@@ -59,7 +59,7 @@ class Timer(SolveInterface):
 
     def start_line(self, cube) -> None:
         if self.show_cube:
-            self.console.print(str(cube), end='')
+            print(cube, end='')
 
         self.console.print(
             f'[scramble]Scramble #{ self.counter }:[/scramble]',

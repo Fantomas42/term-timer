@@ -3,24 +3,7 @@ from cubing_algs.display import VCubeDisplay
 from magiccube.cube import Cube as BaseCube
 
 from term_timer.config import CUBE_ORIENTATION_MOVES
-
-
-# Patch VCubeDisplay
-def display_rich_facelet(_, facelet: str, mask: str = '') -> str:
-    face_color = facelet.lower()
-    if mask == '0':
-        face_color += '_hidden'
-
-    return (
-        f'[face_{ face_color }]'
-        f' { facelet } '
-        f'[/face_{ face_color }]'
-    )
-
-
-VCubeDisplay.display_facelet = display_rich_facelet
-
-# End patch
+from term_timer.config import CUBE_PALETTE
 
 
 class Cube(BaseCube):  # type: ignore[misc]
@@ -41,7 +24,7 @@ class Cube(BaseCube):  # type: ignore[misc]
         if orientation:
             self.rotate(orientation)
 
-        display = VCubeDisplay(self).display()
+        display = VCubeDisplay(self, CUBE_PALETTE).display()
 
         if orientation:
             for _ in orientation:
