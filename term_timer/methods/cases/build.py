@@ -72,16 +72,20 @@ def compute_masks(name: str, moves: str, mode: str,
         mirror_moves,
     )
 
-    # For URF format
+    # For URF format,
+    # can represent a color schema variations and a pairs of faces
     initial_schemes = ['FR', 'FL', 'BR', 'BL']
-    # Apply z2 because algorithms are designed to be applied with D on top
+    # Apply orientations because algorithms are designed
+    # to be applied with D on top, FRU angle from user,
+    # so the schemes are correctly tracked
     initial_schemes_moves = ["z2 y'", 'z2', 'x2', 'z2 y']
 
     # Angular orientations
+    # the masks will be taken from multiple points of views
     orientation_moves = ['', 'y', "y'", 'y2']
 
-    # F2L cases also need to have AUF move to catch correctly all cases
-    # Need to optimize this
+    # F2L cases also need to have AUF extra move to catch
+    # correctly all cases when the top layer is involded
     if mode == 'F2L':
         auf_moves = ['U', "U'", 'U2']
         new_orientations = orientation_moves.copy()
@@ -92,21 +96,16 @@ def compute_masks(name: str, moves: str, mode: str,
                 )
         orientation_moves = new_orientations
 
-    # In OLL other facelets than D are useless to track
-    # so we don't have to track others colors scheme
-    if mode == 'OLL':
-        orientation_moves = ['']
-
     for scheme_name, scheme_moves in zip(
             initial_schemes,
             initial_schemes_moves,
             strict=True,
     ):
         for orientation_move in orientation_moves:
-            # Orient scheme for having multiple colors,
+            # Orientation scheme for having multiple colors,
             # apply reverse algorithm,
-            # offset Y to capture all angular variations,
-            # restore to URF state
+            # offset in Y to capture all angular variations,
+            # cancel orientation scheme back to U on top.
             case_algorithm = (
                 scheme_moves
                 + algorithm
