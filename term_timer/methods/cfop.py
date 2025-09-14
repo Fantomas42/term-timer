@@ -229,10 +229,8 @@ class CFOPAnalyser(Analyser):
                         CFOP_CASE_ENCODERS['PLL'],
                     )
 
-            elif info['name'].startswith('F2L'):
+            elif info['name'].startswith('F2L '):
                 facelets = info['facelets']
-                if not info['case_infos']:
-                    continue  # TODO(me): handle
                 if facelets:
                     info['case'] = self.get_step_case(
                         'F2L', facelets,
