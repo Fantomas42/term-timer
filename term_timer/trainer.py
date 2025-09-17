@@ -1,3 +1,4 @@
+from term_timer.config import CUBE_EFFECT
 from term_timer.config import CUBE_PALETTE
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -38,7 +39,11 @@ class Trainer(SolveInterface):
     def start_line(self, cube, case, main_algorithm) -> None:
         if self.show_cube:
             print(
-                cube.display(self.step, palette=CUBE_PALETTE),
+                cube.display(
+                    mode=self.step,
+                    palette=CUBE_PALETTE,
+                    effect=CUBE_EFFECT,
+                ),
                 end='',
             )
 

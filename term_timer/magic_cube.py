@@ -2,6 +2,7 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.display import VCubeDisplay
 from magiccube.cube import Cube as BaseCube
 
+from term_timer.config import CUBE_EFFECT
 from term_timer.config import CUBE_ORIENTATION_MOVES
 from term_timer.config import CUBE_PALETTE
 
@@ -24,7 +25,7 @@ class Cube(BaseCube):  # type: ignore[misc]
         if orientation:
             self.rotate(orientation)
 
-        display = VCubeDisplay(self, CUBE_PALETTE).display()
+        display = VCubeDisplay(self, CUBE_PALETTE, CUBE_EFFECT).display()
 
         if orientation:
             for _ in orientation:

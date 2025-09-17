@@ -22,6 +22,7 @@ metronome = 0.0
 orientation = "DF"
 method = "cf4op"
 palette = ""
+effect = "face-visible"
 
 [trainer]
 step = "oll"
@@ -87,6 +88,8 @@ CUBE_ORIENTATION_MOVES = parse_moves(
 CUBE_METHOD = CUBE_CONFIG.get('method')
 
 CUBE_PALETTE = CUBE_CONFIG.get('palette')
+
+CUBE_EFFECT = CUBE_CONFIG.get('effect')
 
 AUF_MOVE = OPPOSITE_FACES[CUBE_ORIENTATION[0]]
 
