@@ -77,7 +77,11 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
 
     def print_cube(cube):
         if show_cube:
-            cube.show(orientation=CUBE_ORIENTATION)
+            cube.show(
+                orientation=CUBE_ORIENTATION,
+                mode='linear',
+                facelet='compact',
+            )
 
     while True:
         events = await queue.get()
