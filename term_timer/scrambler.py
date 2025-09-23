@@ -11,12 +11,9 @@ from cubing_algs.vcube import VCube
 from kociemba import solve
 
 from term_timer.config import CUBE_ORIENTATION_MOVES
+from term_timer.exceptions import InvalidCaseError
 from term_timer.magic_cube import Cube
 from term_timer.methods.cases import CASES
-
-
-class InvalidCaseError(Exception):
-    ...
 
 
 def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
