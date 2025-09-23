@@ -3,10 +3,9 @@ from importlib.util import find_spec
 from typing import Any
 
 from cubing_algs.constants import OPPOSITE_FACES
-from cubing_algs.parsing import parse_moves
-from cubing_algs.vcube import VCube
 
 from term_timer.constants import CONFIG_FILE
+from term_timer.orientation import get_orientation_moves
 
 if find_spec('tomllib') is not None:
     import tomllib
@@ -81,9 +80,7 @@ SERVER_CONFIG = CONFIG.get('server', {})
 
 CUBE_ORIENTATION = CUBE_CONFIG.get('orientation')
 
-CUBE_ORIENTATION_MOVES = parse_moves(
-    VCube().compute_orientation_moves(CUBE_ORIENTATION),
-)
+CUBE_ORIENTATION_MOVES = get_orientation_moves(CUBE_ORIENTATION)
 
 CUBE_METHOD = CUBE_CONFIG.get('method')
 
