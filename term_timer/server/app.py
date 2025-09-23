@@ -20,8 +20,6 @@ from cubing_algs.transform.timing import untime_moves
 
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.config import CUBE_METHOD
-from term_timer.config import CUBE_ORIENTATION
-from term_timer.config import CUBE_ORIENTATION_MOVES
 from term_timer.constants import CUBE_SIZES
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PAUSE_FACTOR
@@ -517,7 +515,7 @@ class SessionDetailView(View):
 class SolveDetailView(View):
     template_name = 'solve.html'
 
-    def __init__(self, cube, session, solve, method_name):
+    def __init__(self, cube, session, solve, method_name, orientation):
         self.cube = cube
         self.session = session
 
@@ -537,6 +535,8 @@ class SolveDetailView(View):
         method_name = method_name.strip().lower()
         if method_name:
             self.solve.method_name = method_name
+        if orientation:
+            self.solve.orientation = orientation
 
     def get_context(self):
         tps = []
@@ -614,8 +614,6 @@ class SolveDetailView(View):
             'steps': steps,
             'tps': tps,
             'recognitions': recognitions,
-            'cube_orientation': CUBE_ORIENTATION,
-            'cube_orientation_moves': CUBE_ORIENTATION_MOVES,
             'reconstruction_text': reconstruction_text,
             'reconstruction_timing': self.solve.reconstruction_steps_timing,
             'reconstruction_index': step_index,
@@ -738,6 +736,7 @@ class Server:
             return SolveDetailView(
                 cube, session, solve,
                 request.GET.m or '',
+                request.GET.o or '',
             ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/')

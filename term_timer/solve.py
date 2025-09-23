@@ -14,7 +14,7 @@ from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.timing import untime_moves
 
 from term_timer.config import CUBE_METHOD
-from term_timer.config import CUBE_ORIENTATION_MOVES
+from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import SERVER_CONFIG
 from term_timer.config import STATS_CONFIG
 from term_timer.constants import DNF
@@ -34,6 +34,7 @@ from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
 from term_timer.methods import get_method_analyser
 from term_timer.methods.base import get_step_config
+from term_timer.orientation import get_orientation_moves
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
 
@@ -63,7 +64,7 @@ class Solve:
         self.raw_scramble = scramble
 
         self.method_name = CUBE_METHOD
-        self.orientation_moves = CUBE_ORIENTATION_MOVES
+        self.orientation = CUBE_ORIENTATION
 
     @cached_property
     def solution(self):
@@ -97,6 +98,10 @@ class Solve:
     @cached_property
     def advanced(self):
         return bool(self.raw_moves)
+
+    @cached_property
+    def orientation_moves(self):
+        return get_orientation_moves(self.orientation)
 
     @staticmethod
     def compute_tps(moves: int, time: int) -> float:

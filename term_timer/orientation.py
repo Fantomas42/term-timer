@@ -19,4 +19,5 @@ def get_orientation_moves(orientation: str) -> Algorithm:
     try:
         return ORIENTATION_MOVES[orientation]
     except KeyError as error:
-        raise InvalidOrientationError from error
+        msg = f'Invalid orientation "{ orientation }"'
+        raise InvalidOrientationError(msg) from error
