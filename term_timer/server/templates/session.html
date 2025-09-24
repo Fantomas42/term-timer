@@ -827,14 +827,14 @@
               <tr>
                 <td>
                   <div class="step-case">
-                    {% set code, case_name = name|parse_case_name(step.upper()) %}
+                    {% set code, case_name, section = name|parse_case_name(step.upper()) %}
                     <div class="step-case-img">
                       <a href="?m={{ method_aggregation.analyser.name.lower() }}&step={{ step }}&case_uid={{ code }}">
                         {{ code }}
                       </a>
                     </div>
                     {% if 'SKIP' not in code %}
-                      <a href="https://cubing.fache.fr/{{ step.upper() }}/{{ code }}.html"
+                      <a href="https://cubing.fache.fr/{{ section }}/{{ code }}.html"
                          target="_blank" class="link">
                         {{ case_name }}
                       </a>
