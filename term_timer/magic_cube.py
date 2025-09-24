@@ -1,4 +1,3 @@
-from cubing_algs.algorithm import Algorithm
 from cubing_algs.display import VCubeDisplay
 from magiccube.cube import Cube as BaseCube
 
