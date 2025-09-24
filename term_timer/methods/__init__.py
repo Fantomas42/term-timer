@@ -12,4 +12,4 @@ METHOD_ANALYSERS = {
 
 
 def get_method_analyser(method_name):
-    return METHOD_ANALYSERS.get(method_name, CF4OPAnalyser)
+    return METHOD_ANALYSERS.get(method_name, CFOPAnalyser)
