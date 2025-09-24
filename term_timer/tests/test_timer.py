@@ -19,6 +19,8 @@ class TestTimerModule(unittest.TestCase):
             show_recognition_graph=False,
             countdown=0,
             metronome=0,
+            orientation='DF',
+            method='raw',
             stack=[],
         )
 

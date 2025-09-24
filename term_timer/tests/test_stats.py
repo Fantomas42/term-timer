@@ -458,6 +458,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
                 show_tps_graph=False,
                 show_time_graph=False,
                 show_recognition_graph=False,
+                orientation='DF',
             )
 
             call_args = [str(call) for call in mock_print.call_args_list]
@@ -542,6 +543,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
                         show_tps_graph=False,
                         show_time_graph=False,
                         show_recognition_graph=False,
+                        orientation='DF',
                     )
 
                     call_args = [
@@ -614,6 +616,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
                 show_tps_graph=False,
                 show_time_graph=False,
                 show_recognition_graph=False,
+                orientation='DF',
             )
 
             call_args = [str(call) for call in mock_print.call_args_list]
@@ -686,6 +689,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
                 show_tps_graph=True,
                 show_time_graph=True,
                 show_recognition_graph=True,
+                orientation='DF',
             )
 
             # Should call all graph methods (lines 599, 601, 603)

@@ -582,7 +582,7 @@ class TestSolveDetailView(unittest.TestCase):
     ):
         mock_load_solves.return_value = [Mock()]  # Only one solve
 
-        SolveDetailView(3, 'session', 5, '')  # Request solve 5 (index 4)
+        SolveDetailView(3, 'session', 5, '', '')  # Request solve 5 (index 4)
 
         mock_abort.assert_called_once_with(404, 'Invalid solve ID')
 
@@ -591,7 +591,7 @@ class TestSolveDetailView(unittest.TestCase):
         mock_solve = Mock()
         mock_load_solves.return_value = [mock_solve]
 
-        view = SolveDetailView(3, 'test-session', 1, 'cfop')
+        view = SolveDetailView(3, 'test-session', 1, 'cfop', 'DF')
 
         self.assertEqual(view.cube, 3)
         self.assertEqual(view.session, 'test-session')
@@ -611,7 +611,7 @@ class TestSolveDetailView(unittest.TestCase):
 
         mock_load_solves.return_value = [mock_solve]
 
-        view = SolveDetailView(3, 'test', 1, '')
+        view = SolveDetailView(3, 'test', 1, '', '')
         context = view.get_context()
 
         self.assertEqual(context['cube'], 3)
@@ -644,7 +644,7 @@ class TestSolveDetailView(unittest.TestCase):
 
         mock_load_solves.return_value = [mock_solve]
 
-        view = SolveDetailView(3, 'test', 1, '')
+        view = SolveDetailView(3, 'test', 1, '', '')
         context = view.get_context()
 
         # Should have scatter plot data

@@ -11,6 +11,7 @@ class TestTrainerModule(unittest.TestCase):
             show_solution=False,
             show_cube=False,
             metronome=0,
+            orientation='DF',
         )
 
         for key in (
