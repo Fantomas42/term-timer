@@ -32,7 +32,6 @@
        });
      });
 
-     // Handle method and orientation changes
      const methodSelect = document.getElementById('method-select');
      const orientationSelect = document.getElementById('orientation-select');
 
@@ -791,11 +790,9 @@
             </select>
           </div>
         </div>
-        {% if solve.orientation_moves %}
-          <div class="orientation">
-            <span class="move">{{ solve.orientation_moves }}</span>
-          </div>
-        {% endif %}
+        <div class="orientation">
+          <span class="move">{{ solve.orientation }}</span>
+        </div>
       </div>
 
       <div class="tabs">
