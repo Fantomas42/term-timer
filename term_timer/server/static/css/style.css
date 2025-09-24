@@ -259,7 +259,7 @@ header {
 }
 
 .moves-card .move,
-.orientation .move {
+.orientation.move {
     font-size: 1.3rem;
     font-weight: bold;
     background-color: var(--card-bg);
@@ -270,11 +270,11 @@ header {
 }
 
 .moves-card .move:hover,
-.orientation .move:hover {
+.orientation.move:hover {
     background-color: var(--primary);
 }
 
-.orientation .move {
+.orientation.move {
     background-color: var(--header);
 }
 
@@ -829,6 +829,54 @@ twisty-alg-viewer {
     width: 33%; /* Moves */
 }
 
+/* Reconstruction Controls */
+.reconstruction-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.control-group label {
+    font-weight: bold;
+}
+
+.control-select {
+    background-color: var(--main-bg);
+    border: 1px solid var(--border-color);
+    color: var(--light);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 1rem;
+    outline: none;
+}
+
+.control-select:hover {
+    border-color: var(--info);
+}
+
+/* Media query for mobile */
+@media (max-width: 768px) {
+    .reconstruction-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .control-group {
+        justify-content: space-between;
+    }
+
+    .control-select {
+        min-width: 120px;
+    }
+}
+
 /* PunchCard */
 
 .year-selector {
@@ -842,7 +890,6 @@ twisty-alg-viewer {
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 1rem;
-    cursor: pointer;
     outline: none;
 }
 

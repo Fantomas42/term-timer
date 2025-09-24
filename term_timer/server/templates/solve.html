@@ -765,6 +765,7 @@
         <h2 class="card-title">
           <a href="#reconstruction" id="reconstruction">
             Reconstruction {{ solve.method_analyser.name }}
+            <span class="orientation move">{{ solve.orientation }}</span>
           </a>
         </h2>
         <div class="reconstruction-controls">
@@ -781,7 +782,6 @@
           <div class="control-group">
             <label for="orientation-select">Orientation:</label>
             <select id="orientation-select" class="control-select">
-              <option value="" {% if not solve.orientation %}selected{% endif %}>Default</option>
               {% for orientation in available_orientations %}
                 <option value="{{ orientation }}" {% if orientation == solve.orientation %}selected{% endif %}>
                   {{ orientation }}
@@ -789,9 +789,6 @@
               {% endfor %}
             </select>
           </div>
-        </div>
-        <div class="orientation">
-          <span class="move">{{ solve.orientation }}</span>
         </div>
       </div>
 
