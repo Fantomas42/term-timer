@@ -282,10 +282,12 @@ class Solve:
         if not self.method_applied:
             return ''
 
-        line = (
-            '[step]Orientation:[/step] '
-            f'[consign]{ self.orientation_moves!s }[/consign]\n'
-        )
+        line = ''
+        if self.orientation_moves:
+            line += (
+                '[step]Orientation:[/step] '
+                f'[consign]{ self.orientation_moves!s }[/consign]\n'
+            )
 
         for info in self.method_applied.summary:
 
