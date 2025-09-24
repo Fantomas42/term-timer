@@ -782,9 +782,9 @@
           <div class="control-group">
             <label for="orientation-select">Orientation:</label>
             <select id="orientation-select" class="control-select">
-              {% for orientation in available_orientations %}
+              {% for orientation, moves in available_orientations.items() %}
                 <option value="{{ orientation }}" {% if orientation == solve.orientation %}selected{% endif %}>
-                  {{ orientation }}
+                  {{ orientation }}{% if moves %} ({{ moves }}){% endif %}
                 </option>
               {% endfor %}
             </select>

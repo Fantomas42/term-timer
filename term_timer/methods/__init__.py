@@ -4,10 +4,10 @@ from term_timer.methods.lbl import LBLAnalyser
 from term_timer.methods.raw import RawAnalyser
 
 METHOD_ANALYSERS = {
+    'raw': RawAnalyser,
+    'lbl': LBLAnalyser,
     'cfop': CFOPAnalyser,
     'cf4op': CF4OPAnalyser,
-    'lbl': LBLAnalyser,
-    'raw': RawAnalyser,
 }
 
 
