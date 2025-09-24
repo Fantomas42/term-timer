@@ -1,6 +1,7 @@
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.fat import refat_moves
+from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.rotation import compress_final_rotations
 from cubing_algs.transform.rotation import remove_final_rotations
@@ -12,7 +13,7 @@ from term_timer.constants import RESLICE_THRESHOLD
 
 def reorient_moves(orientation: Algorithm, algorithm: Algorithm) -> Algorithm:
     if orientation:
-        new_algorithm = orientation + algorithm
+        new_algorithm = mirror_moves(orientation) + algorithm
         return new_algorithm.transform(
             degrip_full_moves,
             remove_final_rotations,
