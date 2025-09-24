@@ -146,8 +146,7 @@
 
      const player = new TwistyPlayer({
        alg: parsedAlg,
-       experimentalSetupAlg: "{{ solve.orientation_moves }}",
-       experimentalSetupAnchor: "end",
+       experimentalSetupAlg: "{{ solve.scramble }}",
        viewerLink: "none",
        puzzle: "{{ cube }}x{{ cube }}x{{ cube }}",
        background: "none",
