@@ -13,6 +13,7 @@ from bottle import jinja2_template
 from bottle import redirect
 from bottle import request
 from bottle import static_file
+from cubing_algs.constants import ORIENTATIONS
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.size import compress_moves
@@ -37,6 +38,7 @@ from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import save_solves
 from term_timer.interface.console import console
+from term_timer.methods import METHOD_ANALYSERS
 from term_timer.methods.base import get_step_config
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -618,6 +620,8 @@ class SolveDetailView(View):
             'reconstruction_timing': self.solve.reconstruction_steps_timing,
             'reconstruction_index': step_index,
             'rank': rank,
+            'available_orientations': ORIENTATIONS,
+            'available_methods': list(METHOD_ANALYSERS.keys()),
         }
 
 
