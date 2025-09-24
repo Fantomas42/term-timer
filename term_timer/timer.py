@@ -136,8 +136,14 @@ class Timer(SolveInterface):
                     solve.tps_graph()
                 if self.show_recognition_graph:
                     solve.recognition_graph()
+
+                link = (
+                    solve.link_term_timer
+                    if not self.free_play
+                    else solve.link_alg_cubing
+                )
                 self.console.print(
-                    f'[localhost][link={ solve.link_term_timer }]'
+                    f'[localhost][link={ link }]'
                     f'Analysis #{ self.counter }:[/link][/localhost] '
                     f'{ solve.report_line }',
                 )
