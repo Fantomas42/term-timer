@@ -3,8 +3,9 @@ from cubing_algs.display import VCubeDisplay
 from magiccube.cube import Cube as BaseCube
 
 from term_timer.config import CUBE_EFFECT
-from term_timer.config import CUBE_ORIENTATION_MOVES
+from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import CUBE_PALETTE
+from term_timer.orientation import get_orientation_moves
 
 
 class Cube(BaseCube):  # type: ignore[misc]
@@ -21,17 +22,19 @@ class Cube(BaseCube):  # type: ignore[misc]
     def state(self) -> str:
         return self.get_kociemba_facelet_positions()
 
-    def display(self, orientation: Algorithm = None) -> str:
-        if orientation:
-            self.rotate(orientation)
+    def display(self, orientation: str) -> str:
+        orientation_moves = get_orientation_moves(orientation)
+
+        if orientation_moves:
+            self.rotate(orientation_moves)
 
         display = VCubeDisplay(self, CUBE_PALETTE, CUBE_EFFECT).display()
 
-        if orientation:
-            for _ in orientation:
+        if orientation_moves:
+            for _ in orientation_moves:
                 self.undo()
 
         return display
 
     def __str__(self) -> str:
-        return self.display(CUBE_ORIENTATION_MOVES)
+        return self.display(CUBE_ORIENTATION)

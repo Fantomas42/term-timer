@@ -26,6 +26,8 @@ class Timer(SolveInterface):
                  show_tps_graph: bool,
                  show_time_graph: bool,
                  show_recognition_graph: bool,
+                 method: bool,
+                 orientation: str,
                  countdown: int,
                  metronome: float,
                  stack: list[Solve]):
@@ -44,6 +46,8 @@ class Timer(SolveInterface):
         self.show_tps_graph = show_tps_graph
         self.show_time_graph = show_time_graph
         self.show_recognition_graph = show_recognition_graph
+        self.method = method
+        self.orientation = orientation
         self.countdown = countdown
         self.metronome = metronome
         self.stack = stack
@@ -59,7 +63,7 @@ class Timer(SolveInterface):
 
     def start_line(self, cube) -> None:
         if self.show_cube:
-            print(cube, end='')
+            print(cube.display(self.orientation), end='')
 
         self.console.print(
             f'[scramble]Scramble #{ self.counter }:[/scramble]',
@@ -266,6 +270,9 @@ class Timer(SolveInterface):
             cube_size=self.cube_size,
             moves=' '.join(moves),
         )
+
+        solve.method_name = self.method
+        solve.orientation = self.orientation
 
         self.solve_line(solve)
 

@@ -58,6 +58,8 @@ async def timer(options) -> int:
         show_tps_graph=options.show_tps_graph,
         show_time_graph=options.show_time_graph,
         show_recognition_graph=options.show_recognition_graph,
+        method=options.method,
+        orientation=options.orientation,
         countdown=options.countdown,
         metronome=options.metronome,
         stack=stack,
@@ -94,6 +96,7 @@ async def trainer(options) -> int:
     trainer = Trainer(
         step=options.step,
         cases=options.case,
+        orientation=options.orientation,
         show_solution=options.show_solution,
         show_cube=options.show_cube,
         metronome=options.metronome,
@@ -168,6 +171,7 @@ def tools(command: str, options) -> int:
             session_stats.detail(
                 solve_id,
                 options.method,
+                options.orientation,
                 show_cube=options.show_cube,
                 show_reconstruction=options.show_reconstruction,
                 show_tps_graph=options.show_tps_graph,

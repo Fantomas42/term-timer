@@ -1,8 +1,11 @@
 import sys
 from typing import Any
 
+from cubing_algs.constants import ORIENTATIONS
+
 from term_timer.argparser import ArgumentParser
 from term_timer.config import CUBE_METHOD
+from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import DISPLAY_CONFIG
 from term_timer.config import SERVER_CONFIG
 from term_timer.config import TIMER_CONFIG
@@ -27,6 +30,8 @@ COMMAND_RESOLUTIONS = {}
 for name, aliases in COMMAND_ALIASES.items():
     for alias in aliases:
         COMMAND_RESOLUTIONS[alias] = name
+
+ORIENTATIONS_SORTED = sorted(ORIENTATIONS)
 
 
 def set_session_arguments(parser):
@@ -108,8 +113,9 @@ def solve_arguments(subparsers):
         ),
     )
 
+    cube = parser.add_argument_group('Cube')
     mode = 'hide' if show_cube else 'show'
-    parser.add_argument(
+    cube.add_argument(
         '-p', f'--{ mode }-cube',
         action='store_const',
         const=not show_cube,
@@ -120,6 +126,16 @@ def solve_arguments(subparsers):
             'Default: False'
         ),
     )
+    cube.add_argument(
+        '-o', '--orientation',
+        default=CUBE_ORIENTATION,
+        choices=ORIENTATIONS_SORTED,
+        metavar='ORIENTATION',
+        help=(
+            'Set the cube orientation used.\n'
+            f'Default: { CUBE_ORIENTATION }.'
+        ),
+    )
 
     bluetooth = parser.add_argument_group('Bluetooth')
     bluetooth.add_argument(
@@ -128,6 +144,18 @@ def solve_arguments(subparsers):
         help=(
             'Use a Bluetooth-connected cube.\n'
             'Default: False.'
+        ),
+    )
+    bluetooth.add_argument(
+        '-m', '--method',
+        default=CUBE_METHOD,
+        choices={
+            'lbl', 'cfop', 'cf4op', 'raw',
+        },
+        metavar='METHOD',
+        help=(
+            'Set the method of analyse used.\n'
+            f'Default: { CUBE_METHOD }.'
         ),
     )
     mode = 'hide' if show_reconstruction else 'show'
@@ -221,7 +249,7 @@ def solve_arguments(subparsers):
         ),
     )
     timer.add_argument(
-        '-m', '--metronome',
+        '-k', '--metronome',
         type=float,
         default=metronome,
         metavar='TEMPO',
@@ -316,8 +344,9 @@ def train_arguments(subparsers):
         ),
     )
 
+    cube = parser.add_argument_group('Cube')
     mode = 'hide' if show_cube else 'show'
-    parser.add_argument(
+    cube.add_argument(
         '-p', f'--{ mode }-cube',
         action='store_const',
         const=not show_cube,
@@ -326,6 +355,16 @@ def train_arguments(subparsers):
         help=(
             f'{ mode.title() } the cube in its scrambled state.\n'
             'Default: False'
+        ),
+    )
+    cube.add_argument(
+        '-o', '--orientation',
+        default=CUBE_ORIENTATION,
+        choices=ORIENTATIONS_SORTED,
+        metavar='ORIENTATION',
+        help=(
+            'Set the cube orientation used.\n'
+            f'Default: { CUBE_ORIENTATION }.'
         ),
     )
 
@@ -341,7 +380,7 @@ def train_arguments(subparsers):
 
     timer = parser.add_argument_group('Timer')
     timer.add_argument(
-        '-m', '--metronome',
+        '-k', '--metronome',
         type=float,
         default=metronome,
         metavar='TEMPO',
@@ -542,8 +581,9 @@ def detail_arguments(subparsers):
         help='ID(s) of the solve(s) to display details for.',
     )
 
+    cube = parser.add_argument_group('Cube')
     mode = 'hide' if show_cube else 'show'
-    parser.add_argument(
+    cube.add_argument(
         '-p', f'--{ mode }-cube',
         action='store_const',
         const=not show_cube,
@@ -552,6 +592,16 @@ def detail_arguments(subparsers):
         help=(
             f'{ mode.title() } the cube in its scrambled state.\n'
             'Default: False'
+        ),
+    )
+    cube.add_argument(
+        '-o', '--orientation',
+        default=CUBE_ORIENTATION,
+        choices=ORIENTATIONS_SORTED,
+        metavar='ORIENTATION',
+        help=(
+            'Set the cube orientation used.\n'
+            f'Default: { CUBE_ORIENTATION }.'
         ),
     )
 

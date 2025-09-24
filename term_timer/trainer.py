@@ -19,6 +19,7 @@ class Trainer(SolveInterface):
                  cases: list[str],
                  show_solution: bool,
                  show_cube: bool,
+                 orientation: str,
                  metronome: float):
         super().__init__()
 
@@ -34,6 +35,8 @@ class Trainer(SolveInterface):
         if self.step == 'cross':
             self.step_code = 'Cross'
 
+        self.orientation = orientation
+
         self.counter = 1
 
     def start_line(self, cube, case, main_algorithm) -> None:
@@ -43,6 +46,7 @@ class Trainer(SolveInterface):
                     mode=self.step,
                     palette=CUBE_PALETTE,
                     effect=CUBE_EFFECT,
+                    orientation=self.orientation,
                 ),
                 end='',
             )

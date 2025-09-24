@@ -408,7 +408,7 @@ class StatisticsReporter(Statistics):
                 f'[{ flag_class }]{ solve.flag }[/{ flag_class }]',
             )
 
-    def detail(self, solve_id: int, method: str,
+    def detail(self, solve_id: int, method: str, orientation: str,
                *,
                show_cube: bool,
                show_reconstruction: bool,
@@ -425,6 +425,7 @@ class StatisticsReporter(Statistics):
             return
 
         solve.method_name = method
+        solve.orientation = orientation
 
         date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
@@ -580,7 +581,7 @@ class StatisticsReporter(Statistics):
             cube = Cube(self.cube_size)
             cube.rotate(solve.scramble)
 
-            print(cube, end='')
+            print(cube.display(orientation), end='')
 
         if solve.advanced:
             if show_reconstruction:
