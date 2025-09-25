@@ -23,7 +23,9 @@ def load_cases(path):
                 'name': case_name,
                 'main': data['main'],
                 'probability': data['probability'],
+                'probability_label': data['probability_label'],
                 'setups': data['setups'],
+                'masks': data['masks'],
             }
 
             for mask, mask_info in data['masks'].items():

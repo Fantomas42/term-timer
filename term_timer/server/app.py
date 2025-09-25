@@ -1,4 +1,5 @@
 import gc
+import json
 import os
 import re
 from datetime import datetime
@@ -39,6 +40,7 @@ from term_timer.in_out import save_solves
 from term_timer.interface.console import console
 from term_timer.methods import METHOD_ANALYSERS
 from term_timer.methods.base import get_step_config
+from term_timer.methods.cases import CASES
 from term_timer.orientation import ORIENTATION_MOVES
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -676,6 +678,160 @@ class SolveDeleteView:
         redirect(f'/{ cube }/{ session }/')
 
 
+class AcademyView(View):
+    template_name = 'academy/overview.html'
+    methods = {
+        'CFOP': {
+            'name': 'CFOP',
+            'description': (
+                'Cross, F2L, OLL, PLL - The most popular speedcubing method'
+            ),
+            'steps': {
+                'F2L': {
+                    'name': 'F2L',
+                    'description': (
+                        'First Two Layers - '
+                        'Solve cross and first two layers simultaneously'
+                    ),
+                    'description_alt': (
+                        'Solve the cross and first two layers simultaneously '
+                        'using corner-edge pairs.'
+                    ),
+                },
+                'OLL': {
+                    'name': 'OLL',
+                    'description': (
+                        'Orientation of Last Layer - '
+                        'Orient all pieces on the last layer'
+                    ),
+                    'description_alt': (
+                        'Orient all pieces on the last layer '
+                        'to show the same color on top.'
+                    ),
+                },
+                'PLL': {
+                    'name': 'PLL',
+                    'description': (
+                        'Permutation of Last Layer - '
+                        'Permute all pieces on the last layer'
+                    ),
+                    'description_alt': (
+                        'Permute all pieces on the last layer '
+                        'to their correct positions.'
+                    ),
+                },
+            },
+        },
+    }
+
+    def get_context(self):
+        return {
+            'methods': self.methods,
+        }
+
+
+class AcademyStepView(AcademyView):
+    template_name = 'academy/step.html'
+
+    def __init__(self, step):
+        self.step = step.upper()
+
+        try:
+            self.cases_data = CASES[self.step]
+        except KeyError:
+            abort(404, f'{ self.step } does not exist')
+
+    def get_context(self):
+        cases = []
+
+        for case_id, case_data in self.cases_data.items():
+            case_info = {
+                'id': case_id,
+                'name': case_data['name'],
+                'main_algorithm': case_data['main'],
+                'masks_count': len(case_data['masks']),
+            }
+            if self.step == 'OLL':
+                try:
+                    case_info['code'], case_info['name'], _ = parse_case_name(
+                        case_data['name'], self.step,
+                    )
+                except:
+                    case_info['code'] = case_id
+                    case_info['name'] = case_id
+            elif self.step == 'PLL':
+                case_info['code'] = case_id
+                case_info['name'] = f'PLL {case_id}'
+            elif self.step == 'F2L':
+                case_info['code'] = case_id
+                case_info['name'] = f'F2L {case_id}'
+
+            cases.append(case_info)
+
+        return {
+            'step': self.step,
+            'step_info': self.methods['CFOP']['steps'][self.step],
+            'cases': cases,
+            'cases_count': len(cases),
+        }
+
+
+class AcademyCaseView(AcademyView):
+    template_name = 'academy/case.html'
+
+    def __init__(self, step, case_id):
+        self.step = step.upper()
+        self.case_id = case_id
+
+        try:
+            self.case_data = CASES[self.step][self.case_id]
+        except KeyError:
+            abort(404, f'{ self.step } { self.case_id } does not exist')
+
+    def get_context(self):
+        case_info = {
+            'id': self.case_id,
+            'name': self.case_id,
+            'main_algorithm': self.case_data['main'],
+            'probability': self.case_data['probability_label'],
+        }
+
+        if self.step == 'OLL':
+            try:
+                case_info['code'], case_info['name'], _ = parse_case_name(self.case_id, self.step)
+            except:
+                case_info['code'] = self.case_id
+                case_info['name'] = self.case_id
+        elif self.step == 'PLL':
+            case_info['code'] = self.case_id
+            case_info['name'] = f'PLL {self.case_id}'
+        elif self.step == 'F2L':
+            case_info['code'] = self.case_id
+            case_info['name'] = f'F2L {self.case_id}'
+
+        # Process masks for different orientations
+        orientations = []
+        masks = self.case_data.get('masks', {})
+        for mask, aufs in masks.items():
+            orientations.append({
+                'mask': mask,
+                'aufs': aufs,
+            })
+
+        # Process setup algorithms
+        setups = self.case_data.get('setups', [])
+
+        return {
+            'step': self.step,
+            'step_info': self.methods['CFOP']['steps'][self.step],
+            'case': case_info,
+            'orientations': orientations,
+            'orientations_count': len(orientations),
+            'setups': setups,
+            'setups_count': len(setups),
+        }
+
+
 class Server:
 
     def run_server(self, host, port, debug):
@@ -719,6 +875,18 @@ class Server:
         @app.route('/')
         def session_list():
             return SessionListView().as_view(debug)
+
+        @app.route('/academy/')
+        def academy_overview():
+            return AcademyView().as_view(debug)
+
+        @app.route('/academy/<step>/')
+        def academy_step(step):
+            return AcademyStepView(step).as_view(debug)
+
+        @app.route('/academy/<step>/<case_id>/')
+        def academy_case(step, case_id):
+            return AcademyCaseView(step, case_id).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/update/',
                    method='POST')
