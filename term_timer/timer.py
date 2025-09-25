@@ -65,10 +65,14 @@ class Timer(SolveInterface):
         if self.show_cube:
             print(cube.display(self.orientation), end='')
 
-        self.console.print(
-            f'[scramble]Scramble #{ self.counter }:[/scramble]',
-            f'[moves]{ self.scramble_oriented }[/moves]',
-        )
+        scramble_line = f'[scramble]Scramble #{ self.counter }:[/scramble] '
+        if self.cube_orientation_moves:
+            scramble_line += (
+                f'[rotation]{ self.cube_orientation_moves }[/rotation] '
+            )
+        scramble_line += f'[moves]{ self.scramble_oriented }[/moves]'
+
+        self.console.print(scramble_line)
 
         if self.bluetooth_interface:
             if self.countdown:

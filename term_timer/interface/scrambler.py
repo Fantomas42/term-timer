@@ -37,6 +37,9 @@ class Scrambler:
             full_clear = True
         else:
             out = ''
+            if self.cube_orientation_moves:
+                out += f'[consign]{ self.cube_orientation_moves }[/consign] '
+
             algo = self.reorient(
                 self.scrambled.transform(
                     reslice_timed_moves(RESLICE_THRESHOLD),
