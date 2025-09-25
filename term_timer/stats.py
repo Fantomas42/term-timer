@@ -581,7 +581,7 @@ class StatisticsReporter(Statistics):
             cube = Cube(self.cube_size)
             cube.rotate(solve.scramble)
 
-            print(cube.display(orientation), end='')
+            print(cube.display('UF'), end='')
 
         if solve.advanced:
             if show_reconstruction:
