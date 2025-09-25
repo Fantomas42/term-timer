@@ -286,7 +286,7 @@ class Solve:
         if self.orientation_moves:
             line += (
                 '[step]Orientation:[/step] '
-                f'[consign]{ self.orientation_moves!s }[/consign]\n'
+                f'[rotation]{ self.orientation_moves!s }[/rotation]\n'
             )
 
         for info in self.method_applied.summary:
