@@ -690,15 +690,20 @@ class Solve:
         speed = self.move_speed / MS_TO_NS_FACTOR
 
         timing = []
-        previous_time = 0
         orientation_offset = 0
 
-        if self.orientation_moves:
-            orientation_offset = int(
-                self.orientation_moves.metrics['rtm'] * speed,
+        for move in self.orientation_moves:
+            time = int(speed * (1.6 if move.is_double else 1))
+            timing.append(
+                [
+                    orientation_offset,
+                    orientation_offset + time,
+                    move,
+                ],
             )
-            timing.append([0, orientation_offset, str(self.orientation_moves)])
-            previous_time = orientation_offset
+            orientation_offset += time
+
+        previous_time = orientation_offset
 
         full_algo = ''
         for info in self.method_applied.summary:
