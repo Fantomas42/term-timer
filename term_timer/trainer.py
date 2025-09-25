@@ -60,9 +60,16 @@ class Trainer(SolveInterface):
                 f'{ case.split(" ")[0] }.html'
             )
 
+        scramble_line = f'[moves]{ self.scramble_oriented }[/moves]'
+        if self.cube_orientation_moves:
+            scramble_line = (
+                f'[rotation]{ self.cube_orientation_moves }[/rotation] '
+                + scramble_line
+            )
+
         self.console.print(
             f'[scramble]Training #{ self.counter }:[/scramble]',
-            f'[moves]{ self.scramble_oriented }[/moves]',
+            scramble_line,
             f'[comment]// [link={ link }]{ case }[/link][/comment]',
         )
 
