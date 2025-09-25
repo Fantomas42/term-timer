@@ -293,5 +293,7 @@ class Timer(SolveInterface):
 
             if quit_solve:
                 return False
+        else:
+            self.counter += 1
 
         return True
