@@ -242,8 +242,8 @@ class Timer(SolveInterface):
 
         quit_solve = await self.scramble_solve()
 
-        if quit_solve:
-            return False
+        if quit_solve is not None:
+            return quit_solve
 
         if self.countdown:
             await self.inspect_solve()

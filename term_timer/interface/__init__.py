@@ -80,11 +80,14 @@ class SolveInterface(
             char = await self.getch('scrambled')
 
         if char in {'q', ESCAPE_CHAR}:
+            return False
+
+        if char and self.bluetooth_interface:
             return True
 
         self.set_state('scrambled')
 
-        return False
+        return None
 
     async def inspect_solve(self):
         inspection_task = asyncio.create_task(self.inspection())

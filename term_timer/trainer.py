@@ -143,8 +143,8 @@ class Trainer(SolveInterface):
 
         quit_solve = await self.scramble_solve()
 
-        if quit_solve:
-            return False
+        if quit_solve is not None:
+            return quit_solve
 
         await self.wait_solve()
         await self.time_solve()
