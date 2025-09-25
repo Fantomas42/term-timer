@@ -132,6 +132,7 @@ class Trainer(SolveInterface):
 
         case, main_algorithm, self.scramble, cube = trainer(
                 self.step, self.cases,
+                self.cube_orientation_moves,
                 self.bluetooth_cube,
         )
 

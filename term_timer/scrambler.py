@@ -10,7 +10,6 @@ from cubing_algs.transform.rotation import compress_final_rotations
 from cubing_algs.vcube import VCube
 from kociemba import solve
 
-from term_timer.config import CUBE_ORIENTATION_MOVES
 from term_timer.exceptions import InvalidCaseError
 from term_timer.magic_cube import Cube
 from term_timer.methods.cases import CASES
@@ -51,7 +50,9 @@ def scrambler(cube_size: int, iterations: int,
     return scrambled, cube
 
 
-def trainer(step, cases, bluetooth_cube: VCube | None = None):
+def trainer(step, cases,
+            orientation_moves: Algorithm,
+            bluetooth_cube: VCube | None = None):
     cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube()
 
     if step == 'cross':
@@ -59,14 +60,16 @@ def trainer(step, cases, bluetooth_cube: VCube | None = None):
         main_algorithm = Algorithm()
         scramble = scramble_easy_cross()
     else:
-        case_name, main_algorithm, scramble = random_training(step, cases)
+        case_name, main_algorithm, scramble = random_training(
+            step, cases, orientation_moves,
+        )
 
     cube.rotate(scramble)
 
     return case_name, main_algorithm, scramble, cube
 
 
-def random_training(step, selected_cases):
+def random_training(step, selected_cases, orientation_moves: Algorithm):
     cases = CASES[step.upper()]
     valid_cases = {k: v for k, v in cases.items() if v.get('setups')}
 
@@ -77,10 +80,11 @@ def random_training(step, selected_cases):
         raise InvalidCaseError(error_string)
 
     algo = (
-        CUBE_ORIENTATION_MOVES
+        orientation_moves
         + choice(cases[case]['setups'])
-        + CUBE_ORIENTATION_MOVES
+        + mirror_moves(orientation_moves)
     )
+
     case_name = cases[case]['name']
     main_algorithm = cases[case]['main']
 
