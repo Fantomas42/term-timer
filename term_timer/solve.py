@@ -278,17 +278,23 @@ class Solve:
         )
 
     @cached_property
+    def method_line_with_orientation(self) -> str:
+        method_line = self.method_line
+
+        if method_line and self.orientation_moves:
+            method_line = (
+                '[step]Orientation:[/step] '
+                f'[rotation]{ self.orientation_moves!s }[/rotation]\n'
+            ) + method_line
+
+        return method_line
+
+    @cached_property
     def method_line(self) -> str:
         if not self.method_applied:
             return ''
 
         line = ''
-        if self.orientation_moves:
-            line += (
-                '[step]Orientation:[/step] '
-                f'[rotation]{ self.orientation_moves!s }[/rotation]\n'
-            )
-
         for info in self.method_applied.summary:
 
             header = ''
