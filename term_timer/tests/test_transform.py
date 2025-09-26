@@ -163,7 +163,7 @@ class TransformHumanizeTestCase(unittest.TestCase):
         # Should return original if ends with rotation
         self.assertEqual(result, algorithm)
 
-    def test_humanize_moves_with_rotation_at_end_fat(self):
+    def test_humanize_moves_with_rotation_at_end_wide(self):
         algorithm = parse_moves("R U R' x")
         expect = parse_moves("R U l'")
 
