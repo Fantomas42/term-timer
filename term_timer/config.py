@@ -22,6 +22,7 @@ orientation = "DF"
 method = "cf4op"
 palette = ""
 effect = "face-visible"
+right-handed = true
 
 [trainer]
 step = "oll"
@@ -87,6 +88,8 @@ CUBE_METHOD = CUBE_CONFIG.get('method')
 CUBE_PALETTE = CUBE_CONFIG.get('palette')
 
 CUBE_EFFECT = CUBE_CONFIG.get('effect')
+
+CUBE_RIGHT_HANDED = CUBE_CONFIG.get('right-handed')
 
 AUF_MOVE = OPPOSITE_FACES[CUBE_ORIENTATION[0]]
 

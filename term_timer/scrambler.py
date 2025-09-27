@@ -10,6 +10,7 @@ from cubing_algs.transform.rotation import compress_final_rotations
 from cubing_algs.vcube import VCube
 from kociemba import solve
 
+from term_timer.config import CUBE_RIGHT_HANDED
 from term_timer.exceptions import InvalidCaseError
 from term_timer.magic_cube import Cube
 from term_timer.methods.cases import CASES
@@ -38,6 +39,7 @@ def scrambler(cube_size: int, iterations: int,
         scrambled = scramble(
             cube_size, iterations,
             inner_layers=True,
+            right_handed=CUBE_RIGHT_HANDED,
         )
 
     cube.rotate(scrambled)
