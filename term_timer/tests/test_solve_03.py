@@ -64,7 +64,7 @@ class TestSolve03(unittest.TestCase):
 
     def test_solution(self):
         self.assertEqual(
-            self.solve.solution.metrics['htm'],
+            self.solve.solution.metrics.htm,
             7,
         )
 

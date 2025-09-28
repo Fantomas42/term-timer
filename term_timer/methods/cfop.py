@@ -100,7 +100,7 @@ class CFOPAnalyser(Analyser):
             cross_norm = self.norms.get('moves', {}).get(step_one['name'], 0)
             if cross_norm:
                 malus += (
-                    step_one['moves_prettified'].metrics['htm']
+                    step_one['moves_prettified'].metrics.htm
                     - cross_norm
                 )
 

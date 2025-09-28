@@ -510,9 +510,10 @@ class StatisticsReporter(Statistics):
                 f' [{ exec_class }]{ exec_percent:.2f}%[{ exec_class }]',
             )
 
+            metrics_dict = solve.reconstruction.metrics._asdict()
             metric_string = '[stats]Metrics    :[/stats] '
             for metric in STATS_CONFIG.get('metrics'):
-                value = solve.reconstruction.metrics[metric]
+                value = metrics_dict[metric]
                 metric_string += (
                     f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
                 )

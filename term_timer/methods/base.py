@@ -255,7 +255,7 @@ class Analyser(FaceletAnalyser):
         pre_auf, post_auf = None, None
         pre, post = self.aufs.get(name, [False, False])
 
-        if pre and len(moves.metrics['generators']) > 1:
+        if pre and len(moves.metrics.generators) > 1:
             pre_auf = self.get_auf(moves, 'pre')
 
         if post:

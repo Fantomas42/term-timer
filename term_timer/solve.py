@@ -207,8 +207,9 @@ class Solve:
 
         metric_string = ''
         metrics = STATS_CONFIG.get('metrics')
+        metrics_dict = self.reconstruction.metrics._asdict()
         for metric in metrics:
-            value = self.reconstruction.metrics[metric]
+            value = metrics_dict[metric]
             metric_string += (
                 f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
             )
@@ -250,8 +251,9 @@ class Solve:
 
         metric_string = ''
         metrics = STATS_CONFIG.get('metrics')
+        metrics_dict = self.reconstruction.metrics._asdict()
         for metric in metrics:
-            value = self.reconstruction.metrics[metric]
+            value = metrics_dict[metric]
             metric_string += (
                 f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
             )
@@ -360,7 +362,7 @@ class Solve:
 
             move_klass = self.method_applied.normalize_value(
                 'moves', info['name'],
-                info['moves_prettified'].metrics['htm'],
+                info['moves_prettified'].metrics.htm,
                 'result',
             )
             percent_klass = self.method_applied.normalize_value(
@@ -378,7 +380,7 @@ class Solve:
             line += (
                 f'{ header }'
                 f'[{ move_klass }]'
-                f'{ info["moves_prettified"].metrics["htm"]:>2} HTM'
+                f'{ info["moves_prettified"].metrics.htm:>2} HTM'
                 f'[/{ move_klass }] '
                 f'[recognition]'
                 f'{ format_duration(info["recognition"]):>5}s[/recognition] '
@@ -507,7 +509,7 @@ class Solve:
                 f'{ info["name"] }{ details } '
                 f'Reco: { format_duration(info["recognition"]) }s '
                 f'Exec: { format_duration(info["execution"]) }s '
-                f'HTM: { info["moves_prettified"].metrics["htm"] } '
+                f'HTM: { info["moves_prettified"].metrics.htm } '
                 f'{ aufs }\n'
             )
 
@@ -618,7 +620,7 @@ class Solve:
     def missed_moves(self, algorithm) -> int:
         source, compressed = self.missed_moves_pair(algorithm)
 
-        return source.metrics['qtm'] - compressed.metrics['qtm']
+        return source.metrics.qtm - compressed.metrics.qtm
 
     def pauses(self, algorithm) -> int:
         if not algorithm:
