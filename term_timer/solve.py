@@ -101,7 +101,10 @@ class Solve:
 
     @cached_property
     def orientation_moves(self):
-        return get_orientation_moves(self.orientation)
+        return get_orientation_moves(
+            self.orientation,
+            self.scramble, self.solution,
+        )
 
     @staticmethod
     def compute_tps(moves: int, time: int) -> float:
