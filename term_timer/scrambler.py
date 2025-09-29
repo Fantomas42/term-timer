@@ -44,7 +44,7 @@ def scrambler(cube_size: int, iterations: int,
 
     cube.rotate(scrambled)
 
-    if cube_size != 3 or iterations or easy_cross or scrambled:
+    if cube_size != 3 or iterations or easy_cross or raw_scramble:
         return scrambled, cube
 
     scrambled = state_to_scramble(cube.state)
