@@ -13,9 +13,9 @@ from term_timer.argparser import ArgumentParser
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.config import CUBE_ORIENTATION
-from term_timer.config import CUBE_ORIENTATION_MOVES
 from term_timer.logger import LOGGING_DIR
 from term_timer.opengl.thread import CubeGLThread
+from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
@@ -74,6 +74,8 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
     moves = []
     hardware = ''
     battery = ''
+
+    orientation_moves = get_orientation_moves(CUBE_ORIENTATION)
 
     def print_cube(cube):
         if show_cube:
@@ -171,7 +173,7 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
                 recon = prettify_moves(
                     humanize_moves(
                         reorient_moves(
-                            CUBE_ORIENTATION_MOVES,
+                            orientation_moves,
                             algo,
                         ),
                     ),

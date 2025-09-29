@@ -81,8 +81,6 @@ SERVER_CONFIG = CONFIG.get('server', {})
 
 CUBE_ORIENTATION = CUBE_CONFIG.get('orientation')
 
-CUBE_ORIENTATION_MOVES = get_orientation_moves(CUBE_ORIENTATION)
-
 CUBE_METHOD = CUBE_CONFIG.get('method')
 
 CUBE_PALETTE = CUBE_CONFIG.get('palette')
