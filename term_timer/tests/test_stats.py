@@ -3,6 +3,8 @@ import unittest
 from unittest.mock import Mock
 from unittest.mock import patch
 
+from cubing_algs.metrics import MetricsData
+
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -437,7 +439,10 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.recognition_time = 2 * SECOND
         mock_solve.execution_time = 13 * SECOND
         mock_solve.reconstruction = Mock()
-        mock_solve.reconstruction.metrics = {'qtm': 50, 'htm': 45}
+        mock_solve.reconstruction.metrics._asdict.return_value = {
+            'qtm': 50,
+            'htm': 45,
+        }
         mock_solve.tps = 2.5
         mock_solve.all_missed_moves = 3
         mock_solve.execution_missed_moves = 1
@@ -520,7 +525,9 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
                 mock_solve.recognition_time = 2 * SECOND
                 mock_solve.execution_time = 13 * SECOND
                 mock_solve.reconstruction = Mock()
-                mock_solve.reconstruction.metrics = {'qtm': 50}
+                mock_solve.reconstruction.metrics._asdict.return_value = {
+                    'qtm': 50,
+                }
                 mock_solve.tps = 2.5
                 mock_solve.all_missed_moves = 0
                 mock_solve.execution_missed_moves = 0
@@ -589,7 +596,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.recognition_time = 2 * SECOND
         mock_solve.execution_time = 13 * SECOND
         mock_solve.reconstruction = Mock()
-        mock_solve.reconstruction.metrics = {'qtm': 50}
+        mock_solve.reconstruction.metrics._asdict.return_value = {'qtm': 50}
         mock_solve.tps = 2.5
         mock_solve.all_missed_moves = 0
         mock_solve.execution_missed_moves = 0
@@ -663,7 +670,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.recognition_time = 2 * SECOND
         mock_solve.execution_time = 13 * SECOND
         mock_solve.reconstruction = Mock()
-        mock_solve.reconstruction.metrics = {'qtm': 50}
+        mock_solve.reconstruction.metrics._asdict.return_value = {'qtm': 50}
         mock_solve.tps = 2.5
         mock_solve.all_missed_moves = 0
         mock_solve.execution_missed_moves = 0
