@@ -1,10 +1,10 @@
 import gc
-import json
 import os
 import re
 from datetime import datetime
 from datetime import timezone
 from http import HTTPStatus
+from typing import ClassVar
 from wsgiref.simple_server import WSGIRequestHandler
 
 from bottle import TEMPLATE_PATH
@@ -680,7 +680,7 @@ class SolveDeleteView:
 
 class AcademyView(View):
     template_name = 'academy/overview.html'
-    methods = {
+    methods: ClassVar[dict[str, dict[str, str]]] = {
         'CFOP': {
             'name': 'CFOP',
             'description': (
@@ -756,7 +756,7 @@ class AcademyStepView(AcademyView):
                     case_info['code'], case_info['name'], _ = parse_case_name(
                         case_data['name'], self.step,
                     )
-                except:
+                except KeyError:
                     case_info['code'] = case_id
                     case_info['name'] = case_id
             elif self.step == 'PLL':
@@ -798,8 +798,10 @@ class AcademyCaseView(AcademyView):
 
         if self.step == 'OLL':
             try:
-                case_info['code'], case_info['name'], _ = parse_case_name(self.case_id, self.step)
-            except:
+                case_info['code'], case_info['name'], _ = parse_case_name(
+                    self.case_id, self.step,
+                )
+            except KeyError:
                 case_info['code'] = self.case_id
                 case_info['name'] = self.case_id
         elif self.step == 'PLL':

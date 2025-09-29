@@ -3,8 +3,6 @@ import unittest
 from unittest.mock import Mock
 from unittest.mock import patch
 
-from cubing_algs.metrics import MetricsData
-
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
