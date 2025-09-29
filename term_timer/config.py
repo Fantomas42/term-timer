@@ -5,7 +5,6 @@ from typing import Any
 from cubing_algs.constants import OPPOSITE_FACES
 
 from term_timer.constants import CONFIG_FILE
-from term_timer.orientation import get_orientation_moves
 
 if find_spec('tomllib') is not None:
     import tomllib
