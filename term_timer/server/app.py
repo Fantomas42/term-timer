@@ -1,37 +1,51 @@
+import gc
 import os
 import re
 from datetime import datetime
 from datetime import timezone
 from http import HTTPStatus
+from typing import ClassVar
 from wsgiref.simple_server import WSGIRequestHandler
 
 from bottle import TEMPLATE_PATH
 from bottle import Bottle
 from bottle import abort
 from bottle import jinja2_template
+from bottle import redirect
 from bottle import request
 from bottle import static_file
+from cubing_algs.transform.optimize import optimize_double_moves
+from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.timing import untime_moves
 
-from term_timer.config import CUBE_ORIENTATION
+from term_timer.aggregator import SolvesMethodAggregator
+from term_timer.config import CUBE_METHOD
 from term_timer.constants import CUBE_SIZES
+from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.constants import PAUSE_FACTOR
 from term_timer.constants import SECOND
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
+from term_timer.formatter import format_alg_aufs
+from term_timer.formatter import format_alg_diff
+from term_timer.formatter import format_alg_moves
+from term_timer.formatter import format_alg_pauses
 from term_timer.formatter import format_alg_triggers
-from term_timer.formatter import format_aufs
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
-from term_timer.formatter import format_moves
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
+from term_timer.in_out import save_solves
 from term_timer.interface.console import console
-from term_timer.methods.base import STEPS_CONFIG
-from term_timer.methods.cfop import CFOPAnalyser
+from term_timer.methods import METHOD_ANALYSERS
+from term_timer.methods.base import get_step_config
+from term_timer.methods.cases import CASES
+from term_timer.orientation import ORIENTATION_MOVES
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
+from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 
 SPAN_REGEX = re.compile(r'(<span[^>]*>.*?</span>)')
@@ -71,7 +85,7 @@ def format_score(score: int, title: str = '') -> str:
     return f'<span class="stat-{ klass }">{ title }{ score:.2f}</span>'
 
 
-def format_line(value):
+def format_line(value: str) -> str:
     if not value:
         return ''
 
@@ -81,13 +95,19 @@ def format_line(value):
         legend = LEGENDS.get(markup, markup.title())
 
         klass = 'move'
+        move_name = ''
         if len(moves.split(' ')) > 1:
             klass = 'trigger'
+        else:
+            move_name = moves.lower().replace(
+                "'", '',
+            ).replace(
+                '2', '',
+            )
 
         return (
-            f'<span class="{ klass } { markup }" title="{ legend }">'
-            + moves +
-            '</span>'
+            f'<span class="{ klass } { markup } { move_name }"'
+            f' title="{ legend }">{ moves }</span>'
         )
 
     result = BLOCK_REGEX.sub(replacer, value)
@@ -107,52 +127,124 @@ def format_line(value):
     return ' '.join(processed_parts)
 
 
-def normalize_value(value, method_applied, metric, name):
+def parse_case_name(value, step):
+    try:
+        code, name = value.split(' ', 1)
+    except ValueError:
+        if step == 'PLL':
+            return value, f'PLL { value }', 'PLL'
+        if step.startswith('F2L'):
+            return value, f'F2L { value }', 'F2L'
+        return value, '', ''
+    else:
+        return code, name, 'OLL'
+
+
+def normalize_value(value, method_applied, metric, name) -> str:
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value }</span>'
 
 
-def normalize_percent(value, method_applied, metric, name):
+def normalize_percent(value, method_applied, metric, name) -> str:
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value:.2f}%</span>'
 
 
-def reconstruction_step(step):
+def reconstruction_step(step) -> str:
     algorithm = str(step['moves_prettified'])
 
     algorithm = format_alg_triggers(
-        format_moves(
-            format_aufs(
+        format_alg_moves(
+            format_alg_aufs(
                 algorithm,
                 *step['aufs'],
             ),
         ),
-        STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
+        get_step_config(step['name'], 'triggers', []),
     )
 
     return format_line(algorithm)
 
 
+def reconstruction_overheads(step, solve: Solve) -> str:
+    source, compressed = solve.missed_moves_pair(
+        step['moves_humanized'],
+    )
+    source_paused = source.transform(
+        untime_moves,
+        optimize_double_moves,
+    )
+    compressed_paused = compressed.transform(
+        untime_moves,
+        optimize_double_moves,
+    )
+
+    algo = format_alg_triggers(
+        format_alg_moves(
+            format_alg_aufs(
+                format_alg_diff(
+                    source_paused,
+                    compressed_paused,
+                ),
+                *step['aufs'],
+            ),
+        ),
+        get_step_config(step['name'], 'triggers', []),
+    )
+
+    return format_line(algo)
+
+
+def reconstruction_pauses(step, solve: Solve) -> str:
+    source_paused = step['moves_humanized'].transform(
+        pause_moves(
+            solve.move_speed / MS_TO_NS_FACTOR,
+            PAUSE_FACTOR,
+            multiple=True,
+        ),
+        untime_moves,
+        optimize_double_moves,
+    )
+
+    source_paused = format_alg_pauses(
+        format_alg_triggers(
+            format_alg_moves(
+                format_alg_aufs(
+                    str(source_paused),
+                    *step['aufs'],
+                ),
+            ),
+            get_step_config(step['name'], 'triggers', []),
+        ),
+        solve, step, multiple=True,
+    )
+
+    return format_line(source_paused)
+
+
 def optimized_step(step):
     optimizers = []
 
-    if not step['cases'] or 'SKIP' not in step['cases'][0]:
-        optimizers = STEPS_CONFIG.get(step['name'], {}).get('optimizers', [])
+    if 'SKIP' not in step['case']:
+        optimizers = get_step_config(step['name'], 'optimizers', [])
 
-    optimizers.extend([compress_moves, untime_moves])
-
-    algorithm = step['moves_reoriented'].transform(*optimizers)
+    algorithm = humanize_moves(
+        step['moves_reoriented'].transform(*optimizers),
+    ).transform(
+        compress_moves,
+        untime_moves,
+    )
 
     algorithm_string = format_alg_triggers(
-        format_moves(
-            format_aufs(
+        format_alg_moves(
+            format_alg_aufs(
                 str(algorithm),
                 *step['aufs'],
             ),
         ),
-        STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
+        get_step_config(step['name'], 'triggers', []),
     )
 
     return format_line(algorithm_string), algorithm
@@ -184,15 +276,20 @@ class View:
     def get_context(self):
         raise NotImplementedError
 
-    def as_view(self, debug):
-        return self.template(
+    def as_view(self, debug: bool) -> str:  # noqa: FBT001
+        context = self.get_context()
+
+        content = self.template(
             self.template_name,
             DEBUG=debug,
-            **self.get_context(),
+            **context,
         )
+        gc.collect()
+
+        return content
 
     def template(self, template_name, **context):
-        context['now'] = datetime.now(tz=timezone.utc)  # noqa UP017
+        context['now'] = datetime.now(tz=timezone.utc)  # noqa: UP017
 
         return jinja2_template(
             template_name,
@@ -204,9 +301,12 @@ class View:
                     'format_time': format_time,
                     'format_score': format_score,
                     'format_line': format_line,
+                    'parse_case_name': parse_case_name,
                     'normalize_value': normalize_value,
                     'normalize_percent': normalize_percent,
                     'reconstruction_step': reconstruction_step,
+                    'reconstruction_overheads': reconstruction_overheads,
+                    'reconstruction_pauses': reconstruction_pauses,
                     'optimized_step': optimized_step,
                     'prettify': prettify_moves,
                 },
@@ -243,7 +343,7 @@ class Error500View(View):
         }
 
 
-class IndexView(View):
+class SessionListView(View):
     template_name = 'index.html'
 
     def get_context(self):
@@ -287,10 +387,10 @@ class IndexView(View):
         }
 
 
-class SessionView(View):
+class SessionDetailView(View):
     template_name = 'session.html'
 
-    def __init__(self, cube, session, oll, pll):
+    def __init__(self, cube, session, method_name, step, case_uid):
         self.cube = cube
         self.session = session
 
@@ -299,24 +399,38 @@ class SessionView(View):
             [] if session == 'all' else [session],
             [], '',
         )
+        if not method_name:
+            method_name = CUBE_METHOD
 
-        self.oll = oll
-        self.pll = pll
+        self.step = step.strip().lower()
+        self.case_uid = case_uid.strip().lower()
+        self.method_name = method_name.strip().lower()
 
-        if oll or pll:
+        self.method_aggregation = SolvesMethodAggregator(
+            self.method_name, solves, full=True,
+        )
+
+        solves = self.method_aggregation.results['stack']
+
+        if self.step and self.case_uid:
             filtered_solves = []
-            for solve in solves:
-                analysis = CFOPAnalyser(solve.scramble, solve.solution)
-                step_oll, step_pll = analysis.summary[-2:]
 
-                if (
-                        (oll and step_oll['cases'][0].split(' ')[0] == oll)
-                        or
-                        (pll and step_pll['cases'][0].split(' ')[0] == pll)
-                ):
-                    filtered_solves.append(solve)
+            for solve in solves:
+                if not solve.advanced:
+                    continue
+
+                for s_step in reversed(solve.method_applied.summary):
+                    if s_step['name'].lower() == self.step:
+                        if s_step['case']:
+                            step_case = s_step['case'].split(' ')[0].lower()
+                            if step_case == self.case_uid:
+                                filtered_solves.append(solve)
+                        break
 
             solves = filtered_solves
+
+        if not solves:
+            abort(404, 'No solve to display')
 
         self.stats = StatisticsReporter(
             cube, solves,
@@ -328,12 +442,12 @@ class SessionView(View):
             'session': self.session,
             'stats': self.stats,
             'sessions': self.compute_sessions(),
-            'cfop': self.stats.compute_cfop(),
             'trend': self.compute_trend(),
             'distribution': self.compute_distribution(),
             'punchcard': self.compute_punchcard(),
-            'oll': self.oll,
-            'pll': self.pll,
+            'step': self.step,
+            'case_uid': self.case_uid,
+            'method_aggregation': self.method_aggregation,
         }
 
     def compute_sessions(self):
@@ -402,10 +516,10 @@ class SessionView(View):
         return punchcard
 
 
-class SolveView(View):
+class SolveDetailView(View):
     template_name = 'solve.html'
 
-    def __init__(self, cube, session, solve, method):
+    def __init__(self, cube, session, solve, method_name, orientation):
         self.cube = cube
         self.session = session
 
@@ -416,13 +530,16 @@ class SolveView(View):
         )
 
         self.solve_id = solve
+        self.solve_index = solve - 1
         try:
-            self.solve = self.solves[solve - 1]
+            self.solve = self.solves[self.solve_index]
         except IndexError:
             abort(404, 'Invalid solve ID')
 
-        if method:
-            self.solve.method_name = method
+        method_name = method_name.strip().lower()
+        if method_name:
+            self.solve.method_name = method_name
+        self.solve.orientation = orientation
 
     def get_context(self):
         tps = []
@@ -500,11 +617,219 @@ class SolveView(View):
             'steps': steps,
             'tps': tps,
             'recognitions': recognitions,
-            'cube_orientation': CUBE_ORIENTATION,
             'reconstruction_text': reconstruction_text,
             'reconstruction_timing': self.solve.reconstruction_steps_timing,
             'reconstruction_index': step_index,
             'rank': rank,
+            'available_orientations': ORIENTATION_MOVES,
+            'available_methods': list(METHOD_ANALYSERS.keys()),
+        }
+
+
+class SolveUpdateView:
+
+    def __init__(self, cube, session, solve_id, flag):
+        self.cube = cube
+        self.session = session
+        self.solve_id = solve_id
+        self.flag = flag
+
+        self.solves = load_all_solves(
+            cube,
+            [] if session == 'all' else [session],
+            [], '',
+        )
+
+        self.solve_index = solve_id - 1
+        try:
+            self.solve = self.solves[self.solve_index]
+        except IndexError:
+            abort(404, 'Invalid solve ID')
+
+        self.solves[self.solve_index].flag = flag
+        save_solves(cube, session, self.solves)
+
+        redirect(f'/{ cube }/{ session }/{ solve_id }/')
+
+
+class SolveDeleteView:
+
+    def __init__(self, cube, session, solve_id):
+        self.cube = cube
+        self.session = session
+        self.solve_id = solve_id
+
+        self.solves = load_all_solves(
+            cube,
+            [] if session == 'all' else [session],
+            [], '',
+        )
+
+        self.solve_index = solve_id - 1
+        try:
+            self.solve = self.solves[self.solve_index]
+        except IndexError:
+            abort(404, 'Invalid solve ID')
+
+        self.solves.pop(self.solve_index)
+        save_solves(cube, session, self.solves)
+
+        redirect(f'/{ cube }/{ session }/')
+
+
+class AcademyView(View):
+    template_name = 'academy/overview.html'
+    methods: ClassVar[dict[str, dict[str, str]]] = {
+        'CFOP': {
+            'name': 'CFOP',
+            'description': (
+                'Cross, F2L, OLL, PLL - The most popular speedcubing method'
+            ),
+            'steps': {
+                'F2L': {
+                    'name': 'F2L',
+                    'description': (
+                        'First Two Layers - '
+                        'Solve cross and first two layers simultaneously'
+                    ),
+                    'description_alt': (
+                        'Solve the cross and first two layers simultaneously '
+                        'using corner-edge pairs.'
+                    ),
+                },
+                'OLL': {
+                    'name': 'OLL',
+                    'description': (
+                        'Orientation of Last Layer - '
+                        'Orient all pieces on the last layer'
+                    ),
+                    'description_alt': (
+                        'Orient all pieces on the last layer '
+                        'to show the same color on top.'
+                    ),
+                },
+                'PLL': {
+                    'name': 'PLL',
+                    'description': (
+                        'Permutation of Last Layer - '
+                        'Permute all pieces on the last layer'
+                    ),
+                    'description_alt': (
+                        'Permute all pieces on the last layer '
+                        'to their correct positions.'
+                    ),
+                },
+            },
+        },
+    }
+
+    def get_context(self):
+        return {
+            'methods': self.methods,
+        }
+
+
+class AcademyStepView(AcademyView):
+    template_name = 'academy/step.html'
+
+    def __init__(self, step):
+        self.step = step.upper()
+
+        try:
+            self.cases_data = CASES[self.step]
+        except KeyError:
+            abort(404, f'{ self.step } does not exist')
+
+    def get_context(self):
+        cases = []
+
+        for case_id, case_data in self.cases_data.items():
+            case_info = {
+                'id': case_id,
+                'name': case_data['name'],
+                'main_algorithm': case_data['main'],
+                'masks_count': len(case_data['masks']),
+            }
+            if self.step == 'OLL':
+                try:
+                    case_info['code'], case_info['name'], _ = parse_case_name(
+                        case_data['name'], self.step,
+                    )
+                except KeyError:
+                    case_info['code'] = case_id
+                    case_info['name'] = case_id
+            elif self.step == 'PLL':
+                case_info['code'] = case_id
+                case_info['name'] = f'PLL {case_id}'
+            elif self.step == 'F2L':
+                case_info['code'] = case_id
+                case_info['name'] = f'F2L {case_id}'
+
+            cases.append(case_info)
+
+        return {
+            'step': self.step,
+            'step_info': self.methods['CFOP']['steps'][self.step],
+            'cases': cases,
+            'cases_count': len(cases),
+        }
+
+
+class AcademyCaseView(AcademyView):
+    template_name = 'academy/case.html'
+
+    def __init__(self, step, case_id):
+        self.step = step.upper()
+        self.case_id = case_id
+
+        try:
+            self.case_data = CASES[self.step][self.case_id]
+        except KeyError:
+            abort(404, f'{ self.step } { self.case_id } does not exist')
+
+    def get_context(self):
+        case_info = {
+            'id': self.case_id,
+            'name': self.case_id,
+            'main_algorithm': self.case_data['main'],
+            'probability': self.case_data['probability_label'],
+        }
+
+        if self.step == 'OLL':
+            try:
+                case_info['code'], case_info['name'], _ = parse_case_name(
+                    self.case_id, self.step,
+                )
+            except KeyError:
+                case_info['code'] = self.case_id
+                case_info['name'] = self.case_id
+        elif self.step == 'PLL':
+            case_info['code'] = self.case_id
+            case_info['name'] = f'PLL {self.case_id}'
+        elif self.step == 'F2L':
+            case_info['code'] = self.case_id
+            case_info['name'] = f'F2L {self.case_id}'
+
+        # Process masks for different orientations
+        orientations = []
+        masks = self.case_data.get('masks', {})
+        for mask, aufs in masks.items():
+            orientations.append({
+                'mask': mask,
+                'aufs': aufs,
+            })
+
+        # Process setup algorithms
+        setups = self.case_data.get('setups', [])
+
+        return {
+            'step': self.step,
+            'step_info': self.methods['CFOP']['steps'][self.step],
+            'case': case_info,
+            'orientations': orientations,
+            'orientations_count': len(orientations),
+            'setups': setups,
+            'setups_count': len(setups),
         }
 
 
@@ -536,35 +861,76 @@ class Server:
     def create_app(self, debug):
         app = Bottle()
 
+        @app.hook('before_request')
+        def add_trailing_slash():
+            path = request.environ.get('PATH_INFO', '')
+
+            if (
+                    path != '/'
+                    and not path.endswith('/')
+                    and '.' not in path.split('/')[-1]
+            ):
+                new_url = request.url + '/'
+                redirect(new_url, code=301)
+
         @app.route('/')
-        def index():
-            return IndexView().as_view(debug)
+        def session_list():
+            return SessionListView().as_view(debug)
+
+        @app.route('/academy/')
+        def academy_overview():
+            return AcademyView().as_view(debug)
+
+        @app.route('/academy/<step>/')
+        def academy_step(step):
+            return AcademyStepView(step).as_view(debug)
+
+        @app.route('/academy/<step>/<case_id>/')
+        def academy_case(step, case_id):
+            return AcademyCaseView(step, case_id).as_view(debug)
+
+        @app.route('/<cube:int>/<session:path>/<solve:int>/update/',
+                   method='POST')
+        def solve_update(cube, session, solve):
+            return SolveUpdateView(
+                cube, session, solve,
+                request.POST.flag,
+            ).as_view(debug)
+
+        @app.route('/<cube:int>/<session:path>/<solve:int>/delete/',
+                   method='POST')
+        def solve_delete(cube, session, solve):
+            return SolveDeleteView(
+                cube, session, solve,
+            ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/')
-        def solve(cube, session, solve):
-            return SolveView(
+        def solve_detail(cube, session, solve):
+            return SolveDetailView(
                 cube, session, solve,
-                request.query.m or '',
+                request.GET.m or '',
+                request.GET.o or 'auto',
             ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/')
-        def session(cube, session):
-            return SessionView(
+        def session_detail(cube, session):
+            return SessionDetailView(
                 cube, session,
-                request.query.oll or '',
-                request.query.pll or '',
+                request.GET.m or '',
+                request.GET.step or '',
+                request.GET.case_uid or '',
             ).as_view(debug)
 
         @app.route('/static/<filepath:path>')
-        def serve_static(filepath):
+        def static_serve(filepath):
             return static_file(filepath, root=STATIC_DIRECTORY)
 
         @app.error(404)
-        def error404(error):
+        def error_404(error):
             return Error404View(error).as_view(debug)
 
         @app.error(500)
-        def error500(error):
+        def error_500(error):
             return Error500View(error).as_view(debug)
 
         return app

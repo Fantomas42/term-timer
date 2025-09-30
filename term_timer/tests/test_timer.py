@@ -9,6 +9,7 @@ class TestTimerModule(unittest.TestCase):
             cube_size=3,
             iterations=0,
             easy_cross=False,
+            scramble='',
             session='default',
             free_play=True,
             show_cube=False,
@@ -18,6 +19,8 @@ class TestTimerModule(unittest.TestCase):
             show_recognition_graph=False,
             countdown=0,
             metronome=0,
+            orientation='DF',
+            method='raw',
             stack=[],
         )
 
@@ -31,7 +34,7 @@ class TestTimerModule(unittest.TestCase):
                 'facelets_received_event',
                 'hardware_received_event',
                 'console',
-                'cube_orientation',
+                'cube_orientation_moves',
                 'save_moves',
                 'save_gesture',
                 'save_gesture_event',

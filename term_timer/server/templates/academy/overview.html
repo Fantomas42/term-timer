@@ -1,0 +1,65 @@
+{% extends "skeleton.html" %}
+
+{% block title %}Academy{% endblock %}
+{% block subtitle %}Learning Center{% endblock %}
+
+{% block description %}
+  Learn CFOP method with detailed case analysis and algorithms for speedcubing.
+{% endblock %}
+
+{% block body %}
+<main class="academy-overview">
+  <section class="intro">
+    <h2>CFOP Academy</h2>
+    <p>
+      Master the CFOP method with our comprehensive learning center.
+      Explore all cases, algorithms, and techniques for each step of the method.
+    </p>
+  </section>
+
+  {% for method_name, method in methods.items() %}
+  <section class="method-section">
+    <h3>{{ method.name }}</h3>
+    <p class="method-description">{{ method.description }}</p>
+
+    <div class="steps-grid">
+      {% for code, step in method.steps.items() %}
+      <div class="step-card">
+        <h4>
+          <a href="/academy/{{ step.name.lower() }}/">
+            <i class="fas fa-cube"></i>
+            {{ step.name }}
+          </a>
+        </h4>
+        <p>{{ step.description }}</p>
+        <div class="step-actions">
+          <a href="/academy/{{ step.name.lower() }}/" class="btn btn-primary">
+            View Cases
+            <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+
+  <section class="quick-stats">
+    <h3>Quick Reference</h3>
+    <div class="stats-grid academy-stats">
+      <div class="stat-card academy-stat">
+        <div class="stat-number">42</div>
+        <div class="stat-label">F2L Cases</div>
+      </div>
+      <div class="stat-card academy-stat">
+        <div class="stat-number">57</div>
+        <div class="stat-label">OLL Cases</div>
+      </div>
+      <div class="stat-card academy-stat">
+        <div class="stat-number">21</div>
+        <div class="stat-label">PLL Cases</div>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

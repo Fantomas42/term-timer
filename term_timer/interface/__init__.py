@@ -4,7 +4,10 @@ import time
 from datetime import datetime
 from datetime import timezone
 
+from cubing_algs.algorithm import Algorithm
+
 from term_timer.constants import DNF
+from term_timer.constants import ESCAPE_CHAR
 from term_timer.constants import PLUS_TWO
 from term_timer.in_out import save_solves
 from term_timer.interface.bluetooth import Bluetooth
@@ -45,13 +48,13 @@ class SolveInterface(
 
         self.moves = []
 
-        self.save_moves = []
+        self.save_moves = Algorithm()
         self.save_gesture = ''
         self.save_gesture_event.clear()
 
-        self.scramble = []
-        self.scrambled = []
-        self.scramble_oriented = []
+        self.scramble = Algorithm()
+        self.scrambled = Algorithm()
+        self.scramble_oriented = Algorithm()
         self.facelets_scrambled = ''
         self.scramble_completed_event.clear()
 
@@ -76,12 +79,15 @@ class SolveInterface(
         else:
             char = await self.getch('scrambled')
 
-        if char == 'q':
+        if char in {'q', ESCAPE_CHAR}:
+            return False
+
+        if char and self.bluetooth_interface:
             return True
 
         self.set_state('scrambled')
 
-        return False
+        return None
 
     async def inspect_solve(self):
         inspection_task = asyncio.create_task(self.inspection())
@@ -157,7 +163,7 @@ class SolveInterface(
             self.stack[-1].flag = DNF
             save_string = 'Solve marked as DNF'
             save_style = 'caution'
-        elif char in {'o', 'q'}:
+        elif char == 'o':
             self.stack[-1].flag = ''
             save_string = 'Solve marked as OK'
             save_style = 'success'
@@ -184,4 +190,4 @@ class SolveInterface(
         if char != 'z':
             self.counter += 1
 
-        return char == 'q'
+        return char in {'q', ESCAPE_CHAR}

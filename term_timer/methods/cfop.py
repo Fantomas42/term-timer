@@ -1,55 +1,36 @@
-import json
 from functools import cached_property
-from pathlib import Path
 from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.masks import F2L_BL_MASK
+from cubing_algs.masks import F2L_BR_MASK
+from cubing_algs.masks import F2L_FL_MASK
+from cubing_algs.masks import F2L_FR_MASK
 
 from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
+from term_timer.methods.cases.encoders import f2l_case_encoder
+from term_timer.methods.cases.encoders import oll_case_encoder
+from term_timer.methods.cases.encoders import pll_case_encoder
 
-DATA_DIRECTORY = Path(__file__).parent
-OLL_PATH = DATA_DIRECTORY / 'oll.json'
-PLL_PATH = DATA_DIRECTORY / 'pll.json'
-
-OLL_MASKS = {}
-PLL_MASKS = {}
-OLL_INFO = {}
-PLL_INFO = {}
-OLL_SETUPS = {}
-PLL_SETUPS = {}
-
-
-def load_and_fill(path, masks, info, setups):
-    with path.open('r') as fd:
-        for kase, data in json.load(fd).items():
-            for rotation, alternatives in data['rotations'].items():
-                for alternative, hashed in alternatives.items():
-                    masks[hashed] = {
-                        'case': kase,
-                        'rotation': rotation,
-                        'alternative': alternative,
-                    }
-            info[kase] = {
-                'probability': data['probability'],
-            }
-            if data['setups']:
-                setups[kase] = data['setups']
-
-
-load_and_fill(OLL_PATH, OLL_MASKS, OLL_INFO, OLL_SETUPS)
-load_and_fill(PLL_PATH, PLL_MASKS, PLL_INFO, PLL_SETUPS)
+CFOP_CASE_ENCODERS = {
+    'OLL': oll_case_encoder,
+    'PLL': pll_case_encoder,
+    'F2L FR': f2l_case_encoder(F2L_FR_MASK),
+    'F2L FL': f2l_case_encoder(F2L_FL_MASK),
+    'F2L BR': f2l_case_encoder(F2L_BR_MASK),
+    'F2L BL': f2l_case_encoder(F2L_BL_MASK),
+}
 
 
 class CFOPAnalyser(Analyser):
     name = 'CFOP'
-    step_list = ('Cross', 'F2L', 'OLL', 'PLL')
-    aufs: ClassVar[dict[str, tuple[bool, bool]]] = {
-        'F2L': [True, False],
+    step_list: tuple[str, ...] = ('Cross', 'F2L', 'OLL', 'PLL')
+    aufs: ClassVar[dict[str, list[bool]]] = {
         'OLL': [True, False],
         'PLL': [True, True],
     }
-    norms: ClassVar[dict[str, dict[str, float]]] = {
+    norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
         'moves': {
             'Cross': 6,
             'F2L': 30,
@@ -79,6 +60,10 @@ class CFOPAnalyser(Analyser):
             'execution': (80, 100),
         },
     }
+    aggregate: ClassVar[dict[str, int]] = {
+        'oll': -2,
+        'pll': -1,
+    }
 
     def compute_progress(self, facelets):
         progress = 0
@@ -93,40 +78,11 @@ class CFOPAnalyser(Analyser):
 
     def correct_summary(self, summary):
         # Fix OLL SKIP instead of F2L
-        cases = []
         for info in summary:
-            cases.extend(info['cases'])
             if info['increment'] > 1 and 'OLL' in info['name']:
                 info['name'] = 'F2L'
 
         self.correct_summary_cfop(summary)
-
-    def get_oll_case(self, facelets):
-        masked = []
-        for value in facelets:
-            if value != 'D':
-                masked.append('-')
-            else:
-                masked.append(value)
-
-        masked = ''.join(masked)
-
-        if masked in OLL_MASKS:
-            return OLL_MASKS[masked]['case']
-
-        return ''
-
-    def get_pll_case(self, facelets):
-        mask = ('0' * 9) + ('000000111' * 2) + ('0' * 9) + ('000000111' * 2)
-        masked = self.build_facelets_masked(
-            mask,
-            facelets,
-        )
-
-        if masked in PLL_MASKS:
-            return PLL_MASKS[masked]['case']
-
-        return ''
 
     @cached_property
     def score(self):
@@ -144,7 +100,7 @@ class CFOPAnalyser(Analyser):
             cross_norm = self.norms.get('moves', {}).get(step_one['name'], 0)
             if cross_norm:
                 malus += (
-                    step_one['moves_prettified'].metrics['htm']
+                    step_one['moves_prettified'].metrics.htm
                     - cross_norm
                 )
 
@@ -187,7 +143,8 @@ class CFOPAnalyser(Analyser):
                     'step_execution_percent': 0,
                     'step_recognition_percent': 0,
                     'increment': 0,
-                    'cases': ['SKIP'],
+                    'case': 'SKIP',
+                    'case_infos': [],
                     'facelets': '',
                 },
             )
@@ -217,7 +174,8 @@ class CFOPAnalyser(Analyser):
                     'step_execution_percent': 0,
                     'step_recognition_percent': 0,
                     'increment': 0,
-                    'cases': ['SKIP'],
+                    'case': 'SKIP',
+                    'case_infos': [],
                     'facelets': '',
                 },
             )
@@ -247,7 +205,8 @@ class CFOPAnalyser(Analyser):
                     'step_execution_percent': 0,
                     'step_recognition_percent': 0,
                     'increment': 0,
-                    'cases': ['SKIP'],
+                    'case': 'SKIP',
+                    'case_infos': [],
                     'facelets': '',
                 },
             )
@@ -257,26 +216,41 @@ class CFOPAnalyser(Analyser):
             if info['name'] == 'OLL':
                 facelets = info['facelets']
                 if facelets:
-                    info['cases'] = [self.get_oll_case(facelets)]
+                    info['case'] = self.get_step_case(
+                        'OLL', facelets,
+                        CFOP_CASE_ENCODERS['OLL'],
+                    )
 
             elif info['name'] == 'PLL':
                 facelets = info['facelets']
                 if facelets:
-                    info['cases'] = [self.get_pll_case(facelets)]
+                    info['case'] = self.get_step_case(
+                        'PLL', facelets,
+                        CFOP_CASE_ENCODERS['PLL'],
+                    )
+
+            elif info['name'].startswith('F2L '):
+                facelets = info['facelets']
+                case_infos = info['case_infos']
+                if facelets and case_infos:
+                    info['case'] = self.get_step_case(
+                        'F2L', facelets,
+                        CFOP_CASE_ENCODERS[f'F2L { case_infos[0] }'],
+                    )
 
 
 class CF4OPAnalyser(CFOPAnalyser):
     name = 'CF4OP'
-    step_list = ('Cross', 'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4', 'OLL', 'PLL')
-    aufs: ClassVar[dict[str, tuple[bool, bool]]] = {
-        'F2L 1': [True, False],
-        'F2L 2': [True, False],
-        'F2L 3': [True, False],
-        'F2L 4': [True, False],
+    step_list: tuple[str, ...] = (
+        'Cross',
+        'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4',
+        'OLL', 'PLL',
+    )
+    aufs: ClassVar[dict[str, list[bool]]] = {
         'OLL': [True, True],
         'PLL': [True, True],
     }
-    norms: ClassVar[dict[str, dict[str, float]]] = {
+    norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
         'moves': {
             'Cross': 6,
             'XCross': 8,
@@ -330,7 +304,7 @@ class CF4OPAnalyser(CFOPAnalyser):
 
         if not self.check_step('OLL', facelets):
             name = ['F2L 1', 'F2L 2', 'F2L 3', 'F2L 4']
-            pair = ['FL', 'FR', 'BL', 'BR']
+            pair = ['FR', 'FL', 'BR', 'BL']  # UF orientation
 
             score = 1
             pairs = []
@@ -363,9 +337,9 @@ class CF4OPAnalyser(CFOPAnalyser):
             summary[0]['name'] = 'Full Cube'
 
         # Merge double F2L inserts
-        cases = []
+        case_infos = []
         for i, info in enumerate(summary):
-            cases.extend(info['cases'])
+            case_infos.extend(info['case_infos'])
             if info['increment'] > 1:
                 if 'F2L ' in info['name']:
                     previous = summary[i - 1]
@@ -377,9 +351,9 @@ class CF4OPAnalyser(CFOPAnalyser):
 
                 if 'OLL' in info['name']:
                     info['name'] = 'F2L 4'
-                    info['cases'] = list(
+                    info['case_infos'] = list(
                         {'FR', 'FL', 'BR', 'BL'} -
-                        set(cases),
+                        set(case_infos),
                     )
 
         self.correct_summary_cfop(summary)
@@ -406,7 +380,8 @@ class CF4OPAnalyser(CFOPAnalyser):
             'step_execution_percent': 0,
             'step_recognition_percent': 0,
             'increment': 0,
-            'cases': [],
+            'case': '',
+            'cases_info': [],
             'facelets': '',
         }
 

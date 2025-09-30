@@ -29,8 +29,8 @@ class MoyuWeilong10Driver(Driver):
     encrypter = GanGen2CubeEncrypter
     factor = pow(2, 30)
 
-    def __init__(self, client, device):
-        super().__init__(client, device)
+    def __init__(self, client):
+        super().__init__(client)
 
         self.last_serial = -1
         self.cube_timestamp = 0
@@ -40,7 +40,7 @@ class MoyuWeilong10Driver(Driver):
         return self.encrypter(
             MOYU_WEILONG_ENCRYPTION_KEY['key'],
             MOYU_WEILONG_ENCRYPTION_KEY['iv'],
-            get_salt(self.device.address),
+            get_salt(self.client.address),
         )
 
     def send_command_handler(self, command: str):
@@ -87,10 +87,10 @@ class MoyuWeilong10Driver(Driver):
                 return []
 
             # Orientation Quaternion
-            qw = msg.get_bit_word(8, 32, little_endian=True)
-            qx = msg.get_bit_word(40, 32, little_endian=True)
-            qy = msg.get_bit_word(72, 32, little_endian=True)
-            qz = msg.get_bit_word(104, 32, little_endian=True)
+            qw = msg.get_bit_word(8, 32, little_endian=True, signed=True)
+            qx = msg.get_bit_word(40, 32, little_endian=True, signed=True)
+            qy = msg.get_bit_word(72, 32, little_endian=True, signed=True)
+            qz = msg.get_bit_word(104, 32, little_endian=True, signed=True)
 
             payload = {
                 'event': 'gyro',

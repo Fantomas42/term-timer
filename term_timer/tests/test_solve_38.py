@@ -1,8 +1,6 @@
 import datetime
 import unittest
 
-from cubing_algs.parsing import parse_moves
-
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.solve import Solve
 
@@ -26,7 +24,7 @@ class TestSolve38(unittest.TestCase):
         )
 
         self.solve.method_name = 'cf4op'
-        self.solve.orientation = parse_moves('z2')
+        self.solve.orientation = 'DF'
 
     def test_datetime(self):
         self.assertEqual(
@@ -147,11 +145,18 @@ class TestSolve38(unittest.TestCase):
 
     def test_solution(self):
         self.assertEqual(
-            self.solve.solution.metrics['htm'],
+            self.solve.solution.metrics.htm,
             90,
         )
 
     def test_reconstruction(self):
+        self.assertEqual(
+            str(self.solve.reconstruction),
+            "B L' U F2 U2 B U B' U' U R' U' R U2 L U L' U2 R' U R U' R' U' R2 U R' U' U U' F U2 F' U2 F U' F' U2 F' U F U' F' U' F U2 L' R L' B2 L B L' B L B R' L U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R U2",  # noqa: E501
+        )
+
+    def test_reconstruction_orientation_auto(self):
+        self.solve.orientation = 'auto'
         self.assertEqual(
             str(self.solve.reconstruction),
             "B L' U F2 U2 B U B' U' U R' U' R U2 L U L' U2 R' U R U' R' U' R2 U R' U' U U' F U2 F' U2 F U' F' U2 F' U F U' F' U' F U2 L' R L' B2 L B L' B L B R' L U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R U2",  # noqa: E501
@@ -199,9 +204,9 @@ class TestSolve38(unittest.TestCase):
             0,
         )
 
-    def test_method(self):
+    def test_method_analyser(self):
         self.assertEqual(
-            self.solve.method,
+            self.solve.method_analyser,
             CF4OPAnalyser,
         )
 
@@ -250,29 +255,31 @@ class TestSolve38(unittest.TestCase):
         outputs = [
             "B L' [pause].[/pause] U F2 [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U2[/pre-auf] [pair-ie]B U B'[/pair-ie] "
+            "U2 [pair-ie]B U B'[/pair-ie] "
             "[deletion]U'[/deletion] "
             "[pause].[/pause] [deletion]U[/deletion] "
             "[pair-ie]R' U' R[/pair-ie] "
             "U2 [pair-ie]L U L'[/pair-ie] [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U[/pre-auf] [pause].[/pause] [pre-auf]U[/pre-auf] "
-            "[pair-ie]R' U R[/pair-ie] U' "
-            "[pair-ie]R' U' R[/pair-ie] [reco-pause].[/reco-pause]",
+            "U [pause].[/pause] "
+            "U R' U [sa]R U' R' U'[/sa] "
+            "R [reco-pause].[/reco-pause]",
 
             "[pair-ie]R U R'[/pair-ie] [deletion]U'[/deletion] "
             "[pause].[/pause] [deletion]U[/deletion] U' "
-            "[pause].[/pause] F U2 F' U2 [pair-ie]F U' F'[/pair-ie] "
+            "[pause].[/pause] [ne]F U2 F'[/ne] "
+            "U2 [pair-ie]F U' F'[/pair-ie] [reco-pause].[/reco-pause]",
+
+            "U2 [pause].[/pause] "
+            "F' U [sa]F U' F' U'[/sa] F [reco-pause].[/reco-pause]",
+
+            "[pre-auf]U'[/pre-auf] [pause].[/pause] "
+            "[pre-auf]U'[/pre-auf] [pause].[/pause] "
+            "[slice]M[/slice] "
+            "[chair]L' U2 L U L' U L[/chair] "
+            "U "
+            "[slice]M'[/slice] "
             "[reco-pause].[/reco-pause]",
-
-            "[pre-auf]U2[/pre-auf] [pause].[/pause] "
-            "[pair-ie]F' U F[/pair-ie] U' "
-            "[pair-ie]F' U' F[/pair-ie] [reco-pause].[/reco-pause]",
-
-            "[pre-auf]U'[/pre-auf] [pause].[/pause] "
-            "[pre-auf]U'[/pre-auf] [pause].[/pause] "
-            "[slice]M[/slice] L' U2 [pair-ie]L U L'[/pair-ie] "
-            "U L U [slice]M'[/slice] [reco-pause].[/reco-pause]",
 
             "[pre-auf]U[/pre-auf] R' U' F' "
             "[sexy-move]R U R' U'[/sexy-move] R' F R2 U' "
@@ -297,32 +304,34 @@ class TestSolve38(unittest.TestCase):
             "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
             "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U2[/pre-auf] [pair-ie]B U B'[/pair-ie] "
+            "U2 [pair-ie]B U B'[/pair-ie] "
             "[deletion]U'[/deletion] "
             "[pause].[/pause] [deletion]U[/deletion] "
             "[addition].[/addition] [pair-ie]R' U' R[/pair-ie] "
             "U2 [pair-ie]L U L'[/pair-ie] [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U[/pre-auf] [pause].[/pause] [pre-auf]U[/pre-auf] "
-            "[pair-ie]R' U R[/pair-ie] U' "
-            "[pair-ie]R' U' R[/pair-ie] [reco-pause].[/reco-pause]",
+            "U [pause].[/pause] "
+            "U R' U [sa]R U' R' U'[/sa] "
+            "R [reco-pause].[/reco-pause]",
 
             "[pair-ie]R U R'[/pair-ie] [deletion]U'[/deletion] "
-            "[pause].[/pause] [pause].[/pause] "
-            "[deletion]U[/deletion] U' [pause].[/pause] "
-            "F U2 F' U2 [pair-ie]F U' F'[/pair-ie] "
+            "[pause].[/pause] [pause].[/pause] [deletion]U[/deletion] "
+            "U' [pause].[/pause] "
+            "[ne]F U2 F'[/ne] U2 [pair-ie]F U' F'[/pair-ie] "
             "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
             "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
 
-            "[pre-auf]U2[/pre-auf] [pause].[/pause] "
-            "[pair-ie]F' U F[/pair-ie] U' "
-            "[pair-ie]F' U' F[/pair-ie] [reco-pause].[/reco-pause] "
-            "[reco-pause].[/reco-pause]",
+            "U2 [pause].[/pause] "
+            "F' U [sa]F U' F' U'[/sa] F "
+            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
 
             "[pre-auf]U'[/pre-auf] [pause].[/pause] "
             "[pre-auf]U'[/pre-auf] [pause].[/pause] "
-            "[slice]M[/slice] L' U2 [pair-ie]L U L'[/pair-ie] "
-            "U L U [slice]M'[/slice] [reco-pause].[/reco-pause]",
+            "[slice]M[/slice] "
+            "[chair]L' U2 L U L' U L[/chair] "
+            "U "
+            "[slice]M'[/slice] "
+            "[reco-pause].[/reco-pause]",
 
             "[pre-auf]U[/pre-auf] R' U' F' "
             "[sexy-move]R U R' U'[/sexy-move] R' F R2 U' "
@@ -394,13 +403,13 @@ class TestSolve38(unittest.TestCase):
 
     def test_link_alg_cubing(self):
         self.assertIn(
-            '&alg=z2_%2F%2F_Orientation%0AB_L-_._._U_F2_._._._._%2F%2F_Cross_Reco:_0.00s_Exec:_1.89s_HTM:_4_%0AU2_B_U_B-_U-_._U_R-_U-_R_U2_L_U_L-_._%2F%2F_F2L_1_(BL)_Reco:_2.34s_Exec:_4.20s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_._U_R-_U_R_U-_R-_U-_R_._%2F%2F_F2L_2_(BR)_Reco:_0.96s_Exec:_2.46s_HTM:_8_Pre%26%2345%3BAUF:_%26%232b%3B2%0AR_U_R-_U-_._._U_U-_._F_U2_F-_U2_F_U-_F-_._._._._%2F%2F_F2L_3_(FL)_Reco:_0.66s_Exec:_3.66s_HTM:_13_%0AU2_._F-_U_F_U-_F-_U-_F_._._%2F%2F_F2L_4_(FR)_Reco:_2.16s_Exec:_2.28s_HTM:_8_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU-_._U-_._M_L-_U2_L_U_L-_U_L_U_M-_._%2F%2F_OLL_(10_Anti-Kite)_Reco:_1.20s_Exec:_3.39s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_R-_U-_F-_R_U_R-_U-_R-_F_R2_U-_R-_U-_R_U_R-_U_R_U2_%2F%2F_PLL_(F)_Reco:_0.72s_Exec:_3.90s_HTM:_20_Pre%26%2345%3BAUF:_%26%232b%3B1_Post%26%2345%3BAUF:_%26%232b%3B2%0A&setup=D2_R2_D2_U-_R2_U_R2_F2_R-_B2_F-_L_F-_R_F_U2_B_L-',
+            '&alg=z2_%2F%2F_Orientation%0AB_L-_._._U_F2_._._._._%2F%2F_Cross_Reco:_0.00s_Exec:_1.89s_HTM:_4_%0AU2_B_U_B-_U-_._U_R-_U-_R_U2_L_U_L-_._%2F%2F_F2L_1_(28_BR)_Reco:_2.34s_Exec:_4.20s_HTM:_13_%0AU_._U_R-_U_R_U-_R-_U-_R_._%2F%2F_F2L_2_(13_BL)_Reco:_0.96s_Exec:_2.46s_HTM:_8_%0AR_U_R-_U-_._._U_U-_._F_U2_F-_U2_F_U-_F-_._._._._%2F%2F_F2L_3_(25_FR)_Reco:_0.66s_Exec:_3.66s_HTM:_13_%0AU2_._F-_U_F_U-_F-_U-_F_._._%2F%2F_F2L_4_(13_FL)_Reco:_2.16s_Exec:_2.28s_HTM:_8_%0AU-_._U-_._M_L-_U2_L_U_L-_U_L_U_M-_._%2F%2F_OLL_(10_Anti-Kite)_Reco:_1.20s_Exec:_3.39s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_R-_U-_F-_R_U_R-_U-_R-_F_R2_U-_R-_U-_R_U_R-_U_R_U2_%2F%2F_PLL_(F)_Reco:_0.72s_Exec:_3.90s_HTM:_20_Pre%26%2345%3BAUF:_%26%232b%3B1_Post%26%2345%3BAUF:_%26%232b%3B2%0A&setup=D2_R2_D2_U-_R2_U_R2_F2_R-_B2_F-_L_F-_R_F_U2_B_L-',
             self.solve.link_alg_cubing,
         )
 
     def test_link_cube_db(self):
         self.assertIn(
-            '&alg=z2_%2F%2F_Orientation%0AB_L-_._._U_F2_._._._._%2F%2F_Cross_Reco:_0.00s_Exec:_1.89s_HTM:_4_%0AU2_B_U_B-_U-_._U_R-_U-_R_U2_L_U_L-_._%2F%2F_F2L_1_(BL)_Reco:_2.34s_Exec:_4.20s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_._U_R-_U_R_U-_R-_U-_R_._%2F%2F_F2L_2_(BR)_Reco:_0.96s_Exec:_2.46s_HTM:_8_Pre%26%2345%3BAUF:_%26%232b%3B2%0AR_U_R-_U-_._._U_U-_._F_U2_F-_U2_F_U-_F-_._._._._%2F%2F_F2L_3_(FL)_Reco:_0.66s_Exec:_3.66s_HTM:_13_%0AU2_._F-_U_F_U-_F-_U-_F_._._%2F%2F_F2L_4_(FR)_Reco:_2.16s_Exec:_2.28s_HTM:_8_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU-_._U-_._M_L-_U2_L_U_L-_U_L_U_M-_._%2F%2F_OLL_(10_Anti-Kite)_Reco:_1.20s_Exec:_3.39s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_R-_U-_F-_R_U_R-_U-_R-_F_R2_U-_R-_U-_R_U_R-_U_R_U2_%2F%2F_PLL_(F)_Reco:_0.72s_Exec:_3.90s_HTM:_20_Pre%26%2345%3BAUF:_%26%232b%3B1_Post%26%2345%3BAUF:_%26%232b%3B2%0A&scramble=D2_R2_D2_U-_R2_U_R2_F2_R-_B2_F-_L_F-_R_F_U2_B_L-',
+            '&alg=z2_%2F%2F_Orientation%0AB_L-_._._U_F2_._._._._%2F%2F_Cross_Reco:_0.00s_Exec:_1.89s_HTM:_4_%0AU2_B_U_B-_U-_._U_R-_U-_R_U2_L_U_L-_._%2F%2F_F2L_1_(28_BR)_Reco:_2.34s_Exec:_4.20s_HTM:_13_%0AU_._U_R-_U_R_U-_R-_U-_R_._%2F%2F_F2L_2_(13_BL)_Reco:_0.96s_Exec:_2.46s_HTM:_8_%0AR_U_R-_U-_._._U_U-_._F_U2_F-_U2_F_U-_F-_._._._._%2F%2F_F2L_3_(25_FR)_Reco:_0.66s_Exec:_3.66s_HTM:_13_%0AU2_._F-_U_F_U-_F-_U-_F_._._%2F%2F_F2L_4_(13_FL)_Reco:_2.16s_Exec:_2.28s_HTM:_8_%0AU-_._U-_._M_L-_U2_L_U_L-_U_L_U_M-_._%2F%2F_OLL_(10_Anti-Kite)_Reco:_1.20s_Exec:_3.39s_HTM:_13_Pre%26%2345%3BAUF:_%26%232b%3B2%0AU_R-_U-_F-_R_U_R-_U-_R-_F_R2_U-_R-_U-_R_U_R-_U_R_U2_%2F%2F_PLL_(F)_Reco:_0.72s_Exec:_3.90s_HTM:_20_Pre%26%2345%3BAUF:_%26%232b%3B1_Post%26%2345%3BAUF:_%26%232b%3B2%0A&scramble=D2_R2_D2_U-_R2_U_R2_F2_R-_B2_F-_L_F-_R_F_U2_B_L-',
             self.solve.link_cube_db,
         )
 
@@ -408,99 +417,99 @@ class TestSolve38(unittest.TestCase):
         self.assertEqual(
             self.solve.reconstruction_steps_timing,
             [
-                [0, 483, 'z2'],
-                [483, 724, 'B'],
-                [871, 1113, "L'"],
-                [1457, 1699, '.'],
-                [2043, 2285, 'U'],
-                [2285, 2614, 'F2'],
-                [3542, 3784, '.'],
-                [4776, 5164, 'U2'],
-                [5312, 5554, 'B'],
-                [5554, 5675, 'U'],
-                [5675, 5764, "B'"],
-                [5764, 5855, "U'"],
-                [5913, 6155, '.'],
-                [6212, 6454, 'U'],
-                [6543, 6785, "R'"],
-                [6872, 7114, "U'"],
-                [7203, 7445, 'R'],
-                [7626, 8014, 'U2'],
-                [8132, 8374, 'L'],
-                [8492, 8734, 'U'],
-                [8912, 9154, "L'"],
-                [9393, 9635, '.'],
-                [9873, 10115, 'U'],
-                [10203, 10445, '.'],
-                [10532, 10774, 'U'],
-                [10774, 11014, "R'"],
-                [11014, 11164, 'U'],
-                [11282, 11524, 'R'],
-                [11524, 11734, "U'"],
-                [11792, 12034, "R'"],
-                [12092, 12334, "U'"],
-                [12334, 12574, 'R'],
-                [12662, 12904, '.'],
-                [12992, 13234, 'R'],
-                [13234, 13294, 'U'],
-                [13294, 13384, "R'"],
-                [13384, 13474, "U'"],
-                [13817, 14059, '.'],
-                [14402, 14644, 'U'],
-                [14644, 14824, "U'"],
-                [14942, 15184, '.'],
-                [15302, 15544, 'F'],
-                [15546, 15934, 'U2'],
-                [15934, 15994, "F'"],
-                [16176, 16564, 'U2'],
-                [16564, 16684, 'F'],
-                [16684, 16714, "U'"],
-                [16714, 16894, "F'"],
-                [17732, 17974, '.'],
-                [18907, 19295, 'U2'],
-                [19323, 19565, '.'],
-                [19592, 19834, "F'"],
-                [19834, 19984, 'U'],
-                [20103, 20345, 'F'],
-                [20345, 20555, "U'"],
-                [20581, 20823, "F'"],
-                [20853, 21095, "U'"],
-                [21095, 21334, 'F'],
-                [21692, 21934, '.'],
-                [22292, 22534, "U'"],
-                [22682, 22924, '.'],
-                [23072, 23314, "U'"],
-                [23358, 23600, '.'],
-                [23643, 23885, 'M'],
-                [23972, 24214, "L'"],
-                [24246, 24634, 'U2'],
-                [24634, 24815, 'L'],
-                [24815, 24936, 'U'],
-                [24936, 25055, "L'"],
-                [25055, 25174, 'U'],
-                [25174, 25295, 'L'],
-                [25295, 25474, 'U'],
-                [25682, 25924, "M'"],
-                [26042, 26284, '.'],
-                [26402, 26644, 'U'],
-                [26824, 27066, "R'"],
-                [27066, 27185, "U'"],
-                [27272, 27514, "F'"],
-                [27662, 27904, 'R'],
-                [27904, 28025, 'U'],
-                [28025, 28084, "R'"],
-                [28084, 28205, "U'"],
-                [28205, 28384, "R'"],
-                [28384, 28474, 'F'],
-                [28474, 28744, 'R2'],
-                [28744, 28834, "U'"],
-                [28834, 28984, "R'"],
-                [28984, 29134, "U'"],
-                [29134, 29344, 'R'],
-                [29344, 29495, 'U'],
-                [29495, 29524, "R'"],
-                [29643, 29885, 'U'],
-                [29885, 30004, 'R'],
-                [30156, 30544, 'U2'],
+                [0, 387, 'z2'],
+                [387, 628, 'B'],
+                [775, 1017, "L'"],
+                [1361, 1603, '.'],
+                [1947, 2189, 'U'],
+                [2189, 2518, 'F2'],
+                [3446, 3688, '.'],
+                [4680, 5068, 'U2'],
+                [5216, 5458, 'B'],
+                [5458, 5579, 'U'],
+                [5579, 5668, "B'"],
+                [5668, 5759, "U'"],
+                [5817, 6059, '.'],
+                [6116, 6358, 'U'],
+                [6447, 6689, "R'"],
+                [6776, 7018, "U'"],
+                [7107, 7349, 'R'],
+                [7530, 7918, 'U2'],
+                [8036, 8278, 'L'],
+                [8396, 8638, 'U'],
+                [8816, 9058, "L'"],
+                [9297, 9539, '.'],
+                [9777, 10019, 'U'],
+                [10107, 10349, '.'],
+                [10436, 10678, 'U'],
+                [10678, 10918, "R'"],
+                [10918, 11068, 'U'],
+                [11186, 11428, 'R'],
+                [11428, 11638, "U'"],
+                [11696, 11938, "R'"],
+                [11996, 12238, "U'"],
+                [12238, 12478, 'R'],
+                [12566, 12808, '.'],
+                [12896, 13138, 'R'],
+                [13138, 13198, 'U'],
+                [13198, 13288, "R'"],
+                [13288, 13378, "U'"],
+                [13721, 13963, '.'],
+                [14306, 14548, 'U'],
+                [14548, 14728, "U'"],
+                [14846, 15088, '.'],
+                [15206, 15448, 'F'],
+                [15450, 15838, 'U2'],
+                [15838, 15898, "F'"],
+                [16080, 16468, 'U2'],
+                [16468, 16588, 'F'],
+                [16588, 16618, "U'"],
+                [16618, 16798, "F'"],
+                [17636, 17878, '.'],
+                [18811, 19199, 'U2'],
+                [19227, 19469, '.'],
+                [19496, 19738, "F'"],
+                [19738, 19888, 'U'],
+                [20007, 20249, 'F'],
+                [20249, 20459, "U'"],
+                [20485, 20727, "F'"],
+                [20757, 20999, "U'"],
+                [20999, 21238, 'F'],
+                [21596, 21838, '.'],
+                [22196, 22438, "U'"],
+                [22586, 22828, '.'],
+                [22976, 23218, "U'"],
+                [23261, 23503, '.'],
+                [23546, 23788, 'M'],
+                [23876, 24118, "L'"],
+                [24150, 24538, 'U2'],
+                [24538, 24719, 'L'],
+                [24719, 24840, 'U'],
+                [24840, 24959, "L'"],
+                [24959, 25078, 'U'],
+                [25078, 25199, 'L'],
+                [25199, 25378, 'U'],
+                [25585, 25827, "M'"],
+                [25946, 26188, '.'],
+                [26306, 26548, 'U'],
+                [26728, 26970, "R'"],
+                [26970, 27089, "U'"],
+                [27176, 27418, "F'"],
+                [27566, 27808, 'R'],
+                [27808, 27929, 'U'],
+                [27929, 27988, "R'"],
+                [27988, 28109, "U'"],
+                [28109, 28288, "R'"],
+                [28288, 28378, 'F'],
+                [28378, 28648, 'R2'],
+                [28648, 28738, "U'"],
+                [28738, 28888, "R'"],
+                [28888, 29038, "U'"],
+                [29038, 29248, 'R'],
+                [29248, 29399, 'U'],
+                [29399, 29428, "R'"],
+                [29547, 29789, 'U'],
+                [29789, 29908, 'R'],
+                [30060, 30448, 'U2'],
             ],
         )

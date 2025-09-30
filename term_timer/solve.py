@@ -22,34 +22,26 @@ from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PAUSE_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
+from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_cubing_url
 from term_timer.formatter import format_alg_diff
+from term_timer.formatter import format_alg_moves
+from term_timer.formatter import format_alg_pauses
 from term_timer.formatter import format_alg_triggers
-from term_timer.formatter import format_aufs
 from term_timer.formatter import format_cube_db_url
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
-from term_timer.formatter import format_moves
 from term_timer.formatter import format_time
-from term_timer.methods.base import STEPS_CONFIG
-from term_timer.methods.cfop import CF4OPAnalyser
-from term_timer.methods.cfop import CFOPAnalyser
-from term_timer.methods.lbl import LBLAnalyser
-from term_timer.methods.raw import RawAnalyser
+from term_timer.methods import get_method_analyser
+from term_timer.methods.base import get_step_config
+from term_timer.orientation import get_orientation_moves
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
-
-METHODS = {
-    'cfop': CFOPAnalyser,
-    'cf4op': CF4OPAnalyser,
-    'lbl': LBLAnalyser,
-    'raw': RawAnalyser,
-}
 
 
 class Solve:
     def __init__(self,
-                 date: int, time: int,
+                 date: float, time: int,
                  scramble: Algorithm | str,
                  flag: str = '',
                  timer: str = '',
@@ -60,7 +52,6 @@ class Solve:
                  moves: str | None = None):
         self.date = int(date)
         self.time = int(time)
-        self.scramble = scramble
         self.flag = flag
         self.timer = timer
         self.device = device
@@ -70,16 +61,20 @@ class Solve:
         self.cube_size = cube_size
 
         self.raw_moves = moves
-        self.solution = None
-
-        if self.raw_moves:
-            self.solution = parse_moves(self.raw_moves)
-
-        if not isinstance(self.scramble, Algorithm):
-            self.scramble = parse_moves(self.scramble)
+        self.raw_scramble = scramble
 
         self.method_name = CUBE_METHOD
         self.orientation = CUBE_ORIENTATION
+
+    @cached_property
+    def solution(self) -> Algorithm:
+        return parse_moves(self.raw_moves)
+
+    @cached_property
+    def scramble(self) -> Algorithm:
+        if not isinstance(self.raw_scramble, Algorithm):
+            return parse_moves(self.raw_scramble)
+        return self.raw_scramble
 
     @cached_property
     def datetime(self) -> datetime:
@@ -101,8 +96,15 @@ class Solve:
         return [[m.untimed, m.timed] for m in self.solution]
 
     @cached_property
-    def advanced(self):
+    def advanced(self) -> bool:
         return bool(self.raw_moves)
+
+    @cached_property
+    def orientation_moves(self) -> Algorithm:
+        return get_orientation_moves(
+            self.orientation,
+            self.scramble, self.solution,
+        )
 
     @staticmethod
     def compute_tps(moves: int, time: int) -> float:
@@ -114,7 +116,7 @@ class Solve:
     @cached_property
     def reconstruction(self) -> list[str]:
         return prettify_moves(
-            reorient_moves(self.orientation, self.solution),
+            reorient_moves(self.orientation_moves, self.solution),
         )
 
     @cached_property
@@ -162,18 +164,23 @@ class Solve:
         return self.all_missed_moves - self.step_missed_moves
 
     @cached_property
-    def method(self):
-        return METHODS.get(self.method_name, CF4OPAnalyser)
+    def method_analyser(self):
+        return get_method_analyser(
+            self.method_name,
+        )
 
     @cached_property
-    def method_applied(self) -> dict[str, dict]:
+    def method_applied(self) -> dict[str, dict] | None:
         if not self.advanced:
             return None
 
-        return self.method(self.scramble, self.solution)
+        return self.method_analyser(
+            self.scramble, self.solution,
+            self.orientation_moves,
+        )
 
     @cached_property
-    def recognition_time(self) -> float:
+    def recognition_time(self) -> int:
         return sum(
             s['recognition']
             for s in self.method_applied.summary
@@ -181,7 +188,7 @@ class Solve:
         )
 
     @cached_property
-    def execution_time(self) -> float:
+    def execution_time(self) -> int:
         return sum(
             s['execution']
             for s in self.method_applied.summary
@@ -203,8 +210,9 @@ class Solve:
 
         metric_string = ''
         metrics = STATS_CONFIG.get('metrics')
+        metrics_dict = self.reconstruction.metrics._asdict()
         for metric in metrics:
-            value = self.reconstruction.metrics[metric]
+            value = metrics_dict[metric]
             metric_string += (
                 f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
             )
@@ -240,14 +248,51 @@ class Solve:
         )
 
     @cached_property
+    def trainer_line(self) -> str:
+        if not self.advanced:
+            return ''
+
+        metric_string = ''
+        metrics = STATS_CONFIG.get('metrics')
+        metrics_dict = self.reconstruction.metrics._asdict()
+        for metric in metrics:
+            value = metrics_dict[metric]
+            metric_string += (
+                f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
+            )
+
+        missed_line = ''
+        missed_moves = self.all_missed_moves
+        if missed_line:
+            missed_line = (
+                '[exec-overhead]'
+                f'{ missed_moves } missed QTM'
+                '[/exec-overhead] '
+            )
+
+        pause_line = ''
+        if self.execution_pauses:
+            pause_line = (
+                f'[caution]{ self.execution_pauses } Pauses[/caution]'
+            )
+
+        return (
+            f'{ metric_string }'
+            f'[tps]{ self.tps:.2f} TPS[/tps] '
+            f'{ missed_line }{ pause_line }'
+        )
+
+    @cached_property
     def method_line(self) -> str:
         if not self.method_applied:
             return ''
 
-        line = (
-            '[step]Orientation:[/step] '
-            f'[consign]{ self.orientation!s }[/consign]\n'
-        )
+        line = ''
+        if self.orientation_moves:
+            line += (
+                '[step]Orientation:[/step] '
+                f'[rotation]{ self.orientation_moves!s }[/rotation]\n'
+            )
 
         for info in self.method_applied.summary:
 
@@ -282,34 +327,39 @@ class Solve:
                     self.reconstruction_step_line(info, multiple=False) +
                     '[/consign]'
                 )
-                if info['cases'] and info['cases'][0]:
-                    aufs = ''
-                    if info['aufs'][0]:
-                        aufs += f' +{ info["aufs"][0] } pre-AUF'
-                    if info['aufs'][1]:
-                        aufs += f' +{ info["aufs"][1] } post-AUF'
 
-                    if info['name'] in {'OLL', 'PLL'}:
-                        link = (
-                            'https://cubing.fache.fr/'
-                            f'{ info["name"] }/'
-                            f'{ info["cases"][0].split(" ")[0] }.html'
-                        )
-                        footer += (
-                            ' [comment]// '
-                            f'[link={ link }]{ info["cases"][0] }[/link]'
-                            f'{ aufs }[/comment]'
-                        )
-                    else:
-                        footer += (
-                            ' [comment]// ' +
-                            ' '.join(info['cases']) + aufs +
-                            '[/comment]'
-                        )
+                aufs = ''
+                if info['aufs'][0]:
+                    aufs += f' +{ info["aufs"][0] } pre-AUF'
+                if info['aufs'][1]:
+                    aufs += f' +{ info["aufs"][1] } post-AUF'
+
+                if info['case']:
+                    link = (
+                        'https://cubing.fache.fr/'
+                        f'{ info["name"].split(" ")[0] }/'
+                        f'{ info["case"].split(" ")[0] }.html'
+                    )
+                    details = ''
+                    if info['case_infos']:
+                        details += f' { " ".join(info["case_infos"]) }'
+
+                    footer += (
+                        ' [comment]// '
+                        f'[link={ link }]{ info["case"] }[/link]'
+                        f'{ details }{ aufs }[/comment]'
+                    )
+
+                elif info['case_infos']:
+                    footer += (
+                        ' [comment]// ' +
+                        ' '.join(info['case_infos']) +
+                        f'{ aufs }[/comment]'
+                    )
 
             move_klass = self.method_applied.normalize_value(
                 'moves', info['name'],
-                info['moves_prettified'].metrics['htm'],
+                info['moves_prettified'].metrics.htm,
                 'result',
             )
             percent_klass = self.method_applied.normalize_value(
@@ -327,7 +377,7 @@ class Solve:
             line += (
                 f'{ header }'
                 f'[{ move_klass }]'
-                f'{ info["moves_prettified"].metrics["htm"]:>2} HTM'
+                f'{ info["moves_prettified"].metrics.htm:>2} HTM'
                 f'[/{ move_klass }] '
                 f'[recognition]'
                 f'{ format_duration(info["recognition"]):>5}s[/recognition] '
@@ -374,28 +424,20 @@ class Solve:
             optimize_double_moves,
         )
 
-        algorithm = format_alg_triggers(
-            format_moves(
-                format_aufs(
-                    format_alg_diff(
-                        source_paused,
-                        compressed_paused,
+        return format_alg_pauses(
+            format_alg_triggers(
+                format_alg_moves(
+                    format_alg_aufs(
+                        format_alg_diff(
+                            source_paused,
+                            compressed_paused,
+                        ),
+                        *step['aufs'],
                     ),
-                    *step['aufs'],
                 ),
+                get_step_config(step['name'], 'triggers', []),
             ),
-            STEPS_CONFIG.get(step['name'], {}).get('triggers', []),
-        )
-
-        post = int(step['post_pause'] / self.pause_threshold)
-        if post:
-            algorithm += f' [reco-pause]{ PAUSE_CHAR }[/reco-pause]' * (
-                post if multiple else 1
-            )
-
-        return algorithm.replace(
-            ' .',
-            ' [pause].[/pause]',
+            self, step, multiple=multiple,
         )
 
     def reconstruction_step_text(self, step, *, multiple=False) -> str:
@@ -424,11 +466,14 @@ class Solve:
     def method_text(self):
         return self.method_text_builder(multiple=True)
 
-    def method_text_builder(self, *, multiple):
+    def method_text_builder(self, *, multiple) -> str:
         recons = ''
 
-        if self.orientation:
-            recons += f'{ self.orientation!s } // Orientation\n'
+        if not self.advanced:
+            return recons
+
+        if self.orientation_moves:
+            recons += f'{ self.orientation_moves!s } // Orientation\n'
 
         for info in self.method_applied.summary:
             if info['type'] == 'virtual':
@@ -438,9 +483,13 @@ class Solve:
                 recons += f'// { info["name"] } SKIPPED\n'
                 continue
 
-            cases = ''
-            if info['cases'] and info['cases'][0]:
-                cases = f' ({ " ".join(info["cases"]) })'
+            detail_list = list(info['case_infos'])
+            if info['case']:
+                detail_list.insert(0, info['case'])
+
+            details = ''
+            if detail_list:
+                details = f' ({ " ".join(detail_list) })'
 
             aufs = ''
             if info['aufs'][0]:
@@ -454,10 +503,10 @@ class Solve:
             )
             recons += (
                 f'{ moves } // '
-                f'{ info["name"] }{ cases } '
+                f'{ info["name"] }{ details } '
                 f'Reco: { format_duration(info["recognition"]) }s '
                 f'Exec: { format_duration(info["execution"]) }s '
-                f'HTM: { info["moves_prettified"].metrics["htm"] } '
+                f'HTM: { info["moves_prettified"].metrics.htm } '
                 f'{ aufs }\n'
             )
 
@@ -561,13 +610,14 @@ class Solve:
             optimize_do_undo_moves,
             optimize_repeat_three_moves,
             optimize_triple_moves,
+            to_fixpoint=True,
         )
         return algorithm, compressed
 
     def missed_moves(self, algorithm) -> int:
         source, compressed = self.missed_moves_pair(algorithm)
 
-        return source.metrics['qtm'] - compressed.metrics['qtm']
+        return source.metrics.qtm - compressed.metrics.qtm
 
     def pauses(self, algorithm) -> int:
         if not algorithm:
@@ -639,13 +689,20 @@ class Solve:
         speed = self.move_speed / MS_TO_NS_FACTOR
 
         timing = []
-        previous_time = 0
         orientation_offset = 0
 
-        if CUBE_ORIENTATION:
-            orientation_offset = int(CUBE_ORIENTATION.metrics['rtm'] * speed)
-            timing.append([0, orientation_offset, str(CUBE_ORIENTATION)])
-            previous_time = orientation_offset
+        for move in self.orientation_moves:
+            time = int(speed * (1.6 if move.is_double else 1))
+            timing.append(
+                [
+                    orientation_offset,
+                    orientation_offset + time,
+                    move,
+                ],
+            )
+            orientation_offset += time
+
+        previous_time = orientation_offset
 
         full_algo = ''
         for info in self.method_applied.summary:

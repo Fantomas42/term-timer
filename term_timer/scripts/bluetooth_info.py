@@ -10,14 +10,12 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
-from term_timer.bluetooth.facelets import to_magiccube_facelets
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.config import CUBE_ORIENTATION
-from term_timer.interface.console import console
 from term_timer.logger import LOGGING_DIR
-from term_timer.magic_cube import Cube
 from term_timer.opengl.thread import CubeGLThread
+from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
@@ -71,16 +69,22 @@ LOGGING_CONF = {
 }
 
 
-async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
-    visual_cube = None
+async def consumer_cb(queue, cube_ready, gl_thread,
+                      show_cube, event_collector) -> None:
     virtual_cube = None
     moves = []
     hardware = ''
     battery = ''
 
+    orientation_moves = get_orientation_moves(CUBE_ORIENTATION)
+
     def print_cube(cube):
         if show_cube:
-            console.print(str(cube), end='')
+            cube.show(
+                orientation=CUBE_ORIENTATION,
+                mode='linear',
+                facelet='compact',
+            )
 
     while True:
         events = await queue.get()
@@ -146,11 +150,7 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
                 else:
                     virtual_cube = VCube(event['facelets'])
 
-                visual_cube = Cube(
-                    3,
-                    to_magiccube_facelets(event['facelets']),
-                )
-                print_cube(visual_cube)
+                print_cube(virtual_cube)
 
             elif event_name == 'move':
                 logger.info(
@@ -163,10 +163,7 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
 
                 if virtual_cube:
                     virtual_cube.rotate(event['move'])
-
-                if visual_cube:
-                    visual_cube.rotate(event['move'])
-                    print_cube(visual_cube)
+                    print_cube(virtual_cube)
 
                 if gl_thread and gl_thread.is_alive():
                     direction = 3 if "'" in event['move'] else 1
@@ -177,7 +174,7 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
                 recon = prettify_moves(
                     humanize_moves(
                         reorient_moves(
-                            CUBE_ORIENTATION,
+                            orientation_moves,
                             algo,
                         ),
                     ),
@@ -193,7 +190,7 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
                 )
 
 
-async def client_cb(queue, time, use_opengl):
+async def client_cb(queue, time, use_opengl) -> None:
     bluetooth_interface = BluetoothInterface(queue)
 
     await bluetooth_interface.__aenter__()  # noqa: PLC2801
@@ -254,7 +251,7 @@ def linear_regression(X, Y):
     return (slope, intercept)
 
 
-def resume(events):
+def resume(events) -> None:
     cube_timestamps = []
     local_timestamps = []
 
@@ -301,7 +298,7 @@ def resume(events):
         )
 
 
-async def run(options):
+async def run(options) -> None:
     event_collector = []
     queue = asyncio.Queue()
     cube_ready = threading.Event()
@@ -336,7 +333,7 @@ async def run(options):
     logger.info('Bye bye')
 
 
-def main():
+def main() -> None:
     logging.config.dictConfig(LOGGING_CONF)
 
     parser = ArgumentParser(

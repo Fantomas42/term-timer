@@ -5,6 +5,8 @@ from cubing_algs.vcube import VCube
 
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import CubeNotFoundError
+from term_timer.config import BLUETOOTH_CONFIG
+from term_timer.constants import MS_TO_NS_FACTOR
 
 logger = logging.getLogger(__name__)
 
@@ -26,23 +28,33 @@ class Bluetooth:
         self.hardware_received_event = asyncio.Event()
 
     async def bluetooth_connect(self) -> bool:
+        address = BLUETOOTH_CONFIG.get('address', '')
+
         self.bluetooth_queue = asyncio.Queue()
 
         try:
             self.bluetooth_interface = BluetoothInterface(
                 self.bluetooth_queue,
             )
+            if not address:
+                self.console.print(
+                    '[bluetooth]📡Bluetooth:[/bluetooth] '
+                    'Scanning for Bluetooth cube for '
+                    f'{ self.bluetooth_interface.scan_timeout }s...',
+                    end='',
+                )
 
-            self.console.print(
-                '[bluetooth]📡Bluetooth:[/bluetooth] '
-                'Scanning for Bluetooth cube for '
-                f'{ self.bluetooth_interface.scan_timeout }s...',
-                end='',
-            )
+                device = await self.bluetooth_interface.scan()
+                address = device.address
+            else:
+                self.console.print(
+                    '[bluetooth]📡Bluetooth:[/bluetooth] '
+                    'Connecting to Bluetooth cube address '
+                    f'[b]{ address }[/b]...',
+                    end='',
+                )
 
-            device = await self.bluetooth_interface.scan()
-
-            await self.bluetooth_interface.__aenter__(device)  # noqa: PLC2801
+            await self.bluetooth_interface.__aenter__(address)  # noqa: PLC2801
 
             self.clear_line(full=True)
             self.console.print(
@@ -96,7 +108,10 @@ class Bluetooth:
             return True
 
     async def bluetooth_disconnect(self) -> None:
-        if self.bluetooth_interface and self.bluetooth_interface.device:
+        if (
+                self.bluetooth_interface
+                and self.bluetooth_interface.client.is_connected
+        ):
             self.console.print(
                 '[bluetooth]🔗 Bluetooth[/bluetooth] '
                 f'{ self.bluetooth_device_label } disconnecting...',
@@ -105,7 +120,7 @@ class Bluetooth:
 
     @property
     def bluetooth_device_label(self) -> str:
-        device_label = self.bluetooth_interface.device.name
+        device_label = self.bluetooth_interface.client.name
 
         if 'hardware_version' in self.bluetooth_hardware:
             device_label += f'v{ self.bluetooth_hardware["hardware_version"] }'
@@ -144,32 +159,6 @@ class Bluetooth:
 
                     self.bluetooth_cube = VCube(event['facelets'])
 
-                    if not self.bluetooth_cube.is_solved:
-                        self.clear_line(full=True)
-                        self.console.print(
-                            '[bluetooth]🫤Bluetooth:[/bluetooth] '
-                            '[warning]Cube is not in solved state[/warning]',
-                        )
-                        self.console.print(
-                            '[bluetooth]❓Bluetooth:[/bluetooth] '
-                            '[consign]Is the cube is really solved ? '
-                            '[b](y)[/b] to reset the cube.[/consign]',
-                        )
-                        char = await self.getch('reset cube')
-                        if char == 'y':
-                            for command in ['RESET', 'FACELETS']:
-                                await self.bluetooth_interface.send_command(
-                                    f'REQUEST_{ command }',
-                                )
-                            continue
-
-                        self.console.print(
-                            'Quit until solved',
-                            style='warning',
-                        )
-                        await self.bluetooth_queue.put(None)
-                        continue
-
                     self.facelets_received_event.set()
 
                 elif event_name == 'move':
@@ -181,9 +170,16 @@ class Bluetooth:
                     self.handle_bluetooth_move(event)
 
     def handle_bluetooth_move(self, event) -> None:
+        timed_move = (
+            f"{ event['move'] }@"
+            f"{ int(event['clock'] / MS_TO_NS_FACTOR) }"
+        )
+
         if self.state in {'start', 'scrambling'}:
-            self.scrambled.append(event['move'])
-            self.handle_scrambled()
+            self.handle_scrambled(timed_move)
+
+        elif self.state == 'saving':
+            self.handle_save_gestures(timed_move)
 
         elif self.state == 'scrambled':
             self.moves.append(
@@ -204,11 +200,11 @@ class Bluetooth:
 
             if (
                     not self.solve_completed_event.is_set()
-                    and self.bluetooth_cube.is_solved
+                    and self.cube_is_solved()
             ):
                 self.end_time = event['clock']
                 self.solve_completed_event.set()
                 logger.info('Bluetooth Stop: %s', self.end_time)
 
-        elif self.state == 'saving':
-            self.handle_save_gestures(event['move'])
+    def cube_is_solved(self):
+        return self.bluetooth_cube.is_solved

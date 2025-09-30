@@ -1,11 +1,15 @@
 import sys
 from typing import Any
 
+from cubing_algs.constants import ORIENTATIONS
+
 from term_timer.argparser import ArgumentParser
 from term_timer.config import CUBE_METHOD
+from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import DISPLAY_CONFIG
 from term_timer.config import SERVER_CONFIG
 from term_timer.config import TIMER_CONFIG
+from term_timer.config import TRAINER_STEP
 from term_timer.constants import CUBE_SIZES
 
 COMMAND_ALIASES = {
@@ -17,13 +21,17 @@ COMMAND_ALIASES = {
     'detail': ['dt', 'd'],
     'import': ['im', 'i'],
     'serve': ['se', 'h'],
-    'train': ['tr', 'e'],
+    'train': ['tr', 'w'],
+    'edit': ['ed', 'e'],
+    'delete': ['rm', 'r'],
 }
 
 COMMAND_RESOLUTIONS = {}
 for name, aliases in COMMAND_ALIASES.items():
     for alias in aliases:
         COMMAND_RESOLUTIONS[alias] = name
+
+ORIENTATIONS_SORTED = sorted(ORIENTATIONS)
 
 
 def set_session_arguments(parser):
@@ -105,8 +113,9 @@ def solve_arguments(subparsers):
         ),
     )
 
+    cube = parser.add_argument_group('Cube')
     mode = 'hide' if show_cube else 'show'
-    parser.add_argument(
+    cube.add_argument(
         '-p', f'--{ mode }-cube',
         action='store_const',
         const=not show_cube,
@@ -117,6 +126,16 @@ def solve_arguments(subparsers):
             'Default: False'
         ),
     )
+    cube.add_argument(
+        '-o', '--orientation',
+        default='auto',
+        choices=['auto', *ORIENTATIONS_SORTED],
+        metavar='ORIENTATION',
+        help=(
+            'Set the cube orientation used.\n'
+            'Default: auto.'
+        ),
+    )
 
     bluetooth = parser.add_argument_group('Bluetooth')
     bluetooth.add_argument(
@@ -125,6 +144,18 @@ def solve_arguments(subparsers):
         help=(
             'Use a Bluetooth-connected cube.\n'
             'Default: False.'
+        ),
+    )
+    bluetooth.add_argument(
+        '-m', '--method',
+        default=CUBE_METHOD,
+        choices={
+            'lbl', 'cfop', 'cf4op', 'raw',
+        },
+        metavar='METHOD',
+        help=(
+            'Set the method of analyse used.\n'
+            f'Default: { CUBE_METHOD }.'
         ),
     )
     mode = 'hide' if show_reconstruction else 'show'
@@ -218,7 +249,7 @@ def solve_arguments(subparsers):
         ),
     )
     timer.add_argument(
-        '-m', '--metronome',
+        '-k', '--metronome',
         type=float,
         default=metronome,
         metavar='TEMPO',
@@ -257,6 +288,15 @@ def solve_arguments(subparsers):
             'Default: None.'
         ),
     )
+    scramble.add_argument(
+        '-x', '--scramble',
+        default='',
+        metavar='SCRAMBLE',
+        help=(
+            'Set the scramble to use for solving.\n'
+            'Default: None.'
+        ),
+    )
 
     return parser
 
@@ -273,14 +313,41 @@ def train_arguments(subparsers):
     )
 
     parser.add_argument(
-        'mode',
-        metavar='MODE',
-        choices={'oll', 'pll'},
-        help='Specify the training mode.',
+        '-s', '--step',
+        default=TRAINER_STEP,
+        choices={'cross', 'ecross', 'f2l', 'af2l', 'oll', 'pll'},
+        metavar='STEP',
+        help=(
+            'Specify the training mode : '
+            'cross, ecross, f2l, af2l, oll or pll.\n'
+            f'Default: { TRAINER_STEP }.'
+        ),
     )
 
-    mode = 'hide' if show_cube else 'show'
     parser.add_argument(
+        '-c', '--case',
+        nargs='*',
+        default=[],
+        metavar='CASE',
+        help=(
+            'Names of the step cases to solve.\n'
+            'Default: All.'
+        ),
+    )
+
+    parser.add_argument(
+        '-v', '--solution',
+        action='store_true',
+        dest='show_solution',
+        help=(
+            'Show the main solution of the case.\n'
+            'Default: False.'
+        ),
+    )
+
+    cube = parser.add_argument_group('Cube')
+    mode = 'hide' if show_cube else 'show'
+    cube.add_argument(
         '-p', f'--{ mode }-cube',
         action='store_const',
         const=not show_cube,
@@ -289,6 +356,16 @@ def train_arguments(subparsers):
         help=(
             f'{ mode.title() } the cube in its scrambled state.\n'
             'Default: False'
+        ),
+    )
+    cube.add_argument(
+        '-o', '--orientation',
+        default=CUBE_ORIENTATION,
+        choices=ORIENTATIONS_SORTED,
+        metavar='ORIENTATION',
+        help=(
+            'Set the cube orientation used.\n'
+            f'Default: { CUBE_ORIENTATION }.'
         ),
     )
 
@@ -304,7 +381,7 @@ def train_arguments(subparsers):
 
     timer = parser.add_argument_group('Timer')
     timer.add_argument(
-        '-m', '--metronome',
+        '-k', '--metronome',
         type=float,
         default=metronome,
         metavar='TEMPO',
@@ -505,8 +582,9 @@ def detail_arguments(subparsers):
         help='ID(s) of the solve(s) to display details for.',
     )
 
+    cube = parser.add_argument_group('Cube')
     mode = 'hide' if show_cube else 'show'
-    parser.add_argument(
+    cube.add_argument(
         '-p', f'--{ mode }-cube',
         action='store_const',
         const=not show_cube,
@@ -515,6 +593,16 @@ def detail_arguments(subparsers):
         help=(
             f'{ mode.title() } the cube in its scrambled state.\n'
             'Default: False'
+        ),
+    )
+    cube.add_argument(
+        '-o', '--orientation',
+        default='auto',
+        choices=['auto', *ORIENTATIONS_SORTED],
+        metavar='ORIENTATION',
+        help=(
+            'Set the cube orientation used.\n'
+            'Default: auto.'
         ),
     )
 
@@ -585,6 +673,94 @@ def detail_arguments(subparsers):
     return parser
 
 
+def edit_arguments(subparsers):
+    parser = subparsers.add_parser(
+        'edit',
+        help="Edit solves' flag",
+        description='Edit flag status on specific solves.',
+        aliases=COMMAND_ALIASES['edit'],
+    )
+
+    parser.add_argument(
+        'solves',
+        nargs='+',
+        type=int,
+        metavar='SOLVE_ID',
+        help='ID(s) of the solve(s) to edit state for.',
+    )
+
+    parser.add_argument(
+        'flag',
+        metavar='FLAG',
+        choices={'OK', '+2', 'DNF'},
+        help='Flag to set the solve(s) for.',
+    )
+
+    session = parser.add_argument_group('Session')
+    session.add_argument(
+        '-c', '--cube',
+        type=int,
+        choices=CUBE_SIZES,
+        default=3,
+        metavar='CUBE',
+        help=(
+            'Set the size of the cube (from 2 to 7).\n'
+            'Default: 3.'
+        ),
+    )
+    session.add_argument(
+        '-u', '--session',
+        default='',
+        metavar='SESSION',
+        help=(
+            'Name of the session for solves.\n'
+            'Default: None.'
+        ),
+    )
+
+    return parser
+
+
+def delete_arguments(subparsers):
+    parser = subparsers.add_parser(
+        'delete',
+        help='Delete solves',
+        description='Delete specific solves.',
+        aliases=COMMAND_ALIASES['delete'],
+    )
+
+    parser.add_argument(
+        'solve',
+        type=int,
+        metavar='SOLVE_ID',
+        help='ID of the solve to delete.',
+    )
+
+    session = parser.add_argument_group('Session')
+    session.add_argument(
+        '-c', '--cube',
+        type=int,
+        choices=CUBE_SIZES,
+        default=3,
+        metavar='CUBE',
+        help=(
+            'Set the size of the cube (from 2 to 7).\n'
+            'Default: 3.'
+        ),
+    )
+    session.add_argument(
+        '-u', '--session',
+        default='',
+        metavar='SESSION',
+        help=(
+            'Name of the session for solves.\n'
+            'Default: None.'
+        ),
+    )
+
+    return parser
+
+
 def get_arguments() -> Any:
     parser = ArgumentParser(
         description='Speed cubing timer on your terminal.',
@@ -599,6 +775,8 @@ def get_arguments() -> Any:
     solve_arguments(subparsers)
     train_arguments(subparsers)
     detail_arguments(subparsers)
+    edit_arguments(subparsers)
+    delete_arguments(subparsers)
     list_arguments(subparsers)
     statistics_arguments(subparsers)
     graph_arguments(subparsers)

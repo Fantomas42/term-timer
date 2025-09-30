@@ -4,21 +4,30 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "term-timer"
-version = "1.0"
+dynamic = ["version"]
 description = "Speed Cubing Timer on your Terminal"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
+license = {file = "LICENSE"}
+keywords = ["rubick", "cube", "speedcubing", "solve", "timer"]
+authors = [{name = "Fantomas42", email = "fantomas42@gmail.com"}]
+classifiers = [
+  "Programming Language :: Python"
+]
 dependencies = [
     "magiccube==1.2.0",
     "plotext==5.3.2",
     "rich==13.9.4",
-    "bleak==0.22.3",
+    "bleak==1.1.0",
     "Jinja2==3.1.6",
     "bottle==0.13.3",
     "cryptography==44.0.2",
     "kociemba==1.2.1",
-    "cubing_algs @ git+https://github.com/Fantomas42/cubing-algs.git",
+    "cubing_algs==1.0.11",
 ]
+
+[project.urls]
+repository = "https://github.com/Fantomas42/term-timer"
 
 [project.optional-dependencies]
 dev = [
@@ -35,6 +44,9 @@ term-timer = "term_timer.scripts.timer:main"
 
 [tool.setuptools]
 packages = ["term_timer"]
+
+[tool.setuptools.dynamic]
+version = {attr = "term_timer.__version__"}
 
 [tool.ruff]
 line-length = 80
@@ -128,7 +140,7 @@ allow-magic-value-types = ["str", "int"]
 
 [tool.mypy]
 disable_error_code = ["import-untyped"]
-exclude = ["tests"]
+exclude = ["tests", "poc"]
 python_version = 3.12
 
 [tool.pytest.ini_options]

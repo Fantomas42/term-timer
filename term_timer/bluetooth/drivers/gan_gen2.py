@@ -7,6 +7,8 @@ import time
 from datetime import datetime
 from datetime import timezone
 
+from cubing_algs.facelets import cubies_to_facelets
+
 from term_timer.bluetooth.constants import GAN_ENCRYPTION_KEY
 from term_timer.bluetooth.constants import GAN_GEN2_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN2_SERVICE
@@ -14,7 +16,6 @@ from term_timer.bluetooth.constants import GAN_GEN2_STATE_CHARACTERISTIC
 from term_timer.bluetooth.constants import MOYU_AI_ENCRYPTION_KEY
 from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
-from term_timer.bluetooth.facelets import to_kociemba_facelets
 from term_timer.bluetooth.message import GanProtocolMessage
 from term_timer.bluetooth.salt import get_salt
 
@@ -37,24 +38,24 @@ class GanGen2Driver(Driver):
     command_characteristic_uid = GAN_GEN2_COMMAND_CHARACTERISTIC
     encrypter = GanGen2CubeEncrypter
 
-    def __init__(self, client, device):
-        super().__init__(client, device)
+    def __init__(self, client):
+        super().__init__(client)
 
         self.last_serial = -1
         self.cube_timestamp = 0
         self.last_move_timestamp = 0
 
     def init_cypher(self):
-        if self.device.name.startswith('AiCube'):
+        if self.client.name.startswith('AiCube'):
             return self.encrypter(
                 MOYU_AI_ENCRYPTION_KEY['key'],
                 MOYU_AI_ENCRYPTION_KEY['iv'],
-                get_salt(self.device.address),
+                get_salt(self.client.address),
             )
         return self.encrypter(
             GAN_ENCRYPTION_KEY['key'],
             GAN_ENCRYPTION_KEY['iv'],
-            get_salt(self.device.address),
+            get_salt(self.client.address),
         )
 
     def send_command_handler(self, command: str):
@@ -176,6 +177,7 @@ class GanGen2Driver(Driver):
             co = []
             ep = []
             eo = []
+            so = [0, 1, 2, 3, 4, 5]
             # Corners
             for i in range(7):
                 cp.append(msg.get_bit_word(12 + i * 3, 3))
@@ -194,7 +196,7 @@ class GanGen2Driver(Driver):
                 'clock': clock,
                 'timestamp': timestamp,
                 'serial': serial,
-                'facelets': to_kociemba_facelets(cp, co, ep, eo),
+                'facelets': cubies_to_facelets(cp, co, ep, eo, so),
                 'state': {
                     'CP': cp,
                     'CO': co,

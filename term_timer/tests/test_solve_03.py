@@ -1,8 +1,6 @@
 import datetime
 import unittest
 
-from cubing_algs.parsing import parse_moves
-
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.solve import Solve
 
@@ -26,7 +24,7 @@ class TestSolve03(unittest.TestCase):
         )
 
         self.solve.method_name = 'cf4op'
-        self.solve.orientation = parse_moves('z2')
+        self.solve.orientation = 'DF'
 
     def test_datetime(self):
         self.assertEqual(
@@ -64,7 +62,7 @@ class TestSolve03(unittest.TestCase):
 
     def test_solution(self):
         self.assertEqual(
-            self.solve.solution.metrics['htm'],
+            self.solve.solution.metrics.htm,
             7,
         )
 
@@ -73,6 +71,14 @@ class TestSolve03(unittest.TestCase):
             str(self.solve.reconstruction),
             "U R2 U L2 B'",
         )
+
+    def test_reconstruction_orientation_auto(self):
+        self.solve.orientation = 'auto'
+        self.assertEqual(
+            str(self.solve.reconstruction),
+            "B L2 B R2 U'",
+        )
+        self.assertEqual(str(self.solve.orientation_moves), "x'")
 
     def test_tps(self):
         self.assertEqual(
@@ -116,9 +122,9 @@ class TestSolve03(unittest.TestCase):
             0,
         )
 
-    def test_method(self):
+    def test_method_analyser(self):
         self.assertEqual(
-            self.solve.method,
+            self.solve.method_analyser,
             CF4OPAnalyser,
         )
 
@@ -181,13 +187,13 @@ class TestSolve03(unittest.TestCase):
         self.assertEqual(
             self.solve.reconstruction_steps_timing,
             [
-                [0, 728, 'z2'],
-                [728, 1092, 'U'],
-                [1092, 1602, 'R2'],
-                [1746, 2111, 'U'],
-                [2277, 2861, 'L2'],
-                [2887, 3252, '.'],
-                [3278, 3643, "B'"],
+                [0, 583, 'z2'],
+                [583, 947, 'U'],
+                [947, 1457, 'R2'],
+                [1601, 1966, 'U'],
+                [2132, 2716, 'L2'],
+                [2742, 3107, '.'],
+                [3133, 3498, "B'"],
             ],
         )
 

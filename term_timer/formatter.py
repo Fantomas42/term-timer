@@ -5,11 +5,12 @@ from cubing_algs.constants import OUTER_WIDE_MOVES
 from cubing_algs.constants import PAUSE_CHAR
 from cubing_algs.constants import ROTATIONS
 
+from term_timer.config import AUF_MOVE
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
-from term_timer.methods.base import AUF
 from term_timer.triggers import TRIGGERS_REGEX
+from term_timer.triggers import apply_trigger_outside_blocks
 
 
 def format_time(elapsed_ns: int, *, allow_dnf: bool = True) -> str:
@@ -30,9 +31,6 @@ def format_duration(elapsed_ns: int) -> str:
 
 
 def format_edge(edge: int, max_edge: int) -> str:
-    if not edge:
-        return DNF
-
     mins, secs = divmod(int(edge), 60)
 
     if max_edge < 60:
@@ -58,7 +56,7 @@ def format_delta(delta: int) -> str:
     return f'[{ style }]{ sign }{ format_duration(delta) }[/{ style }]'
 
 
-def format_score(score: int) -> str:
+def format_score(score: float) -> str:
     style = 'green'
     if score < 14:
         style = 'orange'
@@ -186,16 +184,18 @@ def format_alg_triggers(algorithm: str, trigger_names: list[str]) -> str:
                 f'[/{ trigger_name }]'  # noqa: B023
             )
 
-        algorithm = regex.sub(replacer, algorithm)
+        algorithm = apply_trigger_outside_blocks(
+            algorithm, regex, replacer,
+        )
 
     return algorithm
 
 
-def format_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
+def format_alg_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
     if pre_auf and algorithm:
         algorithm_parts = algorithm.split(' ')
         for i, move in enumerate(algorithm_parts):
-            if move[0] == AUF:
+            if move[0] == AUF_MOVE:
                 algorithm_parts[i] = f'[pre-auf]{ move }[/pre-auf]'
             elif move != PAUSE_CHAR:
                 break
@@ -204,7 +204,7 @@ def format_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
     if post_auf and algorithm:
         algorithm_parts = list(reversed(algorithm.split(' ')))
         for i, move in enumerate(algorithm_parts):
-            if move[0] == AUF:
+            if move[0] == AUF_MOVE:
                 algorithm_parts[i] = f'[post-auf]{ move }[/post-auf]'
             elif move != PAUSE_CHAR:
                 break
@@ -213,7 +213,20 @@ def format_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
     return algorithm
 
 
-def format_moves(algorithm: str) -> str:
+def format_alg_pauses(algorithm: str, solve, step, *, multiple=False) -> str:
+    post = int(step['post_pause'] / solve.pause_threshold)
+    if post:
+        algorithm += f' [reco-pause]{ PAUSE_CHAR }[/reco-pause]' * (
+            post if multiple else 1
+        )
+
+    return algorithm.replace(
+        ' .',
+        ' [pause].[/pause]',
+    )
+
+
+def format_alg_moves(algorithm: str) -> str:
     if not algorithm:
         return ''
 

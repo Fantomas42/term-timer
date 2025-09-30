@@ -1,6 +1,4 @@
 from functools import cached_property
-from multiprocessing import Pool
-from multiprocessing import cpu_count
 
 import numpy as np
 import plotext as plt
@@ -22,9 +20,6 @@ from term_timer.formatter import format_score
 from term_timer.formatter import format_time
 from term_timer.interface.console import console
 from term_timer.magic_cube import Cube
-from term_timer.methods.cfop import OLL_INFO
-from term_timer.methods.cfop import PLL_INFO
-from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.solve import Solve
 
 
@@ -194,11 +189,11 @@ class Statistics(StatisticsTools):
         return sum(self.stack_time)
 
     @cached_property
-    def advanced_solves(self) -> int:
+    def advanced_solves(self) -> float:
         return sum(1 for s in self.stack if s.advanced) / self.total
 
     @cached_property
-    def score(self) -> int:
+    def score(self) -> float:
         return sum(s.score for s in self.stack if s.advanced) / self.total
 
     @cached_property
@@ -212,7 +207,7 @@ class Statistics(StatisticsTools):
                     best_bin = second
                     break
 
-        values = [st / SECOND for st in self.stack_time]
+        values = [st / SECOND for st in self.stack_time_sorted]
 
         min_val = int((np.min(values) // best_bin) * best_bin)
         max_val = int(((np.max(values) // best_bin) + 1) * best_bin)
@@ -413,7 +408,7 @@ class StatisticsReporter(Statistics):
                 f'[{ flag_class }]{ solve.flag }[/{ flag_class }]',
             )
 
-    def detail(self, solve_id: int, method: str,
+    def detail(self, solve_id: int, method: str, orientation: str,
                *,
                show_cube: bool,
                show_reconstruction: bool,
@@ -430,9 +425,7 @@ class StatisticsReporter(Statistics):
             return
 
         solve.method_name = method
-
-        cube = Cube(self.cube_size)
-        cube.rotate(solve.scramble)
+        solve.orientation = orientation
 
         date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
@@ -441,7 +434,7 @@ class StatisticsReporter(Statistics):
         )
         console.print(
             '[stats]Time       :[/stats] '
-            f'[result]{ format_time(solve.time) }[/result]'
+            f'[time]{ format_time(solve.time) }[/time]'
             f'[result]{ solve.flag }[/result]',
         )
         console.print(
@@ -483,7 +476,7 @@ class StatisticsReporter(Statistics):
                 f' { format_score(solve.method_applied.score) }'
             )
             console.print(
-                f'[stats]Grade { solve.method.name:<5}:[/stats]'
+                f'[stats]Grade { solve.method_analyser.name:<5}:[/stats]'
                 f'{ grade_line }',
             )
 
@@ -517,9 +510,10 @@ class StatisticsReporter(Statistics):
                 f' [{ exec_class }]{ exec_percent:.2f}%[{ exec_class }]',
             )
 
+            metrics_dict = solve.reconstruction.metrics._asdict()
             metric_string = '[stats]Metrics    :[/stats] '
             for metric in STATS_CONFIG.get('metrics'):
-                value = solve.reconstruction.metrics[metric]
+                value = metrics_dict[metric]
                 metric_string += (
                     f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
                 )
@@ -585,12 +579,16 @@ class StatisticsReporter(Statistics):
             f'[consign]{ solve.scramble }[/consign]',
         )
         if show_cube:
-            console.print(cube.full_cube(None), end='')
+            cube = Cube(self.cube_size)
+            cube.rotate(solve.scramble)
+
+            print(cube.display('UF'), end='')
 
         if solve.advanced:
             if show_reconstruction:
                 console.print(
-                    f'[title]Reconstruction { solve.method.name }[/title]',
+                    '[title]Reconstruction '
+                    f'{ solve.method_analyser.name }[/title]',
                     f'[localhost][link={ solve.link_term_timer }]'
                     'Term-Timer[/link][/localhost]',
                     f'[algcubing][link={ solve.link_alg_cubing }]'
@@ -606,36 +604,8 @@ class StatisticsReporter(Statistics):
             if show_recognition_graph:
                 solve.recognition_graph()
 
-    def analyze_solve_cases(self, solve):
-        if not solve.advanced:
-            return None
-
-        analysis = CFOPAnalyser(solve.scramble, solve.solution)
-        oll, pll = analysis.summary[-2:]
-
-        return {
-            'oll': {
-                'case': oll['cases'][0],
-                'time': oll['total'],
-                'execution': oll['execution'],
-                'recognition': oll['recognition'],
-                'qtm': oll['qtm'],
-                'tps': Solve.compute_tps(oll['qtm'], oll['total']),
-                'etps': Solve.compute_tps(oll['qtm'], oll['execution']),
-            },
-            'pll': {
-                'case': pll['cases'][0],
-                'time': pll['total'],
-                'execution': pll['execution'],
-                'recognition': pll['recognition'],
-                'qtm': pll['qtm'],
-                'tps': Solve.compute_tps(pll['qtm'], pll['total']),
-                'etps': Solve.compute_tps(pll['qtm'], pll['execution']),
-            },
-            'score_cfop': analysis.score,
-        }
-
-    def case_table(self, title, items, sorting, ordering):
+    def case_table(self, title: str, items: list[dict[str, int | float]],
+                   sorting: str, ordering: str) -> None:
         table = Table(title=f'{ title }s', box=box.SIMPLE)
         table.add_column('Case', width=10)
         table.add_column('Σ', width=3)
@@ -659,13 +629,15 @@ class StatisticsReporter(Statistics):
                 info['frequency'] > info['probability'] and 'green'
             ) or 'red'
 
+            label = f'{ title } { name.split(" ")[0] }'
             head = (
                 '[cubingfache][link=https://cubing.fache.fr/'
-                f'{ title }/{ name.split(" ")[0] }.html]{ info["label"] }'
+                f'{ title }/{ name.split(" ")[0] }.html]{ label }'
                 '[/link][/cubingfache]'
             )
-            if 'SKIP' in info['label']:
-                head = f'[skipped]{ info["label"] }[/skipped]'
+
+            if 'SKIP' in name:
+                head = f'[skipped]{ name }[/skipped]'
 
             count = info['count']
 
@@ -699,116 +671,18 @@ class StatisticsReporter(Statistics):
             )
         console.print(table)
 
-    def compute_cfop(self):
-        num_processes = max(1, cpu_count() - 1)
-
-        with Pool(processes=num_processes) as pool:
-            results = pool.map(self.analyze_solve_cases, self.stack)
-
-        olls = {}
-        plls = {}
-        score = 0
-        total = 0
-
-        for result in results:
-            if not result:
-                continue
-
-            total += 1
-            score += result['score_cfop']
-
-            oll_case = result['oll']['case']
-            olls.setdefault(
-                oll_case, {
-                    'recognitions': [],
-                    'executions': [],
-                    'times': [],
-                    'qtms': [],
-                    'tpss': [],
-                    'etpss': [],
-                },
-            )
-            olls[oll_case]['times'].append(result['oll']['time'])
-            olls[oll_case]['executions'].append(result['oll']['execution'])
-            olls[oll_case]['recognitions'].append(result['oll']['recognition'])
-            olls[oll_case]['qtms'].append(result['oll']['qtm'])
-            olls[oll_case]['tpss'].append(result['oll']['tps'])
-            olls[oll_case]['etpss'].append(result['oll']['etps'])
-
-            pll_case = result['pll']['case']
-            plls.setdefault(
-                pll_case,
-                {
-                    'recognitions': [],
-                    'executions': [],
-                    'times': [],
-                    'qtms': [],
-                    'tpss': [],
-                    'etpss': [],
-                 },
-            )
-            plls[pll_case]['times'].append(result['pll']['time'])
-            plls[pll_case]['executions'].append(result['pll']['execution'])
-            plls[pll_case]['recognitions'].append(result['pll']['recognition'])
-            plls[pll_case]['qtms'].append(result['pll']['qtm'])
-            plls[pll_case]['tpss'].append(result['pll']['tps'])
-            plls[pll_case]['etpss'].append(result['pll']['etps'])
-
-        for name, info in olls.items():
-            count = len(info['times'])
-            info['count'] = count
-            info['frequency'] = count / total
-            info['probability'] = OLL_INFO[name]['probability']
-            info['label'] = f'OLL { name.split(" ")[0] }'
-            info['recognition'] = sum(info['recognitions']) / count
-            info['execution'] = sum(info['executions']) / count
-            info['time'] = sum(info['times']) / count
-            info['ao5'] = self.ao(5, info['times'])
-            info['ao12'] = self.ao(12, info['times'])
-            info['qtm'] = sum(info['qtms']) / count
-            info['tps'] = sum(info['tpss']) / count
-            info['etps'] = sum(info['etpss']) / count
-
-        for name, info in plls.items():
-            count = len(info['times'])
-            info['count'] = count
-            info['frequency'] = count / total
-            info['probability'] = PLL_INFO[name]['probability']
-            info['label'] = f'PLL { name }'
-            info['recognition'] = sum(info['recognitions']) / count
-            info['execution'] = sum(info['executions']) / count
-            info['time'] = sum(info['times']) / count
-            info['ao5'] = self.ao(5, info['times'])
-            info['ao12'] = self.ao(12, info['times'])
-            info['qtm'] = sum(info['qtms']) / count
-            info['tps'] = sum(info['tpss']) / count
-            info['etps'] = sum(info['etpss']) / count
-
-        return {
-            'olls': olls,
-            'plls': plls,
-            'total': total,
-            'score': score,
-            'mean': score / total if total else 0,
-        }
-
-    def cfop(self, *, oll_only: bool = False, pll_only: bool = False,
+    def cfop(self, analyses: dict[str, dict[str, float | int] | float],
+             *, oll_only: bool = False, pll_only: bool = False,
              sorting: str = 'count', ordering: str = 'asc') -> None:
         if sorting == 'case':
             sorting = 'label'
 
-        console.print('Aggregating cases...', end='')
-
-        cfop = self.compute_cfop()
-
-        print('\r', end='')
-
         if not pll_only:
-            self.case_table('OLL', cfop['olls'], sorting, ordering)
+            self.case_table('OLL', analyses['resume']['oll'], sorting, ordering)
         if not oll_only:
-            self.case_table('PLL', cfop['plls'], sorting, ordering)
+            self.case_table('PLL', analyses['resume']['pll'], sorting, ordering)
 
-        mean = cfop['mean']
+        mean = analyses['mean']
         grade = format_grade(mean)
         grade_class = grade.lower()
         grade_line = (
@@ -828,7 +702,7 @@ class StatisticsReporter(Statistics):
         plt.clear_figure()
 
         for time in self.stack_time:
-            seconds = time / SECOND
+            seconds = time // SECOND
             times.append(seconds)
 
             ao5 = self.ao(5, times)

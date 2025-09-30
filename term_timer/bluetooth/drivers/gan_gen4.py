@@ -7,12 +7,13 @@ import time
 from datetime import datetime
 from datetime import timezone
 
+from cubing_algs.facelets import cubies_to_facelets
+
 from term_timer.bluetooth.constants import DEBOUNCE
 from term_timer.bluetooth.constants import GAN_GEN4_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN4_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN4_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
-from term_timer.bluetooth.facelets import to_kociemba_facelets
 from term_timer.bluetooth.message import GanProtocolMessage
 
 logger = logging.getLogger(__name__)
@@ -150,6 +151,7 @@ class GanGen4Driver(GanGen3Driver):
             co = []
             ep = []
             eo = []
+            so = [0, 1, 2, 3, 4, 5]
             # Corners
             for i in range(7):
                 cp.append(msg.get_bit_word(32 + i * 3, 3))
@@ -168,7 +170,7 @@ class GanGen4Driver(GanGen3Driver):
                 'clock': clock,
                 'timestamp': timestamp,
                 'serial': serial,
-                'facelets': to_kociemba_facelets(cp, co, ep, eo),
+                'facelets': cubies_to_facelets(cp, co, ep, eo, so),
                 'state': {
                     'CP': cp,
                     'CO': co,

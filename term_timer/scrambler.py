@@ -1,179 +1,103 @@
-import re
 from random import choice
-from random import randint
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.constants import OPPOSITE_FACES
-from cubing_algs.constants import OUTER_BASIC_MOVES
 from cubing_algs.parsing import parse_moves
+from cubing_algs.scrambler import scramble
+from cubing_algs.scrambler import scramble_easy_cross
 from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.fat import unfat_rotation_moves
 from cubing_algs.transform.mirror import mirror_moves
-from cubing_algs.transform.rotation import remove_final_rotations
+from cubing_algs.transform.rotation import compress_final_rotations
+from cubing_algs.vcube import VCube
 from kociemba import solve
 
-from term_timer.config import DEBUG
-from term_timer.config import SCRAMBLE_ITERATIONS
-from term_timer.constants import CUBE_SIZES
+from term_timer.config import CUBE_RIGHT_HANDED
+from term_timer.exceptions import InvalidCaseError
 from term_timer.magic_cube import Cube
-from term_timer.methods.cfop import OLL_SETUPS
-from term_timer.methods.cfop import PLL_SETUPS
-
-FACE_REGEXP = re.compile(r'(F|R|U|B|L|D)')
-
-MOVES_EASY_CROSS = [
-    'F',
-    'R',
-    'B',
-    'L',
-]
+from term_timer.methods.cases import CASES
 
 
-def build_cube_moves(cube_size: int) -> list[str]:
-    moves = []
-
-    for face in OUTER_BASIC_MOVES:
-        moves.extend(
-            [
-                face,
-                f"{ face }'",
-                f'{ face }2',
-            ],
-        )
-        if cube_size > 3:
-            moves.extend(
-                [
-                    f'{ face }w',
-                    f"{ face }w'",
-                    f'{ face }w2',
-                ],
-            )
-            if cube_size > 5:
-                for i in range(2, 4):
-                    moves.extend(
-                        [
-                            f'{ i }{ face }',
-                            f"{ i }{ face }'",
-                            f'{ i }{ face }2',
-                            f'{ i }{ face }w',
-                            f"{ i }{ face }w'",
-                            f'{ i }{ face }w2',
-                        ],
-                    )
-
-    return moves
-
-
-MOVES_BY_CUBE = {
-    i: build_cube_moves(i)
-    for i in CUBE_SIZES
-}
-
-ITERATIONS_BY_CUBE = {
-    2: (9, 11),
-    3: (19, 22),
-    4: (45, 50),
-    5: (60, 60),
-    6: (80, 80),
-    7: (100, 100),
-}
-
-
-def is_valid_next_move(current: str, previous: str) -> bool:
-    current_move_search = FACE_REGEXP.search(current)
-    previous_move_search = FACE_REGEXP.search(previous)
-
-    if not current_move_search or not previous_move_search:
-        return False
-
-    current_move = current_move_search[0]
-    previous_move = previous_move_search[0]
-
-    if current_move == previous_move:
-        return False
-
-    return OPPOSITE_FACES[current_move] != previous_move
-
-
-def random_moves(cube_size: int, iterations: int,
-                 *, easy_cross: bool) -> Algorithm:
-    move_set = MOVES_BY_CUBE[cube_size]
-
-    if easy_cross:
-        iterations = 10
-        move_set = MOVES_EASY_CROSS
-
-    value = choice(move_set)
-    moves = [value]
-    previous = value
-
-    if not iterations:
-        iterations_range = ITERATIONS_BY_CUBE[cube_size]
-        if cube_size == 3:
-            iterations_range = (25, 30)
-        iterations = randint(*iterations_range)
-
-    if DEBUG and SCRAMBLE_ITERATIONS:
-        iterations = SCRAMBLE_ITERATIONS
-
-    while len(moves) < iterations:
-        while not is_valid_next_move(value, previous):
-            value = choice(move_set)
-
-        previous = value
-        moves.append(value)
-
-    return parse_moves(moves)
-
-
-def scramble_moves(state: str, facelets: str = '') -> Algorithm:
+def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
+    """
+    Return algorithm to reach a certain state
+    """
     solution: str = solve(state, facelets) if facelets else solve(state)
 
     return parse_moves(solution).transform(mirror_moves)
 
 
 def scrambler(cube_size: int, iterations: int,
-              *, easy_cross: bool) -> tuple[Algorithm, Cube]:
+              *,
+              easy_cross: bool,
+              raw_scramble: str = '') -> tuple[Algorithm, Cube]:
     cube = Cube(cube_size)
 
-    scramble = random_moves(
-        cube_size, iterations,
-        easy_cross=easy_cross,
-    )
+    if raw_scramble:
+        scrambled = parse_moves(raw_scramble, secure=False)
+    elif easy_cross:
+        scrambled = scramble_easy_cross()
+    else:
+        scrambled = scramble(
+            cube_size, iterations,
+            inner_layers=True,
+            right_handed=CUBE_RIGHT_HANDED,
+        )
+
+    cube.rotate(scrambled)
+
+    if cube_size != 3 or iterations or easy_cross or raw_scramble:
+        return scrambled, cube
+
+    scrambled = state_to_scramble(cube.state)
+
+    return scrambled, cube
+
+
+def trainer(step: str, cases: list[str],
+            orientation_moves: Algorithm,
+            bluetooth_cube: VCube | None = None) -> tuple[
+                str, Algorithm, Algorithm, VCube]:
+    cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube()
+
+    if step == 'ecross':
+        case_name = 'Easy Cross'
+        main_algorithm = Algorithm()
+        scramble = scramble_easy_cross()
+    elif step == 'cross':
+        case_name = 'Cross'
+        main_algorithm = Algorithm()
+        scramble, _cube = scrambler(3, 12, easy_cross=False)
+    else:
+        case_name, main_algorithm, scramble = random_training(
+            step, cases, orientation_moves,
+        )
 
     cube.rotate(scramble)
 
-    if cube_size != 3 or iterations:
-        return scramble, cube
+    return case_name, main_algorithm, scramble, cube
 
-    scramble = scramble_moves(
-        cube.get_kociemba_facelet_positions(),
+
+def random_training(step: str, selected_cases: list[str],
+                    orientation_moves: Algorithm) -> tuple[
+                        str, Algorithm, Algorithm]:
+    cases = CASES[step.upper()]
+    valid_cases = {k: v for k, v in cases.items() if v.get('setups')}
+
+    case = choice(selected_cases or list(valid_cases.keys()))
+
+    if case not in valid_cases:
+        error_string = f'Invalid case { case } for { step.upper() }'
+        raise InvalidCaseError(error_string)
+
+    algo = (
+        orientation_moves
+        + choice(cases[case]['setups'])
+        + mirror_moves(orientation_moves)
     )
 
-    return scramble, cube
+    case_name = cases[case]['name']
+    main_algorithm = cases[case]['main']
 
-
-def trainer(mode):
-    cube = Cube(3)
-
-    case, scramble = random_training(mode)
-
-    cube.rotate('Z2')
-    cube.rotate(scramble)
-
-    return case, scramble, cube
-
-
-def random_training(mode):
-    cases = OLL_SETUPS
-    if mode == 'pll':
-        cases = PLL_SETUPS
-
-    case = choice(list(cases.keys()))
-    algo = choice(cases[case])
-
-    return case, parse_moves(algo).transform(
-        unfat_rotation_moves,
+    return case_name, parse_moves(main_algorithm), parse_moves(algo).transform(
         degrip_full_moves,
-        remove_final_rotations,
+        compress_final_rotations,
     )

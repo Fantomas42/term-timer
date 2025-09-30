@@ -7,6 +7,38 @@
 {% block subtitle %}Sessions{% endblock %}
 
 {% block body %}
+  <div class="academy-banner">
+    <div class="academy-content">
+      <div class="academy-icon">
+        <i class="fas fa-graduation-cap"></i>
+      </div>
+      <div class="academy-info">
+        <h2>CFOP Academy</h2>
+        <p>Master speedcubing with our comprehensive learning center</p>
+        <div class="academy-features">
+          <span class="feature-tag">
+            <i class="fas fa-cube"></i>
+            F2L Cases
+          </span>
+          <span class="feature-tag">
+            <i class="fas fa-layer-group"></i>
+            OLL Algorithms
+          </span>
+          <span class="feature-tag">
+            <i class="fas fa-sync-alt"></i>
+            PLL Permutations
+          </span>
+        </div>
+      </div>
+      <div class="academy-action">
+        <a href="/academy/" class="academy-btn">
+          <span class="btn-text">Enter Academy</span>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
   {% for cube, sessions in sessions.items() %}
     {% if sessions %}
       <div class="card">

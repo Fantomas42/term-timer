@@ -2,7 +2,7 @@ import os
 from importlib.util import find_spec
 from typing import Any
 
-from cubing_algs.parsing import parse_moves
+from cubing_algs.constants import OPPOSITE_FACES
 
 from term_timer.constants import CONFIG_FILE
 
@@ -17,8 +17,14 @@ countdown = 0.0
 metronome = 0.0
 
 [cube]
-orientation = ["z2"]
+orientation = "DF"
 method = "cf4op"
+palette = ""
+effect = "face-visible"
+right-handed = true
+
+[trainer]
+step = "oll"
 
 [display]
 scramble = true
@@ -26,6 +32,9 @@ reconstruction = true
 time_graph = true
 tps_graph = true
 recognition_graph = true
+
+[bluetooth]
+address = ""
 
 [statistics]
 distribution = 0
@@ -61,16 +70,26 @@ DISPLAY_CONFIG = CONFIG.get('display', {})
 
 UI_CONFIG = CONFIG.get('ui', {})
 
+BLUETOOTH_CONFIG = CONFIG.get('bluetooth', {})
+
 CUBE_CONFIG = CONFIG.get('cube', {})
+
+TRAINER_CONFIG = CONFIG.get('trainer', {})
 
 SERVER_CONFIG = CONFIG.get('server', {})
 
-CUBE_ORIENTATION = parse_moves(
-    CUBE_CONFIG.get('orientation'),
-)
+CUBE_ORIENTATION = CUBE_CONFIG.get('orientation')
 
 CUBE_METHOD = CUBE_CONFIG.get('method')
 
-DEBUG = bool(os.getenv('TERM_TIMER_DEBUG', None))
+CUBE_PALETTE = CUBE_CONFIG.get('palette')
 
-SCRAMBLE_ITERATIONS = int(os.getenv('TERM_TIMER_SCRAMBLE_ITERATIONS', '0'))
+CUBE_EFFECT = CUBE_CONFIG.get('effect')
+
+CUBE_RIGHT_HANDED = CUBE_CONFIG.get('right-handed')
+
+AUF_MOVE = OPPOSITE_FACES[CUBE_ORIENTATION[0]]
+
+TRAINER_STEP = TRAINER_CONFIG.get('step')
+
+DEBUG = bool(os.getenv('TERM_TIMER_DEBUG', None))

@@ -5,9 +5,8 @@ class Driver:
 
     disable_gyro = True
 
-    def __init__(self, client, device):
+    def __init__(self, client):
         self.client = client
-        self.device = device
 
         self.events = []
         self.cypher = self.init_cypher()

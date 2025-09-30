@@ -11,6 +11,7 @@ from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.drivers.gan_gen4 import GanGen4Driver
 from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
+from term_timer.exceptions import CubeNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -22,34 +23,39 @@ DRIVERS = [
 ]
 
 
-class CubeNotFoundError(Exception):
-    pass
-
-
 class BluetoothInterface:
-    device = None
     client = None
     driver = None
 
     scan_timeout = 5
+    connect_timeout = 5
 
     def __init__(self, queue: Queue):
         self.queue = queue
 
-    async def __aenter__(self, device=None) -> bool:
-        if not device:
+    async def __aenter__(self, address=None) -> bool:
+        if not address:
             device = await self.scan()
 
-        if not device:
-            logger.debug(
-                'No bluetooth cube found.\n'
-                "Make sure it's powered on and in pairing mode.",
-            )
-            raise CubeNotFoundError
+            if not device:
+                logger.debug(
+                    'No Bluetooth cube found.\n'
+                    'Make sure a cube is powered on and in pairing mode.',
+                )
+                raise CubeNotFoundError
+            address = device.address
 
-        self.device = device
-        self.client = BleakClient(self.device.address)
-        await self.client.connect()
+        self.client = BleakClient(address, timeout=self.connect_timeout)
+
+        try:
+            await self.client.connect()
+        except BleakError as error:
+            msg = (
+                f'No Bluetooth cube found at { address }.\n'
+                'Make sure the cube is powered on and in pairing mode.'
+            )
+            logger.debug(msg)
+            raise CubeNotFoundError from error
 
         logger.debug(' * Connected: %r', self.client.is_connected)
 
@@ -57,7 +63,7 @@ class BluetoothInterface:
             for driver in DRIVERS:
                 if service.uuid == driver.service_uid:
                     logger.debug(' * Using %s driver', driver.__name__)
-                    self.driver = driver(self.client, self.device)
+                    self.driver = driver(self.client)
                     break
             if self.driver:
                 break

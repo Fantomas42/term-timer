@@ -9,6 +9,7 @@ ORANGE = '#FF8700'
 YELLOW = '#FFFF00'
 TEXT_DARK = '#080808'
 TEXT_LIGHT = '#FFFFD7'
+BG_HIDDEN = '#333333'
 
 theme = {
     'warning': f'bold { RED }',
@@ -19,12 +20,15 @@ theme = {
     'scramble': f'{ TEXT_DARK } on { GREEN }',
     'duration': f'{ TEXT_DARK } on { ORANGE }',
     'record': f'{ TEXT_DARK } on #5FFFAF',
+    'solution': f'{ TEXT_DARK } on #9999FF',
 
     'analysis': f'bold { TEXT_LIGHT } on #4D0092',
     'inspection': f'{ TEXT_LIGHT } on #5F00D7',
     'recognition': f'{ TEXT_LIGHT } on #5F00D7',
     'execution': f'{ TEXT_LIGHT } on #4D0092',
     'consign': '#CECECE',
+    'key':  f'bold { TEXT_LIGHT }',
+    'confirm': TEXT_LIGHT,
     'step': 'bold #00AFFF',
     'substep': 'bold #00DFFF',
     'skipped': f'{ TEXT_DARK } on #5FFFAF',
@@ -46,6 +50,7 @@ theme = {
     'title': f'bold { TEXT_LIGHT }',
     'moves': f'bold { TEXT_LIGHT }',
     'result': f'bold { TEXT_LIGHT }',
+    'time': f'bold { TEXT_DARK } on { TEXT_LIGHT }',
     'date': f'bold { GREEN}',
     'best': f'bold { GREEN}',
 
@@ -54,10 +59,12 @@ theme = {
     'pre-auf': f'bold { TEXT_LIGHT } on #5F5F8E',
     'post-auf': f'bold { TEXT_LIGHT } on  #003D80',
 
+    'chair': f'{ TEXT_DARK } on #20C997',
     'sexy-move': f'{ TEXT_DARK } on #FF6666',
     'sledgehammer': f'{ TEXT_DARK } on #88CCFF',
     'pair-ie': f'{ TEXT_DARK } on #66FF66',
     'su': f'{ TEXT_LIGHT } on #AA3333',
+    'sa': f'{ TEXT_DARK } on #FF8888',
     'ne': f'{ TEXT_DARK } on #33FFCC',
     'wide': 'bold #FF00FF',
     'slice': 'bold #00DFFF',
@@ -81,8 +88,8 @@ theme = {
     'mo3': f'bold { ORANGE }',
     'ao5': 'bold #00FFFF',
     'ao12': 'bold #FF00FF',
-    'ao100': f'bold { YELLOW }',
-    'ao1000': f'bold { RED }',
+    'ao100': 'bold #FFCC99',
+    'ao1000': 'bold #CCFF99',
 
     'tps': 'bold #00DFFF',
     'tps-e': 'bold #00AAAA',
@@ -116,14 +123,6 @@ theme = {
     'timer_40': f'{ TEXT_LIGHT } on #9900FF',
     'timer_45': f'{ TEXT_LIGHT } on #CC00FF',
     'timer_50': f'{ TEXT_LIGHT } on #FF00FF',
-
-    'face_w': f'{ TEXT_DARK } on #E4E4E4',
-    'face_y': f'{ TEXT_DARK } on { YELLOW }',
-    'face_b': f'{ TEXT_LIGHT } on #0000FF',
-    'face_r': f'{ TEXT_DARK } on { RED }',
-    'face_g': f'{ TEXT_DARK } on { GREEN }',
-    'face_o': f'{ TEXT_DARK } on { ORANGE }',
-    'face_h': f'{ TEXT_DARK } on #666666',
 }
 
 theme.update(UI_CONFIG)

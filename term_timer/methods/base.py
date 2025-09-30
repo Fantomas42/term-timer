@@ -3,120 +3,119 @@ from functools import cached_property
 from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.constants import INITIAL_STATE
+from cubing_algs.masks import CENTERS_MASK
+from cubing_algs.masks import CROSS_MASK
+from cubing_algs.masks import F2L_BL_MASK
+from cubing_algs.masks import F2L_BR_MASK
+from cubing_algs.masks import F2L_FL_MASK
+from cubing_algs.masks import F2L_FR_MASK
+from cubing_algs.masks import F2L_MASK
+from cubing_algs.masks import FULL_MASK
+from cubing_algs.masks import L1_MASK
+from cubing_algs.masks import OLL_MASK
+from cubing_algs.masks import facelets_masked
+from cubing_algs.masks import union_masks
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
 
-from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.methods.cases import CASES_MASKS
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 
-INITIAL = ''
-for face in ['U', 'R', 'F', 'D', 'L', 'B']:
-    INITIAL += face * 9
+AUF_MOVE = 'D'  # Because actually AUF is based on a URFDLB cube and moves
 
-CENTER_PIECE = '000010000'
-CROSS_PIECE  = '010010000'  # noqa: E221
-LEFT_FACE    = '110110000'  # noqa: E221
-RIGHT_FACE   = '011011000'  # noqa: E221
-F1L_FACE     = '111010000'  # noqa: E221
-F2L_FACE     = '111111000'  # noqa: E221
-FULL_FACE    = '1' * 9      # noqa: E221
-FULL_CUBE    = '1' * 54     # noqa: E221
-
-AUF = 'U'
-
-AUF_MOVE = reorient_moves(
-    CUBE_ORIENTATION,
-    parse_moves(AUF),
-)[0].base_move
+CROSS_CENTER_MASK = union_masks(CROSS_MASK, CENTERS_MASK)
 
 STEPS_CONFIG = {
     'Cross': {
-        'mask': (
-            '010111010' + (CROSS_PIECE * 2)
-            + CENTER_PIECE + (CROSS_PIECE * 2)
-        ),
+        'mask': CROSS_CENTER_MASK,
     },
     'F1L': {
-        'mask': (
-            FULL_FACE + (F1L_FACE * 2)
-            + CENTER_PIECE + (F1L_FACE * 2)
-        ),
-        'triggers': DEFAULT_TRIGGERS,
-    },
-    'F2L 1': {  # FR Pair
-        'mask':  (
-            '010111011' + LEFT_FACE + RIGHT_FACE
-            + CENTER_PIECE + CROSS_PIECE + CROSS_PIECE
-        ),
-        'triggers': DEFAULT_TRIGGERS,
-    },
-    'F2L 2': {  # FL Pair
-        'mask': (
-            '010111110' + CROSS_PIECE + LEFT_FACE
-            + CENTER_PIECE + RIGHT_FACE + CROSS_PIECE
-        ),
-        'triggers': DEFAULT_TRIGGERS,
-    },
-    'F2L 3': {  # BR Pair
-        'mask':  (
-            '011111010' + RIGHT_FACE + CROSS_PIECE
-            + CENTER_PIECE + CROSS_PIECE + LEFT_FACE
-        ),
-        'triggers': DEFAULT_TRIGGERS,
-    },
-    'F2L 4': {  # BL Pair
-        'mask':  (
-            '110111010' + CROSS_PIECE + CROSS_PIECE
-            + CENTER_PIECE + LEFT_FACE + RIGHT_FACE
-        ),
+        'mask': union_masks(CENTERS_MASK, L1_MASK),
         'triggers': DEFAULT_TRIGGERS,
     },
     'F2L': {
-        'mask': (
-            FULL_FACE + (F2L_FACE * 2)
-            + CENTER_PIECE + (F2L_FACE * 2)
-        ),
+        'mask': union_masks(CENTERS_MASK, F2L_MASK),
+        'triggers': DEFAULT_TRIGGERS,
+    },
+    'F2L 1': {  # FR Pair
+        'mask': union_masks(CROSS_CENTER_MASK, F2L_FR_MASK),
+        'triggers': DEFAULT_TRIGGERS,
+    },
+    'F2L 2': {  # FL Pair
+        'mask': union_masks(CROSS_CENTER_MASK, F2L_FL_MASK),
+        'triggers': DEFAULT_TRIGGERS,
+    },
+    'F2L 3': {  # BR Pair
+        'mask': union_masks(CROSS_CENTER_MASK, F2L_BR_MASK),
+        'triggers': DEFAULT_TRIGGERS,
+    },
+    'F2L 4': {  # BL Pair
+        'mask': union_masks(CROSS_CENTER_MASK, F2L_BL_MASK),
         'triggers': DEFAULT_TRIGGERS,
     },
     'OLL': {
-        'mask': (
-            FULL_FACE + (F2L_FACE * 2)
-            + FULL_FACE + (F2L_FACE * 2)
-        ),
+        'mask': union_masks(OLL_MASK, F2L_MASK),
         'triggers': DEFAULT_TRIGGERS,
         'optimizers': [remove_auf_moves],
     },
     'PLL': {
-        'mask': FULL_CUBE,
+        'mask': FULL_MASK,
         'triggers': DEFAULT_TRIGGERS,
         'optimizers': [remove_auf_moves],
     },
     'LL': {
-        'mask': FULL_CUBE,
+        'mask': FULL_MASK,
         'triggers': DEFAULT_TRIGGERS,
         'optimizers': [remove_auf_moves],
     },
     'RAW': {
-        'mask': FULL_CUBE,
+        'mask': FULL_MASK,
         'triggers': DEFAULT_TRIGGERS,
     },
 }
 
 
-class Analyser:
-    name = ''
-    step_list: tuple[str] = ()
-    norms: ClassVar[dict[str, dict[str, float]]] = {}
-    aufs: ClassVar[dict[str, tuple[bool, bool]]] = {}
+class FaceletAnalyser:
 
-    def __init__(self, scramble: Algorithm, solution: Algorithm):
+    def get_step_case(self, step: str, facelets: str, encoder) -> str:
+        encoded = encoder(facelets)
+
+        if encoded in CASES_MASKS[step]:
+            return CASES_MASKS[step][encoded]['case']
+
+        return ''
+
+    def check_step(self, step: str, facelets: str) -> bool:
+        mask = get_step_config(step, 'mask')
+
+        matching = facelets_masked(
+            INITIAL_STATE,
+            mask,
+        )
+        return matching == facelets_masked(
+            facelets,
+            mask,
+        )
+
+
+class Analyser(FaceletAnalyser):
+    name = ''
+    step_list: tuple[str, ...] = ()
+    norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {}
+    aufs: ClassVar[dict[str, list[bool]]] = {}
+    aggregate: ClassVar[dict[str, int]] = {}
+
+    def __init__(self, scramble: Algorithm, solution: Algorithm,
+                 orientation_moves: Algorithm):
         self.scramble = scramble
         self.solution = solution
+        self.orientation_moves = orientation_moves
 
         self.duration = (
             self.solution[-1].timed - self.solution[0].timed
@@ -127,30 +126,34 @@ class Analyser:
 
     def split_steps(self):
         cube = VCube()
-        facelets = cube.rotate(str(self.scramble))
+        facelets = cube.rotate(self.scramble)
 
         steps = {}
-        cases = []
         progress = 0
+        case_infos = []
         step_moves = []
 
         for move_index, move in enumerate(self.solution):
-            current_progress, current_cases = self.compute_progress(cube.state)
+            current_progress, current_case_infos = self.compute_progress(
+                cube.state,
+            )
 
             if current_progress > progress:
                 step_name = self.step_list[current_progress - 1]
-                cleaned_cases = list(set(current_cases) - set(cases))
+                cleaned_case_infos = list(
+                    set(current_case_infos) - set(case_infos),
+                )
 
                 steps[step_name] = {
                     'moves': step_moves.copy(),
                     'increment': current_progress - progress,
-                    'cases': cleaned_cases,
+                    'case_infos': cleaned_case_infos,
                     'facelets': facelets,
                 }
                 step_moves = []
                 facelets = cube.state
                 progress = current_progress
-                cases.extend(cleaned_cases)
+                case_infos.extend(cleaned_case_infos)
 
             step_moves.append(move_index)
             cube.rotate(move.untimed)
@@ -159,7 +162,7 @@ class Analyser:
         steps[step_name] = {
             'moves': step_moves.copy(),
             'increment': 1,
-            'cases': [],
+            'case_infos': [],
             'facelets': facelets,
         }
 
@@ -177,6 +180,9 @@ class Analyser:
 
             info = self.steps[step]
             step_moves = info['moves']
+
+            if not step_moves:
+                continue
 
             moves = parse_moves([self.solution[i] for i in step_moves])
             times = [self.solution[i].timed for i in step_moves]
@@ -207,7 +213,7 @@ class Analyser:
 
             total = execution + recognition
 
-            reorientation = reorient_moves(CUBE_ORIENTATION, moves)
+            reorientation = reorient_moves(self.orientation_moves, moves)
             humanization = humanize_moves(reorientation)
             prettyfication = prettify_moves(humanization)
 
@@ -235,7 +241,8 @@ class Analyser:
                     'step_execution_percent': (execution / total) * 100,
                     'step_recognition_percent': (recognition / total) * 100,
                     'increment': info['increment'],
-                    'cases': info['cases'],
+                    'case': '',
+                    'case_infos': info['case_infos'],
                     'facelets': info['facelets'],
                 },
             )
@@ -244,12 +251,11 @@ class Analyser:
 
         return summary
 
-    def get_aufs(self, name: str, moves: Algorithm) -> list[
-            int | None, int | None]:
+    def get_aufs(self, name: str, moves: Algorithm) -> list[int | None]:
         pre_auf, post_auf = None, None
         pre, post = self.aufs.get(name, [False, False])
 
-        if pre and len(moves.metrics['generators']) > 1:
+        if pre and len(moves.metrics.generators) > 1:
             pre_auf = self.get_auf(moves, 'pre')
 
         if post:
@@ -257,7 +263,7 @@ class Analyser:
 
         return [pre_auf, post_auf]
 
-    def get_auf(self, moves: Algorithm, mode):
+    def get_auf(self, moves: Algorithm, mode: str) -> int:
         auf = 0
 
         if mode == 'post':
@@ -309,23 +315,6 @@ class Analyser:
     def score(self):
         return 20
 
-    @staticmethod
-    def build_facelets_masked(mask: str, facelets: str) -> str:
-        masked = []
-        for i, value in enumerate(facelets):
-            if mask[i] == '0':
-                masked.append('-')
-            else:
-                masked.append(value)
 
-        return ''.join(masked)
-
-    def check_step(self, step, facelets):
-        matching = self.build_facelets_masked(
-            STEPS_CONFIG[step]['mask'],
-            INITIAL,
-        )
-        return matching == self.build_facelets_masked(
-            STEPS_CONFIG[step]['mask'],
-            facelets,
-        )
+def get_step_config(step_name, value, default=None):
+    return STEPS_CONFIG.get(step_name, {}).get(value, default)

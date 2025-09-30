@@ -5,8 +5,8 @@ from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
-from term_timer.scrambler import scramble_moves
 from term_timer.scrambler import scrambler
+from term_timer.scrambler import state_to_scramble
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 
@@ -14,14 +14,20 @@ logger = logging.getLogger(__name__)
 
 
 class Timer(SolveInterface):
-    def __init__(self, *, cube_size: int,
-                 iterations: int, easy_cross: bool,
-                 session: str, free_play: bool,
+    def __init__(self, *,
+                 cube_size: int,
+                 iterations: int,
+                 easy_cross: bool,
+                 scramble: str,
+                 session: str,
+                 free_play: bool,
                  show_cube: bool,
                  show_reconstruction: bool,
                  show_tps_graph: bool,
                  show_time_graph: bool,
                  show_recognition_graph: bool,
+                 method: bool,
+                 orientation: str,
                  countdown: int,
                  metronome: float,
                  stack: list[Solve]):
@@ -34,11 +40,14 @@ class Timer(SolveInterface):
         self.free_play = free_play
         self.iterations = iterations
         self.easy_cross = easy_cross
+        self.raw_scramble = scramble
         self.show_cube = show_cube
         self.show_reconstruction = show_reconstruction
         self.show_tps_graph = show_tps_graph
         self.show_time_graph = show_time_graph
         self.show_recognition_graph = show_recognition_graph
+        self.method = method
+        self.orientation = orientation
         self.countdown = countdown
         self.metronome = metronome
         self.stack = stack
@@ -54,48 +63,64 @@ class Timer(SolveInterface):
 
     def start_line(self, cube) -> None:
         if self.show_cube:
-            self.console.print(str(cube), end='')
+            print(cube.display(self.orientation), end='')
 
-        self.console.print(
-            f'[scramble]Scramble #{ self.counter }:[/scramble]',
-            f'[moves]{ self.scramble_oriented }[/moves]',
-        )
+        scramble_line = f'[scramble]Scramble #{ self.counter }:[/scramble] '
+        if self.cube_orientation_moves:
+            scramble_line += (
+                f'[rotation]{ self.cube_orientation_moves }[/rotation] '
+            )
+        scramble_line += f'[moves]{ self.scramble_oriented }[/moves]'
+
+        self.console.print(scramble_line)
 
         if self.bluetooth_interface:
             if self.countdown:
                 self.console.print(
                     'Apply the scramble on the cube to start the inspection,',
-                    '[b](q)[/b] to quit.',
+                    '[key](q)[/key] to quit.',
                     end='', style='consign',
                 )
             else:
                 self.console.print(
                     'Apply the scramble on the cube to init the timer,',
-                    '[b](q)[/b] to quit.',
+                    '[key](q)[/key] to quit.',
                     end='', style='consign',
                 )
         elif self.countdown:
             self.console.print(
                 'Press any key once scrambled to start the inspection,',
-                '[b](q)[/b] to quit.',
+                '[key](q)[/key] to quit.',
                 end='', style='consign',
             )
         else:
             self.console.print(
                 'Press any key once scrambled to start/stop the timer,',
-                '[b](q)[/b] to quit.',
+                '[key](q)[/key] to quit.',
                 end='', style='consign',
             )
 
     def save_line(self, flag: str) -> None:
-        self.console.print(
-            'Press any key to save and continue,',
-            '[b](d)[/b] for DNF,' if flag != DNF else '[b](o)[/b] for OK',
-            '[b](2)[/b] for +2,',
-            '[b](z)[/b] to cancel,',
-            '[b](q)[/b] to save and quit.',
-            end='', style='consign',
-        )
+        if self.bluetooth_interface:
+            self.console.print(
+                'Press any key to save and continue,',
+                '[key](z)[/key] to cancel,',
+                '[key](q)[/key] to save and quit.',
+                end='', style='consign',
+            )
+        else:
+            self.console.print(
+                'Press any key to save and continue,',
+                (
+                    '[key](d)[/key] for DNF,'
+                    if flag != DNF
+                    else '[key](o)[/key] for OK'
+                ),
+                '[key](2)[/key] for +2,',
+                '[key](z)[/key] to cancel,',
+                '[key](q)[/key] to save and quit.',
+                end='', style='consign',
+            )
 
     def solve_line(self, solve: Solve) -> None:
         old_stats = Statistics(self.stack)
@@ -105,7 +130,7 @@ class Timer(SolveInterface):
 
         self.clear_line(full=True)
 
-        if solve.raw_moves:
+        if solve.advanced:
             if solve.flag != DNF:
                 if self.show_reconstruction:
                     self.console.print(solve.method_line, end='')
@@ -115,15 +140,21 @@ class Timer(SolveInterface):
                     solve.tps_graph()
                 if self.show_recognition_graph:
                     solve.recognition_graph()
+
+                link = (
+                    solve.link_term_timer
+                    if not self.free_play
+                    else solve.link_alg_cubing
+                )
                 self.console.print(
-                    f'[localhost][link={ solve.link_term_timer }]'
+                    f'[localhost][link={ link }]'
                     f'Analysis #{ self.counter }:[/link][/localhost] '
                     f'{ solve.report_line }',
                 )
             else:
                 self.console.print(
                     f'[duration]Duration #{ self.counter }:[/duration]',
-                    f'[result]{ format_time(self.elapsed_time) }[/result]',
+                    f'[time]{ format_time(self.elapsed_time) }[/time]',
                     '[dnf]DNF[/dnf]',
                 )
                 return
@@ -146,7 +177,7 @@ class Timer(SolveInterface):
 
         self.console.print(
             f'[duration]Duration #{ self.counter }:[/duration]',
-            f'[result]{ format_time(self.elapsed_time) }[/result]',
+            f'[time]{ format_time(self.elapsed_time) }[/time]',
             extra,
         )
 
@@ -194,24 +225,25 @@ class Timer(SolveInterface):
             cube_size=self.cube_size,
             iterations=self.iterations,
             easy_cross=self.easy_cross,
+            raw_scramble=self.raw_scramble,
         )
 
         if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
-            scramble = scramble_moves(
-                cube.get_kociemba_facelet_positions(),
+            scramble = state_to_scramble(
+                cube.state,
                 self.bluetooth_cube.state,
             )
             self.scramble_oriented = self.reorient(scramble)
         else:
             self.scramble_oriented = self.reorient(self.scramble)
-        self.facelets_scrambled = cube.get_kociemba_facelet_positions()
+        self.facelets_scrambled = cube.state
 
         self.start_line(cube)
 
         quit_solve = await self.scramble_solve()
 
-        if quit_solve:
-            return False
+        if quit_solve is not None:
+            return quit_solve
 
         if self.countdown:
             await self.inspect_solve()
@@ -241,13 +273,16 @@ class Timer(SolveInterface):
             timer='Term-Timer',
             device=(
                 self.bluetooth_interface
-                and self.bluetooth_interface.device.name
+                and self.bluetooth_interface.client.name
             ) or '',
             session=self.session,
             solve_id=self.counter,
             cube_size=self.cube_size,
             moves=' '.join(moves),
         )
+
+        solve.method_name = self.method
+        solve.orientation = self.orientation
 
         self.solve_line(solve)
 
@@ -258,5 +293,7 @@ class Timer(SolveInterface):
 
             if quit_solve:
                 return False
+        else:
+            self.counter += 1
 
         return True

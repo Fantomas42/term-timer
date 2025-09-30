@@ -113,22 +113,25 @@ community have been invaluable to this project.
 
 ```console
 Usage: term-timer [-h]
-                  {solve,sw,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d,import,im,i,export,ex,e}
+                  {solve,sw,t,train,tr,w,detail,dt,d,edit,ed,e,delete,rm,r,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,serve,se,h,import,im,i}
                   ...
 
 Speed cubing timer on your terminal.
 
 Positional Arguments:
-  {solve,sw,t,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,detail,dt,d,import,im,i,export,ex,e}
+  {solve,sw,t,train,tr,w,detail,dt,d,edit,ed,e,delete,rm,r,list,ls,l,stats,st,s,graph,gr,g,cfop,op,c,serve,se,h,import,im,i}
                         Available commands.
     solve (sw, t)       Start the timer and record solves.
+    train (tr, w)       Start training your OLL/PLL skills.
+    detail (dt, d)      Display detailed information about solves.
+    edit (ed, e)        Edit solves' flag.
+    delete (rm, r)      Delete solves.
     list (ls, l)        Display recorded solves.
     stats (st, s)       Display statistics.
     graph (gr, g)       Display trend graph.
     cfop (op, c)        Display CFOP cases.
-    detail (dt, d)      Display detailed information about solves.
+    serve (se, h)       Serve solves in HTML.
     import (im, i)      Import external solves.
-    export (ex, e)      Export solves in HTML.
 
 Options:
   -h, --help            Show this help message and exit.
@@ -139,8 +142,8 @@ Have fun cubing !
 ### Timer
 
 ```console
-Usage: term-timer solve [-h] [-b] [-p] [-c CUBE] [-u SESSION] [-f] [-i SECONDS] [-m TEMPO] [-e]
-                        [-n ITERATIONS] [-r SEED]
+Usage: term-timer solve [-h] [-p] [-b] [-s] [-t] [-v] [-w] [-c CUBE] [-u SESSION] [-f] [-i SECONDS]
+                        [-m TEMPO] [-e] [-n ITERATIONS] [-r SEED] [-x SCRAMBLE]
                         [SOLVES]
 
 Start the speed cubing timer to record and time your solves.
@@ -151,11 +154,22 @@ Positional Arguments:
 
 Options:
   -h, --help            Show this help message and exit.
+  -p, --hide-cube       Hide the cube in its scrambled state.
+                        Default: False.
 
-Configuration:
+Bluetooth:
   -b, --bluetooth       Use a Bluetooth-connected cube.
                         Default: False.
-  -p, --show-cube       Display the cube in its scrambled state.
+  -s, --hide-reconstruction
+                        Hide the reconstruction of the solve.
+                        Default: False.
+  -t, --show-time-graph
+                        Show the time scatter graph of the solve.
+                        Default: False.
+  -v, --show-tps-graph  Show the TPS graph of the solve.
+                        Default: False.
+  -w, --show-recognition-graph
+                        Show the recognition graph of the solve.
                         Default: False.
 
 Session:
@@ -182,6 +196,9 @@ Scramble:
                         Set the number of random moves.
                         Default: Auto.
   -r SEED, --seed SEED  Set a seed for random move generation to ensure repeatable scrambles.
+                        Default: None.
+  -x SCRAMBLE, --scramble SCRAMBLE
+                        Set the scramble to use for solving.
                         Default: None.
 ```
 

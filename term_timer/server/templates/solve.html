@@ -31,7 +31,92 @@
          });
        });
      });
+
+     const methodSelect = document.getElementById('method-select');
+     const orientationSelect = document.getElementById('orientation-select');
+
+     if (methodSelect) {
+       methodSelect.addEventListener('change', function() {
+         updateUrlParams({ m: this.value });
+       });
+     }
+
+     if (orientationSelect) {
+       orientationSelect.addEventListener('change', function() {
+         updateUrlParams({ o: this.value });
+       });
+     }
    });
+
+   function updateUrlParams(params) {
+     const url = new URL(window.location);
+
+     for (const [key, value] of Object.entries(params)) {
+       if (value) {
+         url.searchParams.set(key, value);
+       } else {
+         url.searchParams.delete(key);
+       }
+     }
+
+     window.location.href = url.toString();
+   }
+
+   function update(url, body) {
+     const form = document.createElement('form');
+     form.method = 'POST';
+     form.action = url;
+     form.style.display = 'none';
+
+     for (const [key, value] of Object.entries(body)) {
+       const input = document.createElement('input');
+       input.type = 'hidden';
+       input.name = key;
+       input.value = value;
+       form.appendChild(input);
+     }
+
+     document.body.appendChild(form);
+     form.submit();
+
+     document.body.removeChild(form);
+   }
+
+
+   function handleOK() {
+     if (confirm('Mark this solve as OK ?')) {
+       update(
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/update/",
+         {flag: ''},
+       )
+     }
+   }
+
+   function handleDNF() {
+     if (confirm('Mark this solve as DNF ?')) {
+       update(
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/update/",
+         {flag: 'DNF'},
+       )
+     }
+   }
+
+   function handlePlus2() {
+     if (confirm('Mark this solve with a +2s penality ?')) {
+       update(
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/update/",
+         {flag: '+2'},
+       )
+     }
+   }
+
+   function handleDelete() {
+     if (confirm('Are you sure you want to permanently delete this solve ?')) {
+       update(
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/delete/", '',
+       )
+     }
+   }
   </script>
   {% if solve.advanced %}
     <script type="module">
@@ -41,8 +126,7 @@
      const solutionString = `{{ reconstruction_text }}`;
      const solutionMoveTimestamps = [
        {% for times in reconstruction_timing %}[{{ times.0 }}, {{ times.1 }}, "{{ times.2 }}"],
-       {% endfor %}
-     ];
+       {% endfor %}];
      const solutionIndex = {{ reconstruction_index|tojson }};
 
      const duration = solutionMoveTimestamps.at(-1);
@@ -62,8 +146,7 @@
 
      const player = new TwistyPlayer({
        alg: parsedAlg,
-       experimentalSetupAlg: "{{ cube_orientation }}",
-       experimentalSetupAnchor: "end",
+       experimentalSetupAlg: "{{ solve.scramble }}",
        viewerLink: "none",
        puzzle: "{{ cube }}x{{ cube }}x{{ cube }}",
        background: "none",
@@ -424,6 +507,19 @@
   {% endif %}
 {% endblock %}
 
+{% block actions %}
+  {% if solve.flag %}
+    <button class="action-btn btn-ok" onclick="handleOK();">OK</button>
+  {% endif %}
+  {% if solve.flag != 'DNF' %}
+    <button class="action-btn btn-dnf" onclick="handleDNF();">DNF</button>
+  {% endif %}
+  {% if solve.flag != '+2' %}
+    <button class="action-btn btn-plus2" onclick="handlePlus2();">+2</button>
+  {% endif %}
+  <button class="action-btn btn-delete" onclick="handleDelete();">Delete</button>
+{% endblock %}
+
 {% block body %}
   <div class="card">
     <div class="card-header">
@@ -484,7 +580,7 @@
           </a>
         </div>
       </div>
-      {% if solve.raw_moves %}
+      {% if solve.advanced %}
         <div class="stat-card">
           <div class="stat-title">Links</div>
           <div class="stat-value">
@@ -666,22 +762,59 @@
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">
-          <a href="#reconstruction" id="reconstruction">Reconstruction</a>
+          <a href="#reconstruction" id="reconstruction">
+            Reconstruction {{ solve.method_analyser.name }}
+            <span class="orientation move">
+              {% if solve.orientation == 'auto' %}
+                Auto
+                {% for orientation, moves in available_orientations.items() %}
+                  {% if moves == solve.orientation_moves %}
+                    {{ orientation }}
+                  {% endif %}
+                {% endfor %}
+              {% else %}
+                {{ solve.orientation }}
+              {% endif %}
+                {% if solve.orientation_moves %}
+                  ({{ solve.orientation_moves }})
+                {% endif %}
+            </span>
+          </a>
         </h2>
-        {% if cube_orientation %}
-          <div class="orientation">
-            <span class="move">{{ cube_orientation }}</span>
+        <div class="reconstruction-controls">
+          <div class="control-group">
+            <label for="method-select">Method:</label>
+            <select id="method-select" class="control-select">
+              {% for method in available_methods %}
+                <option value="{{ method }}" {% if method == solve.method_name %}selected{% endif %}>
+                  {{ method|upper }}
+                </option>
+              {% endfor %}
+            </select>
           </div>
-        {% endif %}
+          <div class="control-group">
+            <label for="orientation-select">Orientation:</label>
+            <select id="orientation-select" class="control-select">
+              <option value="auto">Auto</option>
+              {% for orientation, moves in available_orientations.items() %}
+                <option value="{{ orientation }}" {% if orientation == solve.orientation %}selected{% endif %}>
+                  {{ orientation }}{% if moves %} ({{ moves }}){% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
       </div>
 
       <div class="tabs">
         <div class="tab active" data-tab="solve-time">Time</div>
         <div class="tab" data-tab="solve-percent">Percent</div>
-        <div class="tab" data-tab="solve-issues">Issues</div>
+        <div class="tab" data-tab="solve-overheads">Overheads</div>
+        <div class="tab" data-tab="solve-pauses">Pauses</div>
         <div class="tab" data-tab="solve-optimized">Optimized</div>
         {% if DEBUG %}
           <div class="tab" data-tab="solve-raw">Raw</div>
+          <div class="tab" data-tab="solve-issues">Issues</div>
         {% endif %}
       </div>
 
@@ -791,15 +924,14 @@
         </table>
       </div>
 
-      <div class="tab-content table-container" id="solve-issues-tab">
-        <table class="reconstruction issues">
+      <div class="tab-content table-container" id="solve-overheads-tab">
+        <table class="reconstruction overheads">
           <thead>
             <tr>
               <th>Step</th>
               <th>Case</th>
               <th>Moves</th>
               <th>QTM Overhead</th>
-              <th>Execution Pauses</th>
               <th>QTM Pre-AUF</th>
               <th>QTM Post-AUF</th>
             </tr>
@@ -815,19 +947,13 @@
                 </td>
                 <td class="recons-moves">
                   {% if not info.type == 'virtual' %}
-                    {{ solve.reconstruction_step_line(info, multiple=True)|format_line }}
+                    {{ info|reconstruction_overheads(solve) }}
                   {% endif %}
                 </td>
                 <td class="recons-overhead">
                   {% set missed_moves = solve.missed_moves(info.moves_humanized) %}
                   <span class="metric-{% if missed_moves > 2 %}warning{% elif missed_moves %}caution{% else %}success{% endif %}">
                   {{ missed_moves }}
-                </td>
-                <td class="recons-pauses">
-                  {% set pauses = solve.pauses(info.moves_humanized) %}
-                  <span class="metric-{% if pauses >= 2 %}warning{% elif pauses %}caution{% else %}success{% endif %}">
-                    {{ pauses }}
-                  </span>
                 </td>
                 <td class="recons-pre-aufs">
                   {% if info.aufs.0 is none %}
@@ -846,6 +972,46 @@
                       {{ info.aufs.1 }}
                     </span>
                   {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tab-content table-container" id="solve-pauses-tab">
+        <table class="reconstruction pauses">
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Case</th>
+              <th>Moves</th>
+              <th>Recognition</th>
+              <th>Execution Pauses</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for info in solve.method_applied.summary %}
+              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
+                <td class="recons-step">
+                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
+                </td>
+                <td class="recons-case">
+                  {{ step_case(info) }}
+                </td>
+                <td class="recons-moves">
+                  {% if not info.type == 'virtual' %}
+                    {{ info|reconstruction_pauses(solve) }}
+                  {% endif %}
+                </td>
+                <td class="recons-recognition">
+                  {{ info.recognition|format_duration }}
+                </td>
+                <td class="recons-pauses">
+                  {% set pauses = solve.pauses(info.moves_humanized) %}
+                  <span class="metric-{% if pauses >= 2 %}warning{% elif pauses %}caution{% else %}success{% endif %}">
+                    {{ pauses }}
+                  </span>
                 </td>
               </tr>
             {% endfor %}
@@ -897,36 +1063,102 @@
       </div>
 
       {% if DEBUG %}
-      <div class="tab-content table-container" id="solve-raw-tab">
-        <table class="reconstruction raw">
-          <thead>
-            <tr>
-              <th>Step</th>
-              <th>Case</th>
-              <th>Moves</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for info in solve.method_applied.summary %}
-              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
-                <td class="recons-step">
-                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
-                </td>
-                <td class="recons-case">
-                  {{ step_case(info) }}
-                </td>
-                <td class="recons-moves">
-                  {% if not info.type == 'virtual' %}
-                    {% for m in info.moves_reoriented %}
-                      <span class="move">{{ m.untimed }}</span>
-                    {% endfor %}
-                  {% endif %}
-                </td>
+        <div class="tab-content table-container" id="solve-raw-tab">
+          <table class="reconstruction raw">
+            <thead>
+              <tr>
+                <th>Step</th>
+                <th>Case</th>
+                <th>Moves</th>
+                <th>QTM</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {% for info in solve.method_applied.summary %}
+                <tr class="{% if info.type == 'substep' %}substep{% endif %}">
+                  <td class="recons-step">
+                    <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
+                  </td>
+                  <td class="recons-case">
+                    {{ step_case(info) }}
+                  </td>
+                  <td class="recons-moves">
+                    {% if not info.type == 'virtual' %}
+                      {% for m in info.moves_reoriented %}
+                        <span class="move" title="{{ m.timed }}">{{ m.untimed }}</span>
+                      {% endfor %}
+                    {% endif %}
+                  </td>
+                  <td class="recons-qtm">
+                    {{ info.moves_reoriented.metrics.qtm }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tab-content table-container" id="solve-issues-tab">
+          <table class="reconstruction issues">
+            <thead>
+              <tr>
+                <th>Step</th>
+                <th>Case</th>
+                <th>Moves</th>
+                <th>Execution Pauses</th>
+                <th>QTM Overhead</th>
+                <th>QTM Pre-AUF</th>
+                <th>QTM Post-AUF</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for info in solve.method_applied.summary %}
+                <tr class="{% if info.type == 'substep' %}substep{% endif %}">
+                  <td class="recons-step">
+                    <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
+                  </td>
+                  <td class="recons-case">
+                    {{ step_case(info) }}
+                  </td>
+                  <td class="recons-moves">
+                    {% if not info.type == 'virtual' %}
+                      {{ solve.reconstruction_step_line(info, multiple=True)|format_line }}
+                    {% endif %}
+                  </td>
+                  <td class="recons-pauses">
+                    {% set pauses = solve.pauses(info.moves_humanized) %}
+                    <span class="metric-{% if pauses >= 2 %}warning{% elif pauses %}caution{% else %}success{% endif %}">
+                      {{ pauses }}
+                    </span>
+                  </td>
+                  <td class="recons-overhead">
+                    {% set missed_moves = solve.missed_moves(info.moves_humanized) %}
+                    <span class="metric-{% if missed_moves > 2 %}warning{% elif missed_moves %}caution{% else %}success{% endif %}">
+                      {{ missed_moves }}
+                  </td>
+                  <td class="recons-pre-aufs">
+                    {% if info.aufs.0 is none %}
+                      ---
+                    {% else %}
+                      <span class="metric-{% if info.aufs.0 > 2 %}warning{% elif info.aufs.0 %}caution{% else %}success{% endif %}">
+                        {{ info.aufs.0 }}
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="recons-post-aufs">
+                    {% if info.aufs.1 is none %}
+                      ---
+                    {% else %}
+                      <span class="metric-{% if info.aufs.1 > 2 %}warning{% elif info.aufs.1 %}caution{% else %}success{% endif %}">
+                        {{ info.aufs.1 }}
+                      </span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       {% endif %}
 
     </div>

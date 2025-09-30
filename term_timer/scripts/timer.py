@@ -2,14 +2,20 @@ import asyncio
 from contextlib import suppress
 from random import seed
 
+from cubing_algs.exceptions import InvalidMoveError
+
+from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.config import DEBUG
+from term_timer.exceptions import InvalidCaseError
 from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
 from term_timer.interface.console import console
+from term_timer.interface.terminal import Terminal
 from term_timer.logger import configure_logging
+from term_timer.manage import SolveManager
 from term_timer.server.app import Server
 from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
@@ -19,11 +25,21 @@ from term_timer.trainer import Trainer
 async def timer(options) -> int:
     cube = options.cube
 
-    free_play = options.free_play
-    if options.seed or options.iterations or options.easy_cross:
-        free_play = True
+    session_parts = []
+    if options.session:
+        session_parts.append(options.session)
 
-    stack = [] if free_play else load_solves(cube, options.session)
+    if not options.scramble:
+        if options.seed:
+            session_parts.append(f'seed-{ options.seed }')
+        if options.easy_cross:
+            session_parts.append('easy-cross')
+        elif options.iterations:
+            session_parts.append(f'iterations-{ options.iterations }')
+
+    session = '-'.join(session_parts)
+
+    stack = [] if options.free_play else load_solves(cube, session)
 
     if options.seed:
         seed(options.seed)
@@ -34,13 +50,16 @@ async def timer(options) -> int:
         cube_size=cube,
         iterations=options.iterations,
         easy_cross=options.easy_cross,
-        session=options.session,
-        free_play=free_play,
+        scramble=options.scramble,
+        session=session,
+        free_play=options.free_play,
         show_cube=options.show_cube,
         show_reconstruction=options.show_reconstruction,
         show_tps_graph=options.show_tps_graph,
         show_time_graph=options.show_time_graph,
         show_recognition_graph=options.show_recognition_graph,
+        method=options.method,
+        orientation=options.orientation,
         countdown=options.countdown,
         metronome=options.metronome,
         stack=stack,
@@ -60,6 +79,8 @@ async def timer(options) -> int:
                     break
             else:
                 break
+    except InvalidMoveError as error:
+        console.print('😱', str(error), style='warning')
     finally:
         if timer.bluetooth_interface:
             await timer.bluetooth_disconnect()
@@ -73,7 +94,10 @@ async def timer(options) -> int:
 
 async def trainer(options) -> int:
     trainer = Trainer(
-        mode=options.mode,
+        step=options.step,
+        cases=options.case,
+        orientation=options.orientation,
+        show_solution=options.show_solution,
         show_cube=options.show_cube,
         metronome=options.metronome,
     )
@@ -87,6 +111,8 @@ async def trainer(options) -> int:
 
             if not done:
                 break
+    except InvalidCaseError as error:
+        console.print('😱', str(error), style='warning')
     finally:
         if trainer.bluetooth_interface:
             await trainer.bluetooth_disconnect()
@@ -94,17 +120,19 @@ async def trainer(options) -> int:
     return 0
 
 
-def tools(command, options):
+def tools(command: str, options) -> int:
     cube = options.cube
+
+    stack = load_all_solves(
+        cube,
+        options.include_sessions,
+        options.exclude_sessions,
+        options.devices,
+    )
 
     session_stats = StatisticsReporter(
         cube,
-        load_all_solves(
-            cube,
-            options.include_sessions,
-            options.exclude_sessions,
-            options.devices,
-        ),
+        stack,
     )
 
     if not session_stats.stack:
@@ -120,28 +148,51 @@ def tools(command, options):
     if command == 'stats':
         session_stats.resume('Global ', show_title=True)
 
+    if command == 'graph':
+        session_stats.graph()
+
     if command == 'cfop':
+        console.print('Aggregating cases...', end='')
+
+        analyses = SolvesMethodAggregator('cfop', stack, full=False).results
+
+        Terminal.clear_line(full=False)
+
         session_stats.cfop(
+            analyses,
             oll_only=options.oll,
             pll_only=options.pll,
             sorting=options.sort,
             ordering=options.order,
         )
 
-    if command == 'graph':
-        session_stats.graph()
-
     if command == 'detail':
         for solve_id in options.solves:
             session_stats.detail(
                 solve_id,
                 options.method,
+                options.orientation,
                 show_cube=options.show_cube,
                 show_reconstruction=options.show_reconstruction,
                 show_tps_graph=options.show_tps_graph,
                 show_time_graph=options.show_time_graph,
                 show_recognition_graph=options.show_recognition_graph,
             )
+
+    return 0
+
+
+def manage(command: str, options) -> int:
+    cube = options.cube
+
+    if command == 'edit':
+        for solve_id in options.solves:
+            manager = SolveManager(cube, options.session, solve_id)
+            manager.update(options.flag)
+
+    if command == 'delete':
+        manager = SolveManager(cube, options.session, options.solve)
+        manager.delete()
 
     return 0
 
@@ -158,10 +209,12 @@ def main() -> int:
         if command == 'train':
             return asyncio.run(trainer(options), debug=DEBUG)
         if command == 'import':
-            Importer().import_file(options.source)
-            return 0
+            return Importer().import_file(options.source)
         if command == 'serve':
             Server().run_server(options.host, options.port, DEBUG)
             return 0
-        tools(command, options)
-        return 0
+        if command in {'edit', 'delete'}:
+            return manage(command, options)
+        return tools(command, options)
+
+    return 0
