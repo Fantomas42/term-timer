@@ -196,8 +196,11 @@ async def consumer_cb(queue: asyncio.Queue[Any],
                 )
 
 
-async def client_cb(queue: asyncio.Queue[Any], time: int,
-                    *, use_opengl: bool) -> None:
+async def client_cb(queue: asyncio.Queue[Any], time: int, *,
+                    use_opengl: bool,
+                    cube_reset: bool,
+                    gyroscope_enable: bool,
+                    gyroscope_disable: bool) -> None:
     bluetooth_interface = BluetoothInterface(queue)
 
     await bluetooth_interface.__aenter__()  # noqa: PLC2801
@@ -211,6 +214,13 @@ async def client_cb(queue: asyncio.Queue[Any], time: int,
     await bluetooth_interface.send_command('REQUEST_HARDWARE')
     await bluetooth_interface.send_command('REQUEST_FACELETS')
     await bluetooth_interface.send_command('REQUEST_BATTERY')
+
+    if gyroscope_disable:
+        await bluetooth_interface.send_command('REQUEST_DISABLE_GYRO')
+    if gyroscope_enable:
+        await bluetooth_interface.send_command('REQUEST_ENABLE_GYRO')
+    if cube_reset:
+        await bluetooth_interface.send_command('REQUEST_RESET')
 
     logger.info('Free play for %ss', time)
     print('\a', end='', flush=True)
@@ -295,6 +305,9 @@ async def run(options: Any) -> None:
     client = client_cb(
         queue, options.time,
         use_opengl=options.use_opengl,
+        cube_reset=options.cube_reset,
+        gyroscope_enable=options.gyroscope_enable,
+        gyroscope_disable=options.gyroscope_disable,
     )
     consumer = consumer_cb(
         queue, cube_ready, gl_thread, event_collector,
@@ -349,6 +362,30 @@ def main() -> None:
         action='store_true',
         help=(
             'Enable OpenGL visualization.\n'
+            'Default: False.'
+        ),
+    )
+    parser.add_argument(
+        '--cube-reset',
+        action='store_true',
+        help=(
+            'Request reset of the cube.\n'
+            'Default: False.'
+        ),
+    )
+    parser.add_argument(
+        '--gyroscope-enable',
+        action='store_true',
+        help=(
+            'Enable the gyroscope of the cube.\n'
+            'Default: False.'
+        ),
+    )
+    parser.add_argument(
+        '--gyroscope-disable',
+        action='store_true',
+        help=(
+            'Disable the gyroscope of the cube.\n'
             'Default: False.'
         ),
     )
