@@ -90,6 +90,11 @@ async def consumer_cb(queue: asyncio.Queue[Any],
 
     orientation_moves = get_orientation_moves(CUBE_ORIENTATION)
 
+    logger.info(
+        f'CONSUMER: Use "{ CUBE_ORIENTATION }" as orientation '
+        f'and "{ orientation_moves!s }" as rotation moves',
+    )
+
     while True:
         events = await queue.get()
 
