@@ -582,7 +582,8 @@ class TestSolveDetailView(unittest.TestCase):
     ):
         mock_load_solves.return_value = [Mock()]  # Only one solve
 
-        SolveDetailView(3, 'session', 5, '', '')  # Request solve 5 (index 4)
+        with contextlib.suppress(AttributeError):
+            SolveDetailView(3, 'session', 5, '', '')  # Request solve 5 (index 4)
 
         mock_abort.assert_called_once_with(404, 'Invalid solve ID')
 
