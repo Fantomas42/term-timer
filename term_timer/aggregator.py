@@ -49,7 +49,8 @@ def analyse_solve_worker(solve: Solve,
 
 class SolvesMethodAggregator:
 
-    def __init__(self, method_name: str, stack, *, full: bool = True) -> None:
+    def __init__(self, method_name: str, stack: list[Solve],
+                 *, full: bool = True) -> None:
         self.stack = stack
         self.full = full
 
@@ -58,7 +59,7 @@ class SolvesMethodAggregator:
 
         self.results = self.aggregate()
 
-    def collect_analyses(self):
+    def collect_analyses(self) -> list[dict]:
         num_processes = max(1, cpu_count() - 1)
 
         worker_func = partial(

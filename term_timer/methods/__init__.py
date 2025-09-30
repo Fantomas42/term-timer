@@ -11,5 +11,5 @@ METHOD_ANALYSERS = {
 }
 
 
-def get_method_analyser(method_name):
+def get_method_analyser(method_name: str):
     return METHOD_ANALYSERS.get(method_name, CFOPAnalyser)

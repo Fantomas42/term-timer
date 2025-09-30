@@ -1,7 +1,9 @@
+from collections.abc import Callable
+
 from cubing_algs.masks import state_masked
 
 
-def oll_case_encoder(facelets):
+def oll_case_encoder(facelets: str) -> str:
     facelets_fingerprint = (
         facelets[15:18]
         + facelets[24:36]
@@ -17,14 +19,14 @@ def oll_case_encoder(facelets):
     return ''.join(fingerprint)
 
 
-def pll_case_encoder(facelets):
+def pll_case_encoder(facelets: str) -> str:
     facelets_fingerprint = (
         facelets[15:18]
         + facelets[24:27]
         + facelets[42:45]
         + facelets[51:54]
     )
-    facelet_encoder = {}
+    facelet_encoder: dict[str, str] = {}
     for face in facelets_fingerprint:
         if face not in facelet_encoder:
             facelet_encoder[face] = str(len(facelet_encoder))
@@ -38,11 +40,11 @@ def pll_case_encoder(facelets):
     return ''.join(fingerprint)
 
 
-def f2l_case_encoder(mask):
-    def encoder(facelets):
+def f2l_case_encoder(mask: str) -> Callable[[str], str]:
+    def encoder(facelets: str) -> str:
         facelets_fingerprint = state_masked(facelets, mask)
 
-        facelet_encoder = {}
+        facelet_encoder: dict[str, str] = {}
         for face in facelets_fingerprint:
             if face not in facelet_encoder:
                 facelet_encoder[face] = str(len(facelet_encoder))

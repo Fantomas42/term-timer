@@ -1,4 +1,5 @@
 from typing import ClassVar
+from typing import Never
 
 from term_timer.methods.base import Analyser
 
@@ -13,5 +14,5 @@ class RawAnalyser(Analyser):
         },
     }
 
-    def compute_progress(self, *args, **kwargs):  # noqa: ARG002
+    def compute_progress(self, *_args, **_kwargs) -> tuple[int, list[Never]]:
         return 0, []

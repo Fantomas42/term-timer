@@ -8,11 +8,11 @@ F2L_PATH = CASES_DIRECTORY / 'f2l.json'
 OLL_PATH = CASES_DIRECTORY / 'oll.json'
 PLL_PATH = CASES_DIRECTORY / 'pll.json'
 
-CASES: dict[str, dict[str, str]] = {}
-CASES_MASKS: dict[str, dict[str, str]] = {}
+CASES: dict[str, dict[str, dict[str, dict[str, str | float]]]] = {}
+CASES_MASKS: dict[str, dict[str, dict[str, str]]] = {}
 
 
-def load_cases(path):
+def load_cases(path: Path) -> None:
     case_type = path.name.replace('.json', '').upper()
     cases = CASES.setdefault(case_type, {})
     cases_masks = CASES_MASKS.setdefault(case_type, {})

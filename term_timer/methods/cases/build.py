@@ -62,11 +62,11 @@ def translate(value: str) -> str:
 
 
 def compute_masks(name: str, moves: str, mode: str,
-                  *, debug: bool = False) -> dict[str, dict[str, str]]:
+                  *, debug: bool = False) -> dict[str, list[str]]:
     if mode == 'AF2L':
         return {}
 
-    masks: dict[str, dict[str, str]] = {}
+    masks: dict[str, list[str]] = {}
 
     algorithm = parse_moves(moves).transform(
         mirror_moves,

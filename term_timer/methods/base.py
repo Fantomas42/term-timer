@@ -83,7 +83,7 @@ STEPS_CONFIG = {
 
 class FaceletAnalyser:
 
-    def get_step_case(self, step, facelets, encoder):
+    def get_step_case(self, step: str, facelets: str, encoder) -> str:
         encoded = encoder(facelets)
 
         if encoded in CASES_MASKS[step]:
@@ -91,7 +91,7 @@ class FaceletAnalyser:
 
         return ''
 
-    def check_step(self, step, facelets):
+    def check_step(self, step: str, facelets: str) -> bool:
         mask = get_step_config(step, 'mask')
 
         matching = facelets_masked(
