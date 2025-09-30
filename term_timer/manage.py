@@ -4,6 +4,7 @@ from term_timer.formatter import format_time
 from term_timer.in_out import load_solves
 from term_timer.in_out import save_solves
 from term_timer.interface.console import console
+from term_timer.solve import Solve
 
 
 class SolveManager:
@@ -17,7 +18,7 @@ class SolveManager:
 
         self.solve = self.get_solve()
 
-    def get_solve(self):
+    def get_solve(self) -> Solve | None:
         try:
             solve = self.stack[self.solve_index]
         except IndexError:
@@ -29,29 +30,29 @@ class SolveManager:
 
         return solve
 
-    def confirm(self, text):
-        date = self.solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
+    def confirm(self, text: str, solve: Solve) -> bool:
+        date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
         flag_class = 'result'
-        if self.solve.flag == DNF:
+        if solve.flag == DNF:
             flag_class = 'dnf'
-        if self.solve.flag == PLUS_TWO:
+        if solve.flag == PLUS_TWO:
             flag_class = 'plus-two'
 
         header = (
-            f'[localhost][link={ self.solve.link_term_timer }]'
+            f'[localhost][link={ solve.link_term_timer }]'
             f'Solve #{ self.solve_id}'
             '[/link][/localhost]'
         )
 
         console.print(
             header,
-            f'[time]{ format_time(self.solve.time) }[/time]',
+            f'[time]{ format_time(solve.time) }[/time]',
             f'[date]{ date }[/date]',
-            f'[{ flag_class }]{ self.solve.flag }[/{ flag_class }]',
+            f'[{ flag_class }]{ solve.flag }[/{ flag_class }]',
         )
-        if self.solve.advanced:
-            console.print(self.solve.report_line)
+        if solve.advanced:
+            console.print(solve.report_line)
 
         text += ' (y/N)'
         console.print(text, style='confirm')
@@ -59,14 +60,17 @@ class SolveManager:
 
         return confirm == 'y'
 
-    def save(self):
+    def save(self) -> None:
         save_solves(self.cube, self.session, self.stack)
 
-    def update(self, flag):
-        if not self.solve:
+    def update(self, flag: str) -> None:
+        if self.solve is None:
             return
 
-        if self.confirm(f'Are you sure to mark this solve as "{ flag }" ?'):
+        if self.confirm(
+                f'Are you sure to mark this solve as "{ flag }" ?',
+                self.solve,
+        ):
             if flag == 'OK':
                 flag = ''
 
@@ -83,12 +87,13 @@ class SolveManager:
                 style='caution',
             )
 
-    def delete(self):
-        if not self.solve:
+    def delete(self) -> None:
+        if self.solve is None:
             return
 
         if self.confirm(
                 'Are you sure you want to permanently delete this solve ?',
+                self.solve,
         ):
             self.stack.pop(self.solve_index)
             self.save()
