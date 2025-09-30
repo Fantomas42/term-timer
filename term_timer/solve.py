@@ -101,7 +101,10 @@ class Solve:
 
     @cached_property
     def orientation_moves(self):
-        return get_orientation_moves(self.orientation)
+        return get_orientation_moves(
+            self.orientation,
+            self.scramble, self.solution,
+        )
 
     @staticmethod
     def compute_tps(moves: int, time: int) -> float:
@@ -280,23 +283,17 @@ class Solve:
         )
 
     @cached_property
-    def method_line_with_orientation(self) -> str:
-        method_line = self.method_line
-
-        if method_line and self.orientation_moves:
-            method_line = (
-                '[step]Orientation:[/step] '
-                f'[rotation]{ self.orientation_moves!s }[/rotation]\n'
-            ) + method_line
-
-        return method_line
-
-    @cached_property
     def method_line(self) -> str:
         if not self.method_applied:
             return ''
 
         line = ''
+        if self.orientation_moves:
+            line += (
+                '[step]Orientation:[/step] '
+                f'[rotation]{ self.orientation_moves!s }[/rotation]\n'
+            )
+
         for info in self.method_applied.summary:
 
             header = ''

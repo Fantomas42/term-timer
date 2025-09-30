@@ -596,7 +596,7 @@ class StatisticsReporter(Statistics):
                     f'[cubedb][link={ solve.link_cube_db }]'
                     'cubedb.net[/link][/cubedb]',
                 )
-                console.print(solve.method_line_with_orientation, end='')
+                console.print(solve.method_line, end='')
             if show_time_graph:
                 solve.time_graph()
             if show_tps_graph:

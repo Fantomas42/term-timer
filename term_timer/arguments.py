@@ -128,12 +128,12 @@ def solve_arguments(subparsers):
     )
     cube.add_argument(
         '-o', '--orientation',
-        default=CUBE_ORIENTATION,
-        choices=ORIENTATIONS_SORTED,
+        default='auto',
+        choices=['auto', *ORIENTATIONS_SORTED],
         metavar='ORIENTATION',
         help=(
             'Set the cube orientation used.\n'
-            f'Default: { CUBE_ORIENTATION }.'
+            'Default: auto.'
         ),
     )
 
@@ -596,12 +596,12 @@ def detail_arguments(subparsers):
     )
     cube.add_argument(
         '-o', '--orientation',
-        default=CUBE_ORIENTATION,
-        choices=ORIENTATIONS_SORTED,
+        default='auto',
+        choices=['auto', *ORIENTATIONS_SORTED],
         metavar='ORIENTATION',
         help=(
             'Set the cube orientation used.\n'
-            f'Default: { CUBE_ORIENTATION }.'
+            'Default: auto.'
         ),
     )
 

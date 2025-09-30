@@ -539,8 +539,7 @@ class SolveDetailView(View):
         method_name = method_name.strip().lower()
         if method_name:
             self.solve.method_name = method_name
-        if orientation:
-            self.solve.orientation = orientation
+        self.solve.orientation = orientation
 
     def get_context(self):
         tps = []
@@ -910,7 +909,7 @@ class Server:
             return SolveDetailView(
                 cube, session, solve,
                 request.GET.m or '',
-                request.GET.o or '',
+                request.GET.o or 'auto',
             ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/')
