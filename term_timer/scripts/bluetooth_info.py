@@ -91,8 +91,9 @@ async def consumer_cb(queue: asyncio.Queue[Any],
     orientation_moves = get_orientation_moves(CUBE_ORIENTATION)
 
     logger.info(
-        f'CONSUMER: Use "{ CUBE_ORIENTATION }" as orientation '
-        f'and "{ orientation_moves!s }" as rotation moves',
+        'CONSUMER: Use "%s" as orientation and "%s" as rotation moves',
+        CUBE_ORIENTATION,
+        str(orientation_moves),
     )
 
     while True:
@@ -294,8 +295,8 @@ def resume(events: list[dict]) -> None:
     )
 
     skew_percent = (slope - 1) * 100
-    print(f'Clock skew: { skew_percent:.4f}%')
-    print(f'Slope: { slope:.6f} (1.0 = perfect sync)')
+    logger.info('Clock skew: %.4f%%', skew_percent)
+    logger.info('Slope: %.6f (1.0 = perfect sync)', slope)
 
 
 async def run(options: Any) -> None:
