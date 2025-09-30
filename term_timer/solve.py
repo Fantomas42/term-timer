@@ -41,7 +41,7 @@ from term_timer.transform import reorient_moves
 
 class Solve:
     def __init__(self,
-                 date: int, time: int,
+                 date: float, time: int,
                  scramble: Algorithm | str,
                  flag: str = '',
                  timer: str = '',
@@ -67,11 +67,11 @@ class Solve:
         self.orientation = CUBE_ORIENTATION
 
     @cached_property
-    def solution(self):
+    def solution(self) -> Algorithm:
         return parse_moves(self.raw_moves)
 
     @cached_property
-    def scramble(self):
+    def scramble(self) -> Algorithm:
         if not isinstance(self.raw_scramble, Algorithm):
             return parse_moves(self.raw_scramble)
         return self.raw_scramble
@@ -96,11 +96,11 @@ class Solve:
         return [[m.untimed, m.timed] for m in self.solution]
 
     @cached_property
-    def advanced(self):
+    def advanced(self) -> bool:
         return bool(self.raw_moves)
 
     @cached_property
-    def orientation_moves(self):
+    def orientation_moves(self) -> Algorithm:
         return get_orientation_moves(
             self.orientation,
             self.scramble, self.solution,
@@ -180,7 +180,7 @@ class Solve:
         )
 
     @cached_property
-    def recognition_time(self) -> float:
+    def recognition_time(self) -> int:
         return sum(
             s['recognition']
             for s in self.method_applied.summary
@@ -188,7 +188,7 @@ class Solve:
         )
 
     @cached_property
-    def execution_time(self) -> float:
+    def execution_time(self) -> int:
         return sum(
             s['execution']
             for s in self.method_applied.summary

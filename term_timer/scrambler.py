@@ -52,9 +52,10 @@ def scrambler(cube_size: int, iterations: int,
     return scrambled, cube
 
 
-def trainer(step, cases,
+def trainer(step: str, cases: list[str],
             orientation_moves: Algorithm,
-            bluetooth_cube: VCube | None = None):
+            bluetooth_cube: VCube | None = None) -> tuple[
+                str, Algorithm, Algorithm, VCube]:
     cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube()
 
     if step == 'cross':
@@ -71,7 +72,9 @@ def trainer(step, cases,
     return case_name, main_algorithm, scramble, cube
 
 
-def random_training(step, selected_cases, orientation_moves: Algorithm):
+def random_training(step: str, selected_cases: list[str],
+                    orientation_moves: Algorithm) -> tuple[
+                        str, Algorithm, Algorithm]:
     cases = CASES[step.upper()]
     valid_cases = {k: v for k, v in cases.items() if v.get('setups')}
 

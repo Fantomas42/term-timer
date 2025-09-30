@@ -69,7 +69,8 @@ LOGGING_CONF = {
 }
 
 
-async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
+async def consumer_cb(queue, cube_ready, gl_thread,
+                      show_cube, event_collector) -> None:
     virtual_cube = None
     moves = []
     hardware = ''
@@ -189,7 +190,7 @@ async def consumer_cb(queue, cube_ready, gl_thread, show_cube, event_collector):
                 )
 
 
-async def client_cb(queue, time, use_opengl):
+async def client_cb(queue, time, use_opengl) -> None:
     bluetooth_interface = BluetoothInterface(queue)
 
     await bluetooth_interface.__aenter__()  # noqa: PLC2801
@@ -210,12 +211,12 @@ async def client_cb(queue, time, use_opengl):
     logger.warning('Interface disconnected')
 
 
-def resume(events):
+def resume(events) -> None:
     for event in events:
         print(pformat(event))
 
 
-async def run(options):
+async def run(options) -> None:
     event_collector = []
     queue = asyncio.Queue()
     cube_ready = threading.Event()
@@ -250,7 +251,7 @@ async def run(options):
     logger.info('Bye bye')
 
 
-def main():
+def main() -> None:
     logging.config.dictConfig(LOGGING_CONF)
 
     parser = ArgumentParser(

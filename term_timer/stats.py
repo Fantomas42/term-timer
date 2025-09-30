@@ -189,11 +189,11 @@ class Statistics(StatisticsTools):
         return sum(self.stack_time)
 
     @cached_property
-    def advanced_solves(self) -> int:
+    def advanced_solves(self) -> float:
         return sum(1 for s in self.stack if s.advanced) / self.total
 
     @cached_property
-    def score(self) -> int:
+    def score(self) -> float:
         return sum(s.score for s in self.stack if s.advanced) / self.total
 
     @cached_property
@@ -604,7 +604,8 @@ class StatisticsReporter(Statistics):
             if show_recognition_graph:
                 solve.recognition_graph()
 
-    def case_table(self, title, items, sorting, ordering):
+    def case_table(self, title: str, items: list[dict[str, int | float]],
+                   sorting: str, ordering: str) -> None:
         table = Table(title=f'{ title }s', box=box.SIMPLE)
         table.add_column('Case', width=10)
         table.add_column('Σ', width=3)
@@ -670,7 +671,8 @@ class StatisticsReporter(Statistics):
             )
         console.print(table)
 
-    def cfop(self, analyses, *, oll_only: bool = False, pll_only: bool = False,
+    def cfop(self, analyses: dict[str, dict[str, float | int] | float],
+             *, oll_only: bool = False, pll_only: bool = False,
              sorting: str = 'count', ordering: str = 'asc') -> None:
         if sorting == 'case':
             sorting = 'label'
@@ -700,7 +702,7 @@ class StatisticsReporter(Statistics):
         plt.clear_figure()
 
         for time in self.stack_time:
-            seconds = time / SECOND
+            seconds = time // SECOND
             times.append(seconds)
 
             ao5 = self.ao(5, times)

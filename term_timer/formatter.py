@@ -56,7 +56,7 @@ def format_delta(delta: int) -> str:
     return f'[{ style }]{ sign }{ format_duration(delta) }[/{ style }]'
 
 
-def format_score(score: int) -> str:
+def format_score(score: float) -> str:
     style = 'green'
     if score < 14:
         style = 'orange'

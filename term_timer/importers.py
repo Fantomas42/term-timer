@@ -13,7 +13,7 @@ from term_timer.solve import Solve
 
 class Importer:
 
-    def date_to_ts(self, date: str) -> int:
+    def date_to_ts(self, date: str) -> float:
         date_format = '%Y-%m-%d %H:%M:%S'
         dt = datetime.strptime(date, date_format)  # noqa: DTZ007
 
@@ -35,20 +35,20 @@ class Importer:
 
         return int(total_seconds * SECOND)
 
-    def cubeast_csv(self, data):
+    def cubeast_csv(self, data: list[str]) -> list[dict]:
         solves = []
 
         for _line in data[1:]:
             line = _line.split(',')
 
-            date = line[1][:-4]
+            date_str = line[1][:-4]
             dnf = line[2]
             time = line[3]
             device = line[6]
             moves = line[14]
             scramble = line[19]
 
-            date = self.date_to_ts(date)
+            date = self.date_to_ts(date_str)
 
             flag = ''
             if dnf == 'true':
@@ -70,22 +70,22 @@ class Importer:
                     'Cubeast',
                     device,
                     'import_cubeast_csv',
-                    ' '.join(fixed_moves),
+                    moves=' '.join(fixed_moves),
                 ).as_save,
             )
 
         return solves
 
-    def cstimer_csv(self, data):
+    def cstimer_csv(self, data: list[str]) -> list[dict]:
         solves = []
 
         for line in data[1:]:
             flag = ''
             (
-                _i, time_corrected, _comment, scramble, date, time,
+                _i, time_corrected, _comment, scramble, date_str, time_str,
             ) = line.split(';')
-            date = self.date_to_ts(date)
-            time = self.time_to_ns(time)
+            date = self.date_to_ts(date_str)
+            time = self.time_to_ns(time_str)
 
             if '+' in time_corrected:
                 flag = PLUS_TWO
@@ -94,7 +94,8 @@ class Importer:
 
             solves.append(
                 Solve(
-                    date, time,
+                    date,
+                    time,
                     scramble,
                     flag,
                     'csTimer',
@@ -105,16 +106,16 @@ class Importer:
 
         return solves
 
-    def cstimer_json(self, data):
+    def cstimer_json(self, data: dict) -> list[dict]:
         solves = []
         properties = data['properties']
         session_data = json.loads(properties['sessionData'])
 
-        for session_key in data:
+        for session_key, session_values in data.items():
             if 'session' not in session_key:
                 continue
 
-            if not len(data[session_key]):
+            if not len(session_values):
                 continue
 
             property_key = session_key.replace('session', '')
@@ -125,7 +126,7 @@ class Importer:
             if scramble_type:
                 continue
 
-            for solve in data[session_key]:
+            for solve in session_values:
                 if len(solve) != 5:
                     continue
 
@@ -152,7 +153,7 @@ class Importer:
                         'csTimer',
                         device,
                         'import_cstimer_json',
-                        moves,
+                        moves=moves,
                     ).as_save,
                 )
 

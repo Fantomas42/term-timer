@@ -8,6 +8,7 @@ from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.config import DEBUG
+from term_timer.exceptions import InvalidCaseError
 from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
@@ -15,7 +16,6 @@ from term_timer.interface.console import console
 from term_timer.interface.terminal import Terminal
 from term_timer.logger import configure_logging
 from term_timer.manage import SolveManager
-from term_timer.scrambler import InvalidCaseError
 from term_timer.server.app import Server
 from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
