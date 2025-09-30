@@ -58,10 +58,14 @@ def trainer(step: str, cases: list[str],
                 str, Algorithm, Algorithm, VCube]:
     cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube()
 
-    if step == 'cross':
-        case_name = 'Cross'
+    if step == 'ecross':
+        case_name = 'Easy Cross'
         main_algorithm = Algorithm()
         scramble = scramble_easy_cross()
+    elif step == 'cross':
+        case_name = 'Cross'
+        main_algorithm = Algorithm()
+        scramble, _cube = scrambler(3, 12, easy_cross=False)
     else:
         case_name, main_algorithm, scramble = random_training(
             step, cases, orientation_moves,

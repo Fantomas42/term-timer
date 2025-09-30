@@ -12,6 +12,8 @@ from term_timer.scrambler import trainer
 from term_timer.solve import Solve
 from term_timer.triggers import DEFAULT_TRIGGERS
 
+CROSS_MODES = ('cross', 'ecross')
+
 
 class Trainer(SolveInterface):
     def __init__(self, *,
@@ -32,7 +34,7 @@ class Trainer(SolveInterface):
         self.cases = cases
 
         self.step_code = self.step.upper()
-        if self.step == 'cross':
+        if self.step in CROSS_MODES:
             self.step_code = 'Cross'
 
         self.orientation = orientation
@@ -40,24 +42,26 @@ class Trainer(SolveInterface):
         self.counter = 1
 
     def start_line(self, cube, case, main_algorithm) -> None:
+        if self.step in CROSS_MODES:
+            mode = 'cross'
+            link = ''
+        else:
+            mode = self.step
+            link = (
+                'https://cubing.fache.fr/'
+                f'{ self.step_code }/'
+                f'{ case.split(" ")[0] }.html'
+            )
+
         if self.show_cube:
             print(
                 cube.display(
-                    mode=self.step,
+                    mode=mode,
                     palette=CUBE_PALETTE,
                     effect=CUBE_EFFECT,
                     orientation=self.orientation,
                 ),
                 end='',
-            )
-
-        if self.step == 'cross':
-            link = ''
-        else:
-            link = (
-                'https://cubing.fache.fr/'
-                f'{ self.step_code }/'
-                f'{ case.split(" ")[0] }.html'
             )
 
         scramble_line = f'[moves]{ self.scramble_oriented }[/moves]'
