@@ -1,8 +1,6 @@
 import datetime
 import unittest
 
-from cubing_algs.parsing import parse_moves
-
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.solve import Solve
 
@@ -142,6 +140,20 @@ class TestSolve54(unittest.TestCase):
         )
 
     def test_reconstruction(self):
+        self.assertEqual(
+            str(self.solve.reconstruction),
+            "R2 U F L U F2 U' B2 U' R U R' U B U' B' U F' U F U' F U F' U2 R U' R' U U' R U2 R' U F' U' F U L U' L' U' B' U B U' R L' U B U' B' U' L U R' R U R' U' R' F R2 U' R' U' R U R' R R' F' U2",  # noqa: E501
+        )
+
+    def test_reconstruction_orientation_uf(self):
+        self.solve.orientation = 'UF'
+        self.assertEqual(
+            str(self.solve.reconstruction),
+            "L2 D F R D F2 D' B2 D' L D L' D B D' B' D F' D F D' F D F' D2 L D' L' D D' L D2 L' D F' D' F D R D' R' D' B' D B D' L R' D B D' B' D' R D L' L D L' D' L' F L2 D' L' D' L D L' L L' F' D2",  # noqa: E501
+        )
+
+    def test_reconstruction_orientation_auto(self):
+        self.solve.orientation = 'auto'
         self.assertEqual(
             str(self.solve.reconstruction),
             "R2 U F L U F2 U' B2 U' R U R' U B U' B' U F' U F U' F U F' U2 R U' R' U U' R U2 R' U F' U' F U L U' L' U' B' U B U' R L' U B U' B' U' L U R' R U R' U' R' F R2 U' R' U' R U R' R R' F' U2",  # noqa: E501

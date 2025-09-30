@@ -1,8 +1,6 @@
 import datetime
 import unittest
 
-from cubing_algs.parsing import parse_moves
-
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.solve import Solve
 
@@ -152,6 +150,13 @@ class TestSolve38(unittest.TestCase):
         )
 
     def test_reconstruction(self):
+        self.assertEqual(
+            str(self.solve.reconstruction),
+            "B L' U F2 U2 B U B' U' U R' U' R U2 L U L' U2 R' U R U' R' U' R2 U R' U' U U' F U2 F' U2 F U' F' U2 F' U F U' F' U' F U2 L' R L' B2 L B L' B L B R' L U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R U2",  # noqa: E501
+        )
+
+    def test_reconstruction_orientation_auto(self):
+        self.solve.orientation = 'auto'
         self.assertEqual(
             str(self.solve.reconstruction),
             "B L' U F2 U2 B U B' U' U R' U' R U2 L U L' U2 R' U R U' R' U' R2 U R' U' U U' F U2 F' U2 F U' F' U2 F' U F U' F' U' F U2 L' R L' B2 L B L' B L B R' L U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R U2",  # noqa: E501
