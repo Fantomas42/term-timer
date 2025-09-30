@@ -9,8 +9,10 @@ logger = logging.getLogger(__name__)
 
 
 class CubeGLThread(threading.Thread):
-    def __init__(self, cube_ready_event, width=800, height=600,
-                 *, daemon=True):
+    def __init__(self,
+                 cube_ready_event: threading.Event,
+                 width: int = 800, height: int = 600,
+                 *, daemon: bool = True):
         super().__init__()
 
         self.cube_ready_event = cube_ready_event
@@ -29,10 +31,10 @@ class CubeGLThread(threading.Thread):
         self.last_quaternion = None
         self.has_new_quaternion = True
 
-    def stop(self):
+    def stop(self) -> None:
         self.running = False
 
-    def run(self):
+    def run(self) -> None:
         logger.info('Waiting for bluetooth connection')
         self.cube_ready_event.wait()
         logger.info('Bluetooth connection established')
@@ -51,7 +53,7 @@ class CubeGLThread(threading.Thread):
 
         self.window.quit()
 
-    def process_moves(self):
+    def process_moves(self) -> None:
         moves_to_process = []
 
         with self.move_lock:
@@ -62,11 +64,11 @@ class CubeGLThread(threading.Thread):
         for face, direction in moves_to_process:
             self.cube.animate_moves(self.window, [(face, direction)])
 
-    def add_move(self, face, direction):
+    def add_move(self, face, direction) -> None:
         with self.move_lock:
             self.move_queue.append((face, direction))
 
-    def process_quaternion(self):
+    def process_quaternion(self) -> None:
         quaternion = None
         with self.move_lock:
             if self.has_new_quaternion:
@@ -76,12 +78,12 @@ class CubeGLThread(threading.Thread):
         if quaternion:
             self.cube.set_rotation_from_quaternion(quaternion)
 
-    def add_quaternion(self, quaternion):
+    def add_quaternion(self, quaternion: dict[str, float]) -> None:
         with self.move_lock:
             self.last_quaternion = quaternion
             self.has_new_quaternion = True
 
-    def set_title(self, title):
+    def set_title(self, title: str) -> None:
         with self.move_lock:
             self.title = title
 

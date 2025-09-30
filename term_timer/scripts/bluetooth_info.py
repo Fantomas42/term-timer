@@ -5,14 +5,15 @@ import sys
 import threading
 from contextlib import suppress
 from pprint import pformat
+from typing import Any
 
 from cubing_algs.parsing import parse_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
 from term_timer.bluetooth.interface import BluetoothInterface
-from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.exceptions import CubeNotFoundError
 from term_timer.logger import LOGGING_DIR
 from term_timer.opengl.thread import CubeGLThread
 from term_timer.orientation import get_orientation_moves
@@ -69,8 +70,19 @@ LOGGING_CONF = {
 }
 
 
-async def consumer_cb(queue, cube_ready, gl_thread,
-                      show_cube, event_collector) -> None:
+def print_cube(cube: VCube) -> None:
+    cube.show(
+        orientation=CUBE_ORIENTATION,
+        mode='linear',
+        facelet='compact',
+    )
+
+
+async def consumer_cb(queue: asyncio.Queue[Any],
+                      cube_ready: threading.Event,
+                      gl_thread: CubeGLThread | None,
+                      event_collector: list[dict],
+                      *, show_cube: bool) -> None:
     virtual_cube = None
     moves = []
     hardware = ''
@@ -78,13 +90,11 @@ async def consumer_cb(queue, cube_ready, gl_thread,
 
     orientation_moves = get_orientation_moves(CUBE_ORIENTATION)
 
-    def print_cube(cube):
-        if show_cube:
-            cube.show(
-                orientation=CUBE_ORIENTATION,
-                mode='linear',
-                facelet='compact',
-            )
+    logger.info(
+        'CONSUMER: Use "%s" as orientation and "%s" as rotation moves',
+        CUBE_ORIENTATION,
+        str(orientation_moves),
+    )
 
     while True:
         events = await queue.get()
@@ -150,7 +160,8 @@ async def consumer_cb(queue, cube_ready, gl_thread,
                 else:
                     virtual_cube = VCube(event['facelets'])
 
-                print_cube(virtual_cube)
+                if show_cube:
+                    print_cube(virtual_cube)
 
             elif event_name == 'move':
                 logger.info(
@@ -163,7 +174,8 @@ async def consumer_cb(queue, cube_ready, gl_thread,
 
                 if virtual_cube:
                     virtual_cube.rotate(event['move'])
-                    print_cube(virtual_cube)
+                    if show_cube:
+                        print_cube(virtual_cube)
 
                 if gl_thread and gl_thread.is_alive():
                     direction = 3 if "'" in event['move'] else 1
@@ -190,18 +202,31 @@ async def consumer_cb(queue, cube_ready, gl_thread,
                 )
 
 
-async def client_cb(queue, time, use_opengl) -> None:
+async def client_cb(queue: asyncio.Queue[Any], time: int, *,
+                    use_opengl: bool,
+                    cube_reset: bool,
+                    gyroscope_enable: bool,
+                    gyroscope_disable: bool) -> None:
     bluetooth_interface = BluetoothInterface(queue)
 
     await bluetooth_interface.__aenter__()  # noqa: PLC2801
 
     if use_opengl:
+        assert bluetooth_interface is not None  # noqa: S101
+        assert bluetooth_interface.driver is not None  # noqa: S101
+
         bluetooth_interface.driver.disable_gyro = False
 
-    # Initialize/reset the cube
     await bluetooth_interface.send_command('REQUEST_HARDWARE')
     await bluetooth_interface.send_command('REQUEST_FACELETS')
     await bluetooth_interface.send_command('REQUEST_BATTERY')
+
+    if gyroscope_disable:
+        await bluetooth_interface.send_command('REQUEST_DISABLE_GYRO')
+    if gyroscope_enable:
+        await bluetooth_interface.send_command('REQUEST_ENABLE_GYRO')
+    if cube_reset:
+        await bluetooth_interface.send_command('REQUEST_RESET')
 
     logger.info('Free play for %ss', time)
     print('\a', end='', flush=True)
@@ -211,14 +236,72 @@ async def client_cb(queue, time, use_opengl) -> None:
     logger.warning('Interface disconnected')
 
 
-def resume(events) -> None:
+def linear_regression(x_values: list[float],
+                      y_values: list[float]) -> tuple[float, float]:
+    sum_x = 0.0
+    sum_y = 0.0
+    sum_xy = 0.0
+    sum_xx = 0.0
+    sum_yy = 0.0
+    n = 0
+
+    for i in range(len(x_values)):
+        x = x_values[i]
+        y = y_values[i]
+        if x is None or y is None:
+            continue
+
+        n += 1
+        sum_x += x
+        sum_y += y
+        sum_xy += x * y
+        sum_xx += x * x
+        sum_yy += y * y
+
+    var_x = n * sum_xx - sum_x * sum_x
+    cov_xy = n * sum_xy - sum_x * sum_y
+
+    slope = 1.0 if var_x < 1e-3 else cov_xy / var_x  # noqa: PLR2004
+    intercept = 0.0 if n < 1 else sum_y / n - slope * sum_x / n
+
+    return (slope, intercept)
+
+
+def resume(events: list[dict]) -> None:
+    cube_timestamps = []
+    local_timestamps = []
+
     for event in events:
-        print(pformat(event))
+        if event['event'] != 'move':
+            continue
+        cube_timestamps.append(
+            event['cube_timestamp'],
+        )
+        local_timestamps.append(
+            event['local_timestamp'].timestamp() * 1000,
+        )
+
+    if len(cube_timestamps) < 2:
+        return
+
+    # Linear regression: local_timestamps vs cube_timestamps
+    # This gives us the mapping from cube time to local time
+    # slope ≈ 1.0 means clocks run at same rate
+    # If slope > 1.0, cube clock is slower than local clock
+    # If slope < 1.0, cube clock is faster than local clock
+    slope, _intercept = linear_regression(
+        cube_timestamps,
+        local_timestamps,
+    )
+
+    skew_percent = (slope - 1) * 100
+    logger.info('Clock skew: %.4f%%', skew_percent)
+    logger.info('Slope: %.6f (1.0 = perfect sync)', slope)
 
 
-async def run(options) -> None:
-    event_collector = []
-    queue = asyncio.Queue()
+async def run(options: Any) -> None:
+    event_collector: list[dict] = []
+    queue: asyncio.Queue[Any] = asyncio.Queue()
     cube_ready = threading.Event()
 
     gl_thread = None
@@ -226,11 +309,15 @@ async def run(options) -> None:
         gl_thread = CubeGLThread(cube_ready, 800, 600, daemon=True)
 
     client = client_cb(
-        queue, options.time, options.use_opengl,
+        queue, options.time,
+        use_opengl=options.use_opengl,
+        cube_reset=options.cube_reset,
+        gyroscope_enable=options.gyroscope_enable,
+        gyroscope_disable=options.gyroscope_disable,
     )
     consumer = consumer_cb(
-        queue, cube_ready, gl_thread,
-        options.show_cube, event_collector,
+        queue, cube_ready, gl_thread, event_collector,
+        show_cube=options.show_cube,
     )
 
     try:
@@ -281,6 +368,30 @@ def main() -> None:
         action='store_true',
         help=(
             'Enable OpenGL visualization.\n'
+            'Default: False.'
+        ),
+    )
+    parser.add_argument(
+        '--cube-reset',
+        action='store_true',
+        help=(
+            'Request reset of the cube.\n'
+            'Default: False.'
+        ),
+    )
+    parser.add_argument(
+        '--gyroscope-enable',
+        action='store_true',
+        help=(
+            'Enable the gyroscope of the cube.\n'
+            'Default: False.'
+        ),
+    )
+    parser.add_argument(
+        '--gyroscope-disable',
+        action='store_true',
+        help=(
+            'Disable the gyroscope of the cube.\n'
             'Default: False.'
         ),
     )
