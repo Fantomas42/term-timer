@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 from datetime import timezone
 from http import HTTPStatus
+from typing import Any
 from typing import ClassVar
 from wsgiref.simple_server import WSGIRequestHandler
 
@@ -89,7 +90,7 @@ def format_line(value: str) -> str:
     if not value:
         return ''
 
-    def replacer(matchobj):
+    def replacer(matchobj: re.Match[str]) -> str:
         moves = matchobj.group(2)
         markup = matchobj.group(1)
         legend = LEGENDS.get(markup, markup.title())
@@ -127,7 +128,7 @@ def format_line(value: str) -> str:
     return ' '.join(processed_parts)
 
 
-def parse_case_name(value, step):
+def parse_case_name(value: str, step: str) -> tuple[str, str, str]:
     try:
         code, name = value.split(' ', 1)
     except ValueError:
@@ -140,19 +141,19 @@ def parse_case_name(value, step):
         return code, name, 'OLL'
 
 
-def normalize_value(value, method_applied, metric, name) -> str:
+def normalize_value(value, method_applied, metric: str, name: str) -> str:
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value }</span>'
 
 
-def normalize_percent(value, method_applied, metric, name) -> str:
+def normalize_percent(value, method_applied, metric: str, name: str) -> str:
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value:.2f}%</span>'
 
 
-def reconstruction_step(step) -> str:
+def reconstruction_step(step: dict[str, Any]) -> str:
     algorithm = str(step['moves_prettified'])
 
     algorithm = format_alg_triggers(
@@ -168,7 +169,7 @@ def reconstruction_step(step) -> str:
     return format_line(algorithm)
 
 
-def reconstruction_overheads(step, solve: Solve) -> str:
+def reconstruction_overheads(step: dict[str, Any], solve: Solve) -> str:
     source, compressed = solve.missed_moves_pair(
         step['moves_humanized'],
     )
@@ -197,7 +198,7 @@ def reconstruction_overheads(step, solve: Solve) -> str:
     return format_line(algo)
 
 
-def reconstruction_pauses(step, solve: Solve) -> str:
+def reconstruction_pauses(step: dict[str, Any], solve: Solve) -> str:
     source_paused = step['moves_humanized'].transform(
         pause_moves(
             solve.move_speed / MS_TO_NS_FACTOR,
@@ -224,7 +225,7 @@ def reconstruction_pauses(step, solve: Solve) -> str:
     return format_line(source_paused)
 
 
-def optimized_step(step):
+def optimized_step(step: dict[str, Any]) -> tuple[str, Any]:
     optimizers = []
 
     if 'SKIP' not in step['case']:
@@ -252,7 +253,7 @@ def optimized_step(step):
 
 class RichHandler(WSGIRequestHandler):
 
-    def log_request(self, code, size):
+    def log_request(self, code: int | HTTPStatus, size: int) -> None:
         if isinstance(code, HTTPStatus):
             code = code.value
 
@@ -273,7 +274,7 @@ class RichHandler(WSGIRequestHandler):
 class View:
     template_name = ''
 
-    def get_context(self):
+    def get_context(self) -> dict[str, Any]:
         raise NotImplementedError
 
     def as_view(self, debug: bool) -> str:  # noqa: FBT001
@@ -288,7 +289,7 @@ class View:
 
         return content
 
-    def template(self, template_name, **context):
+    def template(self, template_name: str, **context: Any) -> str:
         context['now'] = datetime.now(tz=timezone.utc)  # noqa: UP017
 
         return jinja2_template(
@@ -318,10 +319,10 @@ class View:
 class Error404View(View):
     template_name = '404.html'
 
-    def __init__(self, error):
+    def __init__(self, error: Any) -> None:
         self.error = error
 
-    def get_context(self):
+    def get_context(self) -> dict[str, Any]:
         return {
             'error': self.error,
             'message': self.error.body,
@@ -331,10 +332,10 @@ class Error404View(View):
 class Error500View(View):
     template_name = '500.html'
 
-    def __init__(self, error):
+    def __init__(self, error: Any) -> None:
         self.error = error
 
-    def get_context(self):
+    def get_context(self) -> dict[str, Any]:
         return {
             'error': self.error,
             'message': self.error.body,
@@ -346,7 +347,7 @@ class Error500View(View):
 class SessionListView(View):
     template_name = 'index.html'
 
-    def get_context(self):
+    def get_context(self) -> dict[str, Any]:
         sessions = {}
         for cube in CUBE_SIZES:
             solves = load_all_solves(cube, [], [], '')
@@ -390,7 +391,8 @@ class SessionListView(View):
 class SessionDetailView(View):
     template_name = 'session.html'
 
-    def __init__(self, cube, session, method_name, step, case_uid):
+    def __init__(self, cube: int, session: str,
+                 method_name: str, step: str, case_uid: str) -> None:
         self.cube = cube
         self.session = session
 
@@ -436,7 +438,7 @@ class SessionDetailView(View):
             cube, solves,
         )
 
-    def get_context(self):
+    def get_context(self) -> dict[str, Any]:
         return {
             'cube': self.cube,
             'session': self.session,
@@ -450,15 +452,15 @@ class SessionDetailView(View):
             'method_aggregation': self.method_aggregation,
         }
 
-    def compute_sessions(self):
-        sessions = {}
+    def compute_sessions(self) -> dict[str, int]:
+        sessions: dict[str, int] = {}
         for solve in self.stats.stack:
             sessions.setdefault(solve.session, 0)
             sessions[solve.session] += 1
 
         return sessions
 
-    def compute_trend(self):
+    def compute_trend(self) -> dict[str, Any]:
         ao5s = []
         ao12s = []
         ao100s = []
@@ -491,7 +493,7 @@ class SessionDetailView(View):
             'ao1000s': ao1000s,
         }
 
-    def compute_distribution(self):
+    def compute_distribution(self) -> dict[str, list[Any]]:
         dist_labels = []
         dist_counts = []
         for count, edge in self.stats.repartition:
@@ -503,7 +505,7 @@ class SessionDetailView(View):
             'counts': dist_counts,
         }
 
-    def compute_punchcard(self):
+    def compute_punchcard(self) -> dict[str, dict[str, int]]:
         punchcard = {}
         for solve in self.stats.stack:
             dt = solve.datetime.astimezone()
@@ -519,7 +521,8 @@ class SessionDetailView(View):
 class SolveDetailView(View):
     template_name = 'solve.html'
 
-    def __init__(self, cube, session, solve, method_name, orientation):
+    def __init__(self, cube: int, session: str, solve_id: int,
+                 method_name: str, orientation: str) -> None:
         self.cube = cube
         self.session = session
 
@@ -529,8 +532,8 @@ class SolveDetailView(View):
             [], '',
         )
 
-        self.solve_id = solve
-        self.solve_index = solve - 1
+        self.solve_id = solve_id
+        self.solve_index = solve_id - 1
         try:
             self.solve = self.solves[self.solve_index]
         except IndexError:
@@ -541,7 +544,7 @@ class SolveDetailView(View):
             self.solve.method_name = method_name
         self.solve.orientation = orientation
 
-    def get_context(self):
+    def get_context(self) -> dict[str, Any]:
         tps = []
         steps = []
         scatter = []
@@ -628,7 +631,8 @@ class SolveDetailView(View):
 
 class SolveUpdateView:
 
-    def __init__(self, cube, session, solve_id, flag):
+    def __init__(self, cube: int, session: str, solve_id: int,
+                 flag: str) -> None:
         self.cube = cube
         self.session = session
         self.solve_id = solve_id
@@ -654,7 +658,7 @@ class SolveUpdateView:
 
 class SolveDeleteView:
 
-    def __init__(self, cube, session, solve_id):
+    def __init__(self, cube: int, session: str, solve_id: int) -> None:
         self.cube = cube
         self.session = session
         self.solve_id = solve_id
@@ -723,7 +727,7 @@ class AcademyView(View):
         },
     }
 
-    def get_context(self):
+    def get_context(self) -> dict[str, Any]:
         return {
             'methods': self.methods,
         }
@@ -732,7 +736,7 @@ class AcademyView(View):
 class AcademyStepView(AcademyView):
     template_name = 'academy/step.html'
 
-    def __init__(self, step):
+    def __init__(self, step: str) -> None:
         self.step = step.upper()
 
         try:
@@ -740,7 +744,7 @@ class AcademyStepView(AcademyView):
         except KeyError:
             abort(404, f'{ self.step } does not exist')
 
-    def get_context(self):
+    def get_context(self) -> dict[str, Any]:
         cases = []
 
         for case_id, case_data in self.cases_data.items():
@@ -778,7 +782,7 @@ class AcademyStepView(AcademyView):
 class AcademyCaseView(AcademyView):
     template_name = 'academy/case.html'
 
-    def __init__(self, step, case_id):
+    def __init__(self, step: str, case_id: str) -> None:
         self.step = step.upper()
         self.case_id = case_id
 
@@ -787,7 +791,7 @@ class AcademyCaseView(AcademyView):
         except KeyError:
             abort(404, f'{ self.step } { self.case_id } does not exist')
 
-    def get_context(self):
+    def get_context(self) -> dict[str, Any]:
         case_info = {
             'id': self.case_id,
             'name': self.case_id,
@@ -835,10 +839,10 @@ class AcademyCaseView(AcademyView):
 
 class Server:
 
-    def run_server(self, host, port, debug):
+    def run_server(self, host: str, port: int, *, debug: bool) -> None:
         TEMPLATE_PATH.insert(0, TEMPLATES_DIRECTORY)
 
-        app = self.create_app(debug)
+        app = self.create_app(debug=debug)
 
         if not os.getenv('BOTTLE_CHILD'):
             console.print(
@@ -858,11 +862,11 @@ class Server:
             handler_class=RichHandler,
         )
 
-    def create_app(self, debug):
+    def create_app(self, *, debug: bool) -> Bottle:
         app = Bottle()
 
         @app.hook('before_request')
-        def add_trailing_slash():
+        def add_trailing_slash() -> None:
             path = request.environ.get('PATH_INFO', '')
 
             if (
@@ -874,24 +878,24 @@ class Server:
                 redirect(new_url, code=301)
 
         @app.route('/')
-        def session_list():
+        def session_list() -> str:
             return SessionListView().as_view(debug)
 
         @app.route('/academy/')
-        def academy_overview():
+        def academy_overview() -> str:
             return AcademyView().as_view(debug)
 
         @app.route('/academy/<step>/')
-        def academy_step(step):
+        def academy_step(step: str) -> str:
             return AcademyStepView(step).as_view(debug)
 
         @app.route('/academy/<step>/<case_id>/')
-        def academy_case(step, case_id):
+        def academy_case(step: str, case_id: str) -> str:
             return AcademyCaseView(step, case_id).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/update/',
                    method='POST')
-        def solve_update(cube, session, solve):
+        def solve_update(cube: int, session: str, solve: int) -> str:
             return SolveUpdateView(
                 cube, session, solve,
                 request.POST.flag,
@@ -899,13 +903,13 @@ class Server:
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/delete/',
                    method='POST')
-        def solve_delete(cube, session, solve):
+        def solve_delete(cube: int, session: str, solve: int) -> str:
             return SolveDeleteView(
                 cube, session, solve,
             ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/')
-        def solve_detail(cube, session, solve):
+        def solve_detail(cube: int, session: str, solve: int) -> str:
             return SolveDetailView(
                 cube, session, solve,
                 request.GET.m or '',
@@ -913,7 +917,7 @@ class Server:
             ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/')
-        def session_detail(cube, session):
+        def session_detail(cube: int, session: str) -> str:
             return SessionDetailView(
                 cube, session,
                 request.GET.m or '',
@@ -922,15 +926,15 @@ class Server:
             ).as_view(debug)
 
         @app.route('/static/<filepath:path>')
-        def static_serve(filepath):
+        def static_serve(filepath: str) -> str:
             return static_file(filepath, root=STATIC_DIRECTORY)
 
         @app.error(404)
-        def error_404(error):
+        def error_404(error: Any) -> str:
             return Error404View(error).as_view(debug)
 
         @app.error(500)
-        def error_500(error):
+        def error_500(error: Any) -> str:
             return Error500View(error).as_view(debug)
 
         return app
