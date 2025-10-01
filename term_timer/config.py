@@ -78,15 +78,15 @@ TRAINER_CONFIG = CONFIG.get('trainer', {})
 
 SERVER_CONFIG = CONFIG.get('server', {})
 
-CUBE_ORIENTATION = CUBE_CONFIG.get('orientation')
+CUBE_ORIENTATION: str = CUBE_CONFIG.get('orientation', '')
 
-CUBE_METHOD = CUBE_CONFIG.get('method')
+CUBE_METHOD: str = CUBE_CONFIG.get('method', '')
 
-CUBE_PALETTE = CUBE_CONFIG.get('palette')
+CUBE_PALETTE: str = CUBE_CONFIG.get('palette', '')
 
-CUBE_EFFECT = CUBE_CONFIG.get('effect')
+CUBE_EFFECT: str = CUBE_CONFIG.get('effect', '')
 
-CUBE_RIGHT_HANDED = CUBE_CONFIG.get('right-handed')
+CUBE_RIGHT_HANDED: bool = CUBE_CONFIG.get('right-handed', True)
 
 AUF_MOVE = OPPOSITE_FACES[CUBE_ORIENTATION[0]]
 

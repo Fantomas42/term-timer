@@ -1,5 +1,5 @@
 import sys
-from typing import Any
+from argparse import Namespace
 
 from cubing_algs.constants import ORIENTATIONS
 
@@ -761,7 +761,7 @@ def delete_arguments(subparsers):
     return parser
 
 
-def get_arguments() -> Any:
+def get_arguments() -> Namespace:
     parser = ArgumentParser(
         description='Speed cubing timer on your terminal.',
         epilog='Have fun cubing !',

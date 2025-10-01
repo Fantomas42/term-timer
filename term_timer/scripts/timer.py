@@ -1,4 +1,5 @@
 import asyncio
+from argparse import Namespace
 from contextlib import suppress
 from random import seed
 
@@ -22,7 +23,7 @@ from term_timer.timer import Timer
 from term_timer.trainer import Trainer
 
 
-async def timer(options) -> int:
+async def timer(options: Namespace) -> int:
     cube = options.cube
 
     session_parts = []
@@ -92,7 +93,7 @@ async def timer(options) -> int:
     return 0
 
 
-async def trainer(options) -> int:
+async def trainer(options: Namespace) -> int:
     trainer = Trainer(
         step=options.step,
         cases=options.case,
@@ -120,7 +121,7 @@ async def trainer(options) -> int:
     return 0
 
 
-def tools(command: str, options) -> int:
+def tools(command: str, options: Namespace) -> int:
     cube = options.cube
 
     stack = load_all_solves(
@@ -182,7 +183,7 @@ def tools(command: str, options) -> int:
     return 0
 
 
-def manage(command: str, options) -> int:
+def manage(command: str, options: Namespace) -> int:
     cube = options.cube
 
     if command == 'edit':
@@ -211,7 +212,7 @@ def main() -> int:
         if command == 'import':
             return Importer().import_file(options.source)
         if command == 'serve':
-            Server().run_server(options.host, options.port, DEBUG)
+            Server().run_server(options.host, options.port, debug=DEBUG)
             return 0
         if command in {'edit', 'delete'}:
             return manage(command, options)

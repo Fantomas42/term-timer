@@ -29,9 +29,9 @@ class TestDriver(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             self.driver.send_command_handler('test_command')
 
-    def test_notification_handler_raises_not_implemented(self):
+    def test_event_handler_raises_not_implemented(self):
         with self.assertRaises(NotImplementedError):
-            self.driver.notification_handler('sender', b'data')
+            self.driver.event_handler('sender', b'data')
 
     def test_add_event_with_single_event(self):
         store = []

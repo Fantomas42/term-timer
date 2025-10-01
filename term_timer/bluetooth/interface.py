@@ -30,7 +30,7 @@ class BluetoothInterface:
     scan_timeout = 5
     connect_timeout = 5
 
-    def __init__(self, queue: Queue):
+    def __init__(self, queue: Queue[list[dict[str, object]] | None]):
         self.queue = queue
 
     async def __aenter__(self, address=None) -> bool:

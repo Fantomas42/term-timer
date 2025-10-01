@@ -1,4 +1,4 @@
-def get_salt(mac_address):
+def get_salt(mac_address: str) -> bytearray:
     mac_parts = mac_address.split(':')
 
     # Convert hex strings to integers and reverse the order

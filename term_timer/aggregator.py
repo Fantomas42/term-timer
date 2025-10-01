@@ -3,6 +3,7 @@ import time
 from functools import partial
 from multiprocessing import Pool
 from multiprocessing import cpu_count
+from typing import Any
 
 from term_timer.methods import get_method_analyser
 from term_timer.methods.cases import CASES
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def analyse_solve_worker(solve: Solve,
                          method_name: str, *,
-                         full: bool = False) -> dict:
+                         full: bool = False) -> dict[str, Any]:
     if not solve.advanced:
         return {
             'solve': solve if full else None,
@@ -59,7 +60,7 @@ class SolvesMethodAggregator:
 
         self.results = self.aggregate()
 
-    def collect_analyses(self) -> list[dict]:
+    def collect_analyses(self) -> list[dict[str, Any]]:
         num_processes = max(1, cpu_count() - 1)
 
         worker_func = partial(
@@ -71,7 +72,7 @@ class SolvesMethodAggregator:
         with Pool(processes=num_processes) as pool:
             return pool.map(worker_func, self.stack)
 
-    def aggregate(self) -> dict:
+    def aggregate(self) -> dict[str, Any]:
         start = time.time()
         analyses = self.collect_analyses()
 

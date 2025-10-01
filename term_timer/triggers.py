@@ -1,4 +1,6 @@
 import re
+from collections.abc import Callable
+from re import Pattern
 
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.offset import offset_y2_moves
@@ -58,7 +60,8 @@ DEFAULT_TRIGGERS = [
 
 
 def apply_trigger_outside_blocks(
-        algorithm: str, regex, replacement_func) -> str:
+        algorithm: str, regex: Pattern[str],
+        replacement_func: Callable[[re.Match[str]], str]) -> str:
     blocks = []
 
     for match in re.finditer(BLOCK_PATTERN, algorithm):

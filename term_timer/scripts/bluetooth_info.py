@@ -3,6 +3,7 @@ import logging
 import logging.config
 import sys
 import threading
+from argparse import Namespace
 from contextlib import suppress
 from pprint import pformat
 from typing import Any
@@ -78,10 +79,10 @@ def print_cube(cube: VCube) -> None:
     )
 
 
-async def consumer_cb(queue: asyncio.Queue[Any],
+async def consumer_cb(queue: asyncio.Queue[list[dict[str, object]] | None],
                       cube_ready: threading.Event,
                       gl_thread: CubeGLThread | None,
-                      event_collector: list[dict],
+                      event_collector: list[dict[str, object]],
                       *, show_cube: bool) -> None:
     virtual_cube = None
     moves = []
@@ -267,7 +268,7 @@ def linear_regression(x_values: list[float],
     return (slope, intercept)
 
 
-def resume(events: list[dict]) -> None:
+def resume(events: list[dict[str, object]]) -> None:
     cube_timestamps = []
     local_timestamps = []
 
@@ -299,9 +300,9 @@ def resume(events: list[dict]) -> None:
     logger.info('Slope: %.6f (1.0 = perfect sync)', slope)
 
 
-async def run(options: Any) -> None:
-    event_collector: list[dict] = []
-    queue: asyncio.Queue[Any] = asyncio.Queue()
+async def run(options: Namespace) -> None:
+    event_collector: list[dict[str, object]] = []
+    queue: asyncio.Queue[list[dict[str, object]] | None] = asyncio.Queue()
     cube_ready = threading.Event()
 
     gl_thread = None
