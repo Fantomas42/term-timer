@@ -136,13 +136,18 @@
        algNode.is(Move) || algNode.is(Pause),
      );
 
-     const animationTimelineLeaves = moves.map((move, i) => {
-       return {
-         animLeaf: move,
-         start: solutionMoveTimestamps[i][0],
-         end: solutionMoveTimestamps[i][1],
-       };
-     });
+     let animationTimelineLeaves = [];
+     try {
+       let animationTimelineLeaves = moves.map((move, i) => {
+         return {
+           animLeaf: move,
+           start: solutionMoveTimestamps[i][0],
+           end: solutionMoveTimestamps[i][1],
+         };
+       });
+     } catch (error) {
+       console.debug('Error in animation timeline')
+     }
 
      const player = new TwistyPlayer({
        alg: parsedAlg,
@@ -151,9 +156,13 @@
        puzzle: "{{ cube }}x{{ cube }}x{{ cube }}",
        background: "none",
      });
-     player.experimentalModel.animationTimelineLeavesRequest.set(
-       animationTimelineLeaves,
-     );
+
+     if (animationTimelineLeaves.length > 0) {
+       player.experimentalModel.animationTimelineLeavesRequest.set(
+         animationTimelineLeaves,
+       );
+     }
+
      const viewer = new TwistyAlgViewer({ twistyPlayer: player });
      document.querySelector("#replayer").appendChild(player);
      document.querySelector("#replayer").appendChild(viewer);
