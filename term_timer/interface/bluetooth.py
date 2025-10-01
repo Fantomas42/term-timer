@@ -188,6 +188,7 @@ class Bluetooth:
                     'time': event['clock'],
                 },
             )
+            self.start_time = event['clock']
             self.solve_started_event.set()
 
         elif self.state == 'solving':

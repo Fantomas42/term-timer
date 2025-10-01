@@ -25,7 +25,6 @@ class StopWatch:
 
         tempo_elapsed = 0
         previous_style = ''
-        self.start_time = time.perf_counter_ns()
 
         self.set_state('solving', self.start_time)
 

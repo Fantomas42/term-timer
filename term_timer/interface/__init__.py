@@ -116,6 +116,9 @@ class SolveInterface(
             await self.wait_control(tasks)
 
     async def time_solve(self):
+        if not self.start_time:
+            self.start_time = time.perf_counter_ns()
+
         stopwatch_task = asyncio.create_task(self.stopwatch())
 
         if self.bluetooth_interface:
