@@ -1,5 +1,7 @@
 import logging
 
+from cubing_algs.vcube import VCube
+
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.formatter import format_delta
@@ -61,7 +63,7 @@ class Timer(SolveInterface):
                 style='warning',
             )
 
-    def start_line(self, cube) -> None:
+    def start_line(self, cube: VCube) -> None:
         if self.show_cube:
             print(cube.display(self.orientation), end='')
 

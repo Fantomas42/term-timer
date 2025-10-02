@@ -11,7 +11,7 @@ class State:
 
         self.state = ''
 
-    def set_state(self, state, timestamp=None):
+    def set_state(self, state: str, timestamp=None) -> None:
         self.state = state
         logger.info(
             'Passing to state %s: %s',

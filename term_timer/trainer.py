@@ -1,3 +1,6 @@
+from cubing_algs.algorithm import Algorithm
+from cubing_algs.vcube import VCube
+
 from term_timer.config import CUBE_EFFECT
 from term_timer.config import CUBE_PALETTE
 from term_timer.constants import DNF
@@ -41,7 +44,8 @@ class Trainer(SolveInterface):
 
         self.counter = 1
 
-    def start_line(self, cube, case, main_algorithm) -> None:
+    def start_line(self, cube: VCube, case: str,
+                   main_algorithm: Algorithm) -> None:
         if self.step in CROSS_MODES:
             mode = 'cross'
             link = ''
@@ -50,7 +54,7 @@ class Trainer(SolveInterface):
             link = (
                 'https://cubing.fache.fr/'
                 f'{ self.step_code }/'
-                f'{ case.split(" ")[0] }.html'
+                f'{ case.split(" ", maxsplit=1)[0] }.html'
             )
 
         if self.show_cube:

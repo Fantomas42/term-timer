@@ -15,7 +15,7 @@ class StopWatch:
         self.end_time = 0
         self.elapsed_time = 0
 
-        self.metronome = 0
+        self.metronome = 0.0
 
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()

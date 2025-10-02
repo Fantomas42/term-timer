@@ -39,7 +39,7 @@ class SolveInterface(
         Bluetooth,
 ):
 
-    def init_solve(self):
+    def init_solve(self) -> None:
         self.set_state('init')
         self.date = datetime.now(tz=timezone.utc).timestamp()  # noqa: UP017
         self.end_time = 0
@@ -63,7 +63,7 @@ class SolveInterface(
 
         self.inspection_completed_event.clear()
 
-    async def scramble_solve(self):
+    async def scramble_solve(self) -> bool | None:
         self.set_state('scrambling')
 
         if self.bluetooth_interface:
@@ -89,7 +89,7 @@ class SolveInterface(
 
         return None
 
-    async def inspect_solve(self):
+    async def inspect_solve(self) -> None:
         inspection_task = asyncio.create_task(self.inspection())
 
         if self.bluetooth_interface:
@@ -107,7 +107,7 @@ class SolveInterface(
 
         await inspection_task
 
-    async def wait_solve(self):
+    async def wait_solve(self) -> None:
         if self.bluetooth_interface:
             tasks = [
                 asyncio.create_task(self.getch('start')),
@@ -115,7 +115,7 @@ class SolveInterface(
             ]
             await self.wait_control(tasks)
 
-    async def time_solve(self):
+    async def time_solve(self) -> None:
         if not self.start_time:
             self.start_time = time.perf_counter_ns()
 
@@ -141,7 +141,7 @@ class SolveInterface(
 
         await stopwatch_task
 
-    async def save_solve(self):
+    async def save_solve(self) -> bool:
         self.set_state('saving')
 
         if self.bluetooth_interface:

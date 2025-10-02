@@ -4,9 +4,9 @@ import logging
 from cubing_algs.vcube import VCube
 
 from term_timer.bluetooth.interface import BluetoothInterface
-from term_timer.bluetooth.interface import CubeNotFoundError
 from term_timer.config import BLUETOOTH_CONFIG
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.exceptions import CubeNotFoundError
 
 logger = logging.getLogger(__name__)
 
