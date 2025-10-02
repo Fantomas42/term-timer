@@ -1,5 +1,6 @@
 import sys
 from argparse import Namespace
+from argparse import _SubParsersAction
 
 from cubing_algs.constants import ORIENTATIONS
 
@@ -34,7 +35,9 @@ for name, aliases in COMMAND_ALIASES.items():
 ORIENTATIONS_SORTED = sorted(ORIENTATIONS)
 
 
-def set_session_arguments(parser):
+def set_session_arguments(
+        parser: ArgumentParser,
+) -> ArgumentParser._ArgumentGroup:
     session = parser.add_argument_group('Session')
     session.add_argument(
         '-c', '--cube',
@@ -81,7 +84,7 @@ def set_session_arguments(parser):
     return session
 
 
-def solve_arguments(subparsers):
+def solve_arguments(subparsers: _SubParsersAction) -> ArgumentParser:
     countdown = TIMER_CONFIG.get('countdown', 0.0)
     metronome = TIMER_CONFIG.get('metronome', 0.0)
 
@@ -301,7 +304,7 @@ def solve_arguments(subparsers):
     return parser
 
 
-def train_arguments(subparsers):
+def train_arguments(subparsers: _SubParsersAction) -> ArgumentParser:
     show_cube = DISPLAY_CONFIG.get('scramble', True)
     metronome = TIMER_CONFIG.get('metronome', 0.0)
 
@@ -394,7 +397,7 @@ def train_arguments(subparsers):
     return parser
 
 
-def list_arguments(subparsers):
+def list_arguments(subparsers: _SubParsersAction) -> ArgumentParser:
     parser = subparsers.add_parser(
         'list',
         help='Display recorded solves',
@@ -431,7 +434,7 @@ def list_arguments(subparsers):
     return parser
 
 
-def statistics_arguments(subparsers):
+def statistics_arguments(subparsers: _SubParsersAction) -> ArgumentParser:
     parser = subparsers.add_parser(
         'stats',
         help='Display statistics',
@@ -444,7 +447,7 @@ def statistics_arguments(subparsers):
     return parser
 
 
-def graph_arguments(subparsers):
+def graph_arguments(subparsers: _SubParsersAction) -> ArgumentParser:
     parser = subparsers.add_parser(
         'graph',
         help='Display trend graph',
@@ -457,7 +460,7 @@ def graph_arguments(subparsers):
     return parser
 
 
-def cfop_arguments(subparsers):
+def cfop_arguments(subparsers: _SubParsersAction) -> ArgumentParser:
     parser = subparsers.add_parser(
         'cfop',
         help='Display CFOP cases',
@@ -514,7 +517,7 @@ def cfop_arguments(subparsers):
     return parser
 
 
-def import_arguments(subparsers):
+def import_arguments(subparsers: _SubParsersAction) -> ArgumentParser:
     parser = subparsers.add_parser(
         'import',
         help='Import external solves',
@@ -529,7 +532,7 @@ def import_arguments(subparsers):
     return parser
 
 
-def serve_arguments(subparsers):
+def serve_arguments(subparsers: _SubParsersAction) -> ArgumentParser:
     domain = SERVER_CONFIG.get('domain', 'localhost')
     port = SERVER_CONFIG.get('port', 8333)
 
@@ -560,7 +563,7 @@ def serve_arguments(subparsers):
     return parser
 
 
-def detail_arguments(subparsers):
+def detail_arguments(subparsers: _SubParsersAction) -> ArgumentParser:
     show_cube = DISPLAY_CONFIG.get('scramble', True)
     show_tps_graph = DISPLAY_CONFIG.get('tps_graph', True)
     show_time_graph = DISPLAY_CONFIG.get('time_graph', True)
@@ -673,7 +676,7 @@ def detail_arguments(subparsers):
     return parser
 
 
-def edit_arguments(subparsers):
+def edit_arguments(subparsers: _SubParsersAction) -> ArgumentParser:
     parser = subparsers.add_parser(
         'edit',
         help="Edit solves' flag",
@@ -721,7 +724,7 @@ def edit_arguments(subparsers):
     return parser
 
 
-def delete_arguments(subparsers):
+def delete_arguments(subparsers: _SubParsersAction) -> ArgumentParser:
     parser = subparsers.add_parser(
         'delete',
         help='Delete solves',

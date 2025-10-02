@@ -432,7 +432,7 @@ class TestSessionDetailView(unittest.TestCase):
         self.assertEqual(view.cube, 3)
         self.assertEqual(view.session, 'test-session')
         self.assertEqual(view.method_name, 'cfop')
-        mock_load_solves.assert_called_once_with(3, ['test-session'], [], '')
+        mock_load_solves.assert_called_once_with(3, ['test-session'], [], [])
 
     @patch('term_timer.server.app.SolvesMethodAggregator')
     @patch('term_timer.server.app.StatisticsReporter')
@@ -450,7 +450,7 @@ class TestSessionDetailView(unittest.TestCase):
         SessionDetailView(3, 'all', '', '', '')
 
         # Should load all sessions when session is 'all'
-        mock_load_solves.assert_called_once_with(3, [], [], '')
+        mock_load_solves.assert_called_once_with(3, [], [], [])
 
     @patch('term_timer.server.app.abort')
     @patch('term_timer.server.app.SolvesMethodAggregator')

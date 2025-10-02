@@ -1,5 +1,8 @@
 import difflib
+import re
+from typing import TYPE_CHECKING
 
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import INNER_MOVES
 from cubing_algs.constants import OUTER_WIDE_MOVES
 from cubing_algs.constants import PAUSE_CHAR
@@ -11,6 +14,9 @@ from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 from term_timer.triggers import TRIGGERS_REGEX
 from term_timer.triggers import apply_trigger_outside_blocks
+
+if TYPE_CHECKING:
+    from term_timer.solve import Solve
 
 
 def format_time(elapsed_ns: int, *, allow_dnf: bool = True) -> str:
@@ -134,7 +140,7 @@ def format_cube_db_url(title: str, setup: str, alg: str) -> str:
     )
 
 
-def format_alg_diff(algo_a, algo_b) -> str:
+def format_alg_diff(algo_a: Algorithm, algo_b: Algorithm) -> str:
     moves = []
     matcher = difflib.SequenceMatcher(None, algo_a, algo_b)
 
@@ -177,7 +183,7 @@ def format_alg_triggers(algorithm: str, trigger_names: list[str]) -> str:
     for trigger_name in trigger_names:
         regex = TRIGGERS_REGEX[trigger_name]
 
-        def replacer(matchobj):
+        def replacer(matchobj: re.Match[str]) -> str:
             return (
                 f'[{ trigger_name }]'   # noqa: B023
                 f'{ matchobj.group(0) }'
@@ -213,7 +219,8 @@ def format_alg_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
     return algorithm
 
 
-def format_alg_pauses(algorithm: str, solve, step, *, multiple=False) -> str:
+def format_alg_pauses(algorithm: str, solve: 'Solve', step: dict[str, int],
+                      *, multiple: bool = False) -> str:
     post = int(step['post_pause'] / solve.pause_threshold)
     if post:
         algorithm += f' [reco-pause]{ PAUSE_CHAR }[/reco-pause]' * (

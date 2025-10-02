@@ -1,5 +1,6 @@
 from contextlib import suppress
 from functools import cached_property
+from typing import Any
 from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm
@@ -316,5 +317,5 @@ class Analyser(FaceletAnalyser):
         return 20
 
 
-def get_step_config(step_name, value, default=None):
+def get_step_config(step_name: str, value: str, default: Any = None):
     return STEPS_CONFIG.get(step_name, {}).get(value, default)

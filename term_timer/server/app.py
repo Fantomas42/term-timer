@@ -3,13 +3,14 @@ import os
 import re
 from datetime import datetime
 from datetime import timezone
-from http import HTTPStatus
 from typing import Any
 from typing import ClassVar
 from wsgiref.simple_server import WSGIRequestHandler
 
 from bottle import TEMPLATE_PATH
 from bottle import Bottle
+from bottle import HTTPError
+from bottle import HTTPResponse
 from bottle import abort
 from bottle import jinja2_template
 from bottle import redirect
@@ -253,10 +254,7 @@ def optimized_step(step: dict[str, Any]) -> tuple[str, Any]:
 
 class RichHandler(WSGIRequestHandler):
 
-    def log_request(self, code: int | HTTPStatus, size: int) -> None:
-        if isinstance(code, HTTPStatus):
-            code = code.value
-
+    def log_request(self, code: int | str, size: int | str) -> None:
         klass = 'green'
         if int(code) > 400:
             klass = 'red'
@@ -319,10 +317,10 @@ class View:
 class Error404View(View):
     template_name = '404.html'
 
-    def __init__(self, error: Any) -> None:
+    def __init__(self, error: HTTPError) -> None:
         self.error = error
 
-    def get_context(self) -> dict[str, Any]:
+    def get_context(self) -> dict[str, str | HTTPError]:
         return {
             'error': self.error,
             'message': self.error.body,
@@ -332,10 +330,10 @@ class Error404View(View):
 class Error500View(View):
     template_name = '500.html'
 
-    def __init__(self, error: Any) -> None:
+    def __init__(self, error: HTTPError) -> None:
         self.error = error
 
-    def get_context(self) -> dict[str, Any]:
+    def get_context(self) -> dict[str, str | HTTPError | Exception]:
         return {
             'error': self.error,
             'message': self.error.body,
@@ -350,7 +348,7 @@ class SessionListView(View):
     def get_context(self) -> dict[str, Any]:
         sessions = {}
         for cube in CUBE_SIZES:
-            solves = load_all_solves(cube, [], [], '')
+            solves = load_all_solves(cube, [], [], [])
             sessions[cube] = {}
             for solve in solves:
                 sessions[cube].setdefault(
@@ -399,7 +397,7 @@ class SessionDetailView(View):
         solves = load_all_solves(
             cube,
             [] if session == 'all' else [session],
-            [], '',
+            [], [],
         )
         if not method_name:
             method_name = CUBE_METHOD
@@ -529,7 +527,7 @@ class SolveDetailView(View):
         self.solves = load_all_solves(
             cube,
             [] if session == 'all' else [session],
-            [], '',
+            [], [],
         )
 
         self.solve_id = solve_id
@@ -641,7 +639,7 @@ class SolveUpdateView:
         self.solves = load_all_solves(
             cube,
             [] if session == 'all' else [session],
-            [], '',
+            [], [],
         )
 
         self.solve_index = solve_id - 1
@@ -666,7 +664,7 @@ class SolveDeleteView:
         self.solves = load_all_solves(
             cube,
             [] if session == 'all' else [session],
-            [], '',
+            [], [],
         )
 
         self.solve_index = solve_id - 1
@@ -895,18 +893,18 @@ class Server:
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/update/',
                    method='POST')
-        def solve_update(cube: int, session: str, solve: int) -> str:
-            return SolveUpdateView(
+        def solve_update(cube: int, session: str, solve: int) -> None:
+            SolveUpdateView(
                 cube, session, solve,
                 request.POST.flag,
-            ).as_view(debug)
+            )
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/delete/',
                    method='POST')
-        def solve_delete(cube: int, session: str, solve: int) -> str:
-            return SolveDeleteView(
+        def solve_delete(cube: int, session: str, solve: int) -> None:
+            SolveDeleteView(
                 cube, session, solve,
-            ).as_view(debug)
+            )
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/')
         def solve_detail(cube: int, session: str, solve: int) -> str:
@@ -926,7 +924,7 @@ class Server:
             ).as_view(debug)
 
         @app.route('/static/<filepath:path>')
-        def static_serve(filepath: str) -> str:
+        def static_serve(filepath: str) -> HTTPResponse:
             return static_file(filepath, root=STATIC_DIRECTORY)
 
         @app.error(404)
