@@ -1,10 +1,10 @@
 import math
 
 from term_timer.opengl import renderer
-from term_timer.opengl.data import orientations_aretes
-from term_timer.opengl.data import orientations_coins
-from term_timer.opengl.data import permutations_aretes
-from term_timer.opengl.data import permutations_coins
+from term_timer.opengl.data import corner_orientations
+from term_timer.opengl.data import corner_permutations
+from term_timer.opengl.data import edge_orientations
+from term_timer.opengl.data import edge_permutations
 from term_timer.opengl.window import Window
 
 
@@ -35,8 +35,8 @@ class Cube:
 
     def move_corners(self, move: str) -> None:
         p = self.corner_permutation
-        move_p = permutations_coins[move]
-        move_o = orientations_coins[move]
+        move_p = corner_permutations[move]
+        move_o = corner_orientations[move]
 
         self.corner_permutation = [p[move_p[i]] for i in range(8)]
         self.corners_orientations = [
@@ -46,8 +46,8 @@ class Cube:
 
     def move_edges(self, move: str) -> None:
         p = self.edge_permutation
-        move_p = permutations_aretes[move]
-        move_o = orientations_aretes[move]
+        move_p = edge_permutations[move]
+        move_o = edge_orientations[move]
 
         self.edge_permutation = [p[move_p[i]] for i in range(12)]
         self.edges_orientations = [
