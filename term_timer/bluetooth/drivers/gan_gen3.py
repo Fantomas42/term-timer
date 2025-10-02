@@ -4,9 +4,14 @@ References :
 """
 import logging
 import time
+from collections.abc import Sequence
 from datetime import datetime
 from datetime import timezone
+from typing import Any
+from typing import ClassVar
+from typing import cast
 
+from bleak import BleakClient
 from cubing_algs.facelets import cubies_to_facelets
 
 from term_timer.bluetooth.constants import DEBOUNCE
@@ -15,6 +20,8 @@ from term_timer.bluetooth.constants import GAN_GEN3_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN3_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.message import GanProtocolMessage
+from term_timer.bluetooth.types import EventDict
+from term_timer.bluetooth.types import MoveEventDict
 
 logger = logging.getLogger(__name__)
 
@@ -23,19 +30,19 @@ class GanGen3Driver(GanGen2Driver):
     """
     GAN356 i Carry 2
     """
-    service_uid = GAN_GEN3_SERVICE
-    state_characteristic_uid = GAN_GEN3_STATE_CHARACTERISTIC
-    command_characteristic_uid = GAN_GEN3_COMMAND_CHARACTERISTIC
+    service_uid: ClassVar[str] = GAN_GEN3_SERVICE
+    state_characteristic_uid: ClassVar[str] = GAN_GEN3_STATE_CHARACTERISTIC
+    command_characteristic_uid: ClassVar[str] = GAN_GEN3_COMMAND_CHARACTERISTIC
 
-    def __init__(self, client):
+    def __init__(self, client: BleakClient) -> None:
         super().__init__(client)
 
-        self.serial = -1
-        self.last_serial = -1
-        self.last_local_timestamp = None
-        self.move_buffer = []
+        self.serial: int = -1
+        self.last_serial: int = -1
+        self.last_local_timestamp: datetime | None = None
+        self.move_buffer: list[MoveEventDict] = []
 
-    def send_command_handler(self, command: str):
+    def send_command_handler(self, command: str) -> bytes | bool:
         msg = bytearray(16)
 
         if command == 'REQUEST_FACELETS':
@@ -58,7 +65,7 @@ class GanGen3Driver(GanGen2Driver):
 
         return self.cypher.encrypt(bytes(msg))
 
-    async def request_move_history(self, serial, count):
+    async def request_move_history(self, serial: int, count: int) -> None:
         msg = bytearray(16)
 
         # Move history response data is byte-aligned,
@@ -89,8 +96,8 @@ class GanGen3Driver(GanGen2Driver):
             self.cypher.encrypt(bytes(msg)),
         )
 
-    async def evict_move_buffer(self):
-        evicted_events = []
+    async def evict_move_buffer(self) -> list[MoveEventDict]:
+        evicted_events: list[MoveEventDict] = []
 
         while len(self.move_buffer) > 0:
             buffer_head = self.move_buffer[0]
@@ -104,19 +111,20 @@ class GanGen3Driver(GanGen2Driver):
             self.last_serial = buffer_head['serial']
 
         if len(self.move_buffer) > 16:
-            self.client.disconnect()
+            await self.client.disconnect()
 
         return evicted_events
 
-    def is_serial_in_range(self, start, end, serial,
-                           *, closed_start=False, closed_end=False):
+    def is_serial_in_range(self, start: int, end: int, serial: int, *,
+                           closed_start: bool = False,
+                           closed_end: bool = False) -> bool:
         return (
             ((end - start) & 0xFF) >= ((serial - start) & 0xFF)
             and (closed_start or ((start - serial) & 0xFF) > 0)
             and (closed_end or ((end - serial) & 0xFF) > 0)
         )
 
-    def inject_missed_move_to_buffer(self, move):
+    def inject_missed_move_to_buffer(self, move: MoveEventDict) -> None:
         if len(self.move_buffer) > 0:
             buffer_head = self.move_buffer[0]
 
@@ -142,7 +150,7 @@ class GanGen3Driver(GanGen2Driver):
         ):
             self.move_buffer.insert(0, move)
 
-    async def check_if_move_missed(self):
+    async def check_if_move_missed(self) -> None:
         diff = (self.serial - self.last_serial) & 0xFF
 
         if diff > 0 and self.serial != 0:
@@ -152,12 +160,12 @@ class GanGen3Driver(GanGen2Driver):
             ) & 0xFF
             await self.request_move_history(start_serial, diff + 1)
 
-    async def event_handler(self, sender, data):  # noqa: ARG002
+    async def event_handler(self, sender: int, data: bytes) -> list[EventDict]:  # noqa: ARG002
         """Process notifications from the cube"""
         clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
 
-        events = []
+        events: list[EventDict] = []
 
         msg = GanProtocolMessage(
             self.cypher.decrypt(data),
@@ -196,7 +204,9 @@ class GanGen3Driver(GanGen2Driver):
                         'move': move.strip(),
                     },
                 )
-            self.add_event(events, await self.evict_move_buffer())
+            evicted = await self.evict_move_buffer()
+            if evicted:
+                self.add_event(events, cast(Sequence[dict[str, Any]], evicted))
 
         elif event == 0x02:  # Facelets
             serial = msg.get_bit_word(24, 16, little_endian=True)
@@ -280,7 +290,9 @@ class GanGen3Driver(GanGen2Driver):
                         },
                     )
 
-            self.add_event(events, await self.evict_move_buffer())
+            evicted = await self.evict_move_buffer()
+            if evicted:
+                self.add_event(events, cast(Sequence[dict[str, Any]], evicted))
 
         elif event == 0x07:  # Hardware
             sw_major = msg.get_bit_word(72, 4)

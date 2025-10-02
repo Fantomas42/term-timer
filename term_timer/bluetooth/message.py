@@ -1,10 +1,11 @@
 import struct
+from collections.abc import Sequence
 
 
 class GanProtocolMessage:
-    def __init__(self, message):
+    def __init__(self, message: bytes | Sequence[int]) -> None:
         # Convert each byte to an 8-bit binary string and join them
-        self.bits = ''.join(
+        self.bits: str = ''.join(
             bin(byte + 0x100)[3:]
             for byte in message
         )
@@ -12,8 +13,9 @@ class GanProtocolMessage:
     def __str__(self) -> str:
         return self.bits
 
-    def get_bit_word(self, start_bit, bit_length,
-                     *, little_endian=False, signed=False) -> int | str:
+    def get_bit_word(self, start_bit: int, bit_length: int,
+                     *, little_endian: bool = False,
+                     signed: bool = False) -> int:
         if bit_length <= 8:
             # For 8 bits or less, simply parse the binary substring
             value = int(self.bits[start_bit : start_bit + bit_length], 2)
@@ -40,7 +42,8 @@ class GanProtocolMessage:
             else:  # 32 bits
                 fmt = endian + ('i' if signed else 'I')
 
-            return struct.unpack(fmt, buf)[0]
+            result: int = struct.unpack(fmt, buf)[0]
+            return result
 
         msg = 'Unsupported bit word length'
         raise ValueError(msg)

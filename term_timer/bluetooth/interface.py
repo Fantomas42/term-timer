@@ -1,5 +1,6 @@
 import logging
 from asyncio import Queue
+from typing import Final
 
 from bleak import BleakClient
 from bleak import BleakScanner
@@ -7,15 +8,17 @@ from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
 
 from term_timer.bluetooth.constants import PREFIX
+from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.drivers.gan_gen4 import GanGen4Driver
 from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
+from term_timer.bluetooth.types import EventDict
 from term_timer.exceptions import CubeNotFoundError
 
 logger = logging.getLogger(__name__)
 
-DRIVERS = [
+DRIVERS: Final[list[type[Driver]]] = [
     GanGen2Driver,
     GanGen3Driver,
     GanGen4Driver,
@@ -24,16 +27,17 @@ DRIVERS = [
 
 
 class BluetoothInterface:
-    client = None
-    driver = None
+    client: BleakClient | None = None
+    driver: Driver | None = None
 
-    scan_timeout = 5
-    connect_timeout = 5
+    scan_timeout: int = 5
+    connect_timeout: int = 5
 
-    def __init__(self, queue: Queue[list[dict[str, object]] | None]):
-        self.queue = queue
+    def __init__(self, queue: Queue[list[EventDict] | None]) -> None:
+        self.queue: Queue[list[EventDict] | None] = queue
 
-    async def __aenter__(self, address=None) -> bool:
+    async def __aenter__(self, address: str | None = None,
+                         ) -> 'BluetoothInterface':
         if not address:
             device = await self.scan()
 
@@ -74,24 +78,28 @@ class BluetoothInterface:
 
         await self.client.start_notify(
             self.driver.state_characteristic_uid,
-            self.notification_handler,
+            self.notification_handler,  # type: ignore[arg-type]
         )
 
         return self
 
-    async def __aexit__(self, exc_type, exc_value, exc_traceback) -> None:
+    async def __aexit__(self, exc_type: type[BaseException] | None,
+                        exc_value: BaseException | None,
+                        exc_traceback: object) -> None:
         logger.debug('Disconnect from client')
         # Send an "exit command to the consumer"
         await self.queue.put(None)
 
-        if self.client and self.client.is_connected:
+        if self.client and self.client.is_connected and self.driver:
             await self.client.stop_notify(
                 self.driver.state_characteristic_uid,
             )
             await self.client.disconnect()
 
-    async def notification_handler(self, sender, data) -> None:
+    async def notification_handler(self, sender: int, data: bytes) -> None:
+        assert self.driver is not None  # noqa: S101
         events = await self.driver.event_handler(sender, data)
+
         for event in events:
             logger.debug('Event: %s', event['event'].upper())
         await self.queue.put(events)
@@ -103,12 +111,15 @@ class BluetoothInterface:
             return False
 
         logger.debug('Sending: %s', command)
+
+        assert self.driver is not None  # noqa: S101
         msg = self.driver.send_command_handler(command)
 
-        if not msg:
+        if msg is False:
             logger.debug('Unknown command "%s"', command)
             return False
 
+        assert isinstance(msg, bytes)  # noqa: S101
         await self.client.write_gatt_char(
             self.driver.command_characteristic_uid,
             msg,

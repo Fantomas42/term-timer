@@ -28,7 +28,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.driver.client, self.mock_client)
         self.assertEqual(self.driver.last_serial, -1)
         self.assertEqual(self.driver.cube_timestamp, 0)
-        self.assertEqual(self.driver.last_move_timestamp, 0)
+        self.assertEqual(self.driver.last_move_timestamp, None)
 
     def test_class_constants(self):
         self.assertEqual(

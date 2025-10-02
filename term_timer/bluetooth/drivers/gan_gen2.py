@@ -6,7 +6,9 @@ import logging
 import time
 from datetime import datetime
 from datetime import timezone
+from typing import ClassVar
 
+from bleak import BleakClient
 from cubing_algs.facelets import cubies_to_facelets
 
 from term_timer.bluetooth.constants import GAN_ENCRYPTION_KEY
@@ -18,6 +20,7 @@ from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
 from term_timer.bluetooth.salt import get_salt
+from term_timer.bluetooth.types import EventDict
 
 logger = logging.getLogger(__name__)
 
@@ -33,20 +36,20 @@ class GanGen2Driver(Driver):
     Monster Go 3Ai
     MoYu AI 2023
     """
-    service_uid = GAN_GEN2_SERVICE
-    state_characteristic_uid = GAN_GEN2_STATE_CHARACTERISTIC
-    command_characteristic_uid = GAN_GEN2_COMMAND_CHARACTERISTIC
-    encrypter = GanGen2CubeEncrypter
+    service_uid: ClassVar[str] = GAN_GEN2_SERVICE
+    state_characteristic_uid: ClassVar[str] = GAN_GEN2_STATE_CHARACTERISTIC
+    command_characteristic_uid: ClassVar[str] = GAN_GEN2_COMMAND_CHARACTERISTIC
+    encrypter: ClassVar[type[GanGen2CubeEncrypter]] = GanGen2CubeEncrypter
 
-    def __init__(self, client):
+    def __init__(self, client: BleakClient) -> None:
         super().__init__(client)
 
-        self.last_serial = -1
-        self.cube_timestamp = 0
-        self.last_move_timestamp = 0
+        self.last_serial: int = -1
+        self.cube_timestamp: float = 0.0
+        self.last_move_timestamp: datetime | None = None
 
-    def init_cypher(self):
-        if self.client.name.startswith('AiCube'):
+    def init_cypher(self) -> GanGen2CubeEncrypter:
+        if self.client.name and self.client.name.startswith('AiCube'):
             return self.encrypter(
                 MOYU_AI_ENCRYPTION_KEY['key'],
                 MOYU_AI_ENCRYPTION_KEY['iv'],
@@ -58,7 +61,7 @@ class GanGen2Driver(Driver):
             get_salt(self.client.address),
         )
 
-    def send_command_handler(self, command: str):
+    def send_command_handler(self, command: str) -> bytes | bool:
         msg = bytearray(20)
 
         if command == 'REQUEST_FACELETS':
@@ -78,12 +81,12 @@ class GanGen2Driver(Driver):
 
         return self.cypher.encrypt(bytes(msg))
 
-    async def event_handler(self, sender, data):  # noqa: ARG002
+    async def event_handler(self, sender: int, data: bytes) -> list[EventDict]:  # noqa: ARG002
         """Process notifications from the cube"""
         clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
 
-        events = []
+        events: list[EventDict] = []
 
         msg = GanProtocolMessage(
             self.cypher.decrypt(data),
@@ -140,13 +143,16 @@ class GanGen2Driver(Driver):
                 face = msg.get_bit_word(12 + 5 * i, 4)
                 direction = msg.get_bit_word(16 + 5 * i, 1)
                 move = 'URFDLB'[face] + " '"[direction]
-                elapsed = msg.get_bit_word(47 + 16 * i, 16)
+                elapsed_raw = msg.get_bit_word(47 + 16 * i, 16)
 
                 # In case of 16-bit cube timestamp register overflow
-                if elapsed == 0 and self.last_move_timestamp:
+                elapsed: float
+                if elapsed_raw == 0 and self.last_move_timestamp is not None:
                     elapsed = (
                         timestamp - self.last_move_timestamp
                     ).total_seconds()
+                else:
+                    elapsed = float(elapsed_raw)
 
                 self.cube_timestamp += elapsed
                 payload = {

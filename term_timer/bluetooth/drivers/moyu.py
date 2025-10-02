@@ -6,6 +6,9 @@ import logging
 import time
 from datetime import datetime
 from datetime import timezone
+from typing import ClassVar
+
+from bleak import BleakClient
 
 from term_timer.bluetooth.constants import MOYU_WEILONG_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import MOYU_WEILONG_ENCRYPTION_KEY
@@ -15,6 +18,7 @@ from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
 from term_timer.bluetooth.salt import get_salt
+from term_timer.bluetooth.types import EventDict
 
 logger = logging.getLogger(__name__)
 
@@ -23,27 +27,27 @@ class MoyuWeilong10Driver(Driver):
     """
     Weilong v10
     """
-    service_uid = MOYU_WEILONG_SERVICE
-    state_characteristic_uid = MOYU_WEILONG_STATE_CHARACTERISTIC
-    command_characteristic_uid = MOYU_WEILONG_COMMAND_CHARACTERISTIC
-    encrypter = GanGen2CubeEncrypter
-    factor = pow(2, 30)
+    service_uid: ClassVar[str] = MOYU_WEILONG_SERVICE
+    state_characteristic_uid: ClassVar[str] = MOYU_WEILONG_STATE_CHARACTERISTIC
+    command_characteristic_uid: ClassVar[str] = MOYU_WEILONG_COMMAND_CHARACTERISTIC  # noqa: E501
+    encrypter: ClassVar[type[GanGen2CubeEncrypter]] = GanGen2CubeEncrypter
+    factor: ClassVar[int] = pow(2, 30)
 
-    def __init__(self, client):
+    def __init__(self, client: BleakClient) -> None:
         super().__init__(client)
 
-        self.last_serial = -1
-        self.cube_timestamp = 0
-        self.last_move_timestamp = 0
+        self.last_serial: int = -1
+        self.cube_timestamp: float = 0.0
+        self.last_move_timestamp: datetime | None = None
 
-    def init_cypher(self):
+    def init_cypher(self) -> GanGen2CubeEncrypter:
         return self.encrypter(
             MOYU_WEILONG_ENCRYPTION_KEY['key'],
             MOYU_WEILONG_ENCRYPTION_KEY['iv'],
             get_salt(self.client.address),
         )
 
-    def send_command_handler(self, command: str):
+    def send_command_handler(self, command: str) -> bytes | bool:
         msg = bytearray(20)
 
         if command == 'REQUEST_FACELETS':
@@ -70,12 +74,12 @@ class MoyuWeilong10Driver(Driver):
 
         return self.cypher.encrypt(bytes(msg))
 
-    async def event_handler(self, sender, data):  # noqa: ARG002
+    async def event_handler(self, sender: int, data: bytes) -> list[EventDict]:  # noqa: ARG002
         """Process notifications from the cube"""
         clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
 
-        events = []
+        events: list[EventDict] = []
 
         msg = GanProtocolMessage(
             self.cypher.decrypt(data),
@@ -121,13 +125,16 @@ class MoyuWeilong10Driver(Driver):
             for i in range(diff - 1, -1, -1):
                 move_value = msg.get_bit_word(96 + i * 5, 5)
                 move = 'FBUDLR'[move_value >> 1] + " '"[move_value & 1]
-                elapsed = msg.get_bit_word(8 + i * 16, 16)
+                elapsed_raw = msg.get_bit_word(8 + i * 16, 16)
 
                 # In case of 16-bit cube timestamp register overflow
-                if elapsed == 0:
+                elapsed: float
+                if elapsed_raw == 0 and self.last_move_timestamp is not None:
                     elapsed = (
                         timestamp - self.last_move_timestamp
                     ).total_seconds()
+                else:
+                    elapsed = float(elapsed_raw)
 
                 self.cube_timestamp += elapsed
                 payload = {

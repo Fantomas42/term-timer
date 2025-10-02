@@ -4,11 +4,29 @@ from unittest.mock import Mock
 from term_timer.bluetooth.drivers.base import Driver
 
 
+class BaseDriver(Driver):
+    def init_cypher(self):
+        return None
+
+
+class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.mock_client = Mock()
+        self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
+
+        self.driver = BaseDriver(self.mock_client)
+
+    async def test_event_handler_raises_not_implemented(self):
+        with self.assertRaises(NotImplementedError):
+            await self.driver.event_handler('sender', b'data')
+
+
 class TestDriver(unittest.TestCase):
     def setUp(self):
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
-        self.driver = Driver(self.mock_client)
+
+        self.driver = BaseDriver(self.mock_client)
 
     def test_init_sets_client(self):
         self.assertEqual(self.driver.client, self.mock_client)
@@ -21,17 +39,13 @@ class TestDriver(unittest.TestCase):
         cypher = self.driver.init_cypher()
         self.assertIsNone(cypher)
 
-    def test_init_cypher_returns_none(self):
-        result = self.driver.init_cypher()
-        self.assertIsNone(result)
+    def test_init_cypher_raises_not_implemented(self):
+        with self.assertRaises(NotImplementedError):
+            Driver(self.mock_client)
 
     def test_send_command_handler_raises_not_implemented(self):
         with self.assertRaises(NotImplementedError):
             self.driver.send_command_handler('test_command')
-
-    def test_event_handler_raises_not_implemented(self):
-        with self.assertRaises(NotImplementedError):
-            self.driver.event_handler('sender', b'data')
 
     def test_add_event_with_single_event(self):
         store = []

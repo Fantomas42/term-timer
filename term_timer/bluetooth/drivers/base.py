@@ -1,34 +1,41 @@
+from collections.abc import Sequence
+from typing import Any
+from typing import ClassVar
+
 from bleak import BleakClient
+
+from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
+from term_timer.bluetooth.types import EventDict
 
 
 class Driver:
-    service_uid = ''
-    state_characteristic_uid = ''
-    command_characteristic_uid = ''
+    service_uid: ClassVar[str] = ''
+    state_characteristic_uid: ClassVar[str] = ''
+    command_characteristic_uid: ClassVar[str] = ''
 
-    disable_gyro = True
+    disable_gyro: bool = True
 
     def __init__(self, client: BleakClient) -> None:
-        self.client = client
+        self.client: BleakClient = client
 
-        self.events: list[dict[str, object]] = []
-        self.cypher = self.init_cypher()
+        self.events: list[EventDict] = []
+        self.cypher: GanGen2CubeEncrypter = self.init_cypher()
 
-    def init_cypher(self) -> None:
-        pass
-
-    def send_command_handler(self, command: str) -> bool:
+    def init_cypher(self) -> GanGen2CubeEncrypter:
         raise NotImplementedError
 
-    def event_handler(self, sender, data) -> list[dict[str, object]]:
+    def send_command_handler(self, command: str) -> bytes | bool:
         raise NotImplementedError
 
-    def add_event(self,
-                  store: list[dict[str, object]],
-                  event: dict[str, object] | list[dict[str, object]]) -> None:
-        if isinstance(event, list):
-            store.extend(event)
-            self.events.extend(event)
+    async def event_handler(self, sender: int, data: bytes) -> list[EventDict]:
+        raise NotImplementedError
+
+    def add_event(self, store: list[EventDict],
+                  event: dict[str, Any] | Sequence[dict[str, Any]]) -> None:
+        if isinstance(event, (list, tuple)):
+            for e in event:
+                store.append(e)
+                self.events.append(e)
         else:
-            store.append(event)
-            self.events.append(event)
+            store.append(event)  # type: ignore[arg-type]
+            self.events.append(event)  # type: ignore[arg-type]

@@ -4,8 +4,12 @@ References :
 """
 import logging
 import time
+from collections.abc import Sequence
 from datetime import datetime
 from datetime import timezone
+from typing import Any
+from typing import ClassVar
+from typing import cast
 
 from cubing_algs.facelets import cubies_to_facelets
 
@@ -15,6 +19,7 @@ from term_timer.bluetooth.constants import GAN_GEN4_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN4_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.message import GanProtocolMessage
+from term_timer.bluetooth.types import EventDict
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +29,11 @@ class GanGen4Driver(GanGen3Driver):
     GAN12 ui Maglev
     GAN14 ui FreePlay
     """
-    service_uid = GAN_GEN4_SERVICE
-    state_characteristic_uid = GAN_GEN4_STATE_CHARACTERISTIC
-    command_characteristic_uid = GAN_GEN4_COMMAND_CHARACTERISTIC
+    service_uid: ClassVar[str] = GAN_GEN4_SERVICE
+    state_characteristic_uid: ClassVar[str] = GAN_GEN4_STATE_CHARACTERISTIC
+    command_characteristic_uid: ClassVar[str] = GAN_GEN4_COMMAND_CHARACTERISTIC
 
-    def send_command_handler(self, command: str):
+    def send_command_handler(self, command: str) -> bytes | bool:
         msg = bytearray(20)
 
         if command == 'REQUEST_FACELETS':
@@ -55,7 +60,7 @@ class GanGen4Driver(GanGen3Driver):
 
         return self.cypher.encrypt(bytes(msg))
 
-    async def request_move_history(self, serial, count):
+    async def request_move_history(self, serial: int, count: int) -> None:
         msg = bytearray(20)
 
         # Move history response data is byte-aligned,
@@ -86,12 +91,12 @@ class GanGen4Driver(GanGen3Driver):
             self.cypher.encrypt(bytes(msg)),
         )
 
-    async def event_handler(self, sender, data):  # noqa: ARG002
+    async def event_handler(self, sender: int, data: bytes) -> list[EventDict]:  # noqa: ARG002
         """Process notifications from the cube"""
         clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
 
-        events = []
+        events: list[EventDict] = []
 
         msg = GanProtocolMessage(
             self.cypher.decrypt(data),
@@ -126,7 +131,9 @@ class GanGen4Driver(GanGen3Driver):
                         'move': move.strip(),
                     },
                 )
-            self.add_event(events, await self.evict_move_buffer())
+            evicted = await self.evict_move_buffer()
+            if evicted:
+                self.add_event(events, cast(Sequence[dict[str, Any]], evicted))
 
         elif event == 0xED:  # Facelets
             serial = msg.get_bit_word(16, 16, little_endian=True)
@@ -210,7 +217,9 @@ class GanGen4Driver(GanGen3Driver):
                         },
                     )
 
-            self.add_event(events, await self.evict_move_buffer())
+            evicted = await self.evict_move_buffer()
+            if evicted:
+                self.add_event(events, cast(Sequence[dict[str, Any]], evicted))
 
         elif event >= 0xFA and event <= 0xFE:  # Hardware
             if event == 0xFA:  # Product date

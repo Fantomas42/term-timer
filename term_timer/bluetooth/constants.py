@@ -1,8 +1,9 @@
-# ruff: noqa: E222
+# ruff: noqa: E222 E501
+from typing import Final
 
-DEBOUNCE = 0.5
+DEBOUNCE: Final[float] = 0.5
 
-PREFIX = [
+PREFIX: Final[list[str]] = [
     'GAN',
     'MG',
     'AiCube',
@@ -10,27 +11,27 @@ PREFIX = [
 ]
 
 # GAN Gen2 protocol BLE service
-GAN_GEN2_SERVICE =                '6e400001-b5a3-f393-e0a9-e50e24dc4179'
-GAN_GEN2_STATE_CHARACTERISTIC =   '28be4cb6-cd67-11e9-a32f-2a2ae2dbcce4'
-GAN_GEN2_COMMAND_CHARACTERISTIC = '28be4a4a-cd67-11e9-a32f-2a2ae2dbcce4'
+GAN_GEN2_SERVICE: Final[str] =                '6e400001-b5a3-f393-e0a9-e50e24dc4179'
+GAN_GEN2_STATE_CHARACTERISTIC: Final[str] =   '28be4cb6-cd67-11e9-a32f-2a2ae2dbcce4'
+GAN_GEN2_COMMAND_CHARACTERISTIC: Final[str] = '28be4a4a-cd67-11e9-a32f-2a2ae2dbcce4'
 
 # GAN Gen3 protocol BLE service
-GAN_GEN3_SERVICE =                '8653000a-43e6-47b7-9cb0-5fc21d4ae340'
-GAN_GEN3_STATE_CHARACTERISTIC =   '8653000b-43e6-47b7-9cb0-5fc21d4ae340'
-GAN_GEN3_COMMAND_CHARACTERISTIC = '8653000c-43e6-47b7-9cb0-5fc21d4ae340'
+GAN_GEN3_SERVICE: Final[str] =                '8653000a-43e6-47b7-9cb0-5fc21d4ae340'
+GAN_GEN3_STATE_CHARACTERISTIC: Final[str] =   '8653000b-43e6-47b7-9cb0-5fc21d4ae340'
+GAN_GEN3_COMMAND_CHARACTERISTIC: Final[str] = '8653000c-43e6-47b7-9cb0-5fc21d4ae340'
 
 # GAN Gen4 protocol BLE service
-GAN_GEN4_SERVICE =                '00000010-0000-fff7-fff6-fff5fff4fff0'
-GAN_GEN4_STATE_CHARACTERISTIC =   '0000fff6-0000-1000-8000-00805f9b34fb'
-GAN_GEN4_COMMAND_CHARACTERISTIC = '0000fff5-0000-1000-8000-00805f9b34fb'
+GAN_GEN4_SERVICE: Final[str] =                '00000010-0000-fff7-fff6-fff5fff4fff0'
+GAN_GEN4_STATE_CHARACTERISTIC: Final[str] =   '0000fff6-0000-1000-8000-00805f9b34fb'
+GAN_GEN4_COMMAND_CHARACTERISTIC: Final[str] = '0000fff5-0000-1000-8000-00805f9b34fb'
 
 # Moyu Weilong v10 protocol BLE service
-MOYU_WEILONG_SERVICE =                '0783b03e-7735-b5a0-1760-a305d2795cb0'
-MOYU_WEILONG_STATE_CHARACTERISTIC =   '0783b03e-7735-b5a0-1760-a305d2795cb1'
-MOYU_WEILONG_COMMAND_CHARACTERISTIC = '0783b03e-7735-b5a0-1760-a305d2795cb2'
+MOYU_WEILONG_SERVICE: Final[str] =                '0783b03e-7735-b5a0-1760-a305d2795cb0'
+MOYU_WEILONG_STATE_CHARACTERISTIC: Final[str] =   '0783b03e-7735-b5a0-1760-a305d2795cb1'
+MOYU_WEILONG_COMMAND_CHARACTERISTIC: Final[str] = '0783b03e-7735-b5a0-1760-a305d2795cb2'
 
 # Key used by GAN Gen2, Gen3 and Gen4 cubes
-GAN_ENCRYPTION_KEY = {
+GAN_ENCRYPTION_KEY: Final[dict[str, list[int]]] = {
     'key': [
         0x01, 0x02, 0x42, 0x28,
         0x31, 0x91, 0x16, 0x07,
@@ -46,7 +47,7 @@ GAN_ENCRYPTION_KEY = {
 }
 
 # Key used by MoYu AI 2023
-MOYU_AI_ENCRYPTION_KEY = {
+MOYU_AI_ENCRYPTION_KEY: Final[dict[str, list[int]]] = {
     'key': [
         0x05, 0x12, 0x02, 0x45,
         0x02, 0x01, 0x29, 0x56,
@@ -63,7 +64,7 @@ MOYU_AI_ENCRYPTION_KEY = {
 
 
 # Key used by MoYu Weilong v10
-MOYU_WEILONG_ENCRYPTION_KEY = {
+MOYU_WEILONG_ENCRYPTION_KEY: Final[dict[str, list[int]]] = {
     'key': [
         0x15, 0x77, 0x3A, 0x5C,
         0x67, 0x0E, 0x2D, 0x1F,
