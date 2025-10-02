@@ -1,5 +1,7 @@
+from collections.abc import Callable
 from os import environ
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
@@ -48,14 +50,25 @@ from pygame import K_z
 
 from term_timer.opengl.camera import Camera
 
+if TYPE_CHECKING:
+    from term_timer.opengl.cube import Cube
+
 
 class Window:
 
-    def __init__(self, width=0, height=0,
-                 fps=60, *, fullscreen=False):
+    def __init__(
+        self,
+        width: int = 0,
+        height: int = 0,
+        fps: int = 60,
+        *,
+        fullscreen: bool = False,
+    ) -> None:
         self.fps = fps
         self.camera = Camera()
-        self.events = {}
+        self.events: dict[
+            tuple[int, int],
+            tuple[Callable[..., None], tuple[object, ...]]] = {}
 
         self.clock = pygame.time.Clock()
 
@@ -101,7 +114,7 @@ class Window:
 
         self.load_texture(Path(__file__).parent / 'facelet.bmp')
 
-    def load_texture(self, filename):
+    def load_texture(self, filename: Path) -> None:
         texture_surface = pygame.image.load(filename)
         texture_data = pygame.image.tostring(
             texture_surface, 'RGBA', True,  # noqa: FBT003
@@ -123,13 +136,13 @@ class Window:
             GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR,
         )
 
-    def prepare(self):
+    def prepare(self) -> None:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         self.handle_events()
         self.handle_camera()
 
-    def update(self):
+    def update(self) -> None:
         pygame.display.flip()
 
         self.clock.tick(self.fps)
@@ -138,10 +151,10 @@ class Window:
             f'{ self.title_prefix } (FPS={ int(self.clock.get_fps())!s })',
         )
 
-    def quit(self):
+    def quit(self) -> None:
         pygame.quit()
 
-    def set_keyboard_events(self, cube):
+    def set_keyboard_events(self, cube: 'Cube') -> None:
         self.add_event(KEYDOWN, K_ESCAPE, self.quit)
         self.add_event(KEYDOWN, K_LEFT, self.set_horizontal_rotation, 1)
         self.add_event(KEYDOWN, K_RIGHT, self.set_horizontal_rotation, -1)
@@ -164,7 +177,7 @@ class Window:
         self.add_event(KEYDOWN, K_y, cube.animate_rotations, self, 'y', 90)
         self.add_event(KEYDOWN, K_z, cube.animate_rotations, self, 'z', 90)
 
-    def handle_events(self):
+    def handle_events(self) -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.quit()
@@ -176,16 +189,22 @@ class Window:
                 else:
                     f(*args)
 
-    def add_event(self, event_type, key, f, *args):
+    def add_event(
+        self,
+        event_type: int,
+        key: int,
+        f: Callable[..., None],
+        *args: object,
+    ) -> None:
         self.events[event_type, key] = (f, args)
 
-    def set_horizontal_rotation(self, value):
+    def set_horizontal_rotation(self, value: int) -> None:
         self.horizontal_rotation += value
 
-    def set_vertical_rotation(self, value):
+    def set_vertical_rotation(self, value: int) -> None:
         self.vertical_rotation += value
 
-    def handle_camera(self):
+    def handle_camera(self) -> None:
         self.camera.increase_rotation(
             self.vertical_rotation,
             self.horizontal_rotation,

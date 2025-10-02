@@ -1,26 +1,28 @@
-BLANC = (1, 1, 1)
-JAUNE = (1, 1, 0)
-BLEU = (0, 0, 1)
-VERT = (0, 1, 0)
-ORANGE = (1, 0.5, 0)
-ROUGE = (1, 0, 0)
-NOIR = (0, 0, 0)
+BLANC: tuple[float, float, float] = (1, 1, 1)
+JAUNE: tuple[float, float, float] = (1, 1, 0)
+BLEU: tuple[float, float, float] = (0, 0, 1)
+VERT: tuple[float, float, float] = (0, 1, 0)
+ORANGE: tuple[float, float, float] = (1, 0.5, 0)
+ROUGE: tuple[float, float, float] = (1, 0, 0)
+NOIR: tuple[float, float, float] = (0, 0, 0)
 
-liste_couleurs = [BLANC, JAUNE, ROUGE, VERT, ORANGE, BLEU]
+liste_couleurs: list[tuple[float, float, float]] = [
+    BLANC, JAUNE, ROUGE, VERT, ORANGE, BLEU,
+]
 
 # Définit l'ordre associé à l'ensemble des centres
 # (peu utile sauf pour l'affichage)
-liste_centres = [
+liste_centres: list[str] = [
     'U', 'D', 'R',
     'F', 'L', 'B',
 ]
 # Définit l'ordre associé à l'ensemble des coins
-liste_coins = [
+liste_coins: list[str] = [
     'URF', 'UFL', 'ULB', 'UBR',
     'DFR', 'DLF', 'DBL', 'DRB',
 ]
 # Définit l'ordre associé à l'ensemble des arêtes
-liste_aretes = [
+liste_aretes: list[str] = [
     'UR', 'UF', 'UL',
     'UB', 'DR', 'DF',
     'DL', 'DB', 'FR',
@@ -28,12 +30,14 @@ liste_aretes = [
 ]
 
 # Liste des factorielles de 11 à 1, on a alors fact[i] = i!
-fact = [1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800]
-
+fact: list[int] = [
+    1, 1, 2, 6, 24, 120, 720,
+    5040, 40320, 362880, 3628800, 39916800,
+]
 
 # Définition des permutations pour chaque mouvement
 # référencés respectivement par liste_aretes et liste_coins
-permutations_aretes = {
+permutations_aretes: dict[str, list[int]] = {
     'U': [3, 0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11],
     'D': [0, 1, 2, 3, 5, 6, 7, 4, 8, 9, 10, 11],
     'F': [0, 9, 2, 3, 4, 8, 6, 7, 1, 5, 10, 11],
@@ -42,7 +46,7 @@ permutations_aretes = {
     'R': [8, 1, 2, 3, 11, 5, 6, 7, 4, 9, 10, 0],
 }
 
-permutations_coins = {
+permutations_coins: dict[str, list[int]] = {
     'U': [3, 0, 1, 2, 4, 5, 6, 7],
     'D': [0, 1, 2, 3, 5, 6, 7, 4],
     'F': [1, 5, 2, 3, 0, 4, 6, 7],
@@ -51,7 +55,7 @@ permutations_coins = {
     'R': [4, 1, 2, 0, 7, 5, 6, 3],
 }
 
-orientations_aretes = {
+orientations_aretes: dict[str, list[int]] = {
     'U': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     'D': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     'F': [0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0],
@@ -60,7 +64,7 @@ orientations_aretes = {
     'R': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 }
 
-orientations_coins = {
+orientations_coins: dict[str, list[int]] = {
     'U': [0, 0, 0, 0, 0, 0, 0, 0],
     'D': [0, 0, 0, 0, 0, 0, 0, 0],
     'F': [1, 2, 0, 0, 2, 1, 0, 0],
@@ -71,7 +75,7 @@ orientations_coins = {
 
 # Table qui donne l'axe de rotation en fonction de la rotation effectuée,
 # si on fait la rotation en sens anti-horaire il faut multiplier l'axe par -1
-axe_rotation = {
+axe_rotation: dict[str, tuple[int, int, int]] = {
     'U': (0, -1, 0),
     'F': (0, 0, -1),
     'R': (-1, 0, 0),
@@ -82,7 +86,7 @@ axe_rotation = {
 
 # Table des coordonnées pour tracer la surface qui cachera l'intérieur du cube
 # pendant la rotation d'une face
-hide_coords = {
+hide_coords: dict[str, list[tuple[int, int, int]]] = {
     'U': [(-3, 1, -3), (3, 1, -3), (3, 1, 3), (-3, 1, 3)],
     'D': [(-3, -1, -3), (3, -1, -3), (3, -1, 3), (-3, -1, 3)],
     'F': [(-3, 3, 1), (-3, -3, 1), (3, -3, 1), (3, 3, 1)],
@@ -92,7 +96,7 @@ hide_coords = {
 }
 
 # Liste des points permettant d'ajuster la texture sur la surface
-tex_map = [
+tex_map: list[tuple[int, int]] = [
     (0, 0),
     (0, 1),
     (1, 1),
@@ -100,7 +104,7 @@ tex_map = [
 ]
 
 # Coordonnées des 8 points permettant de tracer un cube dans l'espace
-s = [
+s: list[tuple[int, int, int]] = [
     (1, 1, 1),
     (-1, 1, 1),
     (-1, 1, -1),
@@ -113,14 +117,14 @@ s = [
 
 
 # Fonction qui permet de changer la taille du cube
-def sommets(x):
+def sommets(x: float) -> list[list[float]]:
     return [
         list(map(float.__mul__, [x] * 3, point))
         for point in s
     ]
 
 
-indices = [
+indices: list[tuple[int, int, int, int]] = [
     (0, 1, 2, 3),
     (4, 5, 6, 7),
     (7, 4, 0, 3),
@@ -129,7 +133,7 @@ indices = [
     (6, 7, 3, 2),
 ]
 
-liste_positions = [
+liste_positions: list[str] = [
     'F', 'L', 'D', 'U', 'R', 'B',
     'DR', 'UB', 'FL', 'BL',
     'DF', 'UR', 'UL', 'DB',
@@ -138,50 +142,50 @@ liste_positions = [
     'DFL', 'UBL', 'DBL', 'DBR',
 ]
 
-table_positions_centres = [
+table_positions_centres: list[tuple[int, int, int]] = [
     (0, 2, 0), (0, -2, 0), (2, 0, 0),
     (0, 0, 2), (-2, 0, 0), (0, 0, -2),
 ]
 
-table_positions_aretes = [
+table_positions_aretes: list[tuple[int, int, int]] = [
     (2, 2, 0), (0, 2, 2), (-2, 2, 0), (0, 2, -2),
     (2, -2, 0), (0, -2, 2), (-2, -2, 0), (0, -2, -2),
     (2, 0, 2), (-2, 0, 2), (-2, 0, -2), (2, 0, -2),
 ]
 
-table_positions_coins = [
+table_positions_coins: list[tuple[int, int, int]] = [
     (2, 2, 2), (-2, 2, 2), (-2, 2, -2), (2, 2, -2),
     (2, -2, 2), (-2, -2, 2), (-2, -2, -2), (2, -2, -2),
 ]
 
-table_couleurs_centres = [
+table_couleurs_centres: list[list[int]] = [
     [0], [1], [2], [3], [4], [5],
 ]
 
-table_couleurs_aretes = [
+table_couleurs_aretes: list[list[int]] = [
     [0, 2], [0, 3], [0, 4], [0, 5],
     [1, 2], [1, 3], [1, 4], [1, 5],
     [3, 2], [3, 4], [5, 4], [5, 2],
 ]
 
-table_couleurs_coins = [
+table_couleurs_coins: list[list[int]] = [
     [0, 2, 3], [0, 3, 4], [0, 4, 5], [0, 5, 2],
     [1, 3, 2], [1, 4, 3], [1, 5, 4], [1, 2, 5],
 ]
 
-table_axe_orientation_aretes = [
+table_axe_orientation_aretes: list[tuple[int, int, int]] = [
     (1, 1, 0), (0, 1, 1), (-1, 1, 0), (0, 1, -1),
     (1, -1, 0), (0, -1, 1), (-1, -1, 0), (0, -1, -1),
     (1, 0, 1), (-1, 0, 1), (-1, 0, -1), (1, 0, -1),
 ]
 
-table_axe_orientation_coins = [
+table_axe_orientation_coins: list[tuple[int, int, int]] = [
     (1, 1, 1), (-1, 1, 1), (-1, 1, -1), (1, 1, -1),
     (1, -1, 1), (-1, -1, 1), (-1, -1, -1), (1, -1, -1),
 ]
 
 # Table des facettes qui doivent afficher une couleur pour chaque pièce
-table_couleurs = {
+table_couleurs: dict[str, list[int]] = {
     'U': [0], 'D': [1], 'R': [2],
     'F': [3], 'L': [4], 'B': [5],
     'UR': [0, 2], 'UF': [0, 3], 'UL': [0, 4], 'UB': [0, 5],
@@ -196,7 +200,7 @@ table_couleurs = {
 # Table des (dX, dY, dZ)
 # Les paramètres de translation pour positionner les pièces dans
 # l'espace par rapport au centre du cube
-table_positions = {
+table_positions: dict[str, tuple[int, int, int]] = {
     '': (0, 0, 0),
     'U': (0, 2, 0), 'D': (0, -2, 0), 'F': (0, 0, 2),
     'B': (0, 0, -2), 'L': (-2, 0, 0), 'R': (2, 0, 0),

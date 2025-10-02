@@ -10,7 +10,7 @@ from term_timer.opengl.window import Window
 
 class Cube:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.edge_permutation = list(range(12))
         self.corner_permutation = list(range(8))
 
@@ -23,17 +23,17 @@ class Cube:
             [0.0, 0.0, 1.0],
         ]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             'Cube('
             f'edge_permutation={ self.edge_permutation!s }, '
             f'corner_permutation={ self.corner_permutation!s }) '
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__repr__()
 
-    def move_corners(self, move):
+    def move_corners(self, move: str) -> None:
         p = self.corner_permutation
         move_p = permutations_coins[move]
         move_o = orientations_coins[move]
@@ -44,7 +44,7 @@ class Cube:
             for i in range(8)
         ]
 
-    def move_edges(self, move):
+    def move_edges(self, move: str) -> None:
         p = self.edge_permutation
         move_p = permutations_aretes[move]
         move_o = orientations_aretes[move]
@@ -55,13 +55,13 @@ class Cube:
             for i in range(12)
         ]
 
-    def move(self, move):
+    def move(self, move: list[tuple[str, int]]) -> None:
         for (face, power) in move:
             for _i in range(power):
                 self.move_corners(face)
                 self.move_edges(face)
 
-    def _rotation_matrix_x(self, angle_deg):
+    def _rotation_matrix_x(self, angle_deg: float) -> list[list[float]]:
         angle_rad = math.radians(angle_deg)
         cos_a = math.cos(angle_rad)
         sin_a = math.sin(angle_rad)
@@ -71,7 +71,7 @@ class Cube:
             [0.0, sin_a, cos_a],
         ]
 
-    def _rotation_matrix_y(self, angle_deg):
+    def _rotation_matrix_y(self, angle_deg: float) -> list[list[float]]:
         angle_rad = math.radians(angle_deg)
         cos_a = math.cos(angle_rad)
         sin_a = math.sin(angle_rad)
@@ -81,7 +81,7 @@ class Cube:
             [-sin_a, 0.0, cos_a],
         ]
 
-    def _rotation_matrix_z(self, angle_deg):
+    def _rotation_matrix_z(self, angle_deg: float) -> list[list[float]]:
         angle_rad = math.radians(angle_deg)
         cos_a = math.cos(angle_rad)
         sin_a = math.sin(angle_rad)
@@ -91,7 +91,11 @@ class Cube:
             [0.0, 0.0, 1.0],
         ]
 
-    def _matrix_multiply(self, a, b):
+    def _matrix_multiply(
+        self,
+        a: list[list[float]],
+        b: list[list[float]],
+    ) -> list[list[float]]:
         c = [
             [0.0, 0.0, 0.0],
             [0.0, 0.0, 0.0],
@@ -103,25 +107,25 @@ class Cube:
                     c[i][j] += a[i][k] * b[k][j]
         return c
 
-    def rotate_x(self, angle):
+    def rotate_x(self, angle: float) -> None:
         rotation = self._rotation_matrix_x(-angle)
         self.rotation_matrix = self._matrix_multiply(
             rotation, self.rotation_matrix,
         )
 
-    def rotate_y(self, angle):
+    def rotate_y(self, angle: float) -> None:
         rotation = self._rotation_matrix_y(-angle)
         self.rotation_matrix = self._matrix_multiply(
             rotation, self.rotation_matrix,
         )
 
-    def rotate_z(self, angle):
+    def rotate_z(self, angle: float) -> None:
         rotation = self._rotation_matrix_z(-angle)
         self.rotation_matrix = self._matrix_multiply(
             rotation, self.rotation_matrix,
         )
 
-    def get_euler_angles(self):
+    def get_euler_angles(self) -> tuple[float, float, float]:
         r = self.rotation_matrix
 
         if abs(r[2][0]) != 1:
@@ -135,7 +139,7 @@ class Cube:
                 r[0][0] / math.cos(theta_y),
             )
         else:
-            theta_z = 0
+            theta_z = 0.0
             if r[2][0] == -1:
                 theta_y = math.pi / 2
                 theta_x = theta_z + math.atan2(r[0][1], r[0][2])
@@ -149,15 +153,16 @@ class Cube:
             math.degrees(theta_z),
         )
 
-    def animate_moves(self, window, moves):
+    def animate_moves(self, window: Window,
+                      moves: list[tuple[str, int]]) -> None:
         for (face, power) in moves:
             renderer.animate_move(window, self, face, power)
             self.move([(face, power)])
 
-    def animate_rotations(self, window, axis, angle):
+    def animate_rotations(self, window: Window, axis: str, angle: int) -> None:
         renderer.animate_rotation(window, self, axis, angle)
 
-    def set_rotation_from_quaternion(self, q):
+    def set_rotation_from_quaternion(self, q: dict[str, float]) -> None:
         qw, qx, qy, qz = q['w'], q['x'], q['z'], -q['y']
 
         self.rotation_matrix = [
@@ -179,7 +184,7 @@ class Cube:
         ]
 
 
-def main(cube):
+def main(cube: Cube) -> None:
     window = Window(
         1024, 720,
         fps=144,

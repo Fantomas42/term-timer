@@ -9,10 +9,14 @@ logger = logging.getLogger(__name__)
 
 
 class CubeGLThread(threading.Thread):
-    def __init__(self,
-                 cube_ready_event: threading.Event,
-                 width: int = 800, height: int = 600,
-                 *, daemon: bool = True):
+    def __init__(
+        self,
+        cube_ready_event: threading.Event,
+        width: int = 800,
+        height: int = 600,
+        *,
+        daemon: bool = True,
+    ) -> None:
         super().__init__()
 
         self.cube_ready_event = cube_ready_event
@@ -20,15 +24,15 @@ class CubeGLThread(threading.Thread):
         self.width = width
         self.height = height
 
-        self.window = None
-        self.cube = None
+        self.window: Window | None = None
+        self.cube: Cube | None = None
         self.running = True
         self.daemon = daemon
 
         self.title = ''
-        self.move_queue = []
+        self.move_queue: list[tuple[str, int]] = []
         self.move_lock = threading.Lock()
-        self.last_quaternion = None
+        self.last_quaternion: dict[str, float] | None = None
         self.has_new_quaternion = True
 
     def stop(self) -> None:
@@ -54,28 +58,29 @@ class CubeGLThread(threading.Thread):
         self.window.quit()
 
     def process_moves(self) -> None:
-        moves_to_process = []
+        moves_to_process: list[tuple[str, int]] = []
 
         with self.move_lock:
             if self.move_queue:
                 moves_to_process = self.move_queue.copy()
                 self.move_queue.clear()
 
-        for face, direction in moves_to_process:
-            self.cube.animate_moves(self.window, [(face, direction)])
+        if self.cube and self.window:
+            for face, direction in moves_to_process:
+                self.cube.animate_moves(self.window, [(face, direction)])
 
-    def add_move(self, face, direction) -> None:
+    def add_move(self, face: str, direction: int) -> None:
         with self.move_lock:
             self.move_queue.append((face, direction))
 
     def process_quaternion(self) -> None:
-        quaternion = None
+        quaternion: dict[str, float] | None = None
         with self.move_lock:
             if self.has_new_quaternion:
                 quaternion = self.last_quaternion
                 self.has_new_quaternion = False
 
-        if quaternion:
+        if quaternion and self.cube:
             self.cube.set_rotation_from_quaternion(quaternion)
 
     def add_quaternion(self, quaternion: dict[str, float]) -> None:

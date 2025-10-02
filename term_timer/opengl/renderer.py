@@ -1,4 +1,5 @@
 from operator import neg
+from typing import TYPE_CHECKING
 
 from OpenGL.GL import GL_MODELVIEW
 from OpenGL.GL import GL_QUADS
@@ -38,8 +39,15 @@ from term_timer.opengl.data import table_positions_centres
 from term_timer.opengl.data import table_positions_coins
 from term_timer.opengl.data import tex_map
 
+if TYPE_CHECKING:
+    from term_timer.opengl.cube import Cube
+    from term_timer.opengl.window import Window
 
-def r_surface(points, couleur):
+
+def r_surface(
+    points: list[tuple[int, int, int]] | list[list[float]],
+    couleur: tuple[float, float, float] | None,
+) -> None:
     glEnable(GL_TEXTURE_2D)
     if couleur is not None:
         glColor3fv(couleur)
@@ -51,15 +59,28 @@ def r_surface(points, couleur):
     glDisable(GL_TEXTURE_2D)
 
 
-def r_cube(couleurs, echelle=1):
-    liste_sommets = s if echelle == 1 else sommets(float(echelle))
+def r_cube(
+    couleurs: list[tuple[float, float, float] | None],
+    echelle: float = 1,
+) -> None:
+    if echelle == 1:
+        for i in range(6):
+            points: list[tuple[int, int, int]] = [s[j] for j in indices[i]]
+            r_surface(points, couleurs[i])
+    else:
+        liste_sommets = sommets(echelle)
+        for i in range(6):
+            points_float: list[list[float]] = [
+                liste_sommets[j] for j in indices[i]
+            ]
+            r_surface(points_float, couleurs[i])
 
-    for i in range(6):
-        points = [liste_sommets[j] for j in indices[i]]
-        r_surface(points, couleurs[i])
 
-
-def get_orientation_param(piece, position, orientation):
+def get_orientation_param(
+    piece: str,
+    position: int,
+    orientation: int,
+) -> tuple[int, int, int, int]:
     if len(piece) == 2:
         rot_x, rot_y, rot_z = table_axe_orientation_aretes[position]
         theta = 180 * orientation
@@ -71,13 +92,19 @@ def get_orientation_param(piece, position, orientation):
     return rot_x, rot_y, rot_z, theta
 
 
-def render_piece(piece, position, orientation):
-    c = [liste_couleurs[liste_centres.index(e)] for e in piece]
-    couleurs = [None] * 6
+def render_piece(piece: str, position: int, orientation: int) -> None:
+    c: list[tuple[float, float, float]] = [
+        liste_couleurs[liste_centres.index(e)] for e in piece
+    ]
+    couleurs: list[tuple[float, float, float] | None] = [None] * 6
 
     rot_x, rot_y, rot_z, theta = get_orientation_param(
         piece, position, orientation,
     )
+
+    d_x: int
+    d_y: int
+    d_z: int
 
     if len(piece) == 1:
         d_x, d_y, d_z = table_positions_centres[position]
@@ -96,6 +123,8 @@ def render_piece(piece, position, orientation):
 
         for i in table_couleurs_coins[position]:
             couleurs[i] = c.pop(0)
+    else:
+        d_x, d_y, d_z = 0, 0, 0
 
     glMatrixMode(GL_MODELVIEW)
     glPushMatrix()
@@ -107,8 +136,12 @@ def render_piece(piece, position, orientation):
     glPopMatrix()
 
 
-def get_moving_pieces(cube, face):
-    moving_pieces, non_moving_pieces = [], []
+def get_moving_pieces(
+    cube: 'Cube',
+    face: str,
+) -> tuple[list[tuple[str, int, int]], list[tuple[str, int, int]]]:
+    moving_pieces: list[tuple[str, int, int]] = []
+    non_moving_pieces: list[tuple[str, int, int]] = []
     corner_p = cube.corner_permutation
     corner_o = cube.corners_orientations
     edge_p = cube.edge_permutation
@@ -133,18 +166,20 @@ def get_moving_pieces(cube, face):
     return moving_pieces, non_moving_pieces
 
 
-def get_rotation_param(face, power):
+def get_rotation_param(face: str,
+                       power: int) -> tuple[tuple[int, int, int], int]:
+    axe: tuple[int, int, int]
     axe = tuple(
         map(
             neg, axe_rotation[face],
         ),
-    ) if power == 3 else axe_rotation[face]
+    ) if power == 3 else axe_rotation[face]  # type: ignore[assignment]
     theta_max = 181 if power == 2 else 91
 
     return axe, theta_max
 
 
-def render(cube):
+def render(cube: 'Cube') -> None:
     corner_p = cube.corner_permutation
     corner_o = cube.corners_orientations
     edge_p = cube.edge_permutation
@@ -169,7 +204,7 @@ def render(cube):
     glPopMatrix()
 
 
-def animate_move(window, cube, face, power):
+def animate_move(window: 'Window', cube: 'Cube', face: str, power: int) -> None:
     moving_pieces, non_moving_pieces = get_moving_pieces(cube, face)
     axe, theta_max = get_rotation_param(face, power)
 
@@ -209,7 +244,8 @@ def animate_move(window, cube, face, power):
         window.update()
 
 
-def animate_rotation(window, cube, axis, angle):
+def animate_rotation(window: 'Window', cube: 'Cube',
+                     axis: str, angle: int) -> None:
     speed = 6
     steps = range(1, angle + 1, speed)
 
