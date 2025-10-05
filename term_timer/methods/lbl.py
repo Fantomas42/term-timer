@@ -3,6 +3,7 @@ from typing import ClassVar
 from cubing_algs.algorithm import Algorithm
 
 from term_timer.methods.base import Analyser
+from term_timer.methods.base import StepSummary
 
 
 class LBLAnalyser(Analyser):
@@ -24,7 +25,7 @@ class LBLAnalyser(Analyser):
         },
     }
 
-    def compute_progress(self, facelets):
+    def compute_progress(self, facelets: str) -> tuple[int, list[str]]:
         progress = 0
 
         for name in self.step_list[:-1]:
@@ -35,7 +36,7 @@ class LBLAnalyser(Analyser):
 
         return progress, []
 
-    def correct_summary(self, summary):
+    def correct_summary(self, summary: list[StepSummary]) -> None:
         # Skipped F1L insert
         if summary[1]['name'] != 'F1L':
             summary.insert(

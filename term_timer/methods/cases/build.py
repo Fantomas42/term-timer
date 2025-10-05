@@ -2,7 +2,7 @@ import json
 import sys
 from pathlib import Path
 from pprint import pformat
-from typing import Any
+from typing import TypedDict
 
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
@@ -11,26 +11,49 @@ from cubing_algs.vcube import VCube
 from term_timer.argparser import ArgumentParser
 from term_timer.methods.cfop import CFOP_CASE_ENCODERS
 
-SKIPPED = {
+
+class SourceCaseInfo(TypedDict):
+    """Case information from source JSON file."""
+    type: str
+    probability: str
+    aliases: list[str]
+    algorithms: list[str]
+    main: str
+
+
+class CaseData(TypedDict):
+    """Processed case data with masks and metadata."""
+    probability: float
+    probability_label: str
+    main: str
+    setups: list[str]
+    masks: dict[str, list[str]]
+
+
+SKIPPED: dict[str, SourceCaseInfo] = {
     'OLL': {
+        'type': 'OLL',
         'probability': '1/216',
         'aliases': [],
         'algorithms': [],
         'main': '',
     },
     'PLL': {
+        'type': 'PLL',
         'probability': '1/72',
         'aliases': [],
         'algorithms': [],
         'main': '',
     },
     'F2L': {
+        'type': 'F2L',
         'probability': '1/42',
         'aliases': [],
         'algorithms': [],
         'main': '',
     },
     'AF2L': {
+        'type': 'AF2L',
         'probability': '1/42',
         'aliases': [],
         'algorithms': [],
@@ -38,7 +61,7 @@ SKIPPED = {
     },
 }
 
-TRANSLATIONS = {
+TRANSLATIONS: dict[str, str] = {
     'Tortue': 'Turtle',
     'Serpent': 'Snake',
     'Right front wide antisune (RFWAS)': 'RFWAS',
@@ -143,15 +166,14 @@ def compute_masks(name: str, moves: str, mode: str,
     return masks
 
 
-def format_case(mode: str, code: str, info: dict[str, Any],
-                data: dict[str, Any], *, debug: bool = False) -> None:
+def format_case(mode: str, code: str, info: SourceCaseInfo,
+                data: dict[str, CaseData], *,
+                debug: bool = False) -> None:
     name = code.split(' ')[1]
     if info['aliases'] and mode == 'OLL':
         name += f' { translate(info["aliases"][0]) }'
 
-    case_data = data.setdefault(name, {})
-
-    setups = []
+    setups: list[str] = []
     for algorithm in info['algorithms'][:10]:
         setups.append(
             str(
@@ -165,24 +187,34 @@ def format_case(mode: str, code: str, info: dict[str, Any],
     if main_algorithm:
         setups.insert(0, main_algorithm)
 
+    probability: float
+    probability_label: str
     if 'F2L' in mode:
-        case_data['probability'] = 1 / 42
-        case_data['probability_label'] = '1/42'
+        probability = 1 / 42
+        probability_label = '1/42'
     else:
-        case_data['probability'] = eval(info['probability'])  # noqa: S307
-        case_data['probability_label'] = info['probability']
+        probability = eval(info['probability'])  # noqa: S307
+        probability_label = info['probability']
 
-    case_data['main'] = main_algorithm
-    case_data['setups'] = setups
-    case_data['masks'] = compute_masks(
+    masks = compute_masks(
         name, main_algorithm, mode,
         debug=debug,
     )
 
+    # Build complete CaseData
+    case_data: CaseData = {
+        'probability': probability,
+        'probability_label': probability_label,
+        'main': main_algorithm,
+        'setups': setups,
+        'masks': masks,
+    }
+    data[name] = case_data
 
-def format_cases(cases: dict[str, dict[str, Any]], mode: str,
-                 *, debug: bool = False) -> dict[str, Any]:
-    data: dict[str, Any] = {}
+
+def format_cases(cases: dict[str, SourceCaseInfo], mode: str, *,
+                 debug: bool = False) -> dict[str, CaseData]:
+    data: dict[str, CaseData] = {}
 
     for code, info in cases.items():
         format_case(mode, code, info, data, debug=debug)
@@ -197,10 +229,10 @@ def format_cases(cases: dict[str, dict[str, Any]], mode: str,
     return data
 
 
-def build(data: dict[str, dict[str, Any]], mode: str, case: str) -> None:
+def build(data: dict[str, SourceCaseInfo], mode: str, case: str) -> None:
     print(f'Processing { mode }')
 
-    cases = {}
+    cases: dict[str, SourceCaseInfo] = {}
 
     for name, info in data.items():
         if info['type'] == mode:

@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import TypedDict
 
 CASES_DIRECTORY = Path(__file__).parent
 
@@ -8,8 +9,25 @@ F2L_PATH = CASES_DIRECTORY / 'f2l.json'
 OLL_PATH = CASES_DIRECTORY / 'oll.json'
 PLL_PATH = CASES_DIRECTORY / 'pll.json'
 
-CASES: dict[str, dict[str, dict[str, dict[str, str | float]]]] = {}
-CASES_MASKS: dict[str, dict[str, dict[str, str]]] = {}
+
+class CaseInfo(TypedDict):
+    """Information about a specific case."""
+    name: str
+    main: str
+    probability: float
+    probability_label: str
+    setups: list[str]
+    masks: dict[str, list[str]]
+
+
+class CaseMaskInfo(TypedDict):
+    """Mask configuration for a case."""
+    case: str
+    configurations: list[str]
+
+
+CASES: dict[str, dict[str, CaseInfo]] = {}
+CASES_MASKS: dict[str, dict[str, CaseMaskInfo]] = {}
 
 
 def load_cases(path: Path) -> None:
@@ -18,17 +36,13 @@ def load_cases(path: Path) -> None:
     cases_masks = CASES_MASKS.setdefault(case_type, {})
 
     with path.open('r') as fd:
-        for case_name, data in json.load(fd).items():
-            case_info = {
-                'name': case_name,
-                'main': data['main'],
-                'probability': data['probability'],
-                'probability_label': data['probability_label'],
-                'setups': data['setups'],
-                'masks': data['masks'],
-            }
+        json_data: dict[str, CaseInfo] = json.load(fd)
+        for case_name, case_data in json_data.items():
+            case_info = case_data
+            case_info['name'] = case_name
 
-            for mask, mask_info in data['masks'].items():
+            masks_dict = case_data['masks']
+            for mask, mask_info in masks_dict.items():
                 cases_masks[mask] = {
                     'case': case_name,
                     'configurations': mask_info,

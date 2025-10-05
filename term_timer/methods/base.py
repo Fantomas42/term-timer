@@ -1,7 +1,10 @@
+from collections.abc import Callable
 from contextlib import suppress
 from functools import cached_property
 from typing import Any
 from typing import ClassVar
+from typing import Literal
+from typing import TypedDict
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import INITIAL_STATE
@@ -32,7 +35,54 @@ AUF_MOVE = 'D'  # Because actually AUF is based on a URFDLB cube and moves
 
 CROSS_CENTER_MASK = union_masks(CROSS_MASK, CENTERS_MASK)
 
-STEPS_CONFIG = {
+
+class StepInfo(TypedDict):
+    """
+    Information about a single step during solve analysis.
+    """
+    moves: list[int]
+    increment: int
+    case_infos: list[str]
+    facelets: str
+
+
+class StepSummary(TypedDict):
+    """
+    Summary information for a completed step.
+    """
+    type: Literal['step', 'skipped', 'substep', 'virtual']
+    name: str
+    moves: Algorithm
+    moves_reoriented: Algorithm
+    moves_humanized: Algorithm
+    moves_prettified: Algorithm
+    times: list[float]
+    index: list[int]
+    qtm: int
+    total: int
+    execution: int
+    recognition: int
+    post_pause: int
+    aufs: list[int | None]
+    total_percent: float
+    execution_percent: float
+    recognition_percent: float
+    step_execution_percent: float
+    step_recognition_percent: float
+    increment: int
+    case: str
+    case_infos: list[str]
+    facelets: str
+
+
+class StepConfig(TypedDict, total=False):
+    """Configuration for a solving step."""
+    mask: str
+    triggers: list[str]
+    optimizers: list[Callable[[Algorithm], Algorithm]]
+
+
+STEPS_CONFIG: dict[str, StepConfig] = {
     'Cross': {
         'mask': CROSS_CENTER_MASK,
     },
@@ -84,7 +134,8 @@ STEPS_CONFIG = {
 
 class FaceletAnalyser:
 
-    def get_step_case(self, step: str, facelets: str, encoder) -> str:
+    def get_step_case(self, step: str, facelets: str,
+                      encoder: Callable[[str], str]) -> str:
         encoded = encoder(facelets)
 
         if encoded in CASES_MASKS[step]:
@@ -96,12 +147,11 @@ class FaceletAnalyser:
         mask = get_step_config(step, 'mask')
 
         matching = facelets_masked(
-            INITIAL_STATE,
-            mask,
+            INITIAL_STATE, mask,
         )
+
         return matching == facelets_masked(
-            facelets,
-            mask,
+            facelets, mask,
         )
 
 
@@ -125,14 +175,14 @@ class Analyser(FaceletAnalyser):
         self.steps = self.split_steps()
         self.summary = self.summarize()
 
-    def split_steps(self):
+    def split_steps(self) -> dict[str, StepInfo]:
         cube = VCube()
         facelets = cube.rotate(self.scramble)
 
-        steps = {}
+        steps: dict[str, StepInfo] = {}
         progress = 0
-        case_infos = []
-        step_moves = []
+        case_infos: list[str] = []
+        step_moves: list[int] = []
 
         for move_index, move in enumerate(self.solution):
             current_progress, current_case_infos = self.compute_progress(
@@ -169,11 +219,11 @@ class Analyser(FaceletAnalyser):
 
         return steps
 
-    def compute_progress(self):
+    def compute_progress(self, facelets: str) -> tuple[int, list[str]]:
         raise NotImplementedError
 
-    def summarize(self):
-        summary = []
+    def summarize(self) -> list[StepSummary]:
+        summary: list[StepSummary] = []
 
         for step in self.step_list:
             if step not in self.steps:
@@ -278,11 +328,11 @@ class Analyser(FaceletAnalyser):
 
         return auf
 
-    def correct_summary(self, summary):
+    def correct_summary(self, summary: list[StepSummary]) -> None:
         pass
 
-    def normalize_value(self, metric, name, value, default,
-                        *, threshold=1.2):
+    def normalize_value(self, metric: str, name: str, value: float,
+                        default: str, *, threshold: float = 1.2) -> str:
         norm = self.norms.get(metric, {}).get(name)
         if not norm:
             return default
@@ -313,9 +363,9 @@ class Analyser(FaceletAnalyser):
         return default
 
     @cached_property
-    def score(self):
+    def score(self) -> float:
         return 20
 
 
-def get_step_config(step_name: str, value: str, default: Any = None):
+def get_step_config(step_name: str, value: str, default: Any = None) -> Any:
     return STEPS_CONFIG.get(step_name, {}).get(value, default)

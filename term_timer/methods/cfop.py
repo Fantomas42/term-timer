@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from functools import cached_property
 from typing import ClassVar
 
@@ -9,11 +10,12 @@ from cubing_algs.masks import F2L_FR_MASK
 
 from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
+from term_timer.methods.base import StepSummary
 from term_timer.methods.cases.encoders import f2l_case_encoder
 from term_timer.methods.cases.encoders import oll_case_encoder
 from term_timer.methods.cases.encoders import pll_case_encoder
 
-CFOP_CASE_ENCODERS = {
+CFOP_CASE_ENCODERS: dict[str, Callable[[str], str]] = {
     'OLL': oll_case_encoder,
     'PLL': pll_case_encoder,
     'F2L FR': f2l_case_encoder(F2L_FR_MASK),
@@ -65,7 +67,7 @@ class CFOPAnalyser(Analyser):
         'pll': -1,
     }
 
-    def compute_progress(self, facelets):
+    def compute_progress(self, facelets: str) -> tuple[int, list[str]]:
         progress = 0
 
         for name in self.step_list[:-1]:
@@ -76,7 +78,7 @@ class CFOPAnalyser(Analyser):
 
         return progress, []
 
-    def correct_summary(self, summary):
+    def correct_summary(self, summary: list[StepSummary]) -> None:
         # Fix OLL SKIP instead of F2L
         for info in summary:
             if info['increment'] > 1 and 'OLL' in info['name']:
@@ -85,8 +87,8 @@ class CFOPAnalyser(Analyser):
         self.correct_summary_cfop(summary)
 
     @cached_property
-    def score(self):
-        bonus = 0
+    def score(self) -> float:
+        bonus: float = 0
 
         step_one = self.summary[0]
         if 'XCross' in step_one['name']:
@@ -118,7 +120,7 @@ class CFOPAnalyser(Analyser):
 
         return 20 + bonus - malus
 
-    def correct_summary_cfop(self, summary):
+    def correct_summary_cfop(self, summary: list[StepSummary]) -> None:
         # Skipped PLL insert
         if summary[-1]['name'] != 'PLL':
             summary.append(
@@ -298,7 +300,7 @@ class CF4OPAnalyser(CFOPAnalyser):
         },
     }
 
-    def compute_progress(self, facelets):
+    def compute_progress(self, facelets: str) -> tuple[int, list[str]]:
         if not self.check_step('Cross', facelets):
             return 0, []
 
@@ -307,7 +309,7 @@ class CF4OPAnalyser(CFOPAnalyser):
             pair = ['FR', 'FL', 'BR', 'BL']  # UF orientation
 
             score = 1
-            pairs = []
+            pairs: list[str] = []
 
             for n, p in zip(name, pair, strict=True):
                 result = self.check_step(n, facelets)
@@ -319,7 +321,7 @@ class CF4OPAnalyser(CFOPAnalyser):
 
         return 6, []
 
-    def correct_summary(self, summary):
+    def correct_summary(self, summary: list[StepSummary]) -> None:
         # Merge XCrosses
         if summary[0]['name'] == 'F2L 1':
             summary[0]['name'] = 'XCross'
@@ -359,7 +361,7 @@ class CF4OPAnalyser(CFOPAnalyser):
         self.correct_summary_cfop(summary)
 
         # Summary for F2L
-        f2l = {
+        f2l: StepSummary = {
             'type': 'virtual',
             'name': 'F2L',
             'moves': Algorithm(),
@@ -373,15 +375,15 @@ class CF4OPAnalyser(CFOPAnalyser):
             'execution': 0,
             'recognition': 0,
             'post_pause': 0,
-            'aufs': [0, 0],
-            'total_percent': 0,
-            'execution_percent': 0,
-            'recognition_percent': 0,
-            'step_execution_percent': 0,
-            'step_recognition_percent': 0,
+            'aufs': [None, None],
+            'total_percent': 0.0,
+            'execution_percent': 0.0,
+            'recognition_percent': 0.0,
+            'step_execution_percent': 0.0,
+            'step_recognition_percent': 0.0,
             'increment': 0,
             'case': '',
-            'cases_info': [],
+            'case_infos': [],
             'facelets': '',
         }
 
@@ -393,6 +395,8 @@ class CF4OPAnalyser(CFOPAnalyser):
         )
 
         insert_f2l = False
+        auf_0_sum = 0
+        auf_1_sum = 0
         for info in summary:
             if 'F2L ' in info['name']:
                 info['type'] = 'substep'
@@ -409,10 +413,10 @@ class CF4OPAnalyser(CFOPAnalyser):
                 f2l['execution'] += info['execution']
                 f2l['recognition'] += info['recognition']
                 f2l['post_pause'] = info['post_pause']
-                if info['aufs'][0]:
-                    f2l['aufs'][0] += info['aufs'][0]
-                if info['aufs'][1]:
-                    f2l['aufs'][1] += info['aufs'][1]
+                if info['aufs'][0] is not None:
+                    auf_0_sum += info['aufs'][0]
+                if info['aufs'][1] is not None:
+                    auf_1_sum += info['aufs'][1]
                 f2l['total_percent'] += info['total_percent']
                 f2l['execution_percent'] += info['execution_percent']
                 f2l['recognition_percent'] += info['recognition_percent']
@@ -423,10 +427,10 @@ class CF4OPAnalyser(CFOPAnalyser):
             f2l['step_execution_percent'] /= f2l_steps
             f2l['step_recognition_percent'] /= f2l_steps
 
-        if not f2l['aufs'][0]:
-            f2l['aufs'][0] = None
-        if not f2l['aufs'][1]:
-            f2l['aufs'][1] = None
+        if auf_0_sum:
+            f2l['aufs'][0] = auf_0_sum
+        if auf_1_sum:
+            f2l['aufs'][1] = auf_1_sum
 
         if insert_f2l:
             if 'F2L' not in summary[0]['name']:
