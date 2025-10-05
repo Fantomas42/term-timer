@@ -16,23 +16,24 @@ LOGGING_PATH = LOGGING_DIR / LOGGING_FILE
 
 
 class DbusSignalFilter(logging.Filter):
-    def filter(self, record) -> bool:
+    def filter(self, record: logging.LogRecord) -> bool:
         return record.funcName not in {'_parse_msg', 'write_gatt_char'}
 
 
 class AsyncioLogHandler(logging.handlers.QueueHandler):
 
-    def __init__(self, log_queue):
+    def __init__(self, log_queue: queue.Queue[logging.LogRecord]) -> None:
         super().__init__(log_queue)
 
 
 class AsyncioLogListener:
 
-    def __init__(self, queue, handler):
-        self.queue = queue
-        self.handler = handler
-        self._stop_event = threading.Event()
-        self._thread = None
+    def __init__(self, log_queue: queue.Queue[logging.LogRecord],
+                 handler: logging.Handler) -> None:
+        self.queue: queue.Queue[logging.LogRecord] = log_queue
+        self.handler: logging.Handler = handler
+        self._stop_event: threading.Event = threading.Event()
+        self._thread: threading.Thread | None = None
 
     def start(self) -> None:
         self._thread = threading.Thread(target=self._process_logs)
@@ -87,7 +88,7 @@ LOGGING_CONF = {
     },
 }
 
-log_listener = None
+log_listener: AsyncioLogListener | None = None
 
 
 def configure_logging() -> None:
@@ -96,7 +97,7 @@ def configure_logging() -> None:
         logging.config.dictConfig(LOGGING_CONF)
 
         root_logger = logging.getLogger()
-        file_handler = None
+        file_handler: logging.FileHandler | None = None
         for handler in root_logger.handlers:
             if isinstance(handler, logging.FileHandler):
                 file_handler = handler
@@ -105,7 +106,7 @@ def configure_logging() -> None:
         if file_handler:
             root_logger.removeHandler(file_handler)
 
-            log_queue = queue.Queue()
+            log_queue: queue.Queue[logging.LogRecord] = queue.Queue()
             queue_handler = AsyncioLogHandler(log_queue)
             root_logger.addHandler(queue_handler)
 

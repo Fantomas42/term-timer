@@ -1,6 +1,6 @@
 import sys
 from argparse import Namespace
-from argparse import _SubParsersAction  # noqa: PLC2701
+from argparse import _SubParsersAction
 from typing import TYPE_CHECKING
 
 from cubing_algs.constants import ORIENTATIONS
