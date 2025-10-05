@@ -9,6 +9,7 @@ from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
+from term_timer.methods.cases import CaseInfo
 from term_timer.methods.cfop import CFOP_CASE_ENCODERS
 
 
@@ -19,15 +20,6 @@ class SourceCaseInfo(TypedDict):
     aliases: list[str]
     algorithms: list[str]
     main: str
-
-
-class CaseData(TypedDict):
-    """Processed case data with masks and metadata."""
-    probability: float
-    probability_label: str
-    main: str
-    setups: list[str]
-    masks: dict[str, list[str]]
 
 
 SKIPPED: dict[str, SourceCaseInfo] = {
@@ -167,7 +159,7 @@ def compute_masks(name: str, moves: str, mode: str,
 
 
 def format_case(mode: str, code: str, info: SourceCaseInfo,
-                data: dict[str, CaseData], *,
+                data: dict[str, CaseInfo], *,
                 debug: bool = False) -> None:
     name = code.split(' ')[1]
     if info['aliases'] and mode == 'OLL':
@@ -201,8 +193,9 @@ def format_case(mode: str, code: str, info: SourceCaseInfo,
         debug=debug,
     )
 
-    # Build complete CaseData
-    case_data: CaseData = {
+    # Build complete CaseInfo
+    case_data: CaseInfo = {
+        'name': name,
         'probability': probability,
         'probability_label': probability_label,
         'main': main_algorithm,
@@ -213,8 +206,8 @@ def format_case(mode: str, code: str, info: SourceCaseInfo,
 
 
 def format_cases(cases: dict[str, SourceCaseInfo], mode: str, *,
-                 debug: bool = False) -> dict[str, CaseData]:
-    data: dict[str, CaseData] = {}
+                 debug: bool = False) -> dict[str, CaseInfo]:
+    data: dict[str, CaseInfo] = {}
 
     for code, info in cases.items():
         format_case(mode, code, info, data, debug=debug)
