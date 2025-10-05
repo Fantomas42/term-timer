@@ -26,6 +26,7 @@ from cubing_algs.vcube import VCube
 
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.methods.cases import CASES_MASKS
+from term_timer.methods.cases import CaseMaskInfo
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
@@ -138,8 +139,9 @@ class FaceletAnalyser:
                       encoder: Callable[[str], str]) -> str:
         encoded = encoder(facelets)
 
-        if encoded in CASES_MASKS[step]:
-            return CASES_MASKS[step][encoded]['case']
+        case_mask: CaseMaskInfo | None = CASES_MASKS[step].get(encoded)
+        if case_mask:
+            return case_mask['case']
 
         return ''
 

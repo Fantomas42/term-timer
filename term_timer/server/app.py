@@ -43,6 +43,7 @@ from term_timer.interface.console import console
 from term_timer.methods import METHOD_ANALYSERS
 from term_timer.methods.base import get_step_config
 from term_timer.methods.cases import CASES
+from term_timer.methods.cases import CaseInfo
 from term_timer.orientation import ORIENTATION_MOVES
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -738,7 +739,7 @@ class AcademyStepView(AcademyView):
         self.step = step.upper()
 
         try:
-            self.cases_data = CASES[self.step]
+            self.cases_data: dict[str, CaseInfo] = CASES[self.step]
         except KeyError:
             abort(404, f'{ self.step } does not exist')
 
@@ -785,7 +786,7 @@ class AcademyCaseView(AcademyView):
         self.case_id = case_id
 
         try:
-            self.case_data = CASES[self.step][self.case_id]
+            self.case_data: CaseInfo = CASES[self.step][self.case_id]
         except KeyError:
             abort(404, f'{ self.step } { self.case_id } does not exist')
 

@@ -14,6 +14,7 @@ from term_timer.config import CUBE_RIGHT_HANDED
 from term_timer.exceptions import InvalidCaseError
 from term_timer.magic_cube import Cube
 from term_timer.methods.cases import CASES
+from term_timer.methods.cases import CaseInfo
 
 
 def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
@@ -79,8 +80,10 @@ def trainer(step: str, cases: list[str],
 def random_training(step: str, selected_cases: list[str],
                     orientation_moves: Algorithm) -> tuple[
                         str, Algorithm, Algorithm]:
-    cases = CASES[step.upper()]
-    valid_cases = {k: v for k, v in cases.items() if v.get('setups')}
+    cases: dict[str, CaseInfo] = CASES[step.upper()]
+    valid_cases: dict[str, CaseInfo] = {
+        k: v for k, v in cases.items() if v.get('setups')
+    }
 
     case = choice(selected_cases or list(valid_cases.keys()))
 
@@ -88,14 +91,16 @@ def random_training(step: str, selected_cases: list[str],
         error_string = f'Invalid case { case } for { step.upper() }'
         raise InvalidCaseError(error_string)
 
+    case_info = cases[case]
+
     algo = (
         orientation_moves
-        + choice(cases[case]['setups'])
+        + choice(case_info['setups'])
         + mirror_moves(orientation_moves)
     )
 
-    case_name = cases[case]['name']
-    main_algorithm = cases[case]['main']
+    case_name = case_info['name']
+    main_algorithm = case_info['main']
 
     return case_name, parse_moves(main_algorithm), parse_moves(algo).transform(
         degrip_full_moves,
