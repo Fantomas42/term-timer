@@ -4,8 +4,12 @@ from functools import partial
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 from typing import Any
+from typing import cast
+
+from term_timer.methods.cases import CaseInfo
 
 from term_timer.methods import get_method_analyser
+from term_timer.methods.base import Analyser
 from term_timer.methods.cases import CASES
 from term_timer.solve import Solve
 from term_timer.stats import StatisticsTools
@@ -27,6 +31,7 @@ def analyse_solve_worker(solve: Solve,
         _ = solve.score
 
     analysis = solve.method_applied
+    analysis = cast(Analyser, analysis)
 
     steps = {}
     for step_name, step_index in solve.method_analyser.aggregate.items():
@@ -84,7 +89,7 @@ class SolvesMethodAggregator:
 
         score = 0
         total = 0
-        resume = {}
+        resume: dict[str, dict[str, Any]] = {}
         stack = []
 
         for analyse in analyses:
@@ -109,12 +114,15 @@ class SolvesMethodAggregator:
                         'etpss': [],
                         'probability': (
                             CASES.get(
-                                step_name.upper(), {},
-                            ).get(
-                                step_case, {},
-                            ).get(
-                                'probability', 0,
-                            )
+                                step_name.upper(), {}
+                            ).get(step_case, CaseInfo(
+                                name='',
+                                main='',
+                                probability=0,
+                                probability_label='',
+                                setups=[],
+                                masks={},
+                            )).get('probability', 0)
                         ),
                     },
                 )

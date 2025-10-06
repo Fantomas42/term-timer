@@ -139,6 +139,7 @@ force-single-line = true
 allow-magic-value-types = ["str", "int"]
 
 [tool.mypy]
+disable_error_code = ["import-untyped"]
 exclude = ["tests", "poc"]
 python_version = 3.12
 
