@@ -16,10 +16,10 @@ from term_timer.argparser import ArgumentParser
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.types import BatteryEventDict
 from term_timer.bluetooth.types import EventDict
-from term_timer.bluetooth.types import HardwareEventDict
-from term_timer.bluetooth.types import MoveEventDict
 from term_timer.bluetooth.types import FaceletsEventDict
 from term_timer.bluetooth.types import GyroEventDict
+from term_timer.bluetooth.types import HardwareEventDict
+from term_timer.bluetooth.types import MoveEventDict
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.logger import LOGGING_DIR

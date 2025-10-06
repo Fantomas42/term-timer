@@ -28,7 +28,7 @@ class Timer(SolveInterface):
                  show_tps_graph: bool,
                  show_time_graph: bool,
                  show_recognition_graph: bool,
-                 method: bool,
+                 method: str,
                  orientation: str,
                  countdown: int,
                  metronome: float,
@@ -259,7 +259,7 @@ class Timer(SolveInterface):
         flag = ''
         moves = []
         if self.moves:
-            if not self.bluetooth_cube.is_solved:
+            if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
                 flag = DNF
 
             first_time = self.moves[0]['time']

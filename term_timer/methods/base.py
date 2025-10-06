@@ -8,7 +8,6 @@ from typing import Literal
 from typing import TypedDict
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.move import Move
 from cubing_algs.constants import INITIAL_STATE
 from cubing_algs.masks import CENTERS_MASK
 from cubing_algs.masks import CROSS_MASK
@@ -22,6 +21,7 @@ from cubing_algs.masks import L1_MASK
 from cubing_algs.masks import OLL_MASK
 from cubing_algs.masks import facelets_masked
 from cubing_algs.masks import union_masks
+from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
@@ -321,11 +321,10 @@ class Analyser(FaceletAnalyser):
     def get_auf(self, moves: Algorithm, mode: str) -> int:
         auf = 0
 
-        moves_iter: Iterable[Move]
-        if mode == 'post':
-            moves_iter = reversed(moves)
-        else:
-            moves_iter = moves
+        moves_iter: Iterable[Move] = (
+            reversed(moves)
+            if mode == 'post' else moves
+        )
 
         for move in moves_iter:
             if move[0] == AUF_MOVE:

@@ -112,21 +112,23 @@ class Trainer(SolveInterface):
             )
 
     def cube_is_solved(self) -> bool:
-        return FaceletAnalyser().check_step(
-            self.step_code,
-            self.bluetooth_cube.state,
-        )
+        if self.bluetooth_cube:
+            return FaceletAnalyser().check_step(
+                self.step_code,
+                self.bluetooth_cube.state,
+            )
+        return False
 
     def solve_line(self, solve: Solve) -> None:
         self.clear_line(full=True)
 
-        if solve.advanced:
+        if solve.method_applied:
             self.console.print(
                 f'[analysis]Executed #{ self.counter }:[/analysis] [consign]' +
                 solve.reconstruction_step_line(
                     solve.method_applied.summary[0],
-                    multiple=True) +
-                '[/consign]',
+                    multiple=True,
+                ) + '[/consign]',
             )
 
         self.console.print(
@@ -162,7 +164,7 @@ class Trainer(SolveInterface):
         flag = ''
         moves = []
         if self.moves:
-            if not self.bluetooth_cube.is_solved:
+            if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
                 flag = DNF
 
             first_time = self.moves[0]['time']
