@@ -12,6 +12,7 @@ from term_timer.config import AUF_MOVE
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
+from term_timer.methods.base import StepSummary
 from term_timer.triggers import TRIGGERS_REGEX
 from term_timer.triggers import apply_trigger_outside_blocks
 
@@ -219,7 +220,7 @@ def format_alg_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
     return algorithm
 
 
-def format_alg_pauses(algorithm: str, solve: 'Solve', step: dict[str, int],
+def format_alg_pauses(algorithm: str, solve: 'Solve', step: StepSummary,
                       *, multiple: bool = False) -> str:
     post = int(step['post_pause'] / solve.pause_threshold)
     if post:

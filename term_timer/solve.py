@@ -238,7 +238,8 @@ class Solve:
         if not missed_moves:
             missed_line = '[success]No missed move[/success]'
 
-        grade = format_grade(self.score)
+        score = self.score if self.score is not None else 0.0
+        grade = format_grade(score)
         grade_class = grade.lower()
         grade_line = (
             f' [grade_{ grade_class }]'
@@ -410,7 +411,8 @@ class Solve:
 
         return line
 
-    def reconstruction_step_line(self, step, *, multiple=False) -> str:
+    def reconstruction_step_line(self, step: StepSummary,
+                                 *, multiple: bool = False) -> str:
         if not step['moves']:
             return ''
 
@@ -436,6 +438,9 @@ class Solve:
             optimize_double_moves,
         )
 
+        pre_auf = step['aufs'][0] or 0
+        post_auf = step['aufs'][1] or 0
+
         return format_alg_pauses(
             format_alg_triggers(
                 format_alg_moves(
@@ -444,7 +449,8 @@ class Solve:
                             source_paused,
                             compressed_paused,
                         ),
-                        *step['aufs'],
+                        pre_auf,
+                        post_auf,
                     ),
                 ),
                 get_step_config(step['name'], 'triggers', []),
@@ -452,7 +458,8 @@ class Solve:
             self, step, multiple=multiple,
         )
 
-    def reconstruction_step_text(self, step, *, multiple=False) -> str:
+    def reconstruction_step_text(self, step: StepSummary,
+                                 *, multiple: bool = False) -> str:
         if not step['moves']:
             return ''
 
