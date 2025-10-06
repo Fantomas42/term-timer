@@ -12,19 +12,19 @@ from term_timer.triggers import apply_trigger_outside_blocks
 
 class TestBaseTriggers(unittest.TestCase):
 
-    def test_chair_trigger(self):
+    def test_chair_trigger(self) -> None:
         self.assertEqual(BASE_TRIGGERS["RU2R'U'RU'R'"], 'chair')
 
-    def test_sexy_move_trigger(self):
+    def test_sexy_move_trigger(self) -> None:
         self.assertEqual(BASE_TRIGGERS["RUR'U'"], 'sexy-move')
 
-    def test_sledgehammer_trigger(self):
+    def test_sledgehammer_trigger(self) -> None:
         self.assertEqual(BASE_TRIGGERS["R'FRF'"], 'sledgehammer')
 
 
 class TestTriggers(unittest.TestCase):
 
-    def test_triggers_generated_from_base(self):
+    def test_triggers_generated_from_base(self) -> None:
         # 8 variationss (2 algos x 4 rotations)
         for name in BASE_TRIGGERS.values():
             self.assertIn(name, TRIGGERS)
@@ -33,16 +33,16 @@ class TestTriggers(unittest.TestCase):
 
 class TestTriggersRegex(unittest.TestCase):
 
-    def test_regex_compiled_for_all_triggers(self):
+    def test_regex_compiled_for_all_triggers(self) -> None:
         self.assertEqual(len(TRIGGERS_REGEX), len(set(BASE_TRIGGERS.values())))
 
-    def test_chair_regex_matches(self):
+    def test_chair_regex_matches(self) -> None:
         chair_regex = TRIGGERS_REGEX['chair']
 
         for trigger in TRIGGERS['chair']:
             self.assertIsNotNone(chair_regex.search(trigger))
 
-    def test_regex_negative_lookahead(self):
+    def test_regex_negative_lookahead(self) -> None:
         # Test that the regex does not include moves with 2 or '
         sexy_regex = TRIGGERS_REGEX['sexy-move']
         self.assertIsNone(sexy_regex.search("RUR'U'2"))
@@ -51,7 +51,7 @@ class TestTriggersRegex(unittest.TestCase):
 
 class TestDefaultTriggers(unittest.TestCase):
 
-    def test_all_default_triggers_in_base(self):
+    def test_all_default_triggers_in_base(self) -> None:
         base_trigger_names = set(BASE_TRIGGERS.values())
         for trigger in DEFAULT_TRIGGERS:
             self.assertIn(trigger, base_trigger_names)
@@ -59,25 +59,25 @@ class TestDefaultTriggers(unittest.TestCase):
 
 class TestBlockPattern(unittest.TestCase):
 
-    def test_block_pattern_matches_simple_block(self):
+    def test_block_pattern_matches_simple_block(self) -> None:
         text = '[comment]some text[/comment]'
         matches = list(BLOCK_PATTERN.finditer(text))
         self.assertEqual(len(matches), 1)
         self.assertEqual(matches[0].group(), '[comment]some text[/comment]')
 
-    def test_block_pattern_matches_multiple_blocks(self):
+    def test_block_pattern_matches_multiple_blocks(self) -> None:
         text = '[tag1]content1[/tag1] normal [tag2]content2[/tag2]'
         matches = list(BLOCK_PATTERN.finditer(text))
         self.assertEqual(len(matches), 2)
 
-    def test_block_pattern_no_match_incomplete(self):
+    def test_block_pattern_no_match_incomplete(self) -> None:
         text = '[tag]content without closing'
         matches = list(BLOCK_PATTERN.finditer(text))
         self.assertEqual(len(matches), 0)
 
 
 class TestApplyTriggerOutsideBlocks(unittest.TestCase):
-    def test_no_blocks_simple_replacement(self):
+    def test_no_blocks_simple_replacement(self) -> None:
         algorithm = "RUR'U' F U F'"
         regex = re.compile(r"RUR'U'")
         replacement = lambda _: '[SEXY]'
@@ -85,7 +85,7 @@ class TestApplyTriggerOutsideBlocks(unittest.TestCase):
         result = apply_trigger_outside_blocks(algorithm, regex, replacement)
         self.assertEqual(result, "[SEXY] F U F'")
 
-    def test_with_blocks_no_replacement_inside(self):
+    def test_with_blocks_no_replacement_inside(self) -> None:
         algorithm = "RUR'U' [comment]RUR'U'[/comment] R U"
         regex = re.compile(r"RUR'U'")
         replacement = lambda _: '[SEXY]'
@@ -93,7 +93,7 @@ class TestApplyTriggerOutsideBlocks(unittest.TestCase):
         result = apply_trigger_outside_blocks(algorithm, regex, replacement)
         self.assertEqual(result, "[SEXY] [comment]RUR'U'[/comment] R U")
 
-    def test_multiple_blocks(self):
+    def test_multiple_blocks(self) -> None:
         algorithm = (
             "RUR'U' [tag1]content[/tag1] "
             "RUR'U' [tag2]RUR'U'[/tag2] "
@@ -110,7 +110,7 @@ class TestApplyTriggerOutsideBlocks(unittest.TestCase):
         )
         self.assertEqual(result, expected)
 
-    def test_no_matches_no_change(self):
+    def test_no_matches_no_change(self) -> None:
         algorithm = "F U F' [comment]content[/comment]"
         regex = re.compile(r"RUR'U'")
         replacement = lambda _: '[SEXY]'
@@ -118,7 +118,7 @@ class TestApplyTriggerOutsideBlocks(unittest.TestCase):
         result = apply_trigger_outside_blocks(algorithm, regex, replacement)
         self.assertEqual(result, algorithm)
 
-    def test_empty_algorithm(self):
+    def test_empty_algorithm(self) -> None:
         algorithm = ''
         regex = re.compile(r"RUR'U'")
         replacement = lambda _: '[SEXY]'
@@ -126,7 +126,7 @@ class TestApplyTriggerOutsideBlocks(unittest.TestCase):
         result = apply_trigger_outside_blocks(algorithm, regex, replacement)
         self.assertEqual(result, '')
 
-    def test_only_blocks(self):
+    def test_only_blocks(self) -> None:
         algorithm = "[comment]RUR'U'[/comment]"
         regex = re.compile(r"RUR'U'")
         replacement = lambda _: '[SEXY]'
@@ -134,7 +134,7 @@ class TestApplyTriggerOutsideBlocks(unittest.TestCase):
         result = apply_trigger_outside_blocks(algorithm, regex, replacement)
         self.assertEqual(result, algorithm)
 
-    def test_complex_replacement_function(self):
+    def test_complex_replacement_function(self) -> None:
         algorithm = "RUR'U' F RUR'U'"
         regex = re.compile(r"RUR'U'")
         replacement = lambda m: f'[{m.group().upper()}]'

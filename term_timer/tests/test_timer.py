@@ -4,7 +4,7 @@ from term_timer.timer import Timer
 
 
 class TestTimerModule(unittest.TestCase):
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         timer = Timer(
             cube_size=3,
             iterations=0,

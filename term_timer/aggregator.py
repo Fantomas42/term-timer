@@ -6,11 +6,10 @@ from multiprocessing import cpu_count
 from typing import Any
 from typing import cast
 
-from term_timer.methods.cases import CaseInfo
-
 from term_timer.methods import get_method_analyser
 from term_timer.methods.base import Analyser
 from term_timer.methods.cases import CASES
+from term_timer.methods.cases import CaseInfo
 from term_timer.solve import Solve
 from term_timer.stats import StatisticsTools
 
@@ -114,7 +113,7 @@ class SolvesMethodAggregator:
                         'etpss': [],
                         'probability': (
                             CASES.get(
-                                step_name.upper(), {}
+                                step_name.upper(), {},
                             ).get(step_case, CaseInfo(
                                 name='',
                                 main='',

@@ -5,10 +5,10 @@ from term_timer.magic_cube import Cube
 
 
 class TestCube(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.cube = Cube()
 
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         self.assertEqual(
             self.cube.size, 3,
         )
@@ -24,7 +24,7 @@ class TestCube(unittest.TestCase):
         'cubing_algs.display.VCubeDisplay.display',
         return_value='Cube Representation',
     )
-    def test_str_representation(self, mock_print_cube):
+    def test_str_representation(self, mock_print_cube) -> None:
         """Test que la méthode __str__ renvoie la représentation du cube."""
         result = str(self.cube)
         self.assertEqual(result, 'Cube Representation')

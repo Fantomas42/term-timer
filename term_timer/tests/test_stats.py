@@ -11,7 +11,7 @@ from term_timer.stats import StatisticsTools
 
 
 class TestStatisticsTools(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test cases with sample solves."""
         self.solves = [
             Solve(1000000000000, 10 * SECOND, 'F R U', ''),  # 10 seconds
@@ -23,32 +23,32 @@ class TestStatisticsTools(unittest.TestCase):
         # Final times: [10s, 15s, 20s, 30s, 25s]
         self.stats_tools = StatisticsTools(self.solves)
 
-    def test_mo_valid(self):
+    def test_mo_valid(self) -> None:
         """Test mean of 3 calculation with sufficient solves."""
         # Mean of last 3: (20 + 30 + 25) / 3 = 25
         mo3 = self.stats_tools.mo(3, self.stats_tools.stack_time)
         self.assertEqual(mo3, 25 * SECOND)
 
-    def test_mo_insufficient_solves(self):
+    def test_mo_insufficient_solves(self) -> None:
         """Test mean of N calculation with insufficient solves."""
         # Not enough solves for mo6
         mo6 = self.stats_tools.mo(6, self.stats_tools.stack_time)
         self.assertEqual(mo6, -1)
 
-    def test_ao_valid(self):
+    def test_ao_valid(self) -> None:
         """Test average of 5 calculation with sufficient solves."""
         # Ao5: Remove best (10) and worst (30),
         # average remaining: (15 + 20 + 25) / 3 = 20
         ao5 = self.stats_tools.ao(5, self.stats_tools.stack_time)
         self.assertEqual(ao5, 20 * SECOND)
 
-    def test_ao_insufficient_solves(self):
+    def test_ao_insufficient_solves(self) -> None:
         """Test average of N calculation with insufficient solves."""
         # Not enough solves for ao6
         ao6 = self.stats_tools.ao(6, self.stats_tools.stack_time)
         self.assertEqual(ao6, -1)
 
-    def test_best_mo(self):
+    def test_best_mo(self) -> None:
         """Test finding the best mean of N in the history."""
         # For mo3, we can have 3 different mo3s:
         # mo3_1: (10 + 15 + 20) / 3 = 15
@@ -62,7 +62,7 @@ class TestStatisticsTools(unittest.TestCase):
         best_mo3 = self.stats_tools.best_mo(3)
         self.assertEqual(best_mo3, 15 * SECOND)
 
-    def test_best_ao(self):
+    def test_best_ao(self) -> None:
         """Test finding the best average of N in the history."""
         # Mock ao5 property to test best_ao
         self.stats_tools.ao5 = 20 * SECOND
@@ -75,7 +75,7 @@ class TestStatisticsTools(unittest.TestCase):
 @patch('term_timer.stats.np.histogram')
 @patch('term_timer.stats.console')
 class TestStatistics(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test cases with sample solves."""
         self.solves = [
             Solve(1000000000000, 10 * SECOND, 'F R U', ''),  # 10 seconds
@@ -85,58 +85,58 @@ class TestStatistics(unittest.TestCase):
             Solve(5000000000000, 25 * SECOND, 'R F U', ''),  # 25 seconds
         ]
 
-    def test_mo3_property(self, *_mocks):
+    def test_mo3_property(self, *_mocks) -> None:
         """Test mo3 property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.mo3, 25 * SECOND)
 
-    def test_ao5_property(self, *_mocks):
+    def test_ao5_property(self, *_mocks) -> None:
         """Test ao5 property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.ao5, 20 * SECOND)
 
-    def test_best_property(self, *_mocks):
+    def test_best_property(self, *_mocks) -> None:
         """Test best property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.best, 10 * SECOND)
 
-    def test_worst_property(self, *_mocks):
+    def test_worst_property(self, *_mocks) -> None:
         """Test worst property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.worst, 30 * SECOND)
 
-    def test_bpa_property(self, *_mocks):
+    def test_bpa_property(self, *_mocks) -> None:
         """Test bpa property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.bpa, 15 * SECOND)
 
-    def test_wpa_property(self, *_mocks):
+    def test_wpa_property(self, *_mocks) -> None:
         """Test wpa property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.wpa, 25 * SECOND)
 
-    def test_mean_property(self, *_mocks):
+    def test_mean_property(self, *_mocks) -> None:
         """Test mean property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.mean, 20 * SECOND)
 
-    def test_median_property(self, *_mocks):
+    def test_median_property(self, *_mocks) -> None:
         """Test median property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.median, 20 * SECOND)
 
-    def test_delta_property(self, *_mocks):
+    def test_delta_property(self, *_mocks) -> None:
         """Test delta property (difference between last two solves)."""
         stats = Statistics(self.solves)
         # Last solve (25s) - second to last solve (30s) = -5s
         self.assertEqual(stats.delta, -5 * SECOND)
 
-    def test_total_property(self, *_mocks):
+    def test_total_property(self, *_mocks) -> None:
         """Test total property (number of solves)."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.total, 5)
 
-    def test_total_time_property(self, *_mocks):
+    def test_total_time_property(self, *_mocks) -> None:
         """Test total_time property (sum of all solve times)."""
         stats = Statistics(self.solves)
         # 10 + 15 + 20 + 30 + 25 = 100s
@@ -145,7 +145,7 @@ class TestStatistics(unittest.TestCase):
 
 class TestStatisticsResumeReporter(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test cases with sample solves."""
         self.solves = [
             Solve(1000000000000, 1010000000000, 'F R U', ''),  # 10 seconds
@@ -156,7 +156,7 @@ class TestStatisticsResumeReporter(unittest.TestCase):
         ]
         self.puzzle = 3
 
-    def test_resume(self):
+    def test_resume(self) -> None:
         """Test the resume method which prints statistics summary."""
         stats = StatisticsReporter(self.puzzle, self.solves)
 
@@ -168,7 +168,7 @@ class TestStatisticsResumeReporter(unittest.TestCase):
 
 
 class TestStatisticsReporterListing(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test cases with sample solves."""
         self.solves = [
             Solve(1000000000, 1 * SECOND, 'F R U', ''),
@@ -179,7 +179,7 @@ class TestStatisticsReporterListing(unittest.TestCase):
         self.listing = StatisticsReporter(3, self.solves)
 
     @patch('term_timer.interface.console.console.print')
-    def test_resume_with_limit(self, mock_console):
+    def test_resume_with_limit(self, mock_console) -> None:
         """Test that resume respects the limit parameter."""
         self.listing.listing(2, '')
 
@@ -187,7 +187,7 @@ class TestStatisticsReporterListing(unittest.TestCase):
         self.assertEqual(mock_console.call_count, 3)
 
     @patch('term_timer.interface.console.console.print')
-    def test_resume_limit_larger_than_stack(self, mock_console):
+    def test_resume_limit_larger_than_stack(self, mock_console) -> None:
         """Test that resume handles limits larger than the stack size."""
         self.listing.listing(10, '')
 
@@ -195,7 +195,7 @@ class TestStatisticsReporterListing(unittest.TestCase):
         self.assertEqual(mock_console.call_count, 5)
 
     @patch('term_timer.interface.console.console.print')
-    def test_resume_format(self, mock_console):
+    def test_resume_format(self, mock_console) -> None:
         """Test the formatting of the resume output."""
         self.listing.listing(1, '')
 
@@ -221,7 +221,7 @@ class TestStatisticsReporterListing(unittest.TestCase):
 class TestStatisticsToolsComprehensive(unittest.TestCase):
     """Comprehensive tests for StatisticsTools to reach 100% coverage."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test cases."""
         self.solves = [
             Solve(1000000000000, 10 * SECOND, 'F R U', ''),
@@ -232,7 +232,7 @@ class TestStatisticsToolsComprehensive(unittest.TestCase):
         ]
         self.stats_tools = StatisticsTools(self.solves)
 
-    def test_init_filters_none_final_times(self):
+    def test_init_filters_none_final_times(self) -> None:
         """Test that initialization filters out None final_time values."""
         solves_with_dnf = [
             Solve(1000000000000, 10 * SECOND, 'F R U', ''),
@@ -247,7 +247,7 @@ class TestStatisticsToolsComprehensive(unittest.TestCase):
         self.assertEqual(len(stats.stack_time_sorted), 2)
         self.assertNotIn(None, stats.stack_time_sorted)
 
-    def test_best_mo_zero_mo_values(self):
+    def test_best_mo_zero_mo_values(self) -> None:
         """Test best_mo when mo calculations return 0."""
         # Create scenario where mo calculations can return 0
         zero_solves = [
@@ -260,7 +260,7 @@ class TestStatisticsToolsComprehensive(unittest.TestCase):
         # Should handle zero times correctly
         self.assertIsInstance(result, int)
 
-    def test_best_ao_zero_ao_values(self):
+    def test_best_ao_zero_ao_values(self) -> None:
         """Test best_ao when ao calculations return 0."""
         # Create scenario where ao calculations can return 0
         zero_solves = [
@@ -275,7 +275,7 @@ class TestStatisticsToolsComprehensive(unittest.TestCase):
         # Should handle zero times correctly
         self.assertIsInstance(result, int)
 
-    def test_empty_mos_list_case(self):
+    def test_empty_mos_list_case(self) -> None:
         """Test best_mo when no valid mos can be calculated."""
         # Empty solve list leads to empty mos list
         # need Statistics class for mo3 property
@@ -283,7 +283,7 @@ class TestStatisticsToolsComprehensive(unittest.TestCase):
         result = stats.best_mo3
         self.assertEqual(result, -1)  # Returns -1 for insufficient solves
 
-    def test_empty_aos_list_case(self):
+    def test_empty_aos_list_case(self) -> None:
         """Test best_ao when no valid aos can be calculated."""
         # Empty solve list leads to empty aos list
         # need Statistics class for ao5 property
@@ -295,7 +295,7 @@ class TestStatisticsToolsComprehensive(unittest.TestCase):
 class TestStatisticsComprehensive(unittest.TestCase):
     """Comprehensive tests for Statistics class to reach 100% coverage."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test cases."""
         self.solves = [
             Solve(1000000000000, 10 * SECOND, 'F R U', ''),
@@ -305,21 +305,21 @@ class TestStatisticsComprehensive(unittest.TestCase):
             Solve(5000000000000, 25 * SECOND, 'R F U', ''),
         ]
 
-    def test_larger_ao_properties(self):
+    def test_larger_ao_properties(self) -> None:
         """Test ao100 and ao1000 properties with insufficient solves."""
         stats = Statistics(self.solves)
         # These should return -1 with only 5 solves
         self.assertEqual(stats.ao100, -1)  # Line 126
         self.assertEqual(stats.ao1000, -1)  # Line 130
 
-    def test_larger_best_ao_properties(self):
+    def test_larger_best_ao_properties(self) -> None:
         """Test best_ao100 and best_ao1000 properties."""
         stats = Statistics(self.solves)
         # These should return -1 with insufficient solves (not 0)
         self.assertEqual(stats.best_ao100, -1)  # Line 146
         self.assertEqual(stats.best_ao1000, -1)  # Line 150
 
-    def test_repartition_configured_bin_size(self):
+    def test_repartition_configured_bin_size(self) -> None:
         """Test repartition with configured bin size."""
         with patch('term_timer.stats.STATS_CONFIG') as mock_config:
             mock_config.get.return_value = 5  # Configured bin size
@@ -334,7 +334,7 @@ class TestStatisticsComprehensive(unittest.TestCase):
 class TestStatisticsReporterComprehensive(unittest.TestCase):
     """Comprehensive tests for StatisticsReporter to reach 100% coverage."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test cases."""
         self.solves = [
             Solve(1600000000, 10 * SECOND, 'F R U', ''),
@@ -344,7 +344,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             Solve(1600000004, 25 * SECOND, 'R F U', ''),
         ]
 
-    def test_resume_many_solves_shows_ao12_ao100_ao1000(self):
+    def test_resume_many_solves_shows_ao12_ao100_ao1000(self) -> None:
         """Test resume with enough solves to show ao12, ao100, ao1000."""
         # Create enough solves to trigger ao12, ao100, ao1000 display
         many_solves = []
@@ -368,7 +368,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             self.assertTrue(ao100_found)
             self.assertTrue(ao1000_found)
 
-    def test_listing_advanced_solve_links(self):
+    def test_listing_advanced_solve_links(self) -> None:
         """Test listing with advanced solves showing links."""
         # Create mock advanced solve
         mock_solve = Mock(spec=Solve)
@@ -393,7 +393,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             link_found = any('link' in call.lower() for call in call_args)
             self.assertTrue(link_found)
 
-    def test_listing_best_worst_time_highlighting(self):
+    def test_listing_best_worst_time_highlighting(self) -> None:
         """Test listing highlights best and worst times."""
         reporter = StatisticsReporter(3, self.solves)
 
@@ -408,7 +408,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
 
             self.assertTrue(success_found or warning_found)
 
-    def test_detail_advanced_solve_full_display(self):
+    def test_detail_advanced_solve_full_display(self) -> None:
         """Test detail method with advanced solve showing all features."""
         # Create comprehensive mock advanced solve
         mock_solve = Mock(spec=Solve)
@@ -487,7 +487,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             self.assertTrue(overhead_found)
             self.assertTrue(pauses_found)
 
-    def test_detail_advanced_solve_conditional_aufs(self):
+    def test_detail_advanced_solve_conditional_aufs(self) -> None:
         """Test detail method AUFs conditional display."""
         # Test different AUF ranges
         test_cases = [
@@ -570,7 +570,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
                         )
                         self.assertTrue(aufs_found)
 
-    def test_detail_with_reconstruction_display(self):
+    def test_detail_with_reconstruction_display(self) -> None:
         """Test detail method with reconstruction display."""
         mock_solve = Mock(spec=Solve)
         mock_solve.final_time = 15 * SECOND
@@ -644,7 +644,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             self.assertTrue(term_timer_found)
             self.assertTrue(alg_cubing_found)
 
-    def test_detail_with_graphs(self):
+    def test_detail_with_graphs(self) -> None:
         """Test detail method with graph displays."""
         mock_solve = Mock(spec=Solve)
         mock_solve.final_time = 15 * SECOND
@@ -702,7 +702,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             mock_solve.tps_graph.assert_called_once()
             mock_solve.recognition_graph.assert_called_once()
 
-    def test_case_table_skip_case_handling(self):
+    def test_case_table_skip_case_handling(self) -> None:
         """Test case_table method with SKIP cases."""
         reporter = StatisticsReporter(3, self.solves)
 
@@ -726,7 +726,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             # Should handle SKIP cases (line 637)
             mock_table.add_row.assert_called_once()
 
-    def test_cfop_case_sorting_by_case(self):
+    def test_cfop_case_sorting_by_case(self) -> None:
         """Test cfop method sorting by 'case'."""
         reporter = StatisticsReporter(3, self.solves)
 
@@ -744,7 +744,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             # Should call case_table with 'label' instead of 'case'
             mock_case_table.assert_called()
 
-    def test_cfop_pll_only(self):
+    def test_cfop_pll_only(self) -> None:
         """Test cfop method with pll_only flag."""
         reporter = StatisticsReporter(3, self.solves)
 
@@ -762,7 +762,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             # Should only call case_table once (for PLL)
             self.assertEqual(mock_case_table.call_count, 1)
 
-    def test_graph_with_ao_data(self):
+    def test_graph_with_ao_data(self) -> None:
         """Test graph method when ao5 and ao12 can be calculated."""
         # Create enough solves for ao5 and ao12
         many_solves = []
@@ -791,7 +791,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             self.assertTrue(mock_plt.plot.call_count >= 3)
 
     @patch('term_timer.interface.console.console.print')
-    def test_resume_reverse_order(self, mock_console):
+    def test_resume_reverse_order(self, mock_console) -> None:
         """Test that solves are displayed in reverse order (newest first)."""
         reporter = StatisticsReporter(3, self.solves)
         reporter.listing(4, 'index')

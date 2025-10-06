@@ -8,7 +8,7 @@ from term_timer.solve import Solve
 class TestSolve03(unittest.TestCase):
     maxDiff = None
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.date = 1751998918
         self.time = 2549969965
         self.scramble = "B R2 D' L2 D'"
@@ -26,7 +26,7 @@ class TestSolve03(unittest.TestCase):
         self.solve.method_name = 'cf4op'
         self.solve.orientation = 'DF'
 
-    def test_datetime(self):
+    def test_datetime(self) -> None:
         self.assertEqual(
             self.solve.datetime,
             datetime.datetime(
@@ -35,13 +35,13 @@ class TestSolve03(unittest.TestCase):
             ),
         )
 
-    def test_final_time(self):
+    def test_final_time(self) -> None:
         self.assertEqual(
             self.solve.final_time,
             self.time,
         )
 
-    def test_move_times(self):
+    def test_move_times(self) -> None:
         self.assertEqual(
             self.solve.move_times,
             [
@@ -55,24 +55,24 @@ class TestSolve03(unittest.TestCase):
             ],
         )
 
-    def test_advanced(self):
+    def test_advanced(self) -> None:
         self.assertTrue(
             self.solve.advanced,
         )
 
-    def test_solution(self):
+    def test_solution(self) -> None:
         self.assertEqual(
             self.solve.solution.metrics.htm,
             7,
         )
 
-    def test_reconstruction(self):
+    def test_reconstruction(self) -> None:
         self.assertEqual(
             str(self.solve.reconstruction),
             "U R2 U L2 B'",
         )
 
-    def test_reconstruction_orientation_auto(self):
+    def test_reconstruction_orientation_auto(self) -> None:
         self.solve.orientation = 'auto'
         self.assertEqual(
             str(self.solve.reconstruction),
@@ -80,91 +80,91 @@ class TestSolve03(unittest.TestCase):
         )
         self.assertEqual(str(self.solve.orientation_moves), "x'")
 
-    def test_tps(self):
+    def test_tps(self) -> None:
         self.assertEqual(
             self.solve.tps,
             2.7451303725453884,
         )
 
-    def test_all_missed_moves(self):
+    def test_all_missed_moves(self) -> None:
         self.assertEqual(
             self.solve.all_missed_moves,
             0,
         )
 
-    def test_step_missed_moves(self):
+    def test_step_missed_moves(self) -> None:
         self.assertEqual(
             self.solve.step_missed_moves,
             0,
         )
 
-    def test_step_pauses(self):
+    def test_step_pauses(self) -> None:
         self.assertEqual(
             self.solve.step_pauses,
             1,
         )
 
-    def test_execution_pauses(self):
+    def test_execution_pauses(self) -> None:
         self.assertEqual(
             self.solve.execution_pauses,
             1,
         )
 
-    def test_execution_missed_moves(self):
+    def test_execution_missed_moves(self) -> None:
         self.assertEqual(
             self.solve.execution_missed_moves,
             0,
         )
 
-    def test_transition_missed_moves(self):
+    def test_transition_missed_moves(self) -> None:
         self.assertEqual(
             self.solve.transition_missed_moves,
             0,
         )
 
-    def test_method_analyser(self):
+    def test_method_analyser(self) -> None:
         self.assertEqual(
             self.solve.method_analyser,
             CF4OPAnalyser,
         )
 
-    def test_recognition_time(self):
+    def test_recognition_time(self) -> None:
         self.assertEqual(
             self.solve.recognition_time,
             0,
         )
 
-    def test_execution_time(self):
+    def test_execution_time(self) -> None:
         self.assertEqual(
             self.solve.execution_time,
             2551000000,
         )
 
-    def test_move_speed(self):
+    def test_move_speed(self) -> None:
         self.assertEqual(
             self.solve.move_speed,
             364428571.4285714,
         )
 
-    def test_pause_threshold(self):
+    def test_pause_threshold(self) -> None:
         self.assertEqual(
             self.solve.pause_threshold,
             728857142.8571428,
         )
 
-    def test_score(self):
+    def test_score(self) -> None:
         self.assertEqual(
             self.solve.score,
             20,
         )
 
-    def test_method_score(self):
+    def test_method_score(self) -> None:
         self.assertEqual(
             self.solve.method_applied.score,
             50,
         )
 
-    def test_summary(self):
+    def test_summary(self) -> None:
         inputs = self.solve.method_applied.summary
         outputs = [
             ('Full Cube', 'step'),
@@ -183,7 +183,7 @@ class TestSolve03(unittest.TestCase):
                 expected[1],
             )
 
-    def test_reconstruction_steps_timing(self):
+    def test_reconstruction_steps_timing(self) -> None:
         self.assertEqual(
             self.solve.reconstruction_steps_timing,
             [
@@ -197,7 +197,7 @@ class TestSolve03(unittest.TestCase):
             ],
         )
 
-    def test_reconstruction_step_line(self):
+    def test_reconstruction_step_line(self) -> None:
         inputs = [
             info
             for info in self.solve.method_applied.summary
@@ -216,7 +216,7 @@ class TestSolve03(unittest.TestCase):
                 expected,
             )
 
-    def test_reconstruction_step_line_multiple(self):
+    def test_reconstruction_step_line_multiple(self) -> None:
         inputs = [
             info
             for info in self.solve.method_applied.summary
@@ -235,7 +235,7 @@ class TestSolve03(unittest.TestCase):
                 expected,
             )
 
-    def test_reconstruction_step_text(self):
+    def test_reconstruction_step_text(self) -> None:
         inputs = [
             info
             for info in self.solve.method_applied.summary
@@ -254,7 +254,7 @@ class TestSolve03(unittest.TestCase):
                 expected,
             )
 
-    def test_reconstruction_step_text_multiple(self):
+    def test_reconstruction_step_text_multiple(self) -> None:
         inputs = [
             info
             for info in self.solve.method_applied.summary

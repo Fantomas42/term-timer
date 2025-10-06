@@ -4,7 +4,7 @@ from term_timer.trainer import Trainer
 
 
 class TestTrainerModule(unittest.TestCase):
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         timer = Trainer(
             step='oll',
             cases=['01', '02'],

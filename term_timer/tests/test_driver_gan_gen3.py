@@ -14,7 +14,7 @@ from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 
 
 class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
         self.mock_client.name = 'GAN356 iCarry2'
@@ -27,17 +27,17 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
         ):
             self.driver = GanGen3Driver(self.mock_client)
 
-    def test_init_sets_correct_attributes(self):
+    def test_init_sets_correct_attributes(self) -> None:
         self.assertEqual(self.driver.client, self.mock_client)
         self.assertEqual(self.driver.serial, -1)
         self.assertEqual(self.driver.last_serial, -1)
         self.assertIsNone(self.driver.last_local_timestamp)
         self.assertEqual(self.driver.move_buffer, [])
 
-    def test_inherits_from_gan_gen2(self):
+    def test_inherits_from_gan_gen2(self) -> None:
         self.assertIsInstance(self.driver, GanGen2Driver)
 
-    def test_class_constants(self):
+    def test_class_constants(self) -> None:
         self.assertEqual(
             GanGen3Driver.service_uid,
             GAN_GEN3_SERVICE,
@@ -51,7 +51,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
             GAN_GEN3_COMMAND_CHARACTERISTIC,
         )
 
-    def test_send_command_handler_request_facelets(self):
+    def test_send_command_handler_request_facelets(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -63,7 +63,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(args[0][1], 0x01)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_hardware(self):
+    def test_send_command_handler_request_hardware(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -74,7 +74,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(args[0][1], 0x04)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_battery(self):
+    def test_send_command_handler_request_battery(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -85,7 +85,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(args[0][1], 0x07)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_reset(self):
+    def test_send_command_handler_request_reset(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -113,7 +113,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(list(args[0]), expected_sequence)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_invalid_command(self):
+    def test_send_command_handler_invalid_command(self) -> None:
         result = self.driver.send_command_handler('INVALID_COMMAND')
         self.assertFalse(result)
 
@@ -203,19 +203,19 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.driver.last_serial, 50)
         self.assertEqual(len(self.driver.move_buffer), 0)
 
-    def test_is_serial_in_range_basic(self):
+    def test_is_serial_in_range_basic(self) -> None:
         # Test serial 5 is in range [3, 7]
         result = self.driver.is_serial_in_range(3, 7, 5)
         self.assertTrue(result)
 
-    def test_is_serial_in_range_boundary_open(self):
+    def test_is_serial_in_range_boundary_open(self) -> None:
         # Test boundaries with open intervals
         # start boundary, open
         self.assertFalse(self.driver.is_serial_in_range(3, 7, 3))
         # end boundary, open
         self.assertFalse(self.driver.is_serial_in_range(3, 7, 7))
 
-    def test_is_serial_in_range_boundary_closed(self):
+    def test_is_serial_in_range_boundary_closed(self) -> None:
         # Test boundaries with closed intervals
         self.assertTrue(
             self.driver.is_serial_in_range(3, 7, 3, closed_start=True),
@@ -224,14 +224,14 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
             self.driver.is_serial_in_range(3, 7, 7, closed_end=True),
         )
 
-    def test_is_serial_in_range_wraparound(self):
+    def test_is_serial_in_range_wraparound(self) -> None:
         # Test wraparound case (e.g., range [250, 10] includes 255, 0, 5)
         self.assertTrue(self.driver.is_serial_in_range(250, 10, 255))
         self.assertTrue(self.driver.is_serial_in_range(250, 10, 0))
         self.assertTrue(self.driver.is_serial_in_range(250, 10, 5))
         self.assertFalse(self.driver.is_serial_in_range(250, 10, 100))
 
-    def test_inject_missed_move_to_buffer_empty_buffer(self):
+    def test_inject_missed_move_to_buffer_empty_buffer(self) -> None:
         self.driver.last_serial = 100
         self.driver.serial = 105
         self.driver.move_buffer = []
@@ -242,7 +242,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(self.driver.move_buffer), 1)
         self.assertEqual(self.driver.move_buffer[0], move)
 
-    def test_inject_missed_move_to_buffer_with_existing_buffer(self):
+    def test_inject_missed_move_to_buffer_with_existing_buffer(self) -> None:
         self.driver.last_serial = 100
         self.driver.move_buffer = [
             {'serial': 105, 'event': 'move', 'move': 'R'},
@@ -255,7 +255,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.driver.move_buffer[0], move)  # Inserted at front
         self.assertEqual(self.driver.move_buffer[1]['serial'], 105)
 
-    def test_inject_missed_move_to_buffer_duplicate_serial(self):
+    def test_inject_missed_move_to_buffer_duplicate_serial(self) -> None:
         self.driver.last_serial = 100
         self.driver.move_buffer = [
             {'serial': 103, 'event': 'move', 'move': 'R'},
@@ -268,7 +268,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
         # Original preserved
         self.assertEqual(self.driver.move_buffer[0]['move'], 'R')
 
-    def test_inject_missed_move_to_buffer_out_of_range(self):
+    def test_inject_missed_move_to_buffer_out_of_range(self) -> None:
         self.driver.last_serial = 100
         self.driver.move_buffer = [
             {'serial': 105, 'event': 'move', 'move': 'R'},
@@ -739,17 +739,17 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(result, [])
                 mock_logger.debug.assert_called_once()
 
-    def test_event_handler_is_async(self):
+    def test_event_handler_is_async(self) -> None:
         # Verify that event_handler is an async function
         self.assertTrue(asyncio.iscoroutinefunction(self.driver.event_handler))
 
-    def test_request_move_history_is_async(self):
+    def test_request_move_history_is_async(self) -> None:
         # Verify that request_move_history is an async function
         self.assertTrue(
             asyncio.iscoroutinefunction(self.driver.request_move_history),
         )
 
-    def test_face_mapping_gen3(self):
+    def test_face_mapping_gen3(self) -> None:
         # Test the Gen3 face mapping for move history
         # [1, 5, 3, 0, 4, 2] maps to URFDLB
         face_indices = [1, 5, 3, 0, 4, 2]
@@ -759,7 +759,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
         for i, expected_face in enumerate(expected_mapping):
             self.assertEqual(face_names[face_indices[i]], expected_face)
 
-    def test_move_direction_bits(self):
+    def test_move_direction_bits(self) -> None:
         # Test move direction bits encoding for Gen3
         # [2, 32, 8, 1, 16, 4] are the bit patterns for URFDLB
         bit_patterns = [2, 32, 8, 1, 16, 4]
@@ -771,7 +771,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(index, i)
             self.assertEqual(face_names[i], face_names[index])
 
-    def test_serial_arithmetic_wraparound(self):
+    def test_serial_arithmetic_wraparound(self) -> None:
         # Test 8-bit serial arithmetic with wraparound
         test_cases = [
             # 1 - 255 = -254, -254 & 0xFF = 2 (with 8-bit wraparound)

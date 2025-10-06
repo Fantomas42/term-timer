@@ -10,7 +10,7 @@ class BaseDriver(Driver):
 
 
 class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
 
@@ -22,32 +22,32 @@ class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
 
 
 class TestDriver(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
 
         self.driver = BaseDriver(self.mock_client)
 
-    def test_init_sets_client(self):
+    def test_init_sets_client(self) -> None:
         self.assertEqual(self.driver.client, self.mock_client)
 
-    def test_init_initializes_empty_events_list(self):
+    def test_init_initializes_empty_events_list(self) -> None:
         self.assertEqual(self.driver.events, [])
 
-    def test_init_calls_init_cypher(self):
+    def test_init_calls_init_cypher(self) -> None:
         # init_cypher should be called during initialization
         cypher = self.driver.init_cypher()
         self.assertIsNone(cypher)
 
-    def test_init_cypher_raises_not_implemented(self):
+    def test_init_cypher_raises_not_implemented(self) -> None:
         with self.assertRaises(NotImplementedError):
             Driver(self.mock_client)
 
-    def test_send_command_handler_raises_not_implemented(self):
+    def test_send_command_handler_raises_not_implemented(self) -> None:
         with self.assertRaises(NotImplementedError):
             self.driver.send_command_handler('test_command')
 
-    def test_add_event_with_single_event(self):
+    def test_add_event_with_single_event(self) -> None:
         store = []
         event = {'type': 'test', 'data': 'test_data'}
 
@@ -58,7 +58,7 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(len(self.driver.events), 1)
         self.assertEqual(self.driver.events[0], event)
 
-    def test_add_event_with_list_of_events(self):
+    def test_add_event_with_list_of_events(self) -> None:
         store = []
         events = [
             {'type': 'test1', 'data': 'data1'},
@@ -73,7 +73,7 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(len(self.driver.events), 3)
         self.assertEqual(self.driver.events, events)
 
-    def test_add_event_with_empty_list(self):
+    def test_add_event_with_empty_list(self) -> None:
         store = []
         events = []
 
@@ -82,7 +82,7 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(len(store), 0)
         self.assertEqual(len(self.driver.events), 0)
 
-    def test_add_event_multiple_calls_accumulate(self):
+    def test_add_event_multiple_calls_accumulate(self) -> None:
         store1 = []
         store2 = []
         event1 = {'type': 'test1'}
@@ -100,7 +100,7 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(len(self.driver.events), 3)
         self.assertEqual(self.driver.events, [event1, event2, event3])
 
-    def test_add_event_with_mixed_single_and_list(self):
+    def test_add_event_with_mixed_single_and_list(self) -> None:
         store = []
         single_event = {'type': 'single'}
         list_events = [{'type': 'list1'}, {'type': 'list2'}]
@@ -112,19 +112,19 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(store, expected_store)
         self.assertEqual(self.driver.events, expected_store)
 
-    def test_class_attributes_default_values(self):
+    def test_class_attributes_default_values(self) -> None:
         self.assertEqual(Driver.service_uid, '')
         self.assertEqual(Driver.state_characteristic_uid, '')
         self.assertEqual(Driver.command_characteristic_uid, '')
         self.assertTrue(Driver.disable_gyro)
 
-    def test_driver_instance_has_cypher_attribute(self):
+    def test_driver_instance_has_cypher_attribute(self) -> None:
         self.assertTrue(hasattr(self.driver, 'cypher'))
         # cypher should be the result of init_cypher()
         # which is None in base class
         self.assertIsNone(self.driver.cypher)
 
-    def test_add_event_preserves_original_list_reference(self):
+    def test_add_event_preserves_original_list_reference(self) -> None:
         # Test that the store parameter is modified in place
         original_store = []
         store_reference = original_store
@@ -137,7 +137,7 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(original_store[0], event)
         self.assertIs(original_store, store_reference)
 
-    def test_add_event_with_none_event(self):
+    def test_add_event_with_none_event(self) -> None:
         store = []
 
         # This should work without raising an exception
@@ -148,7 +148,7 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(len(self.driver.events), 1)
         self.assertIsNone(self.driver.events[0])
 
-    def test_add_event_with_complex_nested_data(self):
+    def test_add_event_with_complex_nested_data(self) -> None:
         store = []
         complex_event = {
             'event': 'move',

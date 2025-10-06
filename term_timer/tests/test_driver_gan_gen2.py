@@ -13,7 +13,7 @@ from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 
 
 class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
         self.mock_client.name = 'GAN356 i'
@@ -24,13 +24,13 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         ):
             self.driver = GanGen2Driver(self.mock_client)
 
-    def test_init_sets_correct_attributes(self):
+    def test_init_sets_correct_attributes(self) -> None:
         self.assertEqual(self.driver.client, self.mock_client)
         self.assertEqual(self.driver.last_serial, -1)
         self.assertEqual(self.driver.cube_timestamp, 0)
         self.assertEqual(self.driver.last_move_timestamp, None)
 
-    def test_class_constants(self):
+    def test_class_constants(self) -> None:
         self.assertEqual(
             GanGen2Driver.service_uid,
             GAN_GEN2_SERVICE,
@@ -44,7 +44,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
             GAN_GEN2_COMMAND_CHARACTERISTIC,
         )
 
-    def test_init_cypher_gan_cube(self):
+    def test_init_cypher_gan_cube(self) -> None:
         # Test that init_cypher returns the encrypter for GAN cube
         self.mock_client.name = 'GAN356 i'
 
@@ -55,7 +55,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         # Test that cypher was set during initialization
         self.assertIsNotNone(self.driver.cypher)
 
-    def test_init_cypher_aicube(self):
+    def test_init_cypher_aicube(self) -> None:
         # Create a new driver with AiCube name
         # to test the different encryption key path
         mock_aicube_client = Mock()
@@ -75,7 +75,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         result = aicube_driver.init_cypher()
         self.assertIsNotNone(result)
 
-    def test_send_command_handler_request_facelets(self):
+    def test_send_command_handler_request_facelets(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -86,7 +86,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(args[0][0], 0x04)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_hardware(self):
+    def test_send_command_handler_request_hardware(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -96,7 +96,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(args[0][0], 0x05)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_battery(self):
+    def test_send_command_handler_request_battery(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -106,7 +106,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(args[0][0], 0x09)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_reset(self):
+    def test_send_command_handler_request_reset(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -120,15 +120,15 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(list(args[0]), expected_sequence)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_invalid_command(self):
+    def test_send_command_handler_invalid_command(self) -> None:
         result = self.driver.send_command_handler('INVALID_COMMAND')
         self.assertFalse(result)
 
-    def test_send_command_handler_empty_command(self):
+    def test_send_command_handler_empty_command(self) -> None:
         result = self.driver.send_command_handler('')
         self.assertFalse(result)
 
-    def test_send_command_handler_none_command(self):
+    def test_send_command_handler_none_command(self) -> None:
         result = self.driver.send_command_handler(None)
         self.assertFalse(result)
 
@@ -530,11 +530,11 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(result, [])
                 mock_logger.debug.assert_called_once()
 
-    def test_event_handler_is_async(self):
+    def test_event_handler_is_async(self) -> None:
         # Verify that event_handler is an async function
         self.assertTrue(asyncio.iscoroutinefunction(self.driver.event_handler))
 
-    def test_quaternion_calculation_positive_values(self):
+    def test_quaternion_calculation_positive_values(self) -> None:
         # Test quaternion calculation logic for positive values
         test_value = 0x4000  # Positive value (bit 15 is 0)
         sign = 1 - ((test_value >> 15) * 2)  # Should be 1
@@ -544,7 +544,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sign, 1)
         self.assertAlmostEqual(expected, 0.5, places=4)
 
-    def test_quaternion_calculation_negative_values(self):
+    def test_quaternion_calculation_negative_values(self) -> None:
         # Test quaternion calculation logic for negative values
         test_value = 0x8000  # Negative value (bit 15 is 1)
         sign = 1 - ((test_value >> 15) * 2)  # Should be -1
@@ -554,7 +554,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sign, -1)
         self.assertEqual(expected, 0.0)
 
-    def test_velocity_calculation_positive_values(self):
+    def test_velocity_calculation_positive_values(self) -> None:
         # Test velocity calculation logic for positive values
         test_value = 0x04  # Positive value (bit 3 is 0)
         sign = 1 - ((test_value >> 3) * 2)  # Should be 1
@@ -564,7 +564,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sign, 1)
         self.assertEqual(expected, 4)
 
-    def test_velocity_calculation_negative_values(self):
+    def test_velocity_calculation_negative_values(self) -> None:
         # Test velocity calculation logic for negative values
         test_value = 0x08  # Negative value (bit 3 is 1)
         sign = 1 - ((test_value >> 3) * 2)  # Should be -1
@@ -574,28 +574,28 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sign, -1)
         self.assertEqual(expected, 0)
 
-    def test_corner_permutation_calculation(self):
+    def test_corner_permutation_calculation(self) -> None:
         # Test that corner permutation is correctly calculated
         # The last corner is calculated as 28 - sum(first 7)
         cp_values = [0, 1, 2, 3, 4, 5, 6]
         last_cp = 28 - sum(cp_values)
         self.assertEqual(last_cp, 7)  # 28 - 21 = 7
 
-    def test_corner_orientation_calculation(self):
+    def test_corner_orientation_calculation(self) -> None:
         # Test that corner orientation is correctly calculated
         # The last corner orientation is calculated as (3 - (sum % 3)) % 3
         co_values = [0, 1, 2, 0, 1, 2, 0]
         last_co = (3 - (sum(co_values) % 3)) % 3
         self.assertEqual(last_co, 0)  # (3 - (6 % 3)) % 3 = (3 - 0) % 3 = 0
 
-    def test_edge_permutation_calculation(self):
+    def test_edge_permutation_calculation(self) -> None:
         # Test that edge permutation is correctly calculated
         # The last edge is calculated as 66 - sum(first 11)
         ep_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         last_ep = 66 - sum(ep_values)
         self.assertEqual(last_ep, 11)  # 66 - 55 = 11
 
-    def test_edge_orientation_calculation(self):
+    def test_edge_orientation_calculation(self) -> None:
         # Test that edge orientation is correctly calculated
         # The last edge orientation is calculated as (2 - (sum % 2)) % 2
         eo_values = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]

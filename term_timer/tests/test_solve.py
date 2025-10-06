@@ -7,7 +7,7 @@ from term_timer.solve import Solve
 
 
 class TestSolveModule(unittest.TestCase):
-    def test_solve_initialization(self):
+    def test_solve_initialization(self) -> None:
         """Test initialization of a Solve object."""
         date = 1000000000
         time = 1012345678
@@ -20,7 +20,7 @@ class TestSolveModule(unittest.TestCase):
         self.assertEqual(str(solve.scramble), scramble)
         self.assertEqual(solve.flag, '')
 
-    def test_solve_with_string(self):
+    def test_solve_with_string(self) -> None:
         """Test initialization of a Solve object with string times."""
         date = '1000000000'
         time = '1012345678'
@@ -31,7 +31,7 @@ class TestSolveModule(unittest.TestCase):
         self.assertEqual(solve.date, 1000000000)
         self.assertEqual(solve.time, 1012345678)
 
-    def test_solve_final_time_normal(self):
+    def test_solve_final_time_normal(self) -> None:
         """Test the final_time property with no penalty."""
         date = 1000000000
         time = 1012345678
@@ -41,7 +41,7 @@ class TestSolveModule(unittest.TestCase):
 
         self.assertEqual(solve.final_time, 1012345678)
 
-    def test_solve_final_time_plus_two(self):
+    def test_solve_final_time_plus_two(self) -> None:
         """Test the final_time property with +2 penalty."""
         date = 1000000000
         time = 1012345678
@@ -51,7 +51,7 @@ class TestSolveModule(unittest.TestCase):
 
         self.assertEqual(solve.final_time, 1012345678 + (2 * SECOND))
 
-    def test_solve_final_time_dnf(self):
+    def test_solve_final_time_dnf(self) -> None:
         """Test the final_time property with DNF penalty."""
         date = 1000000000
         time = 1012345678
@@ -61,7 +61,7 @@ class TestSolveModule(unittest.TestCase):
 
         self.assertEqual(solve.final_time, 0)
 
-    def test_solve_string_representation(self):
+    def test_solve_string_representation(self) -> None:
         """Test the string representation of a Solve object."""
         date = 1000000000000
         time = 1005000000000  # 5 seconds

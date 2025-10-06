@@ -9,7 +9,7 @@ class TestInOut(unittest.TestCase):
 
     @patch('term_timer.in_out.SAVE_DIRECTORY', Path('/mock/path'))
     @patch('pathlib.Path.exists')
-    def test_load_solves_non_existing_file(self, mock_exists):
+    def test_load_solves_non_existing_file(self, mock_exists) -> None:
         """Test loading solves from a non-existing file returns empty list."""
         mock_exists.return_value = False
 

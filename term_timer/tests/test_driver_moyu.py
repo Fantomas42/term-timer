@@ -12,7 +12,7 @@ from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
 
 
 class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
         self.mock_client.name = 'WeiLong v10'
@@ -23,13 +23,13 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
         ):
             self.driver = MoyuWeilong10Driver(self.mock_client)
 
-    def test_init_sets_correct_attributes(self):
+    def test_init_sets_correct_attributes(self) -> None:
         self.assertEqual(self.driver.client, self.mock_client)
         self.assertEqual(self.driver.last_serial, -1)
         self.assertEqual(self.driver.cube_timestamp, 0)
         self.assertEqual(self.driver.last_move_timestamp, None)
 
-    def test_class_constants(self):
+    def test_class_constants(self) -> None:
         self.assertEqual(
             MoyuWeilong10Driver.service_uid,
             MOYU_WEILONG_SERVICE,
@@ -44,12 +44,12 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(MoyuWeilong10Driver.factor, pow(2, 30))
 
-    def test_init_cypher(self):
+    def test_init_cypher(self) -> None:
         result = self.driver.init_cypher()
         self.assertIsNotNone(result)
         self.assertIsNotNone(self.driver.cypher)
 
-    def test_send_command_handler_request_facelets(self):
+    def test_send_command_handler_request_facelets(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -60,7 +60,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(args[0][0], 0xA3)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_hardware(self):
+    def test_send_command_handler_request_hardware(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -70,7 +70,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(args[0][0], 0xA1)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_battery(self):
+    def test_send_command_handler_request_battery(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -80,7 +80,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(args[0][0], 0xA4)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_enable_gyro(self):
+    def test_send_command_handler_request_enable_gyro(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -91,7 +91,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(args[0][2], 0x01)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_disable_gyro(self):
+    def test_send_command_handler_request_disable_gyro(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -102,7 +102,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(args[0][2], 0x00)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_reset(self):
+    def test_send_command_handler_request_reset(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -118,15 +118,15 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(list(args[0]), expected_sequence)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_invalid_command(self):
+    def test_send_command_handler_invalid_command(self) -> None:
         result = self.driver.send_command_handler('INVALID_COMMAND')
         self.assertFalse(result)
 
-    def test_send_command_handler_empty_command(self):
+    def test_send_command_handler_empty_command(self) -> None:
         result = self.driver.send_command_handler('')
         self.assertFalse(result)
 
-    def test_send_command_handler_none_command(self):
+    def test_send_command_handler_none_command(self) -> None:
         result = self.driver.send_command_handler(None)
         self.assertFalse(result)
 
@@ -473,7 +473,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(result, [])
                 mock_logger.debug.assert_called_once()
 
-    def test_event_handler_is_async(self):
+    def test_event_handler_is_async(self) -> None:
         # Verify that event_handler is an async function
         self.assertTrue(asyncio.iscoroutinefunction(self.driver.event_handler))
 
@@ -490,7 +490,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(ValueError):
                     await self.driver.event_handler('sender', b'')
 
-    def test_move_value_to_face_mapping(self):
+    def test_move_value_to_face_mapping(self) -> None:
         # Test the move value to face/direction mapping
         # move_value >> 1 gives face index (0-5 for FBUDLR)
         # move_value & 1 gives direction (0 for normal, 1 for prime)
@@ -513,7 +513,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             actual = face_map[face_idx] + direction_map[direction_idx]
             self.assertEqual(actual.strip(), expected)
 
-    def test_facelets_face_order(self):
+    def test_facelets_face_order(self) -> None:
         # Test that the face order mapping is correct
         # The code uses faces = [2, 5, 0, 3, 4, 1] to parse in URFDLB order
         expected_order = [2, 5, 0, 3, 4, 1]  # Maps URFDLB to FBUDLR indices

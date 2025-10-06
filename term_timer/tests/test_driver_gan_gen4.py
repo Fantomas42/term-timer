@@ -14,7 +14,7 @@ from term_timer.bluetooth.drivers.gan_gen4 import GanGen4Driver
 
 
 class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
         self.mock_client.name = 'GAN12 uiM'
@@ -27,10 +27,10 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
         ):
             self.driver = GanGen4Driver(self.mock_client)
 
-    def test_inherits_from_gan_gen3(self):
+    def test_inherits_from_gan_gen3(self) -> None:
         self.assertIsInstance(self.driver, GanGen3Driver)
 
-    def test_class_constants(self):
+    def test_class_constants(self) -> None:
         self.assertEqual(
             GanGen4Driver.service_uid,
             GAN_GEN4_SERVICE,
@@ -44,7 +44,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
             GAN_GEN4_COMMAND_CHARACTERISTIC,
         )
 
-    def test_send_command_handler_request_facelets(self):
+    def test_send_command_handler_request_facelets(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -57,7 +57,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(args[0][i], expected)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_hardware(self):
+    def test_send_command_handler_request_hardware(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -69,7 +69,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(args[0][i], expected)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_battery(self):
+    def test_send_command_handler_request_battery(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -81,7 +81,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(args[0][i], expected)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_request_reset(self):
+    def test_send_command_handler_request_reset(self) -> None:
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -110,7 +110,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(args[0][i], expected)
             self.assertEqual(result, b'encrypted_data')
 
-    def test_send_command_handler_invalid_command(self):
+    def test_send_command_handler_invalid_command(self) -> None:
         result = self.driver.send_command_handler('INVALID_COMMAND')
         self.assertFalse(result)
 
@@ -780,17 +780,17 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(result, [])
                 mock_logger.debug.assert_called_once()
 
-    def test_event_handler_is_async(self):
+    def test_event_handler_is_async(self) -> None:
         # Verify that event_handler is an async function
         self.assertTrue(asyncio.iscoroutinefunction(self.driver.event_handler))
 
-    def test_request_move_history_is_async(self):
+    def test_request_move_history_is_async(self) -> None:
         # Verify that request_move_history is an async function
         self.assertTrue(
             asyncio.iscoroutinefunction(self.driver.request_move_history),
         )
 
-    def test_hardware_event_range(self):
+    def test_hardware_event_range(self) -> None:
         # Test the hardware event range (0xFA to 0xFE)
         hardware_events = [0xFA, 0xFB, 0xFC, 0xFD, 0xFE]
         for event in hardware_events:
@@ -801,7 +801,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
         for event in non_hardware_events:
             self.assertFalse(0xFA <= event <= 0xFE)
 
-    def test_gyroscope_support_detection(self):
+    def test_gyroscope_support_detection(self) -> None:
         # Test gyroscope support detection logic
         test_cases = [
             ('GAN12uiM', True),
@@ -815,7 +815,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
             has_gyro = 'GAN12uiM' in hardware_name
             self.assertEqual(has_gyro, expected_gyro_support)
 
-    def test_quaternion_calculation_gen4(self):
+    def test_quaternion_calculation_gen4(self) -> None:
         # Test quaternion calculation logic for Gen4 (same as Gen2)
         test_value = 0x4000  # Positive value (bit 15 is 0)
         sign = 1 - ((test_value >> 15) * 2)  # Should be 1
@@ -825,7 +825,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sign, 1)
         self.assertAlmostEqual(expected, 0.5, places=4)
 
-    def test_velocity_calculation_gen4(self):
+    def test_velocity_calculation_gen4(self) -> None:
         # Test velocity calculation logic for Gen4 (same as Gen2)
         test_value = 0x04  # Positive value (bit 3 is 0)
         sign = 1 - ((test_value >> 3) * 2)  # Should be 1
@@ -835,7 +835,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sign, 1)
         self.assertEqual(expected, 4)
 
-    def test_face_mapping_gen4_move_history(self):
+    def test_face_mapping_gen4_move_history(self) -> None:
         # Test the Gen4 face mapping for move history (same as Gen3)
         # [1, 5, 3, 0, 4, 2] maps to URFDLB
         face_indices = [1, 5, 3, 0, 4, 2]
@@ -845,7 +845,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
         for i, expected_face in enumerate(expected_mapping):
             self.assertEqual(face_names[face_indices[i]], expected_face)
 
-    def test_face_mapping_gen4_move_event(self):
+    def test_face_mapping_gen4_move_event(self) -> None:
         # Test the Gen4 face mapping for move events
         # [2, 32, 8, 1, 16, 4] are the bit patterns for URFDLB
         bit_patterns = [2, 32, 8, 1, 16, 4]
@@ -857,25 +857,25 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(index, i)
             self.assertEqual(face_names[i], face_names[index])
 
-    def test_hardware_version_formatting(self):
+    def test_hardware_version_formatting(self) -> None:
         # Test hardware version string formatting
         major, minor = 2, 5
         version_string = f'{major}.{minor}'
         self.assertEqual(version_string, '2.5')
 
-    def test_software_version_formatting(self):
+    def test_software_version_formatting(self) -> None:
         # Test software version string formatting
         major, minor = 1, 3
         version_string = f'{major}.{minor}'
         self.assertEqual(version_string, '1.3')
 
-    def test_product_date_formatting(self):
+    def test_product_date_formatting(self) -> None:
         # Test product date string formatting
         year, month, day = 2023, 6, 15
         date_string = f'{year:04d}-{month:02d}-{day:02d}'
         self.assertEqual(date_string, '2023-06-15')
 
-    def test_battery_calculation_with_data_size_offset(self):
+    def test_battery_calculation_with_data_size_offset(self) -> None:
         # Test battery level calculation with data_size offset
         # Battery level is at position: 8 + data_size * 8
         data_size = 3
@@ -895,7 +895,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(ValueError):
                     await self.driver.event_handler('sender', b'')
 
-    def test_command_byte_sequences(self):
+    def test_command_byte_sequences(self) -> None:
         # Test that command byte sequences are correctly formed
         test_cases = [
             ('REQUEST_FACELETS', [0xDD, 0x04, 0x00, 0xED, 0x00, 0x00]),

@@ -6,7 +6,7 @@ from term_timer.bluetooth.salt import get_salt
 class TestGetSalt(unittest.TestCase):
     """Test cases for get_salt function."""
 
-    def test_valid_mac_address_standard_format(self):
+    def test_valid_mac_address_standard_format(self) -> None:
         """Test with standard MAC address format."""
         mac = '01:23:45:67:89:AB'
         result = get_salt(mac)
@@ -17,7 +17,7 @@ class TestGetSalt(unittest.TestCase):
         self.assertIsInstance(result, bytearray)
         self.assertEqual(len(result), 6)
 
-    def test_valid_mac_address_lowercase(self):
+    def test_valid_mac_address_lowercase(self) -> None:
         """Test with lowercase MAC address."""
         mac = 'aa:bb:cc:dd:ee:ff'
         result = get_salt(mac)
@@ -25,7 +25,7 @@ class TestGetSalt(unittest.TestCase):
         expected = bytearray([0xFF, 0xEE, 0xDD, 0xCC, 0xBB, 0xAA])
         self.assertEqual(result, expected)
 
-    def test_valid_mac_address_uppercase(self):
+    def test_valid_mac_address_uppercase(self) -> None:
         """Test with uppercase MAC address."""
         mac = 'AA:BB:CC:DD:EE:FF'
         result = get_salt(mac)
@@ -33,7 +33,7 @@ class TestGetSalt(unittest.TestCase):
         expected = bytearray([0xFF, 0xEE, 0xDD, 0xCC, 0xBB, 0xAA])
         self.assertEqual(result, expected)
 
-    def test_valid_mac_address_mixed_case(self):
+    def test_valid_mac_address_mixed_case(self) -> None:
         """Test with mixed case MAC address."""
         mac = 'aA:Bb:Cc:Dd:Ee:Ff'
         result = get_salt(mac)
@@ -41,7 +41,7 @@ class TestGetSalt(unittest.TestCase):
         expected = bytearray([0xFF, 0xEE, 0xDD, 0xCC, 0xBB, 0xAA])
         self.assertEqual(result, expected)
 
-    def test_mac_address_with_zeros(self):
+    def test_mac_address_with_zeros(self) -> None:
         """Test MAC address containing zeros."""
         mac = '00:11:22:33:44:55'
         result = get_salt(mac)
@@ -49,7 +49,7 @@ class TestGetSalt(unittest.TestCase):
         expected = bytearray([0x55, 0x44, 0x33, 0x22, 0x11, 0x00])
         self.assertEqual(result, expected)
 
-    def test_mac_address_all_zeros(self):
+    def test_mac_address_all_zeros(self) -> None:
         """Test MAC address with all zeros."""
         mac = '00:00:00:00:00:00'
         result = get_salt(mac)
@@ -57,7 +57,7 @@ class TestGetSalt(unittest.TestCase):
         expected = bytearray([0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
         self.assertEqual(result, expected)
 
-    def test_mac_address_all_ff(self):
+    def test_mac_address_all_ff(self) -> None:
         """Test MAC address with all FF."""
         mac = 'FF:FF:FF:FF:FF:FF'
         result = get_salt(mac)
@@ -65,7 +65,7 @@ class TestGetSalt(unittest.TestCase):
         expected = bytearray([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
         self.assertEqual(result, expected)
 
-    def test_mac_address_boundary_values(self):
+    def test_mac_address_boundary_values(self) -> None:
         """Test MAC address with boundary hex values."""
         mac = '0F:F0:A5:5A:C3:3C'
         result = get_salt(mac)
@@ -73,7 +73,7 @@ class TestGetSalt(unittest.TestCase):
         expected = bytearray([0x3C, 0xC3, 0x5A, 0xA5, 0xF0, 0x0F])
         self.assertEqual(result, expected)
 
-    def test_salt_order_reversal(self):
+    def test_salt_order_reversal(self) -> None:
         """Test that the salt array is properly reversed."""
         mac = '11:22:33:44:55:66'
         result = get_salt(mac)
@@ -87,7 +87,7 @@ class TestGetSalt(unittest.TestCase):
         original_order = [0x11, 0x22, 0x33, 0x44, 0x55, 0x66]
         self.assertEqual(list(result), list(reversed(original_order)))
 
-    def test_mac_too_few_parts(self):
+    def test_mac_too_few_parts(self) -> None:
         """Test MAC address with too few parts - function handles gracefully."""
         mac = '01:23:45:67:89'  # Only 5 parts instead of 6
         result = get_salt(mac)
@@ -97,7 +97,7 @@ class TestGetSalt(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(len(result), 5)
 
-    def test_mac_too_many_parts(self):
+    def test_mac_too_many_parts(self) -> None:
         """
         Test MAC address with too many parts - function handles gracefully.
         """
@@ -109,7 +109,7 @@ class TestGetSalt(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(len(result), 7)
 
-    def test_invalid_mac_non_hex_characters(self):
+    def test_invalid_mac_non_hex_characters(self) -> None:
         """Test MAC address with non-hex characters."""
         invalid_macs = [
             '01:23:45:67:89:XY',  # XY is not hex
@@ -121,7 +121,7 @@ class TestGetSalt(unittest.TestCase):
             with self.assertRaises(ValueError):
                 get_salt(mac)
 
-    def test_mac_single_character_parts(self):
+    def test_mac_single_character_parts(self) -> None:
         """Test MAC address with single character parts - valid hex."""
         mac = '1:2:3:4:5:A'  # Single characters are valid hex
         result = get_salt(mac)
@@ -129,12 +129,12 @@ class TestGetSalt(unittest.TestCase):
         expected = bytearray([0x0A, 0x05, 0x04, 0x03, 0x02, 0x01])
         self.assertEqual(result, expected)
 
-    def test_invalid_mac_empty_string(self):
+    def test_invalid_mac_empty_string(self) -> None:
         """Test with empty string."""
         with self.assertRaises(ValueError):
             get_salt('')  # Empty string -> int('', 16) fails
 
-    def test_invalid_mac_wrong_separator(self):
+    def test_invalid_mac_wrong_separator(self) -> None:
         """Test MAC address with wrong separator."""
         # These don't use ':' separator so split() will return different results
         wrong_separator_macs = [
@@ -149,7 +149,7 @@ class TestGetSalt(unittest.TestCase):
             with self.assertRaises(ValueError):
                 get_salt(mac)  # Will fail on invalid hex conversion
 
-    def test_invalid_mac_empty_parts(self):
+    def test_invalid_mac_empty_parts(self) -> None:
         """Test MAC address with empty parts."""
         invalid_macs = [
             ':23:45:67:89:AB',     # Empty part at start
@@ -161,7 +161,7 @@ class TestGetSalt(unittest.TestCase):
             with self.assertRaises(ValueError):
                 get_salt(mac)
 
-    def test_mac_three_digit_parts(self):
+    def test_mac_three_digit_parts(self) -> None:
         """Test MAC address with three digit parts - valid hex."""
         mac = '012:034:056:078:09A:0BC'  # Three digit hex numbers under 256
         result = get_salt(mac)
@@ -170,7 +170,7 @@ class TestGetSalt(unittest.TestCase):
         expected = bytearray([0x0BC, 0x09A, 0x078, 0x056, 0x034, 0x012])
         self.assertEqual(result, expected)
 
-    def test_mac_address_case_insensitivity(self):
+    def test_mac_address_case_insensitivity(self) -> None:
         """Test that case doesn't matter for the same MAC address."""
         mac_lower = 'ab:cd:ef:12:34:56'
         mac_upper = 'AB:CD:EF:12:34:56'
@@ -184,7 +184,7 @@ class TestGetSalt(unittest.TestCase):
         self.assertEqual(result_lower, result_mixed)
         self.assertEqual(result_upper, result_mixed)
 
-    def test_return_type_is_bytearray(self):
+    def test_return_type_is_bytearray(self) -> None:
         """Test that return type is specifically bytearray."""
         mac = '01:23:45:67:89:AB'
         result = get_salt(mac)
@@ -193,7 +193,7 @@ class TestGetSalt(unittest.TestCase):
         self.assertNotIsInstance(result, bytes)
         self.assertNotIsInstance(result, list)
 
-    def test_bytearray_mutability(self):
+    def test_bytearray_mutability(self) -> None:
         """Test that returned bytearray is mutable."""
         mac = '01:23:45:67:89:AB'
         result = get_salt(mac)
@@ -204,7 +204,7 @@ class TestGetSalt(unittest.TestCase):
         self.assertNotEqual(result[0], original_first)
         self.assertEqual(result[0], 0x99)
 
-    def test_consistent_results(self):
+    def test_consistent_results(self) -> None:
         """Test that same input produces same output consistently."""
         mac = '12:34:56:78:9A:BC'
 
@@ -216,7 +216,7 @@ class TestGetSalt(unittest.TestCase):
         self.assertEqual(result2, result3)
         self.assertEqual(result1, result3)
 
-    def test_hex_conversion_accuracy(self):
+    def test_hex_conversion_accuracy(self) -> None:
         """Test accuracy of hex string to integer conversion."""
         # Test specific hex values to ensure correct parsing
         test_cases = [

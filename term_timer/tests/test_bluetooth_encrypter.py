@@ -13,7 +13,7 @@ from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 class TestGanGen2CubeEncrypter(unittest.TestCase):
     """Test cases for GanGen2CubeEncrypter class."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test fixtures with valid key, IV, and salt."""
         self.valid_key = bytearray(16)  # 16 zero bytes
         self.valid_iv = bytearray(16)   # 16 zero bytes
@@ -29,7 +29,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
             self.valid_key, self.valid_iv, self.valid_salt,
         )
 
-    def test_init_valid_parameters(self):
+    def test_init_valid_parameters(self) -> None:
         """Test successful initialization with valid parameters."""
         key = bytearray(list(range(16)))
         iv = bytearray([i + 16 for i in range(16)])
@@ -49,7 +49,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
             self.assertEqual(encrypter._key[i], key[i])
             self.assertEqual(encrypter._iv[i], iv[i])
 
-    def test_init_invalid_key_length(self):
+    def test_init_invalid_key_length(self) -> None:
         """Test initialization with invalid key length."""
         invalid_keys = [
             bytearray(15),  # Too short
@@ -63,7 +63,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
                 GanGen2CubeEncrypter(key, self.valid_iv, self.valid_salt)
             self.assertEqual(str(cm.exception), INVALID_KEY)
 
-    def test_init_invalid_iv_length(self):
+    def test_init_invalid_iv_length(self) -> None:
         """Test initialization with invalid IV length."""
         invalid_ivs = [
             bytearray(15),  # Too short
@@ -77,7 +77,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
                 GanGen2CubeEncrypter(self.valid_key, iv, self.valid_salt)
             self.assertEqual(str(cm.exception), INVALID_IV)
 
-    def test_init_invalid_salt_length(self):
+    def test_init_invalid_salt_length(self) -> None:
         """Test initialization with invalid salt length."""
         invalid_salts = [
             bytearray(5),   # Too short
@@ -91,7 +91,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
                 GanGen2CubeEncrypter(self.valid_key, self.valid_iv, salt)
             self.assertEqual(str(cm.exception), INVALID_SALT)
 
-    def test_salt_application_modulo_operation(self):
+    def test_salt_application_modulo_operation(self) -> None:
         """Test that salt application uses modulo 0xFF correctly."""
         # Create key, iv, and salt that will cause overflow
         key = bytearray([0xFE] * 16)  # High values
@@ -111,7 +111,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
             self.assertEqual(encrypter._key[i], 0xFE)
             self.assertEqual(encrypter._iv[i], 0xFD)
 
-    def test_salt_application_boundary_values(self):
+    def test_salt_application_boundary_values(self) -> None:
         """Test salt application with boundary values."""
         # Test with maximum values that won't overflow
         key = bytearray([0xF9] * 16)
@@ -124,7 +124,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
             self.assertEqual(encrypter._key[i], (0xF9 + 0x05) % 0xFF)
             self.assertEqual(encrypter._iv[i], (0xF8 + 0x05) % 0xFF)
 
-    def test_encrypt_data_too_short(self):
+    def test_encrypt_data_too_short(self) -> None:
         """Test encryption with data shorter than 16 bytes."""
         short_data_cases = [
             bytearray(),          # Empty
@@ -138,7 +138,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
                 self.encrypter.encrypt(data)
             self.assertEqual(str(cm.exception), INVALID_DATA)
 
-    def test_decrypt_data_too_short(self):
+    def test_decrypt_data_too_short(self) -> None:
         """Test decryption with data shorter than 16 bytes."""
         short_data_cases = [
             bytearray(),          # Empty
@@ -152,7 +152,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
                 self.encrypter.decrypt(data)
             self.assertEqual(str(cm.exception), INVALID_DATA)
 
-    def test_encrypt_exactly_16_bytes(self):
+    def test_encrypt_exactly_16_bytes(self) -> None:
         """Test encryption with exactly 16 bytes."""
         # Should encrypt only the first chunk
         result = self.encrypter.encrypt(self.test_data_16_bytes)
@@ -162,7 +162,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
         # Result should be different from input (encrypted)
         self.assertNotEqual(result, bytes(self.test_data_16_bytes))
 
-    def test_encrypt_more_than_16_bytes(self):
+    def test_encrypt_more_than_16_bytes(self) -> None:
         """Test encryption with more than 16 bytes."""
         # Should encrypt both first and last chunks
         result = self.encrypter.encrypt(self.test_data_32_bytes)
@@ -172,28 +172,28 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
         # Result should be different from input (encrypted)
         self.assertNotEqual(result, bytes(self.test_data_32_bytes))
 
-    def test_encrypt_decrypt_roundtrip_16_bytes(self):
+    def test_encrypt_decrypt_roundtrip_16_bytes(self) -> None:
         """Test encrypt then decrypt returns original data (16 bytes)."""
         encrypted = self.encrypter.encrypt(self.test_data_16_bytes)
         decrypted = self.encrypter.decrypt(encrypted)
 
         self.assertEqual(decrypted, bytes(self.test_data_16_bytes))
 
-    def test_encrypt_decrypt_roundtrip_32_bytes(self):
+    def test_encrypt_decrypt_roundtrip_32_bytes(self) -> None:
         """Test encrypt then decrypt returns original data (32 bytes)."""
         encrypted = self.encrypter.encrypt(self.test_data_32_bytes)
         decrypted = self.encrypter.decrypt(encrypted)
 
         self.assertEqual(decrypted, bytes(self.test_data_32_bytes))
 
-    def test_encrypt_decrypt_roundtrip_48_bytes(self):
+    def test_encrypt_decrypt_roundtrip_48_bytes(self) -> None:
         """Test encrypt then decrypt returns original data (48 bytes)."""
         encrypted = self.encrypter.encrypt(self.test_data_48_bytes)
         decrypted = self.encrypter.decrypt(encrypted)
 
         self.assertEqual(decrypted, bytes(self.test_data_48_bytes))
 
-    def test_encrypt_decrypt_roundtrip_various_sizes(self):
+    def test_encrypt_decrypt_roundtrip_various_sizes(self) -> None:
         """Test encrypt/decrypt roundtrip with various data sizes."""
         test_sizes = [16, 17, 24, 31, 32, 33, 48, 64, 100]
 
@@ -205,7 +205,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
             self.assertEqual(decrypted, bytes(data),
                            f'Roundtrip failed for size {size}')
 
-    def test_encrypt_creates_copy(self):
+    def test_encrypt_creates_copy(self) -> None:
         """Test that encrypt creates a copy and doesn't modify original."""
         original_data = self.test_data_16_bytes.copy()
         encrypted = self.encrypter.encrypt(self.test_data_16_bytes)
@@ -215,7 +215,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
         # Encrypted should be different
         self.assertNotEqual(encrypted, bytes(original_data))
 
-    def test_decrypt_creates_copy(self):
+    def test_decrypt_creates_copy(self) -> None:
         """Test that decrypt creates a copy and doesn't modify original."""
         encrypted = self.encrypter.encrypt(self.test_data_16_bytes)
         encrypted_copy = bytearray(encrypted)
@@ -226,7 +226,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
         # Decrypted should match original
         self.assertEqual(decrypted, bytes(self.test_data_16_bytes))
 
-    def test_different_keys_produce_different_results(self):
+    def test_different_keys_produce_different_results(self) -> None:
         """Test that different keys produce different encrypted results."""
         key1 = bytearray(range(16))
         key2 = bytearray(range(1, 17))
@@ -239,7 +239,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
 
         self.assertNotEqual(encrypted1, encrypted2)
 
-    def test_different_ivs_produce_different_results(self):
+    def test_different_ivs_produce_different_results(self) -> None:
         """Test that different IVs produce different encrypted results."""
         iv1 = bytearray(range(16))
         iv2 = bytearray(range(1, 17))
@@ -252,7 +252,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
 
         self.assertNotEqual(encrypted1, encrypted2)
 
-    def test_different_salts_produce_different_results(self):
+    def test_different_salts_produce_different_results(self) -> None:
         """Test that different salts produce different encrypted results."""
         salt1 = bytearray(range(6))
         salt2 = bytearray(range(1, 7))
@@ -266,7 +266,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
         self.assertNotEqual(encrypted1, encrypted2)
 
     @patch('term_timer.bluetooth.encrypter.Cipher')
-    def test_encrypt_chunk_calls_aes_correctly(self, mock_cipher_class):
+    def test_encrypt_chunk_calls_aes_correctly(self, mock_cipher_class) -> None:
         """Test that _encrypt_chunk calls AES with correct parameters."""
         mock_cipher = MagicMock()
         mock_encryptor = MagicMock()
@@ -285,7 +285,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
         # backend is passed as keyword argument
 
     @patch('term_timer.bluetooth.encrypter.Cipher')
-    def test_decrypt_chunk_calls_aes_correctly(self, mock_cipher_class):
+    def test_decrypt_chunk_calls_aes_correctly(self, mock_cipher_class) -> None:
         """Test that _decrypt_chunk calls AES with correct parameters."""
         mock_cipher = MagicMock()
         mock_decryptor = MagicMock()
@@ -303,7 +303,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
         self.assertEqual(len(args), 2)  # algorithms.AES, modes.CBC
         # backend is passed as keyword argument
 
-    def test_encryption_deterministic_with_same_inputs(self):
+    def test_encryption_deterministic_with_same_inputs(self) -> None:
         """Test that encryption is deterministic with same inputs."""
         # Note: CBC mode with same IV should produce same results
         result1 = self.encrypter.encrypt(self.test_data_16_bytes)
@@ -311,7 +311,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
 
         self.assertEqual(result1, result2)
 
-    def test_encryption_chunk_boundaries(self):
+    def test_encryption_chunk_boundaries(self) -> None:
         """Test encryption behavior at chunk boundaries."""
         # Test data that's exactly at chunk boundaries
         test_cases = [
@@ -328,7 +328,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
             self.assertEqual(len(encrypted), size)
             self.assertEqual(decrypted, bytes(data))
 
-    def test_large_data_encryption(self):
+    def test_large_data_encryption(self) -> None:
         """Test encryption with large data sets."""
         # Test with 1KB of data
         large_data = bytearray(range(256)) * 4  # 1024 bytes
@@ -338,7 +338,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
         self.assertEqual(len(encrypted), len(large_data))
         self.assertEqual(decrypted, bytes(large_data))
 
-    def test_zero_filled_data(self):
+    def test_zero_filled_data(self) -> None:
         """Test encryption with zero-filled data."""
         zero_data = bytearray(32)  # 32 zeros
         encrypted = self.encrypter.encrypt(zero_data)
@@ -351,7 +351,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
         # Should decrypt to original
         self.assertEqual(decrypted, bytes(zero_data))
 
-    def test_random_byte_patterns(self):
+    def test_random_byte_patterns(self) -> None:
         """Test encryption with various byte patterns."""
         test_patterns = [
             bytearray([0xFF] * 16),      # All ones
@@ -370,7 +370,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
             # Should decrypt correctly
             self.assertEqual(decrypted, bytes(pattern))
 
-    def test_middle_bytes_unchanged_for_large_data(self):
+    def test_middle_bytes_unchanged_for_large_data(self) -> None:
         """Test that middle bytes are unchanged in large data encryption."""
         # For data > 32 bytes, middle sections should remain unencrypted
         large_data = bytearray(range(100))
@@ -386,7 +386,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
         self.assertNotEqual(encrypted[0:16], bytes(large_data[0:16]))
         self.assertNotEqual(encrypted[84:100], bytes(large_data[84:100]))
 
-    def test_constant_error_messages(self):
+    def test_constant_error_messages(self) -> None:
         """Test that error message constants are correct."""
         self.assertEqual(
             INVALID_KEY,
@@ -405,7 +405,7 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):
             'Data must be at least 16 bytes long',
         )
 
-    def test_salt_modulo_edge_case(self):
+    def test_salt_modulo_edge_case(self) -> None:
         """Test edge case where salt addition equals 0xFF."""
         # When (key_byte + salt_byte) equals 0xFF,
         # result should be 0xFE due to modulo
