@@ -33,6 +33,8 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
 from term_timer.methods import get_method_analyser
+from term_timer.methods.base import Analyser
+from term_timer.methods.base import StepSummary
 from term_timer.methods.base import get_step_config
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import prettify_moves
@@ -92,8 +94,8 @@ class Solve:
         return self.time
 
     @cached_property
-    def move_times(self) -> list[list[str | int]]:
-        return [[m.untimed, m.timed] for m in self.solution]
+    def move_times(self) -> list[tuple[str, int]]:
+        return [(m.untimed, m.timed) for m in self.solution]
 
     @cached_property
     def advanced(self) -> bool:
@@ -114,7 +116,7 @@ class Solve:
         return moves / (time / SECOND)
 
     @cached_property
-    def reconstruction(self) -> list[str]:
+    def reconstruction(self) -> Algorithm:
         return prettify_moves(
             reorient_moves(self.orientation_moves, self.solution),
         )
@@ -125,6 +127,8 @@ class Solve:
 
     @cached_property
     def aufs(self) -> int:
+        if not self.method_applied:
+            return 0
         return sum(
             (s['aufs'][0] or 0) + (s['aufs'][1] or 0)
             for s in self.method_applied.summary
@@ -137,6 +141,8 @@ class Solve:
 
     @cached_property
     def step_missed_moves(self) -> int:
+        if not self.method_applied:
+            return 0
         return sum(
             self.missed_moves(s['moves'])
             for s in self.method_applied.summary
@@ -145,6 +151,8 @@ class Solve:
 
     @cached_property
     def step_pauses(self) -> int:
+        if not self.method_applied:
+            return 0
         return sum(
             self.pauses(s['moves'])
             for s in self.method_applied.summary
@@ -164,13 +172,13 @@ class Solve:
         return self.all_missed_moves - self.step_missed_moves
 
     @cached_property
-    def method_analyser(self):
+    def method_analyser(self) -> type[Analyser]:
         return get_method_analyser(
             self.method_name,
         )
 
     @cached_property
-    def method_applied(self) -> dict[str, dict] | None:
+    def method_applied(self) -> Analyser | None:
         if not self.advanced:
             return None
 
@@ -181,6 +189,8 @@ class Solve:
 
     @cached_property
     def recognition_time(self) -> int:
+        if not self.method_applied:
+            return 0
         return sum(
             s['recognition']
             for s in self.method_applied.summary
@@ -189,6 +199,8 @@ class Solve:
 
     @cached_property
     def execution_time(self) -> int:
+        if not self.method_applied:
+            return 0
         return sum(
             s['execution']
             for s in self.method_applied.summary
@@ -463,13 +475,13 @@ class Solve:
         return str(source_paused)
 
     @cached_property
-    def method_text(self):
+    def method_text(self) -> str:
         return self.method_text_builder(multiple=True)
 
-    def method_text_builder(self, *, multiple) -> str:
+    def method_text_builder(self, *, multiple: bool) -> str:
         recons = ''
 
-        if not self.advanced:
+        if not self.advanced or not self.method_applied:
             return recons
 
         if self.orientation_moves:
@@ -516,7 +528,7 @@ class Solve:
         return recons
 
     def time_graph(self) -> None:
-        if not self.advanced:
+        if not self.advanced or not self.method_applied:
             return
 
         plt.clear_figure()
@@ -547,7 +559,7 @@ class Solve:
         plt.show()
 
     def tps_graph(self) -> None:
-        if not self.advanced:
+        if not self.advanced or not self.method_applied:
             return
 
         plt.clear_figure()
@@ -577,7 +589,7 @@ class Solve:
         plt.show()
 
     def recognition_graph(self) -> None:
-        if not self.advanced:
+        if not self.advanced or not self.method_applied:
             return
 
         plt.clear_figure()
@@ -605,7 +617,7 @@ class Solve:
         plt.show()
 
     @staticmethod
-    def missed_moves_pair(algorithm: Algorithm) -> list[Algorithm, Algorithm]:
+    def missed_moves_pair(algorithm: Algorithm) -> tuple[Algorithm, Algorithm]:
         compressed = algorithm.transform(
             optimize_do_undo_moves,
             optimize_repeat_three_moves,
@@ -614,12 +626,12 @@ class Solve:
         )
         return algorithm, compressed
 
-    def missed_moves(self, algorithm) -> int:
+    def missed_moves(self, algorithm: Algorithm) -> int:
         source, compressed = self.missed_moves_pair(algorithm)
 
         return source.metrics.qtm - compressed.metrics.qtm
 
-    def pauses(self, algorithm) -> int:
+    def pauses(self, algorithm: Algorithm) -> int:
         if not algorithm:
             return 0
 
@@ -637,19 +649,19 @@ class Solve:
         return pauses
 
     @cached_property
-    def score(self) -> float:
+    def score(self) -> float | None:
         if not self.method_applied:
             return None
 
         bonus = max((30 - (self.time / SECOND)) / 5, 0)
-        malus = 0
+        malus = 0.0
         malus += self.execution_missed_moves
         malus += self.transition_missed_moves * 0.5
         malus += self.execution_pauses * 0.2
 
         final_score = self.method_applied.score - malus + bonus
 
-        return min(max(0, final_score), 20)
+        return min(max(0.0, final_score), 20.0)
 
     @cached_property
     def link_alg_cubing(self) -> str:
@@ -682,8 +694,8 @@ class Solve:
         )
 
     @cached_property
-    def reconstruction_steps_timing(self):
-        if not self.advanced:
+    def reconstruction_steps_timing(self) -> list[list[int | str]]:
+        if not self.advanced or not self.method_applied:
             return []
 
         speed = self.move_speed / MS_TO_NS_FACTOR
@@ -741,7 +753,7 @@ class Solve:
         return timing
 
     @property
-    def as_save(self) -> dict:
+    def as_save(self) -> dict[str, int | str]:
         return {
             'date': self.date,
             'time': self.time,
@@ -749,7 +761,7 @@ class Solve:
             'flag': self.flag,
             'timer': self.timer,
             'device': self.device,
-            'moves': self.raw_moves or [],
+            'moves': self.raw_moves or '',
         }
 
     def __str__(self) -> str:
