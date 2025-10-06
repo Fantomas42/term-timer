@@ -5,6 +5,7 @@ from functools import cached_property
 import plotext as plt
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import PAUSE_CHAR
+from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.optimize import optimize_do_undo_moves
 from cubing_algs.transform.optimize import optimize_double_moves
@@ -70,6 +71,8 @@ class Solve:
 
     @cached_property
     def solution(self) -> Algorithm:
+        if self.raw_moves is None:
+            return Algorithm()
         return parse_moves(self.raw_moves)
 
     @cached_property
@@ -94,7 +97,7 @@ class Solve:
         return self.time
 
     @cached_property
-    def move_times(self) -> list[tuple[str, int]]:
+    def move_times(self) -> list[tuple[Move, int | None]]:
         return [(m.untimed, m.timed) for m in self.solution]
 
     @cached_property

@@ -1,6 +1,7 @@
 import logging
 import threading
 
+from term_timer.bluetooth.types import QuaternionDict
 from term_timer.opengl.cube import Cube
 from term_timer.opengl.renderer import render
 from term_timer.opengl.window import Window
@@ -83,7 +84,7 @@ class CubeGLThread(threading.Thread):
         if quaternion and self.cube:
             self.cube.set_rotation_from_quaternion(quaternion)
 
-    def add_quaternion(self, quaternion: dict[str, float]) -> None:
+    def add_quaternion(self, quaternion: QuaternionDict) -> None:
         with self.move_lock:
             self.last_quaternion = quaternion
             self.has_new_quaternion = True

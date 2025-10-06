@@ -82,7 +82,7 @@ class Trainer(SolveInterface):
         )
 
         if self.show_solution and main_algorithm:
-            main_algorithm = format_alg_triggers(
+            formatted_algorithm = format_alg_triggers(
                 format_alg_moves(
                     format_alg_aufs(
                         str(main_algorithm),
@@ -95,7 +95,7 @@ class Trainer(SolveInterface):
 
             self.console.print(
                 f'[solution]Solution #{ self.counter }:[/solution]',
-                f'[moves]{ main_algorithm }[/moves]',
+                f'[moves]{ formatted_algorithm }[/moves]',
             )
 
         if self.bluetooth_interface:

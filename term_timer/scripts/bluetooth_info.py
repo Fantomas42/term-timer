@@ -7,12 +7,19 @@ from argparse import Namespace
 from contextlib import suppress
 from pprint import pformat
 from typing import Any
+from typing import cast
 
 from cubing_algs.parsing import parse_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
 from term_timer.bluetooth.interface import BluetoothInterface
+from term_timer.bluetooth.types import BatteryEventDict
+from term_timer.bluetooth.types import EventDict
+from term_timer.bluetooth.types import HardwareEventDict
+from term_timer.bluetooth.types import MoveEventDict
+from term_timer.bluetooth.types import FaceletsEventDict
+from term_timer.bluetooth.types import GyroEventDict
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.logger import LOGGING_DIR
@@ -79,13 +86,13 @@ def print_cube(cube: VCube) -> None:
     )
 
 
-async def consumer_cb(queue: asyncio.Queue[list[dict[str, object]] | None],
+async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                       cube_ready: threading.Event,
                       gl_thread: CubeGLThread | None,
-                      event_collector: list[dict[str, object]],
+                      event_collector: list[EventDict],
                       *, show_cube: bool) -> None:
-    virtual_cube = None
-    moves = []
+    virtual_cube: VCube | None = None
+    moves: list[str] = []
     hardware = ''
     battery = ''
 
@@ -112,6 +119,7 @@ async def consumer_cb(queue: asyncio.Queue[list[dict[str, object]] | None],
             event_collector.append(event)
             event_name = event['event']
             if event_name == 'hardware':
+                event = cast(HardwareEventDict, event)
                 logger.info(
                     'CONSUMER: Hardware %s version %s, Software %s, %s',
                     event['hardware_name'],
@@ -131,6 +139,7 @@ async def consumer_cb(queue: asyncio.Queue[list[dict[str, object]] | None],
                     gl_thread.set_title(f'{ hardware } { battery }')
 
             elif event_name == 'battery':
+                event = cast(BatteryEventDict, event)
                 logger.info(
                     'CONSUMER: Battery: %s%%',
                     event['level'],
@@ -140,6 +149,7 @@ async def consumer_cb(queue: asyncio.Queue[list[dict[str, object]] | None],
                     gl_thread.set_title(f'{ hardware } { battery }')
 
             elif event_name == 'gyro':
+                event = cast(GyroEventDict, event)
                 logger.info(
                     'CONSUMER: Gyroscope event',
                 )
@@ -148,6 +158,7 @@ async def consumer_cb(queue: asyncio.Queue[list[dict[str, object]] | None],
                         event['quaternion'],
                     )
             elif event_name == 'facelets':
+                event = cast(FaceletsEventDict, event)
                 logger.info(
                     'CONSUMER: Facelets received',
                 )
@@ -165,6 +176,7 @@ async def consumer_cb(queue: asyncio.Queue[list[dict[str, object]] | None],
                     print_cube(virtual_cube)
 
             elif event_name == 'move':
+                event = cast(MoveEventDict, event)
                 logger.info(
                     'CONSUMER: Face: %s, Direction: %s, Move: %s',
                     event['face'],
@@ -268,13 +280,18 @@ def linear_regression(x_values: list[float],
     return (slope, intercept)
 
 
-def resume(events: list[dict[str, object]]) -> None:
-    cube_timestamps = []
-    local_timestamps = []
+def resume(events: list[EventDict]) -> None:
+    cube_timestamps: list[float] = []
+    local_timestamps: list[float] = []
 
     for event in events:
         if event['event'] != 'move':
             continue
+
+        event = cast(MoveEventDict, event)
+        if event['cube_timestamp'] is None or event['local_timestamp'] is None:
+            continue
+
         cube_timestamps.append(
             event['cube_timestamp'],
         )
@@ -301,8 +318,8 @@ def resume(events: list[dict[str, object]]) -> None:
 
 
 async def run(options: Namespace) -> None:
-    event_collector: list[dict[str, object]] = []
-    queue: asyncio.Queue[list[dict[str, object]] | None] = asyncio.Queue()
+    event_collector: list[EventDict] = []
+    queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
     cube_ready = threading.Event()
 
     gl_thread = None

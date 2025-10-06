@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from collections.abc import Iterable
 from contextlib import suppress
 from functools import cached_property
 from typing import Any
@@ -7,6 +8,7 @@ from typing import Literal
 from typing import TypedDict
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.move import Move
 from cubing_algs.constants import INITIAL_STATE
 from cubing_algs.masks import CENTERS_MASK
 from cubing_algs.masks import CROSS_MASK
@@ -319,10 +321,13 @@ class Analyser(FaceletAnalyser):
     def get_auf(self, moves: Algorithm, mode: str) -> int:
         auf = 0
 
+        moves_iter: Iterable[Move]
         if mode == 'post':
-            moves = reversed(moves)
+            moves_iter = reversed(moves)
+        else:
+            moves_iter = moves
 
-        for move in moves:
+        for move in moves_iter:
             if move[0] == AUF_MOVE:
                 auf += 1
             else:

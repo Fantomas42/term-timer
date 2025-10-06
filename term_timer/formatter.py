@@ -142,12 +142,12 @@ def format_cube_db_url(title: str, setup: str, alg: str) -> str:
 
 
 def format_alg_diff(algo_a: Algorithm, algo_b: Algorithm) -> str:
-    moves = []
+    moves: list[str] = []
     matcher = difflib.SequenceMatcher(None, algo_a, algo_b)
 
     for opcode, i1, i2, j1, j2 in matcher.get_opcodes():
         if opcode == 'equal':
-            moves.extend(algo_a[i1:i2])
+            moves.extend(str(move) for move in algo_a[i1:i2])
         elif opcode == 'delete':
             moves.extend(
                 [
@@ -177,7 +177,7 @@ def format_alg_diff(algo_a: Algorithm, algo_b: Algorithm) -> str:
                 ],
             )
 
-    return ' '.join([str(m) for m in moves])
+    return ' '.join(moves)
 
 
 def format_alg_triggers(algorithm: str, trigger_names: list[str]) -> str:
