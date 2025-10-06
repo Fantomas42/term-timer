@@ -2,6 +2,7 @@
 import unittest
 from unittest.mock import Mock
 from unittest.mock import patch
+from typing import Any
 
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
@@ -85,58 +86,58 @@ class TestStatistics(unittest.TestCase):
             Solve(5000000000000, 25 * SECOND, 'R F U', ''),  # 25 seconds
         ]
 
-    def test_mo3_property(self, *_mocks) -> None:
+    def test_mo3_property(self, *_mocks: Any) -> None:
         """Test mo3 property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.mo3, 25 * SECOND)
 
-    def test_ao5_property(self, *_mocks) -> None:
+    def test_ao5_property(self, *_mocks: Any) -> None:
         """Test ao5 property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.ao5, 20 * SECOND)
 
-    def test_best_property(self, *_mocks) -> None:
+    def test_best_property(self, *_mocks: Any) -> None:
         """Test best property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.best, 10 * SECOND)
 
-    def test_worst_property(self, *_mocks) -> None:
+    def test_worst_property(self, *_mocks: Any) -> None:
         """Test worst property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.worst, 30 * SECOND)
 
-    def test_bpa_property(self, *_mocks) -> None:
+    def test_bpa_property(self, *_mocks: Any) -> None:
         """Test bpa property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.bpa, 15 * SECOND)
 
-    def test_wpa_property(self, *_mocks) -> None:
+    def test_wpa_property(self, *_mocks: Any) -> None:
         """Test wpa property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.wpa, 25 * SECOND)
 
-    def test_mean_property(self, *_mocks) -> None:
+    def test_mean_property(self, *_mocks: Any) -> None:
         """Test mean property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.mean, 20 * SECOND)
 
-    def test_median_property(self, *_mocks) -> None:
+    def test_median_property(self, *_mocks: Any) -> None:
         """Test median property."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.median, 20 * SECOND)
 
-    def test_delta_property(self, *_mocks) -> None:
+    def test_delta_property(self, *_mocks: Any) -> None:
         """Test delta property (difference between last two solves)."""
         stats = Statistics(self.solves)
         # Last solve (25s) - second to last solve (30s) = -5s
         self.assertEqual(stats.delta, -5 * SECOND)
 
-    def test_total_property(self, *_mocks) -> None:
+    def test_total_property(self, *_mocks: Any) -> None:
         """Test total property (number of solves)."""
         stats = Statistics(self.solves)
         self.assertEqual(stats.total, 5)
 
-    def test_total_time_property(self, *_mocks) -> None:
+    def test_total_time_property(self, *_mocks: Any) -> None:
         """Test total_time property (sum of all solve times)."""
         stats = Statistics(self.solves)
         # 10 + 15 + 20 + 30 + 25 = 100s
