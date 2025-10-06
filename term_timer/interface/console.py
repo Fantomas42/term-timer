@@ -130,16 +130,20 @@ theme.update(UI_CONFIG)
 
 console = RichConsole(highlighter=None, theme=Theme(theme))
 
+
+class Console:
+    """
+    Mixin providing Rich console access for styled terminal output.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.console: RichConsole = console
+
+
 if __name__ == '__main__':
     for name, color in theme.items():
         console.print(
             f'[{ name }]{ name:>15}[/{ name }] : { color }',
         )
-
-
-class Console:
-
-    def __init__(self):
-        super().__init__()
-
-        self.console = console

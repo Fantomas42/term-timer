@@ -5,14 +5,21 @@ logger = logging.getLogger(__name__)
 
 
 class State:
+    """
+    Mixin providing state management and logging.
+    """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-        self.state = ''
+        self.state: str = ''
 
-    def set_state(self, state: str, timestamp=None) -> None:
+    def set_state(self, state: str, timestamp: int | None = None) -> None:
+        """
+        Set the current state and log the transition.
+        """
         self.state = state
+
         logger.info(
             'Passing to state %s: %s',
             state.upper().ljust(10),
