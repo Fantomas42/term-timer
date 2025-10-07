@@ -1,5 +1,6 @@
 import math
 
+from term_timer.bluetooth.types import QuaternionDict
 from term_timer.opengl import renderer
 from term_timer.opengl.data import corner_orientations
 from term_timer.opengl.data import corner_permutations
@@ -162,7 +163,7 @@ class Cube:
     def animate_rotations(self, window: Window, axis: str, angle: int) -> None:
         renderer.animate_rotation(window, self, axis, angle)
 
-    def set_rotation_from_quaternion(self, q: dict[str, float]) -> None:
+    def set_rotation_from_quaternion(self, q: QuaternionDict) -> None:
         qw, qx, qy, qz = q['w'], q['x'], q['z'], -q['y']
 
         self.rotation_matrix = [

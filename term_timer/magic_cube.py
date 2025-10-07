@@ -1,3 +1,4 @@
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.display import VCubeDisplay
 from magiccube.cube import Cube as BaseCube
 
@@ -10,7 +11,7 @@ from term_timer.orientation import get_orientation_moves
 class Cube(BaseCube):  # type: ignore[misc]
     face_number = 6
 
-    def rotate(self, movements) -> None:
+    def rotate(self, movements: Algorithm | list[str]) -> None:
         if isinstance(movements, list):
             for move in movements:
                 self._rotate_once(move)
@@ -19,7 +20,7 @@ class Cube(BaseCube):  # type: ignore[misc]
 
     @property
     def state(self) -> str:
-        return self.get_kociemba_facelet_positions()
+        return self.get_kociemba_facelet_positions()  # type: ignore[no-any-return]
 
     def display(self, orientation: str) -> str:
         orientation_moves = get_orientation_moves(orientation)

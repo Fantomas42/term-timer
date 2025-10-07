@@ -33,7 +33,7 @@ class CubeGLThread(threading.Thread):
         self.title = ''
         self.move_queue: list[tuple[str, int]] = []
         self.move_lock = threading.Lock()
-        self.last_quaternion: dict[str, float] | None = None
+        self.last_quaternion: QuaternionDict | None = None
         self.has_new_quaternion = True
 
     def stop(self) -> None:
@@ -75,7 +75,7 @@ class CubeGLThread(threading.Thread):
             self.move_queue.append((face, direction))
 
     def process_quaternion(self) -> None:
-        quaternion: dict[str, float] | None = None
+        quaternion: QuaternionDict | None = None
         with self.move_lock:
             if self.has_new_quaternion:
                 quaternion = self.last_quaternion

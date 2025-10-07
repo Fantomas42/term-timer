@@ -180,6 +180,7 @@ class Trainer(SolveInterface):
             timer='Term-Timer',
             device=(
                 self.bluetooth_interface
+                and self.bluetooth_interface.client
                 and self.bluetooth_interface.client.name
             ) or '',
             session='training',
