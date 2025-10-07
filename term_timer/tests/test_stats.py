@@ -1,8 +1,8 @@
 # ruff: noqa: ERA001
 import unittest
+from typing import Any
 from unittest.mock import Mock
 from unittest.mock import patch
-from typing import Any
 
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
