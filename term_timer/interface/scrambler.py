@@ -20,10 +20,12 @@ class Scrambler:
     if TYPE_CHECKING:
         # Attributes from Bluetooth mixin
         bluetooth_cube: VCube | None
-        # Attributes from Orienter mixin
-        cube_orientation_moves: Algorithm
         # Attributes from Console mixin
         console: RichConsole
+
+        # Properties from Orienter mixin
+        @property
+        def cube_orientation_moves(self) -> Algorithm: ...
 
         # Methods from Orienter mixin
         def reorient(self, algorithm: Algorithm) -> Algorithm: ...

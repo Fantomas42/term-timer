@@ -11,7 +11,7 @@ TEXT_DARK = '#080808'
 TEXT_LIGHT = '#FFFFD7'
 BG_HIDDEN = '#333333'
 
-theme = {
+theme: dict[str, str] = {
     'warning': f'bold { RED }',
     'caution': f'bold { ORANGE }',
     'success': f'bold { GREEN }',
