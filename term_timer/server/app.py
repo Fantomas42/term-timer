@@ -682,7 +682,7 @@ class SolveDeleteView:
 
 class AcademyView(View):
     template_name = 'academy/overview.html'
-    methods: ClassVar[dict[str, dict[str, str]]] = {
+    methods: ClassVar[dict[str, dict[str, str | dict[str, dict[str, str]]]]] = {
         'CFOP': {
             'name': 'CFOP',
             'description': (
@@ -864,7 +864,7 @@ class Server:
     def create_app(self, *, debug: bool) -> Bottle:
         app = Bottle()
 
-        @app.hook('before_request')
+        @app.hook('before_request')  # type: ignore[misc]
         def add_trailing_slash() -> None:
             path = request.environ.get('PATH_INFO', '')
 
@@ -876,24 +876,24 @@ class Server:
                 new_url = request.url + '/'
                 redirect(new_url, code=301)
 
-        @app.route('/')
+        @app.route('/')  # type: ignore[misc]
         def session_list() -> str:
             return SessionListView().as_view(debug)
 
-        @app.route('/academy/')
+        @app.route('/academy/')  # type: ignore[misc]
         def academy_overview() -> str:
             return AcademyView().as_view(debug)
 
-        @app.route('/academy/<step>/')
+        @app.route('/academy/<step>/')  # type: ignore[misc]
         def academy_step(step: str) -> str:
             return AcademyStepView(step).as_view(debug)
 
-        @app.route('/academy/<step>/<case_id>/')
+        @app.route('/academy/<step>/<case_id>/')  # type: ignore[misc]
         def academy_case(step: str, case_id: str) -> str:
             return AcademyCaseView(step, case_id).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/update/',
-                   method='POST')
+                   method='POST')  # type: ignore[misc]
         def solve_update(cube: int, session: str, solve: int) -> None:
             SolveUpdateView(
                 cube, session, solve,
@@ -901,13 +901,13 @@ class Server:
             )
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/delete/',
-                   method='POST')
+                   method='POST')  # type: ignore[misc]
         def solve_delete(cube: int, session: str, solve: int) -> None:
             SolveDeleteView(
                 cube, session, solve,
             )
 
-        @app.route('/<cube:int>/<session:path>/<solve:int>/')
+        @app.route('/<cube:int>/<session:path>/<solve:int>/')  # type: ignore[misc]
         def solve_detail(cube: int, session: str, solve: int) -> str:
             return SolveDetailView(
                 cube, session, solve,
@@ -915,7 +915,7 @@ class Server:
                 request.GET.o or 'auto',
             ).as_view(debug)
 
-        @app.route('/<cube:int>/<session:path>/')
+        @app.route('/<cube:int>/<session:path>/')  # type: ignore[misc]
         def session_detail(cube: int, session: str) -> str:
             return SessionDetailView(
                 cube, session,
@@ -924,16 +924,16 @@ class Server:
                 request.GET.case_uid or '',
             ).as_view(debug)
 
-        @app.route('/static/<filepath:path>')
+        @app.route('/static/<filepath:path>')  # type: ignore[misc]
         def static_serve(filepath: str) -> HTTPResponse:
             return static_file(filepath, root=STATIC_DIRECTORY)
 
-        @app.error(404)
-        def error_404(error: Any) -> str:
+        @app.error(404)  # type: ignore[misc]
+        def error_404(error: HTTPError) -> str:
             return Error404View(error).as_view(debug)
 
-        @app.error(500)
-        def error_500(error: Any) -> str:
+        @app.error(500)  # type: ignore[misc]
+        def error_500(error: HTTPError) -> str:
             return Error500View(error).as_view(debug)
 
         return app
