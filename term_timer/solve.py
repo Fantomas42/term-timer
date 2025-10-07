@@ -1,6 +1,7 @@
 from datetime import datetime
 from datetime import timezone
 from functools import cached_property
+from typing import TypedDict
 
 import plotext as plt
 from cubing_algs.algorithm import Algorithm
@@ -40,6 +41,17 @@ from term_timer.methods.base import get_step_config
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
+
+
+class SolveData(TypedDict):
+    """Dictionary representation of a solve for serialization."""
+    date: int
+    time: int
+    scramble: str
+    flag: str
+    timer: str
+    device: str
+    moves: str
 
 
 class Solve:
@@ -763,7 +775,7 @@ class Solve:
         return timing
 
     @property
-    def as_save(self) -> dict[str, int | str]:
+    def as_save(self) -> SolveData:
         return {
             'date': self.date,
             'time': self.time,

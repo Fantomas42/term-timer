@@ -2,6 +2,7 @@ import json
 import operator
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -9,6 +10,7 @@ from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.interface.console import console
 from term_timer.solve import Solve
+from term_timer.solve import SolveData
 
 
 class Importer:
@@ -35,15 +37,15 @@ class Importer:
 
         return int(total_seconds * SECOND)
 
-    def cubeast_csv(self, data: list[str]) -> list[dict]:
-        solves = []
+    def cubeast_csv(self, data: list[str]) -> list[SolveData]:
+        solves: list[SolveData] = []
 
         for _line in data[1:]:
             line = _line.split(',')
 
             date_str = line[1][:-4]
             dnf = line[2]
-            time = line[3]
+            time_str = line[3]
             device = line[6]
             moves = line[14]
             scramble = line[19]
@@ -54,7 +56,7 @@ class Importer:
             if dnf == 'true':
                 flag = DNF
 
-            fixed_moves = []
+            fixed_moves: list[str] = []
             for move_raw in moves.split(' '):
                 if move_raw:
                     move, time = move_raw.split('[')
@@ -64,7 +66,7 @@ class Importer:
             solves.append(
                 Solve(
                     date,
-                    int(time) * MS_TO_NS_FACTOR,
+                    int(time_str) * MS_TO_NS_FACTOR,
                     scramble,
                     flag,
                     'Cubeast',
@@ -76,8 +78,8 @@ class Importer:
 
         return solves
 
-    def cstimer_csv(self, data: list[str]) -> list[dict]:
-        solves = []
+    def cstimer_csv(self, data: list[str]) -> list[SolveData]:
+        solves: list[SolveData] = []
 
         for line in data[1:]:
             flag = ''
@@ -106,10 +108,10 @@ class Importer:
 
         return solves
 
-    def cstimer_json(self, data: dict) -> list[dict]:
-        solves = []
-        properties = data['properties']
-        session_data = json.loads(properties['sessionData'])
+    def cstimer_json(self, data: dict[str, Any]) -> list[SolveData]:
+        solves: list[SolveData] = []
+        properties: dict[str, Any] = data['properties']
+        session_data: dict[str, Any] = json.loads(properties['sessionData'])
 
         for session_key, session_values in data.items():
             if 'session' not in session_key:
@@ -119,9 +121,13 @@ class Importer:
                 continue
 
             property_key = session_key.replace('session', '')
-            session_property = session_data[property_key]
+            session_property: dict[str, Any] = session_data[property_key]
 
-            scramble_type = session_property.get('opt', {}).get('scrType', '')
+            scramble_type: str = session_property.get(
+                'opt', {},
+            ).get(
+                'scrType', '',
+            )
 
             if scramble_type:
                 continue
@@ -130,14 +136,17 @@ class Importer:
                 if len(solve) != 5:
                     continue
 
-                flag, time = solve[0]
-                scramble = solve[1]
-                date = solve[3]
-                moves = solve[4][0]
+                flag_raw: int | str
+                time_raw: int
+                flag_raw, time_raw = solve[0]
+                scramble: str = solve[1]
+                date: float = solve[3]
+                moves: str = solve[4][0]
 
-                if flag == -1:
+                flag: str
+                if flag_raw == -1:
                     flag = DNF
-                elif flag == 2000:
+                elif flag_raw == 2000:
                     flag = PLUS_TWO
                 else:
                     flag = ''
@@ -147,7 +156,7 @@ class Importer:
                 solves.append(
                     Solve(
                         date,
-                        time * MS_TO_NS_FACTOR,
+                        time_raw * MS_TO_NS_FACTOR,
                         scramble,
                         flag,
                         'csTimer',
@@ -162,22 +171,22 @@ class Importer:
     def import_file(self, source: str) -> int:
         source_path = Path(source)
 
-        solves = None
+        solves: list[SolveData] | None = None
 
         if source.endswith(('.json', '.txt')):
             with source_path.open() as fd:
-                data = json.load(fd)
+                data: dict[str, Any] = json.load(fd)
 
             solves = self.cstimer_json(data)
 
         elif source.endswith('.csv'):
             with source_path.open() as fd:
-                data = fd.readlines()
+                data_lines: list[str] = fd.readlines()
 
-            if 'No.;' in data[0]:
-                solves = self.cstimer_csv(data)
-            elif 'id,' in data[0]:
-                solves = self.cubeast_csv(data)
+            if 'No.;' in data_lines[0]:
+                solves = self.cstimer_csv(data_lines)
+            elif 'id,' in data_lines[0]:
+                solves = self.cubeast_csv(data_lines)
 
         if solves is None:
             console.print('Invalid export format', style='warning')
