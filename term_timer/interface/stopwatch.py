@@ -1,5 +1,8 @@
 import asyncio
 import time
+from typing import TYPE_CHECKING
+
+from rich.console import Console as RichConsole
 
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
@@ -7,20 +10,39 @@ from term_timer.formatter import format_time
 
 
 class StopWatch:
+    """
+    Mixin providing stopwatch/timer functionality.
+    """
 
-    def __init__(self):
+    if TYPE_CHECKING:
+        # Attributes from Console mixin
+        console: RichConsole
+
+        # Methods from State mixin
+        def set_state(self, state: str, timestamp: int | None = None) -> None:
+            ...
+
+        # Methods from Terminal mixin
+        def clear_line(self, *, full: bool) -> None: ...
+        def back(self, size: int) -> None: ...
+        def beep(self) -> None: ...
+
+    def __init__(self) -> None:
         super().__init__()
 
-        self.start_time = 0
-        self.end_time = 0
-        self.elapsed_time = 0
+        self.start_time: int = 0
+        self.end_time: int = 0
+        self.elapsed_time: int = 0
 
-        self.metronome = 0.0
+        self.metronome: float = 0.0
 
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
 
     async def stopwatch(self) -> None:
+        """
+        Display a running stopwatch timer until solve is completed.
+        """
         self.clear_line(full=True)
 
         tempo_elapsed = 0

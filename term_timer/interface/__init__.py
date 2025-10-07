@@ -21,6 +21,7 @@ from term_timer.interface.scrambler import Scrambler
 from term_timer.interface.state import State
 from term_timer.interface.stopwatch import StopWatch
 from term_timer.interface.terminal import Terminal
+from term_timer.solve import Solve
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +39,36 @@ class SolveInterface(
         Gesture,
         Bluetooth,
 ):
+    """
+    Main interface combining all mixins for solve timing and tracking.
+
+    This class uses multiple inheritance with mixins to provide a complete
+    solving interface. Each mixin provides specific functionality:
+    - State: State management and transitions
+    - Terminal: Low-level terminal control
+    - Console: Rich console output
+    - Controler: Async task coordination
+    - Getcher: Async keyboard input
+    - Orienter: Cube orientation handling
+    - StopWatch: Timer functionality
+    - Inspecter: Inspection countdown
+    - Scrambler: Scramble tracking
+    - Gesture: Gesture detection
+    - Bluetooth: Bluetooth cube integration
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.date: float = 0.0
+        self.session: str = ''
+        self.cube_size: int = 3
+        self.stack: list[Solve] = []
 
     def init_solve(self) -> None:
+        """
+        Initialize all state for a new solve.
+        """
         self.set_state('init')
         self.date = datetime.now(tz=timezone.utc).timestamp()  # noqa: UP017
         self.end_time = 0
@@ -64,18 +93,23 @@ class SolveInterface(
         self.inspection_completed_event.clear()
 
     async def scramble_solve(self) -> bool | None:
+        """
+        Handle the scrambling phase of the solve.
+        """
         self.set_state('scrambling')
 
         if self.bluetooth_interface:
+            getch_task = asyncio.create_task(self.getch('scrambled'))
             tasks = [
-                asyncio.create_task(self.getch('scrambled')),
+                getch_task,
                 asyncio.create_task(self.scramble_completed_event.wait()),
             ]
             await self.wait_control(tasks)
 
             char = ''
             if not self.scramble_completed_event.is_set():
-                char = tasks[0].result()
+                result = getch_task.result()
+                char = result if isinstance(result, str) else ''
         else:
             char = await self.getch('scrambled')
 
@@ -90,6 +124,9 @@ class SolveInterface(
         return None
 
     async def inspect_solve(self) -> None:
+        """
+        Run the inspection countdown phase.
+        """
         inspection_task = asyncio.create_task(self.inspection())
 
         if self.bluetooth_interface:
@@ -108,6 +145,9 @@ class SolveInterface(
         await inspection_task
 
     async def wait_solve(self) -> None:
+        """
+        Wait for the solve to start (either keyboard or bluetooth).
+        """
         if self.bluetooth_interface:
             tasks = [
                 asyncio.create_task(self.getch('start')),
@@ -116,6 +156,9 @@ class SolveInterface(
             await self.wait_control(tasks)
 
     async def time_solve(self) -> None:
+        """
+        Time the solve execution with stopwatch display.
+        """
         if not self.start_time:
             self.start_time = time.perf_counter_ns()
 
@@ -142,18 +185,23 @@ class SolveInterface(
         await stopwatch_task
 
     async def save_solve(self) -> bool:
+        """
+        Handle saving the completed solve with optional flag modifications.
+        """
         self.set_state('saving')
 
         if self.bluetooth_interface:
+            getch_task = asyncio.create_task(self.getch('save'))
             tasks = [
-                asyncio.create_task(self.getch('save')),
+                getch_task,
                 asyncio.create_task(self.save_gesture_event.wait()),
             ]
             await self.wait_control(tasks)
 
             char = ''
             if not self.save_gesture_event.is_set():
-                char = tasks[0].result()
+                result = getch_task.result()
+                char = result if isinstance(result, str) else ''
             else:
                 self.clear_line(full=True)
                 char = self.save_gesture

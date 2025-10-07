@@ -2,11 +2,12 @@ import asyncio
 import logging
 import os
 import sys
+from typing import TYPE_CHECKING
 
 is_windows = sys.platform in {'win32', 'cygwin'}
 
 if is_windows:
-    import msvcrt
+    import msvcrt  # type: ignore[import-not-found,unused-ignore]
 else:
     import termios
 
@@ -14,8 +15,18 @@ logger = logging.getLogger(__name__)
 
 
 class Getcher:
+    """
+    Mixin providing async character input from terminal.
+    """
 
-    async def getch(self, mode, timeout: float | None = None) -> str:
+    if TYPE_CHECKING:
+        # Methods from Terminal mixin
+        def clear_line(self, *, full: bool) -> None: ...
+
+    async def getch(self, mode: str, timeout: float | None = None) -> str:
+        """
+        Get a character from the terminal asynchronously.
+        """
         logger.info('Getch %s', mode.upper())
 
         if is_windows:
@@ -30,14 +41,17 @@ class Getcher:
         return ch
 
     async def getch_windows(self, timeout: float | None = None) -> str:
+        """
+        Get a character from terminal on Windows platform.
+        """
         loop = asyncio.get_running_loop()
         future = loop.create_future()
         ch = ''
 
         def windows_getch() -> None:
             try:
-                if msvcrt.kbhit():
-                    key_bytes = msvcrt.getch()
+                if msvcrt.kbhit():  # type: ignore[attr-defined]
+                    key_bytes = msvcrt.getch()  # type: ignore[attr-defined]
                     key_str = key_bytes.decode('utf-8', errors='replace')
                     if not future.done():
                         future.set_result(key_str)
@@ -63,6 +77,9 @@ class Getcher:
         return ch
 
     async def getch_unix(self, timeout: float | None = None) -> str:
+        """
+        Get a character from terminal on Unix-like platforms.
+        """
         fd = sys.stdin.fileno()
 
         old_settings = termios.tcgetattr(fd)

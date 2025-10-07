@@ -1,7 +1,9 @@
 import asyncio
 import logging
+from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 from cubing_algs.transform.slice import reslice_timed_moves
@@ -12,16 +14,26 @@ logger = logging.getLogger(__name__)
 
 
 class Gesture:
+    """
+    Mixin providing gesture detection for save commands.
+    """
 
-    def __init__(self):
+    if TYPE_CHECKING:
+        # Methods from Orienter mixin
+        def reorient(self, algorithm: Algorithm) -> Algorithm: ...
+
+    def __init__(self) -> None:
         super().__init__()
 
         self.save_moves = Algorithm()
         self.save_gesture = ''
         self.save_gesture_event = asyncio.Event()
 
-    def handle_save_gestures(self, move):
-        move = self.reorient(move)
+    def handle_save_gestures(self, move_raw: str) -> None:
+        """
+        Detect and handle save gestures from cube movements.
+        """
+        move = self.reorient(parse_moves(move_raw))
 
         self.save_moves += move
 

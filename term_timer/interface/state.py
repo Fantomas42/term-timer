@@ -12,7 +12,7 @@ class State:
     def __init__(self) -> None:
         super().__init__()
 
-        self.state: str = ''
+        self.state = ''
 
     def set_state(self, state: str, timestamp: int | None = None) -> None:
         """

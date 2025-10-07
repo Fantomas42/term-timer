@@ -1,20 +1,44 @@
 import asyncio
 import time
+from typing import TYPE_CHECKING
+
+from rich.console import Console as RichConsole
 
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
 
 
 class Inspecter:
+    """
+    Mixin providing inspection countdown functionality.
+    """
 
-    def __init__(self):
+    if TYPE_CHECKING:
+        # Attributes from State mixin
+        state: str
+        # Attributes from Console mixin
+        console: RichConsole
+
+        # Methods from State mixin
+        def set_state(self, state: str, timestamp: int | None = None) -> None:
+            ...
+
+        # Methods from Terminal mixin
+        def clear_line(self, *, full: bool) -> None: ...
+        def back(self, size: int) -> None: ...
+        def beep(self) -> None: ...
+
+    def __init__(self) -> None:
         super().__init__()
 
-        self.countdown = 0
+        self.countdown: int = 0
 
         self.inspection_completed_event = asyncio.Event()
 
     async def inspection(self) -> None:
+        """
+        Run the inspection countdown timer.
+        """
         self.clear_line(full=True)
 
         state = 0

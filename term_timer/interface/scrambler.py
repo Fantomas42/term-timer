@@ -1,33 +1,59 @@
 import asyncio
+from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.slice import reslice_timed_moves
 from cubing_algs.transform.timing import untime_moves
+from cubing_algs.vcube import VCube
+from rich.console import Console as RichConsole
 
 from term_timer.constants import RESLICE_THRESHOLD
 
 
 class Scrambler:
+    """
+    Mixin providing scramble tracking and display functionality.
+    """
 
-    def __init__(self):
+    if TYPE_CHECKING:
+        # Attributes from Bluetooth mixin
+        bluetooth_cube: VCube | None
+        # Attributes from Orienter mixin
+        cube_orientation_moves: Algorithm
+        # Attributes from Console mixin
+        console: RichConsole
+
+        # Methods from Orienter mixin
+        def reorient(self, algorithm: Algorithm) -> Algorithm: ...
+        # Methods from Terminal mixin
+        def clear_line(self, *, full: bool) -> None: ...
+        def beep(self) -> None: ...
+
+    def __init__(self) -> None:
         super().__init__()
 
         self.scramble = Algorithm()
         self.scrambled = Algorithm()
         self.scramble_oriented = Algorithm()
 
-        self.counter = 0
+        self.counter: int = 0
 
         self.facelets_scrambled = ''
 
         self.scramble_completed_event = asyncio.Event()
 
-    def handle_scrambled(self, timed_move):
+    def handle_scrambled(self, timed_move: str) -> None:
+        """
+        Handle a scramble move from the bluetooth cube.
+        """
         self.scrambled += timed_move
 
-        if self.bluetooth_cube.state == self.facelets_scrambled:
+        if (
+                self.bluetooth_cube
+                and self.bluetooth_cube.state == self.facelets_scrambled
+        ):
             self.scramble_completed_event.set()
             self.beep()
             out = (
