@@ -2,12 +2,23 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING
 from typing import TypedDict
+from typing import cast
 
 from cubing_algs.vcube import VCube
 from rich.console import Console as RichConsole
 
 from term_timer.bluetooth.interface import BluetoothInterface
+from term_timer.bluetooth.types import BatteryEventDict
 from term_timer.bluetooth.types import EventDict
+from term_timer.bluetooth.types import FaceletsEventDict
+from term_timer.bluetooth.types import FaceletsEventDictNoState
+from term_timer.bluetooth.types import HardwareEventDict
+from term_timer.bluetooth.types import HardwareEventMoyuDict
+from term_timer.bluetooth.types import HardwareEventNameOnlyDict
+from term_timer.bluetooth.types import HardwareEventPartialDict
+from term_timer.bluetooth.types import HardwareEventSoftwareVersionOnlyDict
+from term_timer.bluetooth.types import HardwareEventVersionOnlyDict
+from term_timer.bluetooth.types import MoveEventDict
 from term_timer.config import BLUETOOTH_CONFIG
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import CubeNotFoundError
@@ -198,44 +209,83 @@ class Bluetooth:
                 event_name = event['event']
 
                 if event_name == 'hardware':
-                    event.pop('event')
-                    event.pop('timestamp')
-                    self.bluetooth_hardware.update(event)
-                    self.hardware_received_event.set()
+                    self.handle_hardware_event(event)
 
                 elif event_name == 'battery':
-                    self.bluetooth_hardware['battery_level'] = event['level']
+                    battery_event = cast(BatteryEventDict, event)
+                    self.bluetooth_hardware['battery_level'] = battery_event[
+                        'level'
+                    ]
 
                 elif event_name == 'facelets':
-                    if self.facelets_received_event.is_set():
-                        continue
+                    if not self.facelets_received_event.is_set():
+                        facelets_event = cast(
+                            FaceletsEventDict | FaceletsEventDictNoState,
+                            event,
+                        )
+                        self.bluetooth_cube = VCube(facelets_event['facelets'])
+                        self.facelets_received_event.set()
 
-                    self.bluetooth_cube = VCube(event['facelets'])
+                elif event_name == 'move' and self.bluetooth_cube:
+                    move_event = cast(MoveEventDict, event)
+                    self.bluetooth_cube.rotate(move_event['move'])
+                    self.handle_bluetooth_move(move_event)
 
-                    self.facelets_received_event.set()
+    def handle_hardware_event(self, event: EventDict) -> None:
+        """
+        Extract hardware information from various hardware event types.
+        """
+        if 'hardware_name' in event:
+            name_event = cast(
+                HardwareEventDict
+                | HardwareEventNameOnlyDict
+                | HardwareEventMoyuDict,
+                event,
+            )
+            self.bluetooth_hardware['hardware_name'] = name_event[
+                'hardware_name'
+            ]
 
-                elif event_name == 'move':
-                    if not self.bluetooth_cube:
-                        continue
+        if 'hardware_version' in event:
+            version_event = cast(
+                HardwareEventDict
+                | HardwareEventVersionOnlyDict
+                | HardwareEventMoyuDict,
+                event,
+            )
+            self.bluetooth_hardware['hardware_version'] = version_event[
+                'hardware_version'
+            ]
 
-                    self.bluetooth_cube.rotate(event['move'])
+        if 'software_version' in event:
+            software_event = cast(
+                HardwareEventDict
+                | HardwareEventSoftwareVersionOnlyDict
+                | HardwareEventMoyuDict,
+                event,
+            )
+            self.bluetooth_hardware['software_version'] = software_event[
+                'software_version'
+            ]
 
-                    self.handle_bluetooth_move(event)
+        if 'product_date' in event:
+            date_event = cast(HardwareEventPartialDict, event)
+            self.bluetooth_hardware['product_date'] = date_event['product_date']
 
-    def handle_bluetooth_move(self, event: EventDict) -> None:
+        if 'serial' in event:
+            serial_event = cast(HardwareEventMoyuDict, event)
+            self.bluetooth_hardware['serial'] = serial_event['serial']
+
+        self.hardware_received_event.set()
+
+    def handle_bluetooth_move(self, event: MoveEventDict) -> None:
         """
         Handle a move event from the Bluetooth cube.
         """
-        move = event.get('move')
-        clock = event.get('clock')
+        move = event['move']
+        clock = event['clock']
 
-        if not isinstance(move, str) or not isinstance(clock, int):
-            return
-
-        timed_move = (
-            f'{ move }@'
-            f'{ int(clock / MS_TO_NS_FACTOR) }'
-        )
+        timed_move = f'{ move }@{ int(clock / MS_TO_NS_FACTOR) }'
 
         if self.state in {'start', 'scrambling'}:
             self.handle_scrambled(timed_move)
