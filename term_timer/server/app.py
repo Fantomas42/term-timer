@@ -1,6 +1,8 @@
 import gc
 import os
 import re
+import threading
+import webbrowser
 from datetime import datetime
 from datetime import timezone
 from typing import Any
@@ -857,12 +859,18 @@ class Server:
         app = self.create_app(debug=debug)
 
         if not os.getenv('BOTTLE_CHILD'):
+            url = f'http://{ host }:{ port }/'
             console.print(
                 '[server]Term Timer server is listening on [/server]'
-                f'[localhost][link=http://{ host }:{ port }/]'
-                f'http://{ host }:{ port }/[/link][/localhost]',
+                f'[localhost][link={ url }]{ url }[/link][/localhost]',
             )
             console.print('Hit Ctrl-C to quit.', style='comment')
+
+            # Open browser in a separate thread
+            def open_browser() -> None:
+                webbrowser.open(url)
+
+            threading.Thread(target=open_browser, daemon=True).start()
 
         app.run(
             host=host,
