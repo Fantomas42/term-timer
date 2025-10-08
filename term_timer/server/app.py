@@ -16,6 +16,7 @@ from bottle import jinja2_template
 from bottle import redirect
 from bottle import request
 from bottle import static_file
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.size import compress_moves
@@ -265,7 +266,7 @@ def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
 
 class RichHandler(WSGIRequestHandler):
 
-    def log_request(self, code: int | str, size: int | str) -> None:
+    def log_request(self, code: int | str = '-', size: int | str = '-') -> None:
         klass = 'green'
         if int(code) > 400:
             klass = 'red'
