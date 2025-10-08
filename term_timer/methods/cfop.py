@@ -97,10 +97,10 @@ class CFOPAnalyser(Analyser):
         elif 'Full Cube' in step_one['name']:
             return 50
 
-        malus = 0
+        malus = 0.0
         if 'Cross' in step_one['name']:
             cross_norm = self.norms.get('moves', {}).get(step_one['name'], 0)
-            if cross_norm:
+            if cross_norm and isinstance(cross_norm, (int, float)):
                 malus += (
                     step_one['moves_prettified'].metrics.htm
                     - cross_norm

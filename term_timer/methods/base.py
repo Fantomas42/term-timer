@@ -6,6 +6,7 @@ from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import TypedDict
+from typing import cast
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import INITIAL_STATE
@@ -173,11 +174,17 @@ class Analyser(FaceletAnalyser):
         self.orientation_moves = orientation_moves
 
         self.duration = (
-            self.solution[-1].timed - self.solution[0].timed
+            self.get_solution_move_time(-1) - self.get_solution_move_time(0)
         ) * MS_TO_NS_FACTOR
 
         self.steps = self.split_steps()
         self.summary = self.summarize()
+
+    def get_solution_move_time(self, index: int) -> int:
+        """
+        Get timing value for a move in the solution.
+        """
+        return cast(int, self.solution[index].timed)
 
     def split_steps(self) -> dict[str, StepInfo]:
         cube = VCube()
@@ -240,29 +247,26 @@ class Analyser(FaceletAnalyser):
                 continue
 
             moves = parse_moves([self.solution[i] for i in step_moves])
-            times = [self.solution[i].timed for i in step_moves]
+            times = [float(self.get_solution_move_time(i)) for i in step_moves]
 
             ante_time = 0
             if step_moves[0]:
-                ante_time = self.solution[step_moves[0] - 1].timed
+                ante_time = self.get_solution_move_time(step_moves[0] - 1)
 
             post_time = 0
             with suppress(IndexError):
-                post_time = self.solution[step_moves[-1] + 1].timed
+                post_time = self.get_solution_move_time(step_moves[-1] + 1)
 
             execution = (
-                self.solution[step_moves[-1]].timed
-                - self.solution[step_moves[0]].timed
+                self.get_solution_move_time(step_moves[-1])
+                - self.get_solution_move_time(step_moves[0])
             ) * MS_TO_NS_FACTOR
             recognition = (
-                self.solution[step_moves[0]].timed
-                - ante_time
+                self.get_solution_move_time(step_moves[0]) - ante_time
             ) * MS_TO_NS_FACTOR
             post_pause = max(
-                (
-                    post_time
-                    - self.solution[step_moves[-1]].timed
-                ) * MS_TO_NS_FACTOR,
+                (post_time - self.get_solution_move_time(step_moves[-1]))
+                * MS_TO_NS_FACTOR,
                 0,
             )
 
