@@ -306,27 +306,29 @@ class View:
     def template(self, template_name: str, **context: Any) -> str:
         context['now'] = datetime.now(tz=timezone.utc)  # noqa: UP017
 
-        return jinja2_template(
-            template_name,
-            template_settings={
-                'filters': {
-                    'format_delta': format_delta,
-                    'format_duration': format_duration,
-                    'format_grade': format_grade,
-                    'format_time': format_time,
-                    'format_score': format_score,
-                    'format_line': format_line,
-                    'parse_case_name': parse_case_name,
-                    'normalize_value': normalize_value,
-                    'normalize_percent': normalize_percent,
-                    'reconstruction_step': reconstruction_step,
-                    'reconstruction_overheads': reconstruction_overheads,
-                    'reconstruction_pauses': reconstruction_pauses,
-                    'optimized_step': optimized_step,
-                    'prettify': prettify_moves,
+        return str(
+            jinja2_template(
+                template_name,
+                template_settings={
+                    'filters': {
+                        'format_delta': format_delta,
+                        'format_duration': format_duration,
+                        'format_grade': format_grade,
+                        'format_time': format_time,
+                        'format_score': format_score,
+                        'format_line': format_line,
+                        'parse_case_name': parse_case_name,
+                        'normalize_value': normalize_value,
+                        'normalize_percent': normalize_percent,
+                        'reconstruction_step': reconstruction_step,
+                        'reconstruction_overheads': reconstruction_overheads,
+                        'reconstruction_pauses': reconstruction_pauses,
+                        'optimized_step': optimized_step,
+                        'prettify': prettify_moves,
+                    },
                 },
-            },
-            **context,
+                **context,
+            ),
         )
 
 
