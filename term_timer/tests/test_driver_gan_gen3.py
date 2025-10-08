@@ -343,7 +343,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start, length, *, little_endian=False):  # noqa: ARG001
+                def mock_get_bit_word(start: int, length: int,
+                                      *, _little_endian: bool = False) -> int:
                     if start == 0 and length == 8:
                         return 0x55  # magic
                     if start == 8 and length == 8:
@@ -384,7 +385,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
     @patch('term_timer.bluetooth.drivers.gan_gen3.datetime')
     async def test_event_handler_move_blocked_before_facelets(
             self, mock_datetime: Mock, mock_time: Mock,
-    ):
+    ) -> None:
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -439,7 +440,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start, length, *, little_endian=False):  # noqa: ARG001
+                def mock_get_bit_word(start: int, length: int,
+                                      *, _little_endian: bool = False) -> int:
                     if start == 0 and length == 8:
                         return 0x55  # magic
                     if start == 8 and length == 8:
@@ -492,7 +494,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start, length, *, little_endian=False):  # noqa: ARG001
+                def mock_get_bit_word(start: int, length: int,
+                                      *, _little_endian: bool = False) -> int:
                     if start == 0 and length == 8:
                         return 0x55  # magic
                     if start == 8 and length == 8:
@@ -537,7 +540,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start, length, *, little_endian=False):  # noqa: ARG001
+                def mock_get_bit_word(start: int, length: int,
+                                      *, _little_endian: bool = False) -> int:
                     if start == 0 and length == 8:
                         return 0x55  # magic
                     if start == 8 and length == 8:

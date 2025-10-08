@@ -1,6 +1,7 @@
 import contextlib
 import unittest
 from http import HTTPStatus
+from typing import Any
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -223,7 +224,7 @@ class TestRichHandler(unittest.TestCase):
         )
 
     @patch('term_timer.server.app.console')
-    def test_log_request_success_code(self, mock_console) -> None:
+    def test_log_request_success_code(self, mock_console: Mock) -> None:
         self.handler.requestline = 'GET /test HTTP/1.1'
         self.handler.log_request(200, 1024)
 
@@ -234,7 +235,7 @@ class TestRichHandler(unittest.TestCase):
         self.assertIn('1024', call_args)
 
     @patch('term_timer.server.app.console')
-    def test_log_request_error_code(self, mock_console) -> None:
+    def test_log_request_error_code(self, mock_console: Mock) -> None:
         self.handler.requestline = 'GET /error HTTP/1.1'
         self.handler.log_request(404, 512)
 
@@ -243,7 +244,7 @@ class TestRichHandler(unittest.TestCase):
         self.assertIn('[red]404[/red]', call_args)
 
     @patch('term_timer.server.app.console')
-    def test_log_request_http_status_object(self, mock_console) -> None:
+    def test_log_request_http_status_object(self, mock_console: Mock) -> None:
         self.handler.requestline = 'GET /status HTTP/1.1'
         self.handler.log_request(HTTPStatus.OK, 256)
 
@@ -260,13 +261,14 @@ class TestView(unittest.TestCase):
 
     @patch('term_timer.server.app.jinja2_template')
     @patch('term_timer.server.app.gc.collect')
-    def test_view_as_view(self, mock_gc_collect, mock_jinja2_template) -> None:
+    def test_view_as_view(self, mock_gc_collect: Mock,
+                          mock_jinja2_template: Mock) -> None:
         mock_jinja2_template.return_value = 'rendered_content'
 
         class TestView(View):
             template_name = 'test.html'
 
-            def get_context(self):
+            def get_context(self) -> dict[str, str]:
                 return {'test': 'value'}
 
         view = TestView()
@@ -277,7 +279,7 @@ class TestView(unittest.TestCase):
         mock_jinja2_template.assert_called_once()
 
     @patch('term_timer.server.app.jinja2_template')
-    def test_view_template_context(self, mock_jinja2_template) -> None:
+    def test_view_template_context(self, mock_jinja2_template: Mock) -> None:
         mock_jinja2_template.return_value = 'template_result'
 
         view = View()
@@ -357,8 +359,8 @@ class TestSessionListView(unittest.TestCase):
     @patch('term_timer.server.app.load_all_solves')
     @patch('term_timer.server.app.Statistics')
     def test_session_list_view_get_context(
-        self, mock_statistics, mock_load_solves,
-    ):
+            self, mock_statistics: Mock, mock_load_solves: Mock,
+    ) -> None:
         # Mock solves data
         mock_solve1 = Mock()
         mock_solve1.session = 'session1'
@@ -368,7 +370,7 @@ class TestSessionListView(unittest.TestCase):
         mock_solve3.session = 'session2'
 
         # Configure load_all_solves to return different data for each cube
-        def load_solves_side_effect(cube, *_args):
+        def load_solves_side_effect(cube: int, *_args: Any) -> list[Mock]:
             if cube == 2:
                 return [mock_solve1]
             if cube == 3:
@@ -396,8 +398,8 @@ class TestSessionListView(unittest.TestCase):
     @patch('term_timer.server.app.load_all_solves')
     @patch('term_timer.server.app.Statistics')
     def test_session_list_view_all_sessions(
-        self, mock_statistics, mock_load_solves,
-    ):
+            self, mock_statistics: Mock, mock_load_solves: Mock,
+    ) -> None:
         # Test that 'all' session is created when multiple sessions exist
         mock_solve1 = Mock(session='session1')
         mock_solve2 = Mock(session='session2')
@@ -418,8 +420,8 @@ class TestSessionDetailView(unittest.TestCase):
     @patch('term_timer.server.app.StatisticsReporter')
     @patch('term_timer.server.app.load_all_solves')
     def test_session_detail_view_initialization(
-        self, mock_load_solves, _mock_stats_reporter, mock_aggregator,
-    ):
+            self, mock_load_solves: Mock, _mock_stats_reporter: Mock,
+            mock_aggregator: Mock) -> None:
         mock_solves = [Mock(), Mock()]
         mock_load_solves.return_value = mock_solves
 
@@ -438,8 +440,8 @@ class TestSessionDetailView(unittest.TestCase):
     @patch('term_timer.server.app.StatisticsReporter')
     @patch('term_timer.server.app.load_all_solves')
     def test_session_detail_view_all_session(
-        self, mock_load_solves, _mock_stats_reporter, mock_aggregator,
-    ):
+            self, mock_load_solves: Mock, _mock_stats_reporter: Mock,
+            mock_aggregator: Mock) -> None:
         mock_solves = [Mock(), Mock()]
         mock_load_solves.return_value = mock_solves
 
@@ -456,8 +458,8 @@ class TestSessionDetailView(unittest.TestCase):
     @patch('term_timer.server.app.SolvesMethodAggregator')
     @patch('term_timer.server.app.load_all_solves')
     def test_session_detail_view_no_solves(
-        self, mock_load_solves, mock_aggregator, mock_abort,
-    ):
+            self, mock_load_solves: Mock, mock_aggregator: Mock,
+            mock_abort: Mock) -> None:
         mock_load_solves.return_value = []
         mock_aggregator_instance = Mock()
         mock_aggregator_instance.results = {'stack': []}
@@ -471,8 +473,8 @@ class TestSessionDetailView(unittest.TestCase):
     @patch('term_timer.server.app.StatisticsReporter')
     @patch('term_timer.server.app.load_all_solves')
     def test_session_detail_view_step_case_filtering(
-        self, mock_load_solves, _mock_stats_reporter, mock_aggregator,
-    ):
+            self, mock_load_solves: Mock, _mock_stats_reporter: Mock,
+            mock_aggregator: Mock) -> None:
         mock_solve = Mock()
         mock_solve.advanced = True
         mock_solve.method_applied.summary = [
@@ -578,8 +580,8 @@ class TestSolveDetailView(unittest.TestCase):
     @patch('term_timer.server.app.load_all_solves')
     @patch('term_timer.server.app.abort')
     def test_solve_detail_view_invalid_solve_id(
-        self, mock_abort, mock_load_solves,
-    ):
+            self, mock_abort: Mock, mock_load_solves: Mock,
+    ) -> None:
         mock_load_solves.return_value = [Mock()]  # Only one solve
 
         with contextlib.suppress(AttributeError):
@@ -589,7 +591,8 @@ class TestSolveDetailView(unittest.TestCase):
         mock_abort.assert_called_once_with(404, 'Invalid solve ID')
 
     @patch('term_timer.server.app.load_all_solves')
-    def test_solve_detail_view_initialization(self, mock_load_solves) -> None:
+    def test_solve_detail_view_initialization(
+            self, mock_load_solves: Mock) -> None:
         mock_solve = Mock()
         mock_load_solves.return_value = [mock_solve]
 
@@ -604,7 +607,7 @@ class TestSolveDetailView(unittest.TestCase):
 
     @patch('term_timer.server.app.load_all_solves')
     def test_solve_detail_view_get_context_basic(
-            self, mock_load_solves) -> None:
+            self, mock_load_solves: Mock) -> None:
         mock_solve = Mock()
         mock_solve.final_time = 5000000000
         mock_solve.advanced = False
@@ -626,7 +629,7 @@ class TestSolveDetailView(unittest.TestCase):
 
     @patch('term_timer.server.app.load_all_solves')
     def test_solve_detail_view_get_context_advanced(
-            self, mock_load_solves) -> None:
+            self, mock_load_solves: Mock) -> None:
         mock_solve = Mock()
         mock_solve.final_time = 5000000000
         mock_solve.advanced = True
@@ -669,8 +672,8 @@ class TestSolveUpdateView(unittest.TestCase):
     @patch('term_timer.server.app.save_solves')
     @patch('term_timer.server.app.load_all_solves')
     def test_solve_update_view_invalid_id(
-        self, mock_load_solves, _mock_save_solves, _mock_redirect,
-    ):
+            self, mock_load_solves: Mock, _mock_save_solves: Mock,
+            _mock_redirect: Mock) -> None:
         mock_load_solves.return_value = []
 
         with self.assertRaises(HTTPError):  # abort() raises HTTPError
@@ -680,8 +683,8 @@ class TestSolveUpdateView(unittest.TestCase):
     @patch('term_timer.server.app.save_solves')
     @patch('term_timer.server.app.load_all_solves')
     def test_solve_update_view_success(
-        self, mock_load_solves, mock_save_solves, _mock_redirect,
-    ):
+            self, mock_load_solves: Mock, mock_save_solves: Mock,
+            _mock_redirect: Mock) -> None:
         mock_solve = Mock()
         mock_load_solves.return_value = [mock_solve]
 
@@ -697,8 +700,8 @@ class TestSolveDeleteView(unittest.TestCase):
     @patch('term_timer.server.app.save_solves')
     @patch('term_timer.server.app.load_all_solves')
     def test_solve_delete_view_invalid_id(
-        self, mock_load_solves, _mock_save_solves, _mock_redirect,
-    ):
+            self, mock_load_solves: Mock, _mock_save_solves: Mock,
+            _mock_redirect: Mock) -> None:
         mock_load_solves.return_value = []
 
         with self.assertRaises(HTTPError):  # abort() raises HTTPError
@@ -708,8 +711,8 @@ class TestSolveDeleteView(unittest.TestCase):
     @patch('term_timer.server.app.save_solves')
     @patch('term_timer.server.app.load_all_solves')
     def test_solve_delete_view_success(
-        self, mock_load_solves, mock_save_solves, _mock_redirect,
-    ):
+            self, mock_load_solves: Mock, mock_save_solves: Mock,
+            _mock_redirect: Mock) -> None:
         mock_solve1 = Mock()
         mock_solve2 = Mock()
         mock_solves = [mock_solve1, mock_solve2]
@@ -729,7 +732,7 @@ class TestServer(unittest.TestCase):
 
     @patch.dict('os.environ', {}, clear=True)
     @patch('term_timer.server.app.console')
-    def test_run_server(self, mock_console) -> None:
+    def test_run_server(self, mock_console: Mock) -> None:
         mock_app = Mock()
         mock_app.run = Mock()
 
@@ -751,7 +754,7 @@ class TestServer(unittest.TestCase):
 
     @patch.dict('os.environ', {'BOTTLE_CHILD': '1'})
     @patch('term_timer.server.app.console')
-    def test_run_server_bottle_child(self, mock_console) -> None:
+    def test_run_server_bottle_child(self, mock_console: Mock) -> None:
         mock_app = Mock()
         mock_app.run = Mock()
 

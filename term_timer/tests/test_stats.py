@@ -180,7 +180,7 @@ class TestStatisticsReporterListing(unittest.TestCase):
         self.listing = StatisticsReporter(3, self.solves)
 
     @patch('term_timer.interface.console.console.print')
-    def test_resume_with_limit(self, mock_console) -> None:
+    def test_resume_with_limit(self, mock_console: Mock) -> None:
         """Test that resume respects the limit parameter."""
         self.listing.listing(2, '')
 
@@ -188,7 +188,7 @@ class TestStatisticsReporterListing(unittest.TestCase):
         self.assertEqual(mock_console.call_count, 3)
 
     @patch('term_timer.interface.console.console.print')
-    def test_resume_limit_larger_than_stack(self, mock_console) -> None:
+    def test_resume_limit_larger_than_stack(self, mock_console: Mock) -> None:
         """Test that resume handles limits larger than the stack size."""
         self.listing.listing(10, '')
 
@@ -196,7 +196,7 @@ class TestStatisticsReporterListing(unittest.TestCase):
         self.assertEqual(mock_console.call_count, 5)
 
     @patch('term_timer.interface.console.console.print')
-    def test_resume_format(self, mock_console) -> None:
+    def test_resume_format(self, mock_console: Mock) -> None:
         """Test the formatting of the resume output."""
         self.listing.listing(1, '')
 
@@ -792,7 +792,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             self.assertTrue(mock_plt.plot.call_count >= 3)
 
     @patch('term_timer.interface.console.console.print')
-    def test_resume_reverse_order(self, mock_console) -> None:
+    def test_resume_reverse_order(self, mock_console: Mock) -> None:
         """Test that solves are displayed in reverse order (newest first)."""
         reporter = StatisticsReporter(3, self.solves)
         reporter.listing(4, 'index')

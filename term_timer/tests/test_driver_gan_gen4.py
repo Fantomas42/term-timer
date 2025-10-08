@@ -172,7 +172,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start, length, *, little_endian=False):  # noqa: ARG001
+                def mock_get_bit_word(start: int, length: int,
+                                      *, _little_endian: bool = False) -> int:
                     if start == 0 and length == 8:
                         return 0x01  # event type (move)
                     if start == 8 and length == 8:
@@ -229,7 +230,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start, length, *, little_endian=False):  # noqa: ARG001
+                def mock_get_bit_word(start: int, length: int,
+                                      *, _little_endian: bool = False) -> int:
                     if start == 0 and length == 8:
                         return 0x01  # event type (move)
                     if start == 8 and length == 8:
@@ -269,7 +271,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start, length, *, little_endian=False):  # noqa: ARG001
+                def mock_get_bit_word(start: int, length: int, *,
+                                      _little_endian: bool = False) -> int:
                     if start == 0 and length == 8:
                         return 0xED  # event type (facelets)
                     if start == 8 and length == 8:
@@ -320,7 +323,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start, length, *, little_endian=False):  # noqa: ARG001
+                def mock_get_bit_word(start: int, length: int,
+                                      *, _little_endian: bool = False) -> int:
                     if start == 0 and length == 8:
                         return 0xED  # event type (facelets)
                     if start == 8 and length == 8:
@@ -364,7 +368,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start, length, *, _little_endian=False):
+                def mock_get_bit_word(start: int, length: int,
+                                      *, _little_endian: bool = False) -> int:
                     if start == 0 and length == 8:
                         return 0xD1  # event type (move history)
                     if start == 8 and length == 8:
@@ -453,7 +458,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start, length):
+                def mock_get_bit_word(start: int, length: int) -> int:
                     if start == 0 and length == 8:
                         return 0xFC  # event type (hardware name)
                     if start == 8 and length == 8:
@@ -496,7 +501,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start, length):
+                def mock_get_bit_word(start: int, length: int) -> int:
                     if start == 0 and length == 8:
                         return 0xFC  # event type (hardware name)
                     if start == 8 and length == 8:
@@ -634,7 +639,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start, length, *, little_endian=False):  # noqa: ARG001
+                def mock_get_bit_word(start: int, length: int,
+                                      *, _little_endian: bool = False) -> int:
                     if start == 0 and length == 8:
                         return 0xEC  # event type (gyroscope)
                     if start == 16 and length == 16:
