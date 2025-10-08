@@ -26,9 +26,9 @@ class TestCube(unittest.TestCase):
         return_value='Cube Representation',
     )
     def test_str_representation(self, mock_print_cube: Mock) -> None:
-        """Test que la méthode __str__ renvoie la représentation du cube."""
+        """Test that the __str__ method returns the cube representation."""
         result = str(self.cube)
         self.assertEqual(result, 'Cube Representation')
 
-        # Vérifier que print_cube a été appelé avec la bonne instance de cube
+        # Verify that print_cube was called with the correct cube instance
         mock_print_cube.assert_called_once()
