@@ -721,7 +721,7 @@ class Solve:
         if not self.advanced or not self.method_applied:
             return []
 
-        speed = int(self.move_speed / MS_TO_NS_FACTOR)
+        speed = self.move_speed / MS_TO_NS_FACTOR
 
         timing: list[tuple[int, int, Move]] = []
         orientation_offset = 0
@@ -747,7 +747,7 @@ class Solve:
 
         moves = parse_moves(full_algo).transform(
             pause_moves(
-                speed,
+                int(speed),
                 PAUSE_FACTOR,
                 multiple=False,
             ),
@@ -755,7 +755,7 @@ class Solve:
         )
 
         for move in moves:
-            time = move.timed + orientation_offset + speed
+            time = int(move.timed + orientation_offset + speed)
             starting = max(
                 int(time - (speed * (1.6 if move.is_double else 1))),
                 previous_time,
