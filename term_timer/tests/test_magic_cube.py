@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import Mock
 from unittest.mock import patch
 
 from term_timer.magic_cube import Cube
@@ -24,7 +25,7 @@ class TestCube(unittest.TestCase):
         'cubing_algs.display.VCubeDisplay.display',
         return_value='Cube Representation',
     )
-    def test_str_representation(self, mock_print_cube) -> None:
+    def test_str_representation(self, mock_print_cube: Mock) -> None:
         """Test que la méthode __str__ renvoie la représentation du cube."""
         result = str(self.cube)
         self.assertEqual(result, 'Cube Representation')

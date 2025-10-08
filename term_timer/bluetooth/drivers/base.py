@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from typing import Any
 from typing import ClassVar
 
 from bleak import BleakClient
@@ -31,11 +30,10 @@ class Driver:
         raise NotImplementedError
 
     def add_event(self, store: list[EventDict],
-                  event: dict[str, Any] | Sequence[dict[str, Any]]) -> None:
-        if isinstance(event, (list, tuple)):
-            for e in event:
-                store.append(e)
-                self.events.append(e)
+                  event: EventDict | Sequence[EventDict]) -> None:
+        if isinstance(event, Sequence):
+            store.extend(event)
+            self.events.extend(event)
         else:
-            store.append(event)  # type: ignore[arg-type]
-            self.events.append(event)  # type: ignore[arg-type]
+            store.append(event)
+            self.events.append(event)

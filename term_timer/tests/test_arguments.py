@@ -1,5 +1,6 @@
 import argparse
 import unittest
+from unittest.mock import Mock
 from unittest.mock import patch
 
 from term_timer.arguments import COMMAND_ALIASES
@@ -277,7 +278,7 @@ class TestGetArguments(unittest.TestCase):
 
     @patch('sys.argv', ['term_timer'])
     @patch('sys.exit')
-    def test_get_arguments_no_command_exits(self, mock_exit) -> None:
+    def test_get_arguments_no_command_exits(self, mock_exit: Mock) -> None:
         get_arguments()
         mock_exit.assert_called_once_with(1)
 

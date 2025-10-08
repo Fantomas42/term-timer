@@ -129,13 +129,14 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(result)
 
     def test_send_command_handler_none_command(self) -> None:
-        result = self.driver.send_command_handler(None)
+        result = self.driver.send_command_handler(None)  # type: ignore[arg-type]
         self.assertFalse(result)
 
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')
     async def test_event_handler_gyroscope_disabled(
-            self, mock_datetime, mock_time):
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -165,7 +166,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')
     async def test_event_handler_gyroscope_enabled(
-            self, mock_datetime, mock_time):
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -207,7 +209,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')
     async def test_event_handler_moves_blocked_before_facelets(
-            self, mock_datetime, mock_time):
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -234,7 +237,9 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
 
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')
-    async def test_event_handler_move_event(self, mock_datetime, mock_time):
+    async def test_event_handler_move_event(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -276,7 +281,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')
     async def test_event_handler_move_with_zero_elapsed_time(
-            self, mock_datetime, mock_time):
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -316,7 +322,9 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')
     @patch('term_timer.bluetooth.drivers.gan_gen2.cubies_to_facelets')
     async def test_event_handler_facelets_event(
-            self, mock_cubies_to_facelets, mock_datetime, mock_time):
+        self, mock_cubies_to_facelets: Mock,
+        mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -337,7 +345,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
 
                 # Mock corner and edge data
-                def mock_get_bit_word(start, length):
+                def mock_get_bit_word(start: int, length: int) -> int:
                     if start == 0 and length == 4:
                         return 0x04  # event type
                     if start == 4 and length == 8:
@@ -369,7 +377,9 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
 
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')
-    async def test_event_handler_hardware_event(self, mock_datetime, mock_time):
+    async def test_event_handler_hardware_event(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -386,7 +396,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start, length):
+                def mock_get_bit_word(start: int, length: int) -> int:
                     if start == 0 and length == 4:
                         return 0x05  # event type
                     if start == 8 and length == 8:
@@ -415,7 +425,9 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
 
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')
-    async def test_event_handler_battery_event(self, mock_datetime, mock_time):
+    async def test_event_handler_battery_event(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -446,7 +458,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')
     async def test_event_handler_battery_level_capped(
-            self, mock_datetime, mock_time):
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -476,7 +489,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')
     async def test_event_handler_disconnect_event(
-            self, mock_datetime, mock_time):
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -507,7 +521,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')
     @patch('term_timer.bluetooth.drivers.gan_gen2.logger')
     async def test_event_handler_unknown_event(
-            self, mock_logger, mock_datetime, mock_time):
+            self, mock_logger: Mock, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -602,7 +617,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         last_eo = (2 - (sum(eo_values) % 2)) % 2
         self.assertEqual(last_eo, 1)  # (2 - (5 % 2)) % 2 = (2 - 1) % 2 = 1
 
-    async def test_event_handler_with_invalid_data(self):
+    async def test_event_handler_with_invalid_data(self) -> None:
         # Test with empty data
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = bytearray()
