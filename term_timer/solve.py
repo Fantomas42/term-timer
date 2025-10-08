@@ -64,7 +64,7 @@ class Solve:
                  session: str = '',
                  solve_id: int = 0,
                  cube_size: int = 3,
-                 moves: str | None = None):
+                 moves: str | None = None) -> None:
         self.date = int(date)
         self.time = int(time)
         self.flag = flag
@@ -109,7 +109,7 @@ class Solve:
         return self.time
 
     @cached_property
-    def move_times(self) -> list[tuple[Move, int | None]]:
+    def move_times(self) -> list[tuple[Move, int]]:
         return [(m.untimed, m.timed) for m in self.solution]
 
     @cached_property
@@ -431,12 +431,13 @@ class Solve:
         if not step['moves']:
             return ''
 
+        speed = int(self.move_speed / MS_TO_NS_FACTOR)
         source, compressed = self.missed_moves_pair(
             step['moves_humanized'],
         )
         source_paused = source.transform(
             pause_moves(
-                self.move_speed / MS_TO_NS_FACTOR,
+                speed,
                 PAUSE_FACTOR,
                 multiple=multiple,
             ),
@@ -445,7 +446,7 @@ class Solve:
         )
         compressed_paused = compressed.transform(
             pause_moves(
-                self.move_speed / MS_TO_NS_FACTOR,
+                speed,
                 PAUSE_FACTOR,
                 multiple=multiple,
             ),
@@ -480,7 +481,7 @@ class Solve:
 
         source_paused = step['moves_humanized'].transform(
             pause_moves(
-                self.move_speed / MS_TO_NS_FACTOR,
+                int(self.move_speed / MS_TO_NS_FACTOR),
                 PAUSE_FACTOR,
                 multiple=multiple,
             ),
@@ -716,23 +717,23 @@ class Solve:
         )
 
     @cached_property
-    def reconstruction_steps_timing(self) -> list[list[int | str]]:
+    def reconstruction_steps_timing(self) -> list[tuple[int, int, Move]]:
         if not self.advanced or not self.method_applied:
             return []
 
-        speed = self.move_speed / MS_TO_NS_FACTOR
+        speed = int(self.move_speed / MS_TO_NS_FACTOR)
 
-        timing = []
+        timing: list[tuple[int, int, Move]] = []
         orientation_offset = 0
 
         for move in self.orientation_moves:
             time = int(speed * (1.6 if move.is_double else 1))
             timing.append(
-                [
+                (
                     orientation_offset,
                     orientation_offset + time,
                     move,
-                ],
+                ),
             )
             orientation_offset += time
 
@@ -746,7 +747,7 @@ class Solve:
 
         moves = parse_moves(full_algo).transform(
             pause_moves(
-                self.move_speed / MS_TO_NS_FACTOR,
+                speed,
                 PAUSE_FACTOR,
                 multiple=False,
             ),
@@ -754,7 +755,7 @@ class Solve:
         )
 
         for move in moves:
-            time = int(move.timed + orientation_offset + speed)
+            time = move.timed + orientation_offset + speed
             starting = max(
                 int(time - (speed * (1.6 if move.is_double else 1))),
                 previous_time,
@@ -764,11 +765,11 @@ class Solve:
                 starting = timing[-1][0]
 
             timing.append(
-                [
+                (
                     starting,
                     time,
                     move.untimed,
-                ],
+                ),
             )
             previous_time = time
 

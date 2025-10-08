@@ -6,7 +6,6 @@ from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import TypedDict
-from typing import cast
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import INITIAL_STATE
@@ -184,7 +183,7 @@ class Analyser(FaceletAnalyser):
         """
         Get timing value for a move in the solution.
         """
-        return cast(int, self.solution[index].timed)
+        return self.solution[index].timed
 
     def split_steps(self) -> dict[str, StepInfo]:
         cube = VCube()
