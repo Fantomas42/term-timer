@@ -146,13 +146,15 @@ def parse_case_name(value: str, step: str) -> tuple[str, str, str]:
         return code, name, 'OLL'
 
 
-def normalize_value(value: float, method_applied: Analyser, metric: str, name: str) -> str:
+def normalize_value(value: float, method_applied: Analyser,
+                    metric: str, name: str) -> str:
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value }</span>'
 
 
-def normalize_percent(value: float, method_applied: Analyser, metric: str, name: str) -> str:
+def normalize_percent(value: float, method_applied: Analyser,
+                      metric: str, name: str) -> str:
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value:.2f}%</span>'
