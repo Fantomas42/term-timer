@@ -84,7 +84,7 @@ def format_delta(delta: int) -> str:
     return f'{ sign }{ format_duration(delta) }'
 
 
-def format_score(score: int, title: str = '') -> str:
+def format_score(score: float, title: str = '') -> str:
     klass = 'good'
     if score < 14:
         klass = 'danger'
