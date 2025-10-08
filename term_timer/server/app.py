@@ -7,6 +7,7 @@ from datetime import datetime
 from datetime import timezone
 from typing import Any
 from typing import ClassVar
+from typing import cast
 from wsgiref.simple_server import WSGIRequestHandler
 
 from bottle import TEMPLATE_PATH
@@ -364,7 +365,7 @@ class SessionListView(View):
     template_name = 'index.html'
 
     def get_context(self) -> dict[str, Any]:
-        sessions = {}
+        sessions: dict[int, dict[str, dict[str, Any]]] = {}
         for cube in CUBE_SIZES:
             solves = load_all_solves(cube, [], [], [])
             sessions[cube] = {}
@@ -391,13 +392,12 @@ class SessionListView(View):
                     'stats': Statistics(all_solves),
                 }
 
-            sessions[cube] = dict(
-                sorted(
-                    sessions[cube].items(),
-                    key=lambda item: len(item[1]['solves']),
-                    reverse=True,
-                ),
+            session_sorted = sorted(
+                sessions[cube].items(),
+                key=lambda item: len(item[1]['solves']),
+                reverse=True,
             )
+            sessions[cube] = dict(session_sorted)
 
         return {
             'sessions': sessions,
@@ -428,16 +428,20 @@ class SessionDetailView(View):
             self.method_name, solves, full=True,
         )
 
-        solves = self.method_aggregation.results['stack']
+        solves_analyzed = self.method_aggregation.results['stack']
 
         if self.step and self.case_uid:
             filtered_solves = []
 
-            for solve in solves:
+            for solve in solves_analyzed:
+                solve = cast(Solve, solve)
+
                 if not solve.advanced:
                     continue
 
-                for s_step in reversed(solve.method_applied.summary):
+                method_applied = cast(Analyser, solve.method_applied)
+
+                for s_step in reversed(method_applied.summary):
                     if s_step['name'].lower() == self.step:
                         if s_step['case']:
                             step_case = s_step['case'].split(' ')[0].lower()
@@ -522,7 +526,8 @@ class SessionDetailView(View):
         }
 
     def compute_punchcard(self) -> dict[str, dict[str, int]]:
-        punchcard = {}
+        punchcard: dict[str, dict[str, int]] = {}
+
         for solve in self.stats.stack:
             dt = solve.datetime.astimezone()
             year = dt.strftime('%Y')
@@ -578,7 +583,9 @@ class SolveDetailView(View):
                 for i in range(len(self.solve.move_times))
             ]
 
-            for s in self.solve.method_applied.summary:
+            method_applied = cast(Analyser, self.solve.method_applied)
+
+            for s in method_applied.summary:
                 if s['type'] not in {'skipped', 'virtual'}:
                     index = s['index'][-1] + 1
                     steps.append(
@@ -789,7 +796,7 @@ class AcademyStepView(AcademyView):
 
         return {
             'step': self.step,
-            'step_info': self.methods['CFOP']['steps'][self.step],
+            'step_info': self.methods['CFOP']['steps'][self.step],  # type: ignore[index]
             'cases': cases,
             'cases_count': len(cases),
         }
@@ -844,7 +851,7 @@ class AcademyCaseView(AcademyView):
 
         return {
             'step': self.step,
-            'step_info': self.methods['CFOP']['steps'][self.step],
+            'step_info': self.methods['CFOP']['steps'][self.step],  # type: ignore[index]
             'case': case_info,
             'orientations': orientations,
             'orientations_count': len(orientations),
