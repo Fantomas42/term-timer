@@ -1,4 +1,5 @@
 from functools import cached_property
+from typing import cast
 
 import numpy as np
 import plotext as plt
@@ -20,7 +21,10 @@ from term_timer.formatter import format_score
 from term_timer.formatter import format_time
 from term_timer.interface.console import console
 from term_timer.magic_cube import Cube
+from term_timer.methods.base import Analyser
 from term_timer.solve import Solve
+from term_timer.types_analysis import CaseStats
+from term_timer.types_analysis import MethodAnalysis
 
 
 class StatisticsTools:
@@ -194,7 +198,9 @@ class Statistics(StatisticsTools):
 
     @cached_property
     def score(self) -> float:
-        return sum(s.score for s in self.stack if s.advanced) / self.total
+        return sum(
+            cast(float, s.score) for s in self.stack if s.advanced
+        ) / self.total
 
     @cached_property
     def repartition(self) -> list[tuple[int, int]]:
@@ -457,23 +463,26 @@ class StatisticsReporter(Statistics):
             )
 
         if solve.advanced:
-            grade = format_grade(solve.score)
+            solve_score = cast(float, solve.score)
+            grade = format_grade(solve_score)
             grade_class = grade.lower()
             grade_line = (
                 f' [grade_{ grade_class }]'
                 f'{ grade:<2}'
                 f'[/grade_{ grade_class }]'
-                f' { format_score(solve.score) }'
+                f' { format_score(solve_score) }'
             )
             console.print(f'[stats]Grade      :[/stats]{ grade_line }')
 
-            grade = format_grade(solve.method_applied.score)
+            method_applied = cast(Analyser, solve.method_applied)
+            method_score = method_applied.score
+            grade = format_grade(method_score)
             grade_class = grade.lower()
             grade_line = (
                 f' [grade_{ grade_class }]'
                 f'{ grade:<2}'
                 f'[/grade_{ grade_class }]'
-                f' { format_score(solve.method_applied.score) }'
+                f' { format_score(method_score) }'
             )
             console.print(
                 f'[stats]Grade { solve.method_analyser.name:<5}:[/stats]'
@@ -485,7 +494,7 @@ class StatisticsReporter(Statistics):
                 allow_dnf=False,
             )
             recog_percent = solve.recognition_time / solve.time * 100.0
-            recog_class = solve.method_applied.normalize_value(
+            recog_class = method_applied.normalize_value(
                 'solve', 'recognition',
                 recog_percent, 'recognition-p',
             )
@@ -500,7 +509,7 @@ class StatisticsReporter(Statistics):
                 allow_dnf=False,
             )
             exec_percent = solve.execution_time / solve.time * 100.0
-            exec_class = solve.method_applied.normalize_value(
+            exec_class = method_applied.normalize_value(
                 'solve', 'execution',
                 exec_percent, 'execution-p',
             )
@@ -604,7 +613,7 @@ class StatisticsReporter(Statistics):
             if show_recognition_graph:
                 solve.recognition_graph()
 
-    def case_table(self, title: str, items: list[dict[str, int | float]],
+    def case_table(self, title: str, items: dict[str, CaseStats],
                    sorting: str, ordering: str) -> None:
         table = Table(title=f'{ title }s', box=box.SIMPLE)
         table.add_column('Case', width=10)
@@ -620,9 +629,13 @@ class StatisticsReporter(Statistics):
         table.add_column('TPS', width=5, justify='right')
         table.add_column('eTPS', width=5, justify='right')
 
+        def sort_key(item: tuple[str, CaseStats]) -> tuple[int | float, str]:
+            name, stats = item
+            return (cast(int | float, stats[sorting]), name)  # type: ignore[literal-required]
+
         for name, info in sorted(
                 items.items(),
-                key=lambda x: (x[1][sorting], x[0]),
+                key=sort_key,
                 reverse=ordering == 'desc',
         ):
             percent_klass = (
@@ -651,13 +664,13 @@ class StatisticsReporter(Statistics):
                 f'{ (info["probability"] * 100):.2f}%'
                 '[/percent]',
                 '[recognition]' +
-                format_duration(info['recognition']) +
+                format_duration(int(info['recognition'])) +
                 '[/recognition]',
                 '[execution]' +
-                format_duration(info['execution']) +
+                format_duration(int(info['execution'])) +
                 '[/execution]',
                 '[duration]' +
-                format_duration(info['time']) +
+                format_duration(int(info['time'])) +
                 '[/duration]',
                 '[ao12]' +
                 format_duration(info['ao12']) +
@@ -671,16 +684,17 @@ class StatisticsReporter(Statistics):
             )
         console.print(table)
 
-    def cfop(self, analyses: dict[str, dict[str, float | int] | float],
+    def cfop(self, analyses: MethodAnalysis,
              *, oll_only: bool = False, pll_only: bool = False,
              sorting: str = 'count', ordering: str = 'asc') -> None:
         if sorting == 'case':
             sorting = 'label'
 
-        if not pll_only:
-            self.case_table('OLL', analyses['resume']['oll'], sorting, ordering)
-        if not oll_only:
-            self.case_table('PLL', analyses['resume']['pll'], sorting, ordering)
+        resume = analyses['resume']
+        if not pll_only and 'oll' in resume:
+            self.case_table('OLL', resume['oll'], sorting, ordering)
+        if not oll_only and 'pll' in resume:
+            self.case_table('PLL', resume['pll'], sorting, ordering)
 
         mean = analyses['mean']
         grade = format_grade(mean)

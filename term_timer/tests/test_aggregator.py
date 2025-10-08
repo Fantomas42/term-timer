@@ -15,7 +15,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
 
         result = analyse_solve_worker(solve, 'method', full=True)
 
-        self.assertEqual(result, {'solve': solve})
+        self.assertEqual(result, {'steps': {}, 'score': 0.0, 'solve': solve})
 
     def test_analyse_solve_worker_not_advanced_not_full(self) -> None:
         solve = Mock()
@@ -23,7 +23,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
 
         result = analyse_solve_worker(solve, 'method', full=False)
 
-        self.assertEqual(result, {'solve': None})
+        self.assertEqual(result, {'steps': {}, 'score': 0.0, 'solve': None})
 
     def test_analyse_solve_worker_advanced_full(self) -> None:
         solve = Mock()
@@ -171,6 +171,8 @@ class TestSolvesMethodAggregator(unittest.TestCase):
             },
             {
                 'solve': self.mock_solve_basic,
+                'score': 0.0,
+                'steps': {},
             },
         ]
 
