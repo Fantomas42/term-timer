@@ -4,12 +4,9 @@ References :
 """
 import logging
 import time
-from collections.abc import Sequence
 from datetime import datetime
 from datetime import timezone
-from typing import Any
 from typing import ClassVar
-from typing import cast
 
 from cubing_algs.facelets import cubies_to_facelets
 
@@ -19,7 +16,16 @@ from term_timer.bluetooth.constants import GAN_GEN4_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN4_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.message import GanProtocolMessage
+from term_timer.bluetooth.types import BatteryEventDict
+from term_timer.bluetooth.types import DisconnectEventDict
 from term_timer.bluetooth.types import EventDict
+from term_timer.bluetooth.types import FaceletsEventDict
+from term_timer.bluetooth.types import GyroEventDict
+from term_timer.bluetooth.types import HardwareEventNameOnlyDict
+from term_timer.bluetooth.types import HardwareEventPartialDict
+from term_timer.bluetooth.types import HardwareEventSoftwareVersionOnlyDict
+from term_timer.bluetooth.types import HardwareEventVersionOnlyDict
+from term_timer.bluetooth.types import MoveEventDict
 
 logger = logging.getLogger(__name__)
 
@@ -118,22 +124,21 @@ class GanGen4Driver(GanGen3Driver):
 
             # Put move event into FIFO buffer
             if face >= 0:
-                self.move_buffer.append(
-                    {
-                        'event': 'move',
-                        'clock': clock,
-                        'timestamp': timestamp,
-                        'serial': serial,
-                        'local_timestamp': timestamp,
-                        'cube_timestamp': cube_timestamp,
-                        'face': face,
-                        'direction': direction,
-                        'move': move.strip(),
-                    },
-                )
+                move_event: MoveEventDict = {
+                    'event': 'move',
+                    'clock': clock,
+                    'timestamp': timestamp,
+                    'serial': serial,
+                    'local_timestamp': timestamp,
+                    'cube_timestamp': cube_timestamp,
+                    'face': face,
+                    'direction': direction,
+                    'move': move.strip(),
+                }
+                self.move_buffer.append(move_event)
             evicted = await self.evict_move_buffer()
             if evicted:
-                self.add_event(events, cast(Sequence[dict[str, Any]], evicted))
+                self.add_event(events, evicted)
 
         elif event == 0xED:  # Facelets
             serial = msg.get_bit_word(16, 16, little_endian=True)
@@ -172,7 +177,7 @@ class GanGen4Driver(GanGen3Driver):
             ep.append(66 - sum(ep))
             eo.append((2 - (sum(eo) % 2)) % 2)
 
-            payload = {
+            facelets_payload: FaceletsEventDict = {
                 'event': 'facelets',
                 'clock': clock,
                 'timestamp': timestamp,
@@ -185,7 +190,7 @@ class GanGen4Driver(GanGen3Driver):
                     'EO': eo,
                 },
             }
-            self.add_event(events, payload)
+            self.add_event(events, facelets_payload)
 
         elif event == 0xD1:  # Move history
             start_serial = msg.get_bit_word(16, 8)
@@ -198,28 +203,27 @@ class GanGen4Driver(GanGen3Driver):
                 if face >= 0:
                     move = 'URFDLB'[face] + " '"[direction]
 
-                    self.inject_missed_move_to_buffer(
-                        {
-                            'event': 'move',
-                            'clock': clock,
-                            'timestamp': timestamp,
-                            'serial': (start_serial - i) & 0xFF,
-                            # Missed and recovered events
-                            # has no meaningful local timestamps
-                            'local_timestamp': None,
-                            # Cube hardware timestamp for missed move
-                            # you should interpolate using
-                            # cubeTimestampLinearFit
-                            'cube_timestamp': None,
-                            'face': face,
-                            'direction': direction,
-                            'move': move.strip(),
-                        },
-                    )
+                    history_move: MoveEventDict = {
+                        'event': 'move',
+                        'clock': clock,
+                        'timestamp': timestamp,
+                        'serial': (start_serial - i) & 0xFF,
+                        # Missed and recovered events
+                        # has no meaningful local timestamps
+                        'local_timestamp': None,
+                        # Cube hardware timestamp for missed move
+                        # you should interpolate using
+                        # cubeTimestampLinearFit
+                        'cube_timestamp': None,
+                        'face': face,
+                        'direction': direction,
+                        'move': move.strip(),
+                    }
+                    self.inject_missed_move_to_buffer(history_move)
 
             evicted = await self.evict_move_buffer()
             if evicted:
-                self.add_event(events, cast(Sequence[dict[str, Any]], evicted))
+                self.add_event(events, evicted)
 
         elif event >= 0xFA and event <= 0xFE:  # Hardware
             if event == 0xFA:  # Product date
@@ -227,45 +231,47 @@ class GanGen4Driver(GanGen3Driver):
                 month = msg.get_bit_word(40, 8)
                 day = msg.get_bit_word(48, 8)
 
-                payload = {
+                product_date_payload: HardwareEventPartialDict = {
                     'event': 'hardware',
                     'clock': clock,
                     'timestamp': timestamp,
                     'product_date': f'{ year:04d}-{ month:02d}-{ day:02d}',
                 }
-                self.add_event(events, payload)
+                self.add_event(events, product_date_payload)
             elif event == 0xFC:  # Hardware name
                 hardware_name = ''
                 for i in range(data_size):
                     hardware_name += chr(msg.get_bit_word(i * 8 + 24, 8))
-                payload = {
+                hardware_name_payload: HardwareEventNameOnlyDict = {
                     'event': 'hardware',
                     'clock': clock,
                     'timestamp': timestamp,
                     'hardware_name': hardware_name,
                     'gyroscope_supported': 'GAN12uiM' in hardware_name,
                 }
-                self.add_event(events, payload)
+                self.add_event(events, hardware_name_payload)
             elif event == 0xFD:  # Software version
                 sw_major = msg.get_bit_word(24, 4)
                 sw_minor = msg.get_bit_word(28, 4)
 
-                payload = {
+                sw_version_payload: HardwareEventSoftwareVersionOnlyDict = {
                     'event': 'hardware',
                     'clock': clock,
+                    'timestamp': timestamp,
                     'software_version': f'{ sw_major }.{ sw_minor }',
                 }
-                self.add_event(events, payload)
+                self.add_event(events, sw_version_payload)
             elif event == 0xFE:  # Hardware version
                 hw_major = msg.get_bit_word(24, 4)
                 hw_minor = msg.get_bit_word(28, 4)
 
-                payload = {
+                hw_version_payload: HardwareEventVersionOnlyDict = {
                     'event': 'hardware',
                     'clock': clock,
+                    'timestamp': timestamp,
                     'hardware_version': f'{ hw_major }.{ hw_minor }',
                 }
-                self.add_event(events, payload)
+                self.add_event(events, hw_version_payload)
 
         elif event == 0xEC:  # Gyroscope
             if self.disable_gyro:
@@ -281,7 +287,7 @@ class GanGen4Driver(GanGen3Driver):
             vy = msg.get_bit_word(84, 4)
             vz = msg.get_bit_word(88, 4)
 
-            payload = {
+            gyro_payload: GyroEventDict = {
                 'event': 'gyro',
                 'clock': clock,
                 'timestamp': timestamp,
@@ -298,26 +304,26 @@ class GanGen4Driver(GanGen3Driver):
                 },
             }
 
-            self.add_event(events, payload)
+            self.add_event(events, gyro_payload)
 
         elif event == 0xEF:  # Battery
             battery_level = msg.get_bit_word(8 + data_size * 8, 8)
 
-            payload = {
+            battery_payload: BatteryEventDict = {
                 'event': 'battery',
                 'clock': clock,
                 'timestamp': timestamp,
                 'level': min(battery_level, 100),
             }
-            self.add_event(events, payload)
+            self.add_event(events, battery_payload)
 
         elif event == 0xEA:  # Disconnect
-            payload = {
+            disconnect_payload: DisconnectEventDict = {
                 'event': 'disconnect',
                 'clock': clock,
                 'timestamp': timestamp,
             }
-            self.add_event(events, payload)
+            self.add_event(events, disconnect_payload)
 
             await self.client.disconnect()
 

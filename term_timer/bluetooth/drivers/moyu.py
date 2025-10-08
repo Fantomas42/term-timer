@@ -18,7 +18,13 @@ from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
 from term_timer.bluetooth.salt import get_salt
+from term_timer.bluetooth.types import BatteryEventDict
 from term_timer.bluetooth.types import EventDict
+from term_timer.bluetooth.types import FaceletsEventDictNoState
+from term_timer.bluetooth.types import GyroConfigEventDict
+from term_timer.bluetooth.types import GyroEventDictNoVelocity
+from term_timer.bluetooth.types import HardwareEventMoyuDict
+from term_timer.bluetooth.types import MoveEventDict
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +102,7 @@ class MoyuWeilong10Driver(Driver):
             qy = msg.get_bit_word(72, 32, little_endian=True, signed=True)
             qz = msg.get_bit_word(104, 32, little_endian=True, signed=True)
 
-            payload = {
+            gyro_payload: GyroEventDictNoVelocity = {
                 'event': 'gyro',
                 'clock': clock,
                 'timestamp': timestamp,
@@ -108,7 +114,7 @@ class MoyuWeilong10Driver(Driver):
                 },
             }
 
-            self.add_event(events, payload)
+            self.add_event(events, gyro_payload)
 
         elif event == 0xA5:  # Moves
             if self.last_serial == -1:  # Block moves until facelets received
@@ -137,7 +143,7 @@ class MoyuWeilong10Driver(Driver):
                     elapsed = float(elapsed_raw)
 
                 self.cube_timestamp += elapsed
-                payload = {
+                move_payload: MoveEventDict = {
                     'event': 'move',
                     'clock': clock,
                     'timestamp': timestamp,
@@ -150,7 +156,7 @@ class MoyuWeilong10Driver(Driver):
                     'direction': move_value,
                     'move': move.strip(),
                 }
-                self.add_event(events, payload)
+                self.add_event(events, move_payload)
 
             self.last_move_timestamp = timestamp
 
@@ -170,14 +176,14 @@ class MoyuWeilong10Driver(Driver):
                     if j == 3:
                         state.append('FBUDLR'[faces[i]])
 
-            payload = {
+            facelets_payload: FaceletsEventDictNoState = {
                 'event': 'facelets',
                 'clock': clock,
                 'timestamp': timestamp,
                 'serial': serial,
                 'facelets': ''.join(state),
             }
-            self.add_event(events, payload)
+            self.add_event(events, facelets_payload)
 
         elif event == 0xA1:  # Hardware
             hw_major = msg.get_bit_word(72, 8)
@@ -192,7 +198,7 @@ class MoyuWeilong10Driver(Driver):
             for i in range(8):
                 hardware_name += chr(msg.get_bit_word(i * 8 + 8, 8))
 
-            payload = {
+            hardware_payload: HardwareEventMoyuDict = {
                 'event': 'hardware',
                 'clock': clock,
                 'timestamp': timestamp,
@@ -207,13 +213,13 @@ class MoyuWeilong10Driver(Driver):
                 ),
                 'serial': serial,
             }
-            self.add_event(events, payload)
+            self.add_event(events, hardware_payload)
 
         elif event == 0xAC:  # Gyro config
             gyro_enabled = msg.get_bit_word(16, 8)
             gyro_supported = msg.get_bit_word(8, 8)
 
-            payload = {
+            gyro_config_payload: GyroConfigEventDict = {
                 'event': 'gyro-config',
                 'clock': clock,
                 'timestamp': timestamp,
@@ -224,18 +230,18 @@ class MoyuWeilong10Driver(Driver):
                     and bool(gyro_enabled)
                 ),
             }
-            self.add_event(events, payload)
+            self.add_event(events, gyro_config_payload)
 
         elif event == 0xA4:  # Battery
             battery_level = msg.get_bit_word(8, 8)
 
-            payload = {
+            battery_payload: BatteryEventDict = {
                 'event': 'battery',
                 'clock': clock,
                 'timestamp': timestamp,
                 'level': min(battery_level, 100),
             }
-            self.add_event(events, payload)
+            self.add_event(events, battery_payload)
 
         else:
             logger.debug(

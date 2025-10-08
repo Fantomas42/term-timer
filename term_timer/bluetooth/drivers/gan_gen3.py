@@ -4,12 +4,9 @@ References :
 """
 import logging
 import time
-from collections.abc import Sequence
 from datetime import datetime
 from datetime import timezone
-from typing import Any
 from typing import ClassVar
-from typing import cast
 
 from bleak import BleakClient
 from cubing_algs.facelets import cubies_to_facelets
@@ -20,7 +17,11 @@ from term_timer.bluetooth.constants import GAN_GEN3_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN3_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.message import GanProtocolMessage
+from term_timer.bluetooth.types import BatteryEventDict
+from term_timer.bluetooth.types import DisconnectEventDict
 from term_timer.bluetooth.types import EventDict
+from term_timer.bluetooth.types import FaceletsEventDict
+from term_timer.bluetooth.types import HardwareEventDict
 from term_timer.bluetooth.types import MoveEventDict
 
 logger = logging.getLogger(__name__)
@@ -191,22 +192,21 @@ class GanGen3Driver(GanGen2Driver):
 
             # Put move event into FIFO buffer
             if face >= 0:
-                self.move_buffer.append(
-                    {
-                        'event': 'move',
-                        'clock': clock,
-                        'timestamp': timestamp,
-                        'serial': serial,
-                        'local_timestamp': timestamp,
-                        'cube_timestamp': cube_timestamp,
-                        'face': face,
-                        'direction': direction,
-                        'move': move.strip(),
-                    },
-                )
+                move_event: MoveEventDict = {
+                    'event': 'move',
+                    'clock': clock,
+                    'timestamp': timestamp,
+                    'serial': serial,
+                    'local_timestamp': timestamp,
+                    'cube_timestamp': cube_timestamp,
+                    'face': face,
+                    'direction': direction,
+                    'move': move.strip(),
+                }
+                self.move_buffer.append(move_event)
             evicted = await self.evict_move_buffer()
             if evicted:
-                self.add_event(events, cast(Sequence[dict[str, Any]], evicted))
+                self.add_event(events, evicted)
 
         elif event == 0x02:  # Facelets
             serial = msg.get_bit_word(24, 16, little_endian=True)
@@ -245,7 +245,7 @@ class GanGen3Driver(GanGen2Driver):
             ep.append(66 - sum(ep))
             eo.append((2 - (sum(eo) % 2)) % 2)
 
-            payload = {
+            facelets_payload: FaceletsEventDict = {
                 'event': 'facelets',
                 'clock': clock,
                 'timestamp': timestamp,
@@ -258,7 +258,7 @@ class GanGen3Driver(GanGen2Driver):
                     'EO': eo,
                 },
             }
-            self.add_event(events, payload)
+            self.add_event(events, facelets_payload)
 
         elif event == 0x06:  # Move history
             start_serial = msg.get_bit_word(24, 8)
@@ -271,28 +271,27 @@ class GanGen3Driver(GanGen2Driver):
                 if face >= 0:
                     move = 'URFDLB'[face] + " '"[direction]
 
-                    self.inject_missed_move_to_buffer(
-                        {
-                            'event': 'move',
-                            'clock': clock,
-                            'timestamp': timestamp,
-                            'serial': (start_serial - i) & 0xFF,
-                            # Missed and recovered events
-                            # has no meaningful local timestamps
-                            'local_timestamp': None,
-                            # Cube hardware timestamp for missed move
-                            # you should interpolate using
-                            # cubeTimestampLinearFit
-                            'cube_timestamp': None,
-                            'face': face,
-                            'direction': direction,
-                            'move': move.strip(),
-                        },
-                    )
+                    history_move: MoveEventDict = {
+                        'event': 'move',
+                        'clock': clock,
+                        'timestamp': timestamp,
+                        'serial': (start_serial - i) & 0xFF,
+                        # Missed and recovered events
+                        # has no meaningful local timestamps
+                        'local_timestamp': None,
+                        # Cube hardware timestamp for missed move
+                        # you should interpolate using
+                        # cubeTimestampLinearFit
+                        'cube_timestamp': None,
+                        'face': face,
+                        'direction': direction,
+                        'move': move.strip(),
+                    }
+                    self.inject_missed_move_to_buffer(history_move)
 
             evicted = await self.evict_move_buffer()
             if evicted:
-                self.add_event(events, cast(Sequence[dict[str, Any]], evicted))
+                self.add_event(events, evicted)
 
         elif event == 0x07:  # Hardware
             sw_major = msg.get_bit_word(72, 4)
@@ -304,7 +303,7 @@ class GanGen3Driver(GanGen2Driver):
             for i in range(5):
                 hardware_name += chr(msg.get_bit_word(i * 8 + 32, 8))
 
-            payload = {
+            hardware_payload: HardwareEventDict = {
                 'event': 'hardware',
                 'clock': clock,
                 'timestamp': timestamp,
@@ -313,26 +312,26 @@ class GanGen3Driver(GanGen2Driver):
                 'software_version': f'{ sw_major }.{ sw_minor }',
                 'gyroscope_supported': False,
             }
-            self.add_event(events, payload)
+            self.add_event(events, hardware_payload)
 
         elif event == 0x10:  # Battery
             battery_level = msg.get_bit_word(24, 8)
 
-            payload = {
+            battery_payload: BatteryEventDict = {
                 'event': 'battery',
                 'clock': clock,
                 'timestamp': timestamp,
                 'level': min(battery_level, 100),
             }
-            self.add_event(events, payload)
+            self.add_event(events, battery_payload)
 
         elif event == 0x11:  # Disconnect
-            payload = {
+            disconnect_payload: DisconnectEventDict = {
                 'event': 'disconnect',
                 'clock': clock,
                 'timestamp': timestamp,
             }
-            self.add_event(events, payload)
+            self.add_event(events, disconnect_payload)
 
             await self.client.disconnect()
 

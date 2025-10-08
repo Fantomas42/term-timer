@@ -20,7 +20,13 @@ from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
 from term_timer.bluetooth.salt import get_salt
+from term_timer.bluetooth.types import BatteryEventDict
+from term_timer.bluetooth.types import DisconnectEventDict
 from term_timer.bluetooth.types import EventDict
+from term_timer.bluetooth.types import FaceletsEventDict
+from term_timer.bluetooth.types import GyroEventDict
+from term_timer.bluetooth.types import HardwareEventDict
+from term_timer.bluetooth.types import MoveEventDict
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +114,7 @@ class GanGen2Driver(Driver):
             vy = msg.get_bit_word(72, 4)
             vz = msg.get_bit_word(76, 4)
 
-            payload = {
+            gyro_payload: GyroEventDict = {
                 'event': 'gyro',
                 'clock': clock,
                 'timestamp': timestamp,
@@ -125,7 +131,7 @@ class GanGen2Driver(Driver):
                 },
             }
 
-            self.add_event(events, payload)
+            self.add_event(events, gyro_payload)
 
         elif event == 0x02:  # Moves
             if self.last_serial == -1:  # Block moves until facelets received
@@ -155,7 +161,7 @@ class GanGen2Driver(Driver):
                     elapsed = float(elapsed_raw)
 
                 self.cube_timestamp += elapsed
-                payload = {
+                move_payload: MoveEventDict = {
                     'event': 'move',
                     'clock': clock,
                     'timestamp': timestamp,
@@ -168,7 +174,7 @@ class GanGen2Driver(Driver):
                     'direction': direction,
                     'move': move.strip(),
                 }
-                self.add_event(events, payload)
+                self.add_event(events, move_payload)
 
             self.last_move_timestamp = timestamp
 
@@ -197,7 +203,7 @@ class GanGen2Driver(Driver):
             ep.append(66 - sum(ep))
             eo.append((2 - (sum(eo) % 2)) % 2)
 
-            payload = {
+            facelets_payload: FaceletsEventDict = {
                 'event': 'facelets',
                 'clock': clock,
                 'timestamp': timestamp,
@@ -210,7 +216,7 @@ class GanGen2Driver(Driver):
                     'EO': eo,
                 },
             }
-            self.add_event(events, payload)
+            self.add_event(events, facelets_payload)
 
         elif event == 0x05:  # Hardware
             hw_major = msg.get_bit_word(8, 8)
@@ -223,7 +229,7 @@ class GanGen2Driver(Driver):
             for i in range(8):
                 hardware_name += chr(msg.get_bit_word(i * 8 + 40, 8))
 
-            payload = {
+            hardware_payload: HardwareEventDict = {
                 'event': 'hardware',
                 'clock': clock,
                 'timestamp': timestamp,
@@ -232,26 +238,26 @@ class GanGen2Driver(Driver):
                 'software_version': f'{ sw_major }.{ sw_minor }',
                 'gyroscope_supported': bool(gyro_supported),
             }
-            self.add_event(events, payload)
+            self.add_event(events, hardware_payload)
 
         elif event == 0x09:  # Battery
             battery_level = msg.get_bit_word(8, 8)
 
-            payload = {
+            battery_payload: BatteryEventDict = {
                 'event': 'battery',
                 'clock': clock,
                 'timestamp': timestamp,
                 'level': min(battery_level, 100),
             }
-            self.add_event(events, payload)
+            self.add_event(events, battery_payload)
 
         elif event == 0x0D:  # Disconnect
-            payload = {
+            disconnect_payload: DisconnectEventDict = {
                 'event': 'disconnect',
                 'clock': clock,
                 'timestamp': timestamp,
             }
-            self.add_event(events, payload)
+            self.add_event(events, disconnect_payload)
 
             await self.client.disconnect()
 
