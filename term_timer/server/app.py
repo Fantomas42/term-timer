@@ -41,6 +41,8 @@ from term_timer.in_out import load_all_solves
 from term_timer.in_out import save_solves
 from term_timer.interface.console import console
 from term_timer.methods import METHOD_ANALYSERS
+from term_timer.methods.base import Analyser
+from term_timer.methods.base import StepSummary
 from term_timer.methods.base import get_step_config
 from term_timer.methods.cases import CASES
 from term_timer.methods.cases import CaseInfo
@@ -143,26 +145,28 @@ def parse_case_name(value: str, step: str) -> tuple[str, str, str]:
         return code, name, 'OLL'
 
 
-def normalize_value(value, method_applied, metric: str, name: str) -> str:
+def normalize_value(value: float, method_applied: Analyser, metric: str, name: str) -> str:
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value }</span>'
 
 
-def normalize_percent(value, method_applied, metric: str, name: str) -> str:
+def normalize_percent(value: float, method_applied: Analyser, metric: str, name: str) -> str:
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value:.2f}%</span>'
 
 
-def reconstruction_step(step: dict[str, Any]) -> str:
+def reconstruction_step(step: StepSummary) -> str:
     algorithm = str(step['moves_prettified'])
 
+    pre_auf, post_auf = step['aufs']
     algorithm = format_alg_triggers(
         format_alg_moves(
             format_alg_aufs(
                 algorithm,
-                *step['aufs'],
+                pre_auf or 0,
+                post_auf or 0,
             ),
         ),
         get_step_config(step['name'], 'triggers', []),
@@ -171,7 +175,7 @@ def reconstruction_step(step: dict[str, Any]) -> str:
     return format_line(algorithm)
 
 
-def reconstruction_overheads(step: dict[str, Any], solve: Solve) -> str:
+def reconstruction_overheads(step: StepSummary, solve: Solve) -> str:
     source, compressed = solve.missed_moves_pair(
         step['moves_humanized'],
     )
@@ -184,6 +188,7 @@ def reconstruction_overheads(step: dict[str, Any], solve: Solve) -> str:
         optimize_double_moves,
     )
 
+    pre_auf, post_auf = step['aufs']
     algo = format_alg_triggers(
         format_alg_moves(
             format_alg_aufs(
@@ -191,7 +196,8 @@ def reconstruction_overheads(step: dict[str, Any], solve: Solve) -> str:
                     source_paused,
                     compressed_paused,
                 ),
-                *step['aufs'],
+                pre_auf or 0,
+                post_auf or 0,
             ),
         ),
         get_step_config(step['name'], 'triggers', []),
@@ -200,10 +206,10 @@ def reconstruction_overheads(step: dict[str, Any], solve: Solve) -> str:
     return format_line(algo)
 
 
-def reconstruction_pauses(step: dict[str, Any], solve: Solve) -> str:
+def reconstruction_pauses(step: StepSummary, solve: Solve) -> str:
     source_paused = step['moves_humanized'].transform(
         pause_moves(
-            solve.move_speed / MS_TO_NS_FACTOR,
+            int(solve.move_speed / MS_TO_NS_FACTOR),
             PAUSE_FACTOR,
             multiple=True,
         ),
@@ -211,12 +217,14 @@ def reconstruction_pauses(step: dict[str, Any], solve: Solve) -> str:
         optimize_double_moves,
     )
 
-    source_paused = format_alg_pauses(
+    pre_auf, post_auf = step['aufs']
+    source_paused_str = format_alg_pauses(
         format_alg_triggers(
             format_alg_moves(
                 format_alg_aufs(
                     str(source_paused),
-                    *step['aufs'],
+                    pre_auf or 0,
+                    post_auf or 0,
                 ),
             ),
             get_step_config(step['name'], 'triggers', []),
@@ -224,10 +232,10 @@ def reconstruction_pauses(step: dict[str, Any], solve: Solve) -> str:
         solve, step, multiple=True,
     )
 
-    return format_line(source_paused)
+    return format_line(source_paused_str)
 
 
-def optimized_step(step: dict[str, Any]) -> tuple[str, Any]:
+def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
     optimizers = []
 
     if 'SKIP' not in step['case']:
@@ -240,11 +248,13 @@ def optimized_step(step: dict[str, Any]) -> tuple[str, Any]:
         untime_moves,
     )
 
+    pre_auf, post_auf = step['aufs']
     algorithm_string = format_alg_triggers(
         format_alg_moves(
             format_alg_aufs(
                 str(algorithm),
-                *step['aufs'],
+                pre_auf or 0,
+                post_auf or 0,
             ),
         ),
         get_step_config(step['name'], 'triggers', []),
