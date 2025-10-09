@@ -148,7 +148,7 @@ class FaceletAnalyser:
         return ''
 
     def check_step(self, step: str, facelets: str) -> bool:
-        mask = get_step_config(step, 'mask')
+        mask = get_step_config(step, 'mask', '')
 
         matching = facelets_masked(
             INITIAL_STATE, mask,
