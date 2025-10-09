@@ -73,6 +73,7 @@ theme: dict[str, str] = {
     'edge': 'bold #00DFFF',
     'percent': 'bold #00DFFF',
     'stats': 'bold #00AFFF',
+    'round': 'bold #00FFFF',
     'bar': f'on { GREEN }',
 
     'addition': f'{ GREEN }',

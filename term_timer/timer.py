@@ -53,6 +53,7 @@ class Timer(SolveInterface):
         self.countdown = countdown
         self.metronome = metronome
         self.stack = stack
+        self.stack_done: list[Solve] = []
 
         self.counter = len(stack) + 1
 
@@ -127,6 +128,7 @@ class Timer(SolveInterface):
     def solve_line(self, solve: Solve) -> None:
         old_stats = Statistics(self.stack)
 
+        self.stack_done.append(solve)
         self.stack = [*self.stack, solve]
         new_stats = Statistics(self.stack)
 

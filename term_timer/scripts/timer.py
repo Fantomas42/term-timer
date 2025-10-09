@@ -86,9 +86,16 @@ async def timer(options: Namespace) -> int:
         if timer.bluetooth_interface:
             await timer.bluetooth_disconnect()
 
-    if len(timer.stack) > 1:
+    if len(timer.stack) > len(timer.stack_done):
         session_stats = StatisticsReporter(cube, timer.stack)
-        session_stats.resume('Free Play ' if options.free_play else 'Session ')
+        session_stats.resume('Session ')
+
+    if len(timer.stack_done) > 1:
+        round_stats = StatisticsReporter(cube, timer.stack_done)
+        round_stats.resume(
+            'Free Play ' if options.free_play else 'Current ',
+            'round',
+        )
 
     return 0
 

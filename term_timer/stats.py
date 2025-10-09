@@ -241,94 +241,95 @@ class StatisticsReporter(Statistics):
 
         super().__init__(stack)
 
-    def resume(self, prefix: str = '', *, show_title: bool = False) -> None:
+    def resume(self, prefix: str = '', style: str = 'stats', *,
+               show_title: bool = False) -> None:
         if show_title:
             console.print(
                 f'[title]Statistics for { self.cube_name }[/title]',
             )
 
         console.print(
-            f'[stats]{ prefix }Total :[/stats]',
+            f'[{ style }]{ prefix }Total :[/{ style }]',
             f'[result]{ self.total }[/result]',
         )
         console.print(
-            f'[stats]{ prefix }Time  :[/stats]',
+            f'[{ style }]{ prefix }Time  :[/{ style }]',
             f'[result]{ format_time(self.total_time) }[/result]',
         )
         console.print(
-            f'[stats]{ prefix }Mean  :[/stats]',
+            f'[{ style }]{ prefix }Mean  :[/{ style }]',
             f'[result]{ format_time(self.mean) }[/result]',
         )
         console.print(
-            f'[stats]{ prefix }Median:[/stats]',
+            f'[{ style }]{ prefix }Median:[/{ style }]',
             f'[result]{ format_time(self.median) }[/result]',
         )
         console.print(
-            f'[stats]{ prefix }Stdev :[/stats]',
+            f'[{ style }]{ prefix }Stdev :[/{ style }]',
             f'[result]{ format_time(self.stdev) }[/result]',
         )
         if self.total >= 2:
             if self.total >= 3:
                 console.print(
-                    f'[stats]{ prefix }Best  :[/stats]',
+                    f'[{ style }]{ prefix }Best  :[/{ style }]',
                     f'[green]{ format_time(self.best) }[/green]',
-                    '[stats]BPA  :[/stats]',
+                    f'[{ style }]BPA  :[/{ style }]',
                     f'[result]{ format_time(self.bpa) }[/result]',
                     format_delta(self.bpa - self.best),
                 )
                 console.print(
-                    f'[stats]{ prefix }Worst :[/stats]',
+                    f'[{ style }]{ prefix }Worst :[/{ style }]',
                     f'[red]{ format_time(self.worst) }[/red]',
-                    '[stats]WPA  :[/stats]',
+                    f'[{ style }]WPA  :[/{ style }]',
                     f'[result]{ format_time(self.wpa) }[/result]',
                     format_delta(self.wpa - self.worst),
                 )
             else:
                 console.print(
-                    f'[stats]{ prefix }Best  :[/stats]',
+                    f'[{ style }]{ prefix }Best  :[/{ style }]',
                     f'[green]{ format_time(self.best) }[/green]',
                 )
                 console.print(
-                    f'[stats]{ prefix }Worst :[/stats]',
+                    f'[{ style }]{ prefix }Worst :[/{ style }]',
                     f'[red]{ format_time(self.worst) }[/red]',
                 )
         if self.total >= 3:
             console.print(
-                f'[stats]{ prefix }Mo3   :[/stats]',
+                f'[{ style }]{ prefix }Mo3   :[/{ style }]',
                 f'[mo3]{ format_time(self.mo3) }[/mo3]',
-                '[stats]Best :[/stats]',
+                f'[{ style }]Best :[/{ style }]',
                 f'[result]{ format_time(self.best_mo3) }[/result]',
                 format_delta(self.mo3 - self.best_mo3),
             )
         if self.total >= 5:
             console.print(
-                f'[stats]{ prefix }Ao5   :[/stats]',
+                f'[{ style }]{ prefix }Ao5   :[/{ style }]',
                 f'[ao5]{ format_time(self.ao5) }[/ao5]',
-                '[stats]Best :[/stats]',
+                f'[{ style }]Best :[/{ style }]',
                 f'[result]{ format_time(self.best_ao5) }[/result]',
                 format_delta(self.ao5 - self.best_ao5),
             )
         if self.total >= 12:
             console.print(
-                f'[stats]{ prefix }Ao12  :[/stats]',
+                f'[{ style }]{ prefix }Ao12  :[/{ style }]',
                 f'[ao12]{ format_time(self.ao12) }[/ao12]',
-                '[stats]Best :[/stats]',
+                f'[{ style }]Best :[/{ style }]',
                 f'[result]{ format_time(self.best_ao12) }[/result]',
                 format_delta(self.ao12 - self.best_ao12),
             )
         if self.total >= 100:
             console.print(
-                f'[stats]{ prefix }Ao100 :[/stats]',
+                f'[{ style }]{ prefix }Ao100 :[/{ style }]',
                 f'[ao100]{ format_time(self.ao100) }[/ao100]',
-                '[stats]Best :[/stats]',
+                f'[{ style }]Best :[/{ style }]',
                 f'[result]{ format_time(self.best_ao100) }[/result]',
                 format_delta(self.ao100 - self.best_ao100),
             )
         if self.total >= 1000:
             console.print(
-                f'[stats]{ prefix }Ao1000:[/stats]',
+                f'[{ style }]{ prefix }Ao1000:[/{ style }]',
                 f'[ao1000]{ format_time(self.ao1000) }[/ao1000]',
-                '[stats]Best :[/stats]',
+                f'[{ style }]Best :[/{ style }]',
                 f'[result]{ format_time(self.best_ao1000) }[/result]',
                 format_delta(self.ao1000 - self.best_ao1000),
             )
@@ -344,12 +345,12 @@ class StatisticsReporter(Statistics):
                 percent = (count / self.total)
                 total_percent += percent
 
-                start = f'[stats]{ count!s:{" "}>{max_count}} '
+                start = f'[{ style }]{ count!s:{" "}>{max_count}} '
                 start += f'([edge]{ format_edge(edge, max_edge) }[/edge])'
                 start = start.ljust(26 + len(prefix))
 
                 console.print(
-                    f'{ start }:[/stats]',
+                    f'{ start }:[/{ style }]',
                     f'[bar]{ round(percent * STEP_BAR) * " " }[/bar]'
                     f'{ (STEP_BAR - round(percent * STEP_BAR)) * " " }'
                     f'[result]{ percent * 100:05.2f}%[/result]   ',
