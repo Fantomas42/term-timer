@@ -4,6 +4,7 @@ from typing import Final
 
 from bleak import BleakClient
 from bleak import BleakScanner
+from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
 
@@ -78,7 +79,7 @@ class BluetoothInterface:
 
         await self.client.start_notify(
             self.driver.state_characteristic_uid,
-            self.notification_handler,  # type: ignore[arg-type]
+            self.notification_handler,
         )
 
         return self
@@ -96,7 +97,8 @@ class BluetoothInterface:
             )
             await self.client.disconnect()
 
-    async def notification_handler(self, sender: int, data: bytes) -> None:
+    async def notification_handler(self, sender: BleakGATTCharacteristic,
+                                   data: bytearray) -> None:
         assert self.driver is not None  # noqa: S101
         events = await self.driver.event_handler(sender, data)
 

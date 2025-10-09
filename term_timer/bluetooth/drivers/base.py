@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from typing import ClassVar
 
 from bleak import BleakClient
+from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.types import EventDict
@@ -26,7 +27,8 @@ class Driver:
     def send_command_handler(self, command: str) -> bytes | bool:
         raise NotImplementedError
 
-    async def event_handler(self, sender: int, data: bytes) -> list[EventDict]:
+    async def event_handler(self, sender: BleakGATTCharacteristic,
+                            data: bytearray) -> list[EventDict]:
         raise NotImplementedError
 
     def add_event(self, store: list[EventDict],

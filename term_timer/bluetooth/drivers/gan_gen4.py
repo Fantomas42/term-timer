@@ -8,6 +8,7 @@ from datetime import datetime
 from datetime import timezone
 from typing import ClassVar
 
+from bleak.backends.characteristic import BleakGATTCharacteristic
 from cubing_algs.facelets import cubies_to_facelets
 
 from term_timer.bluetooth.constants import DEBOUNCE
@@ -64,7 +65,7 @@ class GanGen4Driver(GanGen3Driver):
         else:
             return False
 
-        return self.cypher.encrypt(bytes(msg))
+        return self.cypher.encrypt(msg)
 
     async def request_move_history(self, serial: int, count: int) -> None:
         msg = bytearray(20)
@@ -94,10 +95,11 @@ class GanGen4Driver(GanGen3Driver):
 
         await self.client.write_gatt_char(
             self.command_characteristic_uid,
-            self.cypher.encrypt(bytes(msg)),
+            self.cypher.encrypt(msg),
         )
 
-    async def event_handler(self, sender: int, data: bytes) -> list[EventDict]:  # noqa: ARG002
+    async def event_handler(self, sender: BleakGATTCharacteristic,  # noqa: ARG002
+                            data: bytearray) -> list[EventDict]:
         """Process notifications from the cube"""
         clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017

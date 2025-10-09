@@ -63,7 +63,7 @@ class GanGen2CubeEncrypter:
         for i in range(16):
             buffer[offset + i] = chunk[i]
 
-    def encrypt(self, data: bytes) -> bytes:
+    def encrypt(self, data: bytearray) -> bytes:
         if len(data) < 16:
             raise ValueError(INVALID_DATA)
 
@@ -79,7 +79,7 @@ class GanGen2CubeEncrypter:
 
         return bytes(res)
 
-    def decrypt(self, data: bytes) -> bytes:
+    def decrypt(self, data: bytearray) -> bytes:
         if len(data) < 16:
             raise ValueError(INVALID_DATA)
 
