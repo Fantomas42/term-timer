@@ -2,6 +2,7 @@ import asyncio
 import unittest
 from datetime import datetime
 from datetime import timezone
+from typing import cast
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -9,6 +10,11 @@ from term_timer.bluetooth.constants import MOYU_WEILONG_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import MOYU_WEILONG_SERVICE
 from term_timer.bluetooth.constants import MOYU_WEILONG_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
+from term_timer.bluetooth.types import BatteryEventDict
+from term_timer.bluetooth.types import FaceletsEventDictNoState
+from term_timer.bluetooth.types import GyroConfigEventDict
+from term_timer.bluetooth.types import HardwareEventMoyuDict
+from term_timer.bluetooth.types import MoveEventDict
 
 
 class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
@@ -299,9 +305,10 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'facelets')
-                self.assertEqual(event['serial'], 50)
-                self.assertIn('facelets', event)
-                self.assertEqual(len(event['facelets']), 54)  # 54 facelets
+                facelets_event = cast(FaceletsEventDictNoState, event)
+                self.assertEqual(facelets_event['serial'], 50)
+                self.assertIn('facelets', facelets_event)
+                self.assertEqual(len(facelets_event['facelets']), 54)  # 54 facelets
 
     @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.moyu.datetime')
@@ -351,12 +358,13 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'hardware')
-                self.assertEqual(event['hardware_version'], '1.2')
-                self.assertEqual(event['software_version'], '3.4')
-                self.assertTrue(event['gyroscope_enabled'])
-                self.assertTrue(event['gyroscope_support'])
-                self.assertTrue(event['gyroscope_supported'])
-                self.assertEqual(event['serial'], 123)
+                hw_event = cast(HardwareEventMoyuDict, event)
+                self.assertEqual(hw_event['hardware_version'], '1.2')
+                self.assertEqual(hw_event['software_version'], '3.4')
+                self.assertTrue(hw_event['gyroscope_enabled'])
+                self.assertTrue(hw_event['gyroscope_support'])
+                self.assertTrue(hw_event['gyroscope_supported'])
+                self.assertEqual(hw_event['serial'], 123)
 
     @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.moyu.datetime')
@@ -388,7 +396,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'battery')
-                self.assertEqual(event['level'], 75)
+                battery_event = cast(BatteryEventDict, event)
+                self.assertEqual(battery_event['level'], 75)
 
     @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.moyu.datetime')
@@ -419,7 +428,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
-                self.assertEqual(event['level'], 100)
+                battery_event = cast(BatteryEventDict, event)
+                self.assertEqual(battery_event['level'], 100)
 
     @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.moyu.datetime')
@@ -452,9 +462,10 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'gyro-config')
-                self.assertTrue(event['gyroscope_enabled'])
-                self.assertTrue(event['gyroscope_support'])
-                self.assertTrue(event['gyroscope_supported'])
+                gyro_config_event = cast(GyroConfigEventDict, event)
+                self.assertTrue(gyro_config_event['gyroscope_enabled'])
+                self.assertTrue(gyro_config_event['gyroscope_support'])
+                self.assertTrue(gyro_config_event['gyroscope_supported'])
 
     @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.moyu.datetime')

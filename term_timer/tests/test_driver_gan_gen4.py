@@ -2,6 +2,7 @@ import asyncio
 import unittest
 from datetime import datetime
 from datetime import timezone
+from typing import cast
 from unittest.mock import AsyncMock
 from unittest.mock import Mock
 from unittest.mock import patch
@@ -11,6 +12,12 @@ from term_timer.bluetooth.constants import GAN_GEN4_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN4_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.drivers.gan_gen4 import GanGen4Driver
+from term_timer.bluetooth.types import BatteryEventDict
+from term_timer.bluetooth.types import FaceletsEventDict
+from term_timer.bluetooth.types import HardwareEventDict
+from term_timer.bluetooth.types import HardwareEventPartialDict
+from term_timer.bluetooth.types import HardwareEventSoftwareVersionOnlyDict
+from term_timer.bluetooth.types import HardwareEventVersionOnlyDict
 
 
 class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
@@ -288,7 +295,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'facelets')
-                self.assertEqual(event['serial'], 50)
+                facelets_event = cast(FaceletsEventDict, event)
+                self.assertEqual(facelets_event['serial'], 50)
                 self.assertEqual(self.driver.serial, 50)
                 self.assertEqual(self.driver.last_serial, 50)
 
@@ -436,7 +444,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'hardware')
-                self.assertEqual(event['product_date'], '2023-06-15')
+                hw_event = cast(HardwareEventPartialDict, event)
+                self.assertEqual(hw_event['product_date'], '2023-06-15')
 
     @patch('term_timer.bluetooth.drivers.gan_gen4.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen4.datetime')
@@ -477,9 +486,10 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'hardware')
-                self.assertEqual(event['hardware_name'], 'GAN12uiM')
+                hw_event = cast(HardwareEventDict, event)
+                self.assertEqual(hw_event['hardware_name'], 'GAN12uiM')
                 # GAN12uiM supports gyro
-                self.assertTrue(event['gyroscope_supported'])
+                self.assertTrue(hw_event['gyroscope_supported'])
 
     @patch('term_timer.bluetooth.drivers.gan_gen4.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen4.datetime')
@@ -520,9 +530,10 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'hardware')
-                self.assertEqual(event['hardware_name'], 'GAN14ui')
+                hw_event = cast(HardwareEventDict, event)
+                self.assertEqual(hw_event['hardware_name'], 'GAN14ui')
                 # GAN14ui doesn't support gyro
-                self.assertFalse(event['gyroscope_supported'])
+                self.assertFalse(hw_event['gyroscope_supported'])
 
     @patch('term_timer.bluetooth.drivers.gan_gen4.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen4.datetime')
@@ -555,7 +566,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'hardware')
-                self.assertEqual(event['software_version'], '5.3')
+                hw_event = cast(HardwareEventSoftwareVersionOnlyDict, event)
+                self.assertEqual(hw_event['software_version'], '5.3')
 
     @patch('term_timer.bluetooth.drivers.gan_gen4.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen4.datetime')
@@ -588,7 +600,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'hardware')
-                self.assertEqual(event['hardware_version'], '2.1')
+                hw_event = cast(HardwareEventVersionOnlyDict, event)
+                self.assertEqual(hw_event['hardware_version'], '2.1')
 
     @patch('term_timer.bluetooth.drivers.gan_gen4.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen4.datetime')
@@ -701,7 +714,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'battery')
-                self.assertEqual(event['level'], 85)
+                battery_event = cast(BatteryEventDict, event)
+                self.assertEqual(battery_event['level'], 85)
 
     @patch('term_timer.bluetooth.drivers.gan_gen4.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen4.datetime')
@@ -732,7 +746,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
-                self.assertEqual(event['level'], 100)
+                battery_event = cast(BatteryEventDict, event)
+                self.assertEqual(battery_event['level'], 100)
 
     @patch('term_timer.bluetooth.drivers.gan_gen4.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen4.datetime')
