@@ -13,66 +13,263 @@
 {% endblock %}
 
 {% block body %}
+  <!-- Algorithm Overview -->
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
+        <i class="fas fa-cube"></i> Algorithm
+      </h2>
+    </div>
+    <div class="card-body">
+      <div class="algorithm-display">
         {{ algorithm }}
-      </h2>
+      </div>
+      <div class="alg-info-grid">
+        <div>
+          <strong>Total Moves:</strong> {{ algorithm|length }}
+        </div>
+        <div>
+          <strong>Minimum Cube Size:</strong> {{ algorithm.min_cube_size }}x{{ algorithm.min_cube_size }}x{{ algorithm.min_cube_size }}
+        </div>
+        <div>
+          <strong>Cycle Order:</strong> {{ algorithm.cycles }}
+        </div>
+        <div>
+          <strong>Has Rotations:</strong> {{ 'Yes' if algorithm.has_rotations else 'No' }}
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- Metrics -->
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
-        Metrics
+        <i class="fas fa-chart-bar"></i> Metrics
       </h2>
     </div>
     <div class="card-body">
-      {{ algorithm.metrics }}
+      <div class="alg-metrics-grid">
+        <div>
+          <h3 class="alg-section-title">Move Counts</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>HTM</strong> (Half Turn Metric):</td>
+              <td class="alg-value">{{ algorithm.metrics.htm }}</td>
+            </tr>
+            <tr>
+              <td><strong>QTM</strong> (Quarter Turn Metric):</td>
+              <td class="alg-value">{{ algorithm.metrics.qtm }}</td>
+            </tr>
+            <tr>
+              <td><strong>STM</strong> (Slice Turn Metric):</td>
+              <td class="alg-value">{{ algorithm.metrics.stm }}</td>
+            </tr>
+            <tr>
+              <td><strong>ETM</strong> (Execution Turn Metric):</td>
+              <td class="alg-value">{{ algorithm.metrics.etm }}</td>
+            </tr>
+            <tr>
+              <td><strong>RTM</strong> (Rotation Turn Metric):</td>
+              <td class="alg-value">{{ algorithm.metrics.rtm }}</td>
+            </tr>
+            <tr>
+              <td><strong>QSTM</strong> (Quarter Slice Turn Metric):</td>
+              <td class="alg-value">{{ algorithm.metrics.qstm }}</td>
+            </tr>
+          </table>
+        </div>
+        <div>
+          <h3 class="alg-section-title">Move Types</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Outer Moves:</strong></td>
+              <td class="alg-value">{{ algorithm.metrics.outer_moves }}</td>
+            </tr>
+            <tr>
+              <td><strong>Inner Moves:</strong></td>
+              <td class="alg-value">{{ algorithm.metrics.inner_moves }}</td>
+            </tr>
+            <tr>
+              <td><strong>Rotations:</strong></td>
+              <td class="alg-value">{{ algorithm.metrics.rotations }}</td>
+            </tr>
+            <tr>
+              <td><strong>Pauses:</strong></td>
+              <td class="alg-value">{{ algorithm.metrics.pauses }}</td>
+            </tr>
+          </table>
+          <h3 class="alg-section-title alg-section-title-spaced">Generators</h3>
+          <div class="alg-generators">
+            {{ algorithm.metrics.generators|join(', ') if algorithm.metrics.generators else 'None' }}
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- Ergonomics -->
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
-        Cycles
+        <i class="fas fa-hand-paper"></i> Ergonomics
       </h2>
     </div>
     <div class="card-body">
-      {{ algorithm.cycles }}
+      <div class="alg-ergo-grid">
+        <div>
+          <h3 class="alg-section-title">Overall Rating</h3>
+          <div class="alg-rating-box">
+            <div class="alg-comfort-score {% if algorithm.ergonomics.comfort_score >= 80 %}score-excellent{% elif algorithm.ergonomics.comfort_score >= 65 %}score-good{% elif algorithm.ergonomics.comfort_score >= 50 %}score-fair{% elif algorithm.ergonomics.comfort_score >= 35 %}score-poor{% else %}score-very-poor{% endif %}">
+              {{ "%.1f"|format(algorithm.ergonomics.comfort_score) }}
+            </div>
+            <div class="alg-rating-label">
+              {{ algorithm.ergonomics.ergonomic_rating }}
+            </div>
+          </div>
+          <div class="alg-metric-row">
+            <strong>Estimated Execution Time:</strong> {{ "%.2f"|format(algorithm.ergonomics.estimated_execution_time) }}s
+          </div>
+          <div class="alg-metric-row">
+            <strong>Fingertrick Difficulty:</strong> {{ "%.2f"|format(algorithm.ergonomics.fingertrick_difficulty) }}
+          </div>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Hand Balance</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Right Hand:</strong></td>
+              <td class="alg-value">{{ algorithm.ergonomics.right_hand_moves }} moves</td>
+            </tr>
+            <tr>
+              <td><strong>Left Hand:</strong></td>
+              <td class="alg-value">{{ algorithm.ergonomics.left_hand_moves }} moves</td>
+            </tr>
+            <tr>
+              <td><strong>Both Hands:</strong></td>
+              <td class="alg-value">{{ algorithm.ergonomics.both_hand_moves }} moves</td>
+            </tr>
+            <tr>
+              <td><strong>Balance Ratio:</strong></td>
+              <td class="alg-value">{{ "%.2f"|format(algorithm.ergonomics.hand_balance_ratio) }}</td>
+            </tr>
+          </table>
+          <h3 class="alg-section-title alg-section-title-spaced">Finger Usage</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Thumb:</strong></td>
+              <td class="alg-value">{{ algorithm.ergonomics.thumb_moves }} moves</td>
+            </tr>
+            <tr>
+              <td><strong>Index:</strong></td>
+              <td class="alg-value">{{ algorithm.ergonomics.index_finger_moves }} moves</td>
+            </tr>
+            <tr>
+              <td><strong>Middle:</strong></td>
+              <td class="alg-value">{{ algorithm.ergonomics.middle_finger_moves }} moves</td>
+            </tr>
+            <tr>
+              <td><strong>Ring:</strong></td>
+              <td class="alg-value">{{ algorithm.ergonomics.ring_finger_moves }} moves</td>
+            </tr>
+          </table>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Execution Analysis</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Regrips Required:</strong></td>
+              <td class="alg-value">{{ algorithm.ergonomics.regrip_count }}</td>
+            </tr>
+            <tr>
+              <td><strong>Awkward Moves:</strong></td>
+              <td class="alg-value">{{ algorithm.ergonomics.awkward_moves }}</td>
+            </tr>
+            <tr>
+              <td><strong>Flow Breaks:</strong></td>
+              <td class="alg-value">{{ algorithm.ergonomics.flow_breaks }}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- Impacts -->
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
-        Ergonomics
+        <i class="fas fa-crosshairs"></i> Impact Analysis
       </h2>
     </div>
     <div class="card-body">
-      {{ algorithm.ergonomics }}
+      <div class="alg-impact-grid">
+        <div>
+          <h3 class="alg-section-title">Facelet Movement</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Fixed Facelets:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.fixed_count }}</td>
+            </tr>
+            <tr>
+              <td><strong>Mobilized Facelets:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.mobilized_count }}</td>
+            </tr>
+            <tr>
+              <td><strong>Scrambled Percent:</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(algorithm.impacts.scrambled_percent * 100) }}%</td>
+            </tr>
+            <tr>
+              <td><strong>Total Permutations:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.permutations|length }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Movement Distance</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Mean Distance:</strong></td>
+              <td class="alg-value">{{ "%.2f"|format(algorithm.impacts.distance_mean) }}</td>
+            </tr>
+            <tr>
+              <td><strong>Max Distance:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.distance_max }}</td>
+            </tr>
+            <tr>
+              <td><strong>Total Distance:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.distance_sum }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Face Mobility</h3>
+          <table class="alg-table">
+            {% for face, count in algorithm.impacts.face_mobility.items() %}
+            <tr>
+              <td><strong>{{ face }} Face:</strong></td>
+              <td class="alg-value">{{ count }} facelets</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- Cube Visualization -->
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
-        Impacts
+        <i class="fas fa-eye"></i> Visualization
       </h2>
     </div>
     <div class="card-body">
-      {{ algorithm.impacts }}
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        Show
-      </h2>
-    </div>
-    <div class="card-body">
-      {{ algorithm.show() }}
+      <div class="alg-visualization">{{ algorithm.show() }}</div>
     </div>
   </div>
 
