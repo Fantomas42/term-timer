@@ -219,9 +219,6 @@ class TestRichHandler(unittest.TestCase):
         # Create a mock request, client_address, and server for RichHandler
         self.handler = RichHandler.__new__(RichHandler)
         self.handler.requestline = ''
-        self.handler.log_date_time_string = Mock(
-            return_value='01/Jan/2023 12:00:00',
-        )
 
     @patch('term_timer.server.app.console')
     def test_log_request_success_code(self, mock_console: Mock) -> None:
