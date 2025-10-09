@@ -9,6 +9,8 @@ from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
 from term_timer.stats import StatisticsTools
+from term_timer.types_analysis import CaseStats
+from term_timer.types_analysis import MethodAnalysis
 
 
 class TestStatisticsTools(unittest.TestCase):
@@ -57,19 +59,18 @@ class TestStatisticsTools(unittest.TestCase):
         # mo3_3: (20 + 30 + 25) / 3 = 25
         # Best is mo3_1 = 15
 
-        # Mock mo3 property to test best_mo
-        self.stats_tools.mo3 = 25 * SECOND
-
-        best_mo3 = self.stats_tools.best_mo(3)
+        # Use Statistics class which has mo3 property
+        stats = Statistics(self.solves)
+        best_mo3 = stats.best_mo(3)
         self.assertEqual(best_mo3, 15 * SECOND)
 
     def test_best_ao(self) -> None:
         """Test finding the best average of N in the history."""
-        # Mock ao5 property to test best_ao
-        self.stats_tools.ao5 = 20 * SECOND
+        # Use Statistics class which has ao5 property
+        stats = Statistics(self.solves)
 
         # With only 5 solves, there's only one ao5, so best_ao5 should equal ao5
-        best_ao5 = self.stats_tools.best_ao(5)
+        best_ao5 = stats.best_ao(5)
         self.assertEqual(best_ao5, 20 * SECOND)
 
 
@@ -241,7 +242,7 @@ class TestStatisticsToolsComprehensive(unittest.TestCase):
             Solve(3000000000000, 20 * SECOND, 'U F R', ''),
         ]
         # Mock one solve to have None final_time
-        solves_with_dnf[1].final_time = None
+        solves_with_dnf[1].final_time = None  # type: ignore[assignment]
 
         stats = StatisticsTools(solves_with_dnf)
         # Should filter None from sorted list
@@ -713,12 +714,19 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             mock_table = Mock()
             mock_table_class.return_value = mock_table
 
-            test_items = {
+            test_items: dict[str, CaseStats] = {
                 'SKIP case': {
-                    'count': 1, 'frequency': 0.1, 'probability': 0.1,
-                    'recognition': 100000000, 'execution': 500000000,
-                    'time': 600000000, 'ao12': 650000000, 'ao5': 580000000,
-                    'qtm': 5.0, 'tps': 8.3, 'etps': 8.6,
+                    'count': 1,
+                    'frequency': 0.1,
+                    'probability': 0.1,
+                    'recognition': 100000000.0,
+                    'execution': 500000000.0,
+                    'time': 600000000.0,
+                    'ao12': 650000000,
+                    'ao5': 580000000,
+                    'qtm': 5.0,
+                    'tps': 8.3,
+                    'etps': 8.6,
                 },
             }
 
@@ -731,9 +739,11 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
         """Test cfop method sorting by 'case'."""
         reporter = StatisticsReporter(3, self.solves)
 
-        analyses = {
-            'resume': {'oll': {}, 'pll': {}},
+        analyses: MethodAnalysis = {
+            'total': 5,
             'mean': 85.5,
+            'resume': {'oll': {}, 'pll': {}},
+            'stack': [],
         }
 
         with patch.object(reporter, 'case_table') as mock_case_table, \
@@ -749,9 +759,11 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
         """Test cfop method with pll_only flag."""
         reporter = StatisticsReporter(3, self.solves)
 
-        analyses = {
-            'resume': {'oll': {}, 'pll': {}},
+        analyses: MethodAnalysis = {
+            'total': 5,
             'mean': 85.5,
+            'resume': {'oll': {}, 'pll': {}},
+            'stack': [],
         }
 
         with patch.object(reporter, 'case_table') as mock_case_table, \
