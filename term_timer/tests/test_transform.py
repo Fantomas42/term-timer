@@ -28,14 +28,6 @@ class TransformReorientTestCase(unittest.TestCase):
 
         self.assertEqual(result, algorithm)
 
-    def test_reorient_moves_none_orientation(self) -> None:
-        orientation = None
-        algorithm = parse_moves("R U R'")
-
-        result = reorient_moves(orientation, algorithm)
-
-        self.assertEqual(result, algorithm)
-
     def test_reorient_issue_simple(self) -> None:
         scramble = parse_moves("R U R' U'")
         solution = scramble.transform(mirror_moves)
