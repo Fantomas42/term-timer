@@ -206,7 +206,7 @@ class Statistics(StatisticsTools):
     def repartition(self) -> list[tuple[int, int]]:
         gap = (self.worst - self.best) / SECOND
 
-        best_bin = STATS_CONFIG.get('distribution')
+        best_bin = STATS_CONFIG.get('distribution', 0)
         if not best_bin:
             for second in SECOND_BINS:
                 if gap / 10 < second:
@@ -521,7 +521,7 @@ class StatisticsReporter(Statistics):
 
             metrics_dict = solve.reconstruction.metrics._asdict()
             metric_string = '[stats]Metrics    :[/stats] '
-            for metric in STATS_CONFIG.get('metrics'):
+            for metric in STATS_CONFIG.get('metrics', []):
                 value = metrics_dict[metric]
                 metric_string += (
                     f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
