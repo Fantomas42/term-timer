@@ -1,8 +1,15 @@
 import datetime
 import unittest
+from typing import cast
 
+from term_timer.methods.base import Analyser
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.solve import Solve
+
+
+def get_method_applied(solve: Solve) -> Analyser:
+    """Get method_applied, asserting it's not None in tests."""
+    return cast(Analyser, solve.method_applied)
 
 
 class TestSolve54(unittest.TestCase):
@@ -238,15 +245,17 @@ class TestSolve54(unittest.TestCase):
         )
 
     def test_method_score(self) -> None:
+        method_applied = get_method_applied(self.solve)
         self.assertEqual(
-            self.solve.method_applied.score,
+            method_applied.score,
             16.0,
         )
 
     def test_reconstruction_step_line(self) -> None:
+        method_applied = get_method_applied(self.solve)
         inputs = [
             info
-            for info in self.solve.method_applied.summary
+            for info in method_applied.summary
             if info['type'] != 'virtual'
         ]
         outputs = [
@@ -294,9 +303,10 @@ class TestSolve54(unittest.TestCase):
             )
 
     def test_reconstruction_step_line_multiple(self) -> None:
+        method_applied = get_method_applied(self.solve)
         inputs = [
             info
-            for info in self.solve.method_applied.summary
+            for info in method_applied.summary
             if info['type'] != 'virtual'
         ]
         outputs = [
@@ -350,9 +360,10 @@ class TestSolve54(unittest.TestCase):
             )
 
     def test_reconstruction_step_text(self) -> None:
+        method_applied = get_method_applied(self.solve)
         inputs = [
             info
-            for info in self.solve.method_applied.summary
+            for info in method_applied.summary
             if info['type'] != 'virtual'
         ]
         outputs = [
@@ -378,9 +389,10 @@ class TestSolve54(unittest.TestCase):
             )
 
     def test_reconstruction_step_text_multiple(self) -> None:
+        method_applied = get_method_applied(self.solve)
         inputs = [
             info
-            for info in self.solve.method_applied.summary
+            for info in method_applied.summary
             if info['type'] != 'virtual'
         ]
         outputs = [
