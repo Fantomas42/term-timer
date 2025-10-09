@@ -704,6 +704,18 @@ class SolveDeleteView:
         redirect(f'/{ cube }/{ session }/')
 
 
+class AlgorithmDetailView(View):
+    template_name = 'algorithm.html'
+
+    def __init__(self, algorithm: str) -> None:
+        self.algorithm = Algorithm.parse_moves(algorithm)
+
+    def get_context(self) -> dict[str, Any]:
+        return {
+            'algorithm': self.algorithm,
+        }
+
+
 class AcademyView(View):
     template_name = 'academy/overview.html'
     methods: ClassVar[dict[str, dict[str, str | dict[str, dict[str, str]]]]] = {
@@ -921,6 +933,10 @@ class Server:
         @app.route('/academy/<step>/<case_id>/')  # type: ignore[misc]
         def academy_case(step: str, case_id: str) -> str:
             return AcademyCaseView(step, case_id).as_view(debug)
+
+        @app.route('/algorithm/<algorithm>/')  # type: ignore[misc]
+        def algorithm_detail(algorithm: str) -> str:
+            return AlgorithmDetailView(algorithm).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/update/',
                    method='POST')  # type: ignore[misc]

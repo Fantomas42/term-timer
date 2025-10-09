@@ -1,0 +1,79 @@
+{% extends "skeleton.html" %}
+
+{% block description %}
+  Detailled view of algorithm "{{ algorithm }}"
+{% endblock %}
+
+{% block title %}
+  {{ algorithm }}
+{% endblock %}
+
+{% block subtitle %}
+  Algorithm {{ algorithm }}
+{% endblock %}
+
+{% block body %}
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        {{ algorithm }}
+      </h2>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        Metrics
+      </h2>
+    </div>
+    <div class="card-body">
+      {{ algorithm.metrics }}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        Cycles
+      </h2>
+    </div>
+    <div class="card-body">
+      {{ algorithm.cycles }}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        Ergonomics
+      </h2>
+    </div>
+    <div class="card-body">
+      {{ algorithm.ergonomics }}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        Impacts
+      </h2>
+    </div>
+    <div class="card-body">
+      {{ algorithm.impacts }}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        Show
+      </h2>
+    </div>
+    <div class="card-body">
+      {{ algorithm.show() }}
+    </div>
+  </div>
+
+{% endblock %}
