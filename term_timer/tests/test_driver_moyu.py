@@ -153,7 +153,10 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = decrypted_data
 
-            result = await self.driver.event_handler(0, bytes(encrypted_data))
+            mock_sender = Mock()
+            result = await self.driver.event_handler(
+                mock_sender, encrypted_data,
+            )
 
             self.assertEqual(result, [])
 
@@ -188,7 +191,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                     4000,  # qz
                 ]
 
-                result = await self.driver.event_handler(0, bytes(test_data))
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -223,7 +227,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
                 mock_msg.get_bit_word.return_value = 0xA5
 
-                result = await self.driver.event_handler(0, bytes(test_data))
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(result, [])
 
@@ -260,7 +265,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                     500,   # another elapsed time
                 ]
 
-                result = await self.driver.event_handler(0, bytes(test_data))
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 2)
                 self.assertEqual(result[0]['event'], 'move')
@@ -299,7 +305,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
 
                 mock_msg.get_bit_word.side_effect = mock_get_bit_word
 
-                result = await self.driver.event_handler(0, bytes(test_data))
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -352,7 +359,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
 
                 mock_msg.get_bit_word.side_effect = mock_get_bit_word
 
-                result = await self.driver.event_handler(0, bytes(test_data))
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -390,7 +398,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                     75,    # battery level
                 ]
 
-                result = await self.driver.event_handler(0, bytes(test_data))
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -423,7 +432,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                     150,   # battery level > 100
                 ]
 
-                result = await self.driver.event_handler(0, bytes(test_data))
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -456,7 +466,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                     1,     # gyro_supported
                 ]
 
-                result = await self.driver.event_handler(0, bytes(test_data))
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -489,7 +500,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
                 mock_msg.get_bit_word.return_value = 0xFF
 
-                result = await self.driver.event_handler(0, bytes(test_data))
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(result, [])
                 mock_logger.debug.assert_called_once()
@@ -509,7 +521,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.side_effect = ValueError('Invalid data')
 
                 with self.assertRaises(ValueError):
-                    await self.driver.event_handler(0, b'')
+                    mock_sender = Mock()
+                    await self.driver.event_handler(mock_sender, bytearray())
 
     def test_move_value_to_face_mapping(self) -> None:
         # Test the move value to face/direction mapping

@@ -352,8 +352,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start: int, length: int,
-                                      *, _little_endian: bool = False) -> int:
+                def mock_get_bit_word(start: int, length: int, *,
+                                      little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0x55  # magic
                     if start == 8 and length == 8:
@@ -378,8 +378,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 ) as mock_evict:
                     mock_evict.return_value = [{'event': 'move', 'move': 'U'}]
 
+                    mock_sender = Mock()
                     result = await self.driver.event_handler(
-                        'sender',
+                        mock_sender,
                         test_data,
                     )
 
@@ -417,7 +418,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                     10,  # data_size
                 ]
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(result, [])
 
@@ -449,8 +451,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start: int, length: int,
-                                      *, _little_endian: bool = False) -> int:
+                def mock_get_bit_word(start: int, length: int, *,
+                                      little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0x55  # magic
                     if start == 8 and length == 8:
@@ -463,7 +465,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
 
                 mock_msg.get_bit_word.side_effect = mock_get_bit_word
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -504,8 +507,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start: int, length: int,
-                                      *, _little_endian: bool = False) -> int:
+                def mock_get_bit_word(start: int, length: int, *,
+                                      little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0x55  # magic
                     if start == 8 and length == 8:
@@ -527,7 +530,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                         'term_timer.bluetooth.drivers.gan_gen3.cubies_to_facelets',
                     ),
                 ):
-                    await self.driver.event_handler('sender', test_data)
+                    mock_sender = Mock()
+                    await self.driver.event_handler(mock_sender, test_data)
                     mock_check.assert_called_once()
 
     @patch('term_timer.bluetooth.drivers.gan_gen3.time.perf_counter_ns')
@@ -550,8 +554,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start: int, length: int,
-                                      *, _little_endian: bool = False) -> int:
+                def mock_get_bit_word(start: int, length: int, *,
+                                      little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0x55  # magic
                     if start == 8 and length == 8:
@@ -584,7 +588,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 ):
                     mock_evict.return_value = []
 
-                    await self.driver.event_handler('sender', test_data)
+                    mock_sender = Mock()
+                    await self.driver.event_handler(mock_sender, test_data)
                     # (5-1)*2 = 8 moves
                     self.assertEqual(mock_inject.call_count, 8)
 
@@ -627,7 +632,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
 
                 mock_msg.get_bit_word.side_effect = mock_get_bit_word
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -664,7 +670,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                     80,  # battery level
                 ]
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -697,7 +704,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                     1,  # data_size
                 ]
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -729,7 +737,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                     0,  # invalid data_size (0)
                 ]
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(result, [])
 
@@ -759,7 +768,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                     5,  # data_size
                 ]
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(result, [])
                 mock_logger.debug.assert_called_once()

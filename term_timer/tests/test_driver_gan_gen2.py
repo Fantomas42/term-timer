@@ -162,8 +162,9 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
                 mock_msg.get_bit_word.return_value = 0x01
 
+                mock_sender = Mock()
                 result = await self.driver.event_handler(
-                    'sender', encrypted_data,
+                    mock_sender, encrypted_data,
                 )
 
                 self.assertEqual(result, [])
@@ -201,7 +202,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                     0x02,    # vz
                 ]
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -236,7 +238,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
                 mock_msg.get_bit_word.return_value = 0x02
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(result, [])
 
@@ -275,7 +278,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                     500,   # another elapsed time
                 ]
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 2)
                 self.assertEqual(result[0]['event'], 'move')
@@ -316,7 +320,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                     1,     # elapsed time (overflow case)
                 ]
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -373,7 +378,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
 
                 mock_msg.get_bit_word.side_effect = mock_get_bit_word
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -426,7 +432,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
 
                 mock_msg.get_bit_word.side_effect = mock_get_bit_word
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -461,7 +468,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                     85,    # battery level
                 ]
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -494,7 +502,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                     150,   # battery level > 100
                 ]
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -525,7 +534,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
                 mock_msg.get_bit_word.return_value = 0x0D
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
@@ -555,7 +565,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
                 mock_msg.get_bit_word.return_value = 0x0F
 
-                result = await self.driver.event_handler('sender', test_data)
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(result, [])
                 mock_logger.debug.assert_called_once()
@@ -643,4 +654,5 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.side_effect = ValueError('Invalid data')
 
                 with self.assertRaises(ValueError):
-                    await self.driver.event_handler('sender', b'')
+                    mock_sender = Mock()
+                    await self.driver.event_handler(mock_sender, bytearray())

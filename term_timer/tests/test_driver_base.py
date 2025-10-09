@@ -26,8 +26,9 @@ class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
         self.driver = BaseDriver(self.mock_client)
 
     async def test_event_handler_raises_not_implemented(self) -> None:
+        mock_sender = Mock()
         with self.assertRaises(NotImplementedError):
-            await self.driver.event_handler(0, b'data')
+            await self.driver.event_handler(mock_sender, bytearray(b'data'))
 
 
 class TestDriver(unittest.TestCase):
