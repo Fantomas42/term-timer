@@ -14,7 +14,6 @@ from term_timer.bluetooth.types import BatteryEventDict
 from term_timer.bluetooth.types import FaceletsEventDictNoState
 from term_timer.bluetooth.types import GyroConfigEventDict
 from term_timer.bluetooth.types import HardwareEventMoyuDict
-from term_timer.bluetooth.types import MoveEventDict
 
 
 class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
@@ -308,7 +307,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 facelets_event = cast(FaceletsEventDictNoState, event)
                 self.assertEqual(facelets_event['serial'], 50)
                 self.assertIn('facelets', facelets_event)
-                self.assertEqual(len(facelets_event['facelets']), 54)  # 54 facelets
+                self.assertEqual(len(facelets_event['facelets']), 54)
 
     @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.moyu.datetime')

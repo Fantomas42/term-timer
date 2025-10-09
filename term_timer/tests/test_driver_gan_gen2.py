@@ -323,8 +323,11 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(event['event'], 'move')
                 move_event = cast(MoveEventDict, event)
                 self.assertEqual(move_event['move'], 'U')
+                cube_timestamp = move_event['cube_timestamp']
+                self.assertIsNotNone(cube_timestamp)
+                cube_timestamp = cast(int, cube_timestamp)
                 # Should have computed elapsed time from timestamp difference
-                self.assertGreater(event['cube_timestamp'], 0)
+                self.assertGreater(cube_timestamp, 0)
 
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')

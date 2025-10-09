@@ -16,7 +16,6 @@ from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.types import BatteryEventDict
 from term_timer.bluetooth.types import FaceletsEventDict
 from term_timer.bluetooth.types import HardwareEventDict
-from term_timer.bluetooth.types import MoveEventDict
 
 
 class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
@@ -267,10 +266,12 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
             {'serial': 103, 'event': 'move', 'move': 'R'},
         ])
 
-        move = cast(Any, {'serial': 103, 'event': 'move', 'move': 'U'})  # Duplicate serial
+        # Duplicate serial
+        move = cast(Any, {'serial': 103, 'event': 'move', 'move': 'U'})
         self.driver.inject_missed_move_to_buffer(move)
 
-        self.assertEqual(len(self.driver.move_buffer), 1)  # No change
+        # No change
+        self.assertEqual(len(self.driver.move_buffer), 1)
         # Original preserved
         self.assertEqual(self.driver.move_buffer[0]['move'], 'R')
 
@@ -280,10 +281,12 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
             {'serial': 105, 'event': 'move', 'move': 'R'},
         ])
 
-        move = cast(Any, {'serial': 110, 'event': 'move', 'move': 'U'})  # Out of range
+        # Out of range
+        move = cast(Any, {'serial': 110, 'event': 'move', 'move': 'U'})
         self.driver.inject_missed_move_to_buffer(move)
 
-        self.assertEqual(len(self.driver.move_buffer), 1)  # No change
+        # No change
+        self.assertEqual(len(self.driver.move_buffer), 1)
 
     async def test_check_if_move_missed_no_gap(self) -> None:
         self.driver.last_serial = 100
