@@ -26,7 +26,7 @@ class TestSolveModule(unittest.TestCase):
         time = '1012345678'
         scramble = "F R U R' U' F'"
 
-        solve = Solve(date, time, scramble)
+        solve = Solve(date, time, scramble)  # type: ignore[arg-type]
 
         self.assertEqual(solve.date, 1000000000)
         self.assertEqual(solve.time, 1012345678)
