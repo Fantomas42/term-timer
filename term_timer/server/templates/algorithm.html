@@ -41,6 +41,27 @@
     </div>
   </div>
 
+  <!-- Y-Axis Variations -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-sync-alt"></i> Y-Axis Variations
+      </h2>
+    </div>
+    <div class="card-body">
+      <div class="alg-variations-list">
+        {% for variation in y_variations %}
+        <div class="alg-variation-item">
+          <div class="alg-variation-label">{{ variation.label }}</div>
+          <div class="alg-variation-algorithm">
+            <a href="/algorithm/{{ variation.algorithm }}/">{{ variation.algorithm }}</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
   <!-- Metrics -->
   <div class="card">
     <div class="card-header">

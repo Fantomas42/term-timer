@@ -1786,6 +1786,57 @@ twisty-alg-viewer {
     padding-left: 0.75rem;
 }
 
+.alg-variations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.alg-variation-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 0.375rem;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.alg-variation-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary);
+}
+
+.alg-variation-label {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--primary);
+    min-width: 3rem;
+    text-align: center;
+    background: var(--main-bg);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--border-color);
+}
+
+.alg-variation-algorithm {
+    flex: 1;
+    font-family: 'Courier New', monospace;
+    font-size: 1.05rem;
+}
+
+.alg-variation-algorithm a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.alg-variation-algorithm a:hover {
+    color: var(--primary);
+}
+
 .alg-metrics-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
