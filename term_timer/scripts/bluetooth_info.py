@@ -6,7 +6,6 @@ import threading
 from argparse import Namespace
 from contextlib import suppress
 from pprint import pformat
-from typing import Any
 from typing import cast
 
 from cubing_algs.parsing import parse_moves
@@ -215,7 +214,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                 )
 
 
-async def client_cb(queue: asyncio.Queue[Any], time: int, *,
+async def client_cb(queue: asyncio.Queue[list[EventDict] | None], time: int, *,
                     use_opengl: bool,
                     cube_reset: bool,
                     gyroscope_enable: bool,
