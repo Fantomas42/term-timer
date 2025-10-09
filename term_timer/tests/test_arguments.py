@@ -1,8 +1,8 @@
-import argparse
 import unittest
 from unittest.mock import Mock
 from unittest.mock import patch
 
+from term_timer.argparser import ArgumentParser
 from term_timer.arguments import COMMAND_ALIASES
 from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import cfop_arguments
@@ -43,10 +43,10 @@ class TestCommandAliases(unittest.TestCase):
 class TestSessionArguments(unittest.TestCase):
 
     def test_set_session_arguments(self) -> None:
-        parser = argparse.ArgumentParser()
+        parser = ArgumentParser()
         session = set_session_arguments(parser)
 
-        self.assertIsInstance(session, argparse._ArgumentGroup)  # noqa: SLF001
+        self.assertIsInstance(session, ArgumentParser._ArgumentGroup)  # noqa: SLF001
 
         # Test default values by parsing empty args
         args = parser.parse_args([])
@@ -59,15 +59,15 @@ class TestSessionArguments(unittest.TestCase):
 class TestSolveArguments(unittest.TestCase):
 
     def test_solve_parser_creation(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers()
         parser = solve_arguments(subparsers)
 
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        self.assertIsInstance(parser, ArgumentParser)
         self.assertEqual(parser.prog.split()[-1], 'solve')
 
     def test_solve_default_arguments(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         solve_arguments(subparsers)
 
@@ -79,7 +79,7 @@ class TestSolveArguments(unittest.TestCase):
         self.assertFalse(args.free_play)
 
     def test_solve_with_arguments(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         solve_arguments(subparsers)
 
@@ -93,14 +93,14 @@ class TestSolveArguments(unittest.TestCase):
 class TestTrainArguments(unittest.TestCase):
 
     def test_train_parser_creation(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers()
         parser = train_arguments(subparsers)
 
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        self.assertIsInstance(parser, ArgumentParser)
 
     def test_train_default_arguments(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         train_arguments(subparsers)
 
@@ -113,7 +113,7 @@ class TestTrainArguments(unittest.TestCase):
 class TestListArguments(unittest.TestCase):
 
     def test_list_default_arguments(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         list_arguments(subparsers)
 
@@ -123,7 +123,7 @@ class TestListArguments(unittest.TestCase):
         self.assertEqual(args.sort, 'date')
 
     def test_list_with_count(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         list_arguments(subparsers)
 
@@ -134,11 +134,11 @@ class TestListArguments(unittest.TestCase):
 class TestStatisticsArguments(unittest.TestCase):
 
     def test_stats_parser_creation(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         parser = statistics_arguments(subparsers)
 
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        self.assertIsInstance(parser, ArgumentParser)
 
         args = main_parser.parse_args(['stats'])
         self.assertEqual(args.command, 'stats')
@@ -147,11 +147,11 @@ class TestStatisticsArguments(unittest.TestCase):
 class TestGraphArguments(unittest.TestCase):
 
     def test_graph_parser_creation(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         parser = graph_arguments(subparsers)
 
-        self.assertIsInstance(parser, argparse.ArgumentParser)
+        self.assertIsInstance(parser, ArgumentParser)
 
         args = main_parser.parse_args(['graph'])
         self.assertEqual(args.command, 'graph')
@@ -160,7 +160,7 @@ class TestGraphArguments(unittest.TestCase):
 class TestCfopArguments(unittest.TestCase):
 
     def test_cfop_default_arguments(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         cfop_arguments(subparsers)
 
@@ -172,7 +172,7 @@ class TestCfopArguments(unittest.TestCase):
         self.assertEqual(args.order, 'asc')
 
     def test_cfop_with_flags(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         cfop_arguments(subparsers)
 
@@ -184,7 +184,7 @@ class TestCfopArguments(unittest.TestCase):
 class TestImportArguments(unittest.TestCase):
 
     def test_import_with_source(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         import_arguments(subparsers)
 
@@ -196,7 +196,7 @@ class TestImportArguments(unittest.TestCase):
 class TestServeArguments(unittest.TestCase):
 
     def test_serve_default_arguments(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         serve_arguments(subparsers)
 
@@ -204,7 +204,7 @@ class TestServeArguments(unittest.TestCase):
         self.assertEqual(args.command, 'serve')
 
     def test_serve_with_host_port(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         serve_arguments(subparsers)
 
@@ -221,7 +221,7 @@ class TestServeArguments(unittest.TestCase):
 class TestDetailArguments(unittest.TestCase):
 
     def test_detail_with_solve_ids(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         detail_arguments(subparsers)
 
@@ -230,7 +230,7 @@ class TestDetailArguments(unittest.TestCase):
         self.assertEqual(args.solves, [1, 2, 3])
 
     def test_detail_with_method(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         detail_arguments(subparsers)
 
@@ -241,7 +241,7 @@ class TestDetailArguments(unittest.TestCase):
 class TestEditArguments(unittest.TestCase):
 
     def test_edit_with_solve_and_flag(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         edit_arguments(subparsers)
 
@@ -254,7 +254,7 @@ class TestEditArguments(unittest.TestCase):
 class TestDeleteArguments(unittest.TestCase):
 
     def test_delete_with_solve_id(self) -> None:
-        main_parser = argparse.ArgumentParser()
+        main_parser = ArgumentParser()
         subparsers = main_parser.add_subparsers(dest='command')
         delete_arguments(subparsers)
 
