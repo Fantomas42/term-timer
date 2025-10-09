@@ -1,10 +1,12 @@
 import unittest
+from typing import cast
 from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.aggregator import analyse_solve_worker
+from term_timer.solve import Solve
 
 
 class TestAnalyseSolveWorker(unittest.TestCase):
@@ -109,7 +111,10 @@ class TestSolvesMethodAggregator(unittest.TestCase):
         self.mock_solve_basic = Mock()
         self.mock_solve_basic.advanced = False
 
-        self.stack = [self.mock_solve_advanced, self.mock_solve_basic]
+        self.stack: list[Mock] = [
+            self.mock_solve_advanced,
+            self.mock_solve_basic,
+        ]
 
     @patch('term_timer.aggregator.get_method_analyser')
     @patch('term_timer.aggregator.SolvesMethodAggregator.aggregate')
@@ -118,7 +123,9 @@ class TestSolvesMethodAggregator(unittest.TestCase):
         mock_get_analyser.return_value = mock_analyser
         mock_aggregate.return_value = {'test': 'result'}
 
-        aggregator = SolvesMethodAggregator('CFOP', self.stack, full=False)
+        aggregator = SolvesMethodAggregator(
+            'CFOP', cast(list[Solve], self.stack), full=False,
+        )
 
         self.assertEqual(aggregator.stack, self.stack)
         self.assertFalse(aggregator.full)
@@ -139,7 +146,7 @@ class TestSolvesMethodAggregator(unittest.TestCase):
         mock_pool.map.return_value = [{'result': 1}, {'result': 2}]
 
         aggregator = SolvesMethodAggregator.__new__(SolvesMethodAggregator)
-        aggregator.stack = self.stack
+        aggregator.stack = cast(list[Solve], self.stack)
         aggregator.method_name = 'CFOP'
         aggregator.full = True
 
@@ -178,7 +185,7 @@ class TestSolvesMethodAggregator(unittest.TestCase):
         ]
 
         aggregator = SolvesMethodAggregator.__new__(SolvesMethodAggregator)
-        aggregator.stack = self.stack
+        aggregator.stack = cast(list[Solve], self.stack)
 
         with patch.object(aggregator, 'collect_analyses',
                           return_value=analyses):
