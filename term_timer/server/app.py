@@ -20,8 +20,8 @@ from bottle import redirect
 from bottle import request
 from bottle import static_file
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.transform.offset import offset_y_moves
 from cubing_algs.transform.offset import offset_y2_moves
+from cubing_algs.transform.offset import offset_y_moves
 from cubing_algs.transform.offset import offset_yprime_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.pause import pause_moves
@@ -717,15 +717,15 @@ class AlgorithmDetailView(View):
         # Generate Y-axis variations
         y_variations = [
             {
-                'label': "y'",
+                'label': 'Y',
                 'algorithm': offset_y_moves(self.algorithm),
             },
             {
-                'label': 'y2',
+                'label': 'Y2',
                 'algorithm': offset_y2_moves(self.algorithm),
             },
             {
-                'label': 'y',
+                'label': "Y'",
                 'algorithm': offset_yprime_moves(self.algorithm),
             },
         ]

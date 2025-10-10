@@ -9,6 +9,25 @@
 {% block subtitle %}{{ algorithm }}{% endblock %}
 
 {% block script %}
+  <script>
+   document.addEventListener('DOMContentLoaded', function() {
+     const copiers = document.querySelectorAll('.moves-copy');
+
+     copiers.forEach(copier => {
+       copier.addEventListener('click', function() {
+         const moves = copier.parentNode.parentNode.querySelector('.moves-content').textContent.trim().replace(/\s\s+/g, ' ');
+         navigator.clipboard.writeText(moves).then(() => {
+           this.textContent = 'Copied !';
+           setTimeout(() => {
+             this.textContent = 'Copy';
+           }, 2000);
+         }).catch(err => {
+           console.error('Copy error: ', err);
+         });
+       });
+     });
+   });
+  </script>
   <script type="module">
    import { Alg } from "https://cdn.cubing.net/v0/js/cubing/alg";
    import { TwistyPlayer } from "https://cdn.cubing.net/v0/js/cubing/twisty";
@@ -31,32 +50,58 @@
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
-        <i class="fas fa-cube"></i> Algorithm
+        <i class="fas fa-cube"></i>
+        <a href="#algorithm" id="algorithm">Algorithm</a>
       </h2>
     </div>
-    <div class="card-body">
-      <div class="algorithm-display">
-        {{ algorithm }}
+    <div class="algorithm-card moves-card">
+      <div class="moves-content">
+        {% for m in algorithm %}
+          <span class="move">{{ m }}</span>
+        {% endfor %}
       </div>
-      <div class="alg-info-grid">
-        <div>
-          <strong>Total Moves:</strong> {{ algorithm|length }}
+      <div class="moves-footer">
+        <button class="moves-copy">Copy</button>
+      </div>
+    </div>
+    <br>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Total Moves</div>
+        <div class="stat-value">
+          {{ algorithm|length }}
         </div>
-        <div>
-          <strong>Notation:</strong> {% if algorithm.is_sign %}SiGN{% else %}Standard{% endif %}
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Notation</div>
+        <div class="stat-value">
+          {% if algorithm.is_sign %}SiGN{% else %}Standard{% endif %}
         </div>
-        <div>
-          <strong>Minimum Cube Size:</strong> {{ algorithm.min_cube_size }}x{{ algorithm.min_cube_size }}x{{ algorithm.min_cube_size }}
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Minimal Cube Size</div>
+        <div class="stat-value">
+          {% set min_cube_size = algorithm.min_cube_size %}
+          {{ min_cube_size }}x{{ min_cube_size }}x{{ min_cube_size }}
         </div>
-        <div>
-          <strong>Cycle Order:</strong>
-          {% if algorithm.cycles == 100 %}+{% endif %}{{ algorithm.cycles }}
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Cycle Order</div>
+        {% set cycles = algorithm.cycles %}
+        <div class="stat-value {% if cycles == 100 %}stat-worst{% elif cycles <= 10 %}stat-best{% else %}stat-warning{% endif %}">
+          {% if cycles == 100 %}+{% endif %}{{ cycles }}
         </div>
-        <div>
-          <strong>Has Rotations:</strong> {{ 'Yes' if algorithm.has_rotations else 'No' }}
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Rotations</div>
+        <div class="stat-value {% if algorithm.has_rotations %}stat-best{% else %}stat-worst{% endif %}">
+          {{ 'Yes' if algorithm.has_rotations else 'No' }}
         </div>
-        <div>
-          <strong>Has Internal Rotations:</strong> {{ 'Yes' if algorithm.has_internal_rotations else 'No' }}
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Internal Rotations</div>
+        <div class="stat-value {% if algorithm.has_internal_rotations %}stat-best{% else %}stat-worst{% endif %}">
+          {{ 'Yes' if algorithm.has_internal_rotations else 'No' }}
         </div>
       </div>
     </div>
@@ -81,18 +126,22 @@
         <i class="fas fa-sync-alt"></i> Y-Axis Variations
       </h2>
     </div>
-    <div class="card-body">
-      <div class="alg-variations-list">
-        {% for variation in y_variations %}
-        <div class="alg-variation-item">
-          <div class="alg-variation-label">{{ variation.label }}</div>
-          <div class="alg-variation-algorithm">
-            <a href="/algorithm/{{ variation.algorithm }}/">{{ variation.algorithm }}</a>
-          </div>
+
+    {% for variation in y_variations %}
+      <div class="algorithm-card moves-card">
+        <span class="variation-label">{{ variation.label }}</span>
+        <div class="moves-content">
+          {% for m in variation.algorithm %}
+            <span class="move">{{ m }}</span>
+          {% endfor %}
         </div>
-        {% endfor %}
+        <div class="moves-footer">
+          <a href="/algorithm/{{ variation.algorithm }}/" class="algorithm-detail">Details</a>
+          <button class="moves-copy">Copy</button>
+        </div>
       </div>
-    </div>
+      <br />
+    {% endfor %}
   </div>
 
   <!-- Metrics -->
