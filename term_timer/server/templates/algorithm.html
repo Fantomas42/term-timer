@@ -251,11 +251,11 @@
     </div>
   </div>
 
-  <!-- Impacts -->
+  <!-- Facelet Impact Analysis -->
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
-        <i class="fas fa-crosshairs"></i> Impact Analysis
+        <i class="fas fa-crosshairs"></i> Facelet Impact Analysis
       </h2>
     </div>
     <div class="card-body">
@@ -265,19 +265,19 @@
           <table class="alg-table">
             <tr>
               <td><strong>Fixed Facelets:</strong></td>
-              <td class="alg-value">{{ algorithm.impacts.fixed_count }}</td>
+              <td class="alg-value">{{ algorithm.impacts.facelets_fixed_count }}</td>
             </tr>
             <tr>
               <td><strong>Mobilized Facelets:</strong></td>
-              <td class="alg-value">{{ algorithm.impacts.mobilized_count }}</td>
+              <td class="alg-value">{{ algorithm.impacts.facelets_mobilized_count }}</td>
             </tr>
             <tr>
               <td><strong>Scrambled Percent:</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(algorithm.impacts.scrambled_percent * 100) }}%</td>
+              <td class="alg-value">{{ "%.1f"|format(algorithm.impacts.facelets_scrambled_percent * 100) }}%</td>
             </tr>
             <tr>
               <td><strong>Total Permutations:</strong></td>
-              <td class="alg-value">{{ algorithm.impacts.permutations|length }}</td>
+              <td class="alg-value">{{ algorithm.impacts.facelets_permutations|length }}</td>
             </tr>
           </table>
         </div>
@@ -287,15 +287,15 @@
           <table class="alg-table">
             <tr>
               <td><strong>Mean Distance:</strong></td>
-              <td class="alg-value">{{ "%.2f"|format(algorithm.impacts.distance_mean) }}</td>
+              <td class="alg-value">{{ "%.2f"|format(algorithm.impacts.facelets_distance_mean) }}</td>
             </tr>
             <tr>
               <td><strong>Max Distance:</strong></td>
-              <td class="alg-value">{{ algorithm.impacts.distance_max }}</td>
+              <td class="alg-value">{{ algorithm.impacts.facelets_distance_max }}</td>
             </tr>
             <tr>
               <td><strong>Total Distance:</strong></td>
-              <td class="alg-value">{{ algorithm.impacts.distance_sum }}</td>
+              <td class="alg-value">{{ algorithm.impacts.facelets_distance_sum }}</td>
             </tr>
           </table>
         </div>
@@ -303,13 +303,268 @@
         <div>
           <h3 class="alg-section-title">Face Mobility</h3>
           <table class="alg-table">
-            {% for face, count in algorithm.impacts.face_mobility.items() %}
+            {% for face, count in algorithm.impacts.facelets_face_mobility.items() %}
             <tr>
               <td><strong>{{ face }} Face:</strong></td>
               <td class="alg-value">{{ count }} facelets</td>
             </tr>
             {% endfor %}
           </table>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Layer Analysis</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Centers Moved:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.facelets_layer_analysis.centers_moved }}</td>
+            </tr>
+            <tr>
+              <td><strong>Edges Moved:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.facelets_layer_analysis.edges_moved }}</td>
+            </tr>
+            <tr>
+              <td><strong>Corners Moved:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.facelets_layer_analysis.corners_moved }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Symmetry Properties</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>All Faces Same:</strong></td>
+              <td class="alg-value">{{ 'Yes' if algorithm.impacts.facelets_symmetry.all_faces_same else 'No' }}</td>
+            </tr>
+            <tr>
+              <td><strong>Opposite Faces Symmetric:</strong></td>
+              <td class="alg-value">{{ 'Yes' if algorithm.impacts.facelets_symmetry.opposite_faces_symmetric else 'No' }}</td>
+            </tr>
+            <tr>
+              <td><strong>No Impact:</strong></td>
+              <td class="alg-value">{{ 'Yes' if algorithm.impacts.facelets_symmetry.no_impact else 'No' }}</td>
+            </tr>
+            <tr>
+              <td><strong>Full Impact:</strong></td>
+              <td class="alg-value">{{ 'Yes' if algorithm.impacts.facelets_symmetry.full_impact else 'No' }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Face-to-Face Matrix</h3>
+          <table class="alg-table">
+            {% for origin_face, destinations in algorithm.impacts.facelets_face_to_face_matrix.items() %}
+              {% for dest_face, count in destinations.items() %}
+                {% if count > 0 %}
+            <tr>
+              <td><strong>{{ origin_face }} → {{ dest_face }}:</strong></td>
+              <td class="alg-value">{{ count }} facelets</td>
+            </tr>
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+
+      <div class="alg-impact-grid">
+        <div>
+          <h3 class="alg-section-title">Facelet State</h3>
+          <div class="alg-transformation-mask">
+            <pre>{{ algorithm.impacts.facelets_state }}</pre>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Transformation Mask</h3>
+          <div class="alg-transformation-mask">
+            <pre>{{ algorithm.impacts.facelets_transformation_mask }}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cubie Impact Analysis -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-cubes"></i> Cubie Impact Analysis
+      </h2>
+    </div>
+    <div class="card-body">
+      <div class="alg-impact-grid">
+        <div>
+          <h3 class="alg-section-title">Corner Analysis</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Corners Moved:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_corners_moved }}</td>
+            </tr>
+            <tr>
+              <td><strong>Corners Twisted:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_corners_twisted }}</td>
+            </tr>
+            <tr>
+              <td><strong>Corner Cycles:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_corner_cycle_analysis.cycle_count }}</td>
+            </tr>
+            <tr>
+              <td><strong>Corner Parity:</strong></td>
+              <td class="alg-value">{{ 'Even' if algorithm.impacts.cubies_corner_parity == 0 else 'Odd' }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Edge Analysis</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Edges Moved:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_edges_moved }}</td>
+            </tr>
+            <tr>
+              <td><strong>Edges Flipped:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_edges_flipped }}</td>
+            </tr>
+            <tr>
+              <td><strong>Edge Cycles:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_edge_cycle_analysis.cycle_count }}</td>
+            </tr>
+            <tr>
+              <td><strong>Edge Parity:</strong></td>
+              <td class="alg-value">{{ 'Even' if algorithm.impacts.cubies_edge_parity == 0 else 'Odd' }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Complexity Analysis</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Complexity Score:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_complexity_score }}</td>
+            </tr>
+            <tr>
+              <td><strong>Parity Valid:</strong></td>
+              <td class="alg-value">{{ 'Yes' if algorithm.impacts.cubies_parity_valid else 'No' }}</td>
+            </tr>
+          </table>
+          <div class="alg-metric-row">
+            <strong>Suggested Approach:</strong><br>
+            {{ algorithm.impacts.cubies_suggested_approach }}
+          </div>
+        </div>
+      </div>
+
+      {% if algorithm.impacts.cubies_corner_cycle_analysis.cycle_count > 0 or algorithm.impacts.cubies_edge_cycle_analysis.cycle_count > 0 %}
+      <div class="alg-impact-grid">
+        {% if algorithm.impacts.cubies_corner_cycle_analysis.cycle_count > 0 %}
+        <div>
+          <h3 class="alg-section-title">Corner Cycle Details</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Total Pieces in Cycles:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_corner_cycle_analysis.total_pieces_in_cycles }}</td>
+            </tr>
+            <tr>
+              <td><strong>Min Cycle Length:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_corner_cycle_analysis.min_cycle_length }}</td>
+            </tr>
+            <tr>
+              <td><strong>Max Cycle Length:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_corner_cycle_analysis.max_cycle_length }}</td>
+            </tr>
+            <tr>
+              <td><strong>2-Cycles:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_corner_cycle_analysis.two_cycles }}</td>
+            </tr>
+            <tr>
+              <td><strong>3-Cycles:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_corner_cycle_analysis.three_cycles }}</td>
+            </tr>
+            <tr>
+              <td><strong>4+ Cycles:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_corner_cycle_analysis.four_plus_cycles }}</td>
+            </tr>
+          </table>
+        </div>
+        {% endif %}
+
+        {% if algorithm.impacts.cubies_edge_cycle_analysis.cycle_count > 0 %}
+        <div>
+          <h3 class="alg-section-title">Edge Cycle Details</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Total Pieces in Cycles:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_edge_cycle_analysis.total_pieces_in_cycles }}</td>
+            </tr>
+            <tr>
+              <td><strong>Min Cycle Length:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_edge_cycle_analysis.min_cycle_length }}</td>
+            </tr>
+            <tr>
+              <td><strong>Max Cycle Length:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_edge_cycle_analysis.max_cycle_length }}</td>
+            </tr>
+            <tr>
+              <td><strong>2-Cycles:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_edge_cycle_analysis.two_cycles }}</td>
+            </tr>
+            <tr>
+              <td><strong>3-Cycles:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_edge_cycle_analysis.three_cycles }}</td>
+            </tr>
+            <tr>
+              <td><strong>4+ Cycles:</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.cubies_edge_cycle_analysis.four_plus_cycles }}</td>
+            </tr>
+          </table>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if algorithm.impacts.cubies_patterns %}
+      <div>
+        <h3 class="alg-section-title">Pattern Recognition</h3>
+        <div class="alg-generators">
+          {% for pattern in algorithm.impacts.cubies_patterns %}
+            <span class="alg-pattern-badge">{{ pattern }}</span>{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="alg-impact-grid">
+        <div>
+          <h3 class="alg-section-title">Corner Permutation</h3>
+          <div class="alg-cubie-data">
+            <pre>{{ algorithm.impacts.cubies_corner_permutation }}</pre>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Corner Orientation</h3>
+          <div class="alg-cubie-data">
+            <pre>{{ algorithm.impacts.cubies_corner_orientation }}</pre>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Edge Permutation</h3>
+          <div class="alg-cubie-data">
+            <pre>{{ algorithm.impacts.cubies_edge_permutation }}</pre>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Edge Orientation</h3>
+          <div class="alg-cubie-data">
+            <pre>{{ algorithm.impacts.cubies_edge_orientation }}</pre>
+          </div>
         </div>
       </div>
     </div>
