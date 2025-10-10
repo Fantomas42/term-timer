@@ -1,15 +1,29 @@
 {% extends "skeleton.html" %}
 
 {% block description %}
-  Detailled view of algorithm "{{ algorithm }}"
+  Detailled view of algorithm : {{ algorithm }}
 {% endblock %}
 
-{% block title %}
-  {{ algorithm }}
-{% endblock %}
+{% block title %}{{ algorithm }}{% endblock %}
 
-{% block subtitle %}
-  Algorithm {{ algorithm }}
+{% block subtitle %}{{ algorithm }}{% endblock %}
+
+{% block script %}
+  <script type="module">
+   import { Alg } from "https://cdn.cubing.net/v0/js/cubing/alg";
+   import { TwistyPlayer } from "https://cdn.cubing.net/v0/js/cubing/twisty";
+
+   const parsedAlg = Alg.fromString("{{ algorithm }}");
+
+   const player = new TwistyPlayer({
+     alg: parsedAlg,
+     viewerLink: "none",
+     puzzle: "3x3x3",
+     background: "none",
+   });
+
+   document.querySelector("#replayer").appendChild(player);
+  </script>
 {% endblock %}
 
 {% block body %}
@@ -29,15 +43,34 @@
           <strong>Total Moves:</strong> {{ algorithm|length }}
         </div>
         <div>
+          <strong>Notation:</strong> {% if algorithm.is_sign %}SiGN{% else %}Standard{% endif %}
+        </div>
+        <div>
           <strong>Minimum Cube Size:</strong> {{ algorithm.min_cube_size }}x{{ algorithm.min_cube_size }}x{{ algorithm.min_cube_size }}
         </div>
         <div>
-          <strong>Cycle Order:</strong> {{ algorithm.cycles }}
+          <strong>Cycle Order:</strong>
+          {% if algorithm.cycles == 100 %}+{% endif %}{{ algorithm.cycles }}
         </div>
         <div>
           <strong>Has Rotations:</strong> {{ 'Yes' if algorithm.has_rotations else 'No' }}
         </div>
+        <div>
+          <strong>Has Internal Rotations:</strong> {{ 'Yes' if algorithm.has_internal_rotations else 'No' }}
+        </div>
       </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-play"></i>
+        <a href="#replay" id="replay">Simulation</a>
+      </h2>
+    </div>
+    <div class="replay-container">
+      <div id="replayer"></div>
     </div>
   </div>
 
@@ -66,7 +99,7 @@
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
-        <i class="fas fa-chart-bar"></i> Metrics
+        <i class="fas fa-chart-bar"></i> Move Metrics
       </h2>
     </div>
     <div class="card-body">
