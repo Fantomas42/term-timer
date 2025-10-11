@@ -258,6 +258,201 @@
     </div>
   </div>
 
+  <!-- Structure Analysis -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-sitemap"></i>
+        <a href="#structure" id="structure">Structure Analysis</a>
+      </h2>
+    </div>
+    <div class="card-body">
+      {% set structure = algorithm.structure %}
+      <div class="alg-ergo-grid">
+        <div>
+          <h3 class="alg-section-title">Compressed Notation</h3>
+          <div class="alg-generators">
+            <code>{{ structure.compressed }}</code>
+          </div>
+          <div class="alg-metric-row">
+            <strong>Original:</strong> {{ structure.original }}
+          </div>
+          <div class="alg-metric-row">
+            <strong>Original Length:</strong> {{ structure.original_length }} moves
+          </div>
+          <div class="alg-metric-row">
+            <strong>Compressed Length:</strong> {{ structure.compressed_notation_length }} chars
+          </div>
+          <div class="alg-metric-row">
+            <strong>Compression Ratio:</strong> {{ "%.1f"|format(structure.compression_ratio * 100) }}%
+          </div>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Structure Counts</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Total Structures</strong></td>
+              <td class="alg-value">{{ structure.total_structures }}</td>
+            </tr>
+            <tr>
+              <td><strong>Conjugates</strong></td>
+              <td class="alg-value">{{ structure.conjugate_count }}</td>
+            </tr>
+            <tr>
+              <td><strong>Commutators</strong></td>
+              <td class="alg-value">{{ structure.commutator_count }}</td>
+            </tr>
+            <tr>
+              <td><strong>Nested Structures</strong></td>
+              <td class="alg-value">{{ structure.nested_structure_count }}</td>
+            </tr>
+            <tr>
+              <td><strong>Max Nesting Depth</strong></td>
+              <td class="alg-value">{{ structure.max_nesting_depth }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Structure Quality</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Average Structure Score</strong></td>
+              <td class="alg-value">{{ "%.2f"|format(structure.average_structure_score) }}</td>
+            </tr>
+            <tr>
+              <td><strong>Best Structure Score</strong></td>
+              <td class="alg-value">{{ "%.2f"|format(structure.best_structure_score) }}</td>
+            </tr>
+            <tr>
+              <td><strong>Coverage</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(structure.coverage_percent * 100) }}%</td>
+            </tr>
+            <tr>
+              <td><strong>Uncovered Moves</strong></td>
+              <td class="alg-value">{{ structure.uncovered_moves }}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="alg-ergo-grid">
+        <div>
+          <h3 class="alg-section-title">Classifications</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Pure Commutators</strong></td>
+              <td class="alg-value">{{ structure.pure_commutator_count }}</td>
+            </tr>
+            <tr>
+              <td><strong>A9 Commutators</strong></td>
+              <td class="alg-value">{{ structure.a9_commutator_count }}</td>
+            </tr>
+            <tr>
+              <td><strong>Simple Conjugates</strong></td>
+              <td class="alg-value">{{ structure.simple_conjugate_count }}</td>
+            </tr>
+            <tr>
+              <td><strong>Nested Conjugates</strong></td>
+              <td class="alg-value">{{ structure.nested_conjugate_count }}</td>
+            </tr>
+            <tr>
+              <td><strong>With Cancellations</strong></td>
+              <td class="alg-value">{{ structure.structures_with_cancellations }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Setup Length Analysis</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Shortest Setup</strong></td>
+              <td class="alg-value">{{ structure.shortest_setup_length }} moves</td>
+            </tr>
+            <tr>
+              <td><strong>Longest Setup</strong></td>
+              <td class="alg-value">{{ structure.longest_setup_length }} moves</td>
+            </tr>
+            <tr>
+              <td><strong>Average Setup</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(structure.average_setup_length) }} moves</td>
+            </tr>
+          </table>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Action Length Analysis</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Shortest Action</strong></td>
+              <td class="alg-value">{{ structure.shortest_action_length }} moves</td>
+            </tr>
+            <tr>
+              <td><strong>Longest Action</strong></td>
+              <td class="alg-value">{{ structure.longest_action_length }} moves</td>
+            </tr>
+            <tr>
+              <td><strong>Average Action</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(structure.average_action_length) }} moves</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="alg-ergo-grid">
+        <div>
+          <h3 class="alg-section-title">Efficiency Rating</h3>
+          <div class="alg-rating-box">
+            <div class="alg-rating-label">
+              {{ structure.efficiency_rating }}
+            </div>
+          </div>
+          <div class="alg-metric-row">
+            <strong>Average Moves per Structure:</strong> {{ "%.1f"|format(structure.average_move_count) }}
+          </div>
+        </div>
+      </div>
+
+      {% if structure.structures %}
+      <div>
+        <h3 class="alg-section-title">Detected Structures</h3>
+        <table class="alg-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Setup (A)</th>
+              <th>Action (B)</th>
+              <th>Classification</th>
+              <th>Notation</th>
+              <th>Moves</th>
+              <th>Pure</th>
+              <th>Cancels</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for struct in structure.structures %}
+            <tr>
+              <td>{{ struct.type|capitalize }}</td>
+              <td>{{ struct.setup }}</td>
+              <td>{{ struct.action }}</td>
+              <td>{{ struct.classification }}</td>
+              <td><code>{{ struct }}</code></td>
+              <td>{{ struct.move_count }}</td>
+              <td>{{ 'Yes' if struct.is_pure else 'No' }}</td>
+              <td>{{ 'Yes' if struct.has_cancellations else 'No' }}</td>
+              <td>{{ "%.1f"|format(struct.score) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
   <!-- Ergonomics -->
   <div class="card">
     <div class="card-header">
