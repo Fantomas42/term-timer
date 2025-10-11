@@ -105,13 +105,27 @@
         </div>
       </div>
     </div>
+    <br>
+    <div class="algorithm-card moves-card">
+      <span class="variation-label">Mirror</span>
+      <div class="moves-content">
+        {% for m in mirror_variation %}
+          <span class="move">{{ m }}</span>
+        {% endfor %}
+      </div>
+      <div class="moves-footer">
+        <a href="/algorithm/{{ mirror_variation }}/" class="algorithm-detail">Details</a>
+        <button class="moves-copy">Copy</button>
+      </div>
+    </div>
+
   </div>
 
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
         <i class="fas fa-play"></i>
-        <a href="#replay" id="replay">Simulation</a>
+        <a href="#simulation" id="simulation">Simulation</a>
       </h2>
     </div>
     <div class="replay-container">
@@ -123,12 +137,40 @@
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
-        <i class="fas fa-sync-alt"></i> Y-Axis Variations
+        <i class="fas fa-sync-alt"></i>
+        <a href="#y-variations" id="y-variations">Y-Axis Variations</a>
       </h2>
     </div>
 
     <div class="algorithms-grid">
     {% for variation in y_variations %}
+      <div class="algorithm-card moves-card">
+        <span class="variation-label">{{ variation.label }}</span>
+        <div class="moves-content">
+          {% for m in variation.algorithm %}
+            <span class="move">{{ m }}</span>
+          {% endfor %}
+        </div>
+        <div class="moves-footer">
+          <a href="/algorithm/{{ variation.algorithm }}/" class="algorithm-detail">Details</a>
+          <button class="moves-copy">Copy</button>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  </div>
+
+  <!-- Symmetry Variations -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-arrows-up-down-left-right"></i>
+        <a href="#symmetry-variations" id="symmetry-variations">Symmetry Variations</a>
+      </h2>
+    </div>
+
+    <div class="algorithms-grid">
+    {% for variation in symmetry_variations %}
       <div class="algorithm-card moves-card">
         <span class="variation-label">{{ variation.label }}</span>
         <div class="moves-content">

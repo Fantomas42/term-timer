@@ -20,12 +20,16 @@ from bottle import redirect
 from bottle import request
 from bottle import static_file
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.transform.offset import offset_y2_moves
 from cubing_algs.transform.offset import offset_y_moves
 from cubing_algs.transform.offset import offset_yprime_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.size import compress_moves
+from cubing_algs.transform.symmetry import symmetry_c_moves
+from cubing_algs.transform.symmetry import symmetry_m_moves
+from cubing_algs.transform.symmetry import symmetry_s_moves
 from cubing_algs.transform.timing import untime_moves
 
 from term_timer.aggregator import SolvesMethodAggregator
@@ -730,9 +734,26 @@ class AlgorithmDetailView(View):
             },
         ]
 
+        symmetry_variations = [
+            {
+                'label': 'Symmetry M',
+                'algorithm': symmetry_m_moves(self.algorithm),
+            },
+            {
+                'label': 'Symmetry S',
+                'algorithm': symmetry_s_moves(self.algorithm),
+            },
+            {
+                'label': 'Symmetry C',
+                'algorithm': symmetry_c_moves(self.algorithm),
+            },
+        ]
+
         return {
             'algorithm': self.algorithm,
             'y_variations': y_variations,
+            'symmetry_variations': symmetry_variations,
+            'mirror_variation': mirror_moves(self.algorithm),
         }
 
 
