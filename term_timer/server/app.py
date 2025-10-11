@@ -276,6 +276,27 @@ def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
     return format_line(algorithm_string), algorithm
 
 
+def cube_html(cube_str: str) -> str:
+    from cubing_algs.display import ANSI_TO_RGB
+
+    def replace_span(matchobj: re.Match[str]) -> str:
+        if matchobj:
+            groups = matchobj.groups()
+            background_rgb = (int(groups[0]), int(groups[1]), int(groups[2]))
+            foreground_rgb = (int(groups[3]), int(groups[4]), int(groups[5]))
+
+        return (
+            f'<span class="facelet" '
+            f'style="background-color: rgb{ background_rgb }; '
+            f'color: rgb{ foreground_rgb };">'
+        )
+
+    blocks = ANSI_TO_RGB.sub(replace_span, cube_str)
+    blocks = blocks.replace('\x1b[0;0m', '</span>')
+
+    return blocks
+
+
 class RichHandler(WSGIRequestHandler):
 
     def log_request(self, code: int | str = '-', size: int | str = '-') -> None:
@@ -333,6 +354,7 @@ class View:
                         'reconstruction_pauses': reconstruction_pauses,
                         'optimized_step': optimized_step,
                         'prettify': prettify_moves,
+                        'cube_html': cube_html,
                     },
                 },
                 **context,
