@@ -262,26 +262,30 @@
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
-        <i class="fas fa-hand-paper"></i> Ergonomics
+        <i class="fas fa-hand-paper"></i>
+        <a href="#ergonomics" id="ergonomics">Ergonomics</a>
       </h2>
     </div>
     <div class="card-body">
+      {% set ergonomics = algorithm.ergonomics %}
       <div class="alg-ergo-grid">
         <div>
           <h3 class="alg-section-title">Overall Rating</h3>
           <div class="alg-rating-box">
-            <div class="alg-comfort-score {% if algorithm.ergonomics.comfort_score >= 80 %}score-excellent{% elif algorithm.ergonomics.comfort_score >= 65 %}score-good{% elif algorithm.ergonomics.comfort_score >= 50 %}score-fair{% elif algorithm.ergonomics.comfort_score >= 35 %}score-poor{% else %}score-very-poor{% endif %}">
-              {{ "%.1f"|format(algorithm.ergonomics.comfort_score) }}
+            <div class="alg-comfort-score {% if ergonomics.comfort_score >= 80 %}score-excellent{% elif ergonomics.comfort_score >= 65 %}score-good{% elif ergonomics.comfort_score >= 50 %}score-fair{% elif ergonomics.comfort_score >= 35 %}score-poor{% else %}score-very-poor{% endif %}">
+              {{ "%.1f"|format(ergonomics.comfort_score) }}
             </div>
             <div class="alg-rating-label">
-              {{ algorithm.ergonomics.ergonomic_rating }}
+              {{ ergonomics.ergonomic_rating }}
             </div>
           </div>
           <div class="alg-metric-row">
-            <strong>Estimated Execution Time:</strong> {{ "%.2f"|format(algorithm.ergonomics.estimated_execution_time) }}s
+            <strong>Estimated Execution Time:</strong>
+            {{ "%.2f"|format(ergonomics.estimated_execution_time) }}s
           </div>
           <div class="alg-metric-row">
-            <strong>Fingertrick Difficulty:</strong> {{ "%.2f"|format(algorithm.ergonomics.fingertrick_difficulty) }}
+            <strong>Fingertrick Difficulty:</strong>
+            {{ "%.2f"|format(ergonomics.fingertrick_difficulty) }}
           </div>
         </div>
 
@@ -289,59 +293,61 @@
           <h3 class="alg-section-title">Hand Balance</h3>
           <table class="alg-table">
             <tr>
-              <td><strong>Right Hand:</strong></td>
-              <td class="alg-value">{{ algorithm.ergonomics.right_hand_moves }} moves</td>
+              <td><strong>Right Hand</strong></td>
+              <td class="alg-value">{{ ergonomics.right_hand_moves }} moves</td>
             </tr>
             <tr>
-              <td><strong>Left Hand:</strong></td>
-              <td class="alg-value">{{ algorithm.ergonomics.left_hand_moves }} moves</td>
+              <td><strong>Left Hand</strong></td>
+              <td class="alg-value">{{ ergonomics.left_hand_moves }} moves</td>
             </tr>
             <tr>
-              <td><strong>Both Hands:</strong></td>
-              <td class="alg-value">{{ algorithm.ergonomics.both_hand_moves }} moves</td>
+              <td><strong>Both Hands</strong></td>
+              <td class="alg-value">{{ ergonomics.both_hand_moves }} moves</td>
             </tr>
             <tr>
-              <td><strong>Balance Ratio:</strong></td>
-              <td class="alg-value">{{ "%.2f"|format(algorithm.ergonomics.hand_balance_ratio) }}</td>
+              <td><strong>Balance Ratio</strong></td>
+              <td class="alg-value">{{ "%.2f"|format(ergonomics.hand_balance_ratio) }}</td>
             </tr>
           </table>
-          <h3 class="alg-section-title alg-section-title-spaced">Finger Usage</h3>
+          <h3 class="alg-section-title alg-section-title-spaced">Execution Analysis</h3>
           <table class="alg-table">
             <tr>
-              <td><strong>Thumb:</strong></td>
-              <td class="alg-value">{{ algorithm.ergonomics.thumb_moves }} moves</td>
+              <td><strong>Regrips Required</strong></td>
+              <td class="alg-value">{{ ergonomics.regrip_count }}</td>
             </tr>
             <tr>
-              <td><strong>Index:</strong></td>
-              <td class="alg-value">{{ algorithm.ergonomics.index_finger_moves }} moves</td>
+              <td><strong>Awkward Moves</strong></td>
+              <td class="alg-value">{{ ergonomics.awkward_moves }}</td>
             </tr>
             <tr>
-              <td><strong>Middle:</strong></td>
-              <td class="alg-value">{{ algorithm.ergonomics.middle_finger_moves }} moves</td>
-            </tr>
-            <tr>
-              <td><strong>Ring:</strong></td>
-              <td class="alg-value">{{ algorithm.ergonomics.ring_finger_moves }} moves</td>
+              <td><strong>Flow Breaks</strong></td>
+              <td class="alg-value">{{ ergonomics.flow_breaks }}</td>
             </tr>
           </table>
         </div>
 
         <div>
-          <h3 class="alg-section-title">Execution Analysis</h3>
+
+          <h3 class="alg-section-title">Finger Usage</h3>
           <table class="alg-table">
             <tr>
-              <td><strong>Regrips Required:</strong></td>
-              <td class="alg-value">{{ algorithm.ergonomics.regrip_count }}</td>
+              <td><strong>Thumb</strong></td>
+              <td class="alg-value">{{ ergonomics.thumb_moves }} moves</td>
             </tr>
             <tr>
-              <td><strong>Awkward Moves:</strong></td>
-              <td class="alg-value">{{ algorithm.ergonomics.awkward_moves }}</td>
+              <td><strong>Index</strong></td>
+              <td class="alg-value">{{ ergonomics.index_finger_moves }} moves</td>
             </tr>
             <tr>
-              <td><strong>Flow Breaks:</strong></td>
-              <td class="alg-value">{{ algorithm.ergonomics.flow_breaks }}</td>
+              <td><strong>Middle</strong></td>
+              <td class="alg-value">{{ ergonomics.middle_finger_moves }} moves</td>
+            </tr>
+            <tr>
+              <td><strong>Ring</strong></td>
+              <td class="alg-value">{{ ergonomics.ring_finger_moves }} moves</td>
             </tr>
           </table>
+
         </div>
       </div>
     </div>
