@@ -191,64 +191,68 @@
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
-        <i class="fas fa-chart-bar"></i> Move Metrics
+        <i class="fas fa-chart-bar"></i>
+        <a href="#metrics" id="metrics">Move Metrics</a>
       </h2>
     </div>
     <div class="card-body">
+      {% set metrics = algorithm.metrics %}
       <div class="alg-metrics-grid">
         <div>
           <h3 class="alg-section-title">Move Counts</h3>
           <table class="alg-table">
             <tr>
-              <td><strong>HTM</strong> (Half Turn Metric):</td>
-              <td class="alg-value">{{ algorithm.metrics.htm }}</td>
+              <td><strong>HTM</strong> (Half Turn Metric)</td>
+              <td class="alg-value">{{ metrics.htm }}</td>
             </tr>
             <tr>
-              <td><strong>QTM</strong> (Quarter Turn Metric):</td>
-              <td class="alg-value">{{ algorithm.metrics.qtm }}</td>
+              <td><strong>QTM</strong> (Quarter Turn Metric)</td>
+              <td class="alg-value">{{ metrics.qtm }}</td>
             </tr>
             <tr>
-              <td><strong>STM</strong> (Slice Turn Metric):</td>
-              <td class="alg-value">{{ algorithm.metrics.stm }}</td>
+              <td><strong>STM</strong> (Slice Turn Metric)</td>
+              <td class="alg-value">{{ metrics.stm }}</td>
             </tr>
             <tr>
-              <td><strong>ETM</strong> (Execution Turn Metric):</td>
-              <td class="alg-value">{{ algorithm.metrics.etm }}</td>
+              <td><strong>ETM</strong> (Execution Turn Metric)</td>
+              <td class="alg-value">{{ metrics.etm }}</td>
             </tr>
             <tr>
-              <td><strong>RTM</strong> (Rotation Turn Metric):</td>
-              <td class="alg-value">{{ algorithm.metrics.rtm }}</td>
+              <td><strong>RTM</strong> (Rotation Turn Metric)</td>
+              <td class="alg-value">{{ metrics.rtm }}</td>
             </tr>
             <tr>
-              <td><strong>QSTM</strong> (Quarter Slice Turn Metric):</td>
-              <td class="alg-value">{{ algorithm.metrics.qstm }}</td>
+              <td><strong>QSTM</strong> (Quarter Slice Turn Metric)</td>
+              <td class="alg-value">{{ metrics.qstm }}</td>
             </tr>
           </table>
         </div>
         <div>
-          <h3 class="alg-section-title">Move Types</h3>
+          <h3 class="alg-section-title">Generators</h3>
+          <div class="alg-generators">
+            {{ metrics.generators|join(', ') if metrics.generators else 'None' }}
+          </div>
+          <h3 class="alg-section-title alg-section-title-spaced">Move Types</h3>
           <table class="alg-table">
             <tr>
-              <td><strong>Outer Moves:</strong></td>
-              <td class="alg-value">{{ algorithm.metrics.outer_moves }}</td>
+              <td><strong>Outer Moves</strong></td>
+              <td class="alg-value">{{ metrics.outer_moves }}</td>
             </tr>
             <tr>
-              <td><strong>Inner Moves:</strong></td>
-              <td class="alg-value">{{ algorithm.metrics.inner_moves }}</td>
+              <td><strong>Inner Moves</strong></td>
+              <td class="alg-value">{{ metrics.inner_moves }}</td>
             </tr>
             <tr>
-              <td><strong>Rotations:</strong></td>
-              <td class="alg-value">{{ algorithm.metrics.rotations }}</td>
+              <td><strong>Rotations</strong></td>
+              <td class="alg-value">{{ metrics.rotations }}</td>
             </tr>
-            <tr>
-              <td><strong>Pauses:</strong></td>
-              <td class="alg-value">{{ algorithm.metrics.pauses }}</td>
-            </tr>
+            {% if metrics.pauses %}
+              <tr>
+                <td><strong>Pauses</strong></td>
+                <td class="alg-value">{{ metrics.pauses }}</td>
+              </tr>
+            {% endif %}
           </table>
-          <h3 class="alg-section-title alg-section-title-spaced">Generators</h3>
-          <div class="alg-generators">
-            {{ algorithm.metrics.generators|join(', ') if algorithm.metrics.generators else 'None' }}
-          </div>
         </div>
       </div>
     </div>
