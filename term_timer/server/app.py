@@ -20,6 +20,7 @@ from bottle import redirect
 from bottle import request
 from bottle import static_file
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.display import ANSI_TO_RGB
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.transform.offset import offset_y2_moves
 from cubing_algs.transform.offset import offset_y_moves
@@ -277,8 +278,6 @@ def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
 
 
 def cube_html(cube_str: str) -> str:
-    from cubing_algs.display import ANSI_TO_RGB
-
     def replace_span(matchobj: re.Match[str]) -> str:
         if matchobj:
             groups = matchobj.groups()
@@ -292,9 +291,7 @@ def cube_html(cube_str: str) -> str:
         )
 
     blocks = ANSI_TO_RGB.sub(replace_span, cube_str)
-    blocks = blocks.replace('\x1b[0;0m', '</span>')
-
-    return blocks
+    return blocks.replace('\x1b[0;0m', '</span>')
 
 
 class RichHandler(WSGIRequestHandler):
