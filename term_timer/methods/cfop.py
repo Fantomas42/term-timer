@@ -67,7 +67,8 @@ class CFOPAnalyser(Analyser):
         'pll': -1,
     }
 
-    def compute_progress(self, facelets: str) -> tuple[int, list[str]]:
+    def compute_progress(self, facelets: str,
+                         progress: int) -> tuple[int, list[str]]:
         progress = 0
 
         for name in self.step_list[:-1]:
@@ -300,7 +301,8 @@ class CF4OPAnalyser(CFOPAnalyser):
         },
     }
 
-    def compute_progress(self, facelets: str) -> tuple[int, list[str]]:
+    def compute_progress(self, facelets: str,
+                         progress: int) -> tuple[int, list[str]]:
         if not self.check_step('Cross', facelets):
             return 0, []
 

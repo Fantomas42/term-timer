@@ -13,5 +13,6 @@ class RawAnalyser(Analyser):
         },
     }
 
-    def compute_progress(self, _facelets: str) -> tuple[int, list[str]]:
+    def compute_progress(self, _facelets: str,
+                         _progress: int) -> tuple[int, list[str]]:
         return 0, []

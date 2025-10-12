@@ -196,7 +196,7 @@ class Analyser(FaceletAnalyser):
 
         for move_index, move in enumerate(self.solution):
             current_progress, current_case_infos = self.compute_progress(
-                cube.state,
+                cube.state, progress,
             )
 
             if current_progress > progress:
@@ -229,7 +229,8 @@ class Analyser(FaceletAnalyser):
 
         return steps
 
-    def compute_progress(self, facelets: str) -> tuple[int, list[str]]:
+    def compute_progress(self, facelets: str,
+                         progress: int) -> tuple[int, list[str]]:
         raise NotImplementedError
 
     def summarize(self) -> list[StepSummary]:

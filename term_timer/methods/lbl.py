@@ -25,7 +25,8 @@ class LBLAnalyser(Analyser):
         },
     }
 
-    def compute_progress(self, facelets: str) -> tuple[int, list[str]]:
+    def compute_progress(self, facelets: str,
+                         progress: int) -> tuple[int, list[str]]:
         progress = 0
 
         for name in self.step_list[:-1]:
