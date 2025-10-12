@@ -4,7 +4,7 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.rotation import remove_final_rotations
 
-from term_timer.orientation import auto_orientation
+from term_timer.orientation import get_orientation_faces
 
 
 class TestAutoRotation(unittest.TestCase):
@@ -26,7 +26,7 @@ class TestAutoRotation(unittest.TestCase):
         )
 
         self.assertEqual(
-            auto_orientation(scramble, solution),
+            get_orientation_faces(scramble, solution),
             'DR',
         )
 
@@ -47,7 +47,7 @@ class TestAutoRotation(unittest.TestCase):
         )
 
         self.assertEqual(
-            auto_orientation(scramble, solution),
+            get_orientation_faces(scramble, solution),
             'DL',
         )
 
@@ -74,7 +74,7 @@ class TestAutoRotation(unittest.TestCase):
         )
 
         self.assertEqual(
-            auto_orientation(scramble, solution),
+            get_orientation_faces(scramble, solution),
             'LD',
         )
 
@@ -98,6 +98,6 @@ class TestAutoRotation(unittest.TestCase):
         )
 
         self.assertEqual(
-            auto_orientation(scramble, solution),
+            get_orientation_faces(scramble, solution),
             'LU',
         )

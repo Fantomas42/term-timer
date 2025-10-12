@@ -38,6 +38,7 @@ from term_timer.methods import get_method_analyser
 from term_timer.methods.base import Analyser
 from term_timer.methods.base import StepSummary
 from term_timer.methods.base import get_step_config
+from term_timer.orientation import get_orientation_faces
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
@@ -117,11 +118,14 @@ class Solve:
         return bool(self.raw_moves)
 
     @cached_property
+    def orientation_faces(self) -> str:
+        if self.orientation == 'auto':
+            return get_orientation_faces(self.scramble, self.solution)
+        return self.orientation
+
+    @cached_property
     def orientation_moves(self) -> Algorithm:
-        return get_orientation_moves(
-            self.orientation,
-            self.scramble, self.solution,
-        )
+        return get_orientation_moves(self.orientation_faces)
 
     @staticmethod
     def compute_tps(moves: int, time: int) -> float:

@@ -25,7 +25,7 @@ ORIENTATION_MOVES = {
 }
 
 
-def auto_orientation(scramble: Algorithm, solution: Algorithm) -> str:
+def get_orientation_faces(scramble: Algorithm, solution: Algorithm) -> str:
     top_face = None
 
     cube = VCube()
@@ -83,14 +83,9 @@ def auto_orientation(scramble: Algorithm, solution: Algorithm) -> str:
     return top_face + best_front_face
 
 
-def get_orientation_moves(orientation: str,
-                          scramble: Algorithm | None = None,
-                          solution: Algorithm | None = None) -> Algorithm:
+def get_orientation_moves(orientation: str) -> Algorithm:
     if orientation == 'auto':
-        if scramble and solution:
-            orientation = auto_orientation(scramble, solution)
-        else:
-            orientation = CUBE_ORIENTATION
+        orientation = CUBE_ORIENTATION
 
     try:
         return ORIENTATION_MOVES[orientation]
