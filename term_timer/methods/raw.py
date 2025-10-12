@@ -1,6 +1,9 @@
 from typing import ClassVar
 
+from cubing_algs.constants import INITIAL_STATE
+
 from term_timer.methods.base import Analyser
+from term_timer.methods.base import StepInfo
 
 
 class RawAnalyser(Analyser):
@@ -13,6 +16,14 @@ class RawAnalyser(Analyser):
         },
     }
 
-    def compute_progress(self, _facelets: str,
-                         _progress: int) -> tuple[int, list[str]]:
-        return 0, []
+    def split_steps(self) -> dict[str, StepInfo]:
+        steps: dict[str, StepInfo] = {}
+
+        steps[self.step_list[0]] = {
+            'moves': list(range(len(self.solution))),
+            'increment': 1,
+            'case_infos': [],
+            'facelets': INITIAL_STATE,
+        }
+
+        return steps
