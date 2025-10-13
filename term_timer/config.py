@@ -2,8 +2,6 @@ import os
 from importlib.util import find_spec
 from typing import Any
 
-from cubing_algs.constants import OPPOSITE_FACES
-
 from term_timer.constants import CONFIG_FILE
 
 if find_spec('tomllib') is not None:
@@ -87,8 +85,6 @@ CUBE_PALETTE: str = CUBE_CONFIG.get('palette', '')
 CUBE_EFFECT: str = CUBE_CONFIG.get('effect', '')
 
 CUBE_RIGHT_HANDED: bool = CUBE_CONFIG.get('right-handed', True)
-
-AUF_MOVE = OPPOSITE_FACES[CUBE_ORIENTATION[0]]
 
 TRAINER_STEP = TRAINER_CONFIG.get('step')
 

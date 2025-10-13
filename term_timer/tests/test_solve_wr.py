@@ -57,7 +57,7 @@ class TestSolveWR(unittest.TestCase):
         method_applied = get_method_applied(self.solve)
         self.assertEqual(
             method_applied.score,
-            28.5,
+            26.5,
         )
 
     def test_summary(self) -> None:
@@ -93,8 +93,8 @@ class TestSolveWR(unittest.TestCase):
             "U R2 U' F' L F' U' L'",
             "U' [pair-ie]R U R'[/pair-ie]",
             "R' U [ne]R U2 R'[/ne] U R",
-            "U [su]R' U' R U'[/su] [ne]R' U2 R[/ne]",
-            'U',
+            "[pre-auf]U[/pre-auf] [su]R' U' R U'[/su] [ne]R' U2 R[/ne]",
+            '[post-auf]U[/post-auf]',
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):

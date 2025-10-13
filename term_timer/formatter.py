@@ -3,12 +3,12 @@ import re
 from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.constants import AUF_CHAR
 from cubing_algs.constants import INNER_MOVES
 from cubing_algs.constants import OUTER_WIDE_MOVES
 from cubing_algs.constants import PAUSE_CHAR
 from cubing_algs.constants import ROTATIONS
 
-from term_timer.config import AUF_MOVE
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
@@ -202,7 +202,7 @@ def format_alg_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
     if pre_auf and algorithm:
         algorithm_parts = algorithm.split(' ')
         for i, move in enumerate(algorithm_parts):
-            if move[0] == AUF_MOVE:
+            if move[0] == AUF_CHAR:
                 algorithm_parts[i] = f'[pre-auf]{ move }[/pre-auf]'
             elif move != PAUSE_CHAR:
                 break
@@ -211,7 +211,7 @@ def format_alg_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
     if post_auf and algorithm:
         algorithm_parts = list(reversed(algorithm.split(' ')))
         for i, move in enumerate(algorithm_parts):
-            if move[0] == AUF_MOVE:
+            if move[0] == AUF_CHAR:
                 algorithm_parts[i] = f'[post-auf]{ move }[/post-auf]'
             elif move != PAUSE_CHAR:
                 break

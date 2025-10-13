@@ -37,10 +37,6 @@ from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 
-AUF_MOVE = 'D'  # Because actually AUF is based on a URFDLB cube and moves
-
-CROSS_CENTER_MASK = union_masks(CROSS_MASK, CENTERS_MASK)
-
 
 class StepInfo(TypedDict):
     """
@@ -86,6 +82,9 @@ class StepConfig(TypedDict, total=False):
     mask: str
     triggers: list[str]
     optimizers: list[Callable[[Algorithm], Algorithm]]
+
+
+CROSS_CENTER_MASK = union_masks(CROSS_MASK, CENTERS_MASK)
 
 
 STEPS_CONFIG: dict[str, StepConfig] = {
@@ -353,6 +352,7 @@ class Analyser(FaceletAnalyser):
         return [pre_auf, post_auf]
 
     def get_auf(self, moves: Algorithm, mode: str) -> int:
+        auf_move = self.orientation_faces[0]
         auf = 0
 
         moves_iter: Iterable[Move] = (
@@ -361,7 +361,7 @@ class Analyser(FaceletAnalyser):
         )
 
         for move in moves_iter:
-            if move[0] == AUF_MOVE:
+            if move[0] == auf_move:
                 auf += 1
             else:
                 break
