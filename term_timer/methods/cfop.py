@@ -303,6 +303,9 @@ class CF4OPAnalyser(CFOPAnalyser):
 
     def compute_progress(self, facelets: str,
                          progress: int) -> tuple[int, list[str]]:
+        if progress == 6:
+            return 6, []
+
         if not self.check_step('Cross', facelets):
             return 0, []
 
