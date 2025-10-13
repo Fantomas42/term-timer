@@ -49,7 +49,7 @@ class Timer(SolveInterface):
         self.show_time_graph = show_time_graph
         self.show_recognition_graph = show_recognition_graph
         self.method = method
-        self.orientation = orientation
+        self.orientation_faces = orientation
         self.countdown = countdown
         self.metronome = metronome
         self.stack = stack
@@ -66,7 +66,7 @@ class Timer(SolveInterface):
 
     def start_line(self, cube: VCube) -> None:
         if self.show_cube:
-            print(cube.display(self.orientation), end='')
+            print(cube.display(self.orientation_faces), end='')
 
         scramble_line = f'[scramble]Scramble #{ self.counter }:[/scramble] '
         if self.cube_orientation_moves:
@@ -287,7 +287,7 @@ class Timer(SolveInterface):
         )
 
         solve.method_name = self.method
-        solve.orientation = self.orientation
+        solve.orientation = self.orientation_faces
 
         self.solve_line(solve)
 

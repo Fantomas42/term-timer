@@ -53,5 +53,6 @@ class TestTimerModule(unittest.TestCase):
                 'metronome',
                 'solve_started_event',
                 'solve_completed_event',
+                'orientation_faces',
         ):
             self.assertTrue(hasattr(timer, key))

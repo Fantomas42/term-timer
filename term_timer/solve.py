@@ -148,6 +148,7 @@ class Solve:
     def aufs(self) -> int:
         if not self.method_applied:
             return 0
+
         return sum(
             (s['aufs'][0] or 0) + (s['aufs'][1] or 0)
             for s in self.method_applied.summary
@@ -162,6 +163,7 @@ class Solve:
     def step_missed_moves(self) -> int:
         if not self.method_applied:
             return 0
+
         return sum(
             self.missed_moves(s['moves'])
             for s in self.method_applied.summary
@@ -172,6 +174,7 @@ class Solve:
     def step_pauses(self) -> int:
         if not self.method_applied:
             return 0
+
         return sum(
             self.pauses(s['moves'])
             for s in self.method_applied.summary
@@ -210,6 +213,7 @@ class Solve:
     def recognition_time(self) -> int:
         if not self.method_applied:
             return 0
+
         return sum(
             s['recognition']
             for s in self.method_applied.summary
@@ -220,6 +224,7 @@ class Solve:
     def execution_time(self) -> int:
         if not self.method_applied:
             return 0
+
         return sum(
             s['execution']
             for s in self.method_applied.summary

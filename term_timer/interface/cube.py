@@ -14,14 +14,14 @@ class Orienter:
     def __init__(self) -> None:
         super().__init__()
 
-        self.orientation: str = ''
+        self.orientation_faces: str = ''
 
     @cached_property
     def cube_orientation_moves(self) -> Algorithm:
         """
         Get the orientation moves for the current cube orientation.
         """
-        return get_orientation_moves(self.orientation)
+        return get_orientation_moves(self.orientation_faces)
 
     def reorient(self, algorithm: Algorithm) -> Algorithm:
         """

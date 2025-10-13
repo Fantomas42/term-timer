@@ -40,7 +40,7 @@ class Trainer(SolveInterface):
         if self.step in CROSS_MODES:
             self.step_code = 'Cross'
 
-        self.orientation = orientation
+        self.orientation_faces = orientation
 
         self.counter = 1
 
@@ -63,7 +63,7 @@ class Trainer(SolveInterface):
                     mode=mode,
                     palette=CUBE_PALETTE,
                     effect=CUBE_EFFECT,
-                    orientation=self.orientation,
+                    orientation=self.orientation_faces,
                 ),
                 end='',
             )
@@ -116,6 +116,7 @@ class Trainer(SolveInterface):
             return FaceletAnalyser().check_step(
                 self.step_code,
                 self.bluetooth_cube.state,
+                self.orientation_faces,
             )
         return False
 
