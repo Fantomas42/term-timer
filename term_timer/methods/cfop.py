@@ -69,15 +69,15 @@ class CFOPAnalyser(Analyser):
 
     def compute_progress(self, facelets: str,
                          progress: int) -> tuple[int, list[str]]:
-        progress = 0
+        current_progress = progress
 
-        for name in self.step_list[:-1]:
+        for name in self.step_list[progress:-1]:
             if self.check_step(name, facelets):
-                progress += 1
+                current_progress += 1
             else:
                 break
 
-        return progress, []
+        return current_progress, []
 
     def correct_summary(self, summary: list[StepSummary]) -> None:
         # Fix OLL SKIP instead of F2L
