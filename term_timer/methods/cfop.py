@@ -72,7 +72,7 @@ class CFOPAnalyser(Analyser):
         current_progress = progress
 
         for name in self.step_list[progress:-1]:
-            if self.check_step(name, facelets):
+            if self.check_step(name, facelets, self.orientation_faces):
                 current_progress += 1
             else:
                 break
@@ -221,6 +221,7 @@ class CFOPAnalyser(Analyser):
                 if facelets:
                     info['case'] = self.get_step_case(
                         'OLL', facelets,
+                        self.orientation_faces,
                         CFOP_CASE_ENCODERS['OLL'],
                     )
 
@@ -229,6 +230,7 @@ class CFOPAnalyser(Analyser):
                 if facelets:
                     info['case'] = self.get_step_case(
                         'PLL', facelets,
+                        self.orientation_faces,
                         CFOP_CASE_ENCODERS['PLL'],
                     )
 
@@ -238,6 +240,7 @@ class CFOPAnalyser(Analyser):
                 if facelets and case_infos:
                     info['case'] = self.get_step_case(
                         'F2L', facelets,
+                        self.orientation_faces,
                         CFOP_CASE_ENCODERS[f'F2L { case_infos[0] }'],
                     )
 
@@ -306,10 +309,10 @@ class CF4OPAnalyser(CFOPAnalyser):
         if progress == 6:
             return 6, []
 
-        if not self.check_step('Cross', facelets):
+        if not self.check_step('Cross', facelets, self.orientation_faces):
             return 0, []
 
-        if not self.check_step('OLL', facelets):
+        if not self.check_step('OLL', facelets, self.orientation_faces):
             name = ['F2L 1', 'F2L 2', 'F2L 3', 'F2L 4']
             pair = ['FR', 'FL', 'BR', 'BL']  # UF orientation
 
@@ -317,7 +320,7 @@ class CF4OPAnalyser(CFOPAnalyser):
             pairs: list[str] = []
 
             for n, p in zip(name, pair, strict=True):
-                result = self.check_step(n, facelets)
+                result = self.check_step(n, facelets, self.orientation_faces)
                 if result:
                     score += 1
                     pairs.append(p)

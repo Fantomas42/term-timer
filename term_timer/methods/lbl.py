@@ -30,7 +30,7 @@ class LBLAnalyser(Analyser):
         current_progress = progress
 
         for name in self.step_list[progress:-1]:
-            if self.check_step(name, facelets):
+            if self.check_step(name, facelets, self.orientation_faces):
                 current_progress += 1
             else:
                 break

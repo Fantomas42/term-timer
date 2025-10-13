@@ -9,6 +9,7 @@ from typing import TypedDict
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import INITIAL_STATE
+from cubing_algs.constants import OPPOSITE_FACES
 from cubing_algs.masks import CENTERS_MASK
 from cubing_algs.masks import CROSS_MASK
 from cubing_algs.masks import F2L_BL_MASK
@@ -24,11 +25,13 @@ from cubing_algs.masks import union_masks
 from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.auf import remove_auf_moves
+from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.methods.cases import CASES_MASKS
 from term_timer.methods.cases import CaseMaskInfo
+from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
@@ -137,8 +140,29 @@ STEPS_CONFIG: dict[str, StepConfig] = {
 
 class FaceletAnalyser:
 
+    def reorient(self, state: str, orientation_faces: str,
+                 *, offset: bool = False) -> str:
+        top_face = OPPOSITE_FACES[orientation_faces[0]]
+        orientation = f'{ top_face }{ orientation_faces[1] }'
+
+        moves = get_orientation_moves(orientation)
+
+        if not moves:
+            return state
+
+        if offset:
+            moves = mirror_moves(moves)
+
+        cube = VCube(state, check=False)
+        cube.rotate(moves)
+
+        return cube.state
+
     def get_step_case(self, step: str, facelets: str,
+                      orientation_faces: str,
                       encoder: Callable[[str], str]) -> str:
+        facelets = self.reorient(facelets, orientation_faces, offset=False)
+
         encoded = encoder(facelets)
 
         case_mask: CaseMaskInfo | None = CASES_MASKS[step].get(encoded)
@@ -147,8 +171,11 @@ class FaceletAnalyser:
 
         return ''
 
-    def check_step(self, step: str, facelets: str) -> bool:
-        mask = get_step_config(step, 'mask', '')
+    def check_step(self, step: str, facelets: str,
+                   orientation_faces: str) -> bool:
+        mask = get_step_config(step, 'mask')
+
+        mask = self.reorient(mask, orientation_faces, offset=True)
 
         matching = facelets_masked(
             INITIAL_STATE, mask,
@@ -167,9 +194,12 @@ class Analyser(FaceletAnalyser):
     aggregate: ClassVar[dict[str, int]] = {}
 
     def __init__(self, scramble: Algorithm, solution: Algorithm,
+                 orientation_faces: str,
                  orientation_moves: Algorithm):
         self.scramble = scramble
         self.solution = solution
+
+        self.orientation_faces = orientation_faces
         self.orientation_moves = orientation_moves
 
         self.duration = (

@@ -206,6 +206,7 @@ class Solve:
 
         return self.method_analyser(
             self.scramble, self.solution,
+            self.orientation_faces,
             self.orientation_moves,
         )
 
