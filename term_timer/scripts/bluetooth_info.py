@@ -11,6 +11,7 @@ from pprint import pformat
 from typing import TypedDict
 from typing import cast
 
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 from cubing_algs.vcube import VCube
 
@@ -275,10 +276,6 @@ class RotationDetector:
             'confidence': confidence,
         }
 
-    def get_rotation_sequence(self) -> str:
-        """Get the sequence of detected rotations as a string."""
-        return ' '.join(self.rotations)
-
 
 def print_cube(cube: VCube) -> None:
     cube.show(
@@ -286,6 +283,21 @@ def print_cube(cube: VCube) -> None:
         mode='linear',
         facelet='compact',
     )
+
+
+def print_moves(moves: list[str], orientation_moves: Algorithm) -> None:
+    algo = parse_moves(moves)
+    recon = prettify_moves(
+        humanize_moves(
+            reorient_moves(
+                orientation_moves,
+                algo,
+            ),
+        ),
+    )
+
+    logger.info('MOVES: %s', algo)
+    logger.info('RECON: %s', recon)
 
 
 async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
@@ -364,30 +376,6 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                 if gl_thread and gl_thread.is_alive():
                     gl_thread.set_title(f'{ hardware } { battery }')
 
-            elif event_name == 'gyro':
-                event = cast(GyroEventDict, event)
-
-                timestamp = event['timestamp'].timestamp()
-                rotation_result = rotation_detector.process_gyro_event(
-                    event['quaternion'],
-                    timestamp,
-                )
-
-                if rotation_result:
-                    logger.info(
-                        'CONSUMER: Rotation: %s, Angle: %.1f°, '
-                        'Confidence: %.2f%%',
-                        rotation_result['rotation'],
-                        rotation_result['angle_deg'],
-                        rotation_result['confidence'] * 100,
-                    )
-                    rot_seq = rotation_detector.get_rotation_sequence()
-                    logger.info('ROTATIONS: %s', rot_seq)
-
-                if gl_thread and gl_thread.is_alive():
-                    gl_thread.add_quaternion(
-                        event['quaternion'],
-                    )
             elif event_name == 'facelets':
                 event = cast(FaceletsEventDict, event)
                 logger.info(
@@ -406,6 +394,38 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                 if show_cube:
                     print_cube(virtual_cube)
 
+            elif event_name == 'gyro':
+                event = cast(GyroEventDict, event)
+
+                timestamp = event['timestamp'].timestamp()
+                rotation_result = rotation_detector.process_gyro_event(
+                    event['quaternion'],
+                    timestamp,
+                )
+
+                if rotation_result:
+                    logger.info(
+                        'CONSUMER: Rotation: %s, Angle: %.1f°, '
+                        'Confidence: %.2f%%',
+                        rotation_result['rotation'],
+                        rotation_result['angle_deg'],
+                        rotation_result['confidence'] * 100,
+                    )
+
+                    # Apply rotation
+                    moves.append(rotation_result['rotation'])
+                    print_moves(moves, orientation_moves)
+
+                    if virtual_cube:
+                        virtual_cube.rotate(rotation_result['rotation'])
+                        if show_cube:
+                            print_cube(virtual_cube)
+
+                if gl_thread and gl_thread.is_alive():
+                    gl_thread.add_quaternion(
+                        event['quaternion'],
+                    )
+
             elif event_name == 'move':
                 event = cast(MoveEventDict, event)
                 logger.info(
@@ -415,6 +435,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     event['move'],
                 )
                 moves.append(event['move'])
+                print_moves(moves, orientation_moves)
 
                 if virtual_cube:
                     virtual_cube.rotate(event['move'])
@@ -425,19 +446,6 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     direction = 3 if "'" in event['move'] else 1
                     face = event['move'][0]
                     gl_thread.add_move(face, direction)
-
-                algo = parse_moves(moves)
-                recon = prettify_moves(
-                    humanize_moves(
-                        reorient_moves(
-                            orientation_moves,
-                            algo,
-                        ),
-                    ),
-                )
-
-                logger.info('MOVES: %s', algo)
-                logger.info('RECON: %s', recon)
 
             else:
                 logger.info(
