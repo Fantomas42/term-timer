@@ -25,6 +25,7 @@ from term_timer.bluetooth.types import HardwareEventDict
 from term_timer.bluetooth.types import MoveEventDict
 from term_timer.bluetooth.types import QuaternionDict
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.constants import SECOND
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
@@ -534,38 +535,47 @@ def linear_regression(x_values: list[float],
 def resume(events: list[EventDict]) -> None:
     cube_timestamps: list[float] = []
     local_timestamps: list[float] = []
+    gyro_clocks: list[int] = []
 
     for event in events:
-        if event['event'] != 'move':
-            continue
+        if event['event'] == 'move':
+            event = cast(MoveEventDict, event)
+            if (
+                    event['cube_timestamp'] is None
+                    or event['local_timestamp'] is None
+            ):
+                continue
 
-        event = cast(MoveEventDict, event)
-        if event['cube_timestamp'] is None or event['local_timestamp'] is None:
-            continue
+            cube_timestamps.append(
+                event['cube_timestamp'],
+            )
+            local_timestamps.append(
+                event['local_timestamp'].timestamp() * 1000,
+            )
 
-        cube_timestamps.append(
-            event['cube_timestamp'],
+        elif event['event'] == 'gyro':
+            event = cast(GyroEventDict, event)
+            gyro_clocks.append(event['clock'])
+
+    if len(cube_timestamps) > 2:
+        # Linear regression: local_timestamps vs cube_timestamps
+        # This gives us the mapping from cube time to local time
+        # slope ≈ 1.0 means clocks run at same rate
+        # If slope > 1.0, cube clock is slower than local clock
+        # If slope < 1.0, cube clock is faster than local clock
+        slope, _intercept = linear_regression(
+            cube_timestamps,
+            local_timestamps,
         )
-        local_timestamps.append(
-            event['local_timestamp'].timestamp() * 1000,
-        )
 
-    if len(cube_timestamps) < 2:
-        return
+        skew_percent = (slope - 1) * 100
+        logger.info('Clock skew: %.4f%%', skew_percent)
+        logger.info('Slope: %.6f (1.0 = perfect sync)', slope)
 
-    # Linear regression: local_timestamps vs cube_timestamps
-    # This gives us the mapping from cube time to local time
-    # slope ≈ 1.0 means clocks run at same rate
-    # If slope > 1.0, cube clock is slower than local clock
-    # If slope < 1.0, cube clock is faster than local clock
-    slope, _intercept = linear_regression(
-        cube_timestamps,
-        local_timestamps,
-    )
-
-    skew_percent = (slope - 1) * 100
-    logger.info('Clock skew: %.4f%%', skew_percent)
-    logger.info('Slope: %.6f (1.0 = perfect sync)', slope)
+    if len(gyro_clocks) > 2:
+        duration = gyro_clocks[-1] - gyro_clocks[0]
+        frequency = len(gyro_clocks) / (duration / SECOND)
+        logger.info('Gyro frequency: %.4fHz', frequency)
 
 
 async def run(options: Namespace) -> None:
