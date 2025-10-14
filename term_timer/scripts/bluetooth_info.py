@@ -8,6 +8,7 @@ from argparse import Namespace
 from contextlib import suppress
 from dataclasses import dataclass
 from pprint import pformat
+from typing import TypedDict
 from typing import cast
 
 from cubing_algs.parsing import parse_moves
@@ -82,6 +83,13 @@ LOGGING_CONF = {
 # Quaternion math constants for rotation detection
 QUATERNION_EPSILON = 1e-10
 NO_ROTATION_THRESHOLD = 0.9999
+
+
+class RotationResult(TypedDict):
+    """Result of rotation detection."""
+    rotation: str
+    angle_deg: float
+    confidence: float
 
 
 @dataclass
@@ -184,7 +192,7 @@ class RotationDetector:
         self,
         quaternion_dict: QuaternionDict,
         timestamp: float,
-    ) -> str | None:
+    ) -> RotationResult | None:
         """Process a gyro event and return detected rotation if any."""
         current_quat = Quaternion.from_dict(quaternion_dict)
 
@@ -199,7 +207,7 @@ class RotationDetector:
             return None
 
         # Calculate rotation between last and current quaternion
-        rotation = self.calculate_rotation(
+        rotation_result = self.calculate_rotation(
             self.last_quaternion,
             current_quat,
         )
@@ -208,16 +216,16 @@ class RotationDetector:
         self.last_quaternion = current_quat
         self.last_timestamp = timestamp
 
-        if rotation:
-            self.rotations.append(rotation)
+        if rotation_result:
+            self.rotations.append(rotation_result['rotation'])
 
-        return rotation
+        return rotation_result
 
     def calculate_rotation(
         self,
         q1: Quaternion,
         q2: Quaternion,
-    ) -> str | None:
+    ) -> RotationResult | None:
         """Calculate rotation between two quaternions."""
         # Calculate relative rotation: q_rel = q2 * q1^-1
         q_rel = q2.multiply(q1.conjugate()).normalize()
@@ -261,14 +269,11 @@ class RotationDetector:
             else:
                 rotation_type += '2'
 
-        logger.debug(
-            'Detected rotation: %s (angle: %.1f°, confidence: %.2f)',
-            rotation_type,
-            angle_deg,
-            confidence,
-        )
-
-        return rotation_type
+        return {
+            'rotation': rotation_type,
+            'angle_deg': angle_deg,
+            'confidence': confidence,
+        }
 
     def get_rotation_sequence(self) -> str:
         """Get the sequence of detected rotations as a string."""
@@ -304,13 +309,13 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
     )
 
     logger.info(
-        'CONSUMER: Use "%s" as orientation and "%s" as rotation moves',
+        'CONSUMER: Use "%s" as orientation faces and "%s" as orientation moves',
         CUBE_ORIENTATION,
         str(orientation_moves),
     )
     logger.info(
-        'CONSUMER: Rotation detection enabled with threshold: %.1f degrees, '
-        'time window: %.1f seconds',
+        'CONSUMER: Use threshold: %.1f° and time window: %.1fs '
+        'for rotation detection',
         rotation_threshold,
         time_window,
     )
@@ -361,21 +366,20 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
 
             elif event_name == 'gyro':
                 event = cast(GyroEventDict, event)
-                # logger.info(
-                #     'CONSUMER: Gyroscope event',
-                # )
 
-                # Detect rotation from gyroscope data
                 timestamp = event['timestamp'].timestamp()
-                detected_rotation = rotation_detector.process_gyro_event(
+                rotation_result = rotation_detector.process_gyro_event(
                     event['quaternion'],
                     timestamp,
                 )
 
-                if detected_rotation:
+                if rotation_result:
                     logger.info(
-                        'CONSUMER: Detected cube rotation: %s',
-                        detected_rotation,
+                        'CONSUMER: Rotation: %s, Angle: %.1f°, '
+                        'Confidence: %.2f%%',
+                        rotation_result['rotation'],
+                        rotation_result['angle_deg'],
+                        rotation_result['confidence'] * 100,
                     )
                     rot_seq = rotation_detector.get_rotation_sequence()
                     logger.info('ROTATIONS: %s', rot_seq)
@@ -443,7 +447,6 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
 
 
 async def client_cb(queue: asyncio.Queue[list[EventDict] | None], time: int, *,
-                    use_opengl: bool,
                     cube_reset: bool,
                     gyroscope_enable: bool,
                     gyroscope_disable: bool) -> None:
@@ -550,7 +553,6 @@ async def run(options: Namespace) -> None:
     client = client_cb(
         queue,
         options.time,
-        use_opengl=options.use_opengl,
         cube_reset=options.cube_reset,
         gyroscope_enable=options.gyroscope_enable,
         gyroscope_disable=options.gyroscope_disable,
