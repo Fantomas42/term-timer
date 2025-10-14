@@ -198,6 +198,7 @@ class RotationDetector:
         self.last_quaternion: Quaternion | None = None
         self.last_timestamp: float = 0.0
         self.last_velocity_magnitude: float = 0.0
+        self.last_detection_timestamp: float = 0.0
         self.rotations: list[str] = []
 
     def process_gyro_event(
@@ -213,9 +214,18 @@ class RotationDetector:
             self.last_timestamp = timestamp
             return None
 
-        # Check if enough time has passed
-        time_delta = timestamp - self.last_timestamp
-        if time_delta < self.time_window:
+        # Adaptive windowing: use cooldown after detection to prevent duplicates
+        # but allow faster sampling between rotations
+        time_since_last_detection = timestamp - self.last_detection_timestamp
+
+        # If we recently detected a rotation, enforce cooldown period
+        if (
+            self.last_detection_timestamp > 0
+            and time_since_last_detection < self.time_window
+        ):
+            # Still update quaternion for next comparison
+            self.last_quaternion = current_quat
+            self.last_timestamp = timestamp
             return None
 
         # Calculate rotation between last and current quaternion
@@ -230,6 +240,7 @@ class RotationDetector:
 
         if rotation_result:
             self.rotations.append(rotation_result['rotation'])
+            self.last_detection_timestamp = timestamp
 
         return rotation_result
 
@@ -332,9 +343,18 @@ class RotationDetector:
             )
             return None
 
-        # Check if enough time has passed
-        time_delta = timestamp - self.last_timestamp
-        if time_delta < self.time_window:
+        # Adaptive windowing: use cooldown after detection to prevent duplicates
+        time_since_last_detection = timestamp - self.last_detection_timestamp
+
+        # If we recently detected a rotation, enforce cooldown period
+        if (
+            self.last_detection_timestamp > 0
+            and time_since_last_detection < self.time_window
+        ):
+            # Still update state for next comparison
+            self.last_quaternion = current_quat
+            self.last_timestamp = timestamp
+            self.last_velocity_magnitude = velocity_magnitude
             return None
 
         # Calculate rotation between last and current quaternion
@@ -424,6 +444,7 @@ class RotationDetector:
 
         if rotation_result:
             self.rotations.append(rotation_result['rotation'])
+            self.last_detection_timestamp = timestamp
 
         return rotation_result
 
