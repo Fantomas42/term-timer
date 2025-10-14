@@ -1,10 +1,12 @@
 import asyncio
 import logging
 import logging.config
+import math
 import sys
 import threading
 from argparse import Namespace
 from contextlib import suppress
+from dataclasses import dataclass
 from pprint import pformat
 from typing import cast
 
@@ -19,6 +21,7 @@ from term_timer.bluetooth.types import FaceletsEventDict
 from term_timer.bluetooth.types import GyroEventDict
 from term_timer.bluetooth.types import HardwareEventDict
 from term_timer.bluetooth.types import MoveEventDict
+from term_timer.bluetooth.types import QuaternionDict
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.logger import LOGGING_DIR
@@ -76,6 +79,201 @@ LOGGING_CONF = {
     },
 }
 
+# Quaternion math constants for rotation detection
+QUATERNION_EPSILON = 1e-10
+NO_ROTATION_THRESHOLD = 0.9999
+
+
+@dataclass
+class Quaternion:
+    w: float
+    x: float
+    y: float
+    z: float
+
+    @classmethod
+    def from_dict(cls, q: QuaternionDict) -> 'Quaternion':
+        """Create quaternion from dict with coordinate transform.
+
+        Applies the same Y↔Z swap and Y negation used in the OpenGL cube
+        visualization to ensure detected rotations match the display.
+        """
+        qw, qx, qy, qz = q['w'], q['x'], q['y'], q['z']
+        # Apply coordinate system transformation matching OpenGL cube
+        # This swaps Y and Z axes and negates Y to match display orientation
+        return cls(w=qw, x=qx, y=qz, z=-qy)
+
+    def conjugate(self) -> 'Quaternion':
+        return Quaternion(self.w, -self.x, -self.y, -self.z)
+
+    def multiply(self, other: 'Quaternion') -> 'Quaternion':
+        w = (
+            self.w * other.w
+            - self.x * other.x
+            - self.y * other.y
+            - self.z * other.z
+        )
+        x = (
+            self.w * other.x
+            + self.x * other.w
+            + self.y * other.z
+            - self.z * other.y
+        )
+        y = (
+            self.w * other.y
+            - self.x * other.z
+            + self.y * other.w
+            + self.z * other.x
+        )
+        z = (
+            self.w * other.z
+            + self.x * other.y
+            - self.y * other.x
+            + self.z * other.w
+        )
+        return Quaternion(w, x, y, z)
+
+    def normalize(self) -> 'Quaternion':
+        norm = math.sqrt(self.w**2 + self.x**2 + self.y**2 + self.z**2)
+        if norm < QUATERNION_EPSILON:
+            return Quaternion(1.0, 0.0, 0.0, 0.0)
+        return Quaternion(
+            self.w / norm,
+            self.x / norm,
+            self.y / norm,
+            self.z / norm,
+        )
+
+    def to_axis_angle(self) -> tuple[tuple[float, float, float], float]:
+        """Convert quaternion to axis-angle representation."""
+        # Normalize first
+        q = self.normalize()
+
+        # Handle the case where w is very close to 1 (no rotation)
+        if abs(q.w) > NO_ROTATION_THRESHOLD:
+            return ((1.0, 0.0, 0.0), 0.0)
+
+        # Calculate angle
+        angle = 2 * math.acos(max(-1.0, min(1.0, q.w)))
+
+        # Calculate axis
+        s = math.sqrt(1 - q.w * q.w)
+        if s < QUATERNION_EPSILON:
+            # Axis is arbitrary for no rotation
+            return ((1.0, 0.0, 0.0), 0.0)
+
+        axis = (q.x / s, q.y / s, q.z / s)
+        return (axis, angle)
+
+
+class RotationDetector:
+    """Detects cube rotations from gyroscope quaternion data."""
+
+    def __init__(
+        self,
+        rotation_threshold: float = 70.0,
+        time_window: float = 0.5,
+    ) -> None:
+        self.rotation_threshold = rotation_threshold
+        self.time_window = time_window
+        self.last_quaternion: Quaternion | None = None
+        self.last_timestamp: float = 0.0
+        self.rotations: list[str] = []
+
+    def process_gyro_event(
+        self,
+        quaternion_dict: QuaternionDict,
+        timestamp: float,
+    ) -> str | None:
+        """Process a gyro event and return detected rotation if any."""
+        current_quat = Quaternion.from_dict(quaternion_dict)
+
+        if self.last_quaternion is None:
+            self.last_quaternion = current_quat
+            self.last_timestamp = timestamp
+            return None
+
+        # Check if enough time has passed
+        time_delta = timestamp - self.last_timestamp
+        if time_delta < self.time_window:
+            return None
+
+        # Calculate rotation between last and current quaternion
+        rotation = self.calculate_rotation(
+            self.last_quaternion,
+            current_quat,
+        )
+
+        # Update state
+        self.last_quaternion = current_quat
+        self.last_timestamp = timestamp
+
+        if rotation:
+            self.rotations.append(rotation)
+
+        return rotation
+
+    def calculate_rotation(
+        self,
+        q1: Quaternion,
+        q2: Quaternion,
+    ) -> str | None:
+        """Calculate rotation between two quaternions."""
+        # Calculate relative rotation: q_rel = q2 * q1^-1
+        q_rel = q2.multiply(q1.conjugate()).normalize()
+
+        # Convert to axis-angle
+        axis, angle = q_rel.to_axis_angle()
+        angle_deg = math.degrees(angle)
+
+        # Check if rotation exceeds threshold
+        if abs(angle_deg) < self.rotation_threshold:
+            return None
+
+        # Determine which axis is dominant
+        ax, ay, az = axis
+        abs_x, abs_y, abs_z = abs(ax), abs(ay), abs(az)
+
+        # Determine rotation type based on dominant axis
+        rotation_type = None
+        confidence = 0.0
+
+        if abs_x > abs_y and abs_x > abs_z:
+            # X-axis rotation
+            rotation_type = 'x' if ax > 0 else "x'"
+            confidence = abs_x
+        elif abs_y > abs_x and abs_y > abs_z:
+            # Y-axis rotation
+            rotation_type = 'y' if ay > 0 else "y'"
+            confidence = abs_y
+        elif abs_z > abs_x and abs_z > abs_y:
+            # Z-axis rotation
+            rotation_type = 'z' if az > 0 else "z'"
+            confidence = abs_z
+
+        if rotation_type is None:
+            return None
+
+        # Check if it's a double rotation (close to 180 degrees)
+        if abs(abs(angle_deg) - 180) < 30:
+            if rotation_type.endswith("'"):
+                rotation_type = rotation_type[0] + '2'
+            else:
+                rotation_type += '2'
+
+        logger.debug(
+            'Detected rotation: %s (angle: %.1f°, confidence: %.2f)',
+            rotation_type,
+            angle_deg,
+            confidence,
+        )
+
+        return rotation_type
+
+    def get_rotation_sequence(self) -> str:
+        """Get the sequence of detected rotations as a string."""
+        return ' '.join(self.rotations)
+
 
 def print_cube(cube: VCube) -> None:
     cube.show(
@@ -89,7 +287,9 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                       cube_ready: threading.Event,
                       gl_thread: CubeGLThread | None,
                       event_collector: list[EventDict],
-                      *, show_cube: bool) -> None:
+                      *, show_cube: bool,
+                      rotation_threshold: float = 70.0,
+                      time_window: float = 0.5) -> None:
     virtual_cube: VCube | None = None
     moves: list[str] = []
     hardware = ''
@@ -97,10 +297,22 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
 
     orientation_moves = get_orientation_moves(CUBE_ORIENTATION)
 
+    # Initialize rotation detector
+    rotation_detector = RotationDetector(
+        rotation_threshold=rotation_threshold,
+        time_window=time_window,
+    )
+
     logger.info(
         'CONSUMER: Use "%s" as orientation and "%s" as rotation moves',
         CUBE_ORIENTATION,
         str(orientation_moves),
+    )
+    logger.info(
+        'CONSUMER: Rotation detection enabled with threshold: %.1f degrees, '
+        'time window: %.1f seconds',
+        rotation_threshold,
+        time_window,
     )
 
     while True:
@@ -143,15 +355,31 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     'CONSUMER: Battery: %s%%',
                     event['level'],
                 )
-                battery = f'{ event["level"]}%'
+                battery = f'{ event["level"] }%'
                 if gl_thread and gl_thread.is_alive():
                     gl_thread.set_title(f'{ hardware } { battery }')
 
             elif event_name == 'gyro':
                 event = cast(GyroEventDict, event)
-                logger.info(
-                    'CONSUMER: Gyroscope event',
+                # logger.info(
+                #     'CONSUMER: Gyroscope event',
+                # )
+
+                # Detect rotation from gyroscope data
+                timestamp = event['timestamp'].timestamp()
+                detected_rotation = rotation_detector.process_gyro_event(
+                    event['quaternion'],
+                    timestamp,
                 )
+
+                if detected_rotation:
+                    logger.info(
+                        'CONSUMER: Detected cube rotation: %s',
+                        detected_rotation,
+                    )
+                    rot_seq = rotation_detector.get_rotation_sequence()
+                    logger.info('ROTATIONS: %s', rot_seq)
+
                 if gl_thread and gl_thread.is_alive():
                     gl_thread.add_quaternion(
                         event['quaternion'],
@@ -222,12 +450,6 @@ async def client_cb(queue: asyncio.Queue[list[EventDict] | None], time: int, *,
     bluetooth_interface = BluetoothInterface(queue)
 
     await bluetooth_interface.__aenter__()  # noqa: PLC2801
-
-    if use_opengl:
-        assert bluetooth_interface is not None  # noqa: S101
-        assert bluetooth_interface.driver is not None  # noqa: S101
-
-        bluetooth_interface.driver.disable_gyro = False
 
     await bluetooth_interface.send_command('REQUEST_HARDWARE')
     await bluetooth_interface.send_command('REQUEST_FACELETS')
@@ -326,15 +548,21 @@ async def run(options: Namespace) -> None:
         gl_thread = CubeGLThread(cube_ready, 800, 600, daemon=True)
 
     client = client_cb(
-        queue, options.time,
+        queue,
+        options.time,
         use_opengl=options.use_opengl,
         cube_reset=options.cube_reset,
         gyroscope_enable=options.gyroscope_enable,
         gyroscope_disable=options.gyroscope_disable,
     )
     consumer = consumer_cb(
-        queue, cube_ready, gl_thread, event_collector,
+        queue,
+        cube_ready,
+        gl_thread,
+        event_collector,
         show_cube=options.show_cube,
+        rotation_threshold=options.rotation_threshold,
+        time_window=options.rotation_window,
     )
 
     try:
@@ -411,6 +639,20 @@ def main() -> None:
             'Disable the gyroscope of the cube.\n'
             'Default: False.'
         ),
+    )
+    parser.add_argument(
+        '--rotation-threshold',
+        type=float,
+        default=70.0,
+        metavar='DEGREES',
+        help=('Rotation detection threshold in degrees.\nDefault: 70.0.'),
+    )
+    parser.add_argument(
+        '--rotation-window',
+        type=float,
+        default=0.5,
+        metavar='SECONDS',
+        help=('Time window for rotation detection in seconds.\nDefault: 0.5.'),
     )
 
     args = parser.parse_args(sys.argv[1:])

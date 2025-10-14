@@ -13,7 +13,7 @@ class Driver:
     state_characteristic_uid: ClassVar[str] = ''
     command_characteristic_uid: ClassVar[str] = ''
 
-    disable_gyro: bool = True
+    disable_gyro: bool = False
 
     def __init__(self, client: BleakClient) -> None:
         self.client: BleakClient = client
