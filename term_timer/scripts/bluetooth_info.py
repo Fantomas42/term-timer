@@ -346,7 +346,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
         str(orientation_moves),
     )
     logger.info(
-        'CONSUMER: Use threshold: %.1f° and time window: %.1fs '
+        'CONSUMER: Use %.1f° threshold and %.1fs time window '
         'for rotation detection',
         rotation_threshold,
         time_window,
