@@ -24,6 +24,7 @@ from term_timer.bluetooth.types import GyroEventDict
 from term_timer.bluetooth.types import HardwareEventDict
 from term_timer.bluetooth.types import MoveEventDict
 from term_timer.bluetooth.types import QuaternionDict
+from term_timer.bluetooth.types import VelocityDict
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import SECOND
 from term_timer.exceptions import CubeNotFoundError
@@ -187,11 +188,16 @@ class RotationDetector:
         self,
         rotation_threshold: float = 70.0,
         time_window: float = 0.5,
+        velocity_threshold: float = 5.0,
+        velocity_scale: float = 1.0,
     ) -> None:
         self.rotation_threshold = rotation_threshold
         self.time_window = time_window
+        self.velocity_threshold = velocity_threshold
+        self.velocity_scale = velocity_scale
         self.last_quaternion: Quaternion | None = None
         self.last_timestamp: float = 0.0
+        self.last_velocity_magnitude: float = 0.0
         self.rotations: list[str] = []
 
     def process_gyro_event(
@@ -281,6 +287,146 @@ class RotationDetector:
             'confidence': confidence,
         }
 
+    def process_gyro_event_with_velocity(
+        self,
+        quaternion_dict: QuaternionDict,
+        timestamp: float,
+        velocity: VelocityDict,
+    ) -> RotationResult | None:
+        """Process a gyro event with velocity data for enhanced detection.
+
+        Args:
+            quaternion_dict: Current orientation quaternion
+            timestamp: Event timestamp
+            velocity: Angular velocity dict with 'x', 'y', 'z' keys
+
+        Returns:
+            RotationResult if rotation detected, None otherwise
+        """
+        current_quat = Quaternion.from_dict(quaternion_dict)
+
+        # Transform velocity to match quaternion coordinate system
+        # Apply same Y↔Z swap and Y negation as quaternion
+        vx, vy, vz = velocity['x'], velocity['y'], velocity['z']
+        vx_t, vy_t, vz_t = vx, vz, -vy  # Same transform as quaternion
+
+        # Apply scale factor and calculate magnitude
+        vx_scaled = vx_t * self.velocity_scale
+        vy_scaled = vy_t * self.velocity_scale
+        vz_scaled = vz_t * self.velocity_scale
+        velocity_magnitude = math.sqrt(
+            vx_scaled**2 + vy_scaled**2 + vz_scaled**2,
+        )
+
+        # Initialize on first call
+        if self.last_quaternion is None:
+            self.last_quaternion = current_quat
+            self.last_timestamp = timestamp
+            self.last_velocity_magnitude = velocity_magnitude
+            logger.debug(
+                'Velocity init: mag=%.2f (raw: %.2f, %.2f, %.2f)',
+                velocity_magnitude,
+                vx,
+                vy,
+                vz,
+            )
+            return None
+
+        # Check if enough time has passed
+        time_delta = timestamp - self.last_timestamp
+        if time_delta < self.time_window:
+            return None
+
+        # Calculate rotation between last and current quaternion
+        rotation_result = self.calculate_rotation(
+            self.last_quaternion,
+            current_quat,
+        )
+
+        # Velocity-based filtering and enhancement
+        velocity_active = velocity_magnitude > self.velocity_threshold
+
+        logger.debug(
+            'Velocity check: mag=%.2f, threshold=%.2f, active=%s, '
+            'quat_rotation=%s',
+            velocity_magnitude,
+            self.velocity_threshold,
+            velocity_active,
+            rotation_result['rotation'] if rotation_result else None,
+        )
+
+        # Strategy: Use velocity as a gate
+        # - If velocity is low, reject quaternion-detected rotations
+        #   (likely drift)
+        # - If velocity is high, accept quaternion detection
+        # - Use velocity direction to validate axis when available
+        if rotation_result:
+            if not velocity_active:
+                # Quaternion detected rotation but velocity is too low
+                # This is likely drift or slow manual reorientation
+                logger.debug(
+                    'Rejecting rotation %s: velocity too low (%.2f < %.2f)',
+                    rotation_result['rotation'],
+                    velocity_magnitude,
+                    self.velocity_threshold,
+                )
+                rotation_result = None
+            else:
+                # Velocity confirms the rotation
+                # Optionally validate that velocity axis aligns with
+                # rotation axis
+                abs_vx = abs(vx_scaled)
+                abs_vy = abs(vy_scaled)
+                abs_vz = abs(vz_scaled)
+
+                # Determine dominant velocity axis
+                velocity_axis = None
+                if abs_vx > abs_vy and abs_vx > abs_vz:
+                    velocity_axis = 'x'
+                elif abs_vy > abs_vx and abs_vy > abs_vz:
+                    velocity_axis = 'y'
+                elif abs_vz > abs_vx and abs_vz > abs_vy:
+                    velocity_axis = 'z'
+
+                rotation_axis = rotation_result['rotation'][0]
+
+                # Check if axes align (allow some tolerance)
+                if velocity_axis and velocity_axis != rotation_axis:
+                    # Axes don't align - reduce confidence or reject
+                    max_vel_component = max(abs_vx, abs_vy, abs_vz)
+                    second_max = sorted([abs_vx, abs_vy, abs_vz])[-2]
+
+                    # If velocity is ambiguous (two axes similar), keep it
+                    if max_vel_component < second_max * 1.5:
+                        logger.debug(
+                            'Velocity axis ambiguous, accepting rotation %s',
+                            rotation_result['rotation'],
+                        )
+                    else:
+                        logger.debug(
+                            'Velocity axis mismatch: velocity=%s, rotation=%s, '
+                            'rejecting',
+                            velocity_axis,
+                            rotation_axis,
+                        )
+                        rotation_result = None
+                else:
+                    logger.debug(
+                        'Velocity confirms rotation %s (axis=%s)',
+                        rotation_result['rotation'],
+                        velocity_axis,
+                    )
+
+        # Update state
+        self.last_quaternion = current_quat
+        self.last_timestamp = timestamp
+        self.last_velocity_magnitude = velocity_magnitude
+
+        if rotation_result:
+            self.rotations.append(rotation_result['rotation'])
+
+        return rotation_result
+
 
 def print_cube(cube: VCube) -> None:
     logger.info(
@@ -326,7 +472,9 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                       event_collector: list[EventDict],
                       *, show_cube: bool,
                       rotation_threshold: float = 70.0,
-                      time_window: float = 0.5) -> None:
+                      time_window: float = 0.5,
+                      velocity_threshold: float = 5.0,
+                      velocity_scale: float = 1.0) -> None:
     virtual_cube: VCube | None = None
     moves: list[str] = []
     hardware = ''
@@ -338,6 +486,8 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
     rotation_detector = RotationDetector(
         rotation_threshold=rotation_threshold,
         time_window=time_window,
+        velocity_threshold=velocity_threshold,
+        velocity_scale=velocity_scale,
     )
 
     logger.info(
@@ -350,6 +500,12 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
         'for rotation detection',
         rotation_threshold,
         time_window,
+    )
+    logger.info(
+        'CONSUMER: Use %.2f velocity threshold and %.2fx velocity scale '
+        'for enhanced detection',
+        velocity_threshold,
+        velocity_scale,
     )
 
     while True:
@@ -418,10 +574,24 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                 event = cast(GyroEventDict, event)
 
                 timestamp = event['timestamp'].timestamp()
-                rotation_result = rotation_detector.process_gyro_event(
-                    event['quaternion'],
-                    timestamp,
-                )
+
+                # Check if velocity data is available
+                velocity = event.get('velocity')
+                if velocity is not None:
+                    # Use velocity-enhanced detection
+                    rotation_result = (
+                        rotation_detector.process_gyro_event_with_velocity(
+                            event['quaternion'],
+                            timestamp,
+                            velocity,
+                        )
+                    )
+                else:
+                    # Fall back to quaternion-only detection
+                    rotation_result = rotation_detector.process_gyro_event(
+                        event['quaternion'],
+                        timestamp,
+                    )
 
                 if rotation_result:
                     logger.info(
@@ -602,6 +772,8 @@ async def run(options: Namespace) -> None:
         show_cube=options.show_cube,
         rotation_threshold=options.rotation_threshold,
         time_window=options.rotation_window,
+        velocity_threshold=options.velocity_threshold,
+        velocity_scale=options.velocity_scale,
     )
 
     try:
@@ -692,6 +864,26 @@ def main() -> None:
         default=0.5,
         metavar='SECONDS',
         help=('Time window for rotation detection in seconds.\nDefault: 0.5.'),
+    )
+    parser.add_argument(
+        '--velocity-threshold',
+        type=float,
+        default=5.0,
+        metavar='UNITS',
+        help=(
+            'Velocity magnitude threshold for rotation detection.\n'
+            'Default: 5.0.'
+        ),
+    )
+    parser.add_argument(
+        '--velocity-scale',
+        type=float,
+        default=1.0,
+        metavar='FACTOR',
+        help=(
+            'Scale factor for velocity data (use to convert units).\n'
+            'Default: 1.0.'
+        ),
     )
 
     args = parser.parse_args(sys.argv[1:])
