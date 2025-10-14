@@ -26,12 +26,16 @@ from term_timer.bluetooth.types import MoveEventDict
 from term_timer.bluetooth.types import QuaternionDict
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.exceptions import CubeNotFoundError
+from term_timer.formatter import format_alg_moves
+from term_timer.formatter import format_alg_triggers
+from term_timer.interface.console import console
 from term_timer.logger import LOGGING_DIR
 from term_timer.opengl.thread import CubeGLThread
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.transform import reorient_moves
+from term_timer.triggers import DEFAULT_TRIGGERS
 
 logger = logging.getLogger(__name__)
 
@@ -278,26 +282,41 @@ class RotationDetector:
 
 
 def print_cube(cube: VCube) -> None:
-    cube.show(
-        orientation=CUBE_ORIENTATION,
-        mode='linear',
-        facelet='compact',
+    logger.info(
+        'Virtual Cube:\n%s',
+        cube.display(
+            orientation=CUBE_ORIENTATION,
+            mode='linear',
+            facelet='compact',
+        )[:-1],
     )
 
 
 def print_moves(moves: list[str], orientation_moves: Algorithm) -> None:
     algo = parse_moves(moves)
-    recon = prettify_moves(
-        humanize_moves(
-            reorient_moves(
-                orientation_moves,
-                algo,
+
+    recon = format_alg_triggers(
+        format_alg_moves(
+            str(
+                prettify_moves(
+                    humanize_moves(
+                        reorient_moves(
+                            orientation_moves,
+                            algo,
+                        ),
+                    ),
+                ),
             ),
         ),
+        DEFAULT_TRIGGERS,
     )
 
+    with console.capture() as capture:
+        console.print(recon)
+    recon = capture.get()
+
     logger.info('MOVES: %s', algo)
-    logger.info('RECON: %s', recon)
+    logger.info('RECON: %s', recon[:-1])
 
 
 async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
