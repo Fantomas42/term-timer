@@ -305,10 +305,18 @@ def replay(options: Namespace) -> None:
     with file_path.open(encoding='utf-8') as f:
         events = json.load(f)
 
+    show_cube = options.show_cube
+    virtual_cube = VCube()
+    orientation_moves = get_orientation_moves(CUBE_ORIENTATION)
     rotation_detector = RotationDetector(
         rotation_threshold=options.rotation_threshold,
     )
 
+    logger.info(
+        'REPLAY: Use "%s" as orientation faces and "%s" as orientation moves',
+        CUBE_ORIENTATION,
+        str(orientation_moves),
+    )
     logger.info(
         'REPLAY: Use %.1f° threshold for rotation detection',
         options.rotation_threshold,
@@ -336,6 +344,10 @@ def replay(options: Namespace) -> None:
                 )
                 moves.append(rotation_result['rotation'])
 
+                virtual_cube.rotate(rotation_result['rotation'])
+                if show_cube:
+                    print_cube(virtual_cube)
+
         elif event_name == 'move':
             event = cast(MoveEventDict, event)
             logger.info(
@@ -346,7 +358,11 @@ def replay(options: Namespace) -> None:
             )
             moves.append(event['move'])
 
-    print_moves(moves, get_orientation_moves(CUBE_ORIENTATION))
+            virtual_cube.rotate(event['move'])
+            if show_cube:
+                print_cube(virtual_cube)
+
+    print_moves(moves, orientation_moves)
 
 
 def linear_regression(x_values: list[float],
