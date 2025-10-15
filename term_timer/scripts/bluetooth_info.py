@@ -238,8 +238,8 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     rotation_result = (
                         rotation_detector.process_gyro_event_with_velocity(
                             event['quaternion'],
-                            timestamp,
                             velocity,
+                            timestamp,
                         )
                     )
                 else:

@@ -229,8 +229,8 @@ class RotationDetector:
     def process_gyro_event_with_velocity(
         self,
         quaternion_dict: QuaternionDict,
-        timestamp: float,
         velocity: VelocityDict,
+        timestamp: float,
     ) -> RotationResult | None:
         """Process a gyro event with velocity data for enhanced detection.
 
