@@ -1,11 +1,14 @@
 import asyncio
+import json
 import logging
 import logging.config
 import sys
 import threading
 from argparse import Namespace
 from contextlib import suppress
+from pathlib import Path
 from pprint import pformat
+from typing import Any
 from typing import cast
 
 from cubing_algs.algorithm import Algorithm
@@ -358,17 +361,21 @@ def linear_regression(x_values: list[float],
     return (slope, intercept)
 
 
-def resume(events: list[EventDict]) -> None:
+def resume(events: list[EventDict], output: str) -> None:
     cube_timestamps: list[float] = []
     local_timestamps: list[float] = []
     gyro_clocks: list[int] = []
 
+    replay = []
+
     for event in events:
+        data: dict[str, Any] = {}
+
         if event['event'] == 'move':
             event = cast(MoveEventDict, event)
             if (
-                    event['cube_timestamp'] is None
-                    or event['local_timestamp'] is None
+                event['cube_timestamp'] is None
+                or event['local_timestamp'] is None
             ):
                 continue
 
@@ -379,9 +386,18 @@ def resume(events: list[EventDict]) -> None:
                 event['local_timestamp'].timestamp() * 1000,
             )
 
+            data.update(event)
+            data['timestamp'] = data['timestamp'].timestamp()
+            data['local_timestamp'] = data['local_timestamp'].timestamp()
+            replay.append(data)
+
         elif event['event'] == 'gyro':
             event = cast(GyroEventDict, event)
             gyro_clocks.append(event['clock'])
+
+            data.update(event)
+            data['timestamp'] = data['timestamp'].timestamp()
+            replay.append(data)
 
     if len(cube_timestamps) > 2:
         # Linear regression: local_timestamps vs cube_timestamps
@@ -402,6 +418,11 @@ def resume(events: list[EventDict]) -> None:
         duration = gyro_clocks[-1] - gyro_clocks[0]
         frequency = len(gyro_clocks) / (duration / SECOND)
         logger.info('Gyro frequency: %.4fHz', frequency)
+
+    if output:
+        output_path = Path(output).resolve()
+        with output_path.open('w', encoding='utf-8') as f:
+            json.dump(replay, f, indent=2)
 
 
 async def run(options: Namespace) -> None:
@@ -445,7 +466,7 @@ async def run(options: Namespace) -> None:
             gl_thread.stop()
             gl_thread.join(timeout=2)
 
-    resume(event_collector)
+    resume(event_collector, options.output)
 
     logger.info('Bye bye')
 
@@ -466,6 +487,13 @@ def main() -> None:
             'Set the countdown before disconnecting.\n'
             'Default: 10.'
         ),
+    )
+    parser.add_argument(
+        '-o',
+        '--output',
+        type=str,
+        metavar='EVENTS_FILE',
+        help='Output events file (optional).',
     )
     parser.add_argument(
         '-p', '--show-cube',
