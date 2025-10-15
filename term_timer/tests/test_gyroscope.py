@@ -51,13 +51,13 @@ class TestMoveRotationDetector(unittest.TestCase):
     def test_m_m_prime_slow(self) -> None:
         self.check_rotations(
             'gan_gen2/M-M-slow.json',
-            "L' R z R' L z'",  # TODO(me): why z ?
+            "L' R z R' L z'",
         )
 
     def test_triple_m_m_prime_fast(self) -> None:
         self.check_rotations(
             'gan_gen2/triple-M-M-fast.json',
-            "L' R z L R' z' R L' z L R' z' R L' z L R' z'",  # TODO(me): why z ?
+            "L' R z L R' z' R L' z L R' z' R L' z L R' z'",
         )
 
     def test_octuple_y_speed(self) -> None:
