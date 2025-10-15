@@ -232,7 +232,7 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(Driver.service_uid, '')
         self.assertEqual(Driver.state_characteristic_uid, '')
         self.assertEqual(Driver.command_characteristic_uid, '')
-        self.assertTrue(Driver.disable_gyro)
+        self.assertFalse(Driver.disable_gyro)
 
     def test_driver_instance_has_cypher_attribute(self) -> None:
         self.assertTrue(hasattr(self.driver, 'cypher'))
