@@ -234,10 +234,8 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
 
                 timestamp = event['timestamp'].timestamp()
 
-                # Check if velocity data is available
                 velocity = event.get('velocity')
                 if velocity is not None:
-                    # Use velocity-enhanced detection
                     rotation_result = (
                         rotation_detector.process_gyro_event_with_velocity(
                             event['quaternion'],
@@ -246,7 +244,6 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                         )
                     )
                 else:
-                    # Fall back to quaternion-only detection
                     rotation_result = rotation_detector.process_gyro_event(
                         event['quaternion'],
                         timestamp,
@@ -328,6 +325,79 @@ async def client_cb(queue: asyncio.Queue[list[EventDict] | None], time: int, *,
 
     await bluetooth_interface.__aexit__(None, None, None)
     logger.warning('Interface disconnected')
+
+
+def replay(options: Namespace) -> None:
+    file_path = Path(options.input).resolve()
+    with file_path.open(encoding='utf-8') as f:
+        events = json.load(f)
+
+    rotation_detector = RotationDetector(
+        rotation_threshold=options.rotation_threshold,
+        time_window=options.rotation_window,
+        velocity_threshold=options.velocity_threshold,
+        velocity_scale=options.velocity_scale,
+    )
+
+    logger.info(
+        'REPLAY: Use %.1f° threshold and %.1fs time window '
+        'for rotation detection',
+        options.rotation_threshold,
+        options.rotation_window,
+    )
+    logger.info(
+        'REPLAY: Use %.2f velocity threshold and %.2fx velocity scale '
+        'for enhanced detection',
+        options.velocity_threshold,
+        options.velocity_scale,
+    )
+
+    moves = []
+
+    for event in events:
+        event_name = event['event']
+
+        if event_name == 'gyro':
+            event = cast(GyroEventDict, event)
+
+            timestamp = cast(float, event['timestamp'])
+
+            velocity = event.get('velocity')
+            if velocity is not None:
+                rotation_result = (
+                    rotation_detector.process_gyro_event_with_velocity(
+                        event['quaternion'],
+                        velocity,
+                        timestamp,
+                    )
+                )
+            else:
+                rotation_result = rotation_detector.process_gyro_event(
+                    event['quaternion'],
+                    timestamp,
+                )
+
+            if rotation_result:
+                logger.info(
+                    'REPLAY: Rotation: %s, Angle: %.1f°, '
+                    'Confidence: %.2f%%',
+                    rotation_result['rotation'],
+                    rotation_result['angle_deg'],
+                    rotation_result['confidence'] * 100,
+                )
+                moves.append(rotation_result['rotation'])
+
+        elif event_name == 'move':
+            event = cast(MoveEventDict, event)
+            logger.info(
+                'REPLAY: Face: %s, Direction: %s, Move: %s',
+                event['face'],
+                event['direction'],
+                event['move'],
+            )
+            moves.append(event['move'])
+
+    print_moves(moves, get_orientation_moves(CUBE_ORIENTATION))
 
 
 def linear_regression(x_values: list[float],
@@ -426,6 +496,10 @@ def resume(events: list[EventDict], output: str) -> None:
 
 
 async def run(options: Namespace) -> None:
+    if options.input:
+        replay(options)
+        return
+
     event_collector: list[EventDict] = []
     queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
     cube_ready = threading.Event()
@@ -487,6 +561,13 @@ def main() -> None:
             'Set the countdown before disconnecting.\n'
             'Default: 10.'
         ),
+    )
+    parser.add_argument(
+        '-i',
+        '--input',
+        type=str,
+        metavar='EVENTS_FILE',
+        help='Input events file to replay (optional).',
     )
     parser.add_argument(
         '-o',
