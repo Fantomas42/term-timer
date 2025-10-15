@@ -100,8 +100,15 @@ def print_cube(cube: VCube, *, show: bool = False) -> None:
     )
 
 
-def print_moves(moves: list[str], orientation_moves: Algorithm) -> None:
-    algo = parse_moves(moves)
+def print_moves(raw_moves: list[str], orientation_moves: Algorithm) -> None:
+    algo = parse_moves(raw_moves)
+
+    moves = format_alg_triggers(
+        format_alg_moves(
+            str(algo),
+        ),
+        DEFAULT_TRIGGERS,
+    )
 
     recon = format_alg_triggers(
         format_alg_moves(
@@ -120,11 +127,16 @@ def print_moves(moves: list[str], orientation_moves: Algorithm) -> None:
     )
 
     with console.capture() as capture:
-        console.print(recon)
+        console.print(moves, end='')
+    moves = capture.get()
+
+    logger.info('MOVES: %s', moves)
+
+    with console.capture() as capture:
+        console.print(recon, end='')
     recon = capture.get()
 
-    logger.info('MOVES: %s', algo)
-    logger.info('RECON: %s', recon[:-1])
+    logger.info('RECON: %s', recon)
 
 
 async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
