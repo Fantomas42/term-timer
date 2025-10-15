@@ -130,9 +130,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                       gl_thread: CubeGLThread | None,
                       event_collector: list[EventDict],
                       *, show_cube: bool,
-                      rotation_threshold: float = 70.0,
-                      velocity_threshold: float = 5.0,
-                      velocity_scale: float = 1.0) -> None:
+                      rotation_threshold: float = 70.0) -> None:
     virtual_cube: VCube | None = None
     moves: list[str] = []
     hardware = ''
@@ -143,8 +141,6 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
     # Initialize rotation detector
     rotation_detector = RotationDetector(
         rotation_threshold=rotation_threshold,
-        velocity_threshold=velocity_threshold,
-        velocity_scale=velocity_scale,
     )
 
     logger.info(
@@ -155,12 +151,6 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
     logger.info(
         'CONSUMER: Use %.1f° threshold for rotation detection',
         rotation_threshold,
-    )
-    logger.info(
-        'CONSUMER: Use %.2f velocity threshold and %.2fx velocity scale '
-        'for enhanced detection',
-        velocity_threshold,
-        velocity_scale,
     )
 
     while True:
@@ -228,18 +218,9 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
             elif event_name == 'gyro':
                 event = cast(GyroEventDict, event)
 
-                velocity = event.get('velocity')
-                if velocity is not None:
-                    rotation_result = (
-                        rotation_detector.process_gyro_event_with_velocity(
-                            event['quaternion'],
-                            velocity,
-                        )
-                    )
-                else:
-                    rotation_result = rotation_detector.process_gyro_event(
-                        event['quaternion'],
-                    )
+                rotation_result = rotation_detector.process_gyro_event(
+                    event['quaternion'],
+                )
 
                 if rotation_result:
                     logger.info(
@@ -326,19 +307,11 @@ def replay(options: Namespace) -> None:
 
     rotation_detector = RotationDetector(
         rotation_threshold=options.rotation_threshold,
-        velocity_threshold=options.velocity_threshold,
-        velocity_scale=options.velocity_scale,
     )
 
     logger.info(
         'REPLAY: Use %.1f° threshold for rotation detection',
         options.rotation_threshold,
-    )
-    logger.info(
-        'REPLAY: Use %.2f velocity threshold and %.2fx velocity scale '
-        'for enhanced detection',
-        options.velocity_threshold,
-        options.velocity_scale,
     )
 
     moves = []
@@ -349,18 +322,9 @@ def replay(options: Namespace) -> None:
         if event_name == 'gyro':
             event = cast(GyroEventDict, event)
 
-            velocity = event.get('velocity')
-            if velocity is not None:
-                rotation_result = (
-                    rotation_detector.process_gyro_event_with_velocity(
-                        event['quaternion'],
-                        velocity,
-                    )
-                )
-            else:
-                rotation_result = rotation_detector.process_gyro_event(
-                    event['quaternion'],
-                )
+            rotation_result = rotation_detector.process_gyro_event(
+                event['quaternion'],
+            )
 
             if rotation_result:
                 logger.info(
@@ -507,8 +471,6 @@ async def run(options: Namespace) -> None:
         event_collector,
         show_cube=options.show_cube,
         rotation_threshold=options.rotation_threshold,
-        velocity_threshold=options.velocity_threshold,
-        velocity_scale=options.velocity_scale,
     )
 
     try:
@@ -606,26 +568,6 @@ def main() -> None:
         default=70.0,
         metavar='DEGREES',
         help=('Rotation detection threshold in degrees.\nDefault: 70.0.'),
-    )
-    parser.add_argument(
-        '--velocity-threshold',
-        type=float,
-        default=5.0,
-        metavar='UNITS',
-        help=(
-            'Velocity magnitude threshold for rotation detection.\n'
-            'Default: 5.0.'
-        ),
-    )
-    parser.add_argument(
-        '--velocity-scale',
-        type=float,
-        default=1.0,
-        metavar='FACTOR',
-        help=(
-            'Scale factor for velocity data (use to convert units).\n'
-            'Default: 1.0.'
-        ),
     )
 
     args = parser.parse_args(sys.argv[1:])

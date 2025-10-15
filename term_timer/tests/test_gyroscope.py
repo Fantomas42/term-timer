@@ -9,7 +9,6 @@ from term_timer.bluetooth.types import MoveEventDict
 
 
 class TestMoveRotationDetector(unittest.TestCase):
-    use_velocity = False
 
     def check_rotations(self, source_path: str, expected: str) -> None:
         path = Path(__file__).parent / 'replays' / source_path
@@ -31,19 +30,9 @@ class TestMoveRotationDetector(unittest.TestCase):
             if event_name == 'gyro':
                 event = cast(GyroEventDict, event)
 
-                velocity = event.get('velocity')
-
-                if self.use_velocity and velocity:
-                    rotation_result = (
-                        rotation_detector.process_gyro_event_with_velocity(
-                            event['quaternion'],
-                            velocity,
-                        )
-                    )
-                else:
-                    rotation_result = rotation_detector.process_gyro_event(
-                        event['quaternion'],
-                    )
+                rotation_result = rotation_detector.process_gyro_event(
+                    event['quaternion'],
+                )
 
                 if rotation_result:
                     moves.append(rotation_result['rotation'])
@@ -52,10 +41,6 @@ class TestMoveRotationDetector(unittest.TestCase):
             ' '.join(moves),
             expected,
         )
-
-
-class TestMoveRotationsNoVelocity(TestMoveRotationDetector):
-    use_velocity = False
 
     def test_m_m_prime_normal(self) -> None:
         self.check_rotations(

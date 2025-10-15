@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from typing import TypedDict
 
 from term_timer.bluetooth.types import QuaternionDict
-from term_timer.bluetooth.types import VelocityDict
 
 logger = logging.getLogger(__name__)
 
@@ -113,15 +112,8 @@ class RotationDetector:
     at the time of the last detected rotation.
     """
 
-    def __init__(
-            self,
-            rotation_threshold: float = 70.0,
-            velocity_threshold: float = 5.0,
-            velocity_scale: float = 1.0,
-    ) -> None:
+    def __init__(self, rotation_threshold: float = 70.0) -> None:
         self.rotation_threshold = rotation_threshold
-        self.velocity_threshold = velocity_threshold
-        self.velocity_scale = velocity_scale
 
         # Orientation at the last detected rotation (or initial orientation)
         self.last_rotation_orientation: Quaternion | None = None
@@ -202,122 +194,6 @@ class RotationDetector:
             self.last_rotation_orientation,
             current_orientation,
         )
-
-        if rotation_result:
-            self.last_rotation_orientation = current_orientation
-            return rotation_result
-
-        return None
-
-    def process_gyro_event_with_velocity(
-            self,
-            quaternion_dict: QuaternionDict,
-            velocity: VelocityDict,
-    ) -> RotationResult | None:
-        """
-        Process a gyro event with velocity data for enhanced detection.
-
-        Tracks the absolute orientation and uses velocity to filter out drift
-        and validate detected rotations.
-        """
-        current_orientation = Quaternion.from_dict(quaternion_dict)
-
-        # Transform velocity to match quaternion coordinate system
-        # Apply same Y↔Z swap and Y negation as quaternion
-        vx, vy, vz = velocity['x'], velocity['y'], velocity['z']
-        vx_t, vy_t, vz_t = vx, vz, -vy  # Same transform as quaternion
-
-        # Apply scale factor and calculate magnitude
-        vx_scaled = vx_t * self.velocity_scale
-        vy_scaled = vy_t * self.velocity_scale
-        vz_scaled = vz_t * self.velocity_scale
-        velocity_magnitude = math.sqrt(
-            vx_scaled**2 + vy_scaled**2 + vz_scaled**2,
-        )
-
-        if self.last_rotation_orientation is None:
-            self.last_rotation_orientation = current_orientation
-            logger.debug(
-                'Velocity init: mag=%.2f (raw: %.2f, %.2f, %.2f)',
-                velocity_magnitude,
-                vx,
-                vy,
-                vz,
-            )
-            return None
-
-        rotation_result = self.calculate_rotation(
-            self.last_rotation_orientation,
-            current_orientation,
-        )
-
-        # Velocity-based filtering
-        velocity_active = velocity_magnitude > self.velocity_threshold
-
-        logger.debug(
-            'Velocity check: mag=%.2f, threshold=%.2f, active=%s, '
-            'quat_rotation=%s',
-            velocity_magnitude,
-            self.velocity_threshold,
-            velocity_active,
-            rotation_result['rotation'] if rotation_result else None,
-        )
-
-        # Use velocity as a gate to filter drift
-        if rotation_result:
-            if not velocity_active:
-                # Quaternion detected rotation but velocity is too low
-                # This is likely drift or slow manual reorientation
-                logger.debug(
-                    'Rejecting rotation %s: velocity too low (%.2f < %.2f)',
-                    rotation_result['rotation'],
-                    velocity_magnitude,
-                    self.velocity_threshold,
-                )
-                rotation_result = None
-            else:
-                # Velocity confirms the rotation - validate axis alignment
-                abs_vx = abs(vx_scaled)
-                abs_vy = abs(vy_scaled)
-                abs_vz = abs(vz_scaled)
-
-                # Determine dominant velocity axis
-                velocity_axis = None
-                if abs_vx > abs_vy and abs_vx > abs_vz:
-                    velocity_axis = 'x'
-                elif abs_vy > abs_vx and abs_vy > abs_vz:
-                    velocity_axis = 'y'
-                elif abs_vz > abs_vx and abs_vz > abs_vy:
-                    velocity_axis = 'z'
-
-                rotation_axis = rotation_result['rotation'][0]
-
-                # Check if axes align
-                if velocity_axis and velocity_axis != rotation_axis:
-                    # Axes don't align - check if velocity is ambiguous
-                    max_vel_component = max(abs_vx, abs_vy, abs_vz)
-                    second_max = sorted([abs_vx, abs_vy, abs_vz])[-2]
-
-                    if max_vel_component < second_max * 1.5:
-                        # Velocity ambiguous, accept rotation
-                        logger.debug(
-                            'Velocity axis ambiguous, accepting rotation %s',
-                            rotation_result['rotation'],
-                        )
-                    else:
-                        logger.debug(
-                            'Velocity axis mismatch: velocity=%s, rotation=%s, '
-                            'rejecting',
-                            velocity_axis,
-                            rotation_axis,
-                        )
-                        rotation_result = None
-                else:
-                    logger.debug(
-                        'Velocity confirms rotation %s (axis=%s)',
-                        rotation_result['rotation'],
-                        velocity_axis,
-                    )
 
         if rotation_result:
             self.last_rotation_orientation = current_orientation
