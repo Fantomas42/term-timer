@@ -14,7 +14,9 @@ NO_ROTATION_THRESHOLD = 0.9999
 
 
 class RotationResult(TypedDict):
-    """Result of rotation detection."""
+    """
+    Result of rotation detection.
+    """
     rotation: str
     angle_deg: float
     confidence: float
@@ -29,14 +31,14 @@ class Quaternion:
 
     @classmethod
     def from_dict(cls, q: QuaternionDict) -> 'Quaternion':
-        """Create quaternion from dict with coordinate transform.
+        """
+        Create quaternion from dict with coordinate transform.
 
         Applies the same Y↔Z swap and Y negation used in the OpenGL cube
         visualization to ensure detected rotations match the display.
         """
         qw, qx, qy, qz = q['w'], q['x'], q['y'], q['z']
-        # Apply coordinate system transformation matching OpenGL cube
-        # This swaps Y and Z axes and negates Y to match display orientation
+
         return cls(w=qw, x=qx, y=qz, z=-qy)
 
     def conjugate(self) -> 'Quaternion':
@@ -103,79 +105,31 @@ class Quaternion:
 
 
 class RotationDetector:
-    """Detects cube rotations from gyroscope quaternion data."""
+    """
+    Detects cube rotations from gyroscope quaternion data.
+
+    This detector tracks the absolute orientation of the cube and detects
+    rotations by comparing the current orientation against the orientation
+    at the time of the last detected rotation.
+    """
 
     def __init__(
-        self,
-        rotation_threshold: float = 70.0,
-        time_window: float = 0.5,
-        velocity_threshold: float = 5.0,
-        velocity_scale: float = 1.0,
+            self,
+            rotation_threshold: float = 70.0,
+            velocity_threshold: float = 5.0,
+            velocity_scale: float = 1.0,
     ) -> None:
         self.rotation_threshold = rotation_threshold
-        self.time_window = time_window
         self.velocity_threshold = velocity_threshold
         self.velocity_scale = velocity_scale
-        self.reference_quaternion: Quaternion | None = None
-        self.last_quaternion: Quaternion | None = None
-        self.last_timestamp: float = 0.0
-        self.last_velocity_magnitude: float = 0.0
-        self.last_detection_timestamp: float = 0.0
-        self.rotations: list[str] = []
 
-    def process_gyro_event(
-        self,
-        quaternion_dict: QuaternionDict,
-        timestamp: float,
-    ) -> RotationResult | None:
-        """Process a gyro event and return detected rotation if any.
-
-        Uses a reference quaternion approach: accumulates rotation from a
-        reference point until threshold is reached, then resets the reference.
-        This works better with low-frequency gyro data (12.5Hz).
-        """
-        current_quat = Quaternion.from_dict(quaternion_dict)
-
-        # Initialize on first call
-        if self.reference_quaternion is None:
-            self.reference_quaternion = current_quat
-            self.last_quaternion = current_quat
-            self.last_timestamp = timestamp
-            return None
-
-        # Calculate accumulated rotation from reference point
-        rotation_result = self.calculate_rotation(
-            self.reference_quaternion,
-            current_quat,
-        )
-
-        # Update last seen state
-        self.last_quaternion = current_quat
-        self.last_timestamp = timestamp
-
-        if rotation_result:
-            # Rotation detected! Reset reference to current position
-            self.rotations.append(rotation_result['rotation'])
-            self.last_detection_timestamp = timestamp
-            self.reference_quaternion = current_quat
-            return rotation_result
-
-        # No rotation detected yet - check if we should reset reference
-        # to avoid accumulating drift over time
-        time_since_last_detection = timestamp - self.last_detection_timestamp
-        if (
-            self.last_detection_timestamp > 0
-            and time_since_last_detection > self.time_window * 2
-        ):
-            # Been a while since last detection, reset reference to avoid drift
-            self.reference_quaternion = current_quat
-
-        return None
+        # Orientation at the last detected rotation (or initial orientation)
+        self.last_rotation_orientation: Quaternion | None = None
 
     def calculate_rotation(
-        self,
-        q1: Quaternion,
-        q2: Quaternion,
+            self,
+            q1: Quaternion,
+            q2: Quaternion,
     ) -> RotationResult | None:
         """Calculate rotation between two quaternions."""
         # Calculate relative rotation: q_rel = q2 * q1^-1
@@ -226,27 +180,47 @@ class RotationDetector:
             'confidence': confidence,
         }
 
-    def process_gyro_event_with_velocity(
-        self,
-        quaternion_dict: QuaternionDict,
-        velocity: VelocityDict,
-        timestamp: float,
+    def process_gyro_event(
+            self,
+            quaternion_dict: QuaternionDict,
     ) -> RotationResult | None:
-        """Process a gyro event with velocity data for enhanced detection.
-
-        Uses a reference quaternion approach: accumulates rotation from a
-        reference point until threshold is reached, then resets the reference.
-        Velocity data is used to filter out drift and validate rotations.
-
-        Args:
-            quaternion_dict: Current orientation quaternion
-            timestamp: Event timestamp
-            velocity: Angular velocity dict with 'x', 'y', 'z' keys
-
-        Returns:
-            RotationResult if rotation detected, None otherwise
         """
-        current_quat = Quaternion.from_dict(quaternion_dict)
+        Process a gyro event and return detected rotation if any.
+
+        Tracks the absolute orientation of the cube and detects rotations
+        by comparing current orientation against the orientation at the last
+        detected rotation. This approach naturally accumulates slow rotations
+        and works well in real-time without needing time windows.
+        """
+        current_orientation = Quaternion.from_dict(quaternion_dict)
+
+        if self.last_rotation_orientation is None:
+            self.last_rotation_orientation = current_orientation
+            return None
+
+        rotation_result = self.calculate_rotation(
+            self.last_rotation_orientation,
+            current_orientation,
+        )
+
+        if rotation_result:
+            self.last_rotation_orientation = current_orientation
+            return rotation_result
+
+        return None
+
+    def process_gyro_event_with_velocity(
+            self,
+            quaternion_dict: QuaternionDict,
+            velocity: VelocityDict,
+    ) -> RotationResult | None:
+        """
+        Process a gyro event with velocity data for enhanced detection.
+
+        Tracks the absolute orientation and uses velocity to filter out drift
+        and validate detected rotations.
+        """
+        current_orientation = Quaternion.from_dict(quaternion_dict)
 
         # Transform velocity to match quaternion coordinate system
         # Apply same Y↔Z swap and Y negation as quaternion
@@ -261,12 +235,8 @@ class RotationDetector:
             vx_scaled**2 + vy_scaled**2 + vz_scaled**2,
         )
 
-        # Initialize on first call
-        if self.reference_quaternion is None:
-            self.reference_quaternion = current_quat
-            self.last_quaternion = current_quat
-            self.last_timestamp = timestamp
-            self.last_velocity_magnitude = velocity_magnitude
+        if self.last_rotation_orientation is None:
+            self.last_rotation_orientation = current_orientation
             logger.debug(
                 'Velocity init: mag=%.2f (raw: %.2f, %.2f, %.2f)',
                 velocity_magnitude,
@@ -276,13 +246,12 @@ class RotationDetector:
             )
             return None
 
-        # Calculate accumulated rotation from reference point
         rotation_result = self.calculate_rotation(
-            self.reference_quaternion,
-            current_quat,
+            self.last_rotation_orientation,
+            current_orientation,
         )
 
-        # Velocity-based filtering and enhancement
+        # Velocity-based filtering
         velocity_active = velocity_magnitude > self.velocity_threshold
 
         logger.debug(
@@ -294,11 +263,7 @@ class RotationDetector:
             rotation_result['rotation'] if rotation_result else None,
         )
 
-        # Strategy: Use velocity as a gate
-        # - If velocity is low, reject quaternion-detected rotations
-        #   (likely drift)
-        # - If velocity is high, accept quaternion detection
-        # - Use velocity direction to validate axis when available
+        # Use velocity as a gate to filter drift
         if rotation_result:
             if not velocity_active:
                 # Quaternion detected rotation but velocity is too low
@@ -311,9 +276,7 @@ class RotationDetector:
                 )
                 rotation_result = None
             else:
-                # Velocity confirms the rotation
-                # Optionally validate that velocity axis aligns with
-                # rotation axis
+                # Velocity confirms the rotation - validate axis alignment
                 abs_vx = abs(vx_scaled)
                 abs_vy = abs(vy_scaled)
                 abs_vz = abs(vz_scaled)
@@ -329,14 +292,14 @@ class RotationDetector:
 
                 rotation_axis = rotation_result['rotation'][0]
 
-                # Check if axes align (allow some tolerance)
+                # Check if axes align
                 if velocity_axis and velocity_axis != rotation_axis:
-                    # Axes don't align - reduce confidence or reject
+                    # Axes don't align - check if velocity is ambiguous
                     max_vel_component = max(abs_vx, abs_vy, abs_vz)
                     second_max = sorted([abs_vx, abs_vy, abs_vz])[-2]
 
-                    # If velocity is ambiguous (two axes similar), keep it
                     if max_vel_component < second_max * 1.5:
+                        # Velocity ambiguous, accept rotation
                         logger.debug(
                             'Velocity axis ambiguous, accepting rotation %s',
                             rotation_result['rotation'],
@@ -356,26 +319,8 @@ class RotationDetector:
                         velocity_axis,
                     )
 
-        # Update last seen state
-        self.last_quaternion = current_quat
-        self.last_timestamp = timestamp
-        self.last_velocity_magnitude = velocity_magnitude
-
         if rotation_result:
-            # Rotation detected! Reset reference to current position
-            self.rotations.append(rotation_result['rotation'])
-            self.last_detection_timestamp = timestamp
-            self.reference_quaternion = current_quat
+            self.last_rotation_orientation = current_orientation
             return rotation_result
-
-        # No rotation detected yet - check if we should reset reference
-        # to avoid accumulating drift over time
-        time_since_last_detection = timestamp - self.last_detection_timestamp
-        if (
-            self.last_detection_timestamp > 0
-            and time_since_last_detection > self.time_window * 2
-        ):
-            # Been a while since last detection, reset reference to avoid drift
-            self.reference_quaternion = current_quat
 
         return None

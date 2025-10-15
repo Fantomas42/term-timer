@@ -22,7 +22,6 @@ class TestMoveRotationDetector(unittest.TestCase):
 
         for event in events:
             event_name = event['event']
-            timestamp = cast(float, event['timestamp'])
 
             if event_name == 'move':
                 event = cast(MoveEventDict, event)
@@ -39,13 +38,11 @@ class TestMoveRotationDetector(unittest.TestCase):
                         rotation_detector.process_gyro_event_with_velocity(
                             event['quaternion'],
                             velocity,
-                            timestamp,
                         )
                     )
                 else:
                     rotation_result = rotation_detector.process_gyro_event(
                         event['quaternion'],
-                        timestamp,
                     )
 
                 if rotation_result:
@@ -69,7 +66,7 @@ class TestMoveRotationsNoVelocity(TestMoveRotationDetector):
     def test_m_m_prime_slow(self) -> None:
         self.check_rotations(
             'gan_gen2/M-M-slow.json',
-            "L' R z R' L z'",  # TODO(me): fix + why z ?
+            "L' R z R' L z'",  # TODO(me): why z ?
         )
 
     def test_triple_m_m_prime_fast(self) -> None:
@@ -99,17 +96,17 @@ class TestMoveRotationsNoVelocity(TestMoveRotationDetector):
     def test_triple_y_slow(self) -> None:
         self.check_rotations(
             'gan_gen2/triple-Y-slow.json',
-            "y' y' y'",  # TODO(me): fix
+            "y' y' y'",
         )
 
     def test_y_t_perm_y(self) -> None:
         self.check_rotations(
             'gan_gen2/Y-Tperm-Y.json',
-            "y' B D B' D' B' L B B D' B' D' B D B' L' y",  # TODO(me): fix
+            "y' B D B' D' B' L B B D' B' D' B D B' L' y",
         )
 
     def test_y_t_perm_y_bis(self) -> None:
         self.check_rotations(
             'gan_gen2/Y-Tperm-Y-bis.json',
-            "y' B D B' D' B' L B B D' B' D' B D B' L' y",  # TODO(me): fix
+            "y' B D B' D' B' L B B D' B' D' B D B' L' y",
         )
