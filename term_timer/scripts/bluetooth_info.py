@@ -26,6 +26,7 @@ from term_timer.bluetooth.types import GyroEventDict
 from term_timer.bluetooth.types import HardwareEventDict
 from term_timer.bluetooth.types import MoveEventDict
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.formatter import format_alg_moves
@@ -104,9 +105,15 @@ def print_cube(cube: VCube, *, show: bool = False) -> None:
 def print_moves(raw_moves: list[str], orientation_moves: Algorithm) -> None:
     algo = parse_moves(raw_moves)
 
+    algo_timed_reformatted = ''
+    first_time = algo[0].timed
+    for move in algo:
+        algo_timed_reformatted += f'{ move.untimed }@{ move.timed - first_time } '
+    algo_timed_reformatted = algo_timed_reformatted.strip()
+
     moves = format_alg_triggers(
         format_alg_moves(
-            str(algo),
+            algo_timed_reformatted,
         ),
         DEFAULT_TRIGGERS,
     )
@@ -183,6 +190,8 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
         for event in events:
             event_collector.append(event)
             event_name = event['event']
+            time = int(event['clock'] / MS_TO_NS_FACTOR)
+
             if event_name == 'hardware':
                 event = cast(HardwareEventDict, event)
                 logger.info(
@@ -246,9 +255,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                         rotation_result['angle_deg'],
                         rotation_result['confidence'] * 100,
                     )
-
-                    # Apply rotation
-                    moves.append(rotation_result['rotation'])
+                    moves.append(f"{ rotation_result['rotation'] }@{ time }")
                     print_moves(moves, orientation_moves)
 
                     if virtual_cube:
@@ -268,7 +275,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     event['direction'],
                     event['move'],
                 )
-                moves.append(event['move'])
+                moves.append(f"{ event['move'] }@{ time }")
                 print_moves(moves, orientation_moves)
 
                 if virtual_cube:
@@ -343,6 +350,7 @@ def replay(options: Namespace) -> None:
 
     for event in events:
         event_name = event['event']
+        time = int(event['clock'] / MS_TO_NS_FACTOR)
 
         if event_name == 'gyro':
             event = cast(GyroEventDict, event)
@@ -359,7 +367,9 @@ def replay(options: Namespace) -> None:
                     rotation_result['angle_deg'],
                     rotation_result['confidence'] * 100,
                 )
-                moves.append(rotation_result['rotation'])
+                moves.append(f"{ rotation_result['rotation'] }@{ time }")
+                # Okay but because virtual cube is rotated at the init
+                # applied moves and rotations should be reoriented
 
                 virtual_cube.rotate(rotation_result['rotation'])
                 print_cube(virtual_cube, show=show_cube)
@@ -372,7 +382,7 @@ def replay(options: Namespace) -> None:
                 event['direction'],
                 event['move'],
             )
-            moves.append(event['move'])
+            moves.append(f"{ event['move'] }@{ time }")
 
             virtual_cube.rotate(event['move'])
             print_cube(virtual_cube, show=show_cube)
