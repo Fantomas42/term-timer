@@ -16,6 +16,7 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
+from term_timer.arguments import ORIENTATIONS_SORTED
 from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.types import BatteryEventDict
@@ -144,13 +145,14 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                       gl_thread: CubeGLThread | None,
                       event_collector: list[EventDict],
                       *, show_cube: bool,
+                      orientation_faces: str,
                       rotation_threshold: float = 70.0) -> None:
     virtual_cube: VCube | None = None
     moves: list[str] = []
     hardware = ''
     battery = ''
 
-    orientation_moves = get_orientation_moves(CUBE_ORIENTATION)
+    orientation_moves = get_orientation_moves(orientation_faces)
 
     # Initialize rotation detector
     rotation_detector = RotationDetector(
@@ -159,7 +161,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
 
     logger.info(
         'CONSUMER: Use "%s" as orientation faces and "%s" as orientation moves',
-        CUBE_ORIENTATION,
+        orientation_faces,
         str(orientation_moves),
     )
     logger.info(
@@ -318,7 +320,7 @@ def replay(options: Namespace) -> None:
         events = json.load(f)
 
     show_cube = options.show_cube
-    orientation_moves = get_orientation_moves(CUBE_ORIENTATION)
+    orientation_moves = get_orientation_moves(options.orientation)
     rotation_detector = RotationDetector(
         rotation_threshold=options.rotation_threshold,
     )
@@ -328,7 +330,7 @@ def replay(options: Namespace) -> None:
 
     logger.info(
         'REPLAY: Use "%s" as orientation faces and "%s" as orientation moves',
-        CUBE_ORIENTATION,
+        options.orientation,
         str(orientation_moves),
     )
     logger.info(
@@ -499,6 +501,7 @@ async def run(options: Namespace) -> None:
         gl_thread,
         event_collector,
         show_cube=options.show_cube,
+        orientation_faces=options.orientation,
         rotation_threshold=options.rotation_threshold,
     )
 
@@ -545,7 +548,7 @@ def main() -> None:
         help='Input events file to replay (optional).',
     )
     parser.add_argument(
-        '-o',
+        '-r',
         '--output',
         type=str,
         metavar='EVENTS_FILE',
@@ -557,6 +560,16 @@ def main() -> None:
         help=(
             'Display the cube state.\n'
             'Default: False.'
+        ),
+    )
+    parser.add_argument(
+        '-o', '--orientation',
+        default=CUBE_ORIENTATION,
+        choices=ORIENTATIONS_SORTED,
+        metavar='ORIENTATION',
+        help=(
+            'Set the cube orientation used.\n'
+            f'Default: { CUBE_ORIENTATION }.'
         ),
     )
     parser.add_argument(
@@ -596,7 +609,10 @@ def main() -> None:
         type=float,
         default=70.0,
         metavar='DEGREES',
-        help=('Rotation detection threshold in degrees.\nDefault: 70.0.'),
+        help=(
+            'Rotation detection threshold in degrees.\n'
+            'Default: 70.0.'
+        ),
     )
 
     args = parser.parse_args(sys.argv[1:])
