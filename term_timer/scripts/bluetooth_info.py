@@ -249,11 +249,9 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
 
                 if rotation_result:
                     logger.info(
-                        'CONSUMER: Rotation: %s, Angle: %.1f°, '
-                        'Confidence: %.2f%%',
+                        'CONSUMER: Rotation: %s, Angle: %.1f°',
                         rotation_result['rotation'],
                         rotation_result['angle_deg'],
-                        rotation_result['confidence'] * 100,
                     )
                     moves.append(f"{ rotation_result['rotation'] }@{ time }")
                     print_moves(moves, orientation_moves)
@@ -361,11 +359,9 @@ def replay(options: Namespace) -> None:
 
             if rotation_result:
                 logger.info(
-                    'REPLAY: Rotation: %s, Angle: %.1f°, '
-                    'Confidence: %.2f%%',
+                    'REPLAY: Rotation: %s, Angle: %.1f°',
                     rotation_result['rotation'],
                     rotation_result['angle_deg'],
-                    rotation_result['confidence'] * 100,
                 )
                 moves.append(f"{ rotation_result['rotation'] }@{ time }")
                 # Okay but because virtual cube is rotated at the init
@@ -373,6 +369,8 @@ def replay(options: Namespace) -> None:
 
                 virtual_cube.rotate(rotation_result['rotation'])
                 print_cube(virtual_cube, show=show_cube)
+
+                print_moves(moves, orientation_moves)
 
         elif event_name == 'move':
             event = cast(MoveEventDict, event)
@@ -387,7 +385,7 @@ def replay(options: Namespace) -> None:
             virtual_cube.rotate(event['move'])
             print_cube(virtual_cube, show=show_cube)
 
-    print_moves(moves, orientation_moves)
+            print_moves(moves, orientation_moves)
 
 
 def linear_regression(x_values: list[float],

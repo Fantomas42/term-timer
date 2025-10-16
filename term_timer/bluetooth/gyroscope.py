@@ -18,7 +18,6 @@ class RotationResult(TypedDict):
     """
     rotation: str
     angle_deg: float
-    confidence: float
 
 
 @dataclass
@@ -141,20 +140,16 @@ class RotationDetector:
 
         # Determine rotation type based on dominant axis
         rotation_type = None
-        confidence = 0.0
 
         if abs_x > abs_y and abs_x > abs_z:
             # X-axis rotation
             rotation_type = 'x' if ax > 0 else "x'"
-            confidence = abs_x
         elif abs_y > abs_x and abs_y > abs_z:
             # Y-axis rotation
             rotation_type = 'y' if ay > 0 else "y'"
-            confidence = abs_y
         elif abs_z > abs_x and abs_z > abs_y:
             # Z-axis rotation
             rotation_type = 'z' if az > 0 else "z'"
-            confidence = abs_z
 
         if rotation_type is None:
             return None
@@ -169,7 +164,6 @@ class RotationDetector:
         return {
             'rotation': rotation_type,
             'angle_deg': angle_deg,
-            'confidence': confidence,
         }
 
     def process_gyro_event(
