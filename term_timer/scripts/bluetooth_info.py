@@ -13,6 +13,7 @@ from typing import cast
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
@@ -37,7 +38,6 @@ from term_timer.opengl.thread import CubeGLThread
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
-from term_timer.transform import reorient_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 
 logger = logging.getLogger(__name__)
@@ -123,10 +123,7 @@ def print_moves(raw_moves: list[str], orientation_moves: Algorithm) -> None:
             str(
                 prettify_moves(
                     humanize_moves(
-                        reorient_moves(
-                            orientation_moves,
-                            algo,
-                        ),
+                        translate_moves(orientation_moves)(algo),
                     ),
                 ),
             ),

@@ -14,6 +14,7 @@ from cubing_algs.transform.optimize import optimize_repeat_three_moves
 from cubing_algs.transform.optimize import optimize_triple_moves
 from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.timing import untime_moves
+from cubing_algs.transform.translate import translate_moves
 
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
@@ -41,7 +42,6 @@ from term_timer.methods.base import get_step_config
 from term_timer.orientation import get_orientation_faces
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import prettify_moves
-from term_timer.transform import reorient_moves
 
 
 class SolveData(TypedDict):
@@ -137,7 +137,7 @@ class Solve:
     @cached_property
     def reconstruction(self) -> Algorithm:
         return prettify_moves(
-            reorient_moves(self.orientation_moves, self.solution),
+            translate_moves(self.orientation_moves)(self.solution),
         )
 
     @cached_property

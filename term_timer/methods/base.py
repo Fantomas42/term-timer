@@ -26,6 +26,7 @@ from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.transform.mirror import mirror_moves
+from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -34,7 +35,6 @@ from term_timer.methods.cases import CaseMaskInfo
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
-from term_timer.transform import reorient_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 
 
@@ -301,7 +301,7 @@ class Analyser(FaceletAnalyser):
 
             total = execution + recognition
 
-            reorientation = reorient_moves(self.orientation_moves, moves)
+            reorientation = translate_moves(self.orientation_moves)(moves)
             humanization = humanize_moves(reorientation)
             prettyfication = prettify_moves(humanization)
 

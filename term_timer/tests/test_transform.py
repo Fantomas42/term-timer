@@ -2,21 +2,22 @@ import unittest
 
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
+from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
-from term_timer.transform import reorient_moves
 
 
 class TransformReorientTestCase(unittest.TestCase):
+    # Keep for reference
 
     def test_reorient_moves_with_orientation(self) -> None:
         orientation = parse_moves('x y')
         algorithm = parse_moves("R U R'")
         expect = parse_moves("F R F'")
 
-        result = reorient_moves(orientation, algorithm)
+        result = translate_moves(orientation)(algorithm)
 
         self.assertEqual(result, expect)
 
@@ -24,7 +25,7 @@ class TransformReorientTestCase(unittest.TestCase):
         orientation = parse_moves('')
         algorithm = parse_moves("R U R'")
 
-        result = reorient_moves(orientation, algorithm)
+        result = translate_moves(orientation)(algorithm)
 
         self.assertEqual(result, algorithm)
 
@@ -37,9 +38,9 @@ class TransformReorientTestCase(unittest.TestCase):
         cube.rotate(solution)
         self.assertTrue(cube.is_solved)
 
-        solution_z2 = reorient_moves(
-            parse_moves('z2'), solution,
-        )
+        solution_z2 = translate_moves(
+            parse_moves('z2'),
+        )(solution)
 
         cube = VCube()
         cube.rotate(scramble)
@@ -47,9 +48,9 @@ class TransformReorientTestCase(unittest.TestCase):
         cube.rotate(solution_z2)
         self.assertTrue(cube.is_solved)
 
-        solution_y = reorient_moves(
-            parse_moves('y'), solution,
-        )
+        solution_y = translate_moves(
+            parse_moves('y'),
+        )(solution)
 
         cube = VCube()
         cube.rotate(scramble)
@@ -57,9 +58,9 @@ class TransformReorientTestCase(unittest.TestCase):
         cube.rotate(solution_y)
         self.assertTrue(cube.is_solved)
 
-        solution_xyprime = reorient_moves(
-            parse_moves("x y'"), solution,
-        )
+        solution_xyprime = translate_moves(
+            parse_moves("x y'"),
+        )(solution)
 
         cube = VCube()
         cube.rotate(scramble)
@@ -87,9 +88,9 @@ class TransformReorientTestCase(unittest.TestCase):
         cube.rotate(solution)
         self.assertTrue(cube.is_solved)
 
-        solution_z2 = reorient_moves(
-            parse_moves('z2'), solution,
-        )
+        solution_z2 = translate_moves(
+            parse_moves('z2'),
+        )(solution)
 
         cube = VCube()
         cube.rotate(scramble)
@@ -97,9 +98,9 @@ class TransformReorientTestCase(unittest.TestCase):
         cube.rotate(solution_z2)
         self.assertTrue(cube.is_solved)
 
-        solution_y = reorient_moves(
-            parse_moves('y'), solution,
-        )
+        solution_y = translate_moves(
+            parse_moves('y'),
+        )(solution)
 
         cube = VCube()
         cube.rotate(scramble)
@@ -107,9 +108,9 @@ class TransformReorientTestCase(unittest.TestCase):
         cube.rotate(solution_y)
         self.assertTrue(cube.is_solved)
 
-        solution_xyprime = reorient_moves(
-            parse_moves("x y'"), solution,
-        )
+        solution_xyprime = translate_moves(
+            parse_moves("x y'"),
+        )(solution)
 
         cube = VCube()
         cube.rotate(scramble)
