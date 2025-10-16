@@ -143,13 +143,13 @@ class RotationDetector:
 
         if abs_x > abs_y and abs_x > abs_z:
             # X-axis rotation
-            rotation_type = 'x' if ax > 0 else "x'"
+            rotation_type = "x'" if ax > 0 else 'x'
         elif abs_y > abs_x and abs_y > abs_z:
             # Y-axis rotation
-            rotation_type = 'y' if ay > 0 else "y'"
+            rotation_type = "y'" if ay > 0 else 'y'
         elif abs_z > abs_x and abs_z > abs_y:
             # Z-axis rotation
-            rotation_type = 'z' if az > 0 else "z'"
+            rotation_type = "z'" if az > 0 else 'z'
 
         if rotation_type is None:
             return None
