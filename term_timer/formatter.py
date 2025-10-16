@@ -246,6 +246,8 @@ def format_alg_moves(algorithm: str) -> str:
         elif move[0] in INNER_MOVES:
             algorithm_parts[i] = f'[slice]{ move }[/slice]'
         elif move[0] in ROTATIONS:
-            algorithm_parts[i] = f'[rotation]{ move }[/rotation]'
+            algorithm_parts[i] = (
+                f'[rotation_{ move[0] }]{ move }[/rotation_{ move[0] }]'
+            )
 
     return ' '.join(algorithm_parts)

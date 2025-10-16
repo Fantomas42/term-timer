@@ -69,6 +69,9 @@ theme: dict[str, str] = {
     'wide': 'bold #FF00FF',
     'slice': 'bold #00DFFF',
     'rotation': f'bold { ORANGE }',
+    'rotation_x': 'bold #C070FF',
+    'rotation_y': 'bold #FF60A0',
+    'rotation_z': 'bold #A0FF60',
 
     'edge': 'bold #00DFFF',
     'percent': 'bold #00DFFF',

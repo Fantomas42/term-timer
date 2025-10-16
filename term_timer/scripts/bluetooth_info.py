@@ -108,7 +108,9 @@ def print_moves(raw_moves: list[str], orientation_moves: Algorithm) -> None:
     algo_timed_reformatted = ''
     first_time = algo[0].timed
     for move in algo:
-        algo_timed_reformatted += f'{ move.untimed }@{ move.timed - first_time } '
+        algo_timed_reformatted += (
+            f'{ move.untimed }@{ move.timed - first_time } '
+        )
     algo_timed_reformatted = algo_timed_reformatted.strip()
 
     moves = format_alg_triggers(
