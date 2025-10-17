@@ -5,6 +5,7 @@ from cubing_algs.transform.rotation import compress_final_rotations
 from cubing_algs.transform.slice import reslice_timed_moves
 from cubing_algs.transform.timing import untime_moves
 from cubing_algs.transform.wide import rewide_moves
+from cubing_algs.transform.wide import rewide_timed_moves
 
 from term_timer.constants import RESLICE_THRESHOLD
 
@@ -23,6 +24,13 @@ def humanize_moves(algorithm: Algorithm) -> Algorithm:
         return algorithm
 
     return humanized
+
+
+def humanize_moves_new(algorithm: Algorithm) -> Algorithm:
+    return algorithm.transform(
+        reslice_timed_moves(120, (3,)),
+        rewide_timed_moves(50),
+    )
 
 
 def prettify_moves(algorithm: Algorithm) -> Algorithm:

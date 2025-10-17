@@ -36,7 +36,7 @@ from term_timer.interface.console import console
 from term_timer.logger import LOGGING_DIR
 from term_timer.opengl.thread import CubeGLThread
 from term_timer.orientation import get_orientation_moves
-from term_timer.transform import humanize_moves
+from term_timer.transform import humanize_moves_new
 from term_timer.transform import prettify_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 
@@ -133,7 +133,7 @@ def print_moves(raw_moves: list[str], orientation_moves: Algorithm) -> None:
         format_alg_moves(
             str(
                 prettify_moves(
-                    humanize_moves(
+                    humanize_moves_new(
                         translate_moves(orientation_moves)(algo),
                     ),
                 ),
