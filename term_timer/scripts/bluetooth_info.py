@@ -89,10 +89,19 @@ LOGGING_CONF = {
 }
 
 
-def print_cube(cube: VCube, *, show: bool = False) -> None:
-    if not show:
-        return
+def rotate_cube(cube: VCube, move: str,
+                orientation_moves: Algorithm | None = None) -> None:
+    if orientation_moves:
+        translated_move = translate_moves(orientation_moves)(parse_moves(move))
+        cube.rotate(translated_move)
+    else:
+        # Seems for multiple rotation,
+        # that the current should be translated from previous move
+        cube.rotate(move)
+    print_cube(cube)
 
+
+def print_cube(cube: VCube) -> None:
     logger.info(
         'Virtual Cube:\n%s',
         cube.display(
@@ -233,11 +242,12 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                 if virtual_cube:
                     if virtual_cube.state != event['facelets']:
                         logger.warning('FACELETS DESYNCHRONISED')
-                else:
+                elif show_cube:
                     virtual_cube = VCube(event['facelets'])
                     virtual_cube.rotate(orientation_moves)
 
-                print_cube(virtual_cube, show=show_cube)
+                if virtual_cube:
+                    print_cube(virtual_cube)
 
             elif event_name == 'gyro':
                 event = cast(GyroEventDict, event)
@@ -256,8 +266,10 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     print_moves(moves, orientation_moves)
 
                     if virtual_cube:
-                        virtual_cube.rotate(rotation_result['rotation'])
-                        print_cube(virtual_cube, show=show_cube)
+                        rotate_cube(
+                            virtual_cube,
+                            rotation_result['rotation'],
+                        )
 
                 if gl_thread and gl_thread.is_alive():
                     gl_thread.add_quaternion(
@@ -276,8 +288,11 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                 print_moves(moves, orientation_moves)
 
                 if virtual_cube:
-                    virtual_cube.rotate(event['move'])
-                    print_cube(virtual_cube, show=show_cube)
+                    rotate_cube(
+                        virtual_cube,
+                        event['move'],
+                        orientation_moves,
+                    )
 
                 if gl_thread and gl_thread.is_alive():
                     direction = 3 if "'" in event['move'] else 1
@@ -323,14 +338,13 @@ def replay(options: Namespace) -> None:
     with file_path.open(encoding='utf-8') as f:
         events = json.load(f)
 
+    virtual_cube: VCube | None = None
+
     show_cube = options.show_cube
     orientation_moves = get_orientation_moves(options.orientation)
     rotation_detector = RotationDetector(
         rotation_threshold=options.rotation_threshold,
     )
-
-    virtual_cube = VCube()
-    virtual_cube.rotate(orientation_moves)
 
     logger.info(
         'REPLAY: Use "%s" as orientation faces and "%s" as orientation moves',
@@ -341,7 +355,11 @@ def replay(options: Namespace) -> None:
         'REPLAY: Use %.1f° threshold for rotation detection',
         options.rotation_threshold,
     )
-    print_cube(virtual_cube, show=show_cube)
+
+    if show_cube:
+        virtual_cube = VCube()
+        virtual_cube.rotate(orientation_moves)
+        print_cube(virtual_cube)
 
     moves = []
 
@@ -363,11 +381,12 @@ def replay(options: Namespace) -> None:
                     rotation_result['angle_deg'],
                 )
                 moves.append(f"{ rotation_result['rotation'] }@{ time }")
-                # Okay but because virtual cube is rotated at the init
-                # applied moves and rotations should be reoriented
 
-                virtual_cube.rotate(rotation_result['rotation'])
-                print_cube(virtual_cube, show=show_cube)
+                if virtual_cube:
+                    rotate_cube(
+                        virtual_cube,
+                        rotation_result['rotation'],
+                    )
 
                 print_moves(moves, orientation_moves)
 
@@ -381,8 +400,12 @@ def replay(options: Namespace) -> None:
             )
             moves.append(f"{ event['move'] }@{ time }")
 
-            virtual_cube.rotate(event['move'])
-            print_cube(virtual_cube, show=show_cube)
+            if virtual_cube:
+                rotate_cube(
+                    virtual_cube,
+                    event['move'],
+                    orientation_moves,
+                )
 
             print_moves(moves, orientation_moves)
 
