@@ -28,16 +28,14 @@ class Quaternion:
     z: float
 
     @classmethod
-    def from_dict(cls, q: QuaternionDict) -> 'Quaternion':
+    def from_dict_raw(cls, q: QuaternionDict) -> 'Quaternion':
         """
-        Create quaternion from dict with coordinate transform.
+        Create quaternion from dict in raw sensor frame.
 
-        Applies the same Y↔Z swap and Y negation used in the OpenGL cube
-        visualization to ensure detected rotations match the display.
+        Used for normalization calculations
+        before applying coordinate transform.
         """
-        qw, qx, qy, qz = q['w'], q['x'], q['y'], q['z']
-
-        return cls(w=qw, x=qx, y=qz, z=-qy)
+        return cls(w=q['w'], x=q['x'], y=q['y'], z=q['z'])
 
     def conjugate(self) -> 'Quaternion':
         return Quaternion(self.w, -self.x, -self.y, -self.z)
@@ -114,6 +112,9 @@ class RotationDetector:
     def __init__(self, rotation_threshold: float = 70.0) -> None:
         self.rotation_threshold = rotation_threshold
 
+        # Initial orientation used to normalize all measurements
+        self.initial_orientation: Quaternion | None = None
+
         # Orientation at the last detected rotation (or initial orientation)
         self.last_rotation_orientation: Quaternion | None = None
 
@@ -134,8 +135,10 @@ class RotationDetector:
         if abs(angle_deg) < self.rotation_threshold:
             return None
 
-        # Determine which axis is dominant
+        # Transform axis if requested (Y↔Z swap for display coordinates)
         ax, ay, az = axis
+        ay, az = az, -ay  # Y→Z, Z→-Y
+
         abs_x, abs_y, abs_z = abs(ax), abs(ay), abs(az)
 
         # Determine rotation type based on dominant axis
@@ -177,12 +180,28 @@ class RotationDetector:
         by comparing current orientation against the orientation at the last
         detected rotation. This approach naturally accumulates slow rotations
         and works well in real-time without needing time windows.
-        """
-        current_orientation = Quaternion.from_dict(quaternion_dict)
 
-        if self.last_rotation_orientation is None:
-            self.last_rotation_orientation = current_orientation
+        The first quaternion received defines the neutral/identity orientation.
+        All rotations are computed in the raw sensor frame, then the rotation
+        axis is transformed to match the display coordinate system.
+        """
+        # Work entirely in raw sensor frame
+        absolute_raw = Quaternion.from_dict_raw(quaternion_dict)
+
+        # Initialize with first quaternion as neutral orientation
+        if (
+                self.initial_orientation is None
+                or self.last_rotation_orientation is None
+        ):
+            self.initial_orientation = absolute_raw
+            self.last_rotation_orientation = Quaternion(1.0, 0.0, 0.0, 0.0)
             return None
+
+        # Normalize in raw sensor frame: q_normalized = q_initial^-1 * q_current
+        # This transforms from world frame to cube's local frame
+        current_orientation = self.initial_orientation.conjugate().multiply(
+            absolute_raw,
+        ).normalize()
 
         rotation_result = self.calculate_rotation(
             self.last_rotation_orientation,

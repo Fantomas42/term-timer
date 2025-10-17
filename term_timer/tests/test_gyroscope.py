@@ -45,53 +45,53 @@ class TestMoveRotationDetector(unittest.TestCase):
     def test_m_m_prime_normal(self) -> None:
         self.check_rotations(
             'gan_gen2/M-M-normal.json',
-            "L' R x L R' x'",
+            "L' R x' L R' x",
         )
 
     def test_m_m_prime_slow(self) -> None:
         self.check_rotations(
             'gan_gen2/M-M-slow.json',
-            "L' R z' R' L z",
+            "L' R x' R' L x",
         )
 
     def test_triple_m_m_prime_fast(self) -> None:
         self.check_rotations(
             'gan_gen2/triple-M-M-fast.json',
-            "L' R z' L R' z R L' z' L R' z R L' z' L R' z",
+            "L' R x' L R' x R L' x' L R' x R L' x' L R' x",
         )
 
     def test_octuple_y_speed(self) -> None:
         self.check_rotations(
             'gan_gen2/octuple-Y-speed.json',
-            'y y y y y y y y',
+            "y' y' y' y' y' y' y' y'",
         )
 
     def test_alternate_4_y_normal(self) -> None:
         self.check_rotations(
             'gan_gen2/alternate-4-Y-normal.json',
-            "y y' y' y",
+            "y' y y y'",
         )
 
     def test_quadruple_y_normal(self) -> None:
         self.check_rotations(
             'gan_gen2/quadruple-Y-normal.json',
-            'y y y y',
+            "y' y' y' y'",
         )
 
     def test_triple_y_slow(self) -> None:
         self.check_rotations(
             'gan_gen2/triple-Y-slow.json',
-            'y y y',
+            "y' y' y'",
         )
 
     def test_y_t_perm_y(self) -> None:
         self.check_rotations(
             'gan_gen2/Y-Tperm-Y.json',
-            "y B D B' D' B' L B B D' B' D' B D B' L' y'",
+            "y' B D B' D' B' L B B D' B' D' B D B' L' y",
         )
 
     def test_y_t_perm_y_bis(self) -> None:
         self.check_rotations(
             'gan_gen2/Y-Tperm-Y-bis.json',
-            "y B D B' D' B' L B B D' B' D' B D B' L' y'",
+            "y' B D B' D' B' L B B D' B' D' B D B' L' y",
         )
