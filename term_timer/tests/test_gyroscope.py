@@ -253,3 +253,18 @@ class TestSliceCancelRotation(TestMoveRotationDetector):
             'gan_gen2/E-Ep-DF.json',
             "D U' y U D' y'",
         )
+
+
+class TestSexyStableRotation(TestMoveRotationDetector):
+
+    def test_sexy_move_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/sexy-move-UF.json',
+            "R U R' U'",
+        )
+
+    def test_sexy_move_df(self) -> None:
+        self.check_rotations(
+            'gan_gen2/sexy-move-DF.json',
+            "L D L' D'",
+        )
