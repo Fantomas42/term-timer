@@ -13,7 +13,9 @@ from typing import cast
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.timing import untime_moves
 from cubing_algs.transform.translate import translate_moves
+from cubing_algs.transform.translate import translate_pov_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
@@ -36,7 +38,7 @@ from term_timer.interface.console import console
 from term_timer.logger import LOGGING_DIR
 from term_timer.opengl.thread import CubeGLThread
 from term_timer.orientation import get_orientation_moves
-from term_timer.transform import humanize_moves_new
+from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 
@@ -89,15 +91,7 @@ LOGGING_CONF = {
 }
 
 
-def rotate_cube(cube: VCube, move: str,
-                orientation_moves: Algorithm) -> None:
-    translated_move = translate_moves(orientation_moves)(parse_moves(move))
-    cube.rotate(translated_move)
-
-    print_cube(cube)
-
-
-def print_cube(cube: VCube) -> None:
+def show_cube(cube: VCube) -> None:
     logger.info(
         'Virtual Cube:\n%s',
         cube.display(
@@ -107,8 +101,15 @@ def print_cube(cube: VCube) -> None:
     )
 
 
-def print_moves(raw_moves: list[str], orientation_moves: Algorithm) -> None:
+def show_state(raw_moves: list[str], orientation_moves: Algorithm,
+               cube: VCube | None) -> None:
+    if not raw_moves:
+        if cube:
+            show_cube(cube)
+        return
+
     algo = parse_moves(raw_moves)
+    algo_translated = translate_moves(orientation_moves)(algo)
 
     algo_timed_reformatted = ''
     first_time = algo[0].timed
@@ -118,19 +119,16 @@ def print_moves(raw_moves: list[str], orientation_moves: Algorithm) -> None:
         )
     algo_timed_reformatted = algo_timed_reformatted.strip()
 
-    moves = format_alg_triggers(
-        format_alg_moves(
-            algo_timed_reformatted,
-        ),
-        DEFAULT_TRIGGERS,
+    moves = format_alg_moves(
+        algo_timed_reformatted,
     )
 
     recon = format_alg_triggers(
         format_alg_moves(
             str(
                 prettify_moves(
-                    humanize_moves_new(
-                        translate_moves(orientation_moves)(algo),
+                    humanize_moves(
+                        algo_translated,
                     ),
                 ),
             ),
@@ -149,6 +147,16 @@ def print_moves(raw_moves: list[str], orientation_moves: Algorithm) -> None:
     recon = capture.get()
 
     logger.info('RECON: %s', recon)
+
+    if cube:
+        cube_rotated = cube.copy()
+        cube_rotated.rotate(
+            algo_translated.transform(
+                untime_moves,
+                translate_pov_moves,
+            ),
+        )
+        show_cube(cube_rotated)
 
 
 async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
@@ -242,8 +250,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     virtual_cube = VCube(event['facelets'])
                     virtual_cube.rotate(orientation_moves)
 
-                if virtual_cube:
-                    print_cube(virtual_cube)
+                    show_state(moves, orientation_moves, virtual_cube)
 
             elif event_name == 'gyro':
                 event = cast(GyroEventDict, event)
@@ -259,14 +266,8 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                         rotation_result['angle_deg'],
                     )
                     moves.append(f"{ rotation_result['rotation'] }@{ time }")
-                    print_moves(moves, orientation_moves)
 
-                    if virtual_cube:
-                        rotate_cube(
-                            virtual_cube,
-                            rotation_result['rotation'],
-                            orientation_moves,
-                        )
+                    show_state(moves, orientation_moves, virtual_cube)
 
                 if gl_thread and gl_thread.is_alive():
                     gl_thread.add_quaternion(
@@ -282,14 +283,8 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     event['move'],
                 )
                 moves.append(f"{ event['move'] }@{ time }")
-                print_moves(moves, orientation_moves)
 
-                if virtual_cube:
-                    rotate_cube(
-                        virtual_cube,
-                        event['move'],
-                        orientation_moves,
-                    )
+                show_state(moves, orientation_moves, virtual_cube)
 
                 if gl_thread and gl_thread.is_alive():
                     direction = 3 if "'" in event['move'] else 1
@@ -353,12 +348,13 @@ def replay(options: Namespace) -> None:
         options.rotation_threshold,
     )
 
+    moves: list[str] = []
+
     if show_cube:
         virtual_cube = VCube()
         virtual_cube.rotate(orientation_moves)
-        print_cube(virtual_cube)
 
-    moves = []
+        show_state(moves, orientation_moves, virtual_cube)
 
     for event in events:
         event_name = event['event']
@@ -379,14 +375,7 @@ def replay(options: Namespace) -> None:
                 )
                 moves.append(f"{ rotation_result['rotation'] }@{ time }")
 
-                if virtual_cube:
-                    rotate_cube(
-                        virtual_cube,
-                        rotation_result['rotation'],
-                        orientation_moves,
-                    )
-
-                print_moves(moves, orientation_moves)
+                show_state(moves, orientation_moves, virtual_cube)
 
         elif event_name == 'move':
             event = cast(MoveEventDict, event)
@@ -398,14 +387,7 @@ def replay(options: Namespace) -> None:
             )
             moves.append(f"{ event['move'] }@{ time }")
 
-            if virtual_cube:
-                rotate_cube(
-                    virtual_cube,
-                    event['move'],
-                    orientation_moves,
-                )
-
-            print_moves(moves, orientation_moves)
+            show_state(moves, orientation_moves, virtual_cube)
 
 
 def linear_regression(x_values: list[float],
