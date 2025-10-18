@@ -214,3 +214,42 @@ class TestUyURotation(TestMoveRotationDetector):
             'gan_gen2/U-Y-U-DF.json',
             "D y' D",
         )
+
+
+class TestSliceCancelRotation(TestMoveRotationDetector):
+
+    def test_mp_m_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/Mp-M-UF.json',
+            "R' L x R L' x'",
+        )
+
+    def test_mp_m_df(self) -> None:
+        self.check_rotations(
+            'gan_gen2/Mp-M-DF.json',
+            "R L' x' L R' x",
+        )
+
+    def test_s_sp_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/S-Sp-UF.json',
+            "B F' z F B' z'",
+        )
+
+    def test_s_sp_df(self) -> None:
+        self.check_rotations(
+            'gan_gen2/S-Sp-DF.json',
+            "B F' z F B' z'",
+        )
+
+    def test_e_ep_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/E-Ep-UF.json',
+            "U D' y' D U' y",
+        )
+
+    def test_e_ep_df(self) -> None:
+        self.check_rotations(
+            'gan_gen2/E-Ep-DF.json',
+            "D U' y U D' y'",
+        )
