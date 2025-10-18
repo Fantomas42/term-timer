@@ -4,6 +4,7 @@ from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.rotation import compress_final_rotations
 from cubing_algs.transform.slice import reslice_timed_moves
 from cubing_algs.transform.timing import untime_moves
+from cubing_algs.transform.translate import translate_pov_moves
 from cubing_algs.transform.wide import rewide_moves
 from cubing_algs.transform.wide import rewide_timed_moves
 
@@ -28,6 +29,7 @@ def humanize_moves(algorithm: Algorithm) -> Algorithm:
 
 def humanize_moves_new(algorithm: Algorithm) -> Algorithm:
     return algorithm.transform(
+        translate_pov_moves,
         reslice_timed_moves(120, (3,)),
         rewide_timed_moves(50),
     )

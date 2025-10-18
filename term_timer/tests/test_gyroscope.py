@@ -20,7 +20,9 @@ class TestMoveRotationDetector(unittest.TestCase):
         orientation_moves = get_orientation_moves(orientation_faces)
 
         return humanize_moves_new(
-            translate_moves(orientation_moves)(parse_moves(algo)),
+            translate_moves(orientation_moves)(
+                parse_moves(algo),
+            ),
         )
 
     def check_rotations(self, source_path: str,
@@ -326,12 +328,12 @@ class TestSexyYSexyRotation(TestMoveRotationDetector):
         self.check_rotations(
             'gan_gen2/sexy-Y-sexy-UF.json',
             "R U R' U' y B U B' U'",
-            "R U R' U' y R U R' U'", 'UF',
+            "R U R' d' R U R' U'", 'UF',
         )
 
     def test_sexy_y_sexy_move_df(self) -> None:
         self.check_rotations(
             'gan_gen2/sexy-Y-sexy-DF.json',
             "L D L' D' y' B D B' D'",
-            "R U R' U' y R U R' U'", 'DF',
+            "R U R' d' R U R' U'", 'DF',
         )
