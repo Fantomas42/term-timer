@@ -90,14 +90,10 @@ LOGGING_CONF = {
 
 
 def rotate_cube(cube: VCube, move: str,
-                orientation_moves: Algorithm | None = None) -> None:
-    if orientation_moves:
-        translated_move = translate_moves(orientation_moves)(parse_moves(move))
-        cube.rotate(translated_move)
-    else:
-        # Seems for multiple rotation,
-        # that the current should be translated from previous move
-        cube.rotate(move)
+                orientation_moves: Algorithm) -> None:
+    translated_move = translate_moves(orientation_moves)(parse_moves(move))
+    cube.rotate(translated_move)
+
     print_cube(cube)
 
 
@@ -269,6 +265,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                         rotate_cube(
                             virtual_cube,
                             rotation_result['rotation'],
+                            orientation_moves,
                         )
 
                 if gl_thread and gl_thread.is_alive():
@@ -386,6 +383,7 @@ def replay(options: Namespace) -> None:
                     rotate_cube(
                         virtual_cube,
                         rotation_result['rotation'],
+                        orientation_moves,
                     )
 
                 print_moves(moves, orientation_moves)
