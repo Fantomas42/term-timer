@@ -178,3 +178,39 @@ class TestSimpleCancelRotation(TestMoveRotationDetector):
             'gan_gen2/Z-cancel-DF.json',
             "z z'",
         )
+
+
+class TestSimpleQuadruleRotation(TestMoveRotationDetector):
+
+    def test_quadruple_y_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/4-Y-UF.json',
+            'y y y y',
+        )
+
+    def test_quadruple_x_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/4-X-UF.json',
+            'x x x x',
+        )
+
+    def test_quadruple_z_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/4-Z-UF.json',
+            'z z z z',
+        )
+
+
+class TestUyURotation(TestMoveRotationDetector):
+
+    def test_u_y_u_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/U-Y-U-UF.json',
+            'U y U',
+        )
+
+    def test_u_y_u_df(self) -> None:
+        self.check_rotations(
+            'gan_gen2/U-Y-U-DF.json',
+            "D y' D",
+        )
