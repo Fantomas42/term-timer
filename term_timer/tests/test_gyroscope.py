@@ -9,6 +9,7 @@ from term_timer.bluetooth.types import MoveEventDict
 
 
 class TestMoveRotationDetector(unittest.TestCase):
+    # Replays recorded in z2 (DF)
 
     def check_rotations(self, source_path: str, expected: str) -> None:
         path = Path(__file__).parent / 'replays' / source_path
@@ -41,6 +42,10 @@ class TestMoveRotationDetector(unittest.TestCase):
             ' '.join(moves),
             expected,
         )
+
+
+class TestVarious(TestMoveRotationDetector):
+    # Replays recorded in z2 (DF)
 
     def test_m_m_prime_normal(self) -> None:
         self.check_rotations(
@@ -94,4 +99,82 @@ class TestMoveRotationDetector(unittest.TestCase):
         self.check_rotations(
             'gan_gen2/Y-Tperm-Y-bis.json',
             "y' B D B' D' B' L B B D' B' D' B D B' L' y",
+        )
+
+
+class TestSimpleRotation(TestMoveRotationDetector):
+
+    def test_y_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/Y-UF.json',
+            'y',
+        )
+
+    def test_y_df(self) -> None:
+        self.check_rotations(
+            'gan_gen2/Y-DF.json',
+            "y'",
+        )
+
+    def test_x_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/X-UF.json',
+            'x',
+        )
+
+    def test_x_df(self) -> None:
+        self.check_rotations(
+            'gan_gen2/X-DF.json',
+            "x'",
+        )
+
+    def test_z_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/Z-UF.json',
+            'z',
+        )
+
+    def test_z_df(self) -> None:
+        self.check_rotations(
+            'gan_gen2/Z-DF.json',
+            'z',
+        )
+
+
+class TestSimpleCancelRotation(TestMoveRotationDetector):
+
+    def test_y_cancel_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/Y-cancel-UF.json',
+            "y y'",
+        )
+
+    def test_y_cancel_df(self) -> None:
+        self.check_rotations(
+            'gan_gen2/Y-cancel-DF.json',
+            "y' y",
+        )
+
+    def test_x_cancel_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/X-cancel-UF.json',
+            "x x'",
+        )
+
+    def test_x_cancel_df(self) -> None:
+        self.check_rotations(
+            'gan_gen2/X-cancel-DF.json',
+            "x' x",
+        )
+
+    def test_z_cancel_uf(self) -> None:
+        self.check_rotations(
+            'gan_gen2/Z-cancel-UF.json',
+            "z z'",
+        )
+
+    def test_z_cancel_df(self) -> None:
+        self.check_rotations(
+            'gan_gen2/Z-cancel-DF.json',
+            "z z'",
         )
