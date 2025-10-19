@@ -163,6 +163,27 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
         show_cube(cube_rotated)
 
 
+def check_state(raw_moves: list[str], facelets: str,
+                cube: VCube) -> bool:
+    algo = parse_moves(raw_moves)
+
+    cube_rotated = cube.copy()
+    cube_rotated.rotate(
+        algo.transform(
+            untime_moves,
+            translate_pov_moves,
+        ),
+    )
+
+    if cube_rotated.state != facelets:
+        logger.warning('FACELETS DESYNCHRONISED !')
+        logger.debug('MEM: %s', cube_rotated.state)
+        logger.debug('BLE: %s', facelets)
+        return False
+
+    return True
+
+
 async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                       cube_ready: threading.Event,
                       gl_thread: CubeGLThread | None,
@@ -248,8 +269,10 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     cube_ready.set()
 
                 if virtual_cube:
-                    if virtual_cube.state != event['facelets']:
-                        logger.warning('FACELETS DESYNCHRONISED: %s', event['facelets'])
+                    check_state(
+                        moves, event['facelets'],
+                        virtual_cube,
+                    )
                 elif show_cube:
                     virtual_cube = VCube(event['facelets'])
 
