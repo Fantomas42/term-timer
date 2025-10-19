@@ -299,13 +299,14 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                 )
 
 
-async def client_cb(queue: asyncio.Queue[list[EventDict] | None], time: int, *,
+async def client_cb(queue: asyncio.Queue[list[EventDict] | None],
+                    time: int, filter_name: str, *,
                     cube_reset: bool,
                     gyroscope_enable: bool,
                     gyroscope_disable: bool) -> None:
     bluetooth_interface = BluetoothInterface(queue)
 
-    await bluetooth_interface.__aenter__()  # noqa: PLC2801
+    await bluetooth_interface.__aenter__(filter_name=filter_name)  # noqa: PLC2801
 
     await bluetooth_interface.send_command('REQUEST_FACELETS')
     await bluetooth_interface.send_command('REQUEST_HARDWARE')
@@ -502,6 +503,7 @@ async def run(options: Namespace) -> None:
     client = client_cb(
         queue,
         options.time,
+        options.filter_name,
         cube_reset=options.cube_reset,
         gyroscope_enable=options.gyroscope_enable,
         gyroscope_disable=options.gyroscope_disable,
@@ -552,15 +554,19 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        '-i',
-        '--input',
+        '-f', '--filter-name',
+        type=str,
+        metavar='FILTER',
+        help='Filter device name to connect',
+    )
+    parser.add_argument(
+        '-i', '--input',
         type=str,
         metavar='EVENTS_FILE',
         help='Input events file to replay (optional).',
     )
     parser.add_argument(
-        '-r',
-        '--output',
+        '-r', '--output',
         type=str,
         metavar='EVENTS_FILE',
         help='Output events file (optional).',
