@@ -7,8 +7,8 @@ from typing import cast
 from cubing_algs.vcube import VCube
 from rich.console import Console as RichConsole
 
-from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.gyroscope import RotationDetector
+from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.types import BatteryEventDict
 from term_timer.bluetooth.types import EventDict
 from term_timer.bluetooth.types import FaceletsEventDict

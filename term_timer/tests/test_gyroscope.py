@@ -11,7 +11,7 @@ from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.types import GyroEventDict
 from term_timer.bluetooth.types import MoveEventDict
 from term_timer.orientation import get_orientation_moves
-from term_timer.transform import humanize_moves_new
+from term_timer.transform import humanize_moves
 
 
 class TestMoveRotationDetector(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestMoveRotationDetector(unittest.TestCase):
     def reconstruct(self, orientation_faces: str, algo: str) -> Algorithm:
         orientation_moves = get_orientation_moves(orientation_faces)
 
-        return humanize_moves_new(
+        return humanize_moves(
             translate_moves(orientation_moves)(
                 parse_moves(algo),
             ),

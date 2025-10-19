@@ -622,7 +622,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
-        self.driver.disable_gyro = True
+        self.driver.use_gyroscope = False
 
         test_data = bytearray(20)
 
@@ -650,7 +650,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
-        self.driver.disable_gyro = False
+        self.driver.use_gyroscope = True
 
         test_data = bytearray(20)
 

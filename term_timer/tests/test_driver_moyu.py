@@ -144,7 +144,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
-        self.driver.disable_gyro = True
+        self.driver.use_gyroscope = False
 
         # Create mock data that represents a gyro event (0xAB)
         encrypted_data = bytearray(20)
@@ -169,7 +169,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
-        self.driver.disable_gyro = False
+        self.driver.use_gyroscope = True
 
         # Create test data for gyro event
         test_data = bytearray(20)

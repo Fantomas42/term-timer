@@ -146,7 +146,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
-        self.driver.disable_gyro = True
+        self.driver.use_gyroscope = False
 
         # Create mock data that represents a gyro event (0x01)
         encrypted_data = bytearray(20)
@@ -178,7 +178,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
-        self.driver.disable_gyro = False
+        self.driver.use_gyroscope = True
 
         test_data = bytearray(20)
         test_data[0] = 0x01  # Lower 4 bits are 0x01 for gyro

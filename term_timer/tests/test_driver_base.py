@@ -10,6 +10,7 @@ from term_timer.bluetooth.types import GyroEventDict
 from term_timer.bluetooth.types import MoveEventDict
 from term_timer.bluetooth.types import QuaternionDict
 from term_timer.bluetooth.types import VelocityDict
+from term_timer.config import USE_GYROSCOPE
 
 
 class BaseDriver(Driver):
@@ -232,7 +233,7 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(Driver.service_uid, '')
         self.assertEqual(Driver.state_characteristic_uid, '')
         self.assertEqual(Driver.command_characteristic_uid, '')
-        self.assertFalse(Driver.disable_gyro)
+        self.assertEqual(Driver.use_gyroscope, USE_GYROSCOPE)
 
     def test_driver_instance_has_cypher_attribute(self) -> None:
         self.assertTrue(hasattr(self.driver, 'cypher'))
