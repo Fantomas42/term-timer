@@ -246,7 +246,8 @@ class Analyser(FaceletAnalyser):
                 case_infos.extend(cleaned_case_infos)
 
             step_moves.append(move_index)
-            cube.rotate(move.untimed)
+            if move.is_face_move:
+                cube.rotate(move.untimed)
 
         step_name = self.step_list[progress]
         steps[step_name] = {
