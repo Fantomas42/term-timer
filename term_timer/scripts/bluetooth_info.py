@@ -106,7 +106,9 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
                cube: VCube | None) -> None:
     if not raw_moves:
         if cube:
-            show_cube(cube)
+            cube_rotated = cube.copy()
+            cube_rotated.rotate(orientation_moves)
+            show_cube(cube_rotated)
         return
 
     algo = parse_moves(raw_moves)
@@ -151,6 +153,7 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
 
     if cube:
         cube_rotated = cube.copy()
+        cube_rotated.rotate(orientation_moves)
         cube_rotated.rotate(
             algo_translated.transform(
                 untime_moves,
@@ -246,10 +249,9 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
 
                 if virtual_cube:
                     if virtual_cube.state != event['facelets']:
-                        logger.warning('FACELETS DESYNCHRONISED')
+                        logger.warning('FACELETS DESYNCHRONISED: %s', event['facelets'])
                 elif show_cube:
                     virtual_cube = VCube(event['facelets'])
-                    virtual_cube.rotate(orientation_moves)
 
                     show_state(moves, orientation_moves, virtual_cube)
 
@@ -354,7 +356,6 @@ def replay(options: Namespace) -> None:
 
     if show_cube:
         virtual_cube = VCube()
-        virtual_cube.rotate(orientation_moves)
 
         show_state(moves, orientation_moves, virtual_cube)
 
