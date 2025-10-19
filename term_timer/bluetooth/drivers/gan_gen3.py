@@ -216,7 +216,7 @@ class GanGen3Driver(GanGen2Driver):
 
             # Also check and recovery missed moves
             # using periodic facelets event sent by cube
-            if self.last_serial != 1:
+            if self.last_serial != -1:
                 # Debounce the facelet event if there are active cube moves
                 if (
                         self.last_local_timestamp is not None
