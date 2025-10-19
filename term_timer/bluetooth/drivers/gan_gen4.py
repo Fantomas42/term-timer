@@ -276,7 +276,7 @@ class GanGen4Driver(GanGen3Driver):
                 self.add_event(events, hw_version_payload)
 
         elif event == 0xEC:  # Gyroscope
-            if self.disable_gyro:
+            if not self.use_gyroscope:
                 return []
             # Orientation Quaternion
             qw = msg.get_bit_word(16, 16)

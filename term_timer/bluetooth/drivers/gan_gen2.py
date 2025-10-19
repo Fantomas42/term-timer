@@ -102,7 +102,7 @@ class GanGen2Driver(Driver):
         event = msg.get_bit_word(0, 4)
 
         if event == 0x01:  # Gyroscope
-            if self.disable_gyro:
+            if not self.use_gyroscope:
                 return []
 
             # Orientation Quaternion

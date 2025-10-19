@@ -95,7 +95,7 @@ class MoyuWeilong10Driver(Driver):
         event = msg.get_bit_word(0, 8)
 
         if event == 0xAB:  # Gyroscope
-            if self.disable_gyro:
+            if not self.use_gyroscope:
                 return []
 
             # Orientation Quaternion

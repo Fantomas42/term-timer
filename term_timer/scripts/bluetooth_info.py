@@ -29,6 +29,7 @@ from term_timer.bluetooth.types import GyroEventDict
 from term_timer.bluetooth.types import HardwareEventDict
 from term_timer.bluetooth.types import MoveEventDict
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.config import ROTATION_THRESHOLD
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 from term_timer.exceptions import CubeNotFoundError
@@ -617,11 +618,11 @@ def main() -> None:
     parser.add_argument(
         '--rotation-threshold',
         type=float,
-        default=70.0,
+        default=ROTATION_THRESHOLD,
         metavar='DEGREES',
         help=(
             'Rotation detection threshold in degrees.\n'
-            'Default: 70.0.'
+            f'Default: { ROTATION_THRESHOLD }.'
         ),
     )
 
