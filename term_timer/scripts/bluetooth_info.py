@@ -307,8 +307,8 @@ async def client_cb(queue: asyncio.Queue[list[EventDict] | None], time: int, *,
 
     await bluetooth_interface.__aenter__()  # noqa: PLC2801
 
-    await bluetooth_interface.send_command('REQUEST_HARDWARE')
     await bluetooth_interface.send_command('REQUEST_FACELETS')
+    await bluetooth_interface.send_command('REQUEST_HARDWARE')
     await bluetooth_interface.send_command('REQUEST_BATTERY')
 
     if gyroscope_disable:

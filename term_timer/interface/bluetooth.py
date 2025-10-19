@@ -119,8 +119,8 @@ class Bluetooth:
                 self.bluetooth_consumer(),
             )
 
-            await self.bluetooth_interface.send_command('REQUEST_HARDWARE')
             await self.bluetooth_interface.send_command('REQUEST_FACELETS')
+            await self.bluetooth_interface.send_command('REQUEST_HARDWARE')
             await self.bluetooth_interface.send_command('REQUEST_BATTERY')
 
             try:
