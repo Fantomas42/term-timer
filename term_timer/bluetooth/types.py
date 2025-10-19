@@ -68,6 +68,11 @@ class MoveEventDict(BaseEventDict):
     move: str
 
 
+class RotationEventDict(BaseEventDict):
+    """Rotation event payload."""
+    move: str
+
+
 class FaceletsEventDict(BaseEventDict):
     """Facelets event payload."""
 
