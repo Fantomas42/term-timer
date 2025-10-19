@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import TypedDict
 
 from term_timer.bluetooth.types import QuaternionDict
+from term_timer.config import ROTATION_THRESHOLD
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +110,7 @@ class RotationDetector:
     at the time of the last detected rotation.
     """
 
-    def __init__(self, rotation_threshold: float = 70.0) -> None:
+    def __init__(self, rotation_threshold: float = ROTATION_THRESHOLD) -> None:
         self.rotation_threshold = rotation_threshold
 
         # Initial orientation used to normalize all measurements
