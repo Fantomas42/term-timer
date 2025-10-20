@@ -132,8 +132,37 @@ class GanGen2Driver(Driver):
                     'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
                 },
             }
-
             self.add_event(events, gyro_payload)
+
+            # Second Orientation Quaternion
+            qw = msg.get_bit_word(4 + 76, 16)
+            qx = msg.get_bit_word(20 + 76, 16)
+            qy = msg.get_bit_word(36 + 76, 16)
+            qz = msg.get_bit_word(52 + 76, 16)
+
+            # Second Angular Velocity
+            vx = msg.get_bit_word(68 + 76, 4)
+            vy = msg.get_bit_word(72 + 76, 4)
+            vz = msg.get_bit_word(76 + 76, 4)
+
+            second_gyro_payload: GyroEventDict = {
+                'event': 'gyro',
+                'clock': clock,
+                'timestamp': timestamp,
+                'quaternion': {
+                    'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
+                    'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
+                    'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
+                    'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
+                },
+                'velocity': {
+                    'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
+                    'y': (1 - (vy >> 3) * 2) * (vy & 0x7),
+                    'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
+                },
+            }
+
+            self.add_event(events, second_gyro_payload)
 
         elif event == 0x02:  # Moves
             if self.last_serial == -1:  # Block moves until facelets received
