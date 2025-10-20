@@ -193,6 +193,10 @@ class Bluetooth:
             else:
                 device_label += f' ({ battery_level }%)'
 
+        battery_state = self.bluetooth_hardware.get('battery_state')
+        if isinstance(battery_state, int) and battery_state:
+            device_label += ' (charging)'
+
         return device_label
 
     async def bluetooth_consumer(self) -> None:
@@ -220,6 +224,9 @@ class Bluetooth:
                     battery_event = cast(BatteryEventDict, event)
                     self.bluetooth_hardware['battery_level'] = battery_event[
                         'level'
+                    ]
+                    self.bluetooth_hardware['battery_state'] = battery_event[
+                        'charging_state'
                     ]
 
                 elif event_name == 'facelets':

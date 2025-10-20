@@ -95,6 +95,7 @@ class HardwareEventDict(BaseEventDict):
     hardware_version: str
     software_version: str
     gyroscope_supported: bool
+    restart_no_power: int
 
 
 class HardwareEventPartialDict(BaseEventDict):
@@ -138,6 +139,7 @@ class BatteryEventDict(BaseEventDict):
     """Battery level event payload."""
 
     level: int
+    charging_state: int
 
 
 class DisconnectEventDict(BaseEventDict):

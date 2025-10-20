@@ -252,8 +252,9 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
             elif event_name == 'battery':
                 event = cast(BatteryEventDict, event)
                 logger.info(
-                    'CONSUMER: Battery: %s%%',
+                    'CONSUMER: Battery: %s%%%s',
                     event['level'],
+                    ' (charging)' if event['charging_state'] else '',
                 )
                 battery = f'{ event["level"] }%'
                 if gl_thread and gl_thread.is_alive():
