@@ -94,6 +94,8 @@ class HardwareEventDict(BaseEventDict):
     hardware_name: str
     hardware_version: str
     software_version: str
+    gyroscope_enabled: bool
+    gyroscope_ready: bool
     gyroscope_supported: bool
     restart_no_power: int
 
@@ -130,7 +132,7 @@ class HardwareEventMoyuDict(BaseEventDict):
     hardware_version: str
     software_version: str
     gyroscope_enabled: bool
-    gyroscope_support: bool
+    gyroscope_ready: bool
     gyroscope_supported: bool
     serial: int
 
@@ -150,7 +152,7 @@ class GyroConfigEventDict(BaseEventDict):
     """Gyro configuration event payload (Moyu)."""
 
     gyroscope_enabled: bool
-    gyroscope_support: bool
+    gyroscope_ready: bool
     gyroscope_supported: bool
 
 

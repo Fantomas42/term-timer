@@ -332,7 +332,7 @@ async def client_cb(queue: asyncio.Queue[list[EventDict] | None],
                     gyroscope_disable: bool) -> None:
     bluetooth_interface = BluetoothInterface(queue)
 
-    await bluetooth_interface.__aenter__(filter_name=filter_name)  # noqa: PLC2801
+    await bluetooth_interface.__aenter__(filter_name=filter_name)
 
     await bluetooth_interface.send_command('REQUEST_FACELETS')
     await bluetooth_interface.send_command('REQUEST_HARDWARE')

@@ -369,7 +369,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(hw_event['hardware_version'], '1.2')
                 self.assertEqual(hw_event['software_version'], '3.4')
                 self.assertTrue(hw_event['gyroscope_enabled'])
-                self.assertTrue(hw_event['gyroscope_support'])
+                self.assertTrue(hw_event['gyroscope_ready'])
                 self.assertTrue(hw_event['gyroscope_supported'])
                 self.assertEqual(hw_event['serial'], 123)
 
@@ -463,7 +463,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg.get_bit_word.side_effect = [
                     0xAC,  # event type
                     1,     # gyro_enabled
-                    1,     # gyro_supported
+                    1,     # gyro_ready
                 ]
 
                 mock_sender = Mock()
@@ -474,7 +474,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(event['event'], 'gyro-config')
                 gyro_config_event = cast(GyroConfigEventDict, event)
                 self.assertTrue(gyro_config_event['gyroscope_enabled'])
-                self.assertTrue(gyro_config_event['gyroscope_support'])
+                self.assertTrue(gyro_config_event['gyroscope_ready'])
                 self.assertTrue(gyro_config_event['gyroscope_supported'])
 
     @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')

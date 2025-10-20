@@ -193,7 +193,7 @@ class MoyuWeilong10Driver(Driver):
             sw_major = msg.get_bit_word(88, 8)
             sw_minor = msg.get_bit_word(96, 8)
             gyro_enabled = msg.get_bit_word(105, 1)
-            gyro_supported = msg.get_bit_word(106, 1)
+            gyro_ready = msg.get_bit_word(106, 1)
             serial = msg.get_bit_word(109, 8)
 
             hardware_name = ''
@@ -208,10 +208,10 @@ class MoyuWeilong10Driver(Driver):
                 'hardware_version': f'{ hw_major }.{ hw_minor }',
                 'software_version': f'{ sw_major }.{ sw_minor }',
                 'gyroscope_enabled': bool(gyro_enabled),
-                'gyroscope_support': bool(gyro_supported),
+                'gyroscope_ready': bool(gyro_ready),
                 'gyroscope_supported': (
-                    bool(gyro_supported)
-                    and bool(gyro_enabled)
+                    bool(gyro_enabled)
+                    and bool(gyro_ready)
                 ),
                 'serial': serial,
             }
@@ -219,17 +219,17 @@ class MoyuWeilong10Driver(Driver):
 
         elif event == 0xAC:  # Gyro config
             gyro_enabled = msg.get_bit_word(16, 8)
-            gyro_supported = msg.get_bit_word(8, 8)
+            gyro_ready = msg.get_bit_word(8, 8)
 
             gyro_config_payload: GyroConfigEventDict = {
                 'event': 'gyro-config',
                 'clock': clock,
                 'timestamp': timestamp,
                 'gyroscope_enabled': bool(gyro_enabled),
-                'gyroscope_support': bool(gyro_supported),
+                'gyroscope_ready': bool(gyro_ready),
                 'gyroscope_supported': (
-                    bool(gyro_supported)
-                    and bool(gyro_enabled)
+                    bool(gyro_enabled)
+                    and bool(gyro_ready)
                 ),
             }
             self.add_event(events, gyro_config_payload)
@@ -240,6 +240,7 @@ class MoyuWeilong10Driver(Driver):
             battery_payload: BatteryEventDict = {
                 'event': 'battery',
                 'clock': clock,
+                'charging_state': 0,
                 'timestamp': timestamp,
                 'level': min(battery_level, 100),
             }
