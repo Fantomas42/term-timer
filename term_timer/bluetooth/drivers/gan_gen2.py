@@ -221,34 +221,47 @@ class GanGen2Driver(Driver):
             self.add_event(events, facelets_payload)
 
         elif event == 0x05:  # Hardware
+            restart_no_power = msg.get_bit_word(4, 4)
+
             hw_major = msg.get_bit_word(8, 8)
             hw_minor = msg.get_bit_word(16, 8)
+
             sw_major = msg.get_bit_word(24, 8)
             sw_minor = msg.get_bit_word(32, 8)
-            gyro_supported = msg.get_bit_word(104, 1)
 
             hardware_name = ''
             for i in range(8):
                 hardware_name += chr(msg.get_bit_word(i * 8 + 40, 8))
 
+            gyro_enabled = msg.get_bit_word(104, 1)
+            gyro_ready = msg.get_bit_word(105, 1)
+
             hardware_payload: HardwareEventDict = {
                 'event': 'hardware',
                 'clock': clock,
                 'timestamp': timestamp,
+                'restart_no_power': restart_no_power,
                 'hardware_name': hardware_name,
                 'hardware_version': f'{ hw_major }.{ hw_minor }',
                 'software_version': f'{ sw_major }.{ sw_minor }',
-                'gyroscope_supported': bool(gyro_supported),
+                'gyroscope_enabled': bool(gyro_enabled),
+                'gyroscope_ready': bool(gyro_ready),
+                'gyroscope_supported': (
+                    bool(gyro_enabled)
+                    and bool(gyro_ready)
+                ),
             }
             self.add_event(events, hardware_payload)
 
         elif event == 0x09:  # Battery
+            charging_state = msg.get_bit_word(4, 4)
             battery_level = msg.get_bit_word(8, 8)
 
             battery_payload: BatteryEventDict = {
                 'event': 'battery',
                 'clock': clock,
                 'timestamp': timestamp,
+                'charging_state': charging_state,
                 'level': min(battery_level, 100),
             }
             self.add_event(events, battery_payload)
