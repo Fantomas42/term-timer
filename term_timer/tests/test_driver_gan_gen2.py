@@ -146,7 +146,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
-        self.driver.disable_gyro = True
+        self.driver.use_gyroscope = False
 
         # Create mock data that represents a gyro event (0x01)
         encrypted_data = bytearray(20)
@@ -178,7 +178,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
-        self.driver.disable_gyro = False
+        self.driver.use_gyroscope = True
 
         test_data = bytearray(20)
         test_data[0] = 0x01  # Lower 4 bits are 0x01 for gyro
@@ -200,18 +200,25 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                     0x08,    # vx (signed bit set)
                     0x04,    # vy
                     0x02,    # vz
+                    0x8000,  # b qw (signed bit set)
+                    0x4000,  # b qx
+                    0x2000,  # b qy
+                    0x1000,  # b qz
+                    0x08,    # b vx (signed bit set)
+                    0x04,    # b vy
+                    0x02,    # b vz
                 ]
 
                 mock_sender = Mock()
                 result = await self.driver.event_handler(mock_sender, test_data)
 
-                self.assertEqual(len(result), 1)
-                event = result[0]
-                self.assertEqual(event['event'], 'gyro')
-                self.assertEqual(event['clock'], 123456789)
-                self.assertEqual(event['timestamp'], mock_timestamp)
-                self.assertIn('quaternion', event)
-                self.assertIn('velocity', event)
+                self.assertEqual(len(result), 2)
+                for event in result:
+                    self.assertEqual(event['event'], 'gyro')
+                    self.assertEqual(event['clock'], 123456789)
+                    self.assertEqual(event['timestamp'], mock_timestamp)
+                    self.assertIn('quaternion', event)
+                    self.assertIn('velocity', event)
 
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')
@@ -465,6 +472,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
                 mock_msg.get_bit_word.side_effect = [
                     0x09,  # event type
+                    1,     # charging
                     85,    # battery level
                 ]
 
@@ -476,6 +484,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(event['event'], 'battery')
                 battery_event = cast(BatteryEventDict, event)
                 self.assertEqual(battery_event['level'], 85)
+                self.assertEqual(battery_event['charging_state'], 1)
 
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')
@@ -499,6 +508,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
                 mock_msg.get_bit_word.side_effect = [
                     0x09,  # event type
+                    1,     # charging
                     150,   # battery level > 100
                 ]
 
@@ -509,6 +519,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 event = result[0]
                 battery_event = cast(BatteryEventDict, event)
                 self.assertEqual(battery_event['level'], 100)
+                self.assertEqual(battery_event['charging_state'], 1)
 
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen2.datetime')

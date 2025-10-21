@@ -91,7 +91,7 @@ class GanGen3Driver(GanGen2Driver):
         msg[2] = serial
         msg[4] = count
 
-        logger.debug('Sending : REQUEST_HISTORY')
+        logger.debug('Sending : REQUEST_MOVE_HISTORY')
 
         await self.client.write_gatt_char(
             self.command_characteristic_uid,
@@ -216,7 +216,7 @@ class GanGen3Driver(GanGen2Driver):
 
             # Also check and recovery missed moves
             # using periodic facelets event sent by cube
-            if self.last_serial != 1:
+            if self.last_serial != -1:
                 # Debounce the facelet event if there are active cube moves
                 if (
                         self.last_local_timestamp is not None
@@ -296,22 +296,29 @@ class GanGen3Driver(GanGen2Driver):
                 self.add_event(events, evicted)
 
         elif event == 0x07:  # Hardware
-            sw_major = msg.get_bit_word(72, 4)
-            sw_minor = msg.get_bit_word(76, 4)
-            hw_major = msg.get_bit_word(80, 4)
-            hw_minor = msg.get_bit_word(84, 4)
+            restart_reason = msg.get_bit_word(24, 8)
 
             hardware_name = ''
             for i in range(5):
                 hardware_name += chr(msg.get_bit_word(i * 8 + 32, 8))
 
+            sw_major = msg.get_bit_word(72, 4)
+            sw_minor = msg.get_bit_word(76, 4)
+            hw_major = msg.get_bit_word(80, 4)
+            hw_minor = msg.get_bit_word(84, 4)
+
+            _build_time = msg.get_bit_word(88, 32, little_endian=True)
+
             hardware_payload: HardwareEventDict = {
                 'event': 'hardware',
                 'clock': clock,
                 'timestamp': timestamp,
+                'restart_no_power': restart_reason,
                 'hardware_name': hardware_name,
                 'hardware_version': f'{ hw_major }.{ hw_minor }',
                 'software_version': f'{ sw_major }.{ sw_minor }',
+                'gyroscope_enabled': False,
+                'gyroscope_ready': False,
                 'gyroscope_supported': False,
             }
             self.add_event(events, hardware_payload)
@@ -323,6 +330,7 @@ class GanGen3Driver(GanGen2Driver):
                 'event': 'battery',
                 'clock': clock,
                 'timestamp': timestamp,
+                'charging_state': 0,
                 'level': min(battery_level, 100),
             }
             self.add_event(events, battery_payload)

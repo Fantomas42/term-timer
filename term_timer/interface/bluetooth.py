@@ -4,14 +4,17 @@ from typing import TYPE_CHECKING
 from typing import TypedDict
 from typing import cast
 
+from cubing_algs.move import Move
 from cubing_algs.vcube import VCube
 from rich.console import Console as RichConsole
 
+from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.types import BatteryEventDict
 from term_timer.bluetooth.types import EventDict
 from term_timer.bluetooth.types import FaceletsEventDict
 from term_timer.bluetooth.types import FaceletsEventDictNoState
+from term_timer.bluetooth.types import GyroEventDict
 from term_timer.bluetooth.types import HardwareEventDict
 from term_timer.bluetooth.types import HardwareEventMoyuDict
 from term_timer.bluetooth.types import HardwareEventNameOnlyDict
@@ -19,6 +22,7 @@ from term_timer.bluetooth.types import HardwareEventPartialDict
 from term_timer.bluetooth.types import HardwareEventSoftwareVersionOnlyDict
 from term_timer.bluetooth.types import HardwareEventVersionOnlyDict
 from term_timer.bluetooth.types import MoveEventDict
+from term_timer.bluetooth.types import RotationEventDict
 from term_timer.config import BLUETOOTH_CONFIG
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import CubeNotFoundError
@@ -51,9 +55,9 @@ class Bluetooth:
         # Methods from Terminal mixin
         def clear_line(self, *, full: bool) -> None: ...
         # Methods from Scrambler mixin
-        def handle_scrambled(self, timed_move: str) -> None: ...
+        def handle_scrambled(self, timed_move: Move) -> None: ...
         # Methods from Gesture mixin
-        def handle_save_gestures(self, move: str) -> None: ...
+        def handle_save_gestures(self, move: Move) -> None: ...
 
     def __init__(self) -> None:
         super().__init__()
@@ -116,8 +120,8 @@ class Bluetooth:
                 self.bluetooth_consumer(),
             )
 
-            await self.bluetooth_interface.send_command('REQUEST_HARDWARE')
             await self.bluetooth_interface.send_command('REQUEST_FACELETS')
+            await self.bluetooth_interface.send_command('REQUEST_HARDWARE')
             await self.bluetooth_interface.send_command('REQUEST_BATTERY')
 
             try:
@@ -190,6 +194,10 @@ class Bluetooth:
             else:
                 device_label += f' ({ battery_level }%)'
 
+        battery_state = self.bluetooth_hardware.get('battery_state')
+        if isinstance(battery_state, int) and battery_state:
+            device_label += ' (charging)'
+
         return device_label
 
     async def bluetooth_consumer(self) -> None:
@@ -198,6 +206,8 @@ class Bluetooth:
         """
         if not self.bluetooth_queue:
             return
+
+        rotation_detector = RotationDetector()
 
         while True:
             events = await self.bluetooth_queue.get()
@@ -216,6 +226,9 @@ class Bluetooth:
                     self.bluetooth_hardware['battery_level'] = battery_event[
                         'level'
                     ]
+                    self.bluetooth_hardware['battery_state'] = battery_event[
+                        'charging_state'
+                    ]
 
                 elif event_name == 'facelets':
                     if not self.facelets_received_event.is_set():
@@ -230,6 +243,22 @@ class Bluetooth:
                     move_event = cast(MoveEventDict, event)
                     self.bluetooth_cube.rotate(move_event['move'])
                     self.handle_bluetooth_move(move_event)
+
+                elif event_name == 'gyro' and self.bluetooth_cube:
+                    gyro_event = cast(GyroEventDict, event)
+
+                    rotation_result = rotation_detector.process_gyro_event(
+                        gyro_event['quaternion'],
+                    )
+                    if rotation_result:
+                        rotation_event: RotationEventDict = {
+                            'event': 'rotation',
+                            'clock': gyro_event['clock'],
+                            'timestamp': gyro_event['timestamp'],
+                            'move': rotation_result['rotation'],
+                        }
+
+                        self.handle_bluetooth_move(rotation_event)
 
     def handle_hardware_event(self, event: EventDict) -> None:
         """
@@ -278,14 +307,17 @@ class Bluetooth:
 
         self.hardware_received_event.set()
 
-    def handle_bluetooth_move(self, event: MoveEventDict) -> None:
+    def handle_bluetooth_move(
+            self, event: MoveEventDict | RotationEventDict,
+    ) -> None:
         """
-        Handle a move event from the Bluetooth cube.
+        Handle a move or rotation event from the Bluetooth cube.
         """
         move = event['move']
         clock = event['clock']
+        rotation = event['event'] == 'rotation'
 
-        timed_move = f'{ move }@{ int(clock / MS_TO_NS_FACTOR) }'
+        timed_move = Move(f'{ move }@{ int(clock / MS_TO_NS_FACTOR) }')
 
         if self.state in {'start', 'scrambling'}:
             self.handle_scrambled(timed_move)
@@ -294,6 +326,9 @@ class Bluetooth:
             self.handle_save_gestures(timed_move)
 
         elif self.state == 'scrambled':
+            if rotation:
+                return
+
             self.moves.append(
                 {
                     'move': move,

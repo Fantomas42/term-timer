@@ -62,6 +62,22 @@ class GanGen4Driver(GanGen3Driver):
             ]
             for i, val in enumerate(values):
                 msg[i] = val
+        elif command == 'REQUEST_CALIBRATE':
+            values = [0xD3, 0x01, 0x01]
+            for i, val in enumerate(values):
+                msg[i] = val
+        elif command == 'REQUEST_ENABLE_GYRO':
+            values = [0xD4, 0x01, 0x01]
+            for i, val in enumerate(values):
+                msg[i] = val
+        elif command == 'REQUEST_DISABLE_GYRO':
+            values = [0xD4, 0x01, 0x00]
+            for i, val in enumerate(values):
+                msg[i] = val
+        elif command == 'REQUEST_DEBUG_INFO':
+            values = [0xF0, 0x01, 0x01]
+            for i, val in enumerate(values):
+                msg[i] = val
         else:
             return False
 
@@ -227,42 +243,17 @@ class GanGen4Driver(GanGen3Driver):
             if evicted:
                 self.add_event(events, evicted)
 
-        elif event >= 0xFA and event <= 0xFE:  # Hardware
-            if event == 0xFA:  # Product date
-                year = msg.get_bit_word(24, 16, little_endian=True)
-                month = msg.get_bit_word(40, 8)
-                day = msg.get_bit_word(48, 8)
+        elif event >= 0xF5 and event <= 0xFF:  # Hardware Info
+            index = msg.get_bit_word(16, 8)
 
-                product_date_payload: HardwareEventPartialDict = {
-                    'event': 'hardware',
-                    'clock': clock,
-                    'timestamp': timestamp,
-                    'product_date': f'{ year:04d}-{ month:02d}-{ day:02d}',
-                }
-                self.add_event(events, product_date_payload)
-            elif event == 0xFC:  # Hardware name
-                hardware_name = ''
-                for i in range(data_size):
-                    hardware_name += chr(msg.get_bit_word(i * 8 + 24, 8))
-                hardware_name_payload: HardwareEventNameOnlyDict = {
-                    'event': 'hardware',
-                    'clock': clock,
-                    'timestamp': timestamp,
-                    'hardware_name': hardware_name,
-                    'gyroscope_supported': 'GAN12uiM' in hardware_name,
-                }
-                self.add_event(events, hardware_name_payload)
-            elif event == 0xFD:  # Software version
-                sw_major = msg.get_bit_word(24, 4)
-                sw_minor = msg.get_bit_word(28, 4)
+            if event == 0xFF:  # MAC Address
+                mac_address = ''
+                for i in range(7):
+                    if i > 0:
+                        mac_address += ':'
+                    mac_address += f'{msg.get_bit_word(24 + i * 8, 8):02X}'
+                logger.debug('MAC Address: %s', mac_address)
 
-                sw_version_payload: HardwareEventSoftwareVersionOnlyDict = {
-                    'event': 'hardware',
-                    'clock': clock,
-                    'timestamp': timestamp,
-                    'software_version': f'{ sw_major }.{ sw_minor }',
-                }
-                self.add_event(events, sw_version_payload)
             elif event == 0xFE:  # Hardware version
                 hw_major = msg.get_bit_word(24, 4)
                 hw_minor = msg.get_bit_word(28, 4)
@@ -275,8 +266,63 @@ class GanGen4Driver(GanGen3Driver):
                 }
                 self.add_event(events, hw_version_payload)
 
+            elif event == 0xFD:  # Software version
+                sw_major = msg.get_bit_word(24, 4)
+                sw_minor = msg.get_bit_word(28, 4)
+
+                sw_version_payload: HardwareEventSoftwareVersionOnlyDict = {
+                    'event': 'hardware',
+                    'clock': clock,
+                    'timestamp': timestamp,
+                    'software_version': f'{ sw_major }.{ sw_minor }',
+                }
+                self.add_event(events, sw_version_payload)
+
+            elif event == 0xFC:  # Hardware name
+                hardware_name = ''
+                for i in range(data_size):
+                    hardware_name += chr(msg.get_bit_word(i * 8 + 24, 8))
+
+                hardware_name_payload: HardwareEventNameOnlyDict = {
+                    'event': 'hardware',
+                    'clock': clock,
+                    'timestamp': timestamp,
+                    'hardware_name': hardware_name,
+                    'gyroscope_supported': 'GAN12uiM' in hardware_name,
+                }
+                self.add_event(events, hardware_name_payload)
+
+            elif event == 0xFA:  # Product date
+                year = msg.get_bit_word(24, 16, little_endian=True)
+                month = msg.get_bit_word(40, 8)
+                day = msg.get_bit_word(48, 8)
+
+                product_date_payload: HardwareEventPartialDict = {
+                    'event': 'hardware',
+                    'clock': clock,
+                    'timestamp': timestamp,
+                    'product_date': f'{ year:04d}-{ month:02d}-{ day:02d}',
+                }
+                self.add_event(events, product_date_payload)
+
+            elif event == 0xF6:  # Restart reason
+                restart_reason = msg.get_bit_word(24, 16, little_endian=True)
+                logger.debug('Restart reason: %s', restart_reason)
+
+            elif event == 0xF5:  # Build time
+                year = msg.get_bit_word(24, 16, little_endian=True)
+                month = msg.get_bit_word(40, 8)
+                day = msg.get_bit_word(48, 8)
+                hour = msg.get_bit_word(56, 8)
+                minute = msg.get_bit_word(64, 8)
+                build_time = (
+                    f'{year:04d}-{month:02d}-{day:02d} '
+                    f'{hour:02d}:{minute:02d}'
+                )
+                logger.debug('Build time: %s', build_time)
+
         elif event == 0xEC:  # Gyroscope
-            if self.disable_gyro:
+            if not self.use_gyroscope:
                 return []
             # Orientation Quaternion
             qw = msg.get_bit_word(16, 16)
@@ -309,17 +355,53 @@ class GanGen4Driver(GanGen3Driver):
             self.add_event(events, gyro_payload)
 
         elif event == 0xEF:  # Battery
-            battery_level = msg.get_bit_word(8 + data_size * 8, 8)
+            _battery_index = msg.get_bit_word(16, 8)
+            battery_level = msg.get_bit_word(24, 8)
 
             battery_payload: BatteryEventDict = {
                 'event': 'battery',
                 'clock': clock,
+                'charging_state': 0,
                 'timestamp': timestamp,
                 'level': min(battery_level, 100),
             }
             self.add_event(events, battery_payload)
 
+        elif event == 0xD2:  # Reset response
+            reset_result = msg.get_bit_word(16, 32, little_endian=True)
+            logger.debug('Reset result: %s', reset_result)
+
+        elif event == 0xD3:  # Calibrate response
+            calibrate_result = msg.get_bit_word(16, 8)
+            logger.debug('Calibration result: %s', calibrate_result)
+
+        elif event == 0xD4:  # Gyro enable/disable
+            gyro_enabled = msg.get_bit_word(16, 8)
+            logger.debug('Gyro enabled: %s', bool(gyro_enabled))
+
+        elif event == 0x02:  # Time sync
+            cube_time = msg.get_bit_word(16, 32, little_endian=True)
+            logger.debug('Cube time: %s', cube_time)
+
+        elif event == 0xEE:  # Gyro data detailed
+            tag = msg.get_bit_word(16, 8)
+            face_old = msg.get_bit_word(24, 8)
+            face_cur = msg.get_bit_word(32, 8)
+            angle_init = msg.get_bit_word(40, 16, little_endian=True)
+            angle_last = msg.get_bit_word(56, 16, little_endian=True)
+            angle_cur = msg.get_bit_word(72, 16, little_endian=True)
+            parallel = msg.get_bit_word(88, 8)
+
+            logger.debug(
+                'Gyro movement - tag:%s, face:%s->%s, '
+                'angles:%s/%s/%s, parallel:%s',
+                tag, face_old, face_cur,
+                angle_init, angle_last, angle_cur,
+                parallel,
+            )
+
         elif event == 0xEA:  # Disconnect
+            _type = msg.get_bit_word(16, 8)
             disconnect_payload: DisconnectEventDict = {
                 'event': 'disconnect',
                 'clock': clock,
@@ -329,9 +411,17 @@ class GanGen4Driver(GanGen3Driver):
 
             await self.client.disconnect()
 
+        elif event == 0xF0:  # Debug info
+            index = msg.get_bit_word(16, 8)
+            content = ''
+            for i in range(min(data_size - 1, 15)):
+                content += chr(msg.get_bit_word(24 + i * 8, 8))
+
+            logger.debug('Debug info [%s]: %s', index, content)
+
         else:
             logger.debug(
-                'Unknown event type "%s": %s', event, msg,
+                'Unknown event type "0x%02X": %s', event, msg,
             )
 
         return events

@@ -33,6 +33,8 @@ recognition_graph = true
 
 [bluetooth]
 address = ""
+use_gyroscope = true
+rotation_threshold = 75.0
 
 [statistics]
 distribution = 0
@@ -85,6 +87,10 @@ CUBE_PALETTE: str = CUBE_CONFIG.get('palette', '')
 CUBE_EFFECT: str = CUBE_CONFIG.get('effect', '')
 
 CUBE_RIGHT_HANDED: bool = CUBE_CONFIG.get('right-handed', True)
+
+USE_GYROSCOPE: bool = BLUETOOTH_CONFIG.get('use_gyroscope', True)
+
+ROTATION_THRESHOLD: float = BLUETOOTH_CONFIG.get('rotation_threshold', 75.0)
 
 TRAINER_STEP = TRAINER_CONFIG.get('step')
 

@@ -7,7 +7,7 @@ from cubing_algs.constants import OPPOSITE_FACES
 from cubing_algs.constants import ORIENTATIONS
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.rotation import remove_final_rotations
+from cubing_algs.transform.rotation import remove_ending_rotations
 from cubing_algs.transform.timing import untime_moves
 from cubing_algs.vcube import VCube
 
@@ -69,7 +69,7 @@ def get_orientation_faces(scramble: Algorithm, solution: Algorithm) -> str:
             + solution
         ).transform(
             degrip_full_moves,
-            remove_final_rotations,
+            remove_ending_rotations,
         )
         ergonomics = algorithm.ergonomics
         score = ergonomics.right_hand_moves

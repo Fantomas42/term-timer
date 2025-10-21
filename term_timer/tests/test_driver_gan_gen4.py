@@ -438,10 +438,11 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
                 mock_msg.get_bit_word.side_effect = [
                     0xFA,  # event type (product date)
-                    10,  # data_size
+                    10,    # data_size
+                    1,     # index
                     2023,  # year
-                    6,  # month
-                    15,  # day
+                    6,     # month
+                    15,    # day
                 ]
 
                 mock_sender = Mock()
@@ -565,6 +566,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg.get_bit_word.side_effect = [
                     0xFD,  # event type (software version)
                     2,  # data_size
+                    1,  # index
                     5,  # sw_major
                     3,  # sw_minor
                 ]
@@ -599,9 +601,10 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
                 mock_msg.get_bit_word.side_effect = [
                     0xFE,  # event type (hardware version)
-                    2,  # data_size
-                    2,  # hw_major
-                    1,  # hw_minor
+                    2,     # data_size
+                    1,     # index
+                    2,     # hw_major
+                    1,     # hw_minor
                 ]
 
                 mock_sender = Mock()
@@ -622,7 +625,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
-        self.driver.disable_gyro = True
+        self.driver.use_gyroscope = False
 
         test_data = bytearray(20)
 
@@ -650,7 +653,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
-        self.driver.disable_gyro = False
+        self.driver.use_gyroscope = True
 
         test_data = bytearray(20)
 
@@ -717,8 +720,9 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
                 mock_msg.get_bit_word.side_effect = [
                     0xEF,  # event type (battery)
-                    3,  # data_size
-                    85,  # battery level
+                    3,     # data_size
+                    1,     # index
+                    85,    # battery level
                 ]
 
                 mock_sender = Mock()
@@ -751,8 +755,9 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
                 mock_msg.get_bit_word.side_effect = [
                     0xEF,  # event type (battery)
-                    3,  # data_size
-                    150,  # battery level > 100
+                    3,     # data_size
+                    1,     # index
+                    150,   # battery level > 100
                 ]
 
                 mock_sender = Mock()
@@ -784,7 +789,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
                 mock_msg.get_bit_word.side_effect = [
                     0xEA,  # event type (disconnect)
-                    1,  # data_size
+                    1,     # data_size
+                    0,     # type
                 ]
 
                 mock_sender = Mock()

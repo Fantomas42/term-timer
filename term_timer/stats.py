@@ -566,6 +566,19 @@ class StatisticsReporter(Statistics):
 
             console.print(pauses_string)
 
+            if solve.rotations:
+                rotations_string = '[stats]Rotations  :[/stats] '
+                if solve.rotations > 3:
+                    rotations_string += (
+                        f'[warning]{ solve.rotations }[/warning]'
+                    )
+                else:
+                    rotations_string += (
+                        f'[caution]{ solve.rotations }[/caution]'
+                    )
+
+                console.print(rotations_string)
+
             aufs_string = '[stats]Adjusts UF :[/stats] '
             if solve.aufs > 5:
                 aufs_string += (

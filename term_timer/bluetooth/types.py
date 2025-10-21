@@ -68,6 +68,11 @@ class MoveEventDict(BaseEventDict):
     move: str
 
 
+class RotationEventDict(BaseEventDict):
+    """Rotation event payload."""
+    move: str
+
+
 class FaceletsEventDict(BaseEventDict):
     """Facelets event payload."""
 
@@ -89,7 +94,10 @@ class HardwareEventDict(BaseEventDict):
     hardware_name: str
     hardware_version: str
     software_version: str
+    gyroscope_enabled: bool
+    gyroscope_ready: bool
     gyroscope_supported: bool
+    restart_no_power: int
 
 
 class HardwareEventPartialDict(BaseEventDict):
@@ -124,7 +132,7 @@ class HardwareEventMoyuDict(BaseEventDict):
     hardware_version: str
     software_version: str
     gyroscope_enabled: bool
-    gyroscope_support: bool
+    gyroscope_ready: bool
     gyroscope_supported: bool
     serial: int
 
@@ -133,6 +141,7 @@ class BatteryEventDict(BaseEventDict):
     """Battery level event payload."""
 
     level: int
+    charging_state: int
 
 
 class DisconnectEventDict(BaseEventDict):
@@ -143,7 +152,7 @@ class GyroConfigEventDict(BaseEventDict):
     """Gyro configuration event payload (Moyu)."""
 
     gyroscope_enabled: bool
-    gyroscope_support: bool
+    gyroscope_ready: bool
     gyroscope_supported: bool
 
 

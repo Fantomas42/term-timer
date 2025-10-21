@@ -1,17 +1,26 @@
 import asyncio
+import json
 import logging
 import logging.config
 import sys
 import threading
 from argparse import Namespace
 from contextlib import suppress
+from pathlib import Path
 from pprint import pformat
+from typing import Any
 from typing import cast
 
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.timing import untime_moves
+from cubing_algs.transform.translate import translate_moves
+from cubing_algs.transform.translate import translate_pov_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
+from term_timer.arguments import ORIENTATIONS_SORTED
+from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.types import BatteryEventDict
 from term_timer.bluetooth.types import EventDict
@@ -20,13 +29,20 @@ from term_timer.bluetooth.types import GyroEventDict
 from term_timer.bluetooth.types import HardwareEventDict
 from term_timer.bluetooth.types import MoveEventDict
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.config import ROTATION_THRESHOLD
+from term_timer.config import USE_GYROSCOPE
+from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.constants import SECOND
 from term_timer.exceptions import CubeNotFoundError
+from term_timer.formatter import format_alg_moves
+from term_timer.formatter import format_alg_triggers
+from term_timer.interface.console import console
 from term_timer.logger import LOGGING_DIR
 from term_timer.opengl.thread import CubeGLThread
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
-from term_timer.transform import reorient_moves
+from term_timer.triggers import DEFAULT_TRIGGERS
 
 logger = logging.getLogger(__name__)
 
@@ -77,31 +93,126 @@ LOGGING_CONF = {
 }
 
 
-def print_cube(cube: VCube) -> None:
-    cube.show(
-        orientation=CUBE_ORIENTATION,
-        mode='linear',
-        facelet='compact',
+def show_cube(cube: VCube) -> None:
+    logger.info(
+        'Virtual Cube:\n%s',
+        cube.display(
+            mode='linear',
+            facelet='compact',
+        )[:-1],
     )
+
+
+def show_state(raw_moves: list[str], orientation_moves: Algorithm,
+               cube: VCube | None) -> None:
+    if not raw_moves:
+        if cube:
+            cube_rotated = cube.copy()
+            cube_rotated.rotate(orientation_moves)
+            show_cube(cube_rotated)
+        return
+
+    algo = parse_moves(raw_moves)
+    algo_translated = translate_moves(orientation_moves)(algo)
+
+    algo_timed_reformatted = ''
+    first_time = algo[0].timed
+    for move in algo:
+        algo_timed_reformatted += (
+            f'{ move.untimed }@{ move.timed - first_time } '
+        )
+    algo_timed_reformatted = algo_timed_reformatted.strip()
+
+    moves = format_alg_moves(
+        algo_timed_reformatted,
+    )
+
+    recon = format_alg_triggers(
+        format_alg_moves(
+            str(
+                prettify_moves(
+                    humanize_moves(
+                        algo_translated,
+                    ),
+                ),
+            ),
+        ),
+        DEFAULT_TRIGGERS,
+    )
+
+    with console.capture() as capture:
+        console.print(moves, end='')
+    moves = capture.get()
+
+    logger.info('MOVES: %s', moves)
+
+    with console.capture() as capture:
+        console.print(recon, end='')
+    recon = capture.get()
+
+    logger.info('RECON: %s', recon)
+
+    if cube:
+        cube_rotated = cube.copy()
+        cube_rotated.rotate(orientation_moves)
+        cube_rotated.rotate(
+            algo_translated.transform(
+                untime_moves,
+                translate_pov_moves,
+            ),
+        )
+        show_cube(cube_rotated)
+
+
+def check_state(raw_moves: list[str], facelets: str,
+                cube: VCube) -> bool:
+    algo = parse_moves(raw_moves)
+
+    cube_rotated = cube.copy()
+    cube_rotated.rotate(
+        algo.transform(
+            untime_moves,
+            translate_pov_moves,
+        ),
+    )
+
+    if cube_rotated.state != facelets:
+        logger.warning('FACELETS DESYNCHRONISED !')
+        logger.debug('MEM: %s', cube_rotated.state)
+        logger.debug('BLE: %s', facelets)
+        return False
+
+    return True
 
 
 async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                       cube_ready: threading.Event,
                       gl_thread: CubeGLThread | None,
                       event_collector: list[EventDict],
-                      *, show_cube: bool) -> None:
+                      *, show_cube: bool,
+                      orientation_faces: str,
+                      rotation_threshold: float = 70.0) -> None:
     virtual_cube: VCube | None = None
     moves: list[str] = []
     hardware = ''
     battery = ''
 
-    orientation_moves = get_orientation_moves(CUBE_ORIENTATION)
+    rotation_detector: RotationDetector | None = None
+    orientation_moves = get_orientation_moves(orientation_faces)
 
     logger.info(
-        'CONSUMER: Use "%s" as orientation and "%s" as rotation moves',
-        CUBE_ORIENTATION,
+        'CONSUMER: Use "%s" as orientation faces and "%s" as orientation moves',
+        orientation_faces,
         str(orientation_moves),
     )
+    if USE_GYROSCOPE:
+        rotation_detector = RotationDetector(
+            rotation_threshold=rotation_threshold,
+        )
+        logger.info(
+            'CONSUMER: Use %.1f° threshold for rotation detection',
+            rotation_threshold,
+        )
 
     while True:
         events = await queue.get()
@@ -117,6 +228,8 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
         for event in events:
             event_collector.append(event)
             event_name = event['event']
+            time = int(event['clock'] / MS_TO_NS_FACTOR)
+
             if event_name == 'hardware':
                 event = cast(HardwareEventDict, event)
                 logger.info(
@@ -140,22 +253,14 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
             elif event_name == 'battery':
                 event = cast(BatteryEventDict, event)
                 logger.info(
-                    'CONSUMER: Battery: %s%%',
+                    'CONSUMER: Battery: %s%%%s',
                     event['level'],
+                    ' (charging)' if event['charging_state'] else '',
                 )
-                battery = f'{ event["level"]}%'
+                battery = f'{ event["level"] }%'
                 if gl_thread and gl_thread.is_alive():
                     gl_thread.set_title(f'{ hardware } { battery }')
 
-            elif event_name == 'gyro':
-                event = cast(GyroEventDict, event)
-                logger.info(
-                    'CONSUMER: Gyroscope event',
-                )
-                if gl_thread and gl_thread.is_alive():
-                    gl_thread.add_quaternion(
-                        event['quaternion'],
-                    )
             elif event_name == 'facelets':
                 event = cast(FaceletsEventDict, event)
                 logger.info(
@@ -166,13 +271,36 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     cube_ready.set()
 
                 if virtual_cube:
-                    if virtual_cube.state != event['facelets']:
-                        logger.warning('FACELETS DESYNCHRONISED')
-                else:
+                    check_state(
+                        moves, event['facelets'],
+                        virtual_cube,
+                    )
+                elif show_cube:
                     virtual_cube = VCube(event['facelets'])
 
-                if show_cube:
-                    print_cube(virtual_cube)
+                    show_state(moves, orientation_moves, virtual_cube)
+
+            elif event_name == 'gyro' and rotation_detector:
+                event = cast(GyroEventDict, event)
+
+                rotation_result = rotation_detector.process_gyro_event(
+                    event['quaternion'],
+                )
+
+                if rotation_result:
+                    logger.info(
+                        'CONSUMER: Rotation: %s, Angle: %.1f°',
+                        rotation_result['rotation'],
+                        rotation_result['angle_deg'],
+                    )
+                    moves.append(f"{ rotation_result['rotation'] }@{ time }")
+
+                    show_state(moves, orientation_moves, virtual_cube)
+
+                if gl_thread and gl_thread.is_alive():
+                    gl_thread.add_quaternion(
+                        event['quaternion'],
+                    )
 
             elif event_name == 'move':
                 event = cast(MoveEventDict, event)
@@ -182,30 +310,14 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     event['direction'],
                     event['move'],
                 )
-                moves.append(event['move'])
+                moves.append(f"{ event['move'] }@{ time }")
 
-                if virtual_cube:
-                    virtual_cube.rotate(event['move'])
-                    if show_cube:
-                        print_cube(virtual_cube)
+                show_state(moves, orientation_moves, virtual_cube)
 
                 if gl_thread and gl_thread.is_alive():
                     direction = 3 if "'" in event['move'] else 1
                     face = event['move'][0]
                     gl_thread.add_move(face, direction)
-
-                algo = parse_moves(moves)
-                recon = prettify_moves(
-                    humanize_moves(
-                        reorient_moves(
-                            orientation_moves,
-                            algo,
-                        ),
-                    ),
-                )
-
-                logger.info('MOVES: %s', algo)
-                logger.info('RECON: %s', recon)
 
             else:
                 logger.info(
@@ -214,23 +326,17 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                 )
 
 
-async def client_cb(queue: asyncio.Queue[list[EventDict] | None], time: int, *,
-                    use_opengl: bool,
+async def client_cb(queue: asyncio.Queue[list[EventDict] | None],
+                    time: int, filter_name: str, *,
                     cube_reset: bool,
                     gyroscope_enable: bool,
                     gyroscope_disable: bool) -> None:
     bluetooth_interface = BluetoothInterface(queue)
 
-    await bluetooth_interface.__aenter__()  # noqa: PLC2801
+    await bluetooth_interface.__aenter__(filter_name=filter_name)
 
-    if use_opengl:
-        assert bluetooth_interface is not None  # noqa: S101
-        assert bluetooth_interface.driver is not None  # noqa: S101
-
-        bluetooth_interface.driver.disable_gyro = False
-
-    await bluetooth_interface.send_command('REQUEST_HARDWARE')
     await bluetooth_interface.send_command('REQUEST_FACELETS')
+    await bluetooth_interface.send_command('REQUEST_HARDWARE')
     await bluetooth_interface.send_command('REQUEST_BATTERY')
 
     if gyroscope_disable:
@@ -246,6 +352,70 @@ async def client_cb(queue: asyncio.Queue[list[EventDict] | None], time: int, *,
 
     await bluetooth_interface.__aexit__(None, None, None)
     logger.warning('Interface disconnected')
+
+
+def replay(options: Namespace) -> None:
+    file_path = Path(options.input).resolve()
+    with file_path.open(encoding='utf-8') as f:
+        events = json.load(f)
+
+    virtual_cube: VCube | None = None
+
+    show_cube = options.show_cube
+    orientation_moves = get_orientation_moves(options.orientation)
+    rotation_detector = RotationDetector(
+        rotation_threshold=options.rotation_threshold,
+    )
+
+    logger.info(
+        'REPLAY: Use "%s" as orientation faces and "%s" as orientation moves',
+        options.orientation,
+        str(orientation_moves),
+    )
+    logger.info(
+        'REPLAY: Use %.1f° threshold for rotation detection',
+        options.rotation_threshold,
+    )
+
+    moves: list[str] = []
+
+    if show_cube:
+        virtual_cube = VCube()
+
+        show_state(moves, orientation_moves, virtual_cube)
+
+    for event in events:
+        event_name = event['event']
+        time = int(event['clock'] / MS_TO_NS_FACTOR)
+
+        if event_name == 'gyro':
+            event = cast(GyroEventDict, event)
+
+            rotation_result = rotation_detector.process_gyro_event(
+                event['quaternion'],
+            )
+
+            if rotation_result:
+                logger.info(
+                    'REPLAY: Rotation: %s, Angle: %.1f°',
+                    rotation_result['rotation'],
+                    rotation_result['angle_deg'],
+                )
+                moves.append(f"{ rotation_result['rotation'] }@{ time }")
+
+                show_state(moves, orientation_moves, virtual_cube)
+
+        elif event_name == 'move':
+            event = cast(MoveEventDict, event)
+            logger.info(
+                'REPLAY: Face: %s, Direction: %s, Move: %s',
+                event['face'],
+                event['direction'],
+                event['move'],
+            )
+            moves.append(f"{ event['move'] }@{ time }")
+
+            show_state(moves, orientation_moves, virtual_cube)
 
 
 def linear_regression(x_values: list[float],
@@ -279,44 +449,75 @@ def linear_regression(x_values: list[float],
     return (slope, intercept)
 
 
-def resume(events: list[EventDict]) -> None:
+def resume(events: list[EventDict], output: str) -> None:
     cube_timestamps: list[float] = []
     local_timestamps: list[float] = []
+    gyro_clocks: list[int] = []
+
+    replay = []
 
     for event in events:
-        if event['event'] != 'move':
-            continue
+        data: dict[str, Any] = {}
 
-        event = cast(MoveEventDict, event)
-        if event['cube_timestamp'] is None or event['local_timestamp'] is None:
-            continue
+        if event['event'] == 'move':
+            event = cast(MoveEventDict, event)
+            if (
+                event['cube_timestamp'] is None
+                or event['local_timestamp'] is None
+            ):
+                continue
 
-        cube_timestamps.append(
-            event['cube_timestamp'],
+            cube_timestamps.append(
+                event['cube_timestamp'],
+            )
+            local_timestamps.append(
+                event['local_timestamp'].timestamp() * 1000,
+            )
+
+            data.update(event)
+            data['timestamp'] = data['timestamp'].timestamp()
+            data['local_timestamp'] = data['local_timestamp'].timestamp()
+            replay.append(data)
+
+        elif event['event'] == 'gyro':
+            event = cast(GyroEventDict, event)
+            gyro_clocks.append(event['clock'])
+
+            data.update(event)
+            data['timestamp'] = data['timestamp'].timestamp()
+            replay.append(data)
+
+    if len(cube_timestamps) > 2:
+        # Linear regression: local_timestamps vs cube_timestamps
+        # This gives us the mapping from cube time to local time
+        # slope ≈ 1.0 means clocks run at same rate
+        # If slope > 1.0, cube clock is slower than local clock
+        # If slope < 1.0, cube clock is faster than local clock
+        slope, _intercept = linear_regression(
+            cube_timestamps,
+            local_timestamps,
         )
-        local_timestamps.append(
-            event['local_timestamp'].timestamp() * 1000,
-        )
 
-    if len(cube_timestamps) < 2:
-        return
+        skew_percent = (slope - 1) * 100
+        logger.info('Clock skew: %.4f%%', skew_percent)
+        logger.info('Slope: %.6f (1.0 = perfect sync)', slope)
 
-    # Linear regression: local_timestamps vs cube_timestamps
-    # This gives us the mapping from cube time to local time
-    # slope ≈ 1.0 means clocks run at same rate
-    # If slope > 1.0, cube clock is slower than local clock
-    # If slope < 1.0, cube clock is faster than local clock
-    slope, _intercept = linear_regression(
-        cube_timestamps,
-        local_timestamps,
-    )
+    if len(gyro_clocks) > 2:
+        duration = gyro_clocks[-1] - gyro_clocks[0]
+        frequency = len(gyro_clocks) / (duration / SECOND)
+        logger.info('Gyro frequency: %.4fHz', frequency)
 
-    skew_percent = (slope - 1) * 100
-    logger.info('Clock skew: %.4f%%', skew_percent)
-    logger.info('Slope: %.6f (1.0 = perfect sync)', slope)
+    if output:
+        output_path = Path(output).resolve()
+        with output_path.open('w', encoding='utf-8') as f:
+            json.dump(replay, f, indent=2)
 
 
 async def run(options: Namespace) -> None:
+    if options.input:
+        replay(options)
+        return
+
     event_collector: list[EventDict] = []
     queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
     cube_ready = threading.Event()
@@ -326,15 +527,21 @@ async def run(options: Namespace) -> None:
         gl_thread = CubeGLThread(cube_ready, 800, 600, daemon=True)
 
     client = client_cb(
-        queue, options.time,
-        use_opengl=options.use_opengl,
+        queue,
+        options.time,
+        options.filter_name,
         cube_reset=options.cube_reset,
         gyroscope_enable=options.gyroscope_enable,
         gyroscope_disable=options.gyroscope_disable,
     )
     consumer = consumer_cb(
-        queue, cube_ready, gl_thread, event_collector,
+        queue,
+        cube_ready,
+        gl_thread,
+        event_collector,
         show_cube=options.show_cube,
+        orientation_faces=options.orientation,
+        rotation_threshold=options.rotation_threshold,
     )
 
     try:
@@ -350,7 +557,7 @@ async def run(options: Namespace) -> None:
             gl_thread.stop()
             gl_thread.join(timeout=2)
 
-    resume(event_collector)
+    resume(event_collector, options.output)
 
     logger.info('Bye bye')
 
@@ -373,11 +580,39 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        '-f', '--filter-name',
+        type=str,
+        metavar='FILTER',
+        help='Filter device name to connect',
+    )
+    parser.add_argument(
+        '-i', '--input',
+        type=str,
+        metavar='EVENTS_FILE',
+        help='Input events file to replay (optional).',
+    )
+    parser.add_argument(
+        '-r', '--output',
+        type=str,
+        metavar='EVENTS_FILE',
+        help='Output events file (optional).',
+    )
+    parser.add_argument(
         '-p', '--show-cube',
         action='store_true',
         help=(
             'Display the cube state.\n'
             'Default: False.'
+        ),
+    )
+    parser.add_argument(
+        '-o', '--orientation',
+        default=CUBE_ORIENTATION,
+        choices=ORIENTATIONS_SORTED,
+        metavar='ORIENTATION',
+        help=(
+            'Set the cube orientation used.\n'
+            f'Default: { CUBE_ORIENTATION }.'
         ),
     )
     parser.add_argument(
@@ -410,6 +645,16 @@ def main() -> None:
         help=(
             'Disable the gyroscope of the cube.\n'
             'Default: False.'
+        ),
+    )
+    parser.add_argument(
+        '--rotation-threshold',
+        type=float,
+        default=ROTATION_THRESHOLD,
+        metavar='DEGREES',
+        help=(
+            'Rotation detection threshold in degrees.\n'
+            f'Default: { ROTATION_THRESHOLD }.'
         ),
     )
 

@@ -2,14 +2,13 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.transform.degrip import degrip_full_moves
+from cubing_algs.move import Move
 from cubing_algs.transform.size import compress_moves
-from cubing_algs.transform.slice import reslice_timed_moves
 from cubing_algs.transform.timing import untime_moves
 from cubing_algs.vcube import VCube
 from rich.console import Console as RichConsole
 
-from term_timer.constants import RESLICE_THRESHOLD
+from term_timer.transform import humanize_moves
 
 
 class Scrambler:
@@ -46,11 +45,14 @@ class Scrambler:
 
         self.scramble_completed_event = asyncio.Event()
 
-    def handle_scrambled(self, timed_move: str) -> None:
+    def handle_scrambled(self, timed_move: Move) -> None:
         """
         Handle a scramble move from the bluetooth cube.
         """
-        self.scrambled += timed_move
+        if not self.scrambled and timed_move.is_rotation_move:
+            return
+
+        self.scrambled.append(timed_move)
 
         if (
                 self.bluetooth_cube
@@ -70,15 +72,13 @@ class Scrambler:
 
             algo = self.reorient(
                 self.scrambled.transform(
-                    reslice_timed_moves(RESLICE_THRESHOLD),
-                    degrip_full_moves,
+                    humanize_moves,
                     compress_moves,
                     untime_moves,
                 ),
             )
             p_algo = self.scrambled[:-1].transform(
-                reslice_timed_moves(RESLICE_THRESHOLD),
-                degrip_full_moves,
+                humanize_moves,
                 compress_moves,
             )
 

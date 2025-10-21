@@ -474,7 +474,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 facelets_event = cast(FaceletsEventDict, event)
                 self.assertEqual(facelets_event['serial'], 50)
                 self.assertEqual(self.driver.serial, 50)
-                self.assertEqual(self.driver.last_serial, 50)
+                self.assertEqual(self.driver.last_serial, 1)
 
     @patch('term_timer.bluetooth.drivers.gan_gen3.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.gan_gen3.datetime')
@@ -613,7 +613,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start: int, length: int) -> int:
+                def mock_get_bit_word(start: int, length: int, *,
+                                      little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0x55  # magic
                     if start == 8 and length == 8:

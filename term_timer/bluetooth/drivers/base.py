@@ -6,6 +6,7 @@ from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.types import EventDict
+from term_timer.config import USE_GYROSCOPE
 
 
 class Driver:
@@ -13,7 +14,7 @@ class Driver:
     state_characteristic_uid: ClassVar[str] = ''
     command_characteristic_uid: ClassVar[str] = ''
 
-    disable_gyro: bool = True
+    use_gyroscope: bool = USE_GYROSCOPE
 
     def __init__(self, client: BleakClient) -> None:
         self.client: BleakClient = client

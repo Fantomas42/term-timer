@@ -2,7 +2,7 @@ import unittest
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.rotation import remove_final_rotations
+from cubing_algs.transform.rotation import remove_ending_rotations
 
 from term_timer.orientation import get_orientation_faces
 
@@ -70,7 +70,7 @@ class TestAutoRotation(unittest.TestCase):
             """,
         ).transform(
             degrip_full_moves,
-            remove_final_rotations,
+            remove_ending_rotations,
         )
 
         self.assertEqual(
@@ -94,7 +94,7 @@ class TestAutoRotation(unittest.TestCase):
             """,
         ).transform(
             degrip_full_moves,
-            remove_final_rotations,
+            remove_ending_rotations,
         )
 
         self.assertEqual(

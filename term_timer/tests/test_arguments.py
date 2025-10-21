@@ -25,7 +25,7 @@ class TestCommandAliases(unittest.TestCase):
     def test_command_aliases_structure(self) -> None:
         expected_commands = {
             'solve', 'list', 'stats', 'graph', 'cfop', 'detail',
-            'import', 'serve', 'train', 'edit', 'delete',
+            'import', 'serve', 'train', 'edit', 'delete', 'index',
         }
         self.assertEqual(set(COMMAND_ALIASES.keys()), expected_commands)
 

@@ -102,7 +102,7 @@ class GanGen2Driver(Driver):
         event = msg.get_bit_word(0, 4)
 
         if event == 0x01:  # Gyroscope
-            if self.disable_gyro:
+            if not self.use_gyroscope:
                 return []
 
             # Orientation Quaternion
@@ -132,8 +132,37 @@ class GanGen2Driver(Driver):
                     'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
                 },
             }
-
             self.add_event(events, gyro_payload)
+
+            # Second Orientation Quaternion
+            qw = msg.get_bit_word(4 + 76, 16)
+            qx = msg.get_bit_word(20 + 76, 16)
+            qy = msg.get_bit_word(36 + 76, 16)
+            qz = msg.get_bit_word(52 + 76, 16)
+
+            # Second Angular Velocity
+            vx = msg.get_bit_word(68 + 76, 4)
+            vy = msg.get_bit_word(72 + 76, 4)
+            vz = msg.get_bit_word(76 + 76, 4)
+
+            second_gyro_payload: GyroEventDict = {
+                'event': 'gyro',
+                'clock': clock,
+                'timestamp': timestamp,
+                'quaternion': {
+                    'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
+                    'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
+                    'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
+                    'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
+                },
+                'velocity': {
+                    'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
+                    'y': (1 - (vy >> 3) * 2) * (vy & 0x7),
+                    'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
+                },
+            }
+
+            self.add_event(events, second_gyro_payload)
 
         elif event == 0x02:  # Moves
             if self.last_serial == -1:  # Block moves until facelets received
@@ -221,34 +250,47 @@ class GanGen2Driver(Driver):
             self.add_event(events, facelets_payload)
 
         elif event == 0x05:  # Hardware
+            restart_no_power = msg.get_bit_word(4, 4)
+
             hw_major = msg.get_bit_word(8, 8)
             hw_minor = msg.get_bit_word(16, 8)
+
             sw_major = msg.get_bit_word(24, 8)
             sw_minor = msg.get_bit_word(32, 8)
-            gyro_supported = msg.get_bit_word(104, 1)
 
             hardware_name = ''
             for i in range(8):
                 hardware_name += chr(msg.get_bit_word(i * 8 + 40, 8))
 
+            gyro_enabled = msg.get_bit_word(104, 1)
+            gyro_ready = msg.get_bit_word(105, 1)
+
             hardware_payload: HardwareEventDict = {
                 'event': 'hardware',
                 'clock': clock,
                 'timestamp': timestamp,
+                'restart_no_power': restart_no_power,
                 'hardware_name': hardware_name,
                 'hardware_version': f'{ hw_major }.{ hw_minor }',
                 'software_version': f'{ sw_major }.{ sw_minor }',
-                'gyroscope_supported': bool(gyro_supported),
+                'gyroscope_enabled': bool(gyro_enabled),
+                'gyroscope_ready': bool(gyro_ready),
+                'gyroscope_supported': (
+                    bool(gyro_enabled)
+                    and bool(gyro_ready)
+                ),
             }
             self.add_event(events, hardware_payload)
 
         elif event == 0x09:  # Battery
+            charging_state = msg.get_bit_word(4, 4)
             battery_level = msg.get_bit_word(8, 8)
 
             battery_payload: BatteryEventDict = {
                 'event': 'battery',
                 'clock': clock,
                 'timestamp': timestamp,
+                'charging_state': charging_state,
                 'level': min(battery_level, 100),
             }
             self.add_event(events, battery_payload)

@@ -15,6 +15,7 @@ from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.drivers.gan_gen4 import GanGen4Driver
 from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
 from term_timer.bluetooth.types import EventDict
+from term_timer.config import DEBUG
 from term_timer.exceptions import CubeNotFoundError
 
 logger = logging.getLogger(__name__)
@@ -37,10 +38,13 @@ class BluetoothInterface:
     def __init__(self, queue: Queue[list[EventDict] | None]) -> None:
         self.queue: Queue[list[EventDict] | None] = queue
 
-    async def __aenter__(self, address: str | None = None,
-                         ) -> 'BluetoothInterface':
+    async def __aenter__(
+            self,
+            address: str | None = None,
+            filter_name: str | None = None,
+    ) -> 'BluetoothInterface':
         if not address:
-            device = await self.scan()
+            device = await self.scan(filter_name)
 
             if not device:
                 logger.debug(
@@ -102,8 +106,9 @@ class BluetoothInterface:
         assert self.driver is not None  # noqa: S101
         events = await self.driver.event_handler(sender, data)
 
-        for event in events:
-            logger.debug('Event: %s', event['event'].upper())
+        if DEBUG:
+            for event in events:
+                logger.debug('Event: %s', event['event'].upper())
         await self.queue.put(events)
 
     async def send_command(self, command: str) -> bool:
@@ -129,7 +134,7 @@ class BluetoothInterface:
 
         return True
 
-    async def scan(self) -> BLEDevice | None:
+    async def scan(self, filter_name: str | None = None) -> BLEDevice | None:
         logger.debug(
             'Scanning for cube during %ss...',
             self.scan_timeout,
@@ -148,7 +153,7 @@ class BluetoothInterface:
             logger.debug(' * %s %s', device, name)
 
             for prefix in PREFIX:
-                if prefix in name:
+                if prefix in name and (not filter_name or filter_name in name):
                     logger.debug(
                         'Found %s cube: %s (%s)',
                         prefix, device.name, device.address,

@@ -1,9 +1,9 @@
 from functools import cached_property
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.transform.translate import translate_moves
 
 from term_timer.orientation import get_orientation_moves
-from term_timer.transform import reorient_moves
 
 
 class Orienter:
@@ -27,4 +27,4 @@ class Orienter:
         """
         Reorient an algorithm based on the current cube orientation.
         """
-        return reorient_moves(self.cube_orientation_moves, algorithm)
+        return translate_moves(self.cube_orientation_moves)(algorithm)
