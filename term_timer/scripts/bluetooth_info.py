@@ -30,6 +30,7 @@ from term_timer.bluetooth.types import HardwareEventDict
 from term_timer.bluetooth.types import MoveEventDict
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import ROTATION_THRESHOLD
+from term_timer.config import USE_GYROSCOPE
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 from term_timer.exceptions import CubeNotFoundError
@@ -196,22 +197,22 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
     hardware = ''
     battery = ''
 
+    rotation_detector: RotationDetector | None = None
     orientation_moves = get_orientation_moves(orientation_faces)
-
-    # Initialize rotation detector
-    rotation_detector = RotationDetector(
-        rotation_threshold=rotation_threshold,
-    )
 
     logger.info(
         'CONSUMER: Use "%s" as orientation faces and "%s" as orientation moves',
         orientation_faces,
         str(orientation_moves),
     )
-    logger.info(
-        'CONSUMER: Use %.1f° threshold for rotation detection',
-        rotation_threshold,
-    )
+    if USE_GYROSCOPE:
+        rotation_detector = RotationDetector(
+            rotation_threshold=rotation_threshold,
+        )
+        logger.info(
+            'CONSUMER: Use %.1f° threshold for rotation detection',
+            rotation_threshold,
+        )
 
     while True:
         events = await queue.get()
@@ -279,7 +280,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
 
                     show_state(moves, orientation_moves, virtual_cube)
 
-            elif event_name == 'gyro':
+            elif event_name == 'gyro' and rotation_detector:
                 event = cast(GyroEventDict, event)
 
                 rotation_result = rotation_detector.process_gyro_event(
