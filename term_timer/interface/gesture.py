@@ -3,7 +3,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.parsing import parse_moves
+from cubing_algs.move import Move
 
 from term_timer.transform import humanize_moves
 
@@ -26,11 +26,11 @@ class Gesture:
         self.save_gesture = ''
         self.save_gesture_event = asyncio.Event()
 
-    def handle_save_gestures(self, move_raw: str) -> None:
+    def handle_save_gestures(self, timed_move: Move) -> None:
         """
         Detect and handle save gestures from cube movements.
         """
-        move = self.reorient(parse_moves(move_raw))
+        move = self.reorient(Algorithm([timed_move]))
 
         self.save_moves += move
 

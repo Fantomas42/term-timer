@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from typing import TypedDict
 from typing import cast
 
+from cubing_algs.move import Move
 from cubing_algs.vcube import VCube
 from rich.console import Console as RichConsole
 
@@ -54,9 +55,9 @@ class Bluetooth:
         # Methods from Terminal mixin
         def clear_line(self, *, full: bool) -> None: ...
         # Methods from Scrambler mixin
-        def handle_scrambled(self, timed_move: str) -> None: ...
+        def handle_scrambled(self, timed_move: Move) -> None: ...
         # Methods from Gesture mixin
-        def handle_save_gestures(self, move: str) -> None: ...
+        def handle_save_gestures(self, move: Move) -> None: ...
 
     def __init__(self) -> None:
         super().__init__()
@@ -316,7 +317,7 @@ class Bluetooth:
         clock = event['clock']
         rotation = event['event'] == 'rotation'
 
-        timed_move = f'{ move }@{ int(clock / MS_TO_NS_FACTOR) }'
+        timed_move = Move(f'{ move }@{ int(clock / MS_TO_NS_FACTOR) }')
 
         if self.state in {'start', 'scrambling'}:
             self.handle_scrambled(timed_move)
