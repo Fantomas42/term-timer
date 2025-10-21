@@ -16,6 +16,7 @@ from term_timer.in_out import load_solves
 from term_timer.interface.console import console
 from term_timer.interface.terminal import Terminal
 from term_timer.logger import configure_logging
+from term_timer.manage import SessionManager
 from term_timer.manage import SolveManager
 from term_timer.server.app import Server
 from term_timer.stats import StatisticsReporter
@@ -191,16 +192,21 @@ def tools(command: str, options: Namespace) -> int:
 
 
 def manage(command: str, options: Namespace) -> int:
+    if command == 'index':
+        session_manager = SessionManager()
+        session_manager.index()
+        return 0
+
     cube = options.cube
 
     if command == 'edit':
         for solve_id in options.solves:
-            manager = SolveManager(cube, options.session, solve_id)
-            manager.update(options.flag)
+            solve_manager = SolveManager(cube, options.session, solve_id)
+            solve_manager.update(options.flag)
 
     if command == 'delete':
-        manager = SolveManager(cube, options.session, options.solve)
-        manager.delete()
+        solve_manager = SolveManager(cube, options.session, options.solve)
+        solve_manager.delete()
 
     return 0
 
@@ -221,7 +227,7 @@ def main() -> int:
         if command == 'serve':
             Server().run_server(options.host, options.port, debug=DEBUG)
             return 0
-        if command in {'edit', 'delete'}:
+        if command in {'edit', 'delete', 'index'}:
             return manage(command, options)
         return tools(command, options)
 

@@ -1,10 +1,16 @@
+from rich import box
+from rich.table import Table
+
+from term_timer.constants import CUBE_SIZES
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.formatter import format_time
+from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
 from term_timer.in_out import save_solves
 from term_timer.interface.console import console
 from term_timer.solve import Solve
+from term_timer.stats import Statistics
 
 
 class SolveManager:
@@ -107,3 +113,51 @@ class SolveManager:
                 f'Solve #{ self.solve_id } untouched',
                 style='caution',
             )
+
+
+class SessionManager:
+
+    def index(self) -> None:
+        sessions: dict[int, dict[str, list[Solve]]] = {}
+
+        for cube in CUBE_SIZES:
+            solves = load_all_solves(cube, [], [], [])
+            sessions[cube] = {}
+            for solve in solves:
+                sessions[cube].setdefault(
+                    solve.session, [],
+                ).append(
+                    solve,
+                )
+
+        for cube, session_solves in sessions.items():
+            if not session_solves:
+                continue
+
+            table = Table(
+                title=f'Cube { cube }x{ cube }x{ cube }',
+                box=box.SIMPLE,
+            )
+            table.add_column('Name', width=30)
+            table.add_column('Total', width=5, justify='right')
+            table.add_column('Last solve', width=16)
+            table.add_column('Best', width=10)
+
+            names = sorted(session_solves.keys())
+
+            for name in names:
+                session = session_solves[name]
+                stats = Statistics(session)
+                last_solve_date = (
+                    session[-1].datetime.astimezone().strftime(
+                        '%Y-%m-%d %H:%M',
+                    )
+                )
+
+                table.add_row(
+                    f'[stats]{ name }[/stats] ',
+                    f'[result]{ len(session_solves[name]) }[/result]',
+                    f'[date]{ last_solve_date }[/date]',
+                    f'[time]{ format_time(stats.best) }[/time]',
+                )
+            console.print(table)

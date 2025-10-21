@@ -29,6 +29,7 @@ COMMAND_ALIASES: dict[str, list[str]] = {
     'train': ['tr', 'w'],
     'edit': ['ed', 'e'],
     'delete': ['rm', 'r'],
+    'index': ['ix', 'x'],
 }
 
 COMMAND_RESOLUTIONS: dict[str, str] = {}
@@ -438,6 +439,17 @@ def list_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     return parser
 
 
+def index_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    parser = subparsers.add_parser(
+        'index',
+        help='List sessions',
+        description='Display the list of existing sessions.',
+        aliases=COMMAND_ALIASES['index'],
+    )
+
+    return parser  # noqa: RET504
+
+
 def statistics_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     parser = subparsers.add_parser(
         'stats',
@@ -785,6 +797,7 @@ def get_arguments() -> Namespace:
     edit_arguments(subparsers)
     delete_arguments(subparsers)
     list_arguments(subparsers)
+    index_arguments(subparsers)
     statistics_arguments(subparsers)
     graph_arguments(subparsers)
     cfop_arguments(subparsers)

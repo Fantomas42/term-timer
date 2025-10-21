@@ -449,6 +449,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.transition_missed_moves = 2
         mock_solve.execution_pauses = 2
         mock_solve.aufs = 3
+        mock_solve.rotations = 0
 
         reporter = StatisticsReporter(3, [mock_solve])
 
@@ -534,6 +535,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
                 mock_solve.transition_missed_moves = 0
                 mock_solve.execution_pauses = 0
                 mock_solve.aufs = aufs_count
+                mock_solve.rotations = 0
 
                 reporter = StatisticsReporter(3, [mock_solve])
 
@@ -603,6 +605,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.transition_missed_moves = 0
         mock_solve.execution_pauses = 0
         mock_solve.aufs = 1
+        mock_solve.rotations = 0
 
         # Mock links and method_line
         mock_solve.link_term_timer = 'http://term-timer.com'
@@ -677,6 +680,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.transition_missed_moves = 0
         mock_solve.execution_pauses = 0
         mock_solve.aufs = 1
+        mock_solve.rotations = 0
 
         # Mock graph methods
         mock_solve.time_graph = Mock()
