@@ -279,10 +279,16 @@ class Solve:
         else:
             pause_line = ' [success]No Pauses[/success]'
 
+        rotation_line = ''
+        if self.rotations:
+            pause_line = (
+                f' [caution]{ self.rotations } Rotations[/caution]'
+            )
+
         return (
             f'{ metric_string }'
             f'[tps]{ self.tps:.2f} TPS[/tps] '
-            f'{ missed_line }{ pause_line }{ grade_line }'
+            f'{ missed_line }{ pause_line }{ rotation_line }{ grade_line }'
         )
 
     @cached_property
@@ -314,10 +320,16 @@ class Solve:
                 f'[caution]{ self.execution_pauses } Pauses[/caution]'
             )
 
+        rotation_line = ''
+        if self.rotations:
+            pause_line = (
+                f' [caution]{ self.rotations } Rotations[/caution]'
+            )
+
         return (
             f'{ metric_string }'
             f'[tps]{ self.tps:.2f} TPS[/tps] '
-            f'{ missed_line }{ pause_line }'
+            f'{ missed_line }{ pause_line }{ rotation_line }'
         )
 
     @cached_property
@@ -682,6 +694,13 @@ class Solve:
         return pauses
 
     @cached_property
+    def rotations(self) -> int:
+        if not self.advanced:
+            return 0
+
+        return self.solution.metrics.rotations
+
+    @cached_property
     def score(self) -> float | None:
         if not self.method_applied:
             return None
@@ -691,6 +710,7 @@ class Solve:
         malus += self.execution_missed_moves
         malus += self.transition_missed_moves * 0.5
         malus += self.execution_pauses * 0.2
+        malus += self.rotations * 0.1
 
         final_score = self.method_applied.score - malus + bonus
 

@@ -707,6 +707,14 @@
             </div>
           </div>
         {% endif %}
+        {% if solve.rotations %}
+          <div class="stat-card">
+            <div class="stat-title">Rotations</div>
+            <div class="stat-value stat-{% if solve.rotations > 3 %}worst{% else %}warning{% endif %}">
+              {{ solve.rotations }}
+            </div>
+          </div>
+        {% endif %}
         {% if solve.aufs %}
           <div class="stat-card">
             <div class="stat-title">AUFs</div>
