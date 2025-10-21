@@ -4,11 +4,8 @@ from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
-from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.rotation import remove_final_rotations
-from cubing_algs.transform.slice import reslice_timed_moves
 
-from term_timer.constants import RESLICE_THRESHOLD
+from term_timer.transform import humanize_moves
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +38,7 @@ class Gesture:
             return
 
         algo = self.save_moves.transform(
-            reslice_timed_moves(RESLICE_THRESHOLD),
-            degrip_full_moves,
-            remove_final_rotations,
+            humanize_moves,
         )
 
         if len(algo) < 2:
