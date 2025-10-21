@@ -35,7 +35,7 @@ class TestMoveRotationDetector(unittest.TestCase):
             events = json.load(f)
 
         moves = []
-        rotation_detector = RotationDetector()
+        rotation_detector = RotationDetector(75.0)
 
         for event in events:
             event_name = event['event']
