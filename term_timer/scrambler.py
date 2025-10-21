@@ -6,7 +6,7 @@ from cubing_algs.scrambler import scramble
 from cubing_algs.scrambler import scramble_easy_cross
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.mirror import mirror_moves
-from cubing_algs.transform.rotation import compress_final_rotations
+from cubing_algs.transform.rotation import compress_ending_rotations
 from cubing_algs.vcube import VCube
 from kociemba import solve
 
@@ -104,5 +104,5 @@ def random_training(step: str, selected_cases: list[str],
 
     return case_name, parse_moves(main_algorithm), parse_moves(algo).transform(
         degrip_full_moves,
-        compress_final_rotations,
+        compress_ending_rotations,
     )
