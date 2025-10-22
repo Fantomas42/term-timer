@@ -513,18 +513,17 @@ def resume(events: list[EventDict], output: str) -> None:
             json.dump(replay, f, indent=2)
 
 
-async def run(options: Namespace) -> None:
+async def run(
+    options: Namespace,
+    gl_thread: CubeGLThread | None,
+    cube_ready: threading.Event,
+) -> None:
     if options.input:
         replay(options)
         return
 
     event_collector: list[EventDict] = []
     queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
-    cube_ready = threading.Event()
-
-    gl_thread = None
-    if options.use_opengl:
-        gl_thread = CubeGLThread(cube_ready, 800, 600, daemon=True)
 
     client = client_cb(
         queue,
@@ -546,9 +545,6 @@ async def run(options: Namespace) -> None:
 
     try:
         bluetooth_tasks = asyncio.gather(client, consumer)
-
-        if options.use_opengl and gl_thread:
-            gl_thread.start()
 
         with suppress(CubeNotFoundError):
             await bluetooth_tasks
@@ -660,4 +656,11 @@ def main() -> None:
 
     args = parser.parse_args(sys.argv[1:])
 
-    asyncio.run(run(args), debug=True)
+    # Create and start GL thread before async loop to avoid blocking warnings
+    gl_thread = None
+    cube_ready = threading.Event()
+    if args.use_opengl:
+        gl_thread = CubeGLThread(cube_ready, 800, 600, daemon=True)
+        gl_thread.start()
+
+    asyncio.run(run(args, gl_thread, cube_ready), debug=True)
