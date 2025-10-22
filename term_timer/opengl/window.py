@@ -1,9 +1,6 @@
 from collections.abc import Callable
-from os import environ
 from pathlib import Path
 from typing import TYPE_CHECKING
-
-environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
 import pygame
 from OpenGL.GL import GL_BGRA
