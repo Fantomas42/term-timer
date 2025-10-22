@@ -2,6 +2,11 @@ import logging
 import threading
 
 import pygame
+from OpenGL.GL import GL_MODELVIEW
+from OpenGL.GL import glMatrixMode
+from OpenGL.GL import glPopMatrix
+from OpenGL.GL import glPushMatrix
+from OpenGL.GL import glScalef
 
 from term_timer.bluetooth.types import QuaternionDict
 from term_timer.opengl.cube import Cube
@@ -42,6 +47,8 @@ class CubeGLThread(threading.Thread):
         self.last_quaternion: QuaternionDict | None = None
         self.has_new_quaternion = True
         self.font: pygame.font.Font | None = None
+        self.cube_scale = 0.0
+        self.is_animating_entrance = False
 
     def stop(self) -> None:
         self.running = False
@@ -64,13 +71,21 @@ class CubeGLThread(threading.Thread):
                 if self.cube_ready_event.wait(timeout=CUBE_READY_CHECK_TIMEOUT):
                     logger.info('Bluetooth connection established')
                     self.cube = Cube()
+                    self.is_animating_entrance = True
+                    self.cube_scale = 0.0
             else:
                 self.process_moves()
                 self.process_quaternion()
 
+                # Animate entrance if needed
+                if self.is_animating_entrance:
+                    self.cube_scale = min(1.0, self.cube_scale + 0.05)
+                    if self.cube_scale >= 1.0:
+                        self.is_animating_entrance = False
+
                 self.window.prepare()
                 if self.cube:
-                    render(self.cube)
+                    self.render_cube_with_scale()
                 self.window.update()
 
         self.window.quit()
@@ -112,3 +127,14 @@ class CubeGLThread(threading.Thread):
 
         if self.window:
             self.window.title_prefix = self.title
+
+    def render_cube_with_scale(self) -> None:
+        """Render the cube with current scale transformation."""
+        if not self.cube:
+            return
+
+        glMatrixMode(GL_MODELVIEW)
+        glPushMatrix()
+        glScalef(self.cube_scale, self.cube_scale, self.cube_scale)
+        render(self.cube)
+        glPopMatrix()
