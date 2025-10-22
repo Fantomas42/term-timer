@@ -185,7 +185,7 @@ class Window:
                 try:
                     f, args = self.events[event.type, event.key]
                 except KeyError:
-                    ...
+                    pass
                 else:
                     f(*args)
 

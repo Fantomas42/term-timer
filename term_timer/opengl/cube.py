@@ -1,5 +1,8 @@
 import math
 
+import numpy as np
+from numpy.typing import NDArray
+
 from term_timer.bluetooth.types import QuaternionDict
 from term_timer.opengl import renderer
 from term_timer.opengl.data import corner_orientations
@@ -18,11 +21,7 @@ class Cube:
         self.edges_orientations = [0] * 12
         self.corners_orientations = [0] * 8
 
-        self.rotation_matrix = [
-            [1.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0],
-            [0.0, 0.0, 1.0],
-        ]
+        self.rotation_matrix: NDArray[np.float64] = np.eye(3, dtype=np.float64)
 
     def __repr__(self) -> str:
         return (
@@ -62,69 +61,47 @@ class Cube:
                 self.move_corners(face)
                 self.move_edges(face)
 
-    def _rotation_matrix_x(self, angle_deg: float) -> list[list[float]]:
+    def _rotation_matrix_x(self, angle_deg: float) -> NDArray[np.float64]:
         angle_rad = math.radians(angle_deg)
         cos_a = math.cos(angle_rad)
         sin_a = math.sin(angle_rad)
-        return [
+        return np.array([
             [1.0, 0.0, 0.0],
             [0.0, cos_a, -sin_a],
             [0.0, sin_a, cos_a],
-        ]
+        ], dtype=np.float64)
 
-    def _rotation_matrix_y(self, angle_deg: float) -> list[list[float]]:
+    def _rotation_matrix_y(self, angle_deg: float) -> NDArray[np.float64]:
         angle_rad = math.radians(angle_deg)
         cos_a = math.cos(angle_rad)
         sin_a = math.sin(angle_rad)
-        return [
+        return np.array([
             [cos_a, 0.0, sin_a],
             [0.0, 1.0, 0.0],
             [-sin_a, 0.0, cos_a],
-        ]
+        ], dtype=np.float64)
 
-    def _rotation_matrix_z(self, angle_deg: float) -> list[list[float]]:
+    def _rotation_matrix_z(self, angle_deg: float) -> NDArray[np.float64]:
         angle_rad = math.radians(angle_deg)
         cos_a = math.cos(angle_rad)
         sin_a = math.sin(angle_rad)
-        return [
+        return np.array([
             [cos_a, -sin_a, 0.0],
             [sin_a, cos_a, 0.0],
             [0.0, 0.0, 1.0],
-        ]
-
-    def _matrix_multiply(
-        self,
-        a: list[list[float]],
-        b: list[list[float]],
-    ) -> list[list[float]]:
-        c = [
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0],
-        ]
-        for i in range(3):
-            for j in range(3):
-                for k in range(3):
-                    c[i][j] += a[i][k] * b[k][j]
-        return c
+        ], dtype=np.float64)
 
     def rotate_x(self, angle: float) -> None:
         rotation = self._rotation_matrix_x(-angle)
-        self.rotation_matrix = self._matrix_multiply(
-            rotation, self.rotation_matrix,
-        )
+        self.rotation_matrix = rotation @ self.rotation_matrix
 
     def rotate_y(self, angle: float) -> None:
         rotation = self._rotation_matrix_y(-angle)
-        self.rotation_matrix = self._matrix_multiply(
-            rotation, self.rotation_matrix,
-        )
+        self.rotation_matrix = rotation @ self.rotation_matrix
 
     def rotate_z(self, angle: float) -> None:
         rotation = self._rotation_matrix_z(-angle)
-        self.rotation_matrix = self._matrix_multiply(
-            rotation, self.rotation_matrix,
-        )
+        self.rotation_matrix = rotation @ self.rotation_matrix
 
     def get_euler_angles(self) -> tuple[float, float, float]:
         r = self.rotation_matrix
@@ -166,7 +143,7 @@ class Cube:
     def set_rotation_from_quaternion(self, q: QuaternionDict) -> None:
         qw, qx, qy, qz = q['w'], q['x'], q['z'], -q['y']
 
-        self.rotation_matrix = [
+        self.rotation_matrix = np.array([
             [
                 1 - 2 * qy * qy - 2 * qz * qz,
                 2 * qx * qy - 2 * qz * qw,
@@ -182,7 +159,7 @@ class Cube:
                 2 * qy * qz + 2 * qx * qw,
                 1 - 2 * qx * qx - 2 * qy * qy,
             ],
-        ]
+        ], dtype=np.float64)
 
 
 def main(cube: Cube) -> None:

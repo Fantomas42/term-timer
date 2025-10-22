@@ -247,30 +247,25 @@ def animate_move(window: 'Window', cube: 'Cube', face: str, power: int) -> None:
 def animate_rotation(window: 'Window', cube: 'Cube',
                      axis: str, angle: int) -> None:
     speed = 6
-    steps = range(1, angle + 1, speed)
+    steps = list(range(speed, angle, speed))
+    if not steps or steps[-1] != angle:
+        steps.append(angle)
 
-    original_matrix = [row[:] for row in cube.rotation_matrix]
+    prev_angle = 0
 
-    for step in steps:
+    for current_angle in steps:
         window.prepare()
 
-        current_angle = min(step, angle)
+        delta_angle = current_angle - prev_angle
 
         if axis == 'x':
-            cube.rotate_x(current_angle)
+            cube.rotate_x(delta_angle)
         elif axis == 'y':
-            cube.rotate_y(current_angle)
+            cube.rotate_y(delta_angle)
         elif axis == 'z':
-            cube.rotate_z(current_angle)
+            cube.rotate_z(delta_angle)
 
         render(cube)
         window.update()
 
-        cube.rotation_matrix = [row[:] for row in original_matrix]
-
-    if axis == 'x':
-        cube.rotate_x(angle)
-    elif axis == 'y':
-        cube.rotate_y(angle)
-    elif axis == 'z':
-        cube.rotate_z(angle)
+        prev_angle = current_angle

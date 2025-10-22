@@ -18,7 +18,7 @@ class CubeGLThread(threading.Thread):
         *,
         daemon: bool = True,
     ) -> None:
-        super().__init__()
+        super().__init__(daemon=daemon)
 
         self.cube_ready_event = cube_ready_event
 
@@ -28,7 +28,6 @@ class CubeGLThread(threading.Thread):
         self.window: Window | None = None
         self.cube: Cube | None = None
         self.running = True
-        self.daemon = daemon
 
         self.title = ''
         self.move_queue: list[tuple[str, int]] = []
