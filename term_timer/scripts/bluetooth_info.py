@@ -380,11 +380,6 @@ def replay(options: Namespace) -> None:
 
     moves: list[str] = []
 
-    if show_cube:
-        virtual_cube = VCube()
-
-        show_state(moves, orientation_moves, virtual_cube)
-
     for event in events:
         event_name = event['event']
         time = int(event['clock'] / MS_TO_NS_FACTOR)
@@ -417,6 +412,17 @@ def replay(options: Namespace) -> None:
             moves.append(f"{ event['move'] }@{ time }")
 
             show_state(moves, orientation_moves, virtual_cube)
+
+        elif event_name == 'facelets':
+            event = cast(FaceletsEventDict, event)
+            logger.info(
+                'REPLAY: Facelets: %s',
+                event['facelets'],
+            )
+
+            if show_cube:
+                virtual_cube = VCube(event['facelets'])
+                show_state(moves, orientation_moves, virtual_cube)
 
 
 def linear_regression(x_values: list[float],
@@ -484,6 +490,12 @@ def resume(events: list[EventDict], output: str) -> None:
             event = cast(GyroEventDict, event)
             gyro_clocks.append(event['clock'])
 
+            data.update(event)
+            data['timestamp'] = data['timestamp'].timestamp()
+            replay.append(data)
+
+        elif event['event'] == 'facelets':
+            event = cast(FaceletsEventDict, event)
             data.update(event)
             data['timestamp'] = data['timestamp'].timestamp()
             replay.append(data)
