@@ -346,10 +346,10 @@ async def client_cb(queue: asyncio.Queue[list[EventDict] | None],
         await bluetooth_interface.send_command('REQUEST_ENABLE_GYRO')
     if cube_reset:
         await bluetooth_interface.send_command('REQUEST_RESET')
-
-    logger.info('Free play for %ss', time)
-    print('\a', end='', flush=True)
-    await asyncio.sleep(time)
+    else:
+        logger.info('Free play for %ss', time)
+        print('\a', end='', flush=True)
+        await asyncio.sleep(time)
 
     await bluetooth_interface.__aexit__(None, None, None)
     logger.warning('Interface disconnected')
