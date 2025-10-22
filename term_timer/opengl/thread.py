@@ -1,12 +1,19 @@
 import logging
 import threading
 
+import pygame
+
 from term_timer.bluetooth.types import QuaternionDict
 from term_timer.opengl.cube import Cube
 from term_timer.opengl.renderer import render
+from term_timer.opengl.text_renderer import WAITING_MESSAGE_FONT_SIZE
+from term_timer.opengl.text_renderer import render_waiting_message
 from term_timer.opengl.window import Window
 
 logger = logging.getLogger(__name__)
+
+# Constant for cube ready check timeout
+CUBE_READY_CHECK_TIMEOUT = 0.016  # ~60fps
 
 
 class CubeGLThread(threading.Thread):
@@ -34,26 +41,37 @@ class CubeGLThread(threading.Thread):
         self.move_lock = threading.Lock()
         self.last_quaternion: QuaternionDict | None = None
         self.has_new_quaternion = True
+        self.font: pygame.font.Font | None = None
 
     def stop(self) -> None:
         self.running = False
 
     def run(self) -> None:
-        logger.info('Waiting for bluetooth connection')
-        self.cube_ready_event.wait()
-        logger.info('Bluetooth connection established')
-
+        logger.info('Starting OpenGL window')
         self.window = Window(width=self.width, height=self.height, fps=144)
         self.window.title_prefix = self.title
-        self.cube = Cube()
+
+        pygame.font.init()
+        self.font = pygame.font.Font(None, WAITING_MESSAGE_FONT_SIZE)
 
         while self.running:
-            self.process_moves()
-            self.process_quaternion()
+            if not self.cube_ready_event.is_set():
+                self.window.handle_events()
+                render_waiting_message(self.window, self.font)
+                self.window.update()
 
-            self.window.prepare()
-            render(self.cube)
-            self.window.update()
+                # Check if cube is ready with non-blocking timeout
+                if self.cube_ready_event.wait(timeout=CUBE_READY_CHECK_TIMEOUT):
+                    logger.info('Bluetooth connection established')
+                    self.cube = Cube()
+            else:
+                self.process_moves()
+                self.process_quaternion()
+
+                self.window.prepare()
+                if self.cube:
+                    render(self.cube)
+                self.window.update()
 
         self.window.quit()
 
