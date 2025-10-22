@@ -48,14 +48,19 @@ _CENTER_COLOR_INDEX: dict[str, int] = {
     center: idx for idx, center in enumerate(center_list)
 }
 
-# Pre-compute face points for scale=1 to avoid repeated list comprehensions
-_UNIT_CUBE_FACES: list[list[tuple[int, int, int]]] = [
-    [s[j] for j in indices[i]] for i in range(6)
+# Gap factor for realistic piece separation (matches data.py)
+_GAP_FACTOR = 0.96
+
+# Pre-compute face points for scale=1 with gap factor
+_UNIT_CUBE_FACES: list[list[tuple[float, float, float]]] = [
+    [tuple(coord * _GAP_FACTOR for coord in s[j]) for j in indices[i]]
+    for i in range(6)
 ]
 
 
 def r_surface(
-    points: list[tuple[int, int, int]] | list[list[float]],
+    points: (list[tuple[int, int, int]] | list[tuple[float, float, float]] |
+             list[list[float]]),
     color: tuple[float, float, float] | None,
 ) -> None:
     glEnable(GL_TEXTURE_2D)
@@ -77,17 +82,19 @@ def r_cube(
     if scale == 1:
         # Use pre-computed unit cube faces
         for i, color in enumerate(colors):
-            if color is not None:
-                r_surface(_UNIT_CUBE_FACES[i], color)
+            # Render all faces: colored stickers or black plastic interior
+            face_color = color if color is not None else BLACK
+            r_surface(_UNIT_CUBE_FACES[i], face_color)
     else:
         # Scale vertices only once
         vertices_list = vertices(scale)
         for i, color in enumerate(colors):
-            if color is not None:
-                points_float: list[list[float]] = [
-                    vertices_list[j] for j in indices[i]
-                ]
-                r_surface(points_float, color)
+            # Render all faces: colored stickers or black plastic interior
+            face_color = color if color is not None else BLACK
+            points_float: list[list[float]] = [
+                vertices_list[j] for j in indices[i]
+            ]
+            r_surface(points_float, face_color)
 
 
 def get_orientation_param(

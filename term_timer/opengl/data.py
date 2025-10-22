@@ -118,8 +118,11 @@ s: list[tuple[int, int, int]] = [
 
 # Function to change the size of the cube
 def vertices(x: float) -> list[list[float]]:
+    # Add gap between pieces for realistic appearance
+    gap_factor = 0.96  # 4% gap between pieces
+    scaled_x = x * gap_factor
     return [
-        list(map(float.__mul__, [x] * 3, point))
+        list(map(float.__mul__, [scaled_x] * 3, point))
         for point in s
     ]
 
