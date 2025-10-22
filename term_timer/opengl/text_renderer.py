@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 WAITING_MESSAGE_TEXT = 'Waiting for Bluetooth connection...'
 WAITING_MESSAGE_FONT_SIZE = 24
 WAITING_MESSAGE_PADDING = 20
-WAITING_MESSAGE_Y_OFFSET = 30
+WAITING_MESSAGE_BOTTOM_MARGIN = 10
 
 
 def create_text_surface(
@@ -85,7 +85,7 @@ def render_waiting_message(
 
     # Calculate position for bottom-right corner
     x_pos = window.display[0] - text_width - WAITING_MESSAGE_PADDING
-    y_pos = WAITING_MESSAGE_Y_OFFSET
+    y_pos = WAITING_MESSAGE_BOTTOM_MARGIN
 
     # Convert to OpenGL format and draw with alpha blending
     text_data = pygame.image.tostring(text_surface, 'RGBA', True)  # noqa: FBT003
