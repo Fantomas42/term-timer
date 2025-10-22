@@ -19,6 +19,7 @@ from OpenGL.GL import GL_LINEAR_MIPMAP_LINEAR
 from OpenGL.GL import GL_MODELVIEW
 from OpenGL.GL import GL_POSITION
 from OpenGL.GL import GL_PROJECTION
+from OpenGL.GL import GL_QUADS
 from OpenGL.GL import GL_RESCALE_NORMAL
 from OpenGL.GL import GL_SHININESS
 from OpenGL.GL import GL_SPECULAR
@@ -26,16 +27,23 @@ from OpenGL.GL import GL_TEXTURE_2D
 from OpenGL.GL import GL_TEXTURE_MAG_FILTER
 from OpenGL.GL import GL_TEXTURE_MIN_FILTER
 from OpenGL.GL import GL_UNSIGNED_BYTE
+from OpenGL.GL import glBegin
+from OpenGL.GL import glColor3f
+from OpenGL.GL import glEnd
+from OpenGL.GL import glVertex2f
 from OpenGL.GL import glBindTexture
 from OpenGL.GL import glClear
 from OpenGL.GL import glClearColor
 from OpenGL.GL import glColorMaterial
+from OpenGL.GL import glDisable
 from OpenGL.GL import glEnable
 from OpenGL.GL import glGenTextures
 from OpenGL.GL import glLightfv
 from OpenGL.GL import glLoadIdentity
 from OpenGL.GL import glMaterialfv
 from OpenGL.GL import glMatrixMode
+from OpenGL.GL import glPopMatrix
+from OpenGL.GL import glPushMatrix
 from OpenGL.GL import glTexParameterf
 from OpenGL.GLU import gluBuild2DMipmaps
 from OpenGL.GLU import gluPerspective
@@ -111,7 +119,8 @@ class Window:
         pygame.mouse.set_visible(True)
 
         glMatrixMode(GL_PROJECTION)
-        glClearColor(13 / 0xFF, 26 / 0xFF, 74 / 0xFF, 1.0)
+        # Dark neutral background (will be enhanced with gradient)
+        glClearColor(0.08, 0.08, 0.12, 1.0)
         glLoadIdentity()
         gluPerspective(50, (self.display[0] / self.display[1]), 0.1, 50.0)
 
@@ -186,8 +195,47 @@ class Window:
             GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR,
         )
 
+    def render_gradient_background(self) -> None:
+        """Render a subtle gradient background for better aesthetics."""
+        # Save current matrices
+        glMatrixMode(GL_PROJECTION)
+        glPushMatrix()
+        glLoadIdentity()
+        glMatrixMode(GL_MODELVIEW)
+        glPushMatrix()
+        glLoadIdentity()
+
+        # Disable lighting and depth test for background
+        glDisable(GL_LIGHTING)
+        glDisable(GL_DEPTH_TEST)
+
+        # Draw synthwave/80s style gradient (cyan/blue to purple)
+        glBegin(GL_QUADS)
+        # Bottom - dark cyan/blue (retro horizon)
+        glColor3f(0.03, 0.08, 0.20)
+        glVertex2f(-1.0, -1.0)
+        glVertex2f(1.0, -1.0)
+        # Top - deep purple/magenta (synthwave sky)
+        glColor3f(0.12, 0.03, 0.18)
+        glVertex2f(1.0, 1.0)
+        glVertex2f(-1.0, 1.0)
+        glEnd()
+
+        # Re-enable lighting and depth test
+        glEnable(GL_DEPTH_TEST)
+        glEnable(GL_LIGHTING)
+
+        # Restore matrices
+        glPopMatrix()
+        glMatrixMode(GL_PROJECTION)
+        glPopMatrix()
+        glMatrixMode(GL_MODELVIEW)
+
     def prepare(self) -> None:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        # Render gradient background
+        self.render_gradient_background()
 
         self.handle_events()
         self.handle_camera()
