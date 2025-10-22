@@ -45,6 +45,30 @@ if TYPE_CHECKING:
     from term_timer.opengl.cube import Cube
     from term_timer.opengl.window import Window
 
+
+# Easing functions for smooth animations
+def ease_out_cubic(t: float) -> float:
+    """
+    Ease-out cubic function for smooth deceleration.
+    Starts fast, ends slow - feels natural and satisfying.
+    t: normalized time from 0.0 to 1.0
+    Returns: eased value from 0.0 to 1.0
+    """
+    return 1 - pow(1 - t, 3)
+
+
+def ease_in_out_cubic(t: float) -> float:
+    """
+    Ease-in-out cubic for smooth acceleration and deceleration.
+    Starts slow, speeds up in middle, slows at end.
+    t: normalized time from 0.0 to 1.0
+    Returns: eased value from 0.0 to 1.0
+    """
+    if t < 0.5:
+        return 4 * t * t * t
+    return 1 - pow(-2 * t + 2, 3) / 2
+
+
 # Pre-compute color index mapping for faster lookups
 _CENTER_COLOR_INDEX: dict[str, int] = {
     center: idx for idx, center in enumerate(center_list)
@@ -271,9 +295,21 @@ def animate_move(window: 'Window', cube: 'Cube', face: str, power: int) -> None:
     axis, theta_max = get_rotation_param(face, power)
 
     hiding_points = hide_coords[face]
-    speed = 6
 
-    for theta in range(1, theta_max, speed):
+    # Animation parameters
+    total_frames = 15  # Number of frames for animation
+    target_angle = theta_max - 1  # Target rotation angle
+
+    for frame in range(total_frames):
+        # Calculate normalized time (0.0 to 1.0)
+        t = frame / (total_frames - 1)
+
+        # Apply ease-out cubic easing for smooth deceleration
+        eased_t = ease_out_cubic(t)
+
+        # Calculate current angle based on eased progress
+        theta = eased_t * target_angle
+
         window.prepare()
 
         # Enable texture once for entire frame
@@ -313,17 +349,24 @@ def animate_move(window: 'Window', cube: 'Cube', face: str, power: int) -> None:
 
 def animate_rotation(window: 'Window', cube: 'Cube',
                      axis: str, angle: int) -> None:
-    speed = 6
-    steps = list(range(speed, angle, speed))
-    if not steps or steps[-1] != angle:
-        steps.append(angle)
+    # Animation parameters
+    total_frames = 15  # Number of frames for smooth rotation
+    prev_eased_angle = 0.0
 
-    prev_angle = 0
+    for frame in range(total_frames):
+        # Calculate normalized time (0.0 to 1.0)
+        t = frame / (total_frames - 1)
 
-    for current_angle in steps:
+        # Apply ease-out cubic easing
+        eased_t = ease_out_cubic(t)
+
+        # Calculate current angle based on eased progress
+        current_eased_angle = eased_t * angle
+
+        # Calculate delta from previous frame
+        delta_angle = current_eased_angle - prev_eased_angle
+
         window.prepare()
-
-        delta_angle = current_angle - prev_angle
 
         if axis == 'x':
             cube.rotate_x(delta_angle)
@@ -335,4 +378,4 @@ def animate_rotation(window: 'Window', cube: 'Cube',
         render(cube)
         window.update()
 
-        prev_angle = current_angle
+        prev_eased_angle = current_eased_angle
