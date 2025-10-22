@@ -337,3 +337,20 @@ class TestSexyYSexyRotation(TestMoveRotationDetector):
             "L D L' D' y' B D B' D'",
             "R U R' d' R U R' U'", 'DF',
         )
+
+
+class TestSexyVariationRotation(TestMoveRotationDetector):
+
+    def test_sexy_y_r_df(self) -> None:
+        self.check_rotations(
+            'gan_gen2/sexy-Y-R-DF.json',
+            "L D L' D' y' B",
+            "R U R' d' R", 'DF',
+        )
+
+    def test_x_x_sexy_y_df(self) -> None:
+        self.check_rotations(
+            'gan_gen2/X-Y-sexy-Y-DF.json',
+            "x' y' D F D' F' y'",
+            "x y R U R' d'", 'DF',
+        )
