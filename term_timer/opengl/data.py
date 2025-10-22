@@ -1,9 +1,67 @@
-WHITE: tuple[float, float, float] = (1, 1, 1)
-YELLOW: tuple[float, float, float] = (1, 1, 0)
-BLUE: tuple[float, float, float] = (0, 0, 1)
-GREEN: tuple[float, float, float] = (0, 1, 0)
-ORANGE: tuple[float, float, float] = (1, 0.5, 0)
-RED: tuple[float, float, float] = (1, 0, 0)
+from cubing_algs.palettes import PALETTES
+from term_timer.config import CUBE_PALETTE
+
+
+def hex_to_opengl(hex_color: str) -> tuple[float, float, float]:
+    """Convert hexadecimal color to OpenGL RGB tuple (0.0-1.0 range)."""
+    hex_color = hex_color.lstrip('#')
+
+    if len(hex_color) == 3:
+        hex_color = ''.join(c * 2 for c in hex_color)
+
+    r = int(hex_color[0:2], 16) / 255.0
+    g = int(hex_color[2:4], 16) / 255.0
+    b = int(hex_color[4:6], 16) / 255.0
+
+    return (r, g, b)
+
+
+def load_palette_colors() -> list[tuple[float, float, float]]:
+    """
+    Load color palette from cubing_algs and convert to OpenGL format.
+    Returns colors in URFDLB order: [U, R, F, D, L, B]
+    which maps to: [WHITE, RED, GREEN, YELLOW, ORANGE, BLUE]
+    """
+    try:
+        palette_name = CUBE_PALETTE or 'default'
+
+        if palette_name not in PALETTES:
+            palette_name = 'default'
+
+        palette_config = PALETTES[palette_name]
+        faces = palette_config['faces']
+
+        # Convert each face color (in URFDLB order)
+        colors = []
+        for face_config in faces:
+            if isinstance(face_config, dict):
+                hex_color = face_config['background']
+            else:
+                hex_color = face_config
+            colors.append(hex_to_opengl(hex_color))
+
+        return colors
+    except (ImportError, KeyError):
+        # Fallback to default colors if palette system unavailable
+        return [
+            (1.0, 1.0, 1.0),   # White (U)
+            (1.0, 0.0, 0.0),   # Red (R)
+            (0.0, 1.0, 0.0),   # Green (F)
+            (1.0, 1.0, 0.0),   # Yellow (D)
+            (1.0, 0.5, 0.0),   # Orange (L)
+            (0.0, 0.0, 1.0),   # Blue (B)
+        ]
+
+
+# Load colors from palette system
+_palette_colors = load_palette_colors()
+
+WHITE: tuple[float, float, float] = _palette_colors[0]  # U
+YELLOW: tuple[float, float, float] = _palette_colors[3]  # D
+RED: tuple[float, float, float] = _palette_colors[1]  # R
+GREEN: tuple[float, float, float] = _palette_colors[2]  # F
+ORANGE: tuple[float, float, float] = _palette_colors[4]  # L
+BLUE: tuple[float, float, float] = _palette_colors[5]  # B
 BLACK: tuple[float, float, float] = (0, 0, 0)
 
 color_list: list[tuple[float, float, float]] = [
@@ -147,16 +205,23 @@ normals: list[tuple[float, float, float]] = [
     (0.0, 0.0, -1.0),  # Back face (B)
 ]
 
-# Map colors to their corresponding normals
+
+# Map colors to their corresponding normals (built after colors are loaded)
 # WHITE=U, YELLOW=D, RED=R, GREEN=F, ORANGE=L, BLUE=B
-color_to_normal: dict[tuple[float, float, float], tuple[float, float, float]] = {
-    WHITE: (0.0, 1.0, 0.0),    # U face
-    YELLOW: (0.0, -1.0, 0.0),  # D face
-    RED: (1.0, 0.0, 0.0),      # R face
-    GREEN: (0.0, 0.0, 1.0),    # F face
-    ORANGE: (-1.0, 0.0, 0.0),  # L face
-    BLUE: (0.0, 0.0, -1.0),    # B face
-}
+def build_color_to_normal() -> (
+    dict[tuple[float, float, float], tuple[float, float, float]]
+):
+    return {
+        WHITE: (0.0, 1.0, 0.0),    # U face
+        YELLOW: (0.0, -1.0, 0.0),  # D face
+        RED: (1.0, 0.0, 0.0),      # R face
+        GREEN: (0.0, 0.0, 1.0),    # F face
+        ORANGE: (-1.0, 0.0, 0.0),  # L face
+        BLUE: (0.0, 0.0, -1.0),    # B face
+    }
+
+
+color_to_normal = build_color_to_normal()
 
 position_list: list[str] = [
     'F', 'L', 'D', 'U', 'R', 'B',
