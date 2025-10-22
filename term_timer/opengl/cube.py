@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from cubing_algs.vcube import VCube
 from numpy.typing import NDArray
 
 from term_timer.bluetooth.types import QuaternionDict
@@ -14,14 +15,27 @@ from term_timer.opengl.window import Window
 
 class Cube:
 
-    def __init__(self) -> None:
-        self.edge_permutation = list(range(12))
-        self.corner_permutation = list(range(8))
+    def __init__(self, facelets: str | None = None) -> None:
+        if facelets:
+            self.init_from_facelets(facelets)
+        else:
+            self.edge_permutation = list(range(12))
+            self.corner_permutation = list(range(8))
 
-        self.edges_orientations = [0] * 12
-        self.corners_orientations = [0] * 8
+            self.edges_orientations = [0] * 12
+            self.corners_orientations = [0] * 8
 
         self.rotation_matrix: NDArray[np.float64] = np.eye(3, dtype=np.float64)
+
+    def init_from_facelets(self, facelets: str) -> None:
+        """Initialize cube state from a 54-character facelet string."""
+        vcube = VCube(facelets)
+        cp, co, ep, eo, _so = vcube.to_cubies
+
+        self.corner_permutation = list(cp)
+        self.corners_orientations = list(co)
+        self.edge_permutation = list(ep)
+        self.edges_orientations = list(eo)
 
     def __repr__(self) -> str:
         return (

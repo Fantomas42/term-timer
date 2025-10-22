@@ -268,6 +268,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                 )
 
                 if gl_thread:
+                    gl_thread.set_facelets(event['facelets'])
                     cube_ready.set()
 
                 if virtual_cube:

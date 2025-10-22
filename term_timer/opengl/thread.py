@@ -49,6 +49,7 @@ class CubeGLThread(threading.Thread):
         self.font: pygame.font.Font | None = None
         self.cube_scale = 0.0
         self.is_animating_entrance = False
+        self.pending_facelets: str | None = None
 
     def stop(self) -> None:
         self.running = False
@@ -70,7 +71,11 @@ class CubeGLThread(threading.Thread):
                 # Check if cube is ready with non-blocking timeout
                 if self.cube_ready_event.wait(timeout=CUBE_READY_CHECK_TIMEOUT):
                     logger.info('Bluetooth connection established')
-                    self.cube = Cube()
+                    # Get facelets if available
+                    facelets = None
+                    with self.move_lock:
+                        facelets = self.pending_facelets
+                    self.cube = Cube(facelets)
                     self.is_animating_entrance = True
                     self.cube_scale = 0.0
             else:
@@ -127,6 +132,11 @@ class CubeGLThread(threading.Thread):
 
         if self.window:
             self.window.title_prefix = self.title
+
+    def set_facelets(self, facelets: str) -> None:
+        """Set the facelets to initialize the cube with."""
+        with self.move_lock:
+            self.pending_facelets = facelets
 
     def render_cube_with_scale(self) -> None:
         """Render the cube with current scale transformation."""
