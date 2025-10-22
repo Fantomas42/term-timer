@@ -159,8 +159,8 @@ class Window:
         diffuse_light = [0.6, 0.6, 0.6, 1.0]
         glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light)
 
-        # Specular light - very subtle for matte plastic appearance
-        specular_light = [0.2, 0.2, 0.2, 1.0]
+        # Specular light - strong for pronounced glossy highlights
+        specular_light = [0.8, 0.8, 0.8, 1.0]
         glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light)
 
         # Light position - from above and slightly to side for natural look
@@ -168,10 +168,11 @@ class Window:
         light_position = [3.0, 8.0, 5.0, 1.0]
         glLightfv(GL_LIGHT0, GL_POSITION, light_position)
 
-        # Material properties - low shininess for matte speedcube plastic
-        specular_material = [0.15, 0.15, 0.15, 1.0]
+        # Material properties - very high shininess for glossy speedcube plastic
+        # Higher values create more pronounced, tighter specular highlights
+        specular_material = [1.0, 1.0, 1.0, 1.0]
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular_material)
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, [10.0])
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, [80.0])
 
     def load_texture(self, filename: Path) -> None:
         texture_surface = pygame.image.load(filename)
