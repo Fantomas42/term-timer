@@ -43,6 +43,16 @@ if TYPE_CHECKING:
     from term_timer.opengl.cube import Cube
     from term_timer.opengl.window import Window
 
+# Pre-compute color index mapping for faster lookups
+_CENTER_COLOR_INDEX: dict[str, int] = {
+    center: idx for idx, center in enumerate(center_list)
+}
+
+# Pre-compute face points for scale=1 to avoid repeated list comprehensions
+_UNIT_CUBE_FACES: list[list[tuple[int, int, int]]] = [
+    [s[j] for j in indices[i]] for i in range(6)
+]
+
 
 def r_surface(
     points: list[tuple[int, int, int]] | list[list[float]],
@@ -63,17 +73,21 @@ def r_cube(
     colors: list[tuple[float, float, float] | None],
     scale: float = 1,
 ) -> None:
+    # Optimize by using pre-computed face points
     if scale == 1:
-        for i in range(6):
-            points: list[tuple[int, int, int]] = [s[j] for j in indices[i]]
-            r_surface(points, colors[i])
+        # Use pre-computed unit cube faces
+        for i, color in enumerate(colors):
+            if color is not None:
+                r_surface(_UNIT_CUBE_FACES[i], color)
     else:
+        # Scale vertices only once
         vertices_list = vertices(scale)
-        for i in range(6):
-            points_float: list[list[float]] = [
-                vertices_list[j] for j in indices[i]
-            ]
-            r_surface(points_float, colors[i])
+        for i, color in enumerate(colors):
+            if color is not None:
+                points_float: list[list[float]] = [
+                    vertices_list[j] for j in indices[i]
+                ]
+                r_surface(points_float, color)
 
 
 def get_orientation_param(
@@ -93,8 +107,9 @@ def get_orientation_param(
 
 
 def render_piece(piece: str, position: int, orientation: int) -> None:
+    # Use cached color index mapping for O(1) lookups instead of O(n)
     c: list[tuple[float, float, float]] = [
-        color_list[center_list.index(e)] for e in piece
+        color_list[_CENTER_COLOR_INDEX[e]] for e in piece
     ]
     colors: list[tuple[float, float, float] | None] = [None] * 6
 

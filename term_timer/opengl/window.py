@@ -182,11 +182,9 @@ class Window:
             if event.type == pygame.QUIT:
                 self.quit()
             elif event.type in {KEYDOWN, KEYUP}:
-                try:
-                    f, args = self.events[event.type, event.key]
-                except KeyError:
-                    pass
-                else:
+                event_key = (event.type, event.key)
+                if event_key in self.events:
+                    f, args = self.events[event_key]
                     f(*args)
 
     def add_event(
