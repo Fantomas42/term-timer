@@ -3,14 +3,25 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pygame
+from OpenGL.GL import GL_AMBIENT
+from OpenGL.GL import GL_AMBIENT_AND_DIFFUSE
 from OpenGL.GL import GL_BGRA
 from OpenGL.GL import GL_COLOR_BUFFER_BIT
+from OpenGL.GL import GL_COLOR_MATERIAL
 from OpenGL.GL import GL_DEPTH_BUFFER_BIT
 from OpenGL.GL import GL_DEPTH_TEST
+from OpenGL.GL import GL_DIFFUSE
+from OpenGL.GL import GL_FRONT_AND_BACK
+from OpenGL.GL import GL_LIGHT0
+from OpenGL.GL import GL_LIGHTING
 from OpenGL.GL import GL_LINEAR
 from OpenGL.GL import GL_LINEAR_MIPMAP_LINEAR
 from OpenGL.GL import GL_MODELVIEW
+from OpenGL.GL import GL_POSITION
 from OpenGL.GL import GL_PROJECTION
+from OpenGL.GL import GL_RESCALE_NORMAL
+from OpenGL.GL import GL_SHININESS
+from OpenGL.GL import GL_SPECULAR
 from OpenGL.GL import GL_TEXTURE_2D
 from OpenGL.GL import GL_TEXTURE_MAG_FILTER
 from OpenGL.GL import GL_TEXTURE_MIN_FILTER
@@ -18,9 +29,12 @@ from OpenGL.GL import GL_UNSIGNED_BYTE
 from OpenGL.GL import glBindTexture
 from OpenGL.GL import glClear
 from OpenGL.GL import glClearColor
+from OpenGL.GL import glColorMaterial
 from OpenGL.GL import glEnable
 from OpenGL.GL import glGenTextures
+from OpenGL.GL import glLightfv
 from OpenGL.GL import glLoadIdentity
+from OpenGL.GL import glMaterialfv
 from OpenGL.GL import glMatrixMode
 from OpenGL.GL import glTexParameterf
 from OpenGL.GLU import gluBuild2DMipmaps
@@ -109,7 +123,46 @@ class Window:
 
         glEnable(GL_DEPTH_TEST)
 
+        # Enable lighting for realistic 3D appearance
+        self.setup_lighting()
+
         self.load_texture(Path(__file__).parent / 'facelet.bmp')
+
+    def setup_lighting(self) -> None:
+        """Setup OpenGL lighting for realistic 3D cube appearance."""
+        # Enable lighting
+        glEnable(GL_LIGHTING)
+        glEnable(GL_LIGHT0)
+        glEnable(GL_COLOR_MATERIAL)
+        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+
+        # Enable automatic normal rescaling after transformations
+        # GL_RESCALE_NORMAL is faster than GL_NORMALIZE (uses uniform scale factor)
+        # Since we only rotate (no non-uniform scaling), this is sufficient
+        glEnable(GL_RESCALE_NORMAL)
+
+        # Ambient light - higher for softer, more natural appearance
+        # Prevents faces from being too dark
+        ambient_light = [0.5, 0.5, 0.5, 1.0]
+        glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light)
+
+        # Diffuse light - moderate for subtle depth without harsh shadows
+        diffuse_light = [0.6, 0.6, 0.6, 1.0]
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light)
+
+        # Specular light - very subtle for matte plastic appearance
+        specular_light = [0.2, 0.2, 0.2, 1.0]
+        glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light)
+
+        # Light position - from above and slightly to side for natural look
+        # Not too extreme to avoid harsh shadows
+        light_position = [3.0, 8.0, 5.0, 1.0]
+        glLightfv(GL_LIGHT0, GL_POSITION, light_position)
+
+        # Material properties - low shininess for matte speedcube plastic
+        specular_material = [0.15, 0.15, 0.15, 1.0]
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular_material)
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, [10.0])
 
     def load_texture(self, filename: Path) -> None:
         texture_surface = pygame.image.load(filename)

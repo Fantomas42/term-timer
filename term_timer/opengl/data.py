@@ -136,6 +136,28 @@ indices: list[tuple[int, int, int, int]] = [
     (6, 7, 3, 2),
 ]
 
+# Normal vectors for each face (for lighting calculations)
+# Order matches indices: top, bottom, right, front, left, back
+normals: list[tuple[float, float, float]] = [
+    (0.0, 1.0, 0.0),   # Top face (U)
+    (0.0, -1.0, 0.0),  # Bottom face (D)
+    (1.0, 0.0, 0.0),   # Right face (R)
+    (0.0, 0.0, 1.0),   # Front face (F)
+    (-1.0, 0.0, 0.0),  # Left face (L)
+    (0.0, 0.0, -1.0),  # Back face (B)
+]
+
+# Map colors to their corresponding normals
+# WHITE=U, YELLOW=D, RED=R, GREEN=F, ORANGE=L, BLUE=B
+color_to_normal: dict[tuple[float, float, float], tuple[float, float, float]] = {
+    WHITE: (0.0, 1.0, 0.0),    # U face
+    YELLOW: (0.0, -1.0, 0.0),  # D face
+    RED: (1.0, 0.0, 0.0),      # R face
+    GREEN: (0.0, 0.0, 1.0),    # F face
+    ORANGE: (-1.0, 0.0, 0.0),  # L face
+    BLUE: (0.0, 0.0, -1.0),    # B face
+}
+
 position_list: list[str] = [
     'F', 'L', 'D', 'U', 'R', 'B',
     'DR', 'UB', 'FL', 'BL',
