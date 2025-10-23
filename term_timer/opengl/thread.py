@@ -8,6 +8,7 @@ from OpenGL.GL import glPopMatrix
 from OpenGL.GL import glPushMatrix
 from OpenGL.GL import glScalef
 
+from term_timer.bluetooth.types import CubeStateDict
 from term_timer.bluetooth.types import QuaternionDict
 from term_timer.opengl.cube import Cube
 from term_timer.opengl.renderer import render
@@ -49,7 +50,7 @@ class CubeGLThread(threading.Thread):
         self.font: pygame.font.Font | None = None
         self.cube_scale = 0.0
         self.is_animating_entrance = False
-        self.pending_facelets: str | None = None
+        self.pending_state: CubeStateDict | None = None
 
     def stop(self) -> None:
         self.running = False
@@ -71,13 +72,16 @@ class CubeGLThread(threading.Thread):
                 # Check if cube is ready with non-blocking timeout
                 if self.cube_ready_event.wait(timeout=CUBE_READY_CHECK_TIMEOUT):
                     logger.info('Bluetooth connection established')
-                    # Get facelets if available
-                    facelets = None
+                    # Get state if available
+                    state = None
                     with self.move_lock:
-                        facelets = self.pending_facelets
-                    self.cube = Cube(facelets)
-                    self.is_animating_entrance = True
-                    self.cube_scale = 0.0
+                        state = self.pending_state
+
+                    # Initialize cube with state
+                    if state:
+                        self.cube = Cube(state)
+                        self.is_animating_entrance = True
+                        self.cube_scale = 0.0
             else:
                 self.process_moves()
                 self.process_quaternion()
@@ -133,10 +137,10 @@ class CubeGLThread(threading.Thread):
         if self.window:
             self.window.title_prefix = self.title
 
-    def set_facelets(self, facelets: str) -> None:
-        """Set the facelets to initialize the cube with."""
+    def set_state(self, state: CubeStateDict) -> None:
+        """Set the cube state (permutations) to initialize the cube with."""
         with self.move_lock:
-            self.pending_facelets = facelets
+            self.pending_state = state
 
     def render_cube_with_scale(self) -> None:
         """Render the cube with current scale transformation."""

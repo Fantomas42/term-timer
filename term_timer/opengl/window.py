@@ -28,15 +28,14 @@ from OpenGL.GL import GL_TEXTURE_MAG_FILTER
 from OpenGL.GL import GL_TEXTURE_MIN_FILTER
 from OpenGL.GL import GL_UNSIGNED_BYTE
 from OpenGL.GL import glBegin
-from OpenGL.GL import glColor3f
-from OpenGL.GL import glEnd
-from OpenGL.GL import glVertex2f
 from OpenGL.GL import glBindTexture
 from OpenGL.GL import glClear
 from OpenGL.GL import glClearColor
+from OpenGL.GL import glColor3f
 from OpenGL.GL import glColorMaterial
 from OpenGL.GL import glDisable
 from OpenGL.GL import glEnable
+from OpenGL.GL import glEnd
 from OpenGL.GL import glGenTextures
 from OpenGL.GL import glLightfv
 from OpenGL.GL import glLoadIdentity
@@ -45,6 +44,7 @@ from OpenGL.GL import glMatrixMode
 from OpenGL.GL import glPopMatrix
 from OpenGL.GL import glPushMatrix
 from OpenGL.GL import glTexParameterf
+from OpenGL.GL import glVertex2f
 from OpenGL.GLU import gluBuild2DMipmaps
 from OpenGL.GLU import gluPerspective
 from pygame import DOUBLEBUF

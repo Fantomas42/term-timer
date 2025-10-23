@@ -1,4 +1,5 @@
 from cubing_algs.palettes import PALETTES
+
 from term_timer.config import CUBE_PALETTE
 
 
