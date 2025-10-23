@@ -54,6 +54,12 @@ class Cube:
         # Initial orientation for normalizing quaternions
         # The first quaternion received becomes the reference orientation
         self.initial_orientation: Quaternion | None = None
+        # Store the base orientation from orientation_moves to preserve it
+        self.base_orientation_matrix: NDArray[np.float64] = self.rotation_matrix.copy()
+        # Convert base orientation to quaternion for proper composition
+        self.base_orientation_quaternion: Quaternion | None = (
+            self.matrix_to_quaternion(self.base_orientation_matrix)
+        )
 
     def __repr__(self) -> str:
         return (
@@ -135,6 +141,40 @@ class Cube:
         rotation = self._rotation_matrix_z(-angle)
         self.rotation_matrix = rotation @ self.rotation_matrix
 
+    def matrix_to_quaternion(
+            self,
+            matrix: NDArray[np.float64],
+    ) -> Quaternion:
+        """Convert a 3x3 rotation matrix to a quaternion."""
+        trace = matrix[0][0] + matrix[1][1] + matrix[2][2]
+
+        if trace > 0:
+            s = math.sqrt(trace + 1.0) * 2
+            w = 0.25 * s
+            x = (matrix[2][1] - matrix[1][2]) / s
+            y = (matrix[0][2] - matrix[2][0]) / s
+            z = (matrix[1][0] - matrix[0][1]) / s
+        elif matrix[0][0] > matrix[1][1] and matrix[0][0] > matrix[2][2]:
+            s = math.sqrt(1.0 + matrix[0][0] - matrix[1][1] - matrix[2][2]) * 2
+            w = (matrix[2][1] - matrix[1][2]) / s
+            x = 0.25 * s
+            y = (matrix[0][1] + matrix[1][0]) / s
+            z = (matrix[0][2] + matrix[2][0]) / s
+        elif matrix[1][1] > matrix[2][2]:
+            s = math.sqrt(1.0 + matrix[1][1] - matrix[0][0] - matrix[2][2]) * 2
+            w = (matrix[0][2] - matrix[2][0]) / s
+            x = (matrix[0][1] + matrix[1][0]) / s
+            y = 0.25 * s
+            z = (matrix[1][2] + matrix[2][1]) / s
+        else:
+            s = math.sqrt(1.0 + matrix[2][2] - matrix[0][0] - matrix[1][1]) * 2
+            w = (matrix[1][0] - matrix[0][1]) / s
+            x = (matrix[0][2] + matrix[2][0]) / s
+            y = (matrix[1][2] + matrix[2][1]) / s
+            z = 0.25 * s
+
+        return Quaternion(w, x, y, z)
+
     def get_euler_angles(self) -> tuple[float, float, float]:
         r = self.rotation_matrix
 
@@ -186,8 +226,8 @@ class Cube:
         # Initialize with first quaternion as neutral orientation
         if self.initial_orientation is None:
             self.initial_orientation = absolute_raw
-            # Set identity rotation for the initial position
-            self.rotation_matrix = np.eye(3, dtype=np.float64)
+            # Keep the base orientation from orientation_moves instead of resetting
+            self.rotation_matrix = self.base_orientation_matrix.copy()
             return
 
         # Normalize in raw sensor frame: q_normalized = q_initial^-1 * q_current
@@ -197,13 +237,14 @@ class Cube:
         ).normalize()
 
         # Apply coordinate transformation: Y↔Z swap for display coordinates
+        # This transforms from sensor frame to display frame
         qw = current_orientation.w
         qx = current_orientation.x
         qy = current_orientation.z
         qz = -current_orientation.y
 
-        # Convert normalized quaternion to rotation matrix
-        self.rotation_matrix = np.array([
+        # Convert display-frame quaternion to rotation matrix
+        gyro_rotation_matrix = np.array([
             [
                 1 - 2 * qy * qy - 2 * qz * qz,
                 2 * qx * qy - 2 * qz * qw,
@@ -220,6 +261,10 @@ class Cube:
                 1 - 2 * qx * qx - 2 * qy * qy,
             ],
         ], dtype=np.float64)
+
+        # Combine with base orientation: first apply gyro, then base
+        # Matrix multiplication: base * gyro
+        self.rotation_matrix = self.base_orientation_matrix @ gyro_rotation_matrix
 
 
 def main(cube: Cube) -> None:
