@@ -55,10 +55,8 @@ class Cube:
         # The first quaternion received becomes the reference orientation
         self.initial_orientation: Quaternion | None = None
         # Store the base orientation from orientation_moves to preserve it
-        self.base_orientation_matrix: NDArray[np.float64] = self.rotation_matrix.copy()
-        # Convert base orientation to quaternion for proper composition
-        self.base_orientation_quaternion: Quaternion | None = (
-            self.matrix_to_quaternion(self.base_orientation_matrix)
+        self.base_orientation_matrix: NDArray[np.float64] = (
+            self.rotation_matrix.copy()
         )
 
     def __repr__(self) -> str:
@@ -141,40 +139,6 @@ class Cube:
         rotation = self._rotation_matrix_z(-angle)
         self.rotation_matrix = rotation @ self.rotation_matrix
 
-    def matrix_to_quaternion(
-            self,
-            matrix: NDArray[np.float64],
-    ) -> Quaternion:
-        """Convert a 3x3 rotation matrix to a quaternion."""
-        trace = matrix[0][0] + matrix[1][1] + matrix[2][2]
-
-        if trace > 0:
-            s = math.sqrt(trace + 1.0) * 2
-            w = 0.25 * s
-            x = (matrix[2][1] - matrix[1][2]) / s
-            y = (matrix[0][2] - matrix[2][0]) / s
-            z = (matrix[1][0] - matrix[0][1]) / s
-        elif matrix[0][0] > matrix[1][1] and matrix[0][0] > matrix[2][2]:
-            s = math.sqrt(1.0 + matrix[0][0] - matrix[1][1] - matrix[2][2]) * 2
-            w = (matrix[2][1] - matrix[1][2]) / s
-            x = 0.25 * s
-            y = (matrix[0][1] + matrix[1][0]) / s
-            z = (matrix[0][2] + matrix[2][0]) / s
-        elif matrix[1][1] > matrix[2][2]:
-            s = math.sqrt(1.0 + matrix[1][1] - matrix[0][0] - matrix[2][2]) * 2
-            w = (matrix[0][2] - matrix[2][0]) / s
-            x = (matrix[0][1] + matrix[1][0]) / s
-            y = 0.25 * s
-            z = (matrix[1][2] + matrix[2][1]) / s
-        else:
-            s = math.sqrt(1.0 + matrix[2][2] - matrix[0][0] - matrix[1][1]) * 2
-            w = (matrix[1][0] - matrix[0][1]) / s
-            x = (matrix[0][2] + matrix[2][0]) / s
-            y = (matrix[1][2] + matrix[2][1]) / s
-            z = 0.25 * s
-
-        return Quaternion(w, x, y, z)
-
     def get_euler_angles(self) -> tuple[float, float, float]:
         r = self.rotation_matrix
 
@@ -226,7 +190,7 @@ class Cube:
         # Initialize with first quaternion as neutral orientation
         if self.initial_orientation is None:
             self.initial_orientation = absolute_raw
-            # Keep the base orientation from orientation_moves instead of resetting
+            # Keep the base orientation instead of resetting to identity
             self.rotation_matrix = self.base_orientation_matrix.copy()
             return
 
@@ -244,27 +208,40 @@ class Cube:
         qz = -current_orientation.y
 
         # Convert display-frame quaternion to rotation matrix
+        # Pre-compute common subexpressions for efficiency
+        qx2 = qx * qx
+        qy2 = qy * qy
+        qz2 = qz * qz
+        qxy = qx * qy
+        qxz = qx * qz
+        qyz = qy * qz
+        qwx = qw * qx
+        qwy = qw * qy
+        qwz = qw * qz
+
         gyro_rotation_matrix = np.array([
             [
-                1 - 2 * qy * qy - 2 * qz * qz,
-                2 * qx * qy - 2 * qz * qw,
-                2 * qx * qz + 2 * qy * qw,
+                1 - 2 * (qy2 + qz2),
+                2 * (qxy - qwz),
+                2 * (qxz + qwy),
             ],
             [
-                2 * qx * qy + 2 * qz * qw,
-                1 - 2 * qx * qx - 2 * qz * qz,
-                2 * qy * qz - 2 * qx * qw,
+                2 * (qxy + qwz),
+                1 - 2 * (qx2 + qz2),
+                2 * (qyz - qwx),
             ],
             [
-                2 * qx * qz - 2 * qy * qw,
-                2 * qy * qz + 2 * qx * qw,
-                1 - 2 * qx * qx - 2 * qy * qy,
+                2 * (qxz - qwy),
+                2 * (qyz + qwx),
+                1 - 2 * (qx2 + qy2),
             ],
         ], dtype=np.float64)
 
         # Combine with base orientation: first apply gyro, then base
         # Matrix multiplication: base * gyro
-        self.rotation_matrix = self.base_orientation_matrix @ gyro_rotation_matrix
+        self.rotation_matrix = (
+            self.base_orientation_matrix @ gyro_rotation_matrix
+        )
 
 
 def main(cube: Cube) -> None:

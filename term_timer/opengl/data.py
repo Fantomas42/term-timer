@@ -40,8 +40,6 @@ def load_palette_colors() -> list[tuple[float, float, float]]:
             else:
                 hex_color = face_config
             colors.append(hex_to_opengl(hex_color))
-
-        return colors
     except (ImportError, KeyError):
         # Fallback to default colors if palette system unavailable
         return [
@@ -52,6 +50,8 @@ def load_palette_colors() -> list[tuple[float, float, float]]:
             (1.0, 0.5, 0.0),   # Orange (L)
             (0.0, 0.0, 1.0),   # Blue (B)
         ]
+    else:
+        return colors
 
 
 # Load colors from palette system
@@ -208,7 +208,7 @@ normals: list[tuple[float, float, float]] = [
 
 
 # Map colors to their corresponding normals (built after colors are loaded)
-# WHITE=U, YELLOW=D, RED=R, GREEN=F, ORANGE=L, BLUE=B
+# WHITE=U, YELLOW=D, RED=R, GREEN=F, ORANGE=L, BLUE=B  noqa: ERA001
 def build_color_to_normal() -> (
     dict[tuple[float, float, float], tuple[float, float, float]]
 ):

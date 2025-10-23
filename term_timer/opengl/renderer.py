@@ -64,7 +64,7 @@ def ease_in_out_cubic(t: float) -> float:
     t: normalized time from 0.0 to 1.0
     Returns: eased value from 0.0 to 1.0
     """
-    if t < 0.5:
+    if t < 0.5:  # noqa: PLR2004
         return 4 * t * t * t
     return 1 - pow(-2 * t + 2, 3) / 2
 
@@ -123,11 +123,7 @@ def r_cube(
         # Inline rendering for common case (scale=1) - reduces function calls
         for i in range(6):
             color = colors[i]
-            if color is not None:
-                face_color = color
-            else:
-                face_color = BLACK
-
+            face_color = color or BLACK
             points = _UNIT_CUBE_FACES[i]
             normal = normals[i]
 

@@ -146,8 +146,9 @@ class Window:
         glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
 
         # Enable automatic normal rescaling after transformations
-        # GL_RESCALE_NORMAL is faster than GL_NORMALIZE (uses uniform scale factor)
-        # Since we only rotate (no non-uniform scaling), this is sufficient
+        # GL_RESCALE_NORMAL is faster than GL_NORMALIZE because
+        # uses uniform scale factor. Since we only rotate
+        # (no non-uniform scaling), this is sufficient
         glEnable(GL_RESCALE_NORMAL)
 
         # Ambient light - higher for softer, more natural appearance
