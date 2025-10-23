@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from cubing_algs.algorithm import Algorithm
 from numpy.typing import NDArray
 
 from term_timer.bluetooth.gyroscope import Quaternion
@@ -16,7 +17,11 @@ from term_timer.opengl.window import Window
 
 class Cube:
 
-    def __init__(self, state: CubeStateDict | None = None) -> None:
+    def __init__(
+            self,
+            state: CubeStateDict | None = None,
+            orientation_moves: Algorithm | None = None,
+    ) -> None:
         if state:
             self.corner_permutation = list(state['CP'])
             self.corners_orientations = list(state['CO'])
@@ -29,6 +34,22 @@ class Cube:
             self.corners_orientations = [0] * 8
 
         self.rotation_matrix: NDArray[np.float64] = np.eye(3, dtype=np.float64)
+
+        # Apply orientation transformation if provided
+        if orientation_moves:
+            for orientation in orientation_moves:
+                angle = 90
+                if orientation.is_counter_clockwise:
+                    angle = -90
+                elif orientation.is_double:
+                    angle = 180
+
+                if orientation.base_move == 'x':
+                    self.rotate_x(angle)
+                elif orientation.base_move == 'y':
+                    self.rotate_y(angle)
+                else:
+                    self.rotate_z(angle)
 
         # Initial orientation for normalizing quaternions
         # The first quaternion received becomes the reference orientation

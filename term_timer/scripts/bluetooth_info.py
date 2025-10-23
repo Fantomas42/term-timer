@@ -673,7 +673,13 @@ def main() -> None:
     gl_thread = None
     cube_ready = threading.Event()
     if args.use_opengl:
-        gl_thread = CubeGLThread(cube_ready, 800, 600, daemon=True)
+        gl_thread = CubeGLThread(
+            cube_ready,
+            args.orientation,
+            800,
+            600,
+            daemon=True,
+        )
         gl_thread.start()
 
     asyncio.run(run(args, gl_thread, cube_ready), debug=True)

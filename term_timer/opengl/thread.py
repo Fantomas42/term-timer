@@ -15,6 +15,7 @@ from term_timer.opengl.renderer import render
 from term_timer.opengl.text_renderer import WAITING_MESSAGE_FONT_SIZE
 from term_timer.opengl.text_renderer import render_waiting_message
 from term_timer.opengl.window import Window
+from term_timer.orientation import get_orientation_moves
 
 logger = logging.getLogger(__name__)
 
@@ -24,16 +25,19 @@ CUBE_READY_CHECK_TIMEOUT = 0.016  # ~60fps
 
 class CubeGLThread(threading.Thread):
     def __init__(
-        self,
-        cube_ready_event: threading.Event,
-        width: int = 800,
-        height: int = 600,
-        *,
-        daemon: bool = True,
+            self,
+            cube_ready_event: threading.Event,
+            orientation_faces: str,
+            width: int = 800,
+            height: int = 600,
+            *,
+            daemon: bool = True,
     ) -> None:
         super().__init__(daemon=daemon)
 
         self.cube_ready_event = cube_ready_event
+        self.orientation_faces = orientation_faces
+        self.orientation_moves = get_orientation_moves(orientation_faces)
 
         self.width = width
         self.height = height
@@ -79,7 +83,7 @@ class CubeGLThread(threading.Thread):
 
                     # Initialize cube with state
                     if state:
-                        self.cube = Cube(state)
+                        self.cube = Cube(state, self.orientation_moves)
                         self.is_animating_entrance = True
                         self.cube_scale = 0.0
             else:
