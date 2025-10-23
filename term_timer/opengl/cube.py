@@ -14,6 +14,9 @@ from term_timer.opengl.data import edge_orientations
 from term_timer.opengl.data import edge_permutations
 from term_timer.opengl.window import Window
 
+# Gimbal lock threshold for Euler angle extraction
+GIMBAL_LOCK_THRESHOLD = 0.99999  # Near ±1 detection for r[2][0]
+
 
 class Cube:
 
@@ -142,24 +145,30 @@ class Cube:
     def get_euler_angles(self) -> tuple[float, float, float]:
         r = self.rotation_matrix
 
-        if abs(r[2][0]) != 1:
-            theta_y = -math.asin(r[2][0])
-            theta_x = math.atan2(
-                r[2][1] / math.cos(theta_y),
-                r[2][2] / math.cos(theta_y),
-            )
-            theta_z = math.atan2(
-                r[1][0] / math.cos(theta_y),
-                r[0][0] / math.cos(theta_y),
-            )
+        # Clamp r[2][0] to [-1, 1] to avoid numerical issues with asin
+        sin_theta_y = max(-1.0, min(1.0, r[2][0]))
+
+        # Check for gimbal lock (when pitch is near ±90°)
+        if abs(sin_theta_y) < GIMBAL_LOCK_THRESHOLD:
+            # Normal case: no gimbal lock
+            theta_y = -math.asin(sin_theta_y)
+
+            # Use atan2 for better numerical stability
+            theta_x = math.atan2(r[2][1], r[2][2])
+            theta_z = math.atan2(r[1][0], r[0][0])
         else:
+            # Gimbal lock case: pitch is ±90°
+            # In this case, we can only determine the sum/difference of
+            # roll and yaw, so we conventionally set one to zero
             theta_z = 0.0
-            if r[2][0] == -1:
-                theta_y = math.pi / 2
-                theta_x = theta_z + math.atan2(r[0][1], r[0][2])
-            else:
+            if sin_theta_y < 0:
+                # Pitch = -90°
                 theta_y = -math.pi / 2
                 theta_x = -theta_z + math.atan2(-r[0][1], -r[0][2])
+            else:
+                # Pitch = +90°
+                theta_y = math.pi / 2
+                theta_x = theta_z + math.atan2(r[0][1], r[0][2])
 
         return (
             math.degrees(theta_x),
