@@ -4,6 +4,7 @@ import numpy as np
 from cubing_algs.vcube import VCube
 from numpy.typing import NDArray
 
+from term_timer.bluetooth.gyroscope import Quaternion
 from term_timer.bluetooth.types import QuaternionDict
 from term_timer.opengl import renderer
 from term_timer.opengl.data import corner_orientations
@@ -26,6 +27,10 @@ class Cube:
             self.corners_orientations = [0] * 8
 
         self.rotation_matrix: NDArray[np.float64] = np.eye(3, dtype=np.float64)
+
+        # Initial orientation for normalizing quaternions
+        # The first quaternion received becomes the reference orientation
+        self.initial_orientation: Quaternion | None = None
 
     def init_from_facelets(self, facelets: str) -> None:
         """Initialize cube state from a 54-character facelet string."""
@@ -155,8 +160,36 @@ class Cube:
         renderer.animate_rotation(window, self, axis, angle)
 
     def set_rotation_from_quaternion(self, q: QuaternionDict) -> None:
-        qw, qx, qy, qz = q['w'], q['x'], q['z'], -q['y']
+        """
+        Set rotation from quaternion with automatic normalization.
 
+        The first quaternion received becomes the reference orientation.
+        All subsequent quaternions are normalized relative to this initial
+        orientation, similar to RotationDetector.process_gyro_event().
+        """
+        # Convert raw quaternion dict to Quaternion object
+        absolute_raw = Quaternion.from_dict_raw(q)
+
+        # Initialize with first quaternion as neutral orientation
+        if self.initial_orientation is None:
+            self.initial_orientation = absolute_raw
+            # Set identity rotation for the initial position
+            self.rotation_matrix = np.eye(3, dtype=np.float64)
+            return
+
+        # Normalize in raw sensor frame: q_normalized = q_initial^-1 * q_current
+        # This matches the logic in gyroscope.py:201-205
+        current_orientation = self.initial_orientation.conjugate().multiply(
+            absolute_raw,
+        ).normalize()
+
+        # Apply coordinate transformation: Y↔Z swap for display coordinates
+        qw = current_orientation.w
+        qx = current_orientation.x
+        qy = current_orientation.z
+        qz = -current_orientation.y
+
+        # Convert normalized quaternion to rotation matrix
         self.rotation_matrix = np.array([
             [
                 1 - 2 * qy * qy - 2 * qz * qz,
