@@ -1,3 +1,4 @@
+import time
 from operator import neg
 from typing import TYPE_CHECKING
 
@@ -292,13 +293,15 @@ def animate_move(window: 'Window', cube: 'Cube', face: str, power: int) -> None:
 
     hiding_points = hide_coords[face]
 
-    # Animation parameters
-    total_frames = 15  # Number of frames for animation
+    # Animation parameters (time-based for consistent speed)
+    animation_duration = 0.075  # 75ms animation (balanced speed)
     target_angle = theta_max - 1  # Target rotation angle
+    start_time = time.time()
 
-    for frame in range(total_frames):
-        # Calculate normalized time (0.0 to 1.0)
-        t = frame / (total_frames - 1)
+    while True:
+        # Calculate elapsed time
+        elapsed = time.time() - start_time
+        t = min(elapsed / animation_duration, 1.0)  # Clamp to [0, 1]
 
         # Apply ease-out cubic easing for smooth deceleration
         eased_t = ease_out_cubic(t)
@@ -342,16 +345,22 @@ def animate_move(window: 'Window', cube: 'Cube', face: str, power: int) -> None:
 
         window.update()
 
+        # Break when animation is complete
+        if t >= 1.0:
+            break
+
 
 def animate_rotation(window: 'Window', cube: 'Cube',
                      axis: str, angle: int) -> None:
-    # Animation parameters
-    total_frames = 15  # Number of frames for smooth rotation
+    # Animation parameters (time-based for consistent speed)
+    animation_duration = 0.075  # 75ms animation (balanced speed)
+    start_time = time.time()
     prev_eased_angle = 0.0
 
-    for frame in range(total_frames):
-        # Calculate normalized time (0.0 to 1.0)
-        t = frame / (total_frames - 1)
+    while True:
+        # Calculate elapsed time
+        elapsed = time.time() - start_time
+        t = min(elapsed / animation_duration, 1.0)  # Clamp to [0, 1]
 
         # Apply ease-out cubic easing
         eased_t = ease_out_cubic(t)
@@ -375,3 +384,7 @@ def animate_rotation(window: 'Window', cube: 'Cube',
         window.update()
 
         prev_eased_angle = current_eased_angle
+
+        # Break when animation is complete
+        if t >= 1.0:
+            break
