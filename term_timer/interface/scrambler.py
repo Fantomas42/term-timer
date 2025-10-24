@@ -115,11 +115,11 @@ class Scrambler:
             for i, move in enumerate(algo):
                 expected = scramble_oriented[i]
                 style = 'move'
-                if expected != move or not on_good_way:
-                    on_good_way = False
+                if not on_good_way:
                     style = 'warning'
-                    if expected[0] == move[0]:
-                        style = 'caution'
+                elif expected != move:
+                    on_good_way = False
+                    style = 'caution' if expected[0] == move[0] else 'warning'
 
                 out += f'[{ style }]{ move }[/{ style }] '
             full_clear = len(algo) < len(p_algo) or len(algo) <= 1

@@ -323,7 +323,7 @@ class TestComputeScrambleDisplayOffTrackBehavior(unittest.TestCase):
         self.assertEqual(out, expected_output)
         self.assertFalse(full_clear)
 
-    def test_once_off_track_same_face_later_is_caution(self) -> None:
+    def test_once_off_track_same_face_later_is_warning(self) -> None:
         scrambled = parse_moves('R F D')
         scramble_oriented = parse_moves('R U D')
         cube_orientation_moves = parse_moves('')
@@ -337,7 +337,7 @@ class TestComputeScrambleDisplayOffTrackBehavior(unittest.TestCase):
         )
 
         expected_output = (
-            '[move]R[/move] [warning]F[/warning] [caution]D[/caution] '
+            '[move]R[/move] [warning]F[/warning] [warning]D[/warning] '
         )
         self.assertEqual(out, expected_output)
         self.assertFalse(full_clear)
@@ -356,7 +356,7 @@ class TestComputeScrambleDisplayOffTrackBehavior(unittest.TestCase):
         )
 
         expected_output = (
-            '[caution]R[/caution] [caution]U[/caution] [caution]F[/caution] '
+            '[caution]R[/caution] [warning]U[/warning] [warning]F[/warning] '
         )
         self.assertEqual(out, expected_output)
         self.assertFalse(full_clear)
@@ -377,10 +377,10 @@ class TestComputeScrambleDisplayOffTrackBehavior(unittest.TestCase):
         expected_output = (
             '[move]R[/move] '
             '[warning]U[/warning] '
-            '[caution]F[/caution] '
-            '[caution]D[/caution] '
-            '[caution]L[/caution] '
-            '[caution]B[/caution] '
+            '[warning]F[/warning] '
+            '[warning]D[/warning] '
+            '[warning]L[/warning] '
+            '[warning]B[/warning] '
         )
         self.assertEqual(out, expected_output)
         self.assertFalse(full_clear)
@@ -588,7 +588,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         expected_output = (
             '[move]R[/move] '
             "[caution]U'[/caution] "
-            '[caution]F[/caution] '
+            '[warning]F[/warning] '
             '[warning]D[/warning] '
         )
         self.assertEqual(out, expected_output)
@@ -608,7 +608,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         )
 
         expected_output = (
-            '[caution]R[/caution] [caution]U[/caution] [caution]F[/caution] '
+            '[caution]R[/caution] [warning]U[/warning] [warning]F[/warning] '
         )
         self.assertEqual(out, expected_output)
         self.assertFalse(full_clear)
