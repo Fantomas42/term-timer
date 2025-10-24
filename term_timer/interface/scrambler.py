@@ -54,12 +54,41 @@ class Scrambler:
 
         self.scrambled.append(timed_move)
 
-        if (
-                self.bluetooth_cube
-                and self.bluetooth_cube.state == self.facelets_scrambled
-        ):
+        is_complete = (
+            self.bluetooth_cube is not None
+            and self.bluetooth_cube.state == self.facelets_scrambled
+        )
+
+        if is_complete:
             self.scramble_completed_event.set()
             self.beep()
+
+        out, full_clear = self.compute_scramble_display(
+            scrambled=self.scrambled,
+            scramble_oriented=self.scramble_oriented,
+            cube_orientation_moves=self.cube_orientation_moves,
+            is_complete=is_complete,
+        )
+
+        self.clear_line(full=full_clear)
+
+        self.console.print(
+            f'[scramble]Scramble #{ self.counter }:[/scramble]',
+            out,
+            end='',
+        )
+
+    def compute_scramble_display(
+            self,
+            scrambled: Algorithm,
+            scramble_oriented: Algorithm,
+            cube_orientation_moves: Algorithm,
+            *, is_complete: bool,
+    ) -> tuple[str, bool]:
+        """
+        Compute the display output and clear behavior for scramble progress.
+        """
+        if is_complete:
             out = (
                 '[result]Cube scrambled and ready to be solved ![/result] '
                 '[consign]Start solving to launch the timer.[/consign]'
@@ -67,24 +96,24 @@ class Scrambler:
             full_clear = True
         else:
             out = ''
-            if self.cube_orientation_moves:
-                out += f'[consign]{ self.cube_orientation_moves }[/consign] '
+            if cube_orientation_moves:
+                out += f'[consign]{ cube_orientation_moves }[/consign] '
 
             algo = self.reorient(
-                self.scrambled.transform(
+                scrambled.transform(
                     humanize_moves,
                     compress_moves,
                     untime_moves,
                 ),
             )
-            p_algo = self.scrambled[:-1].transform(
+            p_algo = scrambled[:-1].transform(
                 humanize_moves,
                 compress_moves,
             )
 
             on_good_way = True
             for i, move in enumerate(algo):
-                expected = self.scramble_oriented[i]
+                expected = scramble_oriented[i]
                 style = 'move'
                 if expected != move or not on_good_way:
                     on_good_way = False
@@ -95,10 +124,4 @@ class Scrambler:
                 out += f'[{ style }]{ move }[/{ style }] '
             full_clear = len(algo) < len(p_algo) or len(algo) <= 1
 
-        self.clear_line(full=full_clear)
-
-        self.console.print(
-            f'[scramble]Scramble #{ self.counter }:[/scramble]',
-            out,
-            end='',
-        )
+        return out, full_clear
