@@ -9,7 +9,8 @@ from cubing_algs.transform.wide import rewide_moves
 from cubing_algs.transform.wide import rewide_timed_moves
 
 from term_timer.constants import RESLICE_THRESHOLD
-from term_timer.constants import REWIDE_THRESHOLD
+from term_timer.constants import RESLICE_THRESHOLD_GYROSCOPE
+from term_timer.constants import REWIDE_THRESHOLD_GYROSCOPE
 
 
 def humanize_moves_without_rotation(algorithm: Algorithm) -> Algorithm:
@@ -30,8 +31,8 @@ def humanize_moves_without_rotation(algorithm: Algorithm) -> Algorithm:
 def humanize_moves_with_rotation(algorithm: Algorithm) -> Algorithm:
     return algorithm.transform(
         translate_pov_moves,
-        reslice_timed_moves(RESLICE_THRESHOLD, (3,)),
-        rewide_timed_moves(REWIDE_THRESHOLD),
+        reslice_timed_moves(RESLICE_THRESHOLD_GYROSCOPE, (3,)),
+        rewide_timed_moves(REWIDE_THRESHOLD_GYROSCOPE),
     )
 
 
