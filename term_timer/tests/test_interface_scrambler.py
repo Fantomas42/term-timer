@@ -152,7 +152,11 @@ class TestComputeScrambleDisplayIncomplete(unittest.TestCase):
             is_complete=False,
         )
 
-        self.assertTrue(out.startswith('[consign]x y[/consign] '))
+        self.assertTrue(
+            out.startswith(
+                '[rotation_x]x[/rotation_x] [rotation_y]y[/rotation_y] ',
+            ),
+        )
         self.assertTrue('[move]R[/move]' in out)
 
 
@@ -567,7 +571,8 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         )
 
         expected_output = (
-            '[consign]x y[/consign] [move]F[/move] [move]R[/move] '
+            '[rotation_x]x[/rotation_x] [rotation_y]y[/rotation_y] '
+            '[move]F[/move] [move]R[/move] '
         )
         self.assertEqual(out, expected_output)
         self.assertFalse(full_clear)
@@ -626,7 +631,11 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
             is_complete=False,
         )
 
-        self.assertTrue(out.startswith("[consign]x' y2[/consign] "))
+        self.assertTrue(
+            out.startswith(
+                "[rotation_x]x'[/rotation_x] [rotation_y]y2[/rotation_y] ",
+            ),
+        )
         self.assertIn('[move]R[/move]', out)
         self.assertIn('[move]U[/move]', out)
         self.assertFalse(full_clear)

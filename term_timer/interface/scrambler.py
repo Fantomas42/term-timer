@@ -8,6 +8,7 @@ from cubing_algs.transform.timing import untime_moves
 from cubing_algs.vcube import VCube
 from rich.console import Console as RichConsole
 
+from term_timer.formatter import format_alg_moves
 from term_timer.transform import humanize_moves
 
 
@@ -97,7 +98,7 @@ class Scrambler:
         else:
             out = ''
             if cube_orientation_moves:
-                out += f'[consign]{ cube_orientation_moves }[/consign] '
+                out += f'{ format_alg_moves(str(cube_orientation_moves)) } '
 
             algo = self.reorient(
                 scrambled.transform(
