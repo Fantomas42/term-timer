@@ -581,19 +581,37 @@
         </div>
 
         <div>
-          <h3 class="alg-section-title">Movement Distance</h3>
+          <h3 class="alg-section-title">Movement Distance (Manhattan)</h3>
           <table class="alg-table">
             <tr>
               <td><strong>Mean Distance</strong></td>
-              <td class="alg-value">{{ "%.2f"|format(algorithm.impacts.facelets_distance_mean) }}</td>
+              <td class="alg-value">{{ "%.2f"|format(algorithm.impacts.facelets_manhattan_distance.mean) }}</td>
             </tr>
             <tr>
               <td><strong>Max Distance</strong></td>
-              <td class="alg-value">{{ algorithm.impacts.facelets_distance_max }}</td>
+              <td class="alg-value">{{ algorithm.impacts.facelets_manhattan_distance.max }}</td>
             </tr>
             <tr>
               <td><strong>Total Distance</strong></td>
-              <td class="alg-value">{{ algorithm.impacts.facelets_distance_sum }}</td>
+              <td class="alg-value">{{ algorithm.impacts.facelets_manhattan_distance.sum }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Movement Distance (QTM)</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Mean Distance</strong></td>
+              <td class="alg-value">{{ "%.2f"|format(algorithm.impacts.facelets_qtm_distance.mean) }}</td>
+            </tr>
+            <tr>
+              <td><strong>Max Distance</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.facelets_qtm_distance.max }}</td>
+            </tr>
+            <tr>
+              <td><strong>Total Distance</strong></td>
+              <td class="alg-value">{{ algorithm.impacts.facelets_qtm_distance.sum }}</td>
             </tr>
           </table>
         </div>
