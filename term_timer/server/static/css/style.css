@@ -1899,6 +1899,11 @@ twisty-alg-viewer {
     color: var(--text-primary);
 }
 
+.alg-table th {
+    text-align: left;
+    color: var(--text-primary);
+}
+
 .alg-table td:first-child {
     color: var(--text-secondary);
 }
