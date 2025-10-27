@@ -268,11 +268,11 @@
     </div>
     <div class="card-body">
       {% set structure = algorithm.structure %}
-      <div class="alg-ergo-grid">
+      <div class="alg-structure-grid">
         <div>
           <h3 class="alg-section-title">Compressed Notation</h3>
           <div class="alg-generators">
-            <code>{{ structure.compressed }}</code>
+            {{ structure.compressed }}
           </div>
           <div class="alg-metric-row">
             <strong>Original:</strong> {{ structure.original }}
@@ -335,9 +335,7 @@
             </tr>
           </table>
         </div>
-      </div>
 
-      <div class="alg-ergo-grid">
         <div>
           <h3 class="alg-section-title">Classifications</h3>
           <table class="alg-table">
@@ -399,9 +397,7 @@
             </tr>
           </table>
         </div>
-      </div>
 
-      <div class="alg-ergo-grid">
         <div>
           <h3 class="alg-section-title">Efficiency Rating</h3>
           <div class="alg-rating-box">
@@ -416,39 +412,39 @@
       </div>
 
       {% if structure.structures %}
-      <div>
-        <h3 class="alg-section-title">Detected Structures</h3>
-        <table class="alg-table">
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Setup (A)</th>
-              <th>Action (B)</th>
-              <th>Classification</th>
-              <th>Notation</th>
-              <th>Moves</th>
-              <th>Pure</th>
-              <th>Cancels</th>
-              <th>Score</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for struct in structure.structures %}
-            <tr>
-              <td>{{ struct.type|capitalize }}</td>
-              <td>{{ struct.setup }}</td>
-              <td>{{ struct.action }}</td>
-              <td>{{ struct.classification }}</td>
-              <td><code>{{ struct }}</code></td>
-              <td>{{ struct.move_count }}</td>
-              <td>{{ 'Yes' if struct.is_pure else 'No' }}</td>
-              <td>{{ 'Yes' if struct.has_cancellations else 'No' }}</td>
-              <td>{{ "%.1f"|format(struct.score) }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+        <div>
+          <h3 class="alg-section-title">Detected Structures</h3>
+          <table class="alg-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Setup (A)</th>
+                <th>Action (B)</th>
+                <th>Classification</th>
+                <th>Notation</th>
+                <th>Moves</th>
+                <th>Pure</th>
+                <th>Cancels</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for struct in structure.structures %}
+                <tr>
+                  <td>{{ struct.type|capitalize }}</td>
+                  <td>{{ struct.setup }}</td>
+                  <td>{{ struct.action }}</td>
+                  <td>{{ struct.classification }}</td>
+                  <td><code>{{ struct }}</code></td>
+                  <td>{{ struct.move_count }}</td>
+                  <td>{{ 'Yes' if struct.is_pure else 'No' }}</td>
+                  <td>{{ 'Yes' if struct.has_cancellations else 'No' }}</td>
+                  <td>{{ "%.1f"|format(struct.score) }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       {% endif %}
     </div>
   </div>
@@ -622,7 +618,7 @@
             {% for face, count in algorithm.impacts.facelets_face_mobility.items() %}
             <tr>
               <td><strong>{{ face }} Face</strong></td>
-              <td class="alg-value">{{ count }} facelets</td>
+              <td class="alg-value">{{ count }} facelet{% if count > 1 %}s{% endif %}</td>
             </tr>
             {% endfor %}
           </table>
@@ -676,27 +672,39 @@
                 {% if count > 0 %}
             <tr>
               <td><strong>{{ origin_face }} → {{ dest_face }}</strong></td>
-              <td class="alg-value">{{ count }} facelets</td>
+              <td class="alg-value">{{ count }} facelet{% if count > 1 %}s{% endif %}</td>
             </tr>
                 {% endif %}
               {% endfor %}
             {% endfor %}
           </table>
         </div>
-      </div>
 
-      <div class="alg-impact-grid">
         <div>
           <h3 class="alg-section-title">Facelet State</h3>
           <div class="alg-transformation-mask">
-            <div class="alg-generators">{{ algorithm.impacts.facelets_state }}</div>
+            <div class="alg-generators">
+              {% for facelet in algorithm.impacts.facelets_state %}
+                {% if loop.index0 % 9 == 0 and loop.index0 %}
+                  <br>
+                {% endif %}
+                {{ facelet }}
+              {% endfor %}
+            </div>
           </div>
         </div>
 
         <div>
           <h3 class="alg-section-title">Transformation Mask</h3>
           <div class="alg-transformation-mask">
-            <div class="alg-generators">{{ algorithm.impacts.facelets_transformation_mask }}</div>
+            <div class="alg-generators">
+              {% for facelet in algorithm.impacts.facelets_transformation_mask %}
+                {% if loop.index0 % 9 == 0 and loop.index0 %}
+                  <br>
+                {% endif %}
+                {{ facelet }}
+              {% endfor %}
+            </div>
           </div>
         </div>
       </div>
@@ -774,11 +782,10 @@
             {{ algorithm.impacts.cubies_suggested_approach }}
           </div>
         </div>
-      </div>
 
-      {% if algorithm.impacts.cubies_corner_cycle_analysis.cycle_count > 0 or algorithm.impacts.cubies_edge_cycle_analysis.cycle_count > 0 %}
-      <div class="alg-impact-grid">
-        {% if algorithm.impacts.cubies_corner_cycle_analysis.cycle_count > 0 %}
+        {% if algorithm.impacts.cubies_corner_cycle_analysis.cycle_count > 0 or algorithm.impacts.cubies_edge_cycle_analysis.cycle_count > 0 %}
+
+          {% if algorithm.impacts.cubies_corner_cycle_analysis.cycle_count > 0 %}
         <div>
           <h3 class="alg-section-title">Corner Cycle Details</h3>
           <table class="alg-table">
@@ -852,10 +859,9 @@
             </div>
           </div>
         {% endif %}
-      </div>
+
       {% endif %}
 
-      <div class="alg-impact-grid">
         <div>
           <h3 class="alg-section-title">Corner Permutation</h3>
           <div class="alg-cubie-data">

@@ -1855,13 +1855,7 @@ twisty-alg-viewer {
     gap: 2rem;
 }
 
-.alg-ergo-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1.5rem;
-}
-
-.alg-impact-grid {
+.alg-ergo-grid, .alg-impact-grid, .alg-structure-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 1.5rem;
@@ -1991,6 +1985,7 @@ twisty-alg-viewer {
 /* Responsive adjustments */
 @media (max-width: 1024px) {
     .alg-ergo-grid,
+    .alg-structure-grid,
     .alg-impact-grid {
         grid-template-columns: 1fr 1fr;
     }
@@ -1999,6 +1994,7 @@ twisty-alg-viewer {
 @media (max-width: 768px) {
     .alg-metrics-grid,
     .alg-ergo-grid,
+    .alg-structure-grid,
     .alg-impact-grid {
         grid-template-columns: 1fr;
     }
