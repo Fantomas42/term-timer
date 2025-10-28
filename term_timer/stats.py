@@ -647,13 +647,14 @@ class StatisticsReporter(Statistics):
             name, stats = item
             return (cast(int | float, stats[sorting]), name)  # type: ignore[literal-required]
 
-        for name, info in sorted(
+        case_stats: CaseStats
+        for name, case_stats in sorted(
                 items.items(),
                 key=sort_key,
                 reverse=ordering == 'desc',
         ):
             percent_klass = (
-                info['frequency'] > info['probability'] and 'green'
+                case_stats['frequency'] > case_stats['probability'] and 'green'
             ) or 'red'
 
             label = f'{ title } { name.split(" ")[0] }'
@@ -666,35 +667,35 @@ class StatisticsReporter(Statistics):
             if 'SKIP' in name:
                 head = f'[skipped]{ name }[/skipped]'
 
-            count = info['count']
+            count = case_stats['count']
 
             table.add_row(
                 head,
                 f'[stats]{ count!s }[/stats]',
                 f'[{ percent_klass }]'
-                f'{ (info["frequency"] * 100):.2f}%'
+                f'{ (case_stats["frequency"] * 100):.2f}%'
                 f'[/{ percent_klass }]',
                 '[percent]'
-                f'{ (info["probability"] * 100):.2f}%'
+                f'{ (case_stats["probability"] * 100):.2f}%'
                 '[/percent]',
                 '[recognition]' +
-                format_duration(int(info['recognition'])) +
+                format_duration(int(case_stats['recognition'])) +
                 '[/recognition]',
                 '[execution]' +
-                format_duration(int(info['execution'])) +
+                format_duration(int(case_stats['execution'])) +
                 '[/execution]',
                 '[duration]' +
-                format_duration(int(info['time'])) +
+                format_duration(int(case_stats['time'])) +
                 '[/duration]',
                 '[ao12]' +
-                format_duration(info['ao12']) +
+                format_duration(case_stats['ao12']) +
                 '[/ao12]',
                 '[ao5]' +
-                format_duration(info['ao5']) +
+                format_duration(case_stats['ao5']) +
                 '[/ao5]',
-                f'[moves]{ info["qtm"]:.2f}[/moves]',
-                f'[tps]{ info["tps"]:.2f}[/tps]',
-                f'[tps-e]{ info["etps"]:.2f}[/tps-e]',
+                f'[moves]{ case_stats["qtm"]:.2f}[/moves]',
+                f'[tps]{ case_stats["tps"]:.2f}[/tps]',
+                f'[tps-e]{ case_stats["etps"]:.2f}[/tps-e]',
             )
         console.print(table)
 

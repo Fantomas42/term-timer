@@ -7,6 +7,7 @@ from typing import cast
 
 from term_timer.methods import get_method_analyser
 from term_timer.methods.base import Analyser
+from term_timer.methods.base import StepSummary
 from term_timer.methods.cases import CASES
 from term_timer.methods.cases import CaseInfo
 from term_timer.solve import Solve
@@ -39,7 +40,7 @@ def analyse_solve_worker(solve: Solve,
 
     steps: dict[str, StepAnalysis] = {}
     for step_name, step_index in solve.method_analyser.aggregate.items():
-        step = analysis.summary[step_index]
+        step: StepSummary = analysis.summary[step_index]
         steps[step_name] = {
             'case': step['case'],
             'time': step['total'],
@@ -105,6 +106,7 @@ class SolvesMethodAggregator:
             total += 1
             score += analyse['score']
 
+            step: StepAnalysis
             for step_name, step in analyse['steps'].items():
                 step_case = step['case']
                 resume.setdefault(step_name, {})
@@ -139,6 +141,7 @@ class SolvesMethodAggregator:
         final_resume: dict[str, dict[str, CaseStats]] = {}
         for step_name, step_cases in resume.items():
             final_resume[step_name] = {}
+            accumulator: CaseStatsAccumulator
             for case_name, accumulator in step_cases.items():
                 count = len(accumulator['times'])
                 final_resume[step_name][case_name] = {

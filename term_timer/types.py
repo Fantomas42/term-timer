@@ -1,4 +1,37 @@
-"""Type definitions for solve analysis and statistics."""
+"""
+Type definitions for solve analysis and statistics.
+
+This module defines TypedDict classes used for aggregation and statistical
+analysis of multiple solves. These types represent the external/aggregated
+view of solve data.
+
+Type System Architecture:
+------------------------
+The codebase uses a two-layer type system:
+
+1. Internal Analysis Types:
+   - StepInfo: Configuration for a solving step
+   - StepSummary: Detailed analysis results for a single step
+   - StepConfig: Step configuration with metadata
+   These types are used during the solve analysis phase and contain detailed
+   information about individual solve steps.
+
+2. Aggregation Types:
+   - StepAnalysis: Simplified step data for aggregation
+   - SolveAnalysis: Complete solve analysis result
+   - CaseStatsAccumulator: Accumulator for building statistics
+   - CaseStats: Final statistics for a case across multiple solves
+   - MethodAnalysis: Aggregated analysis across all solves
+   These types are used for multi-solve aggregation and statistical reporting.
+
+Data Flow:
+----------
+Analyser.summary (StepSummary list)
+  → analyse_solve_worker() transforms to StepAnalysis
+    → SolveAnalysis returned
+      → aggregate() processes multiple SolveAnalysis
+        → MethodAnalysis produced
+"""
 from typing import TypedDict
 
 from term_timer.solve import Solve

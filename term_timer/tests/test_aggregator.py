@@ -7,6 +7,7 @@ from unittest.mock import patch
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.aggregator import analyse_solve_worker
 from term_timer.solve import Solve
+from term_timer.types import StepAnalysis
 
 
 class TestAnalyseSolveWorker(unittest.TestCase):
@@ -55,7 +56,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
 
             result = analyse_solve_worker(solve, 'method', full=True)
 
-        expected_steps = {
+        expected_steps: dict[str, StepAnalysis] = {
             'step1': {
                 'case': 'case_a',
                 'time': 10.5,

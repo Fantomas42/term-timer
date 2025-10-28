@@ -150,9 +150,9 @@ class Solve:
             return 0
 
         return sum(
-            (s['aufs'][0] or 0) + (s['aufs'][1] or 0)
-            for s in self.method_applied.summary
-            if s['type'] != 'virtual'
+            (step['aufs'][0] or 0) + (step['aufs'][1] or 0)
+            for step in self.method_applied.summary
+            if step['type'] != 'virtual'
         )
 
     @cached_property
@@ -165,9 +165,9 @@ class Solve:
             return 0
 
         return sum(
-            self.missed_moves(s['moves'])
-            for s in self.method_applied.summary
-            if s['type'] != 'virtual'
+            self.missed_moves(step['moves'])
+            for step in self.method_applied.summary
+            if step['type'] != 'virtual'
         )
 
     @cached_property
@@ -176,9 +176,9 @@ class Solve:
             return 0
 
         return sum(
-            self.pauses(s['moves'])
-            for s in self.method_applied.summary
-            if s['type'] != 'virtual'
+            self.pauses(step['moves'])
+            for step in self.method_applied.summary
+            if step['type'] != 'virtual'
         )
 
     @cached_property
@@ -216,9 +216,9 @@ class Solve:
             return 0
 
         return sum(
-            s['recognition']
-            for s in self.method_applied.summary
-            if s['type'] != 'virtual'
+            step['recognition']
+            for step in self.method_applied.summary
+            if step['type'] != 'virtual'
         )
 
     @cached_property
@@ -227,9 +227,9 @@ class Solve:
             return 0
 
         return sum(
-            s['execution']
-            for s in self.method_applied.summary
-            if s['type'] != 'virtual'
+            step['execution']
+            for step in self.method_applied.summary
+            if step['type'] != 'virtual'
         )
 
     @cached_property
@@ -344,25 +344,26 @@ class Solve:
                 f'[rotation]{ self.orientation_moves!s }[/rotation]\n'
             )
 
-        for info in self.method_applied.summary:
+        step: StepSummary
+        for step in self.method_applied.summary:
 
             header = ''
-            if info['type'] == 'substep':
-                header += f'[substep]- { info["name"]:<9}:[/substep] '
+            if step['type'] == 'substep':
+                header += f'[substep]- { step["name"]:<9}:[/substep] '
             else:
-                header += f'[step]{ info["name"]:<11}:[/step] '
+                header += f'[step]{ step["name"]:<11}:[/step] '
 
-            if info['type'] == 'skipped':
+            if step['type'] == 'skipped':
                 line += (
                     f'{ header }[skipped]SKIP[/skipped]\n'
                 )
                 continue
 
             footer = ''
-            if info['type'] != 'virtual':
-                if info['total']:
-                    ratio_execution = info['execution'] / info['total'] * 12
-                    ratio_recognition = info['recognition'] / info['total'] * 12
+            if step['type'] != 'virtual':
+                if step['total']:
+                    ratio_execution = step['execution'] / step['total'] * 12
+                    ratio_recognition = step['recognition'] / step['total'] * 12
                 else:
                     ratio_execution = 0
                     ratio_recognition = 0
@@ -374,73 +375,73 @@ class Solve:
                     '[/recognition]' +
                     (round(ratio_execution) * ' ') +
                     ' [consign]' +
-                    self.reconstruction_step_line(info, multiple=False) +
+                    self.reconstruction_step_line(step, multiple=False) +
                     '[/consign]'
                 )
 
                 aufs = ''
-                if info['aufs'][0]:
-                    aufs += f' +{ info["aufs"][0] } pre-AUF'
-                if info['aufs'][1]:
-                    aufs += f' +{ info["aufs"][1] } post-AUF'
+                if step['aufs'][0]:
+                    aufs += f' +{ step["aufs"][0] } pre-AUF'
+                if step['aufs'][1]:
+                    aufs += f' +{ step["aufs"][1] } post-AUF'
 
-                if info['case']:
+                if step['case']:
                     link = (
                         'https://cubing.fache.fr/'
-                        f'{ info["name"].split(" ")[0] }/'
-                        f'{ info["case"].split(" ")[0] }.html'
+                        f'{ step["name"].split(" ")[0] }/'
+                        f'{ step["case"].split(" ")[0] }.html'
                     )
                     details = ''
-                    if info['case_infos']:
-                        details += f' { " ".join(info["case_infos"]) }'
+                    if step['case_infos']:
+                        details += f' { " ".join(step["case_infos"]) }'
 
                     footer += (
                         ' [comment]// '
-                        f'[link={ link }]{ info["case"] }[/link]'
+                        f'[link={ link }]{ step["case"] }[/link]'
                         f'{ details }{ aufs }[/comment]'
                     )
 
-                elif info['case_infos']:
+                elif step['case_infos']:
                     footer += (
                         ' [comment]// ' +
-                        ' '.join(info['case_infos']) +
+                        ' '.join(step['case_infos']) +
                         f'{ aufs }[/comment]'
                     )
 
             move_klass = self.method_applied.normalize_value(
-                'moves', info['name'],
-                info['moves_prettified'].metrics.htm,
+                'moves', step['name'],
+                step['moves_prettified'].metrics.htm,
                 'result',
             )
             percent_klass = self.method_applied.normalize_value(
-                'percent', info['name'],
-                info['total_percent'],
+                'percent', step['name'],
+                step['total_percent'],
                 'duration-p',
             )
 
-            tps = self.compute_tps(info['qtm'], info['total'])
-            if not info['execution']:
+            tps = self.compute_tps(step['qtm'], step['total'])
+            if not step['execution']:
                 tps_exec = tps
             else:
-                tps_exec = self.compute_tps(info['qtm'], info['execution'])
+                tps_exec = self.compute_tps(step['qtm'], step['execution'])
 
             line += (
                 f'{ header }'
                 f'[{ move_klass }]'
-                f'{ info["moves_prettified"].metrics.htm:>2} HTM'
+                f'{ step["moves_prettified"].metrics.htm:>2} HTM'
                 f'[/{ move_klass }] '
                 f'[recognition]'
-                f'{ format_duration(info["recognition"]):>5}s[/recognition] '
+                f'{ format_duration(step["recognition"]):>5}s[/recognition] '
                 f'[recognition-p]'
-                f'{ info["recognition_percent"]:5.2f}%[/recognition-p] '
+                f'{ step["recognition_percent"]:5.2f}%[/recognition-p] '
                 f'[execution]'
-                f'{ format_duration(info["execution"]):>5}s[/execution] '
+                f'{ format_duration(step["execution"]):>5}s[/execution] '
                 f'[execution-p]'
-                f'{ info["execution_percent"]:5.2f}%[/execution-p] '
+                f'{ step["execution_percent"]:5.2f}%[/execution-p] '
                 f'[duration]'
-                f'{ format_duration(info["total"]):>5}s[/duration] '
+                f'{ format_duration(step["total"]):>5}s[/duration] '
                 f'[{ percent_klass }]'
-                f'{ info["total_percent"]:5.2f}%[/{ percent_klass }] '
+                f'{ step["total_percent"]:5.2f}%[/{ percent_klass }] '
                 f'[tps]{ tps:.2f} TPS[/tps] '
                 f'[tps-e]{ tps_exec:.2f} eTPS[/tps-e]'
                 f'{ footer }\n'
@@ -532,42 +533,43 @@ class Solve:
         if self.orientation_moves:
             recons += f'{ self.orientation_moves!s } // Orientation\n'
 
-        for info in self.method_applied.summary:
-            if info['type'] == 'virtual':
+        step: StepSummary
+        for step in self.method_applied.summary:
+            if step['type'] == 'virtual':
                 continue
 
-            if info['type'] == 'skipped':
-                recons += f'// { info["name"] } SKIPPED\n'
+            if step['type'] == 'skipped':
+                recons += f'// { step["name"] } SKIPPED\n'
                 continue
 
-            detail_list = list(info['case_infos'])
-            if info['case']:
-                detail_list.insert(0, info['case'])
+            detail_list = list(step['case_infos'])
+            if step['case']:
+                detail_list.insert(0, step['case'])
 
             details = ''
             if detail_list:
                 details = f' ({ " ".join(detail_list) })'
 
             aufs = ''
-            if info['aufs'][0]:
-                aufs += f'Pre-AUF: +{ info["aufs"][0] } '
-            if info['aufs'][1]:
-                aufs += f'Post-AUF: +{ info["aufs"][1] } '
+            if step['aufs'][0]:
+                aufs += f'Pre-AUF: +{ step["aufs"][0] } '
+            if step['aufs'][1]:
+                aufs += f'Post-AUF: +{ step["aufs"][1] } '
             aufs = aufs.strip()
 
             moves = self.reconstruction_step_text(
-                info, multiple=multiple,
+                step, multiple=multiple,
             )
             recons += (
                 f'{ moves } // '
-                f'{ info["name"] }{ details } '
-                f'Reco: { format_duration(info["recognition"]) }s '
-                f'Exec: { format_duration(info["execution"]) }s '
-                f'HTM: { info["moves_prettified"].metrics.htm } '
+                f'{ step["name"] }{ details } '
+                f'Reco: { format_duration(step["recognition"]) }s '
+                f'Exec: { format_duration(step["execution"]) }s '
+                f'HTM: { step["moves_prettified"].metrics.htm } '
                 f'{ aufs }\n'
             )
 
-            if info['name'] == 'Full Cube':
+            if step['name'] == 'Full Cube':
                 return recons
 
         return recons
@@ -586,13 +588,14 @@ class Solve:
         yticks = []
         xticks = []
         xlabels = []
-        for s in self.method_applied.summary:
-            if s['type'] not in {'skipped', 'virtual'}:
-                index = s['index'][-1] + 1
+        step: StepSummary
+        for step in self.method_applied.summary:
+            if step['type'] not in {'skipped', 'virtual'}:
+                index = step['index'][-1] + 1
                 plt.vline(index, 'red')
                 xticks.append(index)
                 yticks.append(self.move_times[index - 1][1] / 1000)
-                xlabels.append(s['name'])
+                xlabels.append(step['name'])
 
         plt.xticks(xticks, xlabels)
         plt.yticks(yticks)
@@ -612,12 +615,15 @@ class Solve:
         tpss = []
         etpss = []
         labels = []
-        for s in self.method_applied.summary:
-            if s['type'] not in {'skipped', 'virtual'}:
-                tps = Solve.compute_tps(s['qtm'], s['total'])
+        step: StepSummary
+        for step in self.method_applied.summary:
+            if step['type'] not in {'skipped', 'virtual'}:
+                tps = Solve.compute_tps(step['qtm'], step['total'])
                 tpss.append(tps)
-                etpss.append(Solve.compute_tps(s['qtm'], s['execution']) - tps)
-                labels.append(s['name'])
+                etpss.append(
+                    Solve.compute_tps(step['qtm'], step['execution']) - tps,
+                )
+                labels.append(step['name'])
 
         plt.stacked_bar(
             labels,
@@ -642,11 +648,12 @@ class Solve:
         labels = []
         executions = []
         recognitions = []
-        for s in self.method_applied.summary:
-            if s['type'] not in {'skipped', 'virtual'}:
-                labels.append(s['name'])
-                recognitions.append(s['recognition'] / SECOND)
-                executions.append(s['execution'] / SECOND)
+        step: StepSummary
+        for step in self.method_applied.summary:
+            if step['type'] not in {'skipped', 'virtual'}:
+                labels.append(step['name'])
+                recognitions.append(step['recognition'] / SECOND)
+                executions.append(step['execution'] / SECOND)
 
         plt.stacked_bar(
             labels,
@@ -770,10 +777,11 @@ class Solve:
         previous_time = orientation_offset
 
         full_algo = ''
-        for info in self.method_applied.summary:
-            if info['type'] == 'virtual':
+        step: StepSummary
+        for step in self.method_applied.summary:
+            if step['type'] == 'virtual':
                 continue
-            full_algo += str(info['moves_humanized'])
+            full_algo += str(step['moves_humanized'])
 
         moves = parse_moves(full_algo).transform(
             pause_moves(

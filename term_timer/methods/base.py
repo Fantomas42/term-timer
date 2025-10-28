@@ -42,6 +42,9 @@ from term_timer.triggers import DEFAULT_TRIGGERS
 class StepInfo(TypedDict):
     """
     Information about a single step during solve analysis.
+
+    This is an internal type used during the solve analysis process.
+    For aggregation across multiple solves, see StepAnalysis in types.py.
     """
     moves: list[int]
     increment: int
@@ -52,6 +55,14 @@ class StepInfo(TypedDict):
 class StepSummary(TypedDict):
     """
     Summary information for a completed step.
+
+    This is an internal detailed type used during solve analysis. It contains
+    comprehensive information about a step including move sequences, timings,
+    and percentages.
+
+    For aggregation across multiple solves, this type is transformed into the
+    simplified StepAnalysis type (see types.py) which retains only the
+    essential fields needed for statistical analysis.
     """
     type: Literal['step', 'skipped', 'substep', 'virtual']
     name: str
@@ -79,7 +90,12 @@ class StepSummary(TypedDict):
 
 
 class StepConfig(TypedDict, total=False):
-    """Configuration for a solving step."""
+    """
+    Configuration for a solving step.
+
+    This is an internal type used to configure how steps are analyzed.
+    All fields are optional (total=False).
+    """
     mask: str
     triggers: list[str]
     optimizers: list[Callable[[Algorithm], Algorithm]]
