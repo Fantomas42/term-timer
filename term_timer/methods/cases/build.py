@@ -2,25 +2,15 @@ import json
 import sys
 from pathlib import Path
 from pprint import pformat
-from typing import TypedDict
 
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
-from term_timer.methods.cases import CaseInfo
 from term_timer.methods.cfop import CFOP_CASE_ENCODERS
-
-
-class SourceCaseInfo(TypedDict):
-    """Case information from source JSON file."""
-    type: str
-    probability: str
-    aliases: list[str]
-    algorithms: list[str]
-    main: str
-
+from term_timer.methods.types import CaseInfo
+from term_timer.methods.types import SourceCaseInfo
 
 SKIPPED: dict[str, SourceCaseInfo] = {
     'OLL': {

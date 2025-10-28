@@ -3,7 +3,7 @@ from typing import ClassVar
 from cubing_algs.constants import INITIAL_STATE
 
 from term_timer.methods.base import Analyser
-from term_timer.methods.base import StepInfo
+from term_timer.methods.types import StepInfo
 
 
 class RawAnalyser(Analyser):

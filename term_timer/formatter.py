@@ -12,7 +12,7 @@ from cubing_algs.constants import ROTATIONS
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
-from term_timer.methods.base import StepSummary
+from term_timer.methods.types import StepSummary
 from term_timer.triggers import TRIGGERS_REGEX
 from term_timer.triggers import apply_trigger_outside_blocks
 

@@ -37,8 +37,8 @@ from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
 from term_timer.methods import get_method_analyser
 from term_timer.methods.base import Analyser
-from term_timer.methods.base import StepSummary
 from term_timer.methods.base import get_step_config
+from term_timer.methods.types import StepSummary
 from term_timer.orientation import get_orientation_faces
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import prettify_moves

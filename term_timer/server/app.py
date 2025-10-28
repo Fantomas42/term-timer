@@ -55,10 +55,10 @@ from term_timer.in_out import save_solves
 from term_timer.interface.console import console
 from term_timer.methods import METHOD_ANALYSERS
 from term_timer.methods.base import Analyser
-from term_timer.methods.base import StepSummary
 from term_timer.methods.base import get_step_config
 from term_timer.methods.cases import CASES
-from term_timer.methods.cases import CaseInfo
+from term_timer.methods.types import CaseInfo
+from term_timer.methods.types import StepSummary
 from term_timer.orientation import ORIENTATION_MOVES
 from term_timer.solve import Solve
 from term_timer.stats import Statistics

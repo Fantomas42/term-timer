@@ -1,7 +1,9 @@
 import json
 from pathlib import Path
 from typing import Final
-from typing import TypedDict
+
+from term_timer.methods.types import CaseInfo
+from term_timer.methods.types import CaseMaskInfo
 
 CASES_DIRECTORY: Final = Path(__file__).parent
 
@@ -9,23 +11,6 @@ AF2L_PATH: Final = CASES_DIRECTORY / 'af2l.json'
 F2L_PATH: Final = CASES_DIRECTORY / 'f2l.json'
 OLL_PATH: Final = CASES_DIRECTORY / 'oll.json'
 PLL_PATH: Final = CASES_DIRECTORY / 'pll.json'
-
-
-class CaseInfo(TypedDict):
-    """Information about a specific case."""
-    name: str
-    main: str
-    probability: float
-    probability_label: str
-    setups: list[str]
-    masks: dict[str, list[str]]
-
-
-class CaseMaskInfo(TypedDict):
-    """Mask configuration for a case."""
-    case: str
-    configurations: list[str]
-
 
 CASES: dict[str, dict[str, CaseInfo]] = {}
 CASES_MASKS: dict[str, dict[str, CaseMaskInfo]] = {}

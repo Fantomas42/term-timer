@@ -14,7 +14,7 @@ from term_timer.config import CUBE_RIGHT_HANDED
 from term_timer.exceptions import InvalidCaseError
 from term_timer.magic_cube import Cube
 from term_timer.methods.cases import CASES
-from term_timer.methods.cases import CaseInfo
+from term_timer.methods.types import CaseInfo
 
 
 def state_to_scramble(state: str, facelets: str = '') -> Algorithm:

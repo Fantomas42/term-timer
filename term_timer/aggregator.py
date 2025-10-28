@@ -7,9 +7,9 @@ from typing import cast
 
 from term_timer.methods import get_method_analyser
 from term_timer.methods.base import Analyser
-from term_timer.methods.base import StepSummary
 from term_timer.methods.cases import CASES
-from term_timer.methods.cases import CaseInfo
+from term_timer.methods.types import CaseInfo
+from term_timer.methods.types import StepSummary
 from term_timer.solve import Solve
 from term_timer.stats import StatisticsTools
 from term_timer.types import CaseStats

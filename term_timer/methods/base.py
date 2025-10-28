@@ -5,8 +5,6 @@ from functools import cached_property
 from typing import Any
 from typing import ClassVar
 from typing import Final
-from typing import Literal
-from typing import TypedDict
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import INITIAL_STATE
@@ -32,74 +30,14 @@ from cubing_algs.vcube import VCube
 
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.methods.cases import CASES_MASKS
-from term_timer.methods.cases import CaseMaskInfo
+from term_timer.methods.types import CaseMaskInfo
+from term_timer.methods.types import StepConfig
+from term_timer.methods.types import StepInfo
+from term_timer.methods.types import StepSummary
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
-
-
-class StepInfo(TypedDict):
-    """
-    Information about a single step during solve analysis.
-
-    This is an internal type used during the solve analysis process.
-    For aggregation across multiple solves, see StepAnalysis in types.py.
-    """
-    moves: list[int]
-    increment: int
-    case_infos: list[str]
-    facelets: str
-
-
-class StepSummary(TypedDict):
-    """
-    Summary information for a completed step.
-
-    This is an internal detailed type used during solve analysis. It contains
-    comprehensive information about a step including move sequences, timings,
-    and percentages.
-
-    For aggregation across multiple solves, this type is transformed into the
-    simplified StepAnalysis type (see types.py) which retains only the
-    essential fields needed for statistical analysis.
-    """
-    type: Literal['step', 'skipped', 'substep', 'virtual']
-    name: str
-    moves: Algorithm
-    moves_reoriented: Algorithm
-    moves_humanized: Algorithm
-    moves_prettified: Algorithm
-    times: list[float]
-    index: list[int]
-    qtm: int
-    total: int
-    execution: int
-    recognition: int
-    post_pause: int
-    aufs: list[int | None]
-    total_percent: float
-    execution_percent: float
-    recognition_percent: float
-    step_execution_percent: float
-    step_recognition_percent: float
-    increment: int
-    case: str
-    case_infos: list[str]
-    facelets: str
-
-
-class StepConfig(TypedDict, total=False):
-    """
-    Configuration for a solving step.
-
-    This is an internal type used to configure how steps are analyzed.
-    All fields are optional (total=False).
-    """
-    mask: str
-    triggers: list[str]
-    optimizers: list[Callable[[Algorithm], Algorithm]]
-
 
 CROSS_CENTER_MASK: Final = union_masks(CROSS_MASK, CENTERS_MASK)
 

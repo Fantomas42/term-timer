@@ -3,7 +3,7 @@ from typing import ClassVar
 from cubing_algs.algorithm import Algorithm
 
 from term_timer.methods.base import Analyser
-from term_timer.methods.base import StepSummary
+from term_timer.methods.types import StepSummary
 
 
 class LBLAnalyser(Analyser):
