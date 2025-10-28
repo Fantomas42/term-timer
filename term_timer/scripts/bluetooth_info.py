@@ -557,10 +557,8 @@ async def run(
     )
 
     try:
-        bluetooth_tasks = asyncio.gather(client, consumer)
-
         with suppress(CubeNotFoundError):
-            await bluetooth_tasks
+            await asyncio.gather(client, consumer)
     finally:
         if gl_thread and gl_thread.is_alive():
             gl_thread.stop()
