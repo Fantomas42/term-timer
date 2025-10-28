@@ -174,6 +174,9 @@ class Bluetooth:
             )
             await self.bluetooth_interface.__aexit__(None, None, None)
 
+        if self.bluetooth_consumer_ref:
+            await self.bluetooth_consumer_ref
+
     @property
     def bluetooth_device_label(self) -> str:
         """
