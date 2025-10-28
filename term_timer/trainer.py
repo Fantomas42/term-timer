@@ -7,6 +7,7 @@ from term_timer.config import CUBE_EFFECT
 from term_timer.config import CUBE_PALETTE
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.constants import SolveFlag
 from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
@@ -164,7 +165,7 @@ class Trainer(SolveInterface):
 
         self.elapsed_time = self.end_time - self.start_time
 
-        flag = ''
+        flag: SolveFlag = ''
         moves = []
         if self.moves:
             if self.bluetooth_cube and not self.bluetooth_cube.is_solved:

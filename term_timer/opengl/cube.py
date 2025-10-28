@@ -8,6 +8,7 @@ from numpy.typing import NDArray
 from term_timer.bluetooth.gyroscope import Quaternion
 from term_timer.bluetooth.types import CubeStateDict
 from term_timer.bluetooth.types import QuaternionDict
+from term_timer.constants import Face
 from term_timer.opengl import renderer
 from term_timer.opengl.data import corner_orientations
 from term_timer.opengl.data import corner_permutations
@@ -73,7 +74,7 @@ class Cube:
     def __str__(self) -> str:
         return self.__repr__()
 
-    def move_corners(self, move: str) -> None:
+    def move_corners(self, move: Face) -> None:
         p = self.corner_permutation
         move_p = corner_permutations[move]
         move_o = corner_orientations[move]
@@ -84,7 +85,7 @@ class Cube:
             for i in range(8)
         ]
 
-    def move_edges(self, move: str) -> None:
+    def move_edges(self, move: Face) -> None:
         p = self.edge_permutation
         move_p = edge_permutations[move]
         move_o = edge_orientations[move]
@@ -95,7 +96,7 @@ class Cube:
             for i in range(12)
         ]
 
-    def move(self, move: list[tuple[str, int]]) -> None:
+    def move(self, move: list[tuple[Face, int]]) -> None:
         for (face, power) in move:
             for _i in range(power):
                 self.move_corners(face)
@@ -178,7 +179,7 @@ class Cube:
         )
 
     def animate_moves(self, window: Window,
-                      moves: list[tuple[str, int]]) -> None:
+                      moves: list[tuple[Face, int]]) -> None:
         for (face, power) in moves:
             renderer.animate_move(window, self, face, power)
             self.move([(face, power)])

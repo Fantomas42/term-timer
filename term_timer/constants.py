@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Final
+from typing import Literal
 
 SECOND: Final = 1_000_000_000  # In nano seconds
 
@@ -34,3 +35,9 @@ RESLICE_THRESHOLD_GYROSCOPE: Final = 120
 REWIDE_THRESHOLD_GYROSCOPE: Final = 180
 
 ESCAPE_CHAR: Final = '\x1b'
+
+Face = Literal['U', 'D', 'R', 'L', 'F', 'B']
+
+SolveFlag = Literal['', 'DNF', '+2']
+
+SolveFlagInput = Literal['OK', 'DNF', '+2']

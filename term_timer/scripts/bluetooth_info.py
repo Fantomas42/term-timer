@@ -34,6 +34,7 @@ from term_timer.config import ROTATION_THRESHOLD
 from term_timer.config import USE_GYROSCOPE
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
+from term_timer.constants import Face
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
@@ -318,7 +319,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
 
                 if gl_thread and gl_thread.is_alive():
                     direction = 3 if "'" in event['move'] else 1
-                    face = event['move'][0]
+                    face = cast(Face, event['move'][0])
                     gl_thread.add_move(face, direction)
 
             else:

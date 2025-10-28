@@ -20,6 +20,7 @@ from OpenGL.GL import glTexCoord2iv
 from OpenGL.GL import glTranslatef
 from OpenGL.GL import glVertex3fv
 
+from term_timer.constants import Face
 from term_timer.opengl.data import BLACK
 from term_timer.opengl.data import center_colors_table
 from term_timer.opengl.data import center_list
@@ -217,7 +218,7 @@ def render_piece(piece: str, position: int, orientation: int) -> None:
 
 def get_moving_pieces(
     cube: 'Cube',
-    face: str,
+    face: Face,
 ) -> tuple[list[tuple[str, int, int]], list[tuple[str, int, int]]]:
     moving_pieces: list[tuple[str, int, int]] = []
     non_moving_pieces: list[tuple[str, int, int]] = []
@@ -245,7 +246,7 @@ def get_moving_pieces(
     return moving_pieces, non_moving_pieces
 
 
-def get_rotation_param(face: str,
+def get_rotation_param(face: Face,
                        power: int) -> tuple[tuple[int, int, int], int]:
     axis: tuple[int, int, int]
     axis = tuple(
@@ -288,7 +289,8 @@ def render(cube: 'Cube') -> None:
     glDisable(GL_TEXTURE_2D)
 
 
-def animate_move(window: 'Window', cube: 'Cube', face: str, power: int) -> None:
+def animate_move(window: 'Window', cube: 'Cube',
+                 face: Face, power: int) -> None:
     moving_pieces, non_moving_pieces = get_moving_pieces(cube, face)
     axis, theta_max = get_rotation_param(face, power)
 

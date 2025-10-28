@@ -4,6 +4,8 @@ from rich.table import Table
 from term_timer.constants import CUBE_SIZES
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
+from term_timer.constants import SolveFlag
+from term_timer.constants import SolveFlagInput
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
@@ -69,7 +71,7 @@ class SolveManager:
     def save(self) -> None:
         save_solves(self.cube, self.session, self.stack)
 
-    def update(self, flag: str) -> None:
+    def update(self, flag: SolveFlagInput) -> None:
         if self.solve is None:
             return
 
@@ -77,10 +79,9 @@ class SolveManager:
                 f'Are you sure to mark this solve as "{ flag }" ?',
                 self.solve,
         ):
-            if flag == 'OK':
-                flag = ''
+            normalized_flag: SolveFlag = '' if flag == 'OK' else flag
 
-            self.stack[self.solve_index].flag = flag
+            self.stack[self.solve_index].flag = normalized_flag
             self.save()
 
             console.print(

@@ -42,6 +42,8 @@ from term_timer.constants import PAUSE_FACTOR
 from term_timer.constants import SECOND
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
+from term_timer.constants import SolveFlag
+from term_timer.constants import SolveFlagInput
 from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_diff
 from term_timer.formatter import format_alg_moves
@@ -682,7 +684,7 @@ class SolveDetailView(View):
 class SolveUpdateView:
 
     def __init__(self, cube: int, session: str, solve_id: int,
-                 flag: str) -> None:
+                 flag: SolveFlagInput) -> None:
         self.cube = cube
         self.session = session
         self.solve_id = solve_id
@@ -700,7 +702,8 @@ class SolveUpdateView:
         except IndexError:
             abort(404, 'Invalid solve ID')
 
-        self.solves[self.solve_index].flag = flag
+        normalized_flag: SolveFlag = '' if flag == 'OK' else flag
+        self.solves[self.solve_index].flag = normalized_flag
         save_solves(cube, session, self.solves)
 
         redirect(f'/{ cube }/{ session }/{ solve_id }/')

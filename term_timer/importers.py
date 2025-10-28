@@ -8,6 +8,7 @@ from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
+from term_timer.constants import SolveFlag
 from term_timer.interface.console import console
 from term_timer.solve import Solve
 from term_timer.solve import SolveData
@@ -52,7 +53,7 @@ class Importer:
 
             date = self.date_to_ts(date_str)
 
-            flag = ''
+            flag: SolveFlag = ''
             if dnf == 'true':
                 flag = DNF
 
@@ -82,7 +83,7 @@ class Importer:
         solves: list[SolveData] = []
 
         for line in data[1:]:
-            flag = ''
+            flag: SolveFlag = ''
             (
                 _i, time_corrected, _comment, scramble, date_str, time_str,
             ) = line.split(';')
@@ -143,7 +144,7 @@ class Importer:
                 date: float = solve[3]
                 moves: str = solve[4][0]
 
-                flag: str
+                flag: SolveFlag
                 if flag_raw == -1:
                     flag = DNF
                 elif flag_raw == 2000:

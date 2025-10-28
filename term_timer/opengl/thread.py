@@ -11,6 +11,7 @@ from OpenGL.GL import glScalef
 
 from term_timer.bluetooth.types import CubeStateDict
 from term_timer.bluetooth.types import QuaternionDict
+from term_timer.constants import Face
 from term_timer.opengl.cube import Cube
 from term_timer.opengl.renderer import render
 from term_timer.opengl.text_renderer import WAITING_MESSAGE_FONT_SIZE
@@ -48,7 +49,7 @@ class CubeGLThread(threading.Thread):
         self.running = True
 
         self.title = ''
-        self.move_queue: list[tuple[str, int]] = []
+        self.move_queue: list[tuple[Face, int]] = []
         self.move_lock = threading.Lock()
         self.last_quaternion: QuaternionDict | None = None
         self.has_new_quaternion = True
@@ -105,7 +106,7 @@ class CubeGLThread(threading.Thread):
         self.window.quit()
 
     def process_moves(self) -> None:
-        moves_to_process: list[tuple[str, int]] = []
+        moves_to_process: list[tuple[Face, int]] = []
 
         with self.move_lock:
             if self.move_queue:
@@ -116,7 +117,7 @@ class CubeGLThread(threading.Thread):
             for face, direction in moves_to_process:
                 self.cube.animate_moves(self.window, [(face, direction)])
 
-    def add_move(self, face: str, direction: int) -> None:
+    def add_move(self, face: Face, direction: int) -> None:
         with self.move_lock:
             self.move_queue.append((face, direction))
 

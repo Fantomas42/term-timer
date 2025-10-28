@@ -4,6 +4,7 @@ from cubing_algs.vcube import VCube
 
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.constants import SolveFlag
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
@@ -103,7 +104,7 @@ class Timer(SolveInterface):
                 end='', style='consign',
             )
 
-    def save_line(self, flag: str) -> None:
+    def save_line(self, flag: SolveFlag) -> None:
         if self.bluetooth_interface:
             self.console.print(
                 'Press any key to save and continue,',
@@ -258,7 +259,7 @@ class Timer(SolveInterface):
 
         self.elapsed_time = self.end_time - self.start_time
 
-        flag = ''
+        flag: SolveFlag = ''
         moves = []
         if self.moves:
             if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
