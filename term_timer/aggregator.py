@@ -11,11 +11,11 @@ from term_timer.methods.cases import CASES
 from term_timer.methods.cases import CaseInfo
 from term_timer.solve import Solve
 from term_timer.stats import StatisticsTools
-from term_timer.types_analysis import CaseStats
-from term_timer.types_analysis import CaseStatsAccumulator
-from term_timer.types_analysis import MethodAnalysis
-from term_timer.types_analysis import SolveAnalysis
-from term_timer.types_analysis import StepAnalysis
+from term_timer.types import CaseStats
+from term_timer.types import CaseStatsAccumulator
+from term_timer.types import MethodAnalysis
+from term_timer.types import SolveAnalysis
+from term_timer.types import StepAnalysis
 
 logger = logging.getLogger(__name__)
 

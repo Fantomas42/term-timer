@@ -23,8 +23,8 @@ from term_timer.interface.console import console
 from term_timer.magic_cube import Cube
 from term_timer.methods.base import Analyser
 from term_timer.solve import Solve
-from term_timer.types_analysis import CaseStats
-from term_timer.types_analysis import MethodAnalysis
+from term_timer.types import CaseStats
+from term_timer.types import MethodAnalysis
 
 
 class StatisticsTools:

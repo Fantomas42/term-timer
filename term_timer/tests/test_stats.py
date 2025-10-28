@@ -9,8 +9,8 @@ from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
 from term_timer.stats import StatisticsTools
-from term_timer.types_analysis import CaseStats
-from term_timer.types_analysis import MethodAnalysis
+from term_timer.types import CaseStats
+from term_timer.types import MethodAnalysis
 
 
 class TestStatisticsTools(unittest.TestCase):
