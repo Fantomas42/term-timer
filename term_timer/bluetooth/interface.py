@@ -1,6 +1,7 @@
 import logging
 from asyncio import Queue
 from typing import Final
+from typing import cast
 
 from bleak import BleakClient
 from bleak import BleakScanner
@@ -103,7 +104,8 @@ class BluetoothInterface:
 
     async def notification_handler(self, sender: BleakGATTCharacteristic,
                                    data: bytearray) -> None:
-        assert self.driver is not None  # noqa: S101
+        self.driver = cast(Driver, self.driver)
+
         events = await self.driver.event_handler(sender, data)
 
         if DEBUG:
@@ -119,14 +121,14 @@ class BluetoothInterface:
 
         logger.debug('Sending: %s', command)
 
-        assert self.driver is not None  # noqa: S101
+        self.driver = cast(Driver, self.driver)
         msg = self.driver.send_command_handler(command)
 
         if msg is False:
             logger.debug('Unknown command "%s"', command)
             return False
 
-        assert isinstance(msg, bytes)  # noqa: S101
+        msg = cast(bytes, msg)
         await self.client.write_gatt_char(
             self.driver.command_characteristic_uid,
             msg,
