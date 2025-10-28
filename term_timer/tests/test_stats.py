@@ -4,6 +4,7 @@ from typing import Any
 from unittest.mock import Mock
 from unittest.mock import patch
 
+from term_timer.constants import DNF
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -175,7 +176,7 @@ class TestStatisticsReporterListing(unittest.TestCase):
         self.solves = [
             Solve(1000000000, 1 * SECOND, 'F R U', ''),
             Solve(3000000000, 1 * SECOND, 'R U F', ''),
-            Solve(5000000000, 1 * SECOND, 'U F R', 'DNF'),
+            Solve(5000000000, 1 * SECOND, 'U F R', DNF),
             Solve(7000000000, 1 * SECOND, 'F U R', '+2'),
         ]
         self.listing = StatisticsReporter(3, self.solves)
@@ -238,14 +239,11 @@ class TestStatisticsToolsComprehensive(unittest.TestCase):
         """Test that initialization filters out None final_time values."""
         solves_with_dnf = [
             Solve(1000000000000, 10 * SECOND, 'F R U', ''),
-            Solve(2000000000000, 15 * SECOND, 'R U F', ''),
+            Solve(2000000000000, 15 * SECOND, 'R U F', DNF),
             Solve(3000000000000, 20 * SECOND, 'U F R', ''),
         ]
-        # Mock one solve to have None final_time
-        solves_with_dnf[1].final_time = None  # type: ignore[assignment]
-
         stats = StatisticsTools(solves_with_dnf)
-        # Should filter None from sorted list
+        # Should filter None from sorted list (DNF has None final_time)
         self.assertEqual(len(stats.stack_time_sorted), 2)
         self.assertNotIn(None, stats.stack_time_sorted)
 
