@@ -1,6 +1,7 @@
 import re
 from collections.abc import Callable
 from re import Pattern
+from typing import Final
 
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.offset import offset_y2_moves
@@ -8,9 +9,9 @@ from cubing_algs.transform.offset import offset_y_moves
 from cubing_algs.transform.offset import offset_yprime_moves
 from cubing_algs.transform.symmetry import symmetry_m_moves
 
-BLOCK_PATTERN = re.compile(r'\[[^\]]+\].*?\[/[^\]]+\]')
+BLOCK_PATTERN: Final = re.compile(r'\[[^\]]+\].*?\[/[^\]]+\]')
 
-BASE_TRIGGERS = {
+BASE_TRIGGERS: Final = {
     "RU2R'U'RU'R'": 'chair',
 
     "RUR'U'": 'sexy-move',
@@ -43,12 +44,12 @@ for algo_string, name in BASE_TRIGGERS.items():
         TRIGGERS[name].append(str(algo.transform(offset_y2_moves)))
 
 
-TRIGGERS_REGEX = {
+TRIGGERS_REGEX: Final = {
     name: re.compile(rf'({ "|".join(algos) })(?![2\'])')
     for name, algos in TRIGGERS.items()
 }
 
-DEFAULT_TRIGGERS = [
+DEFAULT_TRIGGERS: Final = [
     'chair',
     'sexy-move',
     'sledgehammer',

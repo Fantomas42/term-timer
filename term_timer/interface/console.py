@@ -1,15 +1,17 @@
+from typing import Final
+
 from rich.console import Console as RichConsole
 from rich.theme import Theme
 
 from term_timer.config import UI_CONFIG
 
-RED = '#FF0000'
-GREEN = '#00D700'
-ORANGE = '#FF8700'
-YELLOW = '#FFFF00'
-TEXT_DARK = '#080808'
-TEXT_LIGHT = '#FFFFD7'
-BG_HIDDEN = '#333333'
+RED: Final = '#FF0000'
+GREEN: Final = '#00D700'
+ORANGE: Final = '#FF8700'
+YELLOW: Final = '#FFFF00'
+TEXT_DARK: Final = '#080808'
+TEXT_LIGHT: Final = '#FFFFD7'
+BG_HIDDEN: Final = '#333333'
 
 theme: dict[str, str] = {
     'warning': f'bold { RED }',

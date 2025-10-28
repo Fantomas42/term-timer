@@ -4,6 +4,7 @@ from contextlib import suppress
 from functools import cached_property
 from typing import Any
 from typing import ClassVar
+from typing import Final
 from typing import Literal
 from typing import TypedDict
 
@@ -84,10 +85,10 @@ class StepConfig(TypedDict, total=False):
     optimizers: list[Callable[[Algorithm], Algorithm]]
 
 
-CROSS_CENTER_MASK = union_masks(CROSS_MASK, CENTERS_MASK)
+CROSS_CENTER_MASK: Final = union_masks(CROSS_MASK, CENTERS_MASK)
 
 
-STEPS_CONFIG: dict[str, StepConfig] = {
+STEPS_CONFIG: Final[dict[str, StepConfig]] = {
     'Cross': {
         'mask': CROSS_CENTER_MASK,
     },

@@ -1,6 +1,7 @@
 import os
 from importlib.util import find_spec
 from typing import Any
+from typing import Final
 
 from term_timer.constants import CONFIG_FILE
 
@@ -10,7 +11,7 @@ else:
     import pip._vendor.tomli as tomllib  # type: ignore[import-not-found, no-redef] # noqa: PLC2701
 
 
-DEFAULT_CONFIG = """[timer]
+DEFAULT_CONFIG: Final = """[timer]
 countdown = 0.0
 metronome = 0.0
 

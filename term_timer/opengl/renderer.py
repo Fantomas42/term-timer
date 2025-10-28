@@ -1,6 +1,7 @@
 import time
 from operator import neg
 from typing import TYPE_CHECKING
+from typing import Final
 
 from OpenGL.GL import GL_MODELVIEW
 from OpenGL.GL import GL_QUADS
@@ -71,15 +72,15 @@ def ease_in_out_cubic(t: float) -> float:
 
 
 # Pre-compute color index mapping for faster lookups
-_CENTER_COLOR_INDEX: dict[str, int] = {
+_CENTER_COLOR_INDEX: Final[dict[str, int]] = {
     center: idx for idx, center in enumerate(center_list)
 }
 
 # Gap factor for realistic piece separation (matches data.py)
-_GAP_FACTOR = 0.96
+_GAP_FACTOR: Final = 0.96
 
 # Pre-compute face points for scale=1 with gap factor
-_UNIT_CUBE_FACES: list[list[tuple[float, float, float]]] = [
+_UNIT_CUBE_FACES: Final[list[list[tuple[float, float, float]]]] = [
     [
         (s[j][0] * _GAP_FACTOR, s[j][1] * _GAP_FACTOR, s[j][2] * _GAP_FACTOR)
         for j in indices[i]
@@ -88,7 +89,7 @@ _UNIT_CUBE_FACES: list[list[tuple[float, float, float]]] = [
 ]
 
 # Pre-cache texture coordinates for fast access
-_TEX_COORDS = (tex_map[0], tex_map[1], tex_map[2], tex_map[3])
+_TEX_COORDS: Final = (tex_map[0], tex_map[1], tex_map[2], tex_map[3])
 
 
 def r_surface(

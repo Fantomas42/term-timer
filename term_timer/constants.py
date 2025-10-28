@@ -1,35 +1,36 @@
 from pathlib import Path
+from typing import Final
 
-SECOND = 1_000_000_000  # In nano seconds
+SECOND: Final = 1_000_000_000  # In nano seconds
 
-MS_TO_NS_FACTOR = 1_000_000
+MS_TO_NS_FACTOR: Final = 1_000_000
 
-PAUSE_FACTOR = 2
+PAUSE_FACTOR: Final = 2
 
-STEP_BAR = 17
+STEP_BAR: Final = 17
 
-SAVE_DIRECTORY = Path.home() / '.solves'
+SAVE_DIRECTORY: Final = Path.home() / '.solves'
 
-CONFIG_FILE = Path('~/.term_timer').expanduser()
+CONFIG_FILE: Final = Path('~/.term_timer').expanduser()
 
-TEMPLATES_DIRECTORY = Path(__file__).parent / 'server' / 'templates'
+TEMPLATES_DIRECTORY: Final = Path(__file__).parent / 'server' / 'templates'
 
-STATIC_DIRECTORY = Path(__file__).parent / 'server' / 'static'
+STATIC_DIRECTORY: Final = Path(__file__).parent / 'server' / 'static'
 
-DNF = 'DNF'
+DNF: Final = 'DNF'
 
-PLUS_TWO = '+2'
+PLUS_TWO: Final = '+2'
 
-CUBE_SIZES = list(range(2, 8))
+CUBE_SIZES: Final = list(range(2, 8))
 
-SECOND_BINS = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
+SECOND_BINS: Final = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
 
-REFRESH = 0.01
+REFRESH: Final = 0.01
 
-RESLICE_THRESHOLD = 50
+RESLICE_THRESHOLD: Final = 50
 
-RESLICE_THRESHOLD_GYROSCOPE = 120
+RESLICE_THRESHOLD_GYROSCOPE: Final = 120
 
-REWIDE_THRESHOLD_GYROSCOPE = 180
+REWIDE_THRESHOLD_GYROSCOPE: Final = 180
 
-ESCAPE_CHAR = '\x1b'
+ESCAPE_CHAR: Final = '\x1b'

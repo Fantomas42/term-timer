@@ -1,5 +1,6 @@
 import logging
 import threading
+from typing import Final
 
 import pygame
 from OpenGL.GL import GL_MODELVIEW
@@ -20,7 +21,7 @@ from term_timer.orientation import get_orientation_moves
 logger = logging.getLogger(__name__)
 
 # Constant for cube ready check timeout
-CUBE_READY_CHECK_TIMEOUT = 0.016  # ~60fps
+CUBE_READY_CHECK_TIMEOUT: Final = 0.016  # ~60fps
 
 
 class CubeGLThread(threading.Thread):

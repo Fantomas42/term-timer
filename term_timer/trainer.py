@@ -1,3 +1,5 @@
+from typing import Final
+
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.vcube import VCube
 
@@ -15,7 +17,7 @@ from term_timer.scrambler import trainer
 from term_timer.solve import Solve
 from term_timer.triggers import DEFAULT_TRIGGERS
 
-CROSS_MODES = ('cross', 'ecross')
+CROSS_MODES: Final = ('cross', 'ecross')
 
 
 class Trainer(SolveInterface):

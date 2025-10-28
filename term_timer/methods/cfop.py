@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from functools import cached_property
 from typing import ClassVar
+from typing import Final
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.masks import F2L_BL_MASK
@@ -15,7 +16,7 @@ from term_timer.methods.cases.encoders import f2l_case_encoder
 from term_timer.methods.cases.encoders import oll_case_encoder
 from term_timer.methods.cases.encoders import pll_case_encoder
 
-CFOP_CASE_ENCODERS: dict[str, Callable[[str], str]] = {
+CFOP_CASE_ENCODERS: Final[dict[str, Callable[[str], str]]] = {
     'OLL': oll_case_encoder,
     'PLL': pll_case_encoder,
     'F2L FR': f2l_case_encoder(F2L_FR_MASK),

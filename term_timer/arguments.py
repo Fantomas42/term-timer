@@ -2,6 +2,7 @@ import sys
 from argparse import Namespace
 from argparse import _SubParsersAction
 from typing import TYPE_CHECKING
+from typing import Final
 
 from cubing_algs.constants import ORIENTATIONS
 
@@ -17,7 +18,7 @@ from term_timer.constants import CUBE_SIZES
 if TYPE_CHECKING:
     _SubParsers = _SubParsersAction[ArgumentParser]
 
-COMMAND_ALIASES: dict[str, list[str]] = {
+COMMAND_ALIASES: Final[dict[str, list[str]]] = {
     'solve': ['sw', 't'],
     'list': ['ls', 'l'],
     'stats': ['st', 's'],
@@ -37,7 +38,7 @@ for name, aliases in COMMAND_ALIASES.items():
     for alias in aliases:
         COMMAND_RESOLUTIONS[alias] = name
 
-ORIENTATIONS_SORTED: list[str] = sorted(ORIENTATIONS)
+ORIENTATIONS_SORTED: Final[list[str]] = sorted(ORIENTATIONS)
 
 
 def set_session_arguments(

@@ -7,6 +7,7 @@ from datetime import datetime
 from datetime import timezone
 from typing import Any
 from typing import ClassVar
+from typing import Final
 from typing import cast
 from wsgiref.simple_server import WSGIRequestHandler
 
@@ -65,15 +66,15 @@ from term_timer.stats import StatisticsReporter
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 
-SPAN_REGEX = re.compile(r'(<span[^>]*>.*?</span>)')
-BLOCK_REGEX = re.compile(r'\[([\w-]+)\](.*?)\[/([\w-]+)\]')
+SPAN_REGEX: Final = re.compile(r'(<span[^>]*>.*?</span>)')
+BLOCK_REGEX: Final = re.compile(r'\[([\w-]+)\](.*?)\[/([\w-]+)\]')
 
-CLASS_CONVERTION = {
+CLASS_CONVERTION: Final = {
     'red': 'deletion',
     'green': 'addition',
 }
 
-LEGENDS = {
+LEGENDS: Final = {
     'pair-ie': 'Pair insertion/extraction',
     'sexy-move': 'Sexy Move',
     'pre-auf': 'Pre-AUF',

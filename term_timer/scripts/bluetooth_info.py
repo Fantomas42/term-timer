@@ -9,6 +9,7 @@ from contextlib import suppress
 from pathlib import Path
 from pprint import pformat
 from typing import Any
+from typing import Final
 from typing import cast
 
 from cubing_algs.algorithm import Algorithm
@@ -46,7 +47,7 @@ from term_timer.triggers import DEFAULT_TRIGGERS
 
 logger = logging.getLogger(__name__)
 
-LOGGING_CONF = {
+LOGGING_CONF: Final = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {

@@ -1,4 +1,5 @@
 import operator
+from typing import Final
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import ADJACENT_FACES
@@ -17,7 +18,7 @@ from term_timer.exceptions import InvalidOrientationError
 
 cube = VCube()
 
-ORIENTATION_MOVES = {
+ORIENTATION_MOVES: Final = {
     orientation: parse_moves(
         cube.compute_orientation_moves(orientation),
     )

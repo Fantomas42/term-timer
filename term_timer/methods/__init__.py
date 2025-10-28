@@ -1,10 +1,12 @@
+from typing import Final
+
 from term_timer.methods.base import Analyser
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.methods.cfop import CFOPAnalyser
 from term_timer.methods.lbl import LBLAnalyser
 from term_timer.methods.raw import RawAnalyser
 
-METHOD_ANALYSERS: dict[str, type[Analyser]] = {
+METHOD_ANALYSERS: Final[dict[str, type[Analyser]]] = {
     'raw': RawAnalyser,
     'lbl': LBLAnalyser,
     'cfop': CFOPAnalyser,

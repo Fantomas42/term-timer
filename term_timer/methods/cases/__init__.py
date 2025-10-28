@@ -1,13 +1,14 @@
 import json
 from pathlib import Path
+from typing import Final
 from typing import TypedDict
 
-CASES_DIRECTORY = Path(__file__).parent
+CASES_DIRECTORY: Final = Path(__file__).parent
 
-AF2L_PATH = CASES_DIRECTORY / 'af2l.json'
-F2L_PATH = CASES_DIRECTORY / 'f2l.json'
-OLL_PATH = CASES_DIRECTORY / 'oll.json'
-PLL_PATH = CASES_DIRECTORY / 'pll.json'
+AF2L_PATH: Final = CASES_DIRECTORY / 'af2l.json'
+F2L_PATH: Final = CASES_DIRECTORY / 'f2l.json'
+OLL_PATH: Final = CASES_DIRECTORY / 'oll.json'
+PLL_PATH: Final = CASES_DIRECTORY / 'pll.json'
 
 
 class CaseInfo(TypedDict):

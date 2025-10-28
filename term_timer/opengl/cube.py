@@ -1,4 +1,5 @@
 import math
+from typing import Final
 
 import numpy as np
 from cubing_algs.algorithm import Algorithm
@@ -15,7 +16,7 @@ from term_timer.opengl.data import edge_permutations
 from term_timer.opengl.window import Window
 
 # Gimbal lock threshold for Euler angle extraction
-GIMBAL_LOCK_THRESHOLD = 0.99999  # Near ±1 detection for r[2][0]
+GIMBAL_LOCK_THRESHOLD: Final = 0.99999  # Near ±1 detection for r[2][0]
 
 
 class Cube:

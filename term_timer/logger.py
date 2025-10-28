@@ -5,14 +5,15 @@ import logging.handlers
 import queue
 import threading
 from pathlib import Path
+from typing import Final
 
 from term_timer.config import DEBUG
 
-LOGGING_DIR = Path(__file__).parent.parent / 'logs'
+LOGGING_DIR: Final = Path(__file__).parent.parent / 'logs'
 
-LOGGING_FILE = 'term-timer.log'
+LOGGING_FILE: Final = 'term-timer.log'
 
-LOGGING_PATH = LOGGING_DIR / LOGGING_FILE
+LOGGING_PATH: Final = LOGGING_DIR / LOGGING_FILE
 
 
 class DbusSignalFilter(logging.Filter):
@@ -54,7 +55,7 @@ class AsyncioLogListener:
                 continue
 
 
-LOGGING_CONF = {
+LOGGING_CONF: Final = {
     'version': 1,
     'disable_existing_loggers': False,
     'filters': {

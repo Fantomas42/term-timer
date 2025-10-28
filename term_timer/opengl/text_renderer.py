@@ -1,6 +1,7 @@
 """Text rendering utilities for OpenGL windows."""
 
 from typing import TYPE_CHECKING
+from typing import Final
 
 import pygame
 from OpenGL.GL import GL_BLEND
@@ -28,10 +29,10 @@ if TYPE_CHECKING:
     from term_timer.opengl.window import Window
 
 # Constants for waiting message display
-WAITING_MESSAGE_TEXT = 'Waiting for Bluetooth connection...'
-WAITING_MESSAGE_FONT_SIZE = 24
-WAITING_MESSAGE_PADDING = 20
-WAITING_MESSAGE_BOTTOM_MARGIN = 10
+WAITING_MESSAGE_TEXT: Final = 'Waiting for Bluetooth connection...'
+WAITING_MESSAGE_FONT_SIZE: Final = 24
+WAITING_MESSAGE_PADDING: Final = 20
+WAITING_MESSAGE_BOTTOM_MARGIN: Final = 10
 
 
 def create_text_surface(
