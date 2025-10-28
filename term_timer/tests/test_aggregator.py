@@ -35,16 +35,16 @@ class TestAnalyseSolveWorker(unittest.TestCase):
         solve.method_applied.summary = [
             {
                 'case': 'case_a',
-                'total': 10.5,
-                'execution': 8.0,
-                'recognition': 2.5,
+                'total': 10,
+                'execution': 8,
+                'recognition': 2,
                 'qtm': 20,
             },
             {
                 'case': 'case_b',
-                'total': 15.0,
-                'execution': 12.0,
-                'recognition': 3.0,
+                'total': 15,
+                'execution': 12,
+                'recognition': 3,
                 'qtm': 30,
             },
         ]
