@@ -3,6 +3,7 @@ import unittest
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 
+from term_timer.interface.cube import Orienter
 from term_timer.interface.scrambler import Scrambler
 
 
@@ -15,6 +16,12 @@ class MockScrambler(Scrambler):
 
     def reorient(self, _algorithm: Algorithm) -> Algorithm:
         return self.reorient_return_value
+
+
+class OrienterScrambler(Orienter, Scrambler):
+
+    def __init__(self, orientation_faces: str) -> None:
+        self.orientation_faces = orientation_faces
 
 
 class TestComputeScrambleDisplayComplete(unittest.TestCase):
@@ -638,4 +645,75 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         )
         self.assertIn('[move]R[/move]', out)
         self.assertIn('[move]U[/move]', out)
+        self.assertFalse(full_clear)
+
+
+class TestComputeDisplayRotationRealCases(unittest.TestCase):
+    """Tests for rotations cases and conditions."""
+    maxDiff = None
+
+    def setUp(self) -> None:
+        self.scrambler = OrienterScrambler('DF')
+
+    def test_index_error_issue_1(self) -> None:
+        scrambled = parse_moves(
+            "F@2568664285 L@2568665426 D@2568665936 L'@2568666625 "
+            "D@2568668965 y@2568669776 F'@2568688166 "
+            "D'@2568688827 F@2568689307 D'@2568689726 F'@2568690476",
+        )
+        scramble_oriented = parse_moves("F R U R' d R' U' R U' R'")
+
+        out, full_clear = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=parse_moves('z2'),
+            is_complete=False,
+        )
+
+        expected_output = (
+            "[rotation_z]z2[/rotation_z] "
+            "[move]F[/move] "
+            "[move]R[/move] "
+            "[move]U[/move] "
+            "[move]R'[/move] "
+            "[move]d[/move] "
+            "[move]R'[/move] "
+            "[move]U'[/move] "
+            "[move]R[/move] "
+            "[move]U'[/move] "
+            "[move]R'[/move] "
+        )
+        self.assertEqual(out, expected_output)
+        self.assertFalse(full_clear)
+
+    def test_index_error_issue_2(self) -> None:
+        scrambled = parse_moves(
+            "B'@2600539431 L'@2600543301 D'@2600543961 "
+            "L@2600544621 D'@2600546391 y'@2600546840 "
+            "B@2600550230 D@2600551700 B'@2600552240 "
+            "D@2600552840 B@2600553530",
+        )
+        scramble_oriented = parse_moves("B' R' U' R d' R U R' U R")
+
+        out, full_clear = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=parse_moves('z2'),
+            is_complete=False,
+        )
+
+        expected_output = (
+            "[rotation_z]z2[/rotation_z] "
+            "[move]B'[/move] "
+            "[move]R'[/move] "
+            "[move]U'[/move] "
+            "[move]R[/move] "
+            "[move]d'[/move] "
+            "[move]R[/move] "
+            "[move]U[/move] "
+            "[move]R'[/move] "
+            "[move]U[/move] "
+            "[move]R[/move] "
+        )
+        self.assertEqual(out, expected_output)
         self.assertFalse(full_clear)
