@@ -8,6 +8,22 @@ if TYPE_CHECKING:
     MoveEventDictList = list['MoveEventDict']
 
 
+class MoveInfo(TypedDict):
+    """
+    Representing a move with timing information.
+    """
+    move: str
+    time: int
+
+
+class RotationResult(TypedDict):
+    """
+    Result of rotation detection.
+    """
+    rotation: str
+    angle_deg: float
+
+
 class QuaternionDict(TypedDict):
     """Quaternion orientation data."""
 

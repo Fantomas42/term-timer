@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from typing import TYPE_CHECKING
-from typing import TypedDict
 from typing import cast
 
 from cubing_algs.move import Move
@@ -22,20 +21,13 @@ from term_timer.bluetooth.types import HardwareEventPartialDict
 from term_timer.bluetooth.types import HardwareEventSoftwareVersionOnlyDict
 from term_timer.bluetooth.types import HardwareEventVersionOnlyDict
 from term_timer.bluetooth.types import MoveEventDict
+from term_timer.bluetooth.types import MoveInfo
 from term_timer.bluetooth.types import RotationEventDict
 from term_timer.config import BLUETOOTH_CONFIG
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import CubeNotFoundError
 
 logger = logging.getLogger(__name__)
-
-
-class MoveInfo(TypedDict):
-    """
-    Representing a move with timing information.
-    """
-    move: str
-    time: int
 
 
 class Bluetooth:

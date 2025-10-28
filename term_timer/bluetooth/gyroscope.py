@@ -2,9 +2,9 @@ import logging
 import math
 from dataclasses import dataclass
 from typing import Final
-from typing import TypedDict
 
 from term_timer.bluetooth.types import QuaternionDict
+from term_timer.bluetooth.types import RotationResult
 from term_timer.config import ROTATION_THRESHOLD
 
 logger = logging.getLogger(__name__)
@@ -12,14 +12,6 @@ logger = logging.getLogger(__name__)
 # Quaternion math constants for rotation detection
 QUATERNION_EPSILON: Final = 1e-10
 NO_ROTATION_THRESHOLD: Final = 0.9999
-
-
-class RotationResult(TypedDict):
-    """
-    Result of rotation detection.
-    """
-    rotation: str
-    angle_deg: float
 
 
 @dataclass
