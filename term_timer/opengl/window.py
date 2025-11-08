@@ -138,7 +138,7 @@ class Window:
         self.load_texture(Path(__file__).parent / 'facelet.bmp')
 
     def setup_lighting(self) -> None:
-        """Setup OpenGL lighting for realistic 3D cube appearance."""
+        """Set OpenGL lighting for realistic 3D cube appearance."""
         # Enable lighting
         glEnable(GL_LIGHTING)
         glEnable(GL_LIGHT0)

@@ -205,7 +205,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
     logger.info(
         'CONSUMER: Use "%s" as orientation faces and "%s" as orientation moves',
         orientation_faces,
-        str(orientation_moves),
+        orientation_moves,
     )
     if USE_GYROSCOPE:
         rotation_detector = RotationDetector(
@@ -373,7 +373,7 @@ def replay(options: Namespace) -> None:
     logger.info(
         'REPLAY: Use "%s" as orientation faces and "%s" as orientation moves',
         options.orientation,
-        str(orientation_moves),
+        orientation_moves,
     )
     logger.info(
         'REPLAY: Use %.1f° threshold for rotation detection',

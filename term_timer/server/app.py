@@ -138,11 +138,10 @@ def format_line(value: str) -> str:
             processed_parts.append(part)
         else:
             moves = part.split()
-            for move in moves:
-                if move.strip():
-                    processed_parts.append(
-                        f'<span class="move">{ move }</span>',
-                    )
+            processed_parts.extend(
+                f'<span class="move">{ move }</span>'
+                for move in moves if move.strip()
+            )
 
     return ' '.join(processed_parts)
 
@@ -459,7 +458,7 @@ class SessionDetailView(View):
 
         solves_analyzed = self.method_aggregation.results['stack']
 
-        if self.step and self.case_uid:
+        if self.step and self.case_uid:  # noqa: PLR1702
             filtered_solves = []
 
             for solve in solves_analyzed:

@@ -21,7 +21,7 @@ def load_cases(path: Path) -> None:
     cases = CASES.setdefault(case_type, {})
     cases_masks = CASES_MASKS.setdefault(case_type, {})
 
-    with path.open('r') as fd:
+    with path.open('r', encoding='utf-8') as fd:
         json_data: dict[str, CaseInfo] = json.load(fd)
         for case_name, case_data in json_data.items():
             case_info = case_data

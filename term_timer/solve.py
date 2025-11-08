@@ -57,7 +57,7 @@ class SolveData(TypedDict):
 
 
 class Solve:
-    def __init__(self,
+    def __init__(self,  # noqa: PLR0913, PLR0917
                  date: float, time: int,
                  scramble: Algorithm | str,
                  flag: SolveFlag = '',

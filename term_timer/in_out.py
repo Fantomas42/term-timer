@@ -77,9 +77,7 @@ def save_solves(cube: int, session: str, solves: list[Solve]) -> bool:
 
     source = SAVE_DIRECTORY / f'{ cube }x{ cube }x{ cube }{ suffix }.json'
 
-    data = []
-    for s in solves:
-        data.append(s.as_save)
+    data = [s.as_save for s in solves]
 
     dumped = json.dumps(data, indent=1)
 

@@ -175,13 +175,13 @@ class Importer:
         solves: list[SolveData] | None = None
 
         if source.endswith(('.json', '.txt')):
-            with source_path.open() as fd:
+            with source_path.open(encoding='utf-8') as fd:
                 data: dict[str, Any] = json.load(fd)
 
             solves = self.cstimer_json(data)
 
         elif source.endswith('.csv'):
-            with source_path.open() as fd:
+            with source_path.open(encoding='utf-8') as fd:
                 data_lines: list[str] = fd.readlines()
 
             if 'No.;' in data_lines[0]:

@@ -85,7 +85,7 @@ def random_training(step: str, selected_cases: list[str],
         k: v for k, v in cases.items() if v.get('setups')
     }
 
-    case = choice(selected_cases or list(valid_cases.keys()))
+    case = choice(selected_cases or list(valid_cases.keys()))  # noqa: S311
 
     if case not in valid_cases:
         error_string = f'Invalid case { case } for { step.upper() }'
@@ -95,7 +95,7 @@ def random_training(step: str, selected_cases: list[str],
 
     algo = (
         orientation_moves
-        + choice(case_info['setups'])
+        + choice(case_info['setups'])  # noqa: S311
         + mirror_moves(orientation_moves)
     )
 

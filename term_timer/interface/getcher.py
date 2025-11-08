@@ -23,7 +23,7 @@ class Getcher:
         # Methods from Terminal mixin
         def clear_line(self, *, full: bool) -> None: ...
 
-    async def getch(self, mode: str, timeout: float | None = None) -> str:
+    async def getch(self, mode: str, timeout: float | None = None) -> str:  # noqa: ASYNC109
         """
         Get a character from the terminal asynchronously.
         """
@@ -36,11 +36,11 @@ class Getcher:
 
         self.clear_line(full=True)
 
-        logger.info('Getched %s: %s', mode.upper(), repr(ch))
+        logger.info('Getched %s: %r', mode.upper(), ch)
 
         return ch
 
-    async def getch_windows(self, timeout: float | None = None) -> str:
+    async def getch_windows(self, timeout: float | None = None) -> str:  # noqa: ASYNC109
         """
         Get a character from terminal on Windows platform.
         """
@@ -57,7 +57,7 @@ class Getcher:
                         future.set_result(key_str)
                 else:
                     loop.call_later(0.01, windows_getch)
-            except Exception as e:  # noqa BLE001
+            except Exception as e:  # noqa: BLE001
                 if not future.done():
                     future.set_exception(e)
 
@@ -76,7 +76,7 @@ class Getcher:
 
         return ch
 
-    async def getch_unix(self, timeout: float | None = None) -> str:
+    async def getch_unix(self, timeout: float | None = None) -> str:  # noqa: ASYNC109
         """
         Get a character from terminal on Unix-like platforms.
         """
@@ -102,7 +102,7 @@ class Getcher:
                     ch = ch_bytes.decode('utf-8', errors='replace')
                     if not future.done():
                         future.set_result(ch)
-                except Exception as e:  # noqa BLE001
+                except Exception as e:  # noqa: BLE001
                     if not future.done():
                         future.set_exception(e)
 

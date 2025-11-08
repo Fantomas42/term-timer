@@ -63,10 +63,11 @@ DEFAULT_TRIGGERS: Final = [
 def apply_trigger_outside_blocks(
         algorithm: str, regex: Pattern[str],
         replacement_func: Callable[[re.Match[str]], str]) -> str:
-    blocks = []
 
-    for match in re.finditer(BLOCK_PATTERN, algorithm):
-        blocks.append((match.start(), match.end(), match.group(0)))
+    blocks = [
+        (match.start(), match.end(), match.group(0))
+        for match in re.finditer(BLOCK_PATTERN, algorithm)
+    ]
 
     result = ''
     last_end = 0

@@ -121,7 +121,7 @@ def configure_logging() -> None:
 
 
 def shutdown_logging() -> None:
-    global log_listener  # noqa PLW0603
+    global log_listener  # noqa: PLW0603
 
     if log_listener:
         log_listener.stop()

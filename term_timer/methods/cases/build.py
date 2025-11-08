@@ -155,15 +155,14 @@ def format_case(mode: str, code: str, info: SourceCaseInfo,
     if info['aliases'] and mode == 'OLL':
         name += f' { translate(info["aliases"][0]) }'
 
-    setups: list[str] = []
-    for algorithm in info['algorithms'][:10]:
-        setups.append(
-            str(
-                parse_moves(algorithm).transform(
-                    mirror_moves,
-                ),
-            ).replace(' ', ''),
-        )
+    setups: list[str] = [
+        str(
+            parse_moves(algorithm).transform(
+                mirror_moves,
+            ),
+        ).replace(' ', '')
+        for algorithm in info['algorithms'][:10]
+    ]
 
     main_algorithm = ''.join(info['main'])
     if main_algorithm:
@@ -232,7 +231,7 @@ def build(data: dict[str, SourceCaseInfo], mode: str, case: str) -> None:
     output_path = Path(__file__).parent / f'{ mode.lower() }.json'
 
     if not case:
-        with output_path.open('w+', encoding='utf8') as fd:
+        with output_path.open('w+', encoding='utf-8') as fd:
             json.dump(
                 formatted_cases,
                 fd,
