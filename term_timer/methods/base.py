@@ -1,7 +1,10 @@
+"""Base classes for solving method analysis and step detection."""
+
 from collections.abc import Callable
 from collections.abc import Iterable
 from contextlib import suppress
 from functools import cached_property
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import Final
@@ -21,7 +24,6 @@ from cubing_algs.masks import L1_MASK
 from cubing_algs.masks import OLL_MASK
 from cubing_algs.masks import facelets_masked
 from cubing_algs.masks import union_masks
-from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.transform.mirror import mirror_moves
@@ -38,6 +40,9 @@ from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
+
+if TYPE_CHECKING:
+    from cubing_algs.move import Move
 
 CROSS_CENTER_MASK: Final = union_masks(CROSS_MASK, CENTERS_MASK)
 
@@ -149,7 +154,7 @@ class Analyser(FaceletAnalyser):
 
     def __init__(self, scramble: Algorithm, solution: Algorithm,
                  orientation_faces: str,
-                 orientation_moves: Algorithm):
+                 orientation_moves: Algorithm) -> None:
         self.scramble = scramble
         self.solution = solution
 

@@ -1,3 +1,5 @@
+"""Layer-by-layer method analysis."""
+
 from typing import ClassVar
 
 from cubing_algs.algorithm import Algorithm

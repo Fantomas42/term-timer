@@ -1,3 +1,5 @@
+"""Tests for magic cube."""
+
 import unittest
 from unittest.mock import Mock
 from unittest.mock import patch

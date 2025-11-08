@@ -1,3 +1,5 @@
+"""Tests for bluetooth encrypter."""
+
 # ruff: noqa: SLF001
 import unittest
 from unittest.mock import Mock

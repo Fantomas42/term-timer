@@ -1,3 +1,5 @@
+"""Raw method analysis with no step detection."""
+
 from typing import ClassVar
 
 from cubing_algs.constants import INITIAL_STATE

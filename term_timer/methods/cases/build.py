@@ -1,3 +1,5 @@
+"""Build CFOP case database from JSON source files."""
+
 import json
 import sys
 from pathlib import Path

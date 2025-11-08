@@ -1,8 +1,11 @@
+"""Interface modules providing mixins for timer and trainer functionality."""
+
 import asyncio
 import logging
 import time
 from datetime import datetime
 from datetime import timezone
+from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
 
@@ -21,7 +24,9 @@ from term_timer.interface.scrambler import Scrambler
 from term_timer.interface.state import State
 from term_timer.interface.stopwatch import StopWatch
 from term_timer.interface.terminal import Terminal
-from term_timer.solve import Solve
+
+if TYPE_CHECKING:
+    from term_timer.solve import Solve
 
 logger = logging.getLogger(__name__)
 

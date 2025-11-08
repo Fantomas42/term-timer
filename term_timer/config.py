@@ -1,3 +1,5 @@
+"""Configuration loading and management from TOML files."""
+
 import os
 from importlib.util import find_spec
 from typing import Any
@@ -51,6 +53,7 @@ port = 8333
 
 
 def load_config() -> dict[str, Any]:
+    """Load configuration from TOML file or create default."""
     if not CONFIG_FILE.exists():
         with CONFIG_FILE.open('w+') as fd:
             fd.write(DEFAULT_CONFIG)

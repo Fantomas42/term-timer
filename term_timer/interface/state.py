@@ -1,3 +1,5 @@
+"""State management and logging for solve tracking."""
+
 import logging
 import time
 

@@ -162,8 +162,9 @@ class GanGen3Driver(GanGen2Driver):
             ) & 0xFF
             await self.request_move_history(start_serial, diff + 1)
 
-    async def event_handler(self, sender: BleakGATTCharacteristic,  # noqa: ARG002
-                            data: bytearray) -> list[EventDict]:
+    async def event_handler(  # noqa: C901, PLR0912, PLR0914, PLR0915
+            self, sender: BleakGATTCharacteristic,  # noqa: ARG002
+            data: bytearray) -> list[EventDict]:
         """Process notifications from the cube"""
         clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017

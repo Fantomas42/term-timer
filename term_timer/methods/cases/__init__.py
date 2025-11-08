@@ -1,3 +1,5 @@
+"""CFOP case database loading and management."""
+
 import json
 from pathlib import Path
 from typing import Final

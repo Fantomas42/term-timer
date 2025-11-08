@@ -40,7 +40,7 @@ class GanGen4Driver(GanGen3Driver):
     state_characteristic_uid: ClassVar[str] = GAN_GEN4_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = GAN_GEN4_COMMAND_CHARACTERISTIC
 
-    def send_command_handler(self, command: str) -> bytes | bool:
+    def send_command_handler(self, command: str) -> bytes | bool:  # noqa: C901, PLR0912
         msg = bytearray(20)
 
         if command == 'REQUEST_FACELETS':
@@ -114,8 +114,9 @@ class GanGen4Driver(GanGen3Driver):
             self.cypher.encrypt(msg),
         )
 
-    async def event_handler(self, sender: BleakGATTCharacteristic,  # noqa: ARG002
-                            data: bytearray) -> list[EventDict]:
+    async def event_handler(  # noqa: C901, PLR0912, PLR0914, PLR0915
+            self, sender: BleakGATTCharacteristic,  # noqa: ARG002
+            data: bytearray) -> list[EventDict]:
         """Process notifications from the cube"""
         clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017

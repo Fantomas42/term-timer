@@ -1,3 +1,5 @@
+"""Bluetooth cube information utility script."""
+
 import asyncio
 import json
 import logging
@@ -187,13 +189,14 @@ def check_state(raw_moves: list[str], facelets: str,
     return True
 
 
-async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
-                      cube_ready: threading.Event,
-                      gl_thread: CubeGLThread | None,
-                      event_collector: list[EventDict],
-                      *, show_cube: bool,
-                      orientation_faces: str,
-                      rotation_threshold: float = 70.0) -> None:
+async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
+        queue: asyncio.Queue[list[EventDict] | None],
+        cube_ready: threading.Event,
+        gl_thread: CubeGLThread | None,
+        event_collector: list[EventDict],
+        *, show_cube: bool,
+        orientation_faces: str,
+        rotation_threshold: float = 70.0) -> None:
     virtual_cube: VCube | None = None
     moves: list[str] = []
     hardware = ''
@@ -329,11 +332,12 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                 )
 
 
-async def client_cb(queue: asyncio.Queue[list[EventDict] | None],
-                    time: int, filter_name: str, *,
-                    cube_reset: bool,
-                    gyroscope_enable: bool,
-                    gyroscope_disable: bool) -> None:
+async def client_cb(  # noqa: PLR0913
+        queue: asyncio.Queue[list[EventDict] | None],
+        time: int, filter_name: str, *,
+        cube_reset: bool,
+        gyroscope_enable: bool,
+        gyroscope_disable: bool) -> None:
     bluetooth_interface = BluetoothInterface(queue)
 
     await bluetooth_interface.__aenter__(filter_name=filter_name)

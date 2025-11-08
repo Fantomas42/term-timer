@@ -1,11 +1,14 @@
+"""Inspection countdown functionality for timed solves."""
+
 import asyncio
 import time
 from typing import TYPE_CHECKING
 
-from rich.console import Console as RichConsole
-
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
+
+if TYPE_CHECKING:
+    from rich.console import Console as RichConsole
 
 
 class Inspecter:

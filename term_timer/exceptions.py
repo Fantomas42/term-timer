@@ -1,3 +1,6 @@
+"""Custom exception classes for the term-timer application."""
+
+
 class CubeNotFoundError(Exception):
     pass
 

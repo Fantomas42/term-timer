@@ -1,3 +1,5 @@
+"""Command-line argument definitions and parsing for the timer application."""
+
 import sys
 from argparse import Namespace
 from argparse import _SubParsersAction
@@ -44,6 +46,7 @@ ORIENTATIONS_SORTED: Final[list[str]] = sorted(ORIENTATIONS)
 def set_session_arguments(
         parser: ArgumentParser,
 ) -> ArgumentParser._ArgumentGroup:
+    """Add session-related command-line arguments to parser."""
     session = parser.add_argument_group('Session')
     session.add_argument(
         '-c', '--cube',
@@ -91,6 +94,7 @@ def set_session_arguments(
 
 
 def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """Create argument parser for solve command."""
     countdown = TIMER_CONFIG.get('countdown', 0.0)
     metronome = TIMER_CONFIG.get('metronome', 0.0)
 
@@ -311,6 +315,7 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
 
 def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """Create argument parser for train command."""
     show_cube = DISPLAY_CONFIG.get('scramble', True)
     metronome = TIMER_CONFIG.get('metronome', 0.0)
 
@@ -404,6 +409,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
 
 def list_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """Create argument parser for list command."""
     parser = subparsers.add_parser(
         'list',
         help='Display recorded solves',
@@ -441,6 +447,7 @@ def list_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
 
 def index_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """Create argument parser for index command."""
     parser = subparsers.add_parser(
         'index',
         help='List sessions',
@@ -452,6 +459,7 @@ def index_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
 
 def statistics_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """Create argument parser for stats command."""
     parser = subparsers.add_parser(
         'stats',
         help='Display statistics',
@@ -465,6 +473,7 @@ def statistics_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
 
 def graph_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """Create argument parser for graph command."""
     parser = subparsers.add_parser(
         'graph',
         help='Display trend graph',
@@ -478,6 +487,7 @@ def graph_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
 
 def cfop_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """Create argument parser for cfop command."""
     parser = subparsers.add_parser(
         'cfop',
         help='Display CFOP cases',
@@ -535,6 +545,7 @@ def cfop_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
 
 def import_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """Create argument parser for import command."""
     parser = subparsers.add_parser(
         'import',
         help='Import external solves',
@@ -550,6 +561,7 @@ def import_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
 
 def serve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """Create argument parser for serve command."""
     domain = SERVER_CONFIG.get('domain', 'localhost')
     port = SERVER_CONFIG.get('port', 8333)
 
@@ -581,6 +593,7 @@ def serve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
 
 def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """Create argument parser for detail command."""
     show_cube = DISPLAY_CONFIG.get('scramble', True)
     show_tps_graph = DISPLAY_CONFIG.get('tps_graph', True)
     show_time_graph = DISPLAY_CONFIG.get('time_graph', True)
@@ -694,6 +707,7 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
 
 def edit_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """Create argument parser for edit command."""
     parser = subparsers.add_parser(
         'edit',
         help="Edit solves' flag",
@@ -742,6 +756,7 @@ def edit_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
 
 def delete_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """Create argument parser for delete command."""
     parser = subparsers.add_parser(
         'delete',
         help='Delete solves',
@@ -782,6 +797,7 @@ def delete_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
 
 def get_arguments() -> Namespace:
+    """Parse command-line arguments and return parsed namespace."""
     parser = ArgumentParser(
         description='Speed cubing timer on your terminal.',
         epilog='Have fun cubing !',

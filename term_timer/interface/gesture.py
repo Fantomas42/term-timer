@@ -1,3 +1,5 @@
+"""Gesture detection for save commands from cube movements."""
+
 import asyncio
 import logging
 from typing import TYPE_CHECKING

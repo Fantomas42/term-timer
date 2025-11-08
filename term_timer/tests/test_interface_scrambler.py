@@ -1,3 +1,5 @@
+"""Tests for interface scrambler."""
+
 import unittest
 
 from cubing_algs.algorithm import Algorithm

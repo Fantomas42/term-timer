@@ -1,4 +1,7 @@
+"""Scramble generation and training case setup utilities."""
+
 from random import choice
+from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
@@ -14,7 +17,9 @@ from term_timer.config import CUBE_RIGHT_HANDED
 from term_timer.exceptions import InvalidCaseError
 from term_timer.magic_cube import Cube
 from term_timer.methods.cases import CASES
-from term_timer.methods.types import CaseInfo
+
+if TYPE_CHECKING:
+    from term_timer.methods.types import CaseInfo
 
 
 def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
@@ -30,6 +35,7 @@ def scrambler(cube_size: int, iterations: int,
               *,
               easy_cross: bool,
               raw_scramble: str = '') -> tuple[Algorithm, Cube]:
+    """Generate cube scramble."""
     cube = Cube(cube_size)
 
     if raw_scramble:
@@ -57,6 +63,7 @@ def trainer(step: str, cases: list[str],
             orientation_moves: Algorithm,
             bluetooth_cube: VCube | None = None) -> tuple[
                 str, Algorithm, Algorithm, VCube]:
+    """Generate training case."""
     cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube()
 
     if step == 'ecross':
@@ -80,6 +87,7 @@ def trainer(step: str, cases: list[str],
 def random_training(step: str, selected_cases: list[str],
                     orientation_moves: Algorithm) -> tuple[
                         str, Algorithm, Algorithm]:
+    """Generate random training case."""
     cases: dict[str, CaseInfo] = CASES[step.upper()]
     valid_cases: dict[str, CaseInfo] = {
         k: v for k, v in cases.items() if v.get('setups')

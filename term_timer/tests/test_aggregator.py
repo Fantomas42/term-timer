@@ -1,4 +1,7 @@
+"""Tests for aggregator."""
+
 import unittest
+from typing import TYPE_CHECKING
 from typing import cast
 from unittest.mock import MagicMock
 from unittest.mock import Mock
@@ -7,7 +10,9 @@ from unittest.mock import patch
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.aggregator import analyse_solve_worker
 from term_timer.solve import Solve
-from term_timer.types import StepAnalysis
+
+if TYPE_CHECKING:
+    from term_timer.types import StepAnalysis
 
 
 class TestAnalyseSolveWorker(unittest.TestCase):

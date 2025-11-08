@@ -1,3 +1,5 @@
+"""Tests for formatter."""
+
 import unittest
 
 from term_timer.constants import SECOND

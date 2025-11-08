@@ -1,3 +1,6 @@
+"""Terminal control utilities for cursor and line management."""
+
+
 class Terminal:
     """
     Mixin providing terminal control utilities.

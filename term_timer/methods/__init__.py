@@ -1,3 +1,5 @@
+"""Solving method analysis modules for CFOP, LBL, and other methods."""
+
 from typing import Final
 
 from term_timer.methods.base import Analyser
@@ -15,4 +17,5 @@ METHOD_ANALYSERS: Final[dict[str, type[Analyser]]] = {
 
 
 def get_method_analyser(method_name: str) -> type[Analyser]:
+    """Get method analyser class for specified method name."""
     return METHOD_ANALYSERS.get(method_name, CFOPAnalyser)

@@ -1,3 +1,5 @@
+"""Binary message parsing for GAN cube Bluetooth protocol."""
+
 import struct
 from collections.abc import Sequence
 
@@ -11,6 +13,7 @@ class GanProtocolMessage:
         )
 
     def __str__(self) -> str:
+        """Return binary string representation of message."""
         return self.bits
 
     def get_bit_word(self, start_bit: int, bit_length: int,

@@ -1,3 +1,5 @@
+"""Custom ArgumentParser with enhanced help message formatting."""
+
 import argparse
 from typing import Any
 

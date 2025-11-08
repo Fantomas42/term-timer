@@ -1,3 +1,5 @@
+"""Asynchronous logging configuration and setup."""
+
 import atexit
 import logging
 import logging.config
@@ -93,6 +95,7 @@ log_listener: AsyncioLogListener | None = None
 
 
 def configure_logging() -> None:
+    """Configure async logging with queue handler."""
     if DEBUG:
         Path(LOGGING_DIR).mkdir(parents=True, exist_ok=True)
         logging.config.dictConfig(LOGGING_CONF)
@@ -121,6 +124,7 @@ def configure_logging() -> None:
 
 
 def shutdown_logging() -> None:
+    """Shut down logging handlers and queue listener."""
     global log_listener  # noqa: PLW0603
 
     if log_listener:

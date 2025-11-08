@@ -1,3 +1,5 @@
+"""Tests for solve 03."""
+
 import datetime
 import unittest
 from typing import cast

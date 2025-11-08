@@ -1,5 +1,8 @@
+"""Tests for stats."""
+
 # ruff: noqa: ERA001
 import unittest
+from typing import TYPE_CHECKING
 from typing import Any
 from unittest.mock import Mock
 from unittest.mock import patch
@@ -10,8 +13,10 @@ from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
 from term_timer.stats import StatisticsTools
-from term_timer.types import CaseStats
-from term_timer.types import MethodAnalysis
+
+if TYPE_CHECKING:
+    from term_timer.types import CaseStats
+    from term_timer.types import MethodAnalysis
 
 
 class TestStatisticsTools(unittest.TestCase):

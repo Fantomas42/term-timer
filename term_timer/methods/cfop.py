@@ -1,3 +1,5 @@
+"""CFOP method analysis with Cross, F2L, OLL, and PLL detection."""
+
 from collections.abc import Callable
 from functools import cached_property
 from typing import ClassVar
@@ -89,7 +91,7 @@ class CFOPAnalyser(Analyser):
         self.correct_summary_cfop(summary)
 
     @cached_property
-    def score(self) -> float:
+    def score(self) -> float:  # noqa: C901
         bonus: float = 0
 
         step_one = self.summary[0]
@@ -122,7 +124,7 @@ class CFOPAnalyser(Analyser):
 
         return 20 + bonus - malus
 
-    def correct_summary_cfop(self, summary: list[StepSummary]) -> None:
+    def correct_summary_cfop(self, summary: list[StepSummary]) -> None:  # noqa: C901
         # Skipped PLL insert
         if summary[-1]['name'] != 'PLL':
             summary.append(
@@ -330,7 +332,7 @@ class CF4OPAnalyser(CFOPAnalyser):
 
         return 6, []
 
-    def correct_summary(self, summary: list[StepSummary]) -> None:
+    def correct_summary(self, summary: list[StepSummary]) -> None:  # noqa: C901, PLR0912, PLR0915
         # Merge XCrosses
         if summary[0]['name'] == 'F2L 1':
             summary[0]['name'] = 'XCross'

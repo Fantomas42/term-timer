@@ -1,3 +1,5 @@
+"""Solve data representation, analysis, and reporting."""
+
 from datetime import datetime
 from datetime import timezone
 from functools import cached_property
@@ -56,7 +58,7 @@ class SolveData(TypedDict):
     moves: str
 
 
-class Solve:
+class Solve:  # noqa: PLR0904
     def __init__(self,  # noqa: PLR0913, PLR0917
                  date: float, time: int,
                  scramble: Algorithm | str,
@@ -334,7 +336,7 @@ class Solve:
         )
 
     @cached_property
-    def method_line(self) -> str:
+    def method_line(self) -> str:  # noqa: C901, PLR0912
         if not self.method_applied:
             return ''
 
@@ -526,7 +528,7 @@ class Solve:
     def method_text(self) -> str:
         return self.method_text_builder(multiple=True)
 
-    def method_text_builder(self, *, multiple: bool) -> str:
+    def method_text_builder(self, *, multiple: bool) -> str:  # noqa: C901
         recons = ''
 
         if not self.advanced or not self.method_applied:
@@ -831,4 +833,5 @@ class Solve:
         }
 
     def __str__(self) -> str:
+        """Return formatted string of solve time and flag."""
         return f'{ format_time(self.time) }{ self.flag }'

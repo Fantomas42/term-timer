@@ -1,3 +1,5 @@
+"""3D cube rendering with OpenGL."""
+
 import math
 from typing import Final
 
@@ -65,6 +67,7 @@ class Cube:
         )
 
     def __repr__(self) -> str:
+        """Return detailed string representation of cube state."""
         return (
             'Cube('
             f'edge_permutation={ self.edge_permutation!s }, '
@@ -72,6 +75,7 @@ class Cube:
         )
 
     def __str__(self) -> str:
+        """Return string representation of cube state."""
         return self.__repr__()
 
     def move_corners(self, move: Face) -> None:
@@ -187,7 +191,7 @@ class Cube:
     def animate_rotations(self, window: Window, axis: str, angle: int) -> None:
         renderer.animate_rotation(window, self, axis, angle)
 
-    def set_rotation_from_quaternion(self, q: QuaternionDict) -> None:
+    def set_rotation_from_quaternion(self, q: QuaternionDict) -> None:  # noqa: PLR0914
         """
         Set rotation from quaternion with automatic normalization.
 

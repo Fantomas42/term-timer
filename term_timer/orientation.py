@@ -1,3 +1,5 @@
+"""Cube orientation calculation and management for optimal viewing angles."""
+
 import operator
 from typing import Final
 
@@ -26,7 +28,8 @@ ORIENTATION_MOVES: Final = {
 }
 
 
-def get_orientation_faces(scramble: Algorithm, solution: Algorithm) -> str:
+def get_orientation_faces(scramble: Algorithm, solution: Algorithm) -> str:  # noqa: C901
+    """Calculate optimal cube orientation for solve analysis."""
     top_face = None
 
     cube = VCube()
@@ -85,6 +88,7 @@ def get_orientation_faces(scramble: Algorithm, solution: Algorithm) -> str:
 
 
 def get_orientation_moves(orientation: str) -> Algorithm:
+    """Get pre-computed orientation moves for given orientation."""
     if orientation == 'auto':
         orientation = CUBE_ORIENTATION
 

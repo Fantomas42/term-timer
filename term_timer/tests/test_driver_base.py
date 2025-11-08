@@ -1,16 +1,21 @@
+"""Tests for driver base."""
+
 import unittest
 from datetime import datetime
 from datetime import timezone
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
-from term_timer.bluetooth.types import EventDict
-from term_timer.bluetooth.types import GyroEventDict
-from term_timer.bluetooth.types import MoveEventDict
-from term_timer.bluetooth.types import QuaternionDict
-from term_timer.bluetooth.types import VelocityDict
 from term_timer.config import USE_GYROSCOPE
+
+if TYPE_CHECKING:
+    from term_timer.bluetooth.types import EventDict
+    from term_timer.bluetooth.types import GyroEventDict
+    from term_timer.bluetooth.types import MoveEventDict
+    from term_timer.bluetooth.types import QuaternionDict
+    from term_timer.bluetooth.types import VelocityDict
 
 
 class BaseDriver(Driver):

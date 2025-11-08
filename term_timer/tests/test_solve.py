@@ -1,3 +1,5 @@
+"""Tests for solve."""
+
 import unittest
 
 from term_timer.constants import DNF

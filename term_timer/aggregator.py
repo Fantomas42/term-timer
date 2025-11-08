@@ -1,3 +1,5 @@
+"""Solve analysis aggregation with multiprocessing support."""
+
 import logging
 import time
 from functools import partial
@@ -24,6 +26,7 @@ logger = logging.getLogger(__name__)
 def analyse_solve_worker(solve: Solve,
                          method_name: str, *,
                          full: bool = False) -> SolveAnalysis:
+    """Analyze solve using specified method and return analysis result."""
     if not solve.advanced:
         return {
             'steps': {},

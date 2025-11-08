@@ -1,3 +1,5 @@
+"""Tests for in out."""
+
 import unittest
 from pathlib import Path
 from unittest.mock import Mock

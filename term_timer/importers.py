@@ -1,3 +1,5 @@
+"""Import solves from external timer applications like csTimer and Cubeast."""
+
 import json
 import operator
 from datetime import datetime

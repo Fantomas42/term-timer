@@ -1,3 +1,5 @@
+"""Flask web server for solve statistics and visualization."""
+
 import gc
 import os
 import re
@@ -86,6 +88,7 @@ LEGENDS: Final = {
 
 
 def format_delta(delta: int) -> str:
+    """Format value as string."""
     if delta == 0:
         return ''
     sign = ''
@@ -96,6 +99,7 @@ def format_delta(delta: int) -> str:
 
 
 def format_score(score: float, title: str = '') -> str:
+    """Format value as string."""
     klass = 'good'
     if score < 14:
         klass = 'danger'
@@ -106,6 +110,7 @@ def format_score(score: float, title: str = '') -> str:
 
 
 def format_line(value: str) -> str:
+    """Format value as string."""
     if not value:
         return ''
 
@@ -147,6 +152,7 @@ def format_line(value: str) -> str:
 
 
 def parse_case_name(value: str, step: str) -> tuple[str, str, str]:
+    """Parse input data."""
     try:
         code, name = value.split(' ', 1)
     except ValueError:
@@ -161,6 +167,7 @@ def parse_case_name(value: str, step: str) -> tuple[str, str, str]:
 
 def normalize_value(value: float, method_applied: Analyser,
                     metric: str, name: str) -> str:
+    """Normalize value for display."""
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value }</span>'
@@ -168,12 +175,14 @@ def normalize_value(value: float, method_applied: Analyser,
 
 def normalize_percent(value: float, method_applied: Analyser,
                       metric: str, name: str) -> str:
+    """Normalize value for display."""
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value:.2f}%</span>'
 
 
 def reconstruction_step(step: StepSummary) -> str:
+    """Format reconstruction output."""
     algorithm = str(step['moves_prettified'])
 
     pre_auf, post_auf = step['aufs']
@@ -192,6 +201,7 @@ def reconstruction_step(step: StepSummary) -> str:
 
 
 def reconstruction_overheads(step: StepSummary, solve: Solve) -> str:
+    """Format reconstruction output."""
     source, compressed = solve.missed_moves_pair(
         step['moves_humanized'],
     )
@@ -223,6 +233,7 @@ def reconstruction_overheads(step: StepSummary, solve: Solve) -> str:
 
 
 def reconstruction_pauses(step: StepSummary, solve: Solve) -> str:
+    """Format reconstruction output."""
     source_paused = step['moves_humanized'].transform(
         pause_moves(
             int(solve.move_speed / MS_TO_NS_FACTOR),
@@ -252,6 +263,7 @@ def reconstruction_pauses(step: StepSummary, solve: Solve) -> str:
 
 
 def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
+    """Get optimized step algorithm."""
     optimizers = []
 
     if 'SKIP' not in step['case']:
@@ -280,6 +292,7 @@ def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
 
 
 def cube_html(cube_str: str) -> str:
+    """Generate HTML for cube display."""
     def replace_span(matchobj: re.Match[str]) -> str:
         if matchobj:
             groups = matchobj.groups()
@@ -966,7 +979,7 @@ class Server:
             handler_class=RichHandler,
         )
 
-    def create_app(self, *, debug: bool) -> Bottle:
+    def create_app(self, *, debug: bool) -> Bottle:  # noqa: C901
         app = Bottle()
 
         @app.hook('before_request')  # type: ignore[misc]

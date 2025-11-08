@@ -1,3 +1,5 @@
+"""Solve and session management utilities for editing and deleting solves."""
+
 from rich import box
 from rich.table import Table
 
@@ -16,7 +18,7 @@ from term_timer.stats import Statistics
 
 
 class SolveManager:
-    def __init__(self, cube: int, session: str, solve_id: int):
+    def __init__(self, cube: int, session: str, solve_id: int) -> None:
         self.cube = cube
         self.session = session
         self.solve_id = solve_id

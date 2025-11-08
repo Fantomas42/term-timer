@@ -1,3 +1,5 @@
+"""OpenGL renderer for animated cube visualization."""
+
 import time
 from operator import neg
 from typing import TYPE_CHECKING
@@ -289,7 +291,7 @@ def render(cube: 'Cube') -> None:
     glDisable(GL_TEXTURE_2D)
 
 
-def animate_move(window: 'Window', cube: 'Cube',
+def animate_move(window: 'Window', cube: 'Cube',  # noqa: PLR0914
                  face: Face, power: int) -> None:
     moving_pieces, non_moving_pieces = get_moving_pieces(cube, face)
     axis, theta_max = get_rotation_param(face, power)

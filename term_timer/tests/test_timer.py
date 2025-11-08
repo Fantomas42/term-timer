@@ -1,3 +1,5 @@
+"""Tests for timer."""
+
 import unittest
 
 from term_timer.timer import Timer

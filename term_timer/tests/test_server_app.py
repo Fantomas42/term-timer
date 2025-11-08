@@ -1,3 +1,5 @@
+"""Tests for server app."""
+
 import contextlib
 import unittest
 from http import HTTPStatus

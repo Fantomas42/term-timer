@@ -1,3 +1,5 @@
+"""Scramble tracking and display functionality."""
+
 import asyncio
 from typing import TYPE_CHECKING
 
@@ -5,11 +7,13 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.move import Move
 from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.timing import untime_moves
-from cubing_algs.vcube import VCube
-from rich.console import Console as RichConsole
 
 from term_timer.formatter import format_alg_moves
 from term_timer.transform import humanize_moves
+
+if TYPE_CHECKING:
+    from cubing_algs.vcube import VCube
+    from rich.console import Console as RichConsole
 
 
 class Scrambler:

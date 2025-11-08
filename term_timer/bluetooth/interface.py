@@ -1,3 +1,5 @@
+"""Bluetooth cube interface for scanning, connecting, and communication."""
+
 import logging
 from asyncio import Queue
 from typing import Final
@@ -44,6 +46,7 @@ class BluetoothInterface:
             address: str | None = None,
             filter_name: str | None = None,
     ) -> 'BluetoothInterface':
+        """Enter async context manager by connecting to Bluetooth cube."""
         if not address:
             device = await self.scan(filter_name)
 
@@ -92,6 +95,7 @@ class BluetoothInterface:
     async def __aexit__(self, exc_type: type[BaseException] | None,
                         exc_value: BaseException | None,
                         exc_traceback: object) -> None:
+        """Exit async context manager by disconnecting from cube."""
         logger.debug('Disconnect from client')
         # Send an "exit command to the consumer"
         await self.queue.put(None)

@@ -1,12 +1,15 @@
+"""Stopwatch and timer functionality for solve timing."""
+
 import asyncio
 import time
 from typing import TYPE_CHECKING
 
-from rich.console import Console as RichConsole
-
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
 from term_timer.formatter import format_time
+
+if TYPE_CHECKING:
+    from rich.console import Console as RichConsole
 
 
 class StopWatch:
@@ -39,7 +42,7 @@ class StopWatch:
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
 
-    async def stopwatch(self) -> None:
+    async def stopwatch(self) -> None:  # noqa: C901, PLR0912
         """
         Display a running stopwatch timer until solve is completed.
         """

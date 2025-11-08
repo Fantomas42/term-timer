@@ -1,3 +1,5 @@
+"""Training interface for practicing specific CFOP cases."""
+
 from typing import Final
 
 from cubing_algs.algorithm import Algorithm
@@ -22,13 +24,14 @@ CROSS_MODES: Final = ('cross', 'ecross')
 
 
 class Trainer(SolveInterface):
-    def __init__(self, *,
-                 step: str,
-                 cases: list[str],
-                 show_solution: bool,
-                 show_cube: bool,
-                 orientation: str,
-                 metronome: float):
+    def __init__(  # noqa: PLR0913
+            self, *,
+            step: str,
+            cases: list[str],
+            show_solution: bool,
+            show_cube: bool,
+            orientation: str,
+            metronome: float) -> None:
         super().__init__()
 
         self.set_state('configure')

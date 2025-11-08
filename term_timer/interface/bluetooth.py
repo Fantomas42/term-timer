@@ -1,3 +1,5 @@
+"""Bluetooth cube integration interface mixin."""
+
 import asyncio
 import logging
 from typing import TYPE_CHECKING
@@ -5,7 +7,6 @@ from typing import cast
 
 from cubing_algs.move import Move
 from cubing_algs.vcube import VCube
-from rich.console import Console as RichConsole
 
 from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
@@ -26,6 +27,9 @@ from term_timer.bluetooth.types import RotationEventDict
 from term_timer.config import BLUETOOTH_CONFIG
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import CubeNotFoundError
+
+if TYPE_CHECKING:
+    from rich.console import Console as RichConsole
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +199,7 @@ class Bluetooth:
 
         return device_label
 
-    async def bluetooth_consumer(self) -> None:
+    async def bluetooth_consumer(self) -> None:  # noqa: C901
         """
         Consume events from the Bluetooth queue and process them.
         """

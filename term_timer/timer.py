@@ -1,3 +1,5 @@
+"""Timer interface for recording and analyzing cube solves."""
+
 import logging
 
 from cubing_algs.vcube import VCube
@@ -18,23 +20,24 @@ logger = logging.getLogger(__name__)
 
 
 class Timer(SolveInterface):
-    def __init__(self, *,
-                 cube_size: int,
-                 iterations: int,
-                 easy_cross: bool,
-                 scramble: str,
-                 session: str,
-                 free_play: bool,
-                 show_cube: bool,
-                 show_reconstruction: bool,
-                 show_tps_graph: bool,
-                 show_time_graph: bool,
-                 show_recognition_graph: bool,
-                 method: str,
-                 orientation: str,
-                 countdown: int,
-                 metronome: float,
-                 stack: list[Solve]):
+    def __init__(  # noqa: PLR0913
+            self, *,
+            cube_size: int,
+            iterations: int,
+            easy_cross: bool,
+            scramble: str,
+            session: str,
+            free_play: bool,
+            show_cube: bool,
+            show_reconstruction: bool,
+            show_tps_graph: bool,
+            show_time_graph: bool,
+            show_recognition_graph: bool,
+            method: str,
+            orientation: str,
+            countdown: int,
+            metronome: float,
+            stack: list[Solve]) -> None:
         super().__init__()
 
         self.set_state('configure')
@@ -134,7 +137,7 @@ class Timer(SolveInterface):
                 end='', style='consign',
             )
 
-    def solve_line(self, solve: Solve) -> None:
+    def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912
         old_stats = Statistics(self.stack)
 
         self.stack_done.append(solve)

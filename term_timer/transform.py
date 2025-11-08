@@ -1,3 +1,5 @@
+"""Algorithm transformation utilities for humanizing and prettifying moves."""
+
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves
@@ -14,6 +16,7 @@ from term_timer.constants import REWIDE_THRESHOLD_GYROSCOPE
 
 
 def humanize_moves_without_rotation(algorithm: Algorithm) -> Algorithm:
+    """Transform to human-readable format."""
     humanized = algorithm.transform(
         reslice_timed_moves(RESLICE_THRESHOLD, (2,)),
         degrip_full_moves,
@@ -29,6 +32,7 @@ def humanize_moves_without_rotation(algorithm: Algorithm) -> Algorithm:
 
 
 def humanize_moves_with_rotation(algorithm: Algorithm) -> Algorithm:
+    """Transform to human-readable format."""
     return algorithm.transform(
         translate_pov_moves,
         reslice_timed_moves(RESLICE_THRESHOLD_GYROSCOPE, (3,)),
@@ -37,6 +41,7 @@ def humanize_moves_with_rotation(algorithm: Algorithm) -> Algorithm:
 
 
 def humanize_moves(algorithm: Algorithm) -> Algorithm:
+    """Transform to human-readable format."""
     if algorithm.has_rotations:
         return humanize_moves_with_rotation(algorithm)
 
@@ -44,6 +49,7 @@ def humanize_moves(algorithm: Algorithm) -> Algorithm:
 
 
 def prettify_moves(algorithm: Algorithm) -> Algorithm:
+    """Optimize algorithm representation."""
     return algorithm.transform(
         untime_moves,
         optimize_double_moves,

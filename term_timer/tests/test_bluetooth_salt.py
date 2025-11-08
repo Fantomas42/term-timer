@@ -1,3 +1,5 @@
+"""Tests for bluetooth salt."""
+
 import unittest
 
 from term_timer.bluetooth.salt import get_salt

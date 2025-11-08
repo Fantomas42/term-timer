@@ -1,3 +1,5 @@
+"""Tests for solve wr."""
+
 import unittest
 from typing import cast
 

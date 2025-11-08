@@ -1,3 +1,5 @@
+"""Tests for trainer."""
+
 import unittest
 
 from term_timer.trainer import Trainer

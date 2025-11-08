@@ -1,3 +1,5 @@
+"""Statistics calculation and display for solve sessions."""
+
 from functools import cached_property
 from typing import cast
 
@@ -29,7 +31,7 @@ from term_timer.types import MethodAnalysis
 
 
 class StatisticsTools:
-    def __init__(self, stack: list[Solve]):
+    def __init__(self, stack: list[Solve]) -> None:
         self.stack = stack
         self.stack_time = [
             s.final_time for s in stack
@@ -100,7 +102,7 @@ class StatisticsTools:
         return 0
 
 
-class Statistics(StatisticsTools):
+class Statistics(StatisticsTools):  # noqa: PLR0904
 
     @cached_property
     def bpa(self) -> int:
@@ -236,13 +238,13 @@ class Statistics(StatisticsTools):
 
 class StatisticsReporter(Statistics):
 
-    def __init__(self, cube_size: int, stack: list[Solve]):
+    def __init__(self, cube_size: int, stack: list[Solve]) -> None:
         self.cube_size = cube_size
         self.cube_name = f'{ cube_size }x{ cube_size }x{ cube_size }'
 
         super().__init__(stack)
 
-    def resume(self, prefix: str = '', style: str = 'stats', *,
+    def resume(self, prefix: str = '', style: str = 'stats', *,  # noqa: C901
                show_title: bool = False) -> None:
         if show_title:
             console.print(
@@ -416,13 +418,14 @@ class StatisticsReporter(Statistics):
                 f'[{ flag_class }]{ solve.flag }[/{ flag_class }]',
             )
 
-    def detail(self, solve_id: int, method: str, orientation: str,
-               *,
-               show_cube: bool,
-               show_reconstruction: bool,
-               show_tps_graph: bool,
-               show_time_graph: bool,
-               show_recognition_graph: bool) -> None:
+    def detail(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915
+            self, solve_id: int, method: str, orientation: str,
+            *,
+            show_cube: bool,
+            show_reconstruction: bool,
+            show_tps_graph: bool,
+            show_time_graph: bool,
+            show_recognition_graph: bool) -> None:
         try:
             solve = self.stack[solve_id - 1]
         except IndexError:

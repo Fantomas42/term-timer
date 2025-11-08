@@ -1,3 +1,5 @@
+"""Cube representation with state management and display capabilities."""
+
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.display import VCubeDisplay
 from magiccube.cube import Cube as BaseCube
@@ -37,4 +39,5 @@ class Cube(BaseCube):  # type: ignore[misc]
         return display
 
     def __str__(self) -> str:
+        """Return string representation of cube with default orientation."""
         return self.display(CUBE_ORIENTATION)
