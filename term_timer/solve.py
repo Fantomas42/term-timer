@@ -342,7 +342,8 @@ class Solve:
         if self.orientation_moves:
             line += (
                 '[step]Orientation:[/step] '
-                f'[rotation]{ self.orientation_moves!s }[/rotation]\n'
+                f'[rotation]{ self.orientation_moves!s }[/rotation] '
+                f'[comment]// { self.orientation_faces }[/comment]\n'
             )
 
         step: StepSummary
@@ -532,7 +533,10 @@ class Solve:
             return recons
 
         if self.orientation_moves:
-            recons += f'{ self.orientation_moves!s } // Orientation\n'
+            recons += (
+                f'{ self.orientation_moves!s } '
+                f'// Orientation ({ self.orientation_faces })\n'
+            )
 
         step: StepSummary
         for step in self.method_applied.summary:
