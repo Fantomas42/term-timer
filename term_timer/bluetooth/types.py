@@ -12,6 +12,7 @@ class MoveInfo(TypedDict):
     """
     Representing a move with timing information.
     """
+
     move: str
     time: int
 
@@ -20,6 +21,7 @@ class RotationResult(TypedDict):
     """
     Result of rotation detection.
     """
+
     rotation: str
     angle_deg: float
 
@@ -86,6 +88,7 @@ class MoveEventDict(BaseEventDict):
 
 class RotationEventDict(BaseEventDict):
     """Rotation event payload."""
+
     move: str
 
 

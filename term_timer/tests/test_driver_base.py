@@ -19,7 +19,9 @@ if TYPE_CHECKING:
 
 
 class BaseDriver(Driver):
-    def init_cypher(self) -> GanGen2CubeEncrypter:
+
+    @staticmethod
+    def init_cypher() -> GanGen2CubeEncrypter:
         # Return a dummy encrypter for testing
         return GanGen2CubeEncrypter(bytes(16), bytes(16), bytes(6))
 

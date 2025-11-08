@@ -1,6 +1,9 @@
 """
+GAN Gen3 Driver.
+
 References :
   - https://github.com/afedotov/gan-web-bluetooth
+  - https://github.com/Fantomas42/gan-protocols
 """
 import logging
 import time
@@ -29,9 +32,8 @@ logger = logging.getLogger(__name__)
 
 
 class GanGen3Driver(GanGen2Driver):
-    """
-    GAN356 i Carry 2
-    """
+    """GAN356 i Carry 2."""
+
     service_uid: ClassVar[str] = GAN_GEN3_SERVICE
     state_characteristic_uid: ClassVar[str] = GAN_GEN3_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = GAN_GEN3_COMMAND_CHARACTERISTIC
@@ -117,7 +119,8 @@ class GanGen3Driver(GanGen2Driver):
 
         return evicted_events
 
-    def is_serial_in_range(self, start: int, end: int, serial: int, *,
+    @staticmethod
+    def is_serial_in_range(start: int, end: int, serial: int, *,
                            closed_start: bool = False,
                            closed_end: bool = False) -> bool:
         return (
@@ -165,7 +168,7 @@ class GanGen3Driver(GanGen2Driver):
     async def event_handler(  # noqa: C901, PLR0912, PLR0914, PLR0915
             self, sender: BleakGATTCharacteristic,  # noqa: ARG002
             data: bytearray) -> list[EventDict]:
-        """Process notifications from the cube"""
+        """Process notifications from the cube."""
         clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
 

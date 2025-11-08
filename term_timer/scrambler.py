@@ -23,9 +23,7 @@ if TYPE_CHECKING:
 
 
 def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
-    """
-    Return algorithm to reach a certain state
-    """
+    """Return algorithm to reach a certain state."""
     solution: str = solve(state, facelets) if facelets else solve(state)
 
     return parse_moves(solution).transform(mirror_moves)

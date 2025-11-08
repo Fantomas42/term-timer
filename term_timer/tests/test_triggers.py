@@ -1,5 +1,4 @@
 """Tests for triggers."""
-
 # ruff: noqa: E731
 import re
 import unittest

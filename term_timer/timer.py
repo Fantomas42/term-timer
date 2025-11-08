@@ -72,7 +72,7 @@ class Timer(SolveInterface):
     def start_line(self, cube: VCube) -> None:
         if self.show_cube:
             cube_display = cube.display(self.orientation_faces)[:-1]
-            print(cube_display, end='')
+            print(cube_display, end='')  # noqa: T201
 
             scrambled = self.scramble.impacts.facelets_scrambled_percent
             self.console.print(

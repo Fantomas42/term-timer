@@ -1,6 +1,7 @@
 """Statistics calculation and display for solve sessions."""
 
 from functools import cached_property
+from typing import TYPE_CHECKING
 from typing import cast
 
 import numpy as np
@@ -24,10 +25,12 @@ from term_timer.formatter import format_score
 from term_timer.formatter import format_time
 from term_timer.interface.console import console
 from term_timer.magic_cube import Cube
-from term_timer.methods.base import Analyser
 from term_timer.solve import Solve
 from term_timer.types import CaseStats
 from term_timer.types import MethodAnalysis
+
+if TYPE_CHECKING:
+    from term_timer.methods.base import Analyser
 
 
 class StatisticsTools:
@@ -202,7 +205,7 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
     @cached_property
     def score(self) -> float:
         return sum(
-            cast(float, s.score) for s in self.stack if s.advanced
+            cast('float', s.score) for s in self.stack if s.advanced
         ) / self.total
 
     @cached_property
@@ -468,7 +471,7 @@ class StatisticsReporter(Statistics):
             )
 
         if solve.advanced:
-            solve_score = cast(float, solve.score)
+            solve_score = cast('float', solve.score)
             grade = format_grade(solve_score)
             grade_class = grade.lower()
             grade_line = (
@@ -479,7 +482,7 @@ class StatisticsReporter(Statistics):
             )
             console.print(f'[stats]Grade      :[/stats]{ grade_line }')
 
-            method_applied = cast(Analyser, solve.method_applied)
+            method_applied = cast('Analyser', solve.method_applied)
             method_score = method_applied.score
             grade = format_grade(method_score)
             grade_class = grade.lower()
@@ -610,7 +613,7 @@ class StatisticsReporter(Statistics):
             cube.rotate(solve.scramble)
 
             cube_display = cube.display('UF')[:-1]
-            print(cube_display, end='')
+            print(cube_display, end='')  # noqa: T201
 
             scrambled = solve.scramble.impacts.facelets_scrambled_percent
             console.print(
@@ -638,7 +641,8 @@ class StatisticsReporter(Statistics):
             if show_recognition_graph:
                 solve.recognition_graph()
 
-    def case_table(self, title: str, items: dict[str, CaseStats],
+    @staticmethod
+    def case_table(title: str, items: dict[str, CaseStats],
                    sorting: str, ordering: str) -> None:
         table = Table(title=f'{ title }s', box=box.SIMPLE)
         table.add_column('Case', width=10)
@@ -656,7 +660,7 @@ class StatisticsReporter(Statistics):
 
         def sort_key(item: tuple[str, CaseStats]) -> tuple[int | float, str]:
             name, stats = item
-            return (cast(int | float, stats[sorting]), name)  # type: ignore[literal-required]
+            return (cast('int | float', stats[sorting]), name)  # type: ignore[literal-required]
 
         case_stats: CaseStats
         for name, case_stats in sorted(

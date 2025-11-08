@@ -27,7 +27,6 @@ from term_timer.trainer import Trainer
 
 
 async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912
-    """Function implementation."""
     cube = options.cube
 
     session_parts = []
@@ -218,7 +217,6 @@ def manage(command: str, options: Namespace) -> int:
 
 
 def main() -> int:  # noqa: PLR0911
-    """Main entry point."""
     configure_logging()
 
     options = get_arguments()

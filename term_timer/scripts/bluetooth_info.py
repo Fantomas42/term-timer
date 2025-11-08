@@ -223,7 +223,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
         events = await queue.get()
 
         if events is None:
-            print('\a', end='', flush=True)
+            print('\a', end='', flush=True)  # noqa: T201
             logger.info(
                 'CONSUMER: Got message from client about disconnection. '
                 'Exiting consumer loop...',
@@ -236,7 +236,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
             time = int(event['clock'] / MS_TO_NS_FACTOR)
 
             if event_name == 'hardware':
-                event = cast(HardwareEventDict, event)
+                event = cast('HardwareEventDict', event)
                 logger.info(
                     'CONSUMER: Hardware %s version %s, Software %s, %s',
                     event['hardware_name'],
@@ -256,7 +256,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                     gl_thread.set_title(f'{ hardware } { battery }')
 
             elif event_name == 'battery':
-                event = cast(BatteryEventDict, event)
+                event = cast('BatteryEventDict', event)
                 logger.info(
                     'CONSUMER: Battery: %s%%%s',
                     event['level'],
@@ -267,7 +267,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                     gl_thread.set_title(f'{ hardware } { battery }')
 
             elif event_name == 'facelets':
-                event = cast(FaceletsEventDict, event)
+                event = cast('FaceletsEventDict', event)
                 logger.info(
                     'CONSUMER: Facelets received',
                 )
@@ -287,7 +287,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                     show_state(moves, orientation_moves, virtual_cube)
 
             elif event_name == 'gyro' and rotation_detector:
-                event = cast(GyroEventDict, event)
+                event = cast('GyroEventDict', event)
 
                 rotation_result = rotation_detector.process_gyro_event(
                     event['quaternion'],
@@ -309,7 +309,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                     )
 
             elif event_name == 'move':
-                event = cast(MoveEventDict, event)
+                event = cast('MoveEventDict', event)
                 logger.info(
                     'CONSUMER: Face: %s, Direction: %s, Move: %s',
                     event['face'],
@@ -322,7 +322,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
 
                 if gl_thread and gl_thread.is_alive():
                     direction = 3 if "'" in event['move'] else 1
-                    face = cast(Face, event['move'][0])
+                    face = cast('Face', event['move'][0])
                     gl_thread.add_move(face, direction)
 
             else:
@@ -354,7 +354,7 @@ async def client_cb(  # noqa: PLR0913
         await bluetooth_interface.send_command('REQUEST_RESET')
     else:
         logger.info('Free play for %ss', time)
-        print('\a', end='', flush=True)
+        print('\a', end='', flush=True)  # noqa: T201
         await asyncio.sleep(time)
 
     await bluetooth_interface.__aexit__(None, None, None)
@@ -391,7 +391,7 @@ def replay(options: Namespace) -> None:
         time = int(event['clock'] / MS_TO_NS_FACTOR)
 
         if event_name == 'gyro':
-            event = cast(GyroEventDict, event)
+            event = cast('GyroEventDict', event)
 
             rotation_result = rotation_detector.process_gyro_event(
                 event['quaternion'],
@@ -408,7 +408,7 @@ def replay(options: Namespace) -> None:
                 show_state(moves, orientation_moves, virtual_cube)
 
         elif event_name == 'move':
-            event = cast(MoveEventDict, event)
+            event = cast('MoveEventDict', event)
             logger.info(
                 'REPLAY: Face: %s, Direction: %s, Move: %s',
                 event['face'],
@@ -420,7 +420,7 @@ def replay(options: Namespace) -> None:
             show_state(moves, orientation_moves, virtual_cube)
 
         elif event_name == 'facelets':
-            event = cast(FaceletsEventDict, event)
+            event = cast('FaceletsEventDict', event)
             logger.info(
                 'REPLAY: Facelets: %s',
                 event['facelets'],
@@ -473,7 +473,7 @@ def resume(events: list[EventDict], output: str) -> None:
         data: dict[str, Any] = {}
 
         if event['event'] == 'move':
-            event = cast(MoveEventDict, event)
+            event = cast('MoveEventDict', event)
             if (
                 event['cube_timestamp'] is None
                 or event['local_timestamp'] is None
@@ -493,7 +493,7 @@ def resume(events: list[EventDict], output: str) -> None:
             replay.append(data)
 
         elif event['event'] == 'gyro':
-            event = cast(GyroEventDict, event)
+            event = cast('GyroEventDict', event)
             gyro_clocks.append(event['clock'])
 
             data.update(event)
@@ -501,7 +501,7 @@ def resume(events: list[EventDict], output: str) -> None:
             replay.append(data)
 
         elif event['event'] == 'facelets':
-            event = cast(FaceletsEventDict, event)
+            event = cast('FaceletsEventDict', event)
             data.update(event)
             data['timestamp'] = data['timestamp'].timestamp()
             replay.append(data)

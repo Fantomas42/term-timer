@@ -221,7 +221,7 @@ class Bluetooth:
                     self.handle_hardware_event(event)
 
                 elif event_name == 'battery':
-                    battery_event = cast(BatteryEventDict, event)
+                    battery_event = cast('BatteryEventDict', event)
                     self.bluetooth_hardware['battery_level'] = battery_event[
                         'level'
                     ]
@@ -232,19 +232,19 @@ class Bluetooth:
                 elif event_name == 'facelets':
                     if not self.facelets_received_event.is_set():
                         facelets_event = cast(
-                            FaceletsEventDict | FaceletsEventDictNoState,
+                            'FaceletsEventDict | FaceletsEventDictNoState',
                             event,
                         )
                         self.bluetooth_cube = VCube(facelets_event['facelets'])
                         self.facelets_received_event.set()
 
                 elif event_name == 'move' and self.bluetooth_cube:
-                    move_event = cast(MoveEventDict, event)
+                    move_event = cast('MoveEventDict', event)
                     self.bluetooth_cube.rotate(move_event['move'])
                     self.handle_bluetooth_move(move_event)
 
                 elif event_name == 'gyro' and self.bluetooth_cube:
-                    gyro_event = cast(GyroEventDict, event)
+                    gyro_event = cast('GyroEventDict', event)
 
                     rotation_result = rotation_detector.process_gyro_event(
                         gyro_event['quaternion'],
@@ -265,9 +265,9 @@ class Bluetooth:
         """
         if 'hardware_name' in event:
             name_event = cast(
-                HardwareEventDict
-                | HardwareEventNameOnlyDict
-                | HardwareEventMoyuDict,
+                'HardwareEventDict | '
+                'HardwareEventNameOnlyDict | '
+                'HardwareEventMoyuDict',
                 event,
             )
             self.bluetooth_hardware['hardware_name'] = name_event[
@@ -276,9 +276,9 @@ class Bluetooth:
 
         if 'hardware_version' in event:
             version_event = cast(
-                HardwareEventDict
-                | HardwareEventVersionOnlyDict
-                | HardwareEventMoyuDict,
+                'HardwareEventDict | '
+                'HardwareEventVersionOnlyDict | '
+                'HardwareEventMoyuDict',
                 event,
             )
             self.bluetooth_hardware['hardware_version'] = version_event[
@@ -287,9 +287,9 @@ class Bluetooth:
 
         if 'software_version' in event:
             software_event = cast(
-                HardwareEventDict
-                | HardwareEventSoftwareVersionOnlyDict
-                | HardwareEventMoyuDict,
+                'HardwareEventDict | '
+                'HardwareEventSoftwareVersionOnlyDict | '
+                'HardwareEventMoyuDict',
                 event,
             )
             self.bluetooth_hardware['software_version'] = software_event[
@@ -297,11 +297,11 @@ class Bluetooth:
             ]
 
         if 'product_date' in event:
-            date_event = cast(HardwareEventPartialDict, event)
+            date_event = cast('HardwareEventPartialDict', event)
             self.bluetooth_hardware['product_date'] = date_event['product_date']
 
         if 'serial' in event:
-            serial_event = cast(HardwareEventMoyuDict, event)
+            serial_event = cast('HardwareEventMoyuDict', event)
             self.bluetooth_hardware['serial'] = serial_event['serial']
 
         self.hardware_received_event.set()

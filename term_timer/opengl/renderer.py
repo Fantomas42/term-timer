@@ -55,6 +55,7 @@ if TYPE_CHECKING:
 def ease_out_cubic(t: float) -> float:
     """
     Ease-out cubic function for smooth deceleration.
+
     Starts fast, ends slow - feels natural and satisfying.
     t: normalized time from 0.0 to 1.0
     Returns: eased value from 0.0 to 1.0
@@ -65,6 +66,7 @@ def ease_out_cubic(t: float) -> float:
 def ease_in_out_cubic(t: float) -> float:
     """
     Ease-in-out cubic for smooth acceleration and deceleration.
+
     Starts slow, speeds up in middle, slows at end.
     t: normalized time from 0.0 to 1.0
     Returns: eased value from 0.0 to 1.0

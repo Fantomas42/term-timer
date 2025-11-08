@@ -5,7 +5,7 @@ import unittest
 from term_timer.bluetooth.salt import get_salt
 
 
-class TestGetSalt(unittest.TestCase):
+class TestGetSalt(unittest.TestCase):  # noqa: PLR0904
     """Test cases for get_salt function."""
 
     def test_valid_mac_address_standard_format(self) -> None:
@@ -100,9 +100,7 @@ class TestGetSalt(unittest.TestCase):
         self.assertEqual(len(result), 5)
 
     def test_mac_too_many_parts(self) -> None:
-        """
-        Test MAC address with too many parts - function handles gracefully.
-        """
+        """Test MAC address with too many parts - should handles gracefully."""
         mac = '01:23:45:67:89:AB:CD'  # 7 parts instead of 6
         result = get_salt(mac)
 

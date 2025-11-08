@@ -11,10 +11,10 @@ from term_timer.solve import Solve
 
 def get_method_applied(solve: Solve) -> Analyser:
     """Get method_applied, asserting it's not None in tests."""
-    return cast(Analyser, solve.method_applied)
+    return cast('Analyser', solve.method_applied)
 
 
-class TestSolve38(unittest.TestCase):
+class TestSolve38(unittest.TestCase):  # noqa: PLR0904
     maxDiff = None
 
     def setUp(self) -> None:

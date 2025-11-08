@@ -1,5 +1,5 @@
 """Build CFOP case database from JSON source files."""
-
+# ruff: noqa: T201
 import json
 import sys
 from pathlib import Path

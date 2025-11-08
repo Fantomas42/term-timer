@@ -34,7 +34,7 @@ class GanGen2CubeEncrypter:
             self._iv[i] = (iv[i] + salt[i]) % 0xFF
 
     def _encrypt_chunk(self, buffer: bytearray, offset: int) -> None:
-        """Encrypt 16-byte buffer chunk starting at offset using AES-128-CBC"""
+        """Encrypt 16-byte buffer chunk starting at offset using AES-128-CBC."""
         cipher = Cipher(
             algorithms.AES(bytes(self._key)),
             modes.CBC(bytes(self._iv)),
@@ -50,7 +50,7 @@ class GanGen2CubeEncrypter:
             buffer[offset + i] = chunk[i]
 
     def _decrypt_chunk(self, buffer: bytearray, offset: int) -> None:
-        """Decrypt 16-byte buffer chunk starting at offset using AES-128-CBC"""
+        """Decrypt 16-byte buffer chunk starting at offset using AES-128-CBC."""
         cipher = Cipher(
             algorithms.AES(bytes(self._key)),
             modes.CBC(bytes(self._iv)),

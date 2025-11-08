@@ -1,5 +1,4 @@
 """Tests for stats."""
-
 # ruff: noqa: ERA001
 import unittest
 from typing import TYPE_CHECKING
@@ -652,7 +651,8 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             self.assertTrue(term_timer_found)
             self.assertTrue(alg_cubing_found)
 
-    def test_detail_with_graphs(self) -> None:
+    @staticmethod
+    def test_detail_with_graphs() -> None:
         """Test detail method with graph displays."""
         mock_solve = Mock(spec=Solve)
         mock_solve.final_time = 15 * SECOND

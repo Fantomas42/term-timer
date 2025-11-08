@@ -63,7 +63,7 @@ def format_edge(edge: int, max_edge: int) -> str:
 
 
 def format_delta(delta: int) -> str:
-    """Format time delta with color coding (red for slower, green for faster)."""
+    """Format time delta with color coding."""
     if delta == 0:
         return ''
     style = (delta > 0 and 'red') or 'green'
@@ -98,8 +98,8 @@ def compute_padding(max_value: float) -> int:
     return padding
 
 
-def format_grade(score: float) -> str:
-    """Convert numeric score to letter grade (S, A+, A, B+, B, C+, C, D, E, F)."""
+def format_grade(score: float) -> str:  # noqa: PLR0911
+    """Convert numeric score to letter grade."""
     if score >= 20:
         return 'S'
     if score >= 18:
@@ -159,7 +159,9 @@ def format_cube_db_url(title: str, setup: str, alg: str) -> str:
 
 
 def format_alg_diff(algo_a: Algorithm, algo_b: Algorithm) -> str:
-    """Format diff between two algorithms with markup for additions and deletions."""
+    """
+    Format diff between two algorithms with markup for additions and deletions.
+    """
     moves: list[str] = []
     matcher = difflib.SequenceMatcher(None, algo_a, algo_b)
 

@@ -278,9 +278,10 @@ class TestGetArguments(unittest.TestCase):
         self.assertEqual(args.command, 'list')
         self.assertEqual(args.count, 10)
 
+    @staticmethod
     @patch('sys.argv', ['term_timer'])
     @patch('sys.exit')
-    def test_get_arguments_no_command_exits(self, mock_exit: Mock) -> None:
+    def test_get_arguments_no_command_exits(mock_exit: Mock) -> None:
         get_arguments()
         mock_exit.assert_called_once_with(1)
 

@@ -1,6 +1,9 @@
 """
+GAN Gen4 Driver.
+
 References :
   - https://github.com/afedotov/gan-web-bluetooth
+  - https://github.com/Fantomas42/gan-protocols
 """
 import logging
 import time
@@ -33,9 +36,10 @@ logger = logging.getLogger(__name__)
 
 class GanGen4Driver(GanGen3Driver):
     """
-    GAN12 ui Maglev
-    GAN14 ui FreePlay
+    GAN12 ui Maglev.
+    GAN14 ui FreePlay.
     """
+
     service_uid: ClassVar[str] = GAN_GEN4_SERVICE
     state_characteristic_uid: ClassVar[str] = GAN_GEN4_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = GAN_GEN4_COMMAND_CHARACTERISTIC
@@ -117,7 +121,7 @@ class GanGen4Driver(GanGen3Driver):
     async def event_handler(  # noqa: C901, PLR0912, PLR0914, PLR0915
             self, sender: BleakGATTCharacteristic,  # noqa: ARG002
             data: bytearray) -> list[EventDict]:
-        """Process notifications from the cube"""
+        """Process notifications from the cube."""
         clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
 

@@ -66,7 +66,6 @@ def apply_trigger_outside_blocks(
         algorithm: str, regex: Pattern[str],
         replacement_func: Callable[[re.Match[str]], str]) -> str:
     """Apply trigger pattern."""
-
     blocks = [
         (match.start(), match.end(), match.group(0))
         for match in re.finditer(BLOCK_PATTERN, algorithm)

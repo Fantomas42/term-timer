@@ -1,5 +1,5 @@
 """Tests for server app."""
-
+# ruff: noqa: PT019
 import contextlib
 import unittest
 from http import HTTPStatus
@@ -267,7 +267,8 @@ class TestView(unittest.TestCase):
         class TestView(View):
             template_name = 'test.html'
 
-            def get_context(self) -> dict[str, str]:
+            @staticmethod
+            def get_context() -> dict[str, str]:
                 return {'test': 'value'}
 
         view = TestView()
@@ -435,11 +436,12 @@ class TestSessionDetailView(unittest.TestCase):
         self.assertEqual(view.method_name, 'cfop')
         mock_load_solves.assert_called_once_with(3, ['test-session'], [], [])
 
+    @staticmethod
     @patch('term_timer.server.app.SolvesMethodAggregator')
     @patch('term_timer.server.app.StatisticsReporter')
     @patch('term_timer.server.app.load_all_solves')
     def test_session_detail_view_all_session(
-            self, mock_load_solves: Mock, _mock_stats_reporter: Mock,
+            mock_load_solves: Mock, _mock_stats_reporter: Mock,
             mock_aggregator: Mock) -> None:
         mock_solves = [Mock(), Mock()]
         mock_load_solves.return_value = mock_solves
@@ -453,11 +455,12 @@ class TestSessionDetailView(unittest.TestCase):
         # Should load all sessions when session is 'all'
         mock_load_solves.assert_called_once_with(3, [], [], [])
 
+    @staticmethod
     @patch('term_timer.server.app.abort')
     @patch('term_timer.server.app.SolvesMethodAggregator')
     @patch('term_timer.server.app.load_all_solves')
     def test_session_detail_view_no_solves(
-            self, mock_load_solves: Mock, mock_aggregator: Mock,
+            mock_load_solves: Mock, mock_aggregator: Mock,
             mock_abort: Mock) -> None:
         mock_load_solves.return_value = []
         mock_aggregator_instance = Mock()
@@ -576,10 +579,12 @@ class TestSessionDetailView(unittest.TestCase):
 
 
 class TestSolveDetailView(unittest.TestCase):
+
+    @staticmethod
     @patch('term_timer.server.app.load_all_solves')
     @patch('term_timer.server.app.abort')
     def test_solve_detail_view_invalid_solve_id(
-            self, mock_abort: Mock, mock_load_solves: Mock,
+            mock_abort: Mock, mock_load_solves: Mock,
     ) -> None:
         mock_load_solves.return_value = [Mock()]  # Only one solve
 

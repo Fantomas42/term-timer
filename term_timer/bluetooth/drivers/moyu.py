@@ -1,4 +1,6 @@
 """
+Moyu Weilong V10 Driver.
+
 References :
   - https://github.com/lukeburong/weilong-v10-ai-protocol
 """
@@ -31,9 +33,8 @@ logger = logging.getLogger(__name__)
 
 
 class MoyuWeilong10Driver(Driver):
-    """
-    Weilong v10
-    """
+    """Weilong v10."""
+
     service_uid: ClassVar[str] = MOYU_WEILONG_SERVICE
     state_characteristic_uid: ClassVar[str] = MOYU_WEILONG_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = MOYU_WEILONG_COMMAND_CHARACTERISTIC  # noqa: E501
@@ -84,7 +85,7 @@ class MoyuWeilong10Driver(Driver):
     async def event_handler(  # noqa: C901, PLR0912, PLR0914, PLR0915
             self, sender: BleakGATTCharacteristic,  # noqa: ARG002
             data: bytearray) -> list[EventDict]:
-        """Process notifications from the cube"""
+        """Process notifications from the cube."""
         clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
 

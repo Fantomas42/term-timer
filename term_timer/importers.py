@@ -18,13 +18,15 @@ from term_timer.solve import SolveData
 
 class Importer:
 
-    def date_to_ts(self, date: str) -> float:
+    @staticmethod
+    def date_to_ts(date: str) -> float:
         date_format = '%Y-%m-%d %H:%M:%S'
         dt = datetime.strptime(date, date_format)  # noqa: DTZ007
 
         return dt.timestamp()
 
-    def time_to_ns(self, time: str) -> int:
+    @staticmethod
+    def time_to_ns(time: str) -> int:
         minutes_str = '0'
         reste = time
         if ':' in time:
@@ -111,7 +113,8 @@ class Importer:
 
         return solves
 
-    def cstimer_json(self, data: dict[str, Any]) -> list[SolveData]:
+    @staticmethod
+    def cstimer_json(data: dict[str, Any]) -> list[SolveData]:
         solves: list[SolveData] = []
         properties: dict[str, Any] = data['properties']
         session_data: dict[str, Any] = json.loads(properties['sessionData'])
@@ -199,6 +202,6 @@ class Importer:
 
         out = json.dumps(solves, indent=1)
 
-        print(out)
+        print(out)  # noqa: T201
 
         return 0

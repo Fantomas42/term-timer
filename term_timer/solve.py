@@ -49,6 +49,7 @@ from term_timer.transform import prettify_moves
 
 class SolveData(TypedDict):
     """Dictionary representation of a solve for serialization."""
+
     date: int
     time: int
     scramble: str

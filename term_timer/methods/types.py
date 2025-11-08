@@ -8,6 +8,7 @@ from cubing_algs.algorithm import Algorithm
 
 class CaseInfo(TypedDict):
     """Information about a specific case."""
+
     name: str
     main: str
     probability: float
@@ -18,12 +19,14 @@ class CaseInfo(TypedDict):
 
 class CaseMaskInfo(TypedDict):
     """Mask configuration for a case."""
+
     case: str
     configurations: list[str]
 
 
 class SourceCaseInfo(TypedDict):
     """Case information from source JSON file."""
+
     type: str
     probability: str
     aliases: list[str]
@@ -38,6 +41,7 @@ class StepInfo(TypedDict):
     This is an internal type used during the solve analysis process.
     For aggregation across multiple solves, see StepAnalysis in types.py.
     """
+
     moves: list[int]
     increment: int
     case_infos: list[str]
@@ -56,6 +60,7 @@ class StepSummary(TypedDict):
     simplified StepAnalysis type (see types.py) which retains only the
     essential fields needed for statistical analysis.
     """
+
     type: Literal['step', 'skipped', 'substep', 'virtual']
     name: str
     moves: Algorithm
@@ -88,6 +93,7 @@ class StepConfig(TypedDict, total=False):
     This is an internal type used to configure how steps are analyzed.
     All fields are optional (total=False).
     """
+
     mask: str
     triggers: list[str]
     optimizers: list[Callable[[Algorithm], Algorithm]]

@@ -4,6 +4,7 @@ import asyncio
 import unittest
 from datetime import datetime
 from datetime import timezone
+from typing import TYPE_CHECKING
 from typing import cast
 from unittest.mock import AsyncMock
 from unittest.mock import Mock
@@ -13,13 +14,15 @@ from term_timer.bluetooth.constants import GAN_GEN2_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN2_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN2_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
-from term_timer.bluetooth.types import BatteryEventDict
-from term_timer.bluetooth.types import FaceletsEventDict
-from term_timer.bluetooth.types import HardwareEventDict
-from term_timer.bluetooth.types import MoveEventDict
+
+if TYPE_CHECKING:
+    from term_timer.bluetooth.types import BatteryEventDict
+    from term_timer.bluetooth.types import FaceletsEventDict
+    from term_timer.bluetooth.types import HardwareEventDict
+    from term_timer.bluetooth.types import MoveEventDict
 
 
-class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
+class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     def setUp(self) -> None:
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
@@ -292,10 +295,10 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
 
                 self.assertEqual(len(result), 2)
                 self.assertEqual(result[0]['event'], 'move')
-                move_event_0 = cast(MoveEventDict, result[0])
+                move_event_0 = cast('MoveEventDict', result[0])
                 self.assertEqual(move_event_0['move'], "U'")
                 self.assertEqual(result[1]['event'], 'move')
-                move_event_1 = cast(MoveEventDict, result[1])
+                move_event_1 = cast('MoveEventDict', result[1])
                 self.assertEqual(move_event_1['move'], 'D')
 
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
@@ -335,11 +338,11 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'move')
-                move_event = cast(MoveEventDict, event)
+                move_event = cast('MoveEventDict', event)
                 self.assertEqual(move_event['move'], 'U')
                 cube_timestamp = move_event['cube_timestamp']
                 self.assertIsNotNone(cube_timestamp)
-                cube_timestamp = cast(int, cube_timestamp)
+                cube_timestamp = cast('int', cube_timestamp)
                 # Should have computed elapsed time from timestamp difference
                 self.assertGreater(cube_timestamp, 0)
 
@@ -370,7 +373,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
 
                 # Mock corner and edge data
-                def mock_get_bit_word(start: int, length: int) -> int:
+                def mock_get_bit_word(start: int, length: int) -> int:  # noqa: PLR0911
                     if start == 0 and length == 4:
                         return 0x04  # event type
                     if start == 4 and length == 8:
@@ -393,7 +396,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'facelets')
-                facelets_event = cast(FaceletsEventDict, event)
+                facelets_event = cast('FaceletsEventDict', event)
                 self.assertEqual(facelets_event['serial'], 50)
                 self.assertIn('facelets', facelets_event)
                 self.assertIn('state', facelets_event)
@@ -423,7 +426,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start: int, length: int) -> int:
+                def mock_get_bit_word(start: int, length: int) -> int:  # noqa: PLR0911
                     if start == 0 and length == 4:
                         return 0x05  # event type
                     if start == 8 and length == 8:
@@ -447,7 +450,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'hardware')
-                hw_event = cast(HardwareEventDict, event)
+                hw_event = cast('HardwareEventDict', event)
                 self.assertEqual(hw_event['hardware_version'], '1.2')
                 self.assertEqual(hw_event['software_version'], '3.4')
                 self.assertTrue(hw_event['gyroscope_supported'])
@@ -484,7 +487,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'battery')
-                battery_event = cast(BatteryEventDict, event)
+                battery_event = cast('BatteryEventDict', event)
                 self.assertEqual(battery_event['level'], 85)
                 self.assertEqual(battery_event['charging_state'], 1)
 
@@ -519,7 +522,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
-                battery_event = cast(BatteryEventDict, event)
+                battery_event = cast('BatteryEventDict', event)
                 self.assertEqual(battery_event['level'], 100)
                 self.assertEqual(battery_event['charging_state'], 1)
 

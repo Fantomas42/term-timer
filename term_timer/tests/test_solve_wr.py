@@ -9,15 +9,16 @@ from term_timer.solve import Solve
 
 def get_method_applied(solve: Solve) -> Analyser:
     """Get method_applied, asserting it's not None in tests."""
-    return cast(Analyser, solve.method_applied)
+    return cast('Analyser', solve.method_applied)
 
 
 class TestSolveWR(unittest.TestCase):
     """
-    Test Solve WR for color neutral analyse
+    Test Solve WR for color neutral analyse.
 
     http://cubesolv.es/solve/5757
     """
+
     maxDiff = None
 
     def setUp(self) -> None:

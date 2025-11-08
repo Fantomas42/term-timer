@@ -24,6 +24,7 @@ def hex_to_opengl(hex_color: str) -> tuple[float, float, float]:
 def load_palette_colors() -> list[tuple[float, float, float]]:
     """
     Load color palette from cubing_algs and convert to OpenGL format.
+
     Returns colors in URFDLB order: [U, R, F, D, L, B]
     which maps to: [WHITE, RED, GREEN, YELLOW, ORANGE, BLUE]
     """

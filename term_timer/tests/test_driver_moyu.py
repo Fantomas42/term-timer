@@ -4,6 +4,7 @@ import asyncio
 import unittest
 from datetime import datetime
 from datetime import timezone
+from typing import TYPE_CHECKING
 from typing import cast
 from unittest.mock import Mock
 from unittest.mock import patch
@@ -12,13 +13,15 @@ from term_timer.bluetooth.constants import MOYU_WEILONG_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import MOYU_WEILONG_SERVICE
 from term_timer.bluetooth.constants import MOYU_WEILONG_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
-from term_timer.bluetooth.types import BatteryEventDict
-from term_timer.bluetooth.types import FaceletsEventDictNoState
-from term_timer.bluetooth.types import GyroConfigEventDict
-from term_timer.bluetooth.types import HardwareEventMoyuDict
+
+if TYPE_CHECKING:
+    from term_timer.bluetooth.types import BatteryEventDict
+    from term_timer.bluetooth.types import FaceletsEventDictNoState
+    from term_timer.bluetooth.types import GyroConfigEventDict
+    from term_timer.bluetooth.types import HardwareEventMoyuDict
 
 
-class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
+class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     def setUp(self) -> None:
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
@@ -313,7 +316,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'facelets')
-                facelets_event = cast(FaceletsEventDictNoState, event)
+                facelets_event = cast('FaceletsEventDictNoState', event)
                 self.assertEqual(facelets_event['serial'], 50)
                 self.assertIn('facelets', facelets_event)
                 self.assertEqual(len(facelets_event['facelets']), 54)
@@ -339,7 +342,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start: int, length: int) -> int:
+                def mock_get_bit_word(start: int, length: int) -> int:  # noqa: PLR0911
                     if start == 0 and length == 8:
                         return 0xA1  # event type
                     if start == 72 and length == 8:
@@ -367,7 +370,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'hardware')
-                hw_event = cast(HardwareEventMoyuDict, event)
+                hw_event = cast('HardwareEventMoyuDict', event)
                 self.assertEqual(hw_event['hardware_version'], '1.2')
                 self.assertEqual(hw_event['software_version'], '3.4')
                 self.assertTrue(hw_event['gyroscope_enabled'])
@@ -406,7 +409,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'battery')
-                battery_event = cast(BatteryEventDict, event)
+                battery_event = cast('BatteryEventDict', event)
                 self.assertEqual(battery_event['level'], 75)
 
     @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
@@ -439,7 +442,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
-                battery_event = cast(BatteryEventDict, event)
+                battery_event = cast('BatteryEventDict', event)
                 self.assertEqual(battery_event['level'], 100)
 
     @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
@@ -474,7 +477,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'gyro-config')
-                gyro_config_event = cast(GyroConfigEventDict, event)
+                gyro_config_event = cast('GyroConfigEventDict', event)
                 self.assertTrue(gyro_config_event['gyroscope_enabled'])
                 self.assertTrue(gyro_config_event['gyroscope_ready'])
                 self.assertTrue(gyro_config_event['gyroscope_supported'])

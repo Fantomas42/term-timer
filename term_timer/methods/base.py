@@ -99,7 +99,8 @@ STEPS_CONFIG: Final[dict[str, StepConfig]] = {
 
 class FaceletAnalyser:
 
-    def reorient(self, state: str, orientation_faces: str,
+    @staticmethod
+    def reorient(state: str, orientation_faces: str,
                  *, offset: bool = False) -> str:
         top_face = OPPOSITE_FACES[orientation_faces[0]]
         orientation = f'{ top_face }{ orientation_faces[1] }'
@@ -332,7 +333,7 @@ class Analyser(FaceletAnalyser):
     def correct_summary(self, summary: list[StepSummary]) -> None:
         pass
 
-    def normalize_value(self, metric: str, name: str, value: float,
+    def normalize_value(self, metric: str, name: str, value: float,  # noqa: PLR0911
                         default: str, *, threshold: float = 1.2) -> str:
         norm = self.norms.get(metric, {}).get(name)
         if not norm:

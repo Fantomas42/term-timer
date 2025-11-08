@@ -344,7 +344,8 @@ class View:
 
         return content
 
-    def template(self, template_name: str, **context: Any) -> str:
+    @staticmethod
+    def template(template_name: str, **context: Any) -> str:
         context['now'] = datetime.now(tz=timezone.utc)  # noqa: UP017
 
         return str(
@@ -405,7 +406,8 @@ class Error500View(View):
 class SessionListView(View):
     template_name = 'index.html'
 
-    def get_context(self) -> dict[str, Any]:
+    @staticmethod
+    def get_context() -> dict[str, Any]:
         sessions: dict[int, dict[str, dict[str, Any]]] = {}
         for cube in CUBE_SIZES:
             solves = load_all_solves(cube, [], [], [])
@@ -475,12 +477,12 @@ class SessionDetailView(View):
             filtered_solves = []
 
             for solve in solves_analyzed:
-                solve = cast(Solve, solve)
+                solve = cast('Solve', solve)
 
                 if not solve.advanced:
                     continue
 
-                method_applied = cast(Analyser, solve.method_applied)
+                method_applied = cast('Analyser', solve.method_applied)
 
                 for s_step in reversed(method_applied.summary):
                     if s_step['name'].lower() == self.step:
@@ -624,7 +626,7 @@ class SolveDetailView(View):
                 for i in range(len(self.solve.move_times))
             ]
 
-            method_applied = cast(Analyser, self.solve.method_applied)
+            method_applied = cast('Analyser', self.solve.method_applied)
 
             for s in method_applied.summary:
                 if s['type'] not in {'skipped', 'virtual'}:
@@ -979,7 +981,8 @@ class Server:
             handler_class=RichHandler,
         )
 
-    def create_app(self, *, debug: bool) -> Bottle:  # noqa: C901
+    @staticmethod
+    def create_app(*, debug: bool) -> Bottle:  # noqa: C901
         app = Bottle()
 
         @app.hook('before_request')  # type: ignore[misc]

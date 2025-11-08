@@ -652,6 +652,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
 
 class TestComputeDisplayRotationRealCases(unittest.TestCase):
     """Tests for rotations cases and conditions."""
+
     maxDiff = None
 
     def setUp(self) -> None:

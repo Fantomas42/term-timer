@@ -1,5 +1,4 @@
 """Tests for bluetooth encrypter."""
-
 # ruff: noqa: SLF001
 import unittest
 from unittest.mock import Mock
@@ -12,7 +11,7 @@ from term_timer.bluetooth.encrypter import INVALID_SALT
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 
 
-class TestGanGen2CubeEncrypter(unittest.TestCase):
+class TestGanGen2CubeEncrypter(unittest.TestCase):  # noqa: PLR0904
     """Test cases for GanGen2CubeEncrypter class."""
 
     def setUp(self) -> None:

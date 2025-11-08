@@ -1,4 +1,5 @@
 """Terminal control utilities for cursor and line management."""
+# ruff: noqa: T201
 
 
 class Terminal:

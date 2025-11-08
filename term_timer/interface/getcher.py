@@ -42,7 +42,8 @@ class Getcher:
 
         return ch
 
-    async def getch_windows(self, timeout: float | None = None) -> str:  # noqa: ASYNC109
+    @staticmethod
+    async def getch_windows(timeout: float | None = None) -> str:  # noqa: ASYNC109
         """
         Get a character from terminal on Windows platform.
         """
@@ -78,7 +79,8 @@ class Getcher:
 
         return ch
 
-    async def getch_unix(self, timeout: float | None = None) -> str:  # noqa: ASYNC109
+    @staticmethod
+    async def getch_unix(timeout: float | None = None) -> str:  # noqa: ASYNC109
         """
         Get a character from terminal on Unix-like platforms.
         """

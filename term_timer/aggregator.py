@@ -5,10 +5,10 @@ import time
 from functools import partial
 from multiprocessing import Pool
 from multiprocessing import cpu_count
+from typing import TYPE_CHECKING
 from typing import cast
 
 from term_timer.methods import get_method_analyser
-from term_timer.methods.base import Analyser
 from term_timer.methods.cases import CASES
 from term_timer.methods.types import CaseInfo
 from term_timer.methods.types import StepSummary
@@ -19,6 +19,9 @@ from term_timer.types import CaseStatsAccumulator
 from term_timer.types import MethodAnalysis
 from term_timer.types import SolveAnalysis
 from term_timer.types import StepAnalysis
+
+if TYPE_CHECKING:
+    from term_timer.methods.base import Analyser
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +42,7 @@ def analyse_solve_worker(solve: Solve,
     if full:
         _ = solve.score
 
-    analysis = cast(Analyser, solve.method_applied)
+    analysis = cast('Analyser', solve.method_applied)
 
     steps: dict[str, StepAnalysis] = {}
     for step_name, step_index in solve.method_analyser.aggregate.items():

@@ -5,7 +5,7 @@ import unittest
 from term_timer.bluetooth.message import GanProtocolMessage
 
 
-class TestGanProtocolMessage(unittest.TestCase):
+class TestGanProtocolMessage(unittest.TestCase):  # noqa: PLR0904
     """Test cases for GanProtocolMessage class."""
 
     def setUp(self) -> None:

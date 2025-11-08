@@ -64,7 +64,7 @@ class Trainer(SolveInterface):
             )
 
         if self.show_cube:
-            print(
+            print(  # noqa: T201
                 cube.display(
                     mode=mode,
                     palette=CUBE_PALETTE,

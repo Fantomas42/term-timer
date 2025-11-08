@@ -4,6 +4,7 @@ import asyncio
 import unittest
 from datetime import datetime
 from datetime import timezone
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 from unittest.mock import AsyncMock
@@ -15,12 +16,14 @@ from term_timer.bluetooth.constants import GAN_GEN3_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN3_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
-from term_timer.bluetooth.types import BatteryEventDict
-from term_timer.bluetooth.types import FaceletsEventDict
-from term_timer.bluetooth.types import HardwareEventDict
+
+if TYPE_CHECKING:
+    from term_timer.bluetooth.types import BatteryEventDict
+    from term_timer.bluetooth.types import FaceletsEventDict
+    from term_timer.bluetooth.types import HardwareEventDict
 
 
-class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
+class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     def setUp(self) -> None:
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
@@ -171,7 +174,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
 
     async def test_evict_move_buffer_sequential_moves(self) -> None:
         self.driver.last_serial = 100
-        self.driver.move_buffer = cast(Any, [
+        self.driver.move_buffer = cast('Any', [
             {'serial': 101, 'event': 'move', 'move': 'U'},
             {'serial': 102, 'event': 'move', 'move': 'R'},
         ])
@@ -186,7 +189,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
 
     async def test_evict_move_buffer_missed_move_requests_history(self) -> None:
         self.driver.last_serial = 100
-        self.driver.move_buffer = cast(Any, [
+        self.driver.move_buffer = cast('Any', [
             {'serial': 103, 'event': 'move', 'move': 'U'},  # Gap at 101, 102
         ])
 
@@ -199,7 +202,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
 
     async def test_evict_move_buffer_first_move_no_gap_check(self) -> None:
         self.driver.last_serial = -1  # First move
-        self.driver.move_buffer = cast(Any, [
+        self.driver.move_buffer = cast('Any', [
             {'serial': 50, 'event': 'move', 'move': 'U'},
         ])
 
@@ -243,7 +246,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
         self.driver.serial = 105
         self.driver.move_buffer = []
 
-        move = cast(Any, {'serial': 103, 'event': 'move', 'move': 'U'})
+        move = cast('Any', {'serial': 103, 'event': 'move', 'move': 'U'})
         self.driver.inject_missed_move_to_buffer(move)
 
         self.assertEqual(len(self.driver.move_buffer), 1)
@@ -251,11 +254,11 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
 
     def test_inject_missed_move_to_buffer_with_existing_buffer(self) -> None:
         self.driver.last_serial = 100
-        self.driver.move_buffer = cast(Any, [
+        self.driver.move_buffer = cast('Any', [
             {'serial': 105, 'event': 'move', 'move': 'R'},
         ])
 
-        move = cast(Any, {'serial': 104, 'event': 'move', 'move': 'U'})
+        move = cast('Any', {'serial': 104, 'event': 'move', 'move': 'U'})
         self.driver.inject_missed_move_to_buffer(move)
 
         self.assertEqual(len(self.driver.move_buffer), 2)
@@ -264,12 +267,12 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
 
     def test_inject_missed_move_to_buffer_duplicate_serial(self) -> None:
         self.driver.last_serial = 100
-        self.driver.move_buffer = cast(Any, [
+        self.driver.move_buffer = cast('Any', [
             {'serial': 103, 'event': 'move', 'move': 'R'},
         ])
 
         # Duplicate serial
-        move = cast(Any, {'serial': 103, 'event': 'move', 'move': 'U'})
+        move = cast('Any', {'serial': 103, 'event': 'move', 'move': 'U'})
         self.driver.inject_missed_move_to_buffer(move)
 
         # No change
@@ -279,12 +282,12 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
 
     def test_inject_missed_move_to_buffer_out_of_range(self) -> None:
         self.driver.last_serial = 100
-        self.driver.move_buffer = cast(Any, [
+        self.driver.move_buffer = cast('Any', [
             {'serial': 105, 'event': 'move', 'move': 'R'},
         ])
 
         # Out of range
-        move = cast(Any, {'serial': 110, 'event': 'move', 'move': 'U'})
+        move = cast('Any', {'serial': 110, 'event': 'move', 'move': 'U'})
         self.driver.inject_missed_move_to_buffer(move)
 
         # No change
@@ -313,7 +316,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
     async def test_check_if_move_missed_with_buffer_head(self) -> None:
         self.driver.last_serial = 100
         self.driver.serial = 105
-        self.driver.move_buffer = cast(Any, [
+        self.driver.move_buffer = cast('Any', [
             {'serial': 103, 'event': 'move', 'move': 'U'},
         ])
 
@@ -354,8 +357,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start: int, length: int, *,
-                                      little_endian: bool = False) -> int:  # noqa: ARG001
+                def mock_get_bit_word(  # noqa: PLR0911
+                        start: int, length: int, *,
+                        little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0x55  # magic
                     if start == 8 and length == 8:
@@ -473,7 +477,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'facelets')
-                facelets_event = cast(FaceletsEventDict, event)
+                facelets_event = cast('FaceletsEventDict', event)
                 self.assertEqual(facelets_event['serial'], 50)
                 self.assertEqual(self.driver.serial, 50)
                 self.assertEqual(self.driver.last_serial, 1)
@@ -556,8 +560,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start: int, length: int, *,
-                                      little_endian: bool = False) -> int:  # noqa: ARG001
+                def mock_get_bit_word(  # noqa: PLR0911
+                        start: int, length: int, *,
+                        little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0x55  # magic
                     if start == 8 and length == 8:
@@ -615,8 +620,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start: int, length: int, *,
-                                      little_endian: bool = False) -> int:  # noqa: ARG001
+                def mock_get_bit_word(  # noqa: PLR0911
+                        start: int, length: int, *,
+                        little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0x55  # magic
                     if start == 8 and length == 8:
@@ -641,7 +647,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'hardware')
-                hw_event = cast(HardwareEventDict, event)
+                hw_event = cast('HardwareEventDict', event)
                 self.assertEqual(hw_event['hardware_version'], '3.4')
                 self.assertEqual(hw_event['software_version'], '1.2')
                 # Gen3 doesn't support gyro
@@ -679,7 +685,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'battery')
-                battery_event = cast(BatteryEventDict, event)
+                battery_event = cast('BatteryEventDict', event)
                 self.assertEqual(battery_event['level'], 80)
 
     @patch('term_timer.bluetooth.drivers.gan_gen3.time.perf_counter_ns')
@@ -827,7 +833,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):
     async def test_evict_move_buffer_integration(self) -> None:
         # Integration test for the complete move buffer eviction process
         self.driver.last_serial = 100
-        self.driver.move_buffer = cast(Any, [
+        self.driver.move_buffer = cast('Any', [
             {'serial': 101, 'event': 'move', 'move': 'U'},
             {'serial': 102, 'event': 'move', 'move': 'R'},
             {'serial': 104, 'event': 'move', 'move': 'F'},  # Gap at 103

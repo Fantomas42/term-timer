@@ -3,6 +3,7 @@
 import json
 import unittest
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import cast
 
 from cubing_algs.algorithm import Algorithm
@@ -10,15 +11,18 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.translate import translate_moves
 
 from term_timer.bluetooth.gyroscope import RotationDetector
-from term_timer.bluetooth.types import GyroEventDict
-from term_timer.bluetooth.types import MoveEventDict
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
+
+if TYPE_CHECKING:
+    from term_timer.bluetooth.types import GyroEventDict
+    from term_timer.bluetooth.types import MoveEventDict
 
 
 class TestMoveRotationDetector(unittest.TestCase):
 
-    def reconstruct(self, orientation_faces: str, algo: str) -> Algorithm:
+    @staticmethod
+    def reconstruct(orientation_faces: str, algo: str) -> Algorithm:
         orientation_moves = get_orientation_moves(orientation_faces)
 
         return humanize_moves(
@@ -43,12 +47,12 @@ class TestMoveRotationDetector(unittest.TestCase):
             event_name = event['event']
 
             if event_name == 'move':
-                event = cast(MoveEventDict, event)
+                event = cast('MoveEventDict', event)
 
                 moves.append(event['move'])
 
             if event_name == 'gyro':
-                event = cast(GyroEventDict, event)
+                event = cast('GyroEventDict', event)
 
                 rotation_result = rotation_detector.process_gyro_event(
                     event['quaternion'],

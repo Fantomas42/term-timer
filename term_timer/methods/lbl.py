@@ -39,7 +39,8 @@ class LBLAnalyser(Analyser):
 
         return current_progress, []
 
-    def correct_summary(self, summary: list[StepSummary]) -> None:
+    @staticmethod
+    def correct_summary(summary: list[StepSummary]) -> None:
         # Skipped F1L insert
         if summary[1]['name'] != 'F1L':
             summary.insert(

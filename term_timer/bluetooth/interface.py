@@ -108,7 +108,7 @@ class BluetoothInterface:
 
     async def notification_handler(self, sender: BleakGATTCharacteristic,
                                    data: bytearray) -> None:
-        self.driver = cast(Driver, self.driver)
+        self.driver = cast('Driver', self.driver)
 
         events = await self.driver.event_handler(sender, data)
 
@@ -118,21 +118,21 @@ class BluetoothInterface:
         await self.queue.put(events)
 
     async def send_command(self, command: str) -> bool:
-        """Send a command to the cube"""
+        """Send a command to the cube."""
         if not self.client or not self.client.is_connected:
             logger.debug('Command not connected to cube')
             return False
 
         logger.debug('Sending: %s', command)
 
-        self.driver = cast(Driver, self.driver)
+        self.driver = cast('Driver', self.driver)
         msg = self.driver.send_command_handler(command)
 
         if msg is False:
             logger.debug('Unknown command "%s"', command)
             return False
 
-        msg = cast(bytes, msg)
+        msg = cast('bytes', msg)
         await self.client.write_gatt_char(
             self.driver.command_characteristic_uid,
             msg,

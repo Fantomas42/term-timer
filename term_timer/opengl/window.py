@@ -139,7 +139,8 @@ class Window:
 
         self.load_texture(Path(__file__).parent / 'facelet.bmp')
 
-    def setup_lighting(self) -> None:
+    @staticmethod
+    def setup_lighting() -> None:
         """Set OpenGL lighting for realistic 3D cube appearance."""
         # Enable lighting
         glEnable(GL_LIGHTING)
@@ -199,7 +200,8 @@ class Window:
             GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR,
         )
 
-    def render_gradient_background(self) -> None:
+    @staticmethod
+    def render_gradient_background() -> None:
         """Render a subtle gradient background for better aesthetics."""
         # Save current matrices
         glMatrixMode(GL_PROJECTION)
@@ -253,7 +255,8 @@ class Window:
             f'{ self.title_prefix } (FPS={ int(self.clock.get_fps())!s })',
         )
 
-    def quit(self) -> None:
+    @staticmethod
+    def quit() -> None:
         pygame.quit()
 
     def set_keyboard_events(self, cube: 'Cube') -> None:

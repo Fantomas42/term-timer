@@ -120,7 +120,8 @@ class SolveManager:
 
 class SessionManager:
 
-    def index(self) -> None:
+    @staticmethod
+    def index() -> None:
         sessions: dict[int, dict[str, list[Solve]]] = {}
 
         for cube in CUBE_SIZES:

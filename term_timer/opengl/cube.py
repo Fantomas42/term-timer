@@ -106,30 +106,36 @@ class Cube:
                 self.move_corners(face)
                 self.move_edges(face)
 
-    def _rotation_matrix_x(self, angle_deg: float) -> NDArray[np.float64]:
+    @staticmethod
+    def _rotation_matrix_x(angle_deg: float) -> NDArray[np.float64]:
         angle_rad = math.radians(angle_deg)
         cos_a = math.cos(angle_rad)
         sin_a = math.sin(angle_rad)
+
         return np.array([
             [1.0, 0.0, 0.0],
             [0.0, cos_a, -sin_a],
             [0.0, sin_a, cos_a],
         ], dtype=np.float64)
 
-    def _rotation_matrix_y(self, angle_deg: float) -> NDArray[np.float64]:
+    @staticmethod
+    def _rotation_matrix_y(angle_deg: float) -> NDArray[np.float64]:
         angle_rad = math.radians(angle_deg)
         cos_a = math.cos(angle_rad)
         sin_a = math.sin(angle_rad)
+
         return np.array([
             [cos_a, 0.0, sin_a],
             [0.0, 1.0, 0.0],
             [-sin_a, 0.0, cos_a],
         ], dtype=np.float64)
 
-    def _rotation_matrix_z(self, angle_deg: float) -> NDArray[np.float64]:
+    @staticmethod
+    def _rotation_matrix_z(angle_deg: float) -> NDArray[np.float64]:
         angle_rad = math.radians(angle_deg)
         cos_a = math.cos(angle_rad)
         sin_a = math.sin(angle_rad)
+
         return np.array([
             [cos_a, -sin_a, 0.0],
             [sin_a, cos_a, 0.0],

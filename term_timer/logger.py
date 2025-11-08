@@ -19,7 +19,9 @@ LOGGING_PATH: Final = LOGGING_DIR / LOGGING_FILE
 
 
 class DbusSignalFilter(logging.Filter):
-    def filter(self, record: logging.LogRecord) -> bool:
+
+    @staticmethod
+    def filter(record: logging.LogRecord) -> bool:
         return record.funcName not in {'_parse_msg', 'write_gatt_char'}
 
 
