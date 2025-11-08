@@ -345,7 +345,7 @@ class View:
         return content
 
     @staticmethod
-    def template(template_name: str, **context: Any) -> str:
+    def template(template_name: str, **context: Any) -> str:  # noqa: ANN401
         context['now'] = datetime.now(tz=timezone.utc)  # noqa: UP017
 
         return str(

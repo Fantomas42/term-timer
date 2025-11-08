@@ -1,5 +1,5 @@
 """Custom ArgumentParser with enhanced help message formatting."""
-
+# ruff: noqa: ANN401
 import argparse
 from typing import Any
 

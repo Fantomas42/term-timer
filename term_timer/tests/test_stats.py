@@ -1,5 +1,5 @@
 """Tests for stats."""
-# ruff: noqa: ERA001
+# ruff: noqa: ANN401, ERA001
 import unittest
 from typing import TYPE_CHECKING
 from typing import Any

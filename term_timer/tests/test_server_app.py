@@ -370,7 +370,7 @@ class TestSessionListView(unittest.TestCase):
         mock_solve3.session = 'session2'
 
         # Configure load_all_solves to return different data for each cube
-        def load_solves_side_effect(cube: int, *_args: Any) -> list[Mock]:
+        def load_solves_side_effect(cube: int, *_args: Any) -> list[Mock]:  # noqa: ANN401
             if cube == 2:
                 return [mock_solve1]
             if cube == 3:

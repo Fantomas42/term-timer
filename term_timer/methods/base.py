@@ -369,5 +369,5 @@ class Analyser(FaceletAnalyser):
         return 20
 
 
-def get_step_config(step_name: str, value: str, default: Any = None) -> Any:
+def get_step_config(step_name: str, value: str, default: Any = None) -> Any:  # noqa: ANN401
     return STEPS_CONFIG.get(step_name, {}).get(value, default)
