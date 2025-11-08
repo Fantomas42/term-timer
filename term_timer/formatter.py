@@ -20,6 +20,10 @@ if TYPE_CHECKING:
     from term_timer.solve import Solve
 
 
+def format_float(value: float, precision: int = 2) -> str:
+    return f'{value:.{precision}f}'.rstrip('0').rstrip('.')
+
+
 def format_time(elapsed_ns: int, *, allow_dnf: bool = True) -> str:
     if not elapsed_ns and allow_dnf:
         return f'{ DNF:>9}'

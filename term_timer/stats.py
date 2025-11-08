@@ -16,6 +16,7 @@ from term_timer.formatter import compute_padding
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
+from term_timer.formatter import format_float
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_score
 from term_timer.formatter import format_time
@@ -605,7 +606,14 @@ class StatisticsReporter(Statistics):
             cube = Cube(self.cube_size)
             cube.rotate(solve.scramble)
 
-            print(cube.display('UF'), end='')
+            cube_display = cube.display('UF')[:-1]
+            print(cube_display, end='')
+
+            scrambled = solve.scramble.impacts.facelets_scrambled_percent
+            console.print(
+                f' { format_float(scrambled * 100) }%',
+                style='scrambled',
+            )
 
         if solve.advanced:
             if show_reconstruction:

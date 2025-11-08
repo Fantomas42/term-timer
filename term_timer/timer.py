@@ -6,6 +6,7 @@ from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SolveFlag
 from term_timer.formatter import format_delta
+from term_timer.formatter import format_float
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
 from term_timer.scrambler import scrambler
@@ -67,7 +68,14 @@ class Timer(SolveInterface):
 
     def start_line(self, cube: VCube) -> None:
         if self.show_cube:
-            print(cube.display(self.orientation_faces), end='')
+            cube_display = cube.display(self.orientation_faces)[:-1]
+            print(cube_display, end='')
+
+            scrambled = self.scramble.impacts.facelets_scrambled_percent
+            self.console.print(
+                f' { format_float(scrambled * 100) }%',
+                style='scrambled',
+            )
 
         scramble_line = f'[scramble]Scramble #{ self.counter }:[/scramble] '
         if self.cube_orientation_moves:
