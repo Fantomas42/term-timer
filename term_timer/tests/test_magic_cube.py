@@ -11,9 +11,11 @@ class TestCube(unittest.TestCase):
     """Tests for Cube class."""
 
     def setUp(self) -> None:
+        """Set up test fixture with a default Cube instance."""
         self.cube = Cube()
 
     def test_initialization(self) -> None:
+        """Test that Cube initializes with correct default values."""
         self.assertEqual(
             self.cube.size, 3,
         )

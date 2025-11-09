@@ -23,7 +23,13 @@ class BaseDriver(Driver):
 
     @staticmethod
     def init_cypher() -> GanGen2CubeEncrypter:
-        # Return a dummy encrypter for testing
+        """
+        Return a dummy encrypter for testing.
+
+        Returns:
+            GanGen2CubeEncrypter instance with dummy keys.
+
+        """
         return GanGen2CubeEncrypter(bytes(16), bytes(16), bytes(6))
 
 
@@ -31,12 +37,14 @@ class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
     """Tests for async Driver methods."""
 
     def setUp(self) -> None:
+        """Test setup."""
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
 
         self.driver = BaseDriver(self.mock_client)
 
     async def test_event_handler_raises_not_implemented(self) -> None:
+        """Test event handler raises not implemented."""
         mock_sender = Mock()
         with self.assertRaises(NotImplementedError):
             await self.driver.event_handler(mock_sender, bytearray(b'data'))
@@ -46,31 +54,38 @@ class TestDriver(unittest.TestCase):
     """Tests for Driver base class."""
 
     def setUp(self) -> None:
+        """Test setup."""
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
 
         self.driver = BaseDriver(self.mock_client)
 
     def test_init_sets_client(self) -> None:
+        """Test init sets client."""
         self.assertEqual(self.driver.client, self.mock_client)
 
     def test_init_initializes_empty_events_list(self) -> None:
+        """Test init initializes empty events list."""
         self.assertEqual(self.driver.events, [])
 
     def test_init_calls_init_cypher(self) -> None:
+        """Test init calls init cypher."""
         # init_cypher should be called during initialization
         cypher = self.driver.init_cypher()
         self.assertIsInstance(cypher, GanGen2CubeEncrypter)
 
     def test_init_cypher_raises_not_implemented(self) -> None:
+        """Test init cypher raises not implemented."""
         with self.assertRaises(NotImplementedError):
             Driver(self.mock_client)
 
     def test_send_command_handler_raises_not_implemented(self) -> None:
+        """Test send command handler raises not implemented."""
         with self.assertRaises(NotImplementedError):
             self.driver.send_command_handler('test_command')
 
     def test_add_event_with_single_event(self) -> None:
+        """Test add event with single event."""
         store: list[EventDict] = []
         event: MoveEventDict = {
             'event': 'move',
@@ -92,6 +107,7 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(self.driver.events[0], event)
 
     def test_add_event_with_list_of_events(self) -> None:
+        """Test add event with list of events."""
         store: list[EventDict] = []
         now = datetime.now(tz=timezone.utc)  # noqa: UP017
         events: list[MoveEventDict] = [
@@ -138,6 +154,7 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(self.driver.events, events)
 
     def test_add_event_with_empty_list(self) -> None:
+        """Test add event with empty list."""
         store: list[EventDict] = []
         events: list[EventDict] = []
 
@@ -147,6 +164,7 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(len(self.driver.events), 0)
 
     def test_add_event_multiple_calls_accumulate(self) -> None:
+        """Test add event multiple calls accumulate."""
         store1: list[EventDict] = []
         store2: list[EventDict] = []
         now = datetime.now(tz=timezone.utc)  # noqa: UP017
@@ -196,6 +214,7 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(self.driver.events, [event1, event2, event3])
 
     def test_add_event_with_mixed_single_and_list(self) -> None:
+        """Test add event with mixed single and list."""
         store: list[EventDict] = []
         now = datetime.now(tz=timezone.utc)  # noqa: UP017
         single_event: MoveEventDict = {
@@ -242,17 +261,20 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(self.driver.events, expected_store)
 
     def test_class_attributes_default_values(self) -> None:
+        """Test class attributes default values."""
         self.assertEqual(Driver.service_uid, '')
         self.assertEqual(Driver.state_characteristic_uid, '')
         self.assertEqual(Driver.command_characteristic_uid, '')
         self.assertEqual(Driver.use_gyroscope, USE_GYROSCOPE)
 
     def test_driver_instance_has_cypher_attribute(self) -> None:
+        """Test driver instance has cypher attribute."""
         self.assertTrue(hasattr(self.driver, 'cypher'))
         # cypher should be the result of init_cypher()
         self.assertIsInstance(self.driver.cypher, GanGen2CubeEncrypter)
 
     def test_add_event_preserves_original_list_reference(self) -> None:
+        """Test add event preserves original list reference."""
         # Test that the store parameter is modified in place
         original_store: list[EventDict] = []
         store_reference = original_store
@@ -276,6 +298,7 @@ class TestDriver(unittest.TestCase):
         self.assertIs(original_store, store_reference)
 
     def test_add_event_with_none_event(self) -> None:
+        """Test add event with none event."""
         store: list[EventDict] = []
 
         # This should work without raising an exception
@@ -287,6 +310,7 @@ class TestDriver(unittest.TestCase):
         self.assertIsNone(self.driver.events[0])
 
     def test_add_event_with_complex_nested_data(self) -> None:
+        """Test add event with complex nested data."""
         store: list[EventDict] = []
         quaternion: QuaternionDict = {
             'x': 0.1,

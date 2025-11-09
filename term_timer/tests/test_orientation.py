@@ -13,6 +13,7 @@ class TestAutoRotation(unittest.TestCase):
     """Tests for automatic orientation detection."""
 
     def test_solve_500(self) -> None:
+        """Test solve 500."""
         scramble = Algorithm.parse_moves(
             "F R' F' U' D2 B' L F U' F L' U F2 U' F2 B2 L2 D2 B2 D' L2",
         )
@@ -34,6 +35,7 @@ class TestAutoRotation(unittest.TestCase):
         )
 
     def test_solve_501(self) -> None:
+        """Test solve 501."""
         scramble = Algorithm.parse_moves(
             "U F2 L' D' R2 B R F L' D2 F U2 D' F2 R2 U' B2 R2 U' D2 R2 F2",
         )
@@ -55,6 +57,7 @@ class TestAutoRotation(unittest.TestCase):
         )
 
     def test_solve_roux(self) -> None:
+        """Test solve roux."""
         scramble = Algorithm.parse_moves(
             "B L2 B D2 B2 U L2 D2 R U L R2 D R D U2 L' U2",
         )
@@ -82,6 +85,7 @@ class TestAutoRotation(unittest.TestCase):
         )
 
     def test_solve_wr(self) -> None:
+        """Test solve wr."""
         scramble = Algorithm.parse_moves(
             "F U2 L2 B2 F' U L2 U R2 D2 L' B L2 B' R2 U2",
         )

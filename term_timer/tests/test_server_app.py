@@ -36,10 +36,12 @@ class TestConstants(unittest.TestCase):
     """Tests for server app constants."""
 
     def test_class_conversion_constants(self) -> None:
+        """Test class conversion constants."""
         self.assertEqual(CLASS_CONVERTION['red'], 'deletion')
         self.assertEqual(CLASS_CONVERTION['green'], 'addition')
 
     def test_legends_constants(self) -> None:
+        """Test legends constants."""
         expected_legends = {
             'pair-ie': 'Pair insertion/extraction',
             'sexy-move': 'Sexy Move',
@@ -50,6 +52,7 @@ class TestConstants(unittest.TestCase):
         self.assertEqual(LEGENDS, expected_legends)
 
     def test_regex_patterns(self) -> None:
+        """Test regex patterns."""
         # Test SPAN_REGEX matches span tags
         test_html = '<span class="test">content</span>'
         matches = SPAN_REGEX.findall(test_html)
@@ -65,18 +68,22 @@ class TestFormatDelta(unittest.TestCase):
     """Tests for format_delta function."""
 
     def test_format_delta_zero(self) -> None:
+        """Test format delta zero."""
         result = format_delta(0)
         self.assertEqual(result, '')
 
     def test_format_delta_positive(self) -> None:
+        """Test format delta positive."""
         result = format_delta(1500000000)  # 1.5 seconds
         self.assertEqual(result, '+1.50')
 
     def test_format_delta_negative(self) -> None:
+        """Test format delta negative."""
         result = format_delta(-2500000000)  # -2.5 seconds
         self.assertEqual(result, '-2.50')
 
     def test_format_delta_small_positive(self) -> None:
+        """Test format delta small positive."""
         result = format_delta(100000000)  # 0.1 seconds
         self.assertEqual(result, '+0.10')
 
@@ -85,26 +92,31 @@ class TestFormatScore(unittest.TestCase):
     """Tests for format_score function."""
 
     def test_format_score_good(self) -> None:
+        """Test format score good."""
         result = format_score(15, 'Test: ')
         expected = '<span class="stat-good">Test: 15.00</span>'
         self.assertEqual(result, expected)
 
     def test_format_score_danger(self) -> None:
+        """Test format score danger."""
         result = format_score(10, 'Score: ')
         expected = '<span class="stat-danger">Score: 10.00</span>'
         self.assertEqual(result, expected)
 
     def test_format_score_warning(self) -> None:
+        """Test format score warning."""
         result = format_score(5, 'Low: ')
         expected = '<span class="stat-warning">Low: 5.00</span>'
         self.assertEqual(result, expected)
 
     def test_format_score_no_title(self) -> None:
+        """Test format score no title."""
         result = format_score(20)
         expected = '<span class="stat-good">20.00</span>'
         self.assertEqual(result, expected)
 
     def test_format_score_boundary_values(self) -> None:
+        """Test format score boundary values."""
         # Test exact boundary values
         result = format_score(14)
         self.assertIn('stat-good', result)
@@ -123,10 +135,12 @@ class TestFormatLine(unittest.TestCase):
     """Tests for format_line function."""
 
     def test_format_line_empty_value(self) -> None:
+        """Test format line empty value."""
         result = format_line('')
         self.assertEqual(result, '')
 
     def test_format_line_simple_moves(self) -> None:
+        """Test format line simple moves."""
         result = format_line("R U R'")
         expected = (
             '<span class="move">R</span> '
@@ -136,16 +150,19 @@ class TestFormatLine(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_format_line_with_block_pattern(self) -> None:
+        """Test format line with block pattern."""
         result = format_line('[pre-auf]R U[/pre-auf]')
         self.assertIn('class="trigger pre-auf ', result)
         self.assertIn('title="Pre-AUF"', result)
 
     def test_format_line_single_move_in_block(self) -> None:
+        """Test format line single move in block."""
         result = format_line('[sexy-move]R[/sexy-move]')
         self.assertIn('class="move sexy-move r"', result)
         self.assertIn('title="Sexy Move"', result)
 
     def test_format_line_mixed_content(self) -> None:
+        """Test format line mixed content."""
         result = format_line("R [pre-auf]U R'[/pre-auf] D")
         # Should contain both regular moves and block-formatted moves
         self.assertIn('<span class="move">R</span>', result)
@@ -153,10 +170,12 @@ class TestFormatLine(unittest.TestCase):
         self.assertIn('trigger pre-auf', result)
 
     def test_format_line_unknown_markup(self) -> None:
+        """Test format line unknown markup."""
         result = format_line('[unknown-markup]R U[/unknown-markup]')
         self.assertIn('title="Unknown-Markup"', result)
 
     def test_format_line_move_name_normalization(self) -> None:
+        """Test format line move name normalization."""
         # Test that move names are normalized (lowercase, no quotes/numbers)
         result = format_line("[test]R'2[/test]")
         self.assertIn('class="move test r"', result)
@@ -166,30 +185,35 @@ class TestParseCaseName(unittest.TestCase):
     """Tests for parse_case_name function."""
 
     def test_parse_case_name_with_code_and_name(self) -> None:
+        """Test parse case name with code and name."""
         code, name, step_type = parse_case_name('OLL01 T-Shape', 'OLL')
         self.assertEqual(code, 'OLL01')
         self.assertEqual(name, 'T-Shape')
         self.assertEqual(step_type, 'OLL')
 
     def test_parse_case_name_pll_no_space(self) -> None:
+        """Test parse case name pll no space."""
         code, name, step_type = parse_case_name('Aa', 'PLL')
         self.assertEqual(code, 'Aa')
         self.assertEqual(name, 'PLL Aa')
         self.assertEqual(step_type, 'PLL')
 
     def test_parse_case_name_f2l_no_space(self) -> None:
+        """Test parse case name f2l no space."""
         code, name, step_type = parse_case_name('1', 'F2L')
         self.assertEqual(code, '1')
         self.assertEqual(name, 'F2L 1')
         self.assertEqual(step_type, 'F2L')
 
     def test_parse_case_name_f2l_substep(self) -> None:
+        """Test parse case name f2l substep."""
         code, name, step_type = parse_case_name('2', 'F2L-1')
         self.assertEqual(code, '2')
         self.assertEqual(name, 'F2L 2')
         self.assertEqual(step_type, 'F2L')
 
     def test_parse_case_name_other_step(self) -> None:
+        """Test parse case name other step."""
         code, name, step_type = parse_case_name('test', 'Cross')
         self.assertEqual(code, 'test')
         self.assertEqual(name, '')
@@ -200,6 +224,7 @@ class TestNormalizeValue(unittest.TestCase):
     """Tests for normalize_value function."""
 
     def test_normalize_value(self) -> None:
+        """Test normalize value."""
         mock_method_applied = Mock()
         mock_method_applied.normalize_value.return_value = 'good'
 
@@ -216,6 +241,7 @@ class TestNormalizePercent(unittest.TestCase):
     """Tests for normalize_percent function."""
 
     def test_normalize_percent(self) -> None:
+        """Test normalize percent."""
         mock_method_applied = Mock()
         mock_method_applied.normalize_value.return_value = 'warning'
 
@@ -234,12 +260,14 @@ class TestRichHandler(unittest.TestCase):
     """Tests for RichHandler class."""
 
     def setUp(self) -> None:
+        """Test setup."""
         # Create a mock request, client_address, and server for RichHandler
         self.handler = RichHandler.__new__(RichHandler)
         self.handler.requestline = ''
 
     @patch('term_timer.server.app.console')
     def test_log_request_success_code(self, mock_console: Mock) -> None:
+        """Test log request success code."""
         self.handler.requestline = 'GET /test HTTP/1.1'
         self.handler.log_request(200, 1024)
 
@@ -251,6 +279,7 @@ class TestRichHandler(unittest.TestCase):
 
     @patch('term_timer.server.app.console')
     def test_log_request_error_code(self, mock_console: Mock) -> None:
+        """Test log request error code."""
         self.handler.requestline = 'GET /error HTTP/1.1'
         self.handler.log_request(404, 512)
 
@@ -260,6 +289,7 @@ class TestRichHandler(unittest.TestCase):
 
     @patch('term_timer.server.app.console')
     def test_log_request_http_status_object(self, mock_console: Mock) -> None:
+        """Test log request http status object."""
         self.handler.requestline = 'GET /status HTTP/1.1'
         self.handler.log_request(HTTPStatus.OK, 256)
 
@@ -272,6 +302,7 @@ class TestView(unittest.TestCase):
     """Tests for View base class."""
 
     def test_view_abstract_get_context(self) -> None:
+        """Test view abstract get context."""
         view = View()
         with self.assertRaises(NotImplementedError):
             view.get_context()
@@ -280,6 +311,7 @@ class TestView(unittest.TestCase):
     @patch('term_timer.server.app.gc.collect')
     def test_view_as_view(self, mock_gc_collect: Mock,
                           mock_jinja2_template: Mock) -> None:
+        """Test view as view."""
         mock_jinja2_template.return_value = 'rendered_content'
 
         class TestView(View):
@@ -298,6 +330,7 @@ class TestView(unittest.TestCase):
 
     @patch('term_timer.server.app.jinja2_template')
     def test_view_template_context(self, mock_jinja2_template: Mock) -> None:
+        """Test view template context."""
         mock_jinja2_template.return_value = 'template_result'
 
         view = View()
@@ -335,6 +368,7 @@ class TestError404View(unittest.TestCase):
     """Tests for Error404View class."""
 
     def test_error404_view_get_context(self) -> None:
+        """Test error404 view get context."""
         mock_error = Mock()
         mock_error.body = 'Page not found'
         view = Error404View(mock_error)
@@ -348,6 +382,7 @@ class TestError404View(unittest.TestCase):
         self.assertEqual(context, expected)
 
     def test_error404_view_template_name(self) -> None:
+        """Test error404 view template name."""
         view = Error404View(Mock())
         self.assertEqual(view.template_name, '404.html')
 
@@ -356,6 +391,7 @@ class TestError500View(unittest.TestCase):
     """Tests for Error500View class."""
 
     def test_error500_view_get_context(self) -> None:
+        """Test error500 view get context."""
         mock_error = Mock()
         mock_error.body = 'Internal server error'
         mock_error.exception = Exception('Test exception')
@@ -373,6 +409,7 @@ class TestError500View(unittest.TestCase):
         self.assertEqual(context, expected)
 
     def test_error500_view_template_name(self) -> None:
+        """Test error500 view template name."""
         view = Error500View(Mock())
         self.assertEqual(view.template_name, '500.html')
 
@@ -385,6 +422,7 @@ class TestSessionListView(unittest.TestCase):
     def test_session_list_view_get_context(
             self, mock_statistics: Mock, mock_load_solves: Mock,
     ) -> None:
+        """Test session list view get context."""
         # Mock solves data
         mock_solve1 = Mock()
         mock_solve1.session = 'session1'
@@ -424,6 +462,7 @@ class TestSessionListView(unittest.TestCase):
     def test_session_list_view_all_sessions(
             self, mock_statistics: Mock, mock_load_solves: Mock,
     ) -> None:
+        """Test session list view all sessions."""
         # Test that 'all' session is created when multiple sessions exist
         mock_solve1 = Mock(session='session1')
         mock_solve2 = Mock(session='session2')
@@ -448,6 +487,7 @@ class TestSessionDetailView(unittest.TestCase):
     def test_session_detail_view_initialization(
             self, mock_load_solves: Mock, _mock_stats_reporter: Mock,
             mock_aggregator: Mock) -> None:
+        """Test session detail view initialization."""
         mock_solves = [Mock(), Mock()]
         mock_load_solves.return_value = mock_solves
 
@@ -469,6 +509,7 @@ class TestSessionDetailView(unittest.TestCase):
     def test_session_detail_view_all_session(
             mock_load_solves: Mock, _mock_stats_reporter: Mock,
             mock_aggregator: Mock) -> None:
+        """Test session detail view all session."""
         mock_solves = [Mock(), Mock()]
         mock_load_solves.return_value = mock_solves
 
@@ -488,6 +529,7 @@ class TestSessionDetailView(unittest.TestCase):
     def test_session_detail_view_no_solves(
             mock_load_solves: Mock, mock_aggregator: Mock,
             mock_abort: Mock) -> None:
+        """Test session detail view no solves."""
         mock_load_solves.return_value = []
         mock_aggregator_instance = Mock()
         mock_aggregator_instance.results = {'stack': []}
@@ -503,6 +545,7 @@ class TestSessionDetailView(unittest.TestCase):
     def test_session_detail_view_step_case_filtering(
             self, mock_load_solves: Mock, _mock_stats_reporter: Mock,
             mock_aggregator: Mock) -> None:
+        """Test session detail view step case filtering."""
         mock_solve = Mock()
         mock_solve.advanced = True
         mock_solve.method_applied.summary = [
@@ -521,6 +564,7 @@ class TestSessionDetailView(unittest.TestCase):
         self.assertEqual(view.case_uid, 'oll01')
 
     def test_session_detail_view_compute_sessions(self) -> None:
+        """Test session detail view compute sessions."""
         mock_solve1 = Mock(session='session1')
         mock_solve2 = Mock(session='session1')
         mock_solve3 = Mock(session='session2')
@@ -540,6 +584,7 @@ class TestSessionDetailView(unittest.TestCase):
             self.assertEqual(sessions, expected)
 
     def test_session_detail_view_compute_trend(self) -> None:
+        """Test session detail view compute trend."""
         with (
             patch('term_timer.server.app.load_all_solves'),
             patch('term_timer.server.app.SolvesMethodAggregator'),
@@ -562,6 +607,7 @@ class TestSessionDetailView(unittest.TestCase):
             self.assertEqual(trend['indices'], ['1', '2', '3'])
 
     def test_session_detail_view_compute_distribution(self) -> None:
+        """Test session detail view compute distribution."""
         with (
             patch('term_timer.server.app.load_all_solves'),
             patch('term_timer.server.app.SolvesMethodAggregator'),
@@ -580,6 +626,7 @@ class TestSessionDetailView(unittest.TestCase):
             self.assertEqual(distribution, expected)
 
     def test_session_detail_view_compute_punchcard(self) -> None:
+        """Test session detail view compute punchcard."""
         mock_dt = Mock()
         mock_dt.strftime.side_effect = lambda fmt: {
             '%Y': '2023',
@@ -613,6 +660,7 @@ class TestSolveDetailView(unittest.TestCase):
     def test_solve_detail_view_invalid_solve_id(
             mock_abort: Mock, mock_load_solves: Mock,
     ) -> None:
+        """Test solve detail view invalid solve id."""
         mock_load_solves.return_value = [Mock()]  # Only one solve
 
         with contextlib.suppress(AttributeError):
@@ -624,6 +672,7 @@ class TestSolveDetailView(unittest.TestCase):
     @patch('term_timer.server.app.load_all_solves')
     def test_solve_detail_view_initialization(
             self, mock_load_solves: Mock) -> None:
+        """Test solve detail view initialization."""
         mock_solve = Mock()
         mock_load_solves.return_value = [mock_solve]
 
@@ -639,6 +688,7 @@ class TestSolveDetailView(unittest.TestCase):
     @patch('term_timer.server.app.load_all_solves')
     def test_solve_detail_view_get_context_basic(
             self, mock_load_solves: Mock) -> None:
+        """Test solve detail view get context basic."""
         mock_solve = Mock()
         mock_solve.final_time = 5000000000
         mock_solve.advanced = False
@@ -661,6 +711,7 @@ class TestSolveDetailView(unittest.TestCase):
     @patch('term_timer.server.app.load_all_solves')
     def test_solve_detail_view_get_context_advanced(
             self, mock_load_solves: Mock) -> None:
+        """Test solve detail view get context advanced."""
         mock_solve = Mock()
         mock_solve.final_time = 5000000000
         mock_solve.advanced = True
@@ -707,6 +758,7 @@ class TestSolveUpdateView(unittest.TestCase):
     def test_solve_update_view_invalid_id(
             self, mock_load_solves: Mock, _mock_save_solves: Mock,
             _mock_redirect: Mock) -> None:
+        """Test solve update view invalid id."""
         mock_load_solves.return_value = []
 
         with self.assertRaises(HTTPError):  # abort() raises HTTPError
@@ -718,6 +770,7 @@ class TestSolveUpdateView(unittest.TestCase):
     def test_solve_update_view_success(
             self, mock_load_solves: Mock, mock_save_solves: Mock,
             _mock_redirect: Mock) -> None:
+        """Test solve update view success."""
         mock_solve = Mock()
         mock_load_solves.return_value = [mock_solve]
 
@@ -737,6 +790,7 @@ class TestSolveDeleteView(unittest.TestCase):
     def test_solve_delete_view_invalid_id(
             self, mock_load_solves: Mock, _mock_save_solves: Mock,
             _mock_redirect: Mock) -> None:
+        """Test solve delete view invalid id."""
         mock_load_solves.return_value = []
 
         with self.assertRaises(HTTPError):  # abort() raises HTTPError
@@ -748,6 +802,7 @@ class TestSolveDeleteView(unittest.TestCase):
     def test_solve_delete_view_success(
             self, mock_load_solves: Mock, mock_save_solves: Mock,
             _mock_redirect: Mock) -> None:
+        """Test solve delete view success."""
         mock_solve1 = Mock()
         mock_solve2 = Mock()
         mock_solves = [mock_solve1, mock_solve2]
@@ -765,11 +820,13 @@ class TestServer(unittest.TestCase):
     """Tests for Server class."""
 
     def setUp(self) -> None:
+        """Test setup."""
         self.server = Server()
 
     @patch.dict('os.environ', {}, clear=True)
     @patch('term_timer.server.app.console')
     def test_run_server(self, mock_console: Mock) -> None:
+        """Test run server."""
         mock_app = Mock()
         mock_app.run = Mock()
 
@@ -792,6 +849,7 @@ class TestServer(unittest.TestCase):
     @patch.dict('os.environ', {'BOTTLE_CHILD': '1'})
     @patch('term_timer.server.app.console')
     def test_run_server_bottle_child(self, mock_console: Mock) -> None:
+        """Test run server bottle child."""
         mock_app = Mock()
         mock_app.run = Mock()
 
@@ -802,6 +860,7 @@ class TestServer(unittest.TestCase):
             mock_console.print.assert_not_called()
 
     def test_create_app(self) -> None:
+        """Test create app."""
         app = self.server.create_app(debug=False)
 
         self.assertIsInstance(app, Bottle)
@@ -821,6 +880,7 @@ class TestServer(unittest.TestCase):
             self.assertIn(expected_path, route_paths)
 
     def test_create_app_has_hooks(self) -> None:
+        """Test create app has hooks."""
         app = self.server.create_app(debug=False)
 
         # Verify that the app has hooks registered
@@ -830,6 +890,7 @@ class TestServer(unittest.TestCase):
         self.assertGreater(len(app.routes), 0)
 
     def test_create_app_error_handlers(self) -> None:
+        """Test create app error handlers."""
         app = self.server.create_app(debug=False)
 
         # Check that error handlers are registered

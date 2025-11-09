@@ -9,6 +9,7 @@ class TestTimerModule(unittest.TestCase):
     """Tests for Timer class."""
 
     def test_initialization(self) -> None:
+        """Test that Timer initializes with all required attributes."""
         timer = Timer(
             cube_size=3,
             iterations=0,

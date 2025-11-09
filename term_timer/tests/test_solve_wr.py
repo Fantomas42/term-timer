@@ -28,6 +28,7 @@ class TestSolveWR(unittest.TestCase):
     maxDiff = None
 
     def setUp(self) -> None:
+        """Test setup."""
         self.date = 1751998918
         self.time = 2549969965
         self.scramble = "F U2 L2 B2 F' U L2 U R2 D2 L' B L2 B' R2 U2"
@@ -50,6 +51,7 @@ class TestSolveWR(unittest.TestCase):
         self.solve.orientation = 'auto'
 
     def test_reconstruction(self) -> None:
+        """Test reconstruction."""
         self.assertEqual(
             str(self.solve.reconstruction),
             "U R2 U' F' L F' U' L' U' R U R2 U R U2 R' U R "
@@ -57,12 +59,14 @@ class TestSolveWR(unittest.TestCase):
         )
 
     def test_score(self) -> None:
+        """Test score."""
         self.assertEqual(
             self.solve.score,
             20,
         )
 
     def test_method_score(self) -> None:
+        """Test method score."""
         method_applied = get_method_applied(self.solve)
         self.assertEqual(
             method_applied.score,
@@ -70,6 +74,7 @@ class TestSolveWR(unittest.TestCase):
         )
 
     def test_summary(self) -> None:
+        """Test summary."""
         method_applied = get_method_applied(self.solve)
         inputs = method_applied.summary
         outputs = [
@@ -92,6 +97,7 @@ class TestSolveWR(unittest.TestCase):
             )
 
     def test_reconstruction_step_line(self) -> None:
+        """Test reconstruction step line."""
         method_applied = get_method_applied(self.solve)
         inputs = [
             info
@@ -113,6 +119,7 @@ class TestSolveWR(unittest.TestCase):
             )
 
     def test_reconstruction_step_text(self) -> None:
+        """Test reconstruction step text."""
         method_applied = get_method_applied(self.solve)
         inputs = [
             info

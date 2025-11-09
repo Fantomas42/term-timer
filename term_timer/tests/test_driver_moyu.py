@@ -25,6 +25,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
     """Tests for MoyuWeilong10Driver class."""
 
     def setUp(self) -> None:
+        """Test setup."""
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
         self.mock_client.name = 'WeiLong v10'
@@ -36,12 +37,14 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             self.driver = MoyuWeilong10Driver(self.mock_client)
 
     def test_init_sets_correct_attributes(self) -> None:
+        """Test init sets correct attributes."""
         self.assertEqual(self.driver.client, self.mock_client)
         self.assertEqual(self.driver.last_serial, -1)
         self.assertEqual(self.driver.cube_timestamp, 0)
         self.assertEqual(self.driver.last_move_timestamp, None)
 
     def test_class_constants(self) -> None:
+        """Test class constants."""
         self.assertEqual(
             MoyuWeilong10Driver.service_uid,
             MOYU_WEILONG_SERVICE,
@@ -57,11 +60,13 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
         self.assertEqual(MoyuWeilong10Driver.factor, pow(2, 30))
 
     def test_init_cypher(self) -> None:
+        """Test init cypher."""
         result = self.driver.init_cypher()
         self.assertIsNotNone(result)
         self.assertIsNotNone(self.driver.cypher)
 
     def test_send_command_handler_request_facelets(self) -> None:
+        """Test send command handler request facelets."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -73,6 +78,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_hardware(self) -> None:
+        """Test send command handler request hardware."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -83,6 +89,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_battery(self) -> None:
+        """Test send command handler request battery."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -93,6 +100,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_enable_gyro(self) -> None:
+        """Test send command handler request enable gyro."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -104,6 +112,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_disable_gyro(self) -> None:
+        """Test send command handler request disable gyro."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -115,6 +124,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_reset(self) -> None:
+        """Test send command handler request reset."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -131,14 +141,17 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_invalid_command(self) -> None:
+        """Test send command handler invalid command."""
         result = self.driver.send_command_handler('INVALID_COMMAND')
         self.assertFalse(result)
 
     def test_send_command_handler_empty_command(self) -> None:
+        """Test send command handler empty command."""
         result = self.driver.send_command_handler('')
         self.assertFalse(result)
 
     def test_send_command_handler_none_command(self) -> None:
+        """Test send command handler none command."""
         result = self.driver.send_command_handler(None)  # type: ignore[arg-type]
         self.assertFalse(result)
 
@@ -147,6 +160,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
     async def test_event_handler_gyroscope_disabled(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler gyroscope disabled."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -172,6 +186,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
     async def test_event_handler_gyroscope_enabled(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler gyroscope enabled."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -213,6 +228,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
     async def test_event_handler_moves_blocked_before_facelets(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler moves blocked before facelets."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -244,6 +260,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
     async def test_event_handler_move_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler move event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -285,6 +302,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
     async def test_event_handler_facelets_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler facelets event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -328,6 +346,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
     async def test_event_handler_hardware_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler hardware event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -385,6 +404,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
     async def test_event_handler_battery_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler battery event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -419,6 +439,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
     async def test_event_handler_battery_level_capped(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler battery level capped."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -452,6 +473,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
     async def test_event_handler_gyro_config_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler gyro config event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -490,6 +512,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
     async def test_event_handler_unknown_event(
             self, mock_logger: Mock, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler unknown event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -514,10 +537,12 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                 mock_logger.debug.assert_called_once()
 
     def test_event_handler_is_async(self) -> None:
+        """Test event handler is async."""
         # Verify that event_handler is an async function
         self.assertTrue(asyncio.iscoroutinefunction(self.driver.event_handler))
 
     async def test_event_handler_with_invalid_data(self) -> None:
+        """Test event handler with invalid data."""
         # Test with empty data
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = bytearray()
@@ -532,6 +557,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                     await self.driver.event_handler(mock_sender, bytearray())
 
     def test_move_value_to_face_mapping(self) -> None:
+        """Test move value to face mapping."""
         # Test the move value to face/direction mapping
         # move_value >> 1 gives face index (0-5 for FBUDLR)
         # move_value & 1 gives direction (0 for normal, 1 for prime)
@@ -555,6 +581,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             self.assertEqual(actual.strip(), expected)
 
     def test_facelets_face_order(self) -> None:
+        """Test facelets face order."""
         # Test that the face order mapping is correct
         # The code uses faces = [2, 5, 0, 3, 4, 1] to parse in URFDLB order
         expected_order = [2, 5, 0, 3, 4, 1]  # Maps URFDLB to FBUDLR indices

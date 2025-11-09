@@ -27,6 +27,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     """Tests for GanGen3Driver class."""
 
     def setUp(self) -> None:
+        """Test setup."""
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
         self.mock_client.name = 'GAN356 iCarry2'
@@ -40,6 +41,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.driver = GanGen3Driver(self.mock_client)
 
     def test_init_sets_correct_attributes(self) -> None:
+        """Test init sets correct attributes."""
         self.assertEqual(self.driver.client, self.mock_client)
         self.assertEqual(self.driver.serial, -1)
         self.assertEqual(self.driver.last_serial, -1)
@@ -47,9 +49,11 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.assertEqual(self.driver.move_buffer, [])
 
     def test_inherits_from_gan_gen2(self) -> None:
+        """Test inherits from gan gen2."""
         self.assertIsInstance(self.driver, GanGen2Driver)
 
     def test_class_constants(self) -> None:
+        """Test class constants."""
         self.assertEqual(
             GanGen3Driver.service_uid,
             GAN_GEN3_SERVICE,
@@ -64,6 +68,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         )
 
     def test_send_command_handler_request_facelets(self) -> None:
+        """Test send command handler request facelets."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -76,6 +81,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_hardware(self) -> None:
+        """Test send command handler request hardware."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -87,6 +93,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_battery(self) -> None:
+        """Test send command handler request battery."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -98,6 +105,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_reset(self) -> None:
+        """Test send command handler request reset."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -126,10 +134,12 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_invalid_command(self) -> None:
+        """Test send command handler invalid command."""
         result = self.driver.send_command_handler('INVALID_COMMAND')
         self.assertFalse(result)
 
     async def test_request_move_history_odd_serial(self) -> None:
+        """Test request move history odd serial."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -144,6 +154,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertEqual(args[0][4], 6)  # count unchanged
 
     async def test_request_move_history_even_serial(self) -> None:
+        """Test request move history even serial."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -155,6 +166,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertEqual(args[0][4], 6)  # count adjusted to even
 
     async def test_request_move_history_overflow_protection(self) -> None:
+        """Test request move history overflow protection."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -166,6 +178,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertEqual(args[0][4], 250)  # count capped to serial + 1
 
     async def test_evict_move_buffer_empty(self) -> None:
+        """Test evict move buffer empty."""
         self.driver.move_buffer = []
         self.driver.last_serial = 100
 
@@ -175,6 +188,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.assertEqual(len(self.driver.move_buffer), 0)
 
     async def test_evict_move_buffer_sequential_moves(self) -> None:
+        """Test evict move buffer sequential moves."""
         self.driver.last_serial = 100
         self.driver.move_buffer = cast('Any', [
             {'serial': 101, 'event': 'move', 'move': 'U'},
@@ -190,6 +204,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.assertEqual(len(self.driver.move_buffer), 0)
 
     async def test_evict_move_buffer_missed_move_requests_history(self) -> None:
+        """Test evict move buffer missed move requests history."""
         self.driver.last_serial = 100
         self.driver.move_buffer = cast('Any', [
             {'serial': 103, 'event': 'move', 'move': 'U'},  # Gap at 101, 102
@@ -203,6 +218,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertEqual(len(self.driver.move_buffer), 1)
 
     async def test_evict_move_buffer_first_move_no_gap_check(self) -> None:
+        """Test evict move buffer first move no gap check."""
         self.driver.last_serial = -1  # First move
         self.driver.move_buffer = cast('Any', [
             {'serial': 50, 'event': 'move', 'move': 'U'},
@@ -216,11 +232,13 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.assertEqual(len(self.driver.move_buffer), 0)
 
     def test_is_serial_in_range_basic(self) -> None:
+        """Test is serial in range basic."""
         # Test serial 5 is in range [3, 7]
         result = self.driver.is_serial_in_range(3, 7, 5)
         self.assertTrue(result)
 
     def test_is_serial_in_range_boundary_open(self) -> None:
+        """Test is serial in range boundary open."""
         # Test boundaries with open intervals
         # start boundary, open
         self.assertFalse(self.driver.is_serial_in_range(3, 7, 3))
@@ -228,6 +246,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.assertFalse(self.driver.is_serial_in_range(3, 7, 7))
 
     def test_is_serial_in_range_boundary_closed(self) -> None:
+        """Test is serial in range boundary closed."""
         # Test boundaries with closed intervals
         self.assertTrue(
             self.driver.is_serial_in_range(3, 7, 3, closed_start=True),
@@ -237,6 +256,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         )
 
     def test_is_serial_in_range_wraparound(self) -> None:
+        """Test is serial in range wraparound."""
         # Test wraparound case (e.g., range [250, 10] includes 255, 0, 5)
         self.assertTrue(self.driver.is_serial_in_range(250, 10, 255))
         self.assertTrue(self.driver.is_serial_in_range(250, 10, 0))
@@ -244,6 +264,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.assertFalse(self.driver.is_serial_in_range(250, 10, 100))
 
     def test_inject_missed_move_to_buffer_empty_buffer(self) -> None:
+        """Test inject missed move to buffer empty buffer."""
         self.driver.last_serial = 100
         self.driver.serial = 105
         self.driver.move_buffer = []
@@ -255,6 +276,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.assertEqual(self.driver.move_buffer[0], move)
 
     def test_inject_missed_move_to_buffer_with_existing_buffer(self) -> None:
+        """Test inject missed move to buffer with existing buffer."""
         self.driver.last_serial = 100
         self.driver.move_buffer = cast('Any', [
             {'serial': 105, 'event': 'move', 'move': 'R'},
@@ -268,6 +290,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.assertEqual(self.driver.move_buffer[1]['serial'], 105)
 
     def test_inject_missed_move_to_buffer_duplicate_serial(self) -> None:
+        """Test inject missed move to buffer duplicate serial."""
         self.driver.last_serial = 100
         self.driver.move_buffer = cast('Any', [
             {'serial': 103, 'event': 'move', 'move': 'R'},
@@ -283,6 +306,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.assertEqual(self.driver.move_buffer[0]['move'], 'R')
 
     def test_inject_missed_move_to_buffer_out_of_range(self) -> None:
+        """Test inject missed move to buffer out of range."""
         self.driver.last_serial = 100
         self.driver.move_buffer = cast('Any', [
             {'serial': 105, 'event': 'move', 'move': 'R'},
@@ -296,6 +320,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.assertEqual(len(self.driver.move_buffer), 1)
 
     async def test_check_if_move_missed_no_gap(self) -> None:
+        """Test check if move missed no gap."""
         self.driver.last_serial = 100
         self.driver.serial = 100
 
@@ -305,6 +330,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_request.assert_not_called()
 
     async def test_check_if_move_missed_with_gap(self) -> None:
+        """Test check if move missed with gap."""
         self.driver.last_serial = 100
         self.driver.serial = 103
         self.driver.move_buffer = []
@@ -316,6 +342,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_request.assert_called_once_with(104, 4)
 
     async def test_check_if_move_missed_with_buffer_head(self) -> None:
+        """Test check if move missed with buffer head."""
         self.driver.last_serial = 100
         self.driver.serial = 105
         self.driver.move_buffer = cast('Any', [
@@ -329,6 +356,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_request.assert_called_once_with(103, 6)
 
     async def test_check_if_move_missed_serial_zero_case(self) -> None:
+        """Test check if move missed serial zero case."""
         self.driver.last_serial = 100
         self.driver.serial = 0  # Wraparound case
 
@@ -342,6 +370,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     async def test_event_handler_move_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler move event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -404,6 +433,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     async def test_event_handler_move_blocked_before_facelets(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler move blocked before facelets."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -438,6 +468,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self, mock_cubies_to_facelets: Mock,
             mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler facelets event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -490,6 +521,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     async def test_event_handler_facelets_with_debounce_check(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler facelets with debounce check."""
         mock_time.return_value = 123456789
         current_time = datetime.now(tz=timezone.utc)  # noqa: UP017
         old_time = datetime.fromtimestamp(
@@ -547,6 +579,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     async def test_event_handler_move_history(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler move history."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -607,6 +640,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     async def test_event_handler_hardware_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler hardware event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -660,6 +694,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     async def test_event_handler_battery_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler battery event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -695,6 +730,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     async def test_event_handler_disconnect_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler disconnect event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -728,6 +764,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     async def test_event_handler_invalid_magic_or_size(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler invalid magic or size."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -759,6 +796,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     async def test_event_handler_unknown_event(
             self, mock_logger: Mock, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler unknown event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -786,16 +824,19 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 mock_logger.debug.assert_called_once()
 
     def test_event_handler_is_async(self) -> None:
+        """Test event handler is async."""
         # Verify that event_handler is an async function
         self.assertTrue(asyncio.iscoroutinefunction(self.driver.event_handler))
 
     def test_request_move_history_is_async(self) -> None:
+        """Test request move history is async."""
         # Verify that request_move_history is an async function
         self.assertTrue(
             asyncio.iscoroutinefunction(self.driver.request_move_history),
         )
 
     def test_face_mapping_gen3(self) -> None:
+        """Test face mapping gen3."""
         # Test the Gen3 face mapping for move history
         # [1, 5, 3, 0, 4, 2] maps to URFDLB
         face_indices = [1, 5, 3, 0, 4, 2]
@@ -806,6 +847,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertEqual(face_names[face_indices[i]], expected_face)
 
     def test_move_direction_bits(self) -> None:
+        """Test move direction bits."""
         # Test move direction bits encoding for Gen3
         # [2, 32, 8, 1, 16, 4] are the bit patterns for URFDLB
         bit_patterns = [2, 32, 8, 1, 16, 4]
@@ -818,6 +860,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertEqual(face_names[i], face_names[index])
 
     def test_serial_arithmetic_wraparound(self) -> None:
+        """Test serial arithmetic wraparound."""
         # Test 8-bit serial arithmetic with wraparound
         test_cases = [
             # 1 - 255 = -254, -254 & 0xFF = 2 (with 8-bit wraparound)
@@ -833,6 +876,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertEqual(diff, expected_diff)
 
     async def test_evict_move_buffer_integration(self) -> None:
+        """Test evict move buffer integration."""
         # Integration test for the complete move buffer eviction process
         self.driver.last_serial = 100
         self.driver.move_buffer = cast('Any', [
