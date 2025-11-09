@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 
 class BaseDriver(Driver):
+    """Test driver implementation for base Driver tests."""
 
     @staticmethod
     def init_cypher() -> GanGen2CubeEncrypter:
@@ -27,6 +28,8 @@ class BaseDriver(Driver):
 
 
 class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
+    """Tests for async Driver methods."""
+
     def setUp(self) -> None:
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
@@ -40,6 +43,8 @@ class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
 
 
 class TestDriver(unittest.TestCase):
+    """Tests for Driver base class."""
+
     def setUp(self) -> None:
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'

@@ -19,33 +19,88 @@ LOGGING_PATH: Final = LOGGING_DIR / LOGGING_FILE
 
 
 class DbusSignalFilter(logging.Filter):
+    """
+    Filters out noisy D-Bus signal log messages.
+
+    Prevents logging of frequently called D-Bus internal functions to reduce
+    log verbosity and improve readability.
+    """
 
     @staticmethod
     def filter(record: logging.LogRecord) -> bool:
+        """
+        Determine whether a log record should be logged.
+
+        Args:
+            record: The log record to evaluate.
+
+        Returns:
+            False if the record is from a filtered function, True otherwise.
+
+        """
         return record.funcName not in {'_parse_msg', 'write_gatt_char'}
 
 
 class AsyncioLogHandler(logging.handlers.QueueHandler):
+    """
+    Queue-based log handler for asynchronous logging.
+
+    Sends log records to a queue for processing by a separate thread,
+    preventing blocking of the main application during log I/O operations.
+    """
 
     def __init__(self, log_queue: queue.Queue[logging.LogRecord]) -> None:
+        """
+        Initialize the async log handler with a queue.
+
+        Args:
+            log_queue: Queue to receive log records for async processing.
+
+        """
         super().__init__(log_queue)
 
 
 class AsyncioLogListener:
+    """
+    Background thread listener that processes log records from a queue.
+
+    Continuously monitors a queue for log records and dispatches them to a
+    handler in a separate daemon thread, enabling non-blocking logging.
+    """
 
     def __init__(self, log_queue: queue.Queue[logging.LogRecord],
                  handler: logging.Handler) -> None:
+        """
+        Initialize the log listener with a queue and handler.
+
+        Args:
+            log_queue: Queue from which to read log records.
+            handler: Logging handler to process the records.
+
+        """
         self.queue: queue.Queue[logging.LogRecord] = log_queue
         self.handler: logging.Handler = handler
         self._stop_event: threading.Event = threading.Event()
         self._thread: threading.Thread | None = None
 
     def start(self) -> None:
+        """
+        Start the background logging thread.
+
+        Creates and launches a daemon thread that processes log records
+        from the queue until stopped.
+        """
         self._thread = threading.Thread(target=self._process_logs)
         self._thread.daemon = True
         self._thread.start()
 
     def stop(self) -> None:
+        """
+        Stop the background logging thread gracefully.
+
+        Signals the thread to stop processing and waits for it to complete
+        any remaining work before returning.
+        """
         self._stop_event.set()
         if self._thread and self._thread.is_alive():
             self._thread.join()

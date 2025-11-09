@@ -13,6 +13,7 @@ class MockScrambler(Scrambler):
     """Mock class for testing Scrambler mixin."""
 
     def __init__(self) -> None:
+        """Initialize mock scrambler with empty reorient value."""
         self.reorient_return_value = parse_moves('')
         super().__init__()
 
@@ -21,8 +22,10 @@ class MockScrambler(Scrambler):
 
 
 class OrienterScrambler(Orienter, Scrambler):
+    """Test class combining Orienter and Scrambler."""
 
     def __init__(self, orientation_faces: str) -> None:
+        """Initialize with specified cube orientation."""
         self.orientation_faces = orientation_faces
 
 

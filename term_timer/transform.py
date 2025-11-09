@@ -16,7 +16,13 @@ from term_timer.constants import REWIDE_THRESHOLD_GYROSCOPE
 
 
 def humanize_moves_without_rotation(algorithm: Algorithm) -> Algorithm:
-    """Transform to human-readable format."""
+    """
+    Transform to human-readable format.
+
+    Returns:
+        Humanized algorithm with resliced and rewide moves.
+
+    """
     humanized = algorithm.transform(
         reslice_timed_moves(RESLICE_THRESHOLD, (2,)),
         degrip_full_moves,
@@ -32,7 +38,13 @@ def humanize_moves_without_rotation(algorithm: Algorithm) -> Algorithm:
 
 
 def humanize_moves_with_rotation(algorithm: Algorithm) -> Algorithm:
-    """Transform to human-readable format."""
+    """
+    Transform to human-readable format.
+
+    Returns:
+        Humanized algorithm with POV translations and gyroscope timing.
+
+    """
     return algorithm.transform(
         translate_pov_moves,
         reslice_timed_moves(RESLICE_THRESHOLD_GYROSCOPE, (3,)),
@@ -41,7 +53,13 @@ def humanize_moves_with_rotation(algorithm: Algorithm) -> Algorithm:
 
 
 def humanize_moves(algorithm: Algorithm) -> Algorithm:
-    """Transform to human-readable format."""
+    """
+    Transform to human-readable format.
+
+    Returns:
+        Humanized algorithm using rotation-specific or standard method.
+
+    """
     if algorithm.has_rotations:
         return humanize_moves_with_rotation(algorithm)
 
@@ -49,7 +67,13 @@ def humanize_moves(algorithm: Algorithm) -> Algorithm:
 
 
 def prettify_moves(algorithm: Algorithm) -> Algorithm:
-    """Optimize algorithm representation."""
+    """
+    Optimize algorithm representation.
+
+    Returns:
+        Optimized algorithm with timing removed and double moves merged.
+
+    """
     return algorithm.transform(
         untime_moves,
         optimize_double_moves,

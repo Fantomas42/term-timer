@@ -2,7 +2,13 @@
 
 
 def get_salt(mac_address: str) -> bytearray:
-    """Generate encryption salt array from Bluetooth MAC address."""
+    """
+    Generate encryption salt array from Bluetooth MAC address.
+
+    Returns:
+        Bytearray containing reversed MAC address bytes.
+
+    """
     mac_parts = mac_address.split(':')
 
     # Convert hex strings to integers and reverse the order

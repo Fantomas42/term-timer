@@ -9,6 +9,8 @@ from term_timer.solve import Solve
 
 
 class TestSolveModule(unittest.TestCase):
+    """Tests for Solve class initialization and properties."""
+
     def test_solve_initialization(self) -> None:
         """Test initialization of a Solve object."""
         date = 1000000000

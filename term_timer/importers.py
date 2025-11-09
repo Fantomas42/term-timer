@@ -17,9 +17,26 @@ from term_timer.solve import SolveData
 
 
 class Importer:
+    """
+    Imports solve data from external timer applications.
+
+    Supports importing from csTimer (JSON and CSV formats) and Cubeast
+    (CSV format). Converts external timer data into Term Timer's SolveData
+    format for storage and analysis.
+    """
 
     @staticmethod
     def date_to_ts(date: str) -> float:
+        """
+        Convert a date string to a Unix timestamp.
+
+        Args:
+            date: Date string in 'YYYY-MM-DD HH:MM:SS' format.
+
+        Returns:
+            Unix timestamp as a float.
+
+        """
         date_format = '%Y-%m-%d %H:%M:%S'
         dt = datetime.strptime(date, date_format)  # noqa: DTZ007
 
@@ -27,6 +44,19 @@ class Importer:
 
     @staticmethod
     def time_to_ns(time: str) -> int:
+        """
+        Convert a time string to nanoseconds.
+
+        Parses time strings in format 'MM:SS.CC' or 'SS.CC' where MM is
+        minutes, SS is seconds, and CC is centiseconds.
+
+        Args:
+            time: Time string with optional minutes and centisecond precision.
+
+        Returns:
+            Time in nanoseconds as an integer.
+
+        """
         minutes_str = '0'
         reste = time
         if ':' in time:
@@ -43,6 +73,20 @@ class Importer:
         return int(total_seconds * SECOND)
 
     def cubeast_csv(self, data: list[str]) -> list[SolveData]:
+        """
+        Parse solve data from a Cubeast CSV export file.
+
+        Extracts solve information including timestamps, solve times, DNF
+        flags, scrambles, moves with timestamps, and device information from
+        Cubeast's CSV format.
+
+        Args:
+            data: List of CSV lines from a Cubeast export file.
+
+        Returns:
+            List of SolveData dictionaries ready for storage.
+
+        """
         solves: list[SolveData] = []
 
         for _line in data[1:]:
@@ -84,6 +128,20 @@ class Importer:
         return solves
 
     def cstimer_csv(self, data: list[str]) -> list[SolveData]:
+        """
+        Parse solve data from a csTimer CSV export file.
+
+        Extracts solve information including timestamps, solve times, penalty
+        flags (DNF, +2), and scrambles from csTimer's semicolon-delimited
+        CSV format.
+
+        Args:
+            data: List of CSV lines from a csTimer export file.
+
+        Returns:
+            List of SolveData dictionaries ready for storage.
+
+        """
         solves: list[SolveData] = []
 
         for line in data[1:]:
@@ -115,6 +173,20 @@ class Importer:
 
     @staticmethod
     def cstimer_json(data: dict[str, Any]) -> list[SolveData]:
+        """
+        Parse solve data from a csTimer JSON export file.
+
+        Processes csTimer's native JSON export format, extracting solves from
+        all sessions. Filters out non-standard puzzle types and includes move
+        sequences, timestamps, penalty flags, and scrambles.
+
+        Args:
+            data: Parsed JSON data from a csTimer export file.
+
+        Returns:
+            List of SolveData dictionaries ready for storage.
+
+        """
         solves: list[SolveData] = []
         properties: dict[str, Any] = data['properties']
         session_data: dict[str, Any] = json.loads(properties['sessionData'])
@@ -175,6 +247,20 @@ class Importer:
         return solves
 
     def import_file(self, source: str) -> int:
+        """
+        Import solve data from an external timer export file.
+
+        Automatically detects the file format and timer application based on
+        file extension and content. Supports csTimer JSON/CSV and Cubeast CSV
+        formats. Prints the imported solves as JSON to stdout.
+
+        Args:
+            source: Path to the export file to import.
+
+        Returns:
+            Exit code: 0 for success, 1 for invalid format.
+
+        """
         source_path = Path(source)
 
         solves: list[SolveData] | None = None

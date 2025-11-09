@@ -53,7 +53,13 @@ port = 8333
 
 
 def load_config() -> dict[str, Any]:
-    """Load configuration from TOML file or create default."""
+    """
+    Load configuration from TOML file or create default.
+
+    Returns:
+        Dictionary containing configuration settings.
+
+    """
     if not CONFIG_FILE.exists():
         with CONFIG_FILE.open('w+') as fd:
             fd.write(DEFAULT_CONFIG)

@@ -10,6 +10,7 @@ from term_timer.orientation import get_orientation_faces
 
 
 class TestAutoRotation(unittest.TestCase):
+    """Tests for automatic orientation detection."""
 
     def test_solve_500(self) -> None:
         scramble = Algorithm.parse_moves(

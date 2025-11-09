@@ -17,5 +17,11 @@ METHOD_ANALYSERS: Final[dict[str, type[Analyser]]] = {
 
 
 def get_method_analyser(method_name: str) -> type[Analyser]:
-    """Get method analyser class for specified method name."""
+    """
+    Get method analyser class for specified method name.
+
+    Returns:
+        Analyser class for the method, defaulting to CFOPAnalyser.
+
+    """
     return METHOD_ANALYSERS.get(method_name, CFOPAnalyser)

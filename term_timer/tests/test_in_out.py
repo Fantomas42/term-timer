@@ -9,6 +9,7 @@ from term_timer.in_out import load_solves
 
 
 class TestInOut(unittest.TestCase):
+    """Tests for solve loading and saving functionality."""
 
     @patch('term_timer.in_out.SAVE_DIRECTORY', Path('/mock/path'))
     @patch('pathlib.Path.exists')

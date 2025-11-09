@@ -15,8 +15,17 @@ INVALID_DATA: Final[str] = 'Data must be at least 16 bytes long'
 
 
 class GanGen2CubeEncrypter:
+    """AES-128-CBC encrypter for GAN Gen2 cube Bluetooth protocol."""
+
     def __init__(self, key: Sequence[int], iv: Sequence[int],
                  salt: Sequence[int]) -> None:
+        """
+        Initialize encrypter with AES key, IV, and cube-specific salt.
+
+        Raises:
+            ValueError: If key, IV, or salt have incorrect lengths.
+
+        """
         if len(key) != 16:
             raise ValueError(INVALID_KEY)
         if len(iv) != 16:
@@ -66,6 +75,16 @@ class GanGen2CubeEncrypter:
             buffer[offset + i] = chunk[i]
 
     def encrypt(self, data: bytearray) -> bytes:
+        """
+        Encrypt data using AES-128-CBC.
+
+        Returns:
+            Encrypted bytes with first and last 16-byte chunks encrypted.
+
+        Raises:
+            ValueError: If data is less than 16 bytes long.
+
+        """
         if len(data) < 16:
             raise ValueError(INVALID_DATA)
 
@@ -82,6 +101,16 @@ class GanGen2CubeEncrypter:
         return bytes(res)
 
     def decrypt(self, data: bytearray) -> bytes:
+        """
+        Decrypt data using AES-128-CBC.
+
+        Returns:
+            Decrypted bytes with first and last 16-byte chunks decrypted.
+
+        Raises:
+            ValueError: If data is less than 16 bytes long.
+
+        """
         if len(data) < 16:
             raise ValueError(INVALID_DATA)
 

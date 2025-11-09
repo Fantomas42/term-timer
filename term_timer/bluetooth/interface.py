@@ -32,6 +32,23 @@ DRIVERS: Final[list[type[Driver]]] = [
 
 
 class BluetoothInterface:
+    """
+    Manages Bluetooth connection and communication with smart cubes.
+
+    This class handles device scanning, connection management, and bidirectional
+    communication with Bluetooth-enabled speedcubing smart cubes. It supports
+    multiple cube brands through a driver-based architecture.
+
+    Attributes:
+        client: The BLE client for Bluetooth communication, or None if not
+            connected.
+        driver: The cube-specific driver for handling communication protocol,
+            or None if not initialized.
+        scan_timeout: Maximum seconds to scan for Bluetooth devices.
+        connect_timeout: Maximum seconds to wait for connection establishment.
+
+    """
+
     client: BleakClient | None = None
     driver: Driver | None = None
 
@@ -39,6 +56,14 @@ class BluetoothInterface:
     connect_timeout: int = 5
 
     def __init__(self, queue: Queue[list[EventDict] | None]) -> None:
+        """
+        Initialize the Bluetooth interface with an event queue.
+
+        Args:
+            queue: Queue for delivering cube events to the application. Events
+                include moves, rotations, and battery status updates.
+
+        """
         self.queue: Queue[list[EventDict] | None] = queue
 
     async def __aenter__(
@@ -46,7 +71,29 @@ class BluetoothInterface:
             address: str | None = None,
             filter_name: str | None = None,
     ) -> 'BluetoothInterface':
-        """Enter async context manager by connecting to Bluetooth cube."""
+        """
+        Enters async context manager by connecting to a Bluetooth cube.
+
+        Scans for available cubes if no address is provided, establishes a
+        connection, identifies the appropriate driver based on the cube's
+        service UUID, and starts receiving notifications from the cube.
+
+        Args:
+            address: Specific Bluetooth device address to connect to. If None,
+                performs a scan to discover available cubes.
+            filter_name: Optional name filter to narrow device scan results.
+                Only devices containing this string will be selected.
+
+        Returns:
+            The initialized BluetoothInterface instance with an active
+            connection and configured driver.
+
+        Raises:
+            CubeNotFoundError: No compatible cube found during scan, or
+                connection failed, or no compatible driver found for the
+                connected device.
+
+        """
         if not address:
             device = await self.scan(filter_name)
 
@@ -108,6 +155,19 @@ class BluetoothInterface:
 
     async def notification_handler(self, sender: BleakGATTCharacteristic,
                                    data: bytearray) -> None:
+        """
+        Handle incoming Bluetooth notifications from the connected cube.
+
+        Processes raw Bluetooth data received from the cube by delegating to
+        the appropriate driver for parsing, then queues the resulting events
+        for consumption by the application.
+
+        Args:
+            sender: The GATT characteristic that sent the notification.
+            data: Raw byte data received from the cube containing state changes,
+                moves, or other events.
+
+        """
         self.driver = cast('Driver', self.driver)
 
         events = await self.driver.event_handler(sender, data)
@@ -118,7 +178,21 @@ class BluetoothInterface:
         await self.queue.put(events)
 
     async def send_command(self, command: str) -> bool:
-        """Send a command to the cube."""
+        """
+        Send a command to the connected Bluetooth cube.
+
+        Translates a high-level command string into the appropriate protocol
+        message using the active driver, then transmits it to the cube via
+        Bluetooth GATT characteristic write.
+
+        Args:
+            command: High-level command string (e.g., 'reset', 'battery').
+
+        Returns:
+            True if the command was successfully sent, False if not connected
+            or if the command is not recognized by the driver.
+
+        """
         if not self.client or not self.client.is_connected:
             logger.debug('Command not connected to cube')
             return False
@@ -141,6 +215,26 @@ class BluetoothInterface:
         return True
 
     async def scan(self, filter_name: str | None = None) -> BLEDevice | None:
+        """
+        Scan for available Bluetooth smart cubes in the vicinity.
+
+        Performs a Bluetooth Low Energy scan to discover nearby devices,
+        filtering for known smart cube prefixes and optionally matching a
+        specific name pattern.
+
+        Args:
+            filter_name: Optional name substring to filter discovered devices.
+                Only devices whose name contains this string will be returned.
+
+        Returns:
+            The first discovered BLE device matching the cube criteria, or None
+            if no compatible cube is found within the scan timeout period.
+
+        Raises:
+            CubeNotFoundError: Bluetooth adapter error or system-level scanning
+                failure occurred.
+
+        """
         logger.debug(
             'Scanning for cube during %ss...',
             self.scan_timeout,

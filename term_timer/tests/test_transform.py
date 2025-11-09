@@ -12,7 +12,7 @@ from term_timer.transform import prettify_moves
 
 
 class TransformReorientTestCase(unittest.TestCase):
-    # Keep for reference
+    """Tests for move reorientation transformations."""
 
     def test_reorient_moves_with_orientation(self) -> None:
         orientation = parse_moves('x y')
@@ -122,6 +122,7 @@ class TransformReorientTestCase(unittest.TestCase):
 
 
 class TransformSliceTestCase(unittest.TestCase):
+    """Tests for slice move transformations."""
 
     def test_reslice_moves_issue_01(self) -> None:
         provide = parse_moves("B' F B' F U L R' R' L D' L' R U D' D' U R L' U")
@@ -138,6 +139,7 @@ class TransformSliceTestCase(unittest.TestCase):
 
 
 class TransformPrettiyTestCase(unittest.TestCase):
+    """Tests for prettify_moves function."""
 
     def test_prettify_moves_with_double_moves(self) -> None:
         algorithm = parse_moves('R R U U')
@@ -149,6 +151,7 @@ class TransformPrettiyTestCase(unittest.TestCase):
 
 
 class TransformHumanizeTestCase(unittest.TestCase):
+    """Tests for humanize_moves function."""
 
     def test_humanize_moves_with_rotation_at_end(self) -> None:
         algorithm = parse_moves("R U R' y")

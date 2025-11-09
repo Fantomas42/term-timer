@@ -23,12 +23,34 @@ if TYPE_CHECKING:
 
 
 def format_float(value: float, precision: int = 2) -> str:
-    """Format float value with specified precision, removing trailing zeros."""
+    """
+    Format float value with specified precision, removing trailing zeros.
+
+    Args:
+        value: The float value to format.
+        precision: Number of decimal places to include (default: 2).
+
+    Returns:
+        Formatted string with trailing zeros and decimal point removed.
+
+    """
     return f'{value:.{precision}f}'.rstrip('0').rstrip('.')
 
 
 def format_time(elapsed_ns: int, *, allow_dnf: bool = True) -> str:
-    """Format elapsed time in nanoseconds to MM:SS.mmm format."""
+    """
+    Format elapsed time in nanoseconds to MM:SS.mmm format.
+
+    Args:
+        elapsed_ns: Time in nanoseconds to format.
+        allow_dnf: Whether to display DNF for zero time (default: True).
+
+    Returns:
+        Formatted time string as MM:SS.mmm or HH:MM:SS.mmm for times
+        over 1 hour, or DNF string if elapsed_ns is 0 and allow_dnf
+        is True.
+
+    """
     if not elapsed_ns and allow_dnf:
         return f'{ DNF:>9}'
 
@@ -42,12 +64,31 @@ def format_time(elapsed_ns: int, *, allow_dnf: bool = True) -> str:
 
 
 def format_duration(elapsed_ns: int) -> str:
-    """Format duration in nanoseconds to seconds with 2 decimal places."""
+    """
+    Format duration in nanoseconds to seconds with 2 decimal places.
+
+    Args:
+        elapsed_ns: Duration in nanoseconds to format.
+
+    Returns:
+        Formatted duration string in seconds with 2 decimal places.
+
+    """
     return f'{ elapsed_ns / SECOND:.2f}'
 
 
 def format_edge(edge: int, max_edge: int) -> str:
-    """Format time edge value for graph display."""
+    """
+    Format time edge value for graph display.
+
+    Args:
+        edge: The time edge value in seconds.
+        max_edge: Maximum edge value to determine formatting style.
+
+    Returns:
+        Formatted edge string with appropriate padding and units.
+
+    """
     mins, secs = divmod(int(edge), 60)
 
     if max_edge < 60:
@@ -63,7 +104,18 @@ def format_edge(edge: int, max_edge: int) -> str:
 
 
 def format_delta(delta: int) -> str:
-    """Format time delta with color coding."""
+    """
+    Format time delta with color coding.
+
+    Args:
+        delta: Time delta in nanoseconds (positive for slower,
+            negative for faster).
+
+    Returns:
+        Formatted delta string with Rich markup for color (red for
+        positive, green for negative), or empty string if delta is 0.
+
+    """
     if delta == 0:
         return ''
     style = (delta > 0 and 'red') or 'green'
@@ -75,7 +127,17 @@ def format_delta(delta: int) -> str:
 
 
 def format_score(score: float) -> str:
-    """Format solve score with color coding based on quality."""
+    """
+    Format solve score with color coding based on quality.
+
+    Args:
+        score: Numeric solve score to format.
+
+    Returns:
+        Formatted score string with Rich markup for color coding
+        (green for score >= 14, orange for 8-14, red for < 8).
+
+    """
     style = 'green'
     if score < 14:
         style = 'orange'
@@ -86,7 +148,17 @@ def format_score(score: float) -> str:
 
 
 def compute_padding(max_value: float) -> int:
-    """Compute padding width based on maximum value."""
+    """
+    Compute padding width based on maximum value.
+
+    Args:
+        max_value: The maximum value to determine padding for.
+
+    Returns:
+        Number of characters needed for padding (1 for < 10, 2 for < 100,
+        3 for < 1000, 4 for >= 1000).
+
+    """
     padding = 1
     if max_value >= 1000:
         padding = 4
@@ -99,7 +171,16 @@ def compute_padding(max_value: float) -> int:
 
 
 def format_grade(score: float) -> str:  # noqa: PLR0911
-    """Convert numeric score to letter grade."""
+    """
+    Convert numeric score to letter grade.
+
+    Args:
+        score: Numeric score to convert to letter grade.
+
+    Returns:
+        Letter grade from S (20+) to F (< 4), including plus grades.
+
+    """
     if score >= 20:
         return 'S'
     if score >= 18:
@@ -122,7 +203,16 @@ def format_grade(score: float) -> str:  # noqa: PLR0911
 
 
 def clean_url(string: str) -> str:
-    """URL-encode special characters in string for use in URLs."""
+    """
+    URL-encode special characters in string for use in URLs.
+
+    Args:
+        string: The string to URL-encode.
+
+    Returns:
+        URL-encoded string with special characters replaced.
+
+    """
     return string.replace(
         ' ', '_',
     ).replace(
@@ -139,7 +229,18 @@ def clean_url(string: str) -> str:
 
 
 def format_alg_cubing_url(title: str, setup: str, alg: str) -> str:
-    """Generate alg.cubing.net URL for algorithm visualization."""
+    """
+    Generate alg.cubing.net URL for algorithm visualization.
+
+    Args:
+        title: Title for the algorithm visualization.
+        setup: Setup moves to apply before the algorithm.
+        alg: The algorithm to visualize.
+
+    Returns:
+        Complete URL for alg.cubing.net with encoded parameters.
+
+    """
     return (
         'https://alg.cubing.net/'
         f'?title={ title }'
@@ -149,7 +250,18 @@ def format_alg_cubing_url(title: str, setup: str, alg: str) -> str:
 
 
 def format_cube_db_url(title: str, setup: str, alg: str) -> str:
-    """Generate cubedb.net URL for algorithm visualization."""
+    """
+    Generate cubedb.net URL for algorithm visualization.
+
+    Args:
+        title: Title for the algorithm visualization.
+        setup: Setup moves to apply before the algorithm.
+        alg: The algorithm to visualize.
+
+    Returns:
+        Complete URL for cubedb.net with encoded parameters.
+
+    """
     return (
         'https://cubedb.net/'
         f'?title={ title }'
@@ -160,7 +272,16 @@ def format_cube_db_url(title: str, setup: str, alg: str) -> str:
 
 def format_alg_diff(algo_a: Algorithm, algo_b: Algorithm) -> str:
     """
-    Format diff between two algorithms with markup for additions and deletions.
+    Format diff between two algorithms with markup.
+
+    Args:
+        algo_a: First algorithm for comparison.
+        algo_b: Second algorithm for comparison.
+
+    Returns:
+        Formatted string showing differences with Rich markup tags for
+        additions and deletions.
+
     """
     moves: list[str] = []
     matcher = difflib.SequenceMatcher(None, algo_a, algo_b)
@@ -201,7 +322,17 @@ def format_alg_diff(algo_a: Algorithm, algo_b: Algorithm) -> str:
 
 
 def format_alg_triggers(algorithm: str, trigger_names: list[str]) -> str:
-    """Add markup to highlight trigger patterns in algorithm string."""
+    """
+    Add markup to highlight trigger patterns in algorithm string.
+
+    Args:
+        algorithm: Algorithm string to add markup to.
+        trigger_names: List of trigger pattern names to highlight.
+
+    Returns:
+        Algorithm string with Rich markup tags around trigger patterns.
+
+    """
     for trigger_name in trigger_names:
         regex = TRIGGERS_REGEX[trigger_name]
 
@@ -220,7 +351,18 @@ def format_alg_triggers(algorithm: str, trigger_names: list[str]) -> str:
 
 
 def format_alg_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
-    """Add markup to highlight pre-AUF and post-AUF moves in algorithm."""
+    """
+    Add markup to highlight pre-AUF and post-AUF moves in algorithm.
+
+    Args:
+        algorithm: Algorithm string to add markup to.
+        pre_auf: Number of pre-AUF moves present.
+        post_auf: Number of post-AUF moves present.
+
+    Returns:
+        Algorithm string with Rich markup tags around AUF moves.
+
+    """
     if pre_auf and algorithm:
         algorithm_parts = algorithm.split(' ')
         for i, move in enumerate(algorithm_parts):
@@ -244,7 +386,19 @@ def format_alg_aufs(algorithm: str, pre_auf: int, post_auf: int) -> str:
 
 def format_alg_pauses(algorithm: str, solve: 'Solve', step: StepSummary,
                       *, multiple: bool = False) -> str:
-    """Add markup to highlight pauses in algorithm execution."""
+    """
+    Add markup to highlight pauses in algorithm execution.
+
+    Args:
+        algorithm: Algorithm string to add markup to.
+        solve: Solve object containing pause threshold information.
+        step: Step summary containing post-pause timing data.
+        multiple: Whether to show multiple pause markers (default: False).
+
+    Returns:
+        Algorithm string with Rich markup tags around pause markers.
+
+    """
     post = int(step['post_pause'] / solve.pause_threshold)
     if post:
         algorithm += f' [reco-pause]{ PAUSE_CHAR }[/reco-pause]' * (
@@ -258,7 +412,18 @@ def format_alg_pauses(algorithm: str, solve: 'Solve', step: StepSummary,
 
 
 def format_alg_moves(algorithm: str) -> str:
-    """Add markup to highlight different move types (wide, slice, rotation)."""
+    """
+    Add markup to highlight different move types.
+
+    Args:
+        algorithm: Algorithm string to add markup to.
+
+    Returns:
+        Algorithm string with Rich markup tags around wide moves,
+        slice moves, and rotations, or empty string if algorithm
+        is empty.
+
+    """
     if not algorithm:
         return ''
 

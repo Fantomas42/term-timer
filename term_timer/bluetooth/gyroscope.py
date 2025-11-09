@@ -18,6 +18,21 @@ NO_ROTATION_THRESHOLD: Final = 0.9999
 
 @dataclass
 class Quaternion:
+    """
+    Represents a quaternion for 3D rotation calculations.
+
+    A quaternion is a mathematical construct used to represent rotations in
+    3D space. It consists of four components: a scalar part (w) and a
+    vector part (x, y, z).
+
+    Attributes:
+        w: Scalar component of the quaternion.
+        x: X component of the vector part.
+        y: Y component of the vector part.
+        z: Z component of the vector part.
+
+    """
+
     w: float
     x: float
     y: float
@@ -26,17 +41,48 @@ class Quaternion:
     @classmethod
     def from_dict_raw(cls, q: QuaternionDict) -> 'Quaternion':
         """
-        Create quaternion from dict in raw sensor frame.
+        Create a quaternion from a dictionary in raw sensor frame.
 
-        Used for normalization calculations
-        before applying coordinate transform.
+        Used for normalization calculations before applying coordinate
+        transform.
+
+        Args:
+            q: Dictionary containing quaternion components with keys 'w',
+                'x', 'y', 'z'.
+
+        Returns:
+            Quaternion instance with components from the input dictionary.
+
         """
         return cls(w=q['w'], x=q['x'], y=q['y'], z=q['z'])
 
     def conjugate(self) -> 'Quaternion':
+        """
+        Compute the conjugate of this quaternion.
+
+        The conjugate of a quaternion (w, x, y, z) is (w, -x, -y, -z).
+        For unit quaternions, the conjugate represents the inverse rotation.
+
+        Returns:
+            New Quaternion instance representing the conjugate.
+
+        """
         return Quaternion(self.w, -self.x, -self.y, -self.z)
 
     def multiply(self, other: 'Quaternion') -> 'Quaternion':
+        """
+        Multiply this quaternion with another quaternion.
+
+        Quaternion multiplication combines two rotations. The operation is
+        non-commutative, meaning order matters.
+
+        Args:
+            other: The quaternion to multiply with.
+
+        Returns:
+            New Quaternion representing the combined rotation.
+
+        """
         w = (
             self.w * other.w
             - self.x * other.x
@@ -64,6 +110,18 @@ class Quaternion:
         return Quaternion(w, x, y, z)
 
     def normalize(self) -> 'Quaternion':
+        """
+        Normalize this quaternion to unit length.
+
+        A normalized quaternion has a magnitude of 1 and represents a pure
+        rotation without scaling. If the magnitude is near zero, returns
+        the identity quaternion.
+
+        Returns:
+            New Quaternion with unit length, or identity if magnitude is
+            near zero.
+
+        """
         norm = math.sqrt(self.w**2 + self.x**2 + self.y**2 + self.z**2)
         if norm < QUATERNION_EPSILON:
             return Quaternion(1.0, 0.0, 0.0, 0.0)
@@ -75,7 +133,18 @@ class Quaternion:
         )
 
     def to_axis_angle(self) -> tuple[tuple[float, float, float], float]:
-        """Convert quaternion to axis-angle representation."""
+        """
+        Convert quaternion to axis-angle representation.
+
+        The axis-angle representation expresses a rotation as a unit vector
+        (the axis) and an angle of rotation around that axis.
+
+        Returns:
+            Tuple containing the rotation axis as (x, y, z) and the rotation
+            angle in radians. Returns ((1.0, 0.0, 0.0), 0.0) for negligible
+            rotations.
+
+        """
         # Normalize first
         q = self.normalize()
 
@@ -103,9 +172,26 @@ class RotationDetector:
     This detector tracks the absolute orientation of the cube and detects
     rotations by comparing the current orientation against the orientation
     at the time of the last detected rotation.
+
+    Attributes:
+        rotation_threshold: Minimum rotation angle in degrees to detect.
+        initial_orientation: First quaternion received, used as neutral
+            orientation for normalizing all subsequent measurements.
+        last_rotation_orientation: Orientation at the last detected rotation,
+            used as reference point for detecting the next rotation.
+
     """
 
     def __init__(self, rotation_threshold: float = ROTATION_THRESHOLD) -> None:
+        """
+        Initialize the rotation detector.
+
+        Args:
+            rotation_threshold: Minimum rotation angle in degrees required
+                to register as a detected rotation. Defaults to the value
+                from config.ROTATION_THRESHOLD.
+
+        """
         self.rotation_threshold = rotation_threshold
 
         # Initial orientation used to normalize all measurements
@@ -119,7 +205,23 @@ class RotationDetector:
             q1: Quaternion,
             q2: Quaternion,
     ) -> RotationResult | None:
-        """Calculate rotation between two quaternions."""
+        """
+        Calculate the rotation between two quaternion orientations.
+
+        Computes the relative rotation from q1 to q2, converts it to
+        axis-angle representation, and determines the rotation type using
+        cube notation (x, y, z with optional prime or 2 suffix).
+
+        Args:
+            q1: Starting orientation quaternion.
+            q2: Ending orientation quaternion.
+
+        Returns:
+            Dictionary with 'rotation' (cube notation string) and 'angle_deg'
+            (rotation angle in degrees), or None if rotation is below the
+            threshold.
+
+        """
         # Calculate relative rotation: q_rel = q2 * q1^-1
         q_rel = q2.multiply(q1.conjugate()).normalize()
 
@@ -170,16 +272,27 @@ class RotationDetector:
             quaternion_dict: QuaternionDict,
     ) -> RotationResult | None:
         """
-        Process a gyro event and return detected rotation if any.
+        Process a gyroscope event and detect cube rotations.
 
         Tracks the absolute orientation of the cube and detects rotations
         by comparing current orientation against the orientation at the last
         detected rotation. This approach naturally accumulates slow rotations
         and works well in real-time without needing time windows.
 
-        The first quaternion received defines the neutral/identity orientation.
-        All rotations are computed in the raw sensor frame, then the rotation
-        axis is transformed to match the display coordinate system.
+        The first quaternion received defines the neutral/identity
+        orientation. All rotations are computed in the raw sensor frame,
+        then the rotation axis is transformed to match the display
+        coordinate system.
+
+        Args:
+            quaternion_dict: Dictionary containing quaternion components
+                from the gyroscope sensor.
+
+        Returns:
+            Dictionary with rotation information if a rotation exceeding the
+            threshold is detected, None otherwise. On first call, returns
+            None while initializing the reference orientation.
+
         """
         # Work entirely in raw sensor frame
         absolute_raw = Quaternion.from_dict_raw(quaternion_dict)

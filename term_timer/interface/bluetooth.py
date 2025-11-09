@@ -49,13 +49,22 @@ class Bluetooth:
         solve_completed_event: asyncio.Event
 
         # Methods from Terminal mixin
-        def clear_line(self, *, full: bool) -> None: ...
+        def clear_line(self, *, full: bool) -> None:
+            """Clear current terminal line."""
+            ...
+
         # Methods from Scrambler mixin
-        def handle_scrambled(self, timed_move: Move) -> None: ...
+        def handle_scrambled(self, timed_move: Move) -> None:
+            """Handle a move during scrambling phase."""
+            ...
+
         # Methods from Gesture mixin
-        def handle_save_gestures(self, move: Move) -> None: ...
+        def handle_save_gestures(self, move: Move) -> None:
+            """Handle a move during gesture saving phase."""
+            ...
 
     def __init__(self) -> None:
+        """Initialize Bluetooth integration state and event queues."""
         super().__init__()
 
         self.moves: list[MoveInfo] = []
@@ -73,7 +82,14 @@ class Bluetooth:
 
     async def bluetooth_connect(self) -> bool:
         """
-        Connect to a Bluetooth cube.
+        Connect to a Bluetooth cube and initialize device communication.
+
+        Scans for or connects to a Bluetooth cube, requests initial state,
+        and waits for hardware and facelet information to be received.
+
+        Returns:
+            True if connection and initialization succeeded, False otherwise.
+
         """
         address = BLUETOOTH_CONFIG.get('address', '')
 
@@ -156,9 +172,7 @@ class Bluetooth:
             return True
 
     async def bluetooth_disconnect(self) -> None:
-        """
-        Disconnect from the Bluetooth cube if connected.
-        """
+        """Disconnect from the Bluetooth cube if connected."""
         if (
                 self.bluetooth_interface
                 and self.bluetooth_interface.client
@@ -175,9 +189,7 @@ class Bluetooth:
 
     @property
     def bluetooth_device_label(self) -> str:
-        """
-        Get a formatted label for the connected Bluetooth device.
-        """
+        """Get a formatted label with device name, version, and battery."""
         if not self.bluetooth_interface or not self.bluetooth_interface.client:
             return ''
 
@@ -201,7 +213,12 @@ class Bluetooth:
 
     async def bluetooth_consumer(self) -> None:  # noqa: C901
         """
-        Consume events from the Bluetooth queue and process them.
+        Consume events from Bluetooth queue and dispatch to handlers.
+
+        Processes hardware, battery, facelets, move, and gyroscope events
+        from the Bluetooth cube, updating state and triggering appropriate
+        handlers based on event type.
+
         """
         if not self.bluetooth_queue:
             return
@@ -261,7 +278,14 @@ class Bluetooth:
 
     def handle_hardware_event(self, event: EventDict) -> None:
         """
-        Extract hardware information from various hardware event types.
+        Extract and store hardware info from various event types.
+
+        Processes hardware events to extract device name, version numbers,
+        production date, and serial number into bluetooth_hardware dict.
+
+        Args:
+            event: Hardware event containing device information.
+
         """
         if 'hardware_name' in event:
             name_event = cast(
@@ -311,6 +335,15 @@ class Bluetooth:
     ) -> None:
         """
         Handle a move or rotation event from the Bluetooth cube.
+
+        Processes cube moves based on current state: passes to scramble
+        handler during scrambling, records moves during solving, and
+        triggers solve completion when cube becomes solved.
+
+        Args:
+            event: Move or rotation event containing move notation, clock
+                time, and event type.
+
         """
         move = event['move']
         clock = event['clock']
@@ -357,5 +390,9 @@ class Bluetooth:
     def cube_is_solved(self) -> bool:
         """
         Check if the Bluetooth cube is in solved state.
+
+        Returns:
+            True if cube is solved, False otherwise or if no cube connected.
+
         """
         return self.bluetooth_cube.is_solved if self.bluetooth_cube else False

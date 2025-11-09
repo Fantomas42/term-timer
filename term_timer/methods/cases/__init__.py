@@ -19,6 +19,7 @@ CASES_MASKS: dict[str, dict[str, CaseMaskInfo]] = {}
 
 
 def load_cases(path: Path) -> None:
+    """Load case definitions from JSON file into CASES and CASES_MASKS."""
     case_type = path.name.replace('.json', '').upper()
     cases = CASES.setdefault(case_type, {})
     cases_masks = CASES_MASKS.setdefault(case_type, {})

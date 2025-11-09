@@ -9,6 +9,12 @@ from term_timer.methods.types import StepSummary
 
 
 class LBLAnalyser(Analyser):
+    """
+    Analyser for Layer-by-Layer solving method.
+
+    Tracks solve progress through Cross, F1L, F2L, and Last Layer steps.
+    """
+
     name = 'LBL'
     step_list = ('Cross', 'F1L', 'F2L', 'LL')
     norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
@@ -29,6 +35,13 @@ class LBLAnalyser(Analyser):
 
     def compute_progress(self, facelets: str,
                          progress: int) -> tuple[int, list[str]]:
+        """
+        Calculate solve progress through LBL steps.
+
+        Returns:
+            Tuple of (current step index, list of case identifiers).
+
+        """
         current_progress = progress
 
         for name in self.step_list[progress:-1]:
@@ -41,6 +54,11 @@ class LBLAnalyser(Analyser):
 
     @staticmethod
     def correct_summary(summary: list[StepSummary]) -> None:
+        """
+        Apply LBL-specific corrections to step summary.
+
+        Inserts skipped F1L step if necessary.
+        """
         # Skipped F1L insert
         if summary[1]['name'] != 'F1L':
             summary.insert(

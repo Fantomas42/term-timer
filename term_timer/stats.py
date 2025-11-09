@@ -34,7 +34,21 @@ if TYPE_CHECKING:
 
 
 class StatisticsTools:
+    """
+    Provides core statistical calculation tools for solve sessions.
+
+    This class handles the fundamental calculations for solve statistics
+    including mean of N (mo), average of N (ao), and best results.
+    """
+
     def __init__(self, stack: list[Solve]) -> None:
+        """
+        Initialize the statistics tools with a stack of solves.
+
+        Args:
+            stack: List of Solve objects to analyze.
+
+        """
         self.stack = stack
         self.stack_time = [
             s.final_time for s in stack
@@ -45,6 +59,17 @@ class StatisticsTools:
 
     @staticmethod
     def mo(limit: int, stack_elapsed: list[int]) -> int:
+        """
+        Calculate the mean of N (moN) for the last N solve times.
+
+        Args:
+            limit: Number of most recent solves to include.
+            stack_elapsed: List of solve times in milliseconds.
+
+        Returns:
+            Mean time in milliseconds, or -1 if insufficient solves.
+
+        """
         if limit > len(stack_elapsed):
             return -1
 
@@ -52,6 +77,20 @@ class StatisticsTools:
 
     @staticmethod
     def ao(limit: int, stack_elapsed: list[int]) -> int:
+        """
+        Calculate the average of N (aoN) excluding best/worst times.
+
+        Removes the top and bottom 5% of times before averaging, following
+        WCA (World Cube Association) competition rules.
+
+        Args:
+            limit: Number of most recent solves to include.
+            stack_elapsed: List of solve times in milliseconds.
+
+        Returns:
+            Average time in milliseconds, or -1 if insufficient solves.
+
+        """
         if limit > len(stack_elapsed):
             return -1
 
@@ -65,6 +104,19 @@ class StatisticsTools:
         return int(np.mean(last_of))
 
     def best_mo(self, limit: int) -> int:
+        """
+        Find the best mean of N across all rolling windows.
+
+        Iterates through all possible consecutive solve windows to find
+        the minimum mean time.
+
+        Args:
+            limit: Window size for calculating mean.
+
+        Returns:
+            Best mean time in milliseconds, or 0 if no valid windows.
+
+        """
         mos: list[int] = []
         stack = list(self.stack_time[:-1])
 
@@ -85,6 +137,19 @@ class StatisticsTools:
         return 0
 
     def best_ao(self, limit: int) -> int:
+        """
+        Find the best average of N across all rolling windows.
+
+        Iterates through all possible consecutive solve windows to find
+        the minimum average time.
+
+        Args:
+            limit: Window size for calculating average.
+
+        Returns:
+            Best average time in milliseconds, or 0 if no valid windows.
+
+        """
         aos: list[int] = []
         stack = list(self.stack_time[:-1])
 
@@ -106,85 +171,218 @@ class StatisticsTools:
 
 
 class Statistics(StatisticsTools):  # noqa: PLR0904
+    """
+    Computes comprehensive statistics for solve sessions.
+
+    Extends StatisticsTools with cached properties for commonly used
+    statistics like best/worst times, averages, and distribution analysis.
+    """
 
     @cached_property
     def bpa(self) -> int:
+        """
+        Calculate best of 3 average (mean of 3 fastest times).
+
+        Returns:
+            Average of 3 best times in milliseconds, or 0 if insufficient.
+
+        """
         if self.stack_time_sorted:
             return int(np.mean(self.stack_time_sorted[:3]))
         return 0
 
     @cached_property
     def wpa(self) -> int:
+        """
+        Calculate worst of 3 average (mean of 3 slowest times).
+
+        Returns:
+            Average of 3 worst times in milliseconds, or 0 if insufficient.
+
+        """
         if self.stack_time_sorted:
             return int(np.mean(self.stack_time_sorted[-3:]))
         return 0
 
     @cached_property
     def mo3(self) -> int:
+        """
+        Calculate mean of last 3 solves.
+
+        Returns:
+            Mean of 3 in milliseconds, or -1 if insufficient solves.
+
+        """
         return self.mo(3, self.stack_time)
 
     @cached_property
     def ao5(self) -> int:
+        """
+        Calculate average of last 5 solves.
+
+        Returns:
+            Average of 5 in milliseconds, or -1 if insufficient solves.
+
+        """
         return self.ao(5, self.stack_time)
 
     @cached_property
     def ao12(self) -> int:
+        """
+        Calculate average of last 12 solves.
+
+        Returns:
+            Average of 12 in milliseconds, or -1 if insufficient solves.
+
+        """
         return self.ao(12, self.stack_time)
 
     @cached_property
     def ao100(self) -> int:
+        """
+        Calculate average of last 100 solves.
+
+        Returns:
+            Average of 100 in milliseconds, or -1 if insufficient solves.
+
+        """
         return self.ao(100, self.stack_time)
 
     @cached_property
     def ao1000(self) -> int:
+        """
+        Calculate average of last 1000 solves.
+
+        Returns:
+            Average of 1000 in milliseconds, or -1 if insufficient solves.
+
+        """
         return self.ao(1000, self.stack_time)
 
     @cached_property
     def best_mo3(self) -> int:
+        """
+        Find best mean of 3 across all windows.
+
+        Returns:
+            Best mo3 in milliseconds, or 0 if no valid windows.
+
+        """
         return self.best_mo(3)
 
     @cached_property
     def best_ao5(self) -> int:
+        """
+        Find best average of 5 across all windows.
+
+        Returns:
+            Best ao5 in milliseconds, or 0 if no valid windows.
+
+        """
         return self.best_ao(5)
 
     @cached_property
     def best_ao12(self) -> int:
+        """
+        Find best average of 12 across all windows.
+
+        Returns:
+            Best ao12 in milliseconds, or 0 if no valid windows.
+
+        """
         return self.best_ao(12)
 
     @cached_property
     def best_ao100(self) -> int:
+        """
+        Find best average of 100 across all windows.
+
+        Returns:
+            Best ao100 in milliseconds, or 0 if no valid windows.
+
+        """
         return self.best_ao(100)
 
     @cached_property
     def best_ao1000(self) -> int:
+        """
+        Find best average of 1000 across all windows.
+
+        Returns:
+            Best ao1000 in milliseconds, or 0 if no valid windows.
+
+        """
         return self.best_ao(1000)
 
     @cached_property
     def best(self) -> int:
+        """
+        Return the fastest solve time.
+
+        Returns:
+            Best time in milliseconds, or 0 if no solves.
+
+        """
         if self.stack_time_sorted:
             return self.stack_time_sorted[0]
         return 0
 
     @cached_property
     def worst(self) -> int:
+        """
+        Return the slowest solve time.
+
+        Returns:
+            Worst time in milliseconds, or 0 if no solves.
+
+        """
         if self.stack_time_sorted:
             return self.stack_time_sorted[-1]
         return 0
 
     @cached_property
     def mean(self) -> int:
+        """
+        Calculate mean time across all solves.
+
+        Returns:
+            Mean time in milliseconds.
+
+        """
         return int(np.mean(self.stack_time))
 
     @cached_property
     def median(self) -> int:
+        """
+        Calculate median time across all solves.
+
+        Returns:
+            Median time in milliseconds.
+
+        """
         return int(np.median(self.stack_time))
 
     @cached_property
     def stdev(self) -> int:
+        """
+        Calculate standard deviation of solve times.
+
+        Returns:
+            Standard deviation in milliseconds.
+
+        """
         return int(np.std(self.stack_time))
 
     @cached_property
     def delta(self) -> int:
+        """
+        Calculate time difference between last two solves.
+
+        Returns:
+            Time delta in milliseconds (positive if slower, negative if
+            faster).
+
+        """
         return (
             self.stack[-1].time
             - self.stack[-2].time
@@ -192,24 +390,63 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
 
     @cached_property
     def total(self) -> int:
+        """
+        Return total number of solves in the session.
+
+        Returns:
+            Count of solves.
+
+        """
         return len(self.stack)
 
     @cached_property
     def total_time(self) -> int:
+        """
+        Calculate cumulative time spent solving.
+
+        Returns:
+            Total time in milliseconds.
+
+        """
         return sum(self.stack_time)
 
     @cached_property
     def advanced_solves(self) -> float:
+        """
+        Calculate ratio of advanced solves with method analysis.
+
+        Returns:
+            Proportion of advanced solves (0.0 to 1.0).
+
+        """
         return sum(1 for s in self.stack if s.advanced) / self.total
 
     @cached_property
     def score(self) -> float:
+        """
+        Calculate average score across all advanced solves.
+
+        Returns:
+            Mean score value across all solves with method analysis.
+
+        """
         return sum(
             cast('float', s.score) for s in self.stack if s.advanced
         ) / self.total
 
     @cached_property
     def repartition(self) -> list[tuple[int, int]]:
+        """
+        Compute time distribution histogram for solve times.
+
+        Creates histogram bins based on the time range and returns count
+        and edge value for each non-empty bin.
+
+        Returns:
+            List of tuples containing (count, bin_edge) for distribution
+            visualization.
+
+        """
         gap = (self.worst - self.best) / SECOND
 
         best_bin = STATS_CONFIG.get('distribution', 0)
@@ -240,8 +477,23 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
 
 
 class StatisticsReporter(Statistics):
+    """
+    Formats and displays statistics for solve sessions.
+
+    Extends Statistics with methods for presenting data through the
+    console, including formatted summaries, detailed solve analysis, and
+    graphical visualizations.
+    """
 
     def __init__(self, cube_size: int, stack: list[Solve]) -> None:
+        """
+        Initialize the statistics reporter.
+
+        Args:
+            cube_size: Dimension of the cube (e.g., 3 for 3x3x3).
+            stack: List of Solve objects to analyze.
+
+        """
         self.cube_size = cube_size
         self.cube_name = f'{ cube_size }x{ cube_size }x{ cube_size }'
 
@@ -249,6 +501,18 @@ class StatisticsReporter(Statistics):
 
     def resume(self, prefix: str = '', style: str = 'stats', *,  # noqa: C901
                show_title: bool = False) -> None:
+        """
+        Display comprehensive statistics summary to the console.
+
+        Shows total solves, timing statistics, averages, and distribution
+        histogram formatted for terminal output.
+
+        Args:
+            prefix: String to prepend to each line for indentation.
+            style: Rich console style name for formatting labels.
+            show_title: Whether to display the cube name title.
+
+        """
         if show_title:
             console.print(
                 f'[title]Statistics for { self.cube_name }[/title]',
@@ -364,6 +628,15 @@ class StatisticsReporter(Statistics):
                 )
 
     def listing(self, limit: int, sorting: str) -> None:
+        """
+        Display a formatted list of solves to the console.
+
+        Args:
+            limit: Number of solves to display (positive for first N,
+                negative for last N, 0 for all).
+            sorting: Sort order, either 'time' or 'chronological'.
+
+        """
         console.print(
             f'[title]Listing for { self.cube_name }[/title]',
         )
@@ -429,6 +702,24 @@ class StatisticsReporter(Statistics):
             show_tps_graph: bool,
             show_time_graph: bool,
             show_recognition_graph: bool) -> None:
+        """
+        Display detailed analysis for a specific solve.
+
+        Shows comprehensive metrics including timing, method analysis,
+        recognition/execution breakdown, and optional visualizations.
+
+        Args:
+            solve_id: 1-based index of the solve to analyze.
+            method: Solving method name for analysis (e.g., 'CFOP').
+            orientation: Cube orientation string (e.g., 'UF').
+            show_cube: Whether to display scrambled cube state.
+            show_reconstruction: Whether to show move sequence breakdown.
+            show_tps_graph: Whether to display turns per second graph.
+            show_time_graph: Whether to display timing breakdown graph.
+            show_recognition_graph: Whether to display recognition timing
+                graph.
+
+        """
         try:
             solve = self.stack[solve_id - 1]
         except IndexError:
@@ -644,6 +935,20 @@ class StatisticsReporter(Statistics):
     @staticmethod
     def case_table(title: str, items: dict[str, CaseStats],
                    sorting: str, ordering: str) -> None:
+        """
+        Display a formatted table of case statistics.
+
+        Creates a Rich table showing detailed statistics for algorithm
+        cases (e.g., OLL, PLL) with timing, frequency, and performance
+        metrics.
+
+        Args:
+            title: Case type name (e.g., 'OLL', 'PLL').
+            items: Dictionary mapping case names to their statistics.
+            sorting: Column name to sort by.
+            ordering: Sort direction, either 'asc' or 'desc'.
+
+        """
         table = Table(title=f'{ title }s', box=box.SIMPLE)
         table.add_column('Case', width=10)
         table.add_column('Σ', width=3)
@@ -717,6 +1022,20 @@ class StatisticsReporter(Statistics):
     def cfop(self, analyses: MethodAnalysis,
              *, oll_only: bool = False, pll_only: bool = False,
              sorting: str = 'count', ordering: str = 'asc') -> None:
+        """
+        Display CFOP method analysis with OLL/PLL case statistics.
+
+        Shows detailed case-by-case statistics for the CFOP solving method,
+        including overall grade and performance metrics.
+
+        Args:
+            analyses: Dictionary containing method analysis data.
+            oll_only: Whether to show only OLL statistics.
+            pll_only: Whether to show only PLL statistics.
+            sorting: Column name to sort cases by.
+            ordering: Sort direction, either 'asc' or 'desc'.
+
+        """
         if sorting == 'case':
             sorting = 'label'
 
@@ -739,6 +1058,12 @@ class StatisticsReporter(Statistics):
         )
 
     def graph(self) -> None:
+        """
+        Display a terminal-based graph of solve times and trends.
+
+        Plots individual solve times along with rolling ao5 and ao12
+        averages to visualize performance trends over the session.
+        """
         ao5s = []
         ao12s = []
         times = []

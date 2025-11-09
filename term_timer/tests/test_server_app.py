@@ -33,6 +33,8 @@ from term_timer.server.app import parse_case_name
 
 
 class TestConstants(unittest.TestCase):
+    """Tests for server app constants."""
+
     def test_class_conversion_constants(self) -> None:
         self.assertEqual(CLASS_CONVERTION['red'], 'deletion')
         self.assertEqual(CLASS_CONVERTION['green'], 'addition')
@@ -60,6 +62,8 @@ class TestConstants(unittest.TestCase):
 
 
 class TestFormatDelta(unittest.TestCase):
+    """Tests for format_delta function."""
+
     def test_format_delta_zero(self) -> None:
         result = format_delta(0)
         self.assertEqual(result, '')
@@ -78,6 +82,8 @@ class TestFormatDelta(unittest.TestCase):
 
 
 class TestFormatScore(unittest.TestCase):
+    """Tests for format_score function."""
+
     def test_format_score_good(self) -> None:
         result = format_score(15, 'Test: ')
         expected = '<span class="stat-good">Test: 15.00</span>'
@@ -114,6 +120,8 @@ class TestFormatScore(unittest.TestCase):
 
 
 class TestFormatLine(unittest.TestCase):
+    """Tests for format_line function."""
+
     def test_format_line_empty_value(self) -> None:
         result = format_line('')
         self.assertEqual(result, '')
@@ -155,6 +163,8 @@ class TestFormatLine(unittest.TestCase):
 
 
 class TestParseCaseName(unittest.TestCase):
+    """Tests for parse_case_name function."""
+
     def test_parse_case_name_with_code_and_name(self) -> None:
         code, name, step_type = parse_case_name('OLL01 T-Shape', 'OLL')
         self.assertEqual(code, 'OLL01')
@@ -187,6 +197,8 @@ class TestParseCaseName(unittest.TestCase):
 
 
 class TestNormalizeValue(unittest.TestCase):
+    """Tests for normalize_value function."""
+
     def test_normalize_value(self) -> None:
         mock_method_applied = Mock()
         mock_method_applied.normalize_value.return_value = 'good'
@@ -201,6 +213,8 @@ class TestNormalizeValue(unittest.TestCase):
 
 
 class TestNormalizePercent(unittest.TestCase):
+    """Tests for normalize_percent function."""
+
     def test_normalize_percent(self) -> None:
         mock_method_applied = Mock()
         mock_method_applied.normalize_value.return_value = 'warning'
@@ -217,6 +231,8 @@ class TestNormalizePercent(unittest.TestCase):
 
 
 class TestRichHandler(unittest.TestCase):
+    """Tests for RichHandler class."""
+
     def setUp(self) -> None:
         # Create a mock request, client_address, and server for RichHandler
         self.handler = RichHandler.__new__(RichHandler)
@@ -253,6 +269,8 @@ class TestRichHandler(unittest.TestCase):
 
 
 class TestView(unittest.TestCase):
+    """Tests for View base class."""
+
     def test_view_abstract_get_context(self) -> None:
         view = View()
         with self.assertRaises(NotImplementedError):
@@ -314,6 +332,8 @@ class TestView(unittest.TestCase):
 
 
 class TestError404View(unittest.TestCase):
+    """Tests for Error404View class."""
+
     def test_error404_view_get_context(self) -> None:
         mock_error = Mock()
         mock_error.body = 'Page not found'
@@ -333,6 +353,8 @@ class TestError404View(unittest.TestCase):
 
 
 class TestError500View(unittest.TestCase):
+    """Tests for Error500View class."""
+
     def test_error500_view_get_context(self) -> None:
         mock_error = Mock()
         mock_error.body = 'Internal server error'
@@ -356,6 +378,8 @@ class TestError500View(unittest.TestCase):
 
 
 class TestSessionListView(unittest.TestCase):
+    """Tests for SessionListView class."""
+
     @patch('term_timer.server.app.load_all_solves')
     @patch('term_timer.server.app.Statistics')
     def test_session_list_view_get_context(
@@ -416,6 +440,8 @@ class TestSessionListView(unittest.TestCase):
 
 
 class TestSessionDetailView(unittest.TestCase):
+    """Tests for SessionDetailView class."""
+
     @patch('term_timer.server.app.SolvesMethodAggregator')
     @patch('term_timer.server.app.StatisticsReporter')
     @patch('term_timer.server.app.load_all_solves')
@@ -579,6 +605,7 @@ class TestSessionDetailView(unittest.TestCase):
 
 
 class TestSolveDetailView(unittest.TestCase):
+    """Tests for SolveDetailView class."""
 
     @staticmethod
     @patch('term_timer.server.app.load_all_solves')
@@ -672,6 +699,8 @@ class TestSolveDetailView(unittest.TestCase):
 
 
 class TestSolveUpdateView(unittest.TestCase):
+    """Tests for SolveUpdateView class."""
+
     @patch('term_timer.server.app.redirect')
     @patch('term_timer.server.app.save_solves')
     @patch('term_timer.server.app.load_all_solves')
@@ -700,6 +729,8 @@ class TestSolveUpdateView(unittest.TestCase):
 
 
 class TestSolveDeleteView(unittest.TestCase):
+    """Tests for SolveDeleteView class."""
+
     @patch('term_timer.server.app.redirect')
     @patch('term_timer.server.app.save_solves')
     @patch('term_timer.server.app.load_all_solves')
@@ -731,6 +762,8 @@ class TestSolveDeleteView(unittest.TestCase):
 
 
 class TestServer(unittest.TestCase):
+    """Tests for Server class."""
+
     def setUp(self) -> None:
         self.server = Server()
 

@@ -5,9 +5,7 @@ from collections.abc import Iterable
 
 
 class Controler:
-    """
-    Mixin providing async task control utilities.
-    """
+    """Mixin providing async task control utilities."""
 
     @staticmethod
     async def wait_control(
@@ -15,6 +13,10 @@ class Controler:
     ) -> set[asyncio.Task[object]]:
         """
         Wait for first task to complete, then cancel remaining tasks.
+
+        Returns:
+            Set of completed tasks.
+
         """
         done, pending = await asyncio.wait(
             tasks,

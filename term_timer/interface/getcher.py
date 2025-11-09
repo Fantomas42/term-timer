@@ -19,15 +19,42 @@ logger = logging.getLogger(__name__)
 class Getcher:
     """
     Mixin providing async character input from terminal.
+
+    This mixin provides cross-platform asynchronous character input
+    functionality for terminal applications. It handles platform-specific
+    differences between Windows and Unix-like systems.
     """
 
     if TYPE_CHECKING:
         # Methods from Terminal mixin
-        def clear_line(self, *, full: bool) -> None: ...
+        def clear_line(self, *, full: bool) -> None:
+            """
+            Clear the current line in the terminal.
+
+            Args:
+                full: If True, clear the entire line. If False, clear from
+                    cursor position to end of line.
+
+            """
+            ...
 
     async def getch(self, mode: str, timeout: float | None = None) -> str:  # noqa: ASYNC109
         """
         Get a character from the terminal asynchronously.
+
+        Reads a single character from the terminal using platform-specific
+        methods. Clears the terminal line after reading and logs the
+        operation.
+
+        Args:
+            mode: Description of the current input mode for logging purposes.
+            timeout: Maximum time in seconds to wait for input. If None,
+                waits indefinitely.
+
+        Returns:
+            The character read from terminal, or empty string if timeout
+            occurs or an error happens.
+
         """
         logger.info('Getch %s', mode.upper())
 
@@ -46,12 +73,25 @@ class Getcher:
     async def getch_windows(timeout: float | None = None) -> str:  # noqa: ASYNC109
         """
         Get a character from terminal on Windows platform.
+
+        Uses msvcrt module to poll for keyboard input asynchronously on
+        Windows. Polls every 10ms until a key is pressed or timeout occurs.
+
+        Args:
+            timeout: Maximum time in seconds to wait for input. If None,
+                waits indefinitely.
+
+        Returns:
+            The character read from terminal, or empty string if timeout
+            occurs or an error happens.
+
         """
         loop = asyncio.get_running_loop()
         future = loop.create_future()
         ch = ''
 
         def windows_getch() -> None:
+            """Poll for keyboard input and resolve future when key pressed."""
             try:
                 if msvcrt.kbhit():  # type: ignore[attr-defined]
                     key_bytes = msvcrt.getch()  # type: ignore[attr-defined]
@@ -83,6 +123,19 @@ class Getcher:
     async def getch_unix(timeout: float | None = None) -> str:  # noqa: ASYNC109
         """
         Get a character from terminal on Unix-like platforms.
+
+        Uses termios to configure stdin for raw mode and asyncio event loop
+        to read input asynchronously. Handles up to 3 bytes to support
+        multi-byte UTF-8 characters and escape sequences.
+
+        Args:
+            timeout: Maximum time in seconds to wait for input. If None,
+                waits indefinitely.
+
+        Returns:
+            The character read from terminal, or empty string if timeout
+            occurs or an error happens.
+
         """
         fd = sys.stdin.fileno()
 
@@ -101,6 +154,7 @@ class Getcher:
             future = loop.create_future()
 
             def stdin_callback() -> None:
+                """Read stdin and resolve future with decoded character."""
                 try:
                     ch_bytes = os.read(fd, 3)
                     ch = ch_bytes.decode('utf-8', errors='replace')

@@ -8,7 +8,13 @@ from term_timer.solve import Solve
 
 
 def load_solves(cube: int, session: str) -> list[Solve]:
-    """Load solves from file for given cube size and session."""
+    """
+    Load solves from file for given cube size and session.
+
+    Returns:
+        List of Solve objects loaded from the JSON file.
+
+    """
     if session == 'default':
         session = ''
 
@@ -37,7 +43,13 @@ def load_all_solves(cube: int,
                     includes: list[str],
                     excludes: list[str],
                     devices: list[str]) -> list[Solve]:
-    """Load all solves from multiple sessions with filters."""
+    """
+    Load all solves from multiple sessions with filters.
+
+    Returns:
+        Deduplicated and sorted list of Solve objects from all sessions.
+
+    """
     if len(includes) == 1:
         return load_solves(cube, includes[0])
 
@@ -74,7 +86,13 @@ def load_all_solves(cube: int,
 
 
 def save_solves(cube: int, session: str, solves: list[Solve]) -> bool:
-    """Save solves to file for given cube size and session."""
+    """
+    Save solves to file for given cube size and session.
+
+    Returns:
+        True if save was successful.
+
+    """
     if session == 'default':
         session = ''
 

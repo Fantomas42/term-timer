@@ -6,6 +6,13 @@ from cubing_algs.masks import state_masked
 
 
 def oll_case_encoder(facelets: str) -> str:
+    """
+    Encode OLL case from cube facelets to binary fingerprint.
+
+    Returns:
+        21-character binary string representing the OLL pattern.
+
+    """
     facelets_fingerprint = (
         facelets[15:18]
         + facelets[24:36]
@@ -22,6 +29,13 @@ def oll_case_encoder(facelets: str) -> str:
 
 
 def pll_case_encoder(facelets: str) -> str:
+    """
+    Encode PLL case from cube facelets to numeric fingerprint.
+
+    Returns:
+        21-character numeric string representing the PLL pattern.
+
+    """
     facelets_fingerprint = (
         facelets[15:18]
         + facelets[24:27]
@@ -43,6 +57,13 @@ def pll_case_encoder(facelets: str) -> str:
 
 
 def f2l_case_encoder(mask: str) -> Callable[[str], str]:
+    """
+    Create F2L case encoder function with specific mask.
+
+    Returns:
+        Encoder function that converts facelets to F2L fingerprint.
+
+    """
     def encoder(facelets: str) -> str:
         facelets_fingerprint = state_masked(facelets, mask)
 

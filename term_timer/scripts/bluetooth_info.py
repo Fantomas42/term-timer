@@ -98,6 +98,13 @@ LOGGING_CONF: Final = {
 
 
 def show_cube(cube: VCube) -> None:
+    """
+    Display the virtual cube state in linear compact format.
+
+    Args:
+        cube: The virtual cube to display.
+
+    """
     logger.info(
         'Virtual Cube:\n%s',
         cube.display(
@@ -109,6 +116,19 @@ def show_cube(cube: VCube) -> None:
 
 def show_state(raw_moves: list[str], orientation_moves: Algorithm,
                cube: VCube | None) -> None:
+    """
+    Display the cube state after applying moves with timing and triggers.
+
+    Parses raw moves, translates them based on orientation, and displays
+    both the timed move sequence and the reconstructed solution with
+    trigger highlighting. Updates the virtual cube state if provided.
+
+    Args:
+        raw_moves: List of moves in timed notation (e.g., ["R@100", "U@200"]).
+        orientation_moves: Algorithm for orientation transformation.
+        cube: Virtual cube to update, or None to skip cube display.
+
+    """
     if not raw_moves:
         if cube:
             cube_rotated = cube.copy()
@@ -170,6 +190,22 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
 
 def check_state(raw_moves: list[str], facelets: str,
                 cube: VCube) -> bool:
+    """
+    Verify cube state synchronization between moves and facelets.
+
+    Applies the move sequence to a copy of the cube and compares the
+    resulting state with the provided facelet string to detect
+    desynchronization.
+
+    Args:
+        raw_moves: List of moves in timed notation to apply.
+        facelets: Expected facelet string representation.
+        cube: Virtual cube to verify against.
+
+    Returns:
+        True if states match, False if desynchronized.
+
+    """
     algo = parse_moves(raw_moves)
 
     cube_rotated = cube.copy()
@@ -197,6 +233,25 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
         *, show_cube: bool,
         orientation_faces: str,
         rotation_threshold: float = 70.0) -> None:
+    """
+    Consumes Bluetooth events and processes cube state updates.
+
+    Processes events from the Bluetooth interface queue including hardware
+    information, battery status, facelet updates, gyroscope rotations, and
+    move notifications. Updates the virtual cube state and OpenGL display
+    as events are received.
+
+    Args:
+        queue: Event queue from Bluetooth interface. None signals disconnect.
+        cube_ready: Event to signal when cube state is initialized.
+        gl_thread: Optional OpenGL visualization thread.
+        event_collector: List to accumulate all received events.
+        show_cube: Whether to display cube state in console.
+        orientation_faces: Two-character orientation specification (e.g., "UF").
+        rotation_threshold: Minimum rotation angle in degrees for detection.
+            Defaults to 70.0.
+
+    """
     virtual_cube: VCube | None = None
     moves: list[str] = []
     hardware = ''
@@ -338,6 +393,22 @@ async def client_cb(  # noqa: PLR0913
         cube_reset: bool,
         gyroscope_enable: bool,
         gyroscope_disable: bool) -> None:
+    """
+    Manage Bluetooth connection and send commands to the smart cube.
+
+    Establishes connection to a Bluetooth cube, sends initial information
+    requests, applies configuration commands, and maintains the connection
+    for the specified duration before disconnecting.
+
+    Args:
+        queue: Event queue for receiving Bluetooth events.
+        time: Duration in seconds to maintain connection.
+        filter_name: Device name filter for connection, or empty string.
+        cube_reset: Whether to request cube reset.
+        gyroscope_enable: Whether to enable gyroscope data streaming.
+        gyroscope_disable: Whether to disable gyroscope data streaming.
+
+    """
     bluetooth_interface = BluetoothInterface(queue)
 
     await bluetooth_interface.__aenter__(filter_name=filter_name)
@@ -362,6 +433,18 @@ async def client_cb(  # noqa: PLR0913
 
 
 def replay(options: Namespace) -> None:
+    """
+    Replays recorded Bluetooth events from a JSON file.
+
+    Loads and processes events from a file, simulating the live event
+    stream to analyze gyroscope rotations, moves, and facelet updates
+    without requiring an active Bluetooth connection.
+
+    Args:
+        options: Command-line arguments containing input file path,
+            orientation settings, and rotation threshold.
+
+    """
     file_path = Path(options.input).resolve()
     with file_path.open(encoding='utf-8') as f:
         events = json.load(f)
@@ -433,6 +516,21 @@ def replay(options: Namespace) -> None:
 
 def linear_regression(x_values: list[float],
                       y_values: list[float]) -> tuple[float, float]:
+    """
+    Calculate linear regression parameters for two data series.
+
+    Computes the slope and intercept of the best-fit line through the
+    provided data points using the least squares method. Handles None
+    values by skipping them in the calculation.
+
+    Args:
+        x_values: Independent variable data points.
+        y_values: Dependent variable data points.
+
+    Returns:
+        Tuple of (slope, intercept) for the linear regression line.
+
+    """
     sum_x = 0.0
     sum_y = 0.0
     sum_xy = 0.0
@@ -463,6 +561,18 @@ def linear_regression(x_values: list[float],
 
 
 def resume(events: list[EventDict], output: str) -> None:
+    """
+    Analyzes event timing and optionally exports to JSON.
+
+    Processes collected events to compute clock skew between cube and local
+    timestamps, calculates gyroscope sampling frequency, and exports events
+    to a JSON file if an output path is provided.
+
+    Args:
+        events: List of all events collected during the session.
+        output: Output file path for JSON export, or empty string to skip.
+
+    """
     cube_timestamps: list[float] = []
     local_timestamps: list[float] = []
     gyro_clocks: list[int] = []
@@ -537,6 +647,19 @@ async def run(
     gl_thread: CubeGLThread | None,
     cube_ready: threading.Event,
 ) -> None:
+    """
+    Orchestrates the main event loop for Bluetooth monitoring or replay.
+
+    Coordinates the client connection, event consumer, and optional OpenGL
+    visualization. Handles both live Bluetooth sessions and replay mode
+    from recorded event files.
+
+    Args:
+        options: Parsed command-line arguments.
+        gl_thread: Optional OpenGL visualization thread.
+        cube_ready: Event to synchronize cube state initialization.
+
+    """
     if options.input:
         replay(options)
         return
@@ -576,6 +699,13 @@ async def run(
 
 
 def main() -> None:
+    """
+    Entry point for the Bluetooth cube information utility.
+
+    Configures logging, parses command-line arguments, initializes the
+    optional OpenGL visualization thread, and launches the async event
+    processing loop.
+    """
     logging.config.dictConfig(LOGGING_CONF)
 
     parser = ArgumentParser(

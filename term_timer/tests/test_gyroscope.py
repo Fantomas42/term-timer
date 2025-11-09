@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 
 class TestMoveRotationDetector(unittest.TestCase):
+    """Tests for RotationDetector move detection."""
 
     @staticmethod
     def reconstruct(orientation_faces: str, algo: str) -> Algorithm:
@@ -69,7 +70,7 @@ class TestMoveRotationDetector(unittest.TestCase):
 
 
 class TestVarious(TestMoveRotationDetector):
-    # Replays recorded in z2 (DF)
+    """Tests for various rotation scenarios with GAN Gen2 replays."""
 
     def test_m_m_prime_normal(self) -> None:
         self.check_rotations(
@@ -136,6 +137,7 @@ class TestVarious(TestMoveRotationDetector):
 
 
 class TestSimpleRotation(TestMoveRotationDetector):
+    """Tests for simple single rotation detection."""
 
     def test_y_uf(self) -> None:
         self.check_rotations(
@@ -181,6 +183,7 @@ class TestSimpleRotation(TestMoveRotationDetector):
 
 
 class TestSimpleCancelRotation(TestMoveRotationDetector):
+    """Tests for rotation cancellation detection."""
 
     def test_y_cancel_uf(self) -> None:
         self.check_rotations(
@@ -226,6 +229,7 @@ class TestSimpleCancelRotation(TestMoveRotationDetector):
 
 
 class TestSimpleQuadruleRotation(TestMoveRotationDetector):
+    """Tests for quadruple rotation detection."""
 
     def test_quadruple_y_uf(self) -> None:
         self.check_rotations(
@@ -250,6 +254,7 @@ class TestSimpleQuadruleRotation(TestMoveRotationDetector):
 
 
 class TestUyURotation(TestMoveRotationDetector):
+    """Tests for U-rotation-U sequence detection."""
 
     def test_u_y_u_uf(self) -> None:
         self.check_rotations(
@@ -267,6 +272,7 @@ class TestUyURotation(TestMoveRotationDetector):
 
 
 class TestSliceCancelRotation(TestMoveRotationDetector):
+    """Tests for slice move rotation cancellation."""
 
     def test_mp_m_uf(self) -> None:
         self.check_rotations(
@@ -312,6 +318,7 @@ class TestSliceCancelRotation(TestMoveRotationDetector):
 
 
 class TestSexyStableRotation(TestMoveRotationDetector):
+    """Tests for sexy move with stable orientation."""
 
     def test_sexy_move_uf(self) -> None:
         self.check_rotations(
@@ -329,6 +336,7 @@ class TestSexyStableRotation(TestMoveRotationDetector):
 
 
 class TestSexyYSexyRotation(TestMoveRotationDetector):
+    """Tests for sexy move with Y rotation between repetitions."""
 
     def test_sexy_y_sexy_move_uf(self) -> None:
         self.check_rotations(
@@ -346,6 +354,7 @@ class TestSexyYSexyRotation(TestMoveRotationDetector):
 
 
 class TestSexyVariationRotation(TestMoveRotationDetector):
+    """Tests for sexy move variations with rotations."""
 
     def test_sexy_y_r_df(self) -> None:
         self.check_rotations(

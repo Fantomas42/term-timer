@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 
 class TestAnalyseSolveWorker(unittest.TestCase):
+    """Tests for analyse_solve_worker function."""
 
     def test_analyse_solve_worker_not_advanced(self) -> None:
         solve = Mock()
@@ -109,6 +110,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
 
 
 class TestSolvesMethodAggregator(unittest.TestCase):
+    """Tests for SolvesMethodAggregator class."""
 
     def setUp(self) -> None:
         self.mock_solve_advanced = Mock()

@@ -24,6 +24,13 @@ CROSS_MODES: Final = ('cross', 'ecross')
 
 
 class Trainer(SolveInterface):
+    """
+    Training interface for practicing specific CFOP cases.
+
+    Generates targeted scrambles for practicing cross, F2L, OLL, or PLL
+    cases with optional solution hints.
+    """
+
     def __init__(  # noqa: PLR0913
             self, *,
             step: str,
@@ -32,6 +39,7 @@ class Trainer(SolveInterface):
             show_cube: bool,
             orientation: str,
             metronome: float) -> None:
+        """Initialize trainer with step configuration and display options."""
         super().__init__()
 
         self.set_state('configure')
@@ -52,6 +60,7 @@ class Trainer(SolveInterface):
 
     def start_line(self, cube: VCube, case: str,
                    main_algorithm: Algorithm) -> None:
+        """Display training case, scramble, and optional solution."""
         if self.step in CROSS_MODES:
             mode = 'cross'
             link = ''
@@ -118,6 +127,13 @@ class Trainer(SolveInterface):
             )
 
     def cube_is_solved(self) -> bool:
+        """
+        Check if training step is completed.
+
+        Returns:
+            True if the step is solved, False otherwise.
+
+        """
         if self.bluetooth_cube:
             return FaceletAnalyser().check_step(
                 self.step_code,
@@ -127,6 +143,7 @@ class Trainer(SolveInterface):
         return False
 
     def solve_line(self, solve: Solve) -> None:
+        """Display training solve results and execution details."""
         self.clear_line(full=True)
 
         if solve.method_applied:
@@ -145,6 +162,13 @@ class Trainer(SolveInterface):
         )
 
     async def start(self) -> bool:
+        """
+        Execute training workflow for single case.
+
+        Returns:
+            True to continue training, False to quit.
+
+        """
         self.init_solve()
 
         case, main_algorithm, self.scramble, cube = trainer(

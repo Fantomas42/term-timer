@@ -23,7 +23,13 @@ if TYPE_CHECKING:
 
 
 def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
-    """Return algorithm to reach a certain state."""
+    """
+    Return algorithm to reach a certain state.
+
+    Returns:
+        Algorithm that transforms cube from solved to given state.
+
+    """
     solution: str = solve(state, facelets) if facelets else solve(state)
 
     return parse_moves(solution).transform(mirror_moves)
@@ -33,7 +39,13 @@ def scrambler(cube_size: int, iterations: int,
               *,
               easy_cross: bool,
               raw_scramble: str = '') -> tuple[Algorithm, Cube]:
-    """Generate cube scramble."""
+    """
+    Generate cube scramble.
+
+    Returns:
+        Tuple of (scramble algorithm, scrambled cube state).
+
+    """
     cube = Cube(cube_size)
 
     if raw_scramble:
@@ -61,7 +73,13 @@ def trainer(step: str, cases: list[str],
             orientation_moves: Algorithm,
             bluetooth_cube: VCube | None = None) -> tuple[
                 str, Algorithm, Algorithm, VCube]:
-    """Generate training case."""
+    """
+    Generate training case.
+
+    Returns:
+        Tuple of (case name, main algorithm, scramble, cube state).
+
+    """
     cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube()
 
     if step == 'ecross':
@@ -85,7 +103,16 @@ def trainer(step: str, cases: list[str],
 def random_training(step: str, selected_cases: list[str],
                     orientation_moves: Algorithm) -> tuple[
                         str, Algorithm, Algorithm]:
-    """Generate random training case."""
+    """
+    Generate random training case.
+
+    Returns:
+        Tuple of (case name, main algorithm, scramble algorithm).
+
+    Raises:
+        InvalidCaseError: If selected case is not valid for the step.
+
+    """
     cases: dict[str, CaseInfo] = CASES[step.upper()]
     valid_cases: dict[str, CaseInfo] = {
         k: v for k, v in cases.items() if v.get('setups')

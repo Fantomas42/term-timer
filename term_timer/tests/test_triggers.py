@@ -12,6 +12,7 @@ from term_timer.triggers import apply_trigger_outside_blocks
 
 
 class TestBaseTriggers(unittest.TestCase):
+    """Tests for BASE_TRIGGERS mapping."""
 
     def test_chair_trigger(self) -> None:
         self.assertEqual(BASE_TRIGGERS["RU2R'U'RU'R'"], 'chair')
@@ -24,6 +25,7 @@ class TestBaseTriggers(unittest.TestCase):
 
 
 class TestTriggers(unittest.TestCase):
+    """Tests for TRIGGERS generation."""
 
     def test_triggers_generated_from_base(self) -> None:
         # 8 variationss (2 algos x 4 rotations)
@@ -33,6 +35,7 @@ class TestTriggers(unittest.TestCase):
 
 
 class TestTriggersRegex(unittest.TestCase):
+    """Tests for TRIGGERS_REGEX patterns."""
 
     def test_regex_compiled_for_all_triggers(self) -> None:
         self.assertEqual(len(TRIGGERS_REGEX), len(set(BASE_TRIGGERS.values())))
@@ -51,6 +54,7 @@ class TestTriggersRegex(unittest.TestCase):
 
 
 class TestDefaultTriggers(unittest.TestCase):
+    """Tests for DEFAULT_TRIGGERS configuration."""
 
     def test_all_default_triggers_in_base(self) -> None:
         base_trigger_names = set(BASE_TRIGGERS.values())
@@ -59,6 +63,7 @@ class TestDefaultTriggers(unittest.TestCase):
 
 
 class TestBlockPattern(unittest.TestCase):
+    """Tests for BLOCK_PATTERN regex."""
 
     def test_block_pattern_matches_simple_block(self) -> None:
         text = '[comment]some text[/comment]'
@@ -78,6 +83,8 @@ class TestBlockPattern(unittest.TestCase):
 
 
 class TestApplyTriggerOutsideBlocks(unittest.TestCase):
+    """Tests for apply_trigger_outside_blocks function."""
+
     def test_no_blocks_simple_replacement(self) -> None:
         algorithm = "RUR'U' F U F'"
         regex = re.compile(r"RUR'U'")

@@ -23,6 +23,7 @@ from term_timer.arguments import train_arguments
 
 
 class TestCommandAliases(unittest.TestCase):
+    """Tests for command aliases and resolutions."""
 
     def test_command_aliases_structure(self) -> None:
         expected_commands = {
@@ -43,6 +44,7 @@ class TestCommandAliases(unittest.TestCase):
 
 
 class TestSessionArguments(unittest.TestCase):
+    """Tests for session argument parsing."""
 
     def test_set_session_arguments(self) -> None:
         parser = ArgumentParser()
@@ -59,6 +61,7 @@ class TestSessionArguments(unittest.TestCase):
 
 
 class TestSolveArguments(unittest.TestCase):
+    """Tests for solve command argument parsing."""
 
     def test_solve_parser_creation(self) -> None:
         main_parser = ArgumentParser()
@@ -93,6 +96,7 @@ class TestSolveArguments(unittest.TestCase):
 
 
 class TestTrainArguments(unittest.TestCase):
+    """Tests for train command argument parsing."""
 
     def test_train_parser_creation(self) -> None:
         main_parser = ArgumentParser()
@@ -113,6 +117,7 @@ class TestTrainArguments(unittest.TestCase):
 
 
 class TestListArguments(unittest.TestCase):
+    """Tests for list command argument parsing."""
 
     def test_list_default_arguments(self) -> None:
         main_parser = ArgumentParser()
@@ -134,6 +139,7 @@ class TestListArguments(unittest.TestCase):
 
 
 class TestStatisticsArguments(unittest.TestCase):
+    """Tests for statistics command argument parsing."""
 
     def test_stats_parser_creation(self) -> None:
         main_parser = ArgumentParser()
@@ -147,6 +153,7 @@ class TestStatisticsArguments(unittest.TestCase):
 
 
 class TestGraphArguments(unittest.TestCase):
+    """Tests for graph command argument parsing."""
 
     def test_graph_parser_creation(self) -> None:
         main_parser = ArgumentParser()
@@ -160,6 +167,7 @@ class TestGraphArguments(unittest.TestCase):
 
 
 class TestCfopArguments(unittest.TestCase):
+    """Tests for CFOP command argument parsing."""
 
     def test_cfop_default_arguments(self) -> None:
         main_parser = ArgumentParser()
@@ -184,6 +192,7 @@ class TestCfopArguments(unittest.TestCase):
 
 
 class TestImportArguments(unittest.TestCase):
+    """Tests for import command argument parsing."""
 
     def test_import_with_source(self) -> None:
         main_parser = ArgumentParser()
@@ -196,6 +205,7 @@ class TestImportArguments(unittest.TestCase):
 
 
 class TestServeArguments(unittest.TestCase):
+    """Tests for serve command argument parsing."""
 
     def test_serve_default_arguments(self) -> None:
         main_parser = ArgumentParser()
@@ -221,6 +231,7 @@ class TestServeArguments(unittest.TestCase):
 
 
 class TestDetailArguments(unittest.TestCase):
+    """Tests for detail command argument parsing."""
 
     def test_detail_with_solve_ids(self) -> None:
         main_parser = ArgumentParser()
@@ -241,6 +252,7 @@ class TestDetailArguments(unittest.TestCase):
 
 
 class TestEditArguments(unittest.TestCase):
+    """Tests for edit command argument parsing."""
 
     def test_edit_with_solve_and_flag(self) -> None:
         main_parser = ArgumentParser()
@@ -254,6 +266,7 @@ class TestEditArguments(unittest.TestCase):
 
 
 class TestDeleteArguments(unittest.TestCase):
+    """Tests for delete command argument parsing."""
 
     def test_delete_with_solve_id(self) -> None:
         main_parser = ArgumentParser()
@@ -266,6 +279,7 @@ class TestDeleteArguments(unittest.TestCase):
 
 
 class TestGetArguments(unittest.TestCase):
+    """Tests for get_arguments function."""
 
     @patch('sys.argv', ['term_timer', 'solve'])
     def test_get_arguments_solve(self) -> None:

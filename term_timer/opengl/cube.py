@@ -23,12 +23,40 @@ GIMBAL_LOCK_THRESHOLD: Final = 0.99999  # Near ±1 detection for r[2][0]
 
 
 class Cube:
+    """
+    Represents a 3D Rubik's cube with state and orientation.
+
+    This class manages the cube's piece positions, orientations, and
+    rotation matrix for 3D rendering. It supports initialization from a
+    cube state dictionary and orientation moves.
+
+    Attributes:
+        corner_permutation: List of corner piece positions.
+        corners_orientations: List of corner orientation values (0-2).
+        edge_permutation: List of edge piece positions.
+        edges_orientations: List of edge orientation values (0-1).
+        rotation_matrix: 3x3 rotation matrix for 3D orientation.
+        initial_orientation: Reference quaternion for normalization.
+        base_orientation_matrix: Base rotation from orientation moves.
+
+    """
 
     def __init__(
             self,
             state: CubeStateDict | None = None,
             orientation_moves: Algorithm | None = None,
     ) -> None:
+        """
+        Initialize the cube with optional state and orientation.
+
+        Args:
+            state: Dictionary containing cube state with corner and edge
+                permutations and orientations. If None, creates a solved
+                cube.
+            orientation_moves: Algorithm of x/y/z rotations to apply to
+                the cube's initial orientation.
+
+        """
         if state:
             self.corner_permutation = list(state['CP'])
             self.corners_orientations = list(state['CO'])
@@ -67,7 +95,13 @@ class Cube:
         )
 
     def __repr__(self) -> str:
-        """Return detailed string representation of cube state."""
+        """
+        Return detailed string representation of cube state.
+
+        Returns:
+            String containing edge and corner permutation information.
+
+        """
         return (
             'Cube('
             f'edge_permutation={ self.edge_permutation!s }, '
@@ -75,10 +109,23 @@ class Cube:
         )
 
     def __str__(self) -> str:
-        """Return string representation of cube state."""
+        """
+        Return string representation of cube state.
+
+        Returns:
+            String containing edge and corner permutation information.
+
+        """
         return self.__repr__()
 
     def move_corners(self, move: Face) -> None:
+        """
+        Apply a face turn to update corner positions and orientations.
+
+        Args:
+            move: The cube face to turn (U, D, L, R, F, or B).
+
+        """
         p = self.corner_permutation
         move_p = corner_permutations[move]
         move_o = corner_orientations[move]
@@ -90,6 +137,13 @@ class Cube:
         ]
 
     def move_edges(self, move: Face) -> None:
+        """
+        Apply a face turn to update edge positions and orientations.
+
+        Args:
+            move: The cube face to turn (U, D, L, R, F, or B).
+
+        """
         p = self.edge_permutation
         move_p = edge_permutations[move]
         move_o = edge_orientations[move]
@@ -101,6 +155,14 @@ class Cube:
         ]
 
     def move(self, move: list[tuple[Face, int]]) -> None:
+        """
+        Apply a sequence of face turns to the cube.
+
+        Args:
+            move: List of tuples containing the face to turn and the
+                number of quarter turns (power) to apply.
+
+        """
         for (face, power) in move:
             for _i in range(power):
                 self.move_corners(face)
@@ -143,18 +205,50 @@ class Cube:
         ], dtype=np.float64)
 
     def rotate_x(self, angle: float) -> None:
+        """
+        Rotates the cube around the X-axis.
+
+        Args:
+            angle: Rotation angle in degrees (positive is clockwise).
+
+        """
         rotation = self._rotation_matrix_x(-angle)
         self.rotation_matrix = rotation @ self.rotation_matrix
 
     def rotate_y(self, angle: float) -> None:
+        """
+        Rotates the cube around the Y-axis.
+
+        Args:
+            angle: Rotation angle in degrees (positive is clockwise).
+
+        """
         rotation = self._rotation_matrix_y(-angle)
         self.rotation_matrix = rotation @ self.rotation_matrix
 
     def rotate_z(self, angle: float) -> None:
+        """
+        Rotates the cube around the Z-axis.
+
+        Args:
+            angle: Rotation angle in degrees (positive is clockwise).
+
+        """
         rotation = self._rotation_matrix_z(-angle)
         self.rotation_matrix = rotation @ self.rotation_matrix
 
     def get_euler_angles(self) -> tuple[float, float, float]:
+        """
+        Extract Euler angles from the rotation matrix.
+
+        Converts the rotation matrix to Euler angles (roll, pitch, yaw)
+        with proper handling of gimbal lock situations.
+
+        Returns:
+            Tuple of (theta_x, theta_y, theta_z) in degrees representing
+            the rotation around each axis.
+
+        """
         r = self.rotation_matrix
 
         # Clamp r[2][0] to [-1, 1] to avoid numerical issues with asin
@@ -190,20 +284,43 @@ class Cube:
 
     def animate_moves(self, window: Window,
                       moves: list[tuple[Face, int]]) -> None:
+        """
+        Animates and applies a sequence of face turns.
+
+        Args:
+            window: The OpenGL window for rendering the animation.
+            moves: List of tuples containing the face to turn and the
+                number of quarter turns (power) to apply.
+
+        """
         for (face, power) in moves:
             renderer.animate_move(window, self, face, power)
             self.move([(face, power)])
 
     def animate_rotations(self, window: Window, axis: str, angle: int) -> None:
+        """
+        Animates cube rotations around a specified axis.
+
+        Args:
+            window: The OpenGL window for rendering the animation.
+            axis: The axis to rotate around ('x', 'y', or 'z').
+            angle: Rotation angle in degrees.
+
+        """
         renderer.animate_rotation(window, self, axis, angle)
 
     def set_rotation_from_quaternion(self, q: QuaternionDict) -> None:  # noqa: PLR0914
         """
-        Set rotation from quaternion with automatic normalization.
+        Set cube rotation from a quaternion with normalization.
 
         The first quaternion received becomes the reference orientation.
         All subsequent quaternions are normalized relative to this initial
         orientation, similar to RotationDetector.process_gyro_event().
+
+        Args:
+            q: Quaternion dictionary with 'w', 'x', 'y', 'z' components
+                representing the cube's absolute orientation from sensors.
+
         """
         # Convert raw quaternion dict to Quaternion object
         absolute_raw = Quaternion.from_dict_raw(q)
@@ -266,6 +383,16 @@ class Cube:
 
 
 def main(cube: Cube) -> None:
+    """
+    Run the OpenGL cube visualization demo.
+
+    Creates a window and renders the cube with animation. This is a
+    demonstration function showing basic cube rotation animations.
+
+    Args:
+        cube: The cube instance to visualize and animate.
+
+    """
     window = Window(
         1024, 720,
         fps=144,

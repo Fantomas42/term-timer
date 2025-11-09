@@ -88,7 +88,17 @@ LEGENDS: Final = {
 
 
 def format_delta(delta: int) -> str:
-    """Format value as string."""
+    """
+    Format time delta as a signed duration string.
+
+    Args:
+        delta: Time difference in nanoseconds.
+
+    Returns:
+        Formatted string with sign prefix ('+' or '-') and duration,
+        or empty string if delta is zero.
+
+    """
     if delta == 0:
         return ''
     sign = ''
@@ -99,7 +109,18 @@ def format_delta(delta: int) -> str:
 
 
 def format_score(score: float, title: str = '') -> str:
-    """Format value as string."""
+    """
+    Format score value as HTML span with color-coded class.
+
+    Args:
+        score: Numeric score to format.
+        title: Optional prefix text to display before the score.
+
+    Returns:
+        HTML span element with score colored based on thresholds:
+        good (>=14), danger (8-13), warning (<8).
+
+    """
     klass = 'good'
     if score < 14:
         klass = 'danger'
@@ -110,7 +131,20 @@ def format_score(score: float, title: str = '') -> str:
 
 
 def format_line(value: str) -> str:
-    """Format value as string."""
+    """
+    Format algorithm notation string into styled HTML spans.
+
+    Converts cube algorithm notation into HTML with semantic markup for
+    individual moves and triggers, adding CSS classes and tooltips.
+
+    Args:
+        value: Algorithm string with optional block markup like
+            [sexy-move]R U R' U'[/sexy-move].
+
+    Returns:
+        HTML string with each move wrapped in styled span elements.
+
+    """
     if not value:
         return ''
 
@@ -152,7 +186,18 @@ def format_line(value: str) -> str:
 
 
 def parse_case_name(value: str, step: str) -> tuple[str, str, str]:
-    """Parse input data."""
+    """
+    Parse case identifier into code, name, and category components.
+
+    Args:
+        value: Case identifier string, may include code and name.
+        step: CFOP step name (PLL, OLL, F2L, etc.).
+
+    Returns:
+        Tuple of (code, full_name, category) where category is
+        'PLL', 'OLL', 'F2L', or empty string.
+
+    """
     try:
         code, name = value.split(' ', 1)
     except ValueError:
@@ -167,7 +212,19 @@ def parse_case_name(value: str, step: str) -> tuple[str, str, str]:
 
 def normalize_value(value: float, method_applied: Analyser,
                     metric: str, name: str) -> str:
-    """Normalize value for display."""
+    """
+    Format metric value as HTML with normalized quality indicator.
+
+    Args:
+        value: Numeric metric value to format.
+        method_applied: Method analyser instance for normalization.
+        metric: Metric type identifier.
+        name: Metric name for classification.
+
+    Returns:
+        HTML span element with value and quality-based CSS class.
+
+    """
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value }</span>'
@@ -175,14 +232,35 @@ def normalize_value(value: float, method_applied: Analyser,
 
 def normalize_percent(value: float, method_applied: Analyser,
                       metric: str, name: str) -> str:
-    """Normalize value for display."""
+    """
+    Format percentage metric as HTML with normalized quality indicator.
+
+    Args:
+        value: Numeric percentage value to format.
+        method_applied: Method analyser instance for normalization.
+        metric: Metric type identifier.
+        name: Metric name for classification.
+
+    Returns:
+        HTML span element with percentage value and quality-based CSS class.
+
+    """
     klass = method_applied.normalize_value(metric, name, value, '')
 
     return f'<span class="metric-{ klass }">{ value:.2f}%</span>'
 
 
 def reconstruction_step(step: StepSummary) -> str:
-    """Format reconstruction output."""
+    """
+    Format solve step into styled HTML reconstruction display.
+
+    Args:
+        step: Step summary containing move sequences and AUF information.
+
+    Returns:
+        HTML-formatted algorithm string with styled move annotations.
+
+    """
     algorithm = str(step['moves_prettified'])
 
     pre_auf, post_auf = step['aufs']
@@ -201,7 +279,20 @@ def reconstruction_step(step: StepSummary) -> str:
 
 
 def reconstruction_overheads(step: StepSummary, solve: Solve) -> str:
-    """Format reconstruction output."""
+    """
+    Format step reconstruction showing efficiency overheads.
+
+    Compares executed moves with optimal solution to highlight unnecessary
+    moves and inefficiencies in the solve.
+
+    Args:
+        step: Step summary containing move sequences and AUF information.
+        solve: Solve instance for calculating move optimizations.
+
+    Returns:
+        HTML-formatted algorithm with highlighted overhead moves.
+
+    """
     source, compressed = solve.missed_moves_pair(
         step['moves_humanized'],
     )
@@ -233,7 +324,20 @@ def reconstruction_overheads(step: StepSummary, solve: Solve) -> str:
 
 
 def reconstruction_pauses(step: StepSummary, solve: Solve) -> str:
-    """Format reconstruction output."""
+    """
+    Format step reconstruction with pause markers for timing analysis.
+
+    Annotates algorithm with pause indicators based on move execution timing
+    to identify hesitations and recognition delays.
+
+    Args:
+        step: Step summary containing move sequences and AUF information.
+        solve: Solve instance providing timing data for pause detection.
+
+    Returns:
+        HTML-formatted algorithm with pause annotations highlighted.
+
+    """
     source_paused = step['moves_humanized'].transform(
         pause_moves(
             int(solve.move_speed / MS_TO_NS_FACTOR),
@@ -263,7 +367,21 @@ def reconstruction_pauses(step: StepSummary, solve: Solve) -> str:
 
 
 def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
-    """Get optimized step algorithm."""
+    """
+    Generate optimized version of solve step algorithm.
+
+    Applies step-specific optimizations to produce a more efficient
+    algorithm sequence for the given case.
+
+    Args:
+        step: Step summary containing move sequences and case information.
+
+    Returns:
+        Tuple of (formatted_html_string, algorithm_object) where the HTML
+        string includes styled move annotations and the algorithm is the
+        optimized move sequence.
+
+    """
     optimizers = []
 
     if 'SKIP' not in step['case']:
@@ -292,7 +410,19 @@ def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
 
 
 def cube_html(cube_str: str) -> str:
-    """Generate HTML for cube display."""
+    """
+    Convert ANSI-colored cube string to HTML with inline styles.
+
+    Transforms terminal ANSI escape sequences into HTML span elements with
+    RGB color styling for web display.
+
+    Args:
+        cube_str: Cube visualization string with ANSI color codes.
+
+    Returns:
+        HTML string with colored span elements representing cube facelets.
+
+    """
     def replace_span(matchobj: re.Match[str]) -> str:
         if matchobj:
             groups = matchobj.groups()
@@ -310,8 +440,17 @@ def cube_html(cube_str: str) -> str:
 
 
 class RichHandler(WSGIRequestHandler):
+    """Custom WSGI request handler with Rich console logging."""
 
     def log_request(self, code: int | str = '-', size: int | str = '-') -> None:
+        """
+        Log HTTP request with colored Rich console output.
+
+        Args:
+            code: HTTP status code.
+            size: Response size in bytes.
+
+        """
         klass = 'green'
         if int(code) > 400:
             klass = 'red'
@@ -327,12 +466,34 @@ class RichHandler(WSGIRequestHandler):
 
 
 class View:
+    """Base view class for rendering Jinja2 templates with custom filters."""
+
     template_name = ''
 
     def get_context(self) -> dict[str, Any]:
+        """
+        Build template context dictionary.
+
+        Returns:
+            Dictionary of context variables for template rendering.
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses.
+
+        """
         raise NotImplementedError
 
     def as_view(self, debug: bool) -> str:  # noqa: FBT001
+        """
+        Render view template with context data.
+
+        Args:
+            debug: Enable debug mode for template rendering.
+
+        Returns:
+            Rendered HTML string.
+
+        """
         context = self.get_context()
 
         content = self.template(
@@ -346,6 +507,17 @@ class View:
 
     @staticmethod
     def template(template_name: str, **context: Any) -> str:  # noqa: ANN401
+        """
+        Render Jinja2 template with custom filters and context.
+
+        Args:
+            template_name: Name of template file to render.
+            **context: Template context variables.
+
+        Returns:
+            Rendered template as HTML string.
+
+        """
         context['now'] = datetime.now(tz=timezone.utc)  # noqa: UP017
 
         return str(
@@ -376,12 +548,28 @@ class View:
 
 
 class Error404View(View):
+    """View for rendering 404 Not Found error pages."""
+
     template_name = '404.html'
 
     def __init__(self, error: HTTPError) -> None:
+        """
+        Initialize 404 error view.
+
+        Args:
+            error: HTTP error object containing error details.
+
+        """
         self.error = error
 
     def get_context(self) -> dict[str, str | HTTPError]:
+        """
+        Build context for 404 error template.
+
+        Returns:
+            Dictionary containing error object and message.
+
+        """
         return {
             'error': self.error,
             'message': self.error.body,
@@ -389,12 +577,28 @@ class Error404View(View):
 
 
 class Error500View(View):
+    """View for rendering 500 Internal Server Error pages."""
+
     template_name = '500.html'
 
     def __init__(self, error: HTTPError) -> None:
+        """
+        Initialize 500 error view.
+
+        Args:
+            error: HTTP error object containing error details.
+
+        """
         self.error = error
 
     def get_context(self) -> dict[str, str | HTTPError | Exception]:
+        """
+        Build context for 500 error template.
+
+        Returns:
+            Dictionary containing error, message, exception, and traceback.
+
+        """
         return {
             'error': self.error,
             'message': self.error.body,
@@ -404,10 +608,20 @@ class Error500View(View):
 
 
 class SessionListView(View):
+    """View for listing all solve sessions grouped by cube size."""
+
     template_name = 'index.html'
 
     @staticmethod
     def get_context() -> dict[str, Any]:
+        """
+        Build context with all sessions and their statistics.
+
+        Returns:
+            Dictionary containing sessions organized by cube size,
+            with statistics calculated for each session.
+
+        """
         sessions: dict[int, dict[str, dict[str, Any]]] = {}
         for cube in CUBE_SIZES:
             solves = load_all_solves(cube, [], [], [])
@@ -448,10 +662,23 @@ class SessionListView(View):
 
 
 class SessionDetailView(View):
+    """View for displaying detailed statistics for a solve session."""
+
     template_name = 'session.html'
 
     def __init__(self, cube: int, session: str,
                  method_name: str, step: str, case_uid: str) -> None:
+        """
+        Initialize session detail view with optional filtering.
+
+        Args:
+            cube: Cube size (2-7).
+            session: Session identifier or 'all' for all sessions.
+            method_name: Solving method name (e.g., 'cfop').
+            step: Optional step filter (e.g., 'f2l', 'oll').
+            case_uid: Optional case identifier for filtering.
+
+        """
         self.cube = cube
         self.session = session
 
@@ -502,6 +729,14 @@ class SessionDetailView(View):
         )
 
     def get_context(self) -> dict[str, Any]:
+        """
+        Build context with session statistics and visualizations.
+
+        Returns:
+            Dictionary containing session data, statistics, trends,
+            distribution, and punchcard data.
+
+        """
         return {
             'cube': self.cube,
             'session': self.session,
@@ -516,6 +751,13 @@ class SessionDetailView(View):
         }
 
     def compute_sessions(self) -> dict[str, int]:
+        """
+        Calculate solve counts per session.
+
+        Returns:
+            Dictionary mapping session names to solve counts.
+
+        """
         sessions: dict[str, int] = {}
         for solve in self.stats.stack:
             sessions.setdefault(solve.session, 0)
@@ -524,6 +766,14 @@ class SessionDetailView(View):
         return sessions
 
     def compute_trend(self) -> dict[str, Any]:
+        """
+        Calculate rolling averages and time trends.
+
+        Returns:
+            Dictionary with solve indices, times, and rolling averages
+            (ao5, ao12, ao100, ao1000) for trend visualization.
+
+        """
         ao5s = []
         ao12s = []
         ao100s = []
@@ -557,6 +807,13 @@ class SessionDetailView(View):
         }
 
     def compute_distribution(self) -> dict[str, list[Any]]:
+        """
+        Calculate solve time distribution histogram.
+
+        Returns:
+            Dictionary with time bucket labels and solve counts.
+
+        """
         dist_labels = []
         dist_counts = []
         for count, edge in self.stats.repartition:
@@ -569,6 +826,13 @@ class SessionDetailView(View):
         }
 
     def compute_punchcard(self) -> dict[str, dict[str, int]]:
+        """
+        Calculate daily solve frequency by year for calendar heatmap.
+
+        Returns:
+            Nested dictionary mapping year to date to solve count.
+
+        """
         punchcard: dict[str, dict[str, int]] = {}
 
         for solve in self.stats.stack:
@@ -583,10 +847,23 @@ class SessionDetailView(View):
 
 
 class SolveDetailView(View):
+    """View for displaying detailed analysis of a single solve."""
+
     template_name = 'solve.html'
 
     def __init__(self, cube: int, session: str, solve_id: int,
                  method_name: str, orientation: str) -> None:
+        """
+        Initialize solve detail view.
+
+        Args:
+            cube: Cube size (2-7).
+            session: Session identifier or 'all' for all sessions.
+            solve_id: 1-based solve identifier within the session.
+            method_name: Solving method to apply for analysis.
+            orientation: Cube orientation for display.
+
+        """
         self.cube = cube
         self.session = session
 
@@ -609,6 +886,14 @@ class SolveDetailView(View):
         self.solve.orientation = orientation
 
     def get_context(self) -> dict[str, Any]:
+        """
+        Build context with solve details and analysis data.
+
+        Returns:
+            Dictionary containing solve data, reconstruction, timing charts,
+            TPS metrics, and step analysis.
+
+        """
         tps = []
         steps = []
         scatter = []
@@ -696,9 +981,20 @@ class SolveDetailView(View):
 
 
 class SolveUpdateView:
+    """View for updating solve metadata like flags."""
 
     def __init__(self, cube: int, session: str, solve_id: int,
                  flag: SolveFlagInput) -> None:
+        """
+        Update solve flag and redirect to solve detail.
+
+        Args:
+            cube: Cube size (2-7).
+            session: Session identifier or 'all' for all sessions.
+            solve_id: 1-based solve identifier within the session.
+            flag: New flag value to set (DNF, +2, or OK).
+
+        """
         self.cube = cube
         self.session = session
         self.solve_id = solve_id
@@ -724,8 +1020,18 @@ class SolveUpdateView:
 
 
 class SolveDeleteView:
+    """View for deleting a solve from the database."""
 
     def __init__(self, cube: int, session: str, solve_id: int) -> None:
+        """
+        Delete solve and redirect to session overview.
+
+        Args:
+            cube: Cube size (2-7).
+            session: Session identifier or 'all' for all sessions.
+            solve_id: 1-based solve identifier within the session.
+
+        """
         self.cube = cube
         self.session = session
         self.solve_id = solve_id
@@ -749,12 +1055,29 @@ class SolveDeleteView:
 
 
 class AlgorithmDetailView(View):
+    """View for displaying algorithm with transformations and variations."""
+
     template_name = 'algorithm.html'
 
     def __init__(self, algorithm: str) -> None:
+        """
+        Initialize algorithm detail view.
+
+        Args:
+            algorithm: Algorithm string in standard cube notation.
+
+        """
         self.algorithm = Algorithm.parse_moves(algorithm)
 
     def get_context(self) -> dict[str, Any]:
+        """
+        Build context with algorithm variations and transformations.
+
+        Returns:
+            Dictionary containing original algorithm, Y-axis rotations,
+            symmetry transformations, and mirror variation.
+
+        """
         # Generate Y-axis variations
         y_variations = [
             {
@@ -795,6 +1118,8 @@ class AlgorithmDetailView(View):
 
 
 class AcademyView(View):
+    """View for displaying academy overview with solving methods."""
+
     template_name = 'academy/overview.html'
     methods: ClassVar[dict[str, dict[str, str | dict[str, dict[str, str]]]]] = {
         'CFOP': {
@@ -841,15 +1166,31 @@ class AcademyView(View):
     }
 
     def get_context(self) -> dict[str, Any]:
+        """
+        Build context with available solving methods.
+
+        Returns:
+            Dictionary containing methods and their descriptions.
+
+        """
         return {
             'methods': self.methods,
         }
 
 
 class AcademyStepView(AcademyView):
+    """View for displaying all cases for a specific CFOP step."""
+
     template_name = 'academy/step.html'
 
     def __init__(self, step: str) -> None:
+        """
+        Initialize academy step view.
+
+        Args:
+            step: CFOP step name (F2L, OLL, or PLL).
+
+        """
         self.step = step.upper()
 
         try:
@@ -858,6 +1199,13 @@ class AcademyStepView(AcademyView):
             abort(404, f'{ self.step } does not exist')
 
     def get_context(self) -> dict[str, Any]:
+        """
+        Build context with all cases for the step.
+
+        Returns:
+            Dictionary containing step information, case list, and counts.
+
+        """
         cases = []
 
         for case_id, case_data in self.cases_data.items():
@@ -893,9 +1241,19 @@ class AcademyStepView(AcademyView):
 
 
 class AcademyCaseView(AcademyView):
+    """View for displaying detailed information about a specific case."""
+
     template_name = 'academy/case.html'
 
     def __init__(self, step: str, case_id: str) -> None:
+        """
+        Initialize academy case view.
+
+        Args:
+            step: CFOP step name (F2L, OLL, or PLL).
+            case_id: Case identifier within the step.
+
+        """
         self.step = step.upper()
         self.case_id = case_id
 
@@ -905,6 +1263,14 @@ class AcademyCaseView(AcademyView):
             abort(404, f'{ self.step } { self.case_id } does not exist')
 
     def get_context(self) -> dict[str, Any]:
+        """
+        Build context with case details, algorithms, and orientations.
+
+        Returns:
+            Dictionary containing case information, main algorithm,
+            probability, orientations with AUFs, and setup algorithms.
+
+        """
         case_info = {
             'id': self.case_id,
             'name': self.case_id,
@@ -951,8 +1317,18 @@ class AcademyCaseView(AcademyView):
 
 
 class Server:
+    """Flask/Bottle web server for solve statistics and visualization."""
 
     def run_server(self, host: str, port: int, *, debug: bool) -> None:
+        """
+        Start the web server and open browser.
+
+        Args:
+            host: Host address to bind to (e.g., 'localhost', '0.0.0.0').
+            port: Port number to listen on.
+            debug: Enable debug mode with auto-reload on code changes.
+
+        """
         TEMPLATE_PATH.insert(0, TEMPLATES_DIRECTORY)
 
         app = self.create_app(debug=debug)
@@ -983,10 +1359,22 @@ class Server:
 
     @staticmethod
     def create_app(*, debug: bool) -> Bottle:  # noqa: C901
+        """
+        Create and configure Bottle application with all routes.
+
+        Args:
+            debug: Enable debug mode for detailed error pages.
+
+        Returns:
+            Configured Bottle application instance with all routes,
+            hooks, and error handlers registered.
+
+        """
         app = Bottle()
 
         @app.hook('before_request')  # type: ignore[misc]
         def add_trailing_slash() -> None:
+            """Redirect URLs without trailing slash to version with slash."""
             path = request.environ.get('PATH_INFO', '')
 
             if (
@@ -999,27 +1387,63 @@ class Server:
 
         @app.route('/')  # type: ignore[misc]
         def session_list() -> str:
+            """
+            Render session list overview page.
+
+            Returns:
+                Rendered HTML template.
+
+            """
             return SessionListView().as_view(debug)
 
         @app.route('/academy/')  # type: ignore[misc]
         def academy_overview() -> str:
+            """
+            Render academy overview page.
+
+            Returns:
+                Rendered HTML template.
+
+            """
             return AcademyView().as_view(debug)
 
         @app.route('/academy/<step>/')  # type: ignore[misc]
         def academy_step(step: str) -> str:
+            """
+            Render academy step page with all cases.
+
+            Returns:
+                Rendered HTML template.
+
+            """
             return AcademyStepView(step).as_view(debug)
 
         @app.route('/academy/<step>/<case_id>/')  # type: ignore[misc]
         def academy_case(step: str, case_id: str) -> str:
+            """
+            Render academy case detail page.
+
+            Returns:
+                Rendered HTML template.
+
+            """
             return AcademyCaseView(step, case_id).as_view(debug)
 
         @app.route('/algorithm/<algorithm>/')  # type: ignore[misc]
         def algorithm_detail(algorithm: str) -> str:
+            """
+            Render algorithm detail page with variations.
+
+            Returns:
+                Rendered HTML template.
+
+            """
             return AlgorithmDetailView(algorithm).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/update/',
                    method='POST')  # type: ignore[misc]
         def solve_update(cube: int, session: str, solve: int) -> None:
+            """Handle solve update POST request."""
             SolveUpdateView(
                 cube, session, solve,
                 request.POST.flag,
@@ -1028,12 +1452,20 @@ class Server:
         @app.route('/<cube:int>/<session:path>/<solve:int>/delete/',
                    method='POST')  # type: ignore[misc]
         def solve_delete(cube: int, session: str, solve: int) -> None:
+            """Handle solve delete POST request."""
             SolveDeleteView(
                 cube, session, solve,
             )
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/')  # type: ignore[misc]
         def solve_detail(cube: int, session: str, solve: int) -> str:
+            """
+            Render solve detail page with analysis.
+
+            Returns:
+                Rendered HTML template.
+
+            """
             return SolveDetailView(
                 cube, session, solve,
                 request.GET.m or '',
@@ -1042,6 +1474,13 @@ class Server:
 
         @app.route('/<cube:int>/<session:path>/')  # type: ignore[misc]
         def session_detail(cube: int, session: str) -> str:
+            """
+            Render session detail page with statistics.
+
+            Returns:
+                Rendered HTML template.
+
+            """
             return SessionDetailView(
                 cube, session,
                 request.GET.m or '',
@@ -1051,14 +1490,35 @@ class Server:
 
         @app.route('/static/<filepath:path>')  # type: ignore[misc]
         def static_serve(filepath: str) -> HTTPResponse:
+            """
+            Serve static files.
+
+            Returns:
+                Static file response.
+
+            """
             return static_file(filepath, root=STATIC_DIRECTORY)
 
         @app.error(404)  # type: ignore[misc]
         def error_404(error: HTTPError) -> str:
+            """
+            Handle 404 Not Found errors.
+
+            Returns:
+                Rendered error page HTML.
+
+            """
             return Error404View(error).as_view(debug)
 
         @app.error(500)  # type: ignore[misc]
         def error_500(error: HTTPError) -> str:
+            """
+            Handle 500 Internal Server errors.
+
+            Returns:
+                Rendered error page HTML.
+
+            """
             return Error500View(error).as_view(debug)
 
         return app

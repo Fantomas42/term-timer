@@ -65,11 +65,25 @@ TRANSLATIONS: dict[str, str] = {
 
 
 def translate(value: str) -> str:
+    """
+    Translate case name using TRANSLATIONS dictionary.
+
+    Returns:
+        Translated name or original value if not in dictionary.
+
+    """
     return TRANSLATIONS.get(value, value)
 
 
 def compute_masks(name: str, moves: str, mode: str,
                   *, debug: bool = False) -> dict[str, list[str]]:
+    """
+    Compute facelet masks for case across different orientations.
+
+    Returns:
+        Dictionary mapping encoded cases to orientation configurations.
+
+    """
     if mode == 'AF2L':
         return {}
 
@@ -153,6 +167,7 @@ def compute_masks(name: str, moves: str, mode: str,
 def format_case(mode: str, code: str, info: SourceCaseInfo,
                 data: dict[str, CaseInfo], *,
                 debug: bool = False) -> None:
+    """Format single case from source info into CaseInfo structure."""
     name = code.split(' ')[1]
     if info['aliases'] and mode == 'OLL':
         name += f' { translate(info["aliases"][0]) }'
@@ -198,6 +213,13 @@ def format_case(mode: str, code: str, info: SourceCaseInfo,
 
 def format_cases(cases: dict[str, SourceCaseInfo], mode: str, *,
                  debug: bool = False) -> dict[str, CaseInfo]:
+    """
+    Format all cases for a mode into CaseInfo dictionary.
+
+    Returns:
+        Dictionary mapping case names to formatted CaseInfo structures.
+
+    """
     data: dict[str, CaseInfo] = {}
 
     for code, info in cases.items():
@@ -214,6 +236,7 @@ def format_cases(cases: dict[str, SourceCaseInfo], mode: str, *,
 
 
 def build(data: dict[str, SourceCaseInfo], mode: str, case: str) -> None:
+    """Build case data JSON file for specified mode from source data."""
     print(f'Processing { mode }')
 
     cases: dict[str, SourceCaseInfo] = {}
@@ -247,6 +270,7 @@ def build(data: dict[str, SourceCaseInfo], mode: str, case: str) -> None:
 
 
 def main() -> None:
+    """Build case data from source files."""
     parser = ArgumentParser(
         description='Build cases data.',
     )

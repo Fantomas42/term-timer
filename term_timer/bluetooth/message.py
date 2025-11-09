@@ -5,7 +5,10 @@ from collections.abc import Sequence
 
 
 class GanProtocolMessage:
+    """Binary message parser for GAN cube Bluetooth protocol."""
+
     def __init__(self, message: bytes | Sequence[int]) -> None:
+        """Initialize message parser with binary message data."""
         # Convert each byte to an 8-bit binary string and join them
         self.bits: str = ''.join(
             bin(byte + 0x100)[3:]
@@ -13,12 +16,28 @@ class GanProtocolMessage:
         )
 
     def __str__(self) -> str:
-        """Return binary string representation of message."""
+        """
+        Return binary string representation of message.
+
+        Returns:
+            Binary string representation of message bits.
+
+        """
         return self.bits
 
     def get_bit_word(self, start_bit: int, bit_length: int,
                      *, little_endian: bool = False,
                      signed: bool = False) -> int:
+        """
+        Extract integer value from bit range in message.
+
+        Returns:
+            Integer value decoded from specified bit range.
+
+        Raises:
+            ValueError: If bit_length is not 8, 16, or 32 bits.
+
+        """
         if bit_length <= 8:
             # For 8 bits or less, simply parse the binary substring
             value = int(self.bits[start_bit : start_bit + bit_length], 2)

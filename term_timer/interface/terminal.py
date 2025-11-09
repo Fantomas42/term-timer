@@ -3,15 +3,11 @@
 
 
 class Terminal:
-    """
-    Mixin providing terminal control utilities.
-    """
+    """Mixin providing terminal control utilities."""
 
     @staticmethod
     def clear_line(*, full: bool) -> None:
-        """
-        Clear the current terminal line.
-        """
+        """Clear the current terminal line."""
         if full:
             print(f'\r{ " " * 100}\r', flush=True, end='')
         else:
@@ -19,14 +15,10 @@ class Terminal:
 
     @staticmethod
     def back(size: int) -> None:
-        """
-        Move cursor back by specified number of characters.
-        """
+        """Move cursor back by specified number of characters."""
         print('\b' * size, end='')
 
     @staticmethod
     def beep() -> None:
-        """
-        Emit a terminal beep sound.
-        """
+        """Emit a terminal beep sound."""
         print('\a', end='', flush=True)

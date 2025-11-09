@@ -6,6 +6,8 @@ from term_timer.trainer import Trainer
 
 
 class TestTrainerModule(unittest.TestCase):
+    """Tests for Trainer class."""
+
     def test_initialization(self) -> None:
         timer = Trainer(
             step='oll',

@@ -41,6 +41,10 @@ def create_text_surface(
 ) -> pygame.Surface:
     """
     Create a text surface with white text on transparent background.
+
+    Returns:
+        Pygame surface with rendered text.
+
     """
     # Render text with antialiasing
     temp_surface = font.render(
@@ -64,9 +68,7 @@ def render_waiting_message(
     window: 'Window',
     font: pygame.font.Font,
 ) -> None:
-    """
-    Render waiting message in bottom-right corner of the window.
-    """
+    """Render waiting message in bottom-right corner of the window."""
     # Clear buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 

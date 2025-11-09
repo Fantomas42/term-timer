@@ -19,6 +19,8 @@ if TYPE_CHECKING:
 
 
 class TestStatisticsTools(unittest.TestCase):
+    """Tests for StatisticsTools class."""
+
     def setUp(self) -> None:
         """Set up test cases with sample solves."""
         self.solves = [
@@ -82,6 +84,8 @@ class TestStatisticsTools(unittest.TestCase):
 @patch('term_timer.stats.np.histogram')
 @patch('term_timer.stats.console')
 class TestStatistics(unittest.TestCase):
+    """Tests for Statistics class."""
+
     def setUp(self) -> None:
         """Set up test cases with sample solves."""
         self.solves = [
@@ -151,6 +155,7 @@ class TestStatistics(unittest.TestCase):
 
 
 class TestStatisticsResumeReporter(unittest.TestCase):
+    """Tests for StatisticsReporter resume method."""
 
     def setUp(self) -> None:
         """Set up test cases with sample solves."""
@@ -175,6 +180,8 @@ class TestStatisticsResumeReporter(unittest.TestCase):
 
 
 class TestStatisticsReporterListing(unittest.TestCase):
+    """Tests for StatisticsReporter listing method."""
+
     def setUp(self) -> None:
         """Set up test cases with sample solves."""
         self.solves = [
@@ -336,7 +343,7 @@ class TestStatisticsComprehensive(unittest.TestCase):
 
 
 class TestStatisticsReporterComprehensive(unittest.TestCase):
-    """Comprehensive tests for StatisticsReporter to reach 100% coverage."""
+    """Tests for StatisticsReporter comprehensive coverage."""
 
     def setUp(self) -> None:
         """Set up test cases."""

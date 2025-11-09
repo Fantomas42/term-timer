@@ -20,6 +20,13 @@ logger = logging.getLogger(__name__)
 
 
 class Timer(SolveInterface):
+    """
+    Main timer interface for recording and analyzing cube solves.
+
+    Manages the complete solve workflow including scrambling, timing,
+    recording moves, and displaying statistics.
+    """
+
     def __init__(  # noqa: PLR0913
             self, *,
             cube_size: int,
@@ -38,6 +45,7 @@ class Timer(SolveInterface):
             countdown: int,
             metronome: float,
             stack: list[Solve]) -> None:
+        """Initialize timer with configuration and existing solve stack."""
         super().__init__()
 
         self.set_state('configure')
@@ -70,6 +78,7 @@ class Timer(SolveInterface):
             )
 
     def start_line(self, cube: VCube) -> None:
+        """Display scramble information and instructions to start solve."""
         if self.show_cube:
             cube_display = cube.display(self.orientation_faces)[:-1]
             print(cube_display, end='')  # noqa: T201
@@ -116,6 +125,7 @@ class Timer(SolveInterface):
             )
 
     def save_line(self, flag: SolveFlag) -> None:
+        """Display instructions for saving or canceling the solve."""
         if self.bluetooth_interface:
             self.console.print(
                 'Press any key to save and continue,',
@@ -138,6 +148,7 @@ class Timer(SolveInterface):
             )
 
     def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912
+        """Display solve results, statistics, and record achievements."""
         old_stats = Statistics(self.stack)
 
         self.stack_done.append(solve)
@@ -235,6 +246,13 @@ class Timer(SolveInterface):
                 )
 
     async def start(self) -> bool:
+        """
+        Execute complete solve workflow from scramble to save.
+
+        Returns:
+            True to continue with next solve, False to quit.
+
+        """
         self.init_solve()
 
         self.scramble, cube = scrambler(

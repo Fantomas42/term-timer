@@ -24,6 +24,8 @@ if TYPE_CHECKING:
 
 
 class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
+    """Tests for GanGen3Driver class."""
+
     def setUp(self) -> None:
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'

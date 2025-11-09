@@ -8,6 +8,8 @@ from term_timer.magic_cube import Cube
 
 
 class TestCube(unittest.TestCase):
+    """Tests for Cube class."""
+
     def setUp(self) -> None:
         self.cube = Cube()
 

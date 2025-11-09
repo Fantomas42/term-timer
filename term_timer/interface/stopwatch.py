@@ -14,7 +14,20 @@ if TYPE_CHECKING:
 
 class StopWatch:
     """
-    Mixin providing stopwatch/timer functionality.
+    Mixin providing stopwatch and timer functionality for solve timing.
+
+    This mixin provides timing functionality for speedcubing solves, including
+    a visual stopwatch display that updates in real-time with color-coded time
+    thresholds and optional metronome functionality.
+
+    Attributes:
+        start_time: Nanosecond timestamp when the solve started.
+        end_time: Nanosecond timestamp when the solve ended.
+        elapsed_time: Total elapsed time in nanoseconds.
+        metronome: Interval in seconds for metronome beeps (0.0 disables).
+        solve_started_event: Asyncio event signaling solve start.
+        solve_completed_event: Asyncio event signaling solve completion.
+
     """
 
     if TYPE_CHECKING:
@@ -22,15 +35,16 @@ class StopWatch:
         console: RichConsole
 
         # Methods from State mixin
-        def set_state(self, state: str, timestamp: int | None = None) -> None:
+        def set_state(self, state: str, timestamp: int | None = None) -> None:  # noqa: D102
             ...
 
         # Methods from Terminal mixin
-        def clear_line(self, *, full: bool) -> None: ...
-        def back(self, size: int) -> None: ...
-        def beep(self) -> None: ...
+        def clear_line(self, *, full: bool) -> None: ...  # noqa: D102
+        def back(self, size: int) -> None: ...  # noqa: D102
+        def beep(self) -> None: ...  # noqa: D102
 
     def __init__(self) -> None:
+        """Initialize the stopwatch with default timing values and events."""
         super().__init__()
 
         self.start_time: int = 0
@@ -45,6 +59,11 @@ class StopWatch:
     async def stopwatch(self) -> None:  # noqa: C901, PLR0912
         """
         Display a running stopwatch timer until solve is completed.
+
+        Updates the terminal display with the current elapsed time, applying
+        color-coded styles based on time thresholds (5s, 10s, 15s, etc.).
+        Optionally plays metronome beeps at configured intervals. Runs until
+        the solve_completed_event is set.
         """
         self.clear_line(full=True)
 
