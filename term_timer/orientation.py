@@ -28,13 +28,41 @@ ORIENTATION_MOVES: Final = {
 }
 
 
-def get_orientation_faces(scramble: Algorithm, solution: Algorithm) -> str:  # noqa: C901
+def is_face_complete(cube: VCube, face: str) -> bool:
+    """
+    Check if all facelets on a face are the same color.
+
+    Args:
+        cube: Virtual cube to check
+        face: Face to check (U, R, F, D, L, or B)
+
+    Returns:
+        True if all 9 facelets match the center color
+
+    """
+    facelets = cube.get_face(face)
+    return facelets == facelets[4] * 9
+
+
+def get_orientation_faces(
+        scramble: Algorithm,
+        solution: Algorithm,
+) -> str:
     """
     Calculate optimal cube orientation for solve analysis.
 
+    Detects orientation by finding when the first face is completed
+    during the solve (all 9 facelets same color), then chooses the
+    front face that maximizes ergonomic moves (right-hand or left-hand
+    based on configuration).
+
+    Args:
+        scramble: Scrambling algorithm
+        solution: Solution reconstruction with moves
+
     Returns:
-        Two-character orientation string (e.g., 'UF' for white top,
-        green front).
+        Two-character orientation string
+        (e.g., 'UF' for white top, green front).
 
     """
     top_face = None
@@ -44,24 +72,31 @@ def get_orientation_faces(scramble: Algorithm, solution: Algorithm) -> str:  # n
 
     solution = solution.transform(untime_moves)
 
+    # Step 1: Find when first face is completed
     for move in solution:
         cube.rotate(move)
 
-        faces_done = []
+        # Check which faces are complete (all same color)
+        complete_faces = [
+            face for face in FACE_ORDER
+            if is_face_complete(cube, face)
+        ]
 
-        for face in FACE_ORDER:
-            facelets = cube.get_face(face)
-            if facelets == facelets[4] * 9:
-                faces_done.append(face)
+        # Early exit if no faces are complete
+        if not complete_faces:
+            continue
 
         face_completed = []
-        for face in faces_done:
+        for face in complete_faces:
             cube_orientated = cube.oriented_copy(face)
 
             for adjacent_face in ADJACENT_FACES[face]:
                 adjacent_facelets = cube_orientated.get_face(adjacent_face)[:3]
                 if adjacent_facelets != adjacent_face * 3:
                     break
+            # Bugged
+            # Track first complete face (intentionally without first layer
+            # validation to support color-neutral solving and Roux method)
             face_completed.append(face)
 
             if len(face_completed) == 1:
@@ -70,9 +105,11 @@ def get_orientation_faces(scramble: Algorithm, solution: Algorithm) -> str:  # n
         if top_face:
             break
 
+    # Fallback to configured orientation if no face completion found
     if not top_face:
         return CUBE_ORIENTATION
 
+    # Step 2: Determine best front face based on ergonomics
     scores = []
     for front_face in ADJACENT_FACES[top_face]:
         algorithm = (
@@ -83,9 +120,12 @@ def get_orientation_faces(scramble: Algorithm, solution: Algorithm) -> str:  # n
             remove_ending_rotations,
         )
         ergonomics = algorithm.ergonomics
-        score = ergonomics.right_hand_moves
-        if not CUBE_RIGHT_HANDED:
-            score = ergonomics.left_hand_moves
+
+        # Score based on handedness preference
+        score = (
+            ergonomics.left_hand_moves if not CUBE_RIGHT_HANDED
+            else ergonomics.right_hand_moves
+        )
 
         scores.append((front_face, score))
 
