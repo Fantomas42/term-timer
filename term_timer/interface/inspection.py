@@ -1,17 +1,18 @@
+"""Inspection countdown functionality for timed solves."""
+
 import asyncio
 import time
 from typing import TYPE_CHECKING
 
-from rich.console import Console as RichConsole
-
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
 
+if TYPE_CHECKING:
+    from rich.console import Console as RichConsole
+
 
 class Inspecter:
-    """
-    Mixin providing inspection countdown functionality.
-    """
+    """Mixin providing inspection countdown functionality for timed solves."""
 
     if TYPE_CHECKING:
         # Attributes from State mixin
@@ -21,14 +22,29 @@ class Inspecter:
 
         # Methods from State mixin
         def set_state(self, state: str, timestamp: int | None = None) -> None:
+            """Set the current state with an optional timestamp."""
             ...
 
         # Methods from Terminal mixin
-        def clear_line(self, *, full: bool) -> None: ...
-        def back(self, size: int) -> None: ...
-        def beep(self) -> None: ...
+        def clear_line(self, *, full: bool) -> None:
+            """Clear the current terminal line."""
+            ...
+
+        def back(self, size: int) -> None:
+            """Move the cursor back by the specified number of characters."""
+            ...
+
+        def beep(self) -> None:
+            """Emit an audible beep sound."""
+            ...
 
     def __init__(self) -> None:
+        """
+        Initialize the inspection countdown with default values.
+
+        Set up the countdown timer at 0 seconds and create an asyncio Event
+        for signaling when inspection is completed.
+        """
         super().__init__()
 
         self.countdown: int = 0
@@ -37,7 +53,16 @@ class Inspecter:
 
     async def inspection(self) -> None:
         """
-        Run the inspection countdown timer.
+        Run the inspection countdown timer with visual feedback.
+
+        Display a countdown timer in the terminal that updates in real-time,
+        showing the remaining inspection time. The display changes color as
+        time decreases (normal -> caution -> warning) and emits beeps at 2, 1,
+        and 0 seconds remaining. Continue until the inspection_completed_event
+        is set, then transition to the 'inspected' state.
+
+        The timer format shows seconds with 2 decimal places and updates at
+        the REFRESH rate for smooth countdown display.
         """
         self.clear_line(full=True)
 

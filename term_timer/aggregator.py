@@ -1,12 +1,14 @@
+"""Solve analysis aggregation with multiprocessing support."""
+
 import logging
 import time
 from functools import partial
 from multiprocessing import Pool
 from multiprocessing import cpu_count
+from typing import TYPE_CHECKING
 from typing import cast
 
 from term_timer.methods import get_method_analyser
-from term_timer.methods.base import Analyser
 from term_timer.methods.cases import CASES
 from term_timer.methods.types import CaseInfo
 from term_timer.methods.types import StepSummary
@@ -18,12 +20,22 @@ from term_timer.types import MethodAnalysis
 from term_timer.types import SolveAnalysis
 from term_timer.types import StepAnalysis
 
+if TYPE_CHECKING:
+    from term_timer.methods.base import Analyser
+
 logger = logging.getLogger(__name__)
 
 
 def analyse_solve_worker(solve: Solve,
                          method_name: str, *,
                          full: bool = False) -> SolveAnalysis:
+    """
+    Analyze solve using specified method and return analysis result.
+
+    Returns:
+        Dictionary containing steps analysis, score, and optional solve.
+
+    """
     if not solve.advanced:
         return {
             'steps': {},
@@ -36,7 +48,7 @@ def analyse_solve_worker(solve: Solve,
     if full:
         _ = solve.score
 
-    analysis = cast(Analyser, solve.method_applied)
+    analysis = cast('Analyser', solve.method_applied)
 
     steps: dict[str, StepAnalysis] = {}
     for step_name, step_index in solve.method_analyser.aggregate.items():
@@ -59,9 +71,11 @@ def analyse_solve_worker(solve: Solve,
 
 
 class SolvesMethodAggregator:
+    """Aggregates solve analysis results using multiprocessing."""
 
     def __init__(self, method_name: str, stack: list[Solve],
                  *, full: bool = True) -> None:
+        """Initialize aggregator and compute aggregated results."""
         self.stack = stack
         self.full = full
 
@@ -71,6 +85,13 @@ class SolvesMethodAggregator:
         self.results = self.aggregate()
 
     def collect_analyses(self) -> list[SolveAnalysis]:
+        """
+        Collect solve analyses using multiprocessing.
+
+        Returns:
+            List of analysis results for each solve.
+
+        """
         num_processes = max(1, cpu_count() - 1)
 
         worker_func = partial(
@@ -83,6 +104,13 @@ class SolvesMethodAggregator:
             return pool.map(worker_func, self.stack)
 
     def aggregate(self) -> MethodAnalysis:
+        """
+        Aggregate solve analyses into method statistics.
+
+        Returns:
+            Dictionary with total count, mean score, case statistics, and stack.
+
+        """
         start = time.time()
         analyses = self.collect_analyses()
 

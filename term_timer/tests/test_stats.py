@@ -1,5 +1,7 @@
-# ruff: noqa: ERA001
+"""Tests for stats."""
+# ruff: noqa: ANN401, ERA001
 import unittest
+from typing import TYPE_CHECKING
 from typing import Any
 from unittest.mock import Mock
 from unittest.mock import patch
@@ -10,11 +12,15 @@ from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
 from term_timer.stats import StatisticsTools
-from term_timer.types import CaseStats
-from term_timer.types import MethodAnalysis
+
+if TYPE_CHECKING:
+    from term_timer.types import CaseStats
+    from term_timer.types import MethodAnalysis
 
 
 class TestStatisticsTools(unittest.TestCase):
+    """Tests for StatisticsTools class."""
+
     def setUp(self) -> None:
         """Set up test cases with sample solves."""
         self.solves = [
@@ -78,6 +84,8 @@ class TestStatisticsTools(unittest.TestCase):
 @patch('term_timer.stats.np.histogram')
 @patch('term_timer.stats.console')
 class TestStatistics(unittest.TestCase):
+    """Tests for Statistics class."""
+
     def setUp(self) -> None:
         """Set up test cases with sample solves."""
         self.solves = [
@@ -147,6 +155,7 @@ class TestStatistics(unittest.TestCase):
 
 
 class TestStatisticsResumeReporter(unittest.TestCase):
+    """Tests for StatisticsReporter resume method."""
 
     def setUp(self) -> None:
         """Set up test cases with sample solves."""
@@ -171,6 +180,8 @@ class TestStatisticsResumeReporter(unittest.TestCase):
 
 
 class TestStatisticsReporterListing(unittest.TestCase):
+    """Tests for StatisticsReporter listing method."""
+
     def setUp(self) -> None:
         """Set up test cases with sample solves."""
         self.solves = [
@@ -332,7 +343,7 @@ class TestStatisticsComprehensive(unittest.TestCase):
 
 
 class TestStatisticsReporterComprehensive(unittest.TestCase):
-    """Comprehensive tests for StatisticsReporter to reach 100% coverage."""
+    """Tests for StatisticsReporter comprehensive coverage."""
 
     def setUp(self) -> None:
         """Set up test cases."""
@@ -647,7 +658,8 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             self.assertTrue(term_timer_found)
             self.assertTrue(alg_cubing_found)
 
-    def test_detail_with_graphs(self) -> None:
+    @staticmethod
+    def test_detail_with_graphs() -> None:
         """Test detail method with graph displays."""
         mock_solve = Mock(spec=Solve)
         mock_solve.final_time = 15 * SECOND

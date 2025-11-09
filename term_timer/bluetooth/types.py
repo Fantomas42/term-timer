@@ -9,17 +9,15 @@ if TYPE_CHECKING:
 
 
 class MoveInfo(TypedDict):
-    """
-    Representing a move with timing information.
-    """
+    """Representing a move with timing information."""
+
     move: str
     time: int
 
 
 class RotationResult(TypedDict):
-    """
-    Result of rotation detection.
-    """
+    """Result of rotation detection."""
+
     rotation: str
     angle_deg: float
 
@@ -42,9 +40,7 @@ class VelocityDict(TypedDict):
 
 
 class CubeStateDict(TypedDict):
-    """
-    Cube state representation using corner/edge permutation and orientation.
-    """
+    """Cube state with corner/edge permutation and orientation."""
 
     CP: list[int]
     CO: list[int]
@@ -86,6 +82,7 @@ class MoveEventDict(BaseEventDict):
 
 class RotationEventDict(BaseEventDict):
     """Rotation event payload."""
+
     move: str
 
 

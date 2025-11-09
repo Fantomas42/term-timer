@@ -1,3 +1,4 @@
+"""Bluetooth protocol constants and encryption keys for smart cubes."""
 # ruff: noqa: E222 E501
 from typing import Final
 

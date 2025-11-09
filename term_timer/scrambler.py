@@ -1,4 +1,7 @@
+"""Scramble generation and training case setup utilities."""
+
 from random import choice
+from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
@@ -14,12 +17,18 @@ from term_timer.config import CUBE_RIGHT_HANDED
 from term_timer.exceptions import InvalidCaseError
 from term_timer.magic_cube import Cube
 from term_timer.methods.cases import CASES
-from term_timer.methods.types import CaseInfo
+
+if TYPE_CHECKING:
+    from term_timer.methods.types import CaseInfo
 
 
 def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
     """
-    Return algorithm to reach a certain state
+    Return algorithm to reach a certain state.
+
+    Returns:
+        Algorithm that transforms cube from solved to given state.
+
     """
     solution: str = solve(state, facelets) if facelets else solve(state)
 
@@ -30,6 +39,13 @@ def scrambler(cube_size: int, iterations: int,
               *,
               easy_cross: bool,
               raw_scramble: str = '') -> tuple[Algorithm, Cube]:
+    """
+    Generate cube scramble.
+
+    Returns:
+        Tuple of (scramble algorithm, scrambled cube state).
+
+    """
     cube = Cube(cube_size)
 
     if raw_scramble:
@@ -57,6 +73,13 @@ def trainer(step: str, cases: list[str],
             orientation_moves: Algorithm,
             bluetooth_cube: VCube | None = None) -> tuple[
                 str, Algorithm, Algorithm, VCube]:
+    """
+    Generate training case.
+
+    Returns:
+        Tuple of (case name, main algorithm, scramble, cube state).
+
+    """
     cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube()
 
     if step == 'ecross':
@@ -80,12 +103,22 @@ def trainer(step: str, cases: list[str],
 def random_training(step: str, selected_cases: list[str],
                     orientation_moves: Algorithm) -> tuple[
                         str, Algorithm, Algorithm]:
+    """
+    Generate random training case.
+
+    Returns:
+        Tuple of (case name, main algorithm, scramble algorithm).
+
+    Raises:
+        InvalidCaseError: If selected case is not valid for the step.
+
+    """
     cases: dict[str, CaseInfo] = CASES[step.upper()]
     valid_cases: dict[str, CaseInfo] = {
         k: v for k, v in cases.items() if v.get('setups')
     }
 
-    case = choice(selected_cases or list(valid_cases.keys()))
+    case = choice(selected_cases or list(valid_cases.keys()))  # noqa: S311
 
     if case not in valid_cases:
         error_string = f'Invalid case { case } for { step.upper() }'
@@ -95,7 +128,7 @@ def random_training(step: str, selected_cases: list[str],
 
     algo = (
         orientation_moves
-        + choice(case_info['setups'])
+        + choice(case_info['setups'])  # noqa: S311
         + mirror_moves(orientation_moves)
     )
 

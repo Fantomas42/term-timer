@@ -1,8 +1,11 @@
+"""Interface modules providing mixins for timer and trainer functionality."""
+
 import asyncio
 import logging
 import time
 from datetime import datetime
 from datetime import timezone
+from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
 
@@ -21,7 +24,9 @@ from term_timer.interface.scrambler import Scrambler
 from term_timer.interface.state import State
 from term_timer.interface.stopwatch import StopWatch
 from term_timer.interface.terminal import Terminal
-from term_timer.solve import Solve
+
+if TYPE_CHECKING:
+    from term_timer.solve import Solve
 
 logger = logging.getLogger(__name__)
 
@@ -55,9 +60,17 @@ class SolveInterface(
     - Scrambler: Scramble tracking
     - Gesture: Gesture detection
     - Bluetooth: Bluetooth cube integration
+
+    Attributes:
+        date: Timestamp of the current solve in UTC seconds since epoch.
+        session: Name of the current solving session.
+        cube_size: Size of the cube being solved (2-7).
+        stack: List of completed solves in the current session.
+
     """
 
     def __init__(self) -> None:
+        """Initialize the solve interface with default state values."""
         super().__init__()
 
         self.date: float = 0.0
@@ -67,7 +80,11 @@ class SolveInterface(
 
     def init_solve(self) -> None:
         """
-        Initialize all state for a new solve.
+        Reset all state variables to prepare for a new solve attempt.
+
+        Clears timing data, scramble information, moves history, and all
+        synchronization events. Sets the solve state to 'init' and records
+        the current timestamp.
         """
         self.set_state('init')
         self.date = datetime.now(tz=timezone.utc).timestamp()  # noqa: UP017
@@ -94,7 +111,17 @@ class SolveInterface(
 
     async def scramble_solve(self) -> bool | None:
         """
-        Handle the scrambling phase of the solve.
+        Manage the scrambling phase waiting for user or bluetooth input.
+
+        Sets state to 'scrambling' and waits for keyboard input or bluetooth
+        cube scramble completion. Handles both bluetooth and non-bluetooth
+        input modes.
+
+        Returns:
+            False if user quit (pressed 'q' or ESC), True if bluetooth
+            scramble interrupted by keyboard, None if scramble completed
+            normally.
+
         """
         self.set_state('scrambling')
 
@@ -125,7 +152,11 @@ class SolveInterface(
 
     async def inspect_solve(self) -> None:
         """
-        Run the inspection countdown phase.
+        Execute the inspection countdown phase before solve start.
+
+        Runs the inspection countdown task and waits for either keyboard
+        input or bluetooth solve start event. Sets the inspection completed
+        event when finished. Handles both bluetooth and non-bluetooth modes.
         """
         inspection_task = asyncio.create_task(self.inspection())
 
@@ -146,7 +177,11 @@ class SolveInterface(
 
     async def wait_solve(self) -> None:
         """
-        Wait for the solve to start (either keyboard or bluetooth).
+        Wait for solve start trigger from keyboard or bluetooth cube.
+
+        In bluetooth mode, races keyboard input against the solve started
+        event from the bluetooth cube. Ensures the solve begins only when
+        triggered by the appropriate input source.
         """
         if self.bluetooth_interface:
             tasks = [
@@ -157,7 +192,11 @@ class SolveInterface(
 
     async def time_solve(self) -> None:
         """
-        Time the solve execution with stopwatch display.
+        Record solve duration with live stopwatch display.
+
+        Captures the start time if not already set, displays a running
+        stopwatch, and waits for solve completion via keyboard or bluetooth
+        cube. Records the end time and logs the stop event source.
         """
         if not self.start_time:
             self.start_time = time.perf_counter_ns()
@@ -186,7 +225,15 @@ class SolveInterface(
 
     async def save_solve(self) -> bool:
         """
-        Handle saving the completed solve with optional flag modifications.
+        Save the completed solve with optional flag modifications.
+
+        Waits for user input to mark the solve with a flag (DNF, +2, OK) or
+        cancel it. Persists the solve to storage and displays confirmation.
+        Handles both keyboard and bluetooth gesture input.
+
+        Returns:
+            True if user quit (pressed 'q' or ESC), False otherwise.
+
         """
         self.set_state('saving')
 

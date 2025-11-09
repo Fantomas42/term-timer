@@ -1,3 +1,5 @@
+"""Tests for transform."""
+
 import unittest
 
 from cubing_algs.parsing import parse_moves
@@ -10,9 +12,10 @@ from term_timer.transform import prettify_moves
 
 
 class TransformReorientTestCase(unittest.TestCase):
-    # Keep for reference
+    """Tests for move reorientation transformations."""
 
     def test_reorient_moves_with_orientation(self) -> None:
+        """Test reorient moves with orientation."""
         orientation = parse_moves('x y')
         algorithm = parse_moves("R U R'")
         expect = parse_moves("F R F'")
@@ -22,6 +25,7 @@ class TransformReorientTestCase(unittest.TestCase):
         self.assertEqual(result, expect)
 
     def test_reorient_moves_without_orientation(self) -> None:
+        """Test reorient moves without orientation."""
         orientation = parse_moves('')
         algorithm = parse_moves("R U R'")
 
@@ -30,6 +34,7 @@ class TransformReorientTestCase(unittest.TestCase):
         self.assertEqual(result, algorithm)
 
     def test_reorient_issue_simple(self) -> None:
+        """Test reorient issue simple."""
         scramble = parse_moves("R U R' U'")
         solution = scramble.transform(mirror_moves)
 
@@ -69,6 +74,7 @@ class TransformReorientTestCase(unittest.TestCase):
         self.assertTrue(cube.is_solved)
 
     def test_reorient_issue_without_inverse(self) -> None:
+        """Test reorient issue without inverse."""
         scramble = parse_moves(
             "F R' F' U' D2 B' L F U' F "
             "L' U F2 U' F2 B2 L2 D2 B2 D' L2",
@@ -120,8 +126,10 @@ class TransformReorientTestCase(unittest.TestCase):
 
 
 class TransformSliceTestCase(unittest.TestCase):
+    """Tests for slice move transformations."""
 
     def test_reslice_moves_issue_01(self) -> None:
+        """Test reslice moves issue 01."""
         provide = parse_moves("B' F B' F U L R' R' L D' L' R U D' D' U R L' U")
         expect = parse_moves("S2 D M2 D' M' S2 M U")
 
@@ -136,8 +144,10 @@ class TransformSliceTestCase(unittest.TestCase):
 
 
 class TransformPrettiyTestCase(unittest.TestCase):
+    """Tests for prettify_moves function."""
 
     def test_prettify_moves_with_double_moves(self) -> None:
+        """Test prettify moves with double moves."""
         algorithm = parse_moves('R R U U')
         expect = parse_moves('R2 U2')
 
@@ -147,8 +157,10 @@ class TransformPrettiyTestCase(unittest.TestCase):
 
 
 class TransformHumanizeTestCase(unittest.TestCase):
+    """Tests for humanize_moves function."""
 
     def test_humanize_moves_with_rotation_at_end(self) -> None:
+        """Test humanize moves with rotation at end."""
         algorithm = parse_moves("R U R' y")
 
         result = humanize_moves(algorithm)
@@ -157,6 +169,7 @@ class TransformHumanizeTestCase(unittest.TestCase):
         self.assertEqual(result, algorithm)
 
     def test_humanize_moves_with_rotation_at_end_wide(self) -> None:
+        """Test humanize moves with rotation at end wide."""
         algorithm = parse_moves("R U R' x")
         expect = parse_moves("R U l'")
 
@@ -165,6 +178,7 @@ class TransformHumanizeTestCase(unittest.TestCase):
         self.assertEqual(result, expect)
 
     def test_humanize_moves_empty_algorithm(self) -> None:
+        """Test humanize moves empty algorithm."""
         algorithm = parse_moves('')
 
         result = humanize_moves(algorithm)
@@ -172,6 +186,7 @@ class TransformHumanizeTestCase(unittest.TestCase):
         self.assertEqual(algorithm, result)
 
     def test_humanize_moves_issue_01(self) -> None:
+        """Test humanize moves issue 01."""
         provide = parse_moves(
             "R'@23249 L@23279 "
             "R'@23520 L@23520 "

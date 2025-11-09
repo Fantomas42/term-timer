@@ -1,3 +1,5 @@
+"""OpenGL vertex and color data for cube rendering."""
+
 from typing import Final
 
 from cubing_algs.palettes import PALETTES
@@ -6,7 +8,13 @@ from term_timer.config import CUBE_PALETTE
 
 
 def hex_to_opengl(hex_color: str) -> tuple[float, float, float]:
-    """Convert hexadecimal color to OpenGL RGB tuple (0.0-1.0 range)."""
+    """
+    Convert hexadecimal color to OpenGL RGB tuple (0.0-1.0 range).
+
+    Returns:
+        Tuple of RGB values normalized to 0.0-1.0 range.
+
+    """
     hex_color = hex_color.lstrip('#')
 
     if len(hex_color) == 3:
@@ -22,8 +30,13 @@ def hex_to_opengl(hex_color: str) -> tuple[float, float, float]:
 def load_palette_colors() -> list[tuple[float, float, float]]:
     """
     Load color palette from cubing_algs and convert to OpenGL format.
+
     Returns colors in URFDLB order: [U, R, F, D, L, B]
     which maps to: [WHITE, RED, GREEN, YELLOW, ORANGE, BLUE]
+
+    Returns:
+        List of RGB tuples in URFDLB order.
+
     """
     try:
         palette_name = CUBE_PALETTE or 'default'
@@ -179,6 +192,13 @@ s: Final[list[tuple[int, int, int]]] = [
 
 # Function to change the size of the cube
 def vertices(x: float) -> list[list[float]]:
+    """
+    Generate scaled cube vertices with gap between pieces.
+
+    Returns:
+        List of 8 vertex coordinates with gap factor applied.
+
+    """
     # Add gap between pieces for realistic appearance
     gap_factor = 0.96  # 4% gap between pieces
     scaled_x = x * gap_factor
@@ -214,6 +234,13 @@ normals: Final[list[tuple[float, float, float]]] = [
 def build_color_to_normal() -> (
     dict[tuple[float, float, float], tuple[float, float, float]]
 ):
+    """
+    Build mapping from face colors to their normal vectors.
+
+    Returns:
+        Dictionary mapping RGB colors to normal vectors.
+
+    """
     return {
         WHITE: (0.0, 1.0, 0.0),    # U face
         YELLOW: (0.0, -1.0, 0.0),  # D face

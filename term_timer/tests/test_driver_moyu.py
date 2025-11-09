@@ -1,7 +1,10 @@
+"""Tests for driver moyu."""
+
 import asyncio
 import unittest
 from datetime import datetime
 from datetime import timezone
+from typing import TYPE_CHECKING
 from typing import cast
 from unittest.mock import Mock
 from unittest.mock import patch
@@ -10,14 +13,19 @@ from term_timer.bluetooth.constants import MOYU_WEILONG_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import MOYU_WEILONG_SERVICE
 from term_timer.bluetooth.constants import MOYU_WEILONG_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
-from term_timer.bluetooth.types import BatteryEventDict
-from term_timer.bluetooth.types import FaceletsEventDictNoState
-from term_timer.bluetooth.types import GyroConfigEventDict
-from term_timer.bluetooth.types import HardwareEventMoyuDict
+
+if TYPE_CHECKING:
+    from term_timer.bluetooth.types import BatteryEventDict
+    from term_timer.bluetooth.types import FaceletsEventDictNoState
+    from term_timer.bluetooth.types import GyroConfigEventDict
+    from term_timer.bluetooth.types import HardwareEventMoyuDict
 
 
-class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
+class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
+    """Tests for MoyuWeilong10Driver class."""
+
     def setUp(self) -> None:
+        """Test setup."""
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
         self.mock_client.name = 'WeiLong v10'
@@ -29,12 +37,14 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.driver = MoyuWeilong10Driver(self.mock_client)
 
     def test_init_sets_correct_attributes(self) -> None:
+        """Test init sets correct attributes."""
         self.assertEqual(self.driver.client, self.mock_client)
         self.assertEqual(self.driver.last_serial, -1)
         self.assertEqual(self.driver.cube_timestamp, 0)
         self.assertEqual(self.driver.last_move_timestamp, None)
 
     def test_class_constants(self) -> None:
+        """Test class constants."""
         self.assertEqual(
             MoyuWeilong10Driver.service_uid,
             MOYU_WEILONG_SERVICE,
@@ -50,11 +60,13 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(MoyuWeilong10Driver.factor, pow(2, 30))
 
     def test_init_cypher(self) -> None:
+        """Test init cypher."""
         result = self.driver.init_cypher()
         self.assertIsNotNone(result)
         self.assertIsNotNone(self.driver.cypher)
 
     def test_send_command_handler_request_facelets(self) -> None:
+        """Test send command handler request facelets."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -66,6 +78,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_hardware(self) -> None:
+        """Test send command handler request hardware."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -76,6 +89,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_battery(self) -> None:
+        """Test send command handler request battery."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -86,6 +100,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_enable_gyro(self) -> None:
+        """Test send command handler request enable gyro."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -97,6 +112,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_disable_gyro(self) -> None:
+        """Test send command handler request disable gyro."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -108,6 +124,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_reset(self) -> None:
+        """Test send command handler request reset."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -124,14 +141,17 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_invalid_command(self) -> None:
+        """Test send command handler invalid command."""
         result = self.driver.send_command_handler('INVALID_COMMAND')
         self.assertFalse(result)
 
     def test_send_command_handler_empty_command(self) -> None:
+        """Test send command handler empty command."""
         result = self.driver.send_command_handler('')
         self.assertFalse(result)
 
     def test_send_command_handler_none_command(self) -> None:
+        """Test send command handler none command."""
         result = self.driver.send_command_handler(None)  # type: ignore[arg-type]
         self.assertFalse(result)
 
@@ -140,6 +160,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_gyroscope_disabled(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler gyroscope disabled."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -165,6 +186,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_gyroscope_enabled(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler gyroscope enabled."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -206,6 +228,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_moves_blocked_before_facelets(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler moves blocked before facelets."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -237,6 +260,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_move_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler move event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -278,6 +302,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_facelets_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler facelets event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -311,7 +336,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'facelets')
-                facelets_event = cast(FaceletsEventDictNoState, event)
+                facelets_event = cast('FaceletsEventDictNoState', event)
                 self.assertEqual(facelets_event['serial'], 50)
                 self.assertIn('facelets', facelets_event)
                 self.assertEqual(len(facelets_event['facelets']), 54)
@@ -321,6 +346,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_hardware_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler hardware event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -337,7 +363,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start: int, length: int) -> int:
+                def mock_get_bit_word(start: int, length: int) -> int:  # noqa: PLR0911
                     if start == 0 and length == 8:
                         return 0xA1  # event type
                     if start == 72 and length == 8:
@@ -365,7 +391,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'hardware')
-                hw_event = cast(HardwareEventMoyuDict, event)
+                hw_event = cast('HardwareEventMoyuDict', event)
                 self.assertEqual(hw_event['hardware_version'], '1.2')
                 self.assertEqual(hw_event['software_version'], '3.4')
                 self.assertTrue(hw_event['gyroscope_enabled'])
@@ -378,6 +404,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_battery_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler battery event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -404,7 +431,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'battery')
-                battery_event = cast(BatteryEventDict, event)
+                battery_event = cast('BatteryEventDict', event)
                 self.assertEqual(battery_event['level'], 75)
 
     @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
@@ -412,6 +439,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_battery_level_capped(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler battery level capped."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -437,7 +465,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
-                battery_event = cast(BatteryEventDict, event)
+                battery_event = cast('BatteryEventDict', event)
                 self.assertEqual(battery_event['level'], 100)
 
     @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
@@ -445,6 +473,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_gyro_config_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler gyro config event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -472,7 +501,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'gyro-config')
-                gyro_config_event = cast(GyroConfigEventDict, event)
+                gyro_config_event = cast('GyroConfigEventDict', event)
                 self.assertTrue(gyro_config_event['gyroscope_enabled'])
                 self.assertTrue(gyro_config_event['gyroscope_ready'])
                 self.assertTrue(gyro_config_event['gyroscope_supported'])
@@ -483,6 +512,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_unknown_event(
             self, mock_logger: Mock, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler unknown event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -507,10 +537,12 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                 mock_logger.debug.assert_called_once()
 
     def test_event_handler_is_async(self) -> None:
+        """Test event handler is async."""
         # Verify that event_handler is an async function
         self.assertTrue(asyncio.iscoroutinefunction(self.driver.event_handler))
 
     async def test_event_handler_with_invalid_data(self) -> None:
+        """Test event handler with invalid data."""
         # Test with empty data
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = bytearray()
@@ -525,6 +557,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
                     await self.driver.event_handler(mock_sender, bytearray())
 
     def test_move_value_to_face_mapping(self) -> None:
+        """Test move value to face mapping."""
         # Test the move value to face/direction mapping
         # move_value >> 1 gives face index (0-5 for FBUDLR)
         # move_value & 1 gives direction (0 for normal, 1 for prime)
@@ -548,6 +581,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(actual.strip(), expected)
 
     def test_facelets_face_order(self) -> None:
+        """Test facelets face order."""
         # Test that the face order mapping is correct
         # The code uses faces = [2, 5, 0, 3, 4, 1] to parse in URFDLB order
         expected_order = [2, 5, 0, 3, 4, 1]  # Maps URFDLB to FBUDLR indices

@@ -1,10 +1,15 @@
+"""Tests for trainer."""
+
 import unittest
 
 from term_timer.trainer import Trainer
 
 
 class TestTrainerModule(unittest.TestCase):
+    """Tests for Trainer class."""
+
     def test_initialization(self) -> None:
+        """Test that Trainer initializes with all required attributes."""
         timer = Trainer(
             step='oll',
             cases=['01', '02'],

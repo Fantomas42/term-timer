@@ -1,3 +1,5 @@
+"""Bluetooth cube information utility script."""
+
 import asyncio
 import json
 import logging
@@ -96,6 +98,13 @@ LOGGING_CONF: Final = {
 
 
 def show_cube(cube: VCube) -> None:
+    """
+    Display the virtual cube state in linear compact format.
+
+    Args:
+        cube: The virtual cube to display.
+
+    """
     logger.info(
         'Virtual Cube:\n%s',
         cube.display(
@@ -107,6 +116,19 @@ def show_cube(cube: VCube) -> None:
 
 def show_state(raw_moves: list[str], orientation_moves: Algorithm,
                cube: VCube | None) -> None:
+    """
+    Display the cube state after applying moves with timing and triggers.
+
+    Parses raw moves, translates them based on orientation, and displays
+    both the timed move sequence and the reconstructed solution with
+    trigger highlighting. Updates the virtual cube state if provided.
+
+    Args:
+        raw_moves: List of moves in timed notation (e.g., ["R@100", "U@200"]).
+        orientation_moves: Algorithm for orientation transformation.
+        cube: Virtual cube to update, or None to skip cube display.
+
+    """
     if not raw_moves:
         if cube:
             cube_rotated = cube.copy()
@@ -168,6 +190,22 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
 
 def check_state(raw_moves: list[str], facelets: str,
                 cube: VCube) -> bool:
+    """
+    Verify cube state synchronization between moves and facelets.
+
+    Applies the move sequence to a copy of the cube and compares the
+    resulting state with the provided facelet string to detect
+    desynchronization.
+
+    Args:
+        raw_moves: List of moves in timed notation to apply.
+        facelets: Expected facelet string representation.
+        cube: Virtual cube to verify against.
+
+    Returns:
+        True if states match, False if desynchronized.
+
+    """
     algo = parse_moves(raw_moves)
 
     cube_rotated = cube.copy()
@@ -187,13 +225,33 @@ def check_state(raw_moves: list[str], facelets: str,
     return True
 
 
-async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
-                      cube_ready: threading.Event,
-                      gl_thread: CubeGLThread | None,
-                      event_collector: list[EventDict],
-                      *, show_cube: bool,
-                      orientation_faces: str,
-                      rotation_threshold: float = 70.0) -> None:
+async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
+        queue: asyncio.Queue[list[EventDict] | None],
+        cube_ready: threading.Event,
+        gl_thread: CubeGLThread | None,
+        event_collector: list[EventDict],
+        *, show_cube: bool,
+        orientation_faces: str,
+        rotation_threshold: float = 70.0) -> None:
+    """
+    Consumes Bluetooth events and processes cube state updates.
+
+    Processes events from the Bluetooth interface queue including hardware
+    information, battery status, facelet updates, gyroscope rotations, and
+    move notifications. Updates the virtual cube state and OpenGL display
+    as events are received.
+
+    Args:
+        queue: Event queue from Bluetooth interface. None signals disconnect.
+        cube_ready: Event to signal when cube state is initialized.
+        gl_thread: Optional OpenGL visualization thread.
+        event_collector: List to accumulate all received events.
+        show_cube: Whether to display cube state in console.
+        orientation_faces: Two-character orientation specification (e.g., "UF").
+        rotation_threshold: Minimum rotation angle in degrees for detection.
+            Defaults to 70.0.
+
+    """
     virtual_cube: VCube | None = None
     moves: list[str] = []
     hardware = ''
@@ -205,7 +263,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
     logger.info(
         'CONSUMER: Use "%s" as orientation faces and "%s" as orientation moves',
         orientation_faces,
-        str(orientation_moves),
+        orientation_moves,
     )
     if USE_GYROSCOPE:
         rotation_detector = RotationDetector(
@@ -220,7 +278,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
         events = await queue.get()
 
         if events is None:
-            print('\a', end='', flush=True)
+            print('\a', end='', flush=True)  # noqa: T201
             logger.info(
                 'CONSUMER: Got message from client about disconnection. '
                 'Exiting consumer loop...',
@@ -233,7 +291,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
             time = int(event['clock'] / MS_TO_NS_FACTOR)
 
             if event_name == 'hardware':
-                event = cast(HardwareEventDict, event)
+                event = cast('HardwareEventDict', event)
                 logger.info(
                     'CONSUMER: Hardware %s version %s, Software %s, %s',
                     event['hardware_name'],
@@ -253,7 +311,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     gl_thread.set_title(f'{ hardware } { battery }')
 
             elif event_name == 'battery':
-                event = cast(BatteryEventDict, event)
+                event = cast('BatteryEventDict', event)
                 logger.info(
                     'CONSUMER: Battery: %s%%%s',
                     event['level'],
@@ -264,7 +322,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     gl_thread.set_title(f'{ hardware } { battery }')
 
             elif event_name == 'facelets':
-                event = cast(FaceletsEventDict, event)
+                event = cast('FaceletsEventDict', event)
                 logger.info(
                     'CONSUMER: Facelets received',
                 )
@@ -284,7 +342,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     show_state(moves, orientation_moves, virtual_cube)
 
             elif event_name == 'gyro' and rotation_detector:
-                event = cast(GyroEventDict, event)
+                event = cast('GyroEventDict', event)
 
                 rotation_result = rotation_detector.process_gyro_event(
                     event['quaternion'],
@@ -306,7 +364,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                     )
 
             elif event_name == 'move':
-                event = cast(MoveEventDict, event)
+                event = cast('MoveEventDict', event)
                 logger.info(
                     'CONSUMER: Face: %s, Direction: %s, Move: %s',
                     event['face'],
@@ -319,7 +377,7 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
 
                 if gl_thread and gl_thread.is_alive():
                     direction = 3 if "'" in event['move'] else 1
-                    face = cast(Face, event['move'][0])
+                    face = cast('Face', event['move'][0])
                     gl_thread.add_move(face, direction)
 
             else:
@@ -329,11 +387,28 @@ async def consumer_cb(queue: asyncio.Queue[list[EventDict] | None],
                 )
 
 
-async def client_cb(queue: asyncio.Queue[list[EventDict] | None],
-                    time: int, filter_name: str, *,
-                    cube_reset: bool,
-                    gyroscope_enable: bool,
-                    gyroscope_disable: bool) -> None:
+async def client_cb(  # noqa: PLR0913
+        queue: asyncio.Queue[list[EventDict] | None],
+        time: int, filter_name: str, *,
+        cube_reset: bool,
+        gyroscope_enable: bool,
+        gyroscope_disable: bool) -> None:
+    """
+    Manage Bluetooth connection and send commands to the smart cube.
+
+    Establishes connection to a Bluetooth cube, sends initial information
+    requests, applies configuration commands, and maintains the connection
+    for the specified duration before disconnecting.
+
+    Args:
+        queue: Event queue for receiving Bluetooth events.
+        time: Duration in seconds to maintain connection.
+        filter_name: Device name filter for connection, or empty string.
+        cube_reset: Whether to request cube reset.
+        gyroscope_enable: Whether to enable gyroscope data streaming.
+        gyroscope_disable: Whether to disable gyroscope data streaming.
+
+    """
     bluetooth_interface = BluetoothInterface(queue)
 
     await bluetooth_interface.__aenter__(filter_name=filter_name)
@@ -350,7 +425,7 @@ async def client_cb(queue: asyncio.Queue[list[EventDict] | None],
         await bluetooth_interface.send_command('REQUEST_RESET')
     else:
         logger.info('Free play for %ss', time)
-        print('\a', end='', flush=True)
+        print('\a', end='', flush=True)  # noqa: T201
         await asyncio.sleep(time)
 
     await bluetooth_interface.__aexit__(None, None, None)
@@ -358,6 +433,18 @@ async def client_cb(queue: asyncio.Queue[list[EventDict] | None],
 
 
 def replay(options: Namespace) -> None:
+    """
+    Replays recorded Bluetooth events from a JSON file.
+
+    Loads and processes events from a file, simulating the live event
+    stream to analyze gyroscope rotations, moves, and facelet updates
+    without requiring an active Bluetooth connection.
+
+    Args:
+        options: Command-line arguments containing input file path,
+            orientation settings, and rotation threshold.
+
+    """
     file_path = Path(options.input).resolve()
     with file_path.open(encoding='utf-8') as f:
         events = json.load(f)
@@ -373,7 +460,7 @@ def replay(options: Namespace) -> None:
     logger.info(
         'REPLAY: Use "%s" as orientation faces and "%s" as orientation moves',
         options.orientation,
-        str(orientation_moves),
+        orientation_moves,
     )
     logger.info(
         'REPLAY: Use %.1f° threshold for rotation detection',
@@ -387,7 +474,7 @@ def replay(options: Namespace) -> None:
         time = int(event['clock'] / MS_TO_NS_FACTOR)
 
         if event_name == 'gyro':
-            event = cast(GyroEventDict, event)
+            event = cast('GyroEventDict', event)
 
             rotation_result = rotation_detector.process_gyro_event(
                 event['quaternion'],
@@ -404,7 +491,7 @@ def replay(options: Namespace) -> None:
                 show_state(moves, orientation_moves, virtual_cube)
 
         elif event_name == 'move':
-            event = cast(MoveEventDict, event)
+            event = cast('MoveEventDict', event)
             logger.info(
                 'REPLAY: Face: %s, Direction: %s, Move: %s',
                 event['face'],
@@ -416,7 +503,7 @@ def replay(options: Namespace) -> None:
             show_state(moves, orientation_moves, virtual_cube)
 
         elif event_name == 'facelets':
-            event = cast(FaceletsEventDict, event)
+            event = cast('FaceletsEventDict', event)
             logger.info(
                 'REPLAY: Facelets: %s',
                 event['facelets'],
@@ -429,6 +516,21 @@ def replay(options: Namespace) -> None:
 
 def linear_regression(x_values: list[float],
                       y_values: list[float]) -> tuple[float, float]:
+    """
+    Calculate linear regression parameters for two data series.
+
+    Computes the slope and intercept of the best-fit line through the
+    provided data points using the least squares method. Handles None
+    values by skipping them in the calculation.
+
+    Args:
+        x_values: Independent variable data points.
+        y_values: Dependent variable data points.
+
+    Returns:
+        Tuple of (slope, intercept) for the linear regression line.
+
+    """
     sum_x = 0.0
     sum_y = 0.0
     sum_xy = 0.0
@@ -459,6 +561,18 @@ def linear_regression(x_values: list[float],
 
 
 def resume(events: list[EventDict], output: str) -> None:
+    """
+    Analyzes event timing and optionally exports to JSON.
+
+    Processes collected events to compute clock skew between cube and local
+    timestamps, calculates gyroscope sampling frequency, and exports events
+    to a JSON file if an output path is provided.
+
+    Args:
+        events: List of all events collected during the session.
+        output: Output file path for JSON export, or empty string to skip.
+
+    """
     cube_timestamps: list[float] = []
     local_timestamps: list[float] = []
     gyro_clocks: list[int] = []
@@ -469,7 +583,7 @@ def resume(events: list[EventDict], output: str) -> None:
         data: dict[str, Any] = {}
 
         if event['event'] == 'move':
-            event = cast(MoveEventDict, event)
+            event = cast('MoveEventDict', event)
             if (
                 event['cube_timestamp'] is None
                 or event['local_timestamp'] is None
@@ -489,7 +603,7 @@ def resume(events: list[EventDict], output: str) -> None:
             replay.append(data)
 
         elif event['event'] == 'gyro':
-            event = cast(GyroEventDict, event)
+            event = cast('GyroEventDict', event)
             gyro_clocks.append(event['clock'])
 
             data.update(event)
@@ -497,7 +611,7 @@ def resume(events: list[EventDict], output: str) -> None:
             replay.append(data)
 
         elif event['event'] == 'facelets':
-            event = cast(FaceletsEventDict, event)
+            event = cast('FaceletsEventDict', event)
             data.update(event)
             data['timestamp'] = data['timestamp'].timestamp()
             replay.append(data)
@@ -533,6 +647,19 @@ async def run(
     gl_thread: CubeGLThread | None,
     cube_ready: threading.Event,
 ) -> None:
+    """
+    Orchestrates the main event loop for Bluetooth monitoring or replay.
+
+    Coordinates the client connection, event consumer, and optional OpenGL
+    visualization. Handles both live Bluetooth sessions and replay mode
+    from recorded event files.
+
+    Args:
+        options: Parsed command-line arguments.
+        gl_thread: Optional OpenGL visualization thread.
+        cube_ready: Event to synchronize cube state initialization.
+
+    """
     if options.input:
         replay(options)
         return
@@ -572,6 +699,13 @@ async def run(
 
 
 def main() -> None:
+    """
+    Entry point for the Bluetooth cube information utility.
+
+    Configures logging, parses command-line arguments, initializes the
+    optional OpenGL visualization thread, and launches the async event
+    processing loop.
+    """
     logging.config.dictConfig(LOGGING_CONF)
 
     parser = ArgumentParser(

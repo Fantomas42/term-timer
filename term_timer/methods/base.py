@@ -1,7 +1,10 @@
+"""Base classes for solving method analysis and step detection."""
+
 from collections.abc import Callable
 from collections.abc import Iterable
 from contextlib import suppress
 from functools import cached_property
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import Final
@@ -21,7 +24,6 @@ from cubing_algs.masks import L1_MASK
 from cubing_algs.masks import OLL_MASK
 from cubing_algs.masks import facelets_masked
 from cubing_algs.masks import union_masks
-from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.transform.mirror import mirror_moves
@@ -38,6 +40,9 @@ from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
+
+if TYPE_CHECKING:
+    from cubing_algs.move import Move
 
 CROSS_CENTER_MASK: Final = union_masks(CROSS_MASK, CENTERS_MASK)
 
@@ -93,9 +98,34 @@ STEPS_CONFIG: Final[dict[str, StepConfig]] = {
 
 
 class FaceletAnalyser:
+    """
+    Analyzes cube state based on facelet representation.
 
-    def reorient(self, state: str, orientation_faces: str,
+    Provides methods to reorient cube states, check step completion, and
+    identify solving method cases based on facelet patterns.
+    """
+
+    @staticmethod
+    def reorient(state: str, orientation_faces: str,
                  *, offset: bool = False) -> str:
+        """
+        Transform cube state to match a target orientation.
+
+        Rotates the cube state to align with the specified orientation
+        faces, optionally applying a mirror transformation for offset
+        calculations.
+
+        Args:
+            state: 54-character facelet string representing cube state.
+            orientation_faces: Two-character string specifying bottom and
+                front faces (e.g., 'UF' for white bottom, green front).
+            offset: Whether to mirror the orientation moves for mask
+                alignment.
+
+        Returns:
+            Reoriented 54-character facelet string.
+
+        """
         top_face = OPPOSITE_FACES[orientation_faces[0]]
         orientation = f'{ top_face }{ orientation_faces[1] }'
 
@@ -115,6 +145,22 @@ class FaceletAnalyser:
     def get_step_case(self, step: str, facelets: str,
                       orientation_faces: str,
                       encoder: Callable[[str], str]) -> str:
+        """
+        Identify the solving case for a given step based on facelets.
+
+        Reorients the cube state and encodes it to match against known
+        case patterns for the specified solving step.
+
+        Args:
+            step: Name of the solving step (e.g., 'OLL', 'PLL', 'F2L 1').
+            facelets: Current 54-character facelet string.
+            orientation_faces: Two-character orientation specification.
+            encoder: Function that encodes facelet string into case key.
+
+        Returns:
+            Case name if found in database, empty string otherwise.
+
+        """
         facelets = self.reorient(facelets, orientation_faces, offset=False)
 
         encoded = encoder(facelets)
@@ -127,6 +173,21 @@ class FaceletAnalyser:
 
     def check_step(self, step: str, facelets: str,
                    orientation_faces: str) -> bool:
+        """
+        Verify if a solving step has been completed.
+
+        Compares the current cube state against the expected state for
+        step completion using the step's configured facelet mask.
+
+        Args:
+            step: Name of the solving step to check.
+            facelets: Current 54-character facelet string.
+            orientation_faces: Two-character orientation specification.
+
+        Returns:
+            True if step is completed, False otherwise.
+
+        """
         mask = get_step_config(step, 'mask')
 
         mask = self.reorient(mask, orientation_faces, offset=True)
@@ -141,6 +202,22 @@ class FaceletAnalyser:
 
 
 class Analyser(FaceletAnalyser):
+    """
+    Analyzes solve performance by breaking it into method-specific steps.
+
+    Processes scramble and solution sequences to identify step boundaries,
+    calculate timing metrics, recognize cases, and generate comprehensive
+    solve statistics for training and analysis.
+
+    Attributes:
+        name: Human-readable name of the solving method.
+        step_list: Ordered tuple of step names in the solving sequence.
+        norms: Performance benchmarks for normalizing metrics.
+        aufs: Configuration for AUF (adjustment U face) detection per step.
+        aggregate: Aggregation rules for combining step statistics.
+
+    """
+
     name = ''
     step_list: tuple[str, ...] = ()
     norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {}
@@ -149,7 +226,17 @@ class Analyser(FaceletAnalyser):
 
     def __init__(self, scramble: Algorithm, solution: Algorithm,
                  orientation_faces: str,
-                 orientation_moves: Algorithm):
+                 orientation_moves: Algorithm) -> None:
+        """
+        Initialize analyser with solve data and orientation.
+
+        Args:
+            scramble: Algorithm used to scramble the cube.
+            solution: Complete algorithm sequence solving the scramble.
+            orientation_faces: Two-character bottom/front face orientation.
+            orientation_moves: Rotation moves to achieve target orientation.
+
+        """
         self.scramble = scramble
         self.solution = solution
 
@@ -165,11 +252,30 @@ class Analyser(FaceletAnalyser):
 
     def get_solution_move_time(self, index: int) -> int:
         """
-        Get timing value for a move in the solution.
+        Get the timestamp of a move in the solution sequence.
+
+        Args:
+            index: Zero-based position of the move in the solution.
+
+        Returns:
+            Timestamp in milliseconds for the specified move.
+
         """
         return self.solution[index].timed
 
     def split_steps(self) -> dict[str, StepInfo]:
+        """
+        Divide the solution into distinct solving method steps.
+
+        Simulates cube execution move-by-move, detecting step completion
+        by checking facelet patterns. Associates each move with its
+        corresponding step and captures the cube state at transitions.
+
+        Returns:
+            Dictionary mapping step names to their move indices, case info,
+            and facelet states at step start.
+
+        """
         cube = VCube()
         facelets = cube.rotate(self.scramble)
 
@@ -216,9 +322,38 @@ class Analyser(FaceletAnalyser):
 
     def compute_progress(self, facelets: str,
                          progress: int) -> tuple[int, list[str]]:
+        """
+        Calculate solve progress and identify cases at current state.
+
+        Must be implemented by subclasses to define method-specific logic
+        for detecting which steps have been completed and what cases are
+        present in the current cube state.
+
+        Args:
+            facelets: Current 54-character facelet string.
+            progress: Number of steps completed so far.
+
+        Returns:
+            Tuple of (new progress count, list of detected case names).
+
+        Raises:
+            NotImplementedError: Must be overridden by subclass.
+
+        """
         raise NotImplementedError
 
     def summarize(self) -> list[StepSummary]:
+        """
+        Generate comprehensive statistics for each step in the solve.
+
+        Calculates timing metrics (execution, recognition, pauses), move
+        transformations (reoriented, humanized, prettified), percentage
+        breakdowns, and AUF detection for all detected steps.
+
+        Returns:
+            List of step summaries with timing and analysis data.
+
+        """
         summary: list[StepSummary] = []
 
         for step in self.step_list:
@@ -296,6 +431,20 @@ class Analyser(FaceletAnalyser):
         return summary
 
     def get_aufs(self, name: str, moves: Algorithm) -> list[int | None]:
+        """
+        Detect pre-AUF and post-AUF moves for a step's algorithm.
+
+        AUF (Adjustment U Face) moves are U-layer rotations before or
+        after the main algorithm. Detection is configured per step.
+
+        Args:
+            name: Step name to check AUF configuration for.
+            moves: Algorithm sequence to analyze.
+
+        Returns:
+            List containing [pre-AUF count or None, post-AUF count or None].
+
+        """
         pre_auf, post_auf = None, None
         pre, post = self.aufs.get(name, [False, False])
 
@@ -308,6 +457,17 @@ class Analyser(FaceletAnalyser):
         return [pre_auf, post_auf]
 
     def get_auf(self, moves: Algorithm, mode: str) -> int:
+        """
+        Count consecutive U-face moves at the start or end of algorithm.
+
+        Args:
+            moves: Algorithm sequence to analyze.
+            mode: Either 'pre' for start or 'post' for end of sequence.
+
+        Returns:
+            Number of consecutive U-face moves found.
+
+        """
         auf_move = self.orientation_faces[0]
         auf = 0
 
@@ -325,10 +485,36 @@ class Analyser(FaceletAnalyser):
         return auf
 
     def correct_summary(self, summary: list[StepSummary]) -> None:
-        pass
+        """
+        Apply method-specific corrections to step summaries.
 
-    def normalize_value(self, metric: str, name: str, value: float,
+        Hook for subclasses to adjust summary data based on specific
+        solving method requirements. Default implementation does nothing.
+
+        Args:
+            summary: List of step summaries to potentially modify in-place.
+
+        """
+
+    def normalize_value(self, metric: str, name: str, value: float,  # noqa: PLR0911
                         default: str, *, threshold: float = 1.2) -> str:
+        """
+        Normalize a metric value against benchmark thresholds.
+
+        Compares the value to configured norms and returns a status
+        indicating performance level (success, caution, or warning).
+
+        Args:
+            metric: Metric category (e.g., 'tps', 'execution').
+            name: Specific metric name within category.
+            value: Measured value to normalize.
+            default: Default status if no norm is configured.
+            threshold: Multiplier for warning threshold (default 1.2).
+
+        Returns:
+            Performance status: 'success', 'caution', 'warning', or default.
+
+        """
         norm = self.norms.get(metric, {}).get(name)
         if not norm:
             return default
@@ -360,8 +546,27 @@ class Analyser(FaceletAnalyser):
 
     @cached_property
     def score(self) -> float:
+        """
+        Calculates overall solve quality score.
+
+        Returns:
+            Numerical score representing solve quality (default 20).
+
+        """
         return 20
 
 
-def get_step_config(step_name: str, value: str, default: Any = None) -> Any:
+def get_step_config(step_name: str, value: str, default: Any = None) -> Any:  # noqa: ANN401
+    """
+    Retrieve configuration value for a solving step.
+
+    Args:
+        step_name: Name of the step (e.g., 'Cross', 'OLL', 'F2L 1').
+        value: Configuration key to retrieve (e.g., 'mask', 'triggers').
+        default: Value to return if step or key not found.
+
+    Returns:
+        Configuration value if found, otherwise default value.
+
+    """
     return STEPS_CONFIG.get(step_name, {}).get(value, default)

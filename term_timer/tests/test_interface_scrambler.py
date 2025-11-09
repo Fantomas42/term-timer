@@ -1,3 +1,5 @@
+"""Tests for interface scrambler."""
+
 import unittest
 
 from cubing_algs.algorithm import Algorithm
@@ -11,16 +13,26 @@ class MockScrambler(Scrambler):
     """Mock class for testing Scrambler mixin."""
 
     def __init__(self) -> None:
+        """Initialize mock scrambler with empty reorient value."""
         self.reorient_return_value = parse_moves('')
         super().__init__()
 
     def reorient(self, _algorithm: Algorithm) -> Algorithm:
+        """
+        Return the configured reorient value for testing.
+
+        Returns:
+            The pre-configured reorient_return_value algorithm.
+
+        """
         return self.reorient_return_value
 
 
 class OrienterScrambler(Orienter, Scrambler):
+    """Test class combining Orienter and Scrambler."""
 
     def __init__(self, orientation_faces: str) -> None:
+        """Initialize with specified cube orientation."""
         self.orientation_faces = orientation_faces
 
 
@@ -28,9 +40,11 @@ class TestComputeScrambleDisplayComplete(unittest.TestCase):
     """Tests for compute_scramble_display when scramble is complete."""
 
     def setUp(self) -> None:
+        """Test setup."""
         self.scrambler = MockScrambler()
 
     def test_complete_returns_completion_message(self) -> None:
+        """Test complete returns completion message."""
         scrambled = parse_moves("R U R' U'")
         scramble_oriented = parse_moves("R U R' U'")
         cube_orientation_moves = parse_moves('')
@@ -52,6 +66,7 @@ class TestComputeScrambleDisplayComplete(unittest.TestCase):
     def test_complete_with_orientation_moves_still_shows_completion(
         self,
     ) -> None:
+        """Test complete with orientation moves still shows completion."""
         scrambled = parse_moves("R U R' U'")
         scramble_oriented = parse_moves("R U R' U'")
         cube_orientation_moves = parse_moves('x y')
@@ -71,6 +86,7 @@ class TestComputeScrambleDisplayComplete(unittest.TestCase):
         self.assertTrue(full_clear)
 
     def test_complete_with_empty_scramble(self) -> None:
+        """Test complete with empty scramble."""
         scrambled = parse_moves('')
         scramble_oriented = parse_moves('')
         cube_orientation_moves = parse_moves('')
@@ -94,9 +110,11 @@ class TestComputeScrambleDisplayIncomplete(unittest.TestCase):
     """Tests for compute_scramble_display when scramble is incomplete."""
 
     def setUp(self) -> None:
+        """Test setup."""
         self.scrambler = MockScrambler()
 
     def test_empty_scramble_no_orientation(self) -> None:
+        """Test empty scramble no orientation."""
         scrambled = parse_moves('')
         scramble_oriented = parse_moves('')
         cube_orientation_moves = parse_moves('')
@@ -113,6 +131,7 @@ class TestComputeScrambleDisplayIncomplete(unittest.TestCase):
         self.assertTrue(full_clear)
 
     def test_single_move_scramble(self) -> None:
+        """Test single move scramble."""
         scrambled = parse_moves('R')
         scramble_oriented = parse_moves('R')
         cube_orientation_moves = parse_moves('')
@@ -130,6 +149,7 @@ class TestComputeScrambleDisplayIncomplete(unittest.TestCase):
         self.assertTrue(full_clear)
 
     def test_two_moves_scramble_both_correct(self) -> None:
+        """Test two moves scramble both correct."""
         scrambled = parse_moves('R U')
         scramble_oriented = parse_moves('R U')
         cube_orientation_moves = parse_moves('')
@@ -147,6 +167,7 @@ class TestComputeScrambleDisplayIncomplete(unittest.TestCase):
         self.assertFalse(full_clear)
 
     def test_orientation_moves_displayed(self) -> None:
+        """Test orientation moves displayed."""
         scrambled = parse_moves('R')
         scramble_oriented = parse_moves('R')
         cube_orientation_moves = parse_moves('x y')
@@ -171,9 +192,11 @@ class TestComputeScrambleDisplayCorrectMoves(unittest.TestCase):
     """Tests for correct move styling."""
 
     def setUp(self) -> None:
+        """Test setup."""
         self.scrambler = MockScrambler()
 
     def test_all_correct_moves_styled_as_move(self) -> None:
+        """Test all correct moves styled as move."""
         scrambled = parse_moves("R U R' U'")
         scramble_oriented = parse_moves("R U R' U'")
         cube_orientation_moves = parse_moves('')
@@ -193,6 +216,7 @@ class TestComputeScrambleDisplayCorrectMoves(unittest.TestCase):
         self.assertFalse(full_clear)
 
     def test_first_two_correct_of_three(self) -> None:
+        """Test first two correct of three."""
         scrambled = parse_moves('R U')
         scramble_oriented = parse_moves('R U F')
         cube_orientation_moves = parse_moves('')
@@ -214,9 +238,11 @@ class TestComputeScrambleDisplayCautionStyling(unittest.TestCase):
     """Tests for caution styling (same face, wrong direction/amount)."""
 
     def setUp(self) -> None:
+        """Test setup."""
         self.scrambler = MockScrambler()
 
     def test_same_face_wrong_direction_styled_as_caution(self) -> None:
+        """Test same face wrong direction styled as caution."""
         scrambled = parse_moves('R')
         scramble_oriented = parse_moves("R'")
         cube_orientation_moves = parse_moves('')
@@ -234,6 +260,7 @@ class TestComputeScrambleDisplayCautionStyling(unittest.TestCase):
         self.assertTrue(full_clear)
 
     def test_same_face_wrong_amount_styled_as_caution(self) -> None:
+        """Test same face wrong amount styled as caution."""
         scrambled = parse_moves('R2')
         scramble_oriented = parse_moves('R')
         cube_orientation_moves = parse_moves('')
@@ -251,6 +278,7 @@ class TestComputeScrambleDisplayCautionStyling(unittest.TestCase):
         self.assertTrue(full_clear)
 
     def test_first_correct_second_caution(self) -> None:
+        """Test first correct second caution."""
         scrambled = parse_moves('R U')
         scramble_oriented = parse_moves("R U'")
         cube_orientation_moves = parse_moves('')
@@ -272,9 +300,11 @@ class TestComputeScrambleDisplayWarningStyling(unittest.TestCase):
     """Tests for warning styling (completely wrong move)."""
 
     def setUp(self) -> None:
+        """Test setup."""
         self.scrambler = MockScrambler()
 
     def test_wrong_face_styled_as_warning(self) -> None:
+        """Test wrong face styled as warning."""
         scrambled = parse_moves('R')
         scramble_oriented = parse_moves('U')
         cube_orientation_moves = parse_moves('')
@@ -292,6 +322,7 @@ class TestComputeScrambleDisplayWarningStyling(unittest.TestCase):
         self.assertTrue(full_clear)
 
     def test_first_correct_second_wrong_face(self) -> None:
+        """Test first correct second wrong face."""
         scrambled = parse_moves('R F')
         scramble_oriented = parse_moves('R U')
         cube_orientation_moves = parse_moves('')
@@ -313,9 +344,11 @@ class TestComputeScrambleDisplayOffTrackBehavior(unittest.TestCase):
     """Tests for off-track behavior (once wrong, all subsequent are wrong)."""
 
     def setUp(self) -> None:
+        """Test setup."""
         self.scrambler = MockScrambler()
 
     def test_once_off_track_all_subsequent_warning(self) -> None:
+        """Test once off track all subsequent warning."""
         scrambled = parse_moves('R F U')
         scramble_oriented = parse_moves('R U D')
         cube_orientation_moves = parse_moves('')
@@ -335,6 +368,7 @@ class TestComputeScrambleDisplayOffTrackBehavior(unittest.TestCase):
         self.assertFalse(full_clear)
 
     def test_once_off_track_same_face_later_is_warning(self) -> None:
+        """Test once off track same face later is warning."""
         scrambled = parse_moves('R F D')
         scramble_oriented = parse_moves('R U D')
         cube_orientation_moves = parse_moves('')
@@ -354,6 +388,7 @@ class TestComputeScrambleDisplayOffTrackBehavior(unittest.TestCase):
         self.assertFalse(full_clear)
 
     def test_first_wrong_direction_triggers_off_track(self) -> None:
+        """Test first wrong direction triggers off track."""
         scrambled = parse_moves('R U F')
         scramble_oriented = parse_moves("R' U F")
         cube_orientation_moves = parse_moves('')
@@ -373,6 +408,7 @@ class TestComputeScrambleDisplayOffTrackBehavior(unittest.TestCase):
         self.assertFalse(full_clear)
 
     def test_long_sequence_off_track_after_first_error(self) -> None:
+        """Test long sequence off track after first error."""
         scrambled = parse_moves('R U F D L B')
         scramble_oriented = parse_moves('R L F D L B')
         cube_orientation_moves = parse_moves('')
@@ -401,11 +437,13 @@ class TestComputeScrambleDisplayFullClearBehavior(unittest.TestCase):
     """Tests for full_clear flag behavior."""
 
     def setUp(self) -> None:
+        """Test setup."""
         self.scrambler = MockScrambler()
 
     def test_full_clear_true_when_algo_length_less_than_previous(
         self,
     ) -> None:
+        """Test full clear true when algo length less than previous."""
         scrambled = parse_moves('R')
         scramble_oriented = parse_moves('R U')
         cube_orientation_moves = parse_moves('')
@@ -421,6 +459,7 @@ class TestComputeScrambleDisplayFullClearBehavior(unittest.TestCase):
         self.assertTrue(full_clear)
 
     def test_full_clear_true_when_algo_length_equals_one(self) -> None:
+        """Test full clear true when algo length equals one."""
         scrambled = parse_moves('R')
         scramble_oriented = parse_moves('R')
         cube_orientation_moves = parse_moves('')
@@ -436,6 +475,7 @@ class TestComputeScrambleDisplayFullClearBehavior(unittest.TestCase):
         self.assertTrue(full_clear)
 
     def test_full_clear_true_when_algo_empty(self) -> None:
+        """Test full clear true when algo empty."""
         scrambled = parse_moves('')
         scramble_oriented = parse_moves('')
         cube_orientation_moves = parse_moves('')
@@ -453,6 +493,7 @@ class TestComputeScrambleDisplayFullClearBehavior(unittest.TestCase):
     def test_full_clear_false_when_algo_length_equals_previous(
         self,
     ) -> None:
+        """Test full clear false when algo length equals previous."""
         scrambled = parse_moves('R U')
         scramble_oriented = parse_moves('R U')
         cube_orientation_moves = parse_moves('')
@@ -470,6 +511,7 @@ class TestComputeScrambleDisplayFullClearBehavior(unittest.TestCase):
     def test_full_clear_false_when_algo_length_greater_than_previous(
         self,
     ) -> None:
+        """Test full clear false when algo length greater than previous."""
         scrambled = parse_moves('R U F')
         scramble_oriented = parse_moves('R U F')
         cube_orientation_moves = parse_moves('')
@@ -489,9 +531,11 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
     """Tests for edge cases and boundary conditions."""
 
     def setUp(self) -> None:
+        """Test setup."""
         self.scrambler = MockScrambler()
 
     def test_very_long_scramble(self) -> None:
+        """Test very long scramble."""
         long_scramble_str = (
             "R U R' U' F' R U R' U' R' F R2 U' R' U' R U R' F' R U R' U' F"
         )
@@ -514,6 +558,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         self.assertFalse(full_clear)
 
     def test_scramble_with_double_moves(self) -> None:
+        """Test scramble with double moves."""
         scrambled = parse_moves('R2 U2')
         scramble_oriented = parse_moves('R2 U2')
         cube_orientation_moves = parse_moves('')
@@ -531,6 +576,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         self.assertFalse(full_clear)
 
     def test_scramble_with_wide_moves(self) -> None:
+        """Test scramble with wide moves."""
         scrambled = parse_moves('Rw Uw')
         scramble_oriented = parse_moves('Rw Uw')
         cube_orientation_moves = parse_moves('')
@@ -548,6 +594,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         self.assertFalse(full_clear)
 
     def test_scramble_with_slice_moves(self) -> None:
+        """Test scramble with slice moves."""
         scrambled = parse_moves('M E S')
         scramble_oriented = parse_moves('M E S')
         cube_orientation_moves = parse_moves('')
@@ -565,6 +612,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         self.assertFalse(full_clear)
 
     def test_reorient_transforms_algorithm(self) -> None:
+        """Test reorient transforms algorithm."""
         scrambled = parse_moves('R U')
         scramble_oriented = parse_moves('F R')
         cube_orientation_moves = parse_moves('x y')
@@ -585,6 +633,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         self.assertFalse(full_clear)
 
     def test_mixed_correct_caution_warning(self) -> None:
+        """Test mixed correct caution warning."""
         scrambled = parse_moves("R U' F D")
         scramble_oriented = parse_moves("R U F' L")
         cube_orientation_moves = parse_moves('')
@@ -607,6 +656,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         self.assertFalse(full_clear)
 
     def test_all_moves_same_face_wrong_direction(self) -> None:
+        """Test all moves same face wrong direction."""
         scrambled = parse_moves('R U F')
         scramble_oriented = parse_moves("R' U' F'")
         cube_orientation_moves = parse_moves('')
@@ -626,6 +676,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         self.assertFalse(full_clear)
 
     def test_orientation_moves_with_complex_algorithm(self) -> None:
+        """Test orientation moves with complex algorithm."""
         scrambled = parse_moves("R U R' U'")
         scramble_oriented = parse_moves("R U R' U'")
         cube_orientation_moves = parse_moves("x' y2")
@@ -650,12 +701,15 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
 
 class TestComputeDisplayRotationRealCases(unittest.TestCase):
     """Tests for rotations cases and conditions."""
+
     maxDiff = None
 
     def setUp(self) -> None:
+        """Test setup."""
         self.scrambler = OrienterScrambler('DF')
 
     def test_index_error_issue_1(self) -> None:
+        """Test index error issue 1."""
         scrambled = parse_moves(
             "F@2568664285 L@2568665426 D@2568665936 L'@2568666625 "
             "D@2568668965 y@2568669776 F'@2568688166 "
@@ -687,6 +741,7 @@ class TestComputeDisplayRotationRealCases(unittest.TestCase):
         self.assertFalse(full_clear)
 
     def test_index_error_issue_2(self) -> None:
+        """Test index error issue 2."""
         scrambled = parse_moves(
             "B'@2600539431 L'@2600543301 D'@2600543961 "
             "L@2600544621 D'@2600546391 y'@2600546840 "

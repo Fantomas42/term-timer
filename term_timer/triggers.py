@@ -1,3 +1,5 @@
+"""Trigger pattern detection and formatting for algorithm analysis."""
+
 import re
 from collections.abc import Callable
 from re import Pattern
@@ -63,10 +65,17 @@ DEFAULT_TRIGGERS: Final = [
 def apply_trigger_outside_blocks(
         algorithm: str, regex: Pattern[str],
         replacement_func: Callable[[re.Match[str]], str]) -> str:
-    blocks = []
+    """
+    Apply trigger pattern.
 
-    for match in re.finditer(BLOCK_PATTERN, algorithm):
-        blocks.append((match.start(), match.end(), match.group(0)))
+    Returns:
+        Algorithm string with trigger replacements applied outside blocks.
+
+    """
+    blocks = [
+        (match.start(), match.end(), match.group(0))
+        for match in re.finditer(BLOCK_PATTERN, algorithm)
+    ]
 
     result = ''
     last_end = 0

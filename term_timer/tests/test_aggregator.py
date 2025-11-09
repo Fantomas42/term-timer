@@ -1,4 +1,7 @@
+"""Tests for aggregator."""
+# ruff: noqa: PT019
 import unittest
+from typing import TYPE_CHECKING
 from typing import cast
 from unittest.mock import MagicMock
 from unittest.mock import Mock
@@ -6,13 +9,17 @@ from unittest.mock import patch
 
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.aggregator import analyse_solve_worker
-from term_timer.solve import Solve
-from term_timer.types import StepAnalysis
+
+if TYPE_CHECKING:
+    from term_timer.solve import Solve
+    from term_timer.types import StepAnalysis
 
 
 class TestAnalyseSolveWorker(unittest.TestCase):
+    """Tests for analyse_solve_worker function."""
 
     def test_analyse_solve_worker_not_advanced(self) -> None:
+        """Test that worker returns empty results for non-advanced solve."""
         solve = Mock()
         solve.advanced = False
 
@@ -21,6 +28,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
         self.assertEqual(result, {'steps': {}, 'score': 0.0, 'solve': solve})
 
     def test_analyse_solve_worker_not_advanced_not_full(self) -> None:
+        """Test worker returns empty results without solve when not full."""
         solve = Mock()
         solve.advanced = False
 
@@ -29,6 +37,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
         self.assertEqual(result, {'steps': {}, 'score': 0.0, 'solve': None})
 
     def test_analyse_solve_worker_advanced_full(self) -> None:
+        """Test that worker processes advanced solve with full analysis."""
         solve = Mock()
         solve.advanced = True
         solve.method_analyser.aggregate = {'step1': 0, 'step2': 1}
@@ -83,6 +92,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
         self.assertEqual(solve.method_name, 'method')
 
     def test_analyse_solve_worker_advanced_not_full(self) -> None:
+        """Test that worker processes advanced solve without full data."""
         solve = Mock()
         solve.advanced = True
         solve.method_analyser.aggregate = {'step1': 0}
@@ -104,8 +114,10 @@ class TestAnalyseSolveWorker(unittest.TestCase):
 
 
 class TestSolvesMethodAggregator(unittest.TestCase):
+    """Tests for SolvesMethodAggregator class."""
 
     def setUp(self) -> None:
+        """Set up test fixtures for aggregator tests."""
         self.mock_solve_advanced = Mock()
         self.mock_solve_advanced.advanced = True
 
@@ -120,12 +132,13 @@ class TestSolvesMethodAggregator(unittest.TestCase):
     @patch('term_timer.aggregator.get_method_analyser')
     @patch('term_timer.aggregator.SolvesMethodAggregator.aggregate')
     def test_init(self, mock_aggregate: Mock, mock_get_analyser: Mock) -> None:
+        """Test that aggregator initializes correctly with method and stack."""
         mock_analyser = Mock()
         mock_get_analyser.return_value = mock_analyser
         mock_aggregate.return_value = {'test': 'result'}
 
         aggregator = SolvesMethodAggregator(
-            'CFOP', cast(list[Solve], self.stack), full=False,
+            'CFOP', cast('list[Solve]', self.stack), full=False,
         )
 
         self.assertEqual(aggregator.stack, self.stack)
@@ -142,12 +155,13 @@ class TestSolvesMethodAggregator(unittest.TestCase):
     def test_collect_analyses(self, _mock_cpu_count: Mock,
                               mock_pool_class: Mock,
                               _mock_get_analyser: Mock) -> None:
+        """Test that collect_analyses processes solves using multiprocessing."""
         mock_pool = MagicMock()
         mock_pool_class.return_value.__enter__.return_value = mock_pool
         mock_pool.map.return_value = [{'result': 1}, {'result': 2}]
 
         aggregator = SolvesMethodAggregator.__new__(SolvesMethodAggregator)
-        aggregator.stack = cast(list[Solve], self.stack)
+        aggregator.stack = cast('list[Solve]', self.stack)
         aggregator.method_name = 'CFOP'
         aggregator.full = True
 
@@ -159,6 +173,7 @@ class TestSolvesMethodAggregator(unittest.TestCase):
 
     @patch('term_timer.aggregator.StatisticsTools.ao')
     def test_aggregate_with_advanced_solves(self, mock_ao: Mock) -> None:
+        """Test that aggregate computes statistics for advanced solves."""
         mock_ao.side_effect = lambda n, times: \
             sum(times[:n]) / min(n, len(times)) if times else 0
 
@@ -186,7 +201,7 @@ class TestSolvesMethodAggregator(unittest.TestCase):
         ]
 
         aggregator = SolvesMethodAggregator.__new__(SolvesMethodAggregator)
-        aggregator.stack = cast(list[Solve], self.stack)
+        aggregator.stack = cast('list[Solve]', self.stack)
 
         with patch.object(aggregator, 'collect_analyses',
                           return_value=analyses):
@@ -209,6 +224,7 @@ class TestSolvesMethodAggregator(unittest.TestCase):
 
     @patch('term_timer.aggregator.get_method_analyser')
     def test_aggregate_empty_stack(self, mock_get_analyser: Mock) -> None:
+        """Test that aggregate handles empty solve stack correctly."""
         mock_analyser = Mock()
         mock_get_analyser.return_value = mock_analyser
 
@@ -229,6 +245,7 @@ class TestSolvesMethodAggregator(unittest.TestCase):
     def test_aggregate_multiple_cases_same_step(
             self, mock_ao: Mock,
             mock_get_analyser: Mock) -> None:
+        """Test aggregate averages multiple occurrences of same case."""
         mock_analyser = Mock()
         mock_analyser.infos = {}
         mock_get_analyser.return_value = mock_analyser

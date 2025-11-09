@@ -1,3 +1,5 @@
+"""Tests for solve 54."""
+
 import datetime
 import unittest
 from typing import cast
@@ -8,14 +10,23 @@ from term_timer.solve import Solve
 
 
 def get_method_applied(solve: Solve) -> Analyser:
-    """Get method_applied, asserting it's not None in tests."""
-    return cast(Analyser, solve.method_applied)
+    """
+    Get method_applied, asserting it's not None in tests.
+
+    Returns:
+        The method_applied Analyser instance.
+
+    """
+    return cast('Analyser', solve.method_applied)
 
 
-class TestSolve54(unittest.TestCase):
+class TestSolve54(unittest.TestCase):  # noqa: PLR0904
+    """Tests for solve 54 reconstruction and analysis."""
+
     maxDiff = None
 
     def setUp(self) -> None:
+        """Test setup."""
         self.date = 1751576007
         self.time = 27357994593
         self.scramble = "F2 D2 F2 D' U' L2 B2 L2 B2 U L U' B D R2 U L F2 U R2 U2"  # noqa: E501
@@ -34,6 +45,7 @@ class TestSolve54(unittest.TestCase):
         self.solve.orientation = 'DF'
 
     def test_datetime(self) -> None:
+        """Test datetime."""
         self.assertEqual(
             self.solve.datetime,
             datetime.datetime(
@@ -43,12 +55,14 @@ class TestSolve54(unittest.TestCase):
         )
 
     def test_final_time(self) -> None:
+        """Test final time."""
         self.assertEqual(
             self.solve.final_time,
             self.time,
         )
 
     def test_move_times(self) -> None:
+        """Test move times."""
         self.assertEqual(
             self.solve.move_times,
             [
@@ -136,23 +150,27 @@ class TestSolve54(unittest.TestCase):
         )
 
     def test_advanced(self) -> None:
+        """Test advanced."""
         self.assertTrue(
             self.solve.advanced,
         )
 
     def test_solution(self) -> None:
+        """Test solution."""
         self.assertEqual(
             self.solve.solution.metrics.htm,
             80,
         )
 
     def test_reconstruction(self) -> None:
+        """Test reconstruction."""
         self.assertEqual(
             str(self.solve.reconstruction),
             "R2 U F L U F2 U' B2 U' R U R' U B U' B' U F' U F U' F U F' U2 R U' R' U U' R U2 R' U F' U' F U L U' L' U' B' U B U' R L' U B U' B' U' L U R' R U R' U' R' F R2 U' R' U' R U R' R R' F' U2",  # noqa: E501
         )
 
     def test_reconstruction_orientation_uf(self) -> None:
+        """Test reconstruction orientation uf."""
         self.solve.orientation = 'UF'
         self.assertEqual(
             str(self.solve.reconstruction),
@@ -160,6 +178,7 @@ class TestSolve54(unittest.TestCase):
         )
 
     def test_reconstruction_orientation_auto(self) -> None:
+        """Test reconstruction orientation auto."""
         self.solve.orientation = 'auto'
         self.assertEqual(
             str(self.solve.reconstruction),
@@ -167,84 +186,98 @@ class TestSolve54(unittest.TestCase):
         )
 
     def test_tps(self) -> None:
+        """Test tps."""
         self.assertEqual(
             self.solve.tps,
             2.924190942726092,
         )
 
     def test_all_missed_moves(self) -> None:
+        """Test all missed moves."""
         self.assertEqual(
             self.solve.all_missed_moves,
             10,
         )
 
     def test_step_missed_moves(self) -> None:
+        """Test step missed moves."""
         self.assertEqual(
             self.solve.step_missed_moves,
             8,
         )
 
     def test_step_pauses(self) -> None:
+        """Test step pauses."""
         self.assertEqual(
             self.solve.step_pauses,
             8,
         )
 
     def test_execution_pauses(self) -> None:
+        """Test execution pauses."""
         self.assertEqual(
             self.solve.execution_pauses,
             8,
         )
 
     def test_execution_missed_moves(self) -> None:
+        """Test execution missed moves."""
         self.assertEqual(
             self.solve.execution_missed_moves,
             8,
         )
 
     def test_transition_missed_moves(self) -> None:
+        """Test transition missed moves."""
         self.assertEqual(
             self.solve.transition_missed_moves,
             2,
         )
 
     def test_method_analyser(self) -> None:
+        """Test method analyser."""
         self.assertEqual(
             self.solve.method_analyser,
             CF4OPAnalyser,
         )
 
     def test_recognition_time(self) -> None:
+        """Test recognition time."""
         self.assertEqual(
             self.solve.recognition_time,
             9447000000,
         )
 
     def test_execution_time(self) -> None:
+        """Test execution time."""
         self.assertEqual(
             self.solve.execution_time,
             17912000000,
         )
 
     def test_move_speed(self) -> None:
+        """Test move speed."""
         self.assertEqual(
             self.solve.move_speed,
             223900000.0,
         )
 
     def test_pause_threshold(self) -> None:
+        """Test pause threshold."""
         self.assertEqual(
             self.solve.pause_threshold,
             447800000.0,
         )
 
     def test_score(self) -> None:
+        """Test score."""
         self.assertEqual(
             self.solve.score,
             5.9284010814000005,
         )
 
     def test_method_score(self) -> None:
+        """Test method score."""
         method_applied = get_method_applied(self.solve)
         self.assertEqual(
             method_applied.score,
@@ -252,6 +285,7 @@ class TestSolve54(unittest.TestCase):
         )
 
     def test_reconstruction_step_line(self) -> None:
+        """Test reconstruction step line."""
         method_applied = get_method_applied(self.solve)
         inputs = [
             info
@@ -303,6 +337,7 @@ class TestSolve54(unittest.TestCase):
             )
 
     def test_reconstruction_step_line_multiple(self) -> None:
+        """Test reconstruction step line multiple."""
         method_applied = get_method_applied(self.solve)
         inputs = [
             info
@@ -360,6 +395,7 @@ class TestSolve54(unittest.TestCase):
             )
 
     def test_reconstruction_step_text(self) -> None:
+        """Test reconstruction step text."""
         method_applied = get_method_applied(self.solve)
         inputs = [
             info
@@ -389,6 +425,7 @@ class TestSolve54(unittest.TestCase):
             )
 
     def test_reconstruction_step_text_multiple(self) -> None:
+        """Test reconstruction step text multiple."""
         method_applied = get_method_applied(self.solve)
         inputs = [
             info
@@ -418,18 +455,21 @@ class TestSolve54(unittest.TestCase):
             )
 
     def test_link_alg_cubing(self) -> None:
+        """Test link alg cubing."""
         self.assertIn(
             '&alg=z2_%2F%2F_Orientation_(DF)%0AR2_._U_._F_L_._._U_F2_U-_B2_._._%2F%2F_Cross_Reco:_0.00s_Exec:_3.75s_HTM:_8_%0AU-_R_U_R-_U_B_U-_B-_._._._._._%2F%2F_F2L_1_(05_BL)_Reco:_1.32s_Exec:_1.89s_HTM:_8_%0AU_F-_U_F_U-_F_U_F-_._._%2F%2F_F2L_2_(15_FR)_Reco:_2.43s_Exec:_1.89s_HTM:_8_%0AU2_._R_U-_R-_U_._U-_R_U2_R-_U_F-_U-_F_._._._._%2F%2F_F2L_3_(35_FL)_Reco:_1.05s_Exec:_3.60s_HTM:_13_%0AU_L_U-_L-_U-_B-_U_B_._%2F%2F_F2L_4_(26_BR)_Reco:_1.98s_Exec:_1.17s_HTM:_8_%0AU-_._M_F_U_F-_._U-_F-_L_F_l-_._._._._%2F%2F_OLL_(32_Anti-Couch)_Reco:_0.45s_Exec:_2.49s_HTM:_11_Pre%26%2345%3BAUF:_%26%232b%3B1%0AR_U_R-_U-_R-_F_R2_U-_R-_U-_R_U_R-_._R_R-_F-_U2_%2F%2F_PLL_(T)_Reco:_2.22s_Exec:_3.12s_HTM:_17_Post%26%2345%3BAUF:_%26%232b%3B2%0A&setup=F2_D2_F2_D-_U-_L2_B2_L2_B2_U_L_U-_B_D_R2_U_L_F2_U_R2_U2',
             self.solve.link_alg_cubing,
         )
 
     def test_link_cube_db(self) -> None:
+        """Test link cube db."""
         self.assertIn(
             '&alg=z2_%2F%2F_Orientation_(DF)%0AR2_._U_._F_L_._._U_F2_U-_B2_._._%2F%2F_Cross_Reco:_0.00s_Exec:_3.75s_HTM:_8_%0AU-_R_U_R-_U_B_U-_B-_._._._._._%2F%2F_F2L_1_(05_BL)_Reco:_1.32s_Exec:_1.89s_HTM:_8_%0AU_F-_U_F_U-_F_U_F-_._._%2F%2F_F2L_2_(15_FR)_Reco:_2.43s_Exec:_1.89s_HTM:_8_%0AU2_._R_U-_R-_U_._U-_R_U2_R-_U_F-_U-_F_._._._._%2F%2F_F2L_3_(35_FL)_Reco:_1.05s_Exec:_3.60s_HTM:_13_%0AU_L_U-_L-_U-_B-_U_B_._%2F%2F_F2L_4_(26_BR)_Reco:_1.98s_Exec:_1.17s_HTM:_8_%0AU-_._M_F_U_F-_._U-_F-_L_F_l-_._._._._%2F%2F_OLL_(32_Anti-Couch)_Reco:_0.45s_Exec:_2.49s_HTM:_11_Pre%26%2345%3BAUF:_%26%232b%3B1%0AR_U_R-_U-_R-_F_R2_U-_R-_U-_R_U_R-_._R_R-_F-_U2_%2F%2F_PLL_(T)_Reco:_2.22s_Exec:_3.12s_HTM:_17_Post%26%2345%3BAUF:_%26%232b%3B2%0A&scramble=F2_D2_F2_D-_U-_L2_B2_L2_B2_U_L_U-_B_D_R2_U_L_F2_U_R2_U2',
             self.solve.link_cube_db,
         )
 
     def test_reconstruction_steps_timing(self) -> None:
+        """Test reconstruction steps timing."""
         self.assertEqual(
             self.solve.reconstruction_steps_timing,
             [

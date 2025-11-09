@@ -1,3 +1,5 @@
+"""Gesture detection for save commands from cube movements."""
+
 import asyncio
 import logging
 from typing import TYPE_CHECKING
@@ -11,15 +13,16 @@ logger = logging.getLogger(__name__)
 
 
 class Gesture:
-    """
-    Mixin providing gesture detection for save commands.
-    """
+    """Mixin providing gesture detection for save commands."""
 
     if TYPE_CHECKING:
         # Methods from Orienter mixin
-        def reorient(self, algorithm: Algorithm) -> Algorithm: ...
+        def reorient(self, algorithm: Algorithm) -> Algorithm:
+            """Transform algorithm using cube orientation (from Orienter)."""
+            ...
 
     def __init__(self) -> None:
+        """Initialize gesture detection with empty save gesture state."""
         super().__init__()
 
         self.save_moves = Algorithm()
@@ -27,9 +30,7 @@ class Gesture:
         self.save_gesture_event = asyncio.Event()
 
     def handle_save_gestures(self, timed_move: Move) -> None:
-        """
-        Detect and handle save gestures from cube movements.
-        """
+        """Detect and handle save gestures from cube movements."""
         move = self.reorient(Algorithm([timed_move]))
 
         self.save_moves += move

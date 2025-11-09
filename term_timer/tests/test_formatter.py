@@ -1,3 +1,5 @@
+"""Tests for formatter."""
+
 import unittest
 
 from term_timer.constants import SECOND
@@ -9,6 +11,8 @@ from term_timer.formatter import format_time
 
 
 class TestFormatTime(unittest.TestCase):
+    """Tests for format_time function."""
+
     def test_format_time_with_zero(self) -> None:
         """Test that format_time returns DNF for zero value."""
         self.assertEqual(format_time(0), '      DNF')
@@ -33,6 +37,7 @@ class TestFormatTime(unittest.TestCase):
 
 
 class TestFormatDuration(unittest.TestCase):
+    """Tests for format_duration function."""
 
     def test_format_duration(self) -> None:
         """Test formatting duration as seconds with decimal places."""
@@ -42,6 +47,7 @@ class TestFormatDuration(unittest.TestCase):
 
 
 class TestFormatEdge(unittest.TestCase):
+    """Tests for format_edge function."""
 
     def test_format_edge(self) -> None:
         """Test formatting edge value as integer seconds."""
@@ -78,6 +84,7 @@ class TestFormatEdge(unittest.TestCase):
 
 
 class TestFormatDelta(unittest.TestCase):
+    """Tests for format_delta function."""
 
     def test_format_delta_zero(self) -> None:
         """Test formatting delta of zero returns empty string."""
@@ -97,6 +104,7 @@ class TestFormatDelta(unittest.TestCase):
 
 
 class TestComputingPadding(unittest.TestCase):
+    """Tests for compute_padding function."""
 
     def test_compute_padding_small(self) -> None:
         """Test computing padding for small values."""

@@ -1,3 +1,5 @@
+"""Main timer application entry point."""
+
 import asyncio
 from argparse import Namespace
 from contextlib import suppress
@@ -24,7 +26,14 @@ from term_timer.timer import Timer
 from term_timer.trainer import Trainer
 
 
-async def timer(options: Namespace) -> int:
+async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912
+    """
+    Run speedcubing timer with scrambles and solve tracking.
+
+    Returns:
+        Exit code (0 for success).
+
+    """
     cube = options.cube
 
     session_parts = []
@@ -102,6 +111,13 @@ async def timer(options: Namespace) -> int:
 
 
 async def trainer(options: Namespace) -> int:
+    """
+    Generate training case.
+
+    Returns:
+        Exit code (0 for success).
+
+    """
     trainer = Trainer(
         step=options.step,
         cases=options.case,
@@ -130,6 +146,13 @@ async def trainer(options: Namespace) -> int:
 
 
 def tools(command: str, options: Namespace) -> int:
+    """
+    Execute tool commands.
+
+    Returns:
+        Exit code (0 for success, 1 if no saved solves).
+
+    """
     cube = options.cube
 
     stack = load_all_solves(
@@ -192,6 +215,13 @@ def tools(command: str, options: Namespace) -> int:
 
 
 def manage(command: str, options: Namespace) -> int:
+    """
+    Manage solve data.
+
+    Returns:
+        Exit code (0 for success).
+
+    """
     if command == 'index':
         session_manager = SessionManager()
         session_manager.index()
@@ -211,7 +241,14 @@ def manage(command: str, options: Namespace) -> int:
     return 0
 
 
-def main() -> int:
+def main() -> int:  # noqa: PLR0911
+    """
+    Run term-timer CLI application.
+
+    Returns:
+        Exit code (0 for success).
+
+    """
     configure_logging()
 
     options = get_arguments()

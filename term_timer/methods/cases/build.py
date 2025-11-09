@@ -1,3 +1,5 @@
+"""Build CFOP case database from JSON source files."""
+# ruff: noqa: T201
 import json
 import sys
 from pathlib import Path
@@ -63,11 +65,25 @@ TRANSLATIONS: dict[str, str] = {
 
 
 def translate(value: str) -> str:
+    """
+    Translate case name using TRANSLATIONS dictionary.
+
+    Returns:
+        Translated name or original value if not in dictionary.
+
+    """
     return TRANSLATIONS.get(value, value)
 
 
 def compute_masks(name: str, moves: str, mode: str,
                   *, debug: bool = False) -> dict[str, list[str]]:
+    """
+    Compute facelet masks for case across different orientations.
+
+    Returns:
+        Dictionary mapping encoded cases to orientation configurations.
+
+    """
     if mode == 'AF2L':
         return {}
 
@@ -151,19 +167,19 @@ def compute_masks(name: str, moves: str, mode: str,
 def format_case(mode: str, code: str, info: SourceCaseInfo,
                 data: dict[str, CaseInfo], *,
                 debug: bool = False) -> None:
+    """Format single case from source info into CaseInfo structure."""
     name = code.split(' ')[1]
     if info['aliases'] and mode == 'OLL':
         name += f' { translate(info["aliases"][0]) }'
 
-    setups: list[str] = []
-    for algorithm in info['algorithms'][:10]:
-        setups.append(
-            str(
-                parse_moves(algorithm).transform(
-                    mirror_moves,
-                ),
-            ).replace(' ', ''),
-        )
+    setups: list[str] = [
+        str(
+            parse_moves(algorithm).transform(
+                mirror_moves,
+            ),
+        ).replace(' ', '')
+        for algorithm in info['algorithms'][:10]
+    ]
 
     main_algorithm = ''.join(info['main'])
     if main_algorithm:
@@ -197,6 +213,13 @@ def format_case(mode: str, code: str, info: SourceCaseInfo,
 
 def format_cases(cases: dict[str, SourceCaseInfo], mode: str, *,
                  debug: bool = False) -> dict[str, CaseInfo]:
+    """
+    Format all cases for a mode into CaseInfo dictionary.
+
+    Returns:
+        Dictionary mapping case names to formatted CaseInfo structures.
+
+    """
     data: dict[str, CaseInfo] = {}
 
     for code, info in cases.items():
@@ -213,6 +236,7 @@ def format_cases(cases: dict[str, SourceCaseInfo], mode: str, *,
 
 
 def build(data: dict[str, SourceCaseInfo], mode: str, case: str) -> None:
+    """Build case data JSON file for specified mode from source data."""
     print(f'Processing { mode }')
 
     cases: dict[str, SourceCaseInfo] = {}
@@ -232,7 +256,7 @@ def build(data: dict[str, SourceCaseInfo], mode: str, case: str) -> None:
     output_path = Path(__file__).parent / f'{ mode.lower() }.json'
 
     if not case:
-        with output_path.open('w+', encoding='utf8') as fd:
+        with output_path.open('w+', encoding='utf-8') as fd:
             json.dump(
                 formatted_cases,
                 fd,
@@ -246,6 +270,7 @@ def build(data: dict[str, SourceCaseInfo], mode: str, case: str) -> None:
 
 
 def main() -> None:
+    """Build case data from source files."""
     parser = ArgumentParser(
         description='Build cases data.',
     )

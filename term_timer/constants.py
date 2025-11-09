@@ -1,3 +1,5 @@
+"""Application-wide constants and type definitions."""
+
 from pathlib import Path
 from typing import Final
 from typing import Literal

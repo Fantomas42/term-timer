@@ -1,3 +1,5 @@
+"""Console theme configuration and Rich console instance."""
+
 from typing import Final
 
 from rich.console import Console as RichConsole
@@ -139,11 +141,10 @@ console = RichConsole(highlighter=None, theme=Theme(theme))
 
 
 class Console:
-    """
-    Mixin providing Rich console access for styled terminal output.
-    """
+    """Mixin providing Rich console access for styled terminal output."""
 
     def __init__(self) -> None:
+        """Initialize console mixin with Rich console instance."""
         super().__init__()
 
         self.console: RichConsole = console

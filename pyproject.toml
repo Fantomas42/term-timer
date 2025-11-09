@@ -31,10 +31,10 @@ repository = "https://github.com/Fantomas42/term-timer"
 
 [project.optional-dependencies]
 dev = [
-    "ruff==0.11.12",
-    "mypy==1.16.0",
-    "pytest==8.3.5",
-    "pytest-cov==6.1.1",
+    "ruff",
+    "mypy",
+    "pytest",
+    "pytest-cov",
 ]
 
 
@@ -57,64 +57,14 @@ show-fixes = true
 [tool.ruff.lint]
 preview = true
 fixable = ["ALL"]
-select = [
-       "A",
-       "ARG",
-       "B",
-       "BLE",
-       "C4",
-       #"C90",
-       "COM",
-       #"D",
-       "DJ",
-       "DTZ",
-       "E",
-       "EM",
-       "ERA",
-       "EXE",
-       "F",
-       "FBT",
-       "FIX",
-       "FLY",
-       "FURB",
-       "G",
-       "I",
-       "ICN",
-       "INP",
-       "INT",
-       "ISC",
-       "LOG",
-       "N",
-       "PIE",
-       "PL",
-       "PTH",
-       "Q",
-       "RET",
-       "RSE",
-       "RUF",
-       "S",
-       "SIM",
-       "SLF",
-       "T10",
-       "T20",
-       "TD",
-       "TRY",
-       "UP",
-       "W",
-]
+select = ["ALL"]
 ignore = [
-       "S311",
-       "TD003",
-       "T201",
-       "PLR0904",
-       "PLR0911",
-       "PLR0912",
-       "PLR0913",
-       "PLR0914",
-       "PLR0915",
-       "PLR0917",
-       "PLR1702",
-       "PLR6301",
+    "PT009",
+    "PT027",
+    "CPY001",
+    "D203",
+    "D205",
+    "D212",
 ]
 
 [tool.ruff.format]

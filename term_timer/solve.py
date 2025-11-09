@@ -1,3 +1,5 @@
+"""Solve data representation, analysis, and reporting."""
+
 from datetime import datetime
 from datetime import timezone
 from functools import cached_property
@@ -47,6 +49,7 @@ from term_timer.transform import prettify_moves
 
 class SolveData(TypedDict):
     """Dictionary representation of a solve for serialization."""
+
     date: int
     time: int
     scramble: str
@@ -56,8 +59,29 @@ class SolveData(TypedDict):
     moves: str
 
 
-class Solve:
-    def __init__(self,
+class Solve:  # noqa: PLR0904
+    """
+    Represents a single speedcube solve with timing and analysis data.
+
+    Tracks solve metadata, timing information, scramble, solution moves,
+    and provides detailed analysis including step breakdowns, recognition
+    times, execution metrics, and performance scoring.
+
+    Args:
+        date: Unix timestamp when the solve was performed
+        time: Solve duration in nanoseconds
+        scramble: Algorithm object or string representing the scramble
+        flag: Optional flag ('+2', 'DNF', or empty string)
+        timer: Name of the timer used (e.g., 'bluetooth', 'stackmat')
+        device: Device identifier (e.g., cube model for Bluetooth)
+        session: Session name for grouping solves
+        solve_id: Unique identifier within the session
+        cube_size: Size of the cube (2-7, default 3 for 3x3x3)
+        moves: Optional solution reconstruction as a string
+
+    """
+
+    def __init__(self,  # noqa: PLR0913, PLR0917
                  date: float, time: int,
                  scramble: Algorithm | str,
                  flag: SolveFlag = '',
@@ -67,6 +91,7 @@ class Solve:
                  solve_id: int = 0,
                  cube_size: int = 3,
                  moves: str | None = None) -> None:
+        """Initialize a new Solve instance with the provided data."""
         self.date = int(date)
         self.time = int(time)
         self.flag = flag
@@ -85,24 +110,53 @@ class Solve:
 
     @cached_property
     def solution(self) -> Algorithm:
+        """
+        Parse and return the solution algorithm from raw moves.
+
+        Returns:
+            Parsed Algorithm object or empty Algorithm if no moves recorded
+
+        """
         if self.raw_moves is None:
             return Algorithm()
         return parse_moves(self.raw_moves)
 
     @cached_property
     def scramble(self) -> Algorithm:
+        """
+        Parse and return the scramble algorithm.
+
+        Returns:
+            Parsed Algorithm object from string or existing Algorithm
+
+        """
         if not isinstance(self.raw_scramble, Algorithm):
             return parse_moves(self.raw_scramble)
         return self.raw_scramble
 
     @cached_property
     def datetime(self) -> datetime:
+        """
+        Convert Unix timestamp to timezone-aware datetime object.
+
+        Returns:
+            UTC datetime object representing when the solve occurred
+
+        """
         return datetime.fromtimestamp(
             self.date, tz=timezone.utc,  # noqa: UP017
         )
 
     @cached_property
     def final_time(self) -> int:
+        """
+        Calculate final time with penalties applied.
+
+        Returns:
+            Time in nanoseconds with +2 penalty added, 0 for DNF, or
+            original time for clean solves
+
+        """
         if self.flag == PLUS_TWO:
             return self.time + (2 * SECOND)
         if self.flag == DNF:
@@ -112,24 +166,64 @@ class Solve:
 
     @cached_property
     def move_times(self) -> list[tuple[Move, int]]:
+        """
+        Extract move and timestamp pairs from the solution.
+
+        Returns:
+            List of tuples containing untimed move and its timestamp
+
+        """
         return [(m.untimed, m.timed) for m in self.solution]
 
     @cached_property
     def advanced(self) -> bool:
+        """
+        Check if solve has move-by-move reconstruction data.
+
+        Returns:
+            True if solution moves were recorded, False otherwise
+
+        """
         return bool(self.raw_moves)
 
     @cached_property
     def orientation_faces(self) -> str:
+        """
+        Determine cube orientation for analysis.
+
+        Returns:
+            Two-character orientation string (e.g., 'WG') either from
+            configuration or auto-detected from scramble and solution
+
+        """
         if self.orientation == 'auto':
             return get_orientation_faces(self.scramble, self.solution)
         return self.orientation
 
     @cached_property
     def orientation_moves(self) -> Algorithm:
+        """
+        Convert orientation faces to rotation moves.
+
+        Returns:
+            Algorithm of cube rotations to achieve the target orientation
+
+        """
         return get_orientation_moves(self.orientation_faces)
 
     @staticmethod
     def compute_tps(moves: int, time: int) -> float:
+        """
+        Calculate turns per second from move count and time.
+
+        Args:
+            moves: Number of moves executed
+            time: Duration in nanoseconds
+
+        Returns:
+            Turns per second, or 0 if time is 0
+
+        """
         if not time:
             return 0
 
@@ -137,16 +231,41 @@ class Solve:
 
     @cached_property
     def reconstruction(self) -> Algorithm:
+        """
+        Generate oriented and prettified solution reconstruction.
+
+        Returns:
+            Solution algorithm translated to match the orientation and
+            optimized for readability
+
+        """
         return prettify_moves(
             translate_moves(self.orientation_moves)(self.solution),
         )
 
     @cached_property
     def tps(self) -> float:
+        """
+        Calculate overall turns per second for the solve.
+
+        Returns:
+            TPS based on total solution length and solve time
+
+        """
         return self.compute_tps(len(self.solution), self.time)
 
     @cached_property
     def aufs(self) -> int:
+        """
+        Count total AUF moves across all steps.
+
+        AUF (Adjust U Face) moves are pre- and post-adjustments used
+        in last layer algorithms.
+
+        Returns:
+            Total number of AUF quarter turns used in the solve
+
+        """
         if not self.method_applied:
             return 0
 
@@ -158,10 +277,26 @@ class Solve:
 
     @cached_property
     def all_missed_moves(self) -> int:
+        """
+        Calculate total missed move optimization opportunities.
+
+        Returns:
+            Number of extra QTM that could have been avoided with optimal
+            execution throughout the entire solve
+
+        """
         return self.missed_moves(self.solution)
 
     @cached_property
     def step_missed_moves(self) -> int:
+        """
+        Calculate missed moves within individual solve steps.
+
+        Returns:
+            Number of extra QTM from inefficient execution within each
+            step (excludes transitions between steps)
+
+        """
         if not self.method_applied:
             return 0
 
@@ -173,6 +308,14 @@ class Solve:
 
     @cached_property
     def step_pauses(self) -> int:
+        """
+        Count pauses that occurred within individual solve steps.
+
+        Returns:
+            Number of hesitations detected within step execution based on
+            timing threshold
+
+        """
         if not self.method_applied:
             return 0
 
@@ -184,24 +327,62 @@ class Solve:
 
     @cached_property
     def execution_pauses(self) -> int:
+        """
+        Count pauses during algorithm execution.
+
+        Returns:
+            Number of pauses within step execution (alias for step_pauses)
+
+        """
         return self.step_pauses
 
     @cached_property
     def execution_missed_moves(self) -> int:
+        """
+        Count missed moves during step execution.
+
+        Returns:
+            Number of inefficient moves within steps (alias for
+            step_missed_moves)
+
+        """
         return self.step_missed_moves
 
     @cached_property
     def transition_missed_moves(self) -> int:
+        """
+        Calculate missed moves during transitions between steps.
+
+        Returns:
+            Number of extra QTM from inefficient transitions, calculated
+            as total missed moves minus within-step missed moves
+
+        """
         return self.all_missed_moves - self.step_missed_moves
 
     @cached_property
     def method_analyser(self) -> type[Analyser]:
+        """
+        Get the analyser class for the configured solving method.
+
+        Returns:
+            Analyser subclass (e.g., CFOPAnalyser) for the method
+
+        """
         return get_method_analyser(
             self.method_name,
         )
 
     @cached_property
     def method_applied(self) -> Analyser | None:
+        """
+        Apply method analysis to the solve.
+
+        Returns:
+            Analyser instance with step-by-step breakdown, or None if
+            no reconstruction data available
+
+        """
         if not self.advanced:
             return None
 
@@ -213,6 +394,13 @@ class Solve:
 
     @cached_property
     def recognition_time(self) -> int:
+        """
+        Calculate total time spent recognizing cases.
+
+        Returns:
+            Recognition time in nanoseconds across all steps
+
+        """
         if not self.method_applied:
             return 0
 
@@ -224,6 +412,13 @@ class Solve:
 
     @cached_property
     def execution_time(self) -> int:
+        """
+        Calculate total time spent executing algorithms.
+
+        Returns:
+            Execution time in nanoseconds across all steps
+
+        """
         if not self.method_applied:
             return 0
 
@@ -235,14 +430,36 @@ class Solve:
 
     @cached_property
     def move_speed(self) -> float:
+        """
+        Calculate average time per move during execution.
+
+        Returns:
+            Average nanoseconds per move in the solution
+
+        """
         return self.execution_time / len(self.solution)
 
     @cached_property
     def pause_threshold(self) -> float:
+        """
+        Calculate minimum duration to detect a pause.
+
+        Returns:
+            Threshold in nanoseconds based on average move speed
+
+        """
         return self.move_speed * PAUSE_FACTOR
 
     @cached_property
     def report_line(self) -> str:
+        """
+        Generate formatted summary line for solve reports.
+
+        Returns:
+            Rich-formatted string with metrics, TPS, missed moves, pauses,
+            rotations, and grade
+
+        """
         if not self.advanced:
             return ''
 
@@ -294,6 +511,14 @@ class Solve:
 
     @cached_property
     def trainer_line(self) -> str:
+        """
+        Generate formatted summary line for training mode.
+
+        Returns:
+            Rich-formatted string with metrics, TPS, and optional missed
+            moves, pauses, and rotations
+
+        """
         if not self.advanced:
             return ''
 
@@ -334,7 +559,15 @@ class Solve:
         )
 
     @cached_property
-    def method_line(self) -> str:
+    def method_line(self) -> str:  # noqa: C901, PLR0912
+        """
+        Generate detailed step-by-step method analysis display.
+
+        Returns:
+            Multi-line Rich-formatted string showing each solving step with
+            moves, timing, recognition, execution, case info, and AUFs
+
+        """
         if not self.method_applied:
             return ''
 
@@ -453,6 +686,18 @@ class Solve:
 
     def reconstruction_step_line(self, step: StepSummary,
                                  *, multiple: bool = False) -> str:
+        """
+        Format a single step's moves with highlighting and annotations.
+
+        Args:
+            step: Step summary containing moves and metadata
+            multiple: If True, show multiple pause characters per pause
+
+        Returns:
+            Rich-formatted string with move differences, triggers, AUFs,
+            and pauses highlighted
+
+        """
         if not step['moves']:
             return ''
 
@@ -501,6 +746,17 @@ class Solve:
 
     def reconstruction_step_text(self, step: StepSummary,
                                  *, multiple: bool = False) -> str:
+        """
+        Format a single step's moves as plain text with pauses.
+
+        Args:
+            step: Step summary containing moves and metadata
+            multiple: If True, show multiple pause characters per pause
+
+        Returns:
+            Plain text string with moves and pause markers
+
+        """
         if not step['moves']:
             return ''
 
@@ -524,9 +780,27 @@ class Solve:
 
     @cached_property
     def method_text(self) -> str:
+        """
+        Generate complete plain text reconstruction.
+
+        Returns:
+            Multi-line text reconstruction with all steps, case info,
+            timing, and move counts
+
+        """
         return self.method_text_builder(multiple=True)
 
-    def method_text_builder(self, *, multiple: bool) -> str:
+    def method_text_builder(self, *, multiple: bool) -> str:  # noqa: C901
+        """
+        Build plain text reconstruction with configurable pause display.
+
+        Args:
+            multiple: If True, show multiple pause characters per pause
+
+        Returns:
+            Multi-line text reconstruction of the solve
+
+        """
         recons = ''
 
         if not self.advanced or not self.method_applied:
@@ -580,6 +854,12 @@ class Solve:
         return recons
 
     def time_graph(self) -> None:
+        """
+        Display scatter plot of move times with step boundaries.
+
+        Shows individual move timing throughout the solve with vertical
+        lines marking step transitions.
+        """
         if not self.advanced or not self.method_applied:
             return
 
@@ -612,6 +892,12 @@ class Solve:
         plt.show()
 
     def tps_graph(self) -> None:
+        """
+        Display stacked bar chart of TPS and eTPS per step.
+
+        Shows execution speed with and without recognition time for each
+        solving step.
+        """
         if not self.advanced or not self.method_applied:
             return
 
@@ -645,6 +931,12 @@ class Solve:
         plt.show()
 
     def recognition_graph(self) -> None:
+        """
+        Display stacked bar chart of recognition and execution times.
+
+        Shows time breakdown between case recognition and algorithm
+        execution for each solving step.
+        """
         if not self.advanced or not self.method_applied:
             return
 
@@ -675,6 +967,17 @@ class Solve:
 
     @staticmethod
     def missed_moves_pair(algorithm: Algorithm) -> tuple[Algorithm, Algorithm]:
+        """
+        Generate original and optimized algorithm pair.
+
+        Args:
+            algorithm: Original algorithm to optimize
+
+        Returns:
+            Tuple of (original algorithm, compressed algorithm with
+            inefficiencies removed)
+
+        """
         compressed = algorithm.transform(
             optimize_do_undo_moves,
             optimize_repeat_three_moves,
@@ -684,11 +987,32 @@ class Solve:
         return algorithm, compressed
 
     def missed_moves(self, algorithm: Algorithm) -> int:
+        """
+        Count inefficient moves that could have been optimized.
+
+        Args:
+            algorithm: Algorithm to analyze
+
+        Returns:
+            Number of extra QTM from do-undo sequences, triple moves, etc.
+
+        """
         source, compressed = self.missed_moves_pair(algorithm)
 
         return source.metrics.qtm - compressed.metrics.qtm
 
     def pauses(self, algorithm: Algorithm) -> int:
+        """
+        Detect execution pauses based on timing gaps.
+
+        Args:
+            algorithm: Algorithm with timing information
+
+        Returns:
+            Number of pauses detected where time between moves exceeds
+            the threshold
+
+        """
         if not algorithm:
             return 0
 
@@ -707,6 +1031,13 @@ class Solve:
 
     @cached_property
     def rotations(self) -> int:
+        """
+        Count cube rotations in the solution.
+
+        Returns:
+            Number of x, y, z rotation moves used during the solve
+
+        """
         if not self.advanced:
             return 0
 
@@ -714,6 +1045,16 @@ class Solve:
 
     @cached_property
     def score(self) -> float | None:
+        """
+        Calculate overall solve quality score.
+
+        Combines method analysis score with time bonus and execution
+        penalties for missed moves, pauses, and rotations.
+
+        Returns:
+            Score from 0.0 to 20.0, or None if method not analyzed
+
+        """
         if not self.method_applied:
             return None
 
@@ -730,6 +1071,13 @@ class Solve:
 
     @cached_property
     def link_alg_cubing(self) -> str:
+        """
+        Generate alg.cubing.net URL for solve visualization.
+
+        Returns:
+            URL with scramble and reconstruction for alg.cubing.net
+
+        """
         date = self.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
         return format_alg_cubing_url(
@@ -740,6 +1088,13 @@ class Solve:
 
     @cached_property
     def link_cube_db(self) -> str:
+        """
+        Generate CubeDB URL for solve visualization.
+
+        Returns:
+            URL with scramble and reconstruction for CubeDB
+
+        """
         date = self.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
         return format_cube_db_url(
@@ -750,6 +1105,13 @@ class Solve:
 
     @cached_property
     def link_term_timer(self) -> str:
+        """
+        Generate URL for local Term Timer web interface.
+
+        Returns:
+            Local HTTP URL to view this solve in the web interface
+
+        """
         domain = SERVER_CONFIG.get('domain', 'localhost')
         port = SERVER_CONFIG.get('port', 8333)
 
@@ -760,6 +1122,14 @@ class Solve:
 
     @cached_property
     def reconstruction_steps_timing(self) -> list[tuple[int, int, Move]]:
+        """
+        Generate timing data for reconstruction playback.
+
+        Returns:
+            List of (start_time, end_time, move) tuples for animated
+            visualization of the solve
+
+        """
         if not self.advanced or not self.method_applied:
             return []
 
@@ -820,6 +1190,13 @@ class Solve:
 
     @property
     def as_save(self) -> SolveData:
+        """
+        Convert solve to dictionary for JSON serialization.
+
+        Returns:
+            Dictionary with all solve data ready for saving to file
+
+        """
         return {
             'date': self.date,
             'time': self.time,
@@ -831,4 +1208,11 @@ class Solve:
         }
 
     def __str__(self) -> str:
+        """
+        Return formatted string of solve time and flag.
+
+        Returns:
+            Formatted solve time with optional flag suffix
+
+        """
         return f'{ format_time(self.time) }{ self.flag }'

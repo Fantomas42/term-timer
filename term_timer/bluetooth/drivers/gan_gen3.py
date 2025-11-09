@@ -1,6 +1,9 @@
 """
+GAN Gen3 Driver.
+
 References :
   - https://github.com/afedotov/gan-web-bluetooth
+  - https://github.com/Fantomas42/gan-protocols
 """
 import logging
 import time
@@ -29,14 +32,23 @@ logger = logging.getLogger(__name__)
 
 
 class GanGen3Driver(GanGen2Driver):
-    """
-    GAN356 i Carry 2
-    """
+    """GAN356 i Carry 2."""
+
     service_uid: ClassVar[str] = GAN_GEN3_SERVICE
     state_characteristic_uid: ClassVar[str] = GAN_GEN3_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = GAN_GEN3_COMMAND_CHARACTERISTIC
 
     def __init__(self, client: BleakClient) -> None:
+        """
+        Initialize the GAN Gen3 driver with move tracking capabilities.
+
+        Sets up serial number tracking, timestamp management, and a FIFO
+        buffer for handling move events and detecting missed moves.
+
+        Args:
+            client: The BLE client connection to the cube.
+
+        """
         super().__init__(client)
 
         self.serial: int = -1
@@ -45,6 +57,21 @@ class GanGen3Driver(GanGen2Driver):
         self.move_buffer: list[MoveEventDict] = []
 
     def send_command_handler(self, command: str) -> bytes | bool:
+        """
+        Build and encrypt command messages for the GAN Gen3 cube.
+
+        Constructs protocol-specific message payloads for requesting cube
+        state, hardware info, battery level, or resetting the cube, then
+        encrypts them for transmission.
+
+        Args:
+            command: The command type (REQUEST_FACELETS, REQUEST_HARDWARE,
+                REQUEST_BATTERY, or REQUEST_RESET).
+
+        Returns:
+            Encrypted command bytes if command is valid, False otherwise.
+
+        """
         msg = bytearray(16)
 
         if command == 'REQUEST_FACELETS':
@@ -68,6 +95,18 @@ class GanGen3Driver(GanGen2Driver):
         return self.cypher.encrypt(msg)
 
     async def request_move_history(self, serial: int, count: int) -> None:
+        """
+        Request historical move data from the cube's internal buffer.
+
+        Constructs a move history request with alignment adjustments to work
+        around firmware quirks. Ensures serial numbers are odd-aligned and
+        move counts are even, and prevents overflow at the 255->0 boundary.
+
+        Args:
+            serial: The serial number to start the history request from.
+            count: The number of historical moves to request.
+
+        """
         msg = bytearray(16)
 
         # Move history response data is byte-aligned,
@@ -99,6 +138,18 @@ class GanGen3Driver(GanGen2Driver):
         )
 
     async def evict_move_buffer(self) -> list[MoveEventDict]:
+        """
+        Process and emit move events from the buffer in sequence order.
+
+        Removes move events from the buffer when they can be delivered in the
+        correct serial order. If a gap is detected, requests missing history.
+        Disconnects if the buffer grows too large (indicating sync issues).
+
+        Returns:
+            List of move events that were successfully evicted from the
+            buffer and are ready to be emitted.
+
+        """
         evicted_events: list[MoveEventDict] = []
 
         while len(self.move_buffer) > 0:
@@ -117,9 +168,27 @@ class GanGen3Driver(GanGen2Driver):
 
         return evicted_events
 
-    def is_serial_in_range(self, start: int, end: int, serial: int, *,
+    @staticmethod
+    def is_serial_in_range(start: int, end: int, serial: int, *,
                            closed_start: bool = False,
                            closed_end: bool = False) -> bool:
+        """
+        Check if a serial number falls within a range with wraparound.
+
+        Handles modular arithmetic for serial numbers that wrap around at 255,
+        allowing for both open and closed interval boundaries.
+
+        Args:
+            start: The range start serial number.
+            end: The range end serial number.
+            serial: The serial number to check.
+            closed_start: Whether the start boundary is inclusive.
+            closed_end: Whether the end boundary is inclusive.
+
+        Returns:
+            True if the serial number is within the specified range.
+
+        """
         return (
             ((end - start) & 0xFF) >= ((serial - start) & 0xFF)
             and (closed_start or ((start - serial) & 0xFF) > 0)
@@ -127,6 +196,17 @@ class GanGen3Driver(GanGen2Driver):
         )
 
     def inject_missed_move_to_buffer(self, move: MoveEventDict) -> None:
+        """
+        Insert a recovered historical move into the buffer at the correct
+        position.
+
+        Validates that the move belongs in the current sequence and isn't a
+        duplicate before inserting it into the buffer for ordered delivery.
+
+        Args:
+            move: The move event to inject into the buffer.
+
+        """
         if len(self.move_buffer) > 0:
             buffer_head = self.move_buffer[0]
 
@@ -153,6 +233,14 @@ class GanGen3Driver(GanGen2Driver):
             self.move_buffer.insert(0, move)
 
     async def check_if_move_missed(self) -> None:
+        """
+        Detect gaps in the move sequence and request missing history.
+
+        Compares the current serial with the last processed serial to detect
+        missed moves, then requests the appropriate history window to recover
+        them.
+
+        """
         diff = (self.serial - self.last_serial) & 0xFF
 
         if diff > 0 and self.serial != 0:
@@ -162,9 +250,25 @@ class GanGen3Driver(GanGen2Driver):
             ) & 0xFF
             await self.request_move_history(start_serial, diff + 1)
 
-    async def event_handler(self, sender: BleakGATTCharacteristic,  # noqa: ARG002
-                            data: bytearray) -> list[EventDict]:
-        """Process notifications from the cube"""
+    async def event_handler(  # noqa: C901, PLR0912, PLR0914, PLR0915
+            self, sender: BleakGATTCharacteristic,  # noqa: ARG002
+            data: bytearray) -> list[EventDict]:
+        """
+        Process notifications from the cube and decode event messages.
+
+        Decrypts and parses incoming data to handle various event types
+        including moves, facelets, move history, hardware info, battery
+        status, and disconnection events. Manages move buffering and
+        recovery of missed moves.
+
+        Args:
+            sender: The GATT characteristic that sent the notification.
+            data: The encrypted message data from the cube.
+
+        Returns:
+            List of decoded events ready to be emitted to listeners.
+
+        """
         clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
 

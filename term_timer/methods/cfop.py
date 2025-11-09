@@ -1,3 +1,5 @@
+"""CFOP method analysis with Cross, F2L, OLL, and PLL detection."""
+
 from collections.abc import Callable
 from functools import cached_property
 from typing import ClassVar
@@ -27,6 +29,23 @@ CFOP_CASE_ENCODERS: Final[dict[str, Callable[[str], str]]] = {
 
 
 class CFOPAnalyser(Analyser):
+    """
+    Analyzes solves using the CFOP method with step detection and scoring.
+
+    CFOP (Cross, F2L, OLL, PLL) is the most popular speedcubing method.
+    This analyser tracks solve progress through each step, detects cases,
+    and calculates quality scores based on move efficiency and execution.
+
+    Attributes:
+        name: Method name identifier.
+        step_list: Ordered sequence of CFOP steps.
+        aufs: AUF (Adjust U Face) configuration for each step.
+        norms: Expected values for moves, time percentages, and execution
+            quality for each step.
+        aggregate: Step indices for aggregated statistics.
+
+    """
+
     name = 'CFOP'
     step_list: tuple[str, ...] = ('Cross', 'F2L', 'OLL', 'PLL')
     aufs: ClassVar[dict[str, list[bool]]] = {
@@ -70,6 +89,21 @@ class CFOPAnalyser(Analyser):
 
     def compute_progress(self, facelets: str,
                          progress: int) -> tuple[int, list[str]]:
+        """
+        Calculate current solve progress through CFOP steps.
+
+        Iterates through remaining steps to determine how far the solve has
+        progressed by checking which steps are complete.
+
+        Args:
+            facelets: 54-character cube state string.
+            progress: Current step index in the solve sequence.
+
+        Returns:
+            Tuple containing the updated progress index and an empty list
+            (case information not tracked in base CFOP).
+
+        """
         current_progress = progress
 
         for name in self.step_list[progress:-1]:
@@ -81,6 +115,17 @@ class CFOPAnalyser(Analyser):
         return current_progress, []
 
     def correct_summary(self, summary: list[StepSummary]) -> None:
+        """
+        Apply CFOP-specific corrections to step summary data.
+
+        Fixes step naming issues such as OLL skips being misidentified as
+        F2L, then applies standard CFOP summary corrections.
+
+        Args:
+            summary: List of step summary dictionaries to be corrected
+                in-place.
+
+        """
         # Fix OLL SKIP instead of F2L
         for info in summary:
             if info['increment'] > 1 and 'OLL' in info['name']:
@@ -89,7 +134,19 @@ class CFOPAnalyser(Analyser):
         self.correct_summary_cfop(summary)
 
     @cached_property
-    def score(self) -> float:
+    def score(self) -> float:  # noqa: C901
+        """
+        Calculates solve quality score based on efficiency and execution.
+
+        Evaluates solve quality by rewarding XCrosses and fast lookahead
+        while penalizing inefficient crosses and excessive AUFs. Base score
+        is 20, with bonuses and penalties applied.
+
+        Returns:
+            Quality score ranging from ~10 (poor) to 50 (exceptional).
+            Full cube solve in one step returns maximum score of 50.
+
+        """
         bonus: float = 0
 
         step_one = self.summary[0]
@@ -122,7 +179,19 @@ class CFOPAnalyser(Analyser):
 
         return 20 + bonus - malus
 
-    def correct_summary_cfop(self, summary: list[StepSummary]) -> None:
+    def correct_summary_cfop(self, summary: list[StepSummary]) -> None:  # noqa: C901
+        """
+        Ensure summary contains all CFOP steps with skip placeholders.
+
+        Inserts placeholder entries for skipped steps (PLL, OLL, F2L) and
+        identifies OLL/PLL/F2L cases from cube state. Modifies summary
+        in-place to maintain consistent structure.
+
+        Args:
+            summary: List of step summary dictionaries to be corrected
+                in-place.
+
+        """
         # Skipped PLL insert
         if summary[-1]['name'] != 'PLL':
             summary.append(
@@ -247,6 +316,22 @@ class CFOPAnalyser(Analyser):
 
 
 class CF4OPAnalyser(CFOPAnalyser):
+    """
+    Analyzes solves using CFOP with individual F2L pair tracking.
+
+    CF4OP is a variant of CFOP that tracks each of the four F2L pairs
+    separately, enabling detailed analysis of F2L efficiency and lookahead.
+    Supports XCross detection and aggregates F2L pairs into virtual step.
+
+    Attributes:
+        name: Method name identifier.
+        step_list: Ordered sequence including individual F2L pairs.
+        aufs: AUF configuration for OLL and PLL steps.
+        norms: Expected values for moves, time percentages, and execution
+            quality for each step including individual F2L pairs.
+
+    """
+
     name = 'CF4OP'
     step_list: tuple[str, ...] = (
         'Cross',
@@ -307,6 +392,22 @@ class CF4OPAnalyser(CFOPAnalyser):
 
     def compute_progress(self, facelets: str,
                          progress: int) -> tuple[int, list[str]]:
+        """
+        Calculate progress through CF4OP steps with F2L pair tracking.
+
+        Determines solve progress by checking cross completion, individual
+        F2L pairs, and OLL completion. Returns pair identifiers for tracking
+        which specific F2L slots have been solved.
+
+        Args:
+            facelets: 54-character cube state string.
+            progress: Current step index in the solve sequence.
+
+        Returns:
+            Tuple containing the updated progress index and list of solved
+            F2L pair identifiers (e.g., ['FR', 'FL']).
+
+        """
         if progress == 6:
             return 6, []
 
@@ -330,7 +431,19 @@ class CF4OPAnalyser(CFOPAnalyser):
 
         return 6, []
 
-    def correct_summary(self, summary: list[StepSummary]) -> None:
+    def correct_summary(self, summary: list[StepSummary]) -> None:  # noqa: C901, PLR0912, PLR0915
+        """
+        Apply CF4OP-specific corrections and aggregate F2L pairs.
+
+        Identifies XCross variations, merges multiple F2L pairs solved
+        together, creates virtual F2L summary step from individual pairs,
+        and applies standard CFOP corrections. Modifies summary in-place.
+
+        Args:
+            summary: List of step summary dictionaries to be corrected
+                in-place.
+
+        """
         # Merge XCrosses
         if summary[0]['name'] == 'F2L 1':
             summary[0]['name'] = 'XCross'

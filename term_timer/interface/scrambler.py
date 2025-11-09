@@ -1,3 +1,5 @@
+"""Scramble tracking and display functionality."""
+
 import asyncio
 from typing import TYPE_CHECKING
 
@@ -5,17 +7,17 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.move import Move
 from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.timing import untime_moves
-from cubing_algs.vcube import VCube
-from rich.console import Console as RichConsole
 
 from term_timer.formatter import format_alg_moves
 from term_timer.transform import humanize_moves
 
+if TYPE_CHECKING:
+    from cubing_algs.vcube import VCube
+    from rich.console import Console as RichConsole
+
 
 class Scrambler:
-    """
-    Mixin providing scramble tracking and display functionality.
-    """
+    """Mixin providing scramble tracking and display functionality."""
 
     if TYPE_CHECKING:
         # Attributes from Bluetooth mixin
@@ -25,15 +27,32 @@ class Scrambler:
 
         # Properties from Orienter mixin
         @property
-        def cube_orientation_moves(self) -> Algorithm: ...
+        def cube_orientation_moves(self) -> Algorithm:
+            """Gets the cube orientation moves from the Orienter mixin."""
+            ...
 
         # Methods from Orienter mixin
-        def reorient(self, algorithm: Algorithm) -> Algorithm: ...
+        def reorient(self, algorithm: Algorithm) -> Algorithm:
+            """Reorient an algorithm based on cube orientation."""
+            ...
+
         # Methods from Terminal mixin
-        def clear_line(self, *, full: bool) -> None: ...
-        def beep(self) -> None: ...
+        def clear_line(self, *, full: bool) -> None:
+            """Clear the current terminal line."""
+            ...
+
+        def beep(self) -> None:
+            """Emit a terminal beep sound."""
+            ...
 
     def __init__(self) -> None:
+        """
+        Initialize scramble tracking state and event handling.
+
+        Sets up empty algorithm containers for scramble tracking, initializes
+        the scramble counter, and creates an event for scramble completion
+        detection.
+        """
         super().__init__()
 
         self.scramble = Algorithm()
@@ -48,7 +67,17 @@ class Scrambler:
 
     def handle_scrambled(self, timed_move: Move) -> None:
         """
-        Handle a scramble move from the bluetooth cube.
+        Process a scramble move from the Bluetooth cube and update display.
+
+        Tracks scramble progress by appending moves to the scrambled algorithm,
+        checking for completion against the target cube state, and updating the
+        terminal display with color-coded progress feedback. Emits a beep when
+        the scramble is completed.
+
+        Args:
+            timed_move: The move received from the Bluetooth cube, including
+                timing information.
+
         """
         if not self.scrambled and timed_move.is_rotation_move:
             return
@@ -87,7 +116,24 @@ class Scrambler:
             *, is_complete: bool,
     ) -> tuple[str, bool]:
         """
-        Compute the display output and clear behavior for scramble progress.
+        Compute the formatted display output for scramble progress.
+
+        Generates a Rich-formatted string showing the current scramble progress
+        with color-coded moves indicating correctness. When incomplete, displays
+        orientation moves and color-codes each scramble move based on whether it
+        matches the expected sequence (green for correct, yellow for caution,
+        red for warning). When complete, displays a success message.
+
+        Args:
+            scrambled: The algorithm representing moves performed so far.
+            scramble_oriented: The target scramble algorithm in oriented form.
+            cube_orientation_moves: Moves needed to reorient the cube.
+            is_complete: Whether the scramble has been fully completed.
+
+        Returns:
+            A tuple containing the formatted output string with Rich markup and
+            a boolean indicating whether to perform a full line clear.
+
         """
         if is_complete:
             out = (

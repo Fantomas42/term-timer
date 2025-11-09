@@ -1,3 +1,5 @@
+"""OpenGL window management for 3D cube display."""
+
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -74,6 +76,12 @@ if TYPE_CHECKING:
 
 
 class Window:
+    """
+    Manages the OpenGL window and rendering context for 3D cube display.
+
+    Handles window creation, OpenGL initialization, event management, camera
+    control, and rendering setup including lighting and textures.
+    """
 
     def __init__(
         self,
@@ -83,6 +91,19 @@ class Window:
         *,
         fullscreen: bool = False,
     ) -> None:
+        """
+        Initialize the OpenGL window with rendering context and camera.
+
+        Sets up pygame display, OpenGL projection and lighting, loads
+        textures, and configures the initial camera position.
+
+        Args:
+            width: Window width in pixels. Defaults to screen width if 0.
+            height: Window height in pixels. Defaults to screen height if 0.
+            fps: Target frames per second for rendering.
+            fullscreen: Whether to create a fullscreen window.
+
+        """
         self.fps = fps
         self.camera = Camera()
         self.events: dict[
@@ -137,8 +158,9 @@ class Window:
 
         self.load_texture(Path(__file__).parent / 'facelet.bmp')
 
-    def setup_lighting(self) -> None:
-        """Setup OpenGL lighting for realistic 3D cube appearance."""
+    @staticmethod
+    def setup_lighting() -> None:
+        """Set OpenGL lighting for realistic 3D cube appearance."""
         # Enable lighting
         glEnable(GL_LIGHTING)
         glEnable(GL_LIGHT0)
@@ -176,6 +198,16 @@ class Window:
         glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, [80.0])
 
     def load_texture(self, filename: Path) -> None:
+        """
+        Load and configure a texture for OpenGL rendering.
+
+        Loads an image file and creates mipmapped textures with linear
+        filtering for smooth appearance at different distances.
+
+        Args:
+            filename: Path to the texture image file.
+
+        """
         texture_surface = pygame.image.load(filename)
         texture_data = pygame.image.tostring(
             texture_surface, 'RGBA', True,  # noqa: FBT003
@@ -197,7 +229,8 @@ class Window:
             GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR,
         )
 
-    def render_gradient_background(self) -> None:
+    @staticmethod
+    def render_gradient_background() -> None:
         """Render a subtle gradient background for better aesthetics."""
         # Save current matrices
         glMatrixMode(GL_PROJECTION)
@@ -234,6 +267,12 @@ class Window:
         glMatrixMode(GL_MODELVIEW)
 
     def prepare(self) -> None:
+        """
+        Prepare the frame for rendering.
+
+        Clears the color and depth buffers, renders the gradient background,
+        and processes events and camera updates.
+        """
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         # Render gradient background
@@ -243,6 +282,12 @@ class Window:
         self.handle_camera()
 
     def update(self) -> None:
+        """
+        Update the display and maintain the target frame rate.
+
+        Flips the display buffers, regulates the frame rate, and updates
+        the window caption with current FPS.
+        """
         pygame.display.flip()
 
         self.clock.tick(self.fps)
@@ -251,10 +296,22 @@ class Window:
             f'{ self.title_prefix } (FPS={ int(self.clock.get_fps())!s })',
         )
 
-    def quit(self) -> None:
+    @staticmethod
+    def quit() -> None:
+        """Terminate the pygame display and quit the application."""
         pygame.quit()
 
     def set_keyboard_events(self, cube: 'Cube') -> None:
+        """
+        Register keyboard event handlers for cube manipulation.
+
+        Sets up key bindings for camera rotation (arrow keys), cube moves
+        (U/D/R/L/F/B), cube rotations (X/Y/Z), and application exit (ESC).
+
+        Args:
+            cube: The cube object to manipulate with keyboard events.
+
+        """
         self.add_event(KEYDOWN, K_ESCAPE, self.quit)
         self.add_event(KEYDOWN, K_LEFT, self.set_horizontal_rotation, 1)
         self.add_event(KEYDOWN, K_RIGHT, self.set_horizontal_rotation, -1)
@@ -278,6 +335,12 @@ class Window:
         self.add_event(KEYDOWN, K_z, cube.animate_rotations, self, 'z', 90)
 
     def handle_events(self) -> None:
+        """
+        Process pygame events and trigger registered event handlers.
+
+        Handles window close events and dispatches keyboard events to their
+        registered callback functions.
+        """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.quit()
@@ -294,15 +357,45 @@ class Window:
         f: Callable[..., None],
         *args: object,
     ) -> None:
+        """
+        Register a callback function for a specific keyboard event.
+
+        Args:
+            event_type: The pygame event type (KEYDOWN or KEYUP).
+            key: The pygame key constant (e.g., K_ESCAPE, K_LEFT).
+            f: The callback function to execute when the event occurs.
+            *args: Additional arguments to pass to the callback function.
+
+        """
         self.events[event_type, key] = (f, args)
 
     def set_horizontal_rotation(self, value: int) -> None:
+        """
+        Adjust the horizontal camera rotation rate.
+
+        Args:
+            value: The increment to add to the horizontal rotation rate.
+
+        """
         self.horizontal_rotation += value
 
     def set_vertical_rotation(self, value: int) -> None:
+        """
+        Adjust the vertical camera rotation rate.
+
+        Args:
+            value: The increment to add to the vertical rotation rate.
+
+        """
         self.vertical_rotation += value
 
     def handle_camera(self) -> None:
+        """
+        Apply accumulated rotation to the camera and update its state.
+
+        Uses the current horizontal and vertical rotation rates to adjust
+        the camera orientation and applies the changes.
+        """
         self.camera.increase_rotation(
             self.vertical_rotation,
             self.horizontal_rotation,

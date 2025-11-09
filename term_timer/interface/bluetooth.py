@@ -1,3 +1,5 @@
+"""Bluetooth cube integration interface mixin."""
+
 import asyncio
 import logging
 from typing import TYPE_CHECKING
@@ -5,7 +7,6 @@ from typing import cast
 
 from cubing_algs.move import Move
 from cubing_algs.vcube import VCube
-from rich.console import Console as RichConsole
 
 from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
@@ -27,6 +28,9 @@ from term_timer.config import BLUETOOTH_CONFIG
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import CubeNotFoundError
 
+if TYPE_CHECKING:
+    from rich.console import Console as RichConsole
+
 logger = logging.getLogger(__name__)
 
 
@@ -45,13 +49,22 @@ class Bluetooth:
         solve_completed_event: asyncio.Event
 
         # Methods from Terminal mixin
-        def clear_line(self, *, full: bool) -> None: ...
+        def clear_line(self, *, full: bool) -> None:
+            """Clear current terminal line."""
+            ...
+
         # Methods from Scrambler mixin
-        def handle_scrambled(self, timed_move: Move) -> None: ...
+        def handle_scrambled(self, timed_move: Move) -> None:
+            """Handle a move during scrambling phase."""
+            ...
+
         # Methods from Gesture mixin
-        def handle_save_gestures(self, move: Move) -> None: ...
+        def handle_save_gestures(self, move: Move) -> None:
+            """Handle a move during gesture saving phase."""
+            ...
 
     def __init__(self) -> None:
+        """Initialize Bluetooth integration state and event queues."""
         super().__init__()
 
         self.moves: list[MoveInfo] = []
@@ -69,7 +82,14 @@ class Bluetooth:
 
     async def bluetooth_connect(self) -> bool:
         """
-        Connect to a Bluetooth cube.
+        Connect to a Bluetooth cube and initialize device communication.
+
+        Scans for or connects to a Bluetooth cube, requests initial state,
+        and waits for hardware and facelet information to be received.
+
+        Returns:
+            True if connection and initialization succeeded, False otherwise.
+
         """
         address = BLUETOOTH_CONFIG.get('address', '')
 
@@ -152,9 +172,7 @@ class Bluetooth:
             return True
 
     async def bluetooth_disconnect(self) -> None:
-        """
-        Disconnect from the Bluetooth cube if connected.
-        """
+        """Disconnect from the Bluetooth cube if connected."""
         if (
                 self.bluetooth_interface
                 and self.bluetooth_interface.client
@@ -171,9 +189,7 @@ class Bluetooth:
 
     @property
     def bluetooth_device_label(self) -> str:
-        """
-        Get a formatted label for the connected Bluetooth device.
-        """
+        """Get a formatted label with device name, version, and battery."""
         if not self.bluetooth_interface or not self.bluetooth_interface.client:
             return ''
 
@@ -195,9 +211,14 @@ class Bluetooth:
 
         return device_label
 
-    async def bluetooth_consumer(self) -> None:
+    async def bluetooth_consumer(self) -> None:  # noqa: C901
         """
-        Consume events from the Bluetooth queue and process them.
+        Consume events from Bluetooth queue and dispatch to handlers.
+
+        Processes hardware, battery, facelets, move, and gyroscope events
+        from the Bluetooth cube, updating state and triggering appropriate
+        handlers based on event type.
+
         """
         if not self.bluetooth_queue:
             return
@@ -217,7 +238,7 @@ class Bluetooth:
                     self.handle_hardware_event(event)
 
                 elif event_name == 'battery':
-                    battery_event = cast(BatteryEventDict, event)
+                    battery_event = cast('BatteryEventDict', event)
                     self.bluetooth_hardware['battery_level'] = battery_event[
                         'level'
                     ]
@@ -228,19 +249,19 @@ class Bluetooth:
                 elif event_name == 'facelets':
                     if not self.facelets_received_event.is_set():
                         facelets_event = cast(
-                            FaceletsEventDict | FaceletsEventDictNoState,
+                            'FaceletsEventDict | FaceletsEventDictNoState',
                             event,
                         )
                         self.bluetooth_cube = VCube(facelets_event['facelets'])
                         self.facelets_received_event.set()
 
                 elif event_name == 'move' and self.bluetooth_cube:
-                    move_event = cast(MoveEventDict, event)
+                    move_event = cast('MoveEventDict', event)
                     self.bluetooth_cube.rotate(move_event['move'])
                     self.handle_bluetooth_move(move_event)
 
                 elif event_name == 'gyro' and self.bluetooth_cube:
-                    gyro_event = cast(GyroEventDict, event)
+                    gyro_event = cast('GyroEventDict', event)
 
                     rotation_result = rotation_detector.process_gyro_event(
                         gyro_event['quaternion'],
@@ -257,13 +278,20 @@ class Bluetooth:
 
     def handle_hardware_event(self, event: EventDict) -> None:
         """
-        Extract hardware information from various hardware event types.
+        Extract and store hardware info from various event types.
+
+        Processes hardware events to extract device name, version numbers,
+        production date, and serial number into bluetooth_hardware dict.
+
+        Args:
+            event: Hardware event containing device information.
+
         """
         if 'hardware_name' in event:
             name_event = cast(
-                HardwareEventDict
-                | HardwareEventNameOnlyDict
-                | HardwareEventMoyuDict,
+                'HardwareEventDict | '
+                'HardwareEventNameOnlyDict | '
+                'HardwareEventMoyuDict',
                 event,
             )
             self.bluetooth_hardware['hardware_name'] = name_event[
@@ -272,9 +300,9 @@ class Bluetooth:
 
         if 'hardware_version' in event:
             version_event = cast(
-                HardwareEventDict
-                | HardwareEventVersionOnlyDict
-                | HardwareEventMoyuDict,
+                'HardwareEventDict | '
+                'HardwareEventVersionOnlyDict | '
+                'HardwareEventMoyuDict',
                 event,
             )
             self.bluetooth_hardware['hardware_version'] = version_event[
@@ -283,9 +311,9 @@ class Bluetooth:
 
         if 'software_version' in event:
             software_event = cast(
-                HardwareEventDict
-                | HardwareEventSoftwareVersionOnlyDict
-                | HardwareEventMoyuDict,
+                'HardwareEventDict | '
+                'HardwareEventSoftwareVersionOnlyDict | '
+                'HardwareEventMoyuDict',
                 event,
             )
             self.bluetooth_hardware['software_version'] = software_event[
@@ -293,11 +321,11 @@ class Bluetooth:
             ]
 
         if 'product_date' in event:
-            date_event = cast(HardwareEventPartialDict, event)
+            date_event = cast('HardwareEventPartialDict', event)
             self.bluetooth_hardware['product_date'] = date_event['product_date']
 
         if 'serial' in event:
-            serial_event = cast(HardwareEventMoyuDict, event)
+            serial_event = cast('HardwareEventMoyuDict', event)
             self.bluetooth_hardware['serial'] = serial_event['serial']
 
         self.hardware_received_event.set()
@@ -307,6 +335,15 @@ class Bluetooth:
     ) -> None:
         """
         Handle a move or rotation event from the Bluetooth cube.
+
+        Processes cube moves based on current state: passes to scramble
+        handler during scrambling, records moves during solving, and
+        triggers solve completion when cube becomes solved.
+
+        Args:
+            event: Move or rotation event containing move notation, clock
+                time, and event type.
+
         """
         move = event['move']
         clock = event['clock']
@@ -353,5 +390,9 @@ class Bluetooth:
     def cube_is_solved(self) -> bool:
         """
         Check if the Bluetooth cube is in solved state.
+
+        Returns:
+            True if cube is solved, False otherwise or if no cube connected.
+
         """
         return self.bluetooth_cube.is_solved if self.bluetooth_cube else False

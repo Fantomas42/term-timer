@@ -1,4 +1,6 @@
 """
+Moyu Weilong V10 Driver.
+
 References :
   - https://github.com/lukeburong/weilong-v10-ai-protocol
 """
@@ -31,9 +33,8 @@ logger = logging.getLogger(__name__)
 
 
 class MoyuWeilong10Driver(Driver):
-    """
-    Weilong v10
-    """
+    """Weilong v10."""
+
     service_uid: ClassVar[str] = MOYU_WEILONG_SERVICE
     state_characteristic_uid: ClassVar[str] = MOYU_WEILONG_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = MOYU_WEILONG_COMMAND_CHARACTERISTIC  # noqa: E501
@@ -41,6 +42,7 @@ class MoyuWeilong10Driver(Driver):
     factor: ClassVar[int] = pow(2, 30)
 
     def __init__(self, client: BleakClient) -> None:
+        """Initialize MoYu Weilong driver with BLE client connection."""
         super().__init__(client)
 
         self.last_serial: int = -1
@@ -48,6 +50,13 @@ class MoyuWeilong10Driver(Driver):
         self.last_move_timestamp: datetime | None = None
 
     def init_cypher(self) -> GanGen2CubeEncrypter:
+        """
+        Initialize encryption handler for cube communication.
+
+        Returns:
+            GanGen2CubeEncrypter instance with MoYu encryption keys.
+
+        """
         return self.encrypter(
             MOYU_WEILONG_ENCRYPTION_KEY['key'],
             MOYU_WEILONG_ENCRYPTION_KEY['iv'],
@@ -55,6 +64,13 @@ class MoyuWeilong10Driver(Driver):
         )
 
     def send_command_handler(self, command: str) -> bytes | bool:
+        """
+        Build and encrypt command messages for MoYu Weilong cube.
+
+        Returns:
+            Encrypted command bytes or False if command is invalid.
+
+        """
         msg = bytearray(20)
 
         if command == 'REQUEST_FACELETS':
@@ -81,9 +97,16 @@ class MoyuWeilong10Driver(Driver):
 
         return self.cypher.encrypt(msg)
 
-    async def event_handler(self, sender: BleakGATTCharacteristic,  # noqa: ARG002
-                            data: bytearray) -> list[EventDict]:
-        """Process notifications from the cube"""
+    async def event_handler(  # noqa: C901, PLR0912, PLR0914, PLR0915
+            self, sender: BleakGATTCharacteristic,  # noqa: ARG002
+            data: bytearray) -> list[EventDict]:
+        """
+        Process notifications from the cube.
+
+        Returns:
+            List of event dictionaries parsed from cube notifications.
+
+        """
         clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
 

@@ -1,3 +1,5 @@
+"""CFOP case database loading and management."""
+
 import json
 from pathlib import Path
 from typing import Final
@@ -17,11 +19,12 @@ CASES_MASKS: dict[str, dict[str, CaseMaskInfo]] = {}
 
 
 def load_cases(path: Path) -> None:
+    """Load case definitions from JSON file into CASES and CASES_MASKS."""
     case_type = path.name.replace('.json', '').upper()
     cases = CASES.setdefault(case_type, {})
     cases_masks = CASES_MASKS.setdefault(case_type, {})
 
-    with path.open('r') as fd:
+    with path.open('r', encoding='utf-8') as fd:
         json_data: dict[str, CaseInfo] = json.load(fd)
         for case_name, case_data in json_data.items():
             case_info = case_data

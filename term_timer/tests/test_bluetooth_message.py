@@ -1,12 +1,15 @@
+"""Tests for bluetooth message."""
+
 import unittest
 
 from term_timer.bluetooth.message import GanProtocolMessage
 
 
-class TestGanProtocolMessage(unittest.TestCase):
+class TestGanProtocolMessage(unittest.TestCase):  # noqa: PLR0904
     """Test cases for GanProtocolMessage class."""
 
     def setUp(self) -> None:
+        """Set up test fixtures with various byte array configurations."""
         hex_value = 0xAB47882CFFF873493FA2B87509ECB43AFF000000
         hex_string = hex(hex_value)[2:]  # noqa: FURB116
         if len(hex_string) % 2:
@@ -19,6 +22,7 @@ class TestGanProtocolMessage(unittest.TestCase):
         self.small_data = bytearray([0x12, 0x34, 0x56, 0x78])
 
     def test_str(self) -> None:
+        """Test string representation returns binary bit string."""
         msg = GanProtocolMessage(self.data)
         self.assertEqual(
             str(msg),
@@ -26,6 +30,7 @@ class TestGanProtocolMessage(unittest.TestCase):
         )
 
     def test_get_bit_words_signed_little_endian(self) -> None:
+        """Test extracting signed little-endian bit words."""
         msg = GanProtocolMessage(self.data)
 
         event = msg.get_bit_word(0, 8, signed=True)
@@ -43,6 +48,7 @@ class TestGanProtocolMessage(unittest.TestCase):
         self.assertEqual(qz, -12929812)
 
     def test_get_bit_words_unsigned_little_endian(self) -> None:
+        """Test extracting unsigned little-endian bit words."""
         msg = GanProtocolMessage(self.data)
 
         event = msg.get_bit_word(0, 8, signed=False)
@@ -60,6 +66,7 @@ class TestGanProtocolMessage(unittest.TestCase):
         self.assertEqual(qz, 4282037484)
 
     def test_get_bit_words_invalid_size(self) -> None:
+        """Test that invalid bit lengths raise ValueError."""
         msg = GanProtocolMessage(self.data)
 
         with self.assertRaises(ValueError):

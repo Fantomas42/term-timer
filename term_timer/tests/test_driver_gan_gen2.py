@@ -1,7 +1,10 @@
+"""Tests for driver gan gen2."""
+
 import asyncio
 import unittest
 from datetime import datetime
 from datetime import timezone
+from typing import TYPE_CHECKING
 from typing import cast
 from unittest.mock import AsyncMock
 from unittest.mock import Mock
@@ -11,14 +14,19 @@ from term_timer.bluetooth.constants import GAN_GEN2_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN2_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN2_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
-from term_timer.bluetooth.types import BatteryEventDict
-from term_timer.bluetooth.types import FaceletsEventDict
-from term_timer.bluetooth.types import HardwareEventDict
-from term_timer.bluetooth.types import MoveEventDict
+
+if TYPE_CHECKING:
+    from term_timer.bluetooth.types import BatteryEventDict
+    from term_timer.bluetooth.types import FaceletsEventDict
+    from term_timer.bluetooth.types import HardwareEventDict
+    from term_timer.bluetooth.types import MoveEventDict
 
 
-class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
+class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
+    """Tests for GanGen2Driver class."""
+
     def setUp(self) -> None:
+        """Test setup."""
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
         self.mock_client.name = 'GAN356 i'
@@ -30,12 +38,14 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
             self.driver = GanGen2Driver(self.mock_client)
 
     def test_init_sets_correct_attributes(self) -> None:
+        """Test init sets correct attributes."""
         self.assertEqual(self.driver.client, self.mock_client)
         self.assertEqual(self.driver.last_serial, -1)
         self.assertEqual(self.driver.cube_timestamp, 0)
         self.assertEqual(self.driver.last_move_timestamp, None)
 
     def test_class_constants(self) -> None:
+        """Test class constants."""
         self.assertEqual(
             GanGen2Driver.service_uid,
             GAN_GEN2_SERVICE,
@@ -50,6 +60,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         )
 
     def test_init_cypher_gan_cube(self) -> None:
+        """Test init cypher gan cube."""
         # Test that init_cypher returns the encrypter for GAN cube
         self.mock_client.name = 'GAN356 i'
 
@@ -61,6 +72,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(self.driver.cypher)
 
     def test_init_cypher_aicube(self) -> None:
+        """Test init cypher aicube."""
         # Create a new driver with AiCube name
         # to test the different encryption key path
         mock_aicube_client = Mock()
@@ -81,6 +93,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(result)
 
     def test_send_command_handler_request_facelets(self) -> None:
+        """Test send command handler request facelets."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -92,6 +105,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_hardware(self) -> None:
+        """Test send command handler request hardware."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -102,6 +116,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_battery(self) -> None:
+        """Test send command handler request battery."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -112,6 +127,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_request_reset(self) -> None:
+        """Test send command handler request reset."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
@@ -126,14 +142,17 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result, b'encrypted_data')
 
     def test_send_command_handler_invalid_command(self) -> None:
+        """Test send command handler invalid command."""
         result = self.driver.send_command_handler('INVALID_COMMAND')
         self.assertFalse(result)
 
     def test_send_command_handler_empty_command(self) -> None:
+        """Test send command handler empty command."""
         result = self.driver.send_command_handler('')
         self.assertFalse(result)
 
     def test_send_command_handler_none_command(self) -> None:
+        """Test send command handler none command."""
         result = self.driver.send_command_handler(None)  # type: ignore[arg-type]
         self.assertFalse(result)
 
@@ -142,6 +161,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_gyroscope_disabled(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler gyroscope disabled."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -174,6 +194,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_gyroscope_enabled(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler gyroscope enabled."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -225,6 +246,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_moves_blocked_before_facelets(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler moves blocked before facelets."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -255,6 +277,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_move_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler move event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -290,10 +313,10 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
 
                 self.assertEqual(len(result), 2)
                 self.assertEqual(result[0]['event'], 'move')
-                move_event_0 = cast(MoveEventDict, result[0])
+                move_event_0 = cast('MoveEventDict', result[0])
                 self.assertEqual(move_event_0['move'], "U'")
                 self.assertEqual(result[1]['event'], 'move')
-                move_event_1 = cast(MoveEventDict, result[1])
+                move_event_1 = cast('MoveEventDict', result[1])
                 self.assertEqual(move_event_1['move'], 'D')
 
     @patch('term_timer.bluetooth.drivers.gan_gen2.time.perf_counter_ns')
@@ -301,6 +324,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_move_with_zero_elapsed_time(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler move with zero elapsed time."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -333,11 +357,11 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'move')
-                move_event = cast(MoveEventDict, event)
+                move_event = cast('MoveEventDict', event)
                 self.assertEqual(move_event['move'], 'U')
                 cube_timestamp = move_event['cube_timestamp']
                 self.assertIsNotNone(cube_timestamp)
-                cube_timestamp = cast(int, cube_timestamp)
+                cube_timestamp = cast('int', cube_timestamp)
                 # Should have computed elapsed time from timestamp difference
                 self.assertGreater(cube_timestamp, 0)
 
@@ -348,6 +372,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self, mock_cubies_to_facelets: Mock,
         mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler facelets event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -368,7 +393,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg_class.return_value = mock_msg
 
                 # Mock corner and edge data
-                def mock_get_bit_word(start: int, length: int) -> int:
+                def mock_get_bit_word(start: int, length: int) -> int:  # noqa: PLR0911
                     if start == 0 and length == 4:
                         return 0x04  # event type
                     if start == 4 and length == 8:
@@ -391,7 +416,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'facelets')
-                facelets_event = cast(FaceletsEventDict, event)
+                facelets_event = cast('FaceletsEventDict', event)
                 self.assertEqual(facelets_event['serial'], 50)
                 self.assertIn('facelets', facelets_event)
                 self.assertIn('state', facelets_event)
@@ -405,6 +430,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_hardware_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler hardware event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -421,7 +447,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(start: int, length: int) -> int:
+                def mock_get_bit_word(start: int, length: int) -> int:  # noqa: PLR0911
                     if start == 0 and length == 4:
                         return 0x05  # event type
                     if start == 8 and length == 8:
@@ -445,7 +471,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'hardware')
-                hw_event = cast(HardwareEventDict, event)
+                hw_event = cast('HardwareEventDict', event)
                 self.assertEqual(hw_event['hardware_version'], '1.2')
                 self.assertEqual(hw_event['software_version'], '3.4')
                 self.assertTrue(hw_event['gyroscope_supported'])
@@ -455,6 +481,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_battery_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler battery event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -482,7 +509,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'battery')
-                battery_event = cast(BatteryEventDict, event)
+                battery_event = cast('BatteryEventDict', event)
                 self.assertEqual(battery_event['level'], 85)
                 self.assertEqual(battery_event['charging_state'], 1)
 
@@ -491,6 +518,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_battery_level_capped(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler battery level capped."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -517,7 +545,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
-                battery_event = cast(BatteryEventDict, event)
+                battery_event = cast('BatteryEventDict', event)
                 self.assertEqual(battery_event['level'], 100)
                 self.assertEqual(battery_event['charging_state'], 1)
 
@@ -526,6 +554,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_disconnect_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler disconnect event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -559,6 +588,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
     async def test_event_handler_unknown_event(
             self, mock_logger: Mock, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
+        """Test event handler unknown event."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
@@ -583,10 +613,12 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
                 mock_logger.debug.assert_called_once()
 
     def test_event_handler_is_async(self) -> None:
+        """Test event handler is async."""
         # Verify that event_handler is an async function
         self.assertTrue(asyncio.iscoroutinefunction(self.driver.event_handler))
 
     def test_quaternion_calculation_positive_values(self) -> None:
+        """Test quaternion calculation positive values."""
         # Test quaternion calculation logic for positive values
         test_value = 0x4000  # Positive value (bit 15 is 0)
         sign = 1 - ((test_value >> 15) * 2)  # Should be 1
@@ -597,6 +629,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertAlmostEqual(expected, 0.5, places=4)
 
     def test_quaternion_calculation_negative_values(self) -> None:
+        """Test quaternion calculation negative values."""
         # Test quaternion calculation logic for negative values
         test_value = 0x8000  # Negative value (bit 15 is 1)
         sign = 1 - ((test_value >> 15) * 2)  # Should be -1
@@ -607,6 +640,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(expected, 0.0)
 
     def test_velocity_calculation_positive_values(self) -> None:
+        """Test velocity calculation positive values."""
         # Test velocity calculation logic for positive values
         test_value = 0x04  # Positive value (bit 3 is 0)
         sign = 1 - ((test_value >> 3) * 2)  # Should be 1
@@ -617,6 +651,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(expected, 4)
 
     def test_velocity_calculation_negative_values(self) -> None:
+        """Test velocity calculation negative values."""
         # Test velocity calculation logic for negative values
         test_value = 0x08  # Negative value (bit 3 is 1)
         sign = 1 - ((test_value >> 3) * 2)  # Should be -1
@@ -627,6 +662,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(expected, 0)
 
     def test_corner_permutation_calculation(self) -> None:
+        """Test corner permutation calculation."""
         # Test that corner permutation is correctly calculated
         # The last corner is calculated as 28 - sum(first 7)
         cp_values = [0, 1, 2, 3, 4, 5, 6]
@@ -634,6 +670,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(last_cp, 7)  # 28 - 21 = 7
 
     def test_corner_orientation_calculation(self) -> None:
+        """Test corner orientation calculation."""
         # Test that corner orientation is correctly calculated
         # The last corner orientation is calculated as (3 - (sum % 3)) % 3
         co_values = [0, 1, 2, 0, 1, 2, 0]
@@ -641,6 +678,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(last_co, 0)  # (3 - (6 % 3)) % 3 = (3 - 0) % 3 = 0
 
     def test_edge_permutation_calculation(self) -> None:
+        """Test edge permutation calculation."""
         # Test that edge permutation is correctly calculated
         # The last edge is calculated as 66 - sum(first 11)
         ep_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -648,6 +686,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(last_ep, 11)  # 66 - 55 = 11
 
     def test_edge_orientation_calculation(self) -> None:
+        """Test edge orientation calculation."""
         # Test that edge orientation is correctly calculated
         # The last edge orientation is calculated as (2 - (sum % 2)) % 2
         eo_values = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
@@ -655,6 +694,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(last_eo, 1)  # (2 - (5 % 2)) % 2 = (2 - 1) % 2 = 1
 
     async def test_event_handler_with_invalid_data(self) -> None:
+        """Test event handler with invalid data."""
         # Test with empty data
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = bytearray()

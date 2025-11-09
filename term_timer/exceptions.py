@@ -1,10 +1,13 @@
+"""Custom exception classes for the term-timer application."""
+
+
 class CubeNotFoundError(Exception):
-    pass
+    """Raised when no Bluetooth cube is found during scanning."""
 
 
 class InvalidCaseError(Exception):
-    pass
+    """Raised when an invalid training case is selected."""
 
 
 class InvalidOrientationError(Exception):
-    pass
+    """Raised when an invalid cube orientation is specified."""

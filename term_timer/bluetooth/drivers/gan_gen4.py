@@ -1,6 +1,9 @@
 """
+GAN Gen4 Driver.
+
 References :
   - https://github.com/afedotov/gan-web-bluetooth
+  - https://github.com/Fantomas42/gan-protocols
 """
 import logging
 import time
@@ -33,14 +36,22 @@ logger = logging.getLogger(__name__)
 
 class GanGen4Driver(GanGen3Driver):
     """
-    GAN12 ui Maglev
-    GAN14 ui FreePlay
+    GAN12 ui Maglev.
+    GAN14 ui FreePlay.
     """
+
     service_uid: ClassVar[str] = GAN_GEN4_SERVICE
     state_characteristic_uid: ClassVar[str] = GAN_GEN4_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = GAN_GEN4_COMMAND_CHARACTERISTIC
 
-    def send_command_handler(self, command: str) -> bytes | bool:
+    def send_command_handler(self, command: str) -> bytes | bool:  # noqa: C901, PLR0912
+        """
+        Build and encrypt command messages for GAN Gen4 cube.
+
+        Returns:
+            Encrypted command bytes or False if command is invalid.
+
+        """
         msg = bytearray(20)
 
         if command == 'REQUEST_FACELETS':
@@ -84,6 +95,7 @@ class GanGen4Driver(GanGen3Driver):
         return self.cypher.encrypt(msg)
 
     async def request_move_history(self, serial: int, count: int) -> None:
+        """Request move history from cube starting at serial number."""
         msg = bytearray(20)
 
         # Move history response data is byte-aligned,
@@ -114,9 +126,16 @@ class GanGen4Driver(GanGen3Driver):
             self.cypher.encrypt(msg),
         )
 
-    async def event_handler(self, sender: BleakGATTCharacteristic,  # noqa: ARG002
-                            data: bytearray) -> list[EventDict]:
-        """Process notifications from the cube"""
+    async def event_handler(  # noqa: C901, PLR0912, PLR0914, PLR0915
+            self, sender: BleakGATTCharacteristic,  # noqa: ARG002
+            data: bytearray) -> list[EventDict]:
+        """
+        Process notifications from the cube.
+
+        Returns:
+            List of event dictionaries parsed from cube notifications.
+
+        """
         clock = time.perf_counter_ns()
         timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
 

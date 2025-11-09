@@ -1,3 +1,5 @@
+"""OpenGL renderer for animated cube visualization."""
+
 import time
 from operator import neg
 from typing import TYPE_CHECKING
@@ -52,20 +54,34 @@ if TYPE_CHECKING:
 # Easing functions for smooth animations
 def ease_out_cubic(t: float) -> float:
     """
-    Ease-out cubic function for smooth deceleration.
-    Starts fast, ends slow - feels natural and satisfying.
-    t: normalized time from 0.0 to 1.0
-    Returns: eased value from 0.0 to 1.0
+    Apply cubic ease-out easing for smooth deceleration animation.
+
+    Produces a natural-feeling animation that starts fast and gradually
+    slows down towards the end, creating a satisfying motion effect.
+
+    Args:
+        t: Normalized time value between 0.0 (start) and 1.0 (end).
+
+    Returns:
+        Eased value between 0.0 and 1.0 following a cubic curve.
+
     """
     return 1 - pow(1 - t, 3)
 
 
 def ease_in_out_cubic(t: float) -> float:
     """
-    Ease-in-out cubic for smooth acceleration and deceleration.
-    Starts slow, speeds up in middle, slows at end.
-    t: normalized time from 0.0 to 1.0
-    Returns: eased value from 0.0 to 1.0
+    Apply cubic ease-in-out easing for smooth acceleration.
+
+    Creates an animation that starts slowly, accelerates through the
+    middle, then decelerates smoothly at the end for balanced motion.
+
+    Args:
+        t: Normalized time value between 0.0 (start) and 1.0 (end).
+
+    Returns:
+        Eased value between 0.0 and 1.0 following a cubic S-curve.
+
     """
     if t < 0.5:  # noqa: PLR2004
         return 4 * t * t * t
@@ -99,6 +115,18 @@ def r_surface(
     color: tuple[float, float, float] | None,
     normal: tuple[float, float, float] | None = None,
 ) -> None:
+    """
+    Render a single quad surface with texture coordinates and color.
+
+    Draws a quadrilateral surface using OpenGL with the specified vertices,
+    color, and optional surface normal for lighting calculations.
+
+    Args:
+        points: List of four 3D vertices defining the quad corners.
+        color: RGB color tuple (0.0-1.0 range) or None to skip rendering.
+        normal: Surface normal vector for lighting, defaults to None.
+
+    """
     if color is not None:
         glColor3fv(color)
         # Set normal once for the entire quad (flat shading)
@@ -121,6 +149,19 @@ def r_cube(
     colors: list[tuple[float, float, float] | None],
     scale: float = 1,
 ) -> None:
+    """
+    Render a complete cube with six colored faces at a given scale.
+
+    Draws all six faces of a cube piece with specified colors. Uses
+    optimized rendering path for unit scale (scale=1) with pre-computed
+    face vertices. Black is used for faces without specified colors to
+    represent the cube's plastic interior.
+
+    Args:
+        colors: List of 6 RGB color tuples (one per face) or None values.
+        scale: Cube scaling factor, defaults to 1.0 for standard size.
+
+    """
     # Optimize by using pre-computed face points and inlining for scale=1
     if scale == 1:
         # Inline rendering for common case (scale=1) - reduces function calls
@@ -160,6 +201,25 @@ def get_orientation_param(
     position: int,
     orientation: int,
 ) -> tuple[int, int, int, int]:
+    """
+    Calculate rotation parameters for piece orientation rendering.
+
+    Determines the rotation axis and angle needed to render a cube piece
+    at the correct orientation based on its type (edge/corner/center) and
+    current orientation state.
+
+    Args:
+        piece: Piece identifier string (length 1=center, 2=edge, 3=corner).
+        position: Spatial position index of the piece on the cube.
+        orientation: Orientation state value (0-2 for edges, 0-2 for
+            corners).
+
+    Returns:
+        Tuple of (rot_x, rot_y, rot_z, theta) rotation parameters where
+        rot_x/y/z define the rotation axis and theta is the angle in
+        degrees.
+
+    """
     if len(piece) == 2:
         rot_x, rot_y, rot_z = edge_orientation_axis_table[position]
         theta = 180 * orientation
@@ -172,6 +232,19 @@ def get_orientation_param(
 
 
 def render_piece(piece: str, position: int, orientation: int) -> None:
+    """
+    Render a single cube piece at its specified position and orientation.
+
+    Draws one cube piece (center, edge, or corner) with appropriate colors,
+    spatial positioning, and rotational orientation. Handles piece type
+    detection and applies correct transformations.
+
+    Args:
+        piece: Piece identifier string defining which piece to render.
+        position: Position index where the piece should be rendered.
+        orientation: Orientation value determining the piece's rotation.
+
+    """
     # Use cached color index mapping for O(1) lookups instead of O(n)
     c: list[tuple[float, float, float]] = [
         color_list[_CENTER_COLOR_INDEX[e]] for e in piece
@@ -220,6 +293,24 @@ def get_moving_pieces(
     cube: 'Cube',
     face: Face,
 ) -> tuple[list[tuple[str, int, int]], list[tuple[str, int, int]]]:
+    """
+    Partitions cube pieces into moving and stationary sets for a face turn.
+
+    Analyzes the cube state to determine which pieces will move during a
+    rotation of the specified face and which will remain stationary. This
+    separation enables efficient animation by independently transforming
+    the two groups.
+
+    Args:
+        cube: Cube instance containing current piece permutations and
+            orientations.
+        face: Face identifier indicating which face will be rotated.
+
+    Returns:
+        Tuple of (moving_pieces, non_moving_pieces) where each is a list
+        of (piece_id, position, orientation) tuples.
+
+    """
     moving_pieces: list[tuple[str, int, int]] = []
     non_moving_pieces: list[tuple[str, int, int]] = []
     corner_p = cube.corner_permutation
@@ -248,6 +339,23 @@ def get_moving_pieces(
 
 def get_rotation_param(face: Face,
                        power: int) -> tuple[tuple[int, int, int], int]:
+    """
+    Determine rotation axis and maximum angle for a face turn animation.
+
+    Calculates the 3D rotation axis and target angle based on the face
+    being turned and the move power (quarter turn, half turn, or counter-
+    clockwise turn).
+
+    Args:
+        face: Face identifier indicating which face is being rotated.
+        power: Move power value (1=clockwise 90°, 2=180°, 3=counter-
+            clockwise 90°).
+
+    Returns:
+        Tuple of (axis, theta_max) where axis is a 3D unit vector and
+        theta_max is the target rotation angle in degrees.
+
+    """
     axis: tuple[int, int, int]
     axis = tuple(
         map(
@@ -260,6 +368,18 @@ def get_rotation_param(face: Face,
 
 
 def render(cube: 'Cube') -> None:
+    """
+    Render the complete cube with all pieces in their current state.
+
+    Draws the entire Rubik's cube by rendering all center, edge, and corner
+    pieces according to their current permutations and orientations. Applies
+    the cube's global rotation for viewing angle.
+
+    Args:
+        cube: Cube instance containing full state information including
+            piece positions, orientations, and viewing angles.
+
+    """
     corner_p = cube.corner_permutation
     corner_o = cube.corners_orientations
     edge_p = cube.edge_permutation
@@ -289,8 +409,22 @@ def render(cube: 'Cube') -> None:
     glDisable(GL_TEXTURE_2D)
 
 
-def animate_move(window: 'Window', cube: 'Cube',
+def animate_move(window: 'Window', cube: 'Cube',  # noqa: PLR0914
                  face: Face, power: int) -> None:
+    """
+    Animate a smooth face turn on the cube with eased rotation.
+
+    Performs a time-based animation of a face rotation by independently
+    rotating the affected pieces while keeping stationary pieces fixed.
+    Uses cubic ease-out easing for natural-feeling motion.
+
+    Args:
+        window: Window instance for rendering and display updates.
+        cube: Cube instance containing the current cube state.
+        face: Face identifier indicating which face to rotate.
+        power: Move power determining rotation direction and magnitude.
+
+    """
     moving_pieces, non_moving_pieces = get_moving_pieces(cube, face)
     axis, theta_max = get_rotation_param(face, power)
 
@@ -355,6 +489,20 @@ def animate_move(window: 'Window', cube: 'Cube',
 
 def animate_rotation(window: 'Window', cube: 'Cube',
                      axis: str, angle: int) -> None:
+    """
+    Animate smooth rotation of the entire cube around a specified axis.
+
+    Rotates the whole cube view incrementally around the x, y, or z axis
+    using time-based animation with cubic ease-out easing for smooth,
+    natural-feeling camera movement.
+
+    Args:
+        window: Window instance for rendering and display updates.
+        cube: Cube instance to be rotated.
+        axis: Rotation axis identifier ('x', 'y', or 'z').
+        angle: Target rotation angle in degrees.
+
+    """
     # Animation parameters (time-based for consistent speed)
     animation_duration = 0.075  # 75ms animation (balanced speed)
     start_time = time.time()

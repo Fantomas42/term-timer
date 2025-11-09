@@ -39,6 +39,7 @@ from term_timer.solve import Solve
 
 class StepAnalysis(TypedDict):
     """Analysis of a single step from a solve."""
+
     case: str
     time: int
     execution: int
@@ -50,6 +51,7 @@ class StepAnalysis(TypedDict):
 
 class SolveAnalysis(TypedDict):
     """Analysis result for a single solve."""
+
     steps: dict[str, StepAnalysis]
     score: float
     solve: Solve | None
@@ -57,6 +59,7 @@ class SolveAnalysis(TypedDict):
 
 class CaseStatsAccumulator(TypedDict):
     """Accumulator for case statistics during aggregation."""
+
     recognitions: list[int]
     executions: list[int]
     times: list[int]
@@ -68,6 +71,7 @@ class CaseStatsAccumulator(TypedDict):
 
 class CaseStats(TypedDict):
     """Statistics for a single case (e.g., OLL case, PLL case)."""
+
     count: int
     frequency: float
     probability: float
@@ -83,6 +87,7 @@ class CaseStats(TypedDict):
 
 class MethodAnalysis(TypedDict):
     """Results of method analysis across multiple solves."""
+
     total: int
     mean: float
     resume: dict[str, dict[str, CaseStats]]
