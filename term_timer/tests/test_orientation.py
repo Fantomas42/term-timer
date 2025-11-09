@@ -108,3 +108,114 @@ class TestAutoRotation(unittest.TestCase):
             get_orientation_faces(scramble, solution),
             'LU',
         )
+
+
+class TestOrientationBug(unittest.TestCase):
+    """
+    Tests demonstrating the for-else bug in get_orientation_faces.
+
+    The bug occurs when a face is completed but the first layer is NOT
+    complete. The current implementation incorrectly adds the face to
+    face_completed regardless of the first-layer check result, causing
+    wrong orientation detection.
+
+    These tests will FAIL with the buggy implementation and PASS once fixed.
+    """
+
+    def test_bug_solve_40_face_complete_but_not_first_layer(self) -> None:
+        """
+        Test solve 40 - Face B complete but first layer invalid.
+
+        At move 64, face B becomes complete (all 9 facelets are same color).
+        However, when checking with B on top, the first layer is NOT valid
+        (the top 3 facelets of adjacent faces don't all match).
+
+        Buggy behavior: Returns 'FU' (opposite of B is F)
+        Expected behavior: Should continue searching and find 'DL'
+
+        This demonstrates the missing 'else' clause bug - face B gets added
+        to face_completed even though the first layer check failed.
+        """
+        scramble = Algorithm.parse_moves(
+            "B2 L2 B2 L2 U' F2 U2 F2 R2 F' L2 B' U R' B2 R B R2 U' R'",
+        )
+        solution = Algorithm.parse_moves(
+            """
+            L' L' R' F' B R' B' U R U U D' D D L' D' L B B' D' B D B'
+            L' D' L D D' D' B' D B B D B' D' B D' B' R' D' R D' D' D'
+            B D' D' B' L' D D L D' L' D L F' D F D' D' F' D F D L D L'
+            D' L' F L F' D' L' D D L D' D' L' F L D L' D' L' F' L L
+            """,
+        )
+
+        result = get_orientation_faces(scramble, solution)
+
+        # With the bug, this returns 'FU' (wrong!)
+        # After fix, should return 'DL' (correct)
+        self.assertEqual(
+            result,
+            'DL',
+            f"Expected 'DL' but got '{result}'. "
+            "This solve completes face B at move 64, but first layer is "
+            "NOT valid. The bug causes it to stop early and return 'FU'.",
+        )
+
+    def test_bug_solve_144_same_pattern(self) -> None:
+        """
+        Test solve 144 - Another case of face complete without first layer.
+
+        Same bug pattern: Face B complete at move 40, first layer invalid.
+
+        Buggy behavior: Returns 'FU'
+        Expected behavior: Should return 'DL'
+        """
+        scramble = Algorithm.parse_moves(
+            "F' L2 F U L D' F2 R U' B2 R' U' F' D' R F U2 L U' L B L' "
+            "D2 F' L D2",
+        )
+        solution = Algorithm.parse_moves(
+            """
+            R F' R' D L L U' U' F' D D F D' F' D F L' D D L D F D F'
+            D' D B' D' B D' B' D B D' L' D' L D' B D B' D D R' D' B' D
+            B R B D B' L L U' F D' F' D F' U L L D'
+            """,
+        )
+
+        result = get_orientation_faces(scramble, solution)
+
+        self.assertEqual(
+            result,
+            'DL',
+            f"Expected 'DL' but got '{result}'. "
+            "Face B complete at move 40 but first layer invalid.",
+        )
+
+    def test_bug_solve_174_fd_instead_of_db(self) -> None:
+        """
+        Test solve 174 - Face complete triggers wrong orientation.
+
+        Face B complete at move 45, first layer invalid.
+
+        Buggy behavior: Returns 'FD'
+        Expected behavior: Should return 'DB'
+        """
+        scramble = Algorithm.parse_moves(
+            "D U2 L2 F2 R2 B2 U' B2 F2 U2 L B D' R B D' L2 R2 D2 F' L2",
+        )
+        solution = Algorithm.parse_moves(
+            """
+            U B' D' D' R R D' L L U U D L D' D' L' D L D' L' R D' R'
+            D' B D D B' D B D' B' D' R' D' R D' R D R' D F D' F' D' D'
+            B' D B D' D' D' R' B R B' D' B' D B D R' D' B' R D R' D' R'
+            B R R D' R' D' R D R' D R D' D D
+            """,
+        )
+
+        result = get_orientation_faces(scramble, solution)
+
+        self.assertEqual(
+            result,
+            'DB',
+            f"Expected 'DB' but got '{result}'. "
+            "Face B complete at move 45 but first layer invalid.",
+        )
