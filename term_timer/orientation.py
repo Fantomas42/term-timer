@@ -1,5 +1,4 @@
 """Cube orientation calculation and management for optimal viewing angles."""
-
 import operator
 from typing import Final
 
@@ -40,7 +39,7 @@ def is_face_complete(cube: VCube, face: str) -> bool:
         True if all 9 facelets match the center color
 
     """
-    facelets = cube.get_face(face)
+    facelets = cube.get_face_by_center(face)
     return facelets == facelets[4] * 9
 
 
