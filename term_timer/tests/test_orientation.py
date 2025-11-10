@@ -112,19 +112,19 @@ class TestAutoRotation(unittest.TestCase):
 
 class TestOrientationDetection(unittest.TestCase):
     """
-    Tests for orientation detection based on first face completion.
+    Tests for orientation detection with first layer validation.
 
-    The algorithm detects orientation when the first face is completed
-    (all 9 facelets same color), without requiring first layer validation.
-    This supports color-neutral solving and methods like Roux.
+    The algorithm detects orientation when a face is completed AND
+    the first layer is valid (top row of adjacent faces match).
+    This ensures proper CFOP orientation detection.
     """
 
-    def test_solve_40_early_face_completion(self) -> None:
+    def test_solve_40_first_two_layers_validation(self) -> None:
         """
-        Test solve 40 - Face B completes early.
+        Test solve 40 - Face B complete but first layer invalid.
 
-        Face B becomes complete at move 64, triggering F-top orientation.
-        This is intentional behavior to support color-neutral detection.
+        Face B becomes complete at move 64, but first layer is NOT valid.
+        Algorithm continues and detects valid first layer with D-top.
         """
         scramble = Algorithm.parse_moves(
             "B2 L2 B2 L2 U' F2 U2 F2 R2 F' L2 B' U R' B2 R B R2 U' R'",
@@ -142,16 +142,18 @@ class TestOrientationDetection(unittest.TestCase):
 
         self.assertEqual(
             result,
-            'FU',
-            f"Expected 'FU' but got '{result}'. "
-            "Face B completes at move 64, triggering F-top detection.",
+            'DL',
+            f"Expected 'DL' but got '{result}'. "
+            "Face B completes early but first layer invalid, "
+            "should continue to find valid D-top orientation.",
         )
 
-    def test_solve_144_face_completion(self) -> None:
+    def test_solve_144_first_two_layers_validation(self) -> None:
         """
-        Test solve 144 - Face B complete at move 40.
+        Test solve 144 - Face B complete but first layer invalid.
 
-        Face B completion triggers F-top orientation.
+        Face B completes at move 40 without valid first layer.
+        Algorithm waits for valid first layer with D-top.
         """
         scramble = Algorithm.parse_moves(
             "F' L2 F U L D' F2 R U' B2 R' U' F' D' R F U2 L U' L B L' "
@@ -169,16 +171,17 @@ class TestOrientationDetection(unittest.TestCase):
 
         self.assertEqual(
             result,
-            'FU',
-            f"Expected 'FU' but got '{result}'. "
-            "Face B complete at move 40.",
+            'DL',
+            f"Expected 'DL' but got '{result}'. "
+            "Face B complete at move 40 but first layer invalid.",
         )
 
-    def test_solve_174_face_completion(self) -> None:
+    def test_solve_174_first_two_layers_validation(self) -> None:
         """
-        Test solve 174 - Face B complete at move 45.
+        Test solve 174 - Face B complete but first layer invalid.
 
-        Face B completion triggers F-top orientation.
+        Face B completes at move 45 without valid first layer.
+        Algorithm waits for valid first layer with D-top.
         """
         scramble = Algorithm.parse_moves(
             "D U2 L2 F2 R2 B2 U' B2 F2 U2 L B D' R B D' L2 R2 D2 F' L2",
@@ -196,7 +199,7 @@ class TestOrientationDetection(unittest.TestCase):
 
         self.assertEqual(
             result,
-            'FD',
-            f"Expected 'FD' but got '{result}'. "
-            "Face B complete at move 45.",
+            'DB',
+            f"Expected 'DB' but got '{result}'. "
+            "Face B complete at move 45 but first layer invalid.",
         )
