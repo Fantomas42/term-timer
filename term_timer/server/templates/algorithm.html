@@ -9,6 +9,7 @@
 {% block subtitle %}{{ algorithm }}{% endblock %}
 
 {% block script %}
+  <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
   <script>
    document.addEventListener('DOMContentLoaded', function() {
      const copiers = document.querySelectorAll('.moves-copy');
@@ -26,6 +27,357 @@
          });
        });
      });
+
+     {% set metrics = algorithm.metrics %}
+     {% set ergonomics = algorithm.ergonomics %}
+     {% set impacts = algorithm.impacts %}
+     Chart.defaults.color = '#94a3b8';
+
+     // Move Metrics Bar Chart
+     const metricsCtx = document.getElementById('metricsChart');
+     if (metricsCtx) {
+       new Chart(metricsCtx, {
+         type: 'bar',
+         data: {
+           labels: ['HTM', 'QTM', 'STM', 'ETM', 'RTM', 'QSTM'],
+           datasets: [{
+             label: 'Move Count',
+             data: [
+               {{ metrics.htm }},
+               {{ metrics.qtm }},
+               {{ metrics.stm }},
+               {{ metrics.etm }},
+               {{ metrics.rtm }},
+               {{ metrics.qstm }}
+             ],
+             backgroundColor: [
+               'rgba(54, 162, 235, 0.8)',
+               'rgba(255, 99, 132, 0.8)',
+               'rgba(255, 206, 86, 0.8)',
+               'rgba(75, 192, 192, 0.8)',
+               'rgba(153, 102, 255, 0.8)',
+               'rgba(255, 159, 64, 0.8)'
+             ],
+             borderColor: [
+               'rgba(54, 162, 235, 1)',
+               'rgba(255, 99, 132, 1)',
+               'rgba(255, 206, 86, 1)',
+               'rgba(75, 192, 192, 1)',
+               'rgba(153, 102, 255, 1)',
+               'rgba(255, 159, 64, 1)'
+             ],
+             borderWidth: 2
+           }]
+         },
+         options: {
+           responsive: true,
+           maintainAspectRatio: true,
+           plugins: {
+             legend: {
+               display: false
+             },
+             title: {
+               display: true,
+               text: 'Move Metrics Comparison',
+               font: { size: 16 }
+             }
+           },
+           scales: {
+             y: {
+               beginAtZero: true,
+               ticks: { stepSize: 1 }
+             }
+           }
+         }
+       });
+     }
+
+     // Move Types Pie Chart
+     const moveTypesCtx = document.getElementById('moveTypesChart');
+     if (moveTypesCtx) {
+       new Chart(moveTypesCtx, {
+         type: 'pie',
+         data: {
+           labels: ['Outer Moves', 'Inner Moves', 'Rotations'],
+           datasets: [{
+             data: [
+               {{ metrics.outer_moves }},
+               {{ metrics.inner_moves }},
+               {{ metrics.rotations }}
+             ],
+             backgroundColor: [
+               'rgba(54, 162, 235, 0.8)',
+               'rgba(255, 206, 86, 0.8)',
+               'rgba(153, 102, 255, 0.8)'
+             ],
+             borderColor: [
+               'rgba(54, 162, 235, 1)',
+               'rgba(255, 206, 86, 1)',
+               'rgba(153, 102, 255, 1)'
+             ],
+             borderWidth: 2
+           }]
+         },
+         options: {
+           responsive: true,
+           maintainAspectRatio: true,
+           plugins: {
+             legend: {
+               position: 'bottom'
+             },
+             title: {
+               display: true,
+               text: 'Move Type Distribution',
+               font: { size: 16 }
+             }
+           }
+         }
+       });
+     }
+
+     // Hand Balance Doughnut Chart
+     const handBalanceCtx = document.getElementById('handBalanceChart');
+     if (handBalanceCtx) {
+       new Chart(handBalanceCtx, {
+         type: 'doughnut',
+         data: {
+           labels: ['Right Hand', 'Left Hand', 'Both Hands'],
+           datasets: [{
+             data: [
+               {{ ergonomics.right_hand_moves }},
+               {{ ergonomics.left_hand_moves }},
+               {{ ergonomics.both_hand_moves }}
+             ],
+             backgroundColor: [
+               'rgba(54, 162, 235, 0.8)',
+               'rgba(255, 99, 132, 0.8)',
+               'rgba(75, 192, 192, 0.8)'
+             ],
+             borderColor: [
+               'rgba(54, 162, 235, 1)',
+               'rgba(255, 99, 132, 1)',
+               'rgba(75, 192, 192, 1)'
+             ],
+             borderWidth: 2
+           }]
+         },
+         options: {
+           responsive: true,
+           maintainAspectRatio: true,
+           plugins: {
+             legend: {
+               position: 'bottom'
+             },
+             title: {
+               display: true,
+               text: 'Hand Balance Distribution',
+               font: { size: 16 }
+             }
+           }
+         }
+       });
+     }
+
+     // Finger Usage Polar Chart
+     const fingerUsageCtx = document.getElementById('fingerUsageChart');
+     if (fingerUsageCtx) {
+       new Chart(fingerUsageCtx, {
+         type: 'polarArea',
+         data: {
+           labels: ['Thumb', 'Index', 'Middle', 'Ring'],
+           datasets: [{
+             data: [
+               {{ ergonomics.thumb_moves }},
+               {{ ergonomics.index_finger_moves }},
+               {{ ergonomics.middle_finger_moves }},
+               {{ ergonomics.ring_finger_moves }}
+             ],
+             backgroundColor: [
+               'rgba(255, 99, 132, 0.7)',
+               'rgba(54, 162, 235, 0.7)',
+               'rgba(255, 206, 86, 0.7)',
+               'rgba(75, 192, 192, 0.7)'
+             ],
+             borderColor: [
+               'rgba(255, 99, 132, 1)',
+               'rgba(54, 162, 235, 1)',
+               'rgba(255, 206, 86, 1)',
+               'rgba(75, 192, 192, 1)'
+             ],
+             borderWidth: 2
+           }]
+         },
+         options: {
+           responsive: true,
+           maintainAspectRatio: true,
+           plugins: {
+             legend: {
+               position: 'bottom'
+             },
+             title: {
+               display: true,
+               text: 'Finger Usage Distribution',
+               font: { size: 16 }
+             }
+           },
+           scales: {
+             r: {
+               beginAtZero: true,
+               ticks: { stepSize: 1 }
+             }
+           }
+         }
+       });
+     }
+
+     // Ergonomics Radar Chart
+     const ergonomicsRadarCtx = document.getElementById('ergonomicsRadarChart');
+     if (ergonomicsRadarCtx) {
+       const comfortScore = {{ "%.1f"|format(ergonomics.comfort_score) }};
+       const executionSpeed = Math.max(0, 100 - ({{ "%.2f"|format(ergonomics.estimated_execution_time) }} * 10));
+       const handBalance = {{ "%.2f"|format(ergonomics.hand_balance_ratio) }} * 100;
+       const fingerDifficulty = Math.max(0, 100 - ({{ "%.2f"|format(ergonomics.fingertrick_difficulty) }} * 20));
+       const regripPenalty = Math.max(0, 100 - ({{ ergonomics.regrip_count }} * 10));
+       const flowScore = Math.max(0, 100 - ({{ ergonomics.flow_breaks }} * 15));
+
+       new Chart(ergonomicsRadarCtx, {
+         type: 'radar',
+         data: {
+           labels: [
+             'Comfort',
+             'Speed',
+             'Hand Balance',
+             'Fingertricks',
+             'Flow',
+             'Regrips'
+           ],
+           datasets: [{
+             label: 'Ergonomic Score',
+             data: [
+               comfortScore,
+               executionSpeed,
+               handBalance,
+               fingerDifficulty,
+               flowScore,
+               regripPenalty
+             ],
+             backgroundColor: 'rgba(54, 162, 235, 0.2)',
+             borderColor: 'rgba(54, 162, 235, 1)',
+             borderWidth: 2,
+             pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+             pointBorderColor: '#fff',
+             pointHoverBackgroundColor: '#fff',
+             pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
+           }]
+         },
+         options: {
+           responsive: true,
+           maintainAspectRatio: true,
+           plugins: {
+             legend: {
+               display: false
+             },
+             title: {
+               display: true,
+               text: 'Ergonomic Analysis Radar',
+               font: { size: 16 }
+             }
+           },
+           scales: {
+             r: {
+               beginAtZero: true,
+               max: 100,
+               ticks: {
+                 stepSize: 20
+               }
+             }
+           }
+         }
+       });
+     }
+
+     // Face Mobility Bar Chart
+     const faceMobilityCtx = document.getElementById('faceMobilityChart');
+     if (faceMobilityCtx) {
+       const faceData = {{ impacts.facelets_face_mobility|tojson }};
+       new Chart(faceMobilityCtx, {
+         type: 'bar',
+         data: {
+           labels: Object.keys(faceData),
+           datasets: [{
+             label: 'Facelets Moved',
+             data: Object.values(faceData),
+             backgroundColor: 'rgba(75, 192, 192, 0.8)',
+             borderColor: 'rgba(75, 192, 192, 1)',
+             borderWidth: 2
+           }]
+         },
+         options: {
+           responsive: true,
+           maintainAspectRatio: true,
+           plugins: {
+             legend: {
+               display: false
+             },
+             title: {
+               display: true,
+               text: 'Face Mobility',
+               font: { size: 16 }
+             }
+           },
+           scales: {
+             y: {
+               beginAtZero: true,
+               max: 9,
+               ticks: { stepSize: 1 }
+             }
+           }
+         }
+       });
+     }
+
+     // Layer Analysis Doughnut Chart
+     const layerAnalysisCtx = document.getElementById('layerAnalysisChart');
+     if (layerAnalysisCtx) {
+       new Chart(layerAnalysisCtx, {
+         type: 'doughnut',
+         data: {
+           labels: ['Centers', 'Edges', 'Corners'],
+           datasets: [{
+             data: [
+               {{ impacts.facelets_layer_analysis.centers_moved }},
+               {{ impacts.facelets_layer_analysis.edges_moved }},
+               {{ impacts.facelets_layer_analysis.corners_moved }}
+             ],
+             backgroundColor: [
+               'rgba(255, 206, 86, 0.8)',
+               'rgba(54, 162, 235, 0.8)',
+               'rgba(255, 99, 132, 0.8)'
+             ],
+             borderColor: [
+               'rgba(255, 206, 86, 1)',
+               'rgba(54, 162, 235, 1)',
+               'rgba(255, 99, 132, 1)'
+             ],
+             borderWidth: 2
+           }]
+         },
+         options: {
+           responsive: true,
+           maintainAspectRatio: true,
+           plugins: {
+             legend: {
+               position: 'bottom'
+             },
+             title: {
+               display: true,
+               text: 'Piece Type Movement',
+               font: { size: 16 }
+             }
+           }
+         }
+       });
+     }
    });
   </script>
   <script type="module">
@@ -253,6 +605,15 @@
               </tr>
             {% endif %}
           </table>
+        </div>
+      </div>
+
+      <div class="alg-metrics-grid">
+        <div>
+          <canvas id="metricsChart"></canvas>
+        </div>
+        <div style="max-width: 600px; margin: auto;">
+          <canvas id="moveTypesChart"></canvas>
         </div>
       </div>
     </div>
@@ -541,6 +902,18 @@
 
         </div>
       </div>
+
+      <div class="alg-ergo-grid">
+        <div>
+          <canvas id="ergonomicsRadarChart"></canvas>
+        </div>
+        <div>
+          <canvas id="handBalanceChart"></canvas>
+        </div>
+        <div>
+          <canvas id="fingerUsageChart"></canvas>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -622,6 +995,10 @@
             </tr>
             {% endfor %}
           </table>
+
+          <div>
+            <canvas id="faceMobilityChart"></canvas>
+          </div>
         </div>
 
         <div>
@@ -640,6 +1017,10 @@
               <td class="alg-value">{{ algorithm.impacts.facelets_layer_analysis.corners_moved }}</td>
             </tr>
           </table>
+
+          <div>
+            <canvas id="layerAnalysisChart"></canvas>
+          </div>
         </div>
 
         <div>
