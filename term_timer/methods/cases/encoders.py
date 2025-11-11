@@ -71,8 +71,6 @@ def f2l_case_encoder(mask: str) -> Callable[[str], str]:
         for face in facelets_fingerprint:
             if face not in facelet_encoder:
                 facelet_encoder[face] = str(len(facelet_encoder))
-            if len(facelet_encoder) == 9:
-                break
 
         fingerprint = [''] * 54
         for i, facelet in enumerate(facelets_fingerprint):
