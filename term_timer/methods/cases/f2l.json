@@ -75,6 +75,7 @@
                 "BL U2"
             ]
         },
+        "name": "01",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -160,6 +161,7 @@
                 "BL U2"
             ]
         },
+        "name": "02",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -243,6 +245,7 @@
                 "BL U2"
             ]
         },
+        "name": "03",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -327,6 +330,7 @@
                 "BL U2"
             ]
         },
+        "name": "04",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -411,6 +415,7 @@
                 "BL U2"
             ]
         },
+        "name": "05",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -496,6 +501,7 @@
                 "BL U2"
             ]
         },
+        "name": "06",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -580,6 +586,7 @@
                 "BL U2"
             ]
         },
+        "name": "07",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -665,6 +672,7 @@
                 "BL U2"
             ]
         },
+        "name": "08",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -749,6 +757,7 @@
                 "BL U2"
             ]
         },
+        "name": "09",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -834,6 +843,7 @@
                 "BL U2"
             ]
         },
+        "name": "10",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -919,6 +929,7 @@
                 "BL U2"
             ]
         },
+        "name": "11",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -1004,6 +1015,7 @@
                 "BL U2"
             ]
         },
+        "name": "12",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -1089,6 +1101,7 @@
                 "BL U2"
             ]
         },
+        "name": "13",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -1174,6 +1187,7 @@
                 "BL U2"
             ]
         },
+        "name": "14",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -1259,6 +1273,7 @@
                 "BL U2"
             ]
         },
+        "name": "15",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -1344,6 +1359,7 @@
                 "BL U2"
             ]
         },
+        "name": "16",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -1429,6 +1445,7 @@
                 "BL U2"
             ]
         },
+        "name": "17",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -1514,6 +1531,7 @@
                 "BL U2"
             ]
         },
+        "name": "18",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -1599,6 +1617,7 @@
                 "BL U2"
             ]
         },
+        "name": "19",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -1684,6 +1703,7 @@
                 "BL U2"
             ]
         },
+        "name": "20",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -1769,6 +1789,7 @@
                 "BL U2"
             ]
         },
+        "name": "21",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -1854,6 +1875,7 @@
                 "BL U2"
             ]
         },
+        "name": "22",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -1938,6 +1960,7 @@
                 "BL U2"
             ]
         },
+        "name": "23",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -2023,6 +2046,7 @@
                 "BL U2"
             ]
         },
+        "name": "24",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -2132,6 +2156,7 @@
                 "BL U'"
             ]
         },
+        "name": "25",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -2241,6 +2266,7 @@
                 "BL U2"
             ]
         },
+        "name": "26",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -2350,6 +2376,7 @@
                 "BL U"
             ]
         },
+        "name": "27",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -2459,6 +2486,7 @@
                 "BL"
             ]
         },
+        "name": "28",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -2566,6 +2594,7 @@
                 "BL U2"
             ]
         },
+        "name": "29",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -2674,6 +2703,7 @@
                 "BL U'"
             ]
         },
+        "name": "30",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -2783,6 +2813,7 @@
                 "BL y2"
             ]
         },
+        "name": "31",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -2892,6 +2923,7 @@
                 "BL y2"
             ]
         },
+        "name": "32",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -3001,6 +3033,7 @@
                 "BL y2"
             ]
         },
+        "name": "33",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -3110,6 +3143,7 @@
                 "BL y2"
             ]
         },
+        "name": "34",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -3219,6 +3253,7 @@
                 "BL y2"
             ]
         },
+        "name": "35",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -3328,6 +3363,7 @@
                 "BL y2"
             ]
         },
+        "name": "36",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -3413,6 +3449,7 @@
                 "BL U2"
             ]
         },
+        "name": "37",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -3498,6 +3535,7 @@
                 "BL U2"
             ]
         },
+        "name": "38",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -3583,6 +3621,7 @@
                 "BL U2"
             ]
         },
+        "name": "39",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -3668,6 +3707,7 @@
                 "BL U2"
             ]
         },
+        "name": "40",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -3753,6 +3793,7 @@
                 "BL U2"
             ]
         },
+        "name": "41",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -3838,6 +3879,7 @@
                 "BL U2"
             ]
         },
+        "name": "SKIP",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": []

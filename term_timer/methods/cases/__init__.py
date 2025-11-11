@@ -28,7 +28,6 @@ def load_cases(path: Path) -> None:
         json_data: dict[str, CaseInfo] = json.load(fd)
         for case_name, case_data in json_data.items():
             case_info = case_data
-            case_info['name'] = case_name
 
             masks_dict = case_data['masks']
             for mask, mask_info in masks_dict.items():

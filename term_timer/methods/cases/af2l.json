@@ -2,6 +2,7 @@
     "01": {
         "main": "SR'S'",
         "masks": {},
+        "name": "01",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -14,6 +15,7 @@
     "01a": {
         "main": "U'RUR2U'RU'R'UR",
         "masks": {},
+        "name": "01a",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -26,6 +28,7 @@
     "02": {
         "main": "LF'U2FL'",
         "masks": {},
+        "name": "02",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -38,6 +41,7 @@
     "02a": {
         "main": "R'FRF'LU2L'",
         "masks": {},
+        "name": "02a",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -50,6 +54,7 @@
     "03": {
         "main": "RU'R'UF'rUr'",
         "masks": {},
+        "name": "03",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -62,6 +67,7 @@
     "03a": {
         "main": "R'FR2U'R'UF'",
         "masks": {},
+        "name": "03a",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -74,6 +80,7 @@
     "04": {
         "main": "FR'F'RUR'U2R",
         "masks": {},
+        "name": "04",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -86,6 +93,7 @@
     "04a": {
         "main": "URUR2U2R",
         "masks": {},
+        "name": "04a",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -97,6 +105,7 @@
     "05": {
         "main": "RUR'ULUL'",
         "masks": {},
+        "name": "05",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -109,6 +118,7 @@
     "05a": {
         "main": "UlU'F2Ul'",
         "masks": {},
+        "name": "05a",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -121,6 +131,7 @@
     "06": {
         "main": "RUR'FUF'",
         "masks": {},
+        "name": "06",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -133,6 +144,7 @@
     "06a": {
         "main": "URL'ULR'",
         "masks": {},
+        "name": "06a",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -144,6 +156,7 @@
     "07": {
         "main": "U'F'U'fRS'",
         "masks": {},
+        "name": "07",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -156,6 +169,7 @@
     "07a": {
         "main": "RU2R'UR'U'R",
         "masks": {},
+        "name": "07a",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -168,6 +182,7 @@
     "08": {
         "main": "U'F'U2LUL'F",
         "masks": {},
+        "name": "08",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -180,6 +195,7 @@
     "08a": {
         "main": "RU2R'f'L'f",
         "masks": {},
+        "name": "08a",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -192,6 +208,7 @@
     "09": {
         "main": "UR'F'RF'R'FR",
         "masks": {},
+        "name": "09",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -204,6 +221,7 @@
     "09a": {
         "main": "U2RU'R'L'UL",
         "masks": {},
+        "name": "09a",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -214,6 +232,7 @@
     "10": {
         "main": "U'RUR2U'R",
         "masks": {},
+        "name": "10",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -226,6 +245,7 @@
     "10a": {
         "main": "U'RU'R'UfR'f'",
         "masks": {},
+        "name": "10a",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -237,6 +257,7 @@
     "11": {
         "main": "U'RU'R'LU'L'",
         "masks": {},
+        "name": "11",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -247,6 +268,7 @@
     "11a": {
         "main": "U2LU'F'UFL'",
         "masks": {},
+        "name": "11a",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -259,6 +281,7 @@
     "12": {
         "main": "U2RUR'L'UL",
         "masks": {},
+        "name": "12",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -271,6 +294,7 @@
     "12a": {
         "main": "U'RU'R'U2F'rUr'",
         "masks": {},
+        "name": "12a",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -283,6 +307,7 @@
     "13": {
         "main": "UR'FRF'R'U'R",
         "masks": {},
+        "name": "13",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -295,6 +320,7 @@
     "14": {
         "main": "U2r2UB2U'r2",
         "masks": {},
+        "name": "14",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -307,6 +333,7 @@
     "15": {
         "main": "UR'FR2U'R'U2F'",
         "masks": {},
+        "name": "15",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -319,6 +346,7 @@
     "16": {
         "main": "U'F'R'U'RF",
         "masks": {},
+        "name": "16",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -331,6 +359,7 @@
     "17": {
         "main": "U2RB'U'BR'",
         "masks": {},
+        "name": "17",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -343,6 +372,7 @@
     "18": {
         "main": "UF'U2FL'U'L",
         "masks": {},
+        "name": "18",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -355,6 +385,7 @@
     "19": {
         "main": "U'RU2R'fRf'",
         "masks": {},
+        "name": "19",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -367,6 +398,7 @@
     "20": {
         "main": "URUR'LUL'",
         "masks": {},
+        "name": "20",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -378,6 +410,7 @@
     "21": {
         "main": "URFUF'R'",
         "masks": {},
+        "name": "21",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -390,6 +423,7 @@
     "22": {
         "main": "RU'R2UR",
         "masks": {},
+        "name": "22",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -401,6 +435,7 @@
     "23": {
         "main": "LF'UFL'",
         "masks": {},
+        "name": "23",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -413,6 +448,7 @@
     "24": {
         "main": "RU'R'U2L'UL",
         "masks": {},
+        "name": "24",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -425,6 +461,7 @@
     "25": {
         "main": "F'UR'U2RF",
         "masks": {},
+        "name": "25",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -436,6 +473,7 @@
     "26": {
         "main": "LRU2R'L'",
         "masks": {},
+        "name": "26",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -448,6 +486,7 @@
     "27": {
         "main": "R'FR2UR'F'",
         "masks": {},
+        "name": "27",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -460,6 +499,7 @@
     "28": {
         "main": "RU'R2U'RU'R'U'R",
         "masks": {},
+        "name": "28",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -472,6 +512,7 @@
     "29": {
         "main": "F'UL'ULU'LUL'F",
         "masks": {},
+        "name": "29",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -484,6 +525,7 @@
     "30": {
         "main": "RU'R'U'RU'R'U2L'U'L",
         "masks": {},
+        "name": "30",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -495,6 +537,7 @@
     "31": {
         "main": "RU'R'UR'U'RU'R'UR",
         "masks": {},
+        "name": "31",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -505,6 +548,7 @@
     "32": {
         "main": "RUR'U'RU'R'f'L'f",
         "masks": {},
+        "name": "32",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -517,6 +561,7 @@
     "33": {
         "main": "RU'R'U'L'U'LU'L'UL",
         "masks": {},
+        "name": "33",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -528,6 +573,7 @@
     "34": {
         "main": "F'R'URU'R'U'RF",
         "masks": {},
+        "name": "34",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -540,6 +586,7 @@
     "35": {
         "main": "RU'R'U'RUR'LU'L'",
         "masks": {},
+        "name": "35",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -552,6 +599,7 @@
     "36": {
         "main": "R'FR2U'R'U'RUR'U2F'",
         "masks": {},
+        "name": "36",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -564,6 +612,7 @@
     "37": {
         "main": "RUR'U2RU'R'fRf'",
         "masks": {},
+        "name": "37",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -576,6 +625,7 @@
     "38": {
         "main": "RU'R'URU2R'LU2L'",
         "masks": {},
+        "name": "38",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -588,6 +638,7 @@
     "39": {
         "main": "RUR'L'ULU'LF'L'FL'UL",
         "masks": {},
+        "name": "39",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -600,6 +651,7 @@
     "40": {
         "main": "RU'R2U2RUR'U2R",
         "masks": {},
+        "name": "40",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -612,6 +664,7 @@
     "41": {
         "main": "F'U2L'U2L2UL'F",
         "masks": {},
+        "name": "41",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -624,6 +677,7 @@
     "42": {
         "main": "RU'R'U2L'U2LU2L'UL",
         "masks": {},
+        "name": "42",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": [
@@ -636,6 +690,7 @@
     "SKIP": {
         "main": "",
         "masks": {},
+        "name": "SKIP",
         "probability": 0.023809523809523808,
         "probability_label": "1/42",
         "setups": []
