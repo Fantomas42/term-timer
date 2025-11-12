@@ -1,5 +1,4 @@
 """CFOP method analysis with Cross, F2L, OLL, and PLL detection."""
-
 from collections.abc import Callable
 from functools import cached_property
 from typing import ClassVar
@@ -21,10 +20,11 @@ from term_timer.methods.types import StepSummary
 CFOP_CASE_ENCODERS: Final[dict[str, Callable[[str], str]]] = {
     'OLL': oll_case_encoder,
     'PLL': pll_case_encoder,
-    'F2L FR': f2l_case_encoder(F2L_FR_MASK),
-    'F2L FL': f2l_case_encoder(F2L_FL_MASK),
-    'F2L BR': f2l_case_encoder(F2L_BR_MASK),
-    'F2L BL': f2l_case_encoder(F2L_BL_MASK),
+
+    'F2L Front Left': f2l_case_encoder(F2L_FR_MASK),
+    'F2L Front Right': f2l_case_encoder(F2L_FL_MASK),
+    'F2L Back Left': f2l_case_encoder(F2L_BR_MASK),
+    'F2L Back Right': f2l_case_encoder(F2L_BL_MASK),
 }
 
 
@@ -405,7 +405,7 @@ class CF4OPAnalyser(CFOPAnalyser):
 
         Returns:
             Tuple containing the updated progress index and list of solved
-            F2L pair identifiers (e.g., ['FR', 'FL']).
+            F2L pair identifiers (e.g., ['Front Right', 'Back Left']).
 
         """
         if progress == 6:
@@ -416,7 +416,7 @@ class CF4OPAnalyser(CFOPAnalyser):
 
         if not self.check_step('OLL', facelets, self.orientation_faces):
             name = ['F2L 1', 'F2L 2', 'F2L 3', 'F2L 4']
-            pair = ['FR', 'FL', 'BR', 'BL']  # UF orientation
+            pair = ['Front Left', 'Front Right', 'Back Left', 'Back Right']
 
             score = 1
             pairs: list[str] = []
@@ -476,8 +476,10 @@ class CF4OPAnalyser(CFOPAnalyser):
                 if 'OLL' in info['name']:
                     info['name'] = 'F2L 4'
                     info['case_infos'] = list(
-                        {'FR', 'FL', 'BR', 'BL'} -
-                        set(case_infos),
+                        {
+                            'Front Left', 'Front Right',
+                            'Back Left', 'Back Right',
+                        } - set(case_infos),
                     )
 
         self.correct_summary_cfop(summary)

@@ -628,7 +628,7 @@ class Solve:  # noqa: PLR0904
                     )
                     details = ''
                     if step['case_infos']:
-                        details += f' { " ".join(step["case_infos"]) }'
+                        details += f' { ", ".join(step["case_infos"]) }'
 
                     footer += (
                         ' [comment]// '
@@ -639,7 +639,7 @@ class Solve:  # noqa: PLR0904
                 elif step['case_infos']:
                     footer += (
                         ' [comment]// ' +
-                        ' '.join(step['case_infos']) +
+                        ', '.join(step['case_infos']) +
                         f'{ aufs }[/comment]'
                     )
 
@@ -821,7 +821,10 @@ class Solve:  # noqa: PLR0904
                 recons += f'// { step["name"] } SKIPPED\n'
                 continue
 
-            detail_list = list(step['case_infos'])
+            detail_list = []
+            if step['case_infos']:
+                detail_list = [', '.join(step['case_infos'])]
+
             if step['case']:
                 detail_list.insert(0, step['case'])
 

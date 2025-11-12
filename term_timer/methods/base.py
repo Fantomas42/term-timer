@@ -152,7 +152,7 @@ class FaceletAnalyser:
         case patterns for the specified solving step.
 
         Args:
-            step: Name of the solving step (e.g., 'OLL', 'PLL', 'F2L 1').
+            step: Name of the solving step (e.g., 'OLL', 'PLL').
             facelets: Current 54-character facelet string.
             orientation_faces: Two-character orientation specification.
             encoder: Function that encodes facelet string into case key.
