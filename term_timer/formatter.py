@@ -242,8 +242,8 @@ def format_alg_cubing_url(title: str, setup: str, alg: str) -> str:
 
     """
     return (
-        'https://alg.cubing.net/'
-        f'?title={ title }'
+        'https://alg.cubing.net/?view=playback'
+        f'&title={ title }'
         f'&alg={ clean_url(alg) }'
         f'&setup={ clean_url(setup) }'
     )
