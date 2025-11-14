@@ -94,9 +94,6 @@ disable_error_code = ["import-untyped"]
 exclude = ["poc"]
 python_version = 3.12
 
-[tool.pytest.ini_options]
-addopts = "--cov=term_timer"
-
 [tool.coverage.run]
 branch = true
 omit = [
