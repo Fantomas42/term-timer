@@ -1,5 +1,4 @@
 """Tests for solve 38."""
-
 import datetime
 import unittest
 from typing import cast
@@ -562,5 +561,90 @@ class TestSolve38(unittest.TestCase):  # noqa: PLR0904
                 (29547, 29789, 'U'),
                 (29789, 29908, 'R'),
                 (30060, 30448, 'U2'),
+            ],
+        )
+
+    def test_orientation_faces(self) -> None:
+        """Test orientation faces."""
+        self.solve.orientation = 'auto'
+
+        self.assertEqual(
+            self.solve.orientation_faces,
+            'DF',
+        )
+
+    def test_reconstruction_f2l_slot_naming_dr(self) -> None:
+        """Test reconstruction of F2L slot naming (DR)."""
+        self.solve.orientation = 'DR'
+
+        method_applied = get_method_applied(self.solve)
+        pairs = [
+            info['case_infos'][0]
+            for info in method_applied.summary
+            if info['type'] != 'virtual' and 'F2L ' in info['name']
+        ]
+
+        self.assertEqual(
+            pairs,
+            [
+                'Front Left', 'Back Left',
+                'Front Right', 'Back Right',
+            ],
+        )
+
+    def test_reconstruction_f2l_slot_naming_df(self) -> None:
+        """Test reconstruction of F2L slot naming (DF)."""
+        self.solve.orientation = 'DF'
+
+        method_applied = get_method_applied(self.solve)
+        pairs = [
+            info['case_infos'][0]
+            for info in method_applied.summary
+            if info['type'] != 'virtual' and 'F2L ' in info['name']
+        ]
+
+        self.assertEqual(
+            pairs,
+            [
+                'Back Left', 'Back Right',
+                'Front Left', 'Front Right',
+            ],
+        )
+
+    def test_reconstruction_f2l_slot_naming_dl(self) -> None:
+        """Test reconstruction of F2L slot naming (DL)."""
+        self.solve.orientation = 'DL'
+
+        method_applied = get_method_applied(self.solve)
+        pairs = [
+            info['case_infos'][0]
+            for info in method_applied.summary
+            if info['type'] != 'virtual' and 'F2L ' in info['name']
+        ]
+
+        self.assertEqual(
+            pairs,
+            [
+                'Back Right', 'Front Right',
+                'Back Left', 'Front Left',
+            ],
+        )
+
+    def test_reconstruction_f2l_slot_naming_db(self) -> None:
+        """Test reconstruction of F2L slot naming (DB)."""
+        self.solve.orientation = 'DB'
+
+        method_applied = get_method_applied(self.solve)
+        pairs = [
+            info['case_infos'][0]
+            for info in method_applied.summary
+            if info['type'] != 'virtual' and 'F2L ' in info['name']
+        ]
+
+        self.assertEqual(
+            pairs,
+            [
+                'Front Right', 'Front Left',
+                'Back Right', 'Back Left',
             ],
         )

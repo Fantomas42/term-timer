@@ -291,7 +291,7 @@ class Analyser(FaceletAnalyser):
 
             if current_progress > progress:
                 step_name = self.step_list[current_progress - 1]
-                cleaned_case_infos = list(
+                cleaned_case_infos = sorted(
                     set(current_case_infos) - set(case_infos),
                 )
 

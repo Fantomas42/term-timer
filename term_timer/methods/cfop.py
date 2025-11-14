@@ -478,7 +478,7 @@ class CF4OPAnalyser(CFOPAnalyser):
 
                 if 'OLL' in info['name']:
                     info['name'] = 'F2L 4'
-                    info['case_infos'] = list(
+                    info['case_infos'] = sorted(
                         {
                             'Front Left', 'Front Right',
                             'Back Left', 'Back Right',
