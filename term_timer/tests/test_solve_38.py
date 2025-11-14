@@ -648,3 +648,26 @@ class TestSolve38(unittest.TestCase):  # noqa: PLR0904
                 'Back Right', 'Back Left',
             ],
         )
+
+    def test_reconstruction_f2l_case_consistency(self) -> None:
+        """
+        Test reconstruction of F2L cases detection consistency
+        accross orientations.
+        """
+        orientations = ['DF', 'DB', 'DL', 'DR']
+
+        for orientation in orientations:
+            with self.subTest(orientation=orientations):
+                self.solve.orientation = orientation
+
+                method_applied = get_method_applied(self.solve)
+                pairs = [
+                    info['case']
+                    for info in method_applied.summary
+                    if info['type'] != 'virtual' and 'F2L ' in info['name']
+                ]
+
+                self.assertEqual(
+                    pairs,
+                    ['28', '13', '25', '13'],
+                )

@@ -236,3 +236,27 @@ class TestSolveWR(unittest.TestCase):
                 ['Front Left'], ['Front Right'],
             ],
         )
+
+    def test_reconstruction_f2l_case_consistency(self) -> None:
+        """
+        Test reconstruction of F2L cases detection consistency
+        accross orientations.
+        """
+        orientations = ['LU', 'LD', 'LF', 'LB']
+
+        for orientation in orientations:
+            with self.subTest(orientation=orientations):
+
+                self.solve.orientation = orientation
+
+                method_applied = get_method_applied(self.solve)
+                pairs = [
+                    info['case']
+                    for info in method_applied.summary
+                    if info['type'] != 'virtual' and 'F2L ' in info['name']
+                ]
+
+                self.assertEqual(
+                    pairs,
+                    ['04', '34'],
+                )
