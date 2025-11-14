@@ -416,6 +416,9 @@ class CF4OPAnalyser(CFOPAnalyser):
 
         if not self.check_step('OLL', facelets, self.orientation_faces):
             name = ['F2L 1', 'F2L 2', 'F2L 3', 'F2L 4']
+            # Anticipated compensation
+            # because check_step will perform computing using opposite top face
+            # but keep front face, which rotate the cube like a z2 rotation.
             pair = ['Front Left', 'Front Right', 'Back Left', 'Back Right']
 
             score = 1
