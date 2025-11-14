@@ -245,18 +245,24 @@ class TestSolveWR(unittest.TestCase):
         orientations = ['LU', 'LD', 'LF', 'LB']
 
         for orientation in orientations:
-            with self.subTest(orientation=orientations):
+            self.solve.orientation = orientation
 
-                self.solve.orientation = orientation
+            method_applied = get_method_applied(self.solve)
+            pairs = [
+                info['case']
+                for info in method_applied.summary
+                if info['type'] != 'virtual' and 'F2L ' in info['name']
+            ]
 
-                method_applied = get_method_applied(self.solve)
-                pairs = [
-                    info['case']
-                    for info in method_applied.summary
-                    if info['type'] != 'virtual' and 'F2L ' in info['name']
-                ]
-
+            with self.subTest(
+                    orientation=orientation,
+                    orientation_moves=str(self.solve.orientation_moves),
+            ):
                 self.assertEqual(
                     pairs,
                     ['04', '34'],
                 )
+
+            del self.solve.method_applied
+            del self.solve.orientation_faces
+            del self.solve.orientation_moves

@@ -35,6 +35,7 @@ dev = [
     "mypy",
     "pytest",
     "pytest-cov",
+    "pytest-subtests",
 ]
 
 
