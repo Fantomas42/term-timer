@@ -1,18 +1,18 @@
 """Scramble tracking and display functionality."""
-
 import asyncio
 from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.move import Move
+from cubing_algs.transform.rotation import remove_rotations
 from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.timing import untime_moves
+from cubing_algs.vcube import VCube
 
 from term_timer.formatter import format_alg_moves
 from term_timer.transform import humanize_moves
 
 if TYPE_CHECKING:
-    from cubing_algs.vcube import VCube
     from rich.console import Console as RichConsole
 
 
@@ -84,9 +84,18 @@ class Scrambler:
 
         self.scrambled.append(timed_move)
 
+        reduced_scrambled = self.scrambled.transform(
+            compress_moves,
+            remove_rotations,
+        )
+        if not reduced_scrambled:
+            self.scrambled = Algorithm()
+
+        cube_scrambled = VCube(self.facelets_scrambled, check=False)
+
         is_complete = (
             self.bluetooth_cube is not None
-            and self.bluetooth_cube.state == self.facelets_scrambled
+            and self.bluetooth_cube.is_equal(cube_scrambled, strict=False)
         )
 
         if is_complete:
@@ -153,6 +162,7 @@ class Scrambler:
                     untime_moves,
                 ),
             )
+
             p_algo = scrambled[:-1].transform(
                 humanize_moves,
                 compress_moves,
