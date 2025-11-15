@@ -783,6 +783,41 @@ class TestComputeDisplayRotationRealCases(unittest.TestCase):
         self.assertEqual(out, expected_output)
         self.assertFalse(full_clear)
 
+    def test_index_error_issue_3(self) -> None:
+        """Test index error issue 3. Real overflow."""
+        scrambled = parse_moves(
+            "F@3959546374 L@3959546735 D@3959547335 L'@3959547724 "
+            "D@3959549974 y@3959550034 "
+            "F'@3959551534 D'@3959551895 "
+            "F@3959552855 D'@3959553245 F'@3959555076 "
+            "B@3959555076",
+        )
+        scramble_oriented = parse_moves("F R U R' d R' U' R U' R'")
+
+        out, full_clear = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=parse_moves('z2'),
+            is_complete=False,
+        )
+
+        expected_output = (
+            "[rotation_z]z2[/rotation_z] "
+            "[move]F[/move] "
+            "[move]R[/move] "
+            "[move]U[/move] "
+            "[move]R'[/move] "
+            "[move]d[/move] "
+            "[move]R'[/move] "
+            "[move]U'[/move] "
+            "[move]R[/move] "
+            "[move]U'[/move] "
+            "[move]R'[/move] "
+            "[warning]L[/warning] "
+        )
+        self.assertEqual(out, expected_output)
+        self.assertFalse(full_clear)
+
 
 class TestScrambleCompletionVerification(unittest.TestCase):
     """Tests verifying is_complete using handle_scrambled method."""

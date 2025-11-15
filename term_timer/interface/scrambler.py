@@ -170,7 +170,11 @@ class Scrambler:
 
             on_good_way = True
             for i, move in enumerate(algo):
-                expected = scramble_oriented[i]
+                try:
+                    expected = scramble_oriented[i]
+                except IndexError:
+                    expected = Move('.')
+
                 style = 'move'
                 if not on_good_way:
                     style = 'warning'
