@@ -1,9 +1,9 @@
 """Base classes for solving method analysis and step detection."""
-
 from collections.abc import Callable
 from collections.abc import Iterable
 from contextlib import suppress
 from functools import cached_property
+from functools import lru_cache
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -171,6 +171,34 @@ class FaceletAnalyser:
 
         return ''
 
+    @lru_cache  # noqa: B019
+    def matching_mask(self, step: str,
+                      orientation_faces: str) -> tuple[str, str]:
+        """
+        Return matching mask and oriented mask for checking step.
+
+        Get the step's mask and reoriente it from orientation faces,
+        then prepare matching mask.
+        Use lru_cache to optimize repetitive calls.
+
+        Args:
+            step: Name of the solving step to check.
+            orientation_faces: Two-character orientation specification.
+
+        Returns:
+            The matching mask and the mask oriented.
+
+        """
+        mask = get_step_config(step, 'mask')
+
+        mask = self.reorient(mask, orientation_faces, offset=True)
+
+        matching_mask = facelets_masked(
+            INITIAL_STATE, mask,
+        )
+
+        return matching_mask, mask
+
     def check_step(self, step: str, facelets: str,
                    orientation_faces: str) -> bool:
         """
@@ -188,15 +216,9 @@ class FaceletAnalyser:
             True if step is completed, False otherwise.
 
         """
-        mask = get_step_config(step, 'mask')
+        matching_mask, mask = self.matching_mask(step, orientation_faces)
 
-        mask = self.reorient(mask, orientation_faces, offset=True)
-
-        matching = facelets_masked(
-            INITIAL_STATE, mask,
-        )
-
-        return matching == facelets_masked(
+        return matching_mask == facelets_masked(
             facelets, mask,
         )
 
