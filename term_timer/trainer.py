@@ -1,5 +1,4 @@
 """Training interface for practicing specific CFOP cases."""
-
 from typing import Final
 
 from cubing_algs.algorithm import Algorithm
@@ -7,7 +6,6 @@ from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_EFFECT
 from term_timer.config import CUBE_PALETTE
-from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SolveFlag
 from term_timer.formatter import format_alg_aufs
@@ -195,9 +193,6 @@ class Trainer(SolveInterface):
         flag: SolveFlag = ''
         moves = []
         if self.moves:
-            if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
-                flag = DNF
-
             first_time = self.moves[0]['time']
             for move in self.moves:
                 timing = int((move['time'] - first_time) / MS_TO_NS_FACTOR)
