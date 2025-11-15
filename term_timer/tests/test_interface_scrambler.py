@@ -1,10 +1,11 @@
 """Tests for interface scrambler."""
-
 import unittest
 from unittest.mock import Mock
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.degrip import degrip_full_moves
+from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.interface.cube import Orienter
@@ -827,6 +828,7 @@ class TestScrambleCompletionVerification(unittest.TestCase):
         """Check completion is detected."""
         cube = VCube()
         cube.rotate('z2' + scramble_oriented)
+        orientations = Algorithm()
 
         # Create scrambler with mocked dependencies
         scrambler = OrienterScrambler('DF')
@@ -838,8 +840,21 @@ class TestScrambleCompletionVerification(unittest.TestCase):
         # Apply each move via handle_scrambled
         # Also update bluetooth_cube to simulate physical cube state changes
         for move in scrambled:
-            if not move.is_rotation_move:
-                scrambler.bluetooth_cube.rotate(move.untimed)
+            move_untimed = move.untimed
+            if move.is_rotation_move:
+                orientations.append(move_untimed)
+                scrambler.bluetooth_cube.rotate(move_untimed)
+            elif orientations:
+                # Convert moves for bluetooth cube when orientations
+                # because bluetooth cube does not rotate itself, it stay in UF.
+                oriented_moves = mirror_moves(orientations) + move_untimed
+                move_desoriented = oriented_moves.transform(
+                    degrip_full_moves,
+                )[0]
+                scrambler.bluetooth_cube.rotate(move_desoriented)
+            else:
+                scrambler.bluetooth_cube.rotate(move_untimed)
+
             scrambler.handle_scrambled(move)
 
         self.assertTrue(
@@ -879,5 +894,22 @@ class TestScrambleCompletionVerification(unittest.TestCase):
             "D@3959872292 B@3959873012",
         )
         scramble_oriented = parse_moves("B' R' U' R d' R U R' U R")
+
+        self.check_completion(scrambled, scramble_oriented)
+
+    def test_handle_scrambled_completion_issue_3(self) -> None:
+        """
+        Verify scramble completes using handle_scrambled method.
+
+        Tests issue 3 scramble sequence with multiple rotations.
+        """
+        scrambled = parse_moves(
+            "B@3973238994 z@3973239144 "
+            "B'@3973241724 D'@3973242744 R'@3973245384 D@3973246854 "
+            "R'@3973248893 y'@3973249044 B@3973250453 R@3973251444 "
+            "B'@3973252404 R@3973253124 B@3973254685",
+        )
+
+        scramble_oriented = parse_moves("f B' R' U' R d' R U R' U R")
 
         self.check_completion(scrambled, scramble_oriented)
