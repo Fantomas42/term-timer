@@ -1,9 +1,11 @@
 """Tests for interface scrambler."""
 
 import unittest
+from unittest.mock import Mock
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
+from cubing_algs.vcube import VCube
 
 from term_timer.interface.cube import Orienter
 from term_timer.interface.scrambler import Scrambler
@@ -33,7 +35,14 @@ class OrienterScrambler(Orienter, Scrambler):
 
     def __init__(self, orientation_faces: str) -> None:
         """Initialize with specified cube orientation."""
+        super().__init__()
         self.orientation_faces = orientation_faces
+
+    def clear_line(self, *, full: bool) -> None:
+        """Fake clear_line."""
+
+    def beep(self) -> None:
+        """Fake beep_line."""
 
 
 class TestComputeScrambleDisplayComplete(unittest.TestCase):
@@ -711,9 +720,10 @@ class TestComputeDisplayRotationRealCases(unittest.TestCase):
     def test_index_error_issue_1(self) -> None:
         """Test index error issue 1."""
         scrambled = parse_moves(
-            "F@2568664285 L@2568665426 D@2568665936 L'@2568666625 "
-            "D@2568668965 y@2568669776 F'@2568688166 "
-            "D'@2568688827 F@2568689307 D'@2568689726 F'@2568690476",
+            "F@3959546374 L@3959546735 D@3959547335 L'@3959547724 "
+            "D@3959549974 y@3959550034 "
+            "F'@3959551534 D'@3959551895 "
+            "F@3959552855 D'@3959553245 F'@3959555076",
         )
         scramble_oriented = parse_moves("F R U R' d R' U' R U' R'")
 
@@ -743,10 +753,10 @@ class TestComputeDisplayRotationRealCases(unittest.TestCase):
     def test_index_error_issue_2(self) -> None:
         """Test index error issue 2."""
         scrambled = parse_moves(
-            "B'@2600539431 L'@2600543301 D'@2600543961 "
-            "L@2600544621 D'@2600546391 y'@2600546840 "
-            "B@2600550230 D@2600551700 B'@2600552240 "
-            "D@2600552840 B@2600553530",
+            "B'@3959864761 L'@3959865782 D'@3959866892 "
+            "L@3959867522 D'@3959868602 y'@3959868663 "
+            "B@3959869892 D@3959870612 B'@3959871483 "
+            "D@3959872292 B@3959873012",
         )
         scramble_oriented = parse_moves("B' R' U' R d' R U R' U R")
 
@@ -772,3 +782,79 @@ class TestComputeDisplayRotationRealCases(unittest.TestCase):
         )
         self.assertEqual(out, expected_output)
         self.assertFalse(full_clear)
+
+
+class TestScrambleCompletionVerification(unittest.TestCase):
+    """Tests verifying is_complete using handle_scrambled method."""
+
+    def test_handle_scrambled_completion_issue_1(self) -> None:
+        """
+        Verify scramble completes using handle_scrambled method.
+
+        Tests issue 1 scramble sequence.
+        """
+        scrambled = parse_moves(
+            "F@3959546374 L@3959546735 D@3959547335 L'@3959547724 "
+            "D@3959549974 y@3959550034 "
+            "F'@3959551534 D'@3959551895 "
+            "F@3959552855 D'@3959553245 F'@3959555076",
+        )
+        scramble_oriented = parse_moves("F R U R' d R' U' R U' R'")
+
+        cube = VCube()
+        cube.rotate('z2' + scramble_oriented)
+
+        # Create scrambler with mocked dependencies
+        scrambler = OrienterScrambler('DF')
+        scrambler.bluetooth_cube = VCube()
+        scrambler.facelets_scrambled = cube.state
+        scrambler.scramble_oriented = scramble_oriented
+        scrambler.console = Mock()
+
+        # Apply each move via handle_scrambled
+        # Also update bluetooth_cube to simulate physical cube state changes
+        for move in scrambled:
+            if not move.is_rotation_move:
+                scrambler.bluetooth_cube.rotate(move.untimed)
+            scrambler.handle_scrambled(move)
+
+        self.assertTrue(
+            scrambler.scramble_completed_event.is_set(),
+            'scramble_completed_event should be set after all moves',
+        )
+
+    def test_handle_scrambled_completion_issue_2(self) -> None:
+        """
+        Verify scramble completes using handle_scrambled method.
+
+        Tests issue 2 scramble sequence.
+        """
+        scrambled_moves = parse_moves(
+            "B'@3959864761 L'@3959865782 D'@3959866892 "
+            "L@3959867522 D'@3959868602 y'@3959868663 "
+            "B@3959869892 D@3959870612 B'@3959871483 "
+            "D@3959872292 B@3959873012",
+        )
+        scramble_oriented = parse_moves("B' R' U' R d' R U R' U R")
+
+        cube = VCube()
+        cube.rotate('z2' + scramble_oriented)
+
+        # Create scrambler with mocked dependencies
+        scrambler = OrienterScrambler('DF')
+        scrambler.bluetooth_cube = VCube()
+        scrambler.facelets_scrambled = cube.state
+        scrambler.scramble_oriented = scramble_oriented
+        scrambler.console = Mock()
+
+        # Apply each move via handle_scrambled
+        # Also update bluetooth_cube to simulate physical cube state changes
+        for move in scrambled_moves:
+            if not move.is_rotation_move:
+                scrambler.bluetooth_cube.rotate(move.untimed)
+            scrambler.handle_scrambled(move)
+
+        self.assertTrue(
+            scrambler.scramble_completed_event.is_set(),
+            'scramble_completed_event should be set after all moves',
+        )
