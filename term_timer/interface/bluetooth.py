@@ -5,7 +5,9 @@ import logging
 from typing import TYPE_CHECKING
 from typing import cast
 
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.move import Move
+from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.bluetooth.gyroscope import RotationDetector
@@ -73,6 +75,7 @@ class Bluetooth:
             list[EventDict] | None
         ] | None = None
         self.bluetooth_cube: VCube | None = None
+        self.bluetooth_cube_orientations = Algorithm()
         self.bluetooth_interface: BluetoothInterface | None = None
         self.bluetooth_consumer_ref: asyncio.Task[None] | None = None
         self.bluetooth_hardware: dict[str, str | int] = {}
@@ -239,6 +242,7 @@ class Bluetooth:
 
                 elif event_name == 'battery':
                     battery_event = cast('BatteryEventDict', event)
+
                     self.bluetooth_hardware['battery_level'] = battery_event[
                         'level'
                     ]
@@ -252,12 +256,14 @@ class Bluetooth:
                             'FaceletsEventDict | FaceletsEventDictNoState',
                             event,
                         )
+
                         self.bluetooth_cube = VCube(facelets_event['facelets'])
                         self.facelets_received_event.set()
 
-                elif event_name == 'move' and self.bluetooth_cube:
+                elif event_name == 'move':
                     move_event = cast('MoveEventDict', event)
-                    self.bluetooth_cube.rotate(move_event['move'])
+
+                    self.handle_bluetooth_cube_move(move_event['move'])
                     self.handle_bluetooth_move(move_event)
 
                 elif event_name == 'gyro' and self.bluetooth_cube:
@@ -274,6 +280,7 @@ class Bluetooth:
                             'move': rotation_result['rotation'],
                         }
 
+                        self.handle_bluetooth_cube_move(rotation_result['rotation'])
                         self.handle_bluetooth_move(rotation_event)
 
     def handle_hardware_event(self, event: EventDict) -> None:
@@ -329,6 +336,27 @@ class Bluetooth:
             self.bluetooth_hardware['serial'] = serial_event['serial']
 
         self.hardware_received_event.set()
+
+    def handle_bluetooth_cube_move(self, move_str: str) -> None:
+        """
+        Apply move on Bluetooth cube if ready.
+
+        If move is a rotation, it's stored in a mirror algorithm form,
+        to correct future moves compensating the rotations. In reality
+        the cube does not rotate from his POV and stay in UF orientation.
+        """
+        if not self.bluetooth_cube:
+            return
+
+        move = Move(move_str)
+
+        if move.is_rotation_move:
+            self.bluetooth_cube_orientations.insert(0, move.inverted)
+        elif self.bluetooth_cube_orientations:
+            correction_moves = self.bluetooth_cube_orientations + move
+            move = correction_moves.transform(degrip_full_moves)[0]
+
+        self.bluetooth_cube.rotate(move)
 
     def handle_bluetooth_move(
             self, event: MoveEventDict | RotationEventDict,
