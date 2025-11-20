@@ -80,14 +80,17 @@ class Timer(SolveInterface):
     def start_line(self, cube: VCube) -> None:
         """Display scramble information and instructions to start solve."""
         if self.show_cube:
-            cube_display = cube.display(self.orientation_faces)[:-1]
-            print(cube_display, end='')  # noqa: T201
+            cube_display = cube.display(self.orientation_faces)
+            if self.cube_size == 3:
+                print(cube_display[:-1], end='')  # noqa: T201
 
-            scrambled = self.scramble.impacts.facelets_scrambled_percent
-            self.console.print(
-                f' { format_float(scrambled * 100) }%',
-                style='scrambled',
-            )
+                scrambled = self.scramble.impacts.facelets_scrambled_percent
+                self.console.print(
+                    f' { format_float(scrambled * 100) }%',
+                    style='scrambled',
+                )
+            else:
+                print(cube_display, end='')  # noqa: T201
 
         scramble_line = f'[scramble]Scramble #{ self.counter }:[/scramble] '
         if self.cube_orientation_moves:
