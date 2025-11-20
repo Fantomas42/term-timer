@@ -1,16 +1,14 @@
 """Timer interface for recording and analyzing cube solves."""
-
 import logging
-
-from cubing_algs.vcube import VCube
 
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SolveFlag
 from term_timer.formatter import format_delta
-from term_timer.formatter import format_float
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
+from term_timer.magic_cube import Cube
+from term_timer.printer import print_cube_scrambled
 from term_timer.scrambler import scrambler
 from term_timer.scrambler import state_to_scramble
 from term_timer.solve import Solve
@@ -77,20 +75,10 @@ class Timer(SolveInterface):
                 style='warning',
             )
 
-    def start_line(self, cube: VCube) -> None:
+    def start_line(self, cube: Cube) -> None:
         """Display scramble information and instructions to start solve."""
         if self.show_cube:
-            cube_display = cube.display(self.orientation_faces)
-            if self.cube_size == 3:
-                print(cube_display[:-1], end='')  # noqa: T201
-
-                scrambled = self.scramble.impacts.facelets_scrambled_percent
-                self.console.print(
-                    f' { format_float(scrambled * 100) }%',
-                    style='scrambled',
-                )
-            else:
-                print(cube_display, end='')  # noqa: T201
+            print_cube_scrambled(cube, self.orientation_faces, self.scramble)
 
         scramble_line = f'[scramble]Scramble #{ self.counter }:[/scramble] '
         if self.cube_orientation_moves:

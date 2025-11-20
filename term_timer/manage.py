@@ -1,5 +1,4 @@
 """Solve and session management utilities for editing and deleting solves."""
-
 from rich import box
 from rich.table import Table
 
@@ -8,12 +7,12 @@ from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SolveFlag
 from term_timer.constants import SolveFlagInput
-from term_timer.formatter import format_float
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
 from term_timer.in_out import save_solves
 from term_timer.interface.console import console
+from term_timer.printer import print_cube_scrambled
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -282,14 +281,4 @@ class ScrambleManager:
             console.print(scramble_line)
 
             if self.show_cube:
-                cube_display = cube.display('UF')
-
-                if self.cube_size == 3:
-                    print(cube_display[:-1], end='')  # noqa: T201
-                    scrambled = scramble.impacts.facelets_scrambled_percent
-                    console.print(
-                        f' { format_float(scrambled * 100) }%',
-                        style='scrambled',
-                    )
-                else:
-                    print(cube_display, end='')  # noqa: T201
+                print_cube_scrambled(cube, 'UF', scramble)
