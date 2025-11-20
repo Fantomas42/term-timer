@@ -275,7 +275,8 @@ class ScrambleManager:
             )
             scramble_line = (
                 f'[scramble]Scramble #{ counter + 1 }:[/scramble] '
-                f'[moves]{ scramble }[/moves]'
+                f'[moves]{ scramble }[/moves] '
+                f'[comment]// { scramble.metrics.htm } HTM[/comment]'
             )
 
             console.print(scramble_line)
