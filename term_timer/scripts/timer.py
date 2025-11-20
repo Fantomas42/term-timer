@@ -249,6 +249,7 @@ def manage(command: str, options: Namespace) -> int:
             iterations=options.iterations,
             easy_cross=options.easy_cross,
             show_cube=options.show_cube,
+            output_format=options.format,
         )
         scramble_manager.run()
 

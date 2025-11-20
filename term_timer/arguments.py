@@ -856,6 +856,18 @@ def scramble_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
 
+    output = parser.add_argument_group('Output')
+    output.add_argument(
+        '-f', '--format',
+        default='terminal',
+        choices={'terminal', 'markdown'},
+        metavar='FORMAT',
+        help=(
+            'Set the output format : terminal or markdown\n'
+            'Default: terminal.'
+        ),
+    )
+
     return parser
 
 

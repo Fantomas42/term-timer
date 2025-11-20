@@ -1,4 +1,7 @@
 """Solve and session management utilities for editing and deleting solves."""
+from datetime import datetime
+from datetime import timezone
+
 from rich import box
 from rich.table import Table
 
@@ -235,13 +238,14 @@ class ScrambleManager:
     the timer, with optional cube visualization and scramble analysis.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
             self, *,
             cube_size: int,
             scrambles: int,
             iterations: int,
             easy_cross: bool,
             show_cube: bool,
+            output_format: str,
     ) -> None:
         """
         Initialize the ScrambleManager with scramble generation parameters.
@@ -252,6 +256,7 @@ class ScrambleManager:
             iterations: The number of random moves per scramble (0 for auto).
             easy_cross: Whether to generate scrambles with easy crosses.
             show_cube: Whether to display visual cube representations.
+            output_format: Output format ('terminal' or 'markdown').
 
         """
         self.cube_size = cube_size
@@ -259,10 +264,22 @@ class ScrambleManager:
         self.iterations = iterations
         self.easy_cross = easy_cross
         self.show_cube = show_cube
+        self.output_format = output_format
 
     def run(self) -> None:
         """
         Generate and display the configured number of scrambles.
+
+        Routes to the appropriate output method based on format setting.
+        """
+        if self.output_format == 'markdown':
+            self.run_markdown()
+        else:
+            self.run_terminal()
+
+    def run_terminal(self) -> None:
+        """
+        Generate and display scrambles in terminal format.
 
         For each scramble, displays the move sequence and optionally shows
         the cube visualization with scrambled percentage (3x3x3 only).
@@ -283,3 +300,83 @@ class ScrambleManager:
 
             if self.show_cube:
                 print_cube_scrambled(cube, 'UF', scramble)
+
+    def run_markdown(self) -> None:
+        """
+        Generate and display scrambles in markdown format.
+
+        Produces a formatted markdown document with metadata header,
+        scramble sequences, HTM counts, and optional emoji cube visualizations.
+        """
+        output_lines: list[str] = []
+
+        # Document header
+        output_lines.extend(('# Scrambles', ''))
+
+        # Metadata section
+        now = datetime.now(timezone.utc).astimezone()  # noqa: UP017
+        timestamp = now.strftime('%Y-%m-%d %H:%M:%S')
+
+        cube_size_str = (
+            f'**Cube Size:** '
+            f'{self.cube_size}x{self.cube_size}x{self.cube_size}'
+        )
+        output_lines.extend((
+            f'**Generated:** {timestamp}',
+            cube_size_str,
+            f'**Count:** {self.scrambles}',
+            '**Parameters:**',
+        ))
+        params = []
+
+        if self.iterations:
+            params.append(f'- Iterations: {self.iterations}')
+        else:
+            params.append('- Iterations: Auto')
+
+        params.append(f'- Easy Cross: {"Yes" if self.easy_cross else "No"}')
+
+        output_lines.extend(params)
+        output_lines.extend(('', '---', ''))
+
+        # Generate scrambles
+        for counter in range(self.scrambles):
+            scramble, cube = scrambler(
+                cube_size=self.cube_size,
+                iterations=self.iterations,
+                easy_cross=self.easy_cross,
+            )
+
+            # Scramble header and details
+            output_lines.extend((
+                f'## Scramble #{counter + 1}',
+                '',
+                f'**Moves:** {scramble}',
+                f'**HTM:** {scramble.metrics.htm}',
+                '',
+            ))
+
+            # Cube visualization if requested
+            if self.show_cube:
+                output_lines.extend(('### Cube Visualization', ''))
+
+                cube_emoji = cube.display('UF')
+                output_lines.extend((
+                    '```',
+                    cube_emoji.rstrip('\n'),
+                    '```',
+                    '',
+                ))
+
+                # Add scrambled percentage for 3x3x3
+                if self.cube_size == 3:
+                    scrambled_percent = (
+                        scramble.impacts.facelets_scrambled_percent * 100
+                    )
+                    scrambled_str = f'**Scrambled:** {scrambled_percent:.1f}%'
+                    output_lines.extend((scrambled_str, ''))
+
+            output_lines.extend(('---', ''))
+
+        # Print the complete markdown document
+        print('\n'.join(output_lines))  # noqa: T201
