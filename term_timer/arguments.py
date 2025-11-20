@@ -33,6 +33,7 @@ COMMAND_ALIASES: Final[dict[str, list[str]]] = {
     'edit': ['ed', 'e'],
     'delete': ['rm', 'r'],
     'index': ['ix', 'x'],
+    'scramble': ['sc', 'z'],
 }
 
 COMMAND_RESOLUTIONS: dict[str, str] = {}
@@ -772,6 +773,92 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     return parser
 
 
+def scramble_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """
+    Create argument parser for scramble command.
+
+    Returns:
+        Configured argument parser for scramble command.
+
+    """
+    parser = subparsers.add_parser(
+        'scramble',
+        help='Generate scrambles for chill cubing',
+        description=(
+            'Generate advanced scrambles for solving '
+            'outside term-timer.'
+        ),
+        aliases=COMMAND_ALIASES['scramble'],
+    )
+
+    parser.add_argument(
+        'scrambles',
+        nargs='?',
+        type=int,
+        default=5,
+        metavar='SCRAMBLES',
+        help=(
+            'Specify the number of scrambles to generate.\n'
+            'Default: 5.'
+        ),
+    )
+
+    cube = parser.add_argument_group('Cube')
+    cube.add_argument(
+        '-p', '--show-cube',
+        action='store_true',
+        help=(
+            'Show the cube in its scrambled state.\n'
+            'Default: False'
+        ),
+    )
+
+    session = parser.add_argument_group('Session')
+    session.add_argument(
+        '-c', '--cube',
+        type=int,
+        choices=CUBE_SIZES,
+        default=3,
+        metavar='CUBE',
+        help=(
+            'Set the size of the cube (from 2 to 7).\n'
+            'Default: 3.'
+        ),
+    )
+
+    scramble = parser.add_argument_group('Scramble')
+    scramble.add_argument(
+        '-e', '--easy-cross',
+        action='store_true',
+        help=(
+            'Set the scrambles with an easy cross.\n'
+            'Default: False.'
+        ),
+    )
+    scramble.add_argument(
+        '-n', '--iterations',
+        type=int,
+        default=0,
+        metavar='ITERATIONS',
+        help=(
+            'Set the number of random moves.\n'
+            'Default: Auto.'
+        ),
+    )
+    scramble.add_argument(
+        '-r', '--seed',
+        default='',
+        metavar='SEED',
+        help=(
+            'Set a seed for random move generation '
+            'to ensure repeatable scrambles.\n'
+            'Default: None.'
+        ),
+    )
+
+    return parser
+
+
 def edit_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     """
     Create argument parser for edit command.
@@ -903,6 +990,7 @@ def get_arguments() -> Namespace:
     graph_arguments(subparsers)
     cfop_arguments(subparsers)
     serve_arguments(subparsers)
+    scramble_arguments(subparsers)
     import_arguments(subparsers)
 
     args = parser.parse_args(sys.argv[1:])

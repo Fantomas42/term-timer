@@ -18,6 +18,7 @@ from term_timer.in_out import load_solves
 from term_timer.interface.console import console
 from term_timer.interface.terminal import Terminal
 from term_timer.logger import configure_logging
+from term_timer.manage import ScrambleManager
 from term_timer.manage import SessionManager
 from term_timer.manage import SolveManager
 from term_timer.server.app import Server
@@ -238,6 +239,19 @@ def manage(command: str, options: Namespace) -> int:
         solve_manager = SolveManager(cube, options.session, options.solve)
         solve_manager.delete()
 
+    if command == 'scramble':
+        if options.seed:
+            seed(options.seed)
+
+        scramble_manager = ScrambleManager(
+            cube_size=cube,
+            scrambles=options.scrambles,
+            iterations=options.iterations,
+            easy_cross=options.easy_cross,
+            show_cube=options.show_cube,
+        )
+        scramble_manager.run()
+
     return 0
 
 
@@ -264,7 +278,7 @@ def main() -> int:  # noqa: PLR0911
         if command == 'serve':
             Server().run_server(options.host, options.port, debug=DEBUG)
             return 0
-        if command in {'edit', 'delete', 'index'}:
+        if command in {'edit', 'delete', 'index', 'scramble'}:
             return manage(command, options)
         return tools(command, options)
 

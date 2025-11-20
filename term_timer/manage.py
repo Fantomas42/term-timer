@@ -8,11 +8,13 @@ from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SolveFlag
 from term_timer.constants import SolveFlagInput
+from term_timer.formatter import format_float
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
 from term_timer.in_out import save_solves
 from term_timer.interface.console import console
+from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 
@@ -224,3 +226,70 @@ class SessionManager:
                     f'[time]{ format_time(stats.best) }[/time]',
                 )
             console.print(table)
+
+
+class ScrambleManager:
+    """
+    Generates and displays multiple cube scrambles for practice sessions.
+
+    This class creates random scrambles for speedcubing practice outside of
+    the timer, with optional cube visualization and scramble analysis.
+    """
+
+    def __init__(
+            self, *,
+            cube_size: int,
+            scrambles: int,
+            iterations: int,
+            easy_cross: bool,
+            show_cube: bool,
+    ) -> None:
+        """
+        Initialize the ScrambleManager with scramble generation parameters.
+
+        Args:
+            cube_size: The cube size (e.g., 3 for 3x3x3).
+            scrambles: The number of scrambles to generate.
+            iterations: The number of random moves per scramble (0 for auto).
+            easy_cross: Whether to generate scrambles with easy crosses.
+            show_cube: Whether to display visual cube representations.
+
+        """
+        self.cube_size = cube_size
+        self.scrambles = scrambles
+        self.iterations = iterations
+        self.easy_cross = easy_cross
+        self.show_cube = show_cube
+
+    def run(self) -> None:
+        """
+        Generate and display the configured number of scrambles.
+
+        For each scramble, displays the move sequence and optionally shows
+        the cube visualization with scrambled percentage (3x3x3 only).
+        """
+        for counter in range(self.scrambles):
+            scramble, cube = scrambler(
+                cube_size=self.cube_size,
+                iterations=self.iterations,
+                easy_cross=self.easy_cross,
+            )
+            scramble_line = (
+                f'[scramble]Scramble #{ counter + 1 }:[/scramble] '
+                f'[moves]{ scramble }[/moves]'
+            )
+
+            console.print(scramble_line)
+
+            if self.show_cube:
+                cube_display = cube.display('UF')
+
+                if self.cube_size == 3:
+                    print(cube_display[:-1], end='')  # noqa: T201
+                    scrambled = scramble.impacts.facelets_scrambled_percent
+                    console.print(
+                        f' { format_float(scrambled * 100) }%',
+                        style='scrambled',
+                    )
+                else:
+                    print(cube_display, end='')  # noqa: T201
