@@ -1,5 +1,6 @@
 """Timer interface for recording and analyzing cube solves."""
 import logging
+from random import Random
 
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -42,7 +43,8 @@ class Timer(SolveInterface):
             orientation: str,
             countdown: int,
             metronome: float,
-            stack: list[Solve]) -> None:
+            stack: list[Solve],
+            rng: Random) -> None:
         """Initialize timer with configuration and existing solve stack."""
         super().__init__()
 
@@ -65,6 +67,7 @@ class Timer(SolveInterface):
         self.metronome = metronome
         self.stack = stack
         self.stack_done: list[Solve] = []
+        self.rng = rng
 
         self.counter = len(stack) + 1
 
@@ -251,6 +254,7 @@ class Timer(SolveInterface):
             iterations=self.iterations,
             easy_cross=self.easy_cross,
             raw_scramble=self.raw_scramble,
+            rng=self.rng,
         )
 
         if self.bluetooth_cube and not self.bluetooth_cube.is_solved:

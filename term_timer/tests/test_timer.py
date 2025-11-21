@@ -1,6 +1,6 @@
 """Tests for timer."""
-
 import unittest
+from random import Random
 
 from term_timer.timer import Timer
 
@@ -27,6 +27,7 @@ class TestTimerModule(unittest.TestCase):
             orientation='DF',
             method='raw',
             stack=[],
+            rng=Random(),  # noqa: S311
         )
 
         for key in (
@@ -59,5 +60,6 @@ class TestTimerModule(unittest.TestCase):
                 'solve_started_event',
                 'solve_completed_event',
                 'orientation_faces',
+                'rng',
         ):
             self.assertTrue(hasattr(timer, key))

@@ -1,6 +1,7 @@
 """Solve and session management utilities for editing and deleting solves."""
 from datetime import datetime
 from datetime import timezone
+from random import Random
 
 from rich import box
 from rich.table import Table
@@ -246,6 +247,7 @@ class ScrambleManager:
             easy_cross: bool,
             show_cube: bool,
             output_format: str,
+            rng: Random,
     ) -> None:
         """
         Initialize the ScrambleManager with scramble generation parameters.
@@ -257,6 +259,7 @@ class ScrambleManager:
             easy_cross: Whether to generate scrambles with easy crosses.
             show_cube: Whether to display visual cube representations.
             output_format: Output format ('terminal' or 'markdown').
+            rng: Random number generator.
 
         """
         self.cube_size = cube_size
@@ -265,6 +268,7 @@ class ScrambleManager:
         self.easy_cross = easy_cross
         self.show_cube = show_cube
         self.output_format = output_format
+        self.rng = rng
 
     def run(self) -> None:
         """
@@ -289,6 +293,7 @@ class ScrambleManager:
                 cube_size=self.cube_size,
                 iterations=self.iterations,
                 easy_cross=self.easy_cross,
+                rng=self.rng,
             )
             scramble_line = (
                 f'[scramble]Scramble #{ counter + 1 }:[/scramble] '
@@ -345,6 +350,7 @@ class ScrambleManager:
                 cube_size=self.cube_size,
                 iterations=self.iterations,
                 easy_cross=self.easy_cross,
+                rng=self.rng,
             )
 
             # Scramble header and details

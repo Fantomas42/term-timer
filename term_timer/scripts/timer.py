@@ -3,7 +3,7 @@
 import asyncio
 from argparse import Namespace
 from contextlib import suppress
-from random import seed
+from random import Random
 
 from cubing_algs.exceptions import InvalidMoveError
 
@@ -53,8 +53,7 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912
 
     stack = [] if options.free_play else load_solves(cube, session)
 
-    if options.seed:
-        seed(options.seed)
+    rng = Random(options.seed) if options.seed else Random()  # noqa: S311
 
     solves_done = 0
 
@@ -75,6 +74,7 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912
         countdown=options.countdown,
         metronome=options.metronome,
         stack=stack,
+        rng=rng,
     )
 
     if options.bluetooth:
@@ -240,8 +240,7 @@ def manage(command: str, options: Namespace) -> int:
         solve_manager.delete()
 
     if command == 'scramble':
-        if options.seed:
-            seed(options.seed)
+        rng = Random(options.seed) if options.seed else Random()  # noqa: S311
 
         scramble_manager = ScrambleManager(
             cube_size=cube,
@@ -250,6 +249,7 @@ def manage(command: str, options: Namespace) -> int:
             easy_cross=options.easy_cross,
             show_cube=options.show_cube,
             output_format=options.format,
+            rng=rng,
         )
         scramble_manager.run()
 

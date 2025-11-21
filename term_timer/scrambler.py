@@ -1,5 +1,5 @@
 """Scramble generation and training case setup utilities."""
-
+from random import Random
 from random import choice
 from typing import TYPE_CHECKING
 
@@ -38,7 +38,8 @@ def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
 def scrambler(cube_size: int, iterations: int,
               *,
               easy_cross: bool,
-              raw_scramble: str = '') -> tuple[Algorithm, Cube]:
+              raw_scramble: str = '',
+              rng: Random | None = None) -> tuple[Algorithm, Cube]:
     """
     Generate cube scramble.
 
@@ -51,12 +52,13 @@ def scrambler(cube_size: int, iterations: int,
     if raw_scramble:
         scrambled = parse_moves(raw_scramble, secure=False)
     elif easy_cross:
-        scrambled = scramble_easy_cross()
+        scrambled = scramble_easy_cross(rng)
     else:
         scrambled = scramble(
             cube_size, iterations,
             inner_layers=True,
             right_handed=CUBE_RIGHT_HANDED,
+            rng=rng,
         )
 
     cube.rotate(scrambled)
