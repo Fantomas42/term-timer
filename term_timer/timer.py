@@ -2,6 +2,8 @@
 import logging
 from random import Random
 
+from cubing_algs.algorithm import Algorithm
+
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SolveFlag
@@ -32,6 +34,7 @@ class Timer(SolveInterface):
             iterations: int,
             easy_cross: bool,
             scramble: str,
+            scrambles: list[Algorithm],
             session: str,
             free_play: bool,
             show_cube: bool,
@@ -56,6 +59,8 @@ class Timer(SolveInterface):
         self.iterations = iterations
         self.easy_cross = easy_cross
         self.raw_scramble = scramble
+        self.scrambles = scrambles
+        self.scramble_index = 0
         self.show_cube = show_cube
         self.show_reconstruction = show_reconstruction
         self.show_tps_graph = show_tps_graph
@@ -239,7 +244,7 @@ class Timer(SolveInterface):
                     format_delta(new_stats.ao1000 - old_stats.best_ao1000),
                 )
 
-    async def start(self) -> bool:
+    async def start(self) -> bool:  # noqa: C901, PLR0912
         """
         Execute complete solve workflow from scramble to save.
 
@@ -249,13 +254,27 @@ class Timer(SolveInterface):
         """
         self.init_solve()
 
-        self.scramble, cube = scrambler(
-            cube_size=self.cube_size,
-            iterations=self.iterations,
-            easy_cross=self.easy_cross,
-            raw_scramble=self.raw_scramble,
-            rng=self.rng,
-        )
+        if self.scrambles:
+            if self.scramble_index >= len(self.scrambles):
+                self.console.print(
+                    'All scrambles completed!',
+                    style='success',
+                )
+                return False
+
+            self.scramble = self.scrambles[self.scramble_index]
+            self.scramble_index += 1
+
+            cube = Cube(self.cube_size)
+            cube.rotate(self.scramble)
+        else:
+            self.scramble, cube = scrambler(
+                cube_size=self.cube_size,
+                iterations=self.iterations,
+                easy_cross=self.easy_cross,
+                raw_scramble=self.raw_scramble,
+                rng=self.rng,
+            )
 
         if self.bluetooth_cube and not self.bluetooth_cube.is_solved:
             scramble = state_to_scramble(

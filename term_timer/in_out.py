@@ -1,10 +1,17 @@
 """Load and save solve data to and from JSON files."""
-
 import json
 import operator
+import re
+from pathlib import Path
+
+from cubing_algs.algorithm import Algorithm
+from cubing_algs.exceptions import InvalidMoveError
+from cubing_algs.parsing import parse_moves
 
 from term_timer.constants import SAVE_DIRECTORY
 from term_timer.solve import Solve
+
+SCRAMBLE_LINE = re.compile(r'Scramble #\d+:\s*(.+?)(?:\s*//.*)?$')
 
 
 def load_solves(cube: int, session: str) -> list[Solve]:
@@ -108,3 +115,45 @@ def save_solves(cube: int, session: str, solves: list[Solve]) -> bool:
         fd.write(dumped)
 
     return True
+
+
+def load_scrambles(path: Path) -> list[Algorithm]:
+    """
+    Load scrambles from a file.
+
+    Supports two formats:
+    - term-timer format: "Scramble #1: MOVES // HTM"
+    - Plain format: "MOVES" (one per line)
+
+    Args:
+        path: Path to the file containing scrambles.
+
+    Returns:
+        List of Algorithm objects parsed from the file.
+
+    """
+    scrambles: list[Algorithm] = []
+
+    if not path.exists():
+        return scrambles
+
+    content = path.read_text(encoding='utf-8')
+
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+
+        if not line:
+            continue
+
+        moves_str = line
+        matching = SCRAMBLE_LINE.match(line)
+        if matching:
+            moves_str = matching.group(1).strip()
+
+        try:
+            algorithm = parse_moves(moves_str, secure=False)
+            scrambles.append(algorithm)
+        except InvalidMoveError:
+            continue
+
+    return scrambles

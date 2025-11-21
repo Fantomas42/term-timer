@@ -323,6 +323,16 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Default: None.'
         ),
     )
+    scramble.add_argument(
+        '-g', '--scrambles-file',
+        default='',
+        metavar='FILE',
+        help=(
+            'Load scrambles from a file '
+            '(one per line or term-timer z format).\n'
+            'Default: None.'
+        ),
+    )
 
     return parser
 

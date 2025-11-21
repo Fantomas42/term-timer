@@ -3,6 +3,7 @@
 import asyncio
 from argparse import Namespace
 from contextlib import suppress
+from pathlib import Path
 from random import Random
 
 from cubing_algs.exceptions import InvalidMoveError
@@ -14,6 +15,7 @@ from term_timer.config import DEBUG
 from term_timer.exceptions import InvalidCaseError
 from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
+from term_timer.in_out import load_scrambles
 from term_timer.in_out import load_solves
 from term_timer.interface.console import console
 from term_timer.interface.terminal import Terminal
@@ -41,7 +43,18 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912
     if options.session:
         session_parts.append(options.session)
 
-    if not options.scramble:
+    scrambles = []
+    if options.scrambles_file:
+        scrambles_file = Path(options.scrambles_file)
+        scrambles = load_scrambles(scrambles_file)
+        if not scrambles:
+            console.print(
+                f'🤔 No scrambles in { scrambles_file.name }',
+                style='warning',
+            )
+            return 0
+        session_parts.append(f'scrambles-{ scrambles_file.stem }')
+    elif not options.scramble:
         if options.seed:
             session_parts.append(f'seed-{ options.seed }')
         if options.easy_cross:
@@ -62,6 +75,7 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912
         iterations=options.iterations,
         easy_cross=options.easy_cross,
         scramble=options.scramble,
+        scrambles=scrambles,
         session=session,
         free_play=options.free_play,
         show_cube=options.show_cube,
