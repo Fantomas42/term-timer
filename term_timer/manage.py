@@ -305,6 +305,14 @@ class ScrambleManager:
                 f'[comment]// { scramble.metrics.htm } HTM[/comment]'
             )
 
+            if self.cube_size == 3 and not self.show_cube:
+                scrambled_percent = (
+                    scramble.impacts.facelets_scrambled_percent * 100
+                )
+                scramble_line += (
+                    f' [comment]{ format_float(scrambled_percent) }%[/comment]'
+                )
+
             console.print(scramble_line)
 
             if self.show_cube:
