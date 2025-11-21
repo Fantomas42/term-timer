@@ -17,7 +17,7 @@ class TestTrainerModule(unittest.TestCase):
             show_cube=False,
             metronome=0,
             orientation='DF',
-            rng=Random(),
+            rng=Random(),  # noqa: S311
         )
 
         for key in (

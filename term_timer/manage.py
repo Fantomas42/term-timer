@@ -11,6 +11,7 @@ from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SolveFlag
 from term_timer.constants import SolveFlagInput
+from term_timer.formatter import format_float
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
@@ -247,6 +248,7 @@ class ScrambleManager:
             easy_cross: bool,
             show_cube: bool,
             output_format: str,
+            seed: str,
             rng: Random,
     ) -> None:
         """
@@ -259,6 +261,7 @@ class ScrambleManager:
             easy_cross: Whether to generate scrambles with easy crosses.
             show_cube: Whether to display visual cube representations.
             output_format: Output format ('terminal' or 'markdown').
+            seed: Seed used for the RNG.
             rng: Random number generator.
 
         """
@@ -268,6 +271,7 @@ class ScrambleManager:
         self.easy_cross = easy_cross
         self.show_cube = show_cube
         self.output_format = output_format
+        self.seed = seed
         self.rng = rng
 
     def run(self) -> None:
@@ -324,22 +328,27 @@ class ScrambleManager:
 
         cube_size_str = (
             f'**Cube Size:** '
-            f'{self.cube_size}x{self.cube_size}x{self.cube_size}'
+            f'{ self.cube_size }x{ self.cube_size }x{ self.cube_size }'
         )
         output_lines.extend((
-            f'**Generated:** {timestamp}',
+            f'**Generated:** { timestamp }',
             cube_size_str,
-            f'**Count:** {self.scrambles}',
+            f'**Count:** { self.scrambles }',
             '**Parameters:**',
         ))
         params = []
 
+        if self.seed:
+            params.append(f'- Seed: { self.seed }')
+        else:
+            params.append('- Seed: Random')
+
         if self.iterations:
-            params.append(f'- Iterations: {self.iterations}')
+            params.append(f'- Iterations: { self.iterations }')
         else:
             params.append('- Iterations: Auto')
 
-        params.append(f'- Easy Cross: {"Yes" if self.easy_cross else "No"}')
+        params.append(f'- Easy Cross: { "Yes" if self.easy_cross else "No" }')
 
         output_lines.extend(params)
         output_lines.extend(('', '---', ''))
@@ -355,32 +364,33 @@ class ScrambleManager:
 
             # Scramble header and details
             output_lines.extend((
-                f'## Scramble #{counter + 1}',
+                f'## Scramble #{ counter + 1 }',
                 '',
-                f'**Moves:** {scramble}',
-                f'**HTM:** {scramble.metrics.htm}',
-                '',
+                f'**Moves:** { scramble }',
+                f'**HTM:** { scramble.metrics.htm }',
             ))
+
+            # Add scrambled percentage for 3x3x3
+            if self.cube_size == 3:
+                scrambled_percent = (
+                    scramble.impacts.facelets_scrambled_percent * 100
+                )
+                scrambled_str = (
+                    f'**Scrambled:** { format_float(scrambled_percent) }%'
+                )
+                output_lines.append(scrambled_str)
 
             # Cube visualization if requested
             if self.show_cube:
-                output_lines.extend(('### Cube Visualization', ''))
+                output_lines.extend(('', '### Cube Visualization', ''))
 
-                cube_emoji = cube.display('UF')
+                cube_emoji = cube.display('UF', 'emoji')
                 output_lines.extend((
                     '```',
                     cube_emoji.rstrip('\n'),
                     '```',
                     '',
                 ))
-
-                # Add scrambled percentage for 3x3x3
-                if self.cube_size == 3:
-                    scrambled_percent = (
-                        scramble.impacts.facelets_scrambled_percent * 100
-                    )
-                    scrambled_str = f'**Scrambled:** {scrambled_percent:.1f}%'
-                    output_lines.extend((scrambled_str, ''))
 
             output_lines.extend(('---', ''))
 

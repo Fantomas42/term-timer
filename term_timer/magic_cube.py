@@ -33,7 +33,7 @@ class Cube(BaseCube):  # type: ignore[misc]
         """Get cube state as 54-character facelet string."""
         return self.get_kociemba_facelet_positions()  # type: ignore[no-any-return]
 
-    def display(self, orientation: str) -> str:
+    def display(self, orientation: str, facelet_type: str = '') -> str:
         """
         Generate colored terminal display of cube.
 
@@ -46,7 +46,10 @@ class Cube(BaseCube):  # type: ignore[misc]
         if orientation_moves:
             self.rotate(orientation_moves)
 
-        display = VCubeDisplay(self, CUBE_PALETTE, CUBE_EFFECT).display()
+        display = VCubeDisplay(
+            self, CUBE_PALETTE, CUBE_EFFECT,
+            facelet_type=facelet_type,
+        ).display()
 
         if orientation_moves:
             for _ in orientation_moves:
