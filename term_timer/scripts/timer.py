@@ -119,6 +119,8 @@ async def trainer(options: Namespace) -> int:
         Exit code (0 for success).
 
     """
+    rng = Random(options.seed) if options.seed else Random()  # noqa: S311
+
     trainer = Trainer(
         step=options.step,
         cases=options.case,
@@ -126,6 +128,7 @@ async def trainer(options: Namespace) -> int:
         show_solution=options.show_solution,
         show_cube=options.show_cube,
         metronome=options.metronome,
+        rng=rng,
     )
 
     if options.bluetooth:

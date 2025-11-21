@@ -1,4 +1,5 @@
 """Training interface for practicing specific CFOP cases."""
+from random import Random
 from typing import Final
 
 from cubing_algs.algorithm import Algorithm
@@ -36,7 +37,8 @@ class Trainer(SolveInterface):
             show_solution: bool,
             show_cube: bool,
             orientation: str,
-            metronome: float) -> None:
+            metronome: float,
+            rng: Random) -> None:
         """Initialize trainer with step configuration and display options."""
         super().__init__()
 
@@ -47,6 +49,7 @@ class Trainer(SolveInterface):
         self.show_cube = show_cube
         self.metronome = metronome
         self.cases = cases
+        self.rng = rng
 
         self.step_code = self.step.upper()
         if self.step in CROSS_MODES:
@@ -172,6 +175,7 @@ class Trainer(SolveInterface):
         case, main_algorithm, self.scramble, cube = trainer(
                 self.step, self.cases,
                 self.cube_orientation_moves,
+                self.rng,
                 self.bluetooth_cube,
         )
 

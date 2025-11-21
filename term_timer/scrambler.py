@@ -1,6 +1,5 @@
 """Scramble generation and training case setup utilities."""
 from random import Random
-from random import choice
 from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
@@ -38,8 +37,8 @@ def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
 def scrambler(cube_size: int, iterations: int,
               *,
               easy_cross: bool,
-              raw_scramble: str = '',
-              rng: Random | None = None) -> tuple[Algorithm, Cube]:
+              rng: Random,
+              raw_scramble: str = '') -> tuple[Algorithm, Cube]:
     """
     Generate cube scramble.
 
@@ -73,6 +72,7 @@ def scrambler(cube_size: int, iterations: int,
 
 def trainer(step: str, cases: list[str],
             orientation_moves: Algorithm,
+            rng: Random,
             bluetooth_cube: VCube | None = None) -> tuple[
                 str, Algorithm, Algorithm, VCube]:
     """
@@ -87,14 +87,14 @@ def trainer(step: str, cases: list[str],
     if step == 'ecross':
         case_name = 'Easy Cross'
         main_algorithm = Algorithm()
-        scramble = scramble_easy_cross()
+        scramble = scramble_easy_cross(rng)
     elif step == 'cross':
         case_name = 'Cross'
         main_algorithm = Algorithm()
-        scramble, _cube = scrambler(3, 12, easy_cross=False)
+        scramble, _cube = scrambler(3, 12, easy_cross=False, rng=rng)
     else:
         case_name, main_algorithm, scramble = random_training(
-            step, cases, orientation_moves,
+            step, cases, orientation_moves, rng,
         )
 
     cube.rotate(scramble)
@@ -103,7 +103,8 @@ def trainer(step: str, cases: list[str],
 
 
 def random_training(step: str, selected_cases: list[str],
-                    orientation_moves: Algorithm) -> tuple[
+                    orientation_moves: Algorithm,
+                    rng: Random) -> tuple[
                         str, Algorithm, Algorithm]:
     """
     Generate random training case.
@@ -120,7 +121,7 @@ def random_training(step: str, selected_cases: list[str],
         k: v for k, v in cases.items() if v.get('setups')
     }
 
-    case = choice(selected_cases or list(valid_cases.keys()))  # noqa: S311
+    case = rng.choice(selected_cases or list(valid_cases.keys()))
 
     if case not in valid_cases:
         error_string = f'Invalid case { case } for { step.upper() }'
@@ -130,7 +131,7 @@ def random_training(step: str, selected_cases: list[str],
 
     algo = (
         orientation_moves
-        + choice(case_info['setups'])  # noqa: S311
+        + rng.choice(case_info['setups'])
         + mirror_moves(orientation_moves)
     )
 

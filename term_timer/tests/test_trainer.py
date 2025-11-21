@@ -1,6 +1,6 @@
 """Tests for trainer."""
-
 import unittest
+from random import Random
 
 from term_timer.trainer import Trainer
 
@@ -17,6 +17,7 @@ class TestTrainerModule(unittest.TestCase):
             show_cube=False,
             metronome=0,
             orientation='DF',
+            rng=Random(),
         )
 
         for key in (
@@ -49,5 +50,6 @@ class TestTrainerModule(unittest.TestCase):
                 'solve_started_event',
                 'solve_completed_event',
                 'orientation_faces',
+                'rng',
         ):
             self.assertTrue(hasattr(timer, key))

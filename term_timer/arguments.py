@@ -424,6 +424,18 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
 
+    scramble = parser.add_argument_group('Scramble')
+    scramble.add_argument(
+        '-r', '--seed',
+        default='',
+        metavar='SEED',
+        help=(
+            'Set a seed for random move generation '
+            'to ensure repeatable scrambles.\n'
+            'Default: None.'
+        ),
+    )
+
     return parser
 
 
