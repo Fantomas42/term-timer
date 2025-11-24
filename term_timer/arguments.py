@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 
 COMMAND_ALIASES: Final[dict[str, list[str]]] = {
     'solve': ['sw', 't'],
+    'browse': ['br', 'b'],
     'list': ['ls', 'l'],
     'stats': ['st', 's'],
     'graph': ['gr', 'g'],
@@ -491,6 +492,22 @@ def list_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     set_session_arguments(parser)
 
     return parser
+
+
+def browse_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """
+    Create argument parser for browse command.
+
+    Returns:
+        Configured argument parser for browse command.
+
+    """
+    return subparsers.add_parser(
+        'browse',
+        help='Browse solve sessions interactively',
+        description='Interactive TUI for browsing solve sessions and details.',
+        aliases=COMMAND_ALIASES['browse'],
+    )
 
 
 def index_arguments(subparsers: '_SubParsers') -> ArgumentParser:
@@ -1015,6 +1032,7 @@ def get_arguments() -> Namespace:
 
     solve_arguments(subparsers)
     train_arguments(subparsers)
+    browse_arguments(subparsers)
     detail_arguments(subparsers)
     edit_arguments(subparsers)
     delete_arguments(subparsers)
