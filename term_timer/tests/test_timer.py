@@ -15,6 +15,7 @@ class TestTimerModule(unittest.TestCase):
             iterations=0,
             easy_cross=False,
             scramble='',
+            scrambles=[],
             session='default',
             free_play=True,
             show_cube=False,
