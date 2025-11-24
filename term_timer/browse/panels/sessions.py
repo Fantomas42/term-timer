@@ -5,6 +5,7 @@ from textual.containers import VerticalScroll
 from textual.message import Message
 from textual.widgets import Static
 from textual.widgets import Tree
+from textual.widgets.tree import TreeNode
 
 from term_timer.browse.models import discover_cube_groups
 
@@ -53,6 +54,7 @@ class SessionsPanel(VerticalScroll):
     def on_mount(self) -> None:
         """Load sessions when panel is mounted."""
         self.load_sessions()
+        self.call_after_refresh(self.auto_select_default_session)
 
     def load_sessions(self) -> None:
         """Load and display all cube groups and sessions."""
@@ -88,10 +90,58 @@ class SessionsPanel(VerticalScroll):
                     },
                 )
 
-        # Expand first cube group by default
-        if cube_groups:
-            first_child = tree.root.children[0]
-            first_child.expand()
+    def auto_select_default_session(self) -> None:
+        """Auto-select the 3x3x3 default session if it exists."""
+        tree = self.query_one(Tree)
+
+        # Find the 3x3x3 default session node
+        default_node = self.find_session_node(3, 'default')
+
+        if default_node is not None:
+            # Ensure the parent node is expanded
+            if default_node.parent:
+                default_node.parent.expand()
+            # Move cursor to the node and select it
+            tree.cursor_line = default_node.line
+            tree.select_node(default_node)
+
+        elif tree.root.children:
+            # If no 3x3x3 default, just expand the first cube group
+            tree.root.children[0].expand()
+
+    def find_session_node(
+        self,
+        cube_size: int,
+        session_name: str,
+    ) -> TreeNode[dict] | None:
+        """
+        Find a session node in the tree by cube size and session name.
+
+        Args:
+            cube_size: The cube size to search for.
+            session_name: The session name to search for.
+
+        Returns:
+            The tree node if found, None otherwise.
+
+        """
+        tree = self.query_one(Tree)
+
+        for cube_node in tree.root.children:
+            if (
+                cube_node.data
+                and cube_node.data.get('type') == 'cube'
+                and cube_node.data.get('cube_size') == cube_size
+            ):
+                for session in cube_node.children:
+                    if (
+                        session.data
+                        and session.data.get('type') == 'session'
+                        and session.data.get('session_name') == session_name
+                    ):
+                        return session
+
+        return None
 
     def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
         """Handle tree node selection."""
