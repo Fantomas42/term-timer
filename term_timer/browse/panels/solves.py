@@ -64,7 +64,7 @@ class SolvesPanel(VerticalScroll):
 
         """
         yield Static('Solves')
-        table = DataTable(cursor_type='row')
+        table: DataTable[str] = DataTable(cursor_type='row')
         table.add_columns('#', 'Time', 'Date', 'Flag')
         yield table
 

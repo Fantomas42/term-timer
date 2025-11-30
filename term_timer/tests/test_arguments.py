@@ -29,7 +29,8 @@ class TestCommandAliases(unittest.TestCase):
         """Test that COMMAND_ALIASES contains all expected commands."""
         expected_commands = {
             'solve', 'list', 'stats', 'graph', 'cfop', 'detail',
-            'import', 'serve', 'train', 'edit', 'delete', 'index', 'scramble',
+            'import', 'serve', 'train', 'edit', 'delete', 'index',
+            'scramble', 'browse',
         }
         self.assertEqual(set(COMMAND_ALIASES.keys()), expected_commands)
 

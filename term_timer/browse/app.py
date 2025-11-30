@@ -13,8 +13,10 @@ from term_timer.browse.panels.detail import DetailPanel
 from term_timer.browse.panels.sessions import SessionsPanel
 from term_timer.browse.panels.solves import SolvesPanel
 
+PanelType = SessionsPanel | SolvesPanel | DetailPanel
 
-class BrowseApp(App):
+
+class BrowseApp(App[None]):
     """Interactive TUI for browsing solve sessions and details."""
 
     CSS = """
@@ -31,7 +33,9 @@ class BrowseApp(App):
     }
     """
 
-    BINDINGS: ClassVar[list[Binding]] = [
+    BINDINGS: ClassVar[
+        list[Binding | tuple[str, str] | tuple[str, str, str]]
+    ] = [
         Binding('q', 'quit', 'Quit', priority=True),
         Binding('tab', 'next_panel', 'Next Panel'),
         Binding('shift+tab', 'previous_panel', 'Previous Panel'),
@@ -96,13 +100,13 @@ class BrowseApp(App):
     def action_next_panel(self) -> None:
         """Focus next panel (Tab)."""
         focused = self.focused
-        panels = [
+        panels: list[PanelType] = [
             self.query_one(SessionsPanel),
             self.query_one(SolvesPanel),
             self.query_one(DetailPanel),
         ]
 
-        if focused in panels:
+        if isinstance(focused, (SessionsPanel, SolvesPanel, DetailPanel)):
             current_index = panels.index(focused)
             next_index = (current_index + 1) % len(panels)
             panels[next_index].focus()
@@ -112,13 +116,13 @@ class BrowseApp(App):
     def action_previous_panel(self) -> None:
         """Focus previous panel (Shift+Tab)."""
         focused = self.focused
-        panels = [
+        panels: list[PanelType] = [
             self.query_one(SessionsPanel),
             self.query_one(SolvesPanel),
             self.query_one(DetailPanel),
         ]
 
-        if focused in panels:
+        if isinstance(focused, (SessionsPanel, SolvesPanel, DetailPanel)):
             current_index = panels.index(focused)
             previous_index = (current_index - 1) % len(panels)
             panels[previous_index].focus()

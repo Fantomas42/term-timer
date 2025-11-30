@@ -113,7 +113,7 @@ class SessionsPanel(VerticalScroll):
         self,
         cube_size: int,
         session_name: str,
-    ) -> TreeNode[dict] | None:
+    ) -> TreeNode[dict[str, str | int]] | None:
         """
         Find a session node in the tree by cube size and session name.
 
@@ -143,13 +143,19 @@ class SessionsPanel(VerticalScroll):
 
         return None
 
-    def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
+    def on_tree_node_selected(
+        self,
+        event: Tree.NodeSelected[dict[str, str | int]],
+    ) -> None:
         """Handle tree node selection."""
         node = event.node
         if node.data and node.data.get('type') == 'session':
-            self.post_message(
-                self.SessionSelected(
-                    cube_size=node.data['cube_size'],
-                    session_name=node.data['session_name'],
-                ),
-            )
+            cube_size = node.data['cube_size']
+            session_name = node.data['session_name']
+            if isinstance(cube_size, int) and isinstance(session_name, str):
+                self.post_message(
+                    self.SessionSelected(
+                        cube_size=cube_size,
+                        session_name=session_name,
+                    ),
+                )
