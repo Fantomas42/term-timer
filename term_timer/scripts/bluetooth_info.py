@@ -411,7 +411,10 @@ async def client_cb(  # noqa: PLR0913
     """
     bluetooth_interface = BluetoothInterface(queue)
 
-    await bluetooth_interface.__aenter__(filter_name=filter_name)
+    await bluetooth_interface.__aenter__(
+        filter_name=filter_name,
+        use_gyroscope=True,
+    )
 
     await bluetooth_interface.send_command('REQUEST_FACELETS')
     await bluetooth_interface.send_command('REQUEST_HARDWARE')

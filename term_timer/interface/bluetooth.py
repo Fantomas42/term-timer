@@ -27,6 +27,7 @@ from term_timer.bluetooth.types import MoveEventDict
 from term_timer.bluetooth.types import MoveInfo
 from term_timer.bluetooth.types import RotationEventDict
 from term_timer.config import BLUETOOTH_CONFIG
+from term_timer.config import USE_GYROSCOPE
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import CubeNotFoundError
 
@@ -83,12 +84,17 @@ class Bluetooth:
         self.facelets_received_event = asyncio.Event()
         self.hardware_received_event = asyncio.Event()
 
-    async def bluetooth_connect(self) -> bool:
+    async def bluetooth_connect(
+            self, *,
+            use_gyroscope: bool = USE_GYROSCOPE) -> bool:
         """
         Connect to a Bluetooth cube and initialize device communication.
 
         Scans for or connects to a Bluetooth cube, requests initial state,
         and waits for hardware and facelet information to be received.
+
+        Args:
+            use_gyroscope: Whether the driver should use gyroscope data.
 
         Returns:
             True if connection and initialization succeeded, False otherwise.
@@ -121,7 +127,9 @@ class Bluetooth:
                     end='',
                 )
 
-            await self.bluetooth_interface.__aenter__(address)  # noqa: PLC2801
+            await self.bluetooth_interface.__aenter__(
+                address, use_gyroscope=use_gyroscope,
+            )
 
             self.clear_line(full=True)
             self.console.print(

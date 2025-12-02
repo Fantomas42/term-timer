@@ -41,9 +41,10 @@ class MoyuWeilong10Driver(Driver):
     encrypter: ClassVar[type[GanGen2CubeEncrypter]] = GanGen2CubeEncrypter
     factor: ClassVar[int] = pow(2, 30)
 
-    def __init__(self, client: BleakClient) -> None:
+    def __init__(self, client: BleakClient,
+                 *, use_gyroscope: bool) -> None:
         """Initialize MoYu Weilong driver with BLE client connection."""
-        super().__init__(client)
+        super().__init__(client, use_gyroscope=use_gyroscope)
 
         self.last_serial: int = -1
         self.cube_timestamp: float = 0.0

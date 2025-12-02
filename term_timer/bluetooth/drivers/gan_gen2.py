@@ -52,9 +52,10 @@ class GanGen2Driver(Driver):
     command_characteristic_uid: ClassVar[str] = GAN_GEN2_COMMAND_CHARACTERISTIC
     encrypter: ClassVar[type[GanGen2CubeEncrypter]] = GanGen2CubeEncrypter
 
-    def __init__(self, client: BleakClient) -> None:
+    def __init__(self, client: BleakClient,
+                 *, use_gyroscope: bool) -> None:
         """Initialize GAN Gen2 driver with BLE client connection."""
-        super().__init__(client)
+        super().__init__(client, use_gyroscope=use_gyroscope)
 
         self.last_serial: int = -1
         self.cube_timestamp: float = 0.0

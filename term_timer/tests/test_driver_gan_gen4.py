@@ -40,7 +40,10 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             'term_timer.bluetooth.drivers.gan_gen2.get_salt',
             return_value=b'salt12',
         ):
-            self.driver = GanGen4Driver(self.mock_client)
+            self.driver = GanGen4Driver(
+                self.mock_client,
+                use_gyroscope=False,
+            )
 
     def test_inherits_from_gan_gen3(self) -> None:
         """Test inherits from gan gen3."""

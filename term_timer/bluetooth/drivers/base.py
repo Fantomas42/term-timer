@@ -8,7 +8,6 @@ from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.types import EventDict
-from term_timer.config import USE_GYROSCOPE
 
 
 class Driver:
@@ -24,11 +23,18 @@ class Driver:
     state_characteristic_uid: ClassVar[str] = ''
     command_characteristic_uid: ClassVar[str] = ''
 
-    use_gyroscope: bool = USE_GYROSCOPE
+    def __init__(self, client: BleakClient,
+                 *, use_gyroscope: bool) -> None:
+        """
+        Initialize driver with BleakClient and encryption.
 
-    def __init__(self, client: BleakClient) -> None:
-        """Initialize driver with BleakClient and encryption."""
+        Args:
+            client: The BLE client connection to the cube.
+            use_gyroscope: Whether the driver should use gyroscope data.
+
+        """
         self.client: BleakClient = client
+        self.use_gyroscope = use_gyroscope
 
         self.events: list[EventDict] = []
         self.cypher: GanGen2CubeEncrypter = self.init_cypher()

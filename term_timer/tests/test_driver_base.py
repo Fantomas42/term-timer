@@ -8,7 +8,6 @@ from unittest.mock import Mock
 
 from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
-from term_timer.config import USE_GYROSCOPE
 
 if TYPE_CHECKING:
     from term_timer.bluetooth.types import EventDict
@@ -41,7 +40,7 @@ class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
 
-        self.driver = BaseDriver(self.mock_client)
+        self.driver = BaseDriver(self.mock_client, use_gyroscope=False)
 
     async def test_event_handler_raises_not_implemented(self) -> None:
         """Test event handler raises not implemented."""
@@ -58,15 +57,17 @@ class TestDriver(unittest.TestCase):
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
 
-        self.driver = BaseDriver(self.mock_client)
+        self.driver = BaseDriver(self.mock_client, use_gyroscope=False)
 
     def test_init_sets_client(self) -> None:
         """Test init sets client."""
         self.assertEqual(self.driver.client, self.mock_client)
+        self.assertFalse(self.driver.use_gyroscope)
 
     def test_init_initializes_empty_events_list(self) -> None:
         """Test init initializes empty events list."""
         self.assertEqual(self.driver.events, [])
+        self.assertFalse(self.driver.use_gyroscope)
 
     def test_init_calls_init_cypher(self) -> None:
         """Test init calls init cypher."""
@@ -77,7 +78,7 @@ class TestDriver(unittest.TestCase):
     def test_init_cypher_raises_not_implemented(self) -> None:
         """Test init cypher raises not implemented."""
         with self.assertRaises(NotImplementedError):
-            Driver(self.mock_client)
+            Driver(self.mock_client, use_gyroscope=False)
 
     def test_send_command_handler_raises_not_implemented(self) -> None:
         """Test send command handler raises not implemented."""
@@ -265,7 +266,6 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(Driver.service_uid, '')
         self.assertEqual(Driver.state_characteristic_uid, '')
         self.assertEqual(Driver.command_characteristic_uid, '')
-        self.assertEqual(Driver.use_gyroscope, USE_GYROSCOPE)
 
     def test_driver_instance_has_cypher_attribute(self) -> None:
         """Test driver instance has cypher attribute."""

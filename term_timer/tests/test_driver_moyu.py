@@ -34,7 +34,10 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                 'term_timer.bluetooth.drivers.moyu.get_salt',
                 return_value=b'salt12',
         ):
-            self.driver = MoyuWeilong10Driver(self.mock_client)
+            self.driver = MoyuWeilong10Driver(
+                self.mock_client,
+                use_gyroscope=False,
+            )
 
     def test_init_sets_correct_attributes(self) -> None:
         """Test init sets correct attributes."""

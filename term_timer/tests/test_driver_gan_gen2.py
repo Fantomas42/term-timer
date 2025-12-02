@@ -35,7 +35,10 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 'term_timer.bluetooth.drivers.gan_gen2.get_salt',
                 return_value=b'salt12',
         ):
-            self.driver = GanGen2Driver(self.mock_client)
+            self.driver = GanGen2Driver(
+                self.mock_client,
+                use_gyroscope=False,
+            )
 
     def test_init_sets_correct_attributes(self) -> None:
         """Test init sets correct attributes."""
@@ -83,7 +86,10 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 'term_timer.bluetooth.drivers.gan_gen2.get_salt',
                 return_value=b'salt12',
         ):
-            aicube_driver = GanGen2Driver(mock_aicube_client)
+            aicube_driver = GanGen2Driver(
+                mock_aicube_client,
+                use_gyroscope=False,
+            )
 
         # Test that init_cypher is called and returns the encrypter
         self.assertIsNotNone(aicube_driver.cypher)

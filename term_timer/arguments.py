@@ -15,6 +15,7 @@ from term_timer.config import DISPLAY_CONFIG
 from term_timer.config import SERVER_CONFIG
 from term_timer.config import TIMER_CONFIG
 from term_timer.config import TRAINER_STEP
+from term_timer.config import USE_GYROSCOPE
 from term_timer.constants import CUBE_SIZES
 
 if TYPE_CHECKING:
@@ -173,6 +174,18 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Default: False.'
         ),
     )
+    mode = 'enable' if USE_GYROSCOPE else 'disable'
+    bluetooth.add_argument(
+        '-g', f'--{ mode }-gyroscope',
+        action='store_const',
+        const=not USE_GYROSCOPE,
+        default=USE_GYROSCOPE,
+        dest='use_gyroscope',
+        help=(
+            f"{ mode.title() } the cube's gyroscope.\n"
+            'Default: False'
+        ),
+    )
     bluetooth.add_argument(
         '-m', '--method',
         default=CUBE_METHOD,
@@ -325,7 +338,7 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
     scramble.add_argument(
-        '-g', '--scrambles-file',
+        '-l', '--scrambles-file',
         default='',
         metavar='FILE',
         help=(
@@ -420,6 +433,18 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Use a Bluetooth-connected cube.\n'
             'Default: False.'
+        ),
+    )
+    mode = 'enable' if USE_GYROSCOPE else 'disable'
+    bluetooth.add_argument(
+        '-g', f'--{ mode }-gyroscope',
+        action='store_const',
+        const=not USE_GYROSCOPE,
+        default=USE_GYROSCOPE,
+        dest='use_gyroscope',
+        help=(
+            f"{ mode.title() } the cube's gyroscope.\n"
+            'Default: False'
         ),
     )
 
@@ -759,10 +784,10 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
     analyze.add_argument(
-        '-r', '--disable-rotations',
+        '-g', '--disable-rotations',
         action='store_true',
         help=(
-            'Disable rotations when analysing.\n'
+            'Disable rotations if present when analysing.\n'
             'Default: False'
         ),
     )

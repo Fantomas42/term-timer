@@ -70,6 +70,8 @@ class BluetoothInterface:
             self,
             address: str | None = None,
             filter_name: str | None = None,
+            *,
+            use_gyroscope: bool,
     ) -> 'BluetoothInterface':
         """
         Enters async context manager by connecting to a Bluetooth cube.
@@ -83,6 +85,7 @@ class BluetoothInterface:
                 performs a scan to discover available cubes.
             filter_name: Optional name filter to narrow device scan results.
                 Only devices containing this string will be selected.
+            use_gyroscope: Whether the driver should use gyroscope data.
 
         Returns:
             The initialized BluetoothInterface instance with an active
@@ -123,7 +126,10 @@ class BluetoothInterface:
             for driver in DRIVERS:
                 if service.uuid == driver.service_uid:
                     logger.debug(' * Using %s driver', driver.__name__)
-                    self.driver = driver(self.client)
+                    self.driver = driver(
+                        self.client,
+                        use_gyroscope=use_gyroscope,
+                    )
                     break
             if self.driver:
                 break

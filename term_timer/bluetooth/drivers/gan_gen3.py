@@ -38,7 +38,8 @@ class GanGen3Driver(GanGen2Driver):
     state_characteristic_uid: ClassVar[str] = GAN_GEN3_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = GAN_GEN3_COMMAND_CHARACTERISTIC
 
-    def __init__(self, client: BleakClient) -> None:
+    def __init__(self, client: BleakClient,
+                 *, use_gyroscope: bool) -> None:
         """
         Initialize the GAN Gen3 driver with move tracking capabilities.
 
@@ -47,9 +48,10 @@ class GanGen3Driver(GanGen2Driver):
 
         Args:
             client: The BLE client connection to the cube.
+            use_gyroscope: Whether the driver should use gyroscope data.
 
         """
-        super().__init__(client)
+        super().__init__(client, use_gyroscope=use_gyroscope)
 
         self.serial: int = -1
         self.last_serial: int = -1

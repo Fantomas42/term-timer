@@ -93,7 +93,9 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912
     )
 
     if options.bluetooth:
-        await timer.bluetooth_connect()
+        await timer.bluetooth_connect(
+            use_gyroscope=options.use_gyroscope,
+        )
 
     try:
         while 42:
@@ -147,7 +149,9 @@ async def trainer(options: Namespace) -> int:
     )
 
     if options.bluetooth:
-        await trainer.bluetooth_connect()
+        await trainer.bluetooth_connect(
+            use_gyroscope=options.use_gyroscope,
+        )
 
     try:
         while 42:

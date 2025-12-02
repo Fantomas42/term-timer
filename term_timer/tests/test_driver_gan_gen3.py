@@ -38,7 +38,10 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             'term_timer.bluetooth.drivers.gan_gen2.get_salt',
             return_value=b'salt12',
         ):
-            self.driver = GanGen3Driver(self.mock_client)
+            self.driver = GanGen3Driver(
+                self.mock_client,
+                use_gyroscope=False,
+            )
 
     def test_init_sets_correct_attributes(self) -> None:
         """Test init sets correct attributes."""
