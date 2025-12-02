@@ -16,6 +16,7 @@ from term_timer.bluetooth.types import BatteryEventDict
 from term_timer.bluetooth.types import EventDict
 from term_timer.bluetooth.types import FaceletsEventDict
 from term_timer.bluetooth.types import FaceletsEventDictNoState
+from term_timer.bluetooth.types import GyroConfigEventDict
 from term_timer.bluetooth.types import GyroEventDict
 from term_timer.bluetooth.types import HardwareEventDict
 from term_timer.bluetooth.types import HardwareEventMoyuDict
@@ -247,6 +248,7 @@ class Bluetooth:
 
                 if event_name == 'hardware':
                     self.handle_hardware_event(event)
+                    await self.reconcile_gyroscope_state()
 
                 elif event_name == 'battery':
                     battery_event = cast('BatteryEventDict', event)
@@ -290,6 +292,19 @@ class Bluetooth:
 
                         self.handle_bluetooth_cube_move(rotation_result['rotation'])
                         self.handle_bluetooth_move(rotation_event)
+
+                elif event_name == 'gyro-config':
+                    gyro_config_event = cast('GyroConfigEventDict', event)
+
+                    self.bluetooth_hardware['gyroscope_enabled'] = (
+                        gyro_config_event['gyroscope_enabled']
+                    )
+                    self.bluetooth_hardware['gyroscope_ready'] = (
+                        gyro_config_event['gyroscope_ready']
+                    )
+                    self.bluetooth_hardware['gyroscope_supported'] = (
+                        gyro_config_event['gyroscope_supported']
+                    )
 
     def handle_hardware_event(self, event: EventDict) -> None:
         """
@@ -343,7 +358,65 @@ class Bluetooth:
             serial_event = cast('HardwareEventMoyuDict', event)
             self.bluetooth_hardware['serial'] = serial_event['serial']
 
+        if 'gyroscope_enabled' in event:
+            gyro_enabled_event = cast(
+                'HardwareEventDict | HardwareEventMoyuDict',
+                event,
+            )
+            self.bluetooth_hardware['gyroscope_enabled'] = (
+                gyro_enabled_event['gyroscope_enabled']
+            )
+
+        if 'gyroscope_ready' in event:
+            gyro_ready_event = cast(
+                'HardwareEventDict | HardwareEventMoyuDict',
+                event,
+            )
+            self.bluetooth_hardware['gyroscope_ready'] = (
+                gyro_ready_event['gyroscope_ready']
+            )
+
+        if 'gyroscope_supported' in event:
+            gyro_supported_event = cast(
+                'HardwareEventDict | '
+                'HardwareEventNameOnlyDict | '
+                'HardwareEventMoyuDict',
+                event,
+            )
+            self.bluetooth_hardware['gyroscope_supported'] = (
+                gyro_supported_event['gyroscope_supported']
+            )
+
         self.hardware_received_event.set()
+
+    async def reconcile_gyroscope_state(self) -> None:
+        """
+        Send enable/disable gyroscope commands based on hardware state.
+
+        Compares the user's gyroscope preference (use_gyroscope) with the
+        current hardware state and sends the appropriate command to align them:
+        - Enables gyroscope if wanted but disabled (and hardware supports it)
+        - Disables gyroscope if not wanted but currently enabled
+
+        """
+        if not self.bluetooth_interface or not self.bluetooth_interface.driver:
+            return
+
+        use_gyroscope = self.bluetooth_interface.driver.use_gyroscope
+        gyro_enabled = self.bluetooth_hardware.get('gyroscope_enabled', False)
+        gyro_ready = self.bluetooth_hardware.get('gyroscope_ready', False)
+
+        # Enable gyroscope if wanted but not enabled (and hardware supports it)
+        if use_gyroscope and gyro_ready and not gyro_enabled:
+            logger.debug('Enabling gyroscope (wanted but disabled)')
+            await self.bluetooth_interface.send_command('REQUEST_ENABLE_GYRO')
+
+        # Disable gyroscope if not wanted but currently enabled
+        elif not use_gyroscope and gyro_enabled:
+            logger.debug('Disabling gyroscope (not wanted but enabled)')
+            await self.bluetooth_interface.send_command(
+                'REQUEST_DISABLE_GYRO',
+            )
 
     def handle_bluetooth_cube_move(self, move_str: str) -> None:
         """
