@@ -758,6 +758,14 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             f'Default: { CUBE_METHOD }.'
         ),
     )
+    analyze.add_argument(
+        '-r', '--disable-rotations',
+        action='store_true',
+        help=(
+            'Disable rotations when analysing.\n'
+            'Default: False'
+        ),
+    )
     mode = 'hide' if show_reconstruction else 'show'
     analyze.add_argument(
         '-s', f'--{ mode }-reconstruction',

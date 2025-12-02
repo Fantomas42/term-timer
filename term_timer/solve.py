@@ -107,6 +107,7 @@ class Solve:  # noqa: PLR0904
 
         self.method_name = CUBE_METHOD
         self.orientation = CUBE_ORIENTATION
+        self.disable_rotations = False
 
     @cached_property
     def solution(self) -> Algorithm:
@@ -390,6 +391,7 @@ class Solve:  # noqa: PLR0904
             self.scramble, self.solution,
             self.orientation_faces,
             self.orientation_moves,
+            disable_rotations=self.disable_rotations,
         )
 
     @cached_property

@@ -27,6 +27,7 @@ from cubing_algs.masks import union_masks
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.transform.mirror import mirror_moves
+from cubing_algs.transform.rotation import remove_rotations
 from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
@@ -248,7 +249,8 @@ class Analyser(FaceletAnalyser):
 
     def __init__(self, scramble: Algorithm, solution: Algorithm,
                  orientation_faces: str,
-                 orientation_moves: Algorithm) -> None:
+                 orientation_moves: Algorithm,
+                 *, disable_rotations: bool) -> None:
         """
         Initialize analyser with solve data and orientation.
 
@@ -257,10 +259,16 @@ class Analyser(FaceletAnalyser):
             solution: Complete algorithm sequence solving the scramble.
             orientation_faces: Two-character bottom/front face orientation.
             orientation_moves: Rotation moves to achieve target orientation.
+            disable_rotations: Disable rotations on analyse.
 
         """
         self.scramble = scramble
         self.solution = solution
+
+        if disable_rotations and self.solution.has_rotations:
+            self.solution = self.solution.transform(
+                remove_rotations,
+            )
 
         self.orientation_faces = orientation_faces
         self.orientation_moves = orientation_moves

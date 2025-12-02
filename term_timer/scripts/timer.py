@@ -223,6 +223,7 @@ def tools(command: str, options: Namespace) -> int:
                 solve_id,
                 options.method,
                 options.orientation,
+                disable_rotations=options.disable_rotations,
                 show_cube=options.show_cube,
                 show_reconstruction=options.show_reconstruction,
                 show_tps_graph=options.show_tps_graph,

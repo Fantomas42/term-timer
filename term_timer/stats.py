@@ -697,6 +697,7 @@ class StatisticsReporter(Statistics):
     def detail(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915
             self, solve_id: int, method: str, orientation: str,
             *,
+            disable_rotations: bool,
             show_cube: bool,
             show_reconstruction: bool,
             show_tps_graph: bool,
@@ -712,6 +713,7 @@ class StatisticsReporter(Statistics):
             solve_id: 1-based index of the solve to analyze.
             method: Solving method name for analysis (e.g., 'CFOP').
             orientation: Cube orientation string (e.g., 'UF').
+            disable_rotations: Disable rotations for analysis.
             show_cube: Whether to display scrambled cube state.
             show_reconstruction: Whether to show move sequence breakdown.
             show_tps_graph: Whether to display turns per second graph.
@@ -731,6 +733,7 @@ class StatisticsReporter(Statistics):
 
         solve.method_name = method
         solve.orientation = orientation
+        solve.disable_rotations = disable_rotations
 
         date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
