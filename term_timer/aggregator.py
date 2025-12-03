@@ -1,5 +1,4 @@
 """Solve analysis aggregation with multiprocessing support."""
-
 import logging
 import time
 from functools import partial
@@ -8,8 +7,9 @@ from multiprocessing import cpu_count
 from typing import TYPE_CHECKING
 from typing import cast
 
+from cubing_algs.cases import get_case
+
 from term_timer.methods import get_method_analyser
-from term_timer.methods.cases import CASES
 from term_timer.methods.types import CaseInfo
 from term_timer.methods.types import StepSummary
 from term_timer.solve import Solve
@@ -139,16 +139,7 @@ class SolvesMethodAggregator:
                 step_case = step['case']
                 resume.setdefault(step_name, {})
                 if step_case not in resume[step_name]:
-                    case_info = CASES.get(
-                        step_name.upper(), {},
-                    ).get(step_case, CaseInfo(
-                        name='',
-                        main='',
-                        probability=0,
-                        probability_label='',
-                        setups=[],
-                        masks={},
-                    ))
+                    case_info = get_case(step_name.upper(), step_case)
                     resume[step_name][step_case] = {
                         'recognitions': [],
                         'executions': [],
@@ -156,7 +147,7 @@ class SolvesMethodAggregator:
                         'qtms': [],
                         'tpss': [],
                         'etpss': [],
-                        'probability': case_info.get('probability', 0),
+                        'probability': case_info.probability,
                     }
 
                 resume[step_name][step_case]['times'].append(step['time'])
