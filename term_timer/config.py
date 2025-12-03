@@ -61,7 +61,7 @@ def load_config() -> dict[str, Any]:
 
     """
     if not CONFIG_FILE.exists():
-        with CONFIG_FILE.open('w+') as fd:
+        with CONFIG_FILE.open('w+', encoding='utf-8') as fd:
             fd.write(DEFAULT_CONFIG)
 
         return tomllib.loads(DEFAULT_CONFIG)

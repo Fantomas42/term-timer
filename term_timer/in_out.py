@@ -30,7 +30,7 @@ def load_solves(cube: int, session: str) -> list[Solve]:
     source = SAVE_DIRECTORY / f'{ cube }x{ cube }x{ cube }{ suffix }.json'
 
     if source.exists():
-        with source.open() as fd:
+        with source.open('r', encoding='utf-8') as fd:
             datas = json.load(fd)
 
         return [
@@ -111,7 +111,7 @@ def save_solves(cube: int, session: str, solves: list[Solve]) -> bool:
 
     dumped = json.dumps(data, indent=1)
 
-    with source.open('w+') as fd:
+    with source.open('w+', encoding='utf-8') as fd:
         fd.write(dumped)
 
     return True
