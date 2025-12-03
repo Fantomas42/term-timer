@@ -59,7 +59,7 @@ class Trainer(SolveInterface):
 
         self.counter = 1
 
-    def start_line(self, cube: VCube, case: str,
+    def start_line(self, cube: VCube, case_name: str,
                    main_algorithm: Algorithm) -> None:
         """Display training case, scramble, and optional solution."""
         if self.step in CROSS_MODES:
@@ -70,7 +70,7 @@ class Trainer(SolveInterface):
             link = (
                 'https://cubing.fache.fr/'
                 f'{ self.step_code }/'
-                f'{ case.split(" ", maxsplit=1)[0] }.html'
+                f'{ case_name.split(" ")[1] }.html'
             )
 
         if self.show_cube:
@@ -94,7 +94,7 @@ class Trainer(SolveInterface):
         self.console.print(
             f'[scramble]Training #{ self.counter }:[/scramble]',
             scramble_line,
-            f'[comment]// [link={ link }]{ case }[/link][/comment]',
+            f'[comment]// [link={ link }]{ case_name }[/link][/comment]',
         )
 
         if self.show_solution and main_algorithm:
@@ -172,7 +172,7 @@ class Trainer(SolveInterface):
         """
         self.init_solve()
 
-        case, main_algorithm, self.scramble, cube = trainer(
+        case_name, main_algorithm, self.scramble, cube = trainer(
                 self.step, self.cases,
                 self.cube_orientation_moves,
                 self.rng,
@@ -182,7 +182,7 @@ class Trainer(SolveInterface):
         self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.state
 
-        self.start_line(cube, case, main_algorithm)
+        self.start_line(cube, case_name, main_algorithm)
 
         quit_solve = await self.scramble_solve()
 

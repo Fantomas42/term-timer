@@ -1,8 +1,9 @@
 """Scramble generation and training case setup utilities."""
 from random import Random
-from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.cases import get_collection
+from cubing_algs.cases.case import Case
 from cubing_algs.parsing import parse_moves
 from cubing_algs.scrambler import scramble
 from cubing_algs.scrambler import scramble_easy_cross
@@ -15,10 +16,6 @@ from kociemba import solve
 from term_timer.config import CUBE_RIGHT_HANDED
 from term_timer.exceptions import InvalidCaseError
 from term_timer.magic_cube import Cube
-from term_timer.methods.cases import CASES
-
-if TYPE_CHECKING:
-    from term_timer.methods.types import CaseInfo
 
 
 def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
@@ -93,9 +90,13 @@ def trainer(step: str, cases: list[str],
         main_algorithm = Algorithm()
         scramble, _cube = scrambler(3, 12, easy_cross=False, rng=rng)
     else:
-        case_name, main_algorithm, scramble = random_training(
+        case, scramble = random_training(
             step, cases, orientation_moves, rng,
         )
+        case_name = case.name
+        if case.aliases:
+            case_name += f' ({ case.aliases[0] })'
+        main_algorithm = case.main_algorithm
 
     cube.rotate(scramble)
 
@@ -105,20 +106,20 @@ def trainer(step: str, cases: list[str],
 def random_training(step: str, selected_cases: list[str],
                     orientation_moves: Algorithm,
                     rng: Random) -> tuple[
-                        str, Algorithm, Algorithm]:
+                        Case, Algorithm]:
     """
     Generate random training case.
 
     Returns:
-        Tuple of (case name, main algorithm, scramble algorithm).
+        Tuple of (case, scramble algorithm).
 
     Raises:
         InvalidCaseError: If selected case is not valid for the step.
 
     """
-    cases: dict[str, CaseInfo] = CASES[step.upper()]
-    valid_cases: dict[str, CaseInfo] = {
-        k: v for k, v in cases.items() if v.get('setups')
+    cases = get_collection(step.upper()).cases
+    valid_cases: dict[str, Case] = {
+        k: v for k, v in cases.items() if v.setup_algorithms
     }
 
     case = rng.choice(selected_cases or list(valid_cases.keys()))
@@ -131,14 +132,14 @@ def random_training(step: str, selected_cases: list[str],
 
     algo = (
         orientation_moves
-        + rng.choice(case_info['setups'])
+        + rng.choice(case_info.setup_algorithms)
         + mirror_moves(orientation_moves)
     )
 
-    case_name = case_info['name']
-    main_algorithm = case_info['main']
-
-    return case_name, parse_moves(main_algorithm), parse_moves(algo).transform(
-        degrip_full_moves,
-        compress_ending_rotations,
+    return (
+        case_info,
+        parse_moves(algo).transform(
+            degrip_full_moves,
+            compress_ending_rotations,
+        ),
     )
