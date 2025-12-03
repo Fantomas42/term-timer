@@ -2,77 +2,34 @@
 # ruff: noqa: T201
 import json
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from pprint import pformat
 
+from cubing_algs.masks import F2L_BL_MASK
+from cubing_algs.masks import F2L_BR_MASK
+from cubing_algs.masks import F2L_FL_MASK
+from cubing_algs.masks import F2L_FR_MASK
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
-from term_timer.methods.cfop import CFOP_CASE_ENCODERS
+from term_timer.methods.masks.encoders import f2l_case_encoder
+from term_timer.methods.masks.encoders import oll_case_encoder
+from term_timer.methods.masks.encoders import pll_case_encoder
 from term_timer.methods.types import CaseInfo
 from term_timer.methods.types import SourceCaseInfo
 
-SKIPPED: dict[str, SourceCaseInfo] = {
-    'OLL': {
-        'type': 'OLL',
-        'probability': '1/216',
-        'aliases': [],
-        'algorithms': [],
-        'main': '',
-    },
-    'PLL': {
-        'type': 'PLL',
-        'probability': '1/72',
-        'aliases': [],
-        'algorithms': [],
-        'main': '',
-    },
-    'F2L': {
-        'type': 'F2L',
-        'probability': '1/42',
-        'aliases': [],
-        'algorithms': [],
-        'main': '',
-    },
-    'AF2L': {
-        'type': 'AF2L',
-        'probability': '1/42',
-        'aliases': [],
-        'algorithms': [],
-        'main': '',
-    },
+CFOP_CASE_ENCODERS: dict[str, Callable[[str], str]] = {
+    'OLL': oll_case_encoder,
+    'PLL': pll_case_encoder,
+
+    'F2L FR': f2l_case_encoder(F2L_FR_MASK),
+    'F2L FL': f2l_case_encoder(F2L_FL_MASK),
+    'F2L BR': f2l_case_encoder(F2L_BR_MASK),
+    'F2L BL': f2l_case_encoder(F2L_BL_MASK),
 }
-
-TRANSLATIONS: dict[str, str] = {
-    'Tortue': 'Turtle',
-    'Serpent': 'Snake',
-    'Right front wide antisune (RFWAS)': 'RFWAS',
-    'Stérilet': 'Bottlecap',
-    'Orque': 'Killer whale',
-    'Left Wide Sune (LWS)': 'LWS',
-    'Anti-Professeur Xavier': 'Anti-Prof X',
-    'Professeur Xavier': 'Prof X',
-    "Seein' Headlights (C and headlights)": "Seein' Headlights",
-    'Right back wide antisune (RBWAS)': 'RBWAS',
-    'Anti-Serpent': 'Anti-Snake',
-    'Anti-Barbu': 'Anti-Bearded',
-    'Barbu': 'Bearded',
-    'Anti-Spotted Chameleon': 'Anti-Chameleon',
-    'Spotted Chameleon': 'Chameleon',
-}
-
-
-def translate(value: str) -> str:
-    """
-    Translate case name using TRANSLATIONS dictionary.
-
-    Returns:
-        Translated name or original value if not in dictionary.
-
-    """
-    return TRANSLATIONS.get(value, value)
 
 
 def compute_masks(name: str, moves: str, mode: str,
@@ -169,46 +126,15 @@ def format_case(mode: str, code: str, info: SourceCaseInfo,
                 debug: bool = False) -> None:
     """Format single case from source info into CaseInfo structure."""
     name = code.split(' ')[1]
-    if info['aliases'] and mode == 'OLL':
-        name += f' { translate(info["aliases"][0]) }'
-
-    setups: list[str] = [
-        str(
-            parse_moves(algorithm).transform(
-                mirror_moves,
-            ),
-        ).replace(' ', '')
-        for algorithm in info['algorithms'][:10]
-    ]
 
     main_algorithm = ''.join(info['main'])
-    if main_algorithm:
-        setups.insert(0, main_algorithm)
-
-    probability: float
-    probability_label: str
-    if 'F2L' in mode:
-        probability = 1 / 42
-        probability_label = '1/42'
-    else:
-        probability = eval(info['probability'])  # noqa: S307
-        probability_label = info['probability']
 
     masks = compute_masks(
         name, main_algorithm, mode,
         debug=debug,
     )
 
-    # Build complete CaseInfo
-    case_data: CaseInfo = {
-        'name': name,
-        'probability': probability,
-        'probability_label': probability_label,
-        'main': main_algorithm,
-        'setups': setups,
-        'masks': masks,
-    }
-    data[name] = case_data
+    data[name] = masks
 
 
 def format_cases(cases: dict[str, SourceCaseInfo], mode: str, *,
@@ -225,10 +151,9 @@ def format_cases(cases: dict[str, SourceCaseInfo], mode: str, *,
     for code, info in cases.items():
         format_case(mode, code, info, data, debug=debug)
 
-    if mode in SKIPPED and len(cases) > 1:
-        source = SKIPPED[mode]
+    if len(cases) > 1:
         format_case(
-            mode, f'{ mode } SKIP', source,
+            mode, f'{ mode } SKIP', {'main': ''},
             data, debug=debug,
         )
 

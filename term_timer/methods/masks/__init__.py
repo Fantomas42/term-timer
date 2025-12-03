@@ -1,4 +1,4 @@
-"""CFOP case database loading and management."""
+"""CFOP case's masks loading and management."""
 
 import json
 from pathlib import Path
@@ -14,30 +14,22 @@ F2L_PATH: Final = CASES_DIRECTORY / 'f2l.json'
 OLL_PATH: Final = CASES_DIRECTORY / 'oll.json'
 PLL_PATH: Final = CASES_DIRECTORY / 'pll.json'
 
-CASES: dict[str, dict[str, CaseInfo]] = {}
 CASES_MASKS: dict[str, dict[str, CaseMaskInfo]] = {}
 
 
 def load_cases(path: Path) -> None:
     """Load case definitions from JSON file into CASES and CASES_MASKS."""
     case_type = path.name.replace('.json', '').upper()
-    cases = CASES.setdefault(case_type, {})
     cases_masks = CASES_MASKS.setdefault(case_type, {})
 
     with path.open('r', encoding='utf-8') as fd:
         json_data: dict[str, CaseInfo] = json.load(fd)
-        for case_name, case_data in json_data.items():
-            case_info = case_data
-
-            masks_dict = case_data['masks']
+        for case_name, masks_dict in json_data.items():
             for mask, mask_info in masks_dict.items():
                 cases_masks[mask] = {
                     'case': case_name,
                     'configurations': mask_info,
                 }
-
-            case_id = case_name.split(' ')[0]
-            cases[case_id] = case_info
 
 
 for path in {AF2L_PATH, F2L_PATH, OLL_PATH, PLL_PATH}:
