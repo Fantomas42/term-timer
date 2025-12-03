@@ -119,7 +119,7 @@ def random_training(step: str, selected_cases: list[str],
     """
     cases = get_collection(step.upper()).cases
     valid_cases: dict[str, Case] = {
-        k: v for k, v in cases.items() if v.setup_algorithms
+        v.code: v for v in cases.values() if v.setup_algorithms
     }
 
     case = rng.choice(selected_cases or list(valid_cases.keys()))
@@ -128,7 +128,7 @@ def random_training(step: str, selected_cases: list[str],
         error_string = f'Invalid case { case } for { step.upper() }'
         raise InvalidCaseError(error_string)
 
-    case_info = cases[case]
+    case_info = valid_cases[case]
 
     algo = (
         orientation_moves
