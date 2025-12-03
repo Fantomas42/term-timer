@@ -36,6 +36,7 @@ COMMAND_ALIASES: Final[dict[str, list[str]]] = {
     'delete': ['rm', 'r'],
     'index': ['ix', 'x'],
     'scramble': ['sc', 'z'],
+    'merge': ['mg', 'j'],
 }
 
 COMMAND_RESOLUTIONS: dict[str, str] = {}
@@ -1045,6 +1046,34 @@ def delete_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     return parser
 
 
+def merge_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """
+    Create argument parser for merge command.
+
+    Returns:
+        Configured argument parser for merge command.
+
+    """
+    parser = subparsers.add_parser(
+        'merge',
+        help='Merge multiple sessions into one.',
+        description=(
+            'Merge solves from multiple sessions into a single session, '
+            'sorted by date.'
+        ),
+        aliases=COMMAND_ALIASES['merge'],
+    )
+
+    parser.add_argument(
+        'sessions',
+        nargs='+',
+        metavar='SESSION',
+        help='Session files to merge.',
+    )
+
+    return parser
+
+
 def get_arguments() -> Namespace:
     """
     Parse command-line arguments and return parsed namespace.
@@ -1077,6 +1106,7 @@ def get_arguments() -> Namespace:
     serve_arguments(subparsers)
     scramble_arguments(subparsers)
     import_arguments(subparsers)
+    merge_arguments(subparsers)
 
     args = parser.parse_args(sys.argv[1:])
 

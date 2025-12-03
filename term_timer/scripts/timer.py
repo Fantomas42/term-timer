@@ -1,5 +1,4 @@
 """Main timer application entry point."""
-
 import asyncio
 from argparse import Namespace
 from contextlib import suppress
@@ -251,6 +250,11 @@ def manage(command: str, options: Namespace) -> int:
         session_manager.index()
         return 0
 
+    if command == 'merge':
+        session_manager = SessionManager()
+        session_manager.merge(options.sessions)
+        return 0
+
     cube = options.cube
 
     if command == 'edit':
@@ -306,7 +310,7 @@ def main() -> int:  # noqa: PLR0911
         if command == 'serve':
             Server().run_server(options.host, options.port, debug=DEBUG)
             return 0
-        if command in {'edit', 'delete', 'index', 'scramble'}:
+        if command in {'edit', 'delete', 'index', 'merge', 'scramble'}:
             return manage(command, options)
         return tools(command, options)
 

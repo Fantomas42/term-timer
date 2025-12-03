@@ -15,6 +15,7 @@ from term_timer.arguments import get_arguments
 from term_timer.arguments import graph_arguments
 from term_timer.arguments import import_arguments
 from term_timer.arguments import list_arguments
+from term_timer.arguments import merge_arguments
 from term_timer.arguments import serve_arguments
 from term_timer.arguments import set_session_arguments
 from term_timer.arguments import solve_arguments
@@ -30,7 +31,7 @@ class TestCommandAliases(unittest.TestCase):
         expected_commands = {
             'solve', 'list', 'stats', 'graph', 'cfop', 'detail',
             'import', 'serve', 'train', 'edit', 'delete', 'index',
-            'scramble', 'browse',
+            'scramble', 'browse', 'merge',
         }
         self.assertEqual(set(COMMAND_ALIASES.keys()), expected_commands)
 
@@ -299,6 +300,55 @@ class TestDeleteArguments(unittest.TestCase):
         args = main_parser.parse_args(['delete', '5'])
         self.assertEqual(args.command, 'delete')
         self.assertEqual(args.solve, 5)
+
+
+class TestMergeArguments(unittest.TestCase):
+    """Tests for merge command argument parsing."""
+
+    def test_merge_parser_creation(self) -> None:
+        """Test merge parser creation."""
+        main_parser = ArgumentParser()
+        subparsers = main_parser.add_subparsers()
+        parser = merge_arguments(subparsers)
+        self.assertIsInstance(parser, ArgumentParser)
+
+    def test_merge_with_sessions(self) -> None:
+        """Test merge with session names."""
+        main_parser = ArgumentParser()
+        subparsers = main_parser.add_subparsers(dest='command')
+        merge_arguments(subparsers)
+
+        args = main_parser.parse_args(['merge', 'session1', 'session2'])
+        self.assertEqual(args.command, 'merge')
+        self.assertEqual(args.sessions, ['session1', 'session2'])
+
+    def test_merge_with_multiple_sessions(self) -> None:
+        """Test merge with multiple session names."""
+        main_parser = ArgumentParser()
+        subparsers = main_parser.add_subparsers(dest='command')
+        merge_arguments(subparsers)
+
+        args = main_parser.parse_args([
+            'merge',
+            'default',
+            'session1',
+            'session2',
+            'session3',
+        ])
+        self.assertEqual(
+            args.sessions,
+            ['default', 'session1', 'session2', 'session3'],
+        )
+
+    def test_merge_alias_mg(self) -> None:
+        """Test merge with 'mg' alias."""
+        main_parser = ArgumentParser()
+        subparsers = main_parser.add_subparsers(dest='command')
+        merge_arguments(subparsers)
+
+        args = main_parser.parse_args(['mg', 'session1', 'session2'])
+        self.assertEqual(args.command, 'mg')
+        self.assertEqual(args.sessions, ['session1', 'session2'])
 
 
 class TestGetArguments(unittest.TestCase):

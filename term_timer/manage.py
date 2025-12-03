@@ -1,6 +1,9 @@
 """Solve and session management utilities for editing and deleting solves."""
+import json
+import operator
 from datetime import datetime
 from datetime import timezone
+from pathlib import Path
 from random import Random
 
 from rich import box
@@ -20,6 +23,7 @@ from term_timer.interface.console import console
 from term_timer.printer import print_cube_scrambled
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
+from term_timer.solve import SolveData
 from term_timer.stats import Statistics
 
 
@@ -230,6 +234,36 @@ class SessionManager:
                     f'[time]{ format_time(stats.best) }[/time]',
                 )
             console.print(table)
+
+    @staticmethod
+    def merge(session_paths: list[str]) -> None:
+        """
+        Merge solves from multiple sessions, sorted by date.
+
+        Args:
+            session_paths: List of session path to merge.
+
+        """
+        all_solves: list[SolveData] = []
+        for session_path in session_paths:
+            path = Path(session_path)
+            if not path.exists():
+                console.print(
+                    f'Invalid solve file "{ path }"',
+                    style='warning',
+                )
+                continue
+            with path.open('r', encoding='utf-8') as fd:
+                data: list[SolveData] = json.load(fd)
+            all_solves.extend(data)
+
+        all_solves.sort(key=operator.itemgetter('date'))
+
+        out = json.dumps(
+            all_solves,
+            indent=1,
+        )
+        print(out)  # noqa: T201
 
 
 class ScrambleManager:
