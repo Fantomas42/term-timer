@@ -1,11 +1,10 @@
 """CFOP case's masks loading and management."""
-
 import json
 from pathlib import Path
 from typing import Final
 
-from term_timer.methods.types import CaseInfo
 from term_timer.methods.types import CaseMaskInfo
+from term_timer.methods.types import CaseMasks
 
 CASES_DIRECTORY: Final = Path(__file__).parent
 
@@ -23,7 +22,7 @@ def load_cases(path: Path) -> None:
     cases_masks = CASES_MASKS.setdefault(case_type, {})
 
     with path.open('r', encoding='utf-8') as fd:
-        json_data: dict[str, CaseInfo] = json.load(fd)
+        json_data: dict[str, CaseMasks] = json.load(fd)
         for case_name, masks_dict in json_data.items():
             for mask, mask_info in masks_dict.items():
                 cases_masks[mask] = {

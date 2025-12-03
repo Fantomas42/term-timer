@@ -18,7 +18,7 @@ from term_timer.argparser import ArgumentParser
 from term_timer.methods.masks.encoders import f2l_case_encoder
 from term_timer.methods.masks.encoders import oll_case_encoder
 from term_timer.methods.masks.encoders import pll_case_encoder
-from term_timer.methods.types import CaseInfo
+from term_timer.methods.types import CaseMasks
 from term_timer.methods.types import SourceCaseInfo
 
 CFOP_CASE_ENCODERS: dict[str, Callable[[str], str]] = {
@@ -33,7 +33,7 @@ CFOP_CASE_ENCODERS: dict[str, Callable[[str], str]] = {
 
 
 def compute_masks(name: str, moves: str, mode: str,
-                  *, debug: bool = False) -> dict[str, list[str]]:
+                  *, debug: bool = False) -> CaseMasks:
     """
     Compute facelet masks for case across different orientations.
 
@@ -44,7 +44,7 @@ def compute_masks(name: str, moves: str, mode: str,
     if mode == 'AF2L':
         return {}
 
-    masks: dict[str, list[str]] = {}
+    masks: CaseMasks = {}
 
     algorithm = parse_moves(moves).transform(
         mirror_moves,
@@ -122,9 +122,9 @@ def compute_masks(name: str, moves: str, mode: str,
 
 
 def format_case(mode: str, code: str, info: SourceCaseInfo,
-                data: dict[str, CaseInfo], *,
+                data: dict[str, CaseMasks], *,
                 debug: bool = False) -> None:
-    """Format single case from source info into CaseInfo structure."""
+    """Format single case from source info into mask structure."""
     name = code.split(' ')[1]
 
     main_algorithm = ''.join(info['main'])
@@ -138,22 +138,22 @@ def format_case(mode: str, code: str, info: SourceCaseInfo,
 
 
 def format_cases(cases: dict[str, SourceCaseInfo], mode: str, *,
-                 debug: bool = False) -> dict[str, CaseInfo]:
+                 debug: bool = False) -> dict[str, CaseMasks]:
     """
-    Format all cases for a mode into CaseInfo dictionary.
+    Format all cases for a mode into masks dictionary.
 
     Returns:
-        Dictionary mapping case names to formatted CaseInfo structures.
+        Dictionary mapping case names to formatted masks structures.
 
     """
-    data: dict[str, CaseInfo] = {}
+    data: dict[str, CaseMasks] = {}
 
     for code, info in cases.items():
         format_case(mode, code, info, data, debug=debug)
 
     if len(cases) > 1:
         format_case(
-            mode, f'{ mode } SKIP', {'main': ''},
+            mode, f'{ mode } SKIP', {'main': '', 'type': mode},
             data, debug=debug,
         )
 
