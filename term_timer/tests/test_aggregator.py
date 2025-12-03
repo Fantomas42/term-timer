@@ -182,8 +182,8 @@ class TestSolvesMethodAggregator(unittest.TestCase):
                 'solve': self.mock_solve_advanced,
                 'score': 80,
                 'steps': {
-                    'step1': {
-                        'case': 'case_a',
+                    'oll': {
+                        'case': '35',
                         'time': 10.0,
                         'execution': 8.0,
                         'recognition': 2.0,
@@ -209,10 +209,10 @@ class TestSolvesMethodAggregator(unittest.TestCase):
 
         self.assertEqual(result['total'], 1)
         self.assertEqual(result['mean'], 80.0)
-        self.assertIn('step1', result['resume'])
-        self.assertIn('case_a', result['resume']['step1'])
+        self.assertIn('oll', result['resume'])
+        self.assertIn('35', result['resume']['oll'])
 
-        case_data = result['resume']['step1']['case_a']
+        case_data = result['resume']['oll']['35']
         self.assertEqual(case_data['count'], 1)
         self.assertEqual(case_data['frequency'], 1.0)
         self.assertEqual(case_data['time'], 10.0)
@@ -257,8 +257,8 @@ class TestSolvesMethodAggregator(unittest.TestCase):
                 'solve': Mock(),
                 'score': 80,
                 'steps': {
-                    'step1': {
-                        'case': 'case_a',
+                    'oll': {
+                        'case': '35',
                         'time': 10.0,
                         'execution': 8.0,
                         'recognition': 2.0,
@@ -272,8 +272,8 @@ class TestSolvesMethodAggregator(unittest.TestCase):
                 'solve': Mock(),
                 'score': 90,
                 'steps': {
-                    'step1': {
-                        'case': 'case_a',
+                    'oll': {
+                        'case': '35',
                         'time': 12.0,
                         'execution': 9.0,
                         'recognition': 3.0,
@@ -293,7 +293,7 @@ class TestSolvesMethodAggregator(unittest.TestCase):
                           return_value=analyses):
             result = aggregator.aggregate()
 
-        case_data = result['resume']['step1']['case_a']
+        case_data = result['resume']['oll']['35']
         self.assertEqual(case_data['count'], 2)
         self.assertEqual(case_data['frequency'], 1.0)
         self.assertEqual(case_data['time'], 11.0)  # (10+12)/2
@@ -302,4 +302,4 @@ class TestSolvesMethodAggregator(unittest.TestCase):
         self.assertEqual(case_data['qtm'], 22)  # (20+24)/2
         self.assertEqual(case_data['tps'], 2.1)  # (2.0+2.2)/2
         self.assertEqual(case_data['etps'], 2.6)  # (2.5+2.7)/2
-        self.assertEqual(case_data['probability'], 0)  # default value
+        self.assertEqual(case_data['probability'], 0.018518518518518517)
