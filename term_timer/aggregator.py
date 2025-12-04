@@ -138,7 +138,7 @@ class SolvesMethodAggregator:
                 step_case = step['case']
                 resume.setdefault(step_name, {})
                 if step_case not in resume[step_name]:
-                    case_info = get_case(step_name.upper(), step_case)
+                    case_info = get_case(step_name, step_case)
                     resume[step_name][step_case] = {
                         'recognitions': [],
                         'executions': [],

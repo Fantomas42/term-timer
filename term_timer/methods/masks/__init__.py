@@ -23,10 +23,10 @@ def load_cases(path: Path) -> None:
 
     with path.open('r', encoding='utf-8') as fd:
         json_data: dict[str, CaseMasks] = json.load(fd)
-        for case_name, masks_dict in json_data.items():
+        for case_code, masks_dict in json_data.items():
             for mask, mask_info in masks_dict.items():
                 cases_masks[mask] = {
-                    'case': case_name,
+                    'case': case_code,
                     'configurations': mask_info,
                 }
 

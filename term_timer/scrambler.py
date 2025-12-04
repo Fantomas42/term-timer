@@ -93,9 +93,7 @@ def trainer(step: str, cases: list[str],
         case, scramble = random_training(
             step, cases, orientation_moves, rng,
         )
-        case_name = case.name
-        if case.aliases:
-            case_name += f' ({ case.aliases[0] })'
+        case_name = case.code
         main_algorithm = case.main_algorithm
 
     cube.rotate(scramble)
@@ -117,7 +115,7 @@ def random_training(step: str, selected_cases: list[str],
         InvalidCaseError: If selected case is not valid for the step.
 
     """
-    cases = get_collection(step.upper()).cases
+    cases = get_collection(step).cases
     valid_cases: dict[str, Case] = {
         v.code: v for v in cases.values() if v.setup_algorithms
     }

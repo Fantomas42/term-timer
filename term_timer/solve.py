@@ -1,5 +1,4 @@
 """Solve data representation, analysis, and reporting."""
-
 from datetime import datetime
 from datetime import timezone
 from functools import cached_property
@@ -7,6 +6,7 @@ from typing import TypedDict
 
 import plotext as plt
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.cases import get_case
 from cubing_algs.constants import PAUSE_CHAR
 from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
@@ -623,18 +623,17 @@ class Solve:  # noqa: PLR0904
                     aufs += f' +{ step["aufs"][1] } post-AUF'
 
                 if step['case']:
-                    link = (
-                        'https://cubing.fache.fr/'
-                        f'{ step["name"].split(" ")[0] }/'
-                        f'{ step["case"].split(" ")[0] }.html'
-                    )
+                    step_code = step['name'].split(' ')[0]
+                    step_case = get_case(step_code, step['case'])
+                    link = step_case.cubing_fache_url
+
                     details = ''
                     if step['case_infos']:
                         details += f' { ", ".join(step["case_infos"]) }'
 
                     footer += (
                         ' [comment]// '
-                        f'[link={ link }]{ step["case"] }[/link]'
+                        f'[link={ link }]{ step_case.pretty_name }[/link]'
                         f'{ details }{ aufs }[/comment]'
                     )
 
