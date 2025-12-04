@@ -146,7 +146,7 @@ class SolvesMethodAggregator:
                         'qtms': [],
                         'tpss': [],
                         'etpss': [],
-                        'probability': case_info.probability,
+                        'case': case_info,
                     }
 
                 resume[step_name][step_case]['times'].append(step['time'])
@@ -165,7 +165,7 @@ class SolvesMethodAggregator:
                 final_resume[step_name][case_name] = {
                     'count': count,
                     'frequency': count / total,
-                    'probability': accumulator['probability'],
+                    'case': accumulator['case'],
                     'recognition': sum(accumulator['recognitions']) / count,
                     'execution': sum(accumulator['executions']) / count,
                     'time': sum(accumulator['times']) / count,

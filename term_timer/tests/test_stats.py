@@ -6,6 +6,8 @@ from typing import Any
 from unittest.mock import Mock
 from unittest.mock import patch
 
+from cubing_algs.cases import get_case
+
 from term_timer.constants import DNF
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
@@ -736,7 +738,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
                 'SKIP case': {
                     'count': 1,
                     'frequency': 0.1,
-                    'probability': 0.1,
+                    'case': get_case('OLL', 'SKIP'),
                     'recognition': 100000000.0,
                     'execution': 500000000.0,
                     'time': 600000000.0,

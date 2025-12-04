@@ -302,4 +302,4 @@ class TestSolvesMethodAggregator(unittest.TestCase):
         self.assertEqual(case_data['qtm'], 22)  # (20+24)/2
         self.assertEqual(case_data['tps'], 2.1)  # (2.0+2.2)/2
         self.assertEqual(case_data['etps'], 2.6)  # (2.5+2.7)/2
-        self.assertEqual(case_data['probability'], 0.018518518518518517)
+        self.assertTrue(case_data['case'])

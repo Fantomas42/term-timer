@@ -34,6 +34,8 @@ Analyser.summary (StepSummary list)
 """
 from typing import TypedDict
 
+from cubing_algs.cases.case import Case
+
 from term_timer.solve import Solve
 
 
@@ -66,7 +68,7 @@ class CaseStatsAccumulator(TypedDict):
     qtms: list[int]
     tpss: list[float]
     etpss: list[float]
-    probability: float
+    case: Case
 
 
 class CaseStats(TypedDict):
@@ -74,7 +76,7 @@ class CaseStats(TypedDict):
 
     count: int
     frequency: float
-    probability: float
+    case: Case
     recognition: float
     execution: float
     time: float
