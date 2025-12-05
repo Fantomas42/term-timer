@@ -318,7 +318,7 @@ class TestView(unittest.TestCase):
             template_name = 'test.html'
 
             @staticmethod
-            def get_context() -> dict[str, str]:
+            def get_context() -> dict[str, Any]:  # type: ignore[override]
                 return {'test': 'value'}
 
         view = TestView()
