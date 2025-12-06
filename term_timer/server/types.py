@@ -79,15 +79,13 @@ class RecognitionData(TypedDict):
 class StepDescriptionInfo(TypedDict):
     """Step description information for academy."""
 
-    name: str
     description: str
-    description_alt: str
 
 
 class MethodInfo(TypedDict):
     """Method information for academy overview."""
 
-    name: str
+    cube_size: int
     description: str
     steps: dict[str, StepDescriptionInfo]
 
@@ -170,6 +168,7 @@ class AcademyStepContext(TypedDict):
     method: str
     step: str
     step_info: StepDescriptionInfo
+    cube_size: int
     cases: dict[str, Case]
 
 
@@ -179,4 +178,5 @@ class AcademyCaseContext(TypedDict):
     method: str
     step: str
     step_info: StepDescriptionInfo
+    cube_size: int
     case: Case

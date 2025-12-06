@@ -17,31 +17,31 @@
     </p>
   </section>
 
-  {% for method_name, method in methods.items() %}
-  <section class="method-section">
-    <h3>{{ method.name }}</h3>
-    <p class="method-description">{{ method.description }}</p>
+  {% for method_name, method_info in methods.items() %}
+    <section class="method-section">
+      <h3>{{ method_info.cube_size }}x{{ method_info.cube_size }}x{{ method_info.cube_size }} {{ method_name }}</h3>
+      <p class="method-description">{{ method_info.description }}</p>
 
-    <div class="steps-grid">
-      {% for code, step in method.steps.items() %}
-      <div class="step-card">
-        <h4>
-          <a href="/academy/{{ method.name }}/{{ step.name }}/">
-            <i class="fas fa-cube"></i>
-            {{ step.name }}
-          </a>
-        </h4>
-        <p>{{ step.description }}</p>
-        <div class="step-actions">
-          <a href="/academy/{{ method.name }}/{{ step.name }}/" class="btn btn-primary">
-            View Cases
-            <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
+      <div class="steps-grid">
+        {% for step_name, step_info in method_info.steps.items() %}
+          <div class="step-card">
+            <h4>
+              <a href="/academy/{{ method_name }}/{{ step_name }}/">
+                <i class="fas fa-cube"></i>
+                {{ step_name }}
+              </a>
+            </h4>
+            <p>{{ step_info.description }}</p>
+            <div class="step-actions">
+              <a href="/academy/{{ method_name }}/{{ step_name }}/" class="btn btn-primary">
+                View Cases
+                <i class="fas fa-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        {% endfor %}
       </div>
-      {% endfor %}
-    </div>
-  </section>
+    </section>
   {% endfor %}
 </main>
 {% endblock %}

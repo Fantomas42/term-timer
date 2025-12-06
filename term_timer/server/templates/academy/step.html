@@ -1,14 +1,14 @@
 {% extends "skeleton.html" %}
 
-{% block title %}{{ step_info.name }} Cases{% endblock %}
-{% block subtitle %}{{ step }} Academy{% endblock %}
+{% block title %}{{ method }}/{{ step }} Cases{% endblock %}
+{% block subtitle %}{{ method }} / {{ step }} Academy{% endblock %}
 
 {% block description %}
-Learn all {{ step }} cases with algorithms and variations for the {{ step_info.name }} step.
+Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cube_size }}x{{ cube_size }}x{{ cube_size }} cube.
 {% endblock %}
 
 {% block actions %}
-<a href="/academy/" class="btn btn-secondary">
+<a href="/academy/" class="btn btn-small">
   <i class="fas fa-arrow-left"></i>
   Back to Academy
 </a>
@@ -17,40 +17,40 @@ Learn all {{ step }} cases with algorithms and variations for the {{ step_info.n
 {% block body %}
 <main class="step-cases">
   <section class="step-header">
-    <h2>{{ step_info.name }}</h2>
+    <h2>{{ cube_size }}x{{ cube_size }}x{{ cube_size }} {{ method }} / {{ step }}</h2>
     <p class="step-description">{{ step_info.description }}</p>
     <div class="step-stats">
-      <span class="case-count">{{ cases_count }} Cases</span>
+      <span class="case-count">{{ cases|length }} Cases</span>
     </div>
   </section>
 
   <section class="cases-grid">
-    {% for case in cases %}
-    <div class="case-card">
-      <div class="case-header">
-        <h3>
-          <a href="/academy/{{ step.lower() }}/{{ case.id }}/">
-            {{ case.name }}
+    {% for case in cases.values() %}
+      <div class="case-card">
+        <div class="case-header">
+          <h3>
+            <a href="/academy/{{ method }}/{{ step }}/{{ case.id }}/">
+              {{ case.name }}
+            </a>
+          </h3>
+          <div class="case-code">{{ case.code }}</div>
+        </div>
+
+        <div class="case-algorithm">
+          <code>{{ case.main_algorithm }}</code>
+        </div>
+
+        <div class="case-meta">
+          <span class="orientations-count">
+            <i class="fas fa-sync-alt"></i>
+            {{ case.algorithms|length }} algorithms
+          </span>
+          <a href="/academy/{{ method }}/{{ step }}/{{ case.id }}/" class="case-link">
+            <i class="fas fa-arrow-right"></i>
+            Details
           </a>
-        </h3>
-        <div class="case-code">{{ case.code }}</div>
+        </div>
       </div>
-
-      <div class="case-algorithm">
-        <code>{{ case.main_algorithm | format_line | safe }}</code>
-      </div>
-
-      <div class="case-meta">
-        <span class="orientations-count">
-          <i class="fas fa-sync-alt"></i>
-          {{ case.masks_count }} orientations
-        </span>
-        <a href="/academy/{{ step.lower() }}/{{ case.id }}/" class="case-link">
-          <i class="fas fa-arrow-right"></i>
-          Details
-        </a>
-      </div>
-    </div>
     {% endfor %}
   </section>
 </main>

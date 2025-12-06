@@ -1154,83 +1154,53 @@ class AcademyView(View):
     template_name = 'academy/overview.html'
     methods: ClassVar[dict[str, MethodInfo]] = {
         'CFOP': {
-            'name': 'CFOP',
+            'cube_size': 3,
             'description': (
                 'Cross, F2L, OLL, PLL - The most popular speedcubing method'
             ),
             'steps': {
                 'F2L': {
-                    'name': 'F2L',
                     'description': (
                         'First Two Layers - '
                         'Solve cross and first two layers simultaneously'
                     ),
-                    'description_alt': (
-                        'Solve the cross and first two layers simultaneously '
-                        'using corner-edge pairs.'
-                    ),
                 },
                 'OLL': {
-                    'name': 'OLL',
                     'description': (
                         'Orientation of Last Layer - '
                         'Orient all pieces on the last layer'
                     ),
-                    'description_alt': (
-                        'Orient all pieces on the last layer '
-                        'to show the same color on top.'
-                    ),
                 },
                 'PLL': {
-                    'name': 'PLL',
                     'description': (
                         'Permutation of Last Layer - '
                         'Permute all pieces on the last layer'
                     ),
-                    'description_alt': (
-                        'Permute all pieces on the last layer '
-                        'to their correct positions.'
-                    ),
                 },
                 'AF2L': {
-                    'name': 'AF2L',
                     'description': (
                         'Advanced First Two Layers - '
                         'Solve first two layers with advanced techniques.'
-                    ),
-                    'description_alt': (
-                        'Solve first two layers faster with '
-                        'optimized and faster algorithms.'
                     ),
                 },
             },
         },
         'Ortega': {
-            'name': 'Ortega',
+            'cube_size': 2,
             'description': (
                 'Solve D, OLL, PBL - The most popular 2x2x2 method'
             ),
             'steps': {
                 'OLL': {
-                    'name': 'OLL',
                     'description': (
                         'Orientation of Last Layer - '
                         'Orient all pieces on the last layer'
                     ),
-                    'description_alt': (
-                        'Orient all pieces on the last layer '
-                        'to show the same color on top.'
-                    ),
                 },
                 'PBL': {
-                    'name': 'PBL',
                     'description': (
                         'Permutation of Both Layers - '
                         'Orient all pieces on all layers'
-                    ),
-                    'description_alt': (
-                        'Permute all pieces on both layers '
-                        'to their correct positions.'
                     ),
                 },
             },
@@ -1272,6 +1242,7 @@ class AcademyStepView(AcademyView):
         try:
             self.cases = get_collection(f'{ method }/{ step }').cases
             self.step_info = self.methods[method]['steps'][step]
+            self.cube_size = self.methods[method]['cube_size']
         except KeyError:
             abort(404, f'{ method }/{ step } does not exist')
 
@@ -1287,6 +1258,7 @@ class AcademyStepView(AcademyView):
             'method': self.method,
             'step': self.step,
             'step_info': self.step_info,
+            'cube_size': self.cube_size,
             'cases': self.cases,
         }
 
@@ -1313,6 +1285,7 @@ class AcademyCaseView(AcademyView):
         try:
             self.case = get_case(f'{ method }/{ step }', case_id)
             self.step_info = self.methods[method]['steps'][step]
+            self.cube_size = self.methods[method]['cube_size']
         except KeyError:
             abort(404, f'{ method }/{ step } { case_id } does not exist')
 
@@ -1328,6 +1301,7 @@ class AcademyCaseView(AcademyView):
             'method': self.method,
             'step': self.step,
             'step_info': self.step_info,
+            'cube_size': self.cube_size,
             'case': self.case,
         }
 
