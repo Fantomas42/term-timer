@@ -1236,7 +1236,7 @@ class AcademyStepView(AcademyView):
             step: Method step name (F2L, OLL, or PLL).
 
         """
-        self.method = method
+        self.method = method.upper()
         self.step = step
 
         try:
@@ -1275,7 +1275,7 @@ class AcademyCaseView(AcademyView):
             case_id: Case identifier within the step.
 
         """
-        self.method = method
+        self.method = method.upper()
         self.step = step
         self.case_id = case_id
 
