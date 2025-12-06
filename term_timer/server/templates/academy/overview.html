@@ -1,19 +1,19 @@
 {% extends "skeleton.html" %}
 
 {% block title %}Academy{% endblock %}
-{% block subtitle %}Learning Center{% endblock %}
+{% block subtitle %}Academy{% endblock %}
 
 {% block description %}
-  Learn CFOP method with detailed case analysis and algorithms for speedcubing.
+  Learn cubing methods with detailed case analysis and algorithms for speedcubing.
 {% endblock %}
 
 {% block body %}
 <main class="academy-overview">
   <section class="intro">
-    <h2>CFOP Academy</h2>
+    <h2>Cubing Academy</h2>
     <p>
-      Master the CFOP method with our comprehensive learning center.
-      Explore all cases, algorithms, and techniques for each step of the method.
+      Master the Cube with our comprehensive learning center.
+      Explore all cases, algorithms, and techniques for each step of a method.
     </p>
   </section>
 
@@ -26,14 +26,14 @@
       {% for code, step in method.steps.items() %}
       <div class="step-card">
         <h4>
-          <a href="/academy/{{ step.name.lower() }}/">
+          <a href="/academy/{{ step.name }}/">
             <i class="fas fa-cube"></i>
             {{ step.name }}
           </a>
         </h4>
         <p>{{ step.description }}</p>
         <div class="step-actions">
-          <a href="/academy/{{ step.name.lower() }}/" class="btn btn-primary">
+          <a href="/academy/{{ method.name }}/{{ step.name }}/" class="btn btn-primary">
             View Cases
             <i class="fas fa-arrow-right"></i>
           </a>

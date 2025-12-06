@@ -1192,6 +1192,17 @@ class AcademyView(View):
                         'to their correct positions.'
                     ),
                 },
+                'AF2L': {
+                    'name': 'AF2L',
+                    'description': (
+                        'Advanced First Two Layers - '
+                        'Solve first two layers with advanced techniques.'
+                    ),
+                    'description_alt': (
+                        'Solve first two layers faster with '
+                        'optimized and faster algorithms.'
+                    ),
+                },
             },
         },
     }
@@ -1212,18 +1223,20 @@ class AcademyView(View):
 
 
 class AcademyStepView(AcademyView):
-    """View for displaying all cases for a specific CFOP step."""
+    """View for displaying all cases for a specific method step."""
 
     template_name = 'academy/step.html'
 
-    def __init__(self, step: str) -> None:
+    def __init__(self, method: str, step: str) -> None:
         """
         Initialize academy step view.
 
         Args:
-            step: CFOP step name (F2L, OLL, or PLL).
+            method: Method name (CFOP).
+            step: Method step name (F2L, OLL, or PLL).
 
         """
+        self.method = method
         self.step = step
 
         try:
@@ -1240,8 +1253,9 @@ class AcademyStepView(AcademyView):
 
         """
         return {
+            'method': self.method,
             'step': self.step,
-            'step_info': self.methods['CFOP']['steps'][self.step],
+            'step_info': self.methods[self.method]['steps'][self.step],
             'cases': self.cases,
         }
 
@@ -1251,15 +1265,17 @@ class AcademyCaseView(AcademyView):
 
     template_name = 'academy/case.html'
 
-    def __init__(self, step: str, case_id: str) -> None:
+    def __init__(self, method: str, step: str, case_id: str) -> None:
         """
         Initialize academy case view.
 
         Args:
+            method: Method name (CFOP).
             step: CFOP step name (F2L, OLL, or PLL).
             case_id: Case identifier within the step.
 
         """
+        self.method = method
         self.step = step
         self.case_id = case_id
 
@@ -1277,6 +1293,7 @@ class AcademyCaseView(AcademyView):
 
         """
         return {
+            'method': self.method,
             'step': self.step,
             'step_info': self.methods['CFOP']['steps'][self.step],
             'case': self.case,
@@ -1374,8 +1391,8 @@ class Server:
             """
             return AcademyView().as_view(debug)
 
-        @app.route('/academy/<step>/')  # type: ignore[misc]
-        def academy_step(step: str) -> str:
+        @app.route('/academy/<method>/<step>/')  # type: ignore[misc]
+        def academy_step(method: str, step: str) -> str:
             """
             Render academy step page with all cases.
 
@@ -1383,10 +1400,10 @@ class Server:
                 Rendered HTML template.
 
             """
-            return AcademyStepView(step).as_view(debug)
+            return AcademyStepView(method, step).as_view(debug)
 
-        @app.route('/academy/<step>/<case_id>/')  # type: ignore[misc]
-        def academy_case(step: str, case_id: str) -> str:
+        @app.route('/academy/<method>/<step>/<case_id>/')  # type: ignore[misc]
+        def academy_case(method: str, step: str, case_id: str) -> str:
             """
             Render academy case detail page.
 
@@ -1394,7 +1411,7 @@ class Server:
                 Rendered HTML template.
 
             """
-            return AcademyCaseView(step, case_id).as_view(debug)
+            return AcademyCaseView(method, step, case_id).as_view(debug)
 
         @app.route('/algorithm/<algorithm>/')  # type: ignore[misc]
         def algorithm_detail(algorithm: str) -> str:

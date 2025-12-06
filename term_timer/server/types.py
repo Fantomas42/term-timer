@@ -167,6 +167,7 @@ class AcademyOverviewContext(TypedDict):
 class AcademyStepContext(TypedDict):
     """Template context for academy step view."""
 
+    method: str
     step: str
     step_info: StepDescriptionInfo
     cases: dict[str, Case]
@@ -175,6 +176,7 @@ class AcademyStepContext(TypedDict):
 class AcademyCaseContext(TypedDict):
     """Template context for academy case view."""
 
+    method: str
     step: str
     step_info: StepDescriptionInfo
     case: Case
