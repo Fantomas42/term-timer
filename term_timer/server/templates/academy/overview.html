@@ -26,7 +26,7 @@
       {% for code, step in method.steps.items() %}
       <div class="step-card">
         <h4>
-          <a href="/academy/{{ step.name }}/">
+          <a href="/academy/{{ method.name }}/{{ step.name }}/">
             <i class="fas fa-cube"></i>
             {{ step.name }}
           </a>
@@ -43,23 +43,5 @@
     </div>
   </section>
   {% endfor %}
-
-  <section class="quick-stats">
-    <h3>Quick Reference</h3>
-    <div class="stats-grid academy-stats">
-      <div class="stat-card academy-stat">
-        <div class="stat-number">42</div>
-        <div class="stat-label">F2L Cases</div>
-      </div>
-      <div class="stat-card academy-stat">
-        <div class="stat-number">57</div>
-        <div class="stat-label">OLL Cases</div>
-      </div>
-      <div class="stat-card academy-stat">
-        <div class="stat-number">21</div>
-        <div class="stat-label">PLL Cases</div>
-      </div>
-    </div>
-  </section>
 </main>
 {% endblock %}

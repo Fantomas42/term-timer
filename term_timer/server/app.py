@@ -1205,6 +1205,36 @@ class AcademyView(View):
                 },
             },
         },
+        'Ortega': {
+            'name': 'Ortega',
+            'description': (
+                'Solve D, OLL, PBL - The most popular 2x2x2 method'
+            ),
+            'steps': {
+                'OLL': {
+                    'name': 'OLL',
+                    'description': (
+                        'Orientation of Last Layer - '
+                        'Orient all pieces on the last layer'
+                    ),
+                    'description_alt': (
+                        'Orient all pieces on the last layer '
+                        'to show the same color on top.'
+                    ),
+                },
+                'PBL': {
+                    'name': 'PBL',
+                    'description': (
+                        'Permutation of Both Layers - '
+                        'Orient all pieces on all layers'
+                    ),
+                    'description_alt': (
+                        'Permute all pieces on both layers '
+                        'to their correct positions.'
+                    ),
+                },
+            },
+        },
     }
 
     def get_context(
@@ -1232,17 +1262,18 @@ class AcademyStepView(AcademyView):
         Initialize academy step view.
 
         Args:
-            method: Method name (CFOP).
+            method: Method name (CFOP, Ortega).
             step: Method step name (F2L, OLL, or PLL).
 
         """
-        self.method = method.upper()
+        self.method = method
         self.step = step
 
         try:
-            self.cases = get_collection(step).cases
+            self.cases = get_collection(f'{ method }/{ step }').cases
+            self.step_info = self.methods[method]['steps'][step]
         except KeyError:
-            abort(404, f'{ self.step } does not exist')
+            abort(404, f'{ method }/{ step } does not exist')
 
     def get_context(self) -> AcademyStepContext:
         """
@@ -1255,7 +1286,7 @@ class AcademyStepView(AcademyView):
         return {
             'method': self.method,
             'step': self.step,
-            'step_info': self.methods[self.method]['steps'][self.step],
+            'step_info': self.step_info,
             'cases': self.cases,
         }
 
@@ -1275,14 +1306,15 @@ class AcademyCaseView(AcademyView):
             case_id: Case identifier within the step.
 
         """
-        self.method = method.upper()
+        self.method = method
         self.step = step
         self.case_id = case_id
 
         try:
-            self.case = get_case(step, case_id)
+            self.case = get_case(f'{ method }/{ step }', case_id)
+            self.step_info = self.methods[method]['steps'][step]
         except KeyError:
-            abort(404, f'{ self.step } { self.case_id } does not exist')
+            abort(404, f'{ method }/{ step } { case_id } does not exist')
 
     def get_context(self) -> AcademyCaseContext:
         """
@@ -1295,7 +1327,7 @@ class AcademyCaseView(AcademyView):
         return {
             'method': self.method,
             'step': self.step,
-            'step_info': self.methods['CFOP']['steps'][self.step],
+            'step_info': self.step_info,
             'case': self.case,
         }
 
