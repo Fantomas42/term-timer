@@ -18,6 +18,19 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
 </a>
 {% endblock %}
 
+{% block script %}
+  <script src="https://cdn.cubing.net/v0/js/cubing/twisty" type="module"></script>
+  <script>
+   function copyToClipboard(text) {
+     navigator.clipboard.writeText(text).then(function() {
+       console.log('Algorithm copied to clipboard: ' + text);
+     }, function(err) {
+       console.error('Could not copy text: ', err);
+     });
+   }
+  </script>
+{% endblock script %}
+
 {% block body %}
   <div class="card">
     <div class="card-header">
@@ -130,6 +143,27 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
     </div>
   </div>
 
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-play"></i>
+          <a href="#player" id="player">Player</a>
+        </h2>
+      </div>
+      <div class="player-container">
+        <div id="playerer">
+          <twisty-player
+            alg="{{ case.main_algorithm }}"
+            puzzle="{{ cube_size }}x{{ cube_size }}x{{ cube_size }}"
+            viewerlink="none"
+            background="none"
+            experimental-setup-alg="z2"
+            experimental-setup-anchor="end"
+          ></twisty-player>
+        </div>
+      </div>
+    </div>
+
   {% if case.recognition %}
   <div class="card">
     <div class="card-header">
@@ -168,7 +202,7 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
     <div class="card-header">
       <h2 class="card-title">
         <i class="fas fa-list"></i>
-        <a href="#algorithms" id="algorithms">Alternative Algorithms</a>
+        <a href="#setup-algorithms" id="algorithms">Setup Algorithms</a>
       </h2>
     </div>
     <p style="padding: 0 1rem 1rem 1rem; color: #94a3b8;">
@@ -415,14 +449,4 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
       {% endif %}
     </div>
   </div>
-
-<script>
-function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(function() {
-    console.log('Algorithm copied to clipboard: ' + text);
-  }, function(err) {
-    console.error('Could not copy text: ', err);
-  });
-}
-</script>
 {% endblock %}
