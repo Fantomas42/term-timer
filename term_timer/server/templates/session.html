@@ -832,16 +832,15 @@
               <tr>
                 <td>
                   <div class="step-case">
-                    {% set code, case_name, section = name|parse_case_name(step.upper()) %}
                     <div class="step-case-img">
-                      <a href="?m={{ method_aggregation.analyser.name.lower() }}&step={{ step }}&case_uid={{ code }}">
-                        {{ code }}
+                      <a href="?m={{ method_aggregation.analyser.name.lower() }}&step={{ step }}&case_uid={{ case.case.code }}">
+                        {{ case.case.code }}
                       </a>
                     </div>
-                    {% if 'SKIP' not in code %}
-                      <a href="https://cubing.fache.fr/{{ section }}/{{ code }}.html"
+                    {% if case.case.code != 'SKIP' %}
+                      <a href="{{ case.case.cubing_fache_url }}"
                          target="_blank" class="link">
-                        {{ case_name }}
+                        {{ case.case.pretty_name }}
                       </a>
                     {% else %}
                       <span class="skip">SKIP</span>
@@ -851,11 +850,11 @@
                 <td>
                   {{ case.count }}
                 </td>
-                <td class="frequency-{% if case.frequency > case.probability %}higher{% else %}lower{% endif %}">
+                <td class="frequency-{% if case.frequency > case.case.probability %}higher{% else %}lower{% endif %}">
                   {{ "%0.2f"|format(case.frequency * 100) }}%
                 </td>
                 <td>
-                  {{ "%0.2f"|format(case.probability * 100) }}%
+                  {{ "%0.2f"|format(case.case.probability * 100) }}%
                 </td>
                 <td>
                   {{ case.recognition|format_duration }}

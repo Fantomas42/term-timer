@@ -24,6 +24,7 @@ from bottle import static_file
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
+from cubing_algs.cases.case import Case
 from cubing_algs.display import ANSI_TO_RGB
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.transform.offset import offset_y2_moves
@@ -202,29 +203,19 @@ def format_line(value: str) -> str:
     return ' '.join(processed_parts)
 
 
-def parse_case_name(value: str, step: str) -> tuple[str, str, str]:
+def get_step_case(step_name: str, code_case: str) -> Case:
     """
-    Parse case identifier into code, name, and category components.
+    Retrieve the Case instance.
 
     Args:
-        value: Case identifier string, may include code and name.
-        step: CFOP step name (PLL, OLL, F2L, etc.).
+        step_name: Step to use ('OLL', 'F2L 1').
+        code_case: Code of the case.
 
     Returns:
-        Tuple of (code, full_name, category) where category is
-        'PLL', 'OLL', 'F2L', or empty string.
+        Case instance.
 
     """
-    try:
-        code, name = value.split(' ', 1)
-    except ValueError:
-        if step == 'PLL':
-            return value, f'PLL { value }', 'PLL'
-        if step.startswith('F2L'):
-            return value, f'F2L { value }', 'F2L'
-        return value, '', ''
-    else:
-        return code, name, 'OLL'
+    return get_case(f'CFOP/{ step_name.split(" ", maxsplit=1)[0] }', code_case)
 
 
 def normalize_value(value: float, method_applied: Analyser,
@@ -563,7 +554,7 @@ class View:
                         'format_time': format_time,
                         'format_score': format_score,
                         'format_line': format_line,
-                        'parse_case_name': parse_case_name,
+                        'get_step_case': get_step_case,
                         'normalize_value': normalize_value,
                         'normalize_percent': normalize_percent,
                         'reconstruction_step': reconstruction_step,
