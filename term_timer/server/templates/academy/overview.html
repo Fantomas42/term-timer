@@ -1,65 +1,47 @@
 {% extends "skeleton.html" %}
 
 {% block title %}Academy{% endblock %}
-{% block subtitle %}Learning Center{% endblock %}
+{% block subtitle %}Academy{% endblock %}
 
 {% block description %}
-  Learn CFOP method with detailed case analysis and algorithms for speedcubing.
+  Learn cubing methods with detailed case analysis and algorithms for speedcubing.
 {% endblock %}
 
 {% block body %}
 <main class="academy-overview">
   <section class="intro">
-    <h2>CFOP Academy</h2>
+    <h2>Cubing Academy</h2>
     <p>
-      Master the CFOP method with our comprehensive learning center.
-      Explore all cases, algorithms, and techniques for each step of the method.
+      Master the Cube with our comprehensive learning center.
+      Explore all cases, algorithms, and techniques for each step of a method.
     </p>
   </section>
 
-  {% for method_name, method in methods.items() %}
-  <section class="method-section">
-    <h3>{{ method.name }}</h3>
-    <p class="method-description">{{ method.description }}</p>
+  {% for method_name, method_info in methods.items() %}
+    <section class="method-section">
+      <h3>{{ method_info.cube_size }}x{{ method_info.cube_size }}x{{ method_info.cube_size }} {{ method_name }}</h3>
+      <p class="method-description">{{ method_info.description }}</p>
 
-    <div class="steps-grid">
-      {% for code, step in method.steps.items() %}
-      <div class="step-card">
-        <h4>
-          <a href="/academy/{{ step.name.lower() }}/">
-            <i class="fas fa-cube"></i>
-            {{ step.name }}
-          </a>
-        </h4>
-        <p>{{ step.description }}</p>
-        <div class="step-actions">
-          <a href="/academy/{{ step.name.lower() }}/" class="btn btn-primary">
-            View Cases
-            <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
+      <div class="steps-grid">
+        {% for step_name, step_info in method_info.steps.items() %}
+          <div class="step-card">
+            <h4>
+              <a href="/academy/{{ method_name }}/{{ step_name }}/">
+                <i class="fas fa-cube"></i>
+                {{ step_name }}
+              </a>
+            </h4>
+            <p>{{ step_info.description }}</p>
+            <div class="step-actions">
+              <a href="/academy/{{ method_name }}/{{ step_name }}/" class="btn btn-primary">
+                View Cases
+                <i class="fas fa-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        {% endfor %}
       </div>
-      {% endfor %}
-    </div>
-  </section>
+    </section>
   {% endfor %}
-
-  <section class="quick-stats">
-    <h3>Quick Reference</h3>
-    <div class="stats-grid academy-stats">
-      <div class="stat-card academy-stat">
-        <div class="stat-number">42</div>
-        <div class="stat-label">F2L Cases</div>
-      </div>
-      <div class="stat-card academy-stat">
-        <div class="stat-number">57</div>
-        <div class="stat-label">OLL Cases</div>
-      </div>
-      <div class="stat-card academy-stat">
-        <div class="stat-number">21</div>
-        <div class="stat-label">PLL Cases</div>
-      </div>
-    </div>
-  </section>
 </main>
 {% endblock %}

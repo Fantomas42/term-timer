@@ -976,19 +976,19 @@ class StatisticsReporter(Statistics):
                 key=sort_key,
                 reverse=ordering == 'desc',
         ):
+            case = case_stats['case']
             percent_klass = (
-                case_stats['frequency'] > case_stats['probability'] and 'green'
+                case_stats['frequency'] > case.probability
+                and 'green'
             ) or 'red'
 
-            label = f'{ title } { name.split(" ")[0] }'
             head = (
-                '[cubingfache][link=https://cubing.fache.fr/'
-                f'{ title }/{ name.split(" ")[0] }.html]{ label }'
+                f'[cubingfache][link={ case.cubing_fache_url }]{ case.name }'
                 '[/link][/cubingfache]'
             )
 
             if 'SKIP' in name:
-                head = f'[skipped]{ name }[/skipped]'
+                head = '[skipped]SKIPPED[/skipped]'
 
             count = case_stats['count']
 
@@ -999,7 +999,7 @@ class StatisticsReporter(Statistics):
                 f'{ (case_stats["frequency"] * 100):.2f}%'
                 f'[/{ percent_klass }]',
                 '[percent]'
-                f'{ (case_stats["probability"] * 100):.2f}%'
+                f'{ (case.probability * 100):.2f}%'
                 '[/percent]',
                 '[recognition]' +
                 format_duration(int(case_stats['recognition'])) +

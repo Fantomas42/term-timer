@@ -1,18 +1,20 @@
 {% macro step_case(step) %}
   <div class="step-case">
     {% if step.case %}
-      {% set code, name, section = step.case|parse_case_name(step.name) %}
-      {% if 'SKIP' not in code %}
-        <div class="step-case-img">{{ step.case_infos.0 or code }}</div>
-        <a href="https://cubing.fache.fr/{{ section }}/{{ code }}.html"
-           target="_blank" class="link">
-          {{ name }}
+      {% set case = step.name|get_step_case(step.case) %}
+      {% if case.code != 'SKIP' %}
+        <div class="step-case-img">{{ case.code }}</div>
+        <a href="{{ case.cubing_fache_url }}" target="_blank" class="link">
+          {% if case.aliases %}
+            {{ case.aliases[0] }}
+          {% else %}
+            {# Should be activated for F2L #}
+            {{ ", ".join(step.case_infos) }}
+          {% endif %}
         </a>
       {% else %}
         <span class="skip">SKIP</span>
       {% endif %}
-    {% elif step.case_infos %}
-      <div class="step-case-img">{{ step.case_infos.0 }}</div>
     {% else %}
       <div class="step-case-img">N/A</div>
     {% endif %}

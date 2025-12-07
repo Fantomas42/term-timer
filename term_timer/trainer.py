@@ -1,8 +1,10 @@
 """Training interface for practicing specific CFOP cases."""
 from random import Random
+from typing import TYPE_CHECKING
 from typing import Final
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.cases import get_case
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_EFFECT
@@ -18,6 +20,9 @@ from term_timer.methods.base import FaceletAnalyser
 from term_timer.scrambler import trainer
 from term_timer.solve import Solve
 from term_timer.triggers import DEFAULT_TRIGGERS
+
+if TYPE_CHECKING:
+    from cubing_algs.cases.case import Case
 
 CROSS_MODES: Final = ('cross', 'ecross')
 
@@ -59,19 +64,19 @@ class Trainer(SolveInterface):
 
         self.counter = 1
 
-    def start_line(self, cube: VCube, case: str,
+    def start_line(self, cube: VCube, case_name: str,
                    main_algorithm: Algorithm) -> None:
         """Display training case, scramble, and optional solution."""
+        case: Case | None = None
         if self.step in CROSS_MODES:
             mode = 'cross'
             link = ''
+            name = case_name
         else:
+            case = get_case(self.step, case_name)
             mode = self.step
-            link = (
-                'https://cubing.fache.fr/'
-                f'{ self.step_code }/'
-                f'{ case.split(" ", maxsplit=1)[0] }.html'
-            )
+            link = case.cubing_fache_url
+            name = case.pretty_name
 
         if self.show_cube:
             print(  # noqa: T201
@@ -94,7 +99,7 @@ class Trainer(SolveInterface):
         self.console.print(
             f'[scramble]Training #{ self.counter }:[/scramble]',
             scramble_line,
-            f'[comment]// [link={ link }]{ case }[/link][/comment]',
+            f'[comment]// [link={ link }]{ name }[/link][/comment]',
         )
 
         if self.show_solution and main_algorithm:
@@ -172,7 +177,7 @@ class Trainer(SolveInterface):
         """
         self.init_solve()
 
-        case, main_algorithm, self.scramble, cube = trainer(
+        case_name, main_algorithm, self.scramble, cube = trainer(
                 self.step, self.cases,
                 self.cube_orientation_moves,
                 self.rng,
@@ -182,7 +187,7 @@ class Trainer(SolveInterface):
         self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.state
 
-        self.start_line(cube, case, main_algorithm)
+        self.start_line(cube, case_name, main_algorithm)
 
         quit_solve = await self.scramble_solve()
 

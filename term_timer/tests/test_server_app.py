@@ -29,7 +29,6 @@ from term_timer.server.app import format_line
 from term_timer.server.app import format_score
 from term_timer.server.app import normalize_percent
 from term_timer.server.app import normalize_value
-from term_timer.server.app import parse_case_name
 
 
 class TestConstants(unittest.TestCase):
@@ -181,45 +180,6 @@ class TestFormatLine(unittest.TestCase):
         self.assertIn('class="move test r"', result)
 
 
-class TestParseCaseName(unittest.TestCase):
-    """Tests for parse_case_name function."""
-
-    def test_parse_case_name_with_code_and_name(self) -> None:
-        """Test parse case name with code and name."""
-        code, name, step_type = parse_case_name('OLL01 T-Shape', 'OLL')
-        self.assertEqual(code, 'OLL01')
-        self.assertEqual(name, 'T-Shape')
-        self.assertEqual(step_type, 'OLL')
-
-    def test_parse_case_name_pll_no_space(self) -> None:
-        """Test parse case name pll no space."""
-        code, name, step_type = parse_case_name('Aa', 'PLL')
-        self.assertEqual(code, 'Aa')
-        self.assertEqual(name, 'PLL Aa')
-        self.assertEqual(step_type, 'PLL')
-
-    def test_parse_case_name_f2l_no_space(self) -> None:
-        """Test parse case name f2l no space."""
-        code, name, step_type = parse_case_name('1', 'F2L')
-        self.assertEqual(code, '1')
-        self.assertEqual(name, 'F2L 1')
-        self.assertEqual(step_type, 'F2L')
-
-    def test_parse_case_name_f2l_substep(self) -> None:
-        """Test parse case name f2l substep."""
-        code, name, step_type = parse_case_name('2', 'F2L-1')
-        self.assertEqual(code, '2')
-        self.assertEqual(name, 'F2L 2')
-        self.assertEqual(step_type, 'F2L')
-
-    def test_parse_case_name_other_step(self) -> None:
-        """Test parse case name other step."""
-        code, name, step_type = parse_case_name('test', 'Cross')
-        self.assertEqual(code, 'test')
-        self.assertEqual(name, '')
-        self.assertEqual(step_type, '')
-
-
 class TestNormalizeValue(unittest.TestCase):
     """Tests for normalize_value function."""
 
@@ -318,7 +278,7 @@ class TestView(unittest.TestCase):
             template_name = 'test.html'
 
             @staticmethod
-            def get_context() -> dict[str, str]:
+            def get_context() -> dict[str, Any]:  # type: ignore[override]
                 return {'test': 'value'}
 
         view = TestView()
@@ -351,7 +311,7 @@ class TestView(unittest.TestCase):
             'format_time',
             'format_score',
             'format_line',
-            'parse_case_name',
+            'get_step_case',
             'normalize_value',
             'normalize_percent',
             'reconstruction_step',

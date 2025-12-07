@@ -1,20 +1,22 @@
 """Type definitions for methods."""
 from collections.abc import Callable
 from typing import Literal
+from typing import TypeAlias
 from typing import TypedDict
 
 from cubing_algs.algorithm import Algorithm
 
+# Facelet pattern encoding
+EncodedMask: TypeAlias = str  # noqa: UP040
+# Orientation like "FR", "FL y", etc.
+Configuration: TypeAlias = str  # noqa: UP040
+CaseMasks: TypeAlias = dict[EncodedMask, list[Configuration]]  # noqa: UP040
 
-class CaseInfo(TypedDict):
-    """Information about a specific case."""
 
-    name: str
-    main: str
-    probability: float
-    probability_label: str
-    setups: list[str]
-    masks: dict[str, list[str]]
+class CaseMask(TypedDict):
+    """Information about a specific case with its mask variations."""
+
+    masks: CaseMasks
 
 
 class CaseMaskInfo(TypedDict):
@@ -28,9 +30,6 @@ class SourceCaseInfo(TypedDict):
     """Case information from source JSON file."""
 
     type: str
-    probability: str
-    aliases: list[str]
-    algorithms: list[str]
     main: str
 
 

@@ -4,162 +4,449 @@
 {% block subtitle %}{{ step }} Case Details{% endblock %}
 
 {% block description %}
-Detailed view of {{ case.name }} case with main algorithm and all orientation variations.
+Detailed view of {{ case.name }} case with algorithms, recognition patterns, and metrics.
 {% endblock %}
 
 {% block actions %}
-<a href="/academy/{{ step.lower() }}/" class="btn btn-secondary">
+<a href="/academy/{{ method }}/{{ step }}/" class="btn btn-small">
   <i class="fas fa-arrow-left"></i>
   Back to {{ step }} Cases
 </a>
-<a href="/academy/" class="btn btn-secondary">
+<a href="/academy/" class="btn btn-small">
   <i class="fas fa-home"></i>
   Academy Home
 </a>
 {% endblock %}
 
+{% block script %}
+  <script src="https://cdn.cubing.net/v0/js/cubing/twisty" type="module"></script>
+  <script>
+   function copyToClipboard(text) {
+     navigator.clipboard.writeText(text).then(function() {
+       console.log('Algorithm copied to clipboard: ' + text);
+     }, function(err) {
+       console.error('Could not copy text: ', err);
+     });
+   }
+  </script>
+{% endblock script %}
+
 {% block body %}
-<main class="case-detail">
-  <section class="case-header">
-    <div class="case-title">
-      <h2>{{ case.name }}</h2>
-      <div class="case-badge">{{ case.code }}</div>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-cube"></i>
+        <a href="#case-info" id="case-info">{{ case.name }}</a>
+      </h2>
     </div>
-    <p class="step-description">{{ step_info.description }}</p>
-  </section>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Case Code</div>
+        <div class="stat-value">{{ case.code }}</div>
+      </div>
+      {% if case.probability_label %}
+      <div class="stat-card">
+        <div class="stat-title">Probability</div>
+        <div class="stat-value">{{ case.probability_label }}</div>
+        <div class="stat-meta">{{ "%0.4f"|format(case.probability) }}</div>
+      </div>
+      {% endif %}
+      <div class="stat-card">
+        <div class="stat-title">Optimal HTM</div>
+        <div class="stat-value">{{ case.optimal_htm }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Optimal STM</div>
+        <div class="stat-value">{{ case.optimal_stm }}</div>
+      </div>
+      {% if case.optimal_cycles %}
+      <div class="stat-card">
+        <div class="stat-title">Cycles</div>
+        <div class="stat-value">{{ case.optimal_cycles }}</div>
+      </div>
+      {% endif %}
+      {% if case.family %}
+      <div class="stat-card">
+        <div class="stat-title">Family</div>
+        <div class="stat-value">{{ case.family }}</div>
+      </div>
+      {% endif %}
+      {% if case.symmetry %}
+      <div class="stat-card">
+        <div class="stat-title">Symmetry</div>
+        <div class="stat-value">{{ case.symmetry }}</div>
+      </div>
+      {% endif %}
+      {% if case.status %}
+      <div class="stat-card">
+        <div class="stat-title">Status</div>
+        <div class="stat-value">{{ case.status }}</div>
+      </div>
+      {% endif %}
+    </div>
+    {% if case.description %}
+    <div style="padding: 1rem; color: #94a3b8;">
+      {{ case.description }}
+    </div>
+    {% endif %}
+    {% if case.groups %}
+    <div style="padding: 0 1rem 1rem 1rem;">
+      <div class="stat-title">Groups:</div>
+      <div style="margin-top: 0.5rem;">
+        {% for group in case.groups %}
+        <span class="case-badge" style="margin-right: 0.5rem;">{{ group }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if case.aliases %}
+    <div style="padding: 0 1rem 1rem 1rem;">
+      <div class="stat-title">Also known as:</div>
+      <div style="margin-top: 0.5rem; color: #94a3b8;">
+        {{ case.aliases|join(', ') }}
+      </div>
+    </div>
+    {% endif %}
+    {% if case.arrows %}
+    <div style="padding: 0 1rem 1rem 1rem;">
+      <div class="stat-title">Piece Movement:</div>
+      <div style="margin-top: 0.5rem; color: #94a3b8; font-family: monospace;">
+        {{ case.arrows }}
+      </div>
+    </div>
+    {% endif %}
+  </div>
 
-  <section class="main-algorithm">
-    <h3>Main Algorithm</h3>
-    <div class="algorithm-display">
-      <code>{{ case.main_algorithm | format_line | safe }}</code>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-code"></i>
+        <a href="#main-algorithm" id="main-algorithm">Main Algorithm</a>
+      </h2>
     </div>
-    <div class="algorithm-actions">
-      <button onclick="copyToClipboard('{{ case.main_algorithm }}')" class="btn btn-copy">
-        <i class="fas fa-copy"></i>
-        Copy Algorithm
-      </button>
+    <div class="moves-card">
+      <div class="moves-content">
+        {% for m in case.main_algorithm %}
+          <span class="move">{{ m }}</span>
+        {% endfor %}
+      </div>
+      <div class="moves-footer">
+        {{ case.main_algorithm.metrics.htm }} HTM
+        · {{ case.main_algorithm.metrics.qtm }} QTM
+        · {{ case.main_algorithm.metrics.stm }} STM
+        · {{ case.main_algorithm.metrics.etm }} ETM
+        <a href="/algorithm/{{ case.main_algorithm }}/" class="algorithm-detail">Details</a>
+        <button onclick="copyToClipboard('{{ case.main_algorithm }}')" class="moves-copy">
+          Copy
+        </button>
+      </div>
     </div>
-  </section>
+  </div>
 
-  {% if setups %}
-  <section class="setups">
-    <h3>Alternative Algorithms</h3>
-    <p class="setups-description">
-      Here are {{ setups_count }} alternative ways to solve this case.
-      Different setups might be more comfortable depending on your solving style or the current cube state.
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-play"></i>
+          <a href="#player" id="player">Player</a>
+        </h2>
+      </div>
+      <div class="player-container">
+        <div id="playerer">
+          <twisty-player
+            alg="{{ case.main_algorithm }}"
+            puzzle="{{ cube_size }}x{{ cube_size }}x{{ cube_size }}"
+            viewerlink="none"
+            background="none"
+            experimental-setup-alg="z2"
+            experimental-setup-anchor="end"
+          ></twisty-player>
+        </div>
+      </div>
+    </div>
+
+  {% if case.recognition %}
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-eye"></i>
+        <a href="#recognition" id="recognition">Recognition</a>
+      </h2>
+    </div>
+    <div style="padding: 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1rem;">
+      {% for recog_case in case.recognition.cases %}
+      <div style="padding: 1rem; background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem;">
+        <div style="margin-bottom: 0.5rem;">
+          <strong style="color: #4183c4;">{{ recog_case.feature.name }}</strong>
+        </div>
+        <div style="color: #94a3b8; margin-bottom: 0.5rem; font-size: 0.9rem;">
+          {{ recog_case.description }}
+        </div>
+        {% if recog_case.observation %}
+        <div style="color: #94a3b8; font-size: 0.875rem;">
+          <em>Observation:</em> {{ recog_case.observation }}
+        </div>
+        {% endif %}
+        {% if recog_case.notes %}
+        <div style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.25rem;">
+          <em>Notes:</em> {{ recog_case.notes }}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if case.setup_algorithms %}
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-list"></i>
+        <a href="#setup-algorithms" id="algorithms">Setup Algorithms</a>
+      </h2>
+    </div>
+    <p style="padding: 0 1rem 1rem 1rem; color: #94a3b8;">
+      {{ case.setup_algorithms|length }} alternative algorithm(s) for this case.
+      Different algorithms might be more comfortable depending on your solving style.
     </p>
 
-    <div class="setups-grid">
-      {% for setup in setups %}
-      <div class="setup-card">
-        <div class="setup-header">
-          <h4>Algorithm {{ loop.index }}</h4>
-          <div class="setup-meta">
-            <span class="setup-length">{{ setup.split(' ')|length }} moves</span>
+    <div style="padding: 0 1rem 1rem 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1rem;">
+      {% for setup in case.setup_algorithms %}
+      <div style="background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem; padding: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <div class="stat-title">Algorithm {{ loop.index }}</div>
+          <div style="color: #94a3b8; font-size: 0.875rem;">
+            {{ setup.metrics.htm }} moves
           </div>
         </div>
 
-        <div class="setup-algorithm">
-          <code>{{ setup | format_line | safe }}</code>
+        <div class="moves-content" style="margin-bottom: 0.75rem;">
+          {% for m in setup %}
+            <span class="move">{{ m }}</span>
+          {% endfor %}
         </div>
 
-        <div class="setup-actions">
-          <button onclick="copyToClipboard('{{ setup }}')" class="btn btn-small">
-            <i class="fas fa-copy"></i>
-            Copy
-          </button>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="color: #94a3b8; font-size: 0.875rem;">
+            HTM: {{ setup.metrics.htm }}
+            · QTM: {{ setup.metrics.qtm }}
+            · STM: {{ setup.metrics.stm }}
+            · ETM: {{ setup.metrics.etm }}
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <a href="/algorithm/{{ setup }}/" class="btn btn-small" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+              <i class="fas fa-info-circle"></i>
+              Details
+            </a>
+            <button onclick="copyToClipboard('{{ setup }}')" class="btn btn-small" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+              <i class="fas fa-copy"></i>
+              Copy
+            </button>
+          </div>
         </div>
       </div>
       {% endfor %}
     </div>
-  </section>
+  </div>
   {% endif %}
 
-  {% if orientations %}
-  <section class="orientations">
-    <h3>Orientations & AUFs</h3>
-    <p class="orientations-description">
-      This case can appear in {{ orientations_count }} different orientations.
-      Each orientation may require different AUF (Adjust U Face) moves before executing the algorithm.
+  {% if case.algorithms %}
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-rotate"></i>
+        <a href="#all-algorithms" id="all-algorithms">All Known Algorithms</a>
+      </h2>
+    </div>
+    <p style="padding: 0 1rem 1rem 1rem; color: #94a3b8;">
+      {{ case.algorithms|length }} total algorithm(s) in the database for this case.
     </p>
 
-    <div class="orientations-grid">
-      {% for orientation in orientations %}
-      <div class="orientation-card">
-        <div class="orientation-header">
-          <h4>Orientation {{ loop.index }}</h4>
-          <div class="mask-display">
-            <small>Mask: {{ orientation.mask }}</small>
-          </div>
+    <div style="padding: 0 1rem 1rem 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 0.75rem;">
+      {% for algo in case.algorithms %}
+      <div style="background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem; padding: 0.875rem;">
+        <div class="moves-content" style="margin-bottom: 0.5rem;">
+          {% for m in algo %}
+            <span class="move">{{ m }}</span>
+          {% endfor %}
         </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="color: #94a3b8; font-size: 0.875rem;">
+            HTM: {{ algo.metrics.htm }}
+            · QTM: {{ algo.metrics.qtm }}
+            · STM: {{ algo.metrics.stm }}
+            · ETM: {{ algo.metrics.etm }}
+          </div>
+          <a href="/algorithm/{{ algo }}/" class="btn btn-small" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+            <i class="fas fa-info-circle"></i>
+            Details
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 
-        <div class="aufs-section">
-          <h5>Available AUFs:</h5>
-          <div class="aufs-list">
-            {% for auf in orientation.aufs %}
-            <span class="auf-tag">
-              {{ auf }}
-            </span>
+  {% if case.badmephisto %}
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-graduation-cap"></i>
+        <a href="#badmephisto" id="badmephisto">BadMephisto Algorithms</a>
+      </h2>
+    </div>
+    <div style="padding: 1rem;">
+      {% if case.badmephisto.comment %}
+      <div style="color: #94a3b8; margin-bottom: 1rem; padding: 0.75rem; background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem;">
+        <strong>Comment:</strong> {{ case.badmephisto.comment }}
+      </div>
+      {% endif %}
+      <div style="display: grid; gap: 0.5rem;">
+        <div style="color: #94a3b8; margin-bottom: 0.5rem;">
+          <strong>Difficulty:</strong>
+          <span style="color: {% if case.badmephisto.difficulty <= 3 %}#10b981{% elif case.badmephisto.difficulty <= 6 %}#f59e0b{% else %}#ef4444{% endif %};">
+            {{ case.badmephisto.difficulty }}/10
+          </span>
+        </div>
+        {% if case.badmephisto.algos %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 0.75rem;">
+          {% for algo_str in case.badmephisto.algos %}
+          <div style="background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem; padding: 0.75rem;">
+            <div style="font-family: monospace; color: #94a3b8; margin-bottom: 0.5rem;">
+              {{ algo_str }}
+            </div>
+            <a href="/algorithm/{{ algo_str }}/" class="btn btn-small" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+              <i class="fas fa-info-circle"></i>
+              Details
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if case.logiqx %}
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-book"></i>
+        <a href="#logiqx" id="logiqx">Logiqx Algorithms</a>
+      </h2>
+    </div>
+    <div style="padding: 1rem; display: grid; gap: 1rem;">
+      {% for logiqx_algo in case.logiqx %}
+      <div style="background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem; padding: 1rem;">
+        {% if logiqx_algo.description %}
+        <div style="color: #4183c4; font-weight: bold; margin-bottom: 0.5rem;">
+          {{ logiqx_algo.description }}
+        </div>
+        {% endif %}
+        <div style="background: rgba(148, 163, 184, 0.05); border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.5rem;">
+          <div style="font-family: monospace; color: #94a3b8; margin-bottom: 0.5rem;">
+            {{ logiqx_algo.algo }}
+          </div>
+          <a href="/algorithm/{{ logiqx_algo.algo }}/" class="btn btn-small" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+            <i class="fas fa-info-circle"></i>
+            Details
+          </a>
+        </div>
+        {% if logiqx_algo.variations %}
+        <div style="margin-top: 0.75rem;">
+          <div style="color: #94a3b8; font-size: 0.875rem; margin-bottom: 0.5rem;">
+            <strong>Variations:</strong>
+          </div>
+          <div style="display: grid; gap: 0.5rem;">
+            {% for variation in logiqx_algo.variations %}
+            <div style="background: rgba(148, 163, 184, 0.03); border-radius: 0.375rem; padding: 0.5rem;">
+              {% if variation.description %}
+              <div style="color: #94a3b8; font-size: 0.875rem; margin-bottom: 0.25rem;">
+                {{ variation.description }}
+              </div>
+              {% endif %}
+              <div style="font-family: monospace; color: #94a3b8; font-size: 0.875rem;">
+                {{ variation.algo }}
+              </div>
+              {% if variation.tags %}
+              <div style="margin-top: 0.25rem;">
+                {% for tag in variation.tags %}
+                <span style="background: rgba(65, 131, 196, 0.2); color: #4183c4; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.75rem; margin-right: 0.25rem;">
+                  {{ tag }}
+                </span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
             {% endfor %}
           </div>
         </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 
-        <div class="orientation-actions">
-          {% for auf in orientation.aufs %}
-          <button onclick="copyToClipboard('{{ auf }} {{ case.main_algorithm }}')" class="btn btn-small">
-            Copy {{ auf }}
-          </button>
+  {% if case.two_phase_algorithms %}
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-robot"></i>
+        <a href="#two-phase" id="two-phase">Two-Phase Algorithms</a>
+      </h2>
+    </div>
+    <p style="padding: 0 1rem 1rem 1rem; color: #94a3b8;">
+      {{ case.two_phase_algorithms|length }} algorithm(s) computed by two-phase solver.
+    </p>
+    <div style="padding: 0 1rem 1rem 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 0.75rem;">
+      {% for algo in case.two_phase_algorithms %}
+      <div style="background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem; padding: 0.875rem;">
+        <div class="moves-content" style="margin-bottom: 0.5rem;">
+          {% for m in algo %}
+            <span class="move">{{ m }}</span>
           {% endfor %}
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="color: #94a3b8; font-size: 0.875rem;">
+            HTM: {{ algo.metrics.htm }}
+            · QTM: {{ algo.metrics.qtm }}
+            · STM: {{ algo.metrics.stm }}
+            · ETM: {{ algo.metrics.etm }}
+          </div>
+          <a href="/algorithm/{{ algo }}/" class="btn btn-small" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+            <i class="fas fa-info-circle"></i>
+            Details
+          </a>
         </div>
       </div>
       {% endfor %}
     </div>
-  </section>
+  </div>
   {% endif %}
 
-  <section class="case-info">
-    <h3>Case Information</h3>
-    <div class="info-grid">
-      <div class="info-card">
-        <div class="info-label">Step</div>
-        <div class="info-value">{{ step_info.name }}</div>
-      </div>
-      <div class="info-card">
-        <div class="info-label">Case ID</div>
-        <div class="info-value">{{ case.id }}</div>
-      </div>
-      <div class="info-card">
-        <div class="info-label">Orientations</div>
-        <div class="info-value">{{ orientations_count }}</div>
-      </div>
-      <div class="info-card">
-        <div class="info-label">Algorithm Length</div>
-        <div class="info-value">{{ case.main_algorithm.split(' ')|length }} moves</div>
-      </div>
-      {% if case.probability %}
-      <div class="info-card">
-        <div class="info-label">Probability</div>
-        <div class="info-value">{{ case.probability }}</div>
-      </div>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-link"></i>
+        <a href="#external-links" id="external-links">External Resources</a>
+      </h2>
+    </div>
+    <div style="padding: 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+      {% if case.cubing_fache_url %}
+      <a href="{{ case.cubing_fache_url }}" target="_blank" class="link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem;">
+        <i class="fas fa-external-link-alt"></i>
+        View on cubing.fache.fr
+      </a>
       {% endif %}
-      {% if setups_count > 0 %}
-      <div class="info-card">
-        <div class="info-label">Alternative Algs</div>
-        <div class="info-value">{{ setups_count }}</div>
-      </div>
+      {% if case.badmephisto and case.badmephisto.uid %}
+      <a href="http://badmephisto.com/oll{{ case.badmephisto.uid }}.php" target="_blank" class="link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem;">
+        <i class="fas fa-external-link-alt"></i>
+        View on BadMephisto
+      </a>
       {% endif %}
     </div>
-  </section>
-</main>
-
-<script>
-function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(function() {
-    // Could add a toast notification here
-    console.log('Algorithm copied to clipboard: ' + text);
-  }, function(err) {
-    console.error('Could not copy text: ', err);
-  });
-}
-</script>
+  </div>
 {% endblock %}

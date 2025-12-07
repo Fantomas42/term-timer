@@ -7,7 +7,6 @@ import threading
 import webbrowser
 from datetime import datetime
 from datetime import timezone
-from typing import Any
 from typing import ClassVar
 from typing import Final
 from typing import cast
@@ -23,6 +22,9 @@ from bottle import redirect
 from bottle import request
 from bottle import static_file
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.cases import get_case
+from cubing_algs.cases import get_collection
+from cubing_algs.cases.case import Case
 from cubing_algs.display import ANSI_TO_RGB
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.transform.offset import offset_y2_moves
@@ -60,10 +62,26 @@ from term_timer.interface.console import console
 from term_timer.methods import METHOD_ANALYSERS
 from term_timer.methods.base import Analyser
 from term_timer.methods.base import get_step_config
-from term_timer.methods.cases import CASES
-from term_timer.methods.types import CaseInfo
 from term_timer.methods.types import StepSummary
 from term_timer.orientation import ORIENTATION_MOVES
+from term_timer.server.types import AcademyCaseContext
+from term_timer.server.types import AcademyOverviewContext
+from term_timer.server.types import AcademyStepContext
+from term_timer.server.types import AlgorithmDetailContext
+from term_timer.server.types import AlgorithmVariation
+from term_timer.server.types import DistributionData
+from term_timer.server.types import Error404Context
+from term_timer.server.types import Error500Context
+from term_timer.server.types import MethodInfo
+from term_timer.server.types import RecognitionData
+from term_timer.server.types import ScatterPoint
+from term_timer.server.types import SessionDetailContext
+from term_timer.server.types import SessionInfo
+from term_timer.server.types import SessionListContext
+from term_timer.server.types import SolveDetailContext
+from term_timer.server.types import StepMarker
+from term_timer.server.types import TPSData
+from term_timer.server.types import TrendData
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
@@ -185,29 +203,19 @@ def format_line(value: str) -> str:
     return ' '.join(processed_parts)
 
 
-def parse_case_name(value: str, step: str) -> tuple[str, str, str]:
+def get_step_case(step_name: str, code_case: str) -> Case:
     """
-    Parse case identifier into code, name, and category components.
+    Retrieve the Case instance.
 
     Args:
-        value: Case identifier string, may include code and name.
-        step: CFOP step name (PLL, OLL, F2L, etc.).
+        step_name: Step to use ('OLL', 'F2L 1').
+        code_case: Code of the case.
 
     Returns:
-        Tuple of (code, full_name, category) where category is
-        'PLL', 'OLL', 'F2L', or empty string.
+        Case instance.
 
     """
-    try:
-        code, name = value.split(' ', 1)
-    except ValueError:
-        if step == 'PLL':
-            return value, f'PLL { value }', 'PLL'
-        if step.startswith('F2L'):
-            return value, f'F2L { value }', 'F2L'
-        return value, '', ''
-    else:
-        return code, name, 'OLL'
+    return get_case(f'CFOP/{ step_name.split(" ", maxsplit=1)[0] }', code_case)
 
 
 def normalize_value(value: float, method_applied: Analyser,
@@ -470,7 +478,19 @@ class View:
 
     template_name = ''
 
-    def get_context(self) -> dict[str, Any]:
+    def get_context(
+        self,
+    ) -> (
+        Error404Context
+        | Error500Context
+        | SessionListContext
+        | SessionDetailContext
+        | SolveDetailContext
+        | AlgorithmDetailContext
+        | AcademyOverviewContext
+        | AcademyStepContext
+        | AcademyCaseContext
+    ):
         """
         Build template context dictionary.
 
@@ -506,7 +526,10 @@ class View:
         return content
 
     @staticmethod
-    def template(template_name: str, **context: Any) -> str:  # noqa: ANN401
+    def template(
+        template_name: str,
+        **context: bool | str | float | datetime | object,
+    ) -> str:
         """
         Render Jinja2 template with custom filters and context.
 
@@ -531,7 +554,7 @@ class View:
                         'format_time': format_time,
                         'format_score': format_score,
                         'format_line': format_line,
-                        'parse_case_name': parse_case_name,
+                        'get_step_case': get_step_case,
                         'normalize_value': normalize_value,
                         'normalize_percent': normalize_percent,
                         'reconstruction_step': reconstruction_step,
@@ -562,7 +585,7 @@ class Error404View(View):
         """
         self.error = error
 
-    def get_context(self) -> dict[str, str | HTTPError]:
+    def get_context(self) -> Error404Context:
         """
         Build context for 404 error template.
 
@@ -591,7 +614,7 @@ class Error500View(View):
         """
         self.error = error
 
-    def get_context(self) -> dict[str, str | HTTPError | Exception]:
+    def get_context(self) -> Error500Context:
         """
         Build context for 500 error template.
 
@@ -613,7 +636,7 @@ class SessionListView(View):
     template_name = 'index.html'
 
     @staticmethod
-    def get_context() -> dict[str, Any]:
+    def get_context() -> SessionListContext:
         """
         Build context with all sessions and their statistics.
 
@@ -622,18 +645,17 @@ class SessionListView(View):
             with statistics calculated for each session.
 
         """
-        sessions: dict[int, dict[str, dict[str, Any]]] = {}
+        sessions: dict[int, dict[str, SessionInfo]] = {}
         for cube in CUBE_SIZES:
             solves = load_all_solves(cube, [], [], [])
             sessions[cube] = {}
             for solve in solves:
-                sessions[cube].setdefault(
-                    solve.session, {},
-                ).setdefault(
-                    'solves', [],
-                ).append(
-                    solve,
-                )
+                if solve.session not in sessions[cube]:
+                    sessions[cube][solve.session] = {
+                        'solves': [],
+                        'stats': Statistics([]),
+                    }
+                sessions[cube][solve.session]['solves'].append(solve)
 
         for cube in CUBE_SIZES:
             values = sessions[cube].values()
@@ -728,7 +750,7 @@ class SessionDetailView(View):
             cube, solves,
         )
 
-    def get_context(self) -> dict[str, Any]:
+    def get_context(self) -> SessionDetailContext:
         """
         Build context with session statistics and visualizations.
 
@@ -765,7 +787,7 @@ class SessionDetailView(View):
 
         return sessions
 
-    def compute_trend(self) -> dict[str, Any]:
+    def compute_trend(self) -> TrendData:
         """
         Calculate rolling averages and time trends.
 
@@ -774,12 +796,12 @@ class SessionDetailView(View):
             (ao5, ao12, ao100, ao1000) for trend visualization.
 
         """
-        ao5s = []
-        ao12s = []
-        ao100s = []
-        ao1000s = []
-        times = []
-        indices = []
+        ao5s: list[float | None] = []
+        ao12s: list[float | None] = []
+        ao100s: list[float | None] = []
+        ao1000s: list[float | None] = []
+        times: list[float] = []
+        indices: list[str] = []
 
         stack_time = list(self.stats.stack_time)
         for i, time in enumerate(stack_time):
@@ -806,7 +828,7 @@ class SessionDetailView(View):
             'ao1000s': ao1000s,
         }
 
-    def compute_distribution(self) -> dict[str, list[Any]]:
+    def compute_distribution(self) -> DistributionData:
         """
         Calculate solve time distribution histogram.
 
@@ -814,8 +836,8 @@ class SessionDetailView(View):
             Dictionary with time bucket labels and solve counts.
 
         """
-        dist_labels = []
-        dist_counts = []
+        dist_labels: list[str] = []
+        dist_counts: list[int] = []
         for count, edge in self.stats.repartition:
             dist_labels.append(f'{ edge }s')
             dist_counts.append(int(count))
@@ -885,7 +907,7 @@ class SolveDetailView(View):
             self.solve.method_name = method_name
         self.solve.orientation = orientation
 
-    def get_context(self) -> dict[str, Any]:
+    def get_context(self) -> SolveDetailContext:
         """
         Build context with solve details and analysis data.
 
@@ -894,10 +916,10 @@ class SolveDetailView(View):
             TPS metrics, and step analysis.
 
         """
-        tps = []
-        steps = []
-        scatter = []
-        recognitions = []
+        tps: list[TPSData] = []
+        steps: list[StepMarker] = []
+        scatter: list[ScatterPoint] = []
+        recognitions: list[RecognitionData] = []
 
         ranks = sorted([s.final_time for s in self.solves])
         rank = ranks.index(self.solve.final_time) + 1
@@ -941,7 +963,7 @@ class SolveDetailView(View):
         reconstruction_text = self.solve.method_text_builder(
             multiple=False,
         )
-        step_index = {}
+        step_index: dict[str, int] = {}
         index = 0
         for line in reconstruction_text.split('\n'):
             if not line:
@@ -1069,7 +1091,7 @@ class AlgorithmDetailView(View):
         """
         self.algorithm = Algorithm.parse_moves(algorithm)
 
-    def get_context(self) -> dict[str, Any]:
+    def get_context(self) -> AlgorithmDetailContext:
         """
         Build context with algorithm variations and transformations.
 
@@ -1079,7 +1101,7 @@ class AlgorithmDetailView(View):
 
         """
         # Generate Y-axis variations
-        y_variations = [
+        y_variations: list[AlgorithmVariation] = [
             {
                 'label': 'Y',
                 'algorithm': offset_y_moves(self.algorithm),
@@ -1094,7 +1116,7 @@ class AlgorithmDetailView(View):
             },
         ]
 
-        symmetry_variations = [
+        symmetry_variations: list[AlgorithmVariation] = [
             {
                 'label': 'Symmetry M',
                 'algorithm': symmetry_m_moves(self.algorithm),
@@ -1121,51 +1143,64 @@ class AcademyView(View):
     """View for displaying academy overview with solving methods."""
 
     template_name = 'academy/overview.html'
-    methods: ClassVar[dict[str, dict[str, str | dict[str, dict[str, str]]]]] = {
+    methods: ClassVar[dict[str, MethodInfo]] = {
         'CFOP': {
-            'name': 'CFOP',
+            'cube_size': 3,
             'description': (
                 'Cross, F2L, OLL, PLL - The most popular speedcubing method'
             ),
             'steps': {
                 'F2L': {
-                    'name': 'F2L',
                     'description': (
                         'First Two Layers - '
                         'Solve cross and first two layers simultaneously'
                     ),
-                    'description_alt': (
-                        'Solve the cross and first two layers simultaneously '
-                        'using corner-edge pairs.'
-                    ),
                 },
                 'OLL': {
-                    'name': 'OLL',
                     'description': (
                         'Orientation of Last Layer - '
                         'Orient all pieces on the last layer'
                     ),
-                    'description_alt': (
-                        'Orient all pieces on the last layer '
-                        'to show the same color on top.'
-                    ),
                 },
                 'PLL': {
-                    'name': 'PLL',
                     'description': (
                         'Permutation of Last Layer - '
                         'Permute all pieces on the last layer'
                     ),
-                    'description_alt': (
-                        'Permute all pieces on the last layer '
-                        'to their correct positions.'
+                },
+                'AF2L': {
+                    'description': (
+                        'Advanced First Two Layers - '
+                        'Solve first two layers with advanced techniques.'
+                    ),
+                },
+            },
+        },
+        'Ortega': {
+            'cube_size': 2,
+            'description': (
+                'Solve D, OLL, PBL - The most popular 2x2x2 method'
+            ),
+            'steps': {
+                'OLL': {
+                    'description': (
+                        'Orientation of Last Layer - '
+                        'Orient all pieces on the last layer'
+                    ),
+                },
+                'PBL': {
+                    'description': (
+                        'Permutation of Both Layers - '
+                        'Orient all pieces on all layers'
                     ),
                 },
             },
         },
     }
 
-    def get_context(self) -> dict[str, Any]:
+    def get_context(
+        self,
+    ) -> AcademyOverviewContext | AcademyStepContext | AcademyCaseContext:
         """
         Build context with available solving methods.
 
@@ -1179,64 +1214,43 @@ class AcademyView(View):
 
 
 class AcademyStepView(AcademyView):
-    """View for displaying all cases for a specific CFOP step."""
+    """View for displaying all cases for a specific method step."""
 
     template_name = 'academy/step.html'
 
-    def __init__(self, step: str) -> None:
+    def __init__(self, method: str, step: str) -> None:
         """
         Initialize academy step view.
 
         Args:
-            step: CFOP step name (F2L, OLL, or PLL).
+            method: Method name (CFOP, Ortega).
+            step: Method step name (F2L, OLL, or PLL).
 
         """
-        self.step = step.upper()
+        self.method = method
+        self.step = step
 
         try:
-            self.cases_data: dict[str, CaseInfo] = CASES[self.step]
+            self.cases = get_collection(f'{ method }/{ step }').cases
+            self.step_info = self.methods[method]['steps'][step]
+            self.cube_size = self.methods[method]['cube_size']
         except KeyError:
-            abort(404, f'{ self.step } does not exist')
+            abort(404, f'{ method }/{ step } does not exist')
 
-    def get_context(self) -> dict[str, Any]:
+    def get_context(self) -> AcademyStepContext:
         """
         Build context with all cases for the step.
 
         Returns:
-            Dictionary containing step information, case list, and counts.
+            Dictionary containing step information, case list.
 
         """
-        cases = []
-
-        for case_id, case_data in self.cases_data.items():
-            case_info = {
-                'id': case_id,
-                'name': case_data['name'],
-                'main_algorithm': case_data['main'],
-                'masks_count': len(case_data['masks']),
-            }
-            if self.step == 'OLL':
-                try:
-                    case_info['code'], case_info['name'], _ = parse_case_name(
-                        case_data['name'], self.step,
-                    )
-                except KeyError:
-                    case_info['code'] = case_id
-                    case_info['name'] = case_id
-            elif self.step == 'PLL':
-                case_info['code'] = case_id
-                case_info['name'] = f'PLL {case_id}'
-            elif self.step == 'F2L':
-                case_info['code'] = case_id
-                case_info['name'] = f'F2L {case_id}'
-
-            cases.append(case_info)
-
         return {
+            'method': self.method,
             'step': self.step,
-            'step_info': self.methods['CFOP']['steps'][self.step],  # type: ignore[index]
-            'cases': cases,
-            'cases_count': len(cases),
+            'step_info': self.step_info,
+            'cube_size': self.cube_size,
+            'cases': self.cases,
         }
 
 
@@ -1245,74 +1259,41 @@ class AcademyCaseView(AcademyView):
 
     template_name = 'academy/case.html'
 
-    def __init__(self, step: str, case_id: str) -> None:
+    def __init__(self, method: str, step: str, case_id: str) -> None:
         """
         Initialize academy case view.
 
         Args:
+            method: Method name (CFOP).
             step: CFOP step name (F2L, OLL, or PLL).
             case_id: Case identifier within the step.
 
         """
-        self.step = step.upper()
+        self.method = method
+        self.step = step
         self.case_id = case_id
 
         try:
-            self.case_data: CaseInfo = CASES[self.step][self.case_id]
+            self.case = get_case(f'{ method }/{ step }', case_id)
+            self.step_info = self.methods[method]['steps'][step]
+            self.cube_size = self.methods[method]['cube_size']
         except KeyError:
-            abort(404, f'{ self.step } { self.case_id } does not exist')
+            abort(404, f'{ method }/{ step } { case_id } does not exist')
 
-    def get_context(self) -> dict[str, Any]:
+    def get_context(self) -> AcademyCaseContext:
         """
         Build context with case details, algorithms, and orientations.
 
         Returns:
-            Dictionary containing case information, main algorithm,
-            probability, orientations with AUFs, and setup algorithms.
+            Dictionary containing case information.
 
         """
-        case_info = {
-            'id': self.case_id,
-            'name': self.case_id,
-            'main_algorithm': self.case_data['main'],
-            'probability': self.case_data['probability_label'],
-        }
-
-        if self.step == 'OLL':
-            try:
-                case_info['code'], case_info['name'], _ = parse_case_name(
-                    self.case_id, self.step,
-                )
-            except KeyError:
-                case_info['code'] = self.case_id
-                case_info['name'] = self.case_id
-        elif self.step == 'PLL':
-            case_info['code'] = self.case_id
-            case_info['name'] = f'PLL {self.case_id}'
-        elif self.step == 'F2L':
-            case_info['code'] = self.case_id
-            case_info['name'] = f'F2L {self.case_id}'
-
-        # Process masks for different orientations
-        orientations = []
-        masks = self.case_data.get('masks', {})
-        for mask, aufs in masks.items():
-            orientations.append({
-                'mask': mask,
-                'aufs': aufs,
-            })
-
-        # Process setup algorithms
-        setups = self.case_data.get('setups', [])
-
         return {
+            'method': self.method,
             'step': self.step,
-            'step_info': self.methods['CFOP']['steps'][self.step],  # type: ignore[index]
-            'case': case_info,
-            'orientations': orientations,
-            'orientations_count': len(orientations),
-            'setups': setups,
-            'setups_count': len(setups),
+            'step_info': self.step_info,
+            'cube_size': self.cube_size,
+            'case': self.case,
         }
 
 
@@ -1407,8 +1388,8 @@ class Server:
             """
             return AcademyView().as_view(debug)
 
-        @app.route('/academy/<step>/')  # type: ignore[misc]
-        def academy_step(step: str) -> str:
+        @app.route('/academy/<method>/<step>/')  # type: ignore[misc]
+        def academy_step(method: str, step: str) -> str:
             """
             Render academy step page with all cases.
 
@@ -1416,10 +1397,10 @@ class Server:
                 Rendered HTML template.
 
             """
-            return AcademyStepView(step).as_view(debug)
+            return AcademyStepView(method, step).as_view(debug)
 
-        @app.route('/academy/<step>/<case_id>/')  # type: ignore[misc]
-        def academy_case(step: str, case_id: str) -> str:
+        @app.route('/academy/<method>/<step>/<case_id>/')  # type: ignore[misc]
+        def academy_case(method: str, step: str, case_id: str) -> str:
             """
             Render academy case detail page.
 
@@ -1427,7 +1408,7 @@ class Server:
                 Rendered HTML template.
 
             """
-            return AcademyCaseView(step, case_id).as_view(debug)
+            return AcademyCaseView(method, step, case_id).as_view(debug)
 
         @app.route('/algorithm/<algorithm>/')  # type: ignore[misc]
         def algorithm_detail(algorithm: str) -> str:
