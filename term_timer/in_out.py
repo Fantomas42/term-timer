@@ -111,6 +111,9 @@ def save_solves(cube: int, session: str, solves: list[Solve]) -> bool:
 
     dumped = json.dumps(data, indent=1)
 
+    if not SAVE_DIRECTORY.exists():
+        SAVE_DIRECTORY.mkdir()
+
     with source.open('w+', encoding='utf-8') as fd:
         fd.write(dumped)
 
