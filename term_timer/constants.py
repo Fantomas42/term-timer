@@ -1,8 +1,9 @@
 """Application-wide constants and type definitions."""
-
 from pathlib import Path
 from typing import Final
 from typing import Literal
+
+from cubing_algs.initial_state import get_initial_state
 
 SECOND: Final = 1_000_000_000  # In nano seconds
 
@@ -37,6 +38,8 @@ RESLICE_THRESHOLD_GYROSCOPE: Final = 120
 REWIDE_THRESHOLD_GYROSCOPE: Final = 180
 
 ESCAPE_CHAR: Final = '\x1b'
+
+INITIAL_STATE_3x3x3 = get_initial_state(3)
 
 Face = Literal['U', 'D', 'R', 'L', 'F', 'B']
 

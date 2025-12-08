@@ -10,7 +10,6 @@ from typing import ClassVar
 from typing import Final
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.constants import INITIAL_STATE
 from cubing_algs.constants import OPPOSITE_FACES
 from cubing_algs.masks import CENTERS_MASK
 from cubing_algs.masks import CROSS_MASK
@@ -32,6 +31,7 @@ from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.constants import INITIAL_STATE_3x3x3
 from term_timer.methods.masks import CASES_MASKS
 from term_timer.methods.types import CaseMaskInfo
 from term_timer.methods.types import StepConfig
@@ -195,7 +195,7 @@ class FaceletAnalyser:
         mask = self.reorient(mask, orientation_faces, offset=True)
 
         matching_mask = facelets_masked(
-            INITIAL_STATE, mask,
+            INITIAL_STATE_3x3x3, mask,
         )
 
         return matching_mask, mask
