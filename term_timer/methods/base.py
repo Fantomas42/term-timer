@@ -138,7 +138,7 @@ class FaceletAnalyser:
         if offset:
             moves = mirror_moves(moves)
 
-        cube = VCube(state, check=False)
+        cube = VCube(state, size=3, check=False)
         cube.rotate(moves)
 
         return cube.state
@@ -306,7 +306,7 @@ class Analyser(FaceletAnalyser):
             and facelet states at step start.
 
         """
-        cube = VCube()
+        cube = VCube(size=3)
         facelets = cube.rotate(self.scramble)
 
         steps: dict[str, StepInfo] = {}

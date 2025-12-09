@@ -337,7 +337,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                         virtual_cube,
                     )
                 elif show_cube:
-                    virtual_cube = VCube(event['facelets'])
+                    virtual_cube = VCube(event['facelets'], size=3)
 
                     show_state(moves, orientation_moves, virtual_cube)
 
@@ -513,7 +513,7 @@ def replay(options: Namespace) -> None:
             )
 
             if show_cube:
-                virtual_cube = VCube(event['facelets'])
+                virtual_cube = VCube(event['facelets'], size=3)
                 show_state(moves, orientation_moves, virtual_cube)
 
 

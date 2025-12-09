@@ -79,6 +79,9 @@ class Scrambler:
                 timing information.
 
         """
+        if self.bluetooth_cube is None:
+            return
+
         if not self.scrambled and timed_move.is_rotation_move:
             return
 
@@ -91,12 +94,13 @@ class Scrambler:
         if not reduced_scrambled:
             self.scrambled = Algorithm()
 
-        cube_scrambled = VCube(self.facelets_scrambled, check=False)
-
-        is_complete = (
-            self.bluetooth_cube is not None
-            and self.bluetooth_cube.is_equal(cube_scrambled, strict=False)
+        cube_scrambled = VCube(
+            self.facelets_scrambled,
+            size=self.bluetooth_cube.size,
+            check=False,
         )
+
+        is_complete = self.bluetooth_cube.is_equal(cube_scrambled, strict=False)
 
         if is_complete:
             self.scramble_completed_event.set()

@@ -17,7 +17,7 @@ from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import CUBE_RIGHT_HANDED
 from term_timer.exceptions import InvalidOrientationError
 
-cube = VCube()
+cube = VCube(size=3)
 
 ORIENTATION_MOVES: Final = {
     orientation: parse_moves(
@@ -120,7 +120,7 @@ def get_orientation_faces(
     """
     top_face = None
 
-    cube = VCube()
+    cube = VCube(size=3)
     cube.rotate(scramble)
 
     untimed_solution = solution.transform(untime_moves)

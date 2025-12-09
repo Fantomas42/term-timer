@@ -826,13 +826,13 @@ class TestScrambleCompletionVerification(unittest.TestCase):
     def check_completion(self, scrambled: Algorithm,
                          scramble_oriented: Algorithm) -> None:
         """Check completion is detected."""
-        cube = VCube()
+        cube = VCube(size=3)
         cube.rotate('z2' + scramble_oriented)
         orientations = Algorithm()
 
         # Create scrambler with mocked dependencies
         scrambler = OrienterScrambler('DF')
-        scrambler.bluetooth_cube = VCube()
+        scrambler.bluetooth_cube = VCube(size=3)
         scrambler.facelets_scrambled = cube.state
         scrambler.scramble_oriented = scramble_oriented
         scrambler.console = Mock()
@@ -876,7 +876,7 @@ class TestScrambleCompletionVerification(unittest.TestCase):
         )
         scramble_oriented = parse_moves("F R U R' d R' U' R U' R'")
 
-        cube = VCube()
+        cube = VCube(size=3)
         cube.rotate('z2' + scramble_oriented)
 
         self.check_completion(scrambled, scramble_oriented)

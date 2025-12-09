@@ -95,7 +95,7 @@ def compute_masks(name: str, moves: str, mode: str,
             if mode == 'F2L':
                 mode_key += f' { scheme_name }'
 
-            cube = VCube()
+            cube = VCube(size=3)
             cube.rotate(case_algorithm)
 
             if debug:

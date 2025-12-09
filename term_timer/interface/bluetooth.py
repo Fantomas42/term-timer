@@ -267,7 +267,10 @@ class Bluetooth:
                             event,
                         )
 
-                        self.bluetooth_cube = VCube(facelets_event['facelets'])
+                        self.bluetooth_cube = VCube(
+                            facelets_event['facelets'],
+                            size=3,
+                        )
                         self.facelets_received_event.set()
 
                 elif event_name == 'move':

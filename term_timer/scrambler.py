@@ -78,7 +78,7 @@ def trainer(step: str, cases: list[str],
         Tuple of (case name, main algorithm, scramble, cube state).
 
     """
-    cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube()
+    cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube(size=3)
 
     if step == 'ecross':
         case_name = 'Easy Cross'
@@ -114,7 +114,7 @@ def random_training(step: str, selected_cases: list[str],
         InvalidCaseError: If selected case is not valid for the step.
 
     """
-    cases = get_collection(step).cases
+    cases = get_collection(f'CFOP/{ step }').cases
     valid_cases: dict[str, Case] = {
         v.code: v for v in cases.values() if v.setup_algorithms
     }
