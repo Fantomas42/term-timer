@@ -240,11 +240,14 @@ class SessionManager:
         """
         Merge solves from multiple sessions, sorted by date.
 
+        Deduplicates solves based on the date field. If multiple solves
+        have the same date, only the last one encountered is kept.
+
         Args:
             session_paths: List of session path to merge.
 
         """
-        all_solves: list[SolveData] = []
+        solves_dict: dict[int, SolveData] = {}
         for session_path in session_paths:
             path = Path(session_path)
             if not path.exists():
@@ -255,8 +258,10 @@ class SessionManager:
                 continue
             with path.open('r', encoding='utf-8') as fd:
                 data: list[SolveData] = json.load(fd)
-            all_solves.extend(data)
+            for solve in data:
+                solves_dict[solve['date']] = solve
 
+        all_solves = list(solves_dict.values())
         all_solves.sort(key=operator.itemgetter('date'))
 
         out = json.dumps(
