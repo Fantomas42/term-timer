@@ -147,7 +147,7 @@ class Importer:
         for line in data[1:]:
             flag: SolveFlag = ''
             (
-                _i, time_corrected, _comment, scramble, date_str, time_str,
+                _i, time_corrected, comment, scramble, date_str, time_str,
             ) = line.split(';')
             date = self.date_to_ts(date_str)
             time = self.time_to_ns(time_str)
@@ -166,6 +166,7 @@ class Importer:
                     'csTimer',
                     '',
                     'import_cstimer_csv',
+                    comment,
                 ).as_save,
             )
 
