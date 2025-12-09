@@ -1326,7 +1326,8 @@ class Server:
             def open_browser() -> None:
                 webbrowser.open(url)
 
-            threading.Thread(target=open_browser, daemon=True).start()
+            if not debug:
+                threading.Thread(target=open_browser, daemon=True).start()
 
         app.run(
             host=host,
