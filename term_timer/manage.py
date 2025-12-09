@@ -120,7 +120,7 @@ class SolveManager:
         """Persist the current solve stack to disk."""
         save_solves(self.cube, self.session, self.stack)
 
-    def update(self, flag: SolveFlagInput) -> None:
+    def update_flag(self, flag: SolveFlagInput) -> None:
         """
         Update the flag status of the solve with user confirmation.
 
@@ -138,6 +138,34 @@ class SolveManager:
             normalized_flag: SolveFlag = '' if flag == 'OK' else flag
 
             self.stack[self.solve_index].flag = normalized_flag
+            self.save()
+
+            console.print(
+                f'Solve #{ self.solve_id } updated',
+                style='success',
+            )
+        else:
+            console.print(
+                f'Solve #{ self.solve_id } untouched',
+                style='caution',
+            )
+
+    def update_comment(self, comment: str) -> None:
+        """
+        Update the comment of the solve with user confirmation.
+
+        Args:
+            comment: The new comment to apply.
+
+        """
+        if self.solve is None:
+            return
+
+        if self.confirm(
+                f'Are you sure to update the comment to "{ comment }" ?',
+                self.solve,
+        ):
+            self.stack[self.solve_index].comment = comment
             self.save()
 
             console.print(

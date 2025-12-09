@@ -49,7 +49,7 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912
         scrambles = load_scrambles(scrambles_file)
         if not scrambles:
             console.print(
-                f'🤔 No scrambles in { scrambles_file.name }',
+                f'🤔 No scrambles in { scrambles_file.name }.',
                 style='warning',
             )
             return 0
@@ -191,7 +191,7 @@ def tools(command: str, options: Namespace) -> int:
 
     if not session_stats.stack:
         console.print(
-            f'No saved solves yet for { session_stats.cube_name }.',
+            f'🤔 No saved solves yet for { session_stats.cube_name }.',
             style='warning',
         )
         return 1
@@ -258,9 +258,19 @@ def manage(command: str, options: Namespace) -> int:
     cube = options.cube
 
     if command == 'edit':
+        if not options.flag and not options.comment:
+            console.print(
+                '🤔 Nothing to edit, use --flag or --comment at least.',
+                style='warning',
+            )
+            return 0
+
         for solve_id in options.solves:
             solve_manager = SolveManager(cube, options.session, solve_id)
-            solve_manager.update(options.flag)
+            if options.flag:
+                solve_manager.update_flag(options.flag)
+            if options.comment:
+                solve_manager.update_comment(options.comment)
 
     if command == 'delete':
         solve_manager = SolveManager(cube, options.session, options.solve)
