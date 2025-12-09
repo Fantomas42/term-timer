@@ -57,6 +57,7 @@ class SolveData(TypedDict):
     timer: str
     device: str
     moves: str
+    comment: str
 
 
 class Solve:  # noqa: PLR0904
