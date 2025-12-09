@@ -97,6 +97,7 @@ class Importer:
             time_str = line[3]
             device = line[6]
             moves = line[14]
+            comment = line[16]
             scramble = line[19]
 
             date = self.date_to_ts(date_str)
@@ -122,6 +123,7 @@ class Importer:
                     device,
                     'import_cubeast_csv',
                     moves=' '.join(fixed_moves),
+                    comment=comment,
                 ).as_save,
             )
 
@@ -212,15 +214,16 @@ class Importer:
                 continue
 
             for solve in session_values:
-                if len(solve) != 5:
-                    continue
-
                 flag_raw: int | str
                 time_raw: int
                 flag_raw, time_raw = solve[0]
                 scramble: str = solve[1]
+                comment: str = solve[2]
                 date: float = solve[3]
-                moves: str = solve[4][0]
+
+                moves: str = ''
+                if len(solve) == 5:
+                    moves = solve[4][0]
 
                 flag: SolveFlag
                 if flag_raw == -1:
@@ -242,6 +245,7 @@ class Importer:
                         device,
                         'import_cstimer_json',
                         moves=moves,
+                        comment=comment,
                     ).as_save,
                 )
 
