@@ -86,7 +86,7 @@
    function handleOK() {
      if (confirm('Mark this solve as OK ?')) {
        update(
-         "/{{ cube }}/{{ session }}/{{ solve_id }}/update/",
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/flag/",
          {flag: ''},
        )
      }
@@ -95,7 +95,7 @@
    function handleDNF() {
      if (confirm('Mark this solve as DNF ?')) {
        update(
-         "/{{ cube }}/{{ session }}/{{ solve_id }}/update/",
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/flag/",
          {flag: 'DNF'},
        )
      }
@@ -104,7 +104,7 @@
    function handlePlus2() {
      if (confirm('Mark this solve with a +2s penality ?')) {
        update(
-         "/{{ cube }}/{{ session }}/{{ solve_id }}/update/",
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/flag/",
          {flag: '+2'},
        )
      }

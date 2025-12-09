@@ -1002,8 +1002,8 @@ class SolveDetailView(View):
         }
 
 
-class SolveUpdateView:
-    """View for updating solve metadata like flags."""
+class SolveUpdateFlagView:
+    """View for updating solve flag."""
 
     def __init__(self, cube: int, session: str, solve_id: int,
                  flag: SolveFlagInput) -> None:
@@ -1422,11 +1422,11 @@ class Server:
             """
             return AlgorithmDetailView(algorithm).as_view(debug)
 
-        @app.route('/<cube:int>/<session:path>/<solve:int>/update/',
+        @app.route('/<cube:int>/<session:path>/<solve:int>/flag/',
                    method='POST')  # type: ignore[misc]
-        def solve_update(cube: int, session: str, solve: int) -> None:
-            """Handle solve update POST request."""
-            SolveUpdateView(
+        def solve_update_flag(cube: int, session: str, solve: int) -> None:
+            """Handle solve update flag POST request."""
+            SolveUpdateFlagView(
                 cube, session, solve,
                 request.POST.flag,
             )
