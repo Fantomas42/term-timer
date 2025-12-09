@@ -79,6 +79,7 @@ class Solve:  # noqa: PLR0904
         solve_id: Unique identifier within the session
         cube_size: Size of the cube (2-7, default 3 for 3x3x3)
         moves: Optional solution reconstruction as a string
+        comment: Optional comment about the solve
 
     """
 
@@ -89,6 +90,7 @@ class Solve:  # noqa: PLR0904
                  timer: str = '',
                  device: str = '',
                  session: str = '',
+                 comment: str = '',
                  solve_id: int = 0,
                  cube_size: int = 3,
                  moves: str | None = None) -> None:
@@ -99,6 +101,7 @@ class Solve:  # noqa: PLR0904
         self.timer = timer
         self.device = device
 
+        self.comment = comment
         self.session = session or 'default'
         self.solve_id = solve_id
         self.cube_size = cube_size
@@ -1209,6 +1212,7 @@ class Solve:  # noqa: PLR0904
             'flag': self.flag,
             'timer': self.timer,
             'device': self.device,
+            'comment': self.comment,
             'moves': self.raw_moves or '',
         }
 
