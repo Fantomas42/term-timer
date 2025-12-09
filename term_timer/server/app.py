@@ -1041,6 +1041,44 @@ class SolveUpdateFlagView:
         redirect(f'/{ cube }/{ session }/{ solve_id }/')
 
 
+class SolveUpdateCommentView:
+    """View for updating solve comment."""
+
+    def __init__(self, cube: int, session: str, solve_id: int,
+                 comment: str) -> None:
+        """
+        Update solve comment and redirect to solve detail.
+
+        Args:
+            cube: Cube size (2-7).
+            session: Session identifier or 'all' for all sessions.
+            solve_id: 1-based solve identifier within the session.
+            comment: New comment value to set.
+
+        """
+        self.cube = cube
+        self.session = session
+        self.solve_id = solve_id
+        self.comment = comment
+
+        self.solves = load_all_solves(
+            cube,
+            [] if session == 'all' else [session],
+            [], [],
+        )
+
+        self.solve_index = solve_id - 1
+        try:
+            self.solve = self.solves[self.solve_index]
+        except IndexError:
+            abort(404, 'Invalid solve ID')
+
+        self.solves[self.solve_index].comment = comment.strip()
+        save_solves(cube, session, self.solves)
+
+        redirect(f'/{ cube }/{ session }/{ solve_id }/')
+
+
 class SolveDeleteView:
     """View for deleting a solve from the database."""
 
@@ -1429,6 +1467,15 @@ class Server:
             SolveUpdateFlagView(
                 cube, session, solve,
                 request.POST.flag,
+            )
+
+        @app.route('/<cube:int>/<session:path>/<solve:int>/comment/',
+                   method='POST')  # type: ignore[misc]
+        def solve_update_comment(cube: int, session: str, solve: int) -> None:
+            """Handle solve update comment POST request."""
+            SolveUpdateCommentView(
+                cube, session, solve,
+                request.POST.comment,
             )
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/delete/',
