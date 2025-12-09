@@ -62,6 +62,7 @@ class SolvesPanel(VerticalScroll):
         self.current_session: str | None = None
         self.solves: list[Solve] = []
         self.current_sorts: set[str] = set()
+        self.is_initial_load: bool = True
 
     @staticmethod
     def compose() -> ComposeResult:
@@ -134,6 +135,19 @@ class SolvesPanel(VerticalScroll):
                 solve.flag,
                 key=str(solve_num),
             )
+
+        # Auto-select first solve (last/newest) on initial load
+        if self.is_initial_load and self.solves:
+            self.is_initial_load = False
+            self.call_after_refresh(self.auto_select_first_solve)
+
+    def auto_select_first_solve(self) -> None:
+        """Auto-select the first solve (last/newest) in the table."""
+        table = self.query_one(DataTable)
+        if table.row_count > 0:
+            # Move cursor to first row and select it
+            table.move_cursor(row=0, column=0)
+            table.action_select_cursor()
 
     def sort_reverse_toggle(self, sort_type: str) -> bool:
         """
