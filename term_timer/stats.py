@@ -626,7 +626,7 @@ class StatisticsReporter(Statistics):
                     f'[percent]{ total_percent * 100:05.2f}%[/percent]',
                 )
 
-    def listing(self, limit: int, sorting: str) -> None:
+    def listing(self, limit: int, sorting: str) -> None:  # noqa: C901
         """
         Display a formatted list of solves to the console.
 
