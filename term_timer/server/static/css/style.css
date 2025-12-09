@@ -252,6 +252,13 @@ header {
     font-weight: bold;
 }
 
+.comment-card {
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 0.375rem;
+    font-size: 1.5em;
+}
+
 .moves-card {
     padding: 1rem;
     background-color: rgba(255, 255, 255, 0.05);
@@ -820,8 +827,9 @@ twisty-alg-viewer {
 }
 
 .solve-list th:nth-child(5), .solve-list td:nth-child(5),
-.solve-list th:nth-child(6), .solve-list td:nth-child(6) {
-    width: 5%; /* Flag, Grade */
+.solve-list th:nth-child(6), .solve-list td:nth-child(6),
+.solve-list th:nth-child(7), .solve-list td:nth-child(7) {
+    width: 5%; /* Flag, Comment, Grade */
 }
 
 .reconstruction th:nth-child(1), .reconstruction td:nth-child(1) {

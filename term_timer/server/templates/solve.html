@@ -610,6 +610,22 @@
     </div>
   </div>
 
+  {% if solve.comment %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-comment-alt"></i>
+          <a href="#comment" id="comment">Comment</a>
+        </h2>
+      </div>
+      <div class="comment-card">
+        <div class="comment">
+          <p>{{ solve.comment }}</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
   {% if solve.advanced %}
     <div class="card">
       <div class="card-header">

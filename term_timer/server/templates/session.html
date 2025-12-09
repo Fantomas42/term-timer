@@ -761,6 +761,7 @@
             <th>Date</th>
             <th>Scramble</th>
             <th>Flag</th>
+            <th>Comment</th>
             <th>Grade</th>
           </tr>
         </thead>
@@ -793,6 +794,13 @@
               </td>
               <td class="solve-flag">
                 {{ solve.flag|default('---', true) }}
+              </td>
+              <td class="solve-comment">
+                {% if solve.comment %}
+                  <i class="fas fa-comment-alt" title="{{ solve.comment }}"></i>
+                {% else %}
+                  ---
+                {% endif %}
               </td>
               <td class="solve-grade">
                 {% if solve.score %}
