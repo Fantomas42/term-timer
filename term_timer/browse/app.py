@@ -25,11 +25,11 @@ class BrowseApp(App[None]):
     }
 
     #top-panels {
-        height: 50%;
+        height: 33%;
     }
 
     #bottom-panel {
-        height: 50%;
+        height: 67%;
     }
     """
 
