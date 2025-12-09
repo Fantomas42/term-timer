@@ -954,8 +954,8 @@ def edit_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     """
     parser = subparsers.add_parser(
         'edit',
-        help="Edit solves' flag",
-        description='Edit flag status on specific solves.',
+        help="Edit solves' flag or comment",
+        description='Edit flag status or comment on specific solves.',
         aliases=COMMAND_ALIASES['edit'],
     )
 
@@ -968,10 +968,17 @@ def edit_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
 
     parser.add_argument(
-        'flag',
+        '--flag', '-f',
         metavar='FLAG',
         choices={'OK', '+2', 'DNF'},
         help='Flag to set the solve(s) for.',
+    )
+
+    parser.add_argument(
+        '--comment', '-m',
+        type=str,
+        metavar='COMMENT',
+        help='Comment to set for the solve(s).',
     )
 
     session = parser.add_argument_group('Session')

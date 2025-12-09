@@ -23,6 +23,21 @@ class TestSolveModule(unittest.TestCase):
         self.assertEqual(solve.time, time)
         self.assertEqual(str(solve.scramble), scramble)
         self.assertEqual(solve.flag, '')
+        self.assertEqual(solve.comment, '')
+
+    def test_solve_initialization_with_comment(self) -> None:
+        """Test initialization of a Solve object."""
+        date = 1000000000
+        time = 1012345678
+        scramble = "F R U R' U' F'"
+
+        solve = Solve(date, time, scramble, comment='Comment')
+
+        self.assertEqual(solve.date, date)
+        self.assertEqual(solve.time, time)
+        self.assertEqual(str(solve.scramble), scramble)
+        self.assertEqual(solve.flag, '')
+        self.assertEqual(solve.comment, 'Comment')
 
     def test_solve_with_string(self) -> None:
         """Test initialization of a Solve object with string times."""

@@ -21,6 +21,7 @@ class SolvesPanel(VerticalScroll):
         ('t', 'sort_by_time', 'Sort by Time'),
         ('d', 'sort_by_date', 'Sort by Date'),
         ('f', 'sort_by_flag', 'Sort by Flag'),
+        ('c', 'sort_by_comment', 'Sort by Comment'),
     ]
 
     DEFAULT_CSS = """
@@ -79,6 +80,7 @@ class SolvesPanel(VerticalScroll):
         table.add_column('Time', key='Time')
         table.add_column('Date', key='Date')
         table.add_column('Flag', key='Flag')
+        table.add_column('Comment', key='Comment')
         yield table
 
     def load_session(self, cube_size: int, session_name: str) -> None:
@@ -133,6 +135,7 @@ class SolvesPanel(VerticalScroll):
                 time_str,
                 date_str,
                 solve.flag,
+                '*' if solve.comment else '',
                 key=str(solve_num),
             )
 
@@ -192,6 +195,13 @@ class SolvesPanel(VerticalScroll):
             return
         table = self.query_one(DataTable)
         table.sort('Flag', reverse=self.sort_reverse_toggle('flag'))
+
+    def action_sort_by_comment(self) -> None:
+        """Sort table by solve comment."""
+        if not self.solves:
+            return
+        table = self.query_one(DataTable)
+        table.sort('Comment', reverse=self.sort_reverse_toggle('comment'))
 
     @staticmethod
     def _extract_time_from_display(time_str: str) -> float:

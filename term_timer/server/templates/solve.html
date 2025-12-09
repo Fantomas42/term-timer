@@ -86,7 +86,7 @@
    function handleOK() {
      if (confirm('Mark this solve as OK ?')) {
        update(
-         "/{{ cube }}/{{ session }}/{{ solve_id }}/update/",
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/flag/",
          {flag: ''},
        )
      }
@@ -95,7 +95,7 @@
    function handleDNF() {
      if (confirm('Mark this solve as DNF ?')) {
        update(
-         "/{{ cube }}/{{ session }}/{{ solve_id }}/update/",
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/flag/",
          {flag: 'DNF'},
        )
      }
@@ -104,7 +104,7 @@
    function handlePlus2() {
      if (confirm('Mark this solve with a +2s penality ?')) {
        update(
-         "/{{ cube }}/{{ session }}/{{ solve_id }}/update/",
+         "/{{ cube }}/{{ session }}/{{ solve_id }}/flag/",
          {flag: '+2'},
        )
      }
@@ -116,6 +116,39 @@
          "/{{ cube }}/{{ session }}/{{ solve_id }}/delete/", '',
        )
      }
+   }
+
+   let originalComment = '';
+
+   function startEditComment() {
+     const commentDisplay = document.getElementById('comment-display');
+     const commentEdit = document.getElementById('comment-edit');
+     const commentText = document.getElementById('comment-text');
+
+     originalComment = commentText.value;
+
+     commentDisplay.style.display = 'none';
+     commentEdit.style.display = 'block';
+     commentText.focus();
+   }
+
+   function cancelEditComment() {
+     const commentDisplay = document.getElementById('comment-display');
+     const commentEdit = document.getElementById('comment-edit');
+     const commentText = document.getElementById('comment-text');
+
+     commentText.value = originalComment;
+
+     commentDisplay.style.display = 'block';
+     commentEdit.style.display = 'none';
+   }
+
+   function saveComment() {
+     const commentText = document.getElementById('comment-text');
+     update(
+       "/{{ cube }}/{{ session }}/{{ solve_id }}/comment/",
+       {comment: commentText.value},
+     );
    }
   </script>
   {% if solve.advanced %}
@@ -607,6 +640,31 @@
           </div>
         </div>
       {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-comment-alt"></i>
+        <a href="#comment" id="comment">Comment</a>
+      </h2>
+    </div>
+    <div class="comment-card">
+      <div id="comment-display" class="comment" onclick="startEditComment();">
+        {% if solve.comment %}
+          <p>{{ solve.comment }}</p>
+        {% else %}
+          <p class="comment-placeholder">Click to add a comment...</p>
+        {% endif %}
+      </div>
+      <div id="comment-edit" class="comment-edit-form">
+        <textarea id="comment-text" class="comment-textarea" rows="4">{{ solve.comment }}</textarea>
+        <div class="comment-actions">
+          <button onclick="saveComment();" class="comment-btn comment-btn-save">Save</button>
+          <button onclick="cancelEditComment();" class="comment-btn comment-btn-cancel">Cancel</button>
+        </div>
+      </div>
     </div>
   </div>
 

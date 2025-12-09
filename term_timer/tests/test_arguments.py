@@ -282,10 +282,35 @@ class TestEditArguments(unittest.TestCase):
         subparsers = main_parser.add_subparsers(dest='command')
         edit_arguments(subparsers)
 
-        args = main_parser.parse_args(['edit', '1', '2', 'DNF'])
+        args = main_parser.parse_args(['edit', '1', '2', '-f', 'DNF'])
         self.assertEqual(args.command, 'edit')
         self.assertEqual(args.solves, [1, 2])
         self.assertEqual(args.flag, 'DNF')
+
+    def test_edit_with_solve_and_comment(self) -> None:
+        """Test edit with solve and comment."""
+        main_parser = ArgumentParser()
+        subparsers = main_parser.add_subparsers(dest='command')
+        edit_arguments(subparsers)
+
+        args = main_parser.parse_args(['edit', '1', '2', '-m', 'Comment'])
+        self.assertEqual(args.command, 'edit')
+        self.assertEqual(args.solves, [1, 2])
+        self.assertEqual(args.comment, 'Comment')
+
+    def test_edit_with_solve_flag_and_comment(self) -> None:
+        """Test edit with solve, flag and comment."""
+        main_parser = ArgumentParser()
+        subparsers = main_parser.add_subparsers(dest='command')
+        edit_arguments(subparsers)
+
+        args = main_parser.parse_args(
+            ['edit', '1', '2', '-f', 'DNF', '-m', 'Comment'],
+        )
+        self.assertEqual(args.command, 'edit')
+        self.assertEqual(args.solves, [1, 2])
+        self.assertEqual(args.flag, 'DNF')
+        self.assertEqual(args.comment, 'Comment')
 
 
 class TestDeleteArguments(unittest.TestCase):

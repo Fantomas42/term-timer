@@ -1,5 +1,4 @@
 """Detail panel for displaying solve information."""
-
 from typing import cast
 
 from textual.app import ComposeResult
@@ -72,7 +71,8 @@ class DetailPanel(VerticalScroll):
         # Update header
         header = self.query_one(Static)
         header.update(
-            f'Solve Detail: {cube_size}x{cube_size}x{cube_size} #{solve_index}',
+            f'Solve Detail: { cube_size }x{ cube_size }x{ cube_size } '
+            f'#{ solve_index }',
         )
 
         # Get log widget
@@ -84,25 +84,31 @@ class DetailPanel(VerticalScroll):
 
         # Basic information
         log.write(
-            f'[bold cyan]Time:[/bold cyan]       '
-            f'[green]{format_time(solve.time)}[/green] {solve.flag}',
+            f'[bold cyan]Time:[/bold cyan]        '
+            f'[green]{ format_time(solve.time) }[/green] {solve.flag}',
         )
-        log.write(f'[bold cyan]Date:[/bold cyan]       [dim]{date}[/dim]')
+        log.write(f'[bold cyan]Date:[/bold cyan]        [dim]{date}[/dim]')
         log.write(
-            f'[bold cyan]Session:[/bold cyan]    '
-            f'[yellow]{solve.session.title()}[/yellow]',
+            f'[bold cyan]Session:[/bold cyan]     '
+            f'[yellow]{ solve.session.title() }[/yellow]',
         )
 
         if solve.device:
             log.write(
-                f'[bold cyan]Cube:[/bold cyan]       '
-                f'[magenta]{solve.device}[/magenta]',
+                f'[bold cyan]Cube:[/bold cyan]        '
+                f'[magenta]{ solve.device }[/magenta]',
             )
 
         if solve.timer:
             log.write(
-                f'[bold cyan]Timer:[/bold cyan]      '
-                f'[magenta]{solve.timer}[/magenta]',
+                f'[bold cyan]Timer:[/bold cyan]       '
+                f'[magenta]{ solve.timer }[/magenta]',
+            )
+
+        if solve.comment:
+            log.write(
+                f'[bold cyan]Comment:[/bold cyan]     '
+                f'[yellow]{ solve.comment }[/yellow]',
             )
 
         # Advanced metrics (if available)
@@ -112,10 +118,10 @@ class DetailPanel(VerticalScroll):
 
             solve_score = cast('float', solve.score)
             grade = format_grade(solve_score)
-            grade_text = f'{grade:<2} {format_score(solve_score)}'
+            grade_text = f'{grade:<2} { format_score(solve_score) }'
             log.write(
-                f'[bold cyan]Grade:[/bold cyan]      '
-                f'[bold green]{grade_text}[/bold green]',
+                f'[bold cyan]Grade:[/bold cyan]       '
+                f'[bold green]{ grade_text }[/bold green]',
             )
 
             method_applied = cast('object', solve.method_applied)
@@ -123,11 +129,11 @@ class DetailPanel(VerticalScroll):
                 method_score = method_applied.score
                 method_grade = format_grade(method_score)
                 method_grade_text = (
-                    f'{method_grade:<2} {format_score(method_score)}'
+                    f'{ method_grade:<2} {format_score(method_score)}'
                 )
                 log.write(
-                    f'[bold cyan]Method:[/bold cyan]     '
-                    f'[bold green]{method_grade_text}[/bold green]',
+                    f'[bold cyan]Method:[/bold cyan]      '
+                    f'[bold green]{ method_grade_text }[/bold green]',
                 )
 
             recognition_time = format_time(
@@ -137,7 +143,7 @@ class DetailPanel(VerticalScroll):
             recog_percent = solve.recognition_time / solve.time * 100.0
             log.write(
                 f'[bold cyan]Recognition:[/bold cyan] '
-                f'{recognition_time} ({recog_percent:.2f}%)',
+                f'{ recognition_time } ({ recog_percent:.2f}%)',
             )
 
             execution_time = format_time(
@@ -147,75 +153,75 @@ class DetailPanel(VerticalScroll):
             exec_percent = solve.execution_time / solve.time * 100.0
             log.write(
                 f'[bold cyan]Execution:[/bold cyan]   '
-                f'{execution_time} ({exec_percent:.2f}%)',
+                f'{ execution_time } ({ exec_percent:.2f}%)',
             )
 
             # Metrics
             if hasattr(solve, 'reconstruction'):
                 metrics = solve.reconstruction.metrics
                 log.write(
-                    f'[bold cyan]Metrics:[/bold cyan]    '
-                    f'{metrics.htm} HTM, {metrics.qtm} QTM, '
-                    f'{solve.tps:.2f} TPS',
+                    f'[bold cyan]Metrics:[/bold cyan]     '
+                    f'{ metrics.htm } HTM, { metrics.qtm } QTM, '
+                    f'{ solve.tps:.2f} TPS',
                 )
 
             # Overhead
             all_missed = solve.all_missed_moves
             if all_missed:
-                overhead_text = f'{all_missed} QTM overhead'
+                overhead_text = f'{ all_missed } QTM overhead'
                 if solve.execution_missed_moves:
                     overhead_text += (
-                        f' (+{solve.execution_missed_moves} execution)'
+                        f' (+{ solve.execution_missed_moves } execution)'
                     )
                 if solve.transition_missed_moves:
                     overhead_text += (
-                        f' (+{solve.transition_missed_moves} transition)'
+                        f' (+{ solve.transition_missed_moves } transition)'
                     )
                 log.write(
-                    f'[bold cyan]Overhead:[/bold cyan]   '
-                    f'[red]{overhead_text}[/red]',
+                    '[bold cyan]Overhead:[/bold cyan]    '
+                    f'[red]{ overhead_text }[/red]',
                 )
             else:
                 log.write(
-                    '[bold cyan]Overhead:[/bold cyan]   '
+                    '[bold cyan]Overhead:[/bold cyan]    '
                     '[green]Optimal execution[/green]',
                 )
 
             # Pauses
             if solve.execution_pauses:
                 log.write(
-                    f'[bold cyan]Pauses:[/bold cyan]     '
-                    f'[yellow]{solve.execution_pauses}[/yellow]',
+                    f'[bold cyan]Pauses:[/bold cyan]      '
+                    f'[yellow]{ solve.execution_pauses }[/yellow]',
                 )
             else:
                 log.write(
-                    '[bold cyan]Pauses:[/bold cyan]     [green]None[/green]',
+                    '[bold cyan]Pauses:[/bold cyan]      [green]None[/green]',
                 )
 
             # Rotations and AUFs
             if solve.rotations:
                 log.write(
-                    f'[bold cyan]Rotations:[/bold cyan]  '
-                    f'[yellow]{solve.rotations}[/yellow]',
+                    f'[bold cyan]Rotations:[/bold cyan]   '
+                    f'[yellow]{ solve.rotations }[/yellow]',
                 )
 
             if solve.aufs:
                 log.write(
-                    f'[bold cyan]AUFs:[/bold cyan]       '
-                    f'[dim]{solve.aufs}[/dim]',
+                    f'[bold cyan]AUFs:[/bold cyan]        '
+                    f'[dim]{ solve.aufs }[/dim]',
                 )
 
         # Scramble
         log.write('')
         log.write('[bold yellow]═══ Scramble ═══[/bold yellow]')
-        log.write(f'[dim]{solve.scramble}[/dim]')
+        log.write(f'[dim]{ solve.scramble }[/dim]')
 
         # Reconstruction
         if solve.advanced and hasattr(solve, 'method_line'):
             log.write('')
             log.write(
                 f'[bold yellow]═══ Reconstruction '
-                f'({solve.method_analyser.name}) ═══[/bold yellow]',
+                f'({ solve.method_analyser.name }) ═══[/bold yellow]',
             )
 
             # Display method line (with Rich markup)
@@ -229,11 +235,14 @@ class DetailPanel(VerticalScroll):
             # Links
             log.write('')
             log.write(
-                f'[link={solve.link_term_timer}]View in Term-Timer[/link]',
+                f'[link={ solve.link_term_timer }]'
+                'View in Term-Timer[/link]',
             )
             log.write(
-                f'[link={solve.link_alg_cubing}]View on alg.cubing.net[/link]',
+                f'[link={ solve.link_alg_cubing }]'
+                'View on alg.cubing.net[/link]',
             )
             log.write(
-                f'[link={solve.link_cube_db}]View on cubedb.net[/link]',
+                f'[link={ solve.link_cube_db }]'
+                'View on cubedb.net[/link]',
             )

@@ -626,7 +626,7 @@ class StatisticsReporter(Statistics):
                     f'[percent]{ total_percent * 100:05.2f}%[/percent]',
                 )
 
-    def listing(self, limit: int, sorting: str) -> None:
+    def listing(self, limit: int, sorting: str) -> None:  # noqa: C901
         """
         Display a formatted list of solves to the console.
 
@@ -685,12 +685,18 @@ class StatisticsReporter(Statistics):
             if solve.flag == PLUS_TWO:
                 flag_class = 'plus-two'
 
+            footer = ''
+            if solve.flag:
+                footer += f'[{ flag_class }]{ solve.flag }[/{ flag_class }]'
+            if solve.comment:
+                footer += f"[comment]{ '*' if solve.comment else '' }[/comment]"
+
             console.print(
                 header,
                 f'[{ time_class }]{ format_time(solve.time) }[/{ time_class }]',
                 f'[date]{ date }[/date]',
                 f'[consign]{ solve.scramble }[/consign]',
-                f'[{ flag_class }]{ solve.flag }[/{ flag_class }]',
+                footer,
             )
 
     def detail(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915
@@ -896,6 +902,12 @@ class StatisticsReporter(Statistics):
                 aufs_string += '[success]None[/success]'
 
             console.print(aufs_string)
+
+        if solve.comment:
+            console.print(
+                '[stats]Comment    :[/stats] '
+                f'[comment]{ solve.comment }[/comment]',
+            )
 
         console.print(
             '[stats]Scramble   :[/stats] '

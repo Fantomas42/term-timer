@@ -390,6 +390,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.advanced = True
         mock_solve.link_term_timer = 'http://test.com'
         mock_solve.datetime = Mock()
+        mock_solve.comment = ''
         mock_solve.datetime.astimezone.return_value.strftime.return_value = (
             '2023-01-01 12:00'
         )
@@ -434,6 +435,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             '2023-01-01 12:00'
         )
         mock_solve.session = 'test_session'
+        mock_solve.comment = ''
         mock_solve.device = 'GAN356 X'
         mock_solve.timer = 'stackmat'
         mock_solve.flag = ''
@@ -524,6 +526,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
                     '2023-01-01 12:00'
                 )
                 mock_solve.session = 'test'
+                mock_solve.comment = ''
                 mock_solve.device = None
                 mock_solve.timer = None
                 mock_solve.flag = ''
@@ -599,6 +602,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             '2023-01-01 12:00'
         )
         mock_solve.session = 'test'
+        mock_solve.comment = ''
         mock_solve.device = None
         mock_solve.timer = None
         mock_solve.flag = ''
@@ -676,6 +680,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             '2023-01-01 12:00'
         )
         mock_solve.session = 'test'
+        mock_solve.comment = ''
         mock_solve.device = None
         mock_solve.timer = None
         mock_solve.flag = ''
