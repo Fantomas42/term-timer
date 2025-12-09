@@ -3,6 +3,7 @@ import logging
 from random import Random
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.vcube import VCube
 
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -10,7 +11,6 @@ from term_timer.constants import SolveFlag
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
-from term_timer.magic_cube import Cube
 from term_timer.printer import print_cube_scrambled
 from term_timer.scrambler import scrambler
 from term_timer.scrambler import state_to_scramble
@@ -83,7 +83,7 @@ class Timer(SolveInterface):
                 style='warning',
             )
 
-    def start_line(self, cube: Cube) -> None:
+    def start_line(self, cube: VCube) -> None:
         """Display scramble information and instructions to start solve."""
         if self.show_cube:
             print_cube_scrambled(cube, self.orientation_faces, self.scramble)
@@ -265,7 +265,7 @@ class Timer(SolveInterface):
             self.scramble = self.scrambles[self.scramble_index]
             self.scramble_index += 1
 
-            cube = Cube(self.cube_size)
+            cube = VCube(size=self.cube_size)
             cube.rotate(self.scramble)
         else:
             self.scramble, cube = scrambler(

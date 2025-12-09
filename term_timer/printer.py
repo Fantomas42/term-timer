@@ -1,13 +1,16 @@
 """Cube visualization and scramble display utilities."""
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.vcube import VCube
 
+from term_timer.config import CUBE_EFFECT
+from term_timer.config import CUBE_ORIENTATION
+from term_timer.config import CUBE_PALETTE
 from term_timer.formatter import format_float
 from term_timer.interface.console import console
-from term_timer.magic_cube import Cube
 
 
 def print_cube_scrambled(
-        cube: Cube, orientation: str,
+        cube: VCube, orientation: str,
         scramble: Algorithm,
 ) -> None:
     """
@@ -19,7 +22,7 @@ def print_cube_scrambled(
     with a 'scrambled' style using the Rich console library.
 
     Args:
-        cube: The Cube object containing the current cube state in facelet
+        cube: The VCube object containing the current cube state in facelet
             string format.
         orientation: Two-character string specifying the cube orientation
             for display (e.g., 'UF' for Up-Front).
@@ -32,7 +35,14 @@ def print_cube_scrambled(
         without scramble percentage information.
 
     """
-    cube_display = cube.display(orientation)
+    if orientation == 'auto':
+        orientation = CUBE_ORIENTATION
+
+    cube_display = cube.display(
+        orientation=orientation,
+        palette=CUBE_PALETTE,
+        effect=CUBE_EFFECT,
+    )
 
     is_3x3 = cube.size == 3
     if is_3x3:
@@ -46,3 +56,31 @@ def print_cube_scrambled(
             f' { format_float(scrambled_percent) }%',
             style='scrambled',
         )
+
+
+def print_cube_trainer(
+        cube: VCube, orientation: str,
+        mode: str,
+) -> None:
+    """
+    Display a cube visualization with specific training mode.
+
+    Prints the cube state in the specified orientation and mode.
+
+    Args:
+        cube: The VCube object containing the current cube state in facelet
+            string format.
+        orientation: Two-character string specifying the cube orientation
+            for display (e.g., 'UF' for Up-Front).
+        mode: The training mode used (e.g., 'F2L', 'OLL').
+
+    """
+    print(  # noqa: T201
+        cube.display(
+            mode=mode,
+            orientation=orientation,
+            palette=CUBE_PALETTE,
+            effect=CUBE_EFFECT,
+        ),
+        end='',
+    )

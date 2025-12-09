@@ -15,7 +15,6 @@ from kociemba import solve
 
 from term_timer.config import CUBE_RIGHT_HANDED
 from term_timer.exceptions import InvalidCaseError
-from term_timer.magic_cube import Cube
 
 
 def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
@@ -35,7 +34,7 @@ def scrambler(cube_size: int, iterations: int,
               *,
               easy_cross: bool,
               rng: Random,
-              raw_scramble: str = '') -> tuple[Algorithm, Cube]:
+              raw_scramble: str = '') -> tuple[Algorithm, VCube]:
     """
     Generate cube scramble.
 
@@ -43,7 +42,7 @@ def scrambler(cube_size: int, iterations: int,
         Tuple of (scramble algorithm, scrambled cube state).
 
     """
-    cube = Cube(cube_size)
+    cube = VCube(size=cube_size)
 
     if raw_scramble:
         scrambled = parse_moves(raw_scramble, secure=False)

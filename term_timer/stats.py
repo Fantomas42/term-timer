@@ -1,11 +1,11 @@
 """Statistics calculation and display for solve sessions."""
-
 from functools import cached_property
 from typing import TYPE_CHECKING
 from typing import cast
 
 import numpy as np
 import plotext as plt
+from cubing_algs.vcube import VCube
 from rich import box
 from rich.table import Table
 
@@ -19,12 +19,11 @@ from term_timer.formatter import compute_padding
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
-from term_timer.formatter import format_float
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_score
 from term_timer.formatter import format_time
 from term_timer.interface.console import console
-from term_timer.magic_cube import Cube
+from term_timer.printer import print_cube_scrambled
 from term_timer.solve import Solve
 from term_timer.types import CaseStats
 from term_timer.types import MethodAnalysis
@@ -903,16 +902,11 @@ class StatisticsReporter(Statistics):
             f'[consign]{ solve.scramble }[/consign]',
         )
         if show_cube:
-            cube = Cube(self.cube_size)
+            cube = VCube(size=self.cube_size)
             cube.rotate(solve.scramble)
 
-            cube_display = cube.display('UF')[:-1]
-            print(cube_display, end='')  # noqa: T201
-
-            scrambled = solve.scramble.impacts.facelets_scrambled_percent
-            console.print(
-                f' { format_float(scrambled * 100) }%',
-                style='scrambled',
+            print_cube_scrambled(
+                cube, 'UF', solve.scramble,
             )
 
         if solve.advanced:

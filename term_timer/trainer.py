@@ -7,8 +7,6 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases import get_case
 from cubing_algs.vcube import VCube
 
-from term_timer.config import CUBE_EFFECT
-from term_timer.config import CUBE_PALETTE
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SolveFlag
 from term_timer.formatter import format_alg_aufs
@@ -17,6 +15,7 @@ from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
 from term_timer.methods.base import FaceletAnalyser
+from term_timer.printer import print_cube_trainer
 from term_timer.scrambler import trainer
 from term_timer.solve import Solve
 from term_timer.triggers import DEFAULT_TRIGGERS
@@ -79,15 +78,7 @@ class Trainer(SolveInterface):
             name = case.pretty_name
 
         if self.show_cube:
-            print(  # noqa: T201
-                cube.display(
-                    mode=mode,
-                    palette=CUBE_PALETTE,
-                    effect=CUBE_EFFECT,
-                    orientation=self.orientation_faces,
-                ),
-                end='',
-            )
+            print_cube_trainer(cube, self.orientation_faces, mode)
 
         scramble_line = f'[moves]{ self.scramble_oriented }[/moves]'
         if self.cube_orientation_moves:

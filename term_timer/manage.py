@@ -426,7 +426,7 @@ class ScrambleManager:
             if self.show_cube:
                 output_lines.extend(('', '### Cube Visualization', ''))
 
-                cube_emoji = cube.display('UF', 'emoji')
+                cube_emoji = cube.display(orientation='UF', facelet='emoji')
                 output_lines.extend((
                     '```',
                     cube_emoji.rstrip('\n'),
