@@ -10,6 +10,7 @@ from cubing_algs.parsing import parse_moves
 
 from term_timer.constants import SAVE_DIRECTORY
 from term_timer.solve import Solve
+from term_timer.solve import SolveData
 
 SCRAMBLE_LINE = re.compile(r'Scramble #\d+:\s*(.+?)(?:\s*//.*)?$')
 
@@ -31,7 +32,7 @@ def load_solves(cube: int, session: str) -> list[Solve]:
 
     if source.exists():
         with source.open('r', encoding='utf-8') as fd:
-            datas = json.load(fd)
+            datas: list[SolveData] = json.load(fd)
 
         return [
             Solve(
