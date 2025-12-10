@@ -791,13 +791,11 @@ class StatisticsReporter(Statistics):
             index = f'#{ original_index }'
             date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
-            header = f'[stats]{ index:{" "}>{max_count}}[/stats]'
-            if solve.advanced:
-                header = (
-                    f'[localhost][link={ solve.link_term_timer }]'
-                    f'{ index:{" "}>{max_count}}'
-                    '[/link][/localhost]'
-                )
+            header = (
+                f'[localhost][link={ solve.link_term_timer }]'
+                f'{ index:{" "}>{max_count}}'
+                '[/link][/localhost]'
+            )
 
             time_class = 'result'
             if solve.time == self.best:
