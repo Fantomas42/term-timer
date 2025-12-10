@@ -47,12 +47,22 @@ from term_timer.orientation import get_orientation_moves
 from term_timer.transform import prettify_moves
 
 
-class SolveData(TypedDict):
-    """Dictionary representation of a solve for serialization."""
+class SolveDataRequired(TypedDict):
+    """Required fields for solve serialization."""
 
     date: int
     time: int
     scramble: str
+
+
+class SolveData(SolveDataRequired, total=False):
+    """
+    Dictionary representation of a solve for serialization.
+
+    Required fields: date, time, scramble
+    Optional fields: flag, timer, device, moves, comment
+    """
+
     flag: SolveFlag
     timer: str
     device: str
@@ -1202,19 +1212,32 @@ class Solve:  # noqa: PLR0904
         Convert solve to dictionary for JSON serialization.
 
         Returns:
-            Dictionary with all solve data ready for saving to file
+            Dictionary with solve data ready for saving to file.
+            Only includes non-empty optional fields to reduce file size.
 
         """
-        return {
+        data: SolveData = {
             'date': self.date,
             'time': self.time,
             'scramble': str(self.scramble),
-            'flag': self.flag,
-            'timer': self.timer,
-            'device': self.device,
-            'comment': self.comment,
-            'moves': self.raw_moves or '',
         }
+
+        if self.flag:
+            data['flag'] = self.flag
+
+        if self.timer:
+            data['timer'] = self.timer
+
+        if self.device:
+            data['device'] = self.device
+
+        if self.raw_moves:
+            data['moves'] = self.raw_moves
+
+        if self.comment:
+            data['comment'] = self.comment
+
+        return data
 
     def __str__(self) -> str:
         """
