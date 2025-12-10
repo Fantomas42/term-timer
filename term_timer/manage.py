@@ -254,11 +254,7 @@ class SessionManager:
 
                 url = format_term_timer_session_url(cube, name)
                 total = len(session_solves[name])
-                connecteds = 0
-                for solve in session_solves[name]:
-                    if solve.device:
-                        connecteds += 1
-                connected_percent = format_float((connecteds / total) * 100)
+                connected_percent = format_float(stats.advanced_solves * 100)
 
                 table.add_row(
                     f'[localhost][link={ url }]{ name.title() }'
