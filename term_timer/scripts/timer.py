@@ -268,9 +268,9 @@ def manage(command: str, options: Namespace) -> int:
         for solve_id in options.solves:
             solve_manager = SolveManager(cube, options.session, solve_id)
             if options.flag:
-                solve_manager.update_flag(options.flag)
+                solve_manager.update_flag(options.flag, yes=options.yes)
             if options.comment:
-                solve_manager.update_comment(options.comment)
+                solve_manager.update_comment(options.comment, yes=options.yes)
 
     if command == 'delete':
         solve_manager = SolveManager(cube, options.session, options.solve)

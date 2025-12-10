@@ -120,18 +120,19 @@ class SolveManager:
         """Persist the current solve stack to disk."""
         save_solves(self.cube, self.session, self.stack)
 
-    def update_flag(self, flag: SolveFlagInput) -> None:
+    def update_flag(self, flag: SolveFlagInput, *, yes: bool = False) -> None:
         """
         Update the flag status of the solve with user confirmation.
 
         Args:
             flag: The new flag value to apply (OK, DNF, or +2).
+            yes: If True, skip confirmation prompt.
 
         """
         if self.solve is None:
             return
 
-        if self.confirm(
+        if yes or self.confirm(
                 f'Are you sure to mark this solve as "{ flag }" ?',
                 self.solve,
         ):
@@ -150,18 +151,19 @@ class SolveManager:
                 style='caution',
             )
 
-    def update_comment(self, comment: str) -> None:
+    def update_comment(self, comment: str, *, yes: bool = False) -> None:
         """
         Update the comment of the solve with user confirmation.
 
         Args:
             comment: The new comment to apply.
+            yes: If True, skip confirmation prompt.
 
         """
         if self.solve is None:
             return
 
-        if self.confirm(
+        if yes or self.confirm(
                 f'Are you sure to update the comment to "{ comment }" ?',
                 self.solve,
         ):

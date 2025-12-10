@@ -981,6 +981,12 @@ def edit_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help='Comment to set for the solve(s).',
     )
 
+    parser.add_argument(
+        '--yes', '-y',
+        action='store_true',
+        help='Skip confirmation prompt.',
+    )
+
     session = parser.add_argument_group('Session')
     session.add_argument(
         '-c', '--cube',
