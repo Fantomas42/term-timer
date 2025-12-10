@@ -10,8 +10,6 @@ from rich import box
 from rich.table import Table
 
 from term_timer.config import STATS_CONFIG
-from term_timer.constants import DNF
-from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.constants import SECOND_BINS
 from term_timer.constants import STEP_BAR
@@ -19,6 +17,7 @@ from term_timer.formatter import compute_padding
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
+from term_timer.formatter import format_flag
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_score
 from term_timer.formatter import format_time
@@ -626,7 +625,7 @@ class StatisticsReporter(Statistics):
                     f'[percent]{ total_percent * 100:05.2f}%[/percent]',
                 )
 
-    def listing(self, limit: int, sorting: str) -> None:  # noqa: C901
+    def listing(self, limit: int, sorting: str) -> None:
         """
         Display a formatted list of solves to the console.
 
@@ -679,15 +678,10 @@ class StatisticsReporter(Statistics):
             elif solve.time == self.worst:
                 time_class = 'warning'
 
-            flag_class = 'result'
-            if solve.flag == DNF:
-                flag_class = 'dnf'
-            if solve.flag == PLUS_TWO:
-                flag_class = 'plus-two'
-
             footer = ''
             if solve.flag:
-                footer += f'[{ flag_class }]{ solve.flag }[/{ flag_class }]'
+                footer += format_flag(solve.flag)
+                footer += ' '
             if solve.comment:
                 footer += f"[comment]{ '*' if solve.comment else '' }[/comment]"
 
@@ -747,8 +741,8 @@ class StatisticsReporter(Statistics):
         )
         console.print(
             '[stats]Time       :[/stats] '
-            f'[time]{ format_time(solve.time) }[/time]'
-            f'[result]{ solve.flag }[/result]',
+            f'[time]{ format_time(solve.time) }[/time]',
+            format_flag(solve.flag),
         )
         console.print(
             '[stats]Date       :[/stats] '

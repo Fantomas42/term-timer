@@ -13,13 +13,38 @@ from cubing_algs.constants import ROTATIONS
 
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
+from term_timer.constants import SolveFlag
 from term_timer.methods.types import StepSummary
 from term_timer.triggers import TRIGGERS_REGEX
 from term_timer.triggers import apply_trigger_outside_blocks
 
 if TYPE_CHECKING:
     from term_timer.solve import Solve
+
+
+def compute_padding(max_value: float) -> int:
+    """
+    Compute padding width based on maximum value.
+
+    Args:
+        max_value: The maximum value to determine padding for.
+
+    Returns:
+        Number of characters needed for padding (1 for < 10, 2 for < 100,
+        3 for < 1000, 4 for >= 1000).
+
+    """
+    padding = 1
+    if max_value >= 1000:
+        padding = 4
+    elif max_value >= 100:
+        padding = 3
+    elif max_value >= 10:
+        padding = 2
+
+    return padding
 
 
 def format_float(value: float, precision: int = 2) -> str:
@@ -147,29 +172,6 @@ def format_score(score: float) -> str:
     return f'[{ style }]{ score:.2f}[/{ style }]'
 
 
-def compute_padding(max_value: float) -> int:
-    """
-    Compute padding width based on maximum value.
-
-    Args:
-        max_value: The maximum value to determine padding for.
-
-    Returns:
-        Number of characters needed for padding (1 for < 10, 2 for < 100,
-        3 for < 1000, 4 for >= 1000).
-
-    """
-    padding = 1
-    if max_value >= 1000:
-        padding = 4
-    elif max_value >= 100:
-        padding = 3
-    elif max_value >= 10:
-        padding = 2
-
-    return padding
-
-
 def format_grade(score: float) -> str:  # noqa: PLR0911
     """
     Convert numeric score to letter grade.
@@ -200,6 +202,26 @@ def format_grade(score: float) -> str:  # noqa: PLR0911
     if score >= 4:
         return 'E'
     return 'F'
+
+
+def format_flag(flag: SolveFlag) -> str:
+    """
+    Format flag from his value.
+
+    Args:
+        flag: Flag value to format.
+
+    Returns:
+        Flag value formatted
+
+    """
+    flag_class = 'result'
+    if flag == DNF:
+        flag_class = 'dnf'
+    if flag == PLUS_TWO:
+        flag_class = 'plus-two'
+
+    return f'[{ flag_class }]{ flag }[/{ flag_class }]'
 
 
 def clean_url(string: str) -> str:

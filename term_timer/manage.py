@@ -10,10 +10,9 @@ from rich import box
 from rich.table import Table
 
 from term_timer.constants import CUBE_SIZES
-from term_timer.constants import DNF
-from term_timer.constants import PLUS_TWO
 from term_timer.constants import SolveFlag
 from term_timer.constants import SolveFlagInput
+from term_timer.formatter import format_flag
 from term_timer.formatter import format_float
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
@@ -89,12 +88,6 @@ class SolveManager:
         """
         date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
-        flag_class = 'result'
-        if solve.flag == DNF:
-            flag_class = 'dnf'
-        if solve.flag == PLUS_TWO:
-            flag_class = 'plus-two'
-
         header = (
             f'[localhost][link={ solve.link_term_timer }]'
             f'Solve #{ self.solve_id}'
@@ -105,7 +98,7 @@ class SolveManager:
             header,
             f'[time]{ format_time(solve.time) }[/time]',
             f'[date]{ date }[/date]',
-            f'[{ flag_class }]{ solve.flag }[/{ flag_class }]',
+            format_flag(solve.flag),
         )
         if solve.advanced:
             console.print(solve.report_line)
