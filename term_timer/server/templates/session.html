@@ -652,6 +652,34 @@
           </div>
         </div>
       {% endif %}
+
+      {% if stats.commented_solves %}
+        <div class="stat-card">
+          <div class="stat-title">Commented Solves</div>
+          <div class="stat-value {% if stats.commented_solves == 1 %}stat-best{% endif %}">
+            {{ "%0.2f"|format(stats.commented_solves * 100) }}%
+          </div>
+        </div>
+      {% endif %}
+
+      {% if stats.unfinished_solves %}
+        <div class="stat-card">
+          <div class="stat-title">Unfinished Solves</div>
+          <div class="stat-value {% if stats.unfinished_solves == 1 %}stat-worst{% endif %}">
+            {{ "%0.2f"|format(stats.unfinished_solves * 100) }}%
+          </div>
+        </div>
+      {% endif %}
+
+      {% if stats.penalized_solves %}
+        <div class="stat-card">
+          <div class="stat-title">Penalized Solves</div>
+          <div class="stat-value {% if stats.penalized_solves == 1 %}stat-worst{% endif %}">
+            {{ "%0.2f"|format(stats.penalized_solves * 100) }}%
+          </div>
+        </div>
+      {% endif %}
+
     </div>
   </div>
 

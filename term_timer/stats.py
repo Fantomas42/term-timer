@@ -10,6 +10,8 @@ from rich import box
 from rich.table import Table
 
 from term_timer.config import STATS_CONFIG
+from term_timer.constants import DNF
+from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.constants import SECOND_BINS
 from term_timer.constants import STEP_BAR
@@ -418,6 +420,39 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
 
         """
         return sum(1 for s in self.stack if s.advanced) / self.total
+
+    @cached_property
+    def commented_solves(self) -> float:
+        """
+        Calculate ratio of commented solves.
+
+        Returns:
+            Proportion of commented solves (0.0 to 1.0).
+
+        """
+        return sum(1 for s in self.stack if s.comment) / self.total
+
+    @cached_property
+    def unfinished_solves(self) -> float:
+        """
+        Calculate ratio of DNF solves.
+
+        Returns:
+            Proportion of solves with a DNF flag (0.0 to 1.0).
+
+        """
+        return sum(1 for s in self.stack if s.flag == DNF) / self.total
+
+    @cached_property
+    def penalized_solves(self) -> float:
+        """
+        Calculate ratio of +2 solves.
+
+        Returns:
+            Proportion of solves with a +2 flag (0.0 to 1.0).
+
+        """
+        return sum(1 for s in self.stack if s.flag == PLUS_TWO) / self.total
 
     @cached_property
     def score(self) -> float:
