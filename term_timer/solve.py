@@ -515,7 +515,7 @@ class Solve:  # noqa: PLR0904
 
         rotation_line = ''
         if self.rotations:
-            pause_line = (
+            rotation_line = (
                 f' [caution]{ self.rotations } Rotations[/caution]'
             )
 
@@ -549,7 +549,7 @@ class Solve:  # noqa: PLR0904
 
         missed_line = ''
         missed_moves = self.all_missed_moves
-        if missed_line:
+        if missed_moves:
             missed_line = (
                 '[exec-overhead]'
                 f'{ missed_moves } missed QTM'
@@ -564,7 +564,7 @@ class Solve:  # noqa: PLR0904
 
         rotation_line = ''
         if self.rotations:
-            pause_line = (
+            rotation_line = (
                 f' [caution]{ self.rotations } Rotations[/caution]'
             )
 
