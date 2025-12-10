@@ -24,6 +24,7 @@ from term_timer.manage import ScrambleManager
 from term_timer.manage import SessionManager
 from term_timer.manage import SolveManager
 from term_timer.server.app import Server
+from term_timer.stats import ListingFilters
 from term_timer.stats import StatisticsReporter
 from term_timer.timer import Timer
 from term_timer.trainer import Trainer
@@ -197,7 +198,20 @@ def tools(command: str, options: Namespace) -> int:
         return 1
 
     if command == 'list':
-        session_stats.listing(options.count, options.sort)
+        filters = ListingFilters(
+            with_comments=options.with_comments,
+            without_comments=options.without_comments,
+            connected=options.connected,
+            unconnected=options.unconnected,
+            dnf=options.dnf,
+            plus_two=options.plus_two,
+            no_penalty=options.no_penalty,
+            search_comment=options.search_comment,
+            search_scramble=options.search_scramble,
+            min_time=options.min_time,
+            max_time=options.max_time,
+        )
+        session_stats.listing(options.count, options.sort, filters)
 
     if command == 'stats':
         session_stats.resume('Global ', show_title=True)

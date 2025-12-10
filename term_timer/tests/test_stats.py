@@ -11,6 +11,7 @@ from cubing_algs.cases import get_case
 from term_timer.constants import DNF
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
+from term_timer.stats import ListingFilters
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsReporter
 from term_timer.stats import StatisticsTools
@@ -839,3 +840,553 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
 
         # Should have called print for title and solves
         self.assertTrue(len(call_args_list) > 1)
+
+
+class TestListingFilters(unittest.TestCase):
+    """Tests for ListingFilters dataclass."""
+
+    def test_default_filters(self) -> None:
+        """Test ListingFilters with default values."""
+        filters = ListingFilters()
+
+        self.assertFalse(filters.with_comments)
+        self.assertFalse(filters.without_comments)
+        self.assertFalse(filters.connected)
+        self.assertFalse(filters.unconnected)
+        self.assertFalse(filters.dnf)
+        self.assertFalse(filters.plus_two)
+        self.assertFalse(filters.no_penalty)
+        self.assertIsNone(filters.search_comment)
+        self.assertIsNone(filters.search_scramble)
+        self.assertIsNone(filters.min_time)
+        self.assertIsNone(filters.max_time)
+
+    def test_custom_filters(self) -> None:
+        """Test ListingFilters with custom values."""
+        filters = ListingFilters(
+            with_comments=True,
+            connected=True,
+            dnf=True,
+            search_comment='test',
+            min_time=10.5,
+            max_time=20.0,
+        )
+
+        self.assertTrue(filters.with_comments)
+        self.assertTrue(filters.connected)
+        self.assertTrue(filters.dnf)
+        self.assertEqual(filters.search_comment, 'test')
+        self.assertEqual(filters.min_time, 10.5)
+        self.assertEqual(filters.max_time, 20.0)
+
+
+class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
+    """Tests for StatisticsReporter.matches_filters method."""
+
+    def test_empty_filters_matches_everything(self) -> None:
+        """Test that empty filters match all solves."""
+        solve = Solve(1000000000, 10 * SECOND, 'F R U', '')
+        filters = ListingFilters()
+
+        self.assertTrue(StatisticsReporter.matches_filters(solve, filters))
+
+    def test_with_comments_filter(self) -> None:
+        """Test with_comments filter."""
+        solve_with_comment = Solve(
+            1000000000, 10 * SECOND, 'F R U', '',
+            comment='Good solve',
+        )
+        solve_without_comment = Solve(1000000000, 10 * SECOND, 'F R U', '')
+
+        filters = ListingFilters(with_comments=True)
+
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve_with_comment, filters),
+        )
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve_without_comment, filters),
+        )
+
+    def test_without_comments_filter(self) -> None:
+        """Test without_comments filter."""
+        solve_with_comment = Solve(
+            1000000000, 10 * SECOND, 'F R U', '',
+            comment='Good solve',
+        )
+        solve_without_comment = Solve(1000000000, 10 * SECOND, 'F R U', '')
+
+        filters = ListingFilters(without_comments=True)
+
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve_with_comment, filters),
+        )
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve_without_comment, filters),
+        )
+
+    def test_connected_filter(self) -> None:
+        """Test connected filter for Bluetooth cube solves."""
+        solve_connected = Solve(
+            1000000000, 10 * SECOND, 'F R U', '',
+            device='GAN356 X',
+        )
+        solve_unconnected = Solve(1000000000, 10 * SECOND, 'F R U', '')
+
+        filters = ListingFilters(connected=True)
+
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve_connected, filters),
+        )
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve_unconnected, filters),
+        )
+
+    def test_unconnected_filter(self) -> None:
+        """Test unconnected filter for manual solves."""
+        solve_connected = Solve(
+            1000000000, 10 * SECOND, 'F R U', '',
+            device='GAN356 X',
+        )
+        solve_unconnected = Solve(1000000000, 10 * SECOND, 'F R U', '')
+
+        filters = ListingFilters(unconnected=True)
+
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve_connected, filters),
+        )
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve_unconnected, filters),
+        )
+
+    def test_dnf_filter(self) -> None:
+        """Test DNF flag filter."""
+        solve_dnf = Solve(1000000000, 10 * SECOND, 'F R U', DNF)
+        solve_ok = Solve(1000000000, 10 * SECOND, 'F R U', '')
+        solve_plus_two = Solve(1000000000, 10 * SECOND, 'F R U', '+2')
+
+        filters = ListingFilters(dnf=True)
+
+        self.assertTrue(StatisticsReporter.matches_filters(solve_dnf, filters))
+        self.assertFalse(StatisticsReporter.matches_filters(solve_ok, filters))
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve_plus_two, filters),
+        )
+
+    def test_plus_two_filter(self) -> None:
+        """Test +2 penalty flag filter."""
+        solve_dnf = Solve(1000000000, 10 * SECOND, 'F R U', DNF)
+        solve_ok = Solve(1000000000, 10 * SECOND, 'F R U', '')
+        solve_plus_two = Solve(1000000000, 10 * SECOND, 'F R U', '+2')
+
+        filters = ListingFilters(plus_two=True)
+
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve_dnf, filters),
+        )
+        self.assertFalse(StatisticsReporter.matches_filters(solve_ok, filters))
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve_plus_two, filters),
+        )
+
+    def test_no_penalty_filter(self) -> None:
+        """Test no_penalty filter for clean solves."""
+        solve_dnf = Solve(1000000000, 10 * SECOND, 'F R U', DNF)
+        solve_ok = Solve(1000000000, 10 * SECOND, 'F R U', '')
+        solve_plus_two = Solve(1000000000, 10 * SECOND, 'F R U', '+2')
+
+        filters = ListingFilters(no_penalty=True)
+
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve_dnf, filters),
+        )
+        self.assertTrue(StatisticsReporter.matches_filters(solve_ok, filters))
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve_plus_two, filters),
+        )
+
+    def test_search_comment_filter_case_insensitive(self) -> None:
+        """Test search_comment filter with case insensitive matching."""
+        solve = Solve(
+            1000000000, 10 * SECOND, 'F R U', '',
+            comment='Good solve with LUCKY skip',
+        )
+
+        filters_match = ListingFilters(search_comment='lucky')
+        filters_no_match = ListingFilters(search_comment='bad')
+
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_match),
+        )
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve, filters_no_match),
+        )
+
+    def test_search_comment_filter_no_comment(self) -> None:
+        """Test search_comment filter with solve without comment."""
+        solve = Solve(1000000000, 10 * SECOND, 'F R U', '')
+        filters = ListingFilters(search_comment='test')
+
+        self.assertFalse(StatisticsReporter.matches_filters(solve, filters))
+
+    def test_search_comment_filter_empty_string(self) -> None:
+        """Test search_comment filter with empty search string."""
+        solve = Solve(
+            1000000000, 10 * SECOND, 'F R U', '',
+            comment='Any comment',
+        )
+        filters = ListingFilters(search_comment='')
+
+        self.assertTrue(StatisticsReporter.matches_filters(solve, filters))
+
+    def test_search_scramble_filter_case_insensitive(self) -> None:
+        """Test search_scramble filter with case insensitive matching."""
+        solve = Solve(1000000000, 10 * SECOND, "F R U R' F2", '')
+
+        filters_match = ListingFilters(search_scramble='r u r')
+        filters_no_match = ListingFilters(search_scramble='L D')
+
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_match),
+        )
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve, filters_no_match),
+        )
+
+    def test_search_scramble_filter_empty_string(self) -> None:
+        """Test search_scramble filter with empty search string."""
+        solve = Solve(1000000000, 10 * SECOND, 'F R U', '')
+        filters = ListingFilters(search_scramble='')
+
+        self.assertTrue(StatisticsReporter.matches_filters(solve, filters))
+
+    def test_min_time_filter(self) -> None:
+        """Test min_time filter converts seconds to milliseconds."""
+        solve_fast = Solve(1000000000, 5 * SECOND, 'F R U', '')
+        solve_slow = Solve(1000000000, 15 * SECOND, 'F R U', '')
+
+        filters = ListingFilters(min_time=10.0)
+
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve_fast, filters),
+        )
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve_slow, filters),
+        )
+
+    def test_min_time_filter_boundary(self) -> None:
+        """Test min_time filter at exact boundary."""
+        solve = Solve(1000000000, 10 * SECOND, 'F R U', '')
+        filters_less = ListingFilters(min_time=9.999)
+        filters_equal = ListingFilters(min_time=10.0)
+        filters_greater = ListingFilters(min_time=10.001)
+
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_less),
+        )
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_equal),
+        )
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve, filters_greater),
+        )
+
+    def test_max_time_filter(self) -> None:
+        """Test max_time filter converts seconds to milliseconds."""
+        solve_fast = Solve(1000000000, 5 * SECOND, 'F R U', '')
+        solve_slow = Solve(1000000000, 15 * SECOND, 'F R U', '')
+
+        filters = ListingFilters(max_time=10.0)
+
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve_fast, filters),
+        )
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve_slow, filters),
+        )
+
+    def test_max_time_filter_boundary(self) -> None:
+        """Test max_time filter at exact boundary."""
+        solve = Solve(1000000000, 10 * SECOND, 'F R U', '')
+        filters_less = ListingFilters(max_time=9.999)
+        filters_equal = ListingFilters(max_time=10.0)
+        filters_greater = ListingFilters(max_time=10.001)
+
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve, filters_less),
+        )
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_equal),
+        )
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_greater),
+        )
+
+    def test_min_and_max_time_filter_combined(self) -> None:
+        """Test min_time and max_time filters combined."""
+        solve_too_fast = Solve(1000000000, 5 * SECOND, 'F R U', '')
+        solve_in_range = Solve(1000000000, 12 * SECOND, 'F R U', '')
+        solve_too_slow = Solve(1000000000, 20 * SECOND, 'F R U', '')
+
+        filters = ListingFilters(min_time=10.0, max_time=15.0)
+
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve_too_fast, filters),
+        )
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve_in_range, filters),
+        )
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve_too_slow, filters),
+        )
+
+    def test_multiple_filters_and_logic(self) -> None:
+        """Test multiple filters combined with AND logic."""
+        solve_match_all = Solve(
+            1000000000, 12 * SECOND, 'F R U', '',
+            comment='Good solve',
+            device='GAN356 X',
+        )
+        solve_match_partial = Solve(
+            1000000000, 12 * SECOND, 'F R U', '',
+            comment='Good solve',
+        )
+
+        filters = ListingFilters(
+            with_comments=True,
+            connected=True,
+            min_time=10.0,
+            max_time=15.0,
+        )
+
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve_match_all, filters),
+        )
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve_match_partial, filters),
+        )
+
+    def test_contradictory_comment_filters(self) -> None:
+        """Test contradictory with_comments and without_comments filters."""
+        solve = Solve(
+            1000000000, 10 * SECOND, 'F R U', '',
+            comment='Test',
+        )
+
+        filters = ListingFilters(with_comments=True, without_comments=True)
+
+        self.assertFalse(StatisticsReporter.matches_filters(solve, filters))
+
+    def test_contradictory_connection_filters(self) -> None:
+        """Test contradictory connected and unconnected filters."""
+        solve = Solve(
+            1000000000, 10 * SECOND, 'F R U', '',
+            device='GAN356 X',
+        )
+
+        filters = ListingFilters(connected=True, unconnected=True)
+
+        self.assertFalse(StatisticsReporter.matches_filters(solve, filters))
+
+    def test_contradictory_flag_filters(self) -> None:
+        """Test contradictory flag filters."""
+        solve = Solve(1000000000, 10 * SECOND, 'F R U', '+2')
+
+        filters = ListingFilters(dnf=True, no_penalty=True)
+
+        self.assertFalse(StatisticsReporter.matches_filters(solve, filters))
+
+    def test_min_time_none_value(self) -> None:
+        """Test min_time filter with None value."""
+        solve = Solve(1000000000, 5 * SECOND, 'F R U', '')
+        filters = ListingFilters(min_time=None)
+
+        self.assertTrue(StatisticsReporter.matches_filters(solve, filters))
+
+    def test_max_time_none_value(self) -> None:
+        """Test max_time filter with None value."""
+        solve = Solve(1000000000, 20 * SECOND, 'F R U', '')
+        filters = ListingFilters(max_time=None)
+
+        self.assertTrue(StatisticsReporter.matches_filters(solve, filters))
+
+    def test_search_comment_substring_matching(self) -> None:
+        """Test search_comment filter matches substrings."""
+        solve = Solve(
+            1000000000, 10 * SECOND, 'F R U', '',
+            comment='This is a very long comment about the solve',
+        )
+
+        filters_start = ListingFilters(search_comment='This')
+        filters_middle = ListingFilters(search_comment='very long')
+        filters_end = ListingFilters(search_comment='solve')
+
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_start),
+        )
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_middle),
+        )
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_end),
+        )
+
+    def test_search_scramble_substring_matching(self) -> None:
+        """Test search_scramble filter matches substrings."""
+        solve = Solve(1000000000, 10 * SECOND, "F R U R' F2 L D", '')
+
+        filters_start = ListingFilters(search_scramble='F R')
+        filters_middle = ListingFilters(search_scramble="R' F2")
+        filters_end = ListingFilters(search_scramble='L D')
+
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_start),
+        )
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_middle),
+        )
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_end),
+        )
+
+    def test_time_filters_with_zero_time(self) -> None:
+        """Test time filters with zero time solve."""
+        solve = Solve(1000000000, 0, 'F R U', '')
+
+        filters_min = ListingFilters(min_time=0.0)
+        filters_max = ListingFilters(max_time=0.0)
+
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_min),
+        )
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_max),
+        )
+
+    def test_time_filters_with_fractional_seconds(self) -> None:
+        """Test time filters with fractional second values."""
+        solve = Solve(1000000000, int(12.345 * SECOND), 'F R U', '')
+
+        filters_match = ListingFilters(min_time=12.0, max_time=13.0)
+        filters_no_match = ListingFilters(min_time=12.5, max_time=13.0)
+
+        self.assertTrue(
+            StatisticsReporter.matches_filters(solve, filters_match),
+        )
+        self.assertFalse(
+            StatisticsReporter.matches_filters(solve, filters_no_match),
+        )
+
+
+class TestListingWithFilters(unittest.TestCase):
+    """Tests for StatisticsReporter.listing method with filters."""
+
+    def setUp(self) -> None:
+        """Set up test cases with sample solves."""
+        self.solves = [
+            Solve(
+                1000000000, 10 * SECOND, 'F R U', '',
+                comment='Fast solve',
+                device='GAN356 X',
+            ),
+            Solve(2000000000, 15 * SECOND, 'R U F', ''),
+            Solve(3000000000, 20 * SECOND, 'U F R', DNF),
+            Solve(
+                4000000000, 25 * SECOND, 'F U R', '+2',
+                comment='Penalty',
+            ),
+            Solve(5000000000, 12 * SECOND, 'R F U', '', device='GoCube'),
+        ]
+
+    @patch('term_timer.interface.console.console.print')
+    def test_listing_without_filters(self, mock_console: Mock) -> None:
+        """Test listing without filters shows all solves."""
+        reporter = StatisticsReporter(3, self.solves)
+        reporter.listing(0, 'index')
+
+        self.assertEqual(mock_console.call_count, 6)
+
+    @patch('term_timer.interface.console.console.print')
+    def test_listing_with_comment_filter(self, mock_console: Mock) -> None:
+        """Test listing with comment filter."""
+        reporter = StatisticsReporter(3, self.solves)
+        filters = ListingFilters(with_comments=True)
+        reporter.listing(0, 'index', filters)
+
+        self.assertEqual(mock_console.call_count, 3)
+
+    @patch('term_timer.interface.console.console.print')
+    def test_listing_with_connected_filter(self, mock_console: Mock) -> None:
+        """Test listing with connected filter."""
+        reporter = StatisticsReporter(3, self.solves)
+        filters = ListingFilters(connected=True)
+        reporter.listing(0, 'index', filters)
+
+        self.assertEqual(mock_console.call_count, 3)
+
+    @patch('term_timer.interface.console.console.print')
+    def test_listing_with_dnf_filter(self, mock_console: Mock) -> None:
+        """Test listing with DNF filter."""
+        reporter = StatisticsReporter(3, self.solves)
+        filters = ListingFilters(dnf=True)
+        reporter.listing(0, 'index', filters)
+
+        self.assertEqual(mock_console.call_count, 2)
+
+    @patch('term_timer.interface.console.console.print')
+    def test_listing_with_no_matches(self, mock_console: Mock) -> None:
+        """Test listing with filters that match no solves."""
+        reporter = StatisticsReporter(3, self.solves)
+        filters = ListingFilters(search_comment='nonexistent')
+        reporter.listing(0, 'index', filters)
+
+        mock_console.assert_called()
+        call_args = [str(call) for call in mock_console.call_args_list]
+        warning_found = any(
+            'No solves match' in call for call in call_args
+        )
+        self.assertTrue(warning_found)
+
+    @patch('term_timer.interface.console.console.print')
+    def test_listing_filters_with_limit(self, mock_console: Mock) -> None:
+        """Test listing with filters and limit parameter."""
+        reporter = StatisticsReporter(3, self.solves)
+        filters = ListingFilters(no_penalty=True)
+        reporter.listing(1, 'index', filters)
+
+        self.assertEqual(mock_console.call_count, 2)
+
+    @patch('term_timer.interface.console.console.print')
+    def test_listing_filters_with_time_sorting(
+            self, mock_console: Mock) -> None:
+        """Test listing with filters and time sorting."""
+        reporter = StatisticsReporter(3, self.solves)
+        filters = ListingFilters(no_penalty=True)
+        reporter.listing(0, 'time', filters)
+
+        self.assertTrue(mock_console.call_count > 1)
+
+    @patch('term_timer.interface.console.console.print')
+    def test_listing_filters_with_combined_filters(
+            self, mock_console: Mock) -> None:
+        """Test listing with multiple combined filters."""
+        reporter = StatisticsReporter(3, self.solves)
+        filters = ListingFilters(
+            connected=True,
+            no_penalty=True,
+            min_time=11.0,
+        )
+        reporter.listing(0, 'index', filters)
+
+        self.assertEqual(mock_console.call_count, 2)
+
+    @patch('term_timer.interface.console.console.print')
+    def test_listing_filters_preserves_original_indices(
+            self, mock_console: Mock) -> None:
+        """Test listing with filters preserves original solve indices."""
+        reporter = StatisticsReporter(3, self.solves)
+        filters = ListingFilters(dnf=True)
+        reporter.listing(0, 'index', filters)
+
+        call_args = [str(call) for call in mock_console.call_args_list]
+        index_found = any('#3' in call for call in call_args)
+        self.assertTrue(index_found)

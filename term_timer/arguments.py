@@ -515,6 +515,67 @@ def list_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
 
+    filters = parser.add_argument_group('Filters')
+    filters.add_argument(
+        '--with-comments',
+        action='store_true',
+        help='Show only solves with comments.',
+    )
+    filters.add_argument(
+        '--without-comments',
+        action='store_true',
+        help='Show only solves without comments.',
+    )
+    filters.add_argument(
+        '--connected',
+        action='store_true',
+        help='Show only solves performed with Bluetooth cube.',
+    )
+    filters.add_argument(
+        '--unconnected',
+        action='store_true',
+        help='Show only solves performed without Bluetooth cube.',
+    )
+    filters.add_argument(
+        '--dnf',
+        action='store_true',
+        help='Show only DNF solves.',
+    )
+    filters.add_argument(
+        '--plus-two',
+        action='store_true',
+        help='Show only +2 penalty solves.',
+    )
+    filters.add_argument(
+        '--no-penalty',
+        action='store_true',
+        help='Show only solves without penalties.',
+    )
+    filters.add_argument(
+        '--search-comment',
+        type=str,
+        metavar='TEXT',
+        help='Search for text in comments (case-insensitive).',
+    )
+    filters.add_argument(
+        '--search-scramble',
+        type=str,
+        metavar='TEXT',
+        help='Search for text in scrambles (case-insensitive).',
+    )
+    filters.add_argument(
+        '--min-time',
+        type=float,
+        metavar='SECONDS',
+        help='Show only solves with time >= specified value (in seconds).',
+    )
+    filters.add_argument(
+        '--max-time',
+        type=float,
+        metavar='SECONDS',
+        help='Show only solves with time <= specified value (in seconds).',
+    )
+
     set_session_arguments(parser)
 
     return parser

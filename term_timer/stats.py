@@ -1,4 +1,5 @@
 """Statistics calculation and display for solve sessions."""
+from dataclasses import dataclass
 from functools import cached_property
 from typing import TYPE_CHECKING
 from typing import cast
@@ -31,6 +32,23 @@ from term_timer.types import MethodAnalysis
 
 if TYPE_CHECKING:
     from term_timer.methods.base import Analyser
+
+
+@dataclass
+class ListingFilters:
+    """Filter parameters for solve listing."""
+
+    with_comments: bool = False
+    without_comments: bool = False
+    connected: bool = False
+    unconnected: bool = False
+    dnf: bool = False
+    plus_two: bool = False
+    no_penalty: bool = False
+    search_comment: str | None = None
+    search_scramble: str | None = None
+    min_time: float | None = None
+    max_time: float | None = None
 
 
 class StatisticsTools:
@@ -660,7 +678,62 @@ class StatisticsReporter(Statistics):
                     f'[percent]{ total_percent * 100:05.2f}%[/percent]',
                 )
 
-    def listing(self, limit: int, sorting: str) -> None:
+    @staticmethod
+    def matches_filters(solve: Solve, filters: ListingFilters) -> bool:  # noqa: C901, PLR0911, PLR0912
+        """
+        Check if a solve matches the specified filters.
+
+        Args:
+            solve: The solve to check.
+            filters: The filter criteria to apply.
+
+        Returns:
+            True if the solve matches all filters, False otherwise.
+
+        """
+        if filters.with_comments and not solve.comment:
+            return False
+        if filters.without_comments and solve.comment:
+            return False
+
+        if filters.connected and not solve.device:
+            return False
+        if filters.unconnected and solve.device:
+            return False
+
+        if filters.dnf and solve.flag != DNF:
+            return False
+        if filters.plus_two and solve.flag != PLUS_TWO:
+            return False
+        if filters.no_penalty and solve.flag:
+            return False
+
+        if filters.search_comment:
+            if not solve.comment:
+                return False
+            if filters.search_comment.lower() not in solve.comment.lower():
+                return False
+
+        if filters.search_scramble:
+            scramble_str = str(solve.scramble)
+            if filters.search_scramble.lower() not in scramble_str.lower():
+                return False
+
+        if filters.min_time is not None:
+            min_time_ms = int(filters.min_time * SECOND)
+            if solve.time < min_time_ms:
+                return False
+
+        if filters.max_time is not None:
+            max_time_ms = int(filters.max_time * SECOND)
+            if solve.time > max_time_ms:
+                return False
+
+        return True
+
+    def listing(  # noqa: C901
+            self, limit: int, sorting: str,
+            filters: ListingFilters | None = None) -> None:
         """
         Display a formatted list of solves to the console.
 
@@ -668,13 +741,37 @@ class StatisticsReporter(Statistics):
             limit: Number of solves to display (positive for first N,
                 negative for last N, 0 for all).
             sorting: Sort order, either 'time' or 'chronological'.
+            filters: Optional filters to apply to the solve list.
 
         """
+        if filters is None:
+            filters = ListingFilters()
+
         console.print(
             f'[title]Listing for { self.cube_name }[/title]',
         )
 
         size = len(self.stack)
+
+        indexed_solves = [
+            (size - i, self.stack[size - (i + 1)])
+            for i in range(size)
+        ]
+
+        filtered_solves = [
+            (idx, solve)
+            for idx, solve in indexed_solves
+            if self.matches_filters(solve, filters)
+        ]
+
+        if not filtered_solves:
+            console.print(
+                'No solves match the specified filters.',
+                style='warning',
+            )
+            return
+
+        filtered_size = len(filtered_solves)
         max_count = compute_padding(size) + 1
 
         if not limit:
@@ -684,18 +781,13 @@ class StatisticsReporter(Statistics):
         else:
             s = slice(limit, None)
 
-        indexed_solves = [
-            (size - i, self.stack[size - (i + 1)])
-            for i in range(size)
-        ]
-
-        indices = range(*s.indices(size))
+        indices = range(*s.indices(filtered_size))
 
         if sorting == 'time':
-            indexed_solves.sort(key=lambda x: x[1].time)
+            filtered_solves.sort(key=lambda x: x[1].time)
 
         for indice in indices:
-            original_index, solve = indexed_solves[indice]
+            original_index, solve = filtered_solves[indice]
             index = f'#{ original_index }'
             date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
