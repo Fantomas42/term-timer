@@ -14,6 +14,7 @@ from term_timer.constants import SolveFlag
 from term_timer.constants import SolveFlagInput
 from term_timer.formatter import format_flag
 from term_timer.formatter import format_float
+from term_timer.formatter import format_term_timer_session_url
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
@@ -236,6 +237,7 @@ class SessionManager:
             )
             table.add_column('Name', width=30)
             table.add_column('Total', width=5, justify='right')
+            table.add_column('Bluetooth', width=7, justify='right')
             table.add_column('Last solve', width=16)
             table.add_column('Best', width=10)
 
@@ -250,9 +252,19 @@ class SessionManager:
                     )
                 )
 
+                url = format_term_timer_session_url(cube, name)
+                total = len(session_solves[name])
+                connecteds = 0
+                for solve in session_solves[name]:
+                    if solve.device:
+                        connecteds += 1
+                connected_percent = format_float((connecteds / total) * 100)
+
                 table.add_row(
-                    f'[stats]{ name }[/stats] ',
-                    f'[result]{ len(session_solves[name]) }[/result]',
+                    f'[localhost][link={ url }]{ name.title() }'
+                    '[/link][/localhost]',
+                    f'[result]{ total }[/result]',
+                    f'[bluetooth]{ connected_percent }%[/bluetooth]',
                     f'[date]{ last_solve_date }[/date]',
                     f'[time]{ format_time(stats.best) }[/time]',
                 )

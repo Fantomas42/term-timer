@@ -11,6 +11,7 @@ from cubing_algs.constants import OUTER_WIDE_MOVES
 from cubing_algs.constants import PAUSE_CHAR
 from cubing_algs.constants import ROTATIONS
 
+from term_timer.config import SERVER_CONFIG
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
@@ -289,6 +290,27 @@ def format_cube_db_url(title: str, setup: str, alg: str) -> str:
         f'?title={ title }'
         f'&alg={ clean_url(alg) }'
         f'&scramble={ clean_url(setup) }'
+    )
+
+
+def format_term_timer_session_url(cube_size: int, session_name: str) -> str:
+    """
+    Generate URL for local Term Timer web interface session.
+
+    Args:
+        cube_size: Cube size of the session.
+        session_name: Name of the session.
+
+    Returns:
+        Local HTTP URL to view this session in the web interface.
+
+    """
+    domain = SERVER_CONFIG.get('domain', 'localhost')
+    port = SERVER_CONFIG.get('port', 8333)
+
+    return (
+        f'http://{ domain }:{ port }'
+        f'/{ cube_size }/{ session_name }/'
     )
 
 
