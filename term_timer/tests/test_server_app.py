@@ -22,7 +22,7 @@ from term_timer.server.app import SessionDetailView
 from term_timer.server.app import SessionListView
 from term_timer.server.app import SolveDeleteView
 from term_timer.server.app import SolveDetailView
-from term_timer.server.app import SolveUpdateView
+from term_timer.server.app import SolveUpdateFlagView
 from term_timer.server.app import View
 from term_timer.server.app import format_delta
 from term_timer.server.app import format_line
@@ -709,8 +709,8 @@ class TestSolveDetailView(unittest.TestCase):
         self.assertEqual(len(context['tps']), 1)
 
 
-class TestSolveUpdateView(unittest.TestCase):
-    """Tests for SolveUpdateView class."""
+class TestSolveUpdateFlagView(unittest.TestCase):
+    """Tests for SolveUpdateFlagView class."""
 
     @patch('term_timer.server.app.redirect')
     @patch('term_timer.server.app.save_solves')
@@ -722,7 +722,7 @@ class TestSolveUpdateView(unittest.TestCase):
         mock_load_solves.return_value = []
 
         with self.assertRaises(HTTPError):  # abort() raises HTTPError
-            SolveUpdateView(3, 'session', 1, 'DNF')
+            SolveUpdateFlagView(3, 'session', 1, 'DNF')
 
     @patch('term_timer.server.app.redirect')
     @patch('term_timer.server.app.save_solves')
@@ -735,7 +735,7 @@ class TestSolveUpdateView(unittest.TestCase):
         mock_load_solves.return_value = [mock_solve]
 
         with contextlib.suppress(HTTPError):
-            SolveUpdateView(3, 'session', 1, 'DNF')
+            SolveUpdateFlagView(3, 'session', 1, 'DNF')
 
         self.assertEqual(mock_solve.flag, 'DNF')
         mock_save_solves.assert_called_once_with(3, 'session', [mock_solve])
@@ -829,7 +829,8 @@ class TestServer(unittest.TestCase):
         route_paths = [route.rule for route in app.routes]
         expected_paths = [
             '/',
-            '/<cube:int>/<session:path>/<solve:int>/update/',
+            '/<cube:int>/<session:path>/<solve:int>/flag/',
+            '/<cube:int>/<session:path>/<solve:int>/comment/',
             '/<cube:int>/<session:path>/<solve:int>/delete/',
             '/<cube:int>/<session:path>/<solve:int>/',
             '/<cube:int>/<session:path>/',
