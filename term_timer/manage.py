@@ -74,38 +74,41 @@ class SolveManager:
 
         return solve
 
-    def confirm(self, text: str, solve: Solve) -> bool:
-        """
-        Display solve details and prompt user for confirmation.
+    def display_solve(self) -> None:
+        """Display solve details before editing."""
+        if self.solve is None:
+            return
 
-        Args:
-            text: The confirmation question to display.
-            solve: The solve object to display details for.
-
-        Returns:
-            True if user confirms with 'y', False otherwise.
-
-        """
-        date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
+        date = self.solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
         header = (
-            f'[localhost][link={ solve.link_term_timer }]'
+            f'[localhost][link={ self.solve.link_term_timer }]'
             f'Solve #{ self.solve_id}'
             '[/link][/localhost]'
         )
 
         console.print(
             header,
-            f'[time]{ format_time(solve.time) }[/time]',
+            f'[time]{ format_time(self.solve.time) }[/time]',
             f'[date]{ date }[/date]',
-            format_flag(solve.flag),
+            format_flag(self.solve.flag),
         )
-        if solve.advanced:
-            console.print(solve.report_line)
+        if self.solve.advanced:
+            console.print(self.solve.report_line)
 
-        text += ' (y/N)'
-        console.print(text, style='confirm')
-        confirm = input('')
+    @staticmethod
+    def confirm(text: str) -> bool:
+        """
+        Display solve details and prompt user for confirmation.
+
+        Args:
+            text: The confirmation question to display.
+
+        Returns:
+            True if user confirms with 'y', False otherwise.
+
+        """
+        confirm = console.input(f'[confirm]{ text } (y/N)[/confirm] ')
 
         return confirm == 'y'
 
@@ -127,7 +130,6 @@ class SolveManager:
 
         if yes or self.confirm(
                 f'Are you sure to mark this solve as "{ flag }" ?',
-                self.solve,
         ):
             normalized_flag: SolveFlag = '' if flag == 'OK' else flag
 
@@ -135,12 +137,12 @@ class SolveManager:
             self.save()
 
             console.print(
-                f'Solve #{ self.solve_id } updated',
+                f'Solve #{ self.solve_id } flag updated',
                 style='success',
             )
         else:
             console.print(
-                f'Solve #{ self.solve_id } untouched',
+                f'Solve #{ self.solve_id } flag untouched',
                 style='caution',
             )
 
@@ -158,18 +160,17 @@ class SolveManager:
 
         if yes or self.confirm(
                 f'Are you sure to update the comment to "{ comment }" ?',
-                self.solve,
         ):
             self.stack[self.solve_index].comment = comment
             self.save()
 
             console.print(
-                f'Solve #{ self.solve_id } updated',
+                f'Solve #{ self.solve_id } comment updated',
                 style='success',
             )
         else:
             console.print(
-                f'Solve #{ self.solve_id } untouched',
+                f'Solve #{ self.solve_id } comment untouched',
                 style='caution',
             )
 
@@ -180,7 +181,6 @@ class SolveManager:
 
         if self.confirm(
                 'Are you sure you want to permanently delete this solve ?',
-                self.solve,
         ):
             self.stack.pop(self.solve_index)
             self.save()

@@ -267,6 +267,8 @@ def manage(command: str, options: Namespace) -> int:
 
         for solve_id in options.solves:
             solve_manager = SolveManager(cube, options.session, solve_id)
+            solve_manager.display_solve()
+
             if options.flag:
                 solve_manager.update_flag(options.flag, yes=options.yes)
             if options.comment:
@@ -274,6 +276,7 @@ def manage(command: str, options: Namespace) -> int:
 
     if command == 'delete':
         solve_manager = SolveManager(cube, options.session, options.solve)
+        solve_manager.display_solve()
         solve_manager.delete()
 
     if command == 'scramble':
