@@ -24,7 +24,7 @@ from term_timer.printer import print_cube_scrambled
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.solve import SolveData
-from term_timer.stats import Statistics
+from term_timer.stats import StatisticsReporter
 
 
 class SolveManager:
@@ -245,7 +245,7 @@ class SessionManager:
 
             for name in names:
                 session = session_solves[name]
-                stats = Statistics(session)
+                stats = StatisticsReporter(cube, session)
                 last_solve_date = (
                     session[-1].datetime.astimezone().strftime(
                         '%Y-%m-%d %H:%M',
