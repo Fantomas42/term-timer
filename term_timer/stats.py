@@ -429,63 +429,6 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
         return sum(self.stack_time)
 
     @cached_property
-    def advanced_solves(self) -> float:
-        """
-        Calculate ratio of advanced solves with method analysis.
-
-        Returns:
-            Proportion of advanced solves (0.0 to 1.0).
-
-        """
-        return sum(1 for s in self.stack if s.advanced) / self.total
-
-    @cached_property
-    def commented_solves(self) -> float:
-        """
-        Calculate ratio of commented solves.
-
-        Returns:
-            Proportion of commented solves (0.0 to 1.0).
-
-        """
-        return sum(1 for s in self.stack if s.comment) / self.total
-
-    @cached_property
-    def unfinished_solves(self) -> float:
-        """
-        Calculate ratio of DNF solves.
-
-        Returns:
-            Proportion of solves with a DNF flag (0.0 to 1.0).
-
-        """
-        return sum(1 for s in self.stack if s.flag == DNF) / self.total
-
-    @cached_property
-    def penalized_solves(self) -> float:
-        """
-        Calculate ratio of +2 solves.
-
-        Returns:
-            Proportion of solves with a +2 flag (0.0 to 1.0).
-
-        """
-        return sum(1 for s in self.stack if s.flag == PLUS_TWO) / self.total
-
-    @cached_property
-    def score(self) -> float:
-        """
-        Calculate average score across all advanced solves.
-
-        Returns:
-            Mean score value across all solves with method analysis.
-
-        """
-        return sum(
-            cast('float', s.score) for s in self.stack if s.advanced
-        ) / self.total
-
-    @cached_property
     def repartition(self) -> list[tuple[int, int]]:
         """
         Compute time distribution histogram for solve times.
@@ -549,6 +492,63 @@ class StatisticsReporter(Statistics):
         self.cube_name = f'{ cube_size }x{ cube_size }x{ cube_size }'
 
         super().__init__(stack)
+
+    @cached_property
+    def advanced_solves(self) -> float:
+        """
+        Calculate ratio of advanced solves with method analysis.
+
+        Returns:
+            Proportion of advanced solves (0.0 to 1.0).
+
+        """
+        return sum(1 for s in self.stack if s.advanced) / self.total
+
+    @cached_property
+    def commented_solves(self) -> float:
+        """
+        Calculate ratio of commented solves.
+
+        Returns:
+            Proportion of commented solves (0.0 to 1.0).
+
+        """
+        return sum(1 for s in self.stack if s.comment) / self.total
+
+    @cached_property
+    def unfinished_solves(self) -> float:
+        """
+        Calculate ratio of DNF solves.
+
+        Returns:
+            Proportion of solves with a DNF flag (0.0 to 1.0).
+
+        """
+        return sum(1 for s in self.stack if s.flag == DNF) / self.total
+
+    @cached_property
+    def penalized_solves(self) -> float:
+        """
+        Calculate ratio of +2 solves.
+
+        Returns:
+            Proportion of solves with a +2 flag (0.0 to 1.0).
+
+        """
+        return sum(1 for s in self.stack if s.flag == PLUS_TWO) / self.total
+
+    @cached_property
+    def score(self) -> float:
+        """
+        Calculate average score across all advanced solves.
+
+        Returns:
+            Mean score value across all solves with method analysis.
+
+        """
+        return sum(
+            cast('float', s.score) for s in self.stack if s.advanced
+        ) / self.total
 
     def resume(self, prefix: str = '', style: str = 'stats', *,  # noqa: C901
                show_title: bool = False) -> None:
