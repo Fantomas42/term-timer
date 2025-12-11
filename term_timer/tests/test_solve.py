@@ -1,7 +1,8 @@
 """Tests for solve."""
-
 import datetime
 import unittest
+from typing import TYPE_CHECKING
+from typing import cast
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
@@ -11,6 +12,9 @@ from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
 from term_timer.solve import Solve
+
+if TYPE_CHECKING:
+    from term_timer.methods.types import StepSummary
 
 
 class TestSolveInitialization(unittest.TestCase):
@@ -51,7 +55,7 @@ class TestSolveInitialization(unittest.TestCase):
 
         solve = Solve(
             date, time, scramble,
-            flag=flag, timer=timer, device=device,
+            flag=PLUS_TWO, timer=timer, device=device,
             session=session, comment=comment,
             solve_id=solve_id, cube_size=cube_size,
             moves=moves,
@@ -650,7 +654,7 @@ class TestSolveSerialization(unittest.TestCase):
 
         solve = Solve(
             date, time, scramble,
-            flag=flag, timer=timer, device=device,
+            flag=PLUS_TWO, timer=timer, device=device,
             moves=moves, comment=comment,
         )
         data = solve.as_save
@@ -875,7 +879,7 @@ class TestSolveReconstructionStepMethods(unittest.TestCase):
     def test_reconstruction_step_line_empty_moves(self) -> None:
         """Test reconstruction_step_line with empty moves."""
         solve = Solve(1000000000, 1012345678, "R U R'", moves='R@100')
-        step_summary: dict = {
+        step_summary_dict = {
             'name': 'Test',
             'type': 'step',
             'moves': Algorithm(),
@@ -887,13 +891,14 @@ class TestSolveReconstructionStepMethods(unittest.TestCase):
             'execution': 0,
             'qtm': 0,
         }
+        step_summary = cast('StepSummary', step_summary_dict)
         result = solve.reconstruction_step_line(step_summary, multiple=False)
         self.assertEqual(result, '')
 
     def test_reconstruction_step_text_empty_moves(self) -> None:
         """Test reconstruction_step_text with empty moves."""
         solve = Solve(1000000000, 1012345678, "R U R'", moves='R@100')
-        step_summary: dict = {
+        step_summary_dict = {
             'name': 'Test',
             'type': 'step',
             'moves': Algorithm(),
@@ -901,6 +906,7 @@ class TestSolveReconstructionStepMethods(unittest.TestCase):
             'aufs': (0, 0),
             'post_pause': 0,
         }
+        step_summary = cast('StepSummary', step_summary_dict)
         result = solve.reconstruction_step_text(step_summary, multiple=False)
         self.assertEqual(result, '')
 
@@ -927,19 +933,19 @@ class TestSolveGraphMethods(unittest.TestCase):
     def test_time_graph_without_advanced(self) -> None:
         """Test time_graph without moves."""
         solve = Solve(1000000000, 1012345678, "R U R'")
-        result = solve.time_graph()
+        result = solve.time_graph()  # type: ignore[func-returns-value]
         self.assertIsNone(result)
 
     def test_tps_graph_without_advanced(self) -> None:
         """Test tps_graph without moves."""
         solve = Solve(1000000000, 1012345678, "R U R'")
-        result = solve.tps_graph()
+        result = solve.tps_graph()  # type: ignore[func-returns-value]
         self.assertIsNone(result)
 
     def test_recognition_graph_without_advanced(self) -> None:
         """Test recognition_graph without moves."""
         solve = Solve(1000000000, 1012345678, "R U R'")
-        result = solve.recognition_graph()
+        result = solve.recognition_graph()  # type: ignore[func-returns-value]
         self.assertIsNone(result)
 
 
@@ -953,7 +959,7 @@ class TestSolveTypeConsistency(unittest.TestCase):
 
     def test_time_is_integer(self) -> None:
         """Test that time is always stored as integer."""
-        solve = Solve(1000000000, 1012345678.9, "R U R'")
+        solve = Solve(1000000000, 1012345678, "R U R'")
         self.assertIsInstance(solve.time, int)
 
     def test_final_time_is_integer(self) -> None:
