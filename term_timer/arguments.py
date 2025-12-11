@@ -175,7 +175,7 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Default: False.'
         ),
     )
-    mode = 'enable' if USE_GYROSCOPE else 'disable'
+    mode = 'disable' if USE_GYROSCOPE else 'enable'
     bluetooth.add_argument(
         '-g', f'--{ mode }-gyroscope',
         action='store_const',
@@ -436,7 +436,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Default: False.'
         ),
     )
-    mode = 'enable' if USE_GYROSCOPE else 'disable'
+    mode = 'disable' if USE_GYROSCOPE else 'enable'
     bluetooth.add_argument(
         '-g', f'--{ mode }-gyroscope',
         action='store_const',
