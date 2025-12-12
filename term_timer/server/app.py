@@ -83,8 +83,8 @@ from term_timer.server.types import StepMarker
 from term_timer.server.types import TPSData
 from term_timer.server.types import TrendData
 from term_timer.solve import Solve
+from term_timer.stats import SolveStatisticsReporter
 from term_timer.stats import Statistics
-from term_timer.stats import StatisticsReporter
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 
@@ -660,7 +660,9 @@ class SessionListView(View):
         for cube in CUBE_SIZES:
             values = sessions[cube].values()
             for info in values:
-                info['stats'] = Statistics(info['solves'])
+                info['stats'] = Statistics(
+                    [s.final_time for s in info['solves']],
+                )
 
             if len(values) > 1:
                 all_solves = []
@@ -668,7 +670,9 @@ class SessionListView(View):
                     all_solves.extend(info['solves'])
                 sessions[cube]['all'] = {
                     'solves': all_solves,
-                    'stats': Statistics(all_solves),
+                    'stats': Statistics(
+                        [s.final_time for s in all_solves],
+                    ),
                 }
 
             session_sorted = sorted(
@@ -746,7 +750,7 @@ class SessionDetailView(View):
         if not solves:
             abort(404, 'No solve to display')
 
-        self.stats = StatisticsReporter(
+        self.stats = SolveStatisticsReporter(
             cube, solves,
         )
 

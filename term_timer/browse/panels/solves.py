@@ -113,7 +113,7 @@ class SolvesPanel(VerticalScroll):
             return
 
         # Calculate best and worst for highlighting
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         best_time = stats.best
         worst_time = stats.worst
 

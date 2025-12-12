@@ -15,7 +15,7 @@ from term_timer.printer import print_cube_scrambled
 from term_timer.scrambler import scrambler
 from term_timer.scrambler import state_to_scramble
 from term_timer.solve import Solve
-from term_timer.stats import Statistics
+from term_timer.stats import SolveStatisticsReporter
 
 logger = logging.getLogger(__name__)
 
@@ -148,11 +148,11 @@ class Timer(SolveInterface):
 
     def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912
         """Display solve results, statistics, and record achievements."""
-        old_stats = Statistics(self.stack)
+        old_stats = SolveStatisticsReporter(self.cube_size, self.stack)
 
         self.stack_done.append(solve)
         self.stack = [*self.stack, solve]
-        new_stats = Statistics(self.stack)
+        new_stats = SolveStatisticsReporter(self.cube_size, self.stack)
 
         self.clear_line(full=True)
 

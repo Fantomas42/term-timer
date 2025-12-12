@@ -11,10 +11,10 @@ from cubing_algs.cases import get_case
 from term_timer.constants import DNF
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
-from term_timer.stats import ListingFilters
+from term_timer.stats import SolveStatisticsReporter
 from term_timer.stats import Statistics
-from term_timer.stats import StatisticsReporter
 from term_timer.stats import StatisticsTools
+from term_timer.types import ListingFilters
 
 if TYPE_CHECKING:
     from term_timer.types import CaseStats
@@ -34,7 +34,7 @@ class TestStatisticsTools(unittest.TestCase):
             Solve(5000000000000, 25 * SECOND, 'R F U', ''),  # 25 seconds
         ]
         # Final times: [10s, 15s, 20s, 30s, 25s]
-        self.stats_tools = StatisticsTools(self.solves)
+        self.stats_tools = StatisticsTools([s.final_time for s in self.solves])
 
     def test_mo_valid(self) -> None:
         """Test mean of 3 calculation with sufficient solves."""
@@ -70,14 +70,14 @@ class TestStatisticsTools(unittest.TestCase):
         # Best is mo3_1 = 15
 
         # Use Statistics class which has mo3 property
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         best_mo3 = stats.best_mo(3)
         self.assertEqual(best_mo3, 15 * SECOND)
 
     def test_best_ao(self) -> None:
         """Test finding the best average of N in the history."""
         # Use Statistics class which has ao5 property
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
 
         # With only 5 solves, there's only one ao5, so best_ao5 should equal ao5
         best_ao5 = stats.best_ao(5)
@@ -101,64 +101,64 @@ class TestStatistics(unittest.TestCase):
 
     def test_mo3_property(self, *_mocks: Any) -> None:
         """Test mo3 property."""
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         self.assertEqual(stats.mo3, 25 * SECOND)
 
     def test_ao5_property(self, *_mocks: Any) -> None:
         """Test ao5 property."""
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         self.assertEqual(stats.ao5, 20 * SECOND)
 
     def test_best_property(self, *_mocks: Any) -> None:
         """Test best property."""
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         self.assertEqual(stats.best, 10 * SECOND)
 
     def test_worst_property(self, *_mocks: Any) -> None:
         """Test worst property."""
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         self.assertEqual(stats.worst, 30 * SECOND)
 
     def test_bpa_property(self, *_mocks: Any) -> None:
         """Test bpa property."""
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         self.assertEqual(stats.bpa, 15 * SECOND)
 
     def test_wpa_property(self, *_mocks: Any) -> None:
         """Test wpa property."""
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         self.assertEqual(stats.wpa, 25 * SECOND)
 
     def test_mean_property(self, *_mocks: Any) -> None:
         """Test mean property."""
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         self.assertEqual(stats.mean, 20 * SECOND)
 
     def test_median_property(self, *_mocks: Any) -> None:
         """Test median property."""
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         self.assertEqual(stats.median, 20 * SECOND)
 
     def test_delta_property(self, *_mocks: Any) -> None:
         """Test delta property (difference between last two solves)."""
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         # Last solve (25s) - second to last solve (30s) = -5s
         self.assertEqual(stats.delta, -5 * SECOND)
 
     def test_total_property(self, *_mocks: Any) -> None:
         """Test total property (number of solves)."""
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         self.assertEqual(stats.total, 5)
 
     def test_total_time_property(self, *_mocks: Any) -> None:
         """Test total_time property (sum of all solve times)."""
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         # 10 + 15 + 20 + 30 + 25 = 100s
         self.assertEqual(stats.total_time, 100 * SECOND)
 
 
 class TestStatisticsResumeReporter(unittest.TestCase):
-    """Tests for StatisticsReporter resume method."""
+    """Tests for SolveStatisticsReporter resume method."""
 
     def setUp(self) -> None:
         """Set up test cases with sample solves."""
@@ -173,7 +173,7 @@ class TestStatisticsResumeReporter(unittest.TestCase):
 
     def test_resume(self) -> None:
         """Test the resume method which prints statistics summary."""
-        stats = StatisticsReporter(self.puzzle, self.solves)
+        stats = SolveStatisticsReporter(self.puzzle, self.solves)
 
         with patch('term_timer.interface.console.console.print') as mock_print:
             stats.resume('Test ')
@@ -182,8 +182,8 @@ class TestStatisticsResumeReporter(unittest.TestCase):
             self.assertTrue(mock_print.call_count > 5)
 
 
-class TestStatisticsReporterListing(unittest.TestCase):
-    """Tests for StatisticsReporter listing method."""
+class TestSolveStatisticsReporterListing(unittest.TestCase):
+    """Tests for SolveStatisticsReporter listing method."""
 
     def setUp(self) -> None:
         """Set up test cases with sample solves."""
@@ -193,7 +193,7 @@ class TestStatisticsReporterListing(unittest.TestCase):
             Solve(5000000000, 1 * SECOND, 'U F R', DNF),
             Solve(7000000000, 1 * SECOND, 'F U R', '+2'),
         ]
-        self.listing = StatisticsReporter(3, self.solves)
+        self.listing = SolveStatisticsReporter(3, self.solves)
 
     @patch('term_timer.interface.console.console.print')
     def test_resume_with_limit(self, mock_console: Mock) -> None:
@@ -247,7 +247,7 @@ class TestStatisticsToolsComprehensive(unittest.TestCase):
             Solve(4000000000000, 30 * SECOND, 'F U R', ''),
             Solve(5000000000000, 25 * SECOND, 'R F U', ''),
         ]
-        self.stats_tools = StatisticsTools(self.solves)
+        self.stats_tools = StatisticsTools([s.final_time for s in self.solves])
 
     def test_init_filters_none_final_times(self) -> None:
         """Test that initialization filters out None final_time values."""
@@ -256,7 +256,7 @@ class TestStatisticsToolsComprehensive(unittest.TestCase):
             Solve(2000000000000, 15 * SECOND, 'R U F', DNF),
             Solve(3000000000000, 20 * SECOND, 'U F R', ''),
         ]
-        stats = StatisticsTools(solves_with_dnf)
+        stats = StatisticsTools([s.final_time for s in solves_with_dnf])
         # Should filter None from sorted list (DNF has None final_time)
         self.assertEqual(len(stats.stack_time_sorted), 2)
         self.assertNotIn(None, stats.stack_time_sorted)
@@ -269,7 +269,7 @@ class TestStatisticsToolsComprehensive(unittest.TestCase):
             Solve(2000000000000, 0, 'R U F', ''),  # 0 time
             Solve(3000000000000, 0, 'U F R', ''),  # 0 time
         ]
-        stats = Statistics(zero_solves)
+        stats = Statistics([s.final_time for s in zero_solves])
         result = stats.best_mo3
         # Should handle zero times correctly
         self.assertIsInstance(result, int)
@@ -284,7 +284,7 @@ class TestStatisticsToolsComprehensive(unittest.TestCase):
             Solve(4000000000000, 0, 'F U R', ''),
             Solve(5000000000000, 0, 'R F U', ''),
         ]
-        stats = Statistics(zero_solves)
+        stats = Statistics([s.final_time for s in zero_solves])
         result = stats.best_ao5
         # Should handle zero times correctly
         self.assertIsInstance(result, int)
@@ -321,14 +321,14 @@ class TestStatisticsComprehensive(unittest.TestCase):
 
     def test_larger_ao_properties(self) -> None:
         """Test ao100 and ao1000 properties with insufficient solves."""
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         # These should return -1 with only 5 solves
         self.assertEqual(stats.ao100, -1)  # Line 126
         self.assertEqual(stats.ao1000, -1)  # Line 130
 
     def test_larger_best_ao_properties(self) -> None:
         """Test best_ao100 and best_ao1000 properties."""
-        stats = Statistics(self.solves)
+        stats = Statistics([s.final_time for s in self.solves])
         # These should return -1 with insufficient solves (not 0)
         self.assertEqual(stats.best_ao100, -1)  # Line 146
         self.assertEqual(stats.best_ao1000, -1)  # Line 150
@@ -338,15 +338,15 @@ class TestStatisticsComprehensive(unittest.TestCase):
         with patch('term_timer.stats.STATS_CONFIG') as mock_config:
             mock_config.get.return_value = 5  # Configured bin size
 
-            stats = Statistics(self.solves)
+            stats = Statistics([s.final_time for s in self.solves])
             result = stats.repartition
 
             # Should use configured bin size (line 205->210)
             self.assertIsInstance(result, list)
 
 
-class TestStatisticsReporterComprehensive(unittest.TestCase):
-    """Tests for StatisticsReporter comprehensive coverage."""
+class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
+    """Tests for SolveStatisticsReporter comprehensive coverage."""
 
     def setUp(self) -> None:
         """Set up test cases."""
@@ -366,7 +366,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             solve = Solve(i * 1000000000, (10 + i % 20) * SECOND, 'F R U', '')
             many_solves.append(solve)
 
-        reporter = StatisticsReporter(3, many_solves)
+        reporter = SolveStatisticsReporter(3, many_solves)
 
         with patch('term_timer.interface.console.console.print') as mock_print:
             reporter.resume()
@@ -398,7 +398,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.scramble = 'F R U'
         mock_solve.flag = ''
 
-        reporter = StatisticsReporter(3, [mock_solve])
+        reporter = SolveStatisticsReporter(3, [mock_solve])
 
         with patch('term_timer.interface.console.console.print') as mock_print:
             reporter.listing(0, 'index')
@@ -410,7 +410,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
 
     def test_listing_best_worst_time_highlighting(self) -> None:
         """Test listing highlights best and worst times."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
 
         with patch('term_timer.interface.console.console.print') as mock_print:
             reporter.listing(0, 'index')
@@ -465,7 +465,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.aufs = 3
         mock_solve.rotations = 0
 
-        reporter = StatisticsReporter(3, [mock_solve])
+        reporter = SolveStatisticsReporter(3, [mock_solve])
 
         with patch('term_timer.stats.STATS_CONFIG') as mock_config, \
              patch('term_timer.interface.console.console.print') as mock_print:
@@ -553,7 +553,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
                 mock_solve.aufs = aufs_count
                 mock_solve.rotations = 0
 
-                reporter = StatisticsReporter(3, [mock_solve])
+                reporter = SolveStatisticsReporter(3, [mock_solve])
 
                 with patch(
                         'term_timer.stats.STATS_CONFIG',
@@ -631,7 +631,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.link_cube_db = 'http://cubedb.net'
         mock_solve.method_line = "Cross: R U R' F2L: U R U' R'"
 
-        reporter = StatisticsReporter(3, [mock_solve])
+        reporter = SolveStatisticsReporter(3, [mock_solve])
 
         with patch('term_timer.stats.STATS_CONFIG') as mock_config, \
              patch('term_timer.interface.console.console.print') as mock_print:
@@ -708,7 +708,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.tps_graph = Mock()
         mock_solve.recognition_graph = Mock()
 
-        reporter = StatisticsReporter(3, [mock_solve])
+        reporter = SolveStatisticsReporter(3, [mock_solve])
 
         with patch('term_timer.stats.STATS_CONFIG') as mock_config, \
              patch('term_timer.interface.console.console.print'):
@@ -732,7 +732,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
 
     def test_case_table_skip_case_handling(self) -> None:
         """Test case_table method with SKIP cases."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
 
         with patch('term_timer.stats.Table') as mock_table_class, \
              patch('term_timer.interface.console.console.print'):
@@ -763,7 +763,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
 
     def test_cfop_case_sorting_by_case(self) -> None:
         """Test cfop method sorting by 'case'."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
 
         analyses: MethodAnalysis = {
             'total': 5,
@@ -783,7 +783,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
 
     def test_cfop_pll_only(self) -> None:
         """Test cfop method with pll_only flag."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
 
         analyses: MethodAnalysis = {
             'total': 5,
@@ -809,7 +809,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
             solve = Solve(i * 1000000000, (10 + i) * SECOND, 'F R U', '')
             many_solves.append(solve)
 
-        reporter = StatisticsReporter(3, many_solves)
+        reporter = SolveStatisticsReporter(3, many_solves)
 
         with patch('term_timer.stats.plt') as mock_plt:
             # Mock all plt methods
@@ -832,7 +832,7 @@ class TestStatisticsReporterComprehensive(unittest.TestCase):
     @patch('term_timer.interface.console.console.print')
     def test_resume_reverse_order(self, mock_console: Mock) -> None:
         """Test that solves are displayed in reverse order (newest first)."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
         reporter.listing(4, 'index')
 
         # Get all the call arguments
@@ -881,14 +881,14 @@ class TestListingFilters(unittest.TestCase):
 
 
 class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
-    """Tests for StatisticsReporter.matches_filters method."""
+    """Tests for SolveStatisticsReporter.matches_filters method."""
 
     def test_empty_filters_matches_everything(self) -> None:
         """Test that empty filters match all solves."""
         solve = Solve(1000000000, 10 * SECOND, 'F R U', '')
         filters = ListingFilters()
 
-        self.assertTrue(StatisticsReporter.matches_filters(solve, filters))
+        self.assertTrue(SolveStatisticsReporter.matches_filters(solve, filters))
 
     def test_with_comments_filter(self) -> None:
         """Test with_comments filter."""
@@ -901,10 +901,14 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters = ListingFilters(with_comments=True)
 
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve_with_comment, filters),
+            SolveStatisticsReporter.matches_filters(
+                solve_with_comment, filters,
+            ),
         )
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve_without_comment, filters),
+            SolveStatisticsReporter.matches_filters(
+                solve_without_comment, filters,
+            ),
         )
 
     def test_without_comments_filter(self) -> None:
@@ -918,10 +922,14 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters = ListingFilters(without_comments=True)
 
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve_with_comment, filters),
+            SolveStatisticsReporter.matches_filters(
+                solve_with_comment, filters,
+            ),
         )
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve_without_comment, filters),
+            SolveStatisticsReporter.matches_filters(
+                solve_without_comment, filters,
+            ),
         )
 
     def test_connected_filter(self) -> None:
@@ -935,10 +943,10 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters = ListingFilters(connected=True)
 
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve_connected, filters),
+            SolveStatisticsReporter.matches_filters(solve_connected, filters),
         )
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve_unconnected, filters),
+            SolveStatisticsReporter.matches_filters(solve_unconnected, filters),
         )
 
     def test_unconnected_filter(self) -> None:
@@ -952,10 +960,10 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters = ListingFilters(unconnected=True)
 
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve_connected, filters),
+            SolveStatisticsReporter.matches_filters(solve_connected, filters),
         )
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve_unconnected, filters),
+            SolveStatisticsReporter.matches_filters(solve_unconnected, filters),
         )
 
     def test_dnf_filter(self) -> None:
@@ -966,10 +974,14 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
 
         filters = ListingFilters(dnf=True)
 
-        self.assertTrue(StatisticsReporter.matches_filters(solve_dnf, filters))
-        self.assertFalse(StatisticsReporter.matches_filters(solve_ok, filters))
+        self.assertTrue(
+            SolveStatisticsReporter.matches_filters(solve_dnf, filters),
+        )
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve_plus_two, filters),
+            SolveStatisticsReporter.matches_filters(solve_ok, filters),
+        )
+        self.assertFalse(
+            SolveStatisticsReporter.matches_filters(solve_plus_two, filters),
         )
 
     def test_plus_two_filter(self) -> None:
@@ -981,11 +993,13 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters = ListingFilters(plus_two=True)
 
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve_dnf, filters),
+            SolveStatisticsReporter.matches_filters(solve_dnf, filters),
         )
-        self.assertFalse(StatisticsReporter.matches_filters(solve_ok, filters))
+        self.assertFalse(
+            SolveStatisticsReporter.matches_filters(solve_ok, filters),
+        )
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve_plus_two, filters),
+            SolveStatisticsReporter.matches_filters(solve_plus_two, filters),
         )
 
     def test_no_penalty_filter(self) -> None:
@@ -997,11 +1011,13 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters = ListingFilters(no_penalty=True)
 
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve_dnf, filters),
+            SolveStatisticsReporter.matches_filters(solve_dnf, filters),
         )
-        self.assertTrue(StatisticsReporter.matches_filters(solve_ok, filters))
+        self.assertTrue(
+            SolveStatisticsReporter.matches_filters(solve_ok, filters),
+        )
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve_plus_two, filters),
+            SolveStatisticsReporter.matches_filters(solve_plus_two, filters),
         )
 
     def test_search_comment_filter_case_insensitive(self) -> None:
@@ -1015,10 +1031,10 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters_no_match = ListingFilters(search_comment='bad')
 
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_match),
+            SolveStatisticsReporter.matches_filters(solve, filters_match),
         )
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve, filters_no_match),
+            SolveStatisticsReporter.matches_filters(solve, filters_no_match),
         )
 
     def test_search_comment_filter_no_comment(self) -> None:
@@ -1026,7 +1042,9 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         solve = Solve(1000000000, 10 * SECOND, 'F R U', '')
         filters = ListingFilters(search_comment='test')
 
-        self.assertFalse(StatisticsReporter.matches_filters(solve, filters))
+        self.assertFalse(
+            SolveStatisticsReporter.matches_filters(solve, filters),
+        )
 
     def test_search_comment_filter_empty_string(self) -> None:
         """Test search_comment filter with empty search string."""
@@ -1036,7 +1054,7 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         )
         filters = ListingFilters(search_comment='')
 
-        self.assertTrue(StatisticsReporter.matches_filters(solve, filters))
+        self.assertTrue(SolveStatisticsReporter.matches_filters(solve, filters))
 
     def test_search_scramble_filter_case_insensitive(self) -> None:
         """Test search_scramble filter with case insensitive matching."""
@@ -1046,10 +1064,10 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters_no_match = ListingFilters(search_scramble='L D')
 
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_match),
+            SolveStatisticsReporter.matches_filters(solve, filters_match),
         )
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve, filters_no_match),
+            SolveStatisticsReporter.matches_filters(solve, filters_no_match),
         )
 
     def test_search_scramble_filter_empty_string(self) -> None:
@@ -1057,7 +1075,7 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         solve = Solve(1000000000, 10 * SECOND, 'F R U', '')
         filters = ListingFilters(search_scramble='')
 
-        self.assertTrue(StatisticsReporter.matches_filters(solve, filters))
+        self.assertTrue(SolveStatisticsReporter.matches_filters(solve, filters))
 
     def test_min_time_filter(self) -> None:
         """Test min_time filter converts seconds to milliseconds."""
@@ -1067,10 +1085,10 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters = ListingFilters(min_time=10.0)
 
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve_fast, filters),
+            SolveStatisticsReporter.matches_filters(solve_fast, filters),
         )
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve_slow, filters),
+            SolveStatisticsReporter.matches_filters(solve_slow, filters),
         )
 
     def test_min_time_filter_boundary(self) -> None:
@@ -1081,13 +1099,13 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters_greater = ListingFilters(min_time=10.001)
 
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_less),
+            SolveStatisticsReporter.matches_filters(solve, filters_less),
         )
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_equal),
+            SolveStatisticsReporter.matches_filters(solve, filters_equal),
         )
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve, filters_greater),
+            SolveStatisticsReporter.matches_filters(solve, filters_greater),
         )
 
     def test_max_time_filter(self) -> None:
@@ -1098,10 +1116,10 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters = ListingFilters(max_time=10.0)
 
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve_fast, filters),
+            SolveStatisticsReporter.matches_filters(solve_fast, filters),
         )
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve_slow, filters),
+            SolveStatisticsReporter.matches_filters(solve_slow, filters),
         )
 
     def test_max_time_filter_boundary(self) -> None:
@@ -1112,13 +1130,13 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters_greater = ListingFilters(max_time=10.001)
 
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve, filters_less),
+            SolveStatisticsReporter.matches_filters(solve, filters_less),
         )
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_equal),
+            SolveStatisticsReporter.matches_filters(solve, filters_equal),
         )
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_greater),
+            SolveStatisticsReporter.matches_filters(solve, filters_greater),
         )
 
     def test_min_and_max_time_filter_combined(self) -> None:
@@ -1130,13 +1148,13 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters = ListingFilters(min_time=10.0, max_time=15.0)
 
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve_too_fast, filters),
+            SolveStatisticsReporter.matches_filters(solve_too_fast, filters),
         )
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve_in_range, filters),
+            SolveStatisticsReporter.matches_filters(solve_in_range, filters),
         )
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve_too_slow, filters),
+            SolveStatisticsReporter.matches_filters(solve_too_slow, filters),
         )
 
     def test_multiple_filters_and_logic(self) -> None:
@@ -1159,10 +1177,14 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         )
 
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve_match_all, filters),
+            SolveStatisticsReporter.matches_filters(
+                solve_match_all, filters,
+            ),
         )
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve_match_partial, filters),
+            SolveStatisticsReporter.matches_filters(
+                solve_match_partial, filters,
+            ),
         )
 
     def test_contradictory_comment_filters(self) -> None:
@@ -1174,7 +1196,9 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
 
         filters = ListingFilters(with_comments=True, without_comments=True)
 
-        self.assertFalse(StatisticsReporter.matches_filters(solve, filters))
+        self.assertFalse(
+            SolveStatisticsReporter.matches_filters(solve, filters),
+        )
 
     def test_contradictory_connection_filters(self) -> None:
         """Test contradictory connected and unconnected filters."""
@@ -1185,7 +1209,9 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
 
         filters = ListingFilters(connected=True, unconnected=True)
 
-        self.assertFalse(StatisticsReporter.matches_filters(solve, filters))
+        self.assertFalse(
+            SolveStatisticsReporter.matches_filters(solve, filters),
+        )
 
     def test_contradictory_flag_filters(self) -> None:
         """Test contradictory flag filters."""
@@ -1193,21 +1219,23 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
 
         filters = ListingFilters(dnf=True, no_penalty=True)
 
-        self.assertFalse(StatisticsReporter.matches_filters(solve, filters))
+        self.assertFalse(
+            SolveStatisticsReporter.matches_filters(solve, filters),
+        )
 
     def test_min_time_none_value(self) -> None:
         """Test min_time filter with None value."""
         solve = Solve(1000000000, 5 * SECOND, 'F R U', '')
         filters = ListingFilters(min_time=None)
 
-        self.assertTrue(StatisticsReporter.matches_filters(solve, filters))
+        self.assertTrue(SolveStatisticsReporter.matches_filters(solve, filters))
 
     def test_max_time_none_value(self) -> None:
         """Test max_time filter with None value."""
         solve = Solve(1000000000, 20 * SECOND, 'F R U', '')
         filters = ListingFilters(max_time=None)
 
-        self.assertTrue(StatisticsReporter.matches_filters(solve, filters))
+        self.assertTrue(SolveStatisticsReporter.matches_filters(solve, filters))
 
     def test_search_comment_substring_matching(self) -> None:
         """Test search_comment filter matches substrings."""
@@ -1221,13 +1249,13 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters_end = ListingFilters(search_comment='solve')
 
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_start),
+            SolveStatisticsReporter.matches_filters(solve, filters_start),
         )
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_middle),
+            SolveStatisticsReporter.matches_filters(solve, filters_middle),
         )
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_end),
+            SolveStatisticsReporter.matches_filters(solve, filters_end),
         )
 
     def test_search_scramble_substring_matching(self) -> None:
@@ -1239,13 +1267,13 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters_end = ListingFilters(search_scramble='L D')
 
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_start),
+            SolveStatisticsReporter.matches_filters(solve, filters_start),
         )
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_middle),
+            SolveStatisticsReporter.matches_filters(solve, filters_middle),
         )
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_end),
+            SolveStatisticsReporter.matches_filters(solve, filters_end),
         )
 
     def test_time_filters_with_zero_time(self) -> None:
@@ -1256,10 +1284,10 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters_max = ListingFilters(max_time=0.0)
 
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_min),
+            SolveStatisticsReporter.matches_filters(solve, filters_min),
         )
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_max),
+            SolveStatisticsReporter.matches_filters(solve, filters_max),
         )
 
     def test_time_filters_with_fractional_seconds(self) -> None:
@@ -1270,15 +1298,15 @@ class TestMatchesFilters(unittest.TestCase):  # noqa: PLR0904
         filters_no_match = ListingFilters(min_time=12.5, max_time=13.0)
 
         self.assertTrue(
-            StatisticsReporter.matches_filters(solve, filters_match),
+            SolveStatisticsReporter.matches_filters(solve, filters_match),
         )
         self.assertFalse(
-            StatisticsReporter.matches_filters(solve, filters_no_match),
+            SolveStatisticsReporter.matches_filters(solve, filters_no_match),
         )
 
 
 class TestListingWithFilters(unittest.TestCase):
-    """Tests for StatisticsReporter.listing method with filters."""
+    """Tests for SolveStatisticsReporter.listing method with filters."""
 
     def setUp(self) -> None:
         """Set up test cases with sample solves."""
@@ -1300,7 +1328,7 @@ class TestListingWithFilters(unittest.TestCase):
     @patch('term_timer.interface.console.console.print')
     def test_listing_without_filters(self, mock_console: Mock) -> None:
         """Test listing without filters shows all solves."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
         reporter.listing(0, 'index')
 
         self.assertEqual(mock_console.call_count, 6)
@@ -1308,7 +1336,7 @@ class TestListingWithFilters(unittest.TestCase):
     @patch('term_timer.interface.console.console.print')
     def test_listing_with_comment_filter(self, mock_console: Mock) -> None:
         """Test listing with comment filter."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
         filters = ListingFilters(with_comments=True)
         reporter.listing(0, 'index', filters)
 
@@ -1317,7 +1345,7 @@ class TestListingWithFilters(unittest.TestCase):
     @patch('term_timer.interface.console.console.print')
     def test_listing_with_connected_filter(self, mock_console: Mock) -> None:
         """Test listing with connected filter."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
         filters = ListingFilters(connected=True)
         reporter.listing(0, 'index', filters)
 
@@ -1326,7 +1354,7 @@ class TestListingWithFilters(unittest.TestCase):
     @patch('term_timer.interface.console.console.print')
     def test_listing_with_dnf_filter(self, mock_console: Mock) -> None:
         """Test listing with DNF filter."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
         filters = ListingFilters(dnf=True)
         reporter.listing(0, 'index', filters)
 
@@ -1335,7 +1363,7 @@ class TestListingWithFilters(unittest.TestCase):
     @patch('term_timer.interface.console.console.print')
     def test_listing_with_no_matches(self, mock_console: Mock) -> None:
         """Test listing with filters that match no solves."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
         filters = ListingFilters(search_comment='nonexistent')
         reporter.listing(0, 'index', filters)
 
@@ -1349,7 +1377,7 @@ class TestListingWithFilters(unittest.TestCase):
     @patch('term_timer.interface.console.console.print')
     def test_listing_filters_with_limit(self, mock_console: Mock) -> None:
         """Test listing with filters and limit parameter."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
         filters = ListingFilters(no_penalty=True)
         reporter.listing(1, 'index', filters)
 
@@ -1359,7 +1387,7 @@ class TestListingWithFilters(unittest.TestCase):
     def test_listing_filters_with_time_sorting(
             self, mock_console: Mock) -> None:
         """Test listing with filters and time sorting."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
         filters = ListingFilters(no_penalty=True)
         reporter.listing(0, 'time', filters)
 
@@ -1369,7 +1397,7 @@ class TestListingWithFilters(unittest.TestCase):
     def test_listing_filters_with_combined_filters(
             self, mock_console: Mock) -> None:
         """Test listing with multiple combined filters."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
         filters = ListingFilters(
             connected=True,
             no_penalty=True,
@@ -1383,7 +1411,7 @@ class TestListingWithFilters(unittest.TestCase):
     def test_listing_filters_preserves_original_indices(
             self, mock_console: Mock) -> None:
         """Test listing with filters preserves original solve indices."""
-        reporter = StatisticsReporter(3, self.solves)
+        reporter = SolveStatisticsReporter(3, self.solves)
         filters = ListingFilters(dnf=True)
         reporter.listing(0, 'index', filters)
 

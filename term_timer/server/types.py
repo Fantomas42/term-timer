@@ -1,5 +1,4 @@
 """Type definitions for web server views and templates."""
-
 from typing import TypedDict
 
 from bottle import HTTPError
@@ -9,8 +8,8 @@ from cubing_algs.move import Move
 
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.solve import Solve
+from term_timer.stats import SolveStatisticsReporter
 from term_timer.stats import Statistics
-from term_timer.stats import StatisticsReporter
 
 
 class SessionInfo(TypedDict):
@@ -117,7 +116,7 @@ class SessionDetailContext(TypedDict):
 
     cube: int
     session: str
-    stats: StatisticsReporter
+    stats: SolveStatisticsReporter
     sessions: dict[str, int]
     trend: TrendData
     distribution: DistributionData

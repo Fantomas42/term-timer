@@ -32,6 +32,7 @@ Analyser.summary (StepSummary list)
       → aggregate() processes multiple SolveAnalysis
         → MethodAnalysis produced
 """
+from dataclasses import dataclass
 from typing import TypedDict
 
 from cubing_algs.cases.case import Case
@@ -94,3 +95,20 @@ class MethodAnalysis(TypedDict):
     mean: float
     resume: dict[str, dict[str, CaseStats]]
     stack: list[Solve | None]
+
+
+@dataclass
+class ListingFilters:
+    """Filter parameters for solve listing."""
+
+    with_comments: bool = False
+    without_comments: bool = False
+    connected: bool = False
+    unconnected: bool = False
+    dnf: bool = False
+    plus_two: bool = False
+    no_penalty: bool = False
+    search_comment: str | None = None
+    search_scramble: str | None = None
+    min_time: float | None = None
+    max_time: float | None = None

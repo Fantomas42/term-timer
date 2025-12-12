@@ -24,10 +24,10 @@ from term_timer.manage import ScrambleManager
 from term_timer.manage import SessionManager
 from term_timer.manage import SolveManager
 from term_timer.server.app import Server
-from term_timer.stats import ListingFilters
-from term_timer.stats import StatisticsReporter
+from term_timer.stats import SolveStatisticsReporter
 from term_timer.timer import Timer
 from term_timer.trainer import Trainer
+from term_timer.types import ListingFilters
 
 
 async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912
@@ -115,11 +115,11 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912
             await timer.bluetooth_disconnect()
 
     if len(timer.stack) > len(timer.stack_done):
-        session_stats = StatisticsReporter(cube, timer.stack)
+        session_stats = SolveStatisticsReporter(cube, timer.stack)
         session_stats.resume('Session ')
 
     if len(timer.stack_done) > 1:
-        round_stats = StatisticsReporter(cube, timer.stack_done)
+        round_stats = SolveStatisticsReporter(cube, timer.stack_done)
         round_stats.resume(
             'Free Play ' if options.free_play else 'Current ',
             'round',
@@ -185,7 +185,7 @@ def tools(command: str, options: Namespace) -> int:
         options.devices,
     )
 
-    session_stats = StatisticsReporter(
+    session_stats = SolveStatisticsReporter(
         cube,
         stack,
     )

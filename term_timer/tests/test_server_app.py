@@ -442,7 +442,7 @@ class TestSessionDetailView(unittest.TestCase):
     """Tests for SessionDetailView class."""
 
     @patch('term_timer.server.app.SolvesMethodAggregator')
-    @patch('term_timer.server.app.StatisticsReporter')
+    @patch('term_timer.server.app.SolveStatisticsReporter')
     @patch('term_timer.server.app.load_all_solves')
     def test_session_detail_view_initialization(
             self, mock_load_solves: Mock, _mock_stats_reporter: Mock,
@@ -464,7 +464,7 @@ class TestSessionDetailView(unittest.TestCase):
 
     @staticmethod
     @patch('term_timer.server.app.SolvesMethodAggregator')
-    @patch('term_timer.server.app.StatisticsReporter')
+    @patch('term_timer.server.app.SolveStatisticsReporter')
     @patch('term_timer.server.app.load_all_solves')
     def test_session_detail_view_all_session(
             mock_load_solves: Mock, _mock_stats_reporter: Mock,
@@ -500,7 +500,7 @@ class TestSessionDetailView(unittest.TestCase):
         mock_abort.assert_called_once_with(404, 'No solve to display')
 
     @patch('term_timer.server.app.SolvesMethodAggregator')
-    @patch('term_timer.server.app.StatisticsReporter')
+    @patch('term_timer.server.app.SolveStatisticsReporter')
     @patch('term_timer.server.app.load_all_solves')
     def test_session_detail_view_step_case_filtering(
             self, mock_load_solves: Mock, _mock_stats_reporter: Mock,
@@ -532,7 +532,7 @@ class TestSessionDetailView(unittest.TestCase):
         with (
             patch('term_timer.server.app.load_all_solves'),
             patch('term_timer.server.app.SolvesMethodAggregator'),
-            patch('term_timer.server.app.StatisticsReporter'),
+            patch('term_timer.server.app.SolveStatisticsReporter'),
         ):
             view = SessionDetailView.__new__(SessionDetailView)
             view.stats = Mock()
@@ -548,7 +548,7 @@ class TestSessionDetailView(unittest.TestCase):
         with (
             patch('term_timer.server.app.load_all_solves'),
             patch('term_timer.server.app.SolvesMethodAggregator'),
-            patch('term_timer.server.app.StatisticsReporter'),
+            patch('term_timer.server.app.SolveStatisticsReporter'),
         ):
             view = SessionDetailView.__new__(SessionDetailView)
             view.stats = Mock()
@@ -571,7 +571,7 @@ class TestSessionDetailView(unittest.TestCase):
         with (
             patch('term_timer.server.app.load_all_solves'),
             patch('term_timer.server.app.SolvesMethodAggregator'),
-            patch('term_timer.server.app.StatisticsReporter'),
+            patch('term_timer.server.app.SolveStatisticsReporter'),
         ):
             view = SessionDetailView.__new__(SessionDetailView)
             view.stats = Mock()
@@ -599,7 +599,7 @@ class TestSessionDetailView(unittest.TestCase):
         with (
             patch('term_timer.server.app.load_all_solves'),
             patch('term_timer.server.app.SolvesMethodAggregator'),
-            patch('term_timer.server.app.StatisticsReporter'),
+            patch('term_timer.server.app.SolveStatisticsReporter'),
         ):
             view = SessionDetailView.__new__(SessionDetailView)
             view.stats = Mock()
