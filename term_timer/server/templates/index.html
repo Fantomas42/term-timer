@@ -55,7 +55,7 @@
             <a href="/{{ cube }}/{{ session|default('default', true) }}/">
               <div class="stat-card">
                 <div class="stat-title">
-                  {{ session|default('default', true)|title() }}
+                  {{ session|default('default', true)|format_session_name }}
                 </div>
                 <div class="stat-value">{{ info.stats.total }}</div>
                 <div class="stat-meta">

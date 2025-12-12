@@ -2,7 +2,7 @@
 {% from 'macros/step.html' import step_case %}
 
 {% block description %}
-  Solve #{{ solve_id }} from session {{ session }} on {{ cube }}x{{ cube }}x{{ cube }}
+  Solve #{{ solve_id }} from session {{ session|format_session_name }} on {{ cube }}x{{ cube }}x{{ cube }}
 {% endblock %}
 
 {% block title %}
@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block subtitle %}
-  Solve #{{ solve_id }}
+  {{ session|format_session_name }} {{ cube }}x{{ cube }}x{{ cube }} : Solve #{{ solve_id }}
 {% endblock %}
 
 {% block script %}
@@ -619,8 +619,9 @@
         <div class="stat-title">Session</div>
         <div class="stat-value">
           <a href="/{{ cube }}/{{ session|default('default', true) }}/" class="link">
-            {{ session|default('default', true)|title }}
+            {{ session|default('default', true)|format_session_name }}
           </a>
+          {{ cube }}x{{ cube }}x{{ cube }}
         </div>
       </div>
       {% if solve.advanced %}

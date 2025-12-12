@@ -213,7 +213,7 @@ def format_flag(flag: SolveFlag) -> str:
         flag: Flag value to format.
 
     Returns:
-        Flag value formatted
+        Flag value formatted.
 
     """
     flag_class = 'result'
@@ -223,6 +223,20 @@ def format_flag(flag: SolveFlag) -> str:
         flag_class = 'plus-two'
 
     return f'[{ flag_class }]{ flag }[/{ flag_class }]'
+
+
+def format_session_name(session_name: str) -> str:
+    """
+    Format session name to a prettier version.
+
+    Args:
+        session_name: Name of the session.
+
+    Returns:
+        Session's name formatted.
+
+    """
+    return session_name.replace('-', ' ').title()
 
 
 def clean_url(string: str) -> str:

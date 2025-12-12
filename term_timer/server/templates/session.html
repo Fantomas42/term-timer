@@ -1,11 +1,11 @@
 {% extends "skeleton.html" %}
 
-{% block description %}Detailled statistics for session {{ session|title() }} on {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
+{% block description %}Detailled statistics for session {{ session|format_session_name }} on {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
 
-{% block title %}{{ session|title() }} {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
+{% block title %}{{ session|format_session_name }} {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
 
 {% block subtitle %}
-  {{ session|title() }} {{ cube }}x{{ cube }}x{{ cube }}
+  {{ session|format_session_name }} {{ cube }}x{{ cube }}x{{ cube }}
   {% if case_uid %}{{ step.upper() }}: {{ case_uid.title() }}{% endif %}
 {% endblock %}
 

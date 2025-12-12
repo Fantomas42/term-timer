@@ -14,6 +14,7 @@ from term_timer.constants import SolveFlag
 from term_timer.constants import SolveFlagInput
 from term_timer.formatter import format_flag
 from term_timer.formatter import format_float
+from term_timer.formatter import format_session_name
 from term_timer.formatter import format_term_timer_session_url
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
@@ -257,7 +258,7 @@ class SessionManager:
                 connected_percent = format_float(stats.advanced_solves * 100)
 
                 table.add_row(
-                    f'[localhost][link={ url }]{ name.title() }'
+                    f'[localhost][link={ url }]{ format_session_name(name) }'
                     '[/link][/localhost]',
                     f'[result]{ total }[/result]',
                     f'[bluetooth]{ connected_percent }%[/bluetooth]',

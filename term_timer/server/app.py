@@ -55,6 +55,7 @@ from term_timer.formatter import format_alg_pauses
 from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
+from term_timer.formatter import format_session_name
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import save_solves
@@ -554,6 +555,7 @@ class View:
                         'format_time': format_time,
                         'format_score': format_score,
                         'format_line': format_line,
+                        'format_session_name': format_session_name,
                         'get_step_case': get_step_case,
                         'normalize_value': normalize_value,
                         'normalize_percent': normalize_percent,
