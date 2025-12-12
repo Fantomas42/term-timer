@@ -14,6 +14,8 @@ from cubing_algs.vcube import VCube
 from kociemba import solve
 
 from term_timer.config import CUBE_RIGHT_HANDED
+from term_timer.constants import CROSS_CASE
+from term_timer.constants import EASY_CROSS_CASE
 from term_timer.exceptions import InvalidCaseError
 
 
@@ -70,7 +72,7 @@ def trainer(step: str, cases: list[str],
             orientation_moves: Algorithm,
             rng: Random,
             bluetooth_cube: VCube | None = None) -> tuple[
-                str, Algorithm, Algorithm, VCube]:
+                Case, Algorithm, Algorithm, VCube]:
     """
     Generate training case.
 
@@ -81,23 +83,22 @@ def trainer(step: str, cases: list[str],
     cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube(size=3)
 
     if step == 'ecross':
-        case_name = 'Easy Cross'
+        case = EASY_CROSS_CASE
         main_algorithm = Algorithm()
         scramble = scramble_easy_cross(rng)
     elif step == 'cross':
-        case_name = 'Cross'
+        case = CROSS_CASE
         main_algorithm = Algorithm()
         scramble, _cube = scrambler(3, 12, easy_cross=False, rng=rng)
     else:
         case, scramble = random_training(
             step, cases, orientation_moves, rng,
         )
-        case_name = case.code
         main_algorithm = case.main_algorithm
 
     cube.rotate(scramble)
 
-    return case_name, main_algorithm, scramble, cube
+    return case, main_algorithm, scramble, cube
 
 
 def random_training(step: str, selected_cases: list[str],

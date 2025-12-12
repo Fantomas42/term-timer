@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Final
 from typing import Literal
 
+from cubing_algs.cases.case import Case
+from cubing_algs.cases.case import CaseData
 from cubing_algs.initial_state import get_initial_state
 
 SECOND: Final = 1_000_000_000  # In nano seconds
@@ -46,3 +48,19 @@ Face = Literal['U', 'D', 'R', 'L', 'F', 'B']
 SolveFlag = Literal['', 'DNF', '+2']
 
 SolveFlagInput = Literal['OK', 'DNF', '+2']
+
+CROSS_CASE = Case(
+    '', 'Cross',
+    CaseData(
+        name='Cross',
+        code='cross',
+    ),
+)
+
+EASY_CROSS_CASE = Case(
+    '', 'Easy Cross',
+    CaseData(
+        name='Easy Cross',
+        code='ecross',
+    ),
+)
