@@ -8,6 +8,7 @@ from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.transform import humanize_moves
+from term_timer.transform import humanize_moves_without_rotation
 from term_timer.transform import prettify_moves
 
 
@@ -166,6 +167,21 @@ class TransformHumanizeTestCase(unittest.TestCase):
         result = humanize_moves(algorithm)
 
         # Should return original if ends with rotation
+        self.assertEqual(result, algorithm)
+
+    def test_humanize_moves_without_rotation_ends_with_rotation(self) -> None:
+        """
+        Test humanize_moves_without_rotation when
+        result ends with rotation.
+        """
+        # Timed sequences like R@100 L'@100 reslice to M@100 x@100
+        # which ends with a rotation, triggering the fallback to original
+        algorithm = parse_moves("R@100 L'@100")
+
+        result = humanize_moves_without_rotation(algorithm)
+
+        # Should return original algorithm
+        # since transformation ends with rotation
         self.assertEqual(result, algorithm)
 
     def test_humanize_moves_with_rotation_at_end_wide(self) -> None:
