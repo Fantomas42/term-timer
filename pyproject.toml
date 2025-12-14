@@ -48,6 +48,9 @@ packages = ["term_timer"]
 [tool.setuptools.dynamic]
 version = {attr = "term_timer.__version__"}
 
+[tool.setuptools.package-data]
+term_timer = ["methods/masks/*.json"]
+
 [tool.ruff]
 line-length = 80
 indent-width = 4
