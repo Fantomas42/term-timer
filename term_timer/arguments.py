@@ -383,10 +383,11 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
 
     parser.add_argument(
-        '-c', '--case',
+        '-c', '--cases',
         nargs='*',
         default=[],
-        metavar='CASE',
+        metavar='CASES',
+        dest='case_codes',
         help=(
             'Names of the step cases to solve.\n'
             'Default: All.'

@@ -33,7 +33,7 @@ class Trainer(SolveInterface):
     def __init__(  # noqa: PLR0913
             self, *,
             step: str,
-            cases: list[str],
+            case_codes: list[str],
             show_solution: bool,
             show_cube: bool,
             orientation: str,
@@ -48,7 +48,7 @@ class Trainer(SolveInterface):
         self.show_solution = show_solution
         self.show_cube = show_cube
         self.metronome = metronome
-        self.cases = cases
+        self.case_codes = case_codes
         self.rng = rng
 
         self.step_code = self.step.upper()
@@ -159,7 +159,7 @@ class Trainer(SolveInterface):
         self.init_solve()
 
         case, main_algorithm, self.scramble, cube = trainer(
-                self.step, self.cases,
+                self.step, self.case_codes,
                 self.cube_orientation_moves,
                 self.rng,
                 self.bluetooth_cube,
