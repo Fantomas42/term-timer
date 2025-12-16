@@ -12,7 +12,7 @@ class TestTrainerModule(unittest.TestCase):
         """Test that Trainer initializes with all required attributes."""
         timer = Trainer(
             step='oll',
-            cases=['01', '02'],
+            case_codes=['01', '02'],
             show_solution=False,
             show_cube=False,
             metronome=0,
