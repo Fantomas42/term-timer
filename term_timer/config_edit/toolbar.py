@@ -13,6 +13,7 @@ from term_timer.config_edit.sections import StatisticsSection
 from term_timer.config_edit.sections import TimerSection
 from term_timer.config_edit.sections import TrainerSection
 from term_timer.config_edit.sections import UISection
+from term_timer.constants import CONFIG_FILE
 
 
 class ConfigToolbar(Widget):
@@ -44,7 +45,13 @@ class ConfigToolbar(Widget):
 
     @staticmethod
     def compose() -> ComposeResult:
-        """Compose the toolbar."""
+        """
+        Compose the toolbar.
+
+        Yields:
+            Textual widgets for the toolbar (buttons and status message).
+
+        """
         with Horizontal():
             yield Button('Save', id='save-btn', variant='primary')
             yield Button('Reset', id='reset-btn', variant='default')
@@ -77,7 +84,9 @@ class ConfigToolbar(Widget):
             UISection,
         ]
 
-        config_data: dict[str, dict[str, str | int | float | bool | list[str]]] = {}
+        config_data: dict[
+            str, dict[str, str | int | float | bool | list[str]],
+        ] = {}
         for section_class in sections:
             section = app.query_one(section_class)
             config_data.update(section.get_config_data())
@@ -89,18 +98,11 @@ class ConfigToolbar(Widget):
         status.update('Configuration saved successfully!')
         self.set_timer(3, lambda: status.update(''))
 
+    @staticmethod
     def write_config_file(
-        self,
         config_data: dict[str, dict[str, str | int | float | bool | list[str]]],
     ) -> None:
         """Write configuration data to TOML file."""
-        from term_timer.constants import CONFIG_FILE
-
-        if find_spec('tomli_w') is not None:
-            import tomli_w as tomli_writer
-        else:
-            import pip._vendor.tomli_w as tomli_writer  # type: ignore[import-not-found, no-redef] # noqa: PLC2701
-
         with CONFIG_FILE.open('wb') as fd:
             tomli_writer.dump(config_data, fd)
 
@@ -134,6 +136,3 @@ class ConfigToolbar(Widget):
     def confirm_exit(self) -> None:
         """Confirm exit if there are unsaved changes."""
         self.app.exit()
-
-
-from importlib.util import find_spec

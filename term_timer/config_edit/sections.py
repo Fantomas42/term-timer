@@ -62,25 +62,31 @@ class ConfigSection(VerticalScroll):
     def load_config(self) -> None:
         """Load configuration from file. Override in subclasses."""
 
-    def get_config_data(
-        self,
+    def get_config_data(  # noqa : PLR6301
+            self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
-        """Get configuration data from widgets. Override in subclasses."""
+        """
+        Get configuration data from widgets. Override in subclasses.
+
+        Returns:
+            Configuration data dictionary with section keys and config values.
+
+        """
         return {}
 
-    def on_input_changed(self, event: Input.Changed) -> None:
+    def on_input_changed(self, _event: Input.Changed) -> None:
         """Mark app as modified when input changes."""
         app = self.app
         if hasattr(app, 'mark_modified'):
             app.mark_modified()
 
-    def on_checkbox_changed(self, event: Checkbox.Changed) -> None:
+    def on_checkbox_changed(self, _event: Checkbox.Changed) -> None:
         """Mark app as modified when checkbox changes."""
         app = self.app
         if hasattr(app, 'mark_modified'):
             app.mark_modified()
 
-    def on_select_changed(self, event: Select.Changed) -> None:
+    def on_select_changed(self, _event: Select.Changed) -> None:
         """Mark app as modified when select changes."""
         app = self.app
         if hasattr(app, 'mark_modified'):
@@ -94,7 +100,13 @@ class TimerSection(ConfigSection):
 
     @staticmethod
     def compose() -> ComposeResult:
-        """Compose the timer section."""
+        """
+        Compose the timer section.
+
+        Yields:
+            Textual widgets for the timer configuration section.
+
+        """
         with Grid():
             yield Static('Countdown', classes='field-label')
             yield Input(
@@ -133,7 +145,13 @@ class TimerSection(ConfigSection):
     def get_config_data(
         self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
-        """Get timer configuration data."""
+        """
+        Get timer configuration data.
+
+        Returns:
+            Timer configuration dictionary with countdown and metronome values.
+
+        """
         countdown = self.query_one('#countdown', Input)
         metronome = self.query_one('#metronome', Input)
 
@@ -152,7 +170,13 @@ class CubeSection(ConfigSection):
 
     @staticmethod
     def compose() -> ComposeResult:
-        """Compose the cube section."""
+        """
+        Compose the cube section.
+
+        Yields:
+            Textual widgets for the cube configuration section.
+
+        """
         orientations = [(o, o) for o in sorted(ORIENTATIONS)]
 
         with Grid():
@@ -242,7 +266,13 @@ class CubeSection(ConfigSection):
     def get_config_data(
         self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
-        """Get cube configuration data."""
+        """
+        Get cube configuration data.
+
+        Returns:
+            Cube configuration with orientation, method, palette, and settings.
+
+        """
         orientation = self.query_one('#orientation', Select)
         method = self.query_one('#method', Select)
         palette = self.query_one('#palette', Input)
@@ -267,7 +297,13 @@ class TrainerSection(ConfigSection):
 
     @staticmethod
     def compose() -> ComposeResult:
-        """Compose the trainer section."""
+        """
+        Compose the trainer section.
+
+        Yields:
+            Textual widgets for the trainer configuration section.
+
+        """
         with Grid():
             yield Static('Step', classes='field-label')
             yield Select(
@@ -299,7 +335,13 @@ class TrainerSection(ConfigSection):
     def get_config_data(
         self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
-        """Get trainer configuration data."""
+        """
+        Get trainer configuration data.
+
+        Returns:
+            Trainer configuration dictionary with training step setting.
+
+        """
         step = self.query_one('#step', Select)
 
         return {
@@ -316,7 +358,13 @@ class DisplaySection(ConfigSection):
 
     @staticmethod
     def compose() -> ComposeResult:
-        """Compose the display section."""
+        """
+        Compose the display section.
+
+        Yields:
+            Textual widgets for the display configuration section.
+
+        """
         with Grid():
             yield Static('Show Scramble', classes='field-label')
             yield Checkbox(
@@ -370,7 +418,13 @@ class DisplaySection(ConfigSection):
     def get_config_data(
         self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
-        """Get display configuration data."""
+        """
+        Get display configuration data.
+
+        Returns:
+            Display configuration with visibility settings for various elements.
+
+        """
         scramble = self.query_one('#scramble', Checkbox)
         reconstruction = self.query_one('#reconstruction', Checkbox)
         time_graph = self.query_one('#time_graph', Checkbox)
@@ -395,7 +449,13 @@ class BluetoothSection(ConfigSection):
 
     @staticmethod
     def compose() -> ComposeResult:
-        """Compose the Bluetooth section."""
+        """
+        Compose the Bluetooth section.
+
+        Yields:
+            Textual widgets for the Bluetooth configuration section.
+
+        """
         with Grid():
             yield Static('Device Address', classes='field-label')
             yield Input(
@@ -444,7 +504,13 @@ class BluetoothSection(ConfigSection):
     def get_config_data(
         self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
-        """Get Bluetooth configuration data."""
+        """
+        Get Bluetooth configuration data.
+
+        Returns:
+            Bluetooth configuration with device address and gyroscope settings.
+
+        """
         address = self.query_one('#address', Input)
         use_gyroscope = self.query_one('#use_gyroscope', Checkbox)
         rotation_threshold = self.query_one('#rotation_threshold', Input)
@@ -467,7 +533,13 @@ class StatisticsSection(ConfigSection):
 
     @staticmethod
     def compose() -> ComposeResult:
-        """Compose the statistics section."""
+        """
+        Compose the statistics section.
+
+        Yields:
+            Textual widgets for the statistics configuration section.
+
+        """
         with Grid():
             yield Static('Distribution', classes='field-label')
             yield Input(
@@ -506,7 +578,13 @@ class StatisticsSection(ConfigSection):
     def get_config_data(
         self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
-        """Get statistics configuration data."""
+        """
+        Get statistics configuration data.
+
+        Returns:
+            Statistics configuration with distribution and metrics settings.
+
+        """
         distribution = self.query_one('#distribution', Input)
         metrics = self.query_one('#metrics', Input)
 
@@ -531,7 +609,13 @@ class ServerSection(ConfigSection):
 
     @staticmethod
     def compose() -> ComposeResult:
-        """Compose the server section."""
+        """
+        Compose the server section.
+
+        Yields:
+            Textual widgets for the server configuration section.
+
+        """
         with Grid():
             yield Static('Domain', classes='field-label')
             yield Input(
@@ -569,7 +653,13 @@ class ServerSection(ConfigSection):
     def get_config_data(
         self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
-        """Get server configuration data."""
+        """
+        Get server configuration data.
+
+        Returns:
+            Server configuration with domain and port settings.
+
+        """
         domain = self.query_one('#domain', Input)
         port = self.query_one('#port', Input)
 
@@ -592,7 +682,13 @@ class UISection(ConfigSection):
 
     @staticmethod
     def compose() -> ComposeResult:
-        """Compose the UI section."""
+        """
+        Compose the UI section.
+
+        Yields:
+            Textual widgets for the UI configuration section.
+
+        """
         with Grid():
             yield Static('UI Settings', classes='field-label')
             yield Static(
@@ -603,8 +699,14 @@ class UISection(ConfigSection):
     def load_config(self) -> None:
         """Load UI configuration."""
 
-    def get_config_data(
+    def get_config_data(  # noqa: PLR6301
         self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
-        """Get UI configuration data."""
+        """
+        Get UI configuration data.
+
+        Returns:
+            Empty UI configuration dictionary (no UI settings yet).
+
+        """
         return {'ui': {}}
