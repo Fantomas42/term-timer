@@ -37,6 +37,7 @@ COMMAND_ALIASES: Final[dict[str, list[str]]] = {
     'index': ['ix', 'x'],
     'scramble': ['sc', 'z'],
     'merge': ['mg', 'j'],
+    'config': ['cf', 'k'],
 }
 
 COMMAND_RESOLUTIONS: dict[str, str] = {}
@@ -1149,6 +1150,22 @@ def merge_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     return parser
 
 
+def config_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """
+    Create argument parser for config command.
+
+    Returns:
+        Configured argument parser for config command.
+
+    """
+    return subparsers.add_parser(
+        'config',
+        help='Edit configuration settings',
+        description='Interactive TUI for editing term-timer configuration.',
+        aliases=COMMAND_ALIASES['config'],
+    )
+
+
 def get_arguments() -> Namespace:
     """
     Parse command-line arguments and return parsed namespace.
@@ -1182,6 +1199,7 @@ def get_arguments() -> Namespace:
     scramble_arguments(subparsers)
     import_arguments(subparsers)
     merge_arguments(subparsers)
+    config_arguments(subparsers)
 
     args = parser.parse_args(sys.argv[1:])
 

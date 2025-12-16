@@ -12,6 +12,7 @@ from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.browse.app import run_browse
 from term_timer.config import DEBUG
+from term_timer.config_edit.app import run_config_edit
 from term_timer.exceptions import InvalidCaseError
 from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
@@ -331,6 +332,9 @@ def main() -> int:  # noqa: PLR0911
             return asyncio.run(trainer(options), debug=DEBUG)
         if command == 'browse':
             asyncio.run(run_browse(), debug=DEBUG)
+            return 0
+        if command == 'config':
+            asyncio.run(run_config_edit(), debug=DEBUG)
             return 0
         if command == 'import':
             return Importer().import_file(options.source)
