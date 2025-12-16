@@ -16,7 +16,6 @@ from term_timer.config_edit.sections import ServerSection
 from term_timer.config_edit.sections import StatisticsSection
 from term_timer.config_edit.sections import TimerSection
 from term_timer.config_edit.sections import TrainerSection
-from term_timer.config_edit.sections import UISection
 from term_timer.config_edit.toolbar import ConfigToolbar
 
 
@@ -79,8 +78,6 @@ class ConfigEditApp(App[None]):
                 yield StatisticsSection()
             with TabPane('Server', id='server-tab'):
                 yield ServerSection()
-            with TabPane('UI', id='ui-tab'):
-                yield UISection()
         yield ConfigToolbar()
         yield Footer()
 

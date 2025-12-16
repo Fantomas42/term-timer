@@ -12,7 +12,6 @@ from term_timer.config_edit.sections import ServerSection
 from term_timer.config_edit.sections import StatisticsSection
 from term_timer.config_edit.sections import TimerSection
 from term_timer.config_edit.sections import TrainerSection
-from term_timer.config_edit.sections import UISection
 from term_timer.constants import CONFIG_FILE
 
 
@@ -81,7 +80,6 @@ class ConfigToolbar(Widget):
             BluetoothSection,
             StatisticsSection,
             ServerSection,
-            UISection,
         ]
 
         config_data: dict[
@@ -120,7 +118,6 @@ class ConfigToolbar(Widget):
             BluetoothSection,
             StatisticsSection,
             ServerSection,
-            UISection,
         ]
 
         for section_class in sections:
