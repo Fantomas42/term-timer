@@ -22,6 +22,7 @@ from term_timer.config_edit.toolbar import ConfigToolbar
 class ConfigEditApp(App[None]):
     """Interactive TUI for editing term-timer configuration."""
 
+    ENABLE_COMMAND_PALETTE = False
     CSS = """
     Screen {
         layout: vertical;
@@ -83,6 +84,7 @@ class ConfigEditApp(App[None]):
 
     def on_mount(self) -> None:
         """Set up the app when mounted."""
+        self.theme = 'textual-dark'
         self.update_subtitle()
 
     def update_subtitle(self) -> None:

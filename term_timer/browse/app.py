@@ -19,6 +19,7 @@ PanelType = SessionsPanel | SolvesPanel | DetailPanel
 class BrowseApp(App[None]):
     """Interactive TUI for browsing solve sessions and details."""
 
+    ENABLE_COMMAND_PALETTE = False
     CSS = """
     Screen {
         layout: vertical;
@@ -67,6 +68,7 @@ class BrowseApp(App[None]):
 
     def on_mount(self) -> None:
         """Set up the app when mounted."""
+        self.theme = 'textual-dark'
         # Focus on sessions panel by default
         sessions_panel = self.query_one(SessionsPanel)
         sessions_panel.focus()
