@@ -3,10 +3,9 @@ import os
 from typing import Any
 from typing import Final
 
-from term_timer.constants import CONFIG_FILE
-
 import rtoml
 
+from term_timer.constants import CONFIG_FILE
 
 DEFAULT_CONFIG: Final = """[timer]
 countdown = 0.0

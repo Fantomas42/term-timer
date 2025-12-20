@@ -1,10 +1,10 @@
 """Toolbar for config editor with save/reset/cancel buttons."""
+import rtoml
 from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.widget import Widget
 from textual.widgets import Button
 from textual.widgets import Static
-import rtoml
 
 from term_timer.config_edit.sections import BluetoothSection
 from term_timer.config_edit.sections import CubeSection
