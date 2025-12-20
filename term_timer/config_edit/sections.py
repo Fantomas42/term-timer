@@ -9,6 +9,7 @@ from textual.containers import VerticalScroll
 from textual.widgets import Checkbox
 from textual.widgets import Input
 from textual.widgets import Select
+from textual.widgets import SelectionList
 from textual.widgets import Static
 
 from term_timer.config import CONFIG
@@ -575,13 +576,23 @@ class StatisticsSection(ConfigSection):
             )
 
             yield Static('Metrics', classes='field-label')
-            yield Input(
+            yield SelectionList[str](
+                ('HTM', 'htm'),
+                ('QTM', 'qtm'),
+                ('STM', 'stm'),
+                ('ETM', 'etm'),
+                ('RTM', 'rtm'),
+                ('QSTM', 'qstm'),
+                ('OBTM', 'obtm'),
+                ('OBQTM', 'obqtm'),
+                ('RBTM', 'rbtm'),
+                ('BTM', 'btm'),
+                ('BQTM', 'bqtm'),
                 id='metrics',
-                placeholder='htm, qtm, stm', # TODO
             )
             yield Static('', classes='field-help')
             yield Static(
-                'Move count metrics to track (comma-separated)',
+                'Move count metrics to track',
                 classes='field-help',
             )
 
@@ -592,9 +603,10 @@ class StatisticsSection(ConfigSection):
         distribution = self.query_one('#distribution', Input)
         distribution.value = str(stats_config.get('distribution', 0))
 
-        metrics = self.query_one('#metrics', Input)
+        metrics = self.query_one('#metrics', SelectionList)
         metrics_list = stats_config.get('metrics', ['htm', 'qtm', 'stm'])
-        metrics.value = ', '.join(metrics_list)
+        for m in metrics_list:
+            metrics.select(m)
 
     def get_config_data(
         self,
