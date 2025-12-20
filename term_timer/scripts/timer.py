@@ -193,7 +193,8 @@ def tools(command: str, options: Namespace) -> int:
 
     if not session_stats.stack:
         console.print(
-            f'🤔 No saved solves yet for { session_stats.cube_name }.',
+            f'🤔 No saved solves yet for { session_stats.cube_name }'
+            ' matching requirements.',
             style='warning',
         )
         return 1
