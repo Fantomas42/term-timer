@@ -1,16 +1,11 @@
 """Configuration loading and management from TOML files."""
-
 import os
-from importlib.util import find_spec
 from typing import Any
 from typing import Final
 
 from term_timer.constants import CONFIG_FILE
 
-if find_spec('tomllib') is not None:
-    import tomllib
-else:
-    import pip._vendor.tomli as tomllib  # type: ignore[import-not-found, no-redef] # noqa: PLC2701
+import rtoml
 
 
 DEFAULT_CONFIG: Final = """[timer]
@@ -64,10 +59,9 @@ def load_config() -> dict[str, Any]:
         with CONFIG_FILE.open('w+', encoding='utf-8') as fd:
             fd.write(DEFAULT_CONFIG)
 
-        return tomllib.loads(DEFAULT_CONFIG)
+        return rtoml.loads(DEFAULT_CONFIG)
 
-    with CONFIG_FILE.open('rb') as fd:
-        return tomllib.load(fd)
+    return rtoml.load(CONFIG_FILE)
 
 
 CONFIG = load_config()
