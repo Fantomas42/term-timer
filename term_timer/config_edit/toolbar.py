@@ -4,6 +4,7 @@ from textual.containers import Horizontal
 from textual.widget import Widget
 from textual.widgets import Button
 from textual.widgets import Static
+import rtoml
 
 from term_timer.config_edit.sections import BluetoothSection
 from term_timer.config_edit.sections import CubeSection
@@ -101,8 +102,7 @@ class ConfigToolbar(Widget):
         config_data: dict[str, dict[str, str | int | float | bool | list[str]]],
     ) -> None:
         """Write configuration data to TOML file."""
-        with CONFIG_FILE.open('wb') as fd:
-            tomli_writer.dump(config_data, fd)
+        rtoml.dump(config_data, CONFIG_FILE)
 
     def reset_config(self) -> None:
         """Reset all sections to current saved values."""

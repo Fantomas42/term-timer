@@ -297,7 +297,7 @@ class CubeSection(ConfigSection):
         """
         orientation = self.query_one('#orientation', Select)
         method = self.query_one('#method', Select)
-        palette = self.query_one('#palette', Input)
+        palette = self.query_one('#palette', Select)
         effect = self.query_one('#effect', Select)
         right_handed = self.query_one('#right-handed', Checkbox)
 
@@ -619,13 +619,9 @@ class StatisticsSection(ConfigSection):
 
         """
         distribution = self.query_one('#distribution', Input)
-        metrics = self.query_one('#metrics', Input)
+        metrics = self.query_one('#metrics', SelectionList)
 
-        metrics_list = [
-            m.strip()
-            for m in metrics.value.split(',')
-            if m.strip()
-        ]
+        metrics_list = metrics.selected
 
         return {
             'statistics': {
