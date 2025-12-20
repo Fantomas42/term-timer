@@ -1,6 +1,8 @@
 """Configuration section widgets for different config categories."""
-
 from cubing_algs.constants import ORIENTATIONS
+from cubing_algs.effects import EFFECTS
+from cubing_algs.palettes import PALETTES
+from cubing_algs.vcube import VCube
 from textual.app import ComposeResult
 from textual.containers import Grid
 from textual.containers import VerticalScroll
@@ -177,7 +179,20 @@ class CubeSection(ConfigSection):
             Textual widgets for the cube configuration section.
 
         """
-        orientations = [(o, o) for o in sorted(ORIENTATIONS)]
+        cube = VCube()
+        orientations = []
+
+        for faces in ORIENTATIONS:
+            moves = cube.compute_orientation_moves(faces)
+            if moves:
+                orientations.append(
+                    (
+                        f'{ faces }: ({ moves })',
+                        faces,
+                    ),
+                )
+            else:
+                orientations.append((faces, faces))
 
         with Grid():
             yield Static('Orientation', classes='field-label')
@@ -185,11 +200,11 @@ class CubeSection(ConfigSection):
                 options=orientations,
                 id='orientation',
                 allow_blank=False,
-                value=min(ORIENTATIONS),
+                value='UF',
             )
             yield Static('', classes='field-help')
             yield Static(
-                'Default cube orientation (2-char: top face + front face)',
+                'Default cube orientation (top face + front face)',
                 classes='field-help',
             )
 
@@ -198,12 +213,12 @@ class CubeSection(ConfigSection):
                 options=[
                     ('Layer by Layer', 'lbl'),
                     ('CFOP', 'cfop'),
-                    ('CFOP with 4-step OLL', 'cf4op'),
+                    ('CFOP with 4-step F2L', 'cf4op'),
                     ('Raw moves', 'raw'),
                 ],
                 id='method',
                 allow_blank=False,
-                value='cfop',
+                value='cf4op',
             )
             yield Static('', classes='field-help')
             yield Static(
@@ -212,21 +227,27 @@ class CubeSection(ConfigSection):
             )
 
             yield Static('Palette', classes='field-label')
-            yield Input(
+            yield Select(
+                options=[
+                    (f'{ name.title() }', name)
+                    for name in PALETTES
+                ],
                 id='palette',
-                placeholder='default',
+                allow_blank=False,
+                value='default',
             )
+
             yield Static('', classes='field-help')
             yield Static(
-                'Color palette for cube display (empty for default)',
+                'Color palette for cube display',
                 classes='field-help',
             )
 
             yield Static('Effect', classes='field-label')
             yield Select(
                 options=[
-                    ('Face Visible', 'face-visible'),
-                    ('None', 'none'),
+                    (f'{ name.title() }', name)
+                    for name in EFFECTS
                 ],
                 id='effect',
                 allow_blank=False,
@@ -254,8 +275,8 @@ class CubeSection(ConfigSection):
         method = self.query_one('#method', Select)
         method.value = cube_config.get('method', 'cf4op')
 
-        palette = self.query_one('#palette', Input)
-        palette.value = cube_config.get('palette', '')
+        palette = self.query_one('#palette', Select)
+        palette.value = cube_config.get('palette', 'default')
 
         effect = self.query_one('#effect', Select)
         effect.value = cube_config.get('effect', 'face-visible')
@@ -556,7 +577,7 @@ class StatisticsSection(ConfigSection):
             yield Static('Metrics', classes='field-label')
             yield Input(
                 id='metrics',
-                placeholder='htm, qtm, stm',
+                placeholder='htm, qtm, stm', # TODO
             )
             yield Static('', classes='field-help')
             yield Static(
