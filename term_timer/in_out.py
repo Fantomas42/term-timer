@@ -67,7 +67,11 @@ def load_all_solves(cube: int,
     sessions = ['default'] + [
         f.name.split(prefix, 1)[1].replace('.json', '')
         for f in SAVE_DIRECTORY.iterdir()
-        if f.is_file() and f.name.startswith(prefix)
+        if (
+                f.is_file()
+                and f.name.startswith(prefix)
+                and not f.name.endswith('~')
+        )
     ]
 
     if includes:
