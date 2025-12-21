@@ -5,6 +5,7 @@ from cubing_algs.palettes import PALETTES
 from cubing_algs.vcube import VCube
 from textual.app import ComposeResult
 from textual.containers import Grid
+from textual.containers import Vertical
 from textual.containers import VerticalScroll
 from textual.widgets import Checkbox
 from textual.widgets import Input
@@ -25,34 +26,50 @@ class ConfigSection(VerticalScroll):
 
     ConfigSection Grid {
         grid-size: 2;
-        grid-gutter: 1 2;
-        padding: 1 0;
+        grid-gutter: 0 2;
+        padding: 0;
     }
 
     ConfigSection .field-label {
         height: auto;
-        padding: 1 0;
+        padding: 0;
         text-style: bold;
+        margin-top: 1;
+    }
+
+    ConfigSection .field-container {
+        height: auto;
+        padding: 0;
+        margin-top: 1;
     }
 
     ConfigSection .field-help {
         height: auto;
         color: $text-muted;
         text-style: italic;
-        padding: 0 0 1 0;
+        padding: 0;
+        margin-top: 0;
     }
 
     ConfigSection Input {
         width: 100%;
+        margin-bottom: 0;
     }
 
     ConfigSection Select {
         width: 100%;
+        margin-bottom: 0;
     }
 
     ConfigSection Checkbox {
         height: auto;
-        padding: 1 0;
+        padding: 0;
+    }
+
+    ConfigSection SelectionList {
+        height: auto;
+        max-height: 15;
+        border: solid $primary;
     }
     """
 
@@ -112,28 +129,28 @@ class TimerSection(ConfigSection):
         """
         with Grid():
             yield Static('Countdown', classes='field-label')
-            yield Input(
-                id='countdown',
-                type='number',
-                placeholder='0.0',
-            )
-            yield Static('', classes='field-help')
-            yield Static(
-                'Inspection countdown time in seconds (0 to disable)',
-                classes='field-help',
-            )
+            with Vertical(classes='field-container'):
+                yield Input(
+                    id='countdown',
+                    type='number',
+                    placeholder='0.0',
+                )
+                yield Static(
+                    'Inspection countdown time in seconds (0 to disable)',
+                    classes='field-help',
+                )
 
             yield Static('Metronome', classes='field-label')
-            yield Input(
-                id='metronome',
-                type='number',
-                placeholder='0.0',
-            )
-            yield Static('', classes='field-help')
-            yield Static(
-                'Metronome beep interval in seconds (0 to disable)',
-                classes='field-help',
-            )
+            with Vertical(classes='field-container'):
+                yield Input(
+                    id='metronome',
+                    type='number',
+                    placeholder='0.0',
+                )
+                yield Static(
+                    'Metronome beep interval in seconds (0 to disable)',
+                    classes='field-help',
+                )
 
     def load_config(self) -> None:
         """Load timer configuration."""
@@ -197,74 +214,74 @@ class CubeSection(ConfigSection):
 
         with Grid():
             yield Static('Orientation', classes='field-label')
-            yield Select(
-                options=orientations,
-                id='orientation',
-                allow_blank=False,
-                value='UF',
-            )
-            yield Static('', classes='field-help')
-            yield Static(
-                'Default cube orientation (top face + front face)',
-                classes='field-help',
-            )
+            with Vertical(classes='field-container'):
+                yield Select(
+                    options=orientations,
+                    id='orientation',
+                    allow_blank=False,
+                    value='UF',
+                )
+                yield Static(
+                    'Default cube orientation (top face + front face)',
+                    classes='field-help',
+                )
 
             yield Static('Method', classes='field-label')
-            yield Select(
-                options=[
-                    ('Layer by Layer', 'lbl'),
-                    ('CFOP', 'cfop'),
-                    ('CFOP with 4-step F2L', 'cf4op'),
-                    ('Raw moves', 'raw'),
-                ],
-                id='method',
-                allow_blank=False,
-                value='cf4op',
-            )
-            yield Static('', classes='field-help')
-            yield Static(
-                'Analysis method for solve reconstruction',
-                classes='field-help',
-            )
+            with Vertical(classes='field-container'):
+                yield Select(
+                    options=[
+                        ('Layer by Layer', 'lbl'),
+                        ('CFOP', 'cfop'),
+                        ('CFOP with 4-step F2L', 'cf4op'),
+                        ('Raw moves', 'raw'),
+                    ],
+                    id='method',
+                    allow_blank=False,
+                    value='cf4op',
+                )
+                yield Static(
+                    'Analysis method for solve reconstruction',
+                    classes='field-help',
+                )
 
             yield Static('Palette', classes='field-label')
-            yield Select(
-                options=[
-                    (f'{ name.title() }', name)
-                    for name in PALETTES
-                ],
-                id='palette',
-                allow_blank=False,
-                value='default',
-            )
-
-            yield Static('', classes='field-help')
-            yield Static(
-                'Color palette for cube display',
-                classes='field-help',
-            )
+            with Vertical(classes='field-container'):
+                yield Select(
+                    options=[
+                        (f'{ name.title() }', name)
+                        for name in PALETTES
+                    ],
+                    id='palette',
+                    allow_blank=False,
+                    value='default',
+                )
+                yield Static(
+                    'Color palette for cube display',
+                    classes='field-help',
+                )
 
             yield Static('Effect', classes='field-label')
-            yield Select(
-                options=[
-                    (f'{ name.title() }', name)
-                    for name in EFFECTS
-                ],
-                id='effect',
-                allow_blank=False,
-                value='face-visible',
-            )
-            yield Static('', classes='field-help')
-            yield Static(
-                'Visual effect for cube state display',
-                classes='field-help',
-            )
+            with Vertical(classes='field-container'):
+                yield Select(
+                    options=[
+                        (f'{ name.title() }', name)
+                        for name in EFFECTS
+                    ],
+                    id='effect',
+                    allow_blank=False,
+                    value='face-visible',
+                )
+                yield Static(
+                    'Visual effect for cube state display',
+                    classes='field-help',
+                )
 
             yield Static('Right-handed', classes='field-label')
-            yield Checkbox(
-                'Optimize for right-handed solving',
-                id='right-handed',
-            )
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Optimize for right-handed solving',
+                    id='right-handed',
+                )
 
     def load_config(self) -> None:
         """Load cube configuration."""
@@ -305,7 +322,7 @@ class CubeSection(ConfigSection):
             'cube': {
                 'orientation': str(orientation.value),
                 'method': str(method.value),
-                'palette': palette.value,
+                'palette': str(palette.value),
                 'effect': str(effect.value),
                 'right-handed': right_handed.value,
             },
@@ -328,24 +345,24 @@ class TrainerSection(ConfigSection):
         """
         with Grid():
             yield Static('Step', classes='field-label')
-            yield Select(
-                options=[
-                    ('Cross', 'cross'),
-                    ('Easy Cross', 'ecross'),
-                    ('F2L', 'f2l'),
-                    ('Advanced F2L', 'af2l'),
-                    ('OLL', 'oll'),
-                    ('PLL', 'pll'),
-                ],
-                id='step',
-                allow_blank=False,
-                value='oll',
-            )
-            yield Static('', classes='field-help')
-            yield Static(
-                'Default training step for trainer mode',
-                classes='field-help',
-            )
+            with Vertical(classes='field-container'):
+                yield Select(
+                    options=[
+                        ('Cross', 'cross'),
+                        ('Easy Cross', 'ecross'),
+                        ('F2L', 'f2l'),
+                        ('Advanced F2L', 'af2l'),
+                        ('OLL', 'oll'),
+                        ('PLL', 'pll'),
+                    ],
+                    id='step',
+                    allow_blank=False,
+                    value='oll',
+                )
+                yield Static(
+                    'Default training step for trainer mode',
+                    classes='field-help',
+                )
 
     def load_config(self) -> None:
         """Load trainer configuration."""
@@ -389,34 +406,39 @@ class DisplaySection(ConfigSection):
         """
         with Grid():
             yield Static('Show Scramble', classes='field-label')
-            yield Checkbox(
-                'Display cube in scrambled state',
-                id='scramble',
-            )
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Display cube in scrambled state',
+                    id='scramble',
+                )
 
             yield Static('Show Reconstruction', classes='field-label')
-            yield Checkbox(
-                'Show solve reconstruction analysis',
-                id='reconstruction',
-            )
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Show solve reconstruction analysis',
+                    id='reconstruction',
+                )
 
             yield Static('Show Time Graph', classes='field-label')
-            yield Checkbox(
-                'Display time scatter graph',
-                id='time_graph',
-            )
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Display time scatter graph',
+                    id='time_graph',
+                )
 
             yield Static('Show TPS Graph', classes='field-label')
-            yield Checkbox(
-                'Display turns per second graph',
-                id='tps_graph',
-            )
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Display turns per second graph',
+                    id='tps_graph',
+                )
 
             yield Static('Show Recognition Graph', classes='field-label')
-            yield Checkbox(
-                'Display case recognition time graph',
-                id='recognition_graph',
-            )
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Display case recognition time graph',
+                    id='recognition_graph',
+                )
 
     def load_config(self) -> None:
         """Load display configuration."""
@@ -480,33 +502,34 @@ class BluetoothSection(ConfigSection):
         """
         with Grid():
             yield Static('Device Address', classes='field-label')
-            yield Input(
-                id='address',
-                placeholder='00:00:00:00:00:00',
-            )
-            yield Static('', classes='field-help')
-            yield Static(
-                'Bluetooth MAC address of smart cube (empty for auto)',
-                classes='field-help',
-            )
+            with Vertical(classes='field-container'):
+                yield Input(
+                    id='address',
+                    placeholder='00:00:00:00:00:00',
+                )
+                yield Static(
+                    'Bluetooth MAC address of smart cube (empty for auto)',
+                    classes='field-help',
+                )
 
             yield Static('Use Gyroscope', classes='field-label')
-            yield Checkbox(
-                'Enable gyroscope-based rotation detection',
-                id='use_gyroscope',
-            )
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Enable gyroscope-based rotation detection',
+                    id='use_gyroscope',
+                )
 
             yield Static('Rotation Threshold', classes='field-label')
-            yield Input(
-                id='rotation_threshold',
-                type='number',
-                placeholder='75.0',
-            )
-            yield Static('', classes='field-help')
-            yield Static(
-                'Gyroscope rotation detection threshold (degrees)',
-                classes='field-help',
-            )
+            with Vertical(classes='field-container'):
+                yield Input(
+                    id='rotation_threshold',
+                    type='number',
+                    placeholder='75.0',
+                )
+                yield Static(
+                    'Gyroscope rotation detection threshold (degrees)',
+                    classes='field-help',
+                )
 
     def load_config(self) -> None:
         """Load Bluetooth configuration."""
@@ -564,37 +587,37 @@ class StatisticsSection(ConfigSection):
         """
         with Grid():
             yield Static('Distribution', classes='field-label')
-            yield Input(
-                id='distribution',
-                type='integer',
-                placeholder='0',
-            )
-            yield Static('', classes='field-help')
-            yield Static(
-                'Distribution calculation method (0 for default)',
-                classes='field-help',
-            )
+            with Vertical(classes='field-container'):
+                yield Input(
+                    id='distribution',
+                    type='integer',
+                    placeholder='0',
+                )
+                yield Static(
+                    'Distribution calculation method (0 for default)',
+                    classes='field-help',
+                )
 
             yield Static('Metrics', classes='field-label')
-            yield SelectionList[str](
-                ('HTM', 'htm'),
-                ('QTM', 'qtm'),
-                ('STM', 'stm'),
-                ('ETM', 'etm'),
-                ('RTM', 'rtm'),
-                ('QSTM', 'qstm'),
-                ('OBTM', 'obtm'),
-                ('OBQTM', 'obqtm'),
-                ('RBTM', 'rbtm'),
-                ('BTM', 'btm'),
-                ('BQTM', 'bqtm'),
-                id='metrics',
-            )
-            yield Static('', classes='field-help')
-            yield Static(
-                'Move count metrics to track',
-                classes='field-help',
-            )
+            with Vertical(classes='field-container'):
+                yield SelectionList[str](
+                    ('HTM', 'htm'),
+                    ('QTM', 'qtm'),
+                    ('STM', 'stm'),
+                    ('ETM', 'etm'),
+                    ('RTM', 'rtm'),
+                    ('QSTM', 'qstm'),
+                    ('OBTM', 'obtm'),
+                    ('OBQTM', 'obqtm'),
+                    ('RBTM', 'rbtm'),
+                    ('BTM', 'btm'),
+                    ('BQTM', 'bqtm'),
+                    id='metrics',
+                )
+                yield Static(
+                    'Move count metrics to track',
+                    classes='field-help',
+                )
 
     def load_config(self) -> None:
         """Load statistics configuration."""
@@ -647,27 +670,27 @@ class ServerSection(ConfigSection):
         """
         with Grid():
             yield Static('Domain', classes='field-label')
-            yield Input(
-                id='domain',
-                placeholder='localhost',
-            )
-            yield Static('', classes='field-help')
-            yield Static(
-                'Server hostname for web interface',
-                classes='field-help',
-            )
+            with Vertical(classes='field-container'):
+                yield Input(
+                    id='domain',
+                    placeholder='localhost',
+                )
+                yield Static(
+                    'Server hostname for web interface',
+                    classes='field-help',
+                )
 
             yield Static('Port', classes='field-label')
-            yield Input(
-                id='port',
-                type='integer',
-                placeholder='8333',
-            )
-            yield Static('', classes='field-help')
-            yield Static(
-                'Server port number (1024-65535)',
-                classes='field-help',
-            )
+            with Vertical(classes='field-container'):
+                yield Input(
+                    id='port',
+                    type='integer',
+                    placeholder='8333',
+                )
+                yield Static(
+                    'Server port number (1024-65535)',
+                    classes='field-help',
+                )
 
     def load_config(self) -> None:
         """Load server configuration."""
