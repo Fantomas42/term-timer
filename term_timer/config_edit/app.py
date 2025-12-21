@@ -22,7 +22,6 @@ from term_timer.config_edit.toolbar import ConfigToolbar
 class ConfigEditApp(App[None]):
     """Interactive TUI for editing term-timer configuration."""
 
-    ENABLE_COMMAND_PALETTE = False
     CSS = """
     Screen {
         layout: vertical;

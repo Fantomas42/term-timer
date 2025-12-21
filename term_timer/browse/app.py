@@ -19,7 +19,6 @@ PanelType = SessionsPanel | SolvesPanel | DetailPanel
 class BrowseApp(App[None]):
     """Interactive TUI for browsing solve sessions and details."""
 
-    ENABLE_COMMAND_PALETTE = False
     CSS = """
     Screen {
         layout: vertical;
