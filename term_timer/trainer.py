@@ -1,13 +1,17 @@
 """Training interface for practicing specific CFOP cases."""
+from functools import cached_property
 from random import Random
 from typing import Final
 
-from cubing_algs.algorithm import Algorithm
+from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
 from cubing_algs.vcube import VCube
 
+from term_timer.constants import CROSS_CASE
+from term_timer.constants import EASY_CROSS_CASE
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SolveFlag
+from term_timer.exceptions import InvalidCaseError
 from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
@@ -44,26 +48,72 @@ class Trainer(SolveInterface):
 
         self.set_state('configure')
 
+        self.method = 'CFOP'
         self.step = step
         self.show_solution = show_solution
         self.show_cube = show_cube
         self.metronome = metronome
         self.case_codes = case_codes
         self.rng = rng
-
-        self.step_code = self.step.upper()
-        if self.step in CROSS_MODES:
-            self.step_code = 'Cross'
-
         self.orientation_faces = orientation
+
+        self.cases = self.get_cases()
+        self.console.print(
+            f'Training on { len(self.cases) } '
+            f'case{ "s" if len(self.cases) > 1 else "" } on '
+            f'{ self.method }/{ self.step.upper() }',
+            style='trainer',
+        )
 
         self.counter = 1
 
-    def start_line(self, cube: VCube, case: Case,
-                   main_algorithm: Algorithm) -> None:
+    @cached_property
+    def step_code(self) -> str:
+        """Step code used for cheching step."""
+        if self.step in CROSS_MODES:
+            return 'Cross'
+        return self.step.upper()
+
+    def get_cases(self) -> list[Case]:
+        """
+        Build list of trained cases.
+
+        Returns:
+            List of validated cases to use in training.
+
+        Raises:
+            InvalidCaseError: If selected case is not valid for the step.
+
+        """
+        if self.step == 'ecross':
+            return [EASY_CROSS_CASE]
+        if self.step == 'cross':
+            return [CROSS_CASE]
+
+        cases = get_collection(f'{ self.method }/{ self.step }').cases
+        valid_cases: dict[str, Case] = {
+            v.code: v for v in cases.values()
+            if v.setup_algorithms
+        }
+
+        case_codes = self.case_codes or list(valid_cases.keys())
+
+        selected_cases = []
+        for case_code in case_codes:
+            if case_code not in valid_cases:
+                error_string = (
+                    f'Invalid case "{ case_code }" for '
+                    f'{ self.method }/{ self.step.upper() }'
+                )
+                raise InvalidCaseError(error_string)
+            selected_cases.append(valid_cases[case_code])
+
+        return selected_cases
+
+    def start_line(self, cube: VCube, selected_case: Case) -> None:
         """Display training case, scramble, and optional solution."""
-        link = case.cubing_fache_url
-        name = case.pretty_name
+        link = selected_case.cubing_fache_url
+        name = selected_case.pretty_name
 
         mode = 'cross' if self.step in CROSS_MODES else self.step
 
@@ -83,11 +133,11 @@ class Trainer(SolveInterface):
             f'[comment]// [link={ link }]{ name }[/link][/comment]',
         )
 
-        if self.show_solution and main_algorithm:
+        if self.show_solution and selected_case.main_algorithm:
             formatted_algorithm = format_alg_triggers(
                 format_alg_moves(
                     format_alg_aufs(
-                        str(main_algorithm),
+                        str(selected_case.main_algorithm),
                         pre_auf=True,
                         post_auf=True,
                     ),
@@ -158,8 +208,8 @@ class Trainer(SolveInterface):
         """
         self.init_solve()
 
-        case, main_algorithm, self.scramble, cube = trainer(
-                self.step, self.case_codes,
+        selected_case, self.scramble, cube = trainer(
+                self.step, self.cases,
                 self.cube_orientation_moves,
                 self.rng,
                 self.bluetooth_cube,
@@ -168,7 +218,7 @@ class Trainer(SolveInterface):
         self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.state
 
-        self.start_line(cube, case, main_algorithm)
+        self.start_line(cube, selected_case)
 
         quit_solve = await self.scramble_solve()
 
@@ -204,7 +254,7 @@ class Trainer(SolveInterface):
             cube_size=3,
             moves=' '.join(moves),
         )
-        solve.method_name = 'cfop'
+        solve.method_name = self.method.lower()
 
         self.solve_line(solve)
 

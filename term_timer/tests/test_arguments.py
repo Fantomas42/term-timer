@@ -31,7 +31,7 @@ class TestCommandAliases(unittest.TestCase):
         expected_commands = {
             'solve', 'list', 'stats', 'graph', 'cfop', 'detail',
             'import', 'serve', 'train', 'edit', 'delete', 'index',
-            'scramble', 'browse', 'merge',
+            'scramble', 'browse', 'merge', 'config',
         }
         self.assertEqual(set(COMMAND_ALIASES.keys()), expected_commands)
 
@@ -123,7 +123,7 @@ class TestTrainArguments(unittest.TestCase):
 
         args = main_parser.parse_args(['train'])
         self.assertEqual(args.command, 'train')
-        self.assertEqual(args.case, [])
+        self.assertEqual(args.case_codes, [])
         self.assertFalse(args.bluetooth)
 
 

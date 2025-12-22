@@ -139,15 +139,19 @@ async def trainer(options: Namespace) -> int:
     """
     rng = Random(options.seed) if options.seed else Random()  # noqa: S311
 
-    trainer = Trainer(
-        step=options.step,
-        case_codes=options.case_codes,
-        orientation=options.orientation,
-        show_solution=options.show_solution,
-        show_cube=options.show_cube,
-        metronome=options.metronome,
-        rng=rng,
-    )
+    try:
+        trainer = Trainer(
+            step=options.step,
+            case_codes=options.case_codes,
+            orientation=options.orientation,
+            show_solution=options.show_solution,
+            show_cube=options.show_cube,
+            metronome=options.metronome,
+            rng=rng,
+        )
+    except InvalidCaseError as error:
+        console.print('😱', str(error), style='warning')
+        return 1
 
     if options.bluetooth:
         await trainer.bluetooth_connect(
@@ -160,8 +164,6 @@ async def trainer(options: Namespace) -> int:
 
             if not done:
                 break
-    except InvalidCaseError as error:
-        console.print('😱', str(error), style='warning')
     finally:
         if trainer.bluetooth_interface:
             await trainer.bluetooth_disconnect()

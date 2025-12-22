@@ -2,7 +2,6 @@
 from random import Random
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
 from cubing_algs.parsing import parse_moves
 from cubing_algs.scrambler import scramble
@@ -14,9 +13,6 @@ from cubing_algs.vcube import VCube
 from kociemba import solve
 
 from term_timer.config import CUBE_RIGHT_HANDED
-from term_timer.constants import CROSS_CASE
-from term_timer.constants import EASY_CROSS_CASE
-from term_timer.exceptions import InvalidCaseError
 
 
 def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
@@ -68,40 +64,37 @@ def scrambler(cube_size: int, iterations: int,
     return scrambled, cube
 
 
-def trainer(step: str, cases: list[str],
+def trainer(step: str, cases: list[Case],
             orientation_moves: Algorithm,
             rng: Random,
             bluetooth_cube: VCube | None = None) -> tuple[
-                Case, Algorithm, Algorithm, VCube]:
+                Case, Algorithm, VCube]:
     """
     Generate training case.
 
     Returns:
-        Tuple of (case name, main algorithm, scramble, cube state).
+        Tuple of (case, scramble, cube state).
 
     """
     cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube(size=3)
 
     if step == 'ecross':
-        case = EASY_CROSS_CASE
-        main_algorithm = Algorithm()
+        case = cases[0]
         scramble = scramble_easy_cross(rng)
     elif step == 'cross':
-        case = CROSS_CASE
-        main_algorithm = Algorithm()
+        case = cases[0]
         scramble, _cube = scrambler(3, 12, easy_cross=False, rng=rng)
     else:
         case, scramble = random_training(
-            step, cases, orientation_moves, rng,
+            cases, orientation_moves, rng,
         )
-        main_algorithm = case.main_algorithm
 
     cube.rotate(scramble)
 
-    return case, main_algorithm, scramble, cube
+    return case, scramble, cube
 
 
-def random_training(step: str, selected_cases: list[str],
+def random_training(cases: list[Case],
                     orientation_moves: Algorithm,
                     rng: Random) -> tuple[
                         Case, Algorithm]:
@@ -111,31 +104,17 @@ def random_training(step: str, selected_cases: list[str],
     Returns:
         Tuple of (case, scramble algorithm).
 
-    Raises:
-        InvalidCaseError: If selected case is not valid for the step.
-
     """
-    cases = get_collection(f'CFOP/{ step }').cases
-    valid_cases: dict[str, Case] = {
-        v.code: v for v in cases.values() if v.setup_algorithms
-    }
-
-    case = rng.choice(selected_cases or list(valid_cases.keys()))
-
-    if case not in valid_cases:
-        error_string = f'Invalid case { case } for { step.upper() }'
-        raise InvalidCaseError(error_string)
-
-    case_info = valid_cases[case]
+    selected_case = rng.choice(cases)
 
     algo = (
         orientation_moves
-        + rng.choice(case_info.setup_algorithms)
+        + rng.choice(selected_case.setup_algorithms)
         + mirror_moves(orientation_moves)
     )
 
     return (
-        case_info,
+        selected_case,
         parse_moves(algo).transform(
             degrip_full_moves,
             compress_ending_rotations,
