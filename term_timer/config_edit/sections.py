@@ -1,4 +1,6 @@
 """Configuration section widgets for different config categories."""
+from typing import Any
+
 from cubing_algs.constants import ORIENTATIONS
 from cubing_algs.effects import EFFECTS
 from cubing_algs.palettes import PALETTES
@@ -75,9 +77,23 @@ class ConfigSection(VerticalScroll):
 
     section_name: str = ''
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
+        """Initialize the configuration section."""
+        super().__init__(*args, **kwargs)
+        self.is_loading = True
+
     def on_mount(self) -> None:
         """Load configuration when mounted."""
-        self.set_timer(0.1, self.load_config)
+        self.set_timer(0.1, self.load_initial_config)
+
+    def load_initial_config(self) -> None:
+        """Load initial configuration without triggering change events."""
+        self.load_config()
+        self.set_timer(0.05, self.finish_loading)
+
+    def finish_loading(self) -> None:
+        """Finish loading after all pending events are processed."""
+        self.is_loading = False
 
     def load_config(self) -> None:
         """Load configuration from file. Override in subclasses."""
@@ -96,18 +112,35 @@ class ConfigSection(VerticalScroll):
 
     def on_input_changed(self, _event: Input.Changed) -> None:
         """Mark app as modified when input changes."""
+        if self.is_loading:
+            return
         app = self.app
         if hasattr(app, 'mark_modified'):
             app.mark_modified()
 
     def on_checkbox_changed(self, _event: Checkbox.Changed) -> None:
         """Mark app as modified when checkbox changes."""
+        if self.is_loading:
+            return
         app = self.app
         if hasattr(app, 'mark_modified'):
             app.mark_modified()
 
     def on_select_changed(self, _event: Select.Changed) -> None:
         """Mark app as modified when select changes."""
+        if self.is_loading:
+            return
+        app = self.app
+        if hasattr(app, 'mark_modified'):
+            app.mark_modified()
+
+    def on_selection_list_selected_changed(
+        self,
+        _event: SelectionList.SelectedChanged[str],
+    ) -> None:
+        """Mark app as modified when selection list changes."""
+        if self.is_loading:
+            return
         app = self.app
         if hasattr(app, 'mark_modified'):
             app.mark_modified()
