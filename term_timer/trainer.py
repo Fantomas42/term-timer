@@ -1,5 +1,4 @@
 """Training interface for practicing specific CFOP cases."""
-from dataclasses import dataclass
 from functools import cached_property
 from random import Random
 from typing import Final
@@ -25,16 +24,9 @@ from term_timer.printer import print_cube_trainer
 from term_timer.scrambler import trainer
 from term_timer.solve import Solve
 from term_timer.triggers import DEFAULT_TRIGGERS
+from term_timer.types import TrainingCase
 
 CROSS_MODES: Final = ('cross', 'ecross')
-
-
-@dataclass
-class TrainingCase:
-    """Wrapper for Case with pre-computed best setup algorithms."""
-
-    case: Case
-    best_setups: list[Algorithm]
 
 
 class Trainer(SolveInterface):

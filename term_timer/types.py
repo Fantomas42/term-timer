@@ -35,6 +35,7 @@ Analyser.summary (StepSummary list)
 from dataclasses import dataclass
 from typing import TypedDict
 
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases.case import Case
 
 from term_timer.solve import Solve
@@ -112,3 +113,11 @@ class ListingFilters:
     search_scramble: str | None = None
     min_time: float | None = None
     max_time: float | None = None
+
+
+@dataclass
+class TrainingCase:
+    """Wrapper for Case with pre-computed best setup algorithms."""
+
+    case: Case
+    best_setups: list[Algorithm]
