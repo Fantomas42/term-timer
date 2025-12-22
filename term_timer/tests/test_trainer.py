@@ -46,7 +46,7 @@ class TestTrainerModule(unittest.TestCase):
                 'state',
                 'start_time',
                 'end_time',
-                'free_play'
+                'free_play',
                 'elapsed_time',
                 'metronome',
                 'solve_started_event',
@@ -54,4 +54,4 @@ class TestTrainerModule(unittest.TestCase):
                 'orientation_faces',
                 'rng',
         ):
-            self.assertTrue(hasattr(timer, key))
+            self.assertTrue(hasattr(timer, key), key)

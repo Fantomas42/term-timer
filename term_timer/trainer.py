@@ -1,8 +1,10 @@
 """Training interface for practicing specific CFOP cases."""
+from dataclasses import dataclass
 from functools import cached_property
 from random import Random
 from typing import Final
 
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
 from cubing_algs.vcube import VCube
@@ -25,6 +27,14 @@ from term_timer.solve import Solve
 from term_timer.triggers import DEFAULT_TRIGGERS
 
 CROSS_MODES: Final = ('cross', 'ecross')
+
+
+@dataclass
+class TrainingCase:
+    """Wrapper for Case with pre-computed best setup algorithms."""
+
+    case: Case
+    best_setups: list[Algorithm]
 
 
 class Trainer(SolveInterface):
@@ -86,7 +96,7 @@ class Trainer(SolveInterface):
             return 'Cross'
         return self.step_upper
 
-    def get_cases(self) -> list[Case]:
+    def get_cases(self) -> list[TrainingCase]:
         """
         Build list of trained cases.
 
@@ -98,9 +108,9 @@ class Trainer(SolveInterface):
 
         """
         if self.step == 'ecross':
-            return [EASY_CROSS_CASE]
+            return [TrainingCase(EASY_CROSS_CASE, [])]
         if self.step == 'cross':
-            return [CROSS_CASE]
+            return [TrainingCase(CROSS_CASE, [])]
 
         cases = get_collection(f'{ self.method }/{ self.step }').cases
         valid_cases: dict[str, Case] = {
@@ -110,6 +120,13 @@ class Trainer(SolveInterface):
 
         case_codes = self.case_codes or list(valid_cases.keys())
 
+        def setup_sorter(algorithm: Algorithm) -> tuple[float, float]:
+            ergonomics = algorithm.ergonomics
+            return (
+                ergonomics.estimated_execution_time,
+                -ergonomics.comfort_score,
+            )
+
         selected_cases = []
         for case_code in case_codes:
             if case_code not in valid_cases:
@@ -118,7 +135,17 @@ class Trainer(SolveInterface):
                     f'{ self.method }/{ self.step_upper }'
                 )
                 raise InvalidCaseError(error_string)
-            selected_cases.append(valid_cases[case_code])
+            valid_case = valid_cases[case_code]
+
+            setups = valid_case.setup_algorithms
+
+            best_setups = sorted(
+                setups,
+                key=setup_sorter,
+                reverse=False,
+            )[:5]
+
+            selected_cases.append(TrainingCase(valid_case, best_setups))
 
         return selected_cases
 

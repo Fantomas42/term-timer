@@ -1,5 +1,6 @@
 """Scramble generation and training case setup utilities."""
 from random import Random
+from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases.case import Case
@@ -13,6 +14,9 @@ from cubing_algs.vcube import VCube
 from kociemba import solve
 
 from term_timer.config import CUBE_RIGHT_HANDED
+
+if TYPE_CHECKING:
+    from term_timer.trainer import TrainingCase
 
 
 def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
@@ -64,7 +68,7 @@ def scrambler(cube_size: int, iterations: int,
     return scrambled, cube
 
 
-def trainer(step: str, cases: list[Case],
+def trainer(step: str, cases: list['TrainingCase'],
             orientation_moves: Algorithm,
             rng: Random,
             bluetooth_cube: VCube | None = None) -> tuple[
@@ -79,10 +83,10 @@ def trainer(step: str, cases: list[Case],
     cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube(size=3)
 
     if step == 'ecross':
-        case = cases[0]
+        case = cases[0].case
         scramble = scramble_easy_cross(rng)
     elif step == 'cross':
-        case = cases[0]
+        case = cases[0].case
         scramble, _cube = scrambler(3, 12, easy_cross=False, rng=rng)
     else:
         case, scramble = random_training(
@@ -94,7 +98,7 @@ def trainer(step: str, cases: list[Case],
     return case, scramble, cube
 
 
-def random_training(cases: list[Case],
+def random_training(cases: list['TrainingCase'],
                     orientation_moves: Algorithm,
                     rng: Random) -> tuple[
                         Case, Algorithm]:
@@ -109,12 +113,12 @@ def random_training(cases: list[Case],
 
     algo = (
         orientation_moves
-        + rng.choice(selected_case.setup_algorithms)
+        + rng.choice(selected_case.best_setups)
         + mirror_moves(orientation_moves)
     )
 
     return (
-        selected_case,
+        selected_case.case,
         parse_moves(algo).transform(
             degrip_full_moves,
             compress_ending_rotations,
