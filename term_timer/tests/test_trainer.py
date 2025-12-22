@@ -13,6 +13,7 @@ class TestTrainerModule(unittest.TestCase):
         timer = Trainer(
             step='oll',
             case_codes=['01', '02'],
+            free_play=True,
             show_solution=False,
             show_cube=False,
             metronome=0,
@@ -45,6 +46,7 @@ class TestTrainerModule(unittest.TestCase):
                 'state',
                 'start_time',
                 'end_time',
+                'free_play'
                 'elapsed_time',
                 'metronome',
                 'solve_started_event',
