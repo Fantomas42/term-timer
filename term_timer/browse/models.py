@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from term_timer.constants import SAVE_DIRECTORY
+from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.in_out import load_solves
 
 
@@ -101,7 +101,9 @@ def discover_sessions(cube_size: int) -> list[SessionInfo]:
     sessions: list[SessionInfo] = []
 
     # Check for default session
-    default_file = SAVE_DIRECTORY / f'{cube_size}x{cube_size}x{cube_size}.json'
+    default_file = (
+        SOLVES_DIRECTORY / f'{cube_size}x{cube_size}x{cube_size}.json'
+    )
     if default_file.exists():
         solves = load_solves(cube_size, 'default')
         if solves:
@@ -116,7 +118,7 @@ def discover_sessions(cube_size: int) -> list[SessionInfo]:
 
     # Discover named sessions
     prefix = f'{cube_size}x{cube_size}x{cube_size}-'
-    for file_path in SAVE_DIRECTORY.iterdir():
+    for file_path in SOLVES_DIRECTORY.iterdir():
         if file_path.is_file() and file_path.name.startswith(prefix):
             session_name = file_path.name.split(prefix, 1)[1].replace(
                 '.json', '',
@@ -146,7 +148,7 @@ def discover_cube_groups() -> list[CubeGroup]:
     cube_sizes: set[int] = set()
 
     # Scan save directory for all cube sizes
-    for file_path in SAVE_DIRECTORY.iterdir():
+    for file_path in SOLVES_DIRECTORY.iterdir():
         if file_path.is_file() and file_path.suffix == '.json':
             # Extract cube size from filename like "3x3x3.json"
             name_parts = file_path.name.split('x')

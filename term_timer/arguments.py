@@ -451,6 +451,16 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
 
+    session = parser.add_argument_group('Session')
+    session.add_argument(
+        '-f', '--free-play',
+        action='store_true',
+        help=(
+            'Enable free play mode to disable recording of solves.\n'
+            'Default: False.'
+        ),
+    )
+
     timer = parser.add_argument_group('Timer')
     timer.add_argument(
         '-k', '--metronome',

@@ -8,7 +8,8 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.exceptions import InvalidMoveError
 from cubing_algs.parsing import parse_moves
 
-from term_timer.constants import SAVE_DIRECTORY
+from term_timer.constants import SOLVES_DIRECTORY
+from term_timer.constants import TRAININGS_DIRECTORY
 from term_timer.solve import Solve
 from term_timer.solve import SolveData
 
@@ -28,7 +29,7 @@ def load_solves(cube: int, session: str) -> list[Solve]:
 
     suffix = (session and f'-{ session }') or ''
 
-    source = SAVE_DIRECTORY / f'{ cube }x{ cube }x{ cube }{ suffix }.json'
+    source = SOLVES_DIRECTORY / f'{ cube }x{ cube }x{ cube }{ suffix }.json'
 
     if source.exists():
         with source.open('r', encoding='utf-8') as fd:
@@ -66,7 +67,7 @@ def load_all_solves(cube: int,
     solves = []
     sessions = ['default'] + [
         f.name.split(prefix, 1)[1].replace('.json', '')
-        for f in SAVE_DIRECTORY.iterdir()
+        for f in SOLVES_DIRECTORY.iterdir()
         if (
                 f.is_file()
                 and f.name.startswith(prefix)
@@ -110,19 +111,35 @@ def save_solves(cube: int, session: str, solves: list[Solve]) -> bool:
 
     suffix = (session and f'-{ session }') or ''
 
-    source = SAVE_DIRECTORY / f'{ cube }x{ cube }x{ cube }{ suffix }.json'
+    source = SOLVES_DIRECTORY / f'{ cube }x{ cube }x{ cube }{ suffix }.json'
 
     data = [s.as_save for s in solves]
 
     dumped = json.dumps(data, indent=1)
 
-    if not SAVE_DIRECTORY.exists():
-        SAVE_DIRECTORY.mkdir()
+    if not SOLVES_DIRECTORY.exists():
+        SOLVES_DIRECTORY.mkdir()
 
     with source.open('w+', encoding='utf-8') as fd:
         fd.write(dumped)
 
     return True
+
+
+def load_trainings(method: str, step: str) -> dict:
+    """
+    Load trainings from file for given method and step.
+
+    Returns:
+        Dict of cases trained
+
+    """
+    source_directory = TRAININGS_DIRECTORY / method
+    source_directory.mkdir(parents=True, exist_ok=True)
+
+    _source = source_directory / f'{ step }.json'
+
+    return []
 
 
 def load_scrambles(path: Path) -> list[Algorithm]:

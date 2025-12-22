@@ -16,6 +16,7 @@ from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_time
+from term_timer.in_out import load_trainings
 from term_timer.interface import SolveInterface
 from term_timer.methods.base import FaceletAnalyser
 from term_timer.printer import print_cube_trainer
@@ -38,6 +39,7 @@ class Trainer(SolveInterface):
             self, *,
             step: str,
             case_codes: list[str],
+            free_play: bool,
             show_solution: bool,
             show_cube: bool,
             orientation: str,
@@ -50,6 +52,8 @@ class Trainer(SolveInterface):
 
         self.method = 'CFOP'
         self.step = step
+        self.step_upper = step.upper()
+        self.free_play = free_play
         self.show_solution = show_solution
         self.show_cube = show_cube
         self.metronome = metronome
@@ -58,10 +62,18 @@ class Trainer(SolveInterface):
         self.orientation_faces = orientation
 
         self.cases = self.get_cases()
+
+        self.training_stats = []
+        if not self.free_play:
+            self.training_stats = load_trainings(
+                self.method,
+                self.step_upper,
+            )
+
         self.console.print(
             f'Training on { len(self.cases) } '
             f'case{ "s" if len(self.cases) > 1 else "" } on '
-            f'{ self.method }/{ self.step.upper() }',
+            f'{ self.method }/{ self.step_upper }',
             style='trainer',
         )
 
@@ -72,7 +84,7 @@ class Trainer(SolveInterface):
         """Step code used for cheching step."""
         if self.step in CROSS_MODES:
             return 'Cross'
-        return self.step.upper()
+        return self.step_upper
 
     def get_cases(self) -> list[Case]:
         """
@@ -103,7 +115,7 @@ class Trainer(SolveInterface):
             if case_code not in valid_cases:
                 error_string = (
                     f'Invalid case "{ case_code }" for '
-                    f'{ self.method }/{ self.step.upper() }'
+                    f'{ self.method }/{ self.step_upper }'
                 )
                 raise InvalidCaseError(error_string)
             selected_cases.append(valid_cases[case_code])

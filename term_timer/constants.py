@@ -15,7 +15,9 @@ PAUSE_FACTOR: Final = 2
 
 STEP_BAR: Final = 17
 
-SAVE_DIRECTORY: Final = Path.home() / '.solves'
+SOLVES_DIRECTORY: Final = Path.home() / '.solves'
+
+TRAININGS_DIRECTORY: Final = Path.home() / '.trainings'
 
 CONFIG_FILE: Final = Path('~/.term_timer').expanduser()
 

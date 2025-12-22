@@ -143,6 +143,7 @@ async def trainer(options: Namespace) -> int:
         trainer = Trainer(
             step=options.step,
             case_codes=options.case_codes,
+            free_play=options.free_play,
             orientation=options.orientation,
             show_solution=options.show_solution,
             show_cube=options.show_cube,

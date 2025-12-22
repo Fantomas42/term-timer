@@ -11,7 +11,7 @@ from term_timer.in_out import load_solves
 class TestInOut(unittest.TestCase):
     """Tests for solve loading and saving functionality."""
 
-    @patch('term_timer.in_out.SAVE_DIRECTORY', Path('/mock/path'))
+    @patch('term_timer.in_out.SOLVES_DIRECTORY', Path('/mock/path'))
     @patch('pathlib.Path.exists')
     def test_load_solves_non_existing_file(self, mock_exists: Mock) -> None:
         """Test loading solves from a non-existing file returns empty list."""
