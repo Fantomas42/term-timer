@@ -18,6 +18,7 @@ from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_time
 from term_timer.in_out import load_trainings
+from term_timer.in_out import save_trainings
 from term_timer.interface import SolveInterface
 from term_timer.methods.base import FaceletAnalyser
 from term_timer.printer import print_cube_trainer
@@ -63,14 +64,12 @@ class Trainer(SolveInterface):
         self.rng = rng
         self.orientation_faces = orientation
 
-        self.cases = self.get_cases()
+        self.trainings = load_trainings(
+            self.method,
+            self.step_upper,
+        )
 
-        self.training_stats = []
-        if not self.free_play:
-            self.training_stats = load_trainings(
-                self.method,
-                self.step_upper,
-            )
+        self.cases = self.get_cases()
 
         self.console.print(
             f'Training on { len(self.cases) } '
@@ -288,6 +287,14 @@ class Trainer(SolveInterface):
         solve.method_name = self.method.lower()
 
         self.solve_line(solve)
+
+        if not self.free_play:
+            self.trainings.add_timing(
+                selected_case.code,
+                int(self.elapsed_time / MS_TO_NS_FACTOR),
+                int(self.date),
+            )
+            save_trainings(self.trainings)
 
         self.counter += 1
 

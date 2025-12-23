@@ -12,6 +12,9 @@ from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.constants import TRAININGS_DIRECTORY
 from term_timer.solve import Solve
 from term_timer.solve import SolveData
+from term_timer.training import CaseTraining
+from term_timer.training import CaseTrainingData
+from term_timer.training import Trainings
 
 SCRAMBLE_LINE = re.compile(r'Scramble #\d+:\s*(.+?)(?:\s*//.*)?$')
 
@@ -126,20 +129,59 @@ def save_solves(cube: int, session: str, solves: list[Solve]) -> bool:
     return True
 
 
-def load_trainings(method: str, step: str) -> dict:
+def load_trainings(method: str, step: str) -> Trainings:
     """
     Load trainings from file for given method and step.
 
     Returns:
-        Dict of cases trained
+        Trainings object containing all training data for the method/step,
+        with methods to add new timings and serialize back to JSON.
 
     """
     source_directory = TRAININGS_DIRECTORY / method
     source_directory.mkdir(parents=True, exist_ok=True)
 
-    _source = source_directory / f'{ step }.json'
+    source = source_directory / f'{ step }.json'
 
-    return []
+    cases: dict[str, CaseTraining] = {}
+
+    if source.exists():
+        with source.open('r', encoding='utf-8') as fd:
+            raw_data: dict[str, CaseTrainingData] = json.load(fd)
+
+        cases = {
+            case_code: CaseTraining(
+                code=case_code,
+                last_date=data['last_date'],
+                timings=data['timings'],
+            )
+            for case_code, data in raw_data.items()
+        }
+
+    return Trainings(method=method, step=step, cases=cases)
+
+
+def save_trainings(trainings: Trainings) -> bool:
+    """
+    Save trainings to file for given method and step.
+
+    Returns:
+        True if save was successful.
+
+    """
+    source_directory = TRAININGS_DIRECTORY / trainings.method
+    source_directory.mkdir(parents=True, exist_ok=True)
+
+    source = source_directory / f'{ trainings.step }.json'
+
+    data = trainings.as_save()
+
+    dumped = json.dumps(data, indent=1)
+
+    with source.open('w+', encoding='utf-8') as fd:
+        fd.write(dumped)
+
+    return True
 
 
 def load_scrambles(path: Path) -> list[Algorithm]:
