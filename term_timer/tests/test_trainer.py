@@ -13,6 +13,8 @@ class TestTrainerModule(unittest.TestCase):
         timer = Trainer(
             step='oll',
             case_codes=['01', '02'],
+            oldest=0,
+            slowest=0,
             free_play=True,
             show_solution=False,
             show_cube=False,

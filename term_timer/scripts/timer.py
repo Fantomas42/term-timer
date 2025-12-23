@@ -137,12 +137,26 @@ async def trainer(options: Namespace) -> int:
         Exit code (0 for success).
 
     """
+    active_filters = sum([
+        bool(options.case_codes),
+        options.oldest > 0,
+        options.slowest > 0,
+    ])
+    if active_filters > 1:
+        console.print(
+            '😱 Only one of --cases, --oldest, or --slowest can be used',
+            style='warning',
+        )
+        return 1
+
     rng = Random(options.seed) if options.seed else Random()  # noqa: S311
 
     try:
         trainer = Trainer(
             step=options.step,
             case_codes=options.case_codes,
+            oldest=options.oldest,
+            slowest=options.slowest,
             free_play=options.free_play,
             orientation=options.orientation,
             show_solution=options.show_solution,

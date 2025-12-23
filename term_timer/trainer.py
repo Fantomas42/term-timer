@@ -1,5 +1,6 @@
 """Training interface for practicing specific CFOP cases."""
 from functools import cached_property
+from operator import itemgetter
 from random import Random
 from typing import Final
 
@@ -24,6 +25,7 @@ from term_timer.methods.base import FaceletAnalyser
 from term_timer.printer import print_cube_trainer
 from term_timer.scrambler import trainer
 from term_timer.solve import Solve
+from term_timer.stats import Statistics
 from term_timer.triggers import DEFAULT_TRIGGERS
 from term_timer.types import TrainingCase
 
@@ -42,6 +44,8 @@ class Trainer(SolveInterface):
             self, *,
             step: str,
             case_codes: list[str],
+            oldest: int,
+            slowest: int,
             free_play: bool,
             show_solution: bool,
             show_cube: bool,
@@ -61,6 +65,8 @@ class Trainer(SolveInterface):
         self.show_cube = show_cube
         self.metronome = metronome
         self.case_codes = case_codes
+        self.oldest = oldest
+        self.slowest = slowest
         self.rng = rng
         self.orientation_faces = orientation
 
@@ -87,6 +93,79 @@ class Trainer(SolveInterface):
             return 'Cross'
         return self.step_upper
 
+    def select_oldest_cases(
+            self,
+            valid_cases: dict[str, Case],
+            count: int) -> list[str]:
+        """
+        Select cases by least recent practice date.
+
+        Cases with no training data are prioritized as most urgent.
+
+        Args:
+            valid_cases: Dictionary of valid cases for the step
+            count: Number of cases to select
+
+        Returns:
+            List of case codes sorted by practice urgency
+
+        """
+        case_dates: list[tuple[str, int]] = []
+
+        for case_code in valid_cases:
+            if case_code in self.trainings.cases:
+                case_dates.append((
+                    case_code,
+                    self.trainings.cases[case_code].last_date,
+                ))
+            else:
+                case_dates.append((case_code, 0))
+
+        sorted_cases = sorted(case_dates, key=itemgetter(1))
+
+        return [code for code, _ in sorted_cases[:count]]
+
+    def select_slowest_cases(
+            self,
+            valid_cases: dict[str, Case],
+            count: int) -> list[str]:
+        """
+        Select cases with worst average of 12.
+
+        Cases with fewer than 12 attempts are prioritized as needing
+        more practice.
+
+        Args:
+            valid_cases: Dictionary of valid cases for the step
+            count: Number of cases to select
+
+        Returns:
+            List of case codes sorted by performance need
+
+        """
+        case_ao12s: list[tuple[str, int, bool]] = []
+
+        for case_code in valid_cases:
+            if case_code in self.trainings.cases:
+                case_training = self.trainings.cases[case_code]
+                stats = Statistics(case_training.timings)
+                ao12 = stats.ao12
+                has_enough = len(case_training.timings) >= 12
+
+                if ao12 == -1:
+                    case_ao12s.append((case_code, 999999999, False))
+                else:
+                    case_ao12s.append((case_code, ao12, has_enough))
+            else:
+                case_ao12s.append((case_code, 999999999, False))
+
+        sorted_cases = sorted(
+            case_ao12s,
+            key=lambda x: (x[2], -x[1]),
+        )
+
+        return [code for code, _, _ in sorted_cases[:count]]
+
     def get_cases(self) -> list[TrainingCase]:
         """
         Build list of trained cases.
@@ -110,6 +189,17 @@ class Trainer(SolveInterface):
         }
 
         case_codes = self.case_codes or list(valid_cases.keys())
+
+        if self.oldest > 0:
+            case_codes = self.select_oldest_cases(
+                valid_cases,
+                self.oldest,
+            )
+        elif self.slowest > 0:
+            case_codes = self.select_slowest_cases(
+                valid_cases,
+                self.slowest,
+            )
 
         def setup_sorter(algorithm: Algorithm) -> tuple[float, float]:
             ergonomics = algorithm.ergonomics

@@ -383,7 +383,8 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
 
-    parser.add_argument(
+    cases = parser.add_argument_group('Case Selection')
+    cases.add_argument(
         '-c', '--cases',
         nargs='*',
         default=[],
@@ -392,6 +393,28 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Names of the step cases to solve.\n'
             'Default: All.'
+        ),
+    )
+    cases.add_argument(
+        '-d', '--oldest',
+        type=int,
+        default=0,
+        metavar='N',
+        help=(
+            'Select N cases least recently practiced.\n'
+            'Cases never practiced are prioritized.\n'
+            'Mutually exclusive with --cases and --slowest.'
+        ),
+    )
+    cases.add_argument(
+        '-t', '--slowest',
+        type=int,
+        default=0,
+        metavar='N',
+        help=(
+            'Select N cases with worst average of 12.\n'
+            'Cases with fewer than 12 attempts are prioritized.\n'
+            'Mutually exclusive with --cases and --oldest.'
         ),
     )
 

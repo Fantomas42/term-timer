@@ -1,9 +1,6 @@
 """Training data."""
 from dataclasses import dataclass
-from functools import cached_property
 from typing import TypedDict
-
-from term_timer.stats import Statistics
 
 
 class CaseTrainingData(TypedDict):
@@ -21,11 +18,6 @@ class CaseTraining:
     last_date: int
     timings: list[int]
 
-    @cached_property
-    def statistics(self) -> Statistics:
-        """Return case training statistics."""
-        return Statistics(self.timings)
-
     def add_timing(self, timing: int, date: int) -> None:
         """
         Add a new timing for this case.
@@ -37,7 +29,6 @@ class CaseTraining:
         """
         self.timings.append(timing)
         self.last_date = date
-        del self.statistics
 
     @property
     def as_save(self) -> CaseTrainingData:
