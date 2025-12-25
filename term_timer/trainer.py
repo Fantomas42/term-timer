@@ -249,7 +249,7 @@ class Trainer(SolveInterface):
             )
 
         attempt = 1
-        if selected_case in self.trainings.cases:
+        if selected_case.code in self.trainings.cases:
             attempt = len(self.trainings.cases[selected_case.code].timings) + 1
 
         self.console.print(
