@@ -14,7 +14,7 @@ metronome = 0.0
 [cube]
 orientation = "DF"
 method = "cf4op"
-palette = ""
+palette = "default"
 effect = "face-visible"
 right-handed = true
 
