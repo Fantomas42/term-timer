@@ -17,6 +17,7 @@ from term_timer.exceptions import InvalidCaseError
 from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
+from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.in_out import load_trainings
 from term_timer.in_out import save_trainings
@@ -250,7 +251,9 @@ class Trainer(SolveInterface):
         self.console.print(
             f'[scramble]Training #{ self.counter }:[/scramble]',
             scramble_line,
-            f'[comment]// [link={ link }]{ name }[/link][/comment]',
+            f'[comment]// [link={ link }]{ name }[/link] '
+            f'#{ len(self.trainings.cases[selected_case.code].timings) }'
+            '[/comment]',
         )
 
         if self.show_solution and selected_case.main_algorithm:
@@ -299,8 +302,21 @@ class Trainer(SolveInterface):
             )
         return False
 
-    def solve_line(self, solve: Solve) -> None:
+    def solve_line(self, solve: Solve, selected_case: Case) -> None:  # noqa: C901
         """Display training solve results and execution details."""
+        self.trainings.add_timing(
+            selected_case.code,
+            int(self.elapsed_time / MS_TO_NS_FACTOR),
+            int(self.date),
+        )
+
+        timings = [
+            i * MS_TO_NS_FACTOR
+            for i in self.trainings.cases[selected_case.code].timings
+        ]
+        old_stats = Statistics(timings[:-1])
+        new_stats = Statistics(timings)
+
         self.clear_line(full=True)
 
         if solve.method_applied:
@@ -310,13 +326,67 @@ class Trainer(SolveInterface):
                     solve.method_applied.summary[0],
                     multiple=True,
                 ) + '[/consign]',
+                solve.trainer_line,
             )
+
+        extra = ''
+        if new_stats.total > 1:
+            extra += format_delta(new_stats.delta)
+
+            if new_stats.total >= 3:
+                mo3 = new_stats.mo3
+                extra += f' [mo3]Mo3 { format_time(mo3) }[/mo3]'
+
+            if new_stats.total >= 5:
+                ao5 = new_stats.ao5
+                extra += f' [ao5]Ao5 { format_time(ao5) }[/ao5]'
+
+            if new_stats.total >= 12:
+                ao12 = new_stats.ao12
+                extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
 
         self.console.print(
             f'[duration]Duration #{ self.counter }:[/duration]',
             f'[time]{ format_time(self.elapsed_time) }[/time]',
-            f'{ solve.trainer_line }',
+            extra,
         )
+
+        if new_stats.total > 1:
+            mc = 10 + len(str(len(self.stack))) - 1
+            if new_stats.best < old_stats.best:
+                self.console.print(
+                    f'[record]:rocket:{ "New PB !".center(mc) }[/record]',
+                    f'[best]{ format_time(new_stats.best) }[/best]',
+                    format_delta(new_stats.best - old_stats.best),
+                )
+
+            if new_stats.ao5 < old_stats.best_ao5:
+                self.console.print(
+                    f'[record]:boom:{ "Best Ao5".center(mc) }[/record]',
+                    f'[best]{ format_time(new_stats.ao5) }[/best]',
+                    format_delta(new_stats.ao5 - old_stats.best_ao5),
+                )
+
+            if new_stats.ao12 < old_stats.best_ao12:
+                self.console.print(
+                    f'[record]:muscle:{ "Best Ao12".center(mc) }[/record]',
+                    f'[best]{ format_time(new_stats.ao12) }[/best]',
+                    format_delta(new_stats.ao12 - old_stats.best_ao12),
+                )
+
+            if new_stats.ao100 < old_stats.best_ao100:
+                self.console.print(
+                    f'[record]:crown:{ "Best Ao100".center(mc) }[/record]',
+                    f'[best]{ format_time(new_stats.ao100) }[/best]',
+                    format_delta(new_stats.ao100 - old_stats.best_ao100),
+                )
+
+            if new_stats.ao1000 < old_stats.best_ao1000:
+                self.console.print(
+                    f'[record]:trophy:{ "Best Ao1000".center(mc) }[/record]',
+                    f'[best]{ format_time(new_stats.ao1000) }[/best]',
+                    format_delta(new_stats.ao1000 - old_stats.best_ao1000),
+                )
 
     async def start(self) -> bool:
         """
@@ -376,14 +446,9 @@ class Trainer(SolveInterface):
         )
         solve.method_name = self.method.lower()
 
-        self.solve_line(solve)
+        self.solve_line(solve, selected_case)
 
         if not self.free_play:
-            self.trainings.add_timing(
-                selected_case.code,
-                int(self.elapsed_time / MS_TO_NS_FACTOR),
-                int(self.date),
-            )
             save_trainings(self.trainings)
 
         self.counter += 1
