@@ -223,7 +223,7 @@ class CFOPAnalyser(Analyser):
             )
 
         # Skipped OLL insert
-        if summary[-2]['name'] != 'OLL':
+        if len(summary) > 1 and summary[-2]['name'] != 'OLL':
             summary.insert(
                 len(summary) - 1,
                 {
@@ -254,7 +254,7 @@ class CFOPAnalyser(Analyser):
             )
 
         # Skipped F2L insert
-        if 'F2L' not in summary[1]['name']:
+        if len(summary) > 1 and 'F2L' not in summary[1]['name']:
             summary.insert(
                 1,
                 {
