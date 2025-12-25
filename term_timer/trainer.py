@@ -248,12 +248,15 @@ class Trainer(SolveInterface):
                 + scramble_line
             )
 
+        attempt = 1
+        if selected_case in self.trainings.cases:
+            attempt = len(self.trainings.cases[selected_case.code].timings) + 1
+
         self.console.print(
             f'[scramble]Training #{ self.counter }:[/scramble]',
             scramble_line,
             f'[comment]// [link={ link }]{ name }[/link] '
-            f'#{ len(self.trainings.cases[selected_case.code].timings) }'
-            '[/comment]',
+            f'#{ attempt }[/comment]',
         )
 
         if self.show_solution and selected_case.main_algorithm:
