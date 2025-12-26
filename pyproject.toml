@@ -38,6 +38,10 @@ dev = [
     "pytest-cov",
     "pytest-subtests",
 ]
+opengl = [
+    "pyopengl",
+    "pygame",
+]
 
 [project.scripts]
 bt-info = "term_timer.scripts.bluetooth_info:main"
