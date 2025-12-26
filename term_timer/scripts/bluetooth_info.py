@@ -1,5 +1,4 @@
 """Bluetooth cube information utility script."""
-
 import asyncio
 import json
 import logging
@@ -49,6 +48,8 @@ from term_timer.transform import prettify_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 
 logger = logging.getLogger(__name__)
+
+Path(LOGGING_DIR).mkdir(parents=True, exist_ok=True)
 
 LOGGING_CONF: Final = {
     'version': 1,
