@@ -157,6 +157,10 @@ class BatteryEventDict(BaseEventDict):
     charging_state: int
 
 
+class ResetEventDict(BaseEventDict):
+    """Reset event payload."""
+
+
 class DisconnectEventDict(BaseEventDict):
     """Disconnect event payload."""
 
@@ -185,4 +189,5 @@ EventDict = (
     | BatteryEventDict
     | DisconnectEventDict
     | GyroConfigEventDict
+    | ResetEventDict
 )

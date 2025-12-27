@@ -27,6 +27,7 @@ from term_timer.bluetooth.types import EventDict
 from term_timer.bluetooth.types import FaceletsEventDict
 from term_timer.bluetooth.types import HardwareEventDict
 from term_timer.bluetooth.types import MoveEventDict
+from term_timer.bluetooth.types import ResetEventDict
 
 logger = logging.getLogger(__name__)
 
@@ -428,6 +429,14 @@ class GanGen3Driver(GanGen2Driver):
                 'gyroscope_supported': False,
             }
             self.add_event(events, hardware_payload)
+
+        elif event == 0x08:  # Resetted
+            reset_payload: ResetEventDict = {
+                'event': 'reset',
+                'clock': clock,
+                'timestamp': timestamp,
+            }
+            self.add_event(events, reset_payload)
 
         elif event == 0x10:  # Battery
             battery_level = msg.get_bit_word(24, 8)
