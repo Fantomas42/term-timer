@@ -191,7 +191,7 @@ class Bluetooth:
                 and self.bluetooth_interface.client.is_connected
         ):
             self.console.print(
-                '[bluetooth]🔗 Bluetooth[/bluetooth] '
+                '[bluetooth]🔗Bluetooth:[/bluetooth] '
                 f'{ self.bluetooth_device_label } disconnecting...',
             )
             await self.bluetooth_interface.__aexit__(None, None, None)
@@ -223,7 +223,7 @@ class Bluetooth:
 
         return device_label
 
-    async def bluetooth_consumer(self) -> None:  # noqa: C901
+    async def bluetooth_consumer(self) -> None:  # noqa: C901, PLR0912
         """
         Consume events from Bluetooth queue and dispatch to handlers.
 
@@ -271,6 +271,16 @@ class Bluetooth:
                             facelets_event['facelets'],
                             size=3,
                         )
+                        if not self.bluetooth_cube.is_solved:
+                            self.clear_line(full=True)
+                            self.console.print(
+                                '[bluetooth]🫤Bluetooth:[/bluetooth] '
+                                '[warning]'
+                                'Cube is not in solved state. '
+                                'Use "bt-info --cube-reset" if needed.'
+                                '[/warning]',
+                            )
+
                         self.facelets_received_event.set()
 
                 elif event_name == 'move':
