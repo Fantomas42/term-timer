@@ -1072,6 +1072,7 @@
               <th>Moves</th>
               <th>Recognition</th>
               <th>Execution Pauses</th>
+              <th>Fluency</th>
             </tr>
           </thead>
           <tbody>
@@ -1095,6 +1096,12 @@
                   {% set pauses = solve.pauses(info.moves_humanized) %}
                   <span class="metric-{% if pauses >= 2 %}warning{% elif pauses %}caution{% else %}success{% endif %}">
                     {{ pauses }}
+                  </span>
+                </td>
+                <td class="recons-fluency">
+                  {% set fluency = solve.compute_fluency(info.moves_humanized) %}
+                  <span class="metric-{% if fluency >= 75 %}success{% elif fluency >= 50 %}caution{% else %}warning{% endif %}">
+                    {{ fluency }}%
                   </span>
                 </td>
               </tr>
