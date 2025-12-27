@@ -251,7 +251,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
         show_cube: Whether to display cube state in console.
         orientation_faces: Two-character orientation specification (e.g., "UF").
         rotation_threshold: Minimum rotation angle in degrees for detection.
-            Defaults to 70.0.
+            Defaults to 75.0.
 
     """
     virtual_cube: VCube | None = None
@@ -338,9 +338,14 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                         moves, event['facelets'],
                         virtual_cube,
                     )
-                elif show_cube:
+                else:
                     virtual_cube = VCube(event['facelets'], size=3)
+                    if not virtual_cube.is_solved:
+                        logger.info(
+                            'CONSUMER: Facelets are not in solved state',
+                        )
 
+                if show_cube:
                     show_state(moves, orientation_moves, virtual_cube)
 
             elif event_name == 'gyro':
