@@ -40,6 +40,7 @@ from term_timer.exceptions import CubeNotFoundError
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
 from term_timer.interface.console import console
+from term_timer.interface.terminal import Terminal
 from term_timer.logger import LOGGING_DIR
 from term_timer.opengl.thread import CubeGLThread
 from term_timer.orientation import get_orientation_moves
@@ -279,7 +280,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
         events = await queue.get()
 
         if events is None:
-            print('\a', end='', flush=True)  # noqa: T201
+            Terminal.beep()
             logger.info(
                 'CONSUMER: Got message from client about disconnection. '
                 'Exiting consumer loop...',
@@ -433,7 +434,7 @@ async def client_cb(  # noqa: PLR0913
         await bluetooth_interface.send_command('REQUEST_RESET')
     else:
         logger.info('Free play for %ss', time)
-        print('\a', end='', flush=True)  # noqa: T201
+        Terminal.beep()
         await asyncio.sleep(time)
 
     await bluetooth_interface.__aexit__(None, None, None)
