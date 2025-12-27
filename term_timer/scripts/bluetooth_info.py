@@ -342,7 +342,10 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
 
                     show_state(moves, orientation_moves, virtual_cube)
 
-            elif event_name == 'gyro' and rotation_detector:
+            elif event_name == 'gyro':
+                if not rotation_detector:
+                    continue
+
                 event = cast('GyroEventDict', event)
 
                 rotation_result = rotation_detector.process_gyro_event(
@@ -383,7 +386,8 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
 
             else:
                 logger.info(
-                    'CONSUMER: UNKNOWN\n%s',
+                    'CONSUMER: %s UNHANDLED\n%s',
+                    event_name,
                     pformat(event),
                 )
 
