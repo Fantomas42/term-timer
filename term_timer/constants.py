@@ -43,6 +43,8 @@ REWIDE_THRESHOLD_GYROSCOPE: Final = 180
 
 ESCAPE_CHAR: Final = '\x1b'
 
+FLUENCY_EXPONENTIAL_DECAY: Final = -0.00111571775657105
+
 INITIAL_STATE_3x3x3 = get_initial_state(3)
 
 Face = Literal['U', 'D', 'R', 'L', 'F', 'B']

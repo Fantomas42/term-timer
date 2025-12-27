@@ -1,4 +1,5 @@
 """Solve data representation, analysis, and reporting."""
+import math
 from datetime import datetime
 from datetime import timezone
 from functools import cached_property
@@ -23,6 +24,7 @@ from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import SERVER_CONFIG
 from term_timer.config import STATS_CONFIG
 from term_timer.constants import DNF
+from term_timer.constants import FLUENCY_EXPONENTIAL_DECAY
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PAUSE_FACTOR
 from term_timer.constants import PLUS_TWO
@@ -243,6 +245,39 @@ class Solve:  # noqa: PLR0904
             return 0
 
         return moves / (time / SECOND)
+
+    @staticmethod
+    def compute_fluency(algorithm: Algorithm) -> int:
+        """
+        Calculate fluency score based on timing consistency.
+
+        Fluency measures smoothness of execution - how consistent the timing
+        is between moves. Higher scores indicate more rhythmic, fluid solving.
+
+        Args:
+            algorithm: Algorithm with timing information (timestamps in ms)
+
+        Returns:
+            Fluency score (0-100), or 0 if ≤2 moves
+
+        """
+        if len(algorithm) <= 2:
+            return 0
+
+        intervals: list[int] = []
+        for i, move in enumerate(algorithm):
+            if i == 0:
+                intervals.append(0)
+            else:
+                interval = move.timed - algorithm[i - 1].timed
+                intervals.append(interval)
+
+        mean = sum(intervals) / len(intervals)
+        variance = sum((x - mean) ** 2 for x in intervals) / len(intervals)
+        std_dev = variance ** 0.5
+
+        # Convert to fluency score using exponential decay
+        return math.floor(100 * math.exp(FLUENCY_EXPONENTIAL_DECAY * std_dev))
 
     @cached_property
     def reconstruction(self) -> Algorithm:
@@ -568,14 +603,29 @@ class Solve:  # noqa: PLR0904
                 f' [caution]{ self.rotations } Rotations[/caution]'
             )
 
+        fluency = self.compute_fluency(self.reconstruction)
+        fluency_line = ''
+        if fluency > 0:
+            fluency_klass = 'warning'
+            if fluency >= 75:
+                fluency_klass = 'success'
+            elif fluency >= 50:
+                fluency_klass = 'caution'
+
+            fluency_line = (
+                f'[{ fluency_klass }]'
+                f'{ fluency }% Fluency'
+                f'[/{ fluency_klass }] '
+            )
+
         return (
             f'{ metric_string }'
             f'[tps]{ self.tps:.2f} TPS[/tps] '
-            f'{ missed_line }{ pause_line }{ rotation_line }'
+            f'{ fluency_line }{ missed_line }{ pause_line }{ rotation_line }'
         )
 
     @cached_property
-    def method_line(self) -> str:  # noqa: C901, PLR0912
+    def method_line(self) -> str:  # noqa: C901, PLR0912, PLR0914, PLR0915
         """
         Generate detailed step-by-step method analysis display.
 
@@ -675,6 +725,21 @@ class Solve:  # noqa: PLR0904
             else:
                 tps_exec = self.compute_tps(step['qtm'], step['execution'])
 
+            fluency = self.compute_fluency(step['moves'])
+            fluency_line = ''
+            if fluency > 0:
+                fluency_klass = 'warning'
+                if fluency >= 75:
+                    fluency_klass = 'success'
+                elif fluency >= 50:
+                    fluency_klass = 'caution'
+
+                fluency_line = (
+                    f'[{ fluency_klass }]'
+                    f'{ fluency }% Fluency'
+                    f'[/{ fluency_klass }]'
+                )
+
             line += (
                 f'{ header }'
                 f'[{ move_klass }]'
@@ -693,7 +758,8 @@ class Solve:  # noqa: PLR0904
                 f'[{ percent_klass }]'
                 f'{ step["total_percent"]:5.2f}%[/{ percent_klass }] '
                 f'[tps]{ tps:.2f} TPS[/tps] '
-                f'[tps-e]{ tps_exec:.2f} eTPS[/tps-e]'
+                f'[tps-e]{ tps_exec:.2f} eTPS[/tps-e] '
+                f'{ fluency_line }'
                 f'{ footer }\n'
             )
 
