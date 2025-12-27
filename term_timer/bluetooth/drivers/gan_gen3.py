@@ -381,7 +381,7 @@ class GanGen3Driver(GanGen2Driver):
                     move = 'URFDLB'[face] + " '"[direction]
 
                     history_move: MoveEventDict = {
-                        'event': 'move',
+                        'event': 'move_history',
                         'clock': clock,
                         'timestamp': timestamp,
                         'serial': (start_serial - i) & 0xFF,
