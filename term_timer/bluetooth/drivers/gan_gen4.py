@@ -30,6 +30,7 @@ from term_timer.bluetooth.types import HardwareEventPartialDict
 from term_timer.bluetooth.types import HardwareEventSoftwareVersionOnlyDict
 from term_timer.bluetooth.types import HardwareEventVersionOnlyDict
 from term_timer.bluetooth.types import MoveEventDict
+from term_timer.bluetooth.types import ResetEventDict
 
 logger = logging.getLogger(__name__)
 
@@ -380,8 +381,8 @@ class GanGen4Driver(GanGen3Driver):
             battery_payload: BatteryEventDict = {
                 'event': 'battery',
                 'clock': clock,
-                'charging_state': 0,
                 'timestamp': timestamp,
+                'charging_state': 0,
                 'level': min(battery_level, 100),
             }
             self.add_event(events, battery_payload)
@@ -389,6 +390,13 @@ class GanGen4Driver(GanGen3Driver):
         elif event == 0xD2:  # Reset response
             reset_result = msg.get_bit_word(16, 32, little_endian=True)
             logger.debug('Reset result: %s', reset_result)
+
+            reset_payload: ResetEventDict = {
+                'event': 'reset',
+                'clock': clock,
+                'timestamp': timestamp,
+            }
+            self.add_event(events, reset_payload)
 
         elif event == 0xD3:  # Calibrate response
             calibrate_result = msg.get_bit_word(16, 8)
