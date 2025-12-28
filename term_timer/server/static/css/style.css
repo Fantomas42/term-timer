@@ -509,7 +509,7 @@ header {
     position: relative;
 }
 
-.solve-grade {
+.solve-grade, solve-fluency {
     font-weight: bold;
 }
 
@@ -886,13 +886,14 @@ twisty-alg-viewer {
 }
 
 .solve-list th:nth-child(4), .solve-list td:nth-child(4) {
-    width: 40%; /* Scramble */
+    width: 35%; /* Scramble */
 }
 
 .solve-list th:nth-child(5), .solve-list td:nth-child(5),
 .solve-list th:nth-child(6), .solve-list td:nth-child(6),
-.solve-list th:nth-child(7), .solve-list td:nth-child(7) {
-    width: 5%; /* Flag, Comment, Grade */
+.solve-list th:nth-child(7), .solve-list td:nth-child(7),
+.solve-list th:nth-child(8), .solve-list td:nth-child(8) {
+    width: 5%; /* Flag, Comment, Grade, Fluency */
 }
 
 .reconstruction th:nth-child(1), .reconstruction td:nth-child(1) {

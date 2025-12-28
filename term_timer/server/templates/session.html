@@ -755,19 +755,6 @@
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
-        <i class="fas fa-chart-bar"></i>
-        <a href="#time-distribution" id="time-distribution">Time Distribution</a>
-      </h2>
-    </div>
-    <div class="chart-container">
-      <canvas id="timeDistributionChart"></canvas>
-    </div>
-  </div>
-
-
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
         <i class="fas fa-list"></i>
         <a href="#solves" id="solves">Solves</a>
       </h2>
@@ -791,6 +778,7 @@
             <th>Flag</th>
             <th>Comment</th>
             <th>Grade</th>
+            <th>Fluency</th>
           </tr>
         </thead>
         <tbody>
@@ -840,6 +828,17 @@
                   ---
                 {% endif %}
               </td>
+              <td class="solve-fluency">
+                {% set fluency = solve.compute_fluency(solve.solution) %}
+                {% if fluency %}
+                  <span class="metric-{% if fluency >= 75 %}success{% elif fluency >= 50 %}caution{% else %}warning{% endif %}">
+                    {{ fluency }}%
+                  </span>
+                {% else %}
+                  ---
+                {% endif %}
+              </td>
+
             </tr>
           {% endfor %}
         </tbody>
@@ -916,6 +915,18 @@
         </table>
       </div>
     {% endfor %}
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-chart-bar"></i>
+        <a href="#time-distribution" id="time-distribution">Time Distribution</a>
+      </h2>
+    </div>
+    <div class="chart-container">
+      <canvas id="timeDistributionChart"></canvas>
+    </div>
   </div>
 
   <footer class="app-footer card">
