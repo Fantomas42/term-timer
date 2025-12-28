@@ -73,6 +73,7 @@ from term_timer.server.types import AlgorithmVariation
 from term_timer.server.types import DistributionData
 from term_timer.server.types import Error404Context
 from term_timer.server.types import Error500Context
+from term_timer.server.types import FluencyData
 from term_timer.server.types import MethodInfo
 from term_timer.server.types import RecognitionData
 from term_timer.server.types import ScatterPoint
@@ -925,6 +926,7 @@ class SolveDetailView(View):
         tps: list[TPSData] = []
         steps: list[StepMarker] = []
         scatter: list[ScatterPoint] = []
+        fluencies: list[FluencyData] = []
         recognitions: list[RecognitionData] = []
 
         ranks = sorted([s.final_time for s in self.solves])
@@ -955,6 +957,12 @@ class SolveDetailView(View):
                         {
                             'tps': Solve.compute_tps(s['qtm'], s['total']),
                             'etps': Solve.compute_tps(s['qtm'], s['execution']),
+                            'label': s['name'],
+                        },
+                    )
+                    fluencies.append(
+                        {
+                            'fluency': Solve.compute_fluency(s['moves']),
                             'label': s['name'],
                         },
                     )
@@ -998,6 +1006,7 @@ class SolveDetailView(View):
             'scatter': scatter,
             'steps': steps,
             'tps': tps,
+            'fluencies': fluencies,
             'recognitions': recognitions,
             'reconstruction_text': reconstruction_text,
             'reconstruction_timing': self.solve.reconstruction_steps_timing,

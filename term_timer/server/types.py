@@ -67,6 +67,13 @@ class TPSData(TypedDict):
     label: str
 
 
+class FluencyData(TypedDict):
+    """Fluency score data for a step."""
+
+    fluency: float
+    label: str
+
+
 class RecognitionData(TypedDict):
     """Recognition and execution time data for a step."""
 

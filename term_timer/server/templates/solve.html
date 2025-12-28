@@ -228,6 +228,7 @@
 
        initializeTimingChart();
        initializeTPSChart();
+       initializeFluencyChart();
        initializeRecognitionChart();
        initializeSortableTables();
      });
@@ -431,6 +432,73 @@
                title: {
                  display: true,
                  text: 'TPS (Turns Per Second)',
+                 color: '#94a3b8'
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)',
+               },
+               ticks: {
+                 color: '#94a3b8',
+               },
+             },
+           },
+         }
+       });
+     }
+
+     function initializeFluencyChart() {
+       const ctx = document.getElementById('fluencyChart');
+       const fluency = {{ fluencies|tojson }};
+
+       fluencyChart = new Chart(ctx, {
+         type: 'line',
+         data: {
+           labels: fluency.map(item => item.label),
+           datasets: [
+             {
+               label: 'Fluency',
+               data: fluency.map(item => item.fluency),
+               borderColor: 'rgba(205, 100, 255, 0.6)',
+               tension: 0.1,
+               fill: false,
+               pointBackgroundColor: 'rgba(205, 100, 255, 0.6)',
+               pointRadius: 5,
+               pointHitRadius: 5,
+               pointHoverRadius: 10,
+             },
+           ]
+         },
+         options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           plugins: {
+             legend: {
+               display: false
+             },
+             annotation: {
+               annotations: [{
+                 type: 'line',
+                 yMin: {{ solve.compute_fluency(solve.solution) }},
+                 yMax: {{ solve.compute_fluency(solve.solution) }},
+                 borderColor: 'rgba(255, 0, 0, 0.6)',
+                 borderWidth: 2,
+               }],
+             },
+           },
+           scales: {
+             x: {
+               ticks: {
+                 color: '#94a3b8',
+               },
+               grid: {
+                 color: 'rgba(148, 163, 184, 0.1)',
+               }
+             },
+             y: {
+               beginAtZero: true,
+               title: {
+                 display: true,
+                 text: 'Fluency Score',
                  color: '#94a3b8'
                },
                grid: {
@@ -1284,6 +1352,18 @@
       </div>
       <div class="chart-container">
         <canvas id="tpsChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-cheese"></i>
+          <a href="#fluency" id="fluency">Fluency</a>
+        </h2>
+      </div>
+      <div class="chart-container">
+        <canvas id="fluencyChart"></canvas>
       </div>
     </div>
 
