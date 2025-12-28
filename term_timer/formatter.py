@@ -1,5 +1,4 @@
 """Formatting utilities for times, algorithms, scores, and display output."""
-
 import difflib
 import re
 from typing import TYPE_CHECKING
@@ -216,13 +215,37 @@ def format_flag(flag: SolveFlag) -> str:
         Flag value formatted.
 
     """
-    flag_class = 'result'
+    flag_klass = 'result'
     if flag == DNF:
-        flag_class = 'dnf'
+        flag_klass = 'dnf'
     if flag == PLUS_TWO:
-        flag_class = 'plus-two'
+        flag_klass = 'plus-two'
 
-    return f'[{ flag_class }]{ flag }[/{ flag_class }]'
+    return f'[{ flag_klass }]{ flag }[/{ flag_klass }]'
+
+
+def format_fluency(fluency: int) -> str:
+    """
+    Format fluency score from his value.
+
+    Args:
+        fluency: Fluency value to format.
+
+    Returns:
+        Fluency value formatted.
+
+    """
+    fluency_klass = 'warning'
+    if fluency >= 75:
+        fluency_klass = 'success'
+    elif fluency >= 50:
+        fluency_klass = 'caution'
+
+    return (
+        f'[{ fluency_klass }]'
+        f'{ fluency }% Fluency'
+        f'[/{ fluency_klass }] '
+    )
 
 
 def format_session_name(session_name: str) -> str:

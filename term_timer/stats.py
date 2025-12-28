@@ -20,6 +20,7 @@ from term_timer.formatter import format_delta
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_flag
+from term_timer.formatter import format_fluency
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_score
 from term_timer.formatter import format_time
@@ -985,6 +986,16 @@ class SolveStatisticsReporter(Statistics):
                 missed_string += '[success]Optimal execution[/success]'
 
             console.print(missed_string)
+
+            fluency_string = '[stats]Fluency    :[/stats] '
+            fluency = solve.compute_fluency(solve.solution)
+
+            if fluency > 0:
+                fluency_string += format_fluency(fluency)
+            else:
+                fluency_string += '[result]N/A[/result]'
+
+            console.print(fluency_string)
 
             pauses_string = '[stats]Pauses     :[/stats] '
             if solve.execution_pauses:

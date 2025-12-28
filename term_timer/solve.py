@@ -38,6 +38,7 @@ from term_timer.formatter import format_alg_pauses
 from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_cube_db_url
 from term_timer.formatter import format_duration
+from term_timer.formatter import format_fluency
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_time
 from term_timer.methods import get_method_analyser
@@ -606,17 +607,7 @@ class Solve:  # noqa: PLR0904
         fluency = self.compute_fluency(self.reconstruction)
         fluency_line = ''
         if fluency > 0:
-            fluency_klass = 'warning'
-            if fluency >= 75:
-                fluency_klass = 'success'
-            elif fluency >= 50:
-                fluency_klass = 'caution'
-
-            fluency_line = (
-                f'[{ fluency_klass }]'
-                f'{ fluency }% Fluency'
-                f'[/{ fluency_klass }] '
-            )
+            fluency_line = f'{ format_fluency(fluency) } '
 
         return (
             f'{ metric_string }'
@@ -728,17 +719,7 @@ class Solve:  # noqa: PLR0904
             fluency = self.compute_fluency(step['moves'])
             fluency_line = ''
             if fluency > 0:
-                fluency_klass = 'warning'
-                if fluency >= 75:
-                    fluency_klass = 'success'
-                elif fluency >= 50:
-                    fluency_klass = 'caution'
-
-                fluency_line = (
-                    f'[{ fluency_klass }]'
-                    f'{ fluency }% Fluency'
-                    f'[/{ fluency_klass }]'
-                )
+                fluency_line = format_fluency(fluency)
 
             line += (
                 f'{ header }'
