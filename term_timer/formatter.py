@@ -244,7 +244,7 @@ def format_fluency(fluency: int) -> str:
     return (
         f'[{ fluency_klass }]'
         f'{ fluency }% Fluency'
-        f'[/{ fluency_klass }] '
+        f'[/{ fluency_klass }]'
     )
 
 

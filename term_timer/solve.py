@@ -535,30 +535,49 @@ class Solve:  # noqa: PLR0904
 
         score = self.score if self.score is not None else 0.0
         grade = format_grade(score)
-        grade_class = grade.lower()
+        grade_klass = grade.lower()
         grade_line = (
-            f' [grade_{ grade_class }]'
+            f'[grade_{ grade_klass }]'
             f'Grade { grade }'
-            f'[/grade_{ grade_class }]'
+            f'[/grade_{ grade_klass }]'
         )
 
         if self.execution_pauses:
             pause_line = (
-                f' [caution]{ self.execution_pauses } Pauses[/caution]'
+                f'[caution]{ self.execution_pauses } Pauses[/caution]'
             )
         else:
-            pause_line = ' [success]No Pauses[/success]'
+            pause_line = '[success]No Pauses[/success]'
+
+        fluency_line = ''
+        fluency = self.compute_fluency(self.solution)
+        if fluency > 0:
+            fluency_line += format_fluency(fluency)
 
         rotation_line = ''
         if self.rotations:
             rotation_line = (
-                f' [caution]{ self.rotations } Rotations[/caution]'
+                f'[caution]{ self.rotations } Rotations[/caution]'
             )
+
+        ending = ' '.join(
+            [
+                line
+                for line in [
+                        missed_line,
+                        pause_line,
+                        fluency_line,
+                        rotation_line,
+                        grade_line,
+                ]
+                if line
+            ],
+        )
 
         return (
             f'{ metric_string }'
             f'[tps]{ self.tps:.2f} TPS[/tps] '
-            f'{ missed_line }{ pause_line }{ rotation_line }{ grade_line }'
+            f'{ ending }'
         )
 
     @cached_property

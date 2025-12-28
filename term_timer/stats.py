@@ -803,11 +803,11 @@ class SolveStatisticsReporter(Statistics):
                 '[/link][/localhost]'
             )
 
-            time_class = 'result'
+            time_klass = 'result'
             if solve.time == self.best:
-                time_class = 'success'
+                time_klass = 'success'
             elif solve.time == self.worst:
-                time_class = 'warning'
+                time_klass = 'warning'
 
             footer = ''
             if solve.flag:
@@ -818,7 +818,7 @@ class SolveStatisticsReporter(Statistics):
 
             console.print(
                 header,
-                f'[{ time_class }]{ format_time(solve.time) }[/{ time_class }]',
+                f'[{ time_klass }]{ format_time(solve.time) }[/{ time_klass }]',
                 f'[date]{ date }[/date]',
                 f'[consign]{ solve.scramble }[/consign]',
                 footer,
@@ -897,11 +897,11 @@ class SolveStatisticsReporter(Statistics):
         if solve.advanced:
             solve_score = cast('float', solve.score)
             grade = format_grade(solve_score)
-            grade_class = grade.lower()
+            grade_klass = grade.lower()
             grade_line = (
-                f' [grade_{ grade_class }]'
+                f' [grade_{ grade_klass }]'
                 f'{ grade:<2}'
-                f'[/grade_{ grade_class }]'
+                f'[/grade_{ grade_klass }]'
                 f' { format_score(solve_score) }'
             )
             console.print(f'[stats]Grade      :[/stats]{ grade_line }')
@@ -909,11 +909,11 @@ class SolveStatisticsReporter(Statistics):
             method_applied = cast('Analyser', solve.method_applied)
             method_score = method_applied.score
             grade = format_grade(method_score)
-            grade_class = grade.lower()
+            grade_klass = grade.lower()
             grade_line = (
-                f' [grade_{ grade_class }]'
+                f' [grade_{ grade_klass }]'
                 f'{ grade:<2}'
-                f'[/grade_{ grade_class }]'
+                f'[/grade_{ grade_klass }]'
                 f' { format_score(method_score) }'
             )
             console.print(
@@ -926,14 +926,14 @@ class SolveStatisticsReporter(Statistics):
                 allow_dnf=False,
             )
             recog_percent = solve.recognition_time / solve.time * 100.0
-            recog_class = method_applied.normalize_value(
+            recog_klass = method_applied.normalize_value(
                 'solve', 'recognition',
                 recog_percent, 'recognition-p',
             )
             console.print(
                 '[stats]Recognition:[/stats] '
                 f'[result]{ recognition_time }[/result]'
-                f' [{ recog_class }]{ recog_percent:.2f}%[{ recog_class }]',
+                f' [{ recog_klass }]{ recog_percent:.2f}%[{ recog_klass }]',
             )
 
             execution_time = format_time(
@@ -941,14 +941,14 @@ class SolveStatisticsReporter(Statistics):
                 allow_dnf=False,
             )
             exec_percent = solve.execution_time / solve.time * 100.0
-            exec_class = method_applied.normalize_value(
+            exec_klass = method_applied.normalize_value(
                 'solve', 'execution',
                 exec_percent, 'execution-p',
             )
             console.print(
                 '[stats]Execution  :[/stats] '
                 f'[result]{ execution_time }[/result]'
-                f' [{ exec_class }]{ exec_percent:.2f}%[{ exec_class }]',
+                f' [{ exec_klass }]{ exec_percent:.2f}%[{ exec_klass }]',
             )
 
             metrics_dict = solve.reconstruction.metrics._asdict()
@@ -1191,11 +1191,11 @@ class SolveStatisticsReporter(Statistics):
 
         mean = analyses['mean']
         grade = format_grade(mean)
-        grade_class = grade.lower()
+        grade_klass = grade.lower()
         grade_line = (
-                f' [grade_{ grade_class }]'
+                f' [grade_{ grade_klass }]'
                 f'{ grade }'
-                f'[/grade_{ grade_class }]'
+                f'[/grade_{ grade_klass }]'
             )
         console.print(
             f'[title]Grade CFOP :[/title]{ grade_line } ({ mean:.2f})',
