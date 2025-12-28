@@ -26,6 +26,7 @@ scramble = true
 reconstruction = true
 time_graph = true
 tps_graph = true
+fluency_graph = true
 recognition_graph = true
 
 [bluetooth]

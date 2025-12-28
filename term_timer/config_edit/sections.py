@@ -466,6 +466,13 @@ class DisplaySection(ConfigSection):
                     id='tps_graph',
                 )
 
+            yield Static('Show Fluency Graph', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Display fluency graph',
+                    id='fluency_graph',
+                )
+
             yield Static('Show Recognition Graph', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Checkbox(
@@ -489,6 +496,9 @@ class DisplaySection(ConfigSection):
         tps_graph = self.query_one('#tps_graph', Checkbox)
         tps_graph.value = display_config.get('tps_graph', True)
 
+        fluency_graph = self.query_one('#fluency_graph', Checkbox)
+        fluency_graph.value = display_config.get('fluency_graph', True)
+
         recognition_graph = self.query_one('#recognition_graph', Checkbox)
         recognition_graph.value = display_config.get('recognition_graph', True)
 
@@ -506,6 +516,7 @@ class DisplaySection(ConfigSection):
         reconstruction = self.query_one('#reconstruction', Checkbox)
         time_graph = self.query_one('#time_graph', Checkbox)
         tps_graph = self.query_one('#tps_graph', Checkbox)
+        fluency_graph = self.query_one('#fluency_graph', Checkbox)
         recognition_graph = self.query_one('#recognition_graph', Checkbox)
 
         return {
@@ -514,6 +525,7 @@ class DisplaySection(ConfigSection):
                 'reconstruction': reconstruction.value,
                 'time_graph': time_graph.value,
                 'tps_graph': tps_graph.value,
+                'fluency_graph': fluency_graph.value,
                 'recognition_graph': recognition_graph.value,
             },
         }

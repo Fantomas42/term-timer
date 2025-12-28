@@ -635,7 +635,7 @@ class Solve:  # noqa: PLR0904
         )
 
     @cached_property
-    def method_line(self) -> str:  # noqa: C901, PLR0912, PLR0914, PLR0915
+    def method_line(self) -> str:  # noqa: C901, PLR0912, PLR0914
         """
         Generate detailed step-by-step method analysis display.
 
@@ -1007,6 +1007,40 @@ class Solve:  # noqa: PLR0904
             color=[119, 39],
         )
         plt.hline(self.tps, 'red')
+        plt.plot_size(height=20)
+        plt.canvas_color('default')
+        plt.axes_color('default')
+        plt.ticks_color((0, 175, 255))
+
+        plt.show()
+
+    def fluency_graph(self) -> None:
+        """
+        Display stacked bar chart of fluency per step.
+
+        Shows fluency score for each solving step.
+        """
+        if not self.advanced or not self.method_applied:
+            return
+
+        plt.clear_figure()
+
+        fluencies = []
+        labels = []
+        step: StepSummary
+        for step in self.method_applied.summary:
+            if step['type'] not in {'skipped', 'virtual'}:
+                fluency = Solve.compute_fluency(step['moves'])
+                fluencies.append(fluency)
+                labels.append(step['name'])
+
+        plt.bar(
+            labels,
+            fluencies,
+            label='Fluency',
+            color=129,
+        )
+        plt.hline(self.compute_fluency(self.solution), 'red')
         plt.plot_size(height=20)
         plt.canvas_color('default')
         plt.axes_color('default')

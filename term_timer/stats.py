@@ -832,6 +832,7 @@ class SolveStatisticsReporter(Statistics):
             show_reconstruction: bool,
             show_tps_graph: bool,
             show_time_graph: bool,
+            show_fluency_graph: bool,
             show_recognition_graph: bool) -> None:
         """
         Display detailed analysis for a specific solve.
@@ -848,6 +849,7 @@ class SolveStatisticsReporter(Statistics):
             show_reconstruction: Whether to show move sequence breakdown.
             show_tps_graph: Whether to display turns per second graph.
             show_time_graph: Whether to display timing breakdown graph.
+            show_fluency_graph: Whether to display fluency graph.
             show_recognition_graph: Whether to display recognition timing
                 graph.
 
@@ -1073,6 +1075,8 @@ class SolveStatisticsReporter(Statistics):
                 solve.time_graph()
             if show_tps_graph:
                 solve.tps_graph()
+            if show_fluency_graph:
+                solve.fluency_graph()
             if show_recognition_graph:
                 solve.recognition_graph()
 

@@ -41,6 +41,7 @@ class Timer(SolveInterface):
             show_reconstruction: bool,
             show_tps_graph: bool,
             show_time_graph: bool,
+            show_fluency_graph: bool,
             show_recognition_graph: bool,
             method: str,
             orientation: str,
@@ -65,6 +66,7 @@ class Timer(SolveInterface):
         self.show_reconstruction = show_reconstruction
         self.show_tps_graph = show_tps_graph
         self.show_time_graph = show_time_graph
+        self.show_fluency_graph = show_fluency_graph
         self.show_recognition_graph = show_recognition_graph
         self.method = method
         self.orientation_faces = orientation
@@ -164,6 +166,8 @@ class Timer(SolveInterface):
                     solve.time_graph()
                 if self.show_tps_graph:
                     solve.tps_graph()
+                if self.show_fluency_graph:
+                    solve.fluency_graph()
                 if self.show_recognition_graph:
                     solve.recognition_graph()
 

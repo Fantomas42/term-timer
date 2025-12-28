@@ -118,6 +118,7 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     show_cube = DISPLAY_CONFIG.get('scramble', True)
     show_tps_graph = DISPLAY_CONFIG.get('tps_graph', True)
     show_time_graph = DISPLAY_CONFIG.get('time_graph', True)
+    show_fluency_graph = DISPLAY_CONFIG.get('fluency_graph', True)
     show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
     show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
 
@@ -233,6 +234,18 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         dest='show_tps_graph',
         help=(
             f'{ mode.title() } the TPS graph of the solve.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_fluency_graph else 'show'
+    bluetooth.add_argument(
+        '-z', f'--{ mode }-fluency-graph',
+        action='store_const',
+        const=not show_fluency_graph,
+        default=show_fluency_graph,
+        dest='show_fluency_graph',
+        help=(
+            f'{ mode.title() } the fluency graph of the solve.\n'
             'Default: False.'
         ),
     )
@@ -825,6 +838,7 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     show_cube = DISPLAY_CONFIG.get('scramble', True)
     show_tps_graph = DISPLAY_CONFIG.get('tps_graph', True)
     show_time_graph = DISPLAY_CONFIG.get('time_graph', True)
+    show_fluency_graph = DISPLAY_CONFIG.get('fluency_graph', True)
     show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
     show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
 
@@ -921,6 +935,18 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         dest='show_tps_graph',
         help=(
             f'{ mode.title() } the TPS graph of the solve.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_fluency_graph else 'show'
+    analyze.add_argument(
+        '-z', f'--{ mode }-fluency-graph',
+        action='store_const',
+        const=not show_fluency_graph,
+        default=show_fluency_graph,
+        dest='show_fluency_graph',
+        help=(
+            f'{ mode.title() } the fluency graph of the solve.\n'
             'Default: False.'
         ),
     )
