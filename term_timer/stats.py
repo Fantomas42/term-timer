@@ -990,7 +990,7 @@ class SolveStatisticsReporter(Statistics):
             console.print(missed_string)
 
             fluency_string = '[stats]Fluency    :[/stats] '
-            fluency = solve.compute_fluency(solve.solution)
+            fluency = solve.fluency
 
             if fluency > 0:
                 fluency_string += format_fluency(fluency)

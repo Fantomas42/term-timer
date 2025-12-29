@@ -829,7 +829,7 @@
                 {% endif %}
               </td>
               <td class="solve-fluency">
-                {% set fluency = solve.compute_fluency(solve.solution) %}
+                {% set fluency = solve.fluency %}
                 {% if fluency %}
                   <span class="metric-{% if fluency >= 75 %}success{% elif fluency >= 50 %}caution{% else %}warning{% endif %}">
                     {{ fluency }}%

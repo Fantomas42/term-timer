@@ -478,8 +478,8 @@
              annotation: {
                annotations: [{
                  type: 'line',
-                 yMin: {{ solve.compute_fluency(solve.solution) }},
-                 yMax: {{ solve.compute_fluency(solve.solution) }},
+                 yMin: {{ solve.fluency }},
+                 yMax: {{ solve.fluency }},
                  borderColor: 'rgba(255, 0, 0, 0.6)',
                  borderWidth: 2,
                }],
@@ -791,7 +791,7 @@
         <div class="stat-card">
           <div class="stat-title">Fluency</div>
           <div class="stat-value">
-            {% set fluency = solve.compute_fluency(solve.solution) %}
+            {% set fluency = solve.fluency %}
             <span class="metric-{% if fluency >= 75 %}success{% elif fluency >= 50 %}caution{% else %}warning{% endif %}">
               {{ fluency }}%
             </span>

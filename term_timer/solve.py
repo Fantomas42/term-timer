@@ -295,6 +295,21 @@ class Solve:  # noqa: PLR0904
         )
 
     @cached_property
+    def fluency(self) -> int:
+        """
+        Calculate overall fluency for the solve.
+
+        Returns:
+            Fluency score (0-100), or 0 if ≤2 moves
+
+        """
+        return self.compute_fluency(
+            translate_moves(self.orientation_moves)(self.solution).transform(
+                optimize_double_moves,
+            ),
+        )
+
+    @cached_property
     def tps(self) -> float:
         """
         Calculate overall turns per second for the solve.
@@ -550,9 +565,8 @@ class Solve:  # noqa: PLR0904
             pause_line = '[success]No Pauses[/success]'
 
         fluency_line = ''
-        fluency = self.compute_fluency(self.solution)
-        if fluency > 0:
-            fluency_line += format_fluency(fluency)
+        if self.fluency > 0:
+            fluency_line += format_fluency(self.fluency)
 
         rotation_line = ''
         if self.rotations:
@@ -623,10 +637,9 @@ class Solve:  # noqa: PLR0904
                 f' [caution]{ self.rotations } Rotations[/caution]'
             )
 
-        fluency = self.compute_fluency(self.reconstruction)
         fluency_line = ''
-        if fluency > 0:
-            fluency_line = f'{ format_fluency(fluency) } '
+        if self.fluency > 0:
+            fluency_line = f'{ format_fluency(self.fluency) } '
 
         return (
             f'{ metric_string }'
@@ -1040,7 +1053,7 @@ class Solve:  # noqa: PLR0904
             label='Fluency',
             color=129,
         )
-        plt.hline(self.compute_fluency(self.solution), 'red')
+        plt.hline(self.fluency, 'red')
         plt.plot_size(height=20)
         plt.canvas_color('default')
         plt.axes_color('default')
