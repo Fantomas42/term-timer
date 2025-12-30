@@ -458,6 +458,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
             'htm': 45,
         }
         mock_solve.tps = 2.5
+        mock_solve.fluency = 75
         mock_solve.all_missed_moves = 3
         mock_solve.execution_missed_moves = 1
         mock_solve.transition_missed_moves = 2
@@ -478,6 +479,8 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
                 show_tps_graph=False,
                 show_time_graph=False,
                 show_recognition_graph=False,
+                show_fluency_graph=False,
+                show_advices=False,
                 orientation='DF',
                 disable_rotations=False,
             )
@@ -546,6 +549,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
                     'qtm': 50,
                 }
                 mock_solve.tps = 2.5
+                mock_solve.fluency = 75
                 mock_solve.all_missed_moves = 0
                 mock_solve.execution_missed_moves = 0
                 mock_solve.transition_missed_moves = 0
@@ -568,6 +572,8 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
                         show_tps_graph=False,
                         show_time_graph=False,
                         show_recognition_graph=False,
+                        show_fluency_graph=False,
+                        show_advices=False,
                         orientation='DF',
                         disable_rotations=False,
                     )
@@ -618,6 +624,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.reconstruction = Mock()
         mock_solve.reconstruction.metrics._asdict.return_value = {'qtm': 50}
         mock_solve.tps = 2.5
+        mock_solve.fluency = 75
         mock_solve.all_missed_moves = 0
         mock_solve.execution_missed_moves = 0
         mock_solve.transition_missed_moves = 0
@@ -644,6 +651,8 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
                 show_tps_graph=False,
                 show_time_graph=False,
                 show_recognition_graph=False,
+                show_fluency_graph=False,
+                show_advices=False,
                 orientation='DF',
                 disable_rotations=False,
             )
@@ -696,6 +705,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.reconstruction = Mock()
         mock_solve.reconstruction.metrics._asdict.return_value = {'qtm': 50}
         mock_solve.tps = 2.5
+        mock_solve.fluency = 75
         mock_solve.all_missed_moves = 0
         mock_solve.execution_missed_moves = 0
         mock_solve.transition_missed_moves = 0
@@ -721,6 +731,8 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
                 show_tps_graph=True,
                 show_time_graph=True,
                 show_recognition_graph=True,
+                show_fluency_graph=False,
+                show_advices=False,
                 orientation='DF',
                 disable_rotations=False,
             )

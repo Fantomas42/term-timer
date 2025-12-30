@@ -846,6 +846,7 @@ class SolveStatisticsReporter(Statistics):
             method: Solving method name for analysis (e.g., 'CFOP').
             orientation: Cube orientation string (e.g., 'UF').
             disable_rotations: Disable rotations for analysis.
+            show_advices: Whether to display advices after analyse.
             show_cube: Whether to display scrambled cube state.
             show_reconstruction: Whether to show move sequence breakdown.
             show_tps_graph: Whether to display turns per second graph.

@@ -144,6 +144,7 @@ class SolveDetailContext(TypedDict):
     scatter: list[ScatterPoint]
     steps: list[StepMarker]
     tps: list[TPSData]
+    fluencies: list[FluencyData]
     recognitions: list[RecognitionData]
     reconstruction_text: str
     reconstruction_timing: list[tuple[int, int, Move]]

@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from bottle import Bottle
 from bottle import HTTPError
+from cubing_algs.algorithm import Algorithm
 
 from term_timer.server.app import BLOCK_REGEX
 from term_timer.server.app import CLASS_CONVERTION
@@ -682,6 +683,7 @@ class TestSolveDetailView(unittest.TestCase):
                 'index': [0, 1],
                 'name': 'Cross',
                 'qtm': 8,
+                'moves': Algorithm.parse_moves('R U'),
                 'total': 2000000000,
                 'execution': 1500000000,
                 'recognition': 500000000,
