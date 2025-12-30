@@ -140,20 +140,18 @@ class DetailPanel(VerticalScroll):
                 solve.recognition_time,
                 allow_dnf=False,
             )
-            recog_percent = solve.recognition_time / solve.time * 100.0
             log.write(
                 f'[bold cyan]Recognition:[/bold cyan] '
-                f'{ recognition_time } ({ recog_percent:.2f}%)',
+                f'{ recognition_time } ({ solve.recognition_percent:.2f}%)',
             )
 
             execution_time = format_time(
                 solve.execution_time,
                 allow_dnf=False,
             )
-            exec_percent = solve.execution_time / solve.time * 100.0
             log.write(
                 f'[bold cyan]Execution:[/bold cyan]   '
-                f'{ execution_time } ({ exec_percent:.2f}%)',
+                f'{ execution_time } ({ solve.execution_percent:.2f}%)',
             )
 
             # Metrics

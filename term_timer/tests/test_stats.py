@@ -453,6 +453,8 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.recognition_time = 2 * SECOND
         mock_solve.execution_time = 13 * SECOND
         mock_solve.reconstruction = Mock()
+        mock_solve.recognition_percent = 25
+        mock_solve.execution_percent = 75
         mock_solve.reconstruction.metrics._asdict.return_value = {
             'qtm': 50,
             'htm': 45,
@@ -544,6 +546,8 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
                 )
                 mock_solve.recognition_time = 2 * SECOND
                 mock_solve.execution_time = 13 * SECOND
+                mock_solve.recognition_percent = 25
+                mock_solve.execution_percent = 75
                 mock_solve.reconstruction = Mock()
                 mock_solve.reconstruction.metrics._asdict.return_value = {
                     'qtm': 50,
@@ -621,6 +625,8 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.method_applied.normalize_value = Mock(return_value='success')
         mock_solve.recognition_time = 2 * SECOND
         mock_solve.execution_time = 13 * SECOND
+        mock_solve.recognition_percent = 25
+        mock_solve.execution_percent = 75
         mock_solve.reconstruction = Mock()
         mock_solve.reconstruction.metrics._asdict.return_value = {'qtm': 50}
         mock_solve.tps = 2.5
@@ -702,6 +708,8 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
         mock_solve.method_applied.normalize_value = Mock(return_value='success')
         mock_solve.recognition_time = 2 * SECOND
         mock_solve.execution_time = 13 * SECOND
+        mock_solve.recognition_percent = 25
+        mock_solve.execution_percent = 75
         mock_solve.reconstruction = Mock()
         mock_solve.reconstruction.metrics._asdict.return_value = {'qtm': 50}
         mock_solve.tps = 2.5

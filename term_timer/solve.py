@@ -497,6 +497,36 @@ class Solve:  # noqa: PLR0904
         )
 
     @cached_property
+    def recognition_percent(self) -> float:
+        """
+        Calculate percent time spent recognizing algorithms.
+
+        Returns:
+            Execution percent across all steps
+
+        """
+        return 100.0 - self.execution_percent
+
+    @cached_property
+    def execution_percent(self) -> float:
+        """
+        Calculate percent time spent executing algorithms.
+
+        Use last move timestamp to avoid rounding issue
+        between milliseconds and nanoseconds.
+
+        Returns:
+            Execution percent across all steps
+
+        """
+        return (
+            self.execution_time
+            / MS_TO_NS_FACTOR
+            / self.solution[-1].timed
+            * 100.0
+        )
+
+    @cached_property
     def move_speed(self) -> float:
         """
         Calculate average time per move during execution.

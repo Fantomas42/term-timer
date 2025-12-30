@@ -929,30 +929,32 @@ class SolveStatisticsReporter(Statistics):
                 solve.recognition_time,
                 allow_dnf=False,
             )
-            recog_percent = solve.recognition_time / solve.time * 100.0
             recog_klass = method_applied.normalize_value(
                 'solve', 'recognition',
-                recog_percent, 'recognition-p',
+                solve.recognition_percent, 'recognition-p',
             )
             console.print(
                 '[stats]Recognition:[/stats] '
                 f'[result]{ recognition_time }[/result]'
-                f' [{ recog_klass }]{ recog_percent:.2f}%[{ recog_klass }]',
+                f' [{ recog_klass }]'
+                f'{ solve.recognition_percent:.2f}%'
+                f'[{ recog_klass }]',
             )
 
             execution_time = format_time(
                 solve.execution_time,
                 allow_dnf=False,
             )
-            exec_percent = solve.execution_time / solve.time * 100.0
             exec_klass = method_applied.normalize_value(
                 'solve', 'execution',
-                exec_percent, 'execution-p',
+                solve.execution_percent, 'execution-p',
             )
             console.print(
                 '[stats]Execution  :[/stats] '
                 f'[result]{ execution_time }[/result]'
-                f' [{ exec_klass }]{ exec_percent:.2f}%[{ exec_klass }]',
+                f' [{ exec_klass }]'
+                f'{ solve.execution_percent:.2f}%'
+                f'[{ exec_klass }]',
             )
 
             metrics_dict = solve.reconstruction.metrics._asdict()

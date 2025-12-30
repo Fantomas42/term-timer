@@ -254,6 +254,28 @@ class TestSolve54(unittest.TestCase):  # noqa: PLR0904
             17912000000,
         )
 
+    def test_recognition_percent(self) -> None:
+        """Test recognition percent."""
+        self.assertEqual(
+            self.solve.recognition_percent,
+            34.529770824957055,
+        )
+
+    def test_execution_percent(self) -> None:
+        """Test execution percent."""
+        self.assertEqual(
+            self.solve.execution_percent,
+            65.47022917504295,
+        )
+
+    def test_recognition_execution_percent(self) -> None:
+        """Test recognition + execution percent."""
+        self.assertEqual(
+            self.solve.recognition_percent
+            + self.solve.execution_percent,
+            100.0,
+        )
+
     def test_move_speed(self) -> None:
         """Test move speed."""
         self.assertEqual(
