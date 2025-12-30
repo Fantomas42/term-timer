@@ -104,7 +104,7 @@ def set_session_arguments(
     return session
 
 
-def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR0914
     """
     Create argument parser for solve command.
 
@@ -121,6 +121,7 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     show_fluency_graph = DISPLAY_CONFIG.get('fluency_graph', True)
     show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
     show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
+    show_advices = DISPLAY_CONFIG.get('advices', True)
 
     parser = subparsers.add_parser(
         'solve',
@@ -201,14 +202,6 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             f'Default: { CUBE_METHOD }.'
         ),
     )
-    bluetooth.add_argument(
-        '-a', '--advices',
-        action='store_true',
-        help=(
-            'Show advices after analyse.\n'
-            'Default: False.'
-        ),
-    )
     mode = 'hide' if show_reconstruction else 'show'
     bluetooth.add_argument(
         '-s', f'--{ mode }-reconstruction',
@@ -219,6 +212,18 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             f'{ mode.title() } the reconstruction of the solve.\n'
             'Default: False'
+        ),
+    )
+    mode = 'hide' if show_advices else 'show'
+    bluetooth.add_argument(
+        '-a', f'--{ mode }-advices',
+        action='store_const',
+        const=not show_advices,
+        default=show_advices,
+        dest='show_advices',
+        help=(
+            f'{ mode.title() } advices after analyse.\n'
+            'Default: False.'
         ),
     )
     mode = 'hide' if show_time_graph else 'show'
@@ -849,6 +854,7 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     show_fluency_graph = DISPLAY_CONFIG.get('fluency_graph', True)
     show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
     show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
+    show_advices = DISPLAY_CONFIG.get('advices', True)
 
     parser = subparsers.add_parser(
         'detail',
@@ -903,14 +909,6 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
     analyze.add_argument(
-        '-a', '--advices',
-        action='store_true',
-        help=(
-            'Show advices after analyse.\n'
-            'Default: False.'
-        ),
-    )
-    analyze.add_argument(
         '-g', '--disable-rotations',
         action='store_true',
         help=(
@@ -928,6 +926,18 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             f'{ mode.title() } the reconstruction of the solve.\n'
             'Default: False'
+        ),
+    )
+    mode = 'hide' if show_advices else 'show'
+    analyze.add_argument(
+        '-a', f'--{ mode }-advices',
+        action='store_const',
+        const=not show_advices,
+        default=show_advices,
+        dest='show_advices',
+        help=(
+            f'{ mode.title() } advices after analyse.\n'
+            'Default: False.'
         ),
     )
     mode = 'hide' if show_time_graph else 'show'

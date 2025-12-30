@@ -24,6 +24,7 @@ step = "oll"
 [display]
 scramble = true
 reconstruction = true
+advices = true
 time_graph = true
 tps_graph = true
 fluency_graph = true

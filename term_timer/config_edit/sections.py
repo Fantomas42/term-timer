@@ -452,6 +452,13 @@ class DisplaySection(ConfigSection):
                     id='reconstruction',
                 )
 
+            yield Static('Show Advices', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Display advices after analyse',
+                    id='advices',
+                )
+
             yield Static('Show Time Graph', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Checkbox(
@@ -490,6 +497,9 @@ class DisplaySection(ConfigSection):
         reconstruction = self.query_one('#reconstruction', Checkbox)
         reconstruction.value = display_config.get('reconstruction', True)
 
+        advices = self.query_one('#advices', Checkbox)
+        advices.value = display_config.get('advices', True)
+
         time_graph = self.query_one('#time_graph', Checkbox)
         time_graph.value = display_config.get('time_graph', True)
 
@@ -514,6 +524,7 @@ class DisplaySection(ConfigSection):
         """
         scramble = self.query_one('#scramble', Checkbox)
         reconstruction = self.query_one('#reconstruction', Checkbox)
+        advices = self.query_one('#advices', Checkbox)
         time_graph = self.query_one('#time_graph', Checkbox)
         tps_graph = self.query_one('#tps_graph', Checkbox)
         fluency_graph = self.query_one('#fluency_graph', Checkbox)
@@ -523,6 +534,7 @@ class DisplaySection(ConfigSection):
             'display': {
                 'scramble': scramble.value,
                 'reconstruction': reconstruction.value,
+                'advices': advices.value,
                 'time_graph': time_graph.value,
                 'tps_graph': tps_graph.value,
                 'fluency_graph': fluency_graph.value,

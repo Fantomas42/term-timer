@@ -312,7 +312,7 @@ def generate_solve_advice(solve: 'Solve') -> str:
     if not solve.advanced or not solve.method_applied:
         return ''
 
-    advice_lines = ['[bold cyan]Performance Advice:[/bold cyan]']
+    advice_lines = ['[stats]Advices    :[/stats]']
 
     score = cast('float', solve.score)
     advice_lines.append(
