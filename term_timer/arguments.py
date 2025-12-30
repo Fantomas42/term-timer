@@ -201,6 +201,14 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             f'Default: { CUBE_METHOD }.'
         ),
     )
+    bluetooth.add_argument(
+        '-a', '--advices',
+        action='store_true',
+        help=(
+            'Show advices after analyse.\n'
+            'Default: False.'
+        ),
+    )
     mode = 'hide' if show_reconstruction else 'show'
     bluetooth.add_argument(
         '-s', f'--{ mode }-reconstruction',
@@ -892,6 +900,14 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Set the method of analyse used.\n'
             f'Default: { CUBE_METHOD }.'
+        ),
+    )
+    analyze.add_argument(
+        '-a', '--advices',
+        action='store_true',
+        help=(
+            'Show advices after analyse.\n'
+            'Default: False.'
         ),
     )
     analyze.add_argument(

@@ -828,6 +828,7 @@ class SolveStatisticsReporter(Statistics):
             self, solve_id: int, method: str, orientation: str,
             *,
             disable_rotations: bool,
+            show_advices: bool,
             show_cube: bool,
             show_reconstruction: bool,
             show_tps_graph: bool,
@@ -1079,6 +1080,8 @@ class SolveStatisticsReporter(Statistics):
                 solve.fluency_graph()
             if show_recognition_graph:
                 solve.recognition_graph()
+            if show_advices:
+                console.print(solve.advices())
 
     @staticmethod
     def case_table(title: str, items: dict[str, CaseStats],

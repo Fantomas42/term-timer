@@ -19,6 +19,7 @@ from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.timing import untime_moves
 from cubing_algs.transform.translate import translate_moves
 
+from term_timer.adviser import generate_solve_advice
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import SERVER_CONFIG
@@ -1095,6 +1096,19 @@ class Solve:  # noqa: PLR0904
         plt.ticks_color((0, 175, 255))
 
         plt.show()
+
+    def advices(self) -> str:
+        """
+        Generate constructive advice based on solve performance metrics.
+
+        Analyzes recognition time, execution quality, efficiency, and step
+        performance to provide actionable recommendations for improvement.
+
+        Returns:
+            Rich-formatted string with personalized advice and motivation
+
+        """
+        return generate_solve_advice(self)
 
     @staticmethod
     def missed_moves_pair(algorithm: Algorithm) -> tuple[Algorithm, Algorithm]:
