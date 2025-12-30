@@ -295,9 +295,9 @@ def get_motivational_closing(score: float, time: float) -> str:
     )
 
 
-def generate_solve_advice(solve: 'Solve') -> str:
+def generate_solve_advices(solve: 'Solve') -> list[str]:
     """
-    Generate constructive advice based on solve performance metrics.
+    Generate constructive advices based on solve performance metrics.
 
     Analyzes recognition time, execution quality, efficiency, and step
     performance to provide actionable recommendations for improvement.
@@ -306,13 +306,10 @@ def generate_solve_advice(solve: 'Solve') -> str:
         solve: Solve instance with reconstruction data
 
     Returns:
-        Rich-formatted string with personalized advice and motivation
+        List of strings with personalized advice and motivation
 
     """
-    if not solve.advanced or not solve.method_applied:
-        return ''
-
-    advice_lines = ['[stats]Advices    :[/stats]']
+    advice_lines = []
 
     score = cast('float', solve.score)
     advice_lines.append(
@@ -372,4 +369,4 @@ def generate_solve_advice(solve: 'Solve') -> str:
         ),
     )
 
-    return '\n'.join(advice_lines)
+    return advice_lines

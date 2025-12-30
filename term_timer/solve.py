@@ -19,7 +19,7 @@ from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.timing import untime_moves
 from cubing_algs.transform.translate import translate_moves
 
-from term_timer.adviser import generate_solve_advice
+from term_timer.adviser import generate_solve_advices
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import SERVER_CONFIG
@@ -1108,7 +1108,13 @@ class Solve:  # noqa: PLR0904
             Rich-formatted string with personalized advice and motivation
 
         """
-        return generate_solve_advice(self)
+        if not self.advanced or not self.method_applied:
+            return ''
+
+        advice_lines = ['[stats]Advices    :[/stats]']
+        advice_lines.extend(generate_solve_advices(self))
+
+        return '\n'.join(advice_lines)
 
     @staticmethod
     def missed_moves_pair(algorithm: Algorithm) -> tuple[Algorithm, Algorithm]:
