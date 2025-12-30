@@ -28,8 +28,8 @@ class LBLAnalyser(Analyser):
             'LL': 38,
         },
         'solve': {
-            'recognition': (20, 30),
-            'execution': (70, 80),
+            'recognition': (0, 30),
+            'execution': (70, 100),
         },
     }
 

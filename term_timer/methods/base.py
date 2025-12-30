@@ -546,7 +546,7 @@ class Analyser(FaceletAnalyser):
 
         """
         norm = self.norms.get(metric, {}).get(name)
-        if not norm:
+        if norm is None:
             return default
 
         if isinstance(norm, (int | float)):
