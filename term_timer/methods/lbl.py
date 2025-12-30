@@ -60,7 +60,7 @@ class LBLAnalyser(Analyser):
         Inserts skipped F1L step if necessary.
         """
         # Skipped F1L insert
-        if summary[1]['name'] != 'F1L':
+        if len(summary) > 1 and summary[1]['name'] != 'F1L':
             summary.insert(
                 1,
                 {

@@ -386,7 +386,7 @@ class CF4OPAnalyser(CFOPAnalyser):
         },
         'solve': {
             'recognition': (30, 40),
-            'execution': (60, 70),
+            'execution': (60, 100),
         },
     }
 
