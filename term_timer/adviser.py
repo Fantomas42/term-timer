@@ -17,12 +17,12 @@ def get_performance_feedback(score: float) -> str:
 
     """
     if score >= 16.0:  # noqa: PLR2004
-        return '[green]Excellent solve! Keep up the great work.[/green]'
+        return 'Excellent solve! Keep up the great work.'
     if score >= 12.0:  # noqa: PLR2004
-        return '[cyan]Solid performance with room for optimization.[/cyan]'
+        return 'Solid performance with room for optimization.'
     if score >= 8.0:  # noqa: PLR2004
-        return '[yellow]Good foundation - focus on refinement.[/yellow]'
-    return '[orange1]Lots of potential for improvement![/orange1]'
+        return 'Good foundation - focus on refinement.'
+    return 'Lots of potential for improvement!'
 
 
 def get_recognition_advice(
@@ -45,13 +45,13 @@ def get_recognition_advice(
 
     if rec_percent > 40:
         return [
-            f'[yellow]Recognition time is high ({rec_percent:.1f}%). '
-            'Practice case recognition with drills.[/yellow]',
+            f'Recognition time is high ({rec_percent:.1f}%). '
+            'Practice case recognition with drills.',
         ]
     if rec_percent > 25:
         return [
-            '[dim]Consider drilling cases that take longer '
-            'to recognize.[/dim]',
+            'Consider drilling cases that take longer '
+            'to recognize.',
         ]
     return []
 
@@ -66,19 +66,19 @@ def get_execution_pauses_advice(execution_pauses: int) -> list[str]:
     """
     if execution_pauses > 8:
         return [
-            f'[orange1]Many pauses detected ({execution_pauses}). '
+            f'Many pauses detected ({execution_pauses}). '
             'Practice lookahead by solving slower '
-            'while maintaining continuous turning.[/orange1]',
+            'while maintaining continuous turning.',
         ]
     if execution_pauses > 4:
         return [
-            f'[yellow]Reduce pauses ({execution_pauses}) '
+            f'Reduce pauses ({execution_pauses}) '
             'by improving lookahead. '
             'Try to spot the next pair while solving '
-            'the current one.[/yellow]',
+            'the current one.',
         ]
     if execution_pauses == 0:
-        return ['[green]Perfect flow - no pauses detected![/green]']
+        return ['Perfect flow - no pauses detected!']
     return []
 
 
@@ -95,19 +95,19 @@ def get_fluency_advice(fluency: int) -> list[str]:
 
     if fluency >= 85:
         return [
-            f'[green]Excellent fluency ({fluency}/100) - '
-            'very smooth execution![/green]',
+            f'Excellent fluency ({fluency}/100) - '
+            'very smooth execution!',
         ]
     if fluency >= 70:
         return [
-            f'[cyan]Good fluency ({fluency}/100). '
-            'Keep practicing smooth transitions.[/cyan]',
+            f'Good fluency ({fluency}/100). '
+            'Keep practicing smooth transitions.',
         ]
     if fluency < 50:
         return [
-            f'[yellow]Low fluency ({fluency}/100). '
+            f'Low fluency ({fluency}/100). '
             'Practice slow, consistent turning to build '
-            'muscle memory.[/yellow]',
+            'muscle memory.',
         ]
     return []
 
@@ -128,26 +128,26 @@ def get_missed_moves_advice(
 
     if all_missed_moves > 10:
         advice.append(
-            f'[orange1]Many inefficient moves '
+            f'Many inefficient moves '
             f'({all_missed_moves} missed QTM). '
             'Review your algorithms and avoid '
-            'do-undo sequences.[/orange1]',
+            'do-undo sequences.',
         )
     elif all_missed_moves > 5:
         advice.append(
-            f'[yellow]Some inefficiency '
+            f'Some inefficiency '
             f'({all_missed_moves} missed QTM). '
-            'Double-check your algorithm execution.[/yellow]',
+            'Double-check your algorithm execution.',
         )
     elif all_missed_moves == 0:
         advice.append(
-            '[green]Perfect efficiency - no wasted moves![/green]',
+            'Perfect efficiency - no wasted moves!',
         )
 
     if transition_missed_moves > execution_missed_moves:
         advice.append(
-            '[yellow]Many transition inefficiencies. '
-            'Plan ahead to connect steps smoothly.[/yellow]',
+            'Many transition inefficiencies. '
+            'Plan ahead to connect steps smoothly.',
         )
 
     return advice
@@ -163,17 +163,17 @@ def get_rotation_advice(rotations: int) -> list[str]:
     """
     if rotations > 8:
         return [
-            f'[orange1]Too many rotations ({rotations}). '
+            f'Too many rotations ({rotations}). '
             'Practice rotationless solutions and use '
-            'back slots more.[/orange1]',
+            'back slots more.',
         ]
     if rotations > 4:
         return [
-            f'[yellow]Consider reducing rotations ({rotations}) '
-            'for better TPS.[/yellow]',
+            f'Consider reducing rotations ({rotations}) '
+            'for better TPS.',
         ]
     if rotations == 0:
-        return ['[green]Rotationless solve - excellent![/green]']
+        return ['Rotationless solve - excellent!']
     return []
 
 
@@ -187,13 +187,13 @@ def get_tps_advice(tps: float) -> list[str]:
     """
     if tps > 8.0:  # noqa: PLR2004
         return [
-            f'[green]Impressive turning speed ({tps:.2f} TPS)![/green]',
+            f'Impressive turning speed ({tps:.2f} TPS)!',
         ]
     if tps < 4.0:  # noqa: PLR2004
         return [
-            f'[yellow]Low TPS ({tps:.2f}). '
+            f'Low TPS ({tps:.2f}). '
             'Practice fingertricks and work on '
-            'lookahead to maintain flow.[/yellow]',
+            'lookahead to maintain flow.',
         ]
     return []
 
@@ -208,9 +208,9 @@ def get_auf_advice(aufs: int) -> list[str]:
     """
     if aufs > 6:
         return [
-            f'[yellow]Excessive AUFs ({aufs}). '
+            f'Excessive AUFs ({aufs}). '
             'Learn algorithm variations with '
-            'better pre-AUF/post-AUF.[/yellow]',
+            'better pre-AUF/post-AUF.',
         ]
     return []
 
@@ -242,34 +242,34 @@ def get_step_specific_advice(solve: 'Solve') -> list[str]:
     advice = []
     step_name = slowest_step['name']
     advice.append(
-        f'[yellow]{step_name} took {slowest_percent:.1f}% '
-        'of solve time. Focus practice on this step.[/yellow]',
+        f'{step_name} took {slowest_percent:.1f}% '
+        'of solve time. Focus practice on this step.',
     )
 
     # Specific step advice
     if 'F2L' in step_name:
         advice.append(
-            '[dim]F2L tip: Practice slow solves '
-            'focusing on lookahead.[/dim]',
+            'F2L tip: Practice slow solves '
+            'focusing on lookahead.',
         )
     elif 'OLL' in step_name or 'PLL' in step_name:
         if slowest_step['recognition_percent'] > 15:
             advice.append(
-                '[dim]Practice case recognition drills '
-                'for faster identification.[/dim]',
+                'Practice case recognition drills '
+                'for faster identification.',
             )
         else:
             advice.append(
-                '[dim]Drill this algorithm until you can '
-                'execute it in under 2 seconds.[/dim]',
+                'Drill this algorithm until you can '
+                'execute it in under 2 seconds.',
             )
     elif (
         'Cross' in step_name
         and slowest_step['moves_prettified'].metrics.htm > 8
     ):
         advice.append(
-            '[dim]Plan a more efficient cross '
-            '(target 8 moves or fewer).[/dim]',
+            'Plan a more efficient cross '
+            '(target 8 moves or fewer).',
         )
 
     return advice
@@ -286,12 +286,11 @@ def get_motivational_closing(score: float, time: float) -> str:
     if score >= 14.0:  # noqa: PLR2004
         target = int(time / SECOND) - 2
         return (
-            f'[bold green]Keep pushing for sub-{target} seconds!'
-            '[/bold green]'
+            f'Keep pushing for sub-{target} seconds!'
         )
     return (
-        '[cyan]Every solve is a learning opportunity. '
-        'Stay consistent![/cyan]'
+        'Every solve is a learning opportunity. '
+        'Stay consistent!'
     )
 
 

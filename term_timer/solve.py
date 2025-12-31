@@ -1142,7 +1142,10 @@ class Solve:  # noqa: PLR0904
             return ''
 
         advice_lines = ['[stats]Advices    :[/stats]']
-        advice_lines.extend(generate_solve_advices(self))
+        advice_lines.extend(
+            f'[advice] - { advice }[/advice]'
+            for advice in generate_solve_advices(self)
+        )
 
         return '\n'.join(advice_lines)
 
