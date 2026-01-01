@@ -1,22 +1,10 @@
 """Tests for solve 38."""
 import datetime
 import unittest
-from typing import cast
 
-from term_timer.methods.base import Analyser
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.solve import Solve
-
-
-def get_method_applied(solve: Solve) -> Analyser:
-    """
-    Get method_applied, asserting it's not None in tests.
-
-    Returns:
-        The method_applied Analyser instance.
-
-    """
-    return cast('Analyser', solve.method_applied)
+from term_timer.tests.utils import get_method_applied
 
 
 class TestSolve38(unittest.TestCase):  # noqa: PLR0904
@@ -30,8 +18,18 @@ class TestSolve38(unittest.TestCase):  # noqa: PLR0904
         self.time = 29818126171
         self.scramble = "D2 R2 D2 U' R2 U R2 F2 R' B2 F' L F' R F U2 B L'"
         self.solution = """
-        B@0 R'@389 D@1561 F'@1800 F'@1890 D'@4230 D'@4440 B@4830 D@4951 B'@5040 D'@5131 D@5730 L'@6061 D'@6390 L@6721 D@7050 D@7290 R@7650 D@8010 R'@8430 D@9391 D@10050 L'@10290 D@10440 L@10800 D'@11010 L'@11310 D'@11610 L@11850 L@12510 D@12570 L'@12660 D'@12750 D@13920 D'@14100 F@14820 D@14971 D@15210 F'@15270 D@15630 D@15840 F@15960 D'@15990 F'@16170 D@18330 D@18571 F'@19110 D@19260 F@19621 D'@19831 F'@20099 D'@20371 F@20610 D'@21810 D'@22590 R'@23160 L@23161 R'@23490 B@23670 B@23910 R@24091 B@24212 R'@24331 B@24450 R@24571 B@24750 L'@25199 R@25200 D@25920 L'@26342 D'@26461 F'@26790 L@27180 D@27301 L'@27360 D'@27481 L'@27660 F@27750 L@27930 L@28020 D'@28110 L'@28260 D'@28410 L@28620 D@28771 L'@28800 D@29161 L@29280 D'@29641 D'@29820
-        """  # noqa: E501
+        B@0 R'@389 D@1561 F'@1800 F'@1890 D'@4230 D'@4440 B@4830 D@4951 B'@5040
+        D'@5131 D@5730 L'@6061 D'@6390 L@6721 D@7050 D@7290 R@7650 D@8010
+        R'@8430 D@9391 D@10050 L'@10290 D@10440 L@10800 D'@11010 L'@11310
+        D'@11610 L@11850 L@12510 D@12570 L'@12660 D'@12750 D@13920 D'@14100
+        F@14820 D@14971 D@15210 F'@15270 D@15630 D@15840 F@15960 D'@15990
+        F'@16170 D@18330 D@18571 F'@19110 D@19260 F@19621 D'@19831 F'@20099
+        D'@20371 F@20610 D'@21810 D'@22590 R'@23160 L@23161 R'@23490 B@23670
+        B@23910 R@24091 B@24212 R'@24331 B@24450 R@24571 B@24750 L'@25199
+        R@25200 D@25920 L'@26342 D'@26461 F'@26790 L@27180 D@27301 L'@27360
+        D'@27481 L'@27660 F@27750 L@27930 L@28020 D'@28110 L'@28260 D'@28410
+        L@28620 D@28771 L'@28800 D@29161 L@29280 D'@29641 D'@29820
+        """
 
         self.solve = Solve(
             self.date,
@@ -351,10 +349,11 @@ class TestSolve38(unittest.TestCase):  # noqa: PLR0904
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
-            self.assertEqual(
-                self.solve.reconstruction_step_line(source, multiple=False),
-                expected,
-            )
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    self.solve.reconstruction_step_line(source, multiple=False),
+                    expected,
+                )
 
     def test_reconstruction_step_line_multiple(self) -> None:
         """Test reconstruction step line multiple."""
@@ -405,10 +404,11 @@ class TestSolve38(unittest.TestCase):  # noqa: PLR0904
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
-            self.assertEqual(
-                self.solve.reconstruction_step_line(source, multiple=True),
-                expected,
-            )
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    self.solve.reconstruction_step_line(source, multiple=True),
+                    expected,
+                )
 
     def test_reconstruction_step_text(self) -> None:
         """Test reconstruction step text."""
@@ -435,10 +435,11 @@ class TestSolve38(unittest.TestCase):  # noqa: PLR0904
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
-            self.assertEqual(
-                self.solve.reconstruction_step_text(source, multiple=False),
-                expected,
-            )
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    self.solve.reconstruction_step_text(source, multiple=False),
+                    expected,
+                )
 
     def test_reconstruction_step_text_multiple(self) -> None:
         """Test reconstruction step text multiple."""
@@ -465,10 +466,11 @@ class TestSolve38(unittest.TestCase):  # noqa: PLR0904
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
-            self.assertEqual(
-                self.solve.reconstruction_step_text(source, multiple=True),
-                expected,
-            )
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    self.solve.reconstruction_step_text(source, multiple=True),
+                    expected,
+                )
 
     def test_link_alg_cubing(self) -> None:
         """Test link alg cubing."""

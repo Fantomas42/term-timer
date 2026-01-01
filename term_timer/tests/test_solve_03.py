@@ -1,23 +1,10 @@
 """Tests for solve 03."""
-
 import datetime
 import unittest
-from typing import cast
 
-from term_timer.methods.base import Analyser
 from term_timer.methods.cfop import CF4OPAnalyser
 from term_timer.solve import Solve
-
-
-def get_method_applied(solve: Solve) -> Analyser:
-    """
-    Get method_applied, asserting it's not None in tests.
-
-    Returns:
-        The method_applied Analyser instance.
-
-    """
-    return cast('Analyser', solve.method_applied)
+from term_timer.tests.utils import get_method_applied
 
 
 class TestSolve03(unittest.TestCase):  # noqa: PLR0904
@@ -238,14 +225,15 @@ class TestSolve03(unittest.TestCase):  # noqa: PLR0904
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
-            self.assertEqual(
-                source['name'],
-                expected[0],
-            )
-            self.assertEqual(
-                source['type'],
-                expected[1],
-            )
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    source['name'],
+                    expected[0],
+                )
+                self.assertEqual(
+                    source['type'],
+                    expected[1],
+                )
 
     def test_reconstruction_steps_timing(self) -> None:
         """Test reconstruction steps timing."""
@@ -278,10 +266,11 @@ class TestSolve03(unittest.TestCase):  # noqa: PLR0904
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
-            self.assertEqual(
-                self.solve.reconstruction_step_line(source, multiple=False),
-                expected,
-            )
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    self.solve.reconstruction_step_line(source, multiple=False),
+                    expected,
+                )
 
     def test_reconstruction_step_line_multiple(self) -> None:
         """Test reconstruction step line multiple."""
@@ -299,10 +288,11 @@ class TestSolve03(unittest.TestCase):  # noqa: PLR0904
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
-            self.assertEqual(
-                self.solve.reconstruction_step_line(source, multiple=True),
-                expected,
-            )
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    self.solve.reconstruction_step_line(source, multiple=True),
+                    expected,
+                )
 
     def test_reconstruction_step_text(self) -> None:
         """Test reconstruction step text."""
@@ -320,10 +310,11 @@ class TestSolve03(unittest.TestCase):  # noqa: PLR0904
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
-            self.assertEqual(
-                self.solve.reconstruction_step_text(source, multiple=False),
-                expected,
-            )
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    self.solve.reconstruction_step_text(source, multiple=False),
+                    expected,
+                )
 
     def test_reconstruction_step_text_multiple(self) -> None:
         """Test reconstruction step text multiple."""
@@ -341,7 +332,8 @@ class TestSolve03(unittest.TestCase):  # noqa: PLR0904
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
-            self.assertEqual(
-                self.solve.reconstruction_step_text(source, multiple=True),
-                expected,
-            )
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    self.solve.reconstruction_step_text(source, multiple=True),
+                    expected,
+                )

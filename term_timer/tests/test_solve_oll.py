@@ -1,20 +1,8 @@
 """Tests for solve with OLL skip."""
 import unittest
-from typing import cast
 
-from term_timer.methods.base import Analyser
 from term_timer.solve import Solve
-
-
-def get_method_applied(solve: Solve) -> Analyser:
-    """
-    Get method_applied, asserting it's not None in tests.
-
-    Returns:
-        The method_applied Analyser instance.
-
-    """
-    return cast('Analyser', solve.method_applied)
+from term_timer.tests.utils import get_method_applied
 
 
 class TestSolveOLLSkip(unittest.TestCase):
@@ -67,14 +55,15 @@ class TestSolveOLLSkip(unittest.TestCase):
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
-            self.assertEqual(
-                source['name'],
-                expected[0],
-            )
-            self.assertEqual(
-                source['type'],
-                expected[1],
-            )
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    source['name'],
+                    expected[0],
+                )
+                self.assertEqual(
+                    source['type'],
+                    expected[1],
+                )
 
     def test_reconstruction_step_text(self) -> None:
         """Test reconstruction step text."""
@@ -95,7 +84,8 @@ class TestSolveOLLSkip(unittest.TestCase):
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
-            self.assertEqual(
-                self.solve.reconstruction_step_text(source, multiple=False),
-                expected,
-            )
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    self.solve.reconstruction_step_text(source, multiple=False),
+                    expected,
+                )
