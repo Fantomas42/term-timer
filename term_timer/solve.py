@@ -740,26 +740,23 @@ class Solve:  # noqa: PLR0904
                 if step['aufs'][1]:
                     aufs += f' +{ step["aufs"][1] } post-AUF'
 
+                infos = ''
+                if step['case_infos']:
+                    infos += f' { ", ".join(step["case_infos"]) }'
+
                 if step['case']:
                     step_code = step['name'].split(' ')[0]
                     step_case = get_case(step_code, step['case'])
                     link = step_case.cubing_fache_url
 
-                    details = ''
-                    if step['case_infos']:
-                        details += f' { ", ".join(step["case_infos"]) }'
-
                     footer += (
                         ' [comment]// '
                         f'[link={ link }]{ step_case.pretty_name }[/link]'
-                        f'{ details }{ aufs }[/comment]'
+                        f'{ infos }{ aufs }[/comment]'
                     )
-
-                elif step['case_infos']:
+                elif infos or aufs:
                     footer += (
-                        ' [comment]// ' +
-                        ', '.join(step['case_infos']) +
-                        f'{ aufs }[/comment]'
+                        f' [comment]//{ infos }{ aufs }[/comment]'
                     )
 
             move_klass = self.method_applied.normalize_value(
