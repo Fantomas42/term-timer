@@ -130,9 +130,17 @@ class CFOPAnalyser(Analyser):
         """
         bonus: float = 0
 
+        step_done: int = 0
+        for step in self.summary:
+            if 'step' in step['type']:
+                step_done += 1
+
+        if step_done == 1:
+            bonus += 20
+
         step_one = self.summary[0]
         if 'XCross' in step_one['name']:
-            bonus = 2 * step_one['name'].count('X')
+            bonus += 2 * step_one['name'].count('X')
 
         malus = 0.0
         if 'Cross' in step_one['name'] and step_one['type'] != 'skipped':

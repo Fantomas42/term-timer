@@ -86,8 +86,7 @@ class TestSolveShortAutoOrientation(TestSolveShort):
         method_applied = get_method_applied(self.solve)
         inputs = method_applied.summary
         outputs = [
-            ('F2L', 'virtual'),
-            ('F2L 4', 'substep'),
+            ('XXXXCross', 'step'),
             ('F2L', 'skipped'),
             ('OLL', 'skipped'),
             ('PLL', 'step'),
@@ -186,7 +185,7 @@ class TestSolveShortDFOrientation(TestSolveShort):
         method_applied = get_method_applied(self.solve)
         self.assertEqual(
             method_applied.score,
-            50,
+            41.5,
         )
 
     def test_summary(self) -> None:
