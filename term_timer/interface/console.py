@@ -47,8 +47,8 @@ theme: dict[str, str] = {
     'server': 'bold #00DFFF',
     'bluetooth': 'bold #FFFFFF on #133EBF',
     'localhost': 'bold #FFFFFF on #522081',
-    'algcubing': f'bold { TEXT_DARK } on #D0B0B0',
-    'cubedb': f'bold { TEXT_LIGHT } on #444444',
+    'algcubing': 'bold #FFFFFF on #006060',
+    'cubedb': 'bold #FFFFFF on #444444',
     'cubingfache': 'bold #FFFFFF on #2052CC',
 
     'timer': f'bold { ORANGE }',
