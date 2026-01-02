@@ -47,6 +47,10 @@ class TestSolve32(unittest.TestCase):
         self.solve.method_name = 'cf4op'
         self.solve.orientation = 'auto'
 
+
+class TestSolve32CF4OP(TestSolve32):
+    """Test Solve with broken result for checking output in CF4OP."""
+
     def test_summary(self) -> None:
         """Test summary."""
         method_applied = get_method_applied(self.solve)
@@ -95,4 +99,34 @@ class TestSolve32(unittest.TestCase):
                 self.assertEqual(
                     self.solve.reconstruction_step_text(source, multiple=False),
                     expected,
+                )
+
+
+class TestSolve32LBL(TestSolve32):
+    """Test Solve with broken result for checking output in LBL."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        super().setUp()
+        self.solve.method_name = 'lbl'
+
+    def test_summary(self) -> None:
+        """Test summary."""
+        method_applied = get_method_applied(self.solve)
+        inputs = method_applied.summary
+        outputs = [
+            ('F2L', 'step'),
+            ('F1L', 'skipped'),
+            ('LL', 'step'),
+        ]
+
+        for source, expected in zip(inputs, outputs, strict=True):
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    source['name'],
+                    expected[0],
+                )
+                self.assertEqual(
+                    source['type'],
+                    expected[1],
                 )
