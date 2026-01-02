@@ -4,7 +4,6 @@ from functools import cached_property
 from typing import ClassVar
 from typing import Final
 
-from cubing_algs.algorithm import Algorithm
 from cubing_algs.masks import F2L_BL_MASK
 from cubing_algs.masks import F2L_BR_MASK
 from cubing_algs.masks import F2L_FL_MASK
@@ -130,10 +129,13 @@ class CFOPAnalyser(Analyser):
         """
         bonus: float = 0
 
-        step_done: int = 0
-        for step in self.summary:
-            if 'step' in step['type']:
-                step_done += 1
+        step_done = len(
+            [
+                step
+                for step in self.summary
+                if 'step' in step['type']
+            ],
+        )
 
         if step_done == 1:
             bonus += 20
@@ -361,21 +363,19 @@ class CF4OPAnalyser(CFOPAnalyser):
                 in-place.
 
         """
+        first = summary[0]
         # Merge XCrosses
-        if summary[0]['name'] == 'F2L 1':
-            summary[0]['name'] = 'XCross'
+        if first['name'] == 'F2L 1':
+            first['name'] = 'XCross'
 
-        elif summary[0]['name'] == 'F2L 2':
-            summary[0]['name'] = 'XXCross'
+        elif first['name'] == 'F2L 2':
+            first['name'] = 'XXCross'
 
-        elif summary[0]['name'] == 'F2L 3':
-            summary[0]['name'] = 'XXXCross'
+        elif first['name'] == 'F2L 3':
+            first['name'] = 'XXXCross'
 
-        elif summary[0]['name'] == 'F2L 4':
-            summary[0]['name'] = 'XXXXCross'
-
-        elif len(summary) == 1:
-            summary[0]['name'] = 'Full Cube'
+        elif first['name'] in {'F2L 4', 'OLL'}:
+            first['name'] = 'XXXXCross'
 
         # Merge double F2L inserts
         case_infos = []
@@ -401,33 +401,11 @@ class CF4OPAnalyser(CFOPAnalyser):
 
         self.correct_summary_cfop(summary)
 
-        # Summary for F2L
-        f2l: StepSummary = {
-            'type': 'virtual',
-            'name': 'F2L',
-            'moves': Algorithm(),
-            'moves_reoriented': Algorithm(),
-            'moves_humanized': Algorithm(),
-            'moves_prettified': Algorithm(),
-            'times': [],
-            'index': [],
-            'qtm': 0,
-            'total': 0,
-            'execution': 0,
-            'recognition': 0,
-            'post_pause': 0,
-            'aufs': [None, None],
-            'total_percent': 0.0,
-            'execution_percent': 0.0,
-            'recognition_percent': 0.0,
-            'step_execution_percent': 0.0,
-            'step_recognition_percent': 0.0,
-            'increment': 0,
-            'case': '',
-            'case_infos': [],
-            'facelets': '',
-        }
+        if 'Cross' not in summary[0]['name']:
+            summary.insert(0, self.create_skipped_summary('Cross'))
 
+        # Summary for F2L
+        f2l: StepSummary = self.create_skipped_summary('F2L')
         f2l_steps = len(
             [
                 info for info in summary
@@ -435,14 +413,13 @@ class CF4OPAnalyser(CFOPAnalyser):
              ],
         )
 
-        insert_f2l = False
         auf_0_sum = 0
         auf_1_sum = 0
         for info in summary:
             if 'F2L ' in info['name']:
                 info['type'] = 'substep'
 
-                insert_f2l = True
+                f2l['type'] = 'virtual'
                 f2l['moves'].extend(info['moves'])
                 f2l['moves_reoriented'].extend(info['moves_reoriented'])
                 f2l['moves_humanized'].extend(info['moves_humanized'])
@@ -473,8 +450,12 @@ class CF4OPAnalyser(CFOPAnalyser):
         if auf_1_sum:
             f2l['aufs'][1] = auf_1_sum
 
-        if insert_f2l:
-            if 'F2L' not in summary[0]['name']:
-                summary.insert(1, f2l)
-            else:
-                summary.insert(0, f2l)
+        summary.insert(1, f2l)
+
+        all_steps = [s['name'] for s in summary]
+
+        if 'PLL' not in all_steps:
+            summary.append(self.create_skipped_summary('PLL'))
+
+        if 'OLL' not in all_steps:
+            summary.insert(-1, self.create_skipped_summary('OLL'))

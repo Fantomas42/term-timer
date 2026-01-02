@@ -210,7 +210,7 @@ class TestSolve03(unittest.TestCase):  # noqa: PLR0904
         method_applied = get_method_applied(self.solve)
         self.assertEqual(
             method_applied.score,
-            50,
+            41.5,
         )
 
     def test_summary(self) -> None:
@@ -218,7 +218,7 @@ class TestSolve03(unittest.TestCase):  # noqa: PLR0904
         method_applied = get_method_applied(self.solve)
         inputs = method_applied.summary
         outputs = [
-            ('Full Cube', 'step'),
+            ('Cross', 'step'),
             ('F2L', 'skipped'),
             ('OLL', 'skipped'),
             ('PLL', 'skipped'),

@@ -56,8 +56,7 @@ class TestSolve32CF4OP(TestSolve32):
         method_applied = get_method_applied(self.solve)
         inputs = method_applied.summary
         outputs = [
-            ('F2L', 'virtual'),
-            ('F2L 4', 'substep'),
+            ('XXXXCross', 'step'),
             ('F2L', 'skipped'),
             ('OLL', 'skipped'),
             ('PLL', 'step'),
