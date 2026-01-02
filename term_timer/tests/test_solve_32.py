@@ -131,3 +131,66 @@ class TestSolve32LBL(TestSolve32):
                     source['type'],
                     expected[1],
                 )
+
+
+class TestSolve32CFOP(TestSolve32):
+    """Test Solve with broken result for checking output in CFOP."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        super().setUp()
+        self.solve.method_name = 'cfop'
+
+    def test_summary(self) -> None:
+        """Test summary."""
+        method_applied = get_method_applied(self.solve)
+        inputs = method_applied.summary
+        outputs = [
+            ('Cross', 'skipped'),
+            ('F2L', 'skipped'),
+            ('OLL', 'step'),
+            ('PLL', 'step'),
+        ]
+
+        for source, expected in zip(inputs, outputs, strict=True):
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    source['name'],
+                    expected[0],
+                )
+                self.assertEqual(
+                    source['type'],
+                    expected[1],
+                )
+
+
+class TestSolve32UROrientationCFOP(TestSolve32):
+    """Test Solve with broken result for checking output in CFOP."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        super().setUp()
+        self.solve.method_name = 'cfop'
+        self.solve.orientation = 'UR'
+
+    def test_summary(self) -> None:
+        """Test summary."""
+        method_applied = get_method_applied(self.solve)
+        inputs = method_applied.summary
+        outputs = [
+            ('Cross', 'step'),
+            ('F2L', 'step'),
+            ('OLL', 'skipped'),
+            ('PLL', 'skipped'),
+        ]
+
+        for source, expected in zip(inputs, outputs, strict=True):
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    source['name'],
+                    expected[0],
+                )
+                self.assertEqual(
+                    source['type'],
+                    expected[1],
+                )

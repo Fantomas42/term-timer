@@ -114,25 +114,6 @@ class CFOPAnalyser(Analyser):
 
         return current_progress, []
 
-    def correct_summary(self, summary: list[StepSummary]) -> None:
-        """
-        Apply CFOP-specific corrections to step summary data.
-
-        Fixes step naming issues such as OLL skips being misidentified as
-        F2L, then applies standard CFOP summary corrections.
-
-        Args:
-            summary: List of step summary dictionaries to be corrected
-                in-place.
-
-        """
-        # Fix OLL SKIP instead of F2L
-        for info in summary:
-            if info['increment'] > 1 and 'OLL' in info['name']:
-                info['name'] = 'F2L'
-
-        self.correct_summary_cfop(summary)
-
     @cached_property
     def score(self) -> float:  # noqa: C901
         """
@@ -179,112 +160,40 @@ class CFOPAnalyser(Analyser):
 
         return 20 + bonus - malus
 
-    def correct_summary_cfop(self, summary: list[StepSummary]) -> None:  # noqa: C901
+    def correct_summary(self, summary: list[StepSummary]) -> None:
         """
-        Ensure summary contains all CFOP steps with skip placeholders.
+        Apply CFOP-specific corrections to step summary data.
 
-        Inserts placeholder entries for skipped steps (PLL, OLL, F2L) and
-        identifies OLL/PLL/F2L cases from cube state. Modifies summary
-        in-place to maintain consistent structure.
+        Fixes missing step, then applies standard CFOP summary corrections.
 
         Args:
             summary: List of step summary dictionaries to be corrected
                 in-place.
 
         """
-        # Skipped PLL insert
-        if summary[-1]['name'] != 'PLL':
-            summary.append(
-                {
-                    'type': 'skipped',
-                    'name': 'PLL',
-                    'moves': Algorithm(),
-                    'moves_reoriented': Algorithm(),
-                    'moves_humanized': Algorithm(),
-                    'moves_prettified': Algorithm(),
-                    'times': [],
-                    'index': [],
-                    'qtm': 0,
-                    'total': 0,
-                    'execution': 0,
-                    'recognition': 0,
-                    'post_pause': 0,
-                    'aufs': [None, None],
-                    'total_percent': 0,
-                    'execution_percent': 0,
-                    'recognition_percent': 0,
-                    'step_execution_percent': 0,
-                    'step_recognition_percent': 0,
-                    'increment': 0,
-                    'case': 'SKIP',
-                    'case_infos': [],
-                    'facelets': '',
-                },
+        all_steps = [s['name'] for s in summary]
+
+        for step_position, step_name in enumerate(self.step_list):
+            if step_name not in all_steps:
+                summary.insert(
+                    step_position,
+                    self.create_skipped_summary(step_name),
             )
 
-        # Skipped OLL insert
-        if len(summary) > 1 and summary[-2]['name'] != 'OLL':
-            summary.insert(
-                len(summary) - 1,
-                {
-                    'type': 'skipped',
-                    'name': 'OLL',
-                    'moves': Algorithm(),
-                    'moves_reoriented': Algorithm(),
-                    'moves_humanized': Algorithm(),
-                    'moves_prettified': Algorithm(),
-                    'times': [],
-                    'index': [],
-                    'qtm': 0,
-                    'total': 0,
-                    'execution': 0,
-                    'recognition': 0,
-                    'post_pause': 0,
-                    'aufs': [None, None],
-                    'total_percent': 0,
-                    'execution_percent': 0,
-                    'recognition_percent': 0,
-                    'step_execution_percent': 0,
-                    'step_recognition_percent': 0,
-                    'increment': 0,
-                    'case': 'SKIP',
-                    'case_infos': [],
-                    'facelets': '',
-                },
-            )
+        self.correct_summary_cfop(summary)
 
-        # Skipped F2L insert
-        if len(summary) > 1 and 'F2L' not in summary[1]['name']:
-            summary.insert(
-                1,
-                {
-                    'type': 'skipped',
-                    'name': 'F2L',
-                    'moves': Algorithm(),
-                    'moves_reoriented': Algorithm(),
-                    'moves_humanized': Algorithm(),
-                    'moves_prettified': Algorithm(),
-                    'times': [],
-                    'index': [],
-                    'qtm': 0,
-                    'total': 0,
-                    'execution': 0,
-                    'recognition': 0,
-                    'post_pause': 0,
-                    'aufs': [None, None],
-                    'total_percent': 0,
-                    'execution_percent': 0,
-                    'recognition_percent': 0,
-                    'step_execution_percent': 0,
-                    'step_recognition_percent': 0,
-                    'increment': 0,
-                    'case': 'SKIP',
-                    'case_infos': [],
-                    'facelets': '',
-                },
-            )
+    def correct_summary_cfop(self, summary: list[StepSummary]) -> None:
+        """
+        Improve summary info for CFOP.
 
-        # Guess OLL/PLL cases
+        Identifies OLL/PLL/F2L cases from cube state. Modifies summary
+        in-place to maintain consistent structure.
+
+        Args:
+            summary: List of step summary dictionaries to be updated
+                in-place.
+
+        """
         for info in summary:
             if info['name'] == 'OLL':
                 facelets = info['facelets']

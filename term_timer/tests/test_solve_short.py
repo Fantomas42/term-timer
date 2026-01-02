@@ -342,3 +342,69 @@ class TestSolveShortLBLDFOrientation(TestSolveShort):
                     source['type'],
                     expected[1],
                 )
+
+
+class TestSolveShortCFOPAutoOrientation(TestSolveShort):
+    """Test Short solve in CFOP in auto orientation."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        super().setUp()
+        self.solve.method_name = 'cfop'
+        self.solve.orientation = 'auto'
+
+    def test_summary(self) -> None:
+        """Test summary."""
+        method_applied = get_method_applied(self.solve)
+
+        inputs = method_applied.summary
+        outputs = [
+            ('Cross', 'skipped'),
+            ('F2L', 'skipped'),
+            ('OLL', 'step'),
+            ('PLL', 'step'),
+        ]
+
+        for source, expected in zip(inputs, outputs, strict=True):
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    source['name'],
+                    expected[0],
+                )
+                self.assertEqual(
+                    source['type'],
+                    expected[1],
+                )
+
+
+class TestSolveShortCFOPUFOrientation(TestSolveShort):
+    """Test Short solve in CFOP in UF orientation."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        super().setUp()
+        self.solve.method_name = 'cfop'
+        self.solve.orientation = 'UF'
+
+    def test_summary(self) -> None:
+        """Test summary."""
+        method_applied = get_method_applied(self.solve)
+
+        inputs = method_applied.summary
+        outputs = [
+            ('Cross', 'step'),
+            ('F2L', 'skipped'),
+            ('OLL', 'skipped'),
+            ('PLL', 'skipped'),
+        ]
+
+        for source, expected in zip(inputs, outputs, strict=True):
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    source['name'],
+                    expected[0],
+                )
+                self.assertEqual(
+                    source['type'],
+                    expected[1],
+                )
