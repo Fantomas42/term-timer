@@ -1,8 +1,5 @@
 """Layer-by-layer method analysis."""
-
 from typing import ClassVar
-
-from cubing_algs.algorithm import Algorithm
 
 from term_timer.methods.base import Analyser
 from term_timer.methods.types import StepSummary
@@ -52,40 +49,17 @@ class LBLAnalyser(Analyser):
 
         return current_progress, []
 
-    @staticmethod
-    def correct_summary(summary: list[StepSummary]) -> None:
+    def correct_summary(self, summary: list[StepSummary]) -> None:
         """
         Apply LBL-specific corrections to step summary.
 
-        Inserts skipped F1L step if necessary.
+        Inserts skipped steps if necessary.
         """
-        # Skipped F1L insert
-        if len(summary) > 1 and summary[1]['name'] != 'F1L':
-            summary.insert(
-                1,
-                {
-                    'type': 'skipped',
-                    'name': 'F1L',
-                    'moves': Algorithm(),
-                    'moves_reoriented': Algorithm(),
-                    'moves_humanized': Algorithm(),
-                    'moves_prettified': Algorithm(),
-                    'times': [],
-                    'index': [],
-                    'qtm': 0,
-                    'total': 0,
-                    'execution': 0,
-                    'recognition': 0,
-                    'post_pause': 0,
-                    'aufs': [None, None],
-                    'total_percent': 0,
-                    'execution_percent': 0,
-                    'recognition_percent': 0,
-                    'step_execution_percent': 0,
-                    'step_recognition_percent': 0,
-                    'increment': 0,
-                    'case': 'SKIP',
-                    'case_infos': [],
-                    'facelets': '',
-                },
+        all_steps = [s['name'] for s in summary]
+
+        for step_position, step_name in enumerate(self.step_list):
+            if step_name not in all_steps:
+                summary.insert(
+                    step_position,
+                    self.create_skipped_summary(step_name),
             )

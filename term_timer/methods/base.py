@@ -526,6 +526,44 @@ class Analyser(FaceletAnalyser):
 
         """
 
+    @staticmethod
+    def create_skipped_summary(name: str) -> StepSummary:
+        """
+        Create a skipped StepSummary.
+
+        Args:
+            name: Name of the step skipped.
+
+        Returns:
+            StepSummary with skipped data.
+
+        """
+        return {
+            'type': 'skipped',
+            'name': name,
+            'moves': Algorithm(),
+            'moves_reoriented': Algorithm(),
+            'moves_humanized': Algorithm(),
+            'moves_prettified': Algorithm(),
+            'times': [],
+            'index': [],
+            'qtm': 0,
+            'total': 0,
+            'execution': 0,
+            'recognition': 0,
+            'post_pause': 0,
+            'aufs': [None, None],
+            'total_percent': 0,
+            'execution_percent': 0,
+            'recognition_percent': 0,
+            'step_execution_percent': 0,
+            'step_recognition_percent': 0,
+            'increment': 0,
+            'case': 'SKIP',
+            'case_infos': [],
+            'facelets': '',
+        }
+
     def normalize_value(self, metric: str, name: str, value: float,  # noqa: PLR0911
                         default: str, *, threshold: float = 1.2) -> str:
         """

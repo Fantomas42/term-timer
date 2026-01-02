@@ -276,3 +276,69 @@ class TestSolveShortDFOrientation(TestSolveShort):
             + self.solve.execution_percent,
             100.0,
         )
+
+
+class TestSolveShortLBLAutoOrientation(TestSolveShort):
+    """Test Short solve in LBL in auto orientation."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        super().setUp()
+        self.solve.method_name = 'lbl'
+        self.solve.orientation = 'auto'
+
+    def test_summary(self) -> None:
+        """Test summary."""
+        method_applied = get_method_applied(self.solve)
+
+        inputs = method_applied.summary
+        outputs = [
+            ('Cross', 'skipped'),
+            ('F1L', 'skipped'),
+            ('F2L', 'step'),
+            ('LL', 'step'),
+        ]
+
+        for source, expected in zip(inputs, outputs, strict=True):
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    source['name'],
+                    expected[0],
+                )
+                self.assertEqual(
+                    source['type'],
+                    expected[1],
+                )
+
+
+class TestSolveShortLBLDFOrientation(TestSolveShort):
+    """Test Short solve in LBL in DF orientation."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        super().setUp()
+        self.solve.method_name = 'lbl'
+        self.solve.orientation = 'DF'
+
+    def test_summary(self) -> None:
+        """Test summary."""
+        method_applied = get_method_applied(self.solve)
+
+        inputs = method_applied.summary
+        outputs = [
+            ('Cross', 'step'),
+            ('F1L', 'skipped'),
+            ('F2L', 'skipped'),
+            ('LL', 'skipped'),
+        ]
+
+        for source, expected in zip(inputs, outputs, strict=True):
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    source['name'],
+                    expected[0],
+                )
+                self.assertEqual(
+                    source['type'],
+                    expected[1],
+                )

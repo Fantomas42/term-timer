@@ -115,8 +115,9 @@ class TestSolve32LBL(TestSolve32):
         method_applied = get_method_applied(self.solve)
         inputs = method_applied.summary
         outputs = [
-            ('F2L', 'step'),
+            ('Cross', 'skipped'),
             ('F1L', 'skipped'),
+            ('F2L', 'step'),
             ('LL', 'step'),
         ]
 
