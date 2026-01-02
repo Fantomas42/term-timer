@@ -973,9 +973,6 @@ class Solve:  # noqa: PLR0904
                 f'{ aufs }\n'
             )
 
-            if step['name'] == 'Full Cube':
-                return recons
-
         return recons
 
     def time_graph(self) -> None:

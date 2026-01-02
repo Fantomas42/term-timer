@@ -134,11 +134,8 @@ class CFOPAnalyser(Analyser):
         if 'XCross' in step_one['name']:
             bonus = 2 * step_one['name'].count('X')
 
-        elif 'Full Cube' in step_one['name']:
-            return 50
-
         malus = 0.0
-        if 'Cross' in step_one['name']:
+        if 'Cross' in step_one['name'] and step_one['type'] != 'skipped':
             cross_norm = self.norms.get('moves', {}).get(step_one['name'], 0)
             if cross_norm and isinstance(cross_norm, (int | float)):
                 malus += (
@@ -153,7 +150,7 @@ class CFOPAnalyser(Analyser):
                 elif info['post_pause'] < SECOND:
                     bonus += 0.25
 
-                if info['name'] in {'OLL', 'PLL'}:
+                if info['name'] in {'OLL', 'PLL'} and info['case'] != 'SKIP':
                     for auf in info['aufs']:
                         if auf:
                             malus += int(auf)

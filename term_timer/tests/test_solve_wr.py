@@ -57,7 +57,7 @@ class TestSolveWR(unittest.TestCase):
         method_applied = get_method_applied(self.solve)
         self.assertEqual(
             method_applied.score,
-            26.5,
+            27.5,
         )
 
     def test_summary(self) -> None:

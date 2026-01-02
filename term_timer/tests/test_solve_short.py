@@ -56,7 +56,7 @@ class TestSolveShortAutoOrientation(TestSolveShort):
         method_applied = get_method_applied(self.solve)
         self.assertEqual(
             method_applied.score,
-            18.75,
+            38.75,
         )
 
     def test_recognition_percent(self) -> None:
@@ -194,7 +194,7 @@ class TestSolveShortDFOrientation(TestSolveShort):
         method_applied = get_method_applied(self.solve)
         inputs = method_applied.summary
         outputs = [
-            ('Full Cube', 'step'),
+            ('Cross', 'step'),
             ('F2L', 'skipped'),
             ('OLL', 'skipped'),
             ('PLL', 'skipped'),
