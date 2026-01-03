@@ -447,8 +447,12 @@ class Analyser(FaceletAnalyser):
                     'total_percent': (total / self.duration) * 100,
                     'execution_percent': (execution / self.duration) * 100,
                     'recognition_percent': (recognition / self.duration) * 100,
-                    'step_execution_percent': (execution / total) * 100,
-                    'step_recognition_percent': (recognition / total) * 100,
+                    'step_execution_percent': (
+                        (execution / total) * 100 if total > 0 else 100.0
+                    ),
+                    'step_recognition_percent': (
+                        (recognition / total) * 100 if total > 0 else 0.0
+                    ),
                     'increment': info['increment'],
                     'case': '',
                     'case_infos': info['case_infos'],

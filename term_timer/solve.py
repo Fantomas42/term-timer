@@ -720,7 +720,7 @@ class Solve:  # noqa: PLR0904
                     ratio_execution = step['execution'] / step['total'] * 12
                     ratio_recognition = step['recognition'] / step['total'] * 12
                 else:
-                    ratio_execution = 0
+                    ratio_execution = 12
                     ratio_recognition = 0
 
                 footer += (
