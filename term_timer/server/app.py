@@ -1407,7 +1407,7 @@ class Server:
         """
         app = Bottle()
 
-        @app.hook('before_request')  # type: ignore[misc]
+        @app.hook('before_request')  # type: ignore[untyped-decorator]
         def add_trailing_slash() -> None:
             """Redirect URLs without trailing slash to version with slash."""
             path = request.environ.get('PATH_INFO', '')
@@ -1420,7 +1420,7 @@ class Server:
                 new_url = request.url + '/'
                 redirect(new_url, code=301)
 
-        @app.route('/')  # type: ignore[misc]
+        @app.route('/')  # type: ignore[untyped-decorator]
         def session_list() -> str:
             """
             Render session list overview page.
@@ -1431,7 +1431,7 @@ class Server:
             """
             return SessionListView().as_view(debug)
 
-        @app.route('/academy/')  # type: ignore[misc]
+        @app.route('/academy/')  # type: ignore[untyped-decorator]
         def academy_overview() -> str:
             """
             Render academy overview page.
@@ -1442,7 +1442,7 @@ class Server:
             """
             return AcademyView().as_view(debug)
 
-        @app.route('/academy/<method>/<step>/')  # type: ignore[misc]
+        @app.route('/academy/<method>/<step>/')  # type: ignore[untyped-decorator]
         def academy_step(method: str, step: str) -> str:
             """
             Render academy step page with all cases.
@@ -1453,7 +1453,7 @@ class Server:
             """
             return AcademyStepView(method, step).as_view(debug)
 
-        @app.route('/academy/<method>/<step>/<case_id>/')  # type: ignore[misc]
+        @app.route('/academy/<method>/<step>/<case_id>/')  # type: ignore[untyped-decorator]
         def academy_case(method: str, step: str, case_id: str) -> str:
             """
             Render academy case detail page.
@@ -1464,7 +1464,7 @@ class Server:
             """
             return AcademyCaseView(method, step, case_id).as_view(debug)
 
-        @app.route('/algorithm/<algorithm>/')  # type: ignore[misc]
+        @app.route('/algorithm/<algorithm>/')  # type: ignore[untyped-decorator]
         def algorithm_detail(algorithm: str) -> str:
             """
             Render algorithm detail page with variations.
@@ -1476,7 +1476,7 @@ class Server:
             return AlgorithmDetailView(algorithm).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/flag/',
-                   method='POST')  # type: ignore[misc]
+                   method='POST')  # type: ignore[untyped-decorator]
         def solve_update_flag(cube: int, session: str, solve: int) -> None:
             """Handle solve update flag POST request."""
             SolveUpdateFlagView(
@@ -1485,7 +1485,7 @@ class Server:
             )
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/comment/',
-                   method='POST')  # type: ignore[misc]
+                   method='POST')  # type: ignore[untyped-decorator]
         def solve_update_comment(cube: int, session: str, solve: int) -> None:
             """Handle solve update comment POST request."""
             SolveUpdateCommentView(
@@ -1494,14 +1494,14 @@ class Server:
             )
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/delete/',
-                   method='POST')  # type: ignore[misc]
+                   method='POST')  # type: ignore[untyped-decorator]
         def solve_delete(cube: int, session: str, solve: int) -> None:
             """Handle solve delete POST request."""
             SolveDeleteView(
                 cube, session, solve,
             )
 
-        @app.route('/<cube:int>/<session:path>/<solve:int>/')  # type: ignore[misc]
+        @app.route('/<cube:int>/<session:path>/<solve:int>/')  # type: ignore[untyped-decorator]
         def solve_detail(cube: int, session: str, solve: int) -> str:
             """
             Render solve detail page with analysis.
@@ -1516,7 +1516,7 @@ class Server:
                 request.GET.o or 'auto',
             ).as_view(debug)
 
-        @app.route('/<cube:int>/<session:path>/')  # type: ignore[misc]
+        @app.route('/<cube:int>/<session:path>/')  # type: ignore[untyped-decorator]
         def session_detail(cube: int, session: str) -> str:
             """
             Render session detail page with statistics.
@@ -1532,7 +1532,7 @@ class Server:
                 request.GET.case_uid or '',
             ).as_view(debug)
 
-        @app.route('/static/<filepath:path>')  # type: ignore[misc]
+        @app.route('/static/<filepath:path>')  # type: ignore[untyped-decorator]
         def static_serve(filepath: str) -> HTTPResponse:
             """
             Serve static files.
@@ -1543,7 +1543,7 @@ class Server:
             """
             return static_file(filepath, root=STATIC_DIRECTORY)
 
-        @app.error(404)  # type: ignore[misc]
+        @app.error(404)  # type: ignore[untyped-decorator]
         def error_404(error: HTTPError) -> str:
             """
             Handle 404 Not Found errors.
@@ -1554,7 +1554,7 @@ class Server:
             """
             return Error404View(error).as_view(debug)
 
-        @app.error(500)  # type: ignore[misc]
+        @app.error(500)  # type: ignore[untyped-decorator]
         def error_500(error: HTTPError) -> str:
             """
             Handle 500 Internal Server errors.
