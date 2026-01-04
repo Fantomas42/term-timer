@@ -52,7 +52,7 @@ class TestSolve108CF4OPRU(TestSolve108):
         outputs = [
             ('XXCross', 'step'),
             ('F2L', 'virtual'),
-            ('F2L 4', 'substep'),
+            ('F2L 3+4', 'substep'),
             ('OLL', 'skipped'),
             ('PLL', 'step'),
         ]

@@ -26,6 +26,14 @@ CFOP_CASE_ENCODERS: Final[dict[str, Callable[[str], str]]] = {
     'F2L Back Right': f2l_case_encoder(F2L_BL_MASK),
 }
 
+# Anticipated compensation order
+# because check_step will perform computing using opposite top face
+# but keep front face, which rotate the cube like a z2 rotation.
+F2L_SLOTS = [
+    'Front Left', 'Front Right',
+    'Back Left', 'Back Right',
+]
+
 
 class CFOPAnalyser(Analyser):
     """
@@ -332,15 +340,11 @@ class CF4OPAnalyser(CFOPAnalyser):
 
         if not self.check_step('OLL', facelets, self.orientation_faces):
             name = ['F2L 1', 'F2L 2', 'F2L 3', 'F2L 4']
-            # Anticipated compensation
-            # because check_step will perform computing using opposite top face
-            # but keep front face, which rotate the cube like a z2 rotation.
-            pair = ['Front Left', 'Front Right', 'Back Left', 'Back Right']
 
             score = 1
             pairs: list[str] = []
 
-            for n, p in zip(name, pair, strict=True):
+            for n, p in zip(name, F2L_SLOTS, strict=True):
                 result = self.check_step(n, facelets, self.orientation_faces)
                 if result:
                     score += 1
@@ -393,11 +397,36 @@ class CF4OPAnalyser(CFOPAnalyser):
                 if 'OLL' in info['name']:
                     info['name'] = 'F2L 4'
                     info['case_infos'] = sorted(
-                        {
-                            'Front Left', 'Front Right',
-                            'Back Left', 'Back Right',
-                        } - set(case_infos),
+                        set(F2L_SLOTS) - set(case_infos),
                     )
+
+        # Merge remaining F2L pairs into the last F2L entry
+        f2l_covered: set[int] = set()
+        last_f2l_idx = -1
+
+        for i, info in enumerate(summary):
+            if 'Cross' in info['name']:
+                f2l_covered.update(range(1, info['name'].count('X') + 1))
+            elif 'F2L ' in info['name']:
+                last_f2l_idx = i
+                for part in info['name'].replace('F2L ', '').split('+'):
+                    if part.isdigit():
+                        f2l_covered.add(int(part))
+
+        if last_f2l_idx >= 0 and len(f2l_covered) < 4:
+            last = summary[last_f2l_idx]
+            missing = sorted({1, 2, 3, 4} - f2l_covered)
+            if missing:
+                current = [
+                    int(p)
+                    for p in last['name'].replace('F2L ', '').split('+')
+                    if p.isdigit()
+                ]
+                all_nums = sorted(current + missing)
+                last['name'] = 'F2L ' + '+'.join(map(str, all_nums))
+                last['case_infos'] = sorted(
+                    set(F2L_SLOTS) - set(case_infos),
+                )
 
         self.correct_summary_cfop(summary)
 

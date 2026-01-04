@@ -193,3 +193,70 @@ class TestSolve32UROrientationCFOP(TestSolve32):
                     source['type'],
                     expected[1],
                 )
+
+
+class TestSolve32RFOrientationCF4OP(TestSolve32):
+    """Test Solve with broken result for checking output in CF4OP."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        super().setUp()
+        self.solve.method_name = 'cf4op'
+        self.solve.orientation = 'RF'
+
+    def test_summary(self) -> None:
+        """Test summary."""
+        method_applied = get_method_applied(self.solve)
+        inputs = method_applied.summary
+        outputs = [
+            ('Cross', 'step'),
+            ('F2L', 'virtual'),
+            ('F2L 1+2', 'substep'),
+            ('F2L 3+4', 'substep'),
+            ('OLL', 'skipped'),
+            ('PLL', 'skipped'),
+        ]
+
+        for source, expected in zip(inputs, outputs, strict=True):
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    source['name'],
+                    expected[0],
+                )
+                self.assertEqual(
+                    source['type'],
+                    expected[1],
+                )
+
+
+class TestSolve32UROrientationCF4OP(TestSolve32):
+    """Test Solve with broken result for checking output in CF4OP."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        super().setUp()
+        self.solve.method_name = 'cf4op'
+        self.solve.orientation = 'UR'
+
+    def test_summary(self) -> None:
+        """Test summary."""
+        method_applied = get_method_applied(self.solve)
+        inputs = method_applied.summary
+        outputs = [
+            ('XCross', 'step'),
+            ('F2L', 'virtual'),
+            ('F2L 2+3+4', 'substep'),
+            ('OLL', 'skipped'),
+            ('PLL', 'skipped'),
+        ]
+
+        for source, expected in zip(inputs, outputs, strict=True):
+            with self.subTest(name=source['name']):
+                self.assertEqual(
+                    source['name'],
+                    expected[0],
+                )
+                self.assertEqual(
+                    source['type'],
+                    expected[1],
+                )
