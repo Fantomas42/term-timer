@@ -112,8 +112,10 @@ class TestSolveShortAutoOrientation(TestSolveShort):
             if info['type'] != 'virtual'
         ]
         outputs = [
-            '[pre-auf]U[/pre-auf] L U [pause].[/pause] B '
-            '[reco-pause].[/reco-pause]',
+            (
+                '[pre-auf]U[/pre-auf] L U [pause].[/pause] B '
+                '[reco-pause].[/reco-pause]'
+            ),
             '',
             '',
             '[post-auf]U2[/post-auf]',

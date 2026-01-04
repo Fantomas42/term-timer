@@ -74,8 +74,10 @@ class TestSolveXCross(unittest.TestCase):
             if info['type'] != 'virtual'
         ]
         outputs = [
-            "L' D R2 . L2 B L . D . U R U' R' U2 L' U L . "
-            "U' L U L' U2 L U' L' U2 . F2",
+            (
+                "L' D R2 . L2 B L . D . U R U' R' U2 L' U L . "
+                "U' L U L' U2 L U' L' U2 . F2"
+            ),
             "F' U F . F U' F'",
             "U2 . R U' R' U R' U' R .",
             "R U2 R' U2 R U R' .",
@@ -161,10 +163,14 @@ class TestSolveXXCross(unittest.TestCase):
             if info['type'] != 'virtual'
         ]
         outputs = [
-            "L D' . B . U' R2 . D . U' . U R' U2 R U' R' U R . "
-            "U L U2 L' U L U' L' . F",
-            "U F' U' . U F U2 F' U F U' F' . R U R' U' R' F R . "
-            "U F U' F' .",
+            (
+                "L D' . B . U' R2 . D . U' . U R' U2 R U' R' U R . "
+                "U L U2 L' U L U' L' . F"
+            ),
+            (
+                "U F' U' . U F U2 F' U F U' F' . R U R' U' R' F R . "
+                "U F U' F' ."
+            ),
             "U' . U F' U2 F U2 F' U F .",
             "U' R B U B' U' R' . U B2 D B' U2 B D' B' U2 B' .",
             "F B2 F . U L R' L R' D' R' L U D2 U L R' . U2",

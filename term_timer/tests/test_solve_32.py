@@ -82,15 +82,19 @@ class TestSolve32CF4OP(TestSolve32):
             if info['type'] != 'virtual'
         ]
         outputs = [
-            "R U' B2 F2 D2 . B U B' U' . U . F U2 F' U F' U2 F . "
-            "U' D2 . L' U L U U' . F' U F U . R' U' R U' R' R . U "
-            ". R' U' R U' R' U R U . U . F' U' F U L U L' U' . F' "
-            "U2 U' F . U' F' U F U2 . R U R' . B B' U B' U' R' U R "
-            "B . R U2 R' U' R2 R' U' r' . M U2 M2 .",
+            (
+                "R U' B2 F2 D2 . B U B' U' . U . F U2 F' U F' U2 F . "
+                "U' D2 . L' U L U U' . F' U F U . R' U' R U' R' R . U "
+                ". R' U' R U' R' U R U . U . F' U' F U L U L' U' . F' "
+                "U2 U' F . U' F' U F U2 . R U R' . B B' U B' U' R' U R "
+                "B . R U2 R' U' R2 R' U' r' . M U2 M2 ."
+             ),
             '',
             '',
-            "F' U F' U' R' F' R2 U' R' U R' F R F U' . U R U R' F' "
-            "R U R' U' R' F R2 U' R' U'",
+            (
+                "F' U F' U' R' F' R2 U' R' U R' F R F U' . U R U R' F' "
+                "R U R' U' R' F R2 U' R' U'"
+            ),
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):

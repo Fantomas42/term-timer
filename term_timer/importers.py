@@ -89,8 +89,8 @@ class Importer:
         """
         solves: list[SolveData] = []
 
-        for _line in data[1:]:
-            line = _line.split(',')
+        for raw_line in data[1:]:
+            line = raw_line.split(',')
 
             date_str = line[1][:-4]
             dnf = line[2]

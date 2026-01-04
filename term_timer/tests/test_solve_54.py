@@ -322,41 +322,49 @@ class TestSolve54(unittest.TestCase):  # noqa: PLR0904
             if info['type'] != 'virtual'
         ]
         outputs = [
-            "R2 [pause].[/pause] U [pause].[/pause] F L [pause].[/pause] "
-            "U F2 U' B2 [reco-pause].[/reco-pause]",
-
-            "U' "
-            "[su]R U R' U[/su] "
-            "[pair-ie]B U' B'[/pair-ie] "
-            "[reco-pause].[/reco-pause]",
-
-            "U "
-            "[pair-ie]F' U F[/pair-ie] "
-            "U' "
-            "[pair-ie]F U F'[/pair-ie] "
-            "[reco-pause].[/reco-pause]",
-
-            "U2 [pause].[/pause] "
-            "R [deletion]U'[/deletion] [deletion]R'[/deletion] "
-            "[addition].[/addition] U [deletion].[/deletion] "
-            "[deletion]U'[/deletion] [deletion]R[/deletion] "
-            "[deletion]U2[/deletion] R' U [pair-ie]F' U' F[/pair-ie] "
-            "[reco-pause].[/reco-pause]",
-
-            "U "
-            "[sa]L U' L' U'[/sa] "
-            "[pair-ie]B' U B[/pair-ie] "
-            "[reco-pause].[/reco-pause]",
-
-            "[pre-auf]U'[/pre-auf] [pause].[/pause] "
-            "[slice]M[/slice] [pair-ie]F U F'[/pair-ie] "
-            "[pause].[/pause] U' F' L F [wide]l'[/wide] "
-            "[reco-pause].[/reco-pause]",
-
-            "[sexy-move]R U R' U'[/sexy-move] R' F R2 U' "
-            "[sexy-move]R' U' R U[/sexy-move] "
-            "[deletion]R'[/deletion] [pause].[/pause] "
-            "[deletion]R[/deletion] R' F' [post-auf]U2[/post-auf]",
+            (
+                "R2 [pause].[/pause] U [pause].[/pause] F L [pause].[/pause] "
+                "U F2 U' B2 [reco-pause].[/reco-pause]"
+            ),
+            (
+                "U' "
+                "[su]R U R' U[/su] "
+                "[pair-ie]B U' B'[/pair-ie] "
+                "[reco-pause].[/reco-pause]"
+            ),
+            (
+                "U "
+                "[pair-ie]F' U F[/pair-ie] "
+                "U' "
+                "[pair-ie]F U F'[/pair-ie] "
+                "[reco-pause].[/reco-pause]"
+            ),
+            (
+                "U2 [pause].[/pause] "
+                "R [deletion]U'[/deletion] [deletion]R'[/deletion] "
+                "[addition].[/addition] U [deletion].[/deletion] "
+                "[deletion]U'[/deletion] [deletion]R[/deletion] "
+                "[deletion]U2[/deletion] R' U [pair-ie]F' U' F[/pair-ie] "
+                "[reco-pause].[/reco-pause]"
+            ),
+            (
+                "U "
+                "[sa]L U' L' U'[/sa] "
+                "[pair-ie]B' U B[/pair-ie] "
+                "[reco-pause].[/reco-pause]"
+            ),
+            (
+                "[pre-auf]U'[/pre-auf] [pause].[/pause] "
+                "[slice]M[/slice] [pair-ie]F U F'[/pair-ie] "
+                "[pause].[/pause] U' F' L F [wide]l'[/wide] "
+                "[reco-pause].[/reco-pause]"
+            ),
+            (
+                "[sexy-move]R U R' U'[/sexy-move] R' F R2 U' "
+                "[sexy-move]R' U' R U[/sexy-move] "
+                "[deletion]R'[/deletion] [pause].[/pause] "
+                "[deletion]R[/deletion] R' F' [post-auf]U2[/post-auf]"
+            ),
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
@@ -375,47 +383,55 @@ class TestSolve54(unittest.TestCase):  # noqa: PLR0904
             if info['type'] != 'virtual'
         ]
         outputs = [
-            "R2 [pause].[/pause] U [pause].[/pause] F L [pause].[/pause] "
-            "[pause].[/pause] U F2 U' B2 "
-            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
-
-            "U' "
-            "[su]R U R' U[/su] "
-            "[pair-ie]B U' B'[/pair-ie] "
-            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
-            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
-            "[reco-pause].[/reco-pause]",
-
-            "U "
-            "[pair-ie]F' U F[/pair-ie] "
-            "U' "
-            "[pair-ie]F U F'[/pair-ie] "
-            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
-
-            "U2 [pause].[/pause] "
-            "R [deletion]U'[/deletion] [deletion]R'[/deletion] "
-            "[addition].[/addition] [addition].[/addition] "
-            "[addition].[/addition] U [deletion].[/deletion] "
-            "[deletion]U'[/deletion] [deletion]R[/deletion] "
-            "[deletion]U2[/deletion] R' U [pair-ie]F' U' F[/pair-ie] "
-            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
-            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
-
-            "U "
-            "[sa]L U' L' U'[/sa] "
-            "[pair-ie]B' U B[/pair-ie] "
-            "[reco-pause].[/reco-pause]",
-
-            "[pre-auf]U'[/pre-auf] [pause].[/pause] "
-            "[slice]M[/slice] [pair-ie]F U F'[/pair-ie] "
-            "[pause].[/pause] U' F' L F [wide]l'[/wide] "
-            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
-            "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]",
-
-            "[sexy-move]R U R' U'[/sexy-move] R' F R2 U' "
-            "[sexy-move]R' U' R U[/sexy-move] "
-            "[deletion]R'[/deletion] [pause].[/pause] "
-            "[deletion]R[/deletion] R' F' [post-auf]U2[/post-auf]",
+            (
+                "R2 [pause].[/pause] U [pause].[/pause] F L [pause].[/pause] "
+                "[pause].[/pause] U F2 U' B2 "
+                "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]"
+            ),
+            (
+                "U' "
+                "[su]R U R' U[/su] "
+                "[pair-ie]B U' B'[/pair-ie] "
+                "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
+                "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
+                "[reco-pause].[/reco-pause]"
+            ),
+            (
+                "U "
+                "[pair-ie]F' U F[/pair-ie] "
+                "U' "
+                "[pair-ie]F U F'[/pair-ie] "
+                "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]"
+            ),
+            (
+                "U2 [pause].[/pause] "
+                "R [deletion]U'[/deletion] [deletion]R'[/deletion] "
+                "[addition].[/addition] [addition].[/addition] "
+                "[addition].[/addition] U [deletion].[/deletion] "
+                "[deletion]U'[/deletion] [deletion]R[/deletion] "
+                "[deletion]U2[/deletion] R' U [pair-ie]F' U' F[/pair-ie] "
+                "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
+                "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]"
+            ),
+            (
+                "U "
+                "[sa]L U' L' U'[/sa] "
+                "[pair-ie]B' U B[/pair-ie] "
+                "[reco-pause].[/reco-pause]"
+            ),
+            (
+                "[pre-auf]U'[/pre-auf] [pause].[/pause] "
+                "[slice]M[/slice] [pair-ie]F U F'[/pair-ie] "
+                "[pause].[/pause] U' F' L F [wide]l'[/wide] "
+                "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
+                "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]"
+            ),
+            (
+                "[sexy-move]R U R' U'[/sexy-move] R' F R2 U' "
+                "[sexy-move]R' U' R U[/sexy-move] "
+                "[deletion]R'[/deletion] [pause].[/pause] "
+                "[deletion]R[/deletion] R' F' [post-auf]U2[/post-auf]"
+            ),
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):

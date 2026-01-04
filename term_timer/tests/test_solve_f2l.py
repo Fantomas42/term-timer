@@ -77,9 +77,11 @@ class TestSolveF2LDouble(unittest.TestCase):
         ]
         outputs = [
             "R' U L L' D' L R2 B2 .",
-            "U2 . U R' U' R U2 R' U U2 B' U' B . U . U F U' F' U F . "
-            "U2 F U' F' U' . U . U F2 . F U' F' U F F' . U' F' U F . "
-            "U2 B U' B' U' . F R' F' .",
+            (
+                "U2 . U R' U' R U2 R' U U2 B' U' B . U . U F U' F' U F . "
+                "U2 F U' F' U' . U . U F2 . F U' F' U F F' . U' F' U F . "
+                "U2 B U' B' U' . F R' F' ."
+            ),
             "R' U R U2 R' U2 R U' R' U R .",
             "L' U L U F U' F' .",
             "U' . U2 . F' L F L' U' L' U L .",
