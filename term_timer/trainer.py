@@ -77,15 +77,9 @@ class Trainer(SolveInterface):
         )
 
         self.cases = self.get_cases()
-
-        self.console.print(
-            f'Training on { len(self.cases) } '
-            f'case{ "s" if len(self.cases) > 1 else "" } on '
-            f'{ self.method }/{ self.step_upper }',
-            style='trainer',
-        )
-
         self.counter = 1
+
+        self.trainer_line()
 
     @cached_property
     def step_code(self) -> str:
@@ -231,6 +225,38 @@ class Trainer(SolveInterface):
 
         return selected_cases
 
+    def cube_is_solved(self) -> bool:
+        """
+        Check if training step is completed.
+
+        Returns:
+            True if the step is solved, False otherwise.
+
+        """
+        if self.bluetooth_cube:
+            return FaceletAnalyser().check_step(
+                self.step_code,
+                self.bluetooth_cube.state,
+                self.orientation_faces,
+            )
+        return False
+
+    def trainer_line(self) -> None:
+        """Display training summary."""
+        if self.step in CROSS_MODES:
+            self.console.print(
+                f'Training on '
+                f'{ self.method }/{ self.step_upper }',
+                style='trainer',
+            )
+        else:
+            self.console.print(
+                f'Training on { len(self.cases) } '
+                f'case{ "s" if len(self.cases) > 1 else "" } on '
+                f'{ self.method }/{ self.step_upper }',
+                style='trainer',
+            )
+
     def start_line(self, cube: VCube, selected_case: Case) -> None:
         """Display training case, scramble, and optional solution."""
         link = selected_case.cubing_fache_url
@@ -288,22 +314,6 @@ class Trainer(SolveInterface):
                 '[key](q)[/key] to quit.',
                 end='', style='consign',
             )
-
-    def cube_is_solved(self) -> bool:
-        """
-        Check if training step is completed.
-
-        Returns:
-            True if the step is solved, False otherwise.
-
-        """
-        if self.bluetooth_cube:
-            return FaceletAnalyser().check_step(
-                self.step_code,
-                self.bluetooth_cube.state,
-                self.orientation_faces,
-            )
-        return False
 
     def solve_line(self, solve: Solve, selected_case: Case) -> None:  # noqa: C901
         """Display training solve results and execution details."""
