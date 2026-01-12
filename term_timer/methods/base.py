@@ -499,7 +499,7 @@ class Analyser(FaceletAnalyser):
             mode: Either 'pre' for start or 'post' for end of sequence.
 
         Returns:
-            Number of consecutive U-face moves found.
+            Number of consecutive U-face moves found in QTM.
 
         """
         auf_move = self.orientation_faces[0]
