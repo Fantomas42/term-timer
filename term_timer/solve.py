@@ -11,6 +11,7 @@ from cubing_algs.cases import get_case
 from cubing_algs.constants import PAUSE_CHAR
 from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.transform.optimize import optimize_do_undo_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.optimize import optimize_repeat_three_moves
@@ -679,7 +680,7 @@ class Solve:  # noqa: PLR0904
         )
 
     @cached_property
-    def method_line(self) -> str:  # noqa: C901, PLR0912, PLR0914
+    def method_line(self) -> str:  # noqa: C901, PLR0912, PLR0914, PLR0915
         """
         Generate detailed step-by-step method analysis display.
 
@@ -749,10 +750,20 @@ class Solve:  # noqa: PLR0904
                     step_case = get_case(step_code, step['case'])
                     link = step_case.cubing_fache_url
 
+                    optimal = ''
+                    optimal_htm = step_case.optimal_htm
+                    if optimal_htm:
+                        delta_htm = step['moves_prettified'].transform(
+                            remove_auf_moves,
+                        ).metrics.htm - optimal_htm
+
+                        if delta_htm > 0:
+                            optimal = f' +{ delta_htm } oHTM'
+
                     footer += (
                         ' [comment]// '
                         f'[link={ link }]{ step_case.pretty_name }[/link]'
-                        f'{ infos }{ aufs }[/comment]'
+                        f'{ infos }{ aufs }{ optimal }[/comment]'
                     )
                 elif infos or aufs:
                     footer += (
