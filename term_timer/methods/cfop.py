@@ -62,9 +62,10 @@ class CFOPAnalyser(Analyser):
     norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
         'moves': {
             'Cross': 6,
-            'F2L': 30,
-            'OLL': 10,
-            'PLL': 15,
+            # Mean of shortest algs for each cases + aufs
+            'F2L': 7.2 + 1 * 4,
+            'OLL': 9.37 + 2,
+            'PLL': 11.48 + 2,
         },
         'percent': {
             'Cross': 12.0,
