@@ -63,7 +63,7 @@ class CFOPAnalyser(Analyser):
         'moves': {
             'Cross': 6,
             # Mean of shortest algs for each cases + aufs
-            'F2L': 7.2 + 1 * 4,
+            'F2L': (7.2 + 1) * 4,
             'OLL': 9.37 + 2,
             'PLL': 11.48 + 2,
         },
@@ -274,9 +274,14 @@ class CF4OPAnalyser(CFOPAnalyser):
             'XXCross': 10,
             'XXXCross': 12,
             'XXXXCross': 14,
-            'F2L': 30,
-            'OLL': 10,
-            'PLL': 15,
+            # Mean of shortest algs for each cases + aufs
+            'F2L': (7.2 + 1) * 4,
+            'F2L 1': 7.2 + 1,
+            'F2L 2': 7.2 + 1,
+            'F2L 3': 7.2 + 1,
+            'F2L 4': 7.2 + 1,
+            'OLL': 9.37 + 2,
+            'PLL': 11.48 + 2,
         },
         'percent': {
             'Cross': 12.0,
