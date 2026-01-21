@@ -8,6 +8,59 @@ if TYPE_CHECKING:
     from term_timer.solve import Solve
 
 
+def get_cross_cheer(solve: 'Solve') -> str:
+    """
+    Cheer based on Cross HTM.
+
+    Returns:
+        Cheer message
+
+    """
+    cross_step = None
+    for step in solve.method_applied.summary:
+        if step['name'] == 'Cross':
+            cross_step = step
+            break
+
+    if not cross_step:
+        return ''
+
+    htm = cross_step['moves_prettified'].metrics.htm
+    if htm <= 6:
+        return f'Cross solved efficiently in { htm } HTM.'
+
+    return ''
+
+
+def get_xcross_cheer(solve: 'Solve') -> str:
+    """
+    Cheer based on XCross.
+
+    Returns:
+        Cheer message
+
+    """
+    for step in solve.method_applied.summary:
+        if 'XCross' in step['name']:
+            return f'Solve made with an { step["name"] }.'
+
+    return ''
+
+
+def get_missed_moves_cheer(solve: 'Solve') -> str:
+    """
+    Cheer based on missed moves.
+
+    Returns:
+        Cheer message
+
+    """
+    if not solve.all_missed_moves:
+        return 'Perfect execution - no wasted moves!'
+
+    return ''
+
+
 def get_score_cheer(solve: 'Solve') -> str:
     """
     Cheer based on solve score.
@@ -19,7 +72,7 @@ def get_score_cheer(solve: 'Solve') -> str:
     score = cast('float', solve.score)
 
     if score >= 16:
-        return 'Excellent solve score! Keep up the great work.'
+        return f'Excellent solve score of { score:.2f}.'
 
     return ''
 
@@ -35,7 +88,7 @@ def get_motivational_time(solve: 'Solve') -> str:
     target_time = solve.time * 0.95 / SECOND
 
     return (
-        f'Keep pushing for sub-{ target_time:.1f} seconds!'
+        f'Keep pushing for sub-{ target_time:.1f} seconds.'
     )
 
 
@@ -54,6 +107,15 @@ def generate_solve_cheers(solve: 'Solve') -> list[str]:
 
     """
     cheer_lines = [
+        get_cross_cheer(
+            solve,
+        ),
+        get_xcross_cheer(
+            solve,
+        ),
+        get_missed_moves_cheer(
+            solve,
+        ),
         get_score_cheer(
             solve,
         ),
