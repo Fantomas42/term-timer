@@ -872,7 +872,7 @@ class SolveStatisticsReporter(Statistics):
         date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
 
         console.print(
-            f'[title]Detail for { self.cube_name } #{ solve_id }[/title]',
+            f'[title]Detail for { self.cube_name } #{ solve.solve_id }[/title]',
         )
         console.print(
             '[stats]Time       :[/stats] '
