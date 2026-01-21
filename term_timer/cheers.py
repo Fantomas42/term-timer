@@ -29,8 +29,10 @@ def get_cross_cheer(summary: list['StepSummary']) -> str:
         return ''
 
     htm = cross_step['moves_prettified'].metrics.htm
+    if htm <= 4:
+        return f'Optimal cross in {htm} HTM!'
     if htm <= 6:
-        return f'Cross solved efficiently in { htm } HTM.'
+        return f'Efficient cross in {htm} HTM.'
 
     return ''
 
@@ -49,7 +51,7 @@ def get_xcross_cheer(summary: list['StepSummary']) -> str:
     )
 
     if xcross_step:
-        return f'Solved with { xcross_step["name"] }.'
+        return f'Solved with {xcross_step["name"]}.'
 
     return ''
 
@@ -79,7 +81,7 @@ def get_score_cheer(solve: 'Solve') -> str:
     score = cast('float', solve.score)
 
     if score >= 16:
-        return f'Excellent solve score of { score:.2f}.'
+        return f'Excellent solve score of {score:.2f}.'
 
     return ''
 
@@ -108,9 +110,9 @@ def get_fluency_cheer(solve: 'Solve') -> str:
 
     """
     if solve.fluency >= 90:
-        return f'Buttery smooth! { solve.fluency }/100 fluency.'
+        return f'Buttery smooth! {solve.fluency}/100 fluency.'
     if solve.fluency >= 80:
-        return f'Great flow - { solve.fluency }/100 fluency.'
+        return f'Great flow - {solve.fluency}/100 fluency.'
     return ''
 
 
@@ -123,9 +125,9 @@ def get_tps_cheer(solve: 'Solve') -> str:
 
     """
     if solve.tps >= 5.0:  # noqa: PLR2004
-        return f'Lightning fingers! { solve.tps:.1f } TPS.'
+        return f'Lightning fingers! {solve.tps:.1f} TPS.'
     if solve.tps >= 4.5:  # noqa: PLR2004
-        return f'Fast turning at { solve.tps:.1f } TPS.'
+        return f'Fast turning at {solve.tps:.1f} TPS.'
     return ''
 
 
@@ -156,6 +158,8 @@ def get_skip_cheer(summary: list['StepSummary']) -> str:
         step['name'] for step in summary
         if step['type'] == 'skipped'
     ]
+    if 'OLL' in skips and 'PLL' in skips:
+        return 'Full last layer skip!'
     if 'OLL' in skips:
         return 'OLL skip!'
     if 'PLL' in skips:
@@ -190,7 +194,7 @@ def get_auf_cheer(solve: 'Solve') -> str:
 
     """
     if solve.aufs <= 2:
-        return 'Minimal AUFs - great prediction!'
+        return 'Minimal AUFs - great prediction.'
     return ''
 
 
@@ -294,6 +298,29 @@ def get_optimal_f2l_cheer(summary: list['StepSummary']) -> str:
     return ''
 
 
+def get_step_recognition_cheer(summary: list['StepSummary']) -> str:
+    """
+    Cheer for exceptionally fast recognition on specific steps.
+
+    Checks if OLL or PLL had instant recognition (under 10% of step time).
+
+    Returns:
+        Cheer message
+
+    """
+    for step in summary:
+        if step['type'] in {'skipped', 'virtual'}:
+            continue
+
+        if step['name'] not in {'OLL', 'PLL'}:
+            continue
+
+        if step['step_recognition_percent'] < 10:
+            return f'Instant {step["name"]} recognition!'
+
+    return ''
+
+
 def generate_solve_cheers(solve: 'Solve') -> list[str]:
     """
     Generate cheers based on solve performance metrics.
@@ -320,12 +347,13 @@ def generate_solve_cheers(solve: 'Solve') -> list[str]:
         get_optimal_f2l_cheer(summary),
         get_optimal_ll_cheer(summary),
         get_missed_moves_cheer(solve),
-        get_score_cheer(solve),
         get_fluency_cheer(solve),
         get_tps_cheer(solve),
         get_no_pauses_cheer(solve),
         get_recognition_cheer(solve),
+        get_step_recognition_cheer(summary),
         get_auf_cheer(solve),
+        get_score_cheer(solve),
         get_time_cheer(solve),
     ]
 
