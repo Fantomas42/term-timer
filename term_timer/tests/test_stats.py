@@ -427,6 +427,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
         """Test detail method with advanced solve showing all features."""
         # Create comprehensive mock advanced solve
         mock_solve = Mock(spec=Solve)
+        mock_solve.solve_id = 42
         mock_solve.final_time = 15 * SECOND
         mock_solve.time = 15 * SECOND
         mock_solve.advanced = True
@@ -523,6 +524,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
         for aufs_count, _expected_style in test_cases:
             with self.subTest(aufs_count=aufs_count):
                 mock_solve = Mock(spec=Solve)
+                mock_solve.solve_id = 42
                 mock_solve.final_time = 15 * SECOND
                 mock_solve.time = 15 * SECOND
                 mock_solve.advanced = True
@@ -604,6 +606,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
     def test_detail_with_reconstruction_display(self) -> None:
         """Test detail method with reconstruction display."""
         mock_solve = Mock(spec=Solve)
+        mock_solve.solve_id = 42
         mock_solve.final_time = 15 * SECOND
         mock_solve.time = 15 * SECOND
         mock_solve.advanced = True
@@ -687,6 +690,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
     def test_detail_with_graphs() -> None:
         """Test detail method with graph displays."""
         mock_solve = Mock(spec=Solve)
+        mock_solve.solve_id = 42
         mock_solve.final_time = 15 * SECOND
         mock_solve.time = 15 * SECOND
         mock_solve.advanced = True

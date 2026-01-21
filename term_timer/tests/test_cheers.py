@@ -657,7 +657,7 @@ class TestGetAufCheer(unittest.TestCase):
         solve = Mock()
         solve.aufs = 0
         result = get_auf_cheer(solve)
-        self.assertEqual(result, 'Minimal AUFs - great prediction.')
+        self.assertEqual(result, 'No AUFs - great case mastery.')
 
     def test_one_auf(self) -> None:
         """Test cheer for one AUF."""

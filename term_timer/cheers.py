@@ -193,6 +193,8 @@ def get_auf_cheer(solve: 'Solve') -> str:
         Cheer message
 
     """
+    if not solve.aufs:
+        return 'No AUFs - great case mastery.'
     if solve.aufs <= 2:
         return 'Minimal AUFs - great prediction.'
     return ''
