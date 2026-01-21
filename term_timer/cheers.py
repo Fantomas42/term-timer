@@ -96,6 +96,101 @@ def get_time_cheer(solve: 'Solve') -> str:
     )
 
 
+def get_fluency_cheer(solve: 'Solve') -> str:
+    """
+    Cheer based on solve fluency.
+
+    Returns:
+        Cheer message
+
+    """
+    if solve.fluency >= 90:
+        return f'Buttery smooth! { solve.fluency }/100 fluency.'
+    if solve.fluency >= 80:
+        return f'Great flow - { solve.fluency }/100 fluency.'
+    return ''
+
+
+def get_tps_cheer(solve: 'Solve') -> str:
+    """
+    Cheer based on turning speed.
+
+    Returns:
+        Cheer message
+
+    """
+    if solve.tps >= 5.0:  # noqa: PLR2004
+        return f'Lightning fingers! { solve.tps:.1f } TPS.'
+    if solve.tps >= 4.5:  # noqa: PLR2004
+        return f'Fast turning at { solve.tps:.1f } TPS.'
+    return ''
+
+
+def get_no_pauses_cheer(solve: 'Solve') -> str:
+    """
+    Cheer based on execution pauses.
+
+    Returns:
+        Cheer message
+
+    """
+    if solve.execution_pauses == 0:
+        return 'Flawless lookahead - zero pauses!'
+    if solve.execution_pauses <= 2:
+        return 'Excellent lookahead throughout.'
+    return ''
+
+
+def get_skip_cheer(summary: list['StepSummary']) -> str:
+    """
+    Cheer based on OLL/PLL skips.
+
+    Returns:
+        Cheer message
+
+    """
+    skips = [
+        step['name'] for step in summary
+        if step['type'] == 'skipped'
+    ]
+    if 'OLL' in skips:
+        return 'OLL skip!'
+    if 'PLL' in skips:
+        return 'PLL skip!'
+    return ''
+
+
+def get_recognition_cheer(solve: 'Solve') -> str:
+    """
+    Cheer based on fast recognition.
+
+    Returns:
+        Cheer message
+
+    """
+    if solve.time <= 0:
+        return ''
+
+    rec_percent = solve.recognition_time / solve.time * 100
+
+    if rec_percent <= 20:
+        return 'Sharp recognition throughout!'
+    return ''
+
+
+def get_auf_cheer(solve: 'Solve') -> str:
+    """
+    Cheer based on minimal AUFs.
+
+    Returns:
+        Cheer message
+
+    """
+    if solve.aufs <= 2:
+        return 'Minimal AUFs - great prediction!'
+    return ''
+
+
 def generate_solve_cheers(solve: 'Solve') -> list[str]:
     """
     Generate cheers based on solve performance metrics.
@@ -118,8 +213,14 @@ def generate_solve_cheers(solve: 'Solve') -> list[str]:
     cheer_lines = [
         get_cross_cheer(summary),
         get_xcross_cheer(summary),
+        get_skip_cheer(summary),
         get_missed_moves_cheer(solve),
         get_score_cheer(solve),
+        get_fluency_cheer(solve),
+        get_tps_cheer(solve),
+        get_no_pauses_cheer(solve),
+        get_recognition_cheer(solve),
+        get_auf_cheer(solve),
         get_time_cheer(solve),
     ]
 
