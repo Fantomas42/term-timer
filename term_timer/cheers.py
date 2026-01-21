@@ -30,9 +30,9 @@ def get_cross_cheer(summary: list['StepSummary']) -> str:
 
     htm = cross_step['moves_prettified'].metrics.htm
     if htm <= 4:
-        return f'Optimal cross in {htm} HTM!'
+        return f'Optimal cross in { htm } HTM!'
     if htm <= 6:
-        return f'Efficient cross in {htm} HTM.'
+        return f'Efficient cross in { htm } HTM.'
 
     return ''
 
@@ -51,7 +51,7 @@ def get_xcross_cheer(summary: list['StepSummary']) -> str:
     )
 
     if xcross_step:
-        return f'Solved with {xcross_step["name"]}.'
+        return f'Solved with { xcross_step["name"] }.'
 
     return ''
 
@@ -81,7 +81,7 @@ def get_score_cheer(solve: 'Solve') -> str:
     score = cast('float', solve.score)
 
     if score >= 16:
-        return f'Excellent solve score of {score:.2f}.'
+        return f'Excellent solve score of { score:.2f}.'
 
     return ''
 
@@ -110,9 +110,9 @@ def get_fluency_cheer(solve: 'Solve') -> str:
 
     """
     if solve.fluency >= 90:
-        return f'Buttery smooth! {solve.fluency}/100 fluency.'
+        return f'Buttery smooth! { solve.fluency }/100 fluency.'
     if solve.fluency >= 80:
-        return f'Great flow - {solve.fluency}/100 fluency.'
+        return f'Great flow - { solve.fluency }/100 fluency.'
     return ''
 
 
@@ -125,9 +125,9 @@ def get_tps_cheer(solve: 'Solve') -> str:
 
     """
     if solve.tps >= 5.0:  # noqa: PLR2004
-        return f'Lightning fingers! {solve.tps:.1f} TPS.'
+        return f'Lightning fingers! { solve.tps:.1f} TPS.'
     if solve.tps >= 4.5:  # noqa: PLR2004
-        return f'Fast turning at {solve.tps:.1f} TPS.'
+        return f'Fast turning at { solve.tps:.1f} TPS.'
     return ''
 
 
@@ -316,7 +316,7 @@ def get_step_recognition_cheer(summary: list['StepSummary']) -> str:
             continue
 
         if step['step_recognition_percent'] < 10:
-            return f'Instant {step["name"]} recognition!'
+            return f'Instant { step["name"] } recognition!'
 
     return ''
 
