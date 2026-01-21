@@ -37,7 +37,7 @@ class Timer(SolveInterface):
             scrambles: list[Algorithm],
             session: str,
             free_play: bool,
-            show_advices: bool,
+            show_cheers: bool,
             show_cube: bool,
             show_reconstruction: bool,
             show_tps_graph: bool,
@@ -63,7 +63,7 @@ class Timer(SolveInterface):
         self.raw_scramble = scramble
         self.scrambles = scrambles
         self.scramble_index = 0
-        self.show_advices = show_advices
+        self.show_cheers = show_cheers
         self.show_cube = show_cube
         self.show_reconstruction = show_reconstruction
         self.show_tps_graph = show_tps_graph
@@ -172,8 +172,8 @@ class Timer(SolveInterface):
                     solve.fluency_graph()
                 if self.show_recognition_graph:
                     solve.recognition_graph()
-                if self.show_advices:
-                    self.console.print(solve.advices())
+                if self.show_cheers:
+                    self.console.print(solve.cheers())
 
                 link = (
                     solve.link_term_timer

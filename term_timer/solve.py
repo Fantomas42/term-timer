@@ -20,7 +20,7 @@ from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.timing import untime_moves
 from cubing_algs.transform.translate import translate_moves
 
-from term_timer.adviser import generate_solve_advices
+from term_timer.cheers import generate_solve_cheers
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import SERVER_CONFIG
@@ -1132,27 +1132,29 @@ class Solve:  # noqa: PLR0904
 
         plt.show()
 
-    def advices(self) -> str:
+    def cheers(self) -> str:
         """
-        Generate constructive advice based on solve performance metrics.
+        Generate constructive cheers based on solve performance metrics.
 
         Analyzes recognition time, execution quality, efficiency, and step
-        performance to provide actionable recommendations for improvement.
+        performance to highlight key successes in the solve.
 
         Returns:
-            Rich-formatted string with personalized advice and motivation
+            Rich-formatted strings with cheers and motivation
 
         """
         if not self.advanced or not self.method_applied:
             return ''
 
-        advice_lines = ['[stats]Advices    :[/stats]']
-        advice_lines.extend(
-            f'[advice] - { advice }[/advice]'
-            for advice in generate_solve_advices(self)
+        cheers = generate_solve_cheers(self)
+
+        cheer_lines = ['[stats]Summary    :[/stats]']
+        cheer_lines.extend(
+            f'[cheer] - { cheer }[/cheer]'
+            for cheer in cheers
         )
 
-        return '\n'.join(advice_lines)
+        return '\n'.join(cheer_lines)
 
     @staticmethod
     def missed_moves_pair(algorithm: Algorithm) -> tuple[Algorithm, Algorithm]:

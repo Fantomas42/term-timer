@@ -121,7 +121,7 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
     show_fluency_graph = DISPLAY_CONFIG.get('fluency_graph', True)
     show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
     show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
-    show_advices = DISPLAY_CONFIG.get('advices', True)
+    show_cheers = DISPLAY_CONFIG.get('cheers', True)
 
     parser = subparsers.add_parser(
         'solve',
@@ -214,15 +214,15 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
             'Default: False'
         ),
     )
-    mode = 'hide' if show_advices else 'show'
+    mode = 'hide' if show_cheers else 'show'
     bluetooth.add_argument(
-        '-a', f'--{ mode }-advices',
+        '-a', f'--{ mode }-cheers',
         action='store_const',
-        const=not show_advices,
-        default=show_advices,
-        dest='show_advices',
+        const=not show_cheers,
+        default=show_cheers,
+        dest='show_cheers',
         help=(
-            f'{ mode.title() } advices after analyse.\n'
+            f'{ mode.title() } cheers after analysis.\n'
             'Default: False.'
         ),
     )
@@ -854,7 +854,7 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     show_fluency_graph = DISPLAY_CONFIG.get('fluency_graph', True)
     show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
     show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
-    show_advices = DISPLAY_CONFIG.get('advices', True)
+    show_cheers = DISPLAY_CONFIG.get('cheers', True)
 
     parser = subparsers.add_parser(
         'detail',
@@ -928,15 +928,15 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Default: False'
         ),
     )
-    mode = 'hide' if show_advices else 'show'
+    mode = 'hide' if show_cheers else 'show'
     analyze.add_argument(
-        '-a', f'--{ mode }-advices',
+        '-a', f'--{ mode }-cheers',
         action='store_const',
-        const=not show_advices,
-        default=show_advices,
-        dest='show_advices',
+        const=not show_cheers,
+        default=show_cheers,
+        dest='show_cheers',
         help=(
-            f'{ mode.title() } advices after analyse.\n'
+            f'{ mode.title() } cheers after analysis.\n'
             'Default: False.'
         ),
     )
