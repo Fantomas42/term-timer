@@ -5,10 +5,11 @@ from typing import cast
 from term_timer.constants import SECOND
 
 if TYPE_CHECKING:
+    from term_timer.methods.types import StepSummary
     from term_timer.solve import Solve
 
 
-def get_cross_cheer(solve: 'Solve') -> str:
+def get_cross_cheer(summary: list['StepSummary']) -> str:
     """
     Cheer based on Cross HTM.
 
@@ -16,11 +17,10 @@ def get_cross_cheer(solve: 'Solve') -> str:
         Cheer message
 
     """
-    cross_step = None
-    for step in solve.method_applied.summary:
-        if step['name'] == 'Cross':
-            cross_step = step
-            break
+    cross_step = next(
+        (step for step in summary if step['name'] == 'Cross'),
+        None,
+    )
 
     if not cross_step:
         return ''
@@ -32,7 +32,7 @@ def get_cross_cheer(solve: 'Solve') -> str:
     return ''
 
 
-def get_xcross_cheer(solve: 'Solve') -> str:
+def get_xcross_cheer(summary: list['StepSummary']) -> str:
     """
     Cheer based on XCross.
 
@@ -40,9 +40,13 @@ def get_xcross_cheer(solve: 'Solve') -> str:
         Cheer message
 
     """
-    for step in solve.method_applied.summary:
-        if 'XCross' in step['name']:
-            return f'Solve made with an { step["name"] }.'
+    xcross_step = next(
+        (step for step in summary if 'XCross' in step['name']),
+        None,
+    )
+
+    if xcross_step:
+        return f'Solved with { xcross_step["name"] }.'
 
     return ''
 
@@ -77,7 +81,7 @@ def get_score_cheer(solve: 'Solve') -> str:
     return ''
 
 
-def get_motivational_time(solve: 'Solve') -> str:
+def get_time_cheer(solve: 'Solve') -> str:
     """
     Generate motivational time cheer.
 
@@ -88,7 +92,7 @@ def get_motivational_time(solve: 'Solve') -> str:
     target_time = solve.time * 0.95 / SECOND
 
     return (
-        f'Keep pushing for sub-{ target_time:.1f} seconds.'
+        f'Keep pushing for sub-{ target_time:.1f}.'
     )
 
 
@@ -106,22 +110,17 @@ def generate_solve_cheers(solve: 'Solve') -> list[str]:
         List of strings with cheers and motivation
 
     """
+    if not solve.method_applied:
+        return []
+
+    summary = solve.method_applied.summary
+
     cheer_lines = [
-        get_cross_cheer(
-            solve,
-        ),
-        get_xcross_cheer(
-            solve,
-        ),
-        get_missed_moves_cheer(
-            solve,
-        ),
-        get_score_cheer(
-            solve,
-        ),
-        get_motivational_time(
-            solve,
-        ),
+        get_cross_cheer(summary),
+        get_xcross_cheer(summary),
+        get_missed_moves_cheer(solve),
+        get_score_cheer(solve),
+        get_time_cheer(solve),
     ]
 
     return [cheer for cheer in cheer_lines if cheer]
