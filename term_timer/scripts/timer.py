@@ -325,6 +325,8 @@ def manage(command: str, options: Namespace) -> int:
             iterations=options.iterations,
             easy_cross=options.easy_cross,
             show_cube=options.show_cube,
+            linear=options.linear,
+            no_color=options.no_color,
             output_format=options.format,
             seed=options.seed,
             rng=rng,

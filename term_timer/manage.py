@@ -318,6 +318,8 @@ class ScrambleManager:
             iterations: int,
             easy_cross: bool,
             show_cube: bool,
+            linear: bool,
+            no_color: bool,
             output_format: str,
             seed: str,
             rng: Random,
@@ -331,6 +333,8 @@ class ScrambleManager:
             iterations: The number of random moves per scramble (0 for auto).
             easy_cross: Whether to generate scrambles with easy crosses.
             show_cube: Whether to display visual cube representations.
+            linear: Wether to display the cube in linear.
+            no_color: Do not use color to display the cube.
             output_format: Output format ('terminal' or 'markdown').
             seed: Seed used for the RNG.
             rng: Random number generator.
@@ -341,6 +345,8 @@ class ScrambleManager:
         self.iterations = iterations
         self.easy_cross = easy_cross
         self.show_cube = show_cube
+        self.linear = linear
+        self.no_color = no_color
         self.output_format = output_format
         self.seed = seed
         self.rng = rng
@@ -413,23 +419,21 @@ class ScrambleManager:
             f'**Generated:** { timestamp }',
             cube_size_str,
             f'**Count:** { self.scrambles }',
-            '**Parameters:**',
         ))
         params = []
 
         if self.seed:
             params.append(f'- Seed: { self.seed }')
-        else:
-            params.append('- Seed: Random')
 
         if self.iterations:
             params.append(f'- Iterations: { self.iterations }')
-        else:
-            params.append('- Iterations: Auto')
 
-        params.append(f'- Easy Cross: { "Yes" if self.easy_cross else "No" }')
+        if self.easy_cross:
+            params.append('- Easy Cross: Yes')
 
-        output_lines.extend(params)
+        if params:
+            output_lines.extend(['**Customization:**', *params])
+
         output_lines.extend(('', '---', ''))
 
         # Generate scrambles
@@ -459,19 +463,27 @@ class ScrambleManager:
                 )
                 output_lines.append(scrambled_str)
 
+            output_lines.append('')
+
             # Cube visualization if requested
             if self.show_cube:
-                output_lines.extend(('', '### Cube Visualization', ''))
+                output_lines.append('### Cube Visualization')
 
-                cube_emoji = cube.display(orientation='UF', facelet='emoji')
+                cube_display = cube.display(
+                    orientation='UF',
+                    facelet='no-color' if self.no_color else 'emoji',
+                    mode='linear' if self.linear else '',
+                )
                 output_lines.extend((
                     '```',
-                    cube_emoji.rstrip('\n'),
+                    cube_display.rstrip('\n'),
                     '```',
                     '',
                 ))
 
-            output_lines.extend(('---', ''))
+            output_lines.append('---')
+            if counter < self.scrambles - 1:
+                output_lines.append('')
 
         # Print the complete markdown document
         print('\n'.join(output_lines))  # noqa: T201

@@ -1033,6 +1033,22 @@ def scramble_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Default: False'
         ),
     )
+    cube.add_argument(
+        '-l', '--linear',
+        action='store_true',
+        help=(
+            'Show the scrambled cube in linear mode.\n'
+            'Default: False'
+        ),
+    )
+    cube.add_argument(
+        '-s', '--no-color',
+        action='store_true',
+        help=(
+            'Show the scrambled cube without color.\n'
+            'Default: False'
+        ),
+    )
 
     session = parser.add_argument_group('Session')
     session.add_argument(
