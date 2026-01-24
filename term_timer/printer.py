@@ -3,6 +3,7 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_EFFECT
+from term_timer.config import CUBE_LINEAR
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import CUBE_PALETTE
 from term_timer.formatter import format_float
@@ -42,6 +43,7 @@ def print_cube_scrambled(
         orientation=orientation,
         palette=CUBE_PALETTE,
         effect=CUBE_EFFECT,
+        mode='linear' if CUBE_LINEAR else '',
     )
 
     is_3x3 = cube.size == 3

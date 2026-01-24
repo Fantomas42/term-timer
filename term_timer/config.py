@@ -16,6 +16,7 @@ orientation = "DF"
 method = "cf4op"
 palette = "default"
 effect = "face-visible"
+linear = false
 right-handed = true
 
 [trainer]
@@ -90,6 +91,8 @@ CUBE_METHOD: str = CUBE_CONFIG.get('method', '')
 CUBE_PALETTE: str = CUBE_CONFIG.get('palette', '')
 
 CUBE_EFFECT: str = CUBE_CONFIG.get('effect', '')
+
+CUBE_LINEAR: bool = CUBE_CONFIG.get('linear', False)
 
 CUBE_RIGHT_HANDED: bool = CUBE_CONFIG.get('right-handed', True)
 

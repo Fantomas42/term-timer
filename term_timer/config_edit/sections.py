@@ -293,6 +293,13 @@ class CubeSection(ConfigSection):
                     classes='field-help',
                 )
 
+            yield Static('Linear Display', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Use linear mode for cube display',
+                    id='linear',
+                )
+
             yield Static('Effect', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Select(
@@ -329,6 +336,9 @@ class CubeSection(ConfigSection):
         palette = self.query_one('#palette', Select)
         palette.value = cube_config.get('palette', 'default')
 
+        linear = self.query_one('#linear', Checkbox)
+        linear.value = cube_config.get('linear', True)
+
         effect = self.query_one('#effect', Select)
         effect.value = cube_config.get('effect', 'face-visible')
 
@@ -348,6 +358,7 @@ class CubeSection(ConfigSection):
         orientation = self.query_one('#orientation', Select)
         method = self.query_one('#method', Select)
         palette = self.query_one('#palette', Select)
+        linear = self.query_one('#linear', Checkbox)
         effect = self.query_one('#effect', Select)
         right_handed = self.query_one('#right-handed', Checkbox)
 
@@ -356,6 +367,7 @@ class CubeSection(ConfigSection):
                 'orientation': str(orientation.value),
                 'method': str(method.value),
                 'palette': str(palette.value),
+                'linear': linear.value,
                 'effect': str(effect.value),
                 'right-handed': right_handed.value,
             },
