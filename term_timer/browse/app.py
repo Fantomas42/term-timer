@@ -107,7 +107,7 @@ class BrowseApp(App[None]):
             self.query_one(DetailPanel),
         ]
 
-        if isinstance(focused, (SessionsPanel, SolvesPanel, DetailPanel)):
+        if isinstance(focused, (SessionsPanel | SolvesPanel | DetailPanel)):
             current_index = panels.index(focused)
             next_index = (current_index + 1) % len(panels)
             panels[next_index].focus()
@@ -123,7 +123,7 @@ class BrowseApp(App[None]):
             self.query_one(DetailPanel),
         ]
 
-        if isinstance(focused, (SessionsPanel, SolvesPanel, DetailPanel)):
+        if isinstance(focused, (SessionsPanel | SolvesPanel | DetailPanel)):
             current_index = panels.index(focused)
             previous_index = (current_index - 1) % len(panels)
             panels[previous_index].focus()

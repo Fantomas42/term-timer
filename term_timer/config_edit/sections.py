@@ -98,7 +98,7 @@ class ConfigSection(VerticalScroll):
     def load_config(self) -> None:
         """Load configuration from file. Override in subclasses."""
 
-    def get_config_data(  # noqa : PLR6301
+    def get_config_data(  # noqa: PLR6301
             self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
         """
