@@ -24,6 +24,7 @@ from cubing_algs.masks import OLL_MASK
 from cubing_algs.masks import facelets_masked
 from cubing_algs.masks import union_masks
 from cubing_algs.parsing import parse_moves
+from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.transform.rotation import remove_rotations
@@ -31,7 +32,6 @@ from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.constants import MS_TO_NS_FACTOR
-from term_timer.constants import INITIAL_STATE_3x3x3
 from term_timer.methods.masks import CASES_MASKS
 from term_timer.methods.types import CaseMaskInfo
 from term_timer.methods.types import StepConfig
@@ -195,7 +195,7 @@ class FaceletAnalyser:
         mask = self.reorient(mask, orientation_faces, offset=True)
 
         matching_mask = facelets_masked(
-            INITIAL_STATE_3x3x3, mask,
+            SOLVED_FACELETS_3x3x3, mask,
         )
 
         return matching_mask, mask
