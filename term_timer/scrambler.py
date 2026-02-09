@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases.case import Case
 from cubing_algs.parsing import parse_moves
-from cubing_algs.scrambler import scramble
-from cubing_algs.scrambler import scramble_easy_cross
+from cubing_algs.scrambler.nxn import scramble
+from cubing_algs.scrambler.steps import scramble_easy_cross
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.transform.rotation import compress_ending_rotations
@@ -49,7 +49,7 @@ def scrambler(cube_size: int, iterations: int,
     if raw_scramble:
         scrambled = parse_moves(raw_scramble, secure=False)
     elif easy_cross:
-        scrambled = scramble_easy_cross(rng)
+        scrambled, _solution = scramble_easy_cross('normal', rng=rng)
     else:
         scrambled = scramble(
             cube_size, iterations,
@@ -84,7 +84,7 @@ def trainer(step: str, cases: list['TrainingCase'],
 
     if step == 'ecross':
         case = cases[0].case
-        scramble = scramble_easy_cross(rng)
+        scramble, _solution = scramble_easy_cross('normal', rng=rng)
     elif step == 'cross':
         case = cases[0].case
         scramble, _cube = scrambler(3, 12, easy_cross=False, rng=rng)
