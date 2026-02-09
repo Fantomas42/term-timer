@@ -3,8 +3,8 @@ from typing import ClassVar
 
 from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
 
+from term_timer.methods.annotations import StepInfo
 from term_timer.methods.base import Analyser
-from term_timer.methods.types import StepInfo
 
 
 class RawAnalyser(Analyser):

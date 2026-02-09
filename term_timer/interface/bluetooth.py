@@ -10,23 +10,25 @@ from cubing_algs.move import Move
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.vcube import VCube
 
+from term_timer.bluetooth.annotations import BatteryEventDict
+from term_timer.bluetooth.annotations import EventDict
+from term_timer.bluetooth.annotations import FaceletsEventDict
+from term_timer.bluetooth.annotations import FaceletsEventDictNoState
+from term_timer.bluetooth.annotations import GyroConfigEventDict
+from term_timer.bluetooth.annotations import GyroEventDict
+from term_timer.bluetooth.annotations import HardwareEventDict
+from term_timer.bluetooth.annotations import HardwareEventMoyuDict
+from term_timer.bluetooth.annotations import HardwareEventNameOnlyDict
+from term_timer.bluetooth.annotations import HardwareEventPartialDict
+from term_timer.bluetooth.annotations import (
+    HardwareEventSoftwareVersionOnlyDict,
+)
+from term_timer.bluetooth.annotations import HardwareEventVersionOnlyDict
+from term_timer.bluetooth.annotations import MoveEventDict
+from term_timer.bluetooth.annotations import MoveInfo
+from term_timer.bluetooth.annotations import RotationEventDict
 from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
-from term_timer.bluetooth.types import BatteryEventDict
-from term_timer.bluetooth.types import EventDict
-from term_timer.bluetooth.types import FaceletsEventDict
-from term_timer.bluetooth.types import FaceletsEventDictNoState
-from term_timer.bluetooth.types import GyroConfigEventDict
-from term_timer.bluetooth.types import GyroEventDict
-from term_timer.bluetooth.types import HardwareEventDict
-from term_timer.bluetooth.types import HardwareEventMoyuDict
-from term_timer.bluetooth.types import HardwareEventNameOnlyDict
-from term_timer.bluetooth.types import HardwareEventPartialDict
-from term_timer.bluetooth.types import HardwareEventSoftwareVersionOnlyDict
-from term_timer.bluetooth.types import HardwareEventVersionOnlyDict
-from term_timer.bluetooth.types import MoveEventDict
-from term_timer.bluetooth.types import MoveInfo
-from term_timer.bluetooth.types import RotationEventDict
 from term_timer.config import BLUETOOTH_CONFIG
 from term_timer.config import USE_GYROSCOPE
 from term_timer.constants import MS_TO_NS_FACTOR

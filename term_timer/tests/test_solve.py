@@ -14,7 +14,7 @@ from term_timer.methods.base import Analyser
 from term_timer.solve import Solve
 
 if TYPE_CHECKING:
-    from term_timer.methods.types import StepSummary
+    from term_timer.methods.annotations import StepSummary
 
 
 class TestSolveInitialization(unittest.TestCase):

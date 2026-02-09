@@ -6,8 +6,8 @@ from typing import ClassVar
 from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
+from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
-from term_timer.bluetooth.types import EventDict
 
 
 class Driver:

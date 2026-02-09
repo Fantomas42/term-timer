@@ -16,7 +16,7 @@ from kociemba import solve
 from term_timer.config import CUBE_RIGHT_HANDED
 
 if TYPE_CHECKING:
-    from term_timer.types import TrainingCase
+    from term_timer.annotations import TrainingCase
 
 
 def state_to_scramble(state: str, facelets: str = '') -> Algorithm:

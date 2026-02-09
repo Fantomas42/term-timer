@@ -11,8 +11,8 @@ from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.aggregator import analyse_solve_worker
 
 if TYPE_CHECKING:
+    from term_timer.annotations import StepAnalysis
     from term_timer.solve import Solve
-    from term_timer.types import StepAnalysis
 
 
 class TestAnalyseSolveWorker(unittest.TestCase):

@@ -1,8 +1,8 @@
 """Layer-by-layer method analysis."""
 from typing import ClassVar
 
+from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import Analyser
-from term_timer.methods.types import StepSummary
 
 
 class LBLAnalyser(Analyser):

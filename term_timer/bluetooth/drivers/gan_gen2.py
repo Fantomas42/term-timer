@@ -15,6 +15,13 @@ from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from cubing_algs.facelets import cubies_to_facelets
 
+from term_timer.bluetooth.annotations import BatteryEventDict
+from term_timer.bluetooth.annotations import DisconnectEventDict
+from term_timer.bluetooth.annotations import EventDict
+from term_timer.bluetooth.annotations import FaceletsEventDict
+from term_timer.bluetooth.annotations import GyroEventDict
+from term_timer.bluetooth.annotations import HardwareEventDict
+from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.bluetooth.constants import GAN_ENCRYPTION_KEY
 from term_timer.bluetooth.constants import GAN_GEN2_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN2_SERVICE
@@ -24,13 +31,6 @@ from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
 from term_timer.bluetooth.salt import get_salt
-from term_timer.bluetooth.types import BatteryEventDict
-from term_timer.bluetooth.types import DisconnectEventDict
-from term_timer.bluetooth.types import EventDict
-from term_timer.bluetooth.types import FaceletsEventDict
-from term_timer.bluetooth.types import GyroEventDict
-from term_timer.bluetooth.types import HardwareEventDict
-from term_timer.bluetooth.types import MoveEventDict
 
 logger = logging.getLogger(__name__)
 

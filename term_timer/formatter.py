@@ -16,7 +16,7 @@ from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.constants import SolveFlag
-from term_timer.methods.types import StepSummary
+from term_timer.methods.annotations import StepSummary
 from term_timer.triggers import TRIGGERS_REGEX
 from term_timer.triggers import apply_trigger_outside_blocks
 

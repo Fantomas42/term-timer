@@ -13,6 +13,13 @@ from typing import ClassVar
 from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
+from term_timer.bluetooth.annotations import BatteryEventDict
+from term_timer.bluetooth.annotations import EventDict
+from term_timer.bluetooth.annotations import FaceletsEventDictNoState
+from term_timer.bluetooth.annotations import GyroConfigEventDict
+from term_timer.bluetooth.annotations import GyroEventDictNoVelocity
+from term_timer.bluetooth.annotations import HardwareEventMoyuDict
+from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.bluetooth.constants import MOYU_WEILONG_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import MOYU_WEILONG_ENCRYPTION_KEY
 from term_timer.bluetooth.constants import MOYU_WEILONG_SERVICE
@@ -21,13 +28,6 @@ from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
 from term_timer.bluetooth.salt import get_salt
-from term_timer.bluetooth.types import BatteryEventDict
-from term_timer.bluetooth.types import EventDict
-from term_timer.bluetooth.types import FaceletsEventDictNoState
-from term_timer.bluetooth.types import GyroConfigEventDict
-from term_timer.bluetooth.types import GyroEventDictNoVelocity
-from term_timer.bluetooth.types import HardwareEventMoyuDict
-from term_timer.bluetooth.types import MoveEventDict
 
 logger = logging.getLogger(__name__)
 

@@ -8,6 +8,7 @@ from random import Random
 from cubing_algs.exceptions import InvalidMoveError
 
 from term_timer.aggregator import SolvesMethodAggregator
+from term_timer.annotations import ListingFilters
 from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.browse.app import run_browse
@@ -28,7 +29,6 @@ from term_timer.server.app import Server
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.timer import Timer
 from term_timer.trainer import Trainer
-from term_timer.types import ListingFilters
 
 
 async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912

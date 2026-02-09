@@ -15,10 +15,10 @@ from term_timer.bluetooth.constants import MOYU_WEILONG_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
 
 if TYPE_CHECKING:
-    from term_timer.bluetooth.types import BatteryEventDict
-    from term_timer.bluetooth.types import FaceletsEventDictNoState
-    from term_timer.bluetooth.types import GyroConfigEventDict
-    from term_timer.bluetooth.types import HardwareEventMoyuDict
+    from term_timer.bluetooth.annotations import BatteryEventDict
+    from term_timer.bluetooth.annotations import FaceletsEventDictNoState
+    from term_timer.bluetooth.annotations import GyroConfigEventDict
+    from term_timer.bluetooth.annotations import HardwareEventMoyuDict
 
 
 class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904

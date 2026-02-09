@@ -15,11 +15,11 @@ from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
+from term_timer.methods.annotations import CaseMasks
+from term_timer.methods.annotations import SourceCaseInfo
 from term_timer.methods.masks.encoders import f2l_case_encoder
 from term_timer.methods.masks.encoders import oll_case_encoder
 from term_timer.methods.masks.encoders import pll_case_encoder
-from term_timer.methods.types import CaseMasks
-from term_timer.methods.types import SourceCaseInfo
 
 CFOP_CASE_ENCODERS: dict[str, Callable[[str], str]] = {
     'OLL': oll_case_encoder,

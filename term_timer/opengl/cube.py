@@ -7,9 +7,9 @@ import numpy as np
 from cubing_algs.algorithm import Algorithm
 from numpy.typing import NDArray
 
+from term_timer.bluetooth.annotations import CubeStateDict
+from term_timer.bluetooth.annotations import QuaternionDict
 from term_timer.bluetooth.gyroscope import Quaternion
-from term_timer.bluetooth.types import CubeStateDict
-from term_timer.bluetooth.types import QuaternionDict
 from term_timer.constants import Face
 from term_timer.opengl import renderer
 from term_timer.opengl.data import corner_orientations

@@ -9,6 +9,7 @@ from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
 from cubing_algs.vcube import VCube
 
+from term_timer.annotations import TrainingCase
 from term_timer.constants import CROSS_CASE
 from term_timer.constants import EASY_CROSS_CASE
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -28,7 +29,6 @@ from term_timer.scrambler import trainer
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.triggers import DEFAULT_TRIGGERS
-from term_timer.types import TrainingCase
 
 CROSS_MODES: Final = ('cross', 'ecross')
 

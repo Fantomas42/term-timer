@@ -8,7 +8,7 @@ from cubing_algs.transform.auf import remove_auf_moves
 from term_timer.constants import SECOND
 
 if TYPE_CHECKING:
-    from term_timer.methods.types import StepSummary
+    from term_timer.methods.annotations import StepSummary
     from term_timer.solve import Solve
 
 

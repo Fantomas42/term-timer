@@ -15,8 +15,8 @@ from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
 
 if TYPE_CHECKING:
-    from term_timer.bluetooth.types import GyroEventDict
-    from term_timer.bluetooth.types import MoveEventDict
+    from term_timer.bluetooth.annotations import GyroEventDict
+    from term_timer.bluetooth.annotations import MoveEventDict
 
 
 class TestMoveRotationDetector(unittest.TestCase):

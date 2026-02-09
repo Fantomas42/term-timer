@@ -17,12 +17,14 @@ from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.drivers.gan_gen4 import GanGen4Driver
 
 if TYPE_CHECKING:
-    from term_timer.bluetooth.types import BatteryEventDict
-    from term_timer.bluetooth.types import FaceletsEventDict
-    from term_timer.bluetooth.types import HardwareEventDict
-    from term_timer.bluetooth.types import HardwareEventPartialDict
-    from term_timer.bluetooth.types import HardwareEventSoftwareVersionOnlyDict
-    from term_timer.bluetooth.types import HardwareEventVersionOnlyDict
+    from term_timer.bluetooth.annotations import BatteryEventDict
+    from term_timer.bluetooth.annotations import FaceletsEventDict
+    from term_timer.bluetooth.annotations import HardwareEventDict
+    from term_timer.bluetooth.annotations import HardwareEventPartialDict
+    from term_timer.bluetooth.annotations import (
+        HardwareEventSoftwareVersionOnlyDict,
+    )
+    from term_timer.bluetooth.annotations import HardwareEventVersionOnlyDict
 
 
 class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904

@@ -14,23 +14,25 @@ from typing import ClassVar
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from cubing_algs.facelets import cubies_to_facelets
 
+from term_timer.bluetooth.annotations import BatteryEventDict
+from term_timer.bluetooth.annotations import DisconnectEventDict
+from term_timer.bluetooth.annotations import EventDict
+from term_timer.bluetooth.annotations import FaceletsEventDict
+from term_timer.bluetooth.annotations import GyroEventDict
+from term_timer.bluetooth.annotations import HardwareEventNameOnlyDict
+from term_timer.bluetooth.annotations import HardwareEventPartialDict
+from term_timer.bluetooth.annotations import (
+    HardwareEventSoftwareVersionOnlyDict,
+)
+from term_timer.bluetooth.annotations import HardwareEventVersionOnlyDict
+from term_timer.bluetooth.annotations import MoveEventDict
+from term_timer.bluetooth.annotations import ResetEventDict
 from term_timer.bluetooth.constants import DEBOUNCE
 from term_timer.bluetooth.constants import GAN_GEN4_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN4_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN4_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.message import GanProtocolMessage
-from term_timer.bluetooth.types import BatteryEventDict
-from term_timer.bluetooth.types import DisconnectEventDict
-from term_timer.bluetooth.types import EventDict
-from term_timer.bluetooth.types import FaceletsEventDict
-from term_timer.bluetooth.types import GyroEventDict
-from term_timer.bluetooth.types import HardwareEventNameOnlyDict
-from term_timer.bluetooth.types import HardwareEventPartialDict
-from term_timer.bluetooth.types import HardwareEventSoftwareVersionOnlyDict
-from term_timer.bluetooth.types import HardwareEventVersionOnlyDict
-from term_timer.bluetooth.types import MoveEventDict
-from term_timer.bluetooth.types import ResetEventDict
 
 logger = logging.getLogger(__name__)
 

@@ -11,8 +11,8 @@ from OpenGL.GL import glPopMatrix
 from OpenGL.GL import glPushMatrix
 from OpenGL.GL import glScalef
 
-from term_timer.bluetooth.types import CubeStateDict
-from term_timer.bluetooth.types import QuaternionDict
+from term_timer.bluetooth.annotations import CubeStateDict
+from term_timer.bluetooth.annotations import QuaternionDict
 from term_timer.constants import Face
 from term_timer.opengl.cube import Cube
 from term_timer.opengl.renderer import render

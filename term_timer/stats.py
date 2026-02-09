@@ -9,6 +9,9 @@ from cubing_algs.vcube import VCube
 from rich import box
 from rich.table import Table
 
+from term_timer.annotations import CaseStats
+from term_timer.annotations import ListingFilters
+from term_timer.annotations import MethodAnalysis
 from term_timer.config import STATS_CONFIG
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
@@ -27,9 +30,6 @@ from term_timer.formatter import format_time
 from term_timer.interface.console import console
 from term_timer.printer import print_cube_scrambled
 from term_timer.solve import Solve
-from term_timer.types import CaseStats
-from term_timer.types import ListingFilters
-from term_timer.types import MethodAnalysis
 
 if TYPE_CHECKING:
     from term_timer.methods.base import Analyser

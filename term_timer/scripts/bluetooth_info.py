@@ -22,14 +22,14 @@ from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
 from term_timer.arguments import ORIENTATIONS_SORTED
+from term_timer.bluetooth.annotations import BatteryEventDict
+from term_timer.bluetooth.annotations import EventDict
+from term_timer.bluetooth.annotations import FaceletsEventDict
+from term_timer.bluetooth.annotations import GyroEventDict
+from term_timer.bluetooth.annotations import HardwareEventDict
+from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
-from term_timer.bluetooth.types import BatteryEventDict
-from term_timer.bluetooth.types import EventDict
-from term_timer.bluetooth.types import FaceletsEventDict
-from term_timer.bluetooth.types import GyroEventDict
-from term_timer.bluetooth.types import HardwareEventDict
-from term_timer.bluetooth.types import MoveEventDict
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import ROTATION_THRESHOLD
 from term_timer.config import USE_GYROSCOPE

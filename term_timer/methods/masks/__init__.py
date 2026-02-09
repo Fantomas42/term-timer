@@ -3,8 +3,8 @@ import json
 from pathlib import Path
 from typing import Final
 
-from term_timer.methods.types import CaseMaskInfo
-from term_timer.methods.types import CaseMasks
+from term_timer.methods.annotations import CaseMaskInfo
+from term_timer.methods.annotations import CaseMasks
 
 CASES_DIRECTORY: Final = Path(__file__).parent
 

@@ -8,17 +8,17 @@ from unittest.mock import patch
 
 from cubing_algs.cases import get_case
 
+from term_timer.annotations import ListingFilters
 from term_timer.constants import DNF
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsTools
-from term_timer.types import ListingFilters
 
 if TYPE_CHECKING:
-    from term_timer.types import CaseStats
-    from term_timer.types import MethodAnalysis
+    from term_timer.annotations import CaseStats
+    from term_timer.annotations import MethodAnalysis
 
 
 class TestStatisticsTools(unittest.TestCase):

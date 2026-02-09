@@ -32,11 +32,11 @@ from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.methods.annotations import CaseMaskInfo
+from term_timer.methods.annotations import StepConfig
+from term_timer.methods.annotations import StepInfo
+from term_timer.methods.annotations import StepSummary
 from term_timer.methods.masks import CASES_MASKS
-from term_timer.methods.types import CaseMaskInfo
-from term_timer.methods.types import StepConfig
-from term_timer.methods.types import StepInfo
-from term_timer.methods.types import StepSummary
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves

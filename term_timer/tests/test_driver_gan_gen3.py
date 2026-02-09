@@ -18,9 +18,9 @@ from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 
 if TYPE_CHECKING:
-    from term_timer.bluetooth.types import BatteryEventDict
-    from term_timer.bluetooth.types import FaceletsEventDict
-    from term_timer.bluetooth.types import HardwareEventDict
+    from term_timer.bluetooth.annotations import BatteryEventDict
+    from term_timer.bluetooth.annotations import FaceletsEventDict
+    from term_timer.bluetooth.annotations import HardwareEventDict
 
 
 class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904

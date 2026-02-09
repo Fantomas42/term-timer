@@ -9,18 +9,18 @@ from typing import cast
 
 from cubing_algs.cases import get_case
 
+from term_timer.annotations import CaseStats
+from term_timer.annotations import CaseStatsAccumulator
+from term_timer.annotations import MethodAnalysis
+from term_timer.annotations import SolveAnalysis
+from term_timer.annotations import StepAnalysis
 from term_timer.methods import get_method_analyser
 from term_timer.solve import Solve
 from term_timer.stats import StatisticsTools
-from term_timer.types import CaseStats
-from term_timer.types import CaseStatsAccumulator
-from term_timer.types import MethodAnalysis
-from term_timer.types import SolveAnalysis
-from term_timer.types import StepAnalysis
 
 if TYPE_CHECKING:
+    from term_timer.methods.annotations import StepSummary
     from term_timer.methods.base import Analyser
-    from term_timer.methods.types import StepSummary
 
 logger = logging.getLogger(__name__)
 

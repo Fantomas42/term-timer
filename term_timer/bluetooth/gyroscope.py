@@ -5,8 +5,8 @@ import math
 from dataclasses import dataclass
 from typing import Final
 
-from term_timer.bluetooth.types import QuaternionDict
-from term_timer.bluetooth.types import RotationResult
+from term_timer.bluetooth.annotations import QuaternionDict
+from term_timer.bluetooth.annotations import RotationResult
 from term_timer.config import ROTATION_THRESHOLD
 
 logger = logging.getLogger(__name__)

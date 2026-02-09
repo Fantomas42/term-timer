@@ -15,19 +15,19 @@ from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from cubing_algs.facelets import cubies_to_facelets
 
+from term_timer.bluetooth.annotations import BatteryEventDict
+from term_timer.bluetooth.annotations import DisconnectEventDict
+from term_timer.bluetooth.annotations import EventDict
+from term_timer.bluetooth.annotations import FaceletsEventDict
+from term_timer.bluetooth.annotations import HardwareEventDict
+from term_timer.bluetooth.annotations import MoveEventDict
+from term_timer.bluetooth.annotations import ResetEventDict
 from term_timer.bluetooth.constants import DEBOUNCE
 from term_timer.bluetooth.constants import GAN_GEN3_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN3_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN3_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.message import GanProtocolMessage
-from term_timer.bluetooth.types import BatteryEventDict
-from term_timer.bluetooth.types import DisconnectEventDict
-from term_timer.bluetooth.types import EventDict
-from term_timer.bluetooth.types import FaceletsEventDict
-from term_timer.bluetooth.types import HardwareEventDict
-from term_timer.bluetooth.types import MoveEventDict
-from term_timer.bluetooth.types import ResetEventDict
 
 logger = logging.getLogger(__name__)
 

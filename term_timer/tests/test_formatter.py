@@ -33,7 +33,7 @@ from term_timer.formatter import format_term_timer_session_url
 from term_timer.formatter import format_time
 
 if TYPE_CHECKING:
-    from term_timer.methods.types import StepSummary
+    from term_timer.methods.annotations import StepSummary
 
 
 class TestComputePadding(unittest.TestCase):

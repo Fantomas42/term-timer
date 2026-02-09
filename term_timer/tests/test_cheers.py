@@ -27,7 +27,7 @@ from term_timer.cheers import is_optimal_ll_step
 from term_timer.constants import SECOND
 
 if TYPE_CHECKING:
-    from term_timer.methods.types import StepSummary
+    from term_timer.methods.annotations import StepSummary
 
 
 class TestGetCrossCheer(unittest.TestCase):

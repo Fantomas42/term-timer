@@ -10,11 +10,11 @@ from cubing_algs.masks import F2L_FL_MASK
 from cubing_algs.masks import F2L_FR_MASK
 
 from term_timer.constants import SECOND
+from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import Analyser
 from term_timer.methods.masks.encoders import f2l_case_encoder
 from term_timer.methods.masks.encoders import oll_case_encoder
 from term_timer.methods.masks.encoders import pll_case_encoder
-from term_timer.methods.types import StepSummary
 
 CFOP_CASE_ENCODERS: Final[dict[str, Callable[[str], str]]] = {
     'OLL': oll_case_encoder,
