@@ -6,6 +6,7 @@ from term_timer.config import CUBE_EFFECT
 from term_timer.config import CUBE_LINEAR
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import CUBE_PALETTE
+from term_timer.config import CUBE_STYLE
 from term_timer.formatter import format_float
 from term_timer.interface.console import console
 
@@ -43,6 +44,7 @@ def print_cube_scrambled(
         orientation=orientation,
         palette=CUBE_PALETTE,
         effect=CUBE_EFFECT,
+        style=CUBE_STYLE,
         mode='linear' if CUBE_LINEAR else '',
     )
 
@@ -83,6 +85,7 @@ def print_cube_trainer(
             orientation=orientation,
             palette=CUBE_PALETTE,
             effect=CUBE_EFFECT,
+            style=CUBE_STYLE,
         ),
         end='',
     )

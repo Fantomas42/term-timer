@@ -4,6 +4,7 @@ from typing import Any
 from cubing_algs.constants import ORIENTATIONS
 from cubing_algs.display.effects import EFFECTS
 from cubing_algs.display.palettes import PALETTES
+from cubing_algs.display.styles import STYLES
 from cubing_algs.vcube import VCube
 from textual.app import ComposeResult
 from textual.containers import Grid
@@ -316,6 +317,22 @@ class CubeSection(ConfigSection):
                     classes='field-help',
                 )
 
+            yield Static('Style', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Select(
+                    options=[
+                        (f'{ name.title() }', name)
+                        for name in STYLES
+                    ],
+                    id='style',
+                    allow_blank=False,
+                    value='default',
+                )
+                yield Static(
+                    'Letter style for cube state display',
+                    classes='field-help',
+                )
+
             yield Static('Right-handed', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Checkbox(
@@ -342,6 +359,9 @@ class CubeSection(ConfigSection):
         effect = self.query_one('#effect', Select)
         effect.value = cube_config.get('effect', 'face-visible')
 
+        style = self.query_one('#style', Select)
+        style.value = cube_config.get('style', 'default')
+
         right_handed = self.query_one('#right-handed', Checkbox)
         right_handed.value = cube_config.get('right-handed', True)
 
@@ -360,6 +380,7 @@ class CubeSection(ConfigSection):
         palette = self.query_one('#palette', Select)
         linear = self.query_one('#linear', Checkbox)
         effect = self.query_one('#effect', Select)
+        style = self.query_one('#style', Select)
         right_handed = self.query_one('#right-handed', Checkbox)
 
         return {
@@ -369,6 +390,7 @@ class CubeSection(ConfigSection):
                 'palette': str(palette.value),
                 'linear': linear.value,
                 'effect': str(effect.value),
+                'style': str(style.value),
                 'right-handed': right_handed.value,
             },
         }
