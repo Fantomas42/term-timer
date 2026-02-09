@@ -25,7 +25,7 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
-from cubing_algs.display import ANSI_TO_RGB
+from cubing_algs.display.vcube import ANSI_TO_RGB
 from cubing_algs.transform.mirror import mirror_moves
 from cubing_algs.transform.offset import offset_y2_moves
 from cubing_algs.transform.offset import offset_y_moves

@@ -2,8 +2,8 @@
 from typing import Any
 
 from cubing_algs.constants import ORIENTATIONS
-from cubing_algs.effects import EFFECTS
-from cubing_algs.palettes import PALETTES
+from cubing_algs.display.effects import EFFECTS
+from cubing_algs.display.palettes import PALETTES
 from cubing_algs.vcube import VCube
 from textual.app import ComposeResult
 from textual.containers import Grid

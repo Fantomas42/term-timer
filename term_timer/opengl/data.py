@@ -1,8 +1,7 @@
 """OpenGL vertex and color data for cube rendering."""
-
 from typing import Final
 
-from cubing_algs.palettes import PALETTES
+from cubing_algs.display.palettes import PALETTES
 
 from term_timer.config import CUBE_PALETTE
 
