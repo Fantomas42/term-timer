@@ -1,8 +1,8 @@
 """Bluetooth cube interface for scanning, connecting, and communication."""
-
 import logging
 from asyncio import Queue
 from typing import Final
+from typing import Self
 from typing import cast
 
 from bleak import BleakClient
@@ -72,7 +72,7 @@ class BluetoothInterface:
             filter_name: str | None = None,
             *,
             use_gyroscope: bool,
-    ) -> 'BluetoothInterface':
+    ) -> Self:
         """
         Enters async context manager by connecting to a Bluetooth cube.
 
