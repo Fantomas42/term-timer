@@ -24,7 +24,7 @@ dependencies = [
     "bottle==0.13.3",
     "cryptography==44.0.2",
     "kociemba==1.2.1",
-    "cubing_algs==1.0.17",
+    "cubing_algs==1.0.18",
     "rtoml>=0.12.0",
     "numpy>=2.4.0"
 ]
