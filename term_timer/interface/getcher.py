@@ -1,5 +1,4 @@
 """Async character input from terminal for user interaction."""
-
 import asyncio
 import logging
 import os

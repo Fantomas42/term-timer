@@ -1,5 +1,4 @@
 """Type definitions for bluetooth event payloads."""
-
 from datetime import datetime
 from typing import TYPE_CHECKING
 from typing import TypedDict

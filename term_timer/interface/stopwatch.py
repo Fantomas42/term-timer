@@ -1,5 +1,4 @@
 """Stopwatch and timer functionality for solve timing."""
-
 import asyncio
 import time
 from typing import TYPE_CHECKING

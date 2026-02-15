@@ -1,5 +1,4 @@
 """Tests for driver moyu."""
-
 import asyncio
 import unittest
 from datetime import datetime

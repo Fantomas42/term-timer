@@ -1,5 +1,4 @@
 """Gyroscope data processing and rotation detection for smart cubes."""
-
 import logging
 import math
 from dataclasses import dataclass

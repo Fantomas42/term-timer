@@ -1,5 +1,4 @@
 """Inspection countdown functionality for timed solves."""
-
 import asyncio
 import time
 from typing import TYPE_CHECKING

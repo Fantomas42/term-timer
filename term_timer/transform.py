@@ -1,5 +1,4 @@
 """Algorithm transformation utilities for humanizing and prettifying moves."""
-
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.optimize import optimize_double_moves

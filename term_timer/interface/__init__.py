@@ -1,5 +1,4 @@
 """Interface modules providing mixins for timer and trainer functionality."""
-
 import asyncio
 import logging
 import time

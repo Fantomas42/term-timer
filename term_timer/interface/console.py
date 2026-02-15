@@ -1,5 +1,4 @@
 """Console theme configuration and Rich console instance."""
-
 from typing import Final
 
 from rich.console import Console as RichConsole

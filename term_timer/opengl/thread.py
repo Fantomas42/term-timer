@@ -1,5 +1,4 @@
 """Threading support for OpenGL visualization window."""
-
 import logging
 import threading
 from typing import Final

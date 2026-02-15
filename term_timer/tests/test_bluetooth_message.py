@@ -1,5 +1,4 @@
 """Tests for bluetooth message."""
-
 import unittest
 
 from term_timer.bluetooth.message import GanProtocolMessage

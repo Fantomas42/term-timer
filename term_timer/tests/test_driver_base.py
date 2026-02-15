@@ -1,5 +1,4 @@
 """Tests for driver base."""
-
 import unittest
 from datetime import datetime
 from datetime import timezone

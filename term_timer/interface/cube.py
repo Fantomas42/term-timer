@@ -1,5 +1,4 @@
 """Cube orientation and reorientation capabilities."""
-
 from functools import cached_property
 
 from cubing_algs.algorithm import Algorithm

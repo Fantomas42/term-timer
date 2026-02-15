@@ -1,5 +1,4 @@
 """Base driver class for Bluetooth cube communication."""
-
 from collections.abc import Sequence
 from typing import ClassVar
 

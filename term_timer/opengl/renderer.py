@@ -1,5 +1,4 @@
 """OpenGL renderer for animated cube visualization."""
-
 import time
 from operator import neg
 from typing import TYPE_CHECKING

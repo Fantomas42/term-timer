@@ -1,5 +1,4 @@
 """Text rendering utilities for OpenGL windows."""
-
 from typing import TYPE_CHECKING
 from typing import Final
 

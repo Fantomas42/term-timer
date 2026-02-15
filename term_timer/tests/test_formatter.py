@@ -1,5 +1,4 @@
 """Tests for formatter."""
-
 import unittest
 from typing import TYPE_CHECKING
 from typing import cast

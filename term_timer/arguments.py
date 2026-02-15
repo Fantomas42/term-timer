@@ -1,5 +1,4 @@
 """Command-line argument definitions and parsing for the timer application."""
-
 import sys
 from argparse import Namespace
 from argparse import _SubParsersAction

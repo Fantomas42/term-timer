@@ -1,5 +1,4 @@
 """Asynchronous logging configuration and setup."""
-
 import atexit
 import logging
 import logging.config

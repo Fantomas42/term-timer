@@ -1,5 +1,4 @@
 """Binary message parsing for GAN cube Bluetooth protocol."""
-
 import struct
 from collections.abc import Sequence
 

@@ -1,5 +1,4 @@
 """Solves panel for browsing solve list."""
-
 import re
 
 from textual.app import ComposeResult

@@ -1,5 +1,4 @@
 """OpenGL camera controls for 3D cube visualization."""
-
 from OpenGL.GL import GL_MODELVIEW
 from OpenGL.GL import glLoadIdentity
 from OpenGL.GL import glMatrixMode

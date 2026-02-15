@@ -1,5 +1,4 @@
 """AES-128-CBC encryption and decryption for GAN cube protocols."""
-
 from collections.abc import Sequence
 from typing import Final
 

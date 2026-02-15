@@ -1,5 +1,4 @@
 """Trigger pattern detection and formatting for algorithm analysis."""
-
 import re
 from collections.abc import Callable
 from re import Pattern

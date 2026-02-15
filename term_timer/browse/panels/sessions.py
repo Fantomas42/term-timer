@@ -1,5 +1,4 @@
 """Sessions panel for browsing cube sizes and sessions."""
-
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
 from textual.message import Message

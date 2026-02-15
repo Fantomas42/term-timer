@@ -1,5 +1,4 @@
 """Bluetooth cube integration interface mixin."""
-
 import asyncio
 import logging
 from typing import TYPE_CHECKING

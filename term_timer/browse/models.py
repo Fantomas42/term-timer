@@ -1,5 +1,4 @@
 """Data models for browse interface."""
-
 from dataclasses import dataclass
 
 from term_timer.constants import SOLVES_DIRECTORY

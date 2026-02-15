@@ -1,5 +1,4 @@
 """Solving method analysis modules for CFOP, LBL, and other methods."""
-
 from typing import Final
 
 from term_timer.methods.base import Analyser

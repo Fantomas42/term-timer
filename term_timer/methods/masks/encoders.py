@@ -1,5 +1,4 @@
 """Case encoders for identifying OLL, PLL, and F2L patterns."""
-
 from collections.abc import Callable
 
 from cubing_algs.masks import state_masked

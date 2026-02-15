@@ -1,5 +1,4 @@
 """3D cube rendering with OpenGL."""
-
 import math
 from typing import Final
 
