@@ -1,9 +1,8 @@
 """Tests for transform."""
-
 import unittest
 
 from cubing_algs.parsing import parse_moves
-from cubing_algs.transform.mirror import mirror_moves
+from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
@@ -37,7 +36,7 @@ class TransformReorientTestCase(unittest.TestCase):
     def test_reorient_issue_simple(self) -> None:
         """Test reorient issue simple."""
         scramble = parse_moves("R U R' U'")
-        solution = scramble.transform(mirror_moves)
+        solution = scramble.transform(invert_moves)
 
         cube = VCube()
         cube.rotate(scramble)

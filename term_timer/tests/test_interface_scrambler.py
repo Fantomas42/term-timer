@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.mirror import mirror_moves
+from cubing_algs.transform.invert import invert_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.interface.cube import Orienter
@@ -847,7 +847,7 @@ class TestScrambleCompletionVerification(unittest.TestCase):
             elif orientations:
                 # Convert moves for bluetooth cube when orientations
                 # because bluetooth cube does not rotate itself, it stay in UF.
-                oriented_moves = mirror_moves(orientations) + move_untimed
+                oriented_moves = invert_moves(orientations) + move_untimed
                 move_desoriented = oriented_moves.transform(
                     degrip_full_moves,
                 )[0]

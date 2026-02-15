@@ -8,7 +8,7 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.scrambler.nxn import scramble
 from cubing_algs.scrambler.steps import scramble_easy_cross
 from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.mirror import mirror_moves
+from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.rotation import compress_ending_rotations
 from cubing_algs.vcube import VCube
 from kociemba import solve
@@ -29,7 +29,7 @@ def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
     """
     solution: str = solve(state, facelets) if facelets else solve(state)
 
-    return parse_moves(solution).transform(mirror_moves)
+    return parse_moves(solution).transform(invert_moves)
 
 
 def scrambler(cube_size: int, iterations: int,
@@ -114,7 +114,7 @@ def random_training(cases: list['TrainingCase'],
     algo = (
         orientation_moves
         + rng.choice(selected_case.best_setups)
-        + mirror_moves(orientation_moves)
+        + invert_moves(orientation_moves)
     )
 
     return (

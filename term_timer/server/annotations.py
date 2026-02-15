@@ -160,7 +160,7 @@ class AlgorithmDetailContext(TypedDict):
     algorithm: Algorithm
     y_variations: list[AlgorithmVariation]
     symmetry_variations: list[AlgorithmVariation]
-    mirror_variation: Algorithm
+    inverse_variation: Algorithm
 
 
 class AcademyOverviewContext(TypedDict):

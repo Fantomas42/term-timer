@@ -26,7 +26,7 @@ from cubing_algs.masks import union_masks
 from cubing_algs.parsing import parse_moves
 from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
 from cubing_algs.transform.auf import remove_auf_moves
-from cubing_algs.transform.mirror import mirror_moves
+from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.rotation import remove_rotations
 from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
@@ -113,14 +113,14 @@ class FaceletAnalyser:
         Transform cube state to match a target orientation.
 
         Rotates the cube state to align with the specified orientation
-        faces, optionally applying a mirror transformation for offset
+        faces, optionally applying a invert transformation for offset
         calculations.
 
         Args:
             state: 54-character facelet string representing cube state.
             orientation_faces: Two-character string specifying bottom and
                 front faces (e.g., 'UF' for white bottom, green front).
-            offset: Whether to mirror the orientation moves for mask
+            offset: Whether to invert the orientation moves for mask
                 alignment.
 
         Returns:
@@ -136,7 +136,7 @@ class FaceletAnalyser:
             return state
 
         if offset:
-            moves = mirror_moves(moves)
+            moves = invert_moves(moves)
 
         cube = VCube(state, size=3, check=False)
         cube.rotate(moves)

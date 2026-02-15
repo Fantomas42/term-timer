@@ -459,14 +459,14 @@
     </div>
     <br>
     <div class="algorithm-card moves-card">
-      <span class="variation-label">Mirror</span>
+      <span class="variation-label">Inverse</span>
       <div class="moves-content">
-        {% for m in mirror_variation %}
+        {% for m in inverse_variation %}
           <span class="move">{{ m }}</span>
         {% endfor %}
       </div>
       <div class="moves-footer">
-        <a href="/algorithm/{{ mirror_variation }}/" class="algorithm-detail">Details</a>
+        <a href="/algorithm/{{ inverse_variation }}/" class="algorithm-detail">Details</a>
         <button class="moves-copy">Copy</button>
       </div>
     </div>

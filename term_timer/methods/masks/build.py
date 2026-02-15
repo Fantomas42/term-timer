@@ -11,7 +11,7 @@ from cubing_algs.masks import F2L_BR_MASK
 from cubing_algs.masks import F2L_FL_MASK
 from cubing_algs.masks import F2L_FR_MASK
 from cubing_algs.parsing import parse_moves
-from cubing_algs.transform.mirror import mirror_moves
+from cubing_algs.transform.invert import invert_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
@@ -47,7 +47,7 @@ def compute_masks(name: str, moves: str, mode: str,
     masks: CaseMasks = {}
 
     algorithm = parse_moves(moves).transform(
-        mirror_moves,
+        invert_moves,
     )
 
     # For URF format,

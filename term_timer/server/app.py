@@ -1,5 +1,4 @@
 """Flask web server for solve statistics and visualization."""
-
 import gc
 import os
 import re
@@ -26,7 +25,7 @@ from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
 from cubing_algs.display.vcube import ANSI_TO_RGB
-from cubing_algs.transform.mirror import mirror_moves
+from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.offset import offset_y2_moves
 from cubing_algs.transform.offset import offset_y_moves
 from cubing_algs.transform.offset import offset_yprime_moves
@@ -1150,7 +1149,7 @@ class AlgorithmDetailView(View):
 
         Returns:
             Dictionary containing original algorithm, Y-axis rotations,
-            symmetry transformations, and mirror variation.
+            symmetry transformations, and invert variation.
 
         """
         # Generate Y-axis variations
@@ -1188,7 +1187,7 @@ class AlgorithmDetailView(View):
             'algorithm': self.algorithm,
             'y_variations': y_variations,
             'symmetry_variations': symmetry_variations,
-            'mirror_variation': mirror_moves(self.algorithm),
+            'inverse_variation': invert_moves(self.algorithm),
         }
 
 
