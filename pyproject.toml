@@ -75,6 +75,7 @@ ignore = [
     "D203",
     "D205",
     "D212",
+    "RUF067",
 ]
 
 [tool.ruff.format]
