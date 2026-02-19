@@ -187,14 +187,19 @@ class CFOPAnalyser(Analyser):
                 in-place.
 
         """
-        all_steps = [s['name'] for s in summary]
+        for info in summary:
+            if info['increment'] > 1:
+                step_idx = self.step_list.index(info['name'])
+                first_step = self.step_list[step_idx - info['increment'] + 1]
+                info['name'] = first_step
 
+        names = [s['name'] for s in summary]
         for step_position, step_name in enumerate(self.step_list):
-            if step_name not in all_steps:
+            if step_name not in names:
                 summary.insert(
                     step_position,
                     self.create_skipped_summary(step_name),
-            )
+                )
 
         self.correct_summary_cfop(summary)
 
