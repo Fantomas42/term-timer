@@ -14,7 +14,10 @@ from term_timer.constants import RESLICE_THRESHOLD_GYROSCOPE
 from term_timer.constants import REWIDE_THRESHOLD_GYROSCOPE
 
 
-def humanize_moves_without_rotation(algorithm: Algorithm) -> Algorithm:
+def humanize_moves_without_rotation(
+        algorithm: Algorithm,
+        *, allow_ending_rotations: bool = True,
+) -> Algorithm:
     """
     Transform to human-readable format.
 
@@ -30,7 +33,11 @@ def humanize_moves_without_rotation(algorithm: Algorithm) -> Algorithm:
         to_fixpoint=True,
     )
 
-    if humanized and humanized[-1].is_rotation_move:
+    if (
+            not allow_ending_rotations
+            and humanized
+            and humanized[-1].is_rotation_move
+    ):
         return algorithm
 
     return humanized
@@ -63,6 +70,26 @@ def humanize_moves(algorithm: Algorithm) -> Algorithm:
         return humanize_moves_with_rotation(algorithm)
 
     return humanize_moves_without_rotation(algorithm)
+
+
+def humanize_moves_unsecured(algorithm: Algorithm) -> Algorithm:
+    """
+    Transform to human-readable format.
+
+    But does not allow trailing rotations after transformation.
+    Should be renammed or removed once things are stabilized.
+
+    Returns:
+        Humanized algorithm using rotation-specific or standard method.
+
+    """
+    if algorithm.has_rotations:
+        return humanize_moves_with_rotation(algorithm)
+
+    return humanize_moves_without_rotation(
+        algorithm,
+        allow_ending_rotations=False,
+    )
 
 
 def prettify_moves(algorithm: Algorithm) -> Algorithm:

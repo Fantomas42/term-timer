@@ -7,6 +7,7 @@ from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.transform import humanize_moves
+from term_timer.transform import humanize_moves_unsecured
 from term_timer.transform import humanize_moves_without_rotation
 from term_timer.transform import prettify_moves
 
@@ -168,16 +169,62 @@ class TransformHumanizeTestCase(unittest.TestCase):
         # Should return original if ends with rotation
         self.assertEqual(result, algorithm)
 
-    def test_humanize_moves_without_rotation_ends_with_rotation(self) -> None:
+    def test_humanize_moves_without_rotation_ends_with_rotation_allow(
+            self) -> None:
         """
         Test humanize_moves_without_rotation when
-        result ends with rotation.
+        result ends with rotation allowed.
+        """
+        # Timed sequences like R@100 L'@100 reslice to M@100 x@100
+        # which ends with a rotation
+        algorithm = parse_moves("R@100 L'@100")
+        expect = parse_moves('M@100 x@100')
+
+        result = humanize_moves_without_rotation(
+            algorithm,
+            allow_ending_rotations=True,
+        )
+
+        self.assertEqual(result, expect)
+
+    def test_humanize_moves_without_rotation_ends_with_rotation_disallow(
+            self) -> None:
+        """
+        Test humanize_moves_without_rotation when
+        result ends with rotation not allowed.
         """
         # Timed sequences like R@100 L'@100 reslice to M@100 x@100
         # which ends with a rotation, triggering the fallback to original
         algorithm = parse_moves("R@100 L'@100")
 
-        result = humanize_moves_without_rotation(algorithm)
+        result = humanize_moves_without_rotation(
+            algorithm,
+            allow_ending_rotations=False,
+        )
+
+        # Should return original algorithm
+        # since transformation ends with rotation
+        self.assertEqual(result, algorithm)
+
+    def test_humanize_moves_ends_with_rotation(self) -> None:
+        """Test humanize_moves when result ends with rotation."""
+        algorithm = parse_moves("R@100 L'@100")
+        expect = parse_moves('M@100 x@100')
+
+        result = humanize_moves(algorithm)
+
+        self.assertEqual(result, expect)
+
+    def test_humanize_moves_unsecured_ends_with_rotation(self) -> None:
+        """
+        Test humanize_moves_unsecured when
+        result ends with rotation.
+        """
+        # Timed sequences like R@100 L'@100 reslice to M@100 x@100
+        # which ends with a rotation, but allowed
+        algorithm = parse_moves("R@100 L'@100")
+
+        result = humanize_moves_unsecured(algorithm)
 
         # Should return original algorithm
         # since transformation ends with rotation
