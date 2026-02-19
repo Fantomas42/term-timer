@@ -201,14 +201,13 @@ class CFOPAnalyser(Analyser):
                     self.create_skipped_summary(step_name),
                 )
 
-        self.correct_summary_cfop(summary)
+        self.set_cases_cfop(summary)
 
-    def correct_summary_cfop(self, summary: list[StepSummary]) -> None:
+    def set_cases_cfop(self, summary: list[StepSummary]) -> None:
         """
-        Improve summary info for CFOP.
+        Identify OLL/PLL/F2L cases from cube state.
 
-        Identifies OLL/PLL/F2L cases from cube state. Modifies summary
-        in-place to maintain consistent structure.
+        Modifies summary in-place to maintain consistent structure.
 
         Args:
             summary: List of step summary dictionaries to be updated
@@ -439,7 +438,7 @@ class CF4OPAnalyser(CFOPAnalyser):
                     set(F2L_SLOTS) - set(case_infos),
                 )
 
-        self.correct_summary_cfop(summary)
+        self.set_cases_cfop(summary)
 
         if 'Cross' not in summary[0]['name']:
             summary.insert(0, self.create_skipped_summary('Cross'))
