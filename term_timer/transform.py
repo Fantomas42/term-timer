@@ -69,7 +69,10 @@ def humanize_moves(algorithm: Algorithm) -> Algorithm:
     if algorithm.has_rotations:
         return humanize_moves_with_rotation(algorithm)
 
-    return humanize_moves_without_rotation(algorithm)
+    return humanize_moves_without_rotation(
+        algorithm,
+        allow_ending_rotations=True,
+    )
 
 
 def humanize_moves_unsecured(algorithm: Algorithm) -> Algorithm:
