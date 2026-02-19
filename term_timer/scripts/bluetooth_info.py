@@ -234,7 +234,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
         event_collector: list[EventDict],
         *, show_cube: bool,
         orientation_faces: str,
-        rotation_threshold: float = 70.0) -> None:
+        rotation_threshold: float = 75.0) -> None:
     """
     Consumes Bluetooth events and processes cube state updates.
 
