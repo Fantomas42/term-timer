@@ -102,7 +102,7 @@ class TestSolveXXCross(unittest.TestCase):
         self.date = 1713907485
         self.time = 41206000000
         self.scramble = """
-  U' B L2 F L F U D B R B2 L2 B2 R' F2 L' F2 L' B2 L'
+        U' B L2 F L F U D B R B2 L2 B2 R' F2 L' F2 L' B2 L'
         """
         self.solution = """
         B@0 U'@327 L@1295 D'@2015 F@2334 F@2424 U@3583 D'@4719 D@7229 F'@7825
