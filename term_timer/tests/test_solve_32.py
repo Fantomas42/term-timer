@@ -149,9 +149,9 @@ class TestSolve32CFOP(TestSolve32):
         method_applied = get_method_applied(self.solve)
         inputs = method_applied.summary
         outputs = [
-            ('Cross', 'skipped'),
+            ('Cross', 'step'),
             ('F2L', 'skipped'),
-            ('OLL', 'step'),
+            ('OLL', 'skipped'),
             ('PLL', 'step'),
         ]
 

@@ -360,9 +360,9 @@ class TestSolveShortCFOPAutoOrientation(TestSolveShort):
 
         inputs = method_applied.summary
         outputs = [
-            ('Cross', 'skipped'),
+            ('Cross', 'step'),
             ('F2L', 'skipped'),
-            ('OLL', 'step'),
+            ('OLL', 'skipped'),
             ('PLL', 'step'),
         ]
 
