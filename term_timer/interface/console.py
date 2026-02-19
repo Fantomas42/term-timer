@@ -100,6 +100,7 @@ theme: dict[str, str] = {
     'ao12': 'bold #FF00FF',
     'ao100': 'bold #FFCC99',
     'ao1000': 'bold #CCFF99',
+    'no-ao': 'bold #666666',
 
     'tps': 'bold #00DFFF',
     'tps-e': 'bold #00AAAA',

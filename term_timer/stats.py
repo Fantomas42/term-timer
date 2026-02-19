@@ -1111,8 +1111,8 @@ class SolveStatisticsReporter(Statistics):
         table.add_column('Reco.', width=5, justify='right')
         table.add_column('Exec.', width=5, justify='right')
         table.add_column('Time', width=5, justify='right')
-        table.add_column('Ao12', width=5, justify='right')
         table.add_column('Ao5', width=5, justify='right')
+        table.add_column('Ao12', width=5, justify='right')
         table.add_column('QTM', width=5, justify='right')
         table.add_column('TPS', width=5, justify='right')
         table.add_column('eTPS', width=5, justify='right')
@@ -1143,6 +1143,14 @@ class SolveStatisticsReporter(Statistics):
 
             count = case_stats['count']
 
+            ao5 = '[no-ao]N/A[/no-ao]'
+            if case_stats['ao5'] > 0:
+                ao5 = f'[ao5]{ format_duration(case_stats["ao5"]) }[/ao5]'
+
+            ao12 = '[no-ao]N/A[/no-ao]'
+            if case_stats['ao12'] > 0:
+                ao12 = f'[ao12]{ format_duration(case_stats["ao12"]) }[/ao12]'
+
             table.add_row(
                 head,
                 f'[stats]{ count!s }[/stats]',
@@ -1161,12 +1169,8 @@ class SolveStatisticsReporter(Statistics):
                 '[duration]' +
                 format_duration(int(case_stats['time'])) +
                 '[/duration]',
-                '[ao12]' +
-                format_duration(case_stats['ao12']) +
-                '[/ao12]',
-                '[ao5]' +
-                format_duration(case_stats['ao5']) +
-                '[/ao5]',
+                ao5,
+                ao12,
                 f'[moves]{ case_stats["qtm"]:.2f}[/moves]',
                 f'[tps]{ case_stats["tps"]:.2f}[/tps]',
                 f'[tps-e]{ case_stats["etps"]:.2f}[/tps-e]',
