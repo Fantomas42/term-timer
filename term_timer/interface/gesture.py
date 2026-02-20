@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.move import Move
 
-from term_timer.transform import humanize_moves
+from term_timer.transform import humanize_moves_unsecured
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +15,14 @@ class Gesture:
     """Mixin providing gesture detection for save commands."""
 
     if TYPE_CHECKING:
-        # Methods from Orienter mixin
+        # Method from Orienter mixin
         def reorient(self, algorithm: Algorithm) -> Algorithm:
-            """Transform algorithm using cube orientation (from Orienter)."""
+            """Transform algorithm using cube orientation."""
+            ...
+
+        # Method from Bluetooth mixin
+        def cube_is_solved(self) -> bool:
+            """Check if the Bluetooth cube is in solved state."""
             ...
 
     def __init__(self) -> None:
@@ -37,8 +42,11 @@ class Gesture:
         if len(self.save_moves) < 2:
             return
 
+        if not self.cube_is_solved():
+            return
+
         algo = self.save_moves.transform(
-            humanize_moves,
+            humanize_moves_unsecured,
         )
 
         if len(algo) < 2:
