@@ -38,7 +38,7 @@ from term_timer.methods.annotations import StepInfo
 from term_timer.methods.annotations import StepSummary
 from term_timer.methods.masks import CASES_MASKS
 from term_timer.orientation import get_orientation_moves
-from term_timer.transform import humanize_moves
+from term_timer.transform import humanize_moves_unsecured
 from term_timer.transform import prettify_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 
@@ -423,7 +423,7 @@ class Analyser(FaceletAnalyser):
             total = execution + recognition
 
             reorientation = translate_moves(self.orientation_moves)(moves)
-            humanization = humanize_moves(reorientation)
+            humanization = humanize_moves_unsecured(reorientation)
             prettyfication = prettify_moves(humanization)
 
             aufs = self.get_aufs(step, moves)
