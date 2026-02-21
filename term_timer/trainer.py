@@ -228,7 +228,8 @@ class Trainer(SolveInterface):
 
         return selected_cases
 
-    def cube_is_solved(self) -> bool:
+    @property
+    def bluetooth_cube_is_solved(self) -> bool:
         """
         Check if training step is completed.
 

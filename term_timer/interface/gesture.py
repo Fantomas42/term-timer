@@ -20,8 +20,9 @@ class Gesture:
             """Transform algorithm using cube orientation."""
             ...
 
-        # Method from Bluetooth mixin
-        def cube_is_solved(self) -> bool:
+        # Property from Bluetooth mixin
+        @property
+        def bluetooth_cube_is_solved(self) -> bool:
             """Check if the Bluetooth cube is in solved state."""
             ...
 
@@ -42,7 +43,7 @@ class Gesture:
         if len(self.save_moves) < 2:
             return
 
-        if not self.cube_is_solved():
+        if not self.bluetooth_cube_is_solved:
             return
 
         algo = self.save_moves.transform(
