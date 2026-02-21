@@ -1696,6 +1696,15 @@ twisty-alg-viewer {
     font-weight: bold;
 }
 
+.alg-generators-spaced {
+    margin-top: 0.5rem;
+}
+
+.alg-chart-centered {
+    max-width: 600px;
+    margin: auto;
+}
+
 .alg-rating-box {
     text-align: center;
     padding: 1.25rem;

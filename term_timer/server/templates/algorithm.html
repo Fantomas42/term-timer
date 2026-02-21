@@ -670,7 +670,7 @@
         <div>
           <canvas id="metricsChart"></canvas>
         </div>
-        <div style="max-width: 600px; margin: auto;">
+        <div class="alg-chart-centered">
           <canvas id="moveTypesChart"></canvas>
         </div>
       </div>
@@ -985,7 +985,7 @@
                 <td class="alg-value">{{ ergonomics.trigger_coverage }}</td>
               </tr>
             </table>
-            <div class="alg-generators" style="margin-top: 0.5rem;">
+            <div class="alg-generators alg-generators-spaced">
               {% for pattern in ergonomics.detected_patterns %}
                 <span class="alg-pattern-badge">{{ pattern }}</span>{% if not loop.last %} {% endif %}
               {% endfor %}
