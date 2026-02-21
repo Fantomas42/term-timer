@@ -272,7 +272,7 @@ class Bluetooth:
                             facelets_event['facelets'],
                             size=3,
                         )
-                        if not self.bluetooth_cube.is_solved:
+                        if not self.bluetooth_cube_is_solved:
                             self.clear_line(full=True)
                             self.console.print(
                                 '[bluetooth]🫤Bluetooth:[/bluetooth] '
@@ -504,13 +504,14 @@ class Bluetooth:
 
             if (
                     not self.solve_completed_event.is_set()
-                    and self.cube_is_solved()
+                    and self.bluetooth_cube_is_solved
             ):
                 self.end_time = clock
                 self.solve_completed_event.set()
                 logger.info('Bluetooth Stop: %s', self.end_time)
 
-    def cube_is_solved(self) -> bool:
+    @property
+    def bluetooth_cube_is_solved(self) -> bool:
         """
         Check if the Bluetooth cube is in solved state.
 
@@ -519,3 +520,8 @@ class Bluetooth:
 
         """
         return self.bluetooth_cube.is_solved if self.bluetooth_cube else False
+
+    @property
+    def bluetooth_cube_state(self) -> str:
+        """Returns state of the bluetooth cube if connected."""
+        return self.bluetooth_cube.state if self.bluetooth_cube else ''
