@@ -1277,6 +1277,7 @@
                 <th>QTM Overhead</th>
                 <th>QTM Pre-AUF</th>
                 <th>QTM Post-AUF</th>
+                <th>+oHTM</th>
               </tr>
             </thead>
             <tbody>
@@ -1319,6 +1320,16 @@
                     {% else %}
                       <span class="metric-{% if info.aufs.1 > 2 %}warning{% elif info.aufs.1 %}caution{% else %}success{% endif %}">
                         {{ info.aufs.1 }}
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="recons-ohtm">
+                    {% set ohtm = info|get_ohtm_delta %}
+                    {% if ohtm < 1 %}
+                      ---
+                    {% else %}
+                      <span class="metric-{% if ohtm > 2 %}warning{% else %}caution{% endif %}">
+                        {{ ohtm }}
                       </span>
                     {% endif %}
                   </td>

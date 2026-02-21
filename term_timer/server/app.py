@@ -25,6 +25,7 @@ from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
 from cubing_algs.display.vcube import ANSI_TO_RGB
+from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.offset import offset_y2_moves
 from cubing_algs.transform.offset import offset_y_moves
@@ -218,6 +219,30 @@ def get_step_case(step_name: str, code_case: str) -> Case:
 
     """
     return get_case(f'CFOP/{ step_name.split(" ", maxsplit=1)[0] }', code_case)
+
+
+def get_ohtm_delta(step_info: StepSummary) -> int:
+    """
+    Compute optimal HTM case delta.
+
+    Args:
+        step_info: Step summary info.
+
+    Returns:
+        Number of added HTM.
+
+    """
+    if not step_info['case']:
+        return -1
+
+    step_case = get_step_case(step_info['name'], step_info['case'])
+    optimal_htm = step_case.optimal_htm
+    if optimal_htm:
+        return step_info['moves_prettified'].transform(
+            remove_auf_moves,
+        ).metrics.htm - optimal_htm
+
+    return -1
 
 
 def normalize_value(value: float, method_applied: Analyser,
@@ -558,6 +583,7 @@ class View:
                         'format_line': format_line,
                         'format_session_name': format_session_name,
                         'get_step_case': get_step_case,
+                        'get_ohtm_delta': get_ohtm_delta,
                         'normalize_value': normalize_value,
                         'normalize_percent': normalize_percent,
                         'reconstruction_step': reconstruction_step,
