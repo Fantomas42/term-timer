@@ -378,6 +378,64 @@
          }
        });
      }
+
+     // Memory Sub-scores Radar Chart
+     const memoryRadarCtx = document.getElementById('memoryRadarChart');
+     if (memoryRadarCtx) {
+       {% set memory = algorithm.memory %}
+       new Chart(memoryRadarCtx, {
+         type: 'radar',
+         data: {
+           labels: [
+             'Length',
+             'Chunking',
+             'Structure',
+             'Repetition',
+             'Face Diversity',
+             'Flow',
+             'Familiarity'
+           ],
+           datasets: [{
+             label: 'Difficulty Score',
+             data: [
+               {{ "%.1f"|format(memory.length_score) }},
+               {{ "%.1f"|format(memory.chunk_score) }},
+               {{ "%.1f"|format(memory.structure_score) }},
+               {{ "%.1f"|format(memory.repetition_score) }},
+               {{ "%.1f"|format(memory.face_diversity_score) }},
+               {{ "%.1f"|format(memory.flow_score) }},
+               {{ "%.1f"|format(memory.move_familiarity_score) }}
+             ],
+             backgroundColor: 'rgba(255, 99, 132, 0.2)',
+             borderColor: 'rgba(255, 99, 132, 1)',
+             borderWidth: 2,
+             pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+             pointBorderColor: '#fff',
+             pointHoverBackgroundColor: '#fff',
+             pointHoverBorderColor: 'rgba(255, 99, 132, 1)'
+           }]
+         },
+         options: {
+           responsive: true,
+           maintainAspectRatio: true,
+           plugins: {
+             legend: { display: false },
+             title: {
+               display: true,
+               text: 'Memory Difficulty Breakdown',
+               font: { size: 16 }
+             }
+           },
+           scales: {
+             r: {
+               beginAtZero: true,
+               max: 100,
+               ticks: { stepSize: 20 }
+             }
+           }
+         }
+       });
+     }
    });
   </script>
   <script type="module">
@@ -958,6 +1016,107 @@
           </ul>
         </div>
       {% endif %}
+    </div>
+  </div>
+
+  <!-- Memory Analysis -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-brain"></i>
+        <a href="#memory" id="memory">Memory Analysis</a>
+      </h2>
+    </div>
+    <div class="card-body">
+      {% set memory = algorithm.memory %}
+      <div class="alg-ergo-grid">
+        <div>
+          <h3 class="alg-section-title">Overall Rating</h3>
+          <div class="alg-rating-box">
+            <div class="alg-comfort-score {% if memory.memory_score >= 80 %}score-very-poor{% elif memory.memory_score >= 60 %}score-poor{% elif memory.memory_score >= 40 %}score-fair{% elif memory.memory_score >= 20 %}score-good{% else %}score-excellent{% endif %}">
+              {{ "%.1f"|format(memory.memory_score) }}
+            </div>
+            <div class="alg-rating-label">
+              {{ memory.memory_rating }}
+            </div>
+          </div>
+          <div class="alg-metric-row">
+            <strong>Move Count:</strong> {{ memory.move_count }}
+          </div>
+          <div class="alg-metric-row">
+            <strong>Effective Chunks:</strong> {{ memory.effective_chunks }}
+          </div>
+          <div class="alg-metric-row">
+            <strong>Distinct Faces:</strong> {{ memory.distinct_faces }}
+          </div>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Sub-scores</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Length</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(memory.length_score) }}</td>
+            </tr>
+            <tr>
+              <td><strong>Chunking</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(memory.chunk_score) }}</td>
+            </tr>
+            <tr>
+              <td><strong>Structure</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(memory.structure_score) }}</td>
+            </tr>
+            <tr>
+              <td><strong>Repetition</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(memory.repetition_score) }}</td>
+            </tr>
+            <tr>
+              <td><strong>Face Diversity</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(memory.face_diversity_score) }}</td>
+            </tr>
+            <tr>
+              <td><strong>Flow</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(memory.flow_score) }}</td>
+            </tr>
+            <tr>
+              <td><strong>Move Familiarity</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(memory.move_familiarity_score) }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div>
+          <h3 class="alg-section-title">Raw Data</h3>
+          <table class="alg-table">
+            <tr>
+              <td><strong>Distinct Triggers</strong></td>
+              <td class="alg-value">{{ memory.distinct_triggers }}</td>
+            </tr>
+            <tr>
+              <td><strong>Trigger Coverage</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(memory.trigger_coverage_percent * 100) }}%</td>
+            </tr>
+            <tr>
+              <td><strong>Has Structure</strong></td>
+              <td class="alg-value">{{ 'Yes' if memory.has_structure else 'No' }}</td>
+            </tr>
+            <tr>
+              <td><strong>Repeated Patterns</strong></td>
+              <td class="alg-value">{{ memory.repeated_patterns }}</td>
+            </tr>
+            <tr>
+              <td><strong>Unfamiliar Moves</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(memory.unfamiliar_move_percent * 100) }}%</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="alg-ergo-grid">
+        <div>
+          <canvas id="memoryRadarChart"></canvas>
+        </div>
+      </div>
     </div>
   </div>
 
