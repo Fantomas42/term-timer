@@ -1328,8 +1328,25 @@
           </table>
         </div>
       {% endif %}
-
     </div>
+
+    {% if cheers %}
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-clipboard-list"></i>
+            <a href="#summary" id="summary">Summary</a>
+          </h2>
+        </div>
+        <div class="cheers-card">
+          <ul>
+            {% for cheer in cheers %}
+              <li>{{ cheer }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endif %}
 
     <div class="card">
       <div class="card-header">

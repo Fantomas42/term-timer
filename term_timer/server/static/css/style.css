@@ -463,6 +463,10 @@ header {
     color: var(--text-secondary);
 }
 
+.cheers-card ul {
+    padding-left: 1.5em;
+}
+
 .tabs {
     display: flex;
     gap: 1rem;

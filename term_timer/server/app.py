@@ -38,6 +38,7 @@ from cubing_algs.transform.symmetry import symmetry_s_moves
 from cubing_algs.transform.timing import untime_moves
 
 from term_timer.aggregator import SolvesMethodAggregator
+from term_timer.cheers import generate_solve_cheers
 from term_timer.config import CUBE_METHOD
 from term_timer.constants import CUBE_SIZES
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -1004,6 +1005,7 @@ class SolveDetailView(View):
             'solves': self.solves,
             'scatter': scatter,
             'steps': steps,
+            'cheers': generate_solve_cheers(self.solve),
             'tps': tps,
             'fluencies': fluencies,
             'recognitions': recognitions,
