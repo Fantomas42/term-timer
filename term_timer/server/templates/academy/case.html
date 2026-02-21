@@ -1,10 +1,10 @@
 {% extends "skeleton.html" %}
 
-{% block title %}{{ case.name }}{% endblock %}
-{% block subtitle %}{{ step }} Case Details{% endblock %}
+{% block title %}{{ method }}/{{ case.name }}{% endblock %}
+{% block subtitle %}{{ method }}/{{ case.name }} Case Details{% endblock %}
 
 {% block description %}
-Detailed view of {{ case.name }} case with algorithms, recognition patterns, and metrics.
+Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition patterns, and metrics.
 {% endblock %}
 
 {% block actions %}
@@ -36,7 +36,15 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
     <div class="card-header">
       <h2 class="card-title">
         <i class="fas fa-cube"></i>
-        <a href="#case-info" id="case-info">{{ case.name }}</a>
+        <a href="#case-info" id="case-info">
+          {{ case.name }}
+        </a>
+        {% if case.aliases %}
+          <span class="title-secondary">
+            AKA:
+            {{ case.aliases|join(', ') }}
+          </span>
+        {% endif %}
       </h2>
     </div>
     <div class="stats-grid">
@@ -65,6 +73,16 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
         <div class="stat-value">{{ case.optimal_cycles }}</div>
       </div>
       {% endif %}
+      {% if case.groups %}
+      <div class="stat-card">
+        <div class="stat-title">Groups</div>
+        <div class="stat-value">
+        {% for group in case.groups %}
+          <span class="solve-detail-btn">{{ group }}</span>
+        {% endfor %}
+        </div>
+      </div>
+      {% endif %}
       {% if case.family %}
       <div class="stat-card">
         <div class="stat-title">Family</div>
@@ -74,48 +92,33 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
       {% if case.symmetry %}
       <div class="stat-card">
         <div class="stat-title">Symmetry</div>
-        <div class="stat-value">{{ case.symmetry }}</div>
+        <div class="stat-value">{{ case.symmetry.title() }}</div>
       </div>
       {% endif %}
-      {% if case.status %}
+      {% if DEBUG and case.status %}
       <div class="stat-card">
         <div class="stat-title">Status</div>
-        <div class="stat-value">{{ case.status }}</div>
+        <div class="stat-value {% if case.status == 'OK' %}stat-best{% else %}stat-worst{% endif %}">{{ case.status }}</div>
       </div>
       {% endif %}
     </div>
-    {% if case.description %}
-    <div class="case-description">
-      {{ case.description }}
-    </div>
-    {% endif %}
-    {% if case.groups %}
-    <div class="case-section">
-      <div class="stat-title">Groups:</div>
-      <div class="case-badge-list">
-        {% for group in case.groups %}
-        <span class="case-badge">{{ group }}</span>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
-    {% if case.aliases %}
-    <div class="case-section">
-      <div class="stat-title">Also known as:</div>
-      <div class="case-note">
-        {{ case.aliases|join(', ') }}
-      </div>
-    </div>
-    {% endif %}
-    {% if case.arrows %}
-    <div class="case-section">
-      <div class="stat-title">Piece Movement:</div>
-      <div class="case-mono">
-        {{ case.arrows }}
-      </div>
-    </div>
-    {% endif %}
   </div>
+
+  {% if case.description %}
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-comment-alt"></i>
+        <a href="#comment" id="notes">Notes</a>
+      </h2>
+    </div>
+    <div class="comment-card">
+      <div id="comment-display" class="comment">
+        <p>{{ case.description }}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <div class="card">
     <div class="card-header">

@@ -170,6 +170,10 @@ header {
     color: var(--text-primary);
 }
 
+.card-title .title-secondary {
+    color: var(--text-secondary);
+}
+
 .card-title a {
     text-decoration: none;
     color: var(--text-primary);
