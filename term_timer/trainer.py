@@ -260,7 +260,9 @@ class Trainer(SolveInterface):
                 style='trainer',
             )
 
-    def start_line(self, cube: VCube, selected_case: Case) -> None:
+    def start_line(self, cube: VCube,
+                   selected_case: Case,
+                   solution: Algorithm) -> None:
         """Display training case, scramble, and optional solution."""
         link = selected_case.cubing_fache_url
         name = selected_case.pretty_name
@@ -288,11 +290,11 @@ class Trainer(SolveInterface):
             f'#{ attempt }[/comment]',
         )
 
-        if self.show_solution and selected_case.main_algorithm:
+        if self.show_solution and solution:
             formatted_algorithm = format_alg_triggers(
                 format_alg_moves(
                     format_alg_aufs(
-                        str(selected_case.main_algorithm),
+                        str(solution),
                         pre_auf=True,
                         post_auf=True,
                     ),
@@ -414,7 +416,7 @@ class Trainer(SolveInterface):
         """
         self.init_solve()
 
-        selected_case, self.scramble, cube = trainer(
+        selected_case, self.scramble, solution, cube = trainer(
                 self.step, self.cases,
                 self.cube_orientation_moves,
                 self.rng,
@@ -424,7 +426,7 @@ class Trainer(SolveInterface):
         self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.state
 
-        self.start_line(cube, selected_case)
+        self.start_line(cube, selected_case, solution)
 
         quit_solve = await self.scramble_solve()
 

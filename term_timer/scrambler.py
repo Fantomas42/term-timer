@@ -73,7 +73,7 @@ def trainer(step: str, cases: list['TrainingCase'],
             orientation_moves: Algorithm,
             rng: Random,
             bluetooth_cube: VCube | None = None) -> tuple[
-                Case, Algorithm, VCube]:
+                Case, Algorithm, Algorithm, VCube]:
     """
     Generate training case.
 
@@ -81,31 +81,30 @@ def trainer(step: str, cases: list['TrainingCase'],
         Tuple of (case, scramble, cube state).
 
     """
+    case = cases[0].case
+    solution = Algorithm()
     cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube(size=3)
 
     if step == 'ecross':
-        case = cases[0].case
-        scramble, _solution = scramble_easy_cross('normal', rng=rng)
+        scramble, solution = scramble_easy_cross('normal', rng=rng)
     elif step == 'xcross':
-        case = cases[0].case
-        scramble, _solution = scramble_x_cross('normal', rng=rng)
+        scramble, solution = scramble_x_cross('normal', rng=rng)
     elif step == 'cross':
-        case = cases[0].case
         scramble, _cube = scrambler(3, 12, easy_cross=False, rng=rng)
     else:
-        case, scramble = random_training(
+        case, scramble, solution = random_training(
             cases, orientation_moves, rng,
         )
 
     cube.rotate(scramble)
 
-    return case, scramble, cube
+    return case, scramble, solution, cube
 
 
 def random_training(cases: list['TrainingCase'],
                     orientation_moves: Algorithm,
                     rng: Random) -> tuple[
-                        Case, Algorithm]:
+                        Case, Algorithm, Algorithm]:
     """
     Generate random training case.
 
@@ -127,4 +126,5 @@ def random_training(cases: list['TrainingCase'],
             degrip_full_moves,
             compress_ending_rotations,
         ),
+        selected_case.case.main_algorithm,
     )
