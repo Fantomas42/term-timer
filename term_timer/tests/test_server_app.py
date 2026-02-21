@@ -653,6 +653,7 @@ class TestSolveDetailView(unittest.TestCase):
         mock_solve = Mock()
         mock_solve.final_time = 5000000000
         mock_solve.advanced = False
+        mock_solve.method_applied = None
         mock_solve.method_text_builder.return_value = (
             'Cross // Cross\nF2L // F2L'
         )
@@ -687,8 +688,16 @@ class TestSolveDetailView(unittest.TestCase):
                 'total': 2000000000,
                 'execution': 1500000000,
                 'recognition': 500000000,
+                'moves_prettified': Algorithm.parse_moves('R U'),
             },
         ]
+        mock_solve.fluency = 50
+        mock_solve.tps = 3
+        mock_solve.aufs = 2
+        mock_solve.score = 16.0
+        mock_solve.execution_pauses = 2
+        mock_solve.time = 5000000000
+        mock_solve.recognition_time = 2000000000
         mock_solve.method_text_builder.return_value = (
             'Cross // Cross\nF2L // F2L'
         )
