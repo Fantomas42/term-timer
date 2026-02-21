@@ -138,6 +138,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         · {{ case.main_algorithm.metrics.qtm }} QTM
         · {{ case.main_algorithm.metrics.stm }} STM
         · {{ case.main_algorithm.metrics.etm }} ETM
+        · {{ "%0.2f"|format(case.main_algorithm.ergonomics.comfort_score) }} ERG
+        · {{ "%0.2f"|format(case.main_algorithm.memory.memory_score) }} MEM
         <a href="/algorithm/{{ case.main_algorithm }}/" class="algorithm-detail">Details</a>
         <button onclick="copyToClipboard('{{ case.main_algorithm }}')" class="moves-copy">
           Copy
@@ -207,8 +209,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
       </h2>
     </div>
     <p class="case-section case-note">
-      {{ case.setup_algorithms|length }} alternative algorithm(s) for this case.
-      Different algorithms might be more comfortable depending on your solving style.
+      Top {{ case.setup_algorithms|length }} of the best setup algorithm(s) for this case.
     </p>
     <div class="case-section case-grid">
       {% for setup in case.setup_algorithms %}
@@ -256,6 +257,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
     </div>
     <p class="case-section case-note">
       {{ case.algorithms|length }} total algorithm(s) in the database for this case.
+      Different algorithms might be more comfortable depending on your solving style.
     </p>
     <div class="case-section case-grid">
       {% for algo in case.algorithms %}
