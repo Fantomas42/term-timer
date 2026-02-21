@@ -836,8 +836,20 @@
             {{ "%.2f"|format(ergonomics.estimated_execution_time) }}s
           </div>
           <div class="alg-metric-row">
+            <strong>Estimated TPS:</strong>
+            {{ "%.1f"|format(ergonomics.estimated_tps) }}
+          </div>
+          <div class="alg-metric-row">
             <strong>Fingertrick Difficulty:</strong>
             {{ "%.2f"|format(ergonomics.fingertrick_difficulty) }}
+          </div>
+          <div class="alg-metric-row">
+            <strong>Ergonomic Score:</strong>
+            {{ "%.2f"|format(ergonomics.ergonomic_score) }}
+          </div>
+          <div class="alg-metric-row">
+            <strong>Difficulty:</strong>
+            {{ ergonomics.difficulty_classification }}
           </div>
         </div>
 
@@ -875,11 +887,14 @@
               <td><strong>Flow Breaks</strong></td>
               <td class="alg-value">{{ ergonomics.flow_breaks }}</td>
             </tr>
+            <tr>
+              <td><strong>Flow Score</strong></td>
+              <td class="alg-value">{{ "%.2f"|format(ergonomics.flow_score) }}</td>
+            </tr>
           </table>
         </div>
 
         <div>
-
           <h3 class="alg-section-title">Finger Usage</h3>
           <table class="alg-table">
             <tr>
@@ -900,6 +915,24 @@
             </tr>
           </table>
 
+          {% if ergonomics.trigger_count > 0 %}
+            <h3 class="alg-section-title alg-section-title-spaced">Trigger Patterns</h3>
+            <table class="alg-table">
+              <tr>
+                <td><strong>Triggers Detected</strong></td>
+                <td class="alg-value">{{ ergonomics.trigger_count }}</td>
+              </tr>
+              <tr>
+                <td><strong>Moves Covered</strong></td>
+                <td class="alg-value">{{ ergonomics.trigger_coverage }}</td>
+              </tr>
+            </table>
+            <div class="alg-generators" style="margin-top: 0.5rem;">
+              {% for pattern in ergonomics.detected_patterns %}
+                <span class="alg-pattern-badge">{{ pattern }}</span>{% if not loop.last %} {% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
       </div>
 
@@ -914,6 +947,17 @@
           <canvas id="fingerUsageChart"></canvas>
         </div>
       </div>
+
+      {% if ergonomics.suggestions %}
+        <div>
+          <h3 class="alg-section-title">Suggestions</h3>
+          <ul class="alg-suggestions">
+            {% for suggestion in ergonomics.suggestions %}
+              <li>{{ suggestion }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
     </div>
   </div>
 
