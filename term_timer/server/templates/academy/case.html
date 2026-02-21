@@ -21,6 +21,31 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
 {% block script %}
   <script src="https://cdn.cubing.net/v0/js/cubing/twisty" type="module"></script>
   <script>
+   document.addEventListener('DOMContentLoaded', function() {
+     const orientationSelect = document.getElementById('orientation-select');
+
+     if (orientationSelect) {
+       orientationSelect.addEventListener('change', function() {
+         updateUrlParams({ o: this.value });
+       });
+     }
+
+     function updateUrlParams(params) {
+       const url = new URL(window.location);
+
+       for (const [key, value] of Object.entries(params)) {
+         if (value) {
+           url.searchParams.set(key, value);
+         } else {
+           url.searchParams.delete(key);
+         }
+       }
+
+       window.location.href = url.toString();
+     }
+   });
+  </script>
+  <script>
    function copyToClipboard(text) {
      navigator.clipboard.writeText(text).then(function() {
        console.log('Algorithm copied to clipboard: ' + text);
@@ -154,6 +179,18 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         <i class="fas fa-play"></i>
         <a href="#player" id="player">Player</a>
       </h2>
+      <div class="player-controls">
+        <div class="control-group">
+          <label for="orientation-select">Orientation:</label>
+          <select id="orientation-select" class="control-select">
+            {% for orientation, moves in available_orientations.items() %}
+              <option value="{{ orientation }}" {% if orientation == orientation_faces %}selected{% endif %}>
+                {{ orientation }}{% if moves %} ({{ moves }}){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
     </div>
     <div class="player-container">
       <div id="playerer">

@@ -12,6 +12,28 @@
   <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
   <script>
    document.addEventListener('DOMContentLoaded', function() {
+     const orientationSelect = document.getElementById('orientation-select');
+
+     if (orientationSelect) {
+       orientationSelect.addEventListener('change', function() {
+         updateUrlParams({ o: this.value });
+       });
+     }
+
+     function updateUrlParams(params) {
+       const url = new URL(window.location);
+
+       for (const [key, value] of Object.entries(params)) {
+         if (value) {
+           url.searchParams.set(key, value);
+         } else {
+           url.searchParams.delete(key);
+         }
+       }
+
+       window.location.href = url.toString();
+     }
+
      const copiers = document.querySelectorAll('.moves-copy');
 
      copiers.forEach(copier => {
@@ -539,6 +561,18 @@
         <i class="fas fa-play"></i>
         <a href="#simulation" id="simulation">Simulation</a>
       </h2>
+      <div class="simulation-controls">
+        <div class="control-group">
+          <label for="orientation-select">Orientation:</label>
+          <select id="orientation-select" class="control-select">
+            {% for orientation, moves in available_orientations.items() %}
+              <option value="{{ orientation }}" {% if orientation == orientation_faces %}selected{% endif %}>
+                {{ orientation }}{% if moves %} ({{ moves }}){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
     </div>
     <div class="replay-container">
       <div id="replayer"></div>
@@ -1488,7 +1522,7 @@
       </h2>
     </div>
     <div class="card-body">
-      <div class="alg-visualization">{{ algorithm.show().display(style='uniform')|cube_html }}</div>
+      <div class="alg-visualization">{{ algorithm.show().display(style='uniform', orientation=orientation_faces)|cube_html }}</div>
     </div>
   </div>
 

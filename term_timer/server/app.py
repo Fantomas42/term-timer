@@ -1163,15 +1163,17 @@ class AlgorithmDetailView(View):
 
     template_name = 'algorithm.html'
 
-    def __init__(self, algorithm: str) -> None:
+    def __init__(self, algorithm: str, orientation: str) -> None:
         """
         Initialize algorithm detail view.
 
         Args:
             algorithm: Algorithm string in standard cube notation.
+            orientation: Cube orientation for display.
 
         """
         self.algorithm = Algorithm.parse_moves(algorithm)
+        self.orientation = orientation
 
     def get_context(self) -> AlgorithmDetailContext:
         """
@@ -1213,12 +1215,16 @@ class AlgorithmDetailView(View):
             },
         ]
 
+        selected_orientation = self.orientation or CUBE_ORIENTATION
+
         return {
             'algorithm': self.algorithm,
             'y_variations': y_variations,
             'symmetry_variations': symmetry_variations,
             'inverse_variation': invert_moves(self.algorithm),
-            'orientation_moves': get_orientation_moves(CUBE_ORIENTATION),
+            'orientation_faces': selected_orientation,
+            'orientation_moves': get_orientation_moves(selected_orientation),
+            'available_orientations': ORIENTATION_MOVES,
         }
 
 
@@ -1342,7 +1348,8 @@ class AcademyCaseView(AcademyView):
 
     template_name = 'academy/case.html'
 
-    def __init__(self, method: str, step: str, case_id: str) -> None:
+    def __init__(self, method: str, step: str, case_id: str,
+                 orientation: str) -> None:
         """
         Initialize academy case view.
 
@@ -1350,11 +1357,13 @@ class AcademyCaseView(AcademyView):
             method: Method name (CFOP).
             step: CFOP step name (F2L, OLL, or PLL).
             case_id: Case identifier within the step.
+            orientation: Cube orientation for display.
 
         """
         self.method = method
         self.step = step
         self.case_id = case_id
+        self.orientation = orientation
 
         try:
             self.case = get_case(f'{ method }/{ step }', case_id)
@@ -1371,13 +1380,17 @@ class AcademyCaseView(AcademyView):
             Dictionary containing case information.
 
         """
+        selected_orientation = self.orientation or CUBE_ORIENTATION
+
         return {
             'method': self.method,
             'step': self.step,
             'step_info': self.step_info,
             'cube_size': self.cube_size,
             'case': self.case,
-            'orientation_moves': get_orientation_moves(CUBE_ORIENTATION),
+            'orientation_faces': selected_orientation,
+            'orientation_moves': get_orientation_moves(selected_orientation),
+            'available_orientations': ORIENTATION_MOVES,
         }
 
 
@@ -1493,7 +1506,10 @@ class Server:
                 Rendered HTML template.
 
             """
-            return AcademyCaseView(method, step, case_id).as_view(debug)
+            return AcademyCaseView(
+                method, step, case_id,
+                request.GET.o or '',
+            ).as_view(debug)
 
         @app.route('/algorithm/<algorithm>/')  # type: ignore[untyped-decorator]
         def algorithm_detail(algorithm: str) -> str:
@@ -1504,7 +1520,10 @@ class Server:
                 Rendered HTML template.
 
             """
-            return AlgorithmDetailView(algorithm).as_view(debug)
+            return AlgorithmDetailView(
+                algorithm,
+                request.GET.o or '',
+            ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/flag/',
                    method='POST')  # type: ignore[untyped-decorator]

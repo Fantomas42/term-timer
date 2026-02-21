@@ -163,6 +163,8 @@ class AlgorithmDetailContext(TypedDict):
     symmetry_variations: list[AlgorithmVariation]
     inverse_variation: Algorithm
     orientation_moves: Algorithm
+    orientation_faces: str
+    available_orientations: dict[str, Algorithm]
 
 
 class AcademyOverviewContext(TypedDict):
@@ -190,3 +192,5 @@ class AcademyCaseContext(TypedDict):
     cube_size: int
     case: Case
     orientation_moves: Algorithm
+    orientation_faces: str
+    available_orientations: dict[str, Algorithm]
