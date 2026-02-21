@@ -85,32 +85,32 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
       {% endif %}
     </div>
     {% if case.description %}
-    <div style="padding: 1rem; color: #94a3b8;">
+    <div class="case-description">
       {{ case.description }}
     </div>
     {% endif %}
     {% if case.groups %}
-    <div style="padding: 0 1rem 1rem 1rem;">
+    <div class="case-section">
       <div class="stat-title">Groups:</div>
-      <div style="margin-top: 0.5rem;">
+      <div class="case-badge-list">
         {% for group in case.groups %}
-        <span class="case-badge" style="margin-right: 0.5rem;">{{ group }}</span>
+        <span class="case-badge">{{ group }}</span>
         {% endfor %}
       </div>
     </div>
     {% endif %}
     {% if case.aliases %}
-    <div style="padding: 0 1rem 1rem 1rem;">
+    <div class="case-section">
       <div class="stat-title">Also known as:</div>
-      <div style="margin-top: 0.5rem; color: #94a3b8;">
+      <div class="case-note">
         {{ case.aliases|join(', ') }}
       </div>
     </div>
     {% endif %}
     {% if case.arrows %}
-    <div style="padding: 0 1rem 1rem 1rem;">
+    <div class="case-section">
       <div class="stat-title">Piece Movement:</div>
-      <div style="margin-top: 0.5rem; color: #94a3b8; font-family: monospace;">
+      <div class="case-mono">
         {{ case.arrows }}
       </div>
     </div>
@@ -143,26 +143,26 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
     </div>
   </div>
 
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">
-          <i class="fas fa-play"></i>
-          <a href="#player" id="player">Player</a>
-        </h2>
-      </div>
-      <div class="player-container">
-        <div id="playerer">
-          <twisty-player
-            alg="{{ case.main_algorithm }}"
-            puzzle="{{ cube_size }}x{{ cube_size }}x{{ cube_size }}"
-            viewerlink="none"
-            background="none"
-            experimental-setup-alg="z2"
-            experimental-setup-anchor="end"
-          ></twisty-player>
-        </div>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-play"></i>
+        <a href="#player" id="player">Player</a>
+      </h2>
+    </div>
+    <div class="player-container">
+      <div id="playerer">
+        <twisty-player
+          alg="{{ case.main_algorithm }}"
+          puzzle="{{ cube_size }}x{{ cube_size }}x{{ cube_size }}"
+          viewerlink="none"
+          background="none"
+          experimental-setup-alg="z2"
+          experimental-setup-anchor="end"
+        ></twisty-player>
       </div>
     </div>
+  </div>
 
   {% if case.recognition %}
   <div class="card">
@@ -172,22 +172,20 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
         <a href="#recognition" id="recognition">Recognition</a>
       </h2>
     </div>
-    <div style="padding: 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1rem;">
+    <div class="case-section case-grid-sm">
       {% for recog_case in case.recognition.cases %}
-      <div style="padding: 1rem; background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem;">
-        <div style="margin-bottom: 0.5rem;">
-          <strong style="color: #4183c4;">{{ recog_case.feature.name }}</strong>
-        </div>
-        <div style="color: #94a3b8; margin-bottom: 0.5rem; font-size: 0.9rem;">
+      <div class="case-panel">
+        <strong class="case-accent">{{ recog_case.feature.name }}</strong>
+        <div class="case-note">
           {{ recog_case.description }}
         </div>
         {% if recog_case.observation %}
-        <div style="color: #94a3b8; font-size: 0.875rem;">
+        <div class="case-note">
           <em>Observation:</em> {{ recog_case.observation }}
         </div>
         {% endif %}
         {% if recog_case.notes %}
-        <div style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.25rem;">
+        <div class="case-note">
           <em>Notes:</em> {{ recog_case.notes }}
         </div>
         {% endif %}
@@ -205,40 +203,35 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
         <a href="#setup-algorithms" id="algorithms">Setup Algorithms</a>
       </h2>
     </div>
-    <p style="padding: 0 1rem 1rem 1rem; color: #94a3b8;">
+    <p class="case-section case-note">
       {{ case.setup_algorithms|length }} alternative algorithm(s) for this case.
       Different algorithms might be more comfortable depending on your solving style.
     </p>
-
-    <div style="padding: 0 1rem 1rem 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1rem;">
+    <div class="case-section case-grid">
       {% for setup in case.setup_algorithms %}
-      <div style="background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem; padding: 1rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+      <div class="case-panel">
+        <div class="case-row-header">
           <div class="stat-title">Algorithm {{ loop.index }}</div>
-          <div style="color: #94a3b8; font-size: 0.875rem;">
-            {{ setup.metrics.htm }} moves
-          </div>
+          <div class="case-note">{{ setup.metrics.htm }} moves</div>
         </div>
-
-        <div class="moves-content" style="margin-bottom: 0.75rem;">
+        <div class="moves-content">
           {% for m in setup %}
             <span class="move">{{ m }}</span>
           {% endfor %}
         </div>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-          <div style="color: #94a3b8; font-size: 0.875rem;">
+        <div class="case-row-wrap">
+          <div class="case-note">
             HTM: {{ setup.metrics.htm }}
             · QTM: {{ setup.metrics.qtm }}
             · STM: {{ setup.metrics.stm }}
             · ETM: {{ setup.metrics.etm }}
           </div>
-          <div style="display: flex; gap: 0.5rem;">
-            <a href="/algorithm/{{ setup }}/" class="btn btn-small" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+          <div class="case-actions">
+            <a href="/algorithm/{{ setup }}/" class="btn btn-small">
               <i class="fas fa-info-circle"></i>
               Details
             </a>
-            <button onclick="copyToClipboard('{{ setup }}')" class="btn btn-small" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+            <button onclick="copyToClipboard('{{ setup }}')" class="btn btn-small">
               <i class="fas fa-copy"></i>
               Copy
             </button>
@@ -258,26 +251,25 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
         <a href="#all-algorithms" id="all-algorithms">All Known Algorithms</a>
       </h2>
     </div>
-    <p style="padding: 0 1rem 1rem 1rem; color: #94a3b8;">
+    <p class="case-section case-note">
       {{ case.algorithms|length }} total algorithm(s) in the database for this case.
     </p>
-
-    <div style="padding: 0 1rem 1rem 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 0.75rem;">
+    <div class="case-section case-grid">
       {% for algo in case.algorithms %}
-      <div style="background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem; padding: 0.875rem;">
-        <div class="moves-content" style="margin-bottom: 0.5rem;">
+      <div class="case-panel-sm">
+        <div class="moves-content">
           {% for m in algo %}
             <span class="move">{{ m }}</span>
           {% endfor %}
         </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-          <div style="color: #94a3b8; font-size: 0.875rem;">
+        <div class="case-row-wrap">
+          <div class="case-note">
             HTM: {{ algo.metrics.htm }}
             · QTM: {{ algo.metrics.qtm }}
             · STM: {{ algo.metrics.stm }}
             · ETM: {{ algo.metrics.etm }}
           </div>
-          <a href="/algorithm/{{ algo }}/" class="btn btn-small" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+          <a href="/algorithm/{{ algo }}/" class="btn btn-small">
             <i class="fas fa-info-circle"></i>
             Details
           </a>
@@ -296,27 +288,27 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
         <a href="#badmephisto" id="badmephisto">BadMephisto Algorithms</a>
       </h2>
     </div>
-    <div style="padding: 1rem;">
+    <div class="case-section">
       {% if case.badmephisto.comment %}
-      <div style="color: #94a3b8; margin-bottom: 1rem; padding: 0.75rem; background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem;">
+      <div class="case-panel-note">
         <strong>Comment:</strong> {{ case.badmephisto.comment }}
       </div>
       {% endif %}
-      <div style="display: grid; gap: 0.5rem;">
-        <div style="color: #94a3b8; margin-bottom: 0.5rem;">
+      <div class="case-stack">
+        <div class="case-note">
           <strong>Difficulty:</strong>
-          <span style="color: {% if case.badmephisto.difficulty <= 3 %}#10b981{% elif case.badmephisto.difficulty <= 6 %}#f59e0b{% else %}#ef4444{% endif %};">
+          <span class="{% if case.badmephisto.difficulty <= 3 %}stat-best{% elif case.badmephisto.difficulty <= 6 %}stat-warning{% else %}stat-worst{% endif %}">
             {{ case.badmephisto.difficulty }}/10
           </span>
         </div>
         {% if case.badmephisto.algos %}
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 0.75rem;">
+        <div class="case-grid-sm">
           {% for algo_str in case.badmephisto.algos %}
-          <div style="background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem; padding: 0.75rem;">
-            <div style="font-family: monospace; color: #94a3b8; margin-bottom: 0.5rem;">
+          <div class="case-panel-sm">
+            <div class="case-mono">
               {{ algo_str }}
             </div>
-            <a href="/algorithm/{{ algo_str }}/" class="btn btn-small" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+            <a href="/algorithm/{{ algo_str }}/" class="btn btn-small">
               <i class="fas fa-info-circle"></i>
               Details
             </a>
@@ -337,51 +329,45 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
         <a href="#logiqx" id="logiqx">Logiqx Algorithms</a>
       </h2>
     </div>
-    <div style="padding: 1rem; display: grid; gap: 1rem;">
+    <div class="case-section case-stack-lg">
       {% for logiqx_algo in case.logiqx %}
-      <div style="background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem; padding: 1rem;">
+      <div class="case-panel">
         {% if logiqx_algo.description %}
-        <div style="color: #4183c4; font-weight: bold; margin-bottom: 0.5rem;">
+        <div class="case-accent">
           {{ logiqx_algo.description }}
         </div>
         {% endif %}
-        <div style="background: rgba(148, 163, 184, 0.05); border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.5rem;">
-          <div style="font-family: monospace; color: #94a3b8; margin-bottom: 0.5rem;">
+        <div class="case-panel-sm">
+          <div class="case-mono">
             {{ logiqx_algo.algo }}
           </div>
-          <a href="/algorithm/{{ logiqx_algo.algo }}/" class="btn btn-small" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+          <a href="/algorithm/{{ logiqx_algo.algo }}/" class="btn btn-small">
             <i class="fas fa-info-circle"></i>
             Details
           </a>
         </div>
         {% if logiqx_algo.variations %}
-        <div style="margin-top: 0.75rem;">
-          <div style="color: #94a3b8; font-size: 0.875rem; margin-bottom: 0.5rem;">
-            <strong>Variations:</strong>
-          </div>
-          <div style="display: grid; gap: 0.5rem;">
-            {% for variation in logiqx_algo.variations %}
-            <div style="background: rgba(148, 163, 184, 0.03); border-radius: 0.375rem; padding: 0.5rem;">
-              {% if variation.description %}
-              <div style="color: #94a3b8; font-size: 0.875rem; margin-bottom: 0.25rem;">
-                {{ variation.description }}
-              </div>
-              {% endif %}
-              <div style="font-family: monospace; color: #94a3b8; font-size: 0.875rem;">
-                {{ variation.algo }}
-              </div>
-              {% if variation.tags %}
-              <div style="margin-top: 0.25rem;">
-                {% for tag in variation.tags %}
-                <span style="background: rgba(65, 131, 196, 0.2); color: #4183c4; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.75rem; margin-right: 0.25rem;">
-                  {{ tag }}
-                </span>
-                {% endfor %}
-              </div>
-              {% endif %}
+        <div class="case-stack">
+          <div class="case-note"><strong>Variations:</strong></div>
+          {% for variation in logiqx_algo.variations %}
+          <div class="case-panel-nested">
+            {% if variation.description %}
+            <div class="case-note">
+              {{ variation.description }}
             </div>
-            {% endfor %}
+            {% endif %}
+            <div class="case-mono">
+              {{ variation.algo }}
+            </div>
+            {% if variation.tags %}
+            <div>
+              {% for tag in variation.tags %}
+              <span class="case-tag">{{ tag }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
           </div>
+          {% endfor %}
         </div>
         {% endif %}
       </div>
@@ -398,25 +384,25 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
         <a href="#two-phase" id="two-phase">Two-Phase Algorithms</a>
       </h2>
     </div>
-    <p style="padding: 0 1rem 1rem 1rem; color: #94a3b8;">
+    <p class="case-section case-note">
       {{ case.two_phase_algorithms|length }} algorithm(s) computed by two-phase solver.
     </p>
-    <div style="padding: 0 1rem 1rem 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 0.75rem;">
+    <div class="case-section case-grid-sm">
       {% for algo in case.two_phase_algorithms %}
-      <div style="background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem; padding: 0.875rem;">
-        <div class="moves-content" style="margin-bottom: 0.5rem;">
+      <div class="case-panel-sm">
+        <div class="moves-content">
           {% for m in algo %}
             <span class="move">{{ m }}</span>
           {% endfor %}
         </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-          <div style="color: #94a3b8; font-size: 0.875rem;">
+        <div class="case-row-wrap">
+          <div class="case-note">
             HTM: {{ algo.metrics.htm }}
             · QTM: {{ algo.metrics.qtm }}
             · STM: {{ algo.metrics.stm }}
             · ETM: {{ algo.metrics.etm }}
           </div>
-          <a href="/algorithm/{{ algo }}/" class="btn btn-small" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+          <a href="/algorithm/{{ algo }}/" class="btn btn-small">
             <i class="fas fa-info-circle"></i>
             Details
           </a>
@@ -434,15 +420,15 @@ Detailed view of {{ case.name }} case with algorithms, recognition patterns, and
         <a href="#external-links" id="external-links">External Resources</a>
       </h2>
     </div>
-    <div style="padding: 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+    <div class="case-links-grid case-section">
       {% if case.cubing_fache_url %}
-      <a href="{{ case.cubing_fache_url }}" target="_blank" class="link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem;">
+      <a href="{{ case.cubing_fache_url }}" target="_blank" class="link case-external-link">
         <i class="fas fa-external-link-alt"></i>
         View on cubing.fache.fr
       </a>
       {% endif %}
       {% if case.badmephisto and case.badmephisto.uid %}
-      <a href="http://badmephisto.com/oll{{ case.badmephisto.uid }}.php" target="_blank" class="link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(148, 163, 184, 0.05); border-radius: 0.5rem;">
+      <a href="http://badmephisto.com/oll{{ case.badmephisto.uid }}.php" target="_blank" class="link case-external-link">
         <i class="fas fa-external-link-alt"></i>
         View on BadMephisto
       </a>
