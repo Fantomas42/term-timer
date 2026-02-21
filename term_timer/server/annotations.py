@@ -162,6 +162,7 @@ class AlgorithmDetailContext(TypedDict):
     y_variations: list[AlgorithmVariation]
     symmetry_variations: list[AlgorithmVariation]
     inverse_variation: Algorithm
+    orientation_moves: Algorithm
 
 
 class AcademyOverviewContext(TypedDict):
@@ -188,3 +189,4 @@ class AcademyCaseContext(TypedDict):
     step_info: StepDescriptionInfo
     cube_size: int
     case: Case
+    orientation_moves: Algorithm

@@ -41,6 +41,7 @@ from cubing_algs.transform.timing import untime_moves
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.cheers import generate_solve_cheers
 from term_timer.config import CUBE_METHOD
+from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import CUBE_SIZES
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PAUSE_FACTOR
@@ -66,6 +67,7 @@ from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import Analyser
 from term_timer.methods.base import get_step_config
 from term_timer.orientation import ORIENTATION_MOVES
+from term_timer.orientation import get_orientation_moves
 from term_timer.server.annotations import AcademyCaseContext
 from term_timer.server.annotations import AcademyOverviewContext
 from term_timer.server.annotations import AcademyStepContext
@@ -1216,6 +1218,7 @@ class AlgorithmDetailView(View):
             'y_variations': y_variations,
             'symmetry_variations': symmetry_variations,
             'inverse_variation': invert_moves(self.algorithm),
+            'orientation_moves': get_orientation_moves(CUBE_ORIENTATION),
         }
 
 
@@ -1374,6 +1377,7 @@ class AcademyCaseView(AcademyView):
             'step_info': self.step_info,
             'cube_size': self.cube_size,
             'case': self.case,
+            'orientation_moves': get_orientation_moves(CUBE_ORIENTATION),
         }
 
 
