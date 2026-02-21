@@ -13,6 +13,7 @@ from term_timer.annotations import TrainingCase
 from term_timer.constants import CROSS_CASE
 from term_timer.constants import EASY_CROSS_CASE
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.constants import X_CROSS_CASE
 from term_timer.constants import SolveFlag
 from term_timer.exceptions import InvalidCaseError
 from term_timer.formatter import format_alg_aufs
@@ -30,7 +31,7 @@ from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.triggers import DEFAULT_TRIGGERS
 
-CROSS_MODES: Final = ('cross', 'ecross')
+CROSS_MODES: Final = ('cross', 'ecross', 'xcross')
 
 
 class Trainer(SolveInterface):
@@ -174,6 +175,8 @@ class Trainer(SolveInterface):
         """
         if self.step == 'ecross':
             return [TrainingCase(EASY_CROSS_CASE, [])]
+        if self.step == 'xcross':
+            return [TrainingCase(X_CROSS_CASE, [])]
         if self.step == 'cross':
             return [TrainingCase(CROSS_CASE, [])]
 

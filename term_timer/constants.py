@@ -65,3 +65,11 @@ EASY_CROSS_CASE = Case(
         code='ecross',
     ),
 )
+
+X_CROSS_CASE = Case(
+    '', 'X-Cross',
+    CaseData(
+        name='X-Cross',
+        code='xcross',
+    ),
+)

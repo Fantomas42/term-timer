@@ -7,6 +7,7 @@ from cubing_algs.cases.case import Case
 from cubing_algs.parsing import parse_moves
 from cubing_algs.scrambler.nxn import scramble
 from cubing_algs.scrambler.steps import scramble_easy_cross
+from cubing_algs.scrambler.steps import scramble_x_cross
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.rotation import compress_ending_rotations
@@ -85,6 +86,8 @@ def trainer(step: str, cases: list['TrainingCase'],
     if step == 'ecross':
         case = cases[0].case
         scramble, _solution = scramble_easy_cross('normal', rng=rng)
+    elif step == 'xcross':
+        scramble, _solution = scramble_x_cross('normal', rng=rng)
     elif step == 'cross':
         case = cases[0].case
         scramble, _cube = scrambler(3, 12, easy_cross=False, rng=rng)
