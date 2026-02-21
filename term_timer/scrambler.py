@@ -87,6 +87,7 @@ def trainer(step: str, cases: list['TrainingCase'],
         case = cases[0].case
         scramble, _solution = scramble_easy_cross('normal', rng=rng)
     elif step == 'xcross':
+        case = cases[0].case
         scramble, _solution = scramble_x_cross('normal', rng=rng)
     elif step == 'cross':
         case = cases[0].case
