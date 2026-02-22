@@ -495,7 +495,10 @@
         {% endfor %}
       </div>
       <div class="moves-footer">
-        <button class="moves-copy">Copy</button>
+        <button class="moves-copy">
+          <i class="fas fa-copy"></i>
+          Copy
+        </button>
       </div>
     </div>
     <br>
@@ -548,8 +551,14 @@
         {% endfor %}
       </div>
       <div class="moves-footer">
-        <a href="/algorithm/{{ inverse_variation }}/" class="algorithm-detail">Details</a>
-        <button class="moves-copy">Copy</button>
+        <a href="/algorithm/{{ inverse_variation }}/" class="algorithm-detail">
+          <i class="fas fa-info-circle"></i>
+          Details
+        </a>
+        <button class="moves-copy">
+          <i class="fas fa-copy"></i>
+          Copy
+        </button>
       </div>
     </div>
 
@@ -598,8 +607,14 @@
           {% endfor %}
         </div>
         <div class="moves-footer">
-          <a href="/algorithm/{{ variation.algorithm }}/" class="algorithm-detail">Details</a>
-          <button class="moves-copy">Copy</button>
+          <a href="/algorithm/{{ variation.algorithm }}/" class="algorithm-detail">
+            <i class="fas fa-info-circle"></i>
+            Details
+          </a>
+          <button class="moves-copy">
+            <i class="fas fa-copy"></i>
+            Copy
+          </button>
         </div>
       </div>
     {% endfor %}
@@ -625,8 +640,14 @@
           {% endfor %}
         </div>
         <div class="moves-footer">
-          <a href="/algorithm/{{ variation.algorithm }}/" class="algorithm-detail">Details</a>
-          <button class="moves-copy">Copy</button>
+          <a href="/algorithm/{{ variation.algorithm }}/" class="algorithm-detail">
+            <i class="fas fa-info-circle"></i>
+            Details
+          </a>
+          <button class="moves-copy">
+            <i class="fas fa-copy"></i>
+            Copy
+          </button>
         </div>
       </div>
     {% endfor %}
