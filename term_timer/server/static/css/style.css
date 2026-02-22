@@ -1981,13 +1981,12 @@ twisty-alg-viewer {
 }
 
 /* Text helpers */
-.case-note {
+.case-note.secondary {
     color: var(--text-secondary);
-    font-size: 0.875rem;
 }
 
 .case-accent {
-    color: #4183c4;
+    color: var(--info);
     display: block;
     font-weight: bold;
     margin-bottom: 0.5rem;

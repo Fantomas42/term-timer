@@ -203,18 +203,20 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <div class="case-panel">
             <strong class="case-accent">{{ recog_case.feature.name }}</strong>
             <div class="case-note">
-              {{ recog_case.description }}
+              <p>
+                {{ recog_case.description }}
+              </p>
+              {% if recog_case.observation %}
+                <p>
+                  <b>Observation:</b> {{ recog_case.observation }}
+                </p>
+              {% endif %}
+              {% if recog_case.notes %}
+                <p>
+                  <b>Notes:</b> {{ recog_case.notes }}
+                </p>
+              {% endif %}
             </div>
-            {% if recog_case.observation %}
-              <div class="case-note">
-                <em>Observation:</em> {{ recog_case.observation }}
-              </div>
-            {% endif %}
-            {% if recog_case.notes %}
-              <div class="case-note">
-                <em>Notes:</em> {{ recog_case.notes }}
-              </div>
-            {% endif %}
           </div>
         {% endfor %}
       </div>
@@ -229,7 +231,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <a href="#all-algorithms" id="all-algorithms">All Known Algorithms</a>
         </h2>
       </div>
-      <p class="case-section case-note">
+      <p class="case-section case-note secondary">
         {{ case.algorithms|length }} total algorithm(s) in the database for this case.
         Different algorithms might be more comfortable depending on your solving style.
       </p>
@@ -267,7 +269,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <a href="#setup-algorithms" id="algorithms">Setup Algorithms</a>
         </h2>
       </div>
-      <p class="case-section case-note">
+      <p class="case-section case-note secondary">
         Top {{ case.setup_algorithms|length }} of the best setup algorithm(s) for this case.
       </p>
       <div class="case-section case-grid">
