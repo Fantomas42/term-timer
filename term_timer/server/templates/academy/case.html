@@ -81,8 +81,10 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
       <div class="stat-card">
         <div class="stat-title">Groups</div>
         <div class="stat-value">
-        {% for group in case.groups %}
-          <span class="solve-detail-btn">{{ group }}</span>
+          {% for group in case.groups %}
+            <a href="/academy/{{ method }}/{{ step }}/?group={{ group }}" class="btn btn-small">
+              {{ group }}
+            </a>
         {% endfor %}
         </div>
       </div>
@@ -90,7 +92,11 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
       {% if case.family %}
       <div class="stat-card">
         <div class="stat-title">Family</div>
-        <div class="stat-value">{{ case.family }}</div>
+        <div class="stat-value">
+          <a href="/academy/{{ method }}/{{ step }}/?family={{ case.family }}" class="btn btn-small">
+            {{ case.family }}
+          </a>
+        </div>
       </div>
       {% endif %}
       {% if case.symmetry %}
@@ -185,114 +191,115 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
   </div>
 
   {% if case.recognition %}
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-eye"></i>
-        <a href="#recognition" id="recognition">Recognition</a>
-      </h2>
-    </div>
-    <div class="case-section case-grid-sm">
-      {% for recog_case in case.recognition.cases %}
-      <div class="case-panel">
-        <strong class="case-accent">{{ recog_case.feature.name }}</strong>
-        <div class="case-note">
-          {{ recog_case.description }}
-        </div>
-        {% if recog_case.observation %}
-        <div class="case-note">
-          <em>Observation:</em> {{ recog_case.observation }}
-        </div>
-        {% endif %}
-        {% if recog_case.notes %}
-        <div class="case-note">
-          <em>Notes:</em> {{ recog_case.notes }}
-        </div>
-        {% endif %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-eye"></i>
+          <a href="#recognition" id="recognition">Recognition</a>
+        </h2>
       </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
-  {% if case.setup_algorithms %}
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-list"></i>
-        <a href="#setup-algorithms" id="algorithms">Setup Algorithms</a>
-      </h2>
-    </div>
-    <p class="case-section case-note">
-      Top {{ case.setup_algorithms|length }} of the best setup algorithm(s) for this case.
-    </p>
-    <div class="case-section case-grid">
-      {% for setup in case.setup_algorithms %}
-      <div class="case-panel">
-        <div class="case-row-header">
-          <div class="stat-title">Algorithm {{ loop.index }}</div>
-          <div class="case-note">{{ setup.metrics.htm }} moves</div>
-        </div>
-        <div class="moves-content">
-          {% for m in setup %}
-            <span class="move">{{ m }}</span>
-          {% endfor %}
-        </div>
-        <div class="case-row-wrap">
-          <div class="case-note">
-            HTM: {{ setup.metrics.htm }}
-            · QTM: {{ setup.metrics.qtm }}
-            · STM: {{ setup.metrics.stm }}
-            · ETM: {{ setup.metrics.etm }}
+      <div class="case-section case-grid-sm">
+        {% for recog_case in case.recognition.cases %}
+          <div class="case-panel">
+            <strong class="case-accent">{{ recog_case.feature.name }}</strong>
+            <div class="case-note">
+              {{ recog_case.description }}
+            </div>
+            {% if recog_case.observation %}
+              <div class="case-note">
+                <em>Observation:</em> {{ recog_case.observation }}
+              </div>
+            {% endif %}
+            {% if recog_case.notes %}
+              <div class="case-note">
+                <em>Notes:</em> {{ recog_case.notes }}
+              </div>
+            {% endif %}
           </div>
-          <div class="case-actions">
-            {{ algorithm_detail(setup) }}
-            {{ algorithm_copy(setup) }}
-          </div>
-        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
     </div>
-  </div>
   {% endif %}
 
   {% if case.algorithms %}
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-rotate"></i>
-        <a href="#all-algorithms" id="all-algorithms">All Known Algorithms</a>
-      </h2>
-    </div>
-    <p class="case-section case-note">
-      {{ case.algorithms|length }} total algorithm(s) in the database for this case.
-      Different algorithms might be more comfortable depending on your solving style.
-    </p>
-    <div class="case-section case-grid">
-      {% for algo in case.algorithms %}
-      <div class="case-panel-sm">
-        <div class="moves-content">
-          {% for m in algo %}
-            <span class="move">{{ m }}</span>
-          {% endfor %}
-        </div>
-        <div class="case-row-wrap">
-          <div class="case-note">
-            HTM: {{ algo.metrics.htm }}
-            · QTM: {{ algo.metrics.qtm }}
-            · STM: {{ algo.metrics.stm }}
-            · ETM: {{ algo.metrics.etm }}
-          </div>
-          <div class="case-actions">
-            {{ algorithm_detail(algo) }}
-            {{ algorithm_copy(algo) }}
-          </div>
-        </div>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-rotate"></i>
+          <a href="#all-algorithms" id="all-algorithms">All Known Algorithms</a>
+        </h2>
       </div>
-      {% endfor %}
+      <p class="case-section case-note">
+        {{ case.algorithms|length }} total algorithm(s) in the database for this case.
+        Different algorithms might be more comfortable depending on your solving style.
+      </p>
+      <div class="case-section case-grid">
+        {% for algo in case.algorithms %}
+          <div class="case-panel-sm">
+            <div class="moves-content">
+              {% for m in algo %}
+                <span class="move">{{ m }}</span>
+              {% endfor %}
+            </div>
+            <div class="case-row-wrap">
+              <div class="case-note">
+                HTM: {{ algo.metrics.htm }}
+                · QTM: {{ algo.metrics.qtm }}
+                · STM: {{ algo.metrics.stm }}
+                · ETM: {{ algo.metrics.etm }}
+              </div>
+              <div class="case-actions">
+                {{ algorithm_detail(algo) }}
+                {{ algorithm_copy(algo) }}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
     </div>
-  </div>
   {% endif %}
+
+  {% if case.setup_algorithms %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-list"></i>
+          <a href="#setup-algorithms" id="algorithms">Setup Algorithms</a>
+        </h2>
+      </div>
+      <p class="case-section case-note">
+        Top {{ case.setup_algorithms|length }} of the best setup algorithm(s) for this case.
+      </p>
+      <div class="case-section case-grid">
+        {% for setup in case.setup_algorithms %}
+          <div class="case-panel">
+            <div class="case-row-header">
+              <div class="stat-title">Algorithm {{ loop.index }}</div>
+              <div class="case-note">{{ setup.metrics.htm }} moves</div>
+            </div>
+            <div class="moves-content">
+              {% for m in setup %}
+                <span class="move">{{ m }}</span>
+              {% endfor %}
+            </div>
+            <div class="case-row-wrap">
+              <div class="case-note">
+                HTM: {{ setup.metrics.htm }}
+                · QTM: {{ setup.metrics.qtm }}
+                · STM: {{ setup.metrics.stm }}
+                · ETM: {{ setup.metrics.etm }}
+              </div>
+              <div class="case-actions">
+                {{ algorithm_detail(setup) }}
+                {{ algorithm_copy(setup) }}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
 
   {% if case.badmephisto %}
   <div class="card">
@@ -423,26 +430,22 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
   </div>
   {% endif %}
 
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-link"></i>
-        <a href="#external-links" id="external-links">External Resources</a>
-      </h2>
-    </div>
-    <div class="case-links-grid case-section">
-      {% if case.cubing_fache_url %}
-      <a href="{{ case.cubing_fache_url }}" target="_blank" class="link case-external-link">
-        <i class="fas fa-external-link-alt"></i>
-        View on cubing.fache.fr
-      </a>
-      {% endif %}
-      {% if case.badmephisto and case.badmephisto.uid %}
-      <a href="http://badmephisto.com/oll{{ case.badmephisto.uid }}.php" target="_blank" class="link case-external-link">
-        <i class="fas fa-external-link-alt"></i>
-        View on BadMephisto
-      </a>
-      {% endif %}
-    </div>
+  {% if case.cubing_fache_url %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-link"></i>
+          <a href="#external-links" id="external-links">External Resources</a>
+        </h2>
+      </div>
+      <div class="case-links-grid case-section">
+        {% if case.cubing_fache_url %}
+          <a href="{{ case.cubing_fache_url }}" target="_blank" class="link case-external-link">
+            <i class="fas fa-external-link-alt"></i>
+            View on cubing.fache.fr
+          </a>
+        {% endif %}
+      </div>
+  {% endif %}
   </div>
 {% endblock %}

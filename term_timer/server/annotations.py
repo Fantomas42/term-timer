@@ -181,6 +181,8 @@ class AcademyStepContext(TypedDict):
     step_info: StepDescriptionInfo
     cube_size: int
     cases: dict[str, Case]
+    group: str
+    family: str
 
 
 class AcademyCaseContext(TypedDict):

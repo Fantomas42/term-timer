@@ -1307,17 +1307,22 @@ class AcademyStepView(AcademyView):
 
     template_name = 'academy/step.html'
 
-    def __init__(self, method: str, step: str) -> None:
+    def __init__(self, method: str, step: str,
+                 group: str, family: str) -> None:
         """
         Initialize academy step view.
 
         Args:
             method: Method name (CFOP, Ortega).
             step: Method step name (F2L, OLL, or PLL).
+            group: Step group filter.
+            family: Step family filter.
 
         """
         self.method = method
         self.step = step
+        self.group = group
+        self.family = family
 
         try:
             self.cases = get_collection(f'{ method }/{ step }').cases
@@ -1325,6 +1330,19 @@ class AcademyStepView(AcademyView):
             self.cube_size = self.methods[method]['cube_size']
         except KeyError:
             abort(404, f'{ method }/{ step } does not exist')
+
+        if group:
+            self.cases = {
+                c: case
+                for c, case in self.cases.items()
+                if group in case.groups
+            }
+        if family:
+            self.cases = {
+                c: case
+                for c, case in self.cases.items()
+                if family == case.family
+            }
 
     def get_context(self) -> AcademyStepContext:
         """
@@ -1340,6 +1358,8 @@ class AcademyStepView(AcademyView):
             'step_info': self.step_info,
             'cube_size': self.cube_size,
             'cases': self.cases,
+            'group': self.group,
+            'family': self.family,
         }
 
 
@@ -1495,7 +1515,11 @@ class Server:
                 Rendered HTML template.
 
             """
-            return AcademyStepView(method, step).as_view(debug)
+            return AcademyStepView(
+                method, step,
+                request.GET.group or '',
+                request.GET.family or '',
+            ).as_view(debug)
 
         @app.route('/academy/<method>/<step>/<case_id>/')  # type: ignore[untyped-decorator]
         def academy_case(method: str, step: str, case_id: str) -> str:

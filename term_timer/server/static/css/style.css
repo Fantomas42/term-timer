@@ -596,7 +596,7 @@ ul {
 
 .algorithm-detail {
     color: var(--dark);
-    background-color: var(--link);
+    background-color: var(--success);
 }
 
 .algorithm-copy:hover, .algorithm-detail:hover {

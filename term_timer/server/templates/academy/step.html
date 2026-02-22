@@ -17,10 +17,20 @@ Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cu
 {% block body %}
 <main class="step-cases">
   <section class="step-header">
-    <h2>{{ cube_size }}x{{ cube_size }}x{{ cube_size }} {{ method }} / {{ step }}</h2>
-    <p class="step-description">{{ step_info.description }}</p>
+    <h2>
+      {{ cube_size }}x{{ cube_size }}x{{ cube_size }} {{ method }} / {{ step }}
+    </h2>
+    <p class="step-description">
+      {{ step_info.description }}
+      {% if group %}
+        <span class="solve-detail-btn">Group: {{ group }}</span>
+      {% endif %}
+      {% if family %}
+        <span class="solve-detail-btn">Family: {{ family }}</span>
+      {% endif %}
+    </p>
     <div class="step-stats">
-      <span class="case-count">{{ cases|length - 1 }} Cases</span>
+      <span class="case-count">{{ cases|length }} Cases</span>
     </div>
   </section>
 
