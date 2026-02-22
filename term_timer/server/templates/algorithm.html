@@ -1,4 +1,6 @@
 {% extends "skeleton.html" %}
+{% from 'macros/actions.html' import algorithm_copy %}
+{% from 'macros/actions.html' import algorithm_detail %}
 
 {% block description %}
   Detailled view of algorithm : {{ algorithm }}
@@ -19,36 +21,6 @@
          updateUrlParams({ o: this.value });
        });
      }
-
-     function updateUrlParams(params) {
-       const url = new URL(window.location);
-
-       for (const [key, value] of Object.entries(params)) {
-         if (value) {
-           url.searchParams.set(key, value);
-         } else {
-           url.searchParams.delete(key);
-         }
-       }
-
-       window.location.href = url.toString();
-     }
-
-     const copiers = document.querySelectorAll('.moves-copy');
-
-     copiers.forEach(copier => {
-       copier.addEventListener('click', function() {
-         const moves = copier.parentNode.parentNode.querySelector('.moves-content').textContent.trim().replace(/\s\s+/g, ' ');
-         navigator.clipboard.writeText(moves).then(() => {
-           this.textContent = 'Copied !';
-           setTimeout(() => {
-             this.textContent = 'Copy';
-           }, 2000);
-         }).catch(err => {
-           console.error('Copy error: ', err);
-         });
-       });
-     });
 
      {% set metrics = algorithm.metrics %}
      {% set ergonomics = algorithm.ergonomics %}
@@ -495,10 +467,7 @@
         {% endfor %}
       </div>
       <div class="moves-footer">
-        <button class="moves-copy">
-          <i class="fas fa-copy"></i>
-          Copy
-        </button>
+        {{ algorithm_copy(algorithm) }}
       </div>
     </div>
     <br>
@@ -551,14 +520,8 @@
         {% endfor %}
       </div>
       <div class="moves-footer">
-        <a href="/algorithm/{{ inverse_variation }}/" class="algorithm-detail">
-          <i class="fas fa-info-circle"></i>
-          Details
-        </a>
-        <button class="moves-copy">
-          <i class="fas fa-copy"></i>
-          Copy
-        </button>
+        {{ algorithm_detail(inverse_variation) }}
+        {{ algorithm_copy(inverse_variation) }}
       </div>
     </div>
 
@@ -607,14 +570,8 @@
           {% endfor %}
         </div>
         <div class="moves-footer">
-          <a href="/algorithm/{{ variation.algorithm }}/" class="algorithm-detail">
-            <i class="fas fa-info-circle"></i>
-            Details
-          </a>
-          <button class="moves-copy">
-            <i class="fas fa-copy"></i>
-            Copy
-          </button>
+          {{ algorithm_detail(variation.algorithm) }}
+          {{ algorithm_copy(variation.algorithm) }}
         </div>
       </div>
     {% endfor %}
@@ -640,14 +597,8 @@
           {% endfor %}
         </div>
         <div class="moves-footer">
-          <a href="/algorithm/{{ variation.algorithm }}/" class="algorithm-detail">
-            <i class="fas fa-info-circle"></i>
-            Details
-          </a>
-          <button class="moves-copy">
-            <i class="fas fa-copy"></i>
-            Copy
-          </button>
+          {{ algorithm_detail(variation.algorithm) }}
+          {{ algorithm_copy(variation.algorithm) }}
         </div>
       </div>
     {% endfor %}

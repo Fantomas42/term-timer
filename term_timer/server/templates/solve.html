@@ -1,5 +1,7 @@
 {% extends "skeleton.html" %}
 {% from 'macros/step.html' import step_case %}
+{% from 'macros/actions.html' import algorithm_copy %}
+{% from 'macros/actions.html' import algorithm_detail %}
 
 {% block description %}
   Solve #{{ solve_id }} from session {{ session|format_session_name }} on {{ cube }}x{{ cube }}x{{ cube }}
@@ -16,21 +18,6 @@
 {% block script %}
   <script>
    document.addEventListener('DOMContentLoaded', function() {
-     const copiers = document.querySelectorAll('.moves-copy');
-
-     copiers.forEach(copier => {
-       copier.addEventListener('click', function() {
-         const moves = copier.parentNode.parentNode.querySelector('.moves-content').textContent.trim().replace(/\s\s+/g, ' ');
-         navigator.clipboard.writeText(moves).then(() => {
-           this.textContent = 'Copied !';
-           setTimeout(() => {
-             this.textContent = 'Copy';
-           }, 2000);
-         }).catch(err => {
-           console.error('Copy error: ', err);
-         });
-       });
-     });
 
      const methodSelect = document.getElementById('method-select');
      const orientationSelect = document.getElementById('orientation-select');
@@ -47,20 +34,6 @@
        });
      }
    });
-
-   function updateUrlParams(params) {
-     const url = new URL(window.location);
-
-     for (const [key, value] of Object.entries(params)) {
-       if (value) {
-         url.searchParams.set(key, value);
-       } else {
-         url.searchParams.delete(key);
-       }
-     }
-
-     window.location.href = url.toString();
-   }
 
    function update(url, body) {
      const form = document.createElement('form');
@@ -878,14 +851,8 @@
       </div>
       <div class="moves-footer">
         {{ solve.scramble.metrics.htm }} HTM - Computer generated -
-        <a href="/algorithm/{{ solve.scramble }}/" class="algorithm-detail">
-          <i class="fas fa-info-circle"></i>
-          Details
-        </a>
-        <button class="moves-copy">
-          <i class="fas fa-copy"></i>
-          Copy
-        </button>
+        {{ algorithm_detail(solve.scramble) }}
+        {{ algorithm_copy(solve.scramble) }}
       </div>
     </div>
   </div>
@@ -907,14 +874,8 @@
         </div>
         <div class="moves-footer">
           {{ solution.metrics.htm }} HTM - Human generated -
-          <a href="/algorithm/{{ solution }}/" class="algorithm-detail">
-            <i class="fas fa-info-circle"></i>
-            Details
-          </a>
-          <button class="moves-copy">
-            <i class="fas fa-copy"></i>
-            Copy
-          </button>
+          {{ algorithm_detail(solution) }}
+          {{ algorithm_copy(solution) }}
         </div>
       </div>
     </div>
@@ -1435,10 +1396,7 @@
           </div>
           <div class="moves-footer">
             {{ solve.solution.metrics.qtm }} QTM - Raw Moves -
-            <button class="moves-copy">
-              <i class="fas fa-copy"></i>
-              Copy
-            </button>
+            {{ algorithm_copy(solve.solution) }}
           </div>
         </div>
       </div>

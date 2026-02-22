@@ -580,7 +580,7 @@ ul {
     background-color: #4F8120;
 }
 
-.moves-copy, .algorithm-detail {
+.algorithm-copy, .algorithm-detail {
     background-color: var(--primary);
     color: var(--light);
     border: none;
@@ -599,7 +599,7 @@ ul {
     background-color: var(--link);
 }
 
-.moves-copy:hover, .algorithm-detail:hover {
+.algorithm-copy:hover, .algorithm-detail:hover {
     background-color: var(--info);
 }
 

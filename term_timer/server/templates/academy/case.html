@@ -1,4 +1,6 @@
 {% extends "skeleton.html" %}
+{% from 'macros/actions.html' import algorithm_copy %}
+{% from 'macros/actions.html' import algorithm_detail %}
 
 {% block title %}{{ method }}/{{ case.name }}{% endblock %}
 {% block subtitle %}{{ method }}/{{ case.name }} Case Details{% endblock %}
@@ -29,30 +31,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
          updateUrlParams({ o: this.value });
        });
      }
-
-     function updateUrlParams(params) {
-       const url = new URL(window.location);
-
-       for (const [key, value] of Object.entries(params)) {
-         if (value) {
-           url.searchParams.set(key, value);
-         } else {
-           url.searchParams.delete(key);
-         }
-       }
-
-       window.location.href = url.toString();
-     }
    });
-  </script>
-  <script>
-   function copyToClipboard(text) {
-     navigator.clipboard.writeText(text).then(function() {
-       console.log('Algorithm copied to clipboard: ' + text);
-     }, function(err) {
-       console.error('Could not copy text: ', err);
-     });
-   }
   </script>
 {% endblock script %}
 
@@ -165,14 +144,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         · {{ case.main_algorithm.metrics.etm }} ETM
         · {{ "%0.2f"|format(case.main_algorithm.ergonomics.comfort_score) }} ERG
         · {{ "%0.2f"|format(case.main_algorithm.memory.memory_score) }} MEM
-        <a href="/algorithm/{{ case.main_algorithm }}/" class="algorithm-detail">
-          <i class="fas fa-info-circle"></i>
-          Details
-        </a>
-        <button onclick='copyToClipboard("{{ case.main_algorithm }}")' class="moves-copy">
-          <i class="fas fa-copy"></i>
-          Copy
-        </button>
+        {{ algorithm_detail(case.main_algorithm) }}
+        {{ algorithm_copy(case.main_algorithm) }}
       </div>
     </div>
   </div>
@@ -273,14 +246,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             · ETM: {{ setup.metrics.etm }}
           </div>
           <div class="case-actions">
-            <a href="/algorithm/{{ setup }}/" class="algorithm-detail">
-              <i class="fas fa-info-circle"></i>
-              Details
-            </a>
-            <button onclick='copyToClipboard("{{ setup }}")' class="moves-copy">
-              <i class="fas fa-copy"></i>
-              Copy
-            </button>
+            {{ algorithm_detail(setup) }}
+            {{ algorithm_copy(setup) }}
           </div>
         </div>
       </div>
@@ -317,14 +284,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             · ETM: {{ algo.metrics.etm }}
           </div>
           <div class="case-actions">
-            <a href="/algorithm/{{ algo }}/" class="algorithm-detail">
-              <i class="fas fa-info-circle"></i>
-              Details
-            </a>
-            <button onclick='copyToClipboard("{{ algo }}")' class="moves-copy">
-              <i class="fas fa-copy"></i>
-              Copy
-            </button>
+            {{ algorithm_detail(algo) }}
+            {{ algorithm_copy(algo) }}
           </div>
         </div>
       </div>
@@ -361,14 +322,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             <div class="case-mono">
               {{ algo_str }}
             </div>
-            <a href="/algorithm/{{ algo_str }}/" class="algorithm-detail">
-              <i class="fas fa-info-circle"></i>
-              Details
-            </a>
-            <button onclick='copyToClipboard("{{ algo_str }}")' class="moves-copy">
-              <i class="fas fa-copy"></i>
-              Copy
-            </button>
+            {{ algorithm_detail(algo_str) }}
+            {{ algorithm_copy(algo_str) }}
           </div>
           {% endfor %}
         </div>
@@ -398,14 +353,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <div class="case-mono">
             {{ logiqx_algo.algo }}
           </div>
-          <a href="/algorithm/{{ logiqx_algo.algo }}/" class="algorithm-detail">
-            <i class="fas fa-info-circle"></i>
-            Details
-          </a>
-          <button onclick='copyToClipboard("{{ logiqx_algo.algo }}")' class="moves-copy">
-            <i class="fas fa-copy"></i>
-            Copy
-          </button>
+          {{ algorithm_detail(logiqx_algo.algo) }}
+          {{ algorithm_copy(logiqx_algo.algo) }}
         </div>
         {% if logiqx_algo.variations %}
         <div class="case-stack">
@@ -464,14 +413,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             · ETM: {{ algo.metrics.etm }}
           </div>
           <div class="case-actions">
-            <a href="/algorithm/{{ algo }}/" class="algorithm-detail">
-              <i class="fas fa-info-circle"></i>
-              Details
-            </a>
-            <button onclick='copyToClipboard("{{ algo }}")' class="moves-copy">
-              <i class="fas fa-copy"></i>
-              Copy
-            </button>
+            {{ algorithm_detail(algo) }}
+            {{ algorithm_copy(algo) }}
           </div>
         </div>
       </div>
