@@ -239,7 +239,12 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
       </p>
       <div class="case-section case-grid">
         {% for algo in all_algorithms %}
+          {% set metrics = algo.metrics %}
           <div class="case-panel-sm">
+            <div class="case-row-header">
+              <div class="stat-title">Algorithm {{ loop.index }}</div>
+              <div class="case-note">{{ metrics.htm }} moves</div>
+            </div>
             <div class="moves-content">
               {% for m in algo %}
                 <span class="move">{{ m }}</span>
@@ -247,7 +252,6 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             </div>
             <div class="case-row-wrap">
               <div class="case-note">
-                {% set metrics = algo.metrics %}
                 HTM: {{ metrics.htm }}
                 - QTM: {{ metrics.qtm }}
                 - STM: {{ metrics.stm }}
@@ -278,10 +282,11 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
       </p>
       <div class="case-section case-grid">
         {% for setup in setup_algorithms %}
-          <div class="case-panel">
+          {% set metrics = setup.metrics %}
+          <div class="case-panel-sm">
             <div class="case-row-header">
               <div class="stat-title">Algorithm {{ loop.index }}</div>
-              <div class="case-note">{{ setup.metrics.htm }} moves</div>
+              <div class="case-note">{{ metrics.htm }} moves</div>
             </div>
             <div class="moves-content">
               {% for m in setup %}
@@ -290,7 +295,6 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             </div>
             <div class="case-row-wrap">
               <div class="case-note">
-                {% set metrics = setup.metrics %}
                 HTM: {{ metrics.htm }}
                 - QTM: {{ metrics.qtm }}
                 - STM: {{ metrics.stm }}
