@@ -225,6 +225,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
   {% endif %}
 
   {% if case.algorithms %}
+    {% set all_algorithms = case.algorithms|sort_algorithms %}
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">
@@ -233,11 +234,11 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         </h2>
       </div>
       <p class="case-section case-note secondary">
-        {{ case.algorithms|length }} total algorithm(s) in the database for this case.
+        {{ all_algorithms|length }} total algorithm(s) in the database for this case.
         Different algorithms might be more comfortable depending on your solving style.
       </p>
       <div class="case-section case-grid">
-        {% for algo in case.algorithms %}
+        {% for algo in all_algorithms %}
           <div class="case-panel-sm">
             <div class="moves-content">
               {% for m in algo %}
@@ -264,18 +265,19 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
   {% endif %}
 
   {% if case.setup_algorithms %}
+    {% set setup_algorithms = (case.setup_algorithms|sort_algorithms)[:5] %}
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">
           <i class="fas fa-list"></i>
-          <a href="#setup-algorithms" id="algorithms">Setup Algorithms</a>
+          <a href="#setup-algorithms" id="setup-algorithms">Setup Algorithms</a>
         </h2>
       </div>
       <p class="case-section case-note secondary">
-        Top {{ case.setup_algorithms|length }} of the best setup algorithm(s) for this case.
+        Top {{ setup_algorithms|length }} of the best setup algorithm(s) for this case.
       </p>
       <div class="case-section case-grid">
-        {% for setup in case.setup_algorithms %}
+        {% for setup in setup_algorithms %}
           <div class="case-panel">
             <div class="case-row-header">
               <div class="stat-title">Algorithm {{ loop.index }}</div>

@@ -476,6 +476,26 @@ def cube_html(cube_str: str) -> str:
     return blocks.replace('\x1b[0;0m', '</span>')
 
 
+def sort_algorithms(algorithms: list[Algorithm]) -> list[Algorithm]:
+    """
+    Sort algorithms by the most human optimized versions.
+
+    Args:
+        algorithms: Algorithm to sort.
+
+    Returns:
+        The algorithms sorted.
+
+    """
+    return sorted(
+        algorithms,
+        key=lambda x: (
+            -x.ergonomics.comfort_score,
+            -x.memory.memory_score,
+        ),
+    )
+
+
 class RichHandler(WSGIRequestHandler):
     """Custom WSGI request handler with Rich console logging."""
 
@@ -594,6 +614,7 @@ class View:
                         'optimized_step': optimized_step,
                         'prettify': prettify_moves,
                         'cube_html': cube_html,
+                        'sort_algorithms': sort_algorithms,
                     },
                 },
                 **context,
