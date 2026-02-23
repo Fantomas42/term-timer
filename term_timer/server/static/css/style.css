@@ -1902,12 +1902,11 @@ twisty-alg-viewer {
 }
 
 /* Comment panel with muted text and bottom margin */
-.case-panel-note {
+.case-info {
     background: rgba(148, 163, 184, 0.05);
     border-radius: 0.5rem;
     padding: 0.75rem;
-    margin-bottom: 1rem;
-    color: var(--text-secondary);
+    margin: 1rem 0;
 }
 
 /* Panels — subtle inset background */

@@ -144,12 +144,13 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         {% endfor %}
       </div>
       <div class="moves-footer">
-        {{ case.main_algorithm.metrics.htm }} HTM
-        · {{ case.main_algorithm.metrics.qtm }} QTM
-        · {{ case.main_algorithm.metrics.stm }} STM
-        · {{ case.main_algorithm.metrics.etm }} ETM
-        · {{ "%0.2f"|format(case.main_algorithm.ergonomics.comfort_score) }} ERG
-        · {{ "%0.2f"|format(case.main_algorithm.memory.memory_score) }} MEM
+        {% set metrics = case.main_algorithm.metrics %}
+        {{ metrics.htm }} HTM
+        - {{ metrics.qtm }} QTM
+        - {{ metrics.stm }} STM
+        - {{ metrics.etm }} ETM
+        - {{ "%0.2f"|format(case.main_algorithm.ergonomics.comfort_score) }} ERG
+        - {{ "%0.2f"|format(case.main_algorithm.memory.memory_score) }} MEM
         {{ algorithm_detail(case.main_algorithm) }}
         {{ algorithm_copy(case.main_algorithm) }}
       </div>
@@ -245,10 +246,11 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             </div>
             <div class="case-row-wrap">
               <div class="case-note">
-                HTM: {{ algo.metrics.htm }}
-                · QTM: {{ algo.metrics.qtm }}
-                · STM: {{ algo.metrics.stm }}
-                · ETM: {{ algo.metrics.etm }}
+                {% set metrics = algo.metrics %}
+                HTM: {{ metrics.htm }}
+                - QTM: {{ metrics.qtm }}
+                - STM: {{ metrics.stm }}
+                - ETM: {{ metrics.etm }}
               </div>
               <div class="case-actions">
                 {{ algorithm_detail(algo) }}
@@ -286,10 +288,11 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             </div>
             <div class="case-row-wrap">
               <div class="case-note">
-                HTM: {{ setup.metrics.htm }}
-                · QTM: {{ setup.metrics.qtm }}
-                · STM: {{ setup.metrics.stm }}
-                · ETM: {{ setup.metrics.etm }}
+                {% set metrics = setup.metrics %}
+                HTM: {{ metrics.htm }}
+                - QTM: {{ metrics.qtm }}
+                - STM: {{ metrics.stm }}
+                - ETM: {{ metrics.etm }}
               </div>
               <div class="case-actions">
                 {{ algorithm_detail(setup) }}
@@ -302,42 +305,48 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
     </div>
   {% endif %}
 
-
-  {% if case.badmephisto %}
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-graduation-cap"></i>
-        <a href="#badmephisto" id="badmephisto">BadMephisto Algorithms</a>
-      </h2>
-    </div>
-    <div class="case-section">
-      {% if case.badmephisto.comment %}
-      <div class="case-panel-note">
-        <strong>Comment:</strong> {{ case.badmephisto.comment }}
+  {% set badmephisto = case.badmephisto %}
+  {% if badmephisto %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-graduation-cap"></i>
+          <a href="#badmephisto" id="badmephisto">BadMephisto Algorithms</a>
+        </h2>
       </div>
+      {% for algorithm in badmephisto.algos %}
+        <div class="moves-card">
+          <div class="moves-content">
+            {% for m in algorithm %}
+              <span class="move">{{ m }}</span>
+            {% endfor %}
+          </div>
+          <div class="moves-footer">
+            {% set metrics = algorithm.metrics %}
+            {{ metrics.htm }} HTM
+            - {{ metrics.qtm }} QTM
+            - {{ metrics.stm }} STM
+            - {{ metrics.etm }} ETM
+            - {{ "%0.2f"|format(algorithm.ergonomics.comfort_score) }} ERG
+            - {{ "%0.2f"|format(algorithm.memory.memory_score) }} MEM
+            {{ algorithm_detail(algorithm) }}
+            {{ algorithm_copy(algorithm) }}
+          </div>
+        </div>
+      {% endfor %}
+      {% if badmephisto.comment %}
+        <div class="case-info">
+          <b>Comment:</b> {{ badmephisto.comment }}
+        </div>
       {% endif %}
-      <div class="case-stack">
-        <div class="case-note">
+      {% if badmephisto.difficulty %}
+        <div class="case-info">
           <strong>Difficulty:</strong>
-          <span class="{% if case.badmephisto.difficulty <= 3 %}stat-best{% elif case.badmephisto.difficulty <= 6 %}stat-warning{% else %}stat-worst{% endif %}">
-            {{ case.badmephisto.difficulty }}/10
+          <span class="{% if badmephisto.difficulty <= 3 %}stat-best{% else %}stat-worst{% endif %}">
+            {{ badmephisto.difficulty }} / 5
           </span>
         </div>
-        {% if case.badmephisto.algos %}
-        <div class="case-grid-sm">
-          {% for algo_str in case.badmephisto.algos %}
-          <div class="case-panel-sm">
-            <div class="case-mono">
-              {{ algo_str }}
-            </div>
-            {{ algorithm_detail(algo_str) }}
-            {{ algorithm_copy(algo_str) }}
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-      </div>
+      {% endif %}
     </div>
   </div>
   {% endif %}
@@ -416,10 +425,11 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         </div>
         <div class="case-row-wrap">
           <div class="case-note">
-            HTM: {{ algo.metrics.htm }}
-            · QTM: {{ algo.metrics.qtm }}
-            · STM: {{ algo.metrics.stm }}
-            · ETM: {{ algo.metrics.etm }}
+            {% set metrics = algo.metrics %}
+            HTM: {{ metrics.htm }}
+            - QTM: {{ metrics.qtm }}
+            - STM: {{ metrics.stm }}
+            - ETM: {{ metrics.etm }}
           </div>
           <div class="case-actions">
             {{ algorithm_detail(algo) }}
