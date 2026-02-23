@@ -144,15 +144,17 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         {% endfor %}
       </div>
       <div class="moves-footer">
-        {% set metrics = case.main_algorithm.metrics %}
-        {{ metrics.htm }} HTM
-        - {{ metrics.qtm }} QTM
-        - {{ metrics.stm }} STM
-        - {{ metrics.etm }} ETM
-        - {{ "%0.2f"|format(case.main_algorithm.ergonomics.comfort_score) }} ERG
-        - {{ "%0.2f"|format(case.main_algorithm.memory.memory_score) }} MEM
         {{ algorithm_detail(case.main_algorithm) }}
         {{ algorithm_copy(case.main_algorithm) }}
+        <span class="spec-label htm">
+          HTM: {{ case.main_algorithm.metrics.htm }}
+        </span>
+        <span class="spec-label ergo">
+          ERGO: {{ "%0.2f"|format(case.main_algorithm.ergonomics.comfort_score) }}
+        </span>
+        <span class="spec-label memo">
+          MEMO: {{ "%0.2f"|format(case.main_algorithm.memory.memory_score) }}
+        </span>
       </div>
     </div>
   </div>
@@ -240,27 +242,24 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
       <div class="case-section case-grid">
         {% for algo in all_algorithms %}
           {% set metrics = algo.metrics %}
-          <div class="case-panel-sm">
-            <div class="case-row-header">
-              <div class="stat-title">Algorithm {{ loop.index }}</div>
-              <div class="case-note">{{ metrics.htm }} moves</div>
-            </div>
+          <div class="case-panel-sm moves-card">
             <div class="moves-content">
               {% for m in algo %}
                 <span class="move">{{ m }}</span>
               {% endfor %}
             </div>
-            <div class="case-row-wrap">
-              <div class="case-note">
-                HTM: {{ metrics.htm }}
-                - QTM: {{ metrics.qtm }}
-                - STM: {{ metrics.stm }}
-                - ETM: {{ metrics.etm }}
-              </div>
-              <div class="case-actions">
-                {{ algorithm_detail(algo) }}
-                {{ algorithm_copy(algo) }}
-              </div>
+            <div class="case-footer">
+              {{ algorithm_detail(algo) }}
+              {{ algorithm_copy(algo) }}
+              <span class="spec-label htm">
+                HTM: {{ algo.metrics.htm }}
+              </span>
+              <span class="spec-label ergo">
+                ERGO: {{ "%0.2f"|format(algo.ergonomics.comfort_score) }}
+              </span>
+              <span class="spec-label memo">
+                MEMO: {{ "%0.2f"|format(algo.memory.memory_score) }}
+              </span>
             </div>
           </div>
         {% endfor %}
@@ -283,27 +282,24 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
       <div class="case-section case-grid">
         {% for setup in setup_algorithms %}
           {% set metrics = setup.metrics %}
-          <div class="case-panel-sm">
-            <div class="case-row-header">
-              <div class="stat-title">Algorithm {{ loop.index }}</div>
-              <div class="case-note">{{ metrics.htm }} moves</div>
-            </div>
+          <div class="case-panel-sm moves-card">
             <div class="moves-content">
               {% for m in setup %}
                 <span class="move">{{ m }}</span>
               {% endfor %}
             </div>
-            <div class="case-row-wrap">
-              <div class="case-note">
-                HTM: {{ metrics.htm }}
-                - QTM: {{ metrics.qtm }}
-                - STM: {{ metrics.stm }}
-                - ETM: {{ metrics.etm }}
-              </div>
-              <div class="case-actions">
-                {{ algorithm_detail(setup) }}
-                {{ algorithm_copy(setup) }}
-              </div>
+            <div class="case-footer">
+              {{ algorithm_detail(setup) }}
+              {{ algorithm_copy(setup) }}
+              <span class="spec-label htm">
+                HTM: {{ setup.metrics.htm }}
+              </span>
+              <span class="spec-label ergo">
+                ERGO: {{ "%0.2f"|format(setup.ergonomics.comfort_score) }}
+              </span>
+              <span class="spec-label memo">
+                MEMO: {{ "%0.2f"|format(setup.memory.memory_score) }}
+              </span>
             </div>
           </div>
         {% endfor %}
@@ -328,15 +324,17 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             {% endfor %}
           </div>
           <div class="moves-footer">
-            {% set metrics = algorithm.metrics %}
-            {{ metrics.htm }} HTM
-            - {{ metrics.qtm }} QTM
-            - {{ metrics.stm }} STM
-            - {{ metrics.etm }} ETM
-            - {{ "%0.2f"|format(algorithm.ergonomics.comfort_score) }} ERG
-            - {{ "%0.2f"|format(algorithm.memory.memory_score) }} MEM
             {{ algorithm_detail(algorithm) }}
             {{ algorithm_copy(algorithm) }}
+            <span class="spec-label htm">
+              HTM: {{ algorithm.metrics.htm }}
+            </span>
+            <span class="spec-label ergo">
+              ERGO: {{ "%0.2f"|format(algorithm.ergonomics.comfort_score) }}
+            </span>
+            <span class="spec-label memo">
+              MEMO: {{ "%0.2f"|format(algorithm.memory.memory_score) }}
+            </span>
           </div>
         </div>
       {% endfor %}
@@ -429,15 +427,17 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             {% endfor %}
           </div>
           <div class="moves-footer">
-            {% set metrics = algorithm.metrics %}
-            {{ metrics.htm }} HTM
-            - {{ metrics.qtm }} QTM
-            - {{ metrics.stm }} STM
-            - {{ metrics.etm }} ETM
-            - {{ "%0.2f"|format(algorithm.ergonomics.comfort_score) }} ERG
-            - {{ "%0.2f"|format(algorithm.memory.memory_score) }} MEM
             {{ algorithm_detail(algorithm) }}
             {{ algorithm_copy(algorithm) }}
+            <span class="spec-label htm">
+              HTM: {{ algorithm.metrics.htm }}
+            </span>
+            <span class="spec-label ergo">
+              ERGO: {{ "%0.2f"|format(algorithm.ergonomics.comfort_score) }}
+            </span>
+            <span class="spec-label memo">
+              MEMO: {{ "%0.2f"|format(algorithm.memory.memory_score) }}
+            </span>
           </div>
         </div>
       {% endfor %}

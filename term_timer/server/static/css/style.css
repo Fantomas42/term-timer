@@ -352,6 +352,10 @@ header {
     background-color: var(--header);
 }
 
+.case-grid .moves-card .move {
+    font-size: 1em;
+}
+
 .recons-moves .trigger,
 .recons-moves .move,
 .solve-scramble .move {
@@ -1966,14 +1970,6 @@ twisty-alg-viewer {
     margin-bottom: 0.75rem;
 }
 
-.case-row-wrap {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
 .case-actions {
     display: flex;
     gap: 0.5rem;
@@ -2022,4 +2018,28 @@ twisty-alg-viewer {
     padding: 0.75rem;
     background: rgba(148, 163, 184, 0.05);
     border-radius: 0.5rem;
+}
+
+/* Spec label */
+.spec-label {
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    margin: 0 0.25rem;
+    font-weight: bold;
+    font-size: 0.75rem;;
+}
+
+.spec-label.htm {
+    color: var(--light);
+    background: var(--primary);
+}
+
+.spec-label.ergo {
+    color: var(--light);
+    background: var(--recognition);
+}
+
+.spec-label.memo {
+    color: var(--dark);
+    background: var(--warning);
 }
