@@ -1,10 +1,10 @@
 {% extends "skeleton.html" %}
 
-{% block description %}Session list{% endblock %}
+{% block description %}Dashboard{% endblock %}
 
-{% block title %}Sessions{% endblock %}
+{% block title %}Dashboard{% endblock %}
 
-{% block subtitle %}Sessions{% endblock %}
+{% block subtitle %}Dashboard{% endblock %}
 
 {% block body %}
   <div class="academy-banner">
@@ -38,6 +38,45 @@
       </div>
     </div>
   </div>
+
+  <div class="alg-lookup">
+    <div class="alg-lookup-header">
+      <div class="alg-lookup-icon">
+        <i class="fas fa-search"></i>
+      </div>
+      <div>
+        <h2>Algorithm Lookup</h2>
+        <p>Explore move counts, ergonomics and cube state for any algorithm</p>
+      </div>
+    </div>
+    <form id="algorithm-form" class="alg-lookup-form">
+      <div class="alg-lookup-field">
+        <i class="fas fa-cube alg-lookup-prefix"></i>
+        <input
+          type="text"
+          id="algorithm-input"
+          class="alg-lookup-input"
+          placeholder="e.g. R U R' U' R U R' U'"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        >
+      </div>
+      <button type="submit" class="btn alg-lookup-btn">
+        Analyze
+      </button>
+    </form>
+  </div>
+  <script>
+    document.getElementById('algorithm-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var alg = document.getElementById('algorithm-input').value.trim();
+      if (alg) {
+        window.location.href = '/algorithm/' + encodeURIComponent(alg) + '/';
+      }
+    });
+  </script>
 
   {% for cube, sessions in sessions.items() %}
     {% if sessions %}

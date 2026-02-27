@@ -2043,3 +2043,139 @@ twisty-alg-viewer {
     color: var(--dark);
     background: var(--warning);
 }
+
+/* Algorithm Lookup (index page) */
+.alg-lookup {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0d1f3c 0%, #1a2a4a 60%, #0d2233 100%);
+    border: 1px solid rgba(37, 99, 235, 0.3);
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.alg-lookup::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 280px;
+    height: 280px;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.18) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.alg-lookup::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    left: 30%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.alg-lookup-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.alg-lookup-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    flex-shrink: 0;
+    background: rgba(37, 99, 235, 0.15);
+    border: 1px solid rgba(37, 99, 235, 0.4);
+    border-radius: 12px;
+    font-size: 1.4rem;
+    color: var(--primary);
+}
+
+.alg-lookup-header h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.2rem 0;
+}
+
+.alg-lookup-header p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.alg-lookup-form {
+    display: flex;
+    gap: 0.75rem;
+    align-items: stretch;
+    position: relative;
+    z-index: 1;
+}
+
+.alg-lookup-field {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.alg-lookup-prefix {
+    position: absolute;
+    left: 1rem;
+    color: var(--text-secondary);
+    pointer-events: none;
+    font-size: 1rem;
+    z-index: 1;
+}
+
+.alg-lookup-input {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    padding: 0.875rem 1rem 0.875rem 2.75rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.alg-lookup-input::placeholder {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.alg-lookup-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.alg-lookup-btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 8px;
+    white-space: nowrap;
+    background: #2563eb;
+    border-bottom: 3px solid #1e3a8a;
+}
+
+.alg-lookup-btn:hover {
+    background: #3b82f6;
+}
+
+.alg-lookup-btn:active {
+    background: #1d4ed8;
+    border-bottom-width: 1px;
+    margin-top: 2px;
+}
