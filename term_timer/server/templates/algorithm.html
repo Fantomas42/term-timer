@@ -467,6 +467,15 @@
         {% endfor %}
       </div>
       <div class="moves-footer">
+        <a class="spec-label htm" href="#metrics">
+          HTM: {{ algorithm.metrics.htm }}
+        </a>
+        <a class="spec-label ergo" href="#ergonomics">
+          ERGO: {{ "%0.1f"|format(algorithm.ergonomics.comfort_score) }}
+        </a>
+        <a class="spec-label memo" href="#memory">
+          MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
+        </a>
         {{ algorithm_copy(algorithm) }}
       </div>
     </div>
@@ -520,6 +529,15 @@
         {% endfor %}
       </div>
       <div class="moves-footer">
+        <span class="spec-label htm">
+          HTM: {{ inverse_variation.metrics.htm }}
+        </span>
+        <span class="spec-label ergo">
+          ERGO: {{ "%0.1f"|format(inverse_variation.ergonomics.comfort_score) }}
+        </span>
+        <span class="spec-label memo">
+          MEMO: {{ "%0.1f"|format(inverse_variation.memory.memory_score) }}
+        </span>
         {{ algorithm_detail(inverse_variation) }}
         {{ algorithm_copy(inverse_variation) }}
       </div>
@@ -570,6 +588,15 @@
           {% endfor %}
         </div>
         <div class="moves-footer">
+          <span class="spec-label htm">
+            HTM: {{ variation.algorithm.metrics.htm }}
+          </span>
+          <span class="spec-label ergo">
+            ERGO: {{ "%0.1f"|format(variation.algorithm.ergonomics.comfort_score) }}
+          </span>
+          <span class="spec-label memo">
+            MEMO: {{ "%0.1f"|format(variation.algorithm.memory.memory_score) }}
+          </span>
           {{ algorithm_detail(variation.algorithm) }}
           {{ algorithm_copy(variation.algorithm) }}
         </div>
@@ -597,6 +624,15 @@
           {% endfor %}
         </div>
         <div class="moves-footer">
+          <span class="spec-label htm">
+            HTM: {{ variation.algorithm.metrics.htm }}
+          </span>
+          <span class="spec-label ergo">
+            ERGO: {{ "%0.1f"|format(variation.algorithm.ergonomics.comfort_score) }}
+          </span>
+          <span class="spec-label memo">
+            MEMO: {{ "%0.1f"|format(variation.algorithm.memory.memory_score) }}
+          </span>
           {{ algorithm_detail(variation.algorithm) }}
           {{ algorithm_copy(variation.algorithm) }}
         </div>

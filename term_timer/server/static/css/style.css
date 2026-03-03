@@ -603,7 +603,11 @@ ul {
     background-color: var(--success);
 }
 
-.algorithm-copy:hover, .algorithm-detail:hover {
+.algorithm-detail:hover {
+    background-color: #00CE88;
+}
+
+.algorithm-copy:hover {
     background-color: var(--info);
 }
 
@@ -1938,6 +1942,11 @@ twisty-alg-viewer {
     margin-bottom: 0.5rem;
 }
 
+.case-panel-sm .case-action-buttons {
+    margin-top: 0.5rem;
+    margin-left: 0.25rem;
+}
+
 /* Grids */
 .case-grid {
     display: grid;
@@ -2022,26 +2031,34 @@ twisty-alg-viewer {
 
 /* Spec label */
 .spec-label {
-    border-radius: 0.5rem;
-    padding: 0.25rem;
-    margin: 0 0.25rem;
-    font-weight: bold;
-    font-size: 0.75rem;;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.15rem 0.6rem;
+    margin: 0 0.2rem;
+    font-weight: 600;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.6;
 }
 
 .spec-label.htm {
-    color: var(--light);
-    background: var(--primary);
+    color: #93c5fd;
+    background: rgba(37, 99, 235, 0.15);
+    border: 1px solid rgba(37, 99, 235, 0.45);
 }
 
 .spec-label.ergo {
-    color: var(--light);
-    background: var(--recognition);
+    color: #c4b5fd;
+    background: rgba(93, 63, 211, 0.15);
+    border: 1px solid rgba(93, 63, 211, 0.45);
 }
 
 .spec-label.memo {
-    color: var(--dark);
-    background: var(--warning);
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
 /* Algorithm Lookup (index page) */

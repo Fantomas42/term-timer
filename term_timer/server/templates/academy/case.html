@@ -115,19 +115,19 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
   </div>
 
   {% if case.description %}
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-comment-alt"></i>
-        <a href="#comment" id="notes">Notes</a>
-      </h2>
-    </div>
-    <div class="comment-card">
-      <div id="comment-display" class="comment">
-        <p>{{ case.description }}</p>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-comment-alt"></i>
+          <a href="#comment" id="notes">Notes</a>
+        </h2>
+      </div>
+      <div class="comment-card">
+        <div id="comment-display" class="comment">
+          <p>{{ case.description }}</p>
+        </div>
       </div>
     </div>
-  </div>
   {% endif %}
 
   <div class="card">
@@ -144,17 +144,17 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         {% endfor %}
       </div>
       <div class="moves-footer">
-        {{ algorithm_detail(case.main_algorithm) }}
-        {{ algorithm_copy(case.main_algorithm) }}
         <span class="spec-label htm">
           HTM: {{ case.main_algorithm.metrics.htm }}
         </span>
         <span class="spec-label ergo">
-          ERGO: {{ "%0.2f"|format(case.main_algorithm.ergonomics.comfort_score) }}
+          ERGO: {{ "%0.1f"|format(case.main_algorithm.ergonomics.comfort_score) }}
         </span>
         <span class="spec-label memo">
-          MEMO: {{ "%0.2f"|format(case.main_algorithm.memory.memory_score) }}
+          MEMO: {{ "%0.1f"|format(case.main_algorithm.memory.memory_score) }}
         </span>
+        {{ algorithm_detail(case.main_algorithm) }}
+        {{ algorithm_copy(case.main_algorithm) }}
       </div>
     </div>
   </div>
@@ -239,27 +239,28 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         {{ all_algorithms|length }} total algorithm(s) in the database for this case.
         Different algorithms might be more comfortable depending on your solving style.
       </p>
-      <div class="case-section case-grid">
+      <div class="algorithms-grid">
         {% for algo in all_algorithms %}
           {% set metrics = algo.metrics %}
-          <div class="case-panel-sm moves-card">
+          <div class="algorithm-card moves-card">
+            <span class="variation-label">Algorithm #{{ loop.index }}</span>
             <div class="moves-content">
               {% for m in algo %}
                 <span class="move">{{ m }}</span>
               {% endfor %}
             </div>
-            <div class="case-footer">
-              {{ algorithm_detail(algo) }}
-              {{ algorithm_copy(algo) }}
+            <div class="moves-footer">
               <span class="spec-label htm">
                 HTM: {{ algo.metrics.htm }}
               </span>
               <span class="spec-label ergo">
-                ERGO: {{ "%0.2f"|format(algo.ergonomics.comfort_score) }}
+                ERGO: {{ "%0.1f"|format(algo.ergonomics.comfort_score) }}
               </span>
               <span class="spec-label memo">
-                MEMO: {{ "%0.2f"|format(algo.memory.memory_score) }}
+                MEMO: {{ "%0.1f"|format(algo.memory.memory_score) }}
               </span>
+              {{ algorithm_detail(algo) }}
+              {{ algorithm_copy(algo) }}
             </div>
           </div>
         {% endfor %}
@@ -279,18 +280,17 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
       <p class="case-section case-note secondary">
         Top {{ setup_algorithms|length }} of the best setup algorithm(s) for this case.
       </p>
-      <div class="case-section case-grid">
+      <div class="algorithms-grid">
         {% for setup in setup_algorithms %}
           {% set metrics = setup.metrics %}
-          <div class="case-panel-sm moves-card">
+          <div class="algorithm-card moves-card">
+            <span class="variation-label">Setup #{{ loop.index }}</span>
             <div class="moves-content">
               {% for m in setup %}
                 <span class="move">{{ m }}</span>
               {% endfor %}
             </div>
-            <div class="case-footer">
-              {{ algorithm_detail(setup) }}
-              {{ algorithm_copy(setup) }}
+            <div class="moves-footer">
               <span class="spec-label htm">
                 HTM: {{ setup.metrics.htm }}
               </span>
@@ -300,6 +300,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
               <span class="spec-label memo">
                 MEMO: {{ "%0.2f"|format(setup.memory.memory_score) }}
               </span>
+              {{ algorithm_detail(setup) }}
+              {{ algorithm_copy(setup) }}
             </div>
           </div>
         {% endfor %}
@@ -324,17 +326,17 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             {% endfor %}
           </div>
           <div class="moves-footer">
-            {{ algorithm_detail(algorithm) }}
-            {{ algorithm_copy(algorithm) }}
             <span class="spec-label htm">
               HTM: {{ algorithm.metrics.htm }}
             </span>
             <span class="spec-label ergo">
-              ERGO: {{ "%0.2f"|format(algorithm.ergonomics.comfort_score) }}
+              ERGO: {{ "%0.1f"|format(algorithm.ergonomics.comfort_score) }}
             </span>
             <span class="spec-label memo">
-              MEMO: {{ "%0.2f"|format(algorithm.memory.memory_score) }}
+              MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
             </span>
+            {{ algorithm_detail(algorithm) }}
+            {{ algorithm_copy(algorithm) }}
           </div>
         </div>
       {% endfor %}
@@ -352,59 +354,6 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         </div>
       {% endif %}
     </div>
-  {% endif %}
-
-  {% if case.logiqx %}
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-book"></i>
-        <a href="#logiqx" id="logiqx">Logiqx Algorithms</a>
-      </h2>
-    </div>
-    <div class="case-section case-stack-lg">
-      {% for logiqx_algo in case.logiqx %}
-      <div class="case-panel">
-        {% if logiqx_algo.description %}
-        <div class="case-accent">
-          {{ logiqx_algo.description }}
-        </div>
-        {% endif %}
-        <div class="case-panel-sm">
-          <div class="case-mono">
-            {{ logiqx_algo.algo }}
-          </div>
-          {{ algorithm_detail(logiqx_algo.algo) }}
-          {{ algorithm_copy(logiqx_algo.algo) }}
-        </div>
-        {% if logiqx_algo.variations %}
-        <div class="case-stack">
-          <div class="case-note"><strong>Variations:</strong></div>
-          {% for variation in logiqx_algo.variations %}
-          <div class="case-panel-nested">
-            {% if variation.description %}
-            <div class="case-note">
-              {{ variation.description }}
-            </div>
-            {% endif %}
-            <div class="case-mono">
-              {{ variation.algo }}
-            </div>
-            {% if variation.tags %}
-            <div>
-              {% for tag in variation.tags %}
-              <span class="case-tag">{{ tag }}</span>
-              {% endfor %}
-            </div>
-            {% endif %}
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-  </div>
   {% endif %}
 
   {% if case.two_phase_algorithms %}
@@ -427,17 +376,17 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             {% endfor %}
           </div>
           <div class="moves-footer">
-            {{ algorithm_detail(algorithm) }}
-            {{ algorithm_copy(algorithm) }}
             <span class="spec-label htm">
               HTM: {{ algorithm.metrics.htm }}
             </span>
             <span class="spec-label ergo">
-              ERGO: {{ "%0.2f"|format(algorithm.ergonomics.comfort_score) }}
+              ERGO: {{ "%0.1f"|format(algorithm.ergonomics.comfort_score) }}
             </span>
             <span class="spec-label memo">
-              MEMO: {{ "%0.2f"|format(algorithm.memory.memory_score) }}
+              MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
             </span>
+            {{ algorithm_detail(algorithm) }}
+            {{ algorithm_copy(algorithm) }}
           </div>
         </div>
       {% endfor %}
