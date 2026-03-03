@@ -318,6 +318,9 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <a href="#badmephisto" id="badmephisto">BadMephisto Algorithms</a>
         </h2>
       </div>
+      <p class="case-section case-note secondary">
+        {{ badmephisto.algos|length }} algorithm(s) provided by the famous BadMephisto.
+      </p>
       {% for algorithm in badmephisto.algos %}
         <div class="moves-card">
           <div class="moves-content">
@@ -367,30 +370,28 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
     <p class="case-section case-note secondary">
       {{ case.two_phase_algorithms|length }} algorithm(s) computed by two-phase solver.
     </p>
-    <div class="case-section case-grid-sm">
-      {% for algorithm in case.two_phase_algorithms %}
-        <div class="moves-card">
-          <div class="moves-content">
-            {% for m in algorithm %}
-              <span class="move">{{ m }}</span>
-            {% endfor %}
-          </div>
-          <div class="moves-footer">
-            <span class="spec-label htm">
-              HTM: {{ algorithm.metrics.htm }}
-            </span>
-            <span class="spec-label ergo">
-              ERGO: {{ "%0.1f"|format(algorithm.ergonomics.comfort_score) }}
-            </span>
-            <span class="spec-label memo">
-              MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
-            </span>
-            {{ algorithm_detail(algorithm) }}
-            {{ algorithm_copy(algorithm) }}
-          </div>
+    {% for algorithm in case.two_phase_algorithms %}
+      <div class="moves-card">
+        <div class="moves-content">
+          {% for m in algorithm %}
+            <span class="move">{{ m }}</span>
+          {% endfor %}
         </div>
-      {% endfor %}
-    </div>
+        <div class="moves-footer">
+          <span class="spec-label htm">
+            HTM: {{ algorithm.metrics.htm }}
+          </span>
+          <span class="spec-label ergo">
+            ERGO: {{ "%0.1f"|format(algorithm.ergonomics.comfort_score) }}
+          </span>
+          <span class="spec-label memo">
+            MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
+          </span>
+          {{ algorithm_detail(algorithm) }}
+          {{ algorithm_copy(algorithm) }}
+        </div>
+      </div>
+    {% endfor %}
   </div>
   {% endif %}
 
