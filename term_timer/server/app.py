@@ -24,7 +24,6 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
-from cubing_algs.display.vcube import ANSI_TO_RGB
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.offset import offset_y2_moves
@@ -446,36 +445,6 @@ def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
     return format_line(algorithm_string), algorithm
 
 
-def cube_html(cube_str: str) -> str:
-    """
-    Convert ANSI-colored cube string to HTML with inline styles.
-
-    Transforms terminal ANSI escape sequences into HTML span elements with
-    RGB color styling for web display.
-
-    Args:
-        cube_str: Cube visualization string with ANSI color codes.
-
-    Returns:
-        HTML string with colored span elements representing cube facelets.
-
-    """
-    def replace_span(matchobj: re.Match[str]) -> str:
-        if matchobj:
-            groups = matchobj.groups()
-            background_rgb = (int(groups[0]), int(groups[1]), int(groups[2]))
-            foreground_rgb = (int(groups[3]), int(groups[4]), int(groups[5]))
-
-        return (
-            f'<span class="facelet" '
-            f'style="background-color: rgb{ background_rgb }; '
-            f'color: rgb{ foreground_rgb };">'
-        )
-
-    blocks = ANSI_TO_RGB.sub(replace_span, cube_str)
-    return blocks.replace('\x1b[0;0m', '</span>')
-
-
 def sort_algorithms(algorithms: list[Algorithm]) -> list[Algorithm]:
     """
     Sort algorithms by the most human optimized versions.
@@ -613,7 +582,6 @@ class View:
                         'reconstruction_pauses': reconstruction_pauses,
                         'optimized_step': optimized_step,
                         'prettify': prettify_moves,
-                        'cube_html': cube_html,
                         'sort_algorithms': sort_algorithms,
                     },
                 },

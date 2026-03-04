@@ -1768,24 +1768,6 @@ twisty-alg-viewer {
     font-size: 0.95rem;
 }
 
-.alg-visualization {
-    font-family: 'Courier New', monospace;
-    white-space: pre;
-    overflow-x: auto;
-    background: var(--main-bg);
-    border-radius: 0.375rem;
-    border: 1px solid var(--border-color);
-    line-height: 1;
-    padding: 1em;
-}
-
-.alg-visualization .facelet {
-    font-size: 1rem;
-    display: inline-block;
-    padding: 5px 0;
-    border-radius: 4px;
-}
-
 /* Responsive adjustments */
 @media (max-width: 1024px) {
     .alg-ergo-grid,
