@@ -2178,3 +2178,7 @@ twisty-alg-viewer {
     border-bottom-width: 1px;
     margin-top: 2px;
 }
+
+.algorithm-moves {
+    display: flex;
+}

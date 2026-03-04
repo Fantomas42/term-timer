@@ -1,0 +1,15 @@
+{% macro algorithm_display_simple(algorithm) %}
+  <div class="algorithm-moves simple">
+    {% for move in algorithm %}
+      <span class="move">{{ move }}</span>
+    {% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro algorithm_display_advanced(algorithm) %}
+  <div class="algorithm-moves advanced">
+    {% for move in algorithm %}
+      <span class="move">{{ move }}</span>
+    {% endfor %}
+  </div>
+{% endmacro %}

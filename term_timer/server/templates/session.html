@@ -1,4 +1,5 @@
 {% extends "skeleton.html" %}
+{% from 'macros/algorithm.html' import algorithm_display_simple %}
 
 {% block description %}Detailled statistics for session {{ session|format_session_name }} on {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
 
@@ -806,7 +807,7 @@
                 {% endif %}
               </td>
               <td class="solve-scramble">
-                {% for m in solve.raw_scramble.split(' ') %}<span class="move">{{ m }}</span>{% endfor %}
+                {{ algorithm_display_simple(solve.scramble) }}
               </td>
               <td class="solve-flag">
                 {{ solve.flag|default('---', true) }}
