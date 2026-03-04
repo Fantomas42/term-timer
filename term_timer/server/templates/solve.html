@@ -2,6 +2,7 @@
 {% from 'macros/step.html' import step_case %}
 {% from 'macros/actions.html' import algorithm_button_copy %}
 {% from 'macros/actions.html' import algorithm_button_detail %}
+{% from 'macros/algorithm.html' import algorithm_display_simple %}
 
 {% block description %}
   Solve #{{ solve_id }} from session {{ session|format_session_name }} on {{ cube }}x{{ cube }}x{{ cube }}
@@ -843,16 +844,19 @@
         <a href="#scramble" id="scramble">Scramble</a>
       </h2>
     </div>
+    <p class="card-description">
+      Computer generated scramble
+    </p>
     <div class="scramble-card moves-card">
       <div class="moves-content">
-        {% for m in solve.scramble %}
-          <span class="move">{{ m }}</span>
-        {% endfor %}
+        {{ algorithm_display_simple(solve.scramble) }}
       </div>
       <div class="moves-footer">
-        {{ solve.scramble.metrics.htm }} HTM - Computer generated -
         {{ algorithm_button_detail(solve.scramble) }}
         {{ algorithm_button_copy(solve.scramble) }}
+        <span class="spec-label htm">
+          HTM: {{ solve.scramble.metrics.htm }}
+        </span>
       </div>
     </div>
   </div>
@@ -865,17 +869,20 @@
           <a href="#solution" id="solution">Solution</a>
         </h2>
       </div>
+      <p class="card-description">
+        Human generated solution
+      </p>
       {% set solution = solve.solution|prettify %}
       <div class="solution-card moves-card">
         <div class="moves-content">
-          {% for m in solution %}
-            <span class="move">{{ m }}</span>
-          {% endfor %}
+          {{ algorithm_display_simple(solution) }}
         </div>
         <div class="moves-footer">
-          {{ solution.metrics.htm }} HTM - Human generated -
           {{ algorithm_button_detail(solution) }}
           {{ algorithm_button_copy(solution) }}
+          <span class="spec-label htm">
+            HTM: {{ solution.metrics.htm }}
+          </span>
         </div>
       </div>
     </div>
@@ -1388,15 +1395,18 @@
             <a href="#raw-moves" id="raw-moves">Raw Moves</a>
           </h2>
         </div>
+        <p class="card-description">
+          Raw moves recorded
+        </p>
         <div class="solution-card moves-card">
           <div class="moves-content">
-            {% for m in solve.solution %}
-              <span class="move">{{ m }}</span>
-            {% endfor %}
+            {{ algorithm_display_simple(solve.solution) }}
           </div>
           <div class="moves-footer">
-            {{ solve.solution.metrics.qtm }} QTM - Raw Moves -
             {{ algorithm_button_copy(solve.solution) }}
+            <span class="spec-label htm">
+              HTM: {{ solve.solution.metrics.htm }}
+            </span>
           </div>
         </div>
       </div>

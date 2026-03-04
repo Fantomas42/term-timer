@@ -2179,6 +2179,13 @@ twisty-alg-viewer {
     margin-top: 2px;
 }
 
-.algorithm-moves {
+/* Algorithm display */
+
+.solve-scramble .algorithm-moves {
     display: flex;
+}
+
+.card-description {
+    padding: 0 1rem 1rem 1rem;
+    color: var(--text-secondary);
 }
