@@ -1,6 +1,6 @@
 {% extends "skeleton.html" %}
-{% from 'macros/actions.html' import algorithm_copy %}
-{% from 'macros/actions.html' import algorithm_detail %}
+{% from 'macros/actions.html' import algorithm_button_copy %}
+{% from 'macros/actions.html' import algorithm_button_detail %}
 
 {% block title %}{{ method }}/{{ case.name }}{% endblock %}
 {% block subtitle %}{{ method }}/{{ case.name }} Case Details{% endblock %}
@@ -153,8 +153,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         <span class="spec-label memo">
           MEMO: {{ "%0.1f"|format(case.main_algorithm.memory.memory_score) }}
         </span>
-        {{ algorithm_detail(case.main_algorithm) }}
-        {{ algorithm_copy(case.main_algorithm) }}
+        {{ algorithm_button_detail(case.main_algorithm) }}
+        {{ algorithm_button_copy(case.main_algorithm) }}
       </div>
     </div>
   </div>
@@ -259,8 +259,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
               <span class="spec-label memo">
                 MEMO: {{ "%0.1f"|format(algo.memory.memory_score) }}
               </span>
-              {{ algorithm_detail(algo) }}
-              {{ algorithm_copy(algo) }}
+              {{ algorithm_button_detail(algo) }}
+              {{ algorithm_button_copy(algo) }}
             </div>
           </div>
         {% endfor %}
@@ -300,8 +300,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
               <span class="spec-label memo">
                 MEMO: {{ "%0.2f"|format(setup.memory.memory_score) }}
               </span>
-              {{ algorithm_detail(setup) }}
-              {{ algorithm_copy(setup) }}
+              {{ algorithm_button_detail(setup) }}
+              {{ algorithm_button_copy(setup) }}
             </div>
           </div>
         {% endfor %}
@@ -338,8 +338,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             <span class="spec-label memo">
               MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
             </span>
-            {{ algorithm_detail(algorithm) }}
-            {{ algorithm_copy(algorithm) }}
+            {{ algorithm_button_detail(algorithm) }}
+            {{ algorithm_button_copy(algorithm) }}
           </div>
         </div>
       {% endfor %}
@@ -387,8 +387,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <span class="spec-label memo">
             MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
           </span>
-          {{ algorithm_detail(algorithm) }}
-          {{ algorithm_copy(algorithm) }}
+          {{ algorithm_button_detail(algorithm) }}
+          {{ algorithm_button_copy(algorithm) }}
         </div>
       </div>
     {% endfor %}

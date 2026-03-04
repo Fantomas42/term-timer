@@ -1,4 +1,4 @@
-{% macro algorithm_detail(algorithm) %}
+{% macro algorithm_button_detail(algorithm) %}
   <a href="/algorithm/{{ algorithm }}/" class="algorithm-detail">
     <i class="fas fa-info-circle"></i>
     Details
@@ -6,7 +6,7 @@
 {% endmacro %}
 
 
-{% macro algorithm_copy(algorithm) %}
+{% macro algorithm_button_copy(algorithm) %}
   <button class="algorithm-copy" data-algorithm="{{ algorithm }}">
     <i class="fas fa-copy"></i>
     Copy

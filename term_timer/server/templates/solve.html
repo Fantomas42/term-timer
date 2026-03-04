@@ -1,7 +1,7 @@
 {% extends "skeleton.html" %}
 {% from 'macros/step.html' import step_case %}
-{% from 'macros/actions.html' import algorithm_copy %}
-{% from 'macros/actions.html' import algorithm_detail %}
+{% from 'macros/actions.html' import algorithm_button_copy %}
+{% from 'macros/actions.html' import algorithm_button_detail %}
 
 {% block description %}
   Solve #{{ solve_id }} from session {{ session|format_session_name }} on {{ cube }}x{{ cube }}x{{ cube }}
@@ -851,8 +851,8 @@
       </div>
       <div class="moves-footer">
         {{ solve.scramble.metrics.htm }} HTM - Computer generated -
-        {{ algorithm_detail(solve.scramble) }}
-        {{ algorithm_copy(solve.scramble) }}
+        {{ algorithm_button_detail(solve.scramble) }}
+        {{ algorithm_button_copy(solve.scramble) }}
       </div>
     </div>
   </div>
@@ -874,8 +874,8 @@
         </div>
         <div class="moves-footer">
           {{ solution.metrics.htm }} HTM - Human generated -
-          {{ algorithm_detail(solution) }}
-          {{ algorithm_copy(solution) }}
+          {{ algorithm_button_detail(solution) }}
+          {{ algorithm_button_copy(solution) }}
         </div>
       </div>
     </div>
@@ -1396,7 +1396,7 @@
           </div>
           <div class="moves-footer">
             {{ solve.solution.metrics.qtm }} QTM - Raw Moves -
-            {{ algorithm_copy(solve.solution) }}
+            {{ algorithm_button_copy(solve.solution) }}
           </div>
         </div>
       </div>
