@@ -467,6 +467,7 @@
         {% endfor %}
       </div>
       <div class="moves-footer">
+        {{ algorithm_button_copy(algorithm) }}
         <a class="spec-label htm" href="#metrics">
           HTM: {{ algorithm.metrics.htm }}
         </a>
@@ -476,7 +477,6 @@
         <a class="spec-label memo" href="#memory">
           MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
         </a>
-        {{ algorithm_button_copy(algorithm) }}
       </div>
     </div>
     <br>
@@ -529,6 +529,8 @@
         {% endfor %}
       </div>
       <div class="moves-footer">
+        {{ algorithm_button_detail(inverse_variation) }}
+        {{ algorithm_button_copy(inverse_variation) }}
         <span class="spec-label htm">
           HTM: {{ inverse_variation.metrics.htm }}
         </span>
@@ -538,8 +540,6 @@
         <span class="spec-label memo">
           MEMO: {{ "%0.1f"|format(inverse_variation.memory.memory_score) }}
         </span>
-        {{ algorithm_button_detail(inverse_variation) }}
-        {{ algorithm_button_copy(inverse_variation) }}
       </div>
     </div>
 
@@ -588,6 +588,8 @@
           {% endfor %}
         </div>
         <div class="moves-footer">
+          {{ algorithm_button_detail(variation.algorithm) }}
+          {{ algorithm_button_copy(variation.algorithm) }}
           <span class="spec-label htm">
             HTM: {{ variation.algorithm.metrics.htm }}
           </span>
@@ -597,8 +599,6 @@
           <span class="spec-label memo">
             MEMO: {{ "%0.1f"|format(variation.algorithm.memory.memory_score) }}
           </span>
-          {{ algorithm_button_detail(variation.algorithm) }}
-          {{ algorithm_button_copy(variation.algorithm) }}
         </div>
       </div>
     {% endfor %}
@@ -624,6 +624,8 @@
           {% endfor %}
         </div>
         <div class="moves-footer">
+          {{ algorithm_button_detail(variation.algorithm) }}
+          {{ algorithm_button_copy(variation.algorithm) }}
           <span class="spec-label htm">
             HTM: {{ variation.algorithm.metrics.htm }}
           </span>
@@ -633,8 +635,6 @@
           <span class="spec-label memo">
             MEMO: {{ "%0.1f"|format(variation.algorithm.memory.memory_score) }}
           </span>
-          {{ algorithm_button_detail(variation.algorithm) }}
-          {{ algorithm_button_copy(variation.algorithm) }}
         </div>
       </div>
     {% endfor %}

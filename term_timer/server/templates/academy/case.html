@@ -137,6 +137,9 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         <a href="#main-algorithm" id="main-algorithm">Main Algorithm</a>
       </h2>
     </div>
+    <p class="card-description">
+      Algorithm used to solve the case.
+    </p>
     <div class="moves-card">
       <div class="moves-content">
         {% for m in case.main_algorithm %}
@@ -144,6 +147,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         {% endfor %}
       </div>
       <div class="moves-footer">
+        {{ algorithm_button_detail(case.main_algorithm) }}
+        {{ algorithm_button_copy(case.main_algorithm) }}
         <span class="spec-label htm">
           HTM: {{ case.main_algorithm.metrics.htm }}
         </span>
@@ -153,8 +158,6 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         <span class="spec-label memo">
           MEMO: {{ "%0.1f"|format(case.main_algorithm.memory.memory_score) }}
         </span>
-        {{ algorithm_button_detail(case.main_algorithm) }}
-        {{ algorithm_button_copy(case.main_algorithm) }}
       </div>
     </div>
   </div>
@@ -201,25 +204,26 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <a href="#recognition" id="recognition">Recognition</a>
         </h2>
       </div>
-      <div class="case-section case-grid-sm">
+      <p class="card-description">
+        Tips and tricks to recognize the case from different orientations.
+      </p>
+      <div class="case-grid-sm">
         {% for recog_case in case.recognition.cases %}
           <div class="case-panel">
             <strong class="case-accent">{{ recog_case.feature.name }}</strong>
-            <div class="case-note">
+            <p>
+              {{ recog_case.description }}
+            </p>
+            {% if recog_case.observation %}
               <p>
-                {{ recog_case.description }}
+                <b>Observation:</b> {{ recog_case.observation }}
               </p>
-              {% if recog_case.observation %}
-                <p>
-                  <b>Observation:</b> {{ recog_case.observation }}
-                </p>
-              {% endif %}
-              {% if recog_case.notes %}
-                <p>
-                  <b>Notes:</b> {{ recog_case.notes }}
-                </p>
-              {% endif %}
-            </div>
+            {% endif %}
+            {% if recog_case.notes %}
+              <p>
+                <b>Notes:</b> {{ recog_case.notes }}
+              </p>
+            {% endif %}
           </div>
         {% endfor %}
       </div>
@@ -235,7 +239,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <a href="#all-algorithms" id="all-algorithms">All Known Algorithms</a>
         </h2>
       </div>
-      <p class="case-section case-note secondary">
+      <p class="card-description">
         {{ all_algorithms|length }} total algorithm(s) in the database for this case.
         Different algorithms might be more comfortable depending on your solving style.
       </p>
@@ -250,6 +254,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
               {% endfor %}
             </div>
             <div class="moves-footer">
+              {{ algorithm_button_detail(algo) }}
+              {{ algorithm_button_copy(algo) }}
               <span class="spec-label htm">
                 HTM: {{ algo.metrics.htm }}
               </span>
@@ -259,8 +265,6 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
               <span class="spec-label memo">
                 MEMO: {{ "%0.1f"|format(algo.memory.memory_score) }}
               </span>
-              {{ algorithm_button_detail(algo) }}
-              {{ algorithm_button_copy(algo) }}
             </div>
           </div>
         {% endfor %}
@@ -277,7 +281,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <a href="#setup-algorithms" id="setup-algorithms">Setup Algorithms</a>
         </h2>
       </div>
-      <p class="case-section case-note secondary">
+      <p class="card-description">
         Top {{ setup_algorithms|length }} of the best setup algorithm(s) for this case.
       </p>
       <div class="algorithms-grid">
@@ -291,6 +295,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
               {% endfor %}
             </div>
             <div class="moves-footer">
+              {{ algorithm_button_detail(setup) }}
+              {{ algorithm_button_copy(setup) }}
               <span class="spec-label htm">
                 HTM: {{ setup.metrics.htm }}
               </span>
@@ -300,8 +306,6 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
               <span class="spec-label memo">
                 MEMO: {{ "%0.2f"|format(setup.memory.memory_score) }}
               </span>
-              {{ algorithm_button_detail(setup) }}
-              {{ algorithm_button_copy(setup) }}
             </div>
           </div>
         {% endfor %}
@@ -318,7 +322,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <a href="#badmephisto" id="badmephisto">BadMephisto Algorithms</a>
         </h2>
       </div>
-      <p class="case-section case-note secondary">
+      <p class="card-description">
         {{ badmephisto.algos|length }} algorithm(s) provided by the famous BadMephisto.
       </p>
       {% for algorithm in badmephisto.algos %}
@@ -329,6 +333,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             {% endfor %}
           </div>
           <div class="moves-footer">
+            {{ algorithm_button_detail(algorithm) }}
+            {{ algorithm_button_copy(algorithm) }}
             <span class="spec-label htm">
               HTM: {{ algorithm.metrics.htm }}
             </span>
@@ -338,8 +344,6 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             <span class="spec-label memo">
               MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
             </span>
-            {{ algorithm_button_detail(algorithm) }}
-            {{ algorithm_button_copy(algorithm) }}
           </div>
         </div>
       {% endfor %}
@@ -367,7 +371,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
         <a href="#two-phase" id="two-phase">Two-Phase Algorithms</a>
       </h2>
     </div>
-    <p class="case-section case-note secondary">
+    <p class="card-description">
       {{ case.two_phase_algorithms|length }} algorithm(s) computed by two-phase solver.
     </p>
     {% for algorithm in case.two_phase_algorithms %}
@@ -378,6 +382,8 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           {% endfor %}
         </div>
         <div class="moves-footer">
+          {{ algorithm_button_detail(algorithm) }}
+          {{ algorithm_button_copy(algorithm) }}
           <span class="spec-label htm">
             HTM: {{ algorithm.metrics.htm }}
           </span>
@@ -387,8 +393,6 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <span class="spec-label memo">
             MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
           </span>
-          {{ algorithm_button_detail(algorithm) }}
-          {{ algorithm_button_copy(algorithm) }}
         </div>
       </div>
     {% endfor %}
@@ -403,7 +407,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <a href="#external-links" id="external-links">External Resources</a>
         </h2>
       </div>
-      <div class="case-links-grid case-section">
+      <div class="case-links-grid">
         {% if case.cubing_fache_url %}
           <a href="{{ case.cubing_fache_url }}" target="_blank" class="link case-external-link">
             <i class="fas fa-external-link-alt"></i>

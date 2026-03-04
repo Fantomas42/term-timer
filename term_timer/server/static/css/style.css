@@ -1858,21 +1858,10 @@ twisty-alg-viewer {
 
 /* Case Detail Page */
 
-/* Section padding (direct children of .card) */
-.case-section {
-    padding: 0 1rem 1rem 1rem;
-}
-
 /* Muted intro text after a card-header */
 .case-description {
     padding: 1rem;
     color: var(--text-secondary);
-}
-
-/* Contextual spacing inside .case-section */
-.case-section > .case-note,
-.case-section > .case-mono {
-    margin-top: 0.5rem;
 }
 
 /* Spacing for inner panel in a logiqx/algo item */
@@ -1967,10 +1956,6 @@ twisty-alg-viewer {
 }
 
 /* Text helpers */
-.case-note.secondary {
-    color: var(--text-secondary);
-}
-
 .case-accent {
     color: var(--info);
     display: block;
