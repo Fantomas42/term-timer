@@ -1254,6 +1254,26 @@ class AcademyView(View):
                 },
             },
         },
+        'Roux': {
+            'cube_size': 3,
+            'description': (
+                'First Two Block, CMLL, LSE - The blockbuilding speedcubing method'
+            ),
+            'steps': {
+                'CMLL': {
+                    'description': (
+                        'Corners of last layer - '
+                        'Solve of corner orientations and permutations'
+                    ),
+                },
+                'LSE': {
+                    'description': (
+                        'Last Six Edges - '
+                        'Solve M-slice centers and edges together'
+                    ),
+                },
+            },
+        },
         'Ortega': {
             'cube_size': 2,
             'description': (
