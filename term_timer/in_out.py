@@ -218,7 +218,7 @@ def load_scrambles(path: Path) -> list[Algorithm]:
             moves_str = matching.group(1).strip()
 
         try:
-            algorithm = parse_moves(moves_str, secure=False)
+            algorithm = parse_moves(moves_str, trust_input=False)
             scrambles.append(algorithm)
         except InvalidMoveError:
             continue

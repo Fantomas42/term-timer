@@ -48,7 +48,7 @@ def scrambler(cube_size: int, iterations: int,
     cube = VCube(size=cube_size)
 
     if raw_scramble:
-        scrambled = parse_moves(raw_scramble, secure=False)
+        scrambled = parse_moves(raw_scramble, trust_input=False)
     elif easy_cross:
         scrambled, _solution = scramble_easy_cross('normal', rng=rng)
     else:
