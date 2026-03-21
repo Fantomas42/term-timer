@@ -1494,6 +1494,18 @@ twisty-alg-viewer {
     font-weight: bold;
 }
 
+.case-img {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1em;
+}
+
+.case-img img {
+    background-color: var(--main-bg);
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+}
+
 .case-algorithm {
     background: rgba(255, 255, 255, 0.05);
     padding: 1rem;

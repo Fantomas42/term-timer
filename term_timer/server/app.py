@@ -19,11 +19,13 @@ from bottle import abort
 from bottle import jinja2_template
 from bottle import redirect
 from bottle import request
+from bottle import response
 from bottle import static_file
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
+from cubing_algs.display.image import render_cube
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.offset import offset_y2_moves
@@ -1217,6 +1219,55 @@ class AlgorithmDetailView(View):
         }
 
 
+class CubeImageView(View):
+    """View for displaying a cube in SVG."""
+
+    def __init__(self, algorithm: str, case: str,  # noqa: PLR0913, PLR0917
+                 size: str, cube_size: str, rotation: str,
+                 orientation: str) -> None:
+        """
+        Initialize algorithm image view.
+
+        Args:
+            algorithm: Algorithm to represent.
+            case: Algorithm to represent to solve the case.
+            size: Image size to render.
+            cube_size: Cube size to use.
+            rotation: Rotation to apply to the 3D cube.
+            orientation: Orientation of the initial cube.
+
+        """
+        self.algorithm = (
+            algorithm and Algorithm.parse_moves(algorithm)
+        ) or Algorithm.parse_moves(case).transform(invert_moves)
+
+        self.size = (size and int(size)) or 200
+        self.cube_size = (cube_size and int(cube_size)) or 3
+        self.rotation = rotation or 'y45x-25'
+        self.orientation = orientation or CUBE_ORIENTATION
+
+        if self.orientation:
+            orientation_moves = get_orientation_moves(self.orientation)
+            self.algorithm = orientation_moves + self.algorithm
+
+    def as_view(self, _debug: bool) -> str:  # noqa: FBT001
+        """
+        Render the cube in SVG.
+
+        Returns:
+            The rendered cube.
+
+        """
+        response.content_type = 'image/svg+xml'
+
+        return render_cube(
+            self.algorithm,
+            size=self.size,
+            cube_size=self.cube_size,
+            rotation=self.rotation,
+        )
+
+
 class AcademyView(View):
     """View for displaying academy overview with solving methods."""
 
@@ -1257,7 +1308,8 @@ class AcademyView(View):
         'Roux': {
             'cube_size': 3,
             'description': (
-                'First Two Block, CMLL, LSE - The blockbuilding speedcubing method'
+                'First Two Block, CMLL, LSE - '
+                'The blockbuilding speedcubing method'
             ),
             'steps': {
                 'CMLL': {
@@ -1526,8 +1578,8 @@ class Server:
             """
             return AcademyStepView(
                 method, step,
-                request.GET.group or '',
-                request.GET.family or '',
+                request.GET.group,
+                request.GET.family,
             ).as_view(debug)
 
         @app.route('/academy/<method>/<step>/<case_id>/')  # type: ignore[untyped-decorator]
@@ -1541,7 +1593,7 @@ class Server:
             """
             return AcademyCaseView(
                 method, step, case_id,
-                request.GET.o or '',
+                request.GET.o,
             ).as_view(debug)
 
         @app.route('/algorithm/<algorithm>/')  # type: ignore[untyped-decorator]
@@ -1555,7 +1607,25 @@ class Server:
             """
             return AlgorithmDetailView(
                 algorithm,
-                request.GET.o or '',
+                request.GET.o,
+            ).as_view(debug)
+
+        @app.route('/cube/')  # type: ignore[untyped-decorator]
+        def cube_image() -> str:
+            """
+            Render cube SVG image.
+
+            Returns:
+                Rendered SVG image.
+
+            """
+            return CubeImageView(
+                request.GET.algo,
+                request.GET.case,
+                request.GET.size,
+                request.GET.cube_size,
+                request.GET.rotation,
+                request.GET.o,
             ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/flag/',
@@ -1595,7 +1665,7 @@ class Server:
             """
             return SolveDetailView(
                 cube, session, solve,
-                request.GET.m or '',
+                request.GET.m,
                 request.GET.o or 'auto',
             ).as_view(debug)
 
@@ -1610,9 +1680,9 @@ class Server:
             """
             return SessionDetailView(
                 cube, session,
-                request.GET.m or '',
-                request.GET.step or '',
-                request.GET.case_uid or '',
+                request.GET.m,
+                request.GET.step,
+                request.GET.case_uid,
             ).as_view(debug)
 
         @app.route('/static/<filepath:path>')  # type: ignore[untyped-decorator]
