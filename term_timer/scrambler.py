@@ -53,7 +53,8 @@ def scrambler(cube_size: int, iterations: int,
         scrambled, _solution = scramble_easy_cross('normal', rng=rng)
     else:
         scrambled = scramble(
-            cube_size, iterations,
+            cube_size,
+            iterations or None,
             inner_layers=True,
             right_handed=CUBE_RIGHT_HANDED,
             rng=rng,
