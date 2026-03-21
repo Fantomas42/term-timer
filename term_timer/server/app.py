@@ -1369,7 +1369,7 @@ class AcademyStepView(AcademyView):
     template_name = 'academy/step.html'
 
     def __init__(self, method: str, step: str,
-                 group: str, family: str) -> None:
+                 group: str, family: str, orientation: str) -> None:
         """
         Initialize academy step view.
 
@@ -1378,12 +1378,14 @@ class AcademyStepView(AcademyView):
             step: Method step name (F2L, OLL, or PLL).
             group: Step group filter.
             family: Step family filter.
+            orientation: Cube orientation for display.
 
         """
         self.method = method
         self.step = step
         self.group = group
         self.family = family
+        self.orientation = orientation
 
         try:
             self.cases = get_collection(f'{ method }/{ step }').cases
@@ -1413,6 +1415,8 @@ class AcademyStepView(AcademyView):
             Dictionary containing step information, case list.
 
         """
+        selected_orientation = self.orientation or CUBE_ORIENTATION
+
         return {
             'method': self.method,
             'step': self.step,
@@ -1421,6 +1425,9 @@ class AcademyStepView(AcademyView):
             'cases': self.cases,
             'group': self.group,
             'family': self.family,
+            'orientation_faces': selected_orientation,
+            'orientation_moves': get_orientation_moves(selected_orientation),
+            'available_orientations': ORIENTATION_MOVES,
         }
 
 
@@ -1580,6 +1587,7 @@ class Server:
                 method, step,
                 request.GET.group,
                 request.GET.family,
+                request.GET.o,
             ).as_view(debug)
 
         @app.route('/academy/<method>/<step>/<case_id>/')  # type: ignore[untyped-decorator]

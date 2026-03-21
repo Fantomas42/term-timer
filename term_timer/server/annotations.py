@@ -183,6 +183,9 @@ class AcademyStepContext(TypedDict):
     cases: dict[str, Case]
     group: str
     family: str
+    orientation_moves: Algorithm
+    orientation_faces: str
+    available_orientations: dict[str, Algorithm]
 
 
 class AcademyCaseContext(TypedDict):
