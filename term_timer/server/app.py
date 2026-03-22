@@ -1243,7 +1243,7 @@ class CubeImageView(View):
 
         self.size = (size and int(size)) or 200
         self.cube_size = (cube_size and int(cube_size)) or 3
-        self.rotation = rotation or 'y45x-35'
+        self.rotation = rotation or 'y45x-34'
         self.orientation = orientation or CUBE_ORIENTATION
 
         if self.orientation:
