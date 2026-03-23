@@ -43,6 +43,7 @@ from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.cheers import generate_solve_cheers
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.config import CUBE_PALETTE
 from term_timer.constants import CUBE_SIZES
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PAUSE_FACTOR
@@ -1223,8 +1224,9 @@ class CubeImageView(View):
     """View for displaying a cube in SVG."""
 
     def __init__(self, algorithm: str, case: str,  # noqa: PLR0913, PLR0917
-                 size: str, cube_size: str, rotation: str,
-                 orientation: str) -> None:
+                 size: str, cube_size: str,
+                 view: str, mask: str,
+                 rotation: str, orientation: str) -> None:
         """
         Initialize algorithm image view.
 
@@ -1243,6 +1245,8 @@ class CubeImageView(View):
 
         self.size = (size and int(size)) or 200
         self.cube_size = (cube_size and int(cube_size)) or 3
+        self.view = view or '3d'
+        self.mask = mask
         self.rotation = rotation or 'y45x-34'
         self.orientation = orientation or CUBE_ORIENTATION
 
@@ -1264,7 +1268,10 @@ class CubeImageView(View):
             self.algorithm,
             size=self.size,
             cube_size=self.cube_size,
+            view=self.view,
+            mask=self.mask,
             rotation=self.rotation,
+            palette_name=CUBE_PALETTE,
         )
 
 
@@ -1284,24 +1291,32 @@ class AcademyView(View):
                         'First Two Layers - '
                         'Solve cross and first two layers simultaneously'
                     ),
+                    'view': '3d',
+                    'mask': 'f2l',
                 },
                 'OLL': {
                     'description': (
                         'Orientation of Last Layer - '
                         'Orient all pieces on the last layer'
                     ),
+                    'view': 'top',
+                    'mask': 'oll',
                 },
                 'PLL': {
                     'description': (
                         'Permutation of Last Layer - '
                         'Permute all pieces on the last layer'
                     ),
+                    'view': 'top',
+                    'mask': 'pll',
                 },
                 'AF2L': {
                     'description': (
                         'Advanced First Two Layers - '
                         'Solve first two layers with advanced techniques.'
                     ),
+                    'view': '3d',
+                    'mask': 'af2l',
                 },
             },
         },
@@ -1317,12 +1332,16 @@ class AcademyView(View):
                         'Corners of last layer - '
                         'Solve of corner orientations and permutations'
                     ),
+                    'view': '3d',
+                    'mask': '',
                 },
                 'LSE': {
                     'description': (
                         'Last Six Edges - '
                         'Solve M-slice centers and edges together'
                     ),
+                    'view': '3d',
+                    'mask': '',
                 },
             },
         },
@@ -1337,12 +1356,16 @@ class AcademyView(View):
                         'Orientation of Last Layer - '
                         'Orient all pieces on the last layer'
                     ),
+                    'view': 'top',
+                    'mask': 'oll',
                 },
                 'PBL': {
                     'description': (
                         'Permutation of Both Layers - '
                         'Orient all pieces on all layers'
                     ),
+                    'view': '3d',
+                    'mask': '',
                 },
             },
         },
@@ -1632,6 +1655,8 @@ class Server:
                 request.GET.case,
                 request.GET.size,
                 request.GET.cube_size,
+                request.GET.view,
+                request.GET.mask,
                 request.GET.rotation,
                 request.GET.o,
             ).as_view(debug)
