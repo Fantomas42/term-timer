@@ -382,9 +382,11 @@ class ScrambleManager:
                 f'[comment]// { scramble.metrics.htm } HTM[/comment]'
             )
 
-            if self.cube_size == 3 and not self.show_cube:
+            if not self.show_cube:
                 scrambled_percent = (
-                    scramble.impacts.facelets_scrambled_percent * 100
+                    scramble.impacts(
+                        self.cube_size,
+                    ).facelets_scrambled_percent * 100
                 )
                 scramble_line += (
                     f' [comment]{ format_float(scrambled_percent) }%[/comment]'
@@ -453,17 +455,15 @@ class ScrambleManager:
                 f'**HTM:** { scramble.metrics.htm }',
             ))
 
-            # Add scrambled percentage for 3x3x3
-            if self.cube_size == 3:
-                scrambled_percent = (
-                    scramble.impacts.facelets_scrambled_percent * 100
-                )
-                scrambled_str = (
-                    f'**Scrambled:** { format_float(scrambled_percent) }%'
-                )
-                output_lines.append(scrambled_str)
-
-            output_lines.append('')
+            scrambled_percent = (
+                scramble.impacts(
+                    self.cube_size,
+                ).facelets_scrambled_percent * 100
+            )
+            scrambled_str = (
+                f'**Scrambled:** { format_float(scrambled_percent) }%'
+            )
+            output_lines.extend((scrambled_str, ''))
 
             # Cube visualization if requested
             if self.show_cube:

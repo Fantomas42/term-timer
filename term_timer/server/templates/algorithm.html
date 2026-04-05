@@ -24,7 +24,7 @@
 
      {% set metrics = algorithm.metrics %}
      {% set ergonomics = algorithm.ergonomics %}
-     {% set impacts = algorithm.impacts %}
+     {% set impacts = algorithm.impacts() %}
      Chart.defaults.color = '#94a3b8';
 
      // Move Metrics Bar Chart
@@ -1164,7 +1164,7 @@
     </div>
   </div>
 
-  {% set impacts = algorithm.impacts %}
+  {% set impacts = algorithm.impacts() %}
   <!-- Facelet Impact Analysis -->
   <div class="card">
     <div class="card-header">

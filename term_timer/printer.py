@@ -18,7 +18,7 @@ def print_cube_scrambled(
     """
     Display a cube visualization with scramble information.
 
-    Prints the cube state in the specified orientation and, for 3x3x3 cubes,
+    Prints the cube state in the specified orientation and
     appends the scramble percentage indicating how much of the cube has been
     affected by the scramble algorithm. The scramble percentage is displayed
     with a 'scrambled' style using the Rich console library.
@@ -29,12 +29,7 @@ def print_cube_scrambled(
         orientation: Two-character string specifying the cube orientation
             for display (e.g., 'UF' for Up-Front).
         scramble: Algorithm object representing the scramble sequence applied
-            to the cube. Must have an 'impacts' attribute with
-            'facelets_scrambled_percent' for 3x3x3 cubes.
-
-    Note:
-        For cubes other than 3x3x3, only the cube visualization is printed
-        without scramble percentage information.
+            to the cube.
 
     """
     if orientation == 'auto':
@@ -48,18 +43,18 @@ def print_cube_scrambled(
         mode='linear' if CUBE_LINEAR else '',
     )
 
-    is_3x3 = cube.size == 3
-    if is_3x3:
-        cube_display = cube_display.rstrip('\n')
+    cube_display = cube_display.rstrip('\n')
 
     print(cube_display, end='')  # noqa: T201
 
-    if is_3x3:
-        scrambled_percent = scramble.impacts.facelets_scrambled_percent * 100
-        console.print(
-            f' { format_float(scrambled_percent) }%',
-            style='scrambled',
-        )
+    scrambled_percent = scramble.impacts(
+        cube.size,
+    ).facelets_scrambled_percent * 100
+
+    console.print(
+        f' { format_float(scrambled_percent) }%',
+        style='scrambled',
+    )
 
 
 def print_cube_trainer(
