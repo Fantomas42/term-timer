@@ -1,7 +1,84 @@
 """Case encoders for identifying OLL, PLL, and F2L patterns."""
 from collections.abc import Callable
 
-from cubing_algs.masks import state_masked
+from cubing_algs.annotations import CubeFacelets
+from cubing_algs.annotations import Mask
+from cubing_algs.facelets import cubies_to_facelets
+from cubing_algs.facelets import facelets_to_cubies
+from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
+
+MASK_CACHE: dict[Mask, tuple[bool, ...]] = {}
+CACHE_SIZE_LIMIT = 1000  # Prevent unbounded memory growth
+
+
+def facelets_masked(facelets: CubeFacelets, mask: Mask) -> CubeFacelets:
+    """
+    Apply a binary mask to a facelets string.
+
+    Returns a new facelets string where positions with '0' in the mask
+    are replaced with '-', and positions with '1' retain their original value.
+
+    Optimized for high-frequency usage with caching and fast string operations.
+
+    Args:
+        facelets: The facelets string to mask.
+        mask: The binary mask string.
+
+    Returns:
+        The masked facelets string with '-' for masked positions.
+
+    """
+    if mask in MASK_CACHE:
+        translation = MASK_CACHE[mask]
+        return ''.join(
+            char if keep else '-'
+            for char, keep in zip(facelets, translation, strict=True)
+        )
+
+    # Build and cache translation for new masks
+    translation = tuple(c == '1' for c in mask)
+
+    # Manage cache size to prevent memory bloat
+    if len(MASK_CACHE) >= CACHE_SIZE_LIMIT:
+        # Remove oldest half of cache entries (batch-FIFO eviction)
+        items = list(MASK_CACHE.items())
+        MASK_CACHE.clear()
+        MASK_CACHE.update(items[CACHE_SIZE_LIMIT // 2:])
+
+    MASK_CACHE[mask] = translation
+
+    return ''.join(
+        char if keep else '-'
+        for char, keep in zip(facelets, translation, strict=True)
+    )
+
+
+def state_masked(state: CubeFacelets, mask: Mask) -> CubeFacelets:
+    """
+    Apply a binary mask to a cube state.
+
+    Converts the state to cubies, applies the mask
+    to the initial state facelets, then converts back
+    to a facelets representation showing only the masked pieces.
+
+    Args:
+        state: The cube state string to mask.
+        mask: The binary mask string.
+
+    Returns:
+        The masked cube state as a facelets string.
+
+    Notes:
+        Maybe use a derived of compute_algorithm_mask() in the future.
+
+    """
+    return cubies_to_facelets(
+        *facelets_to_cubies(state),
+        facelets_masked(
+            SOLVED_FACELETS_3x3x3,
+            mask,
+        ),
+    )
 
 
 def oll_case_encoder(facelets: str) -> str:
