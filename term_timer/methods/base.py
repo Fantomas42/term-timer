@@ -21,7 +21,6 @@ from cubing_algs.masks import F2L_MASK
 from cubing_algs.masks import FULL_MASK
 from cubing_algs.masks import L1_MASK
 from cubing_algs.masks import OLL_MASK
-from cubing_algs.masks import facelets_masked
 from cubing_algs.masks import union_masks
 from cubing_algs.parsing import parse_moves
 from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
@@ -37,6 +36,7 @@ from term_timer.methods.annotations import StepConfig
 from term_timer.methods.annotations import StepInfo
 from term_timer.methods.annotations import StepSummary
 from term_timer.methods.masks import CASES_MASKS
+from term_timer.methods.masks.encoders import facelets_masked
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves_unsecured
 from term_timer.transform import prettify_moves
