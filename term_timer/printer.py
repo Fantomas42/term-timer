@@ -36,11 +36,11 @@ def print_cube_scrambled(
         orientation = CUBE_ORIENTATION
 
     cube_display = cube.display(
+        layout='linear' if CUBE_LINEAR else '',
         orientation=orientation,
         palette=CUBE_PALETTE,
         effect=CUBE_EFFECT,
         style=CUBE_STYLE,
-        mode='linear' if CUBE_LINEAR else '',
     )
 
     cube_display = cube_display.rstrip('\n')

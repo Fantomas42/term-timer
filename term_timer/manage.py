@@ -472,7 +472,7 @@ class ScrambleManager:
                 cube_display = cube.display(
                     orientation='UF',
                     facelet='no-color' if self.no_color else 'emoji',
-                    mode='linear' if self.linear else '',
+                    layout='linear' if self.linear else '',
                 )
                 output_lines.extend((
                     '```',

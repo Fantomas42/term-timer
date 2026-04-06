@@ -110,7 +110,7 @@ def show_cube(cube: VCube) -> None:
     logger.info(
         'Virtual Cube:\n%s',
         cube.display(
-            mode='linear',
+            layout='linear',
             facelet='compact',
         )[:-1],
     )
