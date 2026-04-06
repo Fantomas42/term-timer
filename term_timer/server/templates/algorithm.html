@@ -339,9 +339,9 @@
            labels: ['Centers', 'Edges', 'Corners'],
            datasets: [{
              data: [
-               {{ impacts.facelets_layer_analysis.centers_moved }},
-               {{ impacts.facelets_layer_analysis.edges_moved }},
-               {{ impacts.facelets_layer_analysis.corners_moved }}
+               {{ impacts.facelets_piece_type_impact.center }},
+               {{ impacts.facelets_piece_type_impact.edge }},
+               {{ impacts.facelets_piece_type_impact.corner }}
              ],
              backgroundColor: [
                'rgba(255, 206, 86, 0.8)',
@@ -1250,19 +1250,19 @@
         </div>
 
         <div>
-          <h3 class="alg-section-title">Layer Analysis</h3>
+          <h3 class="alg-section-title">Piece Type Impact</h3>
           <table class="alg-table">
             <tr>
               <td><strong>Centers Moved</strong></td>
-              <td class="alg-value">{{ impacts.facelets_layer_analysis.centers_moved }}</td>
+              <td class="alg-value">{{ impacts.facelets_piece_type_impact.center }}</td>
             </tr>
             <tr>
               <td><strong>Edges Moved</strong></td>
-              <td class="alg-value">{{ impacts.facelets_layer_analysis.edges_moved }}</td>
+              <td class="alg-value">{{ impacts.facelets_piece_type_impact.edge }}</td>
             </tr>
             <tr>
               <td><strong>Corners Moved</strong></td>
-              <td class="alg-value">{{ impacts.facelets_layer_analysis.corners_moved }}</td>
+              <td class="alg-value">{{ impacts.facelets_piece_type_impact.corner }}</td>
             </tr>
           </table>
 
