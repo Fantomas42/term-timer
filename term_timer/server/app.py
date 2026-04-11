@@ -25,7 +25,6 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
-from cubing_algs.display.image import render_cube
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.offset import offset_y2_moves
@@ -38,6 +37,7 @@ from cubing_algs.transform.symmetry import symmetry_c_moves
 from cubing_algs.transform.symmetry import symmetry_m_moves
 from cubing_algs.transform.symmetry import symmetry_s_moves
 from cubing_algs.transform.timing import untime_moves
+from cubing_algs.vcube import VCube
 
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.cheers import generate_solve_cheers
@@ -1223,18 +1223,29 @@ class AlgorithmDetailView(View):
 class CubeImageView(View):
     """View for displaying a cube in SVG."""
 
-    def __init__(self, algorithm: str, case: str,  # noqa: PLR0913, PLR0917
-                 size: str, cube_size: str,
-                 view: str, mask: str,
-                 rotation: str, orientation: str) -> None:
+    def __init__(  # noqa: PLR0913, PLR0917
+            self,
+            cube_size: str,
+            algorithm: str,
+            case: str,
+            mode: str,
+            layout: str,
+            orientation: str,
+            mask: str,
+            palette: str,
+            cube_color: str,
+            image_size: str,
+            rotation: str,
+            distance: str,
+    ) -> None:
         """
         Initialize algorithm image view.
 
         Args:
+            cube_size: Cube size to use.
             algorithm: Algorithm to represent.
             case: Algorithm to represent to solve the case.
-            size: Image size to render.
-            cube_size: Cube size to use.
+            image_size: Image size to render.
             rotation: Rotation to apply to the 3D cube.
             orientation: Orientation of the initial cube.
 
@@ -1243,12 +1254,16 @@ class CubeImageView(View):
             algorithm and Algorithm.parse_moves(algorithm)
         ) or Algorithm.parse_moves(case).transform(invert_moves)
 
-        self.size = (size and int(size)) or 200
-        self.cube_size = (cube_size and int(cube_size)) or 3
-        self.view = view or '3d'
-        self.mask = mask
-        self.rotation = rotation or 'y45x-34'
+        self.cube_size = (cube_size and int(cube_size)) or 0
+        self.image_size = (image_size and int(image_size)) or 0
+        self.mode = mode
+        self.layout = layout
         self.orientation = orientation or CUBE_ORIENTATION
+        self.mask = mask
+        self.palette = palette or CUBE_PALETTE
+        self.cube_color = cube_color
+        self.rotation = rotation
+        self.distance = (distance and int(distance)) or 0.0
 
         if self.orientation:
             orientation_moves = get_orientation_moves(self.orientation)
@@ -1264,14 +1279,18 @@ class CubeImageView(View):
         """
         response.content_type = 'image/svg+xml'
 
-        return render_cube(
-            self.algorithm,
-            size=self.size,
-            cube_size=self.cube_size,
-            view=self.view,
+        cube = VCube(size=self.cube_size)
+        cube.rotate(self.algorithm)  # TODO(me): clean algorithm
+
+        return cube.image(
+            mode=self.mode,
+            layout=self.layout,
             mask=self.mask,
+            palette=self.palette,
+            cube_color=self.cube_color,
+            image_size=self.image_size,
             rotation=self.rotation,
-            palette_name=CUBE_PALETTE,
+            distance=self.distance,
         )
 
 
@@ -1291,32 +1310,28 @@ class AcademyView(View):
                         'First Two Layers - '
                         'Solve cross and first two layers simultaneously'
                     ),
-                    'view': '3d',
-                    'mask': 'f2l',
+                    'mode': 'f2l',
                 },
                 'OLL': {
                     'description': (
                         'Orientation of Last Layer - '
                         'Orient all pieces on the last layer'
                     ),
-                    'view': 'top',
-                    'mask': 'oll',
+                    'mode': 'oll',
                 },
                 'PLL': {
                     'description': (
                         'Permutation of Last Layer - '
                         'Permute all pieces on the last layer'
                     ),
-                    'view': 'top',
-                    'mask': 'pll',
+                    'mode': 'pll',
                 },
                 'AF2L': {
                     'description': (
                         'Advanced First Two Layers - '
                         'Solve first two layers with advanced techniques.'
                     ),
-                    'view': '3d',
-                    'mask': 'af2l',
+                    'mode': 'af2l',
                 },
             },
         },
@@ -1332,16 +1347,14 @@ class AcademyView(View):
                         'Corners of last layer - '
                         'Solve of corner orientations and permutations'
                     ),
-                    'view': '3d',
-                    'mask': '',
+                    'mode': '',
                 },
                 'LSE': {
                     'description': (
                         'Last Six Edges - '
                         'Solve M-slice centers and edges together'
                     ),
-                    'view': '3d',
-                    'mask': '',
+                    'mode': '',
                 },
             },
         },
@@ -1356,16 +1369,14 @@ class AcademyView(View):
                         'Orientation of Last Layer - '
                         'Orient all pieces on the last layer'
                     ),
-                    'view': 'top',
-                    'mask': 'oll',
+                    'mode': 'oll',
                 },
                 'PBL': {
                     'description': (
                         'Permutation of Both Layers - '
                         'Orient all pieces on all layers'
                     ),
-                    'view': '3d',
-                    'mask': '',
+                    'mode': '',
                 },
             },
         },
@@ -1651,14 +1662,18 @@ class Server:
 
             """
             return CubeImageView(
+                request.GET.cube_size,
                 request.GET.algo,
                 request.GET.case,
-                request.GET.size,
-                request.GET.cube_size,
-                request.GET.view,
+                request.GET.mode,
+                request.GET.layout,
+                request.GET.orientation,
                 request.GET.mask,
+                request.GET.palette,
+                request.GET.cube_color,
+                request.GET.image_size,
                 request.GET.rotation,
-                request.GET.o,
+                request.GET.distance,
             ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/flag/',

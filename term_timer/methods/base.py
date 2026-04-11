@@ -12,7 +12,7 @@ from typing import Final
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import OPPOSITE_FACES
 from cubing_algs.masks import CENTERS_MASK
-from cubing_algs.masks import CROSS_MASK
+from cubing_algs.masks import CROSS_BOTTOM_MASK
 from cubing_algs.masks import F2L_BL_MASK
 from cubing_algs.masks import F2L_BR_MASK
 from cubing_algs.masks import F2L_FL_MASK
@@ -45,7 +45,7 @@ from term_timer.triggers import DEFAULT_TRIGGERS
 if TYPE_CHECKING:
     from cubing_algs.move import Move
 
-CROSS_CENTER_MASK: Final = union_masks(CROSS_MASK, CENTERS_MASK)
+CROSS_CENTER_MASK: Final = union_masks(CROSS_BOTTOM_MASK, CENTERS_MASK)
 
 
 STEPS_CONFIG: Final[dict[str, StepConfig]] = {

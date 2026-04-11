@@ -2,16 +2,16 @@
 from collections.abc import Callable
 
 from cubing_algs.annotations import CubeFacelets
-from cubing_algs.annotations import Mask
+from cubing_algs.annotations import CubeMask
 from cubing_algs.facelets import cubies_to_facelets
 from cubing_algs.facelets import facelets_to_cubies
 from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
 
-MASK_CACHE: dict[Mask, tuple[bool, ...]] = {}
+MASK_CACHE: dict[CubeMask, tuple[bool, ...]] = {}
 CACHE_SIZE_LIMIT = 1000  # Prevent unbounded memory growth
 
 
-def facelets_masked(facelets: CubeFacelets, mask: Mask) -> CubeFacelets:
+def facelets_masked(facelets: CubeFacelets, mask: CubeMask) -> CubeFacelets:
     """
     Apply a binary mask to a facelets string.
 
@@ -53,7 +53,7 @@ def facelets_masked(facelets: CubeFacelets, mask: Mask) -> CubeFacelets:
     )
 
 
-def state_masked(state: CubeFacelets, mask: Mask) -> CubeFacelets:
+def state_masked(state: CubeFacelets, mask: CubeMask) -> CubeFacelets:
     """
     Apply a binary mask to a cube state.
 
