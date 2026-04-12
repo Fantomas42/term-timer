@@ -1353,14 +1353,14 @@ class AcademyView(View):
                         'Corners of last layer - '
                         'Solve of corner orientations and permutations'
                     ),
-                    'mode': '',
+                    'mode': 'cmll',
                 },
                 'LSE': {
                     'description': (
                         'Last Six Edges - '
                         'Solve M-slice centers and edges together'
                     ),
-                    'mode': '',
+                    'mode': 'lse',
                 },
             },
         },
