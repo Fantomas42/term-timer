@@ -14,16 +14,6 @@
     </select>
   </div>
   <div class="control-group">
-    <label for="mode-select">Mode:</label>
-    <select id="mode-select" class="control-select" onchange="updateUrlParams({m: this.value})">
-      {% for m in available_modes %}
-        <option value="{{ m }}" {% if m == mode %}selected{% endif %}>
-          {{ m or 'default' }}
-        </option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="control-group">
     <label for="cube-size-select">Size:</label>
     <select id="cube-size-select" class="control-select" onchange="updateUrlParams({c: this.value})">
       {% for size in available_cube_sizes %}
@@ -34,11 +24,21 @@
     </select>
   </div>
   <div class="control-group">
+    <label for="mode-select">Mode:</label>
+    <select id="mode-select" class="control-select" onchange="updateUrlParams({m: this.value})">
+      {% for m in available_modes %}
+        <option value="{{ m }}" {% if m == mode %}selected{% endif %}>
+          {{ m.upper() or 'DEFAULT' }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="control-group">
     <label for="palette-select">Palette:</label>
     <select id="palette-select" class="control-select" onchange="updateUrlParams({p: this.value})">
       {% for p in available_palettes %}
         <option value="{{ p }}" {% if p == palette %}selected{% endif %}>
-          {{ p }}
+          {{ p.title() }}
         </option>
       {% endfor %}
     </select>
