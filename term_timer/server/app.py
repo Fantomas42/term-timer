@@ -1254,8 +1254,8 @@ class CubeImageView(View):
             algorithm and Algorithm.parse_moves(algorithm)
         ) or Algorithm.parse_moves(case).transform(invert_moves)
 
-        self.cube_size = (cube_size and int(cube_size)) or 0
-        self.image_size = (image_size and int(image_size)) or 0
+        self.cube_size = (cube_size and int(cube_size)) or 3
+        self.image_size = (image_size and int(image_size)) or 200
         self.mode = mode
         self.layout = layout
         self.orientation = orientation or CUBE_ORIENTATION
@@ -1263,7 +1263,7 @@ class CubeImageView(View):
         self.palette = palette or CUBE_PALETTE
         self.cube_color = cube_color
         self.rotation = rotation
-        self.distance = (distance and int(distance)) or 0.0
+        self.distance = (distance and int(distance)) or 10.0
 
         if self.orientation:
             orientation_moves = get_orientation_moves(self.orientation)
