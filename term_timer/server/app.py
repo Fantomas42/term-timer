@@ -1662,16 +1662,16 @@ class Server:
 
             """
             return CubeImageView(
-                request.GET.cube_size,
+                request.GET.cube_size or request.GET.c,
                 request.GET.algo,
                 request.GET.case,
-                request.GET.mode,
-                request.GET.layout,
-                request.GET.orientation,
+                request.GET.mode or request.GET.m,
+                request.GET.layout or request.GET.l,
+                request.GET.orientation or request.GET.o,
                 request.GET.mask,
-                request.GET.palette,
+                request.GET.palette or request.GET.p,
                 request.GET.cube_color,
-                request.GET.image_size,
+                request.GET.image_size or request.GET.s,
                 request.GET.rotation,
                 request.GET.distance,
             ).as_view(debug)
