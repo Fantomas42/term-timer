@@ -1,4 +1,5 @@
 {% extends "skeleton.html" %}
+{% from 'macros/display_selectors.html' import display_selectors %}
 
 {% block title %}{{ method }}/{{ step }} Cases{% endblock %}
 {% block subtitle %}{{ method }} / {{ step }} Academy{% endblock %}
@@ -7,11 +8,20 @@
 Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cube_size }}x{{ cube_size }}x{{ cube_size }} cube.
 {% endblock %}
 
-{% block actions %}
-<a href="/academy/" class="btn btn-small">
+{% block nav_actions %}
+<a href="/academy/?o={{ orientation_faces }}&p={{ palette }}" class="btn btn-small">
   <i class="fas fa-arrow-left"></i>
   Back to Academy
 </a>
+{% endblock %}
+
+{% block selectors %}
+{% if DEBUG %}
+{{ display_selectors(available_orientations, orientation_faces,
+                     available_modes, mode,
+                     available_cube_sizes, cube_size,
+                     available_palettes, palette) }}
+{% endif %}
 {% endblock %}
 
 {% block body %}
@@ -40,7 +50,7 @@ Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cu
         <div class="case-card">
           <div class="case-header">
             <h3>
-              <a href="/academy/{{ method }}/{{ step }}/{{ case.code }}/">
+              <a href="/academy/{{ method }}/{{ step }}/{{ case.code }}/?o={{ orientation_faces }}&p={{ palette }}">
                 {{ case.pretty_name }}
               </a>
             </h3>
@@ -48,7 +58,7 @@ Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cu
           </div>
 
           <div class="case-img">
-            <img src="/cube/?case={{ case.main_algorithm }}&cube_size={{ cube_size }}&orientation={{ orientation_faces }}&mode={{ step_info.mode }}">
+            <img src="/cube/?case={{ case.main_algorithm }}&cube_size={{ cube_size }}&orientation={{ orientation_faces }}&mode={{ mode }}&palette={{ palette }}">
           </div>
 
           <div class="case-algorithm">
@@ -60,7 +70,7 @@ Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cu
               <i class="fas fa-cube"></i>
               {{ case.algorithms|length }} algorithms
             </span>
-            <a href="/academy/{{ method }}/{{ step }}/{{ case.code }}/" class="case-link">
+            <a href="/academy/{{ method }}/{{ step }}/{{ case.code }}/?o={{ orientation_faces }}&p={{ palette }}" class="case-link">
               <i class="fas fa-arrow-right"></i>
               Details
             </a>

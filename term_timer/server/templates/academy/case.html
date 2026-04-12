@@ -1,6 +1,7 @@
 {% extends "skeleton.html" %}
 {% from 'macros/actions.html' import algorithm_button_copy %}
 {% from 'macros/actions.html' import algorithm_button_detail %}
+{% from 'macros/display_selectors.html' import display_selectors %}
 
 {% block title %}{{ method }}/{{ case.name }}{% endblock %}
 {% block subtitle %}{{ method }}/{{ case.name }} Case Details{% endblock %}
@@ -9,15 +10,24 @@
 Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition patterns, and metrics.
 {% endblock %}
 
-{% block actions %}
-<a href="/academy/{{ method }}/{{ step }}/" class="btn btn-small">
+{% block nav_actions %}
+<a href="/academy/{{ method }}/{{ step }}/?o={{ orientation_faces }}&p={{ palette }}" class="btn btn-small">
   <i class="fas fa-arrow-left"></i>
   Back to {{ step }} Cases
 </a>
-<a href="/academy/" class="btn btn-small">
+<a href="/academy/?o={{ orientation_faces }}&p={{ palette }}" class="btn btn-small">
   <i class="fas fa-home"></i>
   Academy Home
 </a>
+{% endblock %}
+
+{% block selectors %}
+{% if DEBUG %}
+{{ display_selectors(available_orientations, orientation_faces,
+                     available_modes, mode,
+                     available_cube_sizes, cube_size,
+                     available_palettes, palette) }}
+{% endif %}
 {% endblock %}
 
 {% block script %}

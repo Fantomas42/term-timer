@@ -28,6 +28,12 @@
         </div>
         <div class="actions">
           {% block actions %}
+            <div class="header-nav">
+              {% block nav_actions %}{% endblock %}
+            </div>
+            <div class="header-selectors">
+              {% block selectors %}{% endblock %}
+            </div>
           {% endblock %}
         </div>
       </header>

@@ -1,10 +1,20 @@
 {% extends "skeleton.html" %}
+{% from 'macros/display_selectors.html' import display_selectors %}
 
 {% block title %}Academy{% endblock %}
 {% block subtitle %}Academy{% endblock %}
 
 {% block description %}
   Learn cubing methods with detailed case analysis and algorithms for speedcubing.
+{% endblock %}
+
+{% block selectors %}
+{% if DEBUG %}
+{{ display_selectors(available_orientations, orientation_faces,
+                     available_modes, mode,
+                     available_cube_sizes, cube_size,
+                     available_palettes, palette) }}
+{% endif %}
 {% endblock %}
 
 {% block body %}
@@ -24,16 +34,17 @@
 
       <div class="steps-grid">
         {% for step_name, step_info in method_info.steps.items() %}
+          {% set step_url = '/academy/' ~ method_name ~ '/' ~ step_name ~ '/?o=' ~ orientation_faces ~ '&p=' ~ palette %}
           <div class="step-card">
             <h4>
-              <a href="/academy/{{ method_name }}/{{ step_name }}/">
+              <a href="{{ step_url }}">
                 <i class="fas fa-cube"></i>
                 {{ step_name }}
               </a>
             </h4>
             <p>{{ step_info.description }}</p>
             <div class="step-actions">
-              <a href="/academy/{{ method_name }}/{{ step_name }}/" class="btn btn-primary">
+              <a href="{{ step_url }}" class="btn btn-primary">
                 View Cases
                 <i class="fas fa-arrow-right"></i>
               </a>

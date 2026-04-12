@@ -1,0 +1,47 @@
+{% macro display_selectors(available_orientations, orientation_faces,
+                           available_modes, mode,
+                           available_cube_sizes, cube_size,
+                           available_palettes, palette) %}
+<div class="display-selectors">
+  <div class="control-group">
+    <label for="orientation-select">Orientation:</label>
+    <select id="orientation-select" class="control-select" onchange="updateUrlParams({o: this.value})">
+      {% for orientation, moves in available_orientations.items() %}
+        <option value="{{ orientation }}" {% if orientation == orientation_faces %}selected{% endif %}>
+          {{ orientation }}{% if moves %} ({{ moves }}){% endif %}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="control-group">
+    <label for="mode-select">Mode:</label>
+    <select id="mode-select" class="control-select" onchange="updateUrlParams({m: this.value})">
+      {% for m in available_modes %}
+        <option value="{{ m }}" {% if m == mode %}selected{% endif %}>
+          {{ m or 'default' }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="control-group">
+    <label for="cube-size-select">Size:</label>
+    <select id="cube-size-select" class="control-select" onchange="updateUrlParams({c: this.value})">
+      {% for size in available_cube_sizes %}
+        <option value="{{ size }}" {% if size == cube_size %}selected{% endif %}>
+          {{ size }}x{{ size }}x{{ size }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="control-group">
+    <label for="palette-select">Palette:</label>
+    <select id="palette-select" class="control-select" onchange="updateUrlParams({p: this.value})">
+      {% for p in available_palettes %}
+        <option value="{{ p }}" {% if p == palette %}selected{% endif %}>
+          {{ p }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+{% endmacro %}

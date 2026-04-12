@@ -25,6 +25,8 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
+from cubing_algs.display.mode import MODE_CONFIGS
+from cubing_algs.display.palettes import PALETTES
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.offset import offset_y2_moves
@@ -1298,6 +1300,10 @@ class AcademyView(View):
     """View for displaying academy overview with solving methods."""
 
     template_name = 'academy/overview.html'
+    orientation: str = ''
+    display_mode: str = ''
+    cube_size: int = 3
+    palette: str = ''
     methods: ClassVar[dict[str, MethodInfo]] = {
         'CFOP': {
             'cube_size': 3,
@@ -1382,9 +1388,54 @@ class AcademyView(View):
         },
     }
 
-    def get_context(
-        self,
-    ) -> AcademyOverviewContext | AcademyStepContext | AcademyCaseContext:
+    def __init__(self, orientation: str = '', mode: str = '',
+                 cube_size: str = '', palette: str = '') -> None:
+        """
+        Initialize academy overview view.
+
+        Args:
+            orientation: Cube orientation for display.
+            mode: Display mode override.
+            cube_size: Cube size override for display.
+            palette: Color palette override.
+
+        """
+        self.orientation = orientation
+        self.display_mode = mode
+        self.cube_size = int(cube_size) if cube_size else 3
+        self.palette = palette
+
+    def get_display_context(self, default_mode: str = '') -> dict[
+        str,
+        str | Algorithm | dict[str, Algorithm] | int | list[str] | list[int],
+    ]:
+        """
+        Build shared display parameter context for academy views.
+
+        Args:
+            default_mode: Default mode when no GET override is provided.
+
+        Returns:
+            Dictionary with orientation, mode, cube size, and palette context.
+
+        """
+        orientation_faces = self.orientation or CUBE_ORIENTATION
+        mode = self.display_mode or default_mode
+        palette = self.palette or CUBE_PALETTE
+
+        return {
+            'orientation_faces': orientation_faces,
+            'orientation_moves': get_orientation_moves(orientation_faces),
+            'available_orientations': ORIENTATION_MOVES,
+            'mode': mode,
+            'available_modes': ['', *sorted(MODE_CONFIGS.keys())],
+            'cube_size': self.cube_size,
+            'available_cube_sizes': CUBE_SIZES,
+            'palette': palette,
+            'available_palettes': sorted(PALETTES.keys()),
+        }
+
+    def get_context(self) -> AcademyOverviewContext:
         """
         Build context with available solving methods.
 
@@ -1392,8 +1443,9 @@ class AcademyView(View):
             Dictionary containing methods and their descriptions.
 
         """
-        return {
+        return {  # type: ignore[return-value]
             'methods': self.methods,
+            **self.get_display_context(),
         }
 
 
@@ -1402,8 +1454,10 @@ class AcademyStepView(AcademyView):
 
     template_name = 'academy/step.html'
 
-    def __init__(self, method: str, step: str,
-                 group: str, family: str, orientation: str) -> None:
+    def __init__(  # noqa: PLR0913, PLR0917
+            self, method: str, step: str, group: str, family: str,
+            orientation: str, mode: str = '', cube_size: str = '',
+            palette: str = '') -> None:
         """
         Initialize academy step view.
 
@@ -1413,6 +1467,9 @@ class AcademyStepView(AcademyView):
             group: Step group filter.
             family: Step family filter.
             orientation: Cube orientation for display.
+            mode: Display mode override.
+            cube_size: Cube size override for display.
+            palette: Color palette override.
 
         """
         self.method = method
@@ -1420,11 +1477,16 @@ class AcademyStepView(AcademyView):
         self.group = group
         self.family = family
         self.orientation = orientation
+        self.display_mode = mode
+        self.palette = palette
 
         try:
             self.cases = get_collection(f'{ method }/{ step }').cases
             self.step_info = self.methods[method]['steps'][step]
-            self.cube_size = self.methods[method]['cube_size']
+            self.cube_size = (
+                int(cube_size) if cube_size
+                else self.methods[method]['cube_size']
+            )
         except KeyError:
             abort(404, f'{ method }/{ step } does not exist')
 
@@ -1449,19 +1511,16 @@ class AcademyStepView(AcademyView):
             Dictionary containing step information, case list.
 
         """
-        selected_orientation = self.orientation or CUBE_ORIENTATION
-
-        return {
+        return {  # type: ignore[return-value]
             'method': self.method,
             'step': self.step,
             'step_info': self.step_info,
-            'cube_size': self.cube_size,
             'cases': self.cases,
             'group': self.group,
             'family': self.family,
-            'orientation_faces': selected_orientation,
-            'orientation_moves': get_orientation_moves(selected_orientation),
-            'available_orientations': ORIENTATION_MOVES,
+            **self.get_display_context(
+                default_mode=self.step_info['mode'],
+            ),
         }
 
 
@@ -1470,8 +1529,10 @@ class AcademyCaseView(AcademyView):
 
     template_name = 'academy/case.html'
 
-    def __init__(self, method: str, step: str, case_id: str,
-                 orientation: str) -> None:
+    def __init__(  # noqa: PLR0913, PLR0917
+            self, method: str, step: str, case_id: str,
+            orientation: str, mode: str = '', cube_size: str = '',
+            palette: str = '') -> None:
         """
         Initialize academy case view.
 
@@ -1480,17 +1541,25 @@ class AcademyCaseView(AcademyView):
             step: CFOP step name (F2L, OLL, or PLL).
             case_id: Case identifier within the step.
             orientation: Cube orientation for display.
+            mode: Display mode override.
+            cube_size: Cube size override for display.
+            palette: Color palette override.
 
         """
         self.method = method
         self.step = step
         self.case_id = case_id
         self.orientation = orientation
+        self.display_mode = mode
+        self.palette = palette
 
         try:
             self.case = get_case(f'{ method }/{ step }', case_id)
             self.step_info = self.methods[method]['steps'][step]
-            self.cube_size = self.methods[method]['cube_size']
+            self.cube_size = (
+                int(cube_size) if cube_size
+                else self.methods[method]['cube_size']
+            )
         except KeyError:
             abort(404, f'{ method }/{ step } { case_id } does not exist')
 
@@ -1502,17 +1571,14 @@ class AcademyCaseView(AcademyView):
             Dictionary containing case information.
 
         """
-        selected_orientation = self.orientation or CUBE_ORIENTATION
-
-        return {
+        return {  # type: ignore[return-value]
             'method': self.method,
             'step': self.step,
             'step_info': self.step_info,
-            'cube_size': self.cube_size,
             'case': self.case,
-            'orientation_faces': selected_orientation,
-            'orientation_moves': get_orientation_moves(selected_orientation),
-            'available_orientations': ORIENTATION_MOVES,
+            **self.get_display_context(
+                default_mode=self.step_info['mode'],
+            ),
         }
 
 
@@ -1606,7 +1672,12 @@ class Server:
                 Rendered HTML template.
 
             """
-            return AcademyView().as_view(debug)
+            return AcademyView(
+                orientation=request.GET.o,
+                mode=request.GET.m,
+                cube_size=request.GET.c,
+                palette=request.GET.p,
+            ).as_view(debug)
 
         @app.route('/academy/<method>/<step>/')  # type: ignore[untyped-decorator]
         def academy_step(method: str, step: str) -> str:
@@ -1622,6 +1693,9 @@ class Server:
                 request.GET.group,
                 request.GET.family,
                 request.GET.o,
+                mode=request.GET.m,
+                cube_size=request.GET.c,
+                palette=request.GET.p,
             ).as_view(debug)
 
         @app.route('/academy/<method>/<step>/<case_id>/')  # type: ignore[untyped-decorator]
@@ -1636,6 +1710,9 @@ class Server:
             return AcademyCaseView(
                 method, step, case_id,
                 request.GET.o,
+                mode=request.GET.m,
+                cube_size=request.GET.c,
+                palette=request.GET.p,
             ).as_view(debug)
 
         @app.route('/algorithm/<algorithm>/')  # type: ignore[untyped-decorator]

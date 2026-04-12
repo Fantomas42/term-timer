@@ -86,6 +86,7 @@ class StepDescriptionInfo(TypedDict):
     """Step description information for academy."""
 
     description: str
+    mode: str
 
 
 class MethodInfo(TypedDict):
@@ -171,6 +172,15 @@ class AcademyOverviewContext(TypedDict):
     """Template context for academy overview."""
 
     methods: dict[str, MethodInfo]
+    orientation_faces: str
+    orientation_moves: Algorithm
+    available_orientations: dict[str, Algorithm]
+    mode: str
+    available_modes: list[str]
+    cube_size: int
+    available_cube_sizes: list[int]
+    palette: str
+    available_palettes: list[str]
 
 
 class AcademyStepContext(TypedDict):
@@ -186,6 +196,11 @@ class AcademyStepContext(TypedDict):
     orientation_moves: Algorithm
     orientation_faces: str
     available_orientations: dict[str, Algorithm]
+    mode: str
+    available_modes: list[str]
+    available_cube_sizes: list[int]
+    palette: str
+    available_palettes: list[str]
 
 
 class AcademyCaseContext(TypedDict):
@@ -199,3 +214,8 @@ class AcademyCaseContext(TypedDict):
     orientation_moves: Algorithm
     orientation_faces: str
     available_orientations: dict[str, Algorithm]
+    mode: str
+    available_modes: list[str]
+    available_cube_sizes: list[int]
+    palette: str
+    available_palettes: list[str]
