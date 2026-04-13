@@ -470,6 +470,21 @@ def sort_algorithms(algorithms: list[Algorithm]) -> list[Algorithm]:
     )
 
 
+def first_case(method_name: str, step_name: str) -> Case:
+    """
+    Return first case of a step name method.
+
+    Returns:
+        The first case of the step.
+
+    """
+    return next(
+        iter(
+            get_collection(f'{ method_name }/{ step_name }').cases.values(),
+        ),
+    )
+
+
 class RichHandler(WSGIRequestHandler):
     """Custom WSGI request handler with Rich console logging."""
 
@@ -588,6 +603,7 @@ class View:
                         'optimized_step': optimized_step,
                         'prettify': prettify_moves,
                         'sort_algorithms': sort_algorithms,
+                        'first_case': first_case,
                     },
                 },
                 **context,

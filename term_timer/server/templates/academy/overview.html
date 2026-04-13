@@ -42,6 +42,14 @@
                 {{ step_name }}
               </a>
             </h4>
+
+            <div class="case-img">
+              {% set case = method_name|first_case(step_name) %}
+              <a href="{{ step_url }}">
+                <img src="/cube/?case={{ case.main_algorithm }}&c={{ method_info.cube_size }}&o={{ orientation_faces }}&m={{ mode or step_info.mode }}&p={{ palette }}">
+              </a>
+            </div>
+
             <p>{{ step_info.description }}</p>
             <div class="step-actions">
               <a href="{{ step_url }}" class="btn btn-primary">
