@@ -6,7 +6,7 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import ADJACENT_FACES
 from cubing_algs.constants import FACE_ORDER
 from cubing_algs.constants import OPPOSITE_FACES
-from cubing_algs.constants import ORIENTATIONS
+from cubing_algs.constants import ORIENTATION_FACE_MOVES
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.rotation import remove_ending_rotations
@@ -16,15 +16,6 @@ from cubing_algs.vcube import VCube
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import CUBE_RIGHT_HANDED
 from term_timer.exceptions import InvalidOrientationError
-
-cube = VCube(size=3)
-
-ORIENTATION_MOVES: Final = {
-    orientation: parse_moves(
-        cube.compute_orientation_moves(orientation),
-    )
-    for orientation in ORIENTATIONS
-}
 
 
 def is_face_complete(cube: VCube, face: str) -> bool:
@@ -166,7 +157,7 @@ def get_orientation_faces(
         # Build the full algorithm with orientation moves prepended
         # Then apply transforms to normalize it for ergonomic analysis
         algorithm = (
-            ORIENTATION_MOVES[top_face + front_face]
+            ORIENTATION_FACE_MOVES[top_face + front_face]
             + untimed_solution
         ).transform(
             degrip_full_moves,
@@ -203,7 +194,7 @@ def get_orientation_moves(orientation: str) -> Algorithm:
         orientation = CUBE_ORIENTATION
 
     try:
-        return ORIENTATION_MOVES[orientation]
+        return ORIENTATION_FACE_MOVES[orientation]
     except KeyError as error:
         msg = f'Invalid orientation "{ orientation }"'
         raise InvalidOrientationError(msg) from error

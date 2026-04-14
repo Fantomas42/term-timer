@@ -25,6 +25,7 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
+from cubing_algs.constants import ORIENTATION_FACE_MOVES
 from cubing_algs.display.mode import MODE_CONFIGS
 from cubing_algs.display.palettes import PALETTES
 from cubing_algs.transform.auf import remove_auf_moves
@@ -70,7 +71,6 @@ from term_timer.methods import METHOD_ANALYSERS
 from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import Analyser
 from term_timer.methods.base import get_step_config
-from term_timer.orientation import ORIENTATION_MOVES
 from term_timer.orientation import get_orientation_moves
 from term_timer.server.annotations import AcademyCaseContext
 from term_timer.server.annotations import AcademyOverviewContext
@@ -1051,7 +1051,7 @@ class SolveDetailView(View):
             'reconstruction_timing': self.solve.reconstruction_steps_timing,
             'reconstruction_index': step_index,
             'rank': rank,
-            'available_orientations': ORIENTATION_MOVES,
+            'available_orientations': ORIENTATION_FACE_MOVES,
             'available_methods': list(METHOD_ANALYSERS.keys()),
         }
 
@@ -1234,7 +1234,7 @@ class AlgorithmDetailView(View):
             'inverse_variation': invert_moves(self.algorithm),
             'orientation_faces': selected_orientation,
             'orientation_moves': get_orientation_moves(selected_orientation),
-            'available_orientations': ORIENTATION_MOVES,
+            'available_orientations': ORIENTATION_FACE_MOVES,
         }
 
 
@@ -1442,7 +1442,7 @@ class AcademyView(View):
         return {
             'orientation_faces': orientation_faces,
             'orientation_moves': get_orientation_moves(orientation_faces),
-            'available_orientations': ORIENTATION_MOVES,
+            'available_orientations': ORIENTATION_FACE_MOVES,
             'mode': mode,
             'available_modes': ['', *sorted(MODE_CONFIGS.keys())],
             'cube_size': self.cube_size,
