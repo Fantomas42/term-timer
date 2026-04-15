@@ -118,7 +118,8 @@ Interactive cube rendering debug view with rotation controls.
 
     let current = 45;
     let playing = false;
-    let interval = null;
+    let timeout = null;
+    let preloader = null;
 
     function buildRotation(angle) {
       const axis = axisSelect.value;
@@ -148,18 +149,45 @@ Interactive cube rendering debug view with rotation controls.
       img.src = buildUrl(angle);
     }
 
-    function step() {
-      goTo((current + 1) % 360);
+    function cancelPreloader() {
+      if (preloader) {
+        preloader.onload = null;
+        preloader.onerror = null;
+        preloader.src = '';
+        preloader = null;
+      }
     }
 
-    function startInterval() {
-      clearInterval(interval);
-      interval = setInterval(step, parseInt(speedSlider.value, 10));
+    function scheduleNext() {
+      clearTimeout(timeout);
+      timeout = setTimeout(playStep, parseInt(speedSlider.value, 10));
+    }
+
+    function playStep() {
+      if (!playing) return;
+      const next = (current + 1) % 360;
+      const url = buildUrl(next);
+      cancelPreloader();
+      preloader = new Image();
+      preloader.onload = () => {
+        if (!playing) return;
+        current = next;
+        angleSlider.value = next;
+        angleInput.value = next;
+        angleVal.textContent = next;
+        img.src = url;
+        scheduleNext();
+      };
+      preloader.onerror = () => {
+        if (playing) scheduleNext();
+      };
+      preloader.src = url;
     }
 
     function pause() {
       playing = false;
-      clearInterval(interval);
+      clearTimeout(timeout);
+      cancelPreloader();
       playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
       playBtn.classList.remove('playing');
     }
@@ -169,7 +197,7 @@ Interactive cube rendering debug view with rotation controls.
       if (playing) {
         playBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
         playBtn.classList.add('playing');
-        startInterval();
+        playStep();
       } else {
         pause();
       }
@@ -177,7 +205,6 @@ Interactive cube rendering debug view with rotation controls.
 
     speedSlider.addEventListener('input', () => {
       speedVal.textContent = speedSlider.value + ' ms';
-      if (playing) startInterval();
     });
 
     angleSlider.addEventListener('input', () => {
