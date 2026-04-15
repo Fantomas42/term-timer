@@ -1296,6 +1296,7 @@ class CubeImageView(View):
 
         """
         response.content_type = 'image/svg+xml'
+        response.set_header('Cache-Control', 'public, max-age=300')
 
         cube = VCube(size=self.cube_size)
         cube.rotate(self.algorithm)  # TODO(me): clean algorithm
