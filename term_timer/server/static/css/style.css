@@ -2223,3 +2223,185 @@ twisty-alg-viewer {
     padding: 0 1rem 1rem 1rem;
     color: var(--text-secondary);
 }
+
+/* Cube Debug View */
+
+.cube-debug {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.cube-debug-lookup .alg-lookup-icon {
+    background: linear-gradient(135deg, #5f3dc4, #1d4ed8);
+}
+
+.cube-debug-viewer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2rem 1rem;
+    background:
+        radial-gradient(ellipse 70% 55% at 30% 20%,
+            rgba(88, 28, 135, 0.25), transparent),
+        radial-gradient(ellipse 60% 45% at 75% 80%,
+            rgba(15, 82, 186, 0.22), transparent),
+        var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.cube-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3b2667, #1a1a2e 50%, #1f4068);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.cube-frame img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+
+.cube-angle {
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+}
+
+.cube-angle span {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.cube-debug-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem 1.5rem;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.cube-debug-controls .control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.cube-debug-controls label {
+    min-width: 54px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.cube-debug-controls .control-select,
+.cube-debug-controls input[type="number"] {
+    background: rgba(15, 23, 42, 0.85);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cube-debug-controls input[type="number"] {
+    width: 72px;
+    font-variant-numeric: tabular-nums;
+}
+
+.cube-debug-controls .control-select:focus,
+.cube-debug-controls input[type="number"]:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+
+.cube-debug-controls input[type="range"] {
+    flex: 1;
+    min-width: 100px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.cube-debug-controls #speed-val {
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9rem;
+    min-width: 60px;
+    text-align: right;
+}
+
+.cube-debug-controls .play-group {
+    grid-column: 1 / -1;
+    justify-content: center;
+}
+
+.cube-debug-controls #play-btn {
+    min-width: 200px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    background: var(--success);
+    color: var(--text-primary);
+    border: none;
+    border-bottom: 3px solid #047857;
+    cursor: pointer;
+    transition: background 0.15s ease,
+                border-color 0.15s ease,
+                transform 0.05s ease;
+}
+
+.cube-debug-controls #play-btn:hover {
+    background: #34d399;
+}
+
+.cube-debug-controls #play-btn:active {
+    background: #059669;
+    border-bottom-width: 1px;
+    transform: translateY(1px);
+}
+
+.cube-debug-controls #play-btn.playing {
+    background: var(--danger);
+    border-bottom-color: #991b1b;
+}
+
+.cube-debug-controls #play-btn.playing:hover {
+    background: #f87171;
+}
+
+.cube-debug-controls #play-btn.playing:active {
+    background: #dc2626;
+}
+
+.cube-debug-controls #play-btn i {
+    margin-right: 0.4rem;
+}

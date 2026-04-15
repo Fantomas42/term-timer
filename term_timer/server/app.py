@@ -73,6 +73,7 @@ from term_timer.methods.base import Analyser
 from term_timer.methods.base import get_step_config
 from term_timer.orientation import get_orientation_moves
 from term_timer.server.annotations import AcademyCaseContext
+from term_timer.server.annotations import CubeDebugContext
 from term_timer.server.annotations import AcademyOverviewContext
 from term_timer.server.annotations import AcademyStepContext
 from term_timer.server.annotations import AlgorithmDetailContext
@@ -528,6 +529,7 @@ class View:
         | AcademyOverviewContext
         | AcademyStepContext
         | AcademyCaseContext
+        | CubeDebugContext
     ):
         """
         Build template context dictionary.
@@ -1598,6 +1600,54 @@ class AcademyCaseView(AcademyView):
         }
 
 
+class CubeDebugView(View):
+    """View for debugging cube rendering with live rotation."""
+
+    template_name = 'cube_debug.html'
+
+    def __init__(
+            self, orientation: str = '', mode: str = '',
+            cube_size: str = '', palette: str = '',
+            algorithm: str = '') -> None:
+        """
+        Initialize the cube debug view.
+
+        Args:
+            orientation: Cube orientation for display.
+            mode: Display mode override.
+            cube_size: Cube size override for display.
+            palette: Color palette override.
+            algorithm: Optional algorithm applied before rendering.
+
+        """
+        self.orientation = orientation or CUBE_ORIENTATION
+        self.display_mode = mode
+        self.cube_size = int(cube_size) if cube_size else 3
+        self.palette = palette or CUBE_PALETTE
+        self.algorithm = algorithm
+
+    def get_context(self) -> CubeDebugContext:
+        """
+        Build context for the cube debug template.
+
+        Returns:
+            Dictionary with selector options and algorithm.
+
+        """
+        return {  # type: ignore[return-value]
+            'algorithm': self.algorithm,
+            'orientation_faces': self.orientation,
+            'orientation_moves': get_orientation_moves(self.orientation),
+            'available_orientations': ORIENTATION_FACE_MOVES,
+            'mode': self.display_mode,
+            'available_modes': ['', *sorted(MODE_CONFIGS.keys())],
+            'cube_size': self.cube_size,
+            'available_cube_sizes': CUBE_SIZES,
+            'palette': self.palette,
+            'available_palettes': sorted(PALETTES.keys()),
+        }
+
+
 class Server:
     """Flask/Bottle web server for solve statistics and visualization."""
 
@@ -1743,6 +1793,23 @@ class Server:
             return AlgorithmDetailView(
                 algorithm,
                 request.GET.o,
+            ).as_view(debug)
+
+        @app.route('/cube/debug/')  # type: ignore[untyped-decorator]
+        def cube_debug() -> str:
+            """
+            Render cube rendering debug page with live rotation.
+
+            Returns:
+                Rendered HTML template.
+
+            """
+            return CubeDebugView(
+                orientation=request.GET.o,
+                mode=request.GET.m,
+                cube_size=request.GET.c,
+                palette=request.GET.p,
+                algorithm=request.GET.algorithm,
             ).as_view(debug)
 
         @app.route('/cube/')  # type: ignore[untyped-decorator]

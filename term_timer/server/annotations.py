@@ -203,6 +203,21 @@ class AcademyStepContext(TypedDict):
     available_palettes: list[str]
 
 
+class CubeDebugContext(TypedDict):
+    """Template context for cube rendering debug view."""
+
+    algorithm: str
+    orientation_faces: str
+    orientation_moves: Algorithm
+    available_orientations: dict[str, Algorithm]
+    mode: str
+    available_modes: list[str]
+    cube_size: int
+    available_cube_sizes: list[int]
+    palette: str
+    available_palettes: list[str]
+
+
 class AcademyCaseContext(TypedDict):
     """Template context for academy case view."""
 
