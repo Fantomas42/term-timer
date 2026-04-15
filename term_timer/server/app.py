@@ -1253,7 +1253,6 @@ class CubeImageView(View):
             orientation: str,
             mask: str,
             palette: str,
-            cube_color: str,
             image_size: str,
             rotation: str,
             distance: str,
@@ -1281,7 +1280,6 @@ class CubeImageView(View):
         self.orientation = orientation or CUBE_ORIENTATION
         self.mask = mask
         self.palette = palette or CUBE_PALETTE
-        self.cube_color = cube_color
         self.rotation = rotation
         self.distance = (distance and int(distance)) or 10.0
 
@@ -1307,7 +1305,6 @@ class CubeImageView(View):
             layout=self.layout,
             mask=self.mask,
             palette=self.palette,
-            cube_color=self.cube_color,
             image_size=self.image_size,
             rotation=self.rotation,
             distance=self.distance,
@@ -1830,7 +1827,6 @@ class Server:
                 request.GET.orientation or request.GET.o,
                 request.GET.mask,
                 request.GET.palette or request.GET.p,
-                request.GET.cube_color,
                 request.GET.image_size or request.GET.s,
                 request.GET.rotation,
                 request.GET.distance,
