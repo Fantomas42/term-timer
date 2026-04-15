@@ -56,7 +56,7 @@ Interactive cube rendering debug view with rotation controls.
   <section class="cube-debug-viewer">
     <div class="cube-frame">
       <img id="cube-img" alt="Cube"
-           src="/cube/?algo={{ algorithm | urlencode }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&s=500&rotation=z45x45&l=cube">
+           src="/cube/?algo={{ algorithm | urlencode }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&s=500&rotation=y45x-34&l=cube">
     </div>
     <div class="cube-angle">Angle: <span id="angle-val">45</span>°</div>
   </section>
@@ -72,9 +72,10 @@ Interactive cube rendering debug view with rotation controls.
         <option value="yx">Y + X</option>
         <option value="xz">X + Z</option>
         <option value="yz">Y + Z</option>
-        <option value="zx" selected>Z + X</option>
+        <option value="zx">Z + X</option>
         <option value="zy">Z + Y</option>
         <option value="xyz">X + Y + Z</option>
+        <option value="y|x-34" selected>Y (x=-34)</option>
       </select>
     </div>
     <div class="control-group">
@@ -121,11 +122,12 @@ Interactive cube rendering debug view with rotation controls.
 
     function buildRotation(angle) {
       const axis = axisSelect.value;
+      const [variable, fixed = ''] = axis.split('|');
       let rot = '';
-      for (const ch of axis) {
+      for (const ch of variable) {
         rot += ch + angle;
       }
-      return rot;
+      return rot + fixed;
     }
 
     function buildUrl(angle) {

@@ -2131,7 +2131,6 @@ twisty-alg-viewer {
     border: 1px solid rgba(37, 99, 235, 0.4);
     border-radius: 12px;
     font-size: 1.4rem;
-    color: var(--primary);
 }
 
 .alg-lookup-header h2 {
