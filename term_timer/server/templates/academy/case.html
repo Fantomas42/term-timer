@@ -4,21 +4,13 @@
 {% from 'macros/display_selectors.html' import display_selectors %}
 
 {% block title %}{{ method }}/{{ case.name }}{% endblock %}
-{% block subtitle %}{{ method }}/{{ case.name }} Case Details{% endblock %}
+{% block subtitle %}
+<a class="academy-header" href="/academy/?o={{ orientation_faces }}&p={{ palette }}">Academy</a>
+<a class="academy-header academy-step-header" href="/academy/{{ method }}/{{ step }}/?o={{ orientation_faces }}&p={{ palette }}">{{ method }}/{{ case.name }}</a>
+{% endblock %}
 
 {% block description %}
 Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition patterns, and metrics.
-{% endblock %}
-
-{% block nav_actions %}
-<a href="/academy/{{ method }}/{{ step }}/?o={{ orientation_faces }}&p={{ palette }}" class="btn btn-small">
-  <i class="fas fa-arrow-left"></i>
-  Back to {{ step }} Cases
-</a>
-<a href="/academy/?o={{ orientation_faces }}&p={{ palette }}" class="btn btn-small">
-  <i class="fas fa-home"></i>
-  Academy Home
-</a>
 {% endblock %}
 
 {% block selectors %}

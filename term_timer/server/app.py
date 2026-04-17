@@ -486,6 +486,19 @@ def first_case(method_name: str, step_name: str) -> Case:
     )
 
 
+def case_number(method_name: str, step_name: str) -> Case:
+    """
+    Return case number of a step name method.
+
+    Returns:
+        The number of case of the step.
+
+    """
+    return len(
+        get_collection(f'{ method_name }/{ step_name }').cases,
+    )
+
+
 class RichHandler(WSGIRequestHandler):
     """Custom WSGI request handler with Rich console logging."""
 
@@ -606,6 +619,7 @@ class View:
                         'prettify': prettify_moves,
                         'sort_algorithms': sort_algorithms,
                         'first_case': first_case,
+                        'case_number': case_number,
                     },
                 },
                 **context,
@@ -1256,6 +1270,7 @@ class CubeImageView(View):
             image_size: str,
             rotation: str,
             distance: str,
+            arrows: str,
     ) -> None:
         """
         Initialize algorithm image view.
@@ -1282,6 +1297,7 @@ class CubeImageView(View):
         self.palette = palette or CUBE_PALETTE
         self.rotation = rotation
         self.distance = (distance and int(distance)) or 10.0
+        self.arrows = arrows
 
         if self.orientation:
             orientation_moves = get_orientation_moves(self.orientation)
@@ -1309,6 +1325,7 @@ class CubeImageView(View):
             image_size=self.image_size,
             rotation=self.rotation,
             distance=self.distance,
+            arrows=self.arrows,
         )
 
 
@@ -1831,6 +1848,7 @@ class Server:
                 request.GET.image_size or request.GET.s,
                 request.GET.rotation,
                 request.GET.distance,
+                request.GET.arrows,
             ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/flag/',

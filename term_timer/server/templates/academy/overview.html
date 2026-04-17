@@ -2,7 +2,10 @@
 {% from 'macros/display_selectors.html' import display_selectors %}
 
 {% block title %}Academy{% endblock %}
-{% block subtitle %}Academy{% endblock %}
+
+{% block subtitle %}
+  <span class="academy-header">Academy</span>
+{% endblock %}
 
 {% block description %}
   Learn cubing methods with detailed case analysis and algorithms for speedcubing.
@@ -34,30 +37,27 @@
 
       <div class="steps-grid">
         {% for step_name, step_info in method_info.steps.items() %}
-          {% set step_url = '/academy/' ~ method_name ~ '/' ~ step_name ~ '/?o=' ~ orientation_faces ~ '&p=' ~ palette %}
-          <div class="step-card">
-            <h4>
-              <a href="{{ step_url }}">
-                <i class="fas fa-cube"></i>
-                {{ step_name }}
-              </a>
-            </h4>
+        {% set step_url = '/academy/' ~ method_name ~ '/' ~ step_name ~ '/?o=' ~ orientation_faces ~ '&p=' ~ palette %}
+        <div class="step-card">
+          <a href="{{ step_url }}">
 
-            <div class="case-img">
+            <div class="step-card-header">
+              <h4>
+                {{ step_name }}
+              </h4>
+              {% set cases = method_name|case_number(step_name) %}
+              <div class="step-info">{{ cases - 1 }} cases</div>
+            </div>
+
+            <div class="case-img cube-frame">
               {% set case = method_name|first_case(step_name) %}
-              <a href="{{ step_url }}">
-                <img src="/cube/?case={{ case.main_algorithm }}&c={{ method_info.cube_size }}&o={{ orientation_faces }}&m={{ mode or step_info.mode }}&p={{ palette }}">
-              </a>
+                <img src="/cube/?case={{ case.main_algorithm }}&c={{ method_info.cube_size }}&o={{ orientation_faces }}&m={{ mode or step_info.mode }}&p={{ palette }}&arrows={{ case.arrows }}">
             </div>
 
             <p>{{ step_info.description }}</p>
-            <div class="step-actions">
-              <a href="{{ step_url }}" class="btn btn-primary">
-                View Cases
-                <i class="fas fa-arrow-right"></i>
-              </a>
-            </div>
-          </div>
+
+          </a>
+        </div>
         {% endfor %}
       </div>
     </section>

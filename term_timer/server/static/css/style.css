@@ -1346,49 +1346,49 @@ twisty-alg-viewer {
     margin-bottom: 2rem;
 }
 
-.steps-grid {
+.steps-grid, .cases-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(2, minmax(300px, 1fr));
     gap: 2rem;
     margin-bottom: 2rem;
 }
 
-.step-card {
+.step-card, .case-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 1.5rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: box-shadow 0.3s ease;
+    transition: all 0.3s ease;
 }
 
-.step-card:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+.step-card:hover, .case-card:hover {
+    background: var(--header);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-3px);
+    cursor: pointer;
+}
+
+.step-card:hover p, .case-card:hover p {
+    color: var(--text-primary);
+}
+
+.step-card a, .case-card a {
+    text-decoration: none;
 }
 
 .step-card h4 {
     margin-bottom: 0.5rem;
-}
-
-.step-card h4 a {
     color: var(--text-primary);
     text-decoration: none;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-size: 1.5rem;
 }
 
-.step-card h4 a:hover {
-    color: var(--primary);
-}
-
-.step-card p {
+.case-card p, .step-card p {
     color: var(--text-secondary);
-    margin-bottom: 1rem;
-}
-
-.step-actions {
-    text-align: right;
 }
 
 .btn {
@@ -1474,55 +1474,33 @@ twisty-alg-viewer {
     padding: 0.5rem 1rem;
     border-radius: 20px;
     border: 1px solid var(--border-color);
+    font-size: 1.3rem;
+    vertical-align: center;
 }
 
 .case-count {
-    color: var(--primary);
+    color: var(--info);
     font-weight: 600;
 }
 
-.cases-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 1.5rem;
-}
-
-.case-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-}
-
-.case-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    transform: translateY(-2px);
-}
-
-.case-header {
+.case-card-header, .step-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
 }
 
-.case-header h3 {
+.case-card-header h3 {
     margin: 0;
     font-size: 1.3rem;
 }
 
-.case-header h3 a {
+.case-card-header h3 {
     color: var(--text-primary);
     text-decoration: none;
 }
 
-.case-header h3 a:hover {
-    color: var(--primary);
-}
-
-.case-code {
+.case-code, .step-info {
     background: var(--primary);
     color: var(--text-primary);
     padding: 0.25rem 0.5rem;
@@ -1535,12 +1513,6 @@ twisty-alg-viewer {
     display: flex;
     justify-content: center;
     margin-bottom: 1em;
-}
-
-.case-img img {
-    background-color: var(--main-bg);
-    border-radius: 0.5rem;
-    border: 1px solid var(--border-color);
 }
 
 .case-algorithm {
@@ -1557,14 +1529,6 @@ twisty-alg-viewer {
 .case-algorithm code {
     font-size: 0.9rem;
     color: var(--text-primary);
-}
-
-.case-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
 }
 
 .orientations-count {
@@ -1865,6 +1829,12 @@ twisty-alg-viewer {
 
 .academy-action {
     animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+.logo .academy-header {
+    background-color: var(--primary);
+    color: var(--text-primary);
+    padding: 0.25em;
 }
 
 /* Responsive design for academy */

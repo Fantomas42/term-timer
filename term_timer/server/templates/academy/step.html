@@ -2,17 +2,13 @@
 {% from 'macros/display_selectors.html' import display_selectors %}
 
 {% block title %}{{ method }}/{{ step }} Cases{% endblock %}
-{% block subtitle %}{{ method }} / {{ step }} Academy{% endblock %}
+{% block subtitle %}
+  <a class="academy-header" href="/academy/?o={{ orientation_faces }}&p={{ palette }}">Academy</a>
+  {{ method }} / {{ step }}
+{% endblock %}
 
 {% block description %}
 Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cube_size }}x{{ cube_size }}x{{ cube_size }} cube.
-{% endblock %}
-
-{% block nav_actions %}
-<a href="/academy/?o={{ orientation_faces }}&p={{ palette }}" class="btn btn-small">
-  <i class="fas fa-arrow-left"></i>
-  Back to Academy
-</a>
 {% endblock %}
 
 {% block selectors %}
@@ -29,6 +25,7 @@ Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cu
   <section class="step-header">
     <h2>
       {{ cube_size }}x{{ cube_size }}x{{ cube_size }} {{ method }} / {{ step }}
+      <span class="step-stats case-count">{{ cases|length - 1 }} Cases</span>
     </h2>
     <p class="step-description">
       {{ step_info.description }}
@@ -39,46 +36,35 @@ Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cu
         <span class="solve-detail-btn">Family: {{ family }}</span>
       {% endif %}
     </p>
-    <div class="step-stats">
-      <span class="case-count">{{ cases|length - 1 }} Cases</span>
-    </div>
   </section>
 
   <section class="cases-grid">
     {% for case in cases.values() %}
-      {% if case.code != 'SKIP' %}
-        <div class="case-card">
-          <div class="case-header">
-            <h3>
-              <a href="/academy/{{ method }}/{{ step }}/{{ case.code }}/?o={{ orientation_faces }}&p={{ palette }}">
-                {{ case.pretty_name }}
-              </a>
-            </h3>
-            <div class="case-code">{{ case.code }}</div>
-          </div>
-
-          <div class="case-img">
-            <a href="/academy/{{ method }}/{{ step }}/{{ case.code }}/?o={{ orientation_faces }}&p={{ palette }}">
-              <img src="/cube/?case={{ case.main_algorithm }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}">
-            </a>
-          </div>
-
-          <div class="case-algorithm">
-            <code>{{ case.main_algorithm }}</code>
-          </div>
-
-          <div class="case-meta">
-            <span class="orientations-count">
-              <i class="fas fa-cube"></i>
-              {{ case.algorithms|length }} algorithms
-            </span>
-            <a href="/academy/{{ method }}/{{ step }}/{{ case.code }}/?o={{ orientation_faces }}&p={{ palette }}" class="case-link">
-              <i class="fas fa-arrow-right"></i>
-              Details
-            </a>
-          </div>
+    {% if case.code != 'SKIP' %}
+    <div class="case-card">
+      <a href="/academy/{{ method }}/{{ step }}/{{ case.code }}/?o={{ orientation_faces }}&p={{ palette }}">
+        <div class="case-card-header">
+          <h3>
+            {{ case.pretty_name }}
+          </h3>
+          <div class="case-code">{{ case.code }}</div>
         </div>
-      {% endif %}
+
+        <div class="case-img cube-frame">
+          <img src="/cube/?case={{ case.main_algorithm }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&arrows={{ case.arrows }}">
+        </div>
+
+        <div class="case-algorithm">
+          <code>{{ case.main_algorithm }}</code>
+        </div>
+
+        <p class="case-meta">
+          <i class="fas fa-cube"></i>
+          {{ case.algorithms|length }} algorithms
+        </p>
+      </a>
+    </div>
+    {% endif %}
     {% endfor %}
   </section>
 </main>
