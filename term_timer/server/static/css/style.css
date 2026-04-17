@@ -633,6 +633,15 @@ ul {
     background-color: var(--info);
 }
 
+h3.family {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+h3.family a {
+    color: var(--text-primary);
+    text-decoration: none;
+}
 
 .step-case {
     display: flex;

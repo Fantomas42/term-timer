@@ -1544,13 +1544,21 @@ class AcademyStepView(AcademyView):
             Dictionary containing step information, case list.
 
         """
+        tree = {}
+        cases = []
+        for case in self.cases.values():
+            if case.code != 'SKIP':
+                tree.setdefault(case.family, []).append(case)
+                cases.append(case)
+
         return {  # type: ignore[return-value]
             'method': self.method,
             'step': self.step,
             'step_info': self.step_info,
-            'cases': self.cases,
             'group': self.group,
             'family': self.family,
+            'cases': cases,
+            'tree': tree,
             **self.get_display_context(
                 default_mode=self.step_info['mode'],
             ),

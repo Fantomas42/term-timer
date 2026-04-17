@@ -25,7 +25,7 @@ Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cu
   <section class="step-header">
     <h2>
       {{ cube_size }}x{{ cube_size }}x{{ cube_size }} {{ method }} / {{ step }}
-      <span class="step-stats case-count">{{ cases|length - 1 }} Cases</span>
+      <span class="step-stats case-count">{{ cases|length }} Cases</span>
     </h2>
     <p class="step-description">
       {{ step_info.description }}
@@ -38,9 +38,16 @@ Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cu
     </p>
   </section>
 
+  {% for family, cases in tree.items() %}
+  <h3 id="step-{{ familly }}" class="family">
+    <a href="/academy/{{ method }}/{{ step }}/?o={{ orientation_faces }}&p={{ palette }}&family={{ family }}">
+      <i class="fa-solid fa-layer-group"></i>
+      {{ family }}
+    </a>
+  </h3>
+
   <section class="cases-grid">
-    {% for case in cases.values() %}
-    {% if case.code != 'SKIP' %}
+    {% for case in cases %}
     <div class="case-card">
       <a href="/academy/{{ method }}/{{ step }}/{{ case.code }}/?o={{ orientation_faces }}&p={{ palette }}">
         <div class="case-card-header">
@@ -64,8 +71,8 @@ Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cu
         </p>
       </a>
     </div>
-    {% endif %}
     {% endfor %}
   </section>
+  {% endfor %}
 </main>
 {% endblock %}
