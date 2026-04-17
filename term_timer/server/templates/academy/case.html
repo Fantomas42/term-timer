@@ -212,6 +212,9 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
       <div class="case-grid-sm">
         {% for recog_case in case.recognition.cases %}
           <div class="case-panel">
+            <div class="case-img cube-frame">
+              <img src="/cube/?case={{ "".join(case.recognition.moves) }}&c={{ cube_size }}&o={{ orientation_faces }}&m=pll&l=cube&p={{ palette }}&arrows={{ case.arrows }}&rotation=y{{ loop.cycle('45', '135', '225', '315') }}x-34">
+            </div>
             <strong class="case-accent">{{ recog_case.feature.name }}</strong>
             <p>
               {{ recog_case.description }}
