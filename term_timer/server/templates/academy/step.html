@@ -4,7 +4,9 @@
 {% block title %}{{ method }}/{{ step }} Cases{% endblock %}
 {% block subtitle %}
   <a class="academy-header" href="/academy/?o={{ orientation_faces }}&p={{ palette }}">Academy</a>
-  {{ method }} / {{ step }}
+  <a class="academy-header">
+    {{ method }} / {{ step }}
+  </a>
 {% endblock %}
 
 {% block description %}

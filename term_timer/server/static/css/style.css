@@ -1844,23 +1844,28 @@ twisty-alg-viewer {
     display: inline-block;
     padding: 0.1em 0.6em;
     border-radius: 4px;
+    color: var(--light);
     font-size: 0.75em;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    background: rgba(148, 163, 184, 0.1);
-    border: 1px solid var(--border-color);
+    background: linear-gradient(135deg, var(--header) 0%, #764ba2 100%);
     vertical-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     transition:
         color 0.2s ease,
         border-color 0.2s ease,
-        background-color 0.2s ease;
+        box-shadow 0.25s ease,
 }
 
-a.academy-header:hover {
-    color: var(--light);
-    border-color: var(--recognition);
-    background: rgba(93, 63, 211, 0.15);
+a.academy-header:not([href]) {
+    background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+}
+
+a.academy-header[href]:hover {
+    box-shadow:
+        0 4px 14px rgba(118, 75, 162, 0.45),
+        0 0 0 3px rgba(118, 75, 162, 0.15);
 }
 
 .academy-header + .academy-header {

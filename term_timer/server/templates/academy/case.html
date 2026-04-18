@@ -5,8 +5,9 @@
 
 {% block title %}{{ method }}/{{ case.name }}{% endblock %}
 {% block subtitle %}
-<a class="academy-header" href="/academy/?o={{ orientation_faces }}&p={{ palette }}">Academy</a>
-<a class="academy-header academy-step-header" href="/academy/{{ method }}/{{ step }}/?o={{ orientation_faces }}&p={{ palette }}">{{ method }}/{{ case.name }}</a>
+  <a class="academy-header" href="/academy/?o={{ orientation_faces }}&p={{ palette }}">Academy</a>
+  <a class="academy-header academy-step-header" href="/academy/{{ method }}/{{ step }}/?o={{ orientation_faces }}&p={{ palette }}">{{ method }} / {{ step }}</a>
+  <a class="academy-header">{{ case.pretty_name }}</a>
 {% endblock %}
 
 {% block description %}
