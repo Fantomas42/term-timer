@@ -1,5 +1,6 @@
 """Cube orientation calculation and management for optimal viewing angles."""
 import operator
+from functools import lru_cache
 from typing import Final
 
 from cubing_algs.algorithm import Algorithm
@@ -179,6 +180,7 @@ def get_orientation_faces(
     return top_face + best_front_face
 
 
+@lru_cache
 def get_orientation_moves(orientation: str) -> Algorithm:
     """
     Get pre-computed orientation moves for given orientation.
@@ -194,7 +196,7 @@ def get_orientation_moves(orientation: str) -> Algorithm:
         orientation = CUBE_ORIENTATION
 
     try:
-        return ORIENTATION_FACE_MOVES[orientation]
+        return parse_moves(ORIENTATION_FACE_MOVES[orientation])
     except KeyError as error:
         msg = f'Invalid orientation "{ orientation }"'
         raise InvalidOrientationError(msg) from error
