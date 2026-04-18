@@ -1840,10 +1840,31 @@ twisty-alg-viewer {
     animation: fadeInUp 0.6s ease-out 0.3s both;
 }
 
-.logo .academy-header {
-    background-color: var(--primary);
-    color: var(--text-primary);
-    padding: 0.25em;
+.academy-header {
+    display: inline-block;
+    padding: 0.1em 0.6em;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(148, 163, 184, 0.1);
+    border: 1px solid var(--border-color);
+    vertical-align: center;
+    transition:
+        color 0.2s ease,
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+a.academy-header:hover {
+    color: var(--light);
+    border-color: var(--recognition);
+    background: rgba(93, 63, 211, 0.15);
+}
+
+.academy-header + .academy-header {
+    margin-left: 0.4em;
 }
 
 /* Responsive design for academy */
