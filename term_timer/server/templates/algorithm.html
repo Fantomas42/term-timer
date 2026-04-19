@@ -1473,11 +1473,15 @@
           {% if impacts.cubies_patterns %}
             <div>
               <h3 class="alg-section-title">Pattern Recognition</h3>
-              <div class="alg-generators">
-                {% for pattern in impacts.cubies_patterns %}
-                  <span class="alg-pattern-badge">{{ pattern }}</span>{% if not loop.last %}, {% endif %}
+
+              <table class="alg-table">
+                {% for family, patterns in impacts.cubies_patterns._asdict().items() %}
+                <tr>
+                  <td><strong>{{ family.title() }}</strong></td>
+                  <td class="alg-value">{{ ' '.join(patterns) or '---' }}</td>
+                </tr>
                 {% endfor %}
-              </div>
+              </table>
             </div>
           {% endif %}
         {% endif %}
