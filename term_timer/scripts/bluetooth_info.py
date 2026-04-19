@@ -52,6 +52,33 @@ logger = logging.getLogger(__name__)
 
 Path(LOGGING_DIR).mkdir(parents=True, exist_ok=True)
 
+_LEVEL_COLORS: Final = {
+    'DEBUG': '\033[36m',
+    'INFO': '\033[32m',
+    'WARNING': '\033[33m',
+    'ERROR': '\033[31m',
+    'CRITICAL': '\033[35m',
+}
+_RESET: Final = '\033[0m'
+
+
+class ColoredFormatter(logging.Formatter):
+    """Formatter that colorizes the level name using ANSI escape codes."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Format a log record with a colorized level name.
+
+        Returns:
+            The formatted log string with ANSI color codes on the level name.
+
+        """
+        color = _LEVEL_COLORS.get(record.levelname, '')
+        record = logging.makeLogRecord(record.__dict__)
+        record.levelname = f'{color}{record.levelname}{_RESET}'
+        return super().format(record)
+
+
 LOGGING_CONF: Final = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -62,8 +89,8 @@ LOGGING_CONF: Final = {
                       '%(levelname)-7s %(message)s',
         },
         'consoleFormatter': {
-            'class': 'logging.Formatter',
-            'format': '%(levelname)-7s %(message)s',
+            '()': ColoredFormatter,
+            'fmt': '%(levelname)-7s %(message)s',
         },
     },
     'handlers': {
@@ -78,7 +105,7 @@ LOGGING_CONF: Final = {
         'consoleHandler': {
             'formatter': 'consoleFormatter',
             'class': 'logging.StreamHandler',
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
     },
     'loggers': {
@@ -820,8 +847,24 @@ def main() -> None:
             f'Default: { ROTATION_THRESHOLD }.'
         ),
     )
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help=(
+            'Show hardware, battery and connection log events.\n'
+            'Default: False.'
+        ),
+    )
 
     args = parser.parse_args(sys.argv[1:])
+
+    if args.verbose:
+        console_handler = next(
+            h for h in logging.getLogger('term_timer').handlers
+            if isinstance(h, logging.StreamHandler)
+            and not isinstance(h, logging.FileHandler)
+        )
+        console_handler.setLevel(logging.DEBUG)
 
     # Create and start GL thread before async loop to avoid blocking warnings
     gl_thread = None
