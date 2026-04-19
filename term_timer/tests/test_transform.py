@@ -178,7 +178,7 @@ class TransformHumanizeTestCase(unittest.TestCase):
         # Timed sequences like R@100 L'@100 reslice to M@100 x@100
         # which ends with a rotation
         algorithm = parse_moves("R@100 L'@100")
-        expect = parse_moves('M@100 x@100')
+        expect = parse_moves('M@100 x')
 
         result = humanize_moves_without_rotation(
             algorithm,
@@ -209,7 +209,7 @@ class TransformHumanizeTestCase(unittest.TestCase):
     def test_humanize_moves_ends_with_rotation(self) -> None:
         """Test humanize_moves when result ends with rotation."""
         algorithm = parse_moves("R@100 L'@100")
-        expect = parse_moves('M@100 x@100')
+        expect = parse_moves('M@100 x')
 
         result = humanize_moves(algorithm)
 

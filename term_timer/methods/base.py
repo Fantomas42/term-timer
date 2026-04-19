@@ -12,15 +12,7 @@ from typing import Final
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import OPPOSITE_FACES
 from cubing_algs.masks import CENTERS_MASK
-from cubing_algs.masks import CROSS_BOTTOM_MASK
-from cubing_algs.masks import F2L_BL_MASK
-from cubing_algs.masks import F2L_BR_MASK
-from cubing_algs.masks import F2L_FL_MASK
-from cubing_algs.masks import F2L_FR_MASK
-from cubing_algs.masks import F2L_MASK
 from cubing_algs.masks import FULL_MASK
-from cubing_algs.masks import L1_MASK
-from cubing_algs.masks import OLL_MASK
 from cubing_algs.masks import union_masks
 from cubing_algs.parsing import parse_moves
 from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
@@ -44,6 +36,79 @@ from term_timer.triggers import DEFAULT_TRIGGERS
 
 if TYPE_CHECKING:
     from cubing_algs.move import Move
+
+CROSS_BOTTOM_MASK = (
+    '010111010'
+    '010010000'
+    '010010000'
+    '000000000'
+    '010010000'
+    '010010000'
+)
+
+F2L_MASK = (
+    '111111111'
+    '111111000'
+    '111111000'
+    '000000000'
+    '111111000'
+    '111111000'
+)
+
+F2L_FR_MASK = (
+    '000000001'
+    '100100000'
+    '001001000'
+    '000000000'
+    '000000000'
+    '000000000'
+)
+
+F2L_FL_MASK = (
+    '000000100'
+    '000000000'
+    '100100000'
+    '000000000'
+    '001001000'
+    '000000000'
+)
+
+F2L_BR_MASK = (
+    '001000000'
+    '001001000'
+    '000000000'
+    '000000000'
+    '000000000'
+    '100100000'
+)
+
+F2L_BL_MASK = (
+    '100000000'
+    '000000000'
+    '000000000'
+    '000000000'
+    '100100000'
+    '001001000'
+)
+
+OLL_MASK = (
+    '000000000'
+    '000000000'
+    '000000000'
+    '111111111'
+    '000000000'
+    '000000000'
+)
+
+L1_MASK = (
+    '111111111'
+    '111000000'
+    '111000000'
+    '000000000'
+    '111000000'
+    '111000000'
+)
+
 
 CROSS_CENTER_MASK: Final = union_masks(CROSS_BOTTOM_MASK, CENTERS_MASK)
 
