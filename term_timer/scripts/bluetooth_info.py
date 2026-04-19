@@ -141,13 +141,11 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
     algo = parse_moves(raw_moves)
     algo_translated = translate_moves(orientation_moves)(algo)
 
-    algo_timed_reformatted = ''
     first_time = algo[0].timed
-    for move in algo:
-        algo_timed_reformatted += (
-            f'{ move.untimed }@{ move.timed - first_time } '
-        )
-    algo_timed_reformatted = algo_timed_reformatted.strip()
+    algo_timed_reformatted = ' '.join(
+        f'{ move.untimed }@{ move.timed - first_time }'
+        for move in algo
+    )
 
     moves = format_alg_moves(
         algo_timed_reformatted,
@@ -177,6 +175,11 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
     recon = capture.get()
 
     logger.info('RECON: %s', recon)
+
+    category_patterns = algo_translated.impacts().cubies_patterns._asdict()
+    for category, patterns in category_patterns.items():
+        if patterns:
+            logger.info('- %s: %s', category.title(), ', '.join(patterns))
 
     if cube:
         cube_rotated = cube.copy()
