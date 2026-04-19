@@ -176,11 +176,6 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
 
     logger.info('RECON: %s', recon)
 
-    category_patterns = algo_translated.impacts().cubies_patterns._asdict()
-    for category, patterns in category_patterns.items():
-        if patterns:
-            logger.info('- %s: %s', category.title(), ', '.join(patterns))
-
     if cube:
         cube_rotated = cube.copy()
         cube_rotated.rotate(orientation_moves)
@@ -191,6 +186,14 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
             ),
         )
         show_cube(cube_rotated)
+
+    category_patterns = algo_translated.impacts().cubies_patterns._asdict()
+    logger.info('PATTERNS:')
+    for category, patterns in category_patterns.items():
+        if patterns:
+            logger.info('- %s:', category.title())
+            for pattern in patterns:
+                logger.info('    %s', pattern)
 
 
 def check_state(raw_moves: list[str], facelets: str,
