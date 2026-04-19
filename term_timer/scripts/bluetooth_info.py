@@ -90,7 +90,7 @@ LOGGING_CONF: Final = {
         },
         'consoleFormatter': {
             '()': ColoredFormatter,
-            'fmt': '%(levelname)-7s %(message)s',
+            'format': '%(levelname)-7s %(message)s',
         },
     },
     'handlers': {
@@ -193,7 +193,7 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
 
     with console.capture() as capture:
         console.print(moves, end='')
-    moves = capture.get()
+    moves = capture.get().replace('\n', '')
 
     logger.info('MOVES: %s', moves)
 
@@ -374,7 +374,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                 else:
                     virtual_cube = VCube(event['facelets'], size=3)
                     if not virtual_cube.is_solved:
-                        logger.info(
+                        logger.warning(
                             'CONSUMER: Facelets are not in solved state',
                         )
 
@@ -408,7 +408,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
 
             elif event_name == 'move':
                 event = cast('MoveEventDict', event)
-                logger.info(
+                logger.debug(
                     'CONSUMER: Face: %s, Direction: %s, Move: %s',
                     event['face'],
                     event['direction'],
@@ -424,7 +424,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                     gl_thread.add_move(face, direction)
 
             else:
-                logger.info(
+                logger.warning(
                     'CONSUMER: %s UNHANDLED\n%s',
                     event_name,
                     pformat(event),
@@ -471,7 +471,7 @@ async def client_cb(  # noqa: PLR0913
     if cube_reset:
         await bluetooth_interface.send_command('REQUEST_RESET')
     else:
-        logger.info('Free play for %ss', time)
+        logger.warning('Free play for %ss', time)
         Terminal.beep()
         await asyncio.sleep(time)
 
