@@ -1486,6 +1486,29 @@
           {% endif %}
         {% endif %}
 
+            <div>
+              <h3 class="alg-section-title">Parity Signature</h3>
+
+              <table class="alg-table">
+                <tr>
+                  <td><strong>Signature</strong></td>
+                  <td>{{ impacts.cubies_parity_signature.signature }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Is Valid</strong></td>
+                  <td>{{ impacts.cubies_parity_signature.is_valid }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Implications</strong></td>
+                  <td>
+                    {% for implication in impacts.cubies_parity_signature.implications %}
+                    <p>{{ implication }}</p>
+                    {% endfor%}
+                  </td>
+                </tr>
+              </table>
+            </div>
+
         <div>
           <h3 class="alg-section-title">Corner Permutation</h3>
           <div class="alg-cubie-data">
