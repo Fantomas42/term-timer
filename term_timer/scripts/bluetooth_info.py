@@ -60,6 +60,18 @@ _LEVEL_COLORS: Final = {
     'CRITICAL': '\033[35m',
 }
 _RESET: Final = '\033[0m'
+_BOLD: Final = '\x1b[1m'
+_FG_GREY: Final = '\x1b[38;5;244m'
+
+_PATTERN_COLORS: Final[dict[str, str]] = {
+    'state': '\x1b[38;5;77m',
+    'orientation': '\x1b[38;5;80m',
+    'permutation': '\x1b[38;5;75m',
+    'first_layer': '\x1b[38;5;221m',
+    'last_layer': '\x1b[38;5;177m',
+    'scramble': '\x1b[38;5;203m',
+    'cycle': '\x1b[38;5;255m',
+}
 
 
 class ColoredFormatter(logging.Formatter):
@@ -170,7 +182,7 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
 
     first_time = algo[0].timed
     algo_timed_reformatted = ' '.join(
-        f'{ move.untimed }@{ move.timed - first_time }'
+        f'[b]{ move.untimed }[/b]@{ move.timed - first_time }'
         for move in algo
     )
 
@@ -193,15 +205,19 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
 
     with console.capture() as capture:
         console.print(moves, end='')
-    moves = capture.get().replace('\n', '')
+    move_parts = capture.get().replace('\n', '').split(' ')
+    moves = '\n'.join(
+        ' '.join(move_parts[i:i + 6])
+        for i in range(0, len(move_parts), 6)
+    )
 
-    logger.info('MOVES: %s', moves)
+    logger.info('Raw Moves:\n%s', moves)
 
     with console.capture() as capture:
         console.print(recon, end='')
     recon = capture.get()
 
-    logger.info('RECON: %s', recon)
+    logger.info('Reconstructed:\n%s', recon)
 
     if cube:
         cube_rotated = cube.copy()
@@ -215,12 +231,18 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
         show_cube(cube_rotated)
 
     category_patterns = algo_translated.impacts().cubies_patterns._asdict()
-    logger.info('PATTERNS:')
+    lines: list[str] = []
     for category, patterns in category_patterns.items():
         if patterns:
-            logger.info('- %s:', category.title())
-            for pattern in patterns:
-                logger.info('    %s', pattern)
+            color = _PATTERN_COLORS.get(category, '')
+            cat_label = category.replace('_', ' ').title()
+            label = f'{_FG_GREY}{cat_label:<14}{_RESET}'
+            values = ', '.join(
+                f'{_BOLD}{color}{p}{_RESET}' for p in patterns
+            )
+            lines.append(f'  {label} {values}')
+    if lines:
+        logger.info('Classification:\n%s', '\n'.join(lines))
 
 
 def check_state(raw_moves: list[str], facelets: str,
