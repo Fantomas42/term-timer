@@ -336,12 +336,10 @@
        new Chart(layerAnalysisCtx, {
          type: 'doughnut',
          data: {
-           labels: ['Centers', 'Edges', 'Corners'],
+           labels: [{% for piece_type in impacts.facelets_piece_type_impact.keys() %}'{{ piece_type.title() }}s',{% endfor %}],
            datasets: [{
              data: [
-               {{ impacts.facelets_piece_type_impact.center }},
-               {{ impacts.facelets_piece_type_impact.edge }},
-               {{ impacts.facelets_piece_type_impact.corner }}
+               {% for piece_type_value in impacts.facelets_piece_type_impact.values() %}{{ piece_type_value }},{% endfor %},
              ],
              backgroundColor: [
                'rgba(255, 206, 86, 0.8)',
@@ -1252,18 +1250,12 @@
         <div>
           <h3 class="alg-section-title">Piece Type Impact</h3>
           <table class="alg-table">
+            {% for piece_type, value in impacts.facelets_piece_type_impact.items() %}
             <tr>
-              <td><strong>Centers Moved</strong></td>
-              <td class="alg-value">{{ impacts.facelets_piece_type_impact.center }}</td>
+              <td><strong>{{ piece_type.title()  }}s Moved</strong></td>
+              <td class="alg-value">{{ value }}</td>
             </tr>
-            <tr>
-              <td><strong>Edges Moved</strong></td>
-              <td class="alg-value">{{ impacts.facelets_piece_type_impact.edge }}</td>
-            </tr>
-            <tr>
-              <td><strong>Corners Moved</strong></td>
-              <td class="alg-value">{{ impacts.facelets_piece_type_impact.corner }}</td>
-            </tr>
+            {% endfor %}
           </table>
 
           <div>
