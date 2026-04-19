@@ -47,14 +47,20 @@ def print_cube_scrambled(
 
     print(cube_display, end='')  # noqa: T201
 
-    scrambled_percent = scramble.impacts(
-        cube.size,
-    ).facelets_scrambled_percent * 100
+    impacts = scramble.impacts(cube.size)
 
-    console.print(
-        f' { format_float(scrambled_percent) }%',
-        style='scrambled',
+    scrambled_percent = format_float(
+        impacts.facelets_scrambled_percent * 100,
     )
+    infos = f' [scrambled]{ scrambled_percent }%[/scrambled]'
+
+    if (
+            impacts.cubies_patterns
+            and 'EO_COMPLETE' in impacts.cubies_patterns.orientation
+    ):
+        infos += ' [eo]EO[/eo]'
+
+    console.print(infos)
 
 
 def print_cube_trainer(

@@ -38,6 +38,7 @@ theme: dict[str, str] = {
     'substep': 'bold #00DFFF',
     'skipped': f'{ TEXT_DARK } on #5FFFAF',
     'scrambled': 'bold #BBAAEE',
+    'eo': 'bold #40E0D0',
 
     'recognition-p': TEXT_LIGHT,
     'execution-p': TEXT_LIGHT,
