@@ -364,6 +364,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                     f'{ event["hardware_version"] } '
                     f'{ event["software_version"] }'
                 )
+                Terminal.set_title(f'{ hardware } - { battery }')
                 if gl_thread and gl_thread.is_alive():
                     gl_thread.set_title(f'{ hardware } { battery }')
 
@@ -375,6 +376,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                     ' (charging)' if event['charging_state'] else '',
                 )
                 battery = f'{ event["level"] }%'
+                Terminal.set_title(f'{ hardware } - { battery }')
                 if gl_thread and gl_thread.is_alive():
                     gl_thread.set_title(f'{ hardware } { battery }')
 
