@@ -1,7 +1,6 @@
 """Cube orientation calculation and management for optimal viewing angles."""
 import operator
 from functools import lru_cache
-from typing import Final
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import ADJACENT_FACES

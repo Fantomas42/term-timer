@@ -73,11 +73,11 @@ from term_timer.methods.base import Analyser
 from term_timer.methods.base import get_step_config
 from term_timer.orientation import get_orientation_moves
 from term_timer.server.annotations import AcademyCaseContext
-from term_timer.server.annotations import CubeDebugContext
 from term_timer.server.annotations import AcademyOverviewContext
 from term_timer.server.annotations import AcademyStepContext
 from term_timer.server.annotations import AlgorithmDetailContext
 from term_timer.server.annotations import AlgorithmVariation
+from term_timer.server.annotations import CubeDebugContext
 from term_timer.server.annotations import DistributionData
 from term_timer.server.annotations import Error404Context
 from term_timer.server.annotations import Error500Context
@@ -1279,9 +1279,15 @@ class CubeImageView(View):
             cube_size: Cube size to use.
             algorithm: Algorithm to represent.
             case: Algorithm to represent to solve the case.
+            mode: Mode to render to cube.
+            layout: Render layout used.
+            orientation: Orientation of the initial cube.
+            mask: Mask of facelet display.
+            palette: The cube palette color used.
             image_size: Image size to render.
             rotation: Rotation to apply to the 3D cube.
-            orientation: Orientation of the initial cube.
+            distance: The camera distance.
+            arrows: The arrows to draw.
 
         """
         self.algorithm = (
@@ -1315,7 +1321,7 @@ class CubeImageView(View):
         response.set_header('Cache-Control', 'public, max-age=300')
 
         cube = VCube(size=self.cube_size)
-        cube.rotate(self.algorithm)  # TODO(me): clean algorithm
+        cube.rotate(self.algorithm)
 
         return cube.image(
             mode=self.mode,
