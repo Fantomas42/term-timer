@@ -4,13 +4,12 @@ from functools import cached_property
 from typing import ClassVar
 from typing import Final
 
-from cubing_algs.masks import F2L_BL_MASK
-from cubing_algs.masks import F2L_BR_MASK
-from cubing_algs.masks import F2L_FL_MASK
-from cubing_algs.masks import F2L_FR_MASK
-
 from term_timer.constants import SECOND
 from term_timer.methods.annotations import StepSummary
+from term_timer.methods.base import F2L_BL_MASK
+from term_timer.methods.base import F2L_BR_MASK
+from term_timer.methods.base import F2L_FL_MASK
+from term_timer.methods.base import F2L_FR_MASK
 from term_timer.methods.base import Analyser
 from term_timer.methods.masks.encoders import f2l_case_encoder
 from term_timer.methods.masks.encoders import oll_case_encoder
