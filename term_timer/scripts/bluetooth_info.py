@@ -75,7 +75,7 @@ class ColoredFormatter(logging.Formatter):
         """
         color = _LEVEL_COLORS.get(record.levelname, '')
         record = logging.makeLogRecord(record.__dict__)
-        record.levelname = f'{color}{record.levelname}{_RESET}'
+        record.levelname = f'{color}{record.levelname:<7}{_RESET}'
         return super().format(record)
 
 
@@ -90,7 +90,7 @@ LOGGING_CONF: Final = {
         },
         'consoleFormatter': {
             '()': ColoredFormatter,
-            'format': '%(levelname)-7s %(message)s',
+            'fmt': '%(levelname)s %(message)s',
         },
     },
     'handlers': {
