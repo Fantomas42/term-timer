@@ -486,7 +486,7 @@ def first_case(method_name: str, step_name: str) -> Case:
     )
 
 
-def case_number(method_name: str, step_name: str) -> Case:
+def case_number(method_name: str, step_name: str) -> int:
     """
     Return case number of a step name method.
 
@@ -1446,7 +1446,7 @@ class AcademyView(View):
 
     def get_display_context(self, default_mode: str = '') -> dict[
         str,
-        str | Algorithm | dict[str, Algorithm] | int | list[str] | list[int],
+        str | Algorithm | dict[str, str] | int | list[str] | list[int],
     ]:
         """
         Build shared display parameter context for academy views.
@@ -1474,7 +1474,13 @@ class AcademyView(View):
             'available_palettes': sorted(PALETTES.keys()),
         }
 
-    def get_context(self) -> AcademyOverviewContext:
+    def get_context(
+            self,
+    ) -> (
+        AcademyOverviewContext
+        | AcademyStepContext
+        | AcademyCaseContext
+    ):
         """
         Build context with available solving methods.
 
@@ -1482,10 +1488,13 @@ class AcademyView(View):
             Dictionary containing methods and their descriptions.
 
         """
-        return {  # type: ignore[return-value]
-            'methods': self.methods,
-            **self.get_display_context(),
-        }
+        return cast(
+            'AcademyOverviewContext',
+            {
+                'methods': self.methods,
+                **self.get_display_context(),
+            },
+        )
 
 
 class AcademyStepView(AcademyView):
@@ -1550,25 +1559,28 @@ class AcademyStepView(AcademyView):
             Dictionary containing step information, case list.
 
         """
-        tree = {}
+        tree: dict[str, list[Case]] = {}
         cases = []
         for case in self.cases.values():
             if case.code != 'SKIP':
                 tree.setdefault(case.family, []).append(case)
                 cases.append(case)
 
-        return {  # type: ignore[return-value]
-            'method': self.method,
-            'step': self.step,
-            'step_info': self.step_info,
-            'group': self.group,
-            'family': self.family,
-            'cases': cases,
-            'tree': tree,
-            **self.get_display_context(
-                default_mode=self.step_info['mode'],
-            ),
-        }
+        return cast(
+            'AcademyStepContext',
+            {
+                'method': self.method,
+                'step': self.step,
+                'step_info': self.step_info,
+                'group': self.group,
+                'family': self.family,
+                'cases': cases,
+                'tree': tree,
+                **self.get_display_context(
+                    default_mode=self.step_info['mode'],
+                ),
+            },
+        )
 
 
 class AcademyCaseView(AcademyView):
@@ -1618,15 +1630,18 @@ class AcademyCaseView(AcademyView):
             Dictionary containing case information.
 
         """
-        return {  # type: ignore[return-value]
-            'method': self.method,
-            'step': self.step,
-            'step_info': self.step_info,
-            'case': self.case,
-            **self.get_display_context(
-                default_mode=self.step_info['mode'],
-            ),
-        }
+        return cast(
+            'AcademyCaseContext',
+            {
+                'method': self.method,
+                'step': self.step,
+                'step_info': self.step_info,
+                'case': self.case,
+                **self.get_display_context(
+                    default_mode=self.step_info['mode'],
+                ),
+            },
+        )
 
 
 class CubeDebugView(View):
@@ -1663,7 +1678,7 @@ class CubeDebugView(View):
             Dictionary with selector options and algorithm.
 
         """
-        return {  # type: ignore[return-value]
+        return {
             'algorithm': self.algorithm,
             'orientation_faces': self.orientation,
             'orientation_moves': get_orientation_moves(self.orientation),

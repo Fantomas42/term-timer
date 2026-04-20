@@ -152,7 +152,7 @@ class SolveDetailContext(TypedDict):
     reconstruction_timing: list[tuple[int, int, Move]]
     reconstruction_index: dict[str, int]
     rank: int
-    available_orientations: dict[str, Algorithm]
+    available_orientations: dict[str, str]
     available_methods: list[str]
 
 
@@ -165,7 +165,7 @@ class AlgorithmDetailContext(TypedDict):
     inverse_variation: Algorithm
     orientation_moves: Algorithm
     orientation_faces: str
-    available_orientations: dict[str, Algorithm]
+    available_orientations: dict[str, str]
 
 
 class AcademyOverviewContext(TypedDict):
@@ -174,7 +174,7 @@ class AcademyOverviewContext(TypedDict):
     methods: dict[str, MethodInfo]
     orientation_faces: str
     orientation_moves: Algorithm
-    available_orientations: dict[str, Algorithm]
+    available_orientations: dict[str, str]
     mode: str
     available_modes: list[str]
     cube_size: int
@@ -195,7 +195,7 @@ class AcademyStepContext(TypedDict):
     family: str
     orientation_moves: Algorithm
     orientation_faces: str
-    available_orientations: dict[str, Algorithm]
+    available_orientations: dict[str, str]
     mode: str
     available_modes: list[str]
     available_cube_sizes: list[int]
@@ -209,7 +209,7 @@ class CubeDebugContext(TypedDict):
     algorithm: str
     orientation_faces: str
     orientation_moves: Algorithm
-    available_orientations: dict[str, Algorithm]
+    available_orientations: dict[str, str]
     mode: str
     available_modes: list[str]
     cube_size: int
@@ -228,7 +228,7 @@ class AcademyCaseContext(TypedDict):
     case: Case
     orientation_moves: Algorithm
     orientation_faces: str
-    available_orientations: dict[str, Algorithm]
+    available_orientations: dict[str, str]
     mode: str
     available_modes: list[str]
     available_cube_sizes: list[int]
