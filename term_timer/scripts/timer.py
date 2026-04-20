@@ -349,6 +349,8 @@ def main() -> int:  # noqa: PLR0911
     options = get_arguments()
     command = COMMAND_RESOLUTIONS.get(options.command, options.command)
 
+    Terminal.set_title(f'{ command.title() } - Term-Timer')
+
     with suppress(KeyboardInterrupt):
         if command == 'solve':
             return asyncio.run(timer(options), debug=DEBUG)
