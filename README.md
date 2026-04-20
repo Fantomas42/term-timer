@@ -74,7 +74,18 @@ term-timer list 10 -c 7
 ## Installation
 
 ``` console
-pip install -e .
+pip install term-timer
+```
+
+### Development installation
+
+`term-timer` and `cubing-algs` are tightly coupled during development.
+Install the live develop branch of `cubing-algs` first to override the
+pinned PyPI version:
+
+```console
+pip install git+https://github.com/Fantomas42/cubing-algs@develop
+pip install -e .[dev]
 ```
 
 ## Acknowledgments
