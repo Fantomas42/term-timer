@@ -52,18 +52,18 @@ logger = logging.getLogger(__name__)
 
 Path(LOGGING_DIR).mkdir(parents=True, exist_ok=True)
 
-_LEVEL_COLORS: Final = {
+LEVEL_COLORS: Final = {
     'DEBUG': '\033[36m',
     'INFO': '\033[32m',
     'WARNING': '\033[33m',
     'ERROR': '\033[31m',
     'CRITICAL': '\033[35m',
 }
-_RESET: Final = '\033[0m'
-_BOLD: Final = '\x1b[1m'
-_FG_GREY: Final = '\x1b[38;5;244m'
+RESET: Final = '\033[0m'
+BOLD: Final = '\x1b[1m'
+FG_GREY: Final = '\x1b[38;5;244m'
 
-_PATTERN_COLORS: Final[dict[str, str]] = {
+PATTERN_COLORS: Final[dict[str, str]] = {
     'state': '\x1b[38;5;77m',
     'orientation': '\x1b[38;5;80m',
     'permutation': '\x1b[38;5;75m',
@@ -85,9 +85,9 @@ class ColoredFormatter(logging.Formatter):
             The formatted log string with ANSI color codes on the level name.
 
         """
-        color = _LEVEL_COLORS.get(record.levelname, '')
+        color = LEVEL_COLORS.get(record.levelname, '')
         record = logging.makeLogRecord(record.__dict__)
-        record.levelname = f'{color}{record.levelname:<7}{_RESET}'
+        record.levelname = f'{color}{record.levelname:<7}{RESET}'
         return super().format(record)
 
 
@@ -230,19 +230,21 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
         )
         show_cube(cube_rotated)
 
-    category_patterns = algo_translated.impacts().cubies_patterns._asdict()
-    lines: list[str] = []
-    for category, patterns in category_patterns.items():
-        if patterns:
-            color = _PATTERN_COLORS.get(category, '')
-            cat_label = category.replace('_', ' ').title()
-            label = f'{_FG_GREY}{cat_label:<14}{_RESET}'
-            values = ', '.join(
-                f'{_BOLD}{color}{p}{_RESET}' for p in patterns
-            )
-            lines.append(f'  {label} {values}')
-    if lines:
-        logger.info('Classification:\n%s', '\n'.join(lines))
+    impacts = algo_translated.impacts()
+    if impacts.cubies_patterns:
+        category_patterns = impacts.cubies_patterns._asdict()
+        lines: list[str] = []
+        for category, patterns in category_patterns.items():
+            if patterns:
+                color = PATTERN_COLORS.get(category, '')
+                cat_label = category.replace('_', ' ').title()
+                label = f'{FG_GREY}{cat_label:<14}{RESET}'
+                values = ', '.join(
+                    f'{BOLD}{color}{p}{RESET}' for p in patterns
+                )
+                lines.append(f'  {label} {values}')
+        if lines:
+            logger.info('Classification:\n%s', '\n'.join(lines))
 
 
 def check_state(raw_moves: list[str], facelets: str,
