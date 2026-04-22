@@ -1323,9 +1323,13 @@ class CubeImageView(View):
         cube = VCube(size=self.cube_size)
         cube.rotate(self.algorithm)
 
+        # Keep default orientation in AF2L mode for consistency
+        orientation = self.orientation if self.mode == 'af2l' else ''
+
         return cube.image(
             mode=self.mode,
             layout=self.layout,
+            orientation=orientation,
             mask=self.mask,
             palette=self.palette,
             image_size=self.image_size,
