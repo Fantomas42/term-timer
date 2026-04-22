@@ -227,12 +227,12 @@
      // Ergonomics Radar Chart
      const ergonomicsRadarCtx = document.getElementById('ergonomicsRadarChart');
      if (ergonomicsRadarCtx) {
-       const comfortScore = {{ "%.1f"|format(ergonomics.comfort_score) }};
+       const ergonomicScore = {{ "%.2f"|format(ergonomics.ergonomic_score) }} * 100;
        const executionSpeed = Math.max(0, 100 - ({{ "%.2f"|format(ergonomics.estimated_execution_time) }} * 10));
        const handBalance = {{ "%.2f"|format(ergonomics.hand_balance_ratio) }} * 100;
        const fingerDifficulty = Math.max(0, 100 - ({{ "%.2f"|format(ergonomics.fingertrick_difficulty) }} * 20));
        const regripPenalty = Math.max(0, 100 - ({{ ergonomics.regrip_count }} * 10));
-       const flowScore = Math.max(0, 100 - ({{ ergonomics.flow_breaks }} * 15));
+       const flowScore = Math.max(0, 100 - ({{ ergonomics.flow_score }} * 15));
 
        new Chart(ergonomicsRadarCtx, {
          type: 'radar',
@@ -248,7 +248,7 @@
            datasets: [{
              label: 'Ergonomic Score',
              data: [
-               comfortScore,
+               ergonomicScore,
                executionSpeed,
                handBalance,
                fingerDifficulty,
@@ -470,7 +470,7 @@
           HTM: {{ algorithm.metrics.htm }}
         </a>
         <a class="spec-label ergo" href="#ergonomics">
-          ERGO: {{ "%0.1f"|format(algorithm.ergonomics.comfort_score) }}
+          ERGO: {{ "%0.1f"|format(algorithm.ergonomics.ergonomic_score * 100) }}
         </a>
         <a class="spec-label memo" href="#memory">
           MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
@@ -533,7 +533,7 @@
           HTM: {{ inverse_variation.metrics.htm }}
         </span>
         <span class="spec-label ergo">
-          ERGO: {{ "%0.1f"|format(inverse_variation.ergonomics.comfort_score) }}
+          ERGO: {{ "%0.1f"|format(inverse_variation.ergonomics.ergonomic_score * 100) }}
         </span>
         <span class="spec-label memo">
           MEMO: {{ "%0.1f"|format(inverse_variation.memory.memory_score) }}
@@ -592,7 +592,7 @@
             HTM: {{ variation.algorithm.metrics.htm }}
           </span>
           <span class="spec-label ergo">
-            ERGO: {{ "%0.1f"|format(variation.algorithm.ergonomics.comfort_score) }}
+            ERGO: {{ "%0.1f"|format(variation.algorithm.ergonomics.ergonomic_score * 100) }}
           </span>
           <span class="spec-label memo">
             MEMO: {{ "%0.1f"|format(variation.algorithm.memory.memory_score) }}
@@ -628,7 +628,7 @@
             HTM: {{ variation.algorithm.metrics.htm }}
           </span>
           <span class="spec-label ergo">
-            ERGO: {{ "%0.1f"|format(variation.algorithm.ergonomics.comfort_score) }}
+            ERGO: {{ "%0.1f"|format(variation.algorithm.ergonomics.ergonomic_score * 100) }}
           </span>
           <span class="spec-label memo">
             MEMO: {{ "%0.1f"|format(variation.algorithm.memory.memory_score) }}
@@ -924,8 +924,8 @@
         <div>
           <h3 class="alg-section-title">Overall Rating</h3>
           <div class="alg-rating-box">
-            <div class="alg-comfort-score {% if ergonomics.comfort_score >= 80 %}score-excellent{% elif ergonomics.comfort_score >= 65 %}score-good{% elif ergonomics.comfort_score >= 50 %}score-fair{% elif ergonomics.comfort_score >= 35 %}score-poor{% else %}score-very-poor{% endif %}">
-              {{ "%.1f"|format(ergonomics.comfort_score) }}
+            <div class="alg-comfort-score {% if ergonomics.ergonomic_score >= 0.8 %}score-excellent{% elif ergonomics.ergonomic_score >= 0.65 %}score-good{% elif ergonomics.ergonomic_score >= 0.5 %}score-fair{% elif ergonomics.ergonomic_score >= 0.35 %}score-poor{% else %}score-very-poor{% endif %}">
+              {{ "%.1f"|format(ergonomics.ergonomic_score * 100) }}
             </div>
             <div class="alg-rating-label">
               {{ ergonomics.ergonomic_rating }}
@@ -982,10 +982,6 @@
             <tr>
               <td><strong>Awkward Moves</strong></td>
               <td class="alg-value">{{ ergonomics.awkward_moves }}</td>
-            </tr>
-            <tr>
-              <td><strong>Flow Breaks</strong></td>
-              <td class="alg-value">{{ ergonomics.flow_breaks }}</td>
             </tr>
             <tr>
               <td><strong>Flow Score</strong></td>

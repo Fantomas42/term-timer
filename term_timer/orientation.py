@@ -39,11 +39,11 @@ def is_face_truly_completed(cube: VCube, face: str) -> bool:
     Check if the first two layers are completed relative to a face.
 
     A face is considered "truly completed" when:
-    1. All 9 facelets on the face are the same color (monochrome)
+    1. All 9 facelets on the face are the same color (oriented)
     2. The first two layers relative to that face are solved (the top 6
        facelets of each adjacent face match their center color)
 
-    This validates that not only is one face monochrome, but the first
+    This validates that not only is one face oriented, but the first
     two layers are properly solved. This ensures we detect genuine solve
     progress rather than accidental monochrome faces.
 
@@ -114,7 +114,7 @@ def get_orientation_faces(
     cube = VCube(size=3)
     cube.rotate(scramble)
 
-    untimed_solution = solution.transform(untime_moves)
+    untimed_solution = untime_moves(solution)
 
     # Phase 1: Detect when the first face is truly completed
     # We replay the solve move-by-move to find the critical moment
@@ -168,8 +168,8 @@ def get_orientation_faces(
         # Score based on configured handedness preference
         # Higher score = more moves with preferred hand
         score = (
-            ergonomics.left_hand_moves if not CUBE_RIGHT_HANDED
-            else ergonomics.right_hand_moves
+            ergonomics.right_hand_moves if CUBE_RIGHT_HANDED
+            else ergonomics.left_hand_moves
         )
 
         scores.append((front_face, score))

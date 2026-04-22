@@ -156,7 +156,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           HTM: {{ case.main_algorithm.metrics.htm }}
         </span>
         <span class="spec-label ergo">
-          ERGO: {{ "%0.1f"|format(case.main_algorithm.ergonomics.comfort_score) }}
+          ERGO: {{ "%0.1f"|format(case.main_algorithm.ergonomics.ergonomic_score * 100) }}
         </span>
         <span class="spec-label memo">
           MEMO: {{ "%0.1f"|format(case.main_algorithm.memory.memory_score) }}
@@ -266,7 +266,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
                 HTM: {{ algo.metrics.htm }}
               </span>
               <span class="spec-label ergo">
-                ERGO: {{ "%0.1f"|format(algo.ergonomics.comfort_score) }}
+                ERGO: {{ "%0.1f"|format(algo.ergonomics.ergonomic_score * 100) }}
               </span>
               <span class="spec-label memo">
                 MEMO: {{ "%0.1f"|format(algo.memory.memory_score) }}
@@ -307,7 +307,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
                 HTM: {{ setup.metrics.htm }}
               </span>
               <span class="spec-label ergo">
-                ERGO: {{ "%0.2f"|format(setup.ergonomics.comfort_score) }}
+                ERGO: {{ "%0.2f"|format(setup.ergonomics.ergonomic_score * 100) }}
               </span>
               <span class="spec-label memo">
                 MEMO: {{ "%0.2f"|format(setup.memory.memory_score) }}
@@ -345,7 +345,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
               HTM: {{ algorithm.metrics.htm }}
             </span>
             <span class="spec-label ergo">
-              ERGO: {{ "%0.1f"|format(algorithm.ergonomics.comfort_score) }}
+              ERGO: {{ "%0.1f"|format(algorithm.ergonomics.ergonomic_score * 100) }}
             </span>
             <span class="spec-label memo">
               MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
@@ -394,7 +394,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             HTM: {{ algorithm.metrics.htm }}
           </span>
           <span class="spec-label ergo">
-            ERGO: {{ "%0.1f"|format(algorithm.ergonomics.comfort_score) }}
+            ERGO: {{ "%0.1f"|format(algorithm.ergonomics.ergonomic_score * 100) }}
           </span>
           <span class="spec-label memo">
             MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}

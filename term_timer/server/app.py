@@ -465,7 +465,7 @@ def sort_algorithms(algorithms: list[Algorithm]) -> list[Algorithm]:
     return sorted(
         algorithms,
         key=lambda x: (
-            -x.ergonomics.comfort_score,
+            -x.ergonomics.ergonomic_score,
             -x.memory.memory_score,
         ),
     )
