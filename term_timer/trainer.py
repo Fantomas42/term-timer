@@ -203,7 +203,7 @@ class Trainer(SolveInterface):
             ergonomics = algorithm.ergonomics
             return (
                 ergonomics.estimated_execution_time,
-                -ergonomics.comfort_score,
+                -ergonomics.ergonomic_score,
             )
 
         selected_cases = []
