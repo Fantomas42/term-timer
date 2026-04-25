@@ -1,6 +1,8 @@
 """Layer-by-layer method analysis."""
 from typing import ClassVar
 
+from cubing_algs.annotations import CubeFacelets
+
 from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import Analyser
 
@@ -30,8 +32,11 @@ class LBLAnalyser(Analyser):
         },
     }
 
-    def compute_progress(self, facelets: str,
-                         progress: int) -> tuple[int, list[str]]:
+    def compute_progress(
+            self,
+            facelets: CubeFacelets,
+            progress: int,
+    ) -> tuple[int, list[str]]:
         """
         Calculate solve progress through LBL steps.
 
@@ -42,7 +47,7 @@ class LBLAnalyser(Analyser):
         current_progress = progress
 
         for name in self.step_list[progress:-1]:
-            if self.check_step(name, facelets, self.orientation_faces):
+            if self.check_step(name, facelets):
                 current_progress += 1
             else:
                 break

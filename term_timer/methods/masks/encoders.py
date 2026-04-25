@@ -3,9 +3,12 @@ from collections.abc import Callable
 
 from cubing_algs.annotations import CubeFacelets
 from cubing_algs.annotations import CubeMask
+from cubing_algs.annotations import POVMask
 from cubing_algs.facelets import cubies_to_facelets
 from cubing_algs.facelets import facelets_to_cubies
 from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
+
+from term_timer.methods.annotations import EncodedMask
 
 MASK_CACHE: dict[CubeMask, tuple[bool, ...]] = {}
 CACHE_SIZE_LIMIT = 1000  # Prevent unbounded memory growth
@@ -81,7 +84,7 @@ def state_masked(state: CubeFacelets, mask: CubeMask) -> CubeFacelets:
     )
 
 
-def oll_case_encoder(facelets: str) -> str:
+def oll_case_encoder(facelets: CubeFacelets) -> EncodedMask:
     """
     Encode OLL case from cube facelets to binary fingerprint.
 
@@ -90,10 +93,10 @@ def oll_case_encoder(facelets: str) -> str:
 
     """
     facelets_fingerprint = (
-        facelets[15:18]
-        + facelets[24:36]
-        + facelets[42:45]
-        + facelets[51:54]
+        facelets[0:12]
+        + facelets[18:21]
+        + facelets[36:39]
+        + facelets[45:48]
     )
 
     center = facelets_fingerprint[10]
@@ -104,7 +107,7 @@ def oll_case_encoder(facelets: str) -> str:
     return ''.join(fingerprint)
 
 
-def pll_case_encoder(facelets: str) -> str:
+def pll_case_encoder(facelets: CubeFacelets) -> EncodedMask:
     """
     Encode PLL case from cube facelets to numeric fingerprint.
 
@@ -113,10 +116,10 @@ def pll_case_encoder(facelets: str) -> str:
 
     """
     facelets_fingerprint = (
-        facelets[15:18]
-        + facelets[24:27]
-        + facelets[42:45]
-        + facelets[51:54]
+        facelets[9:12]
+        + facelets[18:21]
+        + facelets[36:39]
+        + facelets[45:48]
     )
     facelet_encoder: dict[str, str] = {}
     for face in facelets_fingerprint:
@@ -125,14 +128,14 @@ def pll_case_encoder(facelets: str) -> str:
         if len(facelet_encoder) == 4:
             break
 
-    fingerprint = [''] * 21
+    fingerprint = [''] * 12
     for i, facelet in enumerate(facelets_fingerprint):
         fingerprint[i] = facelet_encoder[facelet]
 
     return ''.join(fingerprint)
 
 
-def f2l_case_encoder(mask: str) -> Callable[[str], str]:
+def f2l_case_encoder(mask: POVMask) -> Callable[[CubeFacelets], EncodedMask]:
     """
     Create F2L case encoder function with specific mask.
 
@@ -140,7 +143,7 @@ def f2l_case_encoder(mask: str) -> Callable[[str], str]:
         Encoder function that converts facelets to F2L fingerprint.
 
     """
-    def encoder(facelets: str) -> str:
+    def encoder(facelets: CubeFacelets) -> EncodedMask:
         facelets_fingerprint = state_masked(facelets, mask)
 
         facelet_encoder: dict[str, str] = {}

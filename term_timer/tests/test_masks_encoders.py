@@ -36,18 +36,17 @@ class OLLEncoderTestCase(unittest.TestCase):
     def test_oll_encoder_all_same_as_center(self) -> None:
         """Test OLL encoder when all positions match U center."""
         # Create state where all OLL positions are U color
-        # OLL positions: [15:18] + [24:36] + [42:45] + [51:54]
         all_u = (
-            'UUUUUUUUU'  # U face: 0-8
+            'UUUUUUUUU'
+            'UUU'
             'RRRRRR'
-             'UUU'      # R face: 15-17
+            'UUU'
             'FFFFFF'
-             'UUU'      # F face: 24-26
-            'UUUUUUUUU'  # D face: 27-35
+            'DDDDDDDDD'
+            'UUU'
             'LLLLLL'
-             'UUU'      # L face: 42-44
+            'UUU'
             'BBBBBB'
-             'UUU'      # B face: 51-53
         )
         result = oll_case_encoder(all_u)
 
@@ -110,19 +109,17 @@ class PLLEncoderTestCase(unittest.TestCase):
 
     def test_pll_encoder_less_than_four_colors(self) -> None:
         """Test PLL encoder with less than 4 colors (no early break)."""
-        # Positions: [15:18] + [24:27] + [42:45] + [51:54]
-        # Use only 2 colors to avoid early break
         two_colors = (
             'UUUUUUUUU'
+            'RRR'
             'RRRRRR'
-             'RRR'  # 15-17: RRR
+            'FFF'
             'FFFFFF'
-             'FFF'  # 24-26: FFF
             'DDDDDDDDD'
+            'RRR'
             'LLLLLL'
-             'RRR'  # 42-44: RRR
+            'FFF'
             'BBBBBB'
-             'FFF'  # 51-53: FFF
         )
         result = pll_case_encoder(two_colors)
 
@@ -133,15 +130,15 @@ class PLLEncoderTestCase(unittest.TestCase):
         """Test PLL encoder with all same color in fingerprint positions."""
         all_r = (
             'UUUUUUUUU'
+            'RRR'
             'RRRRRR'
-             'RRR'  # 15-17: RRR
+            'RRR'
             'FFFFFF'
-             'RRR'  # 24-26: RRR
             'DDDDDDDDD'
+            'RRR'
             'LLLLLL'
-             'RRR'  # 42-44: RRR
+            'RRR'
             'BBBBBB'
-             'RRR'  # 51-53: RRR
         )
         result = pll_case_encoder(all_r)
 

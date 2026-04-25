@@ -10,105 +10,40 @@ from typing import ClassVar
 from typing import Final
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.constants import OPPOSITE_FACES
+from cubing_algs.annotations import CubeFacelets
+from cubing_algs.annotations import CubeMask
 from cubing_algs.masks import CENTERS_MASK
+from cubing_algs.masks import CROSS_BOTTOM_MASK
+from cubing_algs.masks import F2L_BL_MASK
+from cubing_algs.masks import F2L_BR_MASK
+from cubing_algs.masks import F2L_FL_MASK
+from cubing_algs.masks import F2L_FR_MASK
+from cubing_algs.masks import F2L_MASK
 from cubing_algs.masks import FULL_MASK
+from cubing_algs.masks import L1_MASK
+from cubing_algs.masks import OLL_MASK
 from cubing_algs.masks import union_masks
 from cubing_algs.parsing import parse_moves
 from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
 from cubing_algs.transform.auf import remove_auf_moves
-from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.rotation import remove_rotations
 from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.methods.annotations import CaseMaskInfo
+from term_timer.methods.annotations import EncodedMask
 from term_timer.methods.annotations import StepConfig
 from term_timer.methods.annotations import StepInfo
 from term_timer.methods.annotations import StepSummary
 from term_timer.methods.masks import CASES_MASKS
 from term_timer.methods.masks.encoders import facelets_masked
-from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves_unsecured
 from term_timer.transform import prettify_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 
 if TYPE_CHECKING:
     from cubing_algs.move import Move
-
-CROSS_BOTTOM_MASK = (
-    '010111010'
-    '010010000'
-    '010010000'
-    '000000000'
-    '010010000'
-    '010010000'
-)
-
-F2L_MASK = (
-    '111111111'
-    '111111000'
-    '111111000'
-    '000000000'
-    '111111000'
-    '111111000'
-)
-
-F2L_FR_MASK = (
-    '000000001'
-    '100100000'
-    '001001000'
-    '000000000'
-    '000000000'
-    '000000000'
-)
-
-F2L_FL_MASK = (
-    '000000100'
-    '000000000'
-    '100100000'
-    '000000000'
-    '001001000'
-    '000000000'
-)
-
-F2L_BR_MASK = (
-    '001000000'
-    '001001000'
-    '000000000'
-    '000000000'
-    '000000000'
-    '100100000'
-)
-
-F2L_BL_MASK = (
-    '100000000'
-    '000000000'
-    '000000000'
-    '000000000'
-    '100100000'
-    '001001000'
-)
-
-OLL_MASK = (
-    '000000000'
-    '000000000'
-    '000000000'
-    '111111111'
-    '000000000'
-    '000000000'
-)
-
-L1_MASK = (
-    '111111111'
-    '111000000'
-    '111000000'
-    '000000000'
-    '111000000'
-    '111000000'
-)
-
 
 CROSS_CENTER_MASK: Final = union_masks(CROSS_BOTTOM_MASK, CENTERS_MASK)
 
@@ -172,45 +107,11 @@ class FaceletAnalyser:
     """
 
     @staticmethod
-    def reorient(state: str, orientation_faces: str,
-                 *, offset: bool = False) -> str:
-        """
-        Transform cube state to match a target orientation.
-
-        Rotates the cube state to align with the specified orientation
-        faces, optionally applying a invert transformation for offset
-        calculations.
-
-        Args:
-            state: 54-character facelet string representing cube state.
-            orientation_faces: Two-character string specifying bottom and
-                front faces (e.g., 'UF' for white bottom, green front).
-            offset: Whether to invert the orientation moves for mask
-                alignment.
-
-        Returns:
-            Reoriented 54-character facelet string.
-
-        """
-        top_face = OPPOSITE_FACES[orientation_faces[0]]
-        orientation = f'{ top_face }{ orientation_faces[1] }'
-
-        moves = get_orientation_moves(orientation)
-
-        if not moves:
-            return state
-
-        if offset:
-            moves = invert_moves(moves)
-
-        cube = VCube(state, size=3, check=False)
-        cube.rotate(moves)
-
-        return cube.state
-
-    def get_step_case(self, step: str, facelets: str,
-                      orientation_faces: str,
-                      encoder: Callable[[str], str]) -> str:
+    def get_step_case(
+            step: str,
+            facelets: CubeFacelets,
+            encoder: Callable[[CubeFacelets], EncodedMask],
+    ) -> str:
         """
         Identify the solving case for a given step based on facelets.
 
@@ -220,15 +121,12 @@ class FaceletAnalyser:
         Args:
             step: Name of the solving step (e.g., 'OLL', 'PLL').
             facelets: Current 54-character facelet string.
-            orientation_faces: Two-character orientation specification.
             encoder: Function that encodes facelet string into case key.
 
         Returns:
             Case name if found in database, empty string otherwise.
 
         """
-        facelets = self.reorient(facelets, orientation_faces, offset=False)
-
         encoded = encoder(facelets)
 
         case_mask: CaseMaskInfo | None = CASES_MASKS[step].get(encoded)
@@ -237,19 +135,16 @@ class FaceletAnalyser:
 
         return ''
 
-    @lru_cache  # noqa: B019
-    def matching_mask(self, step: str,
-                      orientation_faces: str) -> tuple[str, str]:
+    @staticmethod
+    @lru_cache
+    def matching_mask(step: str) -> tuple[CubeFacelets, CubeMask]:
         """
-        Return matching mask and oriented mask for checking step.
+        Return facelets masked and mask for checking step.
 
-        Get the step's mask and reoriente it from orientation faces,
-        then prepare matching mask.
         Use lru_cache to optimize repetitive calls.
 
         Args:
             step: Name of the solving step to check.
-            orientation_faces: Two-character orientation specification.
 
         Returns:
             The matching mask and the mask oriented.
@@ -257,16 +152,13 @@ class FaceletAnalyser:
         """
         mask = get_step_config(step, 'mask')
 
-        mask = self.reorient(mask, orientation_faces, offset=True)
-
         matching_mask = facelets_masked(
             SOLVED_FACELETS_3x3x3, mask,
         )
 
         return matching_mask, mask
 
-    def check_step(self, step: str, facelets: str,
-                   orientation_faces: str) -> bool:
+    def check_step(self, step: str, facelets: CubeFacelets) -> bool:
         """
         Verify if a solving step has been completed.
 
@@ -276,13 +168,12 @@ class FaceletAnalyser:
         Args:
             step: Name of the solving step to check.
             facelets: Current 54-character facelet string.
-            orientation_faces: Two-character orientation specification.
 
         Returns:
             True if step is completed, False otherwise.
 
         """
-        matching_mask, mask = self.matching_mask(step, orientation_faces)
+        matching_mask, mask = self.matching_mask(step)
 
         return matching_mask == facelets_masked(
             facelets, mask,
@@ -312,10 +203,15 @@ class Analyser(FaceletAnalyser):
     aufs: ClassVar[dict[str, list[bool]]] = {}
     aggregate: ClassVar[dict[str, int]] = {}
 
-    def __init__(self, scramble: Algorithm, solution: Algorithm,
-                 orientation_faces: str,
-                 orientation_moves: Algorithm,
-                 *, disable_rotations: bool) -> None:
+    def __init__(
+            self,
+            scramble: Algorithm,
+            solution: Algorithm,
+            orientation_faces: str,
+            orientation_moves: Algorithm,
+            *,
+            disable_rotations: bool,
+    ) -> None:
         """
         Initialize analyser with solve data and orientation.
 
@@ -338,8 +234,13 @@ class Analyser(FaceletAnalyser):
         self.orientation_faces = orientation_faces
         self.orientation_moves = orientation_moves
 
+        translation = translate_moves(self.orientation_moves)
+        self.scramble_oriented = translation(self.scramble)
+        self.solution_oriented = translation(self.solution)
+
         self.duration = (
-            self.get_solution_move_time(-1) - self.get_solution_move_time(0)
+            self.get_solution_move_time(-1)
+            - self.get_solution_move_time(0)
         ) * MS_TO_NS_FACTOR
 
         self.steps = self.split_steps()
@@ -372,14 +273,14 @@ class Analyser(FaceletAnalyser):
 
         """
         cube = VCube(size=3)
-        facelets = cube.rotate(self.scramble)
+        facelets = cube.rotate(self.scramble_oriented)
 
         steps: dict[str, StepInfo] = {}
         progress = 0
         case_infos: list[str] = []
         step_moves: list[int] = []
 
-        for move_index, move in enumerate(self.solution):
+        for move_index, move in enumerate(self.solution_oriented):
             current_progress, current_case_infos = self.compute_progress(
                 cube.state, progress,
             )
@@ -415,8 +316,11 @@ class Analyser(FaceletAnalyser):
 
         return steps
 
-    def compute_progress(self, facelets: str,
-                         progress: int) -> tuple[int, list[str]]:
+    def compute_progress(
+            self,
+            facelets: CubeFacelets,
+            progress: int,
+    ) -> tuple[int, list[str]]:
         """
         Calculate solve progress and identify cases at current state.
 

@@ -2,14 +2,13 @@
 # ruff: noqa: T201
 import json
 import sys
-from collections.abc import Callable
 from pathlib import Path
 from pprint import pformat
 
-from cubing_algs.masks import F2L_BL_MASK
-from cubing_algs.masks import F2L_BR_MASK
-from cubing_algs.masks import F2L_FL_MASK
-from cubing_algs.masks import F2L_FR_MASK
+from cubing_algs.annotations import CubeDisplayMask
+from cubing_algs.display.masks import F2L_MASK
+from cubing_algs.display.masks import OLL_MASK
+from cubing_algs.display.masks import PLL_MASK
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.invert import invert_moves
 from cubing_algs.vcube import VCube
@@ -17,23 +16,22 @@ from cubing_algs.vcube import VCube
 from term_timer.argparser import ArgumentParser
 from term_timer.methods.annotations import CaseMasks
 from term_timer.methods.annotations import SourceCaseInfo
-from term_timer.methods.masks.encoders import f2l_case_encoder
-from term_timer.methods.masks.encoders import oll_case_encoder
-from term_timer.methods.masks.encoders import pll_case_encoder
+from term_timer.methods.cfop import CFOP_CASE_ENCODERS
 
-CFOP_CASE_ENCODERS: dict[str, Callable[[str], str]] = {
-    'OLL': oll_case_encoder,
-    'PLL': pll_case_encoder,
-
-    'F2L FR': f2l_case_encoder(F2L_FR_MASK),
-    'F2L FL': f2l_case_encoder(F2L_FL_MASK),
-    'F2L BR': f2l_case_encoder(F2L_BR_MASK),
-    'F2L BL': f2l_case_encoder(F2L_BL_MASK),
+CFOP_CASE_MASKS: dict[str, CubeDisplayMask] = {
+    'OLL': OLL_MASK,
+    'PLL': PLL_MASK,
+    'F2L': F2L_MASK,
 }
 
 
-def compute_masks(name: str, moves: str, mode: str,
-                  *, debug: bool = False) -> CaseMasks:
+def compute_masks(
+        name: str,
+        moves: str,
+        mode: str,
+        *,
+        debug: bool = False,
+) -> CaseMasks:
     """
     Compute facelet masks for case across different orientations.
 
@@ -50,21 +48,21 @@ def compute_masks(name: str, moves: str, mode: str,
         invert_moves,
     )
 
-    # For URF format,
-    # can represent a color schema variations and a pairs of faces
-    initial_schemes = ['FR', 'FL', 'BR', 'BL']
-    # Apply orientations because algorithms are designed
-    # to be applied with D on top, FRU angle from user,
-    # so the schemes are correctly tracked
-    initial_schemes_moves = ["z2 y'", 'z2', 'x2', 'z2 y']
-
-    # Angular orientations
-    # the masks will be taken from multiple points of views
+    initial_schemes = ['']
+    # POV orientations
+    # the mask will be taken from multiple points of views
     orientation_moves = ['', 'y', "y'", 'y2']
 
     # F2L cases also need to have AUF extra move to catch
     # correctly all cases when the top layer is involded
     if mode == 'F2L':
+        # For URF format,
+        # can represent a color schema variations and a pairs of faces
+        initial_schemes = [
+            'Front Right', 'Front Left',
+            'Back Right', 'Back Left',
+        ]
+
         auf_moves = ['U', "U'", 'U2']
         new_orientations = orientation_moves.copy()
         for auf_move in auf_moves:
@@ -74,49 +72,26 @@ def compute_masks(name: str, moves: str, mode: str,
                 )
         orientation_moves = new_orientations
 
-    for scheme_name, scheme_moves in zip(
-            initial_schemes,
-            initial_schemes_moves,
-            strict=True,
-    ):
+    for scheme in initial_schemes:
         for orientation_move in orientation_moves:
-            # Orientation scheme for having multiple colors,
-            # apply reverse algorithm,
-            # offset in Y to capture all angular variations,
-            # cancel orientation scheme back to U on top.
-            case_algorithm = (
-                scheme_moves
-                + algorithm
-                + orientation_move
-                + scheme_moves
-            )
-
-            mode_key = mode
-            if mode == 'F2L':
-                mode_key += f' { scheme_name }'
+            case_algorithm = algorithm + orientation_move
 
             cube = VCube(size=3)
             cube.rotate(case_algorithm)
 
             if debug:
-                config = (
-                    f'"{ scheme_name or "?" }-{ orientation_move or "?" }" '
-                    f': { algorithm }'
-                )
                 print('*' * 25)
-                print(f'{ name } { config }')
-                cube.show()
-                print(f'{ name } { mode } { config }')
-                cube.show(mode=mode.lower())
+                print(f'{ name }: { case_algorithm }')
+                cube.show(mode=CFOP_CASE_MASKS.get(mode, ''))
 
-            encoded_case = CFOP_CASE_ENCODERS[mode_key](cube.state)
+            encoded_case = CFOP_CASE_ENCODERS[
+                f'{mode} {scheme}'.strip()
+            ](cube.state)
 
             mask_infos = masks.setdefault(
                 encoded_case, [],
             )
-            configuration = f'{ scheme_name } { orientation_move }'.strip()
-            if configuration not in mask_infos:
-                mask_infos.append(configuration)
+            mask_infos.append(orientation_move)
 
     return masks
 

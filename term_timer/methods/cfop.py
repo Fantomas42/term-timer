@@ -4,33 +4,35 @@ from functools import cached_property
 from typing import ClassVar
 from typing import Final
 
+from cubing_algs.annotations import CubeFacelets
+from cubing_algs.masks import F2L_BL_MASK
+from cubing_algs.masks import F2L_BR_MASK
+from cubing_algs.masks import F2L_FL_MASK
+from cubing_algs.masks import F2L_FR_MASK
+
 from term_timer.constants import SECOND
+from term_timer.methods.annotations import EncodedMask
 from term_timer.methods.annotations import StepSummary
-from term_timer.methods.base import F2L_BL_MASK
-from term_timer.methods.base import F2L_BR_MASK
-from term_timer.methods.base import F2L_FL_MASK
-from term_timer.methods.base import F2L_FR_MASK
 from term_timer.methods.base import Analyser
 from term_timer.methods.masks.encoders import f2l_case_encoder
 from term_timer.methods.masks.encoders import oll_case_encoder
 from term_timer.methods.masks.encoders import pll_case_encoder
 
-CFOP_CASE_ENCODERS: Final[dict[str, Callable[[str], str]]] = {
+CFOP_CASE_ENCODERS: Final[dict[str, Callable[[CubeFacelets], EncodedMask]]] = {
     'OLL': oll_case_encoder,
     'PLL': pll_case_encoder,
 
-    'F2L Front Left': f2l_case_encoder(F2L_FR_MASK),
-    'F2L Front Right': f2l_case_encoder(F2L_FL_MASK),
-    'F2L Back Left': f2l_case_encoder(F2L_BR_MASK),
-    'F2L Back Right': f2l_case_encoder(F2L_BL_MASK),
+    'F2L Front Right': f2l_case_encoder(F2L_FR_MASK),
+    'F2L Front Left': f2l_case_encoder(F2L_FL_MASK),
+    'F2L Back Right': f2l_case_encoder(F2L_BR_MASK),
+    'F2L Back Left': f2l_case_encoder(F2L_BL_MASK),
 }
 
-# Anticipated compensation order
-# because check_step will perform computing using opposite top face
-# but keep front face, which rotate the cube like a z2 rotation.
 F2L_SLOTS = [
-    'Front Left', 'Front Right',
-    'Back Left', 'Back Right',
+    'Front Right',
+    'Front Left',
+    'Back Right',
+    'Back Left',
 ]
 
 
@@ -94,8 +96,11 @@ class CFOPAnalyser(Analyser):
         'pll': -1,
     }
 
-    def compute_progress(self, facelets: str,
-                         progress: int) -> tuple[int, list[str]]:
+    def compute_progress(
+            self,
+            facelets: CubeFacelets,
+            progress: int,
+    ) -> tuple[int, list[str]]:
         """
         Calculate current solve progress through CFOP steps.
 
@@ -114,7 +119,7 @@ class CFOPAnalyser(Analyser):
         current_progress = progress
 
         for name in self.step_list[progress:-1]:
-            if self.check_step(name, facelets, self.orientation_faces):
+            if self.check_step(name, facelets):
                 current_progress += 1
             else:
                 break
@@ -219,7 +224,6 @@ class CFOPAnalyser(Analyser):
                 if facelets:
                     info['case'] = self.get_step_case(
                         'OLL', facelets,
-                        self.orientation_faces,
                         CFOP_CASE_ENCODERS['OLL'],
                     )
 
@@ -228,7 +232,6 @@ class CFOPAnalyser(Analyser):
                 if facelets:
                     info['case'] = self.get_step_case(
                         'PLL', facelets,
-                        self.orientation_faces,
                         CFOP_CASE_ENCODERS['PLL'],
                     )
 
@@ -238,7 +241,6 @@ class CFOPAnalyser(Analyser):
                 if facelets and case_infos:
                     info['case'] = self.get_step_case(
                         'F2L', facelets,
-                        self.orientation_faces,
                         CFOP_CASE_ENCODERS[f'F2L { case_infos[0] }'],
                     )
 
@@ -323,8 +325,11 @@ class CF4OPAnalyser(CFOPAnalyser):
         },
     }
 
-    def compute_progress(self, facelets: str,
-                         progress: int) -> tuple[int, list[str]]:
+    def compute_progress(
+            self,
+            facelets: CubeFacelets,
+            progress: int,
+    ) -> tuple[int, list[str]]:
         """
         Calculate progress through CF4OP steps with F2L pair tracking.
 
@@ -344,17 +349,17 @@ class CF4OPAnalyser(CFOPAnalyser):
         if progress == 6:
             return 6, []
 
-        if not self.check_step('Cross', facelets, self.orientation_faces):
+        if not self.check_step('Cross', facelets):
             return 0, []
 
-        if not self.check_step('OLL', facelets, self.orientation_faces):
+        if not self.check_step('OLL', facelets):
             name = ['F2L 1', 'F2L 2', 'F2L 3', 'F2L 4']
 
             score = 1
             pairs: list[str] = []
 
             for n, p in zip(name, F2L_SLOTS, strict=True):
-                result = self.check_step(n, facelets, self.orientation_faces)
+                result = self.check_step(n, facelets)
                 if result:
                     score += 1
                     pairs.append(p)
