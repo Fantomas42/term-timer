@@ -241,7 +241,6 @@ class Trainer(SolveInterface):
             return FaceletAnalyser().check_step(
                 self.step_code,
                 self.bluetooth_cube_state,
-                self.orientation_faces,
             )
         return False
 
