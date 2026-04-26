@@ -234,9 +234,9 @@ class Analyser(FaceletAnalyser):
         self.orientation_faces = orientation_faces
         self.orientation_moves = orientation_moves
 
-        translation = translate_moves(self.orientation_moves)
-        self.scramble_oriented = translation(self.scramble)
-        self.solution_oriented = translation(self.solution)
+        self.translation = translate_moves(self.orientation_moves)
+        self.scramble_oriented = self.translation(self.scramble)
+        self.solution_oriented = self.translation(self.solution)
 
         self.duration = (
             self.get_solution_move_time(-1)
@@ -391,7 +391,7 @@ class Analyser(FaceletAnalyser):
 
             total = execution + recognition
 
-            reorientation = translate_moves(self.orientation_moves)(moves)
+            reorientation = self.translation(moves)
             humanization = humanize_moves_unsecured(reorientation)
             prettyfication = prettify_moves(humanization)
 
