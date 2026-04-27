@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from typing import cast
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.annotations import CubeOrientation
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.translate import translate_moves
 
@@ -22,7 +23,7 @@ class TestMoveRotationDetector(unittest.TestCase):
     """Tests for RotationDetector move detection."""
 
     @staticmethod
-    def reconstruct(orientation_faces: str, algo: str) -> Algorithm:
+    def reconstruct(orientation_faces: CubeOrientation, algo: str) -> Algorithm:
         """
         Reconstruct algorithm with orientation translation.
 
@@ -38,10 +39,13 @@ class TestMoveRotationDetector(unittest.TestCase):
             ),
         )
 
-    def check_rotations(self, source_path: str,
-                        expected: str,
-                        reconstructed: str,
-                        orientation_faces: str) -> None:
+    def check_rotations(
+            self,
+            source_path: str,
+            expected: str,
+            reconstructed: str,
+            orientation_faces: CubeOrientation,
+    ) -> None:
         """Check that rotation detection produces expected results."""
         path = Path(__file__).parent / 'replays' / source_path
 

@@ -3,6 +3,7 @@ import operator
 from functools import lru_cache
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.annotations import CubeOrientation
 from cubing_algs.constants import ADJACENT_FACES
 from cubing_algs.constants import FACE_ORDER
 from cubing_algs.constants import OPPOSITE_FACES
@@ -83,7 +84,7 @@ def is_face_truly_completed(cube: VCube, face: str) -> bool:
 def get_orientation_faces(
         scramble: Algorithm,
         solution: Algorithm,
-) -> str:
+) -> CubeOrientation:
     """
     Calculate optimal cube orientation for solve analysis.
 
@@ -180,7 +181,7 @@ def get_orientation_faces(
 
 
 @lru_cache
-def get_orientation_moves(orientation: str) -> Algorithm:
+def get_orientation_moves(orientation: CubeOrientation) -> Algorithm:
     """
     Get pre-computed orientation moves for given orientation.
 

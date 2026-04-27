@@ -5,6 +5,7 @@ from typing import cast
 
 import numpy as np
 import plotext as plt
+from cubing_algs.annotations import CubeOrientation
 from cubing_algs.vcube import VCube
 from rich import box
 from rich.table import Table
@@ -825,7 +826,10 @@ class SolveStatisticsReporter(Statistics):
             )
 
     def detail(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915
-            self, solve_id: int, method: str, orientation: str,
+            self,
+            solve_id: int,
+            method: str,
+            orientation: CubeOrientation,
             *,
             disable_rotations: bool,
             show_cheers: bool,
@@ -834,7 +838,8 @@ class SolveStatisticsReporter(Statistics):
             show_tps_graph: bool,
             show_time_graph: bool,
             show_fluency_graph: bool,
-            show_recognition_graph: bool) -> None:
+            show_recognition_graph: bool,
+    ) -> None:
         """
         Display detailed analysis for a specific solve.
 

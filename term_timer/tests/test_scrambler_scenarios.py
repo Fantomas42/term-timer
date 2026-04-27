@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from random import Random
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.annotations import CubeOrientation
 from cubing_algs.cases import get_case
 from cubing_algs.cases.case import Case
 from cubing_algs.move import Move
@@ -234,7 +235,7 @@ def run_trainer_scenario(  # noqa: PLR0913
         collection: str = 'OLL',
         *,
         bt_cube: VCube | None = None,
-        orientation: str = 'UF',
+        orientation: CubeOrientation = 'UF',
         seed: int = 42,
 ) -> TrainerScenarioResult:
     """

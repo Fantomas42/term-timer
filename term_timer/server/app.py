@@ -22,6 +22,7 @@ from bottle import request
 from bottle import response
 from bottle import static_file
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.annotations import CubeOrientation
 from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
@@ -935,7 +936,7 @@ class SolveDetailView(View):
     template_name = 'solve.html'
 
     def __init__(self, cube: int, session: str, solve_id: int,
-                 method_name: str, orientation: str) -> None:
+                 method_name: str, orientation: CubeOrientation) -> None:
         """
         Initialize solve detail view.
 
@@ -1189,7 +1190,7 @@ class AlgorithmDetailView(View):
 
     template_name = 'algorithm.html'
 
-    def __init__(self, algorithm: str, orientation: str) -> None:
+    def __init__(self, algorithm: str, orientation: CubeOrientation) -> None:
         """
         Initialize algorithm detail view.
 
@@ -1264,7 +1265,7 @@ class CubeImageView(View):
             case: str,
             mode: str,
             layout: str,
-            orientation: str,
+            orientation: CubeOrientation,
             mask: str,
             palette: str,
             image_size: str,
@@ -1343,7 +1344,7 @@ class AcademyView(View):
     """View for displaying academy overview with solving methods."""
 
     template_name = 'academy/overview.html'
-    orientation: str = ''
+    orientation: CubeOrientation = ''
     display_mode: str = ''
     cube_size: int = 3
     palette: str = ''
@@ -1431,7 +1432,7 @@ class AcademyView(View):
         },
     }
 
-    def __init__(self, orientation: str = '', mode: str = '',
+    def __init__(self, orientation: CubeOrientation = '', mode: str = '',
                  cube_size: str = '', palette: str = '') -> None:
         """
         Initialize academy overview view.
@@ -1508,7 +1509,7 @@ class AcademyStepView(AcademyView):
 
     def __init__(  # noqa: PLR0913, PLR0917
             self, method: str, step: str, group: str, family: str,
-            orientation: str, mode: str = '', cube_size: str = '',
+            orientation: CubeOrientation, mode: str = '', cube_size: str = '',
             palette: str = '') -> None:
         """
         Initialize academy step view.
@@ -1594,7 +1595,7 @@ class AcademyCaseView(AcademyView):
 
     def __init__(  # noqa: PLR0913, PLR0917
             self, method: str, step: str, case_id: str,
-            orientation: str, mode: str = '', cube_size: str = '',
+            orientation: CubeOrientation, mode: str = '', cube_size: str = '',
             palette: str = '') -> None:
         """
         Initialize academy case view.
@@ -1654,7 +1655,7 @@ class CubeDebugView(View):
     template_name = 'cube_debug.html'
 
     def __init__(
-            self, orientation: str = '', mode: str = '',
+            self, orientation: CubeOrientation = '', mode: str = '',
             cube_size: str = '', palette: str = '',
             algorithm: str = '') -> None:
         """

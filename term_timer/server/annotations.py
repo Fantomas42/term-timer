@@ -3,6 +3,7 @@ from typing import TypedDict
 
 from bottle import HTTPError
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.annotations import CubeOrientation
 from cubing_algs.cases.case import Case
 from cubing_algs.move import Move
 
@@ -164,7 +165,7 @@ class AlgorithmDetailContext(TypedDict):
     symmetry_variations: list[AlgorithmVariation]
     inverse_variation: Algorithm
     orientation_moves: Algorithm
-    orientation_faces: str
+    orientation_faces: CubeOrientation
     available_orientations: dict[str, str]
 
 
@@ -172,7 +173,7 @@ class AcademyOverviewContext(TypedDict):
     """Template context for academy overview."""
 
     methods: dict[str, MethodInfo]
-    orientation_faces: str
+    orientation_faces: CubeOrientation
     orientation_moves: Algorithm
     available_orientations: dict[str, str]
     mode: str
@@ -194,7 +195,7 @@ class AcademyStepContext(TypedDict):
     group: str
     family: str
     orientation_moves: Algorithm
-    orientation_faces: str
+    orientation_faces: CubeOrientation
     available_orientations: dict[str, str]
     mode: str
     available_modes: list[str]
@@ -207,7 +208,7 @@ class CubeDebugContext(TypedDict):
     """Template context for cube rendering debug view."""
 
     algorithm: str
-    orientation_faces: str
+    orientation_faces: CubeOrientation
     orientation_moves: Algorithm
     available_orientations: dict[str, str]
     mode: str
@@ -227,7 +228,7 @@ class AcademyCaseContext(TypedDict):
     cube_size: int
     case: Case
     orientation_moves: Algorithm
-    orientation_faces: str
+    orientation_faces: CubeOrientation
     available_orientations: dict[str, str]
     mode: str
     available_modes: list[str]

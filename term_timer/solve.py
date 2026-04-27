@@ -1,5 +1,6 @@
 """Solve data representation, analysis, and reporting."""
 import math
+from collections.abc import Callable
 from datetime import datetime
 from datetime import timezone
 from functools import cached_property
@@ -286,6 +287,17 @@ class Solve:  # noqa: PLR0904
         return math.floor(100 * math.exp(FLUENCY_EXPONENTIAL_DECAY * std_dev))
 
     @cached_property
+    def translation(self) -> Callable[[Algorithm], Algorithm]:
+        """
+        Cache translation function.
+
+        Returns:
+            Function making the Algorithm translation.
+
+        """
+        return translate_moves(self.orientation_moves)
+
+    @cached_property
     def reconstruction(self) -> Algorithm:
         """
         Generate oriented and prettified solution reconstruction.
@@ -296,7 +308,7 @@ class Solve:  # noqa: PLR0904
 
         """
         return prettify_moves(
-            translate_moves(self.orientation_moves)(self.solution),
+            self.translation(self.solution),
         )
 
     @cached_property
@@ -309,7 +321,7 @@ class Solve:  # noqa: PLR0904
 
         """
         return self.compute_fluency(
-            translate_moves(self.orientation_moves)(self.solution).transform(
+            self.translation(self.solution).transform(
                 optimize_double_moves,
             ),
         )

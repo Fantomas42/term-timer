@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import Mock
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.annotations import CubeOrientation
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.invert import invert_moves
@@ -34,7 +35,7 @@ class MockScrambler(Scrambler):
 class OrienterScrambler(Orienter, Scrambler):
     """Test class combining Orienter and Scrambler."""
 
-    def __init__(self, orientation_faces: str) -> None:
+    def __init__(self, orientation_faces: CubeOrientation) -> None:
         """Initialize with specified cube orientation."""
         super().__init__()
         self.orientation_faces = orientation_faces

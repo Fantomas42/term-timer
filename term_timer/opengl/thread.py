@@ -4,6 +4,7 @@ import threading
 from typing import Final
 
 import pygame
+from cubing_algs.annotations import CubeOrientation
 from OpenGL.GL import GL_MODELVIEW
 from OpenGL.GL import glMatrixMode
 from OpenGL.GL import glPopMatrix
@@ -38,7 +39,7 @@ class CubeGLThread(threading.Thread):
     def __init__(
             self,
             cube_ready_event: threading.Event,
-            orientation_faces: str,
+            orientation_faces: CubeOrientation,
             width: int = 800,
             height: int = 600,
             *,

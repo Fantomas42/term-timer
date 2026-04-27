@@ -6,7 +6,9 @@ import logging.config
 import sys
 import threading
 from argparse import Namespace
+from collections.abc import Callable
 from contextlib import suppress
+from functools import lru_cache
 from pathlib import Path
 from pprint import pformat
 from typing import Any
@@ -14,6 +16,7 @@ from typing import Final
 from typing import cast
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.annotations import CubeOrientation
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.timing import untime_moves
 from cubing_algs.transform.translate import translate_moves
@@ -155,8 +158,25 @@ def show_cube(cube: VCube) -> None:
     )
 
 
-def show_state(raw_moves: list[str], orientation_moves: Algorithm,
-               cube: VCube | None) -> None:
+@lru_cache
+def translation(
+        orientation_moves: Algorithm,
+) -> Callable[[Algorithm], Algorithm]:
+    """
+    Cache translation function.
+
+    Returns:
+        Function making the Algorithm translation.
+
+    """
+    return translate_moves(orientation_moves)
+
+
+def show_state(
+        raw_moves: list[str],
+        orientation_moves: Algorithm,
+        cube: VCube | None,
+) -> None:
     """
     Display the cube state after applying moves with timing and triggers.
 
@@ -178,7 +198,7 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
         return
 
     algo = parse_moves(raw_moves)
-    algo_translated = translate_moves(orientation_moves)(algo)
+    algo_translated = translation()(algo)
 
     first_time = algo[0].timed
     algo_timed_reformatted = ' '.join(
@@ -247,8 +267,11 @@ def show_state(raw_moves: list[str], orientation_moves: Algorithm,
             logger.info('Classification:\n%s', '\n'.join(lines))
 
 
-def check_state(raw_moves: list[str], facelets: str,
-                cube: VCube) -> bool:
+def check_state(
+        raw_moves: list[str],
+        facelets: str,
+        cube: VCube,
+) -> bool:
     """
     Verify cube state synchronization between moves and facelets.
 
@@ -290,7 +313,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
         gl_thread: CubeGLThread | None,
         event_collector: list[EventDict],
         *, show_cube: bool,
-        orientation_faces: str,
+        orientation_faces: CubeOrientation,
         rotation_threshold: float = 75.0) -> None:
     """
     Consumes Bluetooth events and processes cube state updates.
@@ -459,10 +482,13 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
 
 async def client_cb(  # noqa: PLR0913
         queue: asyncio.Queue[list[EventDict] | None],
-        time: int, filter_name: str, *,
+        time: int,
+        filter_name: str,
+        *,
         cube_reset: bool,
         gyroscope_enable: bool,
-        gyroscope_disable: bool) -> None:
+        gyroscope_disable: bool,
+) -> None:
     """
     Manage Bluetooth connection and send commands to the smart cube.
 
@@ -587,8 +613,10 @@ def replay(options: Namespace) -> None:
                 show_state(moves, orientation_moves, virtual_cube)
 
 
-def linear_regression(x_values: list[float],
-                      y_values: list[float]) -> tuple[float, float]:
+def linear_regression(
+        x_values: list[float],
+        y_values: list[float],
+) -> tuple[float, float]:
     """
     Calculate linear regression parameters for two data series.
 
