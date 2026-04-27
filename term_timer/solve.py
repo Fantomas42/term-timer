@@ -7,6 +7,7 @@ from typing import TypedDict
 
 import plotext as plt
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.annotations import CubeOrientation
 from cubing_algs.cases import get_case
 from cubing_algs.constants import PAUSE_CHAR
 from cubing_algs.move import Move
@@ -98,17 +99,19 @@ class Solve:  # noqa: PLR0904
 
     """
 
-    def __init__(self,  # noqa: PLR0913, PLR0917
-                 date: float, time: int,
-                 scramble: Algorithm | str,
-                 flag: SolveFlag = '',
-                 timer: str = '',
-                 device: str = '',
-                 session: str = '',
-                 comment: str = '',
-                 solve_id: int = 0,
-                 cube_size: int = 3,
-                 moves: str | None = None) -> None:
+    def __init__(  # noqa: PLR0913, PLR0917
+            self,
+            date: float, time: int,
+            scramble: Algorithm | str,
+            flag: SolveFlag = '',
+            timer: str = '',
+            device: str = '',
+            session: str = '',
+            comment: str = '',
+            solve_id: int = 0,
+            cube_size: int = 3,
+            moves: str | None = None,
+    ) -> None:
         """Initialize a new Solve instance with the provided data."""
         self.date = int(date)
         self.time = int(time)
@@ -207,12 +210,12 @@ class Solve:  # noqa: PLR0904
         return bool(self.raw_moves)
 
     @cached_property
-    def orientation_faces(self) -> str:
+    def orientation_faces(self) -> CubeOrientation:
         """
         Determine cube orientation for analysis.
 
         Returns:
-            Two-character orientation string (e.g., 'WG') either from
+            Two-character orientation string (e.g., 'DF') either from
             configuration or auto-detected from scramble and solution
 
         """
@@ -455,7 +458,8 @@ class Solve:  # noqa: PLR0904
             return None
 
         return self.method_analyser(
-            self.scramble, self.solution,
+            self.scramble,
+            self.solution,
             self.orientation_faces,
             self.orientation_moves,
             disable_rotations=self.disable_rotations,
@@ -817,8 +821,12 @@ class Solve:  # noqa: PLR0904
 
         return line
 
-    def reconstruction_step_line(self, step: StepSummary,
-                                 *, multiple: bool = False) -> str:
+    def reconstruction_step_line(
+            self,
+            step: StepSummary,
+            *,
+            multiple: bool = False,
+    ) -> str:
         """
         Format a single step's moves with highlighting and annotations.
 
@@ -877,8 +885,12 @@ class Solve:  # noqa: PLR0904
             self, step, multiple=multiple,
         )
 
-    def reconstruction_step_text(self, step: StepSummary,
-                                 *, multiple: bool = False) -> str:
+    def reconstruction_step_text(
+            self,
+            step: StepSummary,
+            *,
+            multiple: bool = False,
+    ) -> str:
         """
         Format a single step's moves as plain text with pauses.
 

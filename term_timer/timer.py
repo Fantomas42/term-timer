@@ -3,6 +3,7 @@ import logging
 from random import Random
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.annotations import CubeOrientation
 from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.vcube import VCube
 
@@ -45,7 +46,7 @@ class Timer(SolveInterface):
             show_fluency_graph: bool,
             show_recognition_graph: bool,
             method: str,
-            orientation: str,
+            orientation: CubeOrientation,
             countdown: int,
             metronome: float,
             stack: list[Solve],

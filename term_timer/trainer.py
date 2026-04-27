@@ -5,6 +5,7 @@ from random import Random
 from typing import Final
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.annotations import CubeOrientation
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
 from cubing_algs.vcube import VCube
@@ -51,9 +52,10 @@ class Trainer(SolveInterface):
             free_play: bool,
             show_solution: bool,
             show_cube: bool,
-            orientation: str,
+            orientation: CubeOrientation,
             metronome: float,
-            rng: Random) -> None:
+            rng: Random,
+    ) -> None:
         """Initialize trainer with step configuration and display options."""
         super().__init__()
 
@@ -92,7 +94,8 @@ class Trainer(SolveInterface):
     def select_oldest_cases(
             self,
             valid_cases: dict[str, Case],
-            count: int) -> list[str]:
+            count: int,
+    ) -> list[str]:
         """
         Select cases by least recent practice date.
 
@@ -124,7 +127,8 @@ class Trainer(SolveInterface):
     def select_slowest_cases(
             self,
             valid_cases: dict[str, Case],
-            count: int) -> list[str]:
+            count: int,
+    ) -> list[str]:
         """
         Select cases with worst average of 12.
 
@@ -260,9 +264,12 @@ class Trainer(SolveInterface):
                 style='trainer',
             )
 
-    def start_line(self, cube: VCube,
-                   selected_case: Case,
-                   solution: Algorithm) -> None:
+    def start_line(
+            self,
+            cube: VCube,
+            selected_case: Case,
+            solution: Algorithm,
+    ) -> None:
         """Display training case, scramble, and optional solution."""
         link = selected_case.cubing_fache_url
         name = selected_case.pretty_name

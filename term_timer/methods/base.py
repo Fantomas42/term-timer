@@ -12,6 +12,7 @@ from typing import Final
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeFacelets
 from cubing_algs.annotations import CubeMask
+from cubing_algs.annotations import CubeOrientation
 from cubing_algs.masks import CENTERS_MASK
 from cubing_algs.masks import CROSS_BOTTOM_MASK
 from cubing_algs.masks import F2L_BL_MASK
@@ -207,7 +208,7 @@ class Analyser(FaceletAnalyser):
             self,
             scramble: Algorithm,
             solution: Algorithm,
-            orientation_faces: str,
+            orientation_faces: CubeOrientation,
             orientation_moves: Algorithm,
             *,
             disable_rotations: bool,

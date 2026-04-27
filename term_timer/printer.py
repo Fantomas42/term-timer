@@ -1,5 +1,6 @@
 """Cube visualization and scramble display utilities."""
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.annotations import CubeOrientation
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_EFFECT
@@ -12,7 +13,8 @@ from term_timer.interface.console import console
 
 
 def print_cube_scrambled(
-        cube: VCube, orientation: str,
+        cube: VCube,
+        orientation: CubeOrientation,
         scramble: Algorithm,
 ) -> None:
     """
@@ -64,7 +66,8 @@ def print_cube_scrambled(
 
 
 def print_cube_trainer(
-        cube: VCube, orientation: str,
+        cube: VCube,
+        orientation: CubeOrientation,
         mode: str,
 ) -> None:
     """

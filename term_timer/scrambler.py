@@ -61,11 +61,15 @@ def scrambler(cube_size: int, iterations: int,
     return scrambled, cube
 
 
-def trainer(step: str, cases: list['TrainingCase'],
-            orientation_moves: Algorithm,
-            rng: Random,
-            bluetooth_cube: VCube | None = None) -> tuple[
-                Case, Algorithm, Algorithm, VCube]:
+def trainer(
+        step: str,
+        cases: list['TrainingCase'],
+        orientation_moves: Algorithm,
+        rng: Random,
+        bluetooth_cube: VCube | None = None,
+) -> tuple[
+    Case, Algorithm, Algorithm, VCube,
+]:
     """
     Generate training case.
 
@@ -93,10 +97,13 @@ def trainer(step: str, cases: list['TrainingCase'],
     return case, scramble, solution, cube
 
 
-def random_training(cases: list['TrainingCase'],
-                    orientation_moves: Algorithm,
-                    rng: Random) -> tuple[
-                        Case, Algorithm, Algorithm]:
+def random_training(
+        cases: list['TrainingCase'],
+        orientation_moves: Algorithm,
+        rng: Random,
+) -> tuple[
+    Case, Algorithm, Algorithm,
+]:
     """
     Generate random training case.
 
