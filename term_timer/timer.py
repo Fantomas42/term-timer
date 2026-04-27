@@ -3,6 +3,7 @@ import logging
 from random import Random
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.vcube import VCube
 
 from term_timer.constants import DNF
@@ -13,7 +14,6 @@ from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
 from term_timer.printer import print_cube_scrambled
 from term_timer.scrambler import scrambler
-from term_timer.scrambler import state_to_scramble
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
 
@@ -285,9 +285,9 @@ class Timer(SolveInterface):
             )
 
         if self.bluetooth_cube and not self.bluetooth_cube_is_solved:
-            scramble = state_to_scramble(
-                cube.state,
+            scramble = facelets_to_facelets_algorithm(
                 self.bluetooth_cube_state,
+                cube.state,
             )
             self.scramble_oriented = self.reorient(scramble)
         else:

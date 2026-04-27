@@ -8,29 +8,17 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.scrambler.nxn import scramble
 from cubing_algs.scrambler.steps import scramble_easy_cross
 from cubing_algs.scrambler.steps import scramble_x_cross
+from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
+from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.rotation import compress_ending_rotations
 from cubing_algs.vcube import VCube
-from kociemba import solve
 
 from term_timer.config import CUBE_RIGHT_HANDED
 
 if TYPE_CHECKING:
     from term_timer.annotations import TrainingCase
-
-
-def state_to_scramble(state: str, facelets: str = '') -> Algorithm:
-    """
-    Return algorithm to reach a certain state.
-
-    Returns:
-        Algorithm that transforms cube from solved to given state.
-
-    """
-    solution: str = solve(state, facelets) if facelets else solve(state)
-
-    return parse_moves(solution).transform(invert_moves)
 
 
 def scrambler(cube_size: int, iterations: int,
@@ -65,7 +53,10 @@ def scrambler(cube_size: int, iterations: int,
     if cube_size != 3 or iterations or easy_cross or raw_scramble:
         return scrambled, cube
 
-    scrambled = state_to_scramble(cube.state)
+    scrambled = facelets_to_facelets_algorithm(
+        SOLVED_FACELETS_3x3x3,
+        cube.state,
+    )
 
     return scrambled, cube
 
