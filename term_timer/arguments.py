@@ -328,10 +328,26 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
 
     scramble = parser.add_argument_group('Scramble')
     scramble.add_argument(
-        '-e', '--easy-cross',
+        '-ec', '--easy-cross',
         action='store_true',
         help=(
             'Set the scramble with an easy cross.\n'
+            'Default: False.'
+        ),
+    )
+    scramble.add_argument(
+        '-eo', '--edges-oriented',
+        action='store_true',
+        help=(
+            'Set the scramble with edges oriented.\n'
+            'Default: False.'
+        ),
+    )
+    scramble.add_argument(
+        '-xc', '--x-cross',
+        action='store_true',
+        help=(
+            'Set the scramble with a x-cross.\n'
             'Default: False.'
         ),
     )

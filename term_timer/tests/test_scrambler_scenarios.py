@@ -127,7 +127,7 @@ class CubeBuilder:
 
         """
         rng = Random(seed)  # noqa: S311
-        _, cube = scrambler(3, moves, easy_cross=False, rng=rng)
+        _, cube = scrambler(3, moves, rng=rng)
         return cube
 
 
@@ -446,7 +446,7 @@ class TestIssueBTDeltaInconsistency(unittest.TestCase):
         """Set up a seeded RNG and a WCA scramble + canonical cube."""
         self.rng = Random(42)  # noqa: S311
         self.wca_scramble, self.canonical_cube = scrambler(
-            3, 0, easy_cross=False, rng=self.rng,
+            3, 0, rng=self.rng,
         )
 
     def simulate_bt_delta(self, bt_cube: VCube) -> Algorithm:
@@ -776,7 +776,3 @@ class TestOrientationBTInteraction(unittest.TestCase):
                 f'Orientation {orient_str}: scramble should have no rotation '
                 f'moves but got: {result.scramble}',
             )
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -7,6 +7,7 @@ from cubing_algs.cases.case import Case
 from cubing_algs.parsing import parse_moves
 from cubing_algs.scrambler.nxn import scramble
 from cubing_algs.scrambler.steps import scramble_easy_cross
+from cubing_algs.scrambler.steps import scramble_edges_oriented
 from cubing_algs.scrambler.steps import scramble_x_cross
 from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
 from cubing_algs.solver import facelets_to_facelets_algorithm
@@ -21,11 +22,16 @@ if TYPE_CHECKING:
     from term_timer.annotations import TrainingCase
 
 
-def scrambler(cube_size: int, iterations: int,
-              *,
-              easy_cross: bool,
-              rng: Random,
-              raw_scramble: str = '') -> tuple[Algorithm, VCube]:
+def scrambler(  # noqa: PLR0913
+        cube_size: int,
+        iterations: int,
+        *,
+        easy_cross: bool = False,
+        x_cross: bool = False,
+        edges_oriented: bool = False,
+        rng: Random,
+        raw_scramble: str = '',
+) -> tuple[Algorithm, VCube]:
     """
     Generate cube scramble.
 
@@ -39,6 +45,13 @@ def scrambler(cube_size: int, iterations: int,
         scrambled = parse_moves(raw_scramble, trust_input=False)
     elif easy_cross:
         scrambled, _solution = scramble_easy_cross('normal', rng=rng)
+    elif x_cross:
+        scrambled, _solution = scramble_x_cross('normal', rng=rng)
+    elif edges_oriented:
+        scrambled = scramble_edges_oriented(
+            iterations or None,
+            rng=rng,
+        )
     else:
         scrambled = scramble(
             cube_size,
@@ -50,7 +63,7 @@ def scrambler(cube_size: int, iterations: int,
 
     cube.rotate(scrambled)
 
-    if cube_size != 3 or iterations or easy_cross or raw_scramble:
+    if cube_size != 3 or iterations or easy_cross or x_cross or raw_scramble:
         return scrambled, cube
 
     scrambled = facelets_to_facelets_algorithm(

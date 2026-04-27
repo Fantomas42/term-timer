@@ -34,6 +34,8 @@ class Timer(SolveInterface):
             cube_size: int,
             iterations: int,
             easy_cross: bool,
+            x_cross: bool,
+            edges_oriented: bool,
             scramble: str,
             scrambles: list[Algorithm],
             session: str,
@@ -61,6 +63,8 @@ class Timer(SolveInterface):
         self.free_play = free_play
         self.iterations = iterations
         self.easy_cross = easy_cross
+        self.x_cross = x_cross
+        self.edges_oriented = edges_oriented
         self.raw_scramble = scramble
         self.scrambles = scrambles
         self.scramble_index = 0
@@ -281,6 +285,8 @@ class Timer(SolveInterface):
                 cube_size=self.cube_size,
                 iterations=self.iterations,
                 easy_cross=self.easy_cross,
+                x_cross=self.x_cross,
+                edges_oriented=self.edges_oriented,
                 raw_scramble=self.raw_scramble,
                 rng=self.rng,
             )

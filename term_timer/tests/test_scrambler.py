@@ -42,7 +42,6 @@ class TestScramblerRawScramble(unittest.TestCase):
         """Test that scrambler returns (Algorithm, VCube)."""
         algo, cube = scrambler(
             3, 0,
-            easy_cross=False,
             rng=self.rng,
             raw_scramble='R U',
         )
@@ -54,7 +53,6 @@ class TestScramblerRawScramble(unittest.TestCase):
         raw = "R U R' U'"
         _, cube = scrambler(
             3, 0,
-            easy_cross=False,
             rng=self.rng,
             raw_scramble=raw,
         )
@@ -68,7 +66,6 @@ class TestScramblerRawScramble(unittest.TestCase):
         raw = 'R U F'
         result, _ = scrambler(
             3, 0,
-            easy_cross=False,
             rng=self.rng,
             raw_scramble=raw,
         )
@@ -82,7 +79,6 @@ class TestScramblerRawScramble(unittest.TestCase):
         ) as mock_f2f:
             scrambler(
                 3, 0,
-                easy_cross=False,
                 rng=self.rng,
                 raw_scramble='R U',
             )
@@ -124,6 +120,120 @@ class TestScramblerEasyCross(unittest.TestCase):
             mock_ec.assert_called_once()
 
 
+class TestScramblerXCross(unittest.TestCase):
+    """Tests for scrambler function with x_cross=True."""
+
+    def setUp(self) -> None:
+        """Set up a seeded RNG for reproducibility."""
+        self.rng = Random(42)  # noqa: S311
+
+    def test_returns_algorithm_and_vcube(self) -> None:
+        """Test that scrambler with x_cross=True returns correct types."""
+        algo, cube = scrambler(3, 0, x_cross=True, rng=self.rng)
+        self.assertIsInstance(algo, Algorithm)
+        self.assertIsInstance(cube, VCube)
+
+    def test_cube_is_scrambled(self) -> None:
+        """Test that the returned cube is not in the solved state."""
+        _, cube = scrambler(3, 0, x_cross=True, rng=self.rng)
+        self.assertNotEqual(cube.state, SOLVED_FACELETS_3x3x3)
+
+    def test_skips_kociemba(self) -> None:
+        """Test that x_cross mode does not call the kociemba solver."""
+        with patch(
+                'term_timer.scrambler.facelets_to_facelets_algorithm',
+        ) as mock_f2f:
+            scrambler(3, 0, x_cross=True, rng=self.rng)
+            mock_f2f.assert_not_called()
+
+    def test_uses_scramble_x_cross(self) -> None:
+        """Test that the scramble_x_cross function is used."""
+        with patch('term_timer.scrambler.scramble_x_cross') as mock_xc:
+            mock_algo = parse_moves('R U')
+            mock_xc.return_value = (mock_algo, Algorithm())
+            scrambler(3, 0, x_cross=True, rng=self.rng)
+            mock_xc.assert_called_once()
+
+
+class TestScramblerEdgesOriented(unittest.TestCase):
+    """Tests for scrambler function with edges_oriented=True."""
+
+    def setUp(self) -> None:
+        """Set up a seeded RNG for reproducibility."""
+        self.rng = Random(42)  # noqa: S311
+
+    def test_returns_algorithm_and_vcube(self) -> None:
+        """
+        Test that scrambler with edges_oriented=True
+        returns correct types.
+        """
+        algo, cube = scrambler(3, 0, edges_oriented=True, rng=self.rng)
+        self.assertIsInstance(algo, Algorithm)
+        self.assertIsInstance(cube, VCube)
+
+    def test_cube_is_scrambled(self) -> None:
+        """Test that the returned cube is not in the solved state."""
+        _, cube = scrambler(3, 0, edges_oriented=True, rng=self.rng)
+        self.assertNotEqual(cube.state, SOLVED_FACELETS_3x3x3)
+
+    def test_uses_scramble_edges_oriented(self) -> None:
+        """Test that the scramble_edges_oriented function is used."""
+        with patch(
+                'term_timer.scrambler.scramble_edges_oriented',
+        ) as mock_eo:
+            mock_eo.return_value = parse_moves('R U')
+            with patch(
+                    'term_timer.scrambler.facelets_to_facelets_algorithm',
+            ) as mock_f2f:
+                mock_f2f.return_value = parse_moves('R U')
+                scrambler(3, 0, edges_oriented=True, rng=self.rng)
+            mock_eo.assert_called_once()
+
+    def test_3x3_no_iterations_uses_kociemba(self) -> None:
+        """Test that 3x3 edges_oriented without iterations calls kociemba."""
+        with patch(
+                'term_timer.scrambler.facelets_to_facelets_algorithm',
+        ) as mock_f2f:
+            mock_f2f.return_value = parse_moves('R U')
+            scrambler(3, 0, edges_oriented=True, rng=self.rng)
+            mock_f2f.assert_called_once()
+
+    def test_with_iterations_skips_kociemba(self) -> None:
+        """Test that edges_oriented with iterations skips kociemba."""
+        with patch(
+                'term_timer.scrambler.facelets_to_facelets_algorithm',
+        ) as mock_f2f:
+            scrambler(3, 10, edges_oriented=True, rng=self.rng)
+            mock_f2f.assert_not_called()
+
+    def test_passes_iterations_to_scramble_edges_oriented(self) -> None:
+        """Test that iterations is passed through to scramble_edges_oriented."""
+        with patch(
+                'term_timer.scrambler.scramble_edges_oriented',
+        ) as mock_eo:
+            mock_eo.return_value = parse_moves('R U')
+            scrambler(3, 10, edges_oriented=True, rng=self.rng)
+            mock_eo.assert_called_once_with(10, rng=self.rng)
+
+    def test_zero_iterations_passes_none_to_scramble_edges_oriented(
+            self,
+    ) -> None:
+        """
+        Test that iterations=0 is converted to None
+        for scramble_edges_oriented.
+        """
+        with patch(
+                'term_timer.scrambler.scramble_edges_oriented',
+        ) as mock_eo:
+            mock_eo.return_value = parse_moves('R U')
+            with patch(
+                    'term_timer.scrambler.facelets_to_facelets_algorithm',
+            ) as mock_f2f:
+                mock_f2f.return_value = parse_moves('R U')
+                scrambler(3, 0, edges_oriented=True, rng=self.rng)
+            mock_eo.assert_called_once_with(None, rng=self.rng)
+
+
 class TestScramblerNxN(unittest.TestCase):
     """Tests for scrambler function for NxN cubes."""
 
@@ -133,13 +243,13 @@ class TestScramblerNxN(unittest.TestCase):
 
     def test_4x4_scramble_returns_correct_types(self) -> None:
         """Test that a 4x4 scramble returns Algorithm and VCube."""
-        algo, cube = scrambler(4, 40, easy_cross=False, rng=self.rng)
+        algo, cube = scrambler(4, 40, rng=self.rng)
         self.assertIsInstance(algo, Algorithm)
         self.assertIsInstance(cube, VCube)
 
     def test_4x4_cube_is_scrambled(self) -> None:
         """Test that a 4x4 cube is not in the solved state after scrambling."""
-        _, cube = scrambler(4, 40, easy_cross=False, rng=self.rng)
+        _, cube = scrambler(4, 40, rng=self.rng)
         solved_4x4 = VCube(size=4).state
         self.assertNotEqual(cube.state, solved_4x4)
 
@@ -148,7 +258,7 @@ class TestScramblerNxN(unittest.TestCase):
         with patch(
                 'term_timer.scrambler.facelets_to_facelets_algorithm',
         ) as mock_f2f:
-            scrambler(3, 20, easy_cross=False, rng=self.rng)
+            scrambler(3, 20, rng=self.rng)
             mock_f2f.assert_not_called()
 
     def test_3x3_no_options_uses_kociemba(self) -> None:
@@ -157,12 +267,12 @@ class TestScramblerNxN(unittest.TestCase):
                 'term_timer.scrambler.facelets_to_facelets_algorithm',
         ) as mock_f2f:
             mock_f2f.return_value = parse_moves('R U')
-            scrambler(3, 0, easy_cross=False, rng=self.rng)
+            scrambler(3, 0, rng=self.rng)
             mock_f2f.assert_called_once()
 
     def test_3x3_no_options_returns_correct_types(self) -> None:
         """Test that 3x3 plain scramble returns correct types."""
-        algo, cube = scrambler(3, 0, easy_cross=False, rng=self.rng)
+        algo, cube = scrambler(3, 0, rng=self.rng)
         self.assertIsInstance(algo, Algorithm)
         self.assertIsInstance(cube, VCube)
         self.assertNotEqual(cube.state, SOLVED_FACELETS_3x3x3)
@@ -178,7 +288,7 @@ class TestScramblerCubeStateConsistency(unittest.TestCase):
     def test_raw_scramble_cube_state_matches_manual_application(self) -> None:
         """Test cube state from raw_scramble matches manually applied moves."""
         raw = "L' R U2 F D'"
-        _, cube = scrambler(3, 0, easy_cross=False, rng=self.rng,
+        _, cube = scrambler(3, 0, rng=self.rng,
                             raw_scramble=raw)
         expected = VCube(size=3)
         expected.rotate(parse_moves(raw, trust_input=False))
@@ -186,14 +296,14 @@ class TestScramblerCubeStateConsistency(unittest.TestCase):
 
     def test_different_seeds_give_different_scrambles(self) -> None:
         """Test that different RNG seeds produce different scrambles."""
-        _, cube1 = scrambler(3, 20, easy_cross=False, rng=Random(1))  # noqa: S311
-        _, cube2 = scrambler(3, 20, easy_cross=False, rng=Random(99))  # noqa: S311
+        _, cube1 = scrambler(3, 20, rng=Random(1))  # noqa: S311
+        _, cube2 = scrambler(3, 20, rng=Random(99))  # noqa: S311
         self.assertNotEqual(cube1.state, cube2.state)
 
     def test_same_seed_gives_same_scramble(self) -> None:
         """Test that the same RNG seed produces the same scramble."""
-        _, cube1 = scrambler(3, 20, easy_cross=False, rng=Random(42))  # noqa: S311
-        _, cube2 = scrambler(3, 20, easy_cross=False, rng=Random(42))  # noqa: S311
+        _, cube1 = scrambler(3, 20, rng=Random(42))  # noqa: S311
+        _, cube2 = scrambler(3, 20, rng=Random(42))  # noqa: S311
         self.assertEqual(cube1.state, cube2.state)
 
 

@@ -31,7 +31,7 @@ from term_timer.timer import Timer
 from term_timer.trainer import Trainer
 
 
-async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912
+async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
     """
     Run speedcubing timer with scrambles and solve tracking.
 
@@ -61,6 +61,10 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912
             session_parts.append(f'seed-{ options.seed }')
         if options.easy_cross:
             session_parts.append('easy-cross')
+        elif options.x_cross:
+            session_parts.append('x-cross')
+        elif options.edges_oriented:
+            session_parts.append('edges-oriented')
         elif options.iterations:
             session_parts.append(f'iterations-{ options.iterations }')
 
@@ -76,6 +80,8 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912
         cube_size=cube,
         iterations=options.iterations,
         easy_cross=options.easy_cross,
+        x_cross=options.x_cross,
+        edges_oriented=options.edges_oriented,
         scramble=options.scramble,
         scrambles=scrambles,
         session=session,
