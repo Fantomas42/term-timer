@@ -1080,10 +1080,26 @@ def scramble_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
     scramble = parser.add_argument_group('Scramble')
     scramble.add_argument(
-        '-e', '--easy-cross',
+        '-ec', '--easy-cross',
         action='store_true',
         help=(
             'Set the scrambles with an easy cross.\n'
+            'Default: False.'
+        ),
+    )
+    scramble.add_argument(
+        '-eo', '--edges-oriented',
+        action='store_true',
+        help=(
+            'Set the scrambles with edges oriented.\n'
+            'Default: False.'
+        ),
+    )
+    scramble.add_argument(
+        '-xc', '--x-cross',
+        action='store_true',
+        help=(
+            'Set the scrambles with a x-cross.\n'
             'Default: False.'
         ),
     )

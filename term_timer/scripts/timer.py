@@ -330,6 +330,8 @@ def manage(command: str, options: Namespace) -> int:
             scrambles=options.scrambles,
             iterations=options.iterations,
             easy_cross=options.easy_cross,
+            x_cross=options.x_cross,
+            edges_oriented=options.edges_oriented,
             show_cube=options.show_cube,
             linear=options.linear,
             no_color=options.no_color,

@@ -317,6 +317,8 @@ class ScrambleManager:
             scrambles: int,
             iterations: int,
             easy_cross: bool,
+            x_cross: bool,
+            edges_oriented: bool,
             show_cube: bool,
             linear: bool,
             no_color: bool,
@@ -332,6 +334,8 @@ class ScrambleManager:
             scrambles: The number of scrambles to generate.
             iterations: The number of random moves per scramble (0 for auto).
             easy_cross: Whether to generate scrambles with easy crosses.
+            x_cross: Whether to generate scrambles with x-cross.
+            edges_oriented: Whether to generate scrambles with edges oriented.
             show_cube: Whether to display visual cube representations.
             linear: Wether to display the cube in linear.
             no_color: Do not use color to display the cube.
@@ -344,6 +348,8 @@ class ScrambleManager:
         self.scrambles = scrambles
         self.iterations = iterations
         self.easy_cross = easy_cross
+        self.x_cross = x_cross
+        self.edges_oriented = edges_oriented
         self.show_cube = show_cube
         self.linear = linear
         self.no_color = no_color
@@ -374,6 +380,8 @@ class ScrambleManager:
                 cube_size=self.cube_size,
                 iterations=self.iterations,
                 easy_cross=self.easy_cross,
+                x_cross=self.x_cross,
+                edges_oriented=self.edges_oriented,
                 rng=self.rng,
             )
             scramble_line = (
@@ -391,6 +399,10 @@ class ScrambleManager:
                 scramble_line += (
                     f' [comment]{ format_float(scrambled_percent) }%[/comment]'
                 )
+                if self.edges_oriented:
+                    scramble_line += (
+                        ' [comment]EO[/comment]'
+                    )
 
             console.print(scramble_line)
 
@@ -432,6 +444,10 @@ class ScrambleManager:
 
         if self.easy_cross:
             params.append('- Easy Cross: Yes')
+        elif self.x_cross:
+            params.append('- X-Cross: Yes')
+        elif self.edges_oriented:
+            params.append('- Edges Oriented: Yes')
 
         if params:
             output_lines.extend(['**Customization:**', *params])
@@ -444,6 +460,8 @@ class ScrambleManager:
                 cube_size=self.cube_size,
                 iterations=self.iterations,
                 easy_cross=self.easy_cross,
+                x_cross=self.x_cross,
+                edges_oriented=self.edges_oriented,
                 rng=self.rng,
             )
 
