@@ -562,3 +562,147 @@ class TestRandomTraining(unittest.TestCase):
             self.cases, self.orientation, Random(99),  # noqa: S311
         )
         self.assertEqual(case1.code, case2.code)
+
+
+class TestScramblerEasyCrossOrientation(unittest.TestCase):
+    """
+    Tests for orientation-aware easy_cross scramble generation.
+
+    scramble_easy_cross() produces a scramble designed for use as
+    ``z2 + scramble``: after applying z2 (DF orientation) then the scramble,
+    the cross is easy on U (user's bottom). When the user's orientation is DF
+    the scrambler must pre-translate the scramble so that Timer's reorient()
+    restores the original, and must set cube.state to the physical state the
+    user ends up with (z2 applied before the scramble).
+
+    Expected values are pre-computed with seed 42 for deterministic checks.
+    UF orientation leaves the canonical output unchanged; DF orientation must
+    produce the adjusted scramble and cube state shown below.
+    """
+
+    def setUp(self) -> None:
+        """Set up a seeded RNG for reproducibility."""
+        self.rng = Random(42)  # noqa: S311
+
+    def test_uf_orientation_scramble(self) -> None:
+        """UF orientation returns the unmodified easy_cross scramble."""
+        scramble, _ = scrambler(3, 0, easy_cross=True, rng=self.rng)
+        self.assertEqual(
+            str(scramble),
+            "R L' U' B R F2 R' D R2 U' L' B2 U R2 U' F2 U' F2 D' R2 D",
+        )
+
+    def test_uf_orientation_cube_state(self) -> None:
+        """UF orientation returns the unmodified easy_cross cube state."""
+        _, cube = scrambler(3, 0, easy_cross=True, rng=self.rng)
+        self.assertEqual(cube.orientation, 'UF')
+        self.assertEqual(
+            cube.state,
+            'FDBUUFFUDBLRDRUBLFUBLLFBLRUFBRRDDUBURFRRLUBFDDFDRBDLLL',
+        )
+
+    def test_df_orientation_scramble(self) -> None:
+        """
+        DF orientation returns a pre-translated scramble.
+
+        When Timer calls reorient() on this scramble the original canonical
+        scramble is recovered, so the display becomes ``z2 original_scramble``
+        which leaves U cross easy after the solution is applied.
+        """
+        scramble, _ = scrambler(
+            3, 0, easy_cross=True, rng=self.rng,
+            orientation_moves=Algorithm.parse_moves('z2'),
+        )
+        self.assertEqual(
+            str(scramble),
+            "L R' D' B L F2 L' U L2 D' R' B2 D L2 D' F2 D' F2 U' L2 U",
+        )
+
+    def test_df_orientation_cube_state(self) -> None:
+        """
+        DF orientation returns the cube state produced by z2
+        then the original scramble.
+
+        This is the physical cube state the user ends up with after applying
+        the displayed ``z2 scramble`` sequence to a solved cube.
+        """
+        _, cube = scrambler(
+            3, 0, easy_cross=True, rng=self.rng,
+            orientation_moves=Algorithm.parse_moves('z2'),
+        )
+        self.assertEqual(cube.orientation, 'UF')
+        self.assertEqual(
+            cube.state,
+            'DBDUULLBFUFBDRLLFLDLRBFRRBDUDFFDDBUFFRBDLULRBRRRUBLUFU',
+        )
+        solution = "z2 F U2 L' D2 F2"
+        cube.rotate(solution)
+        self.assertEqual(
+            cube.state,
+            'UDULDDDBDFFFFLDLLBLRRBFLUFBFUDUUUBURLBFRRDURLRRBLBFDBR',
+        )
+
+
+class TestScramblerXCrossOrientation(unittest.TestCase):
+    """
+    Tests for orientation-aware x_cross scramble generation.
+
+    x_cross has the same orientation requirement as easy_cross: the canonical
+    scramble from scramble_x_cross() is designed for ``z2 + scramble`` usage.
+    The scrambler must apply the same pre-translation when orientation != 'UF'.
+
+    Expected values are pre-computed with seed 42.
+    """
+
+    def setUp(self) -> None:
+        """Set up a seeded RNG for reproducibility."""
+        self.rng = Random(42)  # noqa: S311
+
+    def test_uf_orientation_scramble(self) -> None:
+        """UF orientation returns the unmodified x_cross scramble."""
+        scramble, _ = scrambler(3, 0, x_cross=True, rng=self.rng)
+        self.assertEqual(
+            str(scramble),
+            "U' B' D' L2 B' R L2 U' D' F' D B2 U2 B2 U' L2 F2 U R2 L2",
+        )
+
+    def test_uf_orientation_cube_state(self) -> None:
+        """UF orientation returns the unmodified x_cross cube state."""
+        _, cube = scrambler(3, 0, x_cross=True, rng=self.rng)
+        self.assertEqual(cube.orientation, 'UF')
+        self.assertEqual(
+            cube.state,
+            'DDDFUDLUFRLBFRDLFBURDBFUDLUBUBDDLUBULRFBLUFRLRFFBBLRRR',
+        )
+
+    def test_df_orientation_scramble(self) -> None:
+        """DF orientation returns the pre-translated x_cross scramble."""
+        scramble, _ = scrambler(
+            3, 0, x_cross=True, rng=self.rng,
+            orientation_moves=Algorithm.parse_moves('z2'),
+        )
+        self.assertEqual(
+            str(scramble),
+            "D' B' U' R2 B' L R2 D' U' F' U B2 D2 B2 D' R2 F2 D L2 R2",
+        )
+
+    def test_df_orientation_cube_state(self) -> None:
+        """
+        DF orientation returns the cube state produced by z2
+        then the original x_cross scramble.
+        """
+        _, cube = scrambler(
+            3, 0, x_cross=True, rng=self.rng,
+            orientation_moves=Algorithm.parse_moves('z2'),
+        )
+        self.assertEqual(cube.orientation, 'UF')
+        self.assertEqual(
+            cube.state,
+            'DBDRUUBDBRLFDRBFLRDRUDFBULDFDRUDFUUUBFRULFBRLLLLRBBFFL',
+        )
+        solution = "z2 R2 F U2 L' D2 F2 R'"
+        cube.rotate(solution)
+        self.assertEqual(
+            cube.state,
+            'DDDRDDDBUBFFLLBLLUFLRLFFFFFUUUUUUBUBRDRFRDDRRLBBRBRLBL',
+        )

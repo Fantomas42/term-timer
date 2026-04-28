@@ -289,6 +289,7 @@ class Timer(SolveInterface):
                 edges_oriented=self.edges_oriented,
                 raw_scramble=self.raw_scramble,
                 rng=self.rng,
+                orientation_moves=self.cube_orientation_moves,
             )
 
         if self.bluetooth_cube and not self.bluetooth_cube_is_solved:

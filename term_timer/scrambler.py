@@ -14,6 +14,7 @@ from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.rotation import compress_ending_rotations
+from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_RIGHT_HANDED
@@ -31,12 +32,13 @@ def scrambler(  # noqa: PLR0913
         edges_oriented: bool = False,
         rng: Random,
         raw_scramble: str = '',
+        orientation_moves: Algorithm | None = None,
 ) -> tuple[Algorithm, VCube]:
     """
     Generate cube scramble.
 
     Returns:
-        Tuple of (scramble algorithm, scrambled cube state).
+        Tuple of (scramble algorithm, scrambled cube on canonical orientation).
 
     """
     cube = VCube(size=cube_size)
@@ -45,8 +47,12 @@ def scrambler(  # noqa: PLR0913
         scrambled = parse_moves(raw_scramble, trust_input=False)
     elif easy_cross:
         scrambled, _solution = scramble_easy_cross('normal', rng=rng)
+        if orientation_moves:
+            scrambled = translate_moves(orientation_moves)(scrambled)
     elif x_cross:
         scrambled, _solution = scramble_x_cross('normal', rng=rng)
+        if orientation_moves:
+            scrambled = translate_moves(orientation_moves)(scrambled)
     elif edges_oriented:
         scrambled = scramble_edges_oriented(
             iterations or None,
