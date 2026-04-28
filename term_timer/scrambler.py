@@ -12,9 +12,9 @@ from cubing_algs.scrambler.steps import scramble_x_cross
 from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
 from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.degrip import degrip_full_moves
+from cubing_algs.transform.degrip import degrip_moves
 from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.rotation import compress_ending_rotations
-from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_RIGHT_HANDED
@@ -48,11 +48,11 @@ def scrambler(  # noqa: PLR0913
     elif easy_cross:
         scrambled, _solution = scramble_easy_cross('normal', rng=rng)
         if orientation_moves:
-            scrambled = translate_moves(orientation_moves)(scrambled)
+            scrambled = degrip_moves(orientation_moves + scrambled)
     elif x_cross:
         scrambled, _solution = scramble_x_cross('normal', rng=rng)
         if orientation_moves:
-            scrambled = translate_moves(orientation_moves)(scrambled)
+            scrambled = degrip_moves(orientation_moves + scrambled)
     elif edges_oriented:
         scrambled = scramble_edges_oriented(
             iterations or None,

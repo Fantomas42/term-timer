@@ -642,6 +642,47 @@ class TestScramblerEasyCrossOrientation(unittest.TestCase):
             'UDULDDDBDFFFFLDLLBLRRBFLUFBFUDUUUBURLBFRRDURLRRBLBFDBR',
         )
 
+    def test_fr_orientation_scramble(self) -> None:
+        """
+        FR orientation returns a pre-translated scramble.
+
+        When Timer calls reorient() on this scramble the original canonical
+        scramble is recovered, so the display becomes ``x y original_scramble``
+        which leaves U cross easy after the solution is applied.
+        """
+        scramble, _ = scrambler(
+            3, 0, easy_cross=True, rng=self.rng,
+            orientation_moves=Algorithm.parse_moves('x y'),
+        )
+        self.assertEqual(
+            str(scramble),
+            "U D' F' L U R2 U' B U2 F' D' L2 F U2 F' R2 F' R2 B' U2 B",
+        )
+
+    def test_fr_orientation_cube_state(self) -> None:
+        """
+        FR orientation returns the cube state produced by x y
+        then the original scramble.
+
+        This is the physical cube state the user ends up with after applying
+        the displayed ``x y scramble`` sequence to a solved cube.
+        """
+        _, cube = scrambler(
+            3, 0, easy_cross=True, rng=self.rng,
+            orientation_moves=Algorithm.parse_moves('x y'),
+        )
+        self.assertEqual(cube.orientation, 'UF')
+        self.assertEqual(
+            cube.state,
+            'RDLFUBUDLDLFLRUFDDLRBBFFRFRURUUDFLRBDUBDLRDBBUBFLBLRUF',
+        )
+        solution = "x y F U2 L' D2 F2"
+        cube.rotate(solution)
+        self.assertEqual(
+            cube.state,
+            'BFBUFFFLFRRRRUFUULUDDLRUBRLRBFBBBLBDULRDDFBDUDDLULRFLD',
+        )
+
 
 class TestScramblerXCrossOrientation(unittest.TestCase):
     """
@@ -705,4 +746,36 @@ class TestScramblerXCrossOrientation(unittest.TestCase):
         self.assertEqual(
             cube.state,
             'DDDRDDDBUBFFLLBLLUFLRLFFFFFUUUUUUBUBRDRFRDDRRLBBRBRLBL',
+        )
+
+    def test_fr_orientation_scramble(self) -> None:
+        """FR orientation returns the pre-translated x_cross scramble."""
+        scramble, _ = scrambler(
+            3, 0, x_cross=True, rng=self.rng,
+            orientation_moves=Algorithm.parse_moves('x y'),
+        )
+        self.assertEqual(
+            str(scramble),
+            "F' L' B' D2 L' U D2 F' B' R' B L2 F2 L2 F' D2 R2 F U2 D2",
+        )
+
+    def test_fr_orientation_cube_state(self) -> None:
+        """
+        FR orientation returns the cube state produced by "x y"
+        then the original x_cross scramble.
+        """
+        _, cube = scrambler(
+            3, 0, x_cross=True, rng=self.rng,
+            orientation_moves=Algorithm.parse_moves('x y'),
+        )
+        self.assertEqual(cube.orientation, 'UF')
+        self.assertEqual(
+            cube.state,
+            'LRDBURLDUBFFURDFLBBBRBFFBRDDURLDFRUDULUULRUDRLDFFBLLBF',
+        )
+        solution = "x y R2 F U2 L' D2 F2 R'"
+        cube.rotate(solution)
+        self.assertEqual(
+            cube.state,
+            'FFFDFFFLBLRRUULUUBRUDURRRRRBBBBBBLBLDFDRDFFDDULLDLDULU',
         )
