@@ -1,18 +1,15 @@
 """
-Scenario helpers and reproducers for the design issues in DESIGN_ISSUES.md.
+Scenario helpers and reproducers for scrambler interactions.
 
-TODO(me): Update or remove
-
-Each section maps to a numbered issue. The helpers are designed to construct
-specific cube states and run specific conditions so that the problematic
-behaviour can be observed in isolation, without a physical Bluetooth cube.
+The helpers are designed to construct specific cube states
+and run specific conditions so that the problematic behaviour
+can be observed in isolation, without a physical Bluetooth cube.
 """
 import unittest
 from dataclasses import dataclass
 from random import Random
 
 from cubing_algs.algorithm import Algorithm
-from cubing_algs.annotations import CubeOrientation
 from cubing_algs.cases import get_case
 from cubing_algs.cases.case import Case
 from cubing_algs.move import Move
@@ -21,8 +18,6 @@ from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.vcube import VCube
 
 from term_timer.annotations import TrainingCase
-from term_timer.methods.base import FaceletAnalyser
-from term_timer.orientation import get_orientation_moves
 from term_timer.scrambler import scrambler
 from term_timer.scrambler import trainer
 
@@ -235,7 +230,7 @@ def run_trainer_scenario(  # noqa: PLR0913
         collection: str = 'OLL',
         *,
         bt_cube: VCube | None = None,
-        orientation: CubeOrientation = 'UF',
+        orientation_moves: Algorithm | None = None,
         seed: int = 42,
 ) -> TrainerScenarioResult:
     """
@@ -246,7 +241,7 @@ def run_trainer_scenario(  # noqa: PLR0913
         case_codes: List of case codes to include (e.g. ['01', '02']).
         collection: Collection name for non-cross steps (e.g. 'OLL', 'F2L').
         bt_cube: Optional VCube to use as Bluetooth cube base.
-        orientation: Orientation string passed to get_orientation_moves().
+        orientation_moves: Orientation moves.
         seed: RNG seed for reproducibility.
 
     Returns:
@@ -254,7 +249,6 @@ def run_trainer_scenario(  # noqa: PLR0913
 
     """
     rng = Random(seed)  # noqa: S311
-    orientation_moves = get_orientation_moves(orientation)
 
     cases = []
     for code in case_codes:
@@ -270,8 +264,7 @@ def run_trainer_scenario(  # noqa: PLR0913
     bt_initial = bt_cube.state if bt_cube else None
 
     selected_case, scramble, solution, target_cube = trainer(
-        step, cases, orientation_moves, rng,
-        bluetooth_cube=bt_cube,
+        step, cases, rng, orientation_moves,
     )
 
     return TrainerScenarioResult(
@@ -283,152 +276,6 @@ def run_trainer_scenario(  # noqa: PLR0913
         base_was_solved=base_was_solved,
         bt_cube_initial=bt_initial,
     )
-
-
-# ---------------------------------------------------------------------------
-# Issue 1 -- Cross modes + Bluetooth assume a solved base
-# ---------------------------------------------------------------------------
-
-class TestIssue1CrossBTBase(unittest.TestCase):
-    """
-    Reproduce Issue 1: cross-mode trainer() with an unsolved BT cube.
-
-    The cross scramble generators (scramble_easy_cross, scramble_x_cross,
-    and the generic scrambler) all assume a solved starting cube. When a BT
-    cube is connected and not solved, the facelets_scrambled target becomes
-    unreachable — the user cannot arrive at it by applying the scramble to
-    their actual cube.
-    """
-
-    @staticmethod
-    def _run_cross(
-            step: str, bt_cube: VCube | None, seed: int = 42,
-    ) -> tuple[Algorithm, str]:
-        """
-        Run a cross-mode trainer call.
-
-        Args:
-            step: Cross mode step ('cross', 'ecross', or 'xcross').
-            bt_cube: Optional BT cube to use as base.
-            seed: RNG seed.
-
-        Returns:
-            Tuple of (scramble algorithm, target facelet state).
-
-        """
-        rng = Random(seed)  # noqa: S311
-        oll_case = get_case('OLL', '01')
-        cases = [
-            TrainingCase(
-                case=oll_case,
-                best_setups=list(oll_case.setup_algorithms[:2]),
-            ),
-        ]
-        _, scramble, _, cube = trainer(
-            step, cases, parse_moves(''), rng,
-            bluetooth_cube=bt_cube,
-        )
-        return scramble, cube.state
-
-    def test_ecross_solved_bt_target_is_reachable(self) -> None:
-        """
-        Baseline: when BT cube is solved, applying the scramble reaches
-        facelets_scrambled exactly.
-        """
-        bt = CubeBuilder.solved()
-        scramble, target = self._run_cross('ecross', bt)
-
-        reached = bt.copy()
-        reached.rotate(scramble)
-        self.assertEqual(
-            reached.state, target,
-            'Solved BT cube + scramble should equal target.',
-        )
-
-    @unittest.expectedFailure
-    def test_ecross_unsolved_bt_target_is_same_as_solved_base(self) -> None:
-        """
-        Correct behaviour (not yet implemented): when BT cube is unsolved,
-        the cross-mode target should still equal the target produced from a
-        solved base, because cross scramble generators are designed for a
-        solved starting cube.
-
-        Currently FAILS — trainer() uses the unsolved BT cube as the base,
-        so the two targets diverge. Remove @expectedFailure once Issue 1 is
-        fixed (cross modes should always use a fresh solved VCube as base).
-        """
-        bt = CubeBuilder.from_moves('R U R U')
-        _, target_with_bt = self._run_cross('ecross', bt)
-        _, target_no_bt = self._run_cross('ecross', CubeBuilder.solved())
-
-        self.assertEqual(
-            target_with_bt, target_no_bt,
-            'After fix: target must be identical regardless of BT cube state.',
-        )
-
-    @unittest.expectedFailure
-    def test_cross_unsolved_bt_target_is_same_as_solved_base(self) -> None:
-        """
-        Correct behaviour (not yet implemented): same as above for cross mode.
-
-        Currently FAILS — same root cause as ecross.
-        Remove @expectedFailure once Issue 1 is fixed.
-        """
-        bt = CubeBuilder.partially_scrambled(seed=7)
-        self.assertFalse(bt.is_solved)
-
-        _, target_with_bt = self._run_cross('cross', bt)
-        _, target_no_bt = self._run_cross('cross', CubeBuilder.solved())
-
-        self.assertEqual(target_with_bt, target_no_bt)
-
-    def test_ecross_bt_tracking_is_self_consistent(self) -> None:
-        """
-        Regardless of the base bug, the BT cube + scramble always reaches
-        facelets_scrambled. This means the scramble-completion check fires
-        at the right physical moment — but on the wrong target state.
-
-        This guard test must keep passing after the fix (the BT tracking
-        itself is correct; only the choice of base cube is wrong).
-        """
-        bt = CubeBuilder.from_moves('R U R U')
-        scramble, facelets_scrambled = self._run_cross('ecross', bt)
-
-        bt_after = bt.copy()
-        bt_after.rotate(scramble)
-        self.assertEqual(
-            bt_after.state, facelets_scrambled,
-            'BT cube + scramble must equal facelets_scrambled.',
-        )
-
-    @unittest.expectedFailure
-    def test_ecross_facelets_scrambled_matches_solved_base(self) -> None:
-        """
-        Correct behaviour (not yet implemented): facelets_scrambled must equal
-        the state reached by applying the scramble to a fresh solved cube,
-        regardless of what the BT cube state was at the start.
-
-        Currently FAILS — unsolved BT base shifts the stored target.
-        Remove @expectedFailure once Issue 1 is fixed.
-        """
-        bt = CubeBuilder.from_moves('R U R U')
-        scramble, facelets_scrambled = self._run_cross('ecross', bt)
-
-        solved_after = CubeBuilder.solved()
-        solved_after.rotate(scramble)
-        self.assertEqual(
-            facelets_scrambled, solved_after.state,
-            'After fix: facelets_scrambled must equal solved + scramble.',
-        )
-
-    def test_condition_bt_solved_no_divergence(self) -> None:
-        """Guard: when BT cube starts solved, there is no divergence."""
-        bt = CubeBuilder.solved()
-        scramble, facelets_scrambled = self._run_cross('ecross', bt)
-
-        solved_after = CubeBuilder.solved()
-        solved_after.rotate(scramble)
-        self.assertEqual(facelets_scrambled, solved_after.state)
 
 
 class TestIssueBTDeltaInconsistency(unittest.TestCase):
@@ -547,190 +394,6 @@ class TestIssueBTDeltaInconsistency(unittest.TestCase):
         self.assertEqual(cube_via_wca.state, cube_via_delta.state)
 
 
-# ---------------------------------------------------------------------------
-# Issue 5 -- F2L training with Bluetooth: setup applied to partial base
-# ---------------------------------------------------------------------------
-
-class TestIssue5PartialBTBase(unittest.TestCase):
-    """
-    Reproduce Issue 5: random_training() setup algorithms assume a fully
-    solved cube. When a BT cube is connected and only the current training
-    step is done (not the full cube), the target state becomes inconsistent
-    with a fresh solve.
-
-    OLL training is coincidentally unaffected (OLL and PLL are independent
-    layers). F2L training is broken — the F2L setup applied to a cube with
-    existing F2L structure produces a different target.
-    """
-
-    @staticmethod
-    def _run_oll(
-            bt_cube: VCube | None = None, seed: int = 42,
-    ) -> TrainerScenarioResult:
-        """
-        Run an OLL trainer scenario.
-
-        Args:
-            bt_cube: Optional BT cube to use as base.
-            seed: RNG seed.
-
-        Returns:
-            TrainerScenarioResult for the OLL scenario.
-
-        """
-        return run_trainer_scenario(
-            'oll', ['01', '02', '03'],
-            collection='OLL',
-            bt_cube=bt_cube,
-            seed=seed,
-        )
-
-    @staticmethod
-    def _run_f2l(
-            bt_cube: VCube | None = None, seed: int = 42,
-    ) -> TrainerScenarioResult:
-        """
-        Run an F2L trainer scenario.
-
-        Args:
-            bt_cube: Optional BT cube to use as base.
-            seed: RNG seed.
-
-        Returns:
-            TrainerScenarioResult for the F2L scenario.
-
-        """
-        return run_trainer_scenario(
-            'f2l', ['01', '02', '03'],
-            collection='F2L',
-            bt_cube=bt_cube,
-            seed=seed,
-        )
-
-    @unittest.expectedFailure
-    def test_oll_training_target_is_same_as_solved_base(self) -> None:
-        """
-        Correct behaviour (not yet implemented): facelets_scrambled must be
-        the same whether the BT cube is partially solved or fresh — the OLL
-        setup assumes a fully solved cube, so the base must always be solved.
-
-        Currently FAILS — trainer() copies the partial BT state as the base,
-        shifting the stored target.
-        Remove @expectedFailure once Issue 5 is fixed.
-        """
-        bt_cube = CubeBuilder.with_pll_only_scrambled()
-        analyser = FaceletAnalyser()
-        self.assertTrue(analyser.check_step('OLL', bt_cube.state))
-        self.assertFalse(bt_cube.is_solved)
-
-        result_bt = self._run_oll(bt_cube=bt_cube)
-        result_solved = self._run_oll(bt_cube=None)
-
-        self.assertEqual(
-            result_bt.facelets_scrambled,
-            result_solved.facelets_scrambled,
-            'After fix: targets must be equal regardless of BT cube state.',
-        )
-
-    def test_oll_bt_tracking_is_self_consistent(self) -> None:
-        """
-        Guard: even with the wrong target, the BT cube + scramble always
-        reaches facelets_scrambled. The completion check fires at the right
-        physical moment — on the wrong target state.
-
-        This guard must keep passing after the fix.
-        """
-        bt_cube = CubeBuilder.with_pll_only_scrambled()
-        result = self._run_oll(bt_cube=bt_cube)
-
-        bt_after = bt_cube.copy()
-        bt_after.rotate(result.scramble)
-
-        self.assertEqual(
-            bt_after.state, result.facelets_scrambled,
-            'BT cube + scramble must still reach the stored target.',
-        )
-
-    def test_f2l_scramble_is_independent_of_bt_base(self) -> None:
-        """
-        Guard: the scramble algorithm itself is identical whether or not
-        a BT cube is connected. Only the base cube (and hence the target
-        state) changes. This isolates the bug to the base selection, not
-        to the scramble generation.
-        """
-        bt_cube = CubeBuilder.with_f2l_done_oll_scrambled()
-        result_bt = self._run_f2l(bt_cube=bt_cube)
-        result_solved = self._run_f2l(bt_cube=None)
-
-        self.assertEqual(
-            result_bt.scramble, result_solved.scramble,
-            'Scramble algorithm must be identical regardless of BT base.',
-        )
-
-    @unittest.expectedFailure
-    def test_f2l_training_target_is_same_as_solved_base(self) -> None:
-        """
-        Correct behaviour (not yet implemented): facelets_scrambled must equal
-        the target computed from a solved base for all F2L cases.
-
-        Currently FAILS — partial BT base produces a wrong F2L case target.
-        Remove @expectedFailure once Issue 5 is fixed.
-        """
-        bt_cube = CubeBuilder.with_f2l_done_oll_scrambled()
-        analyser = FaceletAnalyser()
-        self.assertTrue(analyser.check_step('Cross', bt_cube.state))
-        self.assertFalse(bt_cube.is_solved)
-
-        result_bt = self._run_f2l(bt_cube=bt_cube)
-        result_solved = self._run_f2l(bt_cube=None)
-
-        self.assertEqual(
-            result_bt.facelets_scrambled,
-            result_solved.facelets_scrambled,
-            'After fix: targets must be equal regardless of BT cube state.',
-        )
-
-    @unittest.expectedFailure
-    def test_f2l_bt_reaches_same_state_as_solved_base(self) -> None:
-        """
-        Correct behaviour (not yet implemented): applying the F2L scramble to
-        the BT cube's starting position must produce the same state as applying
-        it to a solved cube (the completion check must fire on the correct
-        F2L case state).
-
-        Currently FAILS — the two base cubes produce diverging targets.
-        Remove @expectedFailure once Issue 5 is fixed.
-        """
-        bt_cube = CubeBuilder.with_f2l_done_oll_scrambled()
-        result = self._run_f2l(bt_cube=bt_cube)
-
-        bt_after = bt_cube.copy()
-        bt_after.rotate(result.scramble)
-
-        solved_after = CubeBuilder.solved()
-        solved_after.rotate(result.scramble)
-
-        self.assertEqual(
-            bt_after.state, solved_after.state,
-            'After fix: BT path and solved path must reach the same state.',
-        )
-
-    def test_f2l_solved_bt_no_divergence(self) -> None:
-        """Guard: when the BT cube is fully solved, there is no divergence."""
-        bt_cube = CubeBuilder.solved()
-        result_bt = self._run_f2l(bt_cube=bt_cube)
-        result_solved = self._run_f2l(bt_cube=None)
-
-        self.assertEqual(
-            result_bt.facelets_scrambled,
-            result_solved.facelets_scrambled,
-        )
-
-
-# ---------------------------------------------------------------------------
-# Orientation x BT interaction
-# ---------------------------------------------------------------------------
-
 class TestOrientationBTInteraction(unittest.TestCase):
     """
     Verify that orientation does not interfere with BT cube state tracking.
@@ -741,7 +404,7 @@ class TestOrientationBTInteraction(unittest.TestCase):
     but identical target facelet STATES.
     """
 
-    def test_orientation_changes_move_notation_not_target_state(self) -> None:
+    def test_orientation_changes_move_notation(self) -> None:
         """
         The same training case with two different orientations should produce
         different scramble move sequences (notation for display) but arrive at
@@ -750,15 +413,20 @@ class TestOrientationBTInteraction(unittest.TestCase):
         """
         for seed in range(5):
             result_uf = run_trainer_scenario(
-                'oll', ['01'], orientation='UF', seed=seed,
+                'oll', ['01'], seed=seed,
             )
             result_df = run_trainer_scenario(
-                'oll', ['01'], orientation='DF', seed=seed,
+                'oll', ['01'], seed=seed,
+                orientation_moves=parse_moves('z2'),
             )
 
             self.assertNotEqual(
                 str(result_uf.scramble), str(result_df.scramble),
-                f'Seed {seed}: scrambles should differ between UF and DF.',
+                f'Seed {seed}: scrambles must differs between UF and DF.',
+            )
+            self.assertEqual(
+                str(result_uf.solution), str(result_df.solution),
+                f'Seed {seed}: solutions must be equals between UF and DF.',
             )
 
     def test_scramble_from_non_uf_orientation_is_pure_face_moves(self) -> None:
@@ -767,12 +435,14 @@ class TestOrientationBTInteraction(unittest.TestCase):
         should contain no rotation moves regardless of orientation, confirming
         that the sandwich pattern is fully absorbed.
         """
-        for orient_str in ('UF', 'DF', 'UR', 'UB', 'FU', 'RU'):
+        for moves in ('', 'z2', 'x y', 'z', 'y'):
             result = run_trainer_scenario(
-                'oll', ['01', '02'], orientation=orient_str, seed=42,
+                'oll', ['01', '02'],
+                orientation_moves=parse_moves(moves),
+                seed=42,
             )
             self.assertTrue(
                 AlgorithmProbe.is_pure_face_moves(result.scramble),
-                f'Orientation {orient_str}: scramble should have no rotation '
+                f'Orientation {moves}: scramble should have no rotation '
                 f'moves but got: {result.scramble}',
             )

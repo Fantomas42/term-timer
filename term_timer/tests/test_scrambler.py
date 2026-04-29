@@ -318,13 +318,13 @@ class TestTrainerEcross(unittest.TestCase):
 
     def test_returns_four_tuple(self) -> None:
         """Test that trainer returns a four-element tuple."""
-        result = trainer('ecross', self.cases, self.orientation, self.rng)
+        result = trainer('ecross', self.cases, self.rng, self.orientation)
         self.assertEqual(len(result), 4)
 
     def test_ecross_returns_correct_types(self) -> None:
         """Test that ecross trainer returns correct types for each element."""
         case, scramble, solution, cube = trainer(
-            'ecross', self.cases, self.orientation, self.rng,
+            'ecross', self.cases, self.rng, self.orientation,
         )
         self.assertIsInstance(case, Case)
         self.assertIsInstance(scramble, Algorithm)
@@ -334,7 +334,7 @@ class TestTrainerEcross(unittest.TestCase):
     def test_ecross_cube_is_scrambled(self) -> None:
         """Test that ecross returns a scrambled cube."""
         _, _, _, cube = trainer(
-            'ecross', self.cases, self.orientation, self.rng,
+            'ecross', self.cases, self.rng, self.orientation,
         )
         self.assertNotEqual(cube.state, SOLVED_FACELETS_3x3x3)
 
@@ -342,7 +342,7 @@ class TestTrainerEcross(unittest.TestCase):
         """Test that ecross step calls scramble_easy_cross."""
         with patch('term_timer.scrambler.scramble_easy_cross') as mock_ec:
             mock_ec.return_value = (parse_moves('R U'), parse_moves('U R'))
-            trainer('ecross', self.cases, self.orientation, self.rng)
+            trainer('ecross', self.cases, self.rng, self.orientation)
             mock_ec.assert_called_once()
 
 
@@ -358,7 +358,7 @@ class TestTrainerXcross(unittest.TestCase):
     def test_xcross_returns_correct_types(self) -> None:
         """Test that xcross trainer returns correct types."""
         case, scramble, solution, cube = trainer(
-            'xcross', self.cases, self.orientation, self.rng,
+            'xcross', self.cases, self.rng, self.orientation,
         )
         self.assertIsInstance(case, Case)
         self.assertIsInstance(scramble, Algorithm)
@@ -369,7 +369,7 @@ class TestTrainerXcross(unittest.TestCase):
         """Test that xcross step calls scramble_x_cross."""
         with patch('term_timer.scrambler.scramble_x_cross') as mock_xc:
             mock_xc.return_value = (parse_moves('R U'), parse_moves('U R'))
-            trainer('xcross', self.cases, self.orientation, self.rng)
+            trainer('xcross', self.cases, self.rng, self.orientation)
             mock_xc.assert_called_once()
 
 
@@ -385,7 +385,7 @@ class TestTrainerCross(unittest.TestCase):
     def test_cross_returns_correct_types(self) -> None:
         """Test that cross trainer returns correct types."""
         case, scramble, solution, cube = trainer(
-            'cross', self.cases, self.orientation, self.rng,
+            'cross', self.cases, self.rng, self.orientation,
         )
         self.assertIsInstance(case, Case)
         self.assertIsInstance(scramble, Algorithm)
@@ -396,13 +396,13 @@ class TestTrainerCross(unittest.TestCase):
         """Test that cross step uses the scrambler function."""
         with patch('term_timer.scrambler.scrambler') as mock_sc:
             mock_sc.return_value = (parse_moves('R U'), VCube(size=3))
-            trainer('cross', self.cases, self.orientation, self.rng)
+            trainer('cross', self.cases, self.rng, self.orientation)
             mock_sc.assert_called_once()
 
     def test_cross_solution_is_empty(self) -> None:
         """Test that cross step returns an empty solution algorithm."""
         _, _, solution, _ = trainer(
-            'cross', self.cases, self.orientation, self.rng,
+            'cross', self.cases, self.rng, self.orientation,
         )
         self.assertEqual(len(solution), 0)
 
@@ -422,7 +422,7 @@ class TestTrainerOll(unittest.TestCase):
     def test_oll_returns_correct_types(self) -> None:
         """Test that OLL trainer returns correct types."""
         case, scramble, solution, cube = trainer(
-            'oll', self.cases, self.orientation, self.rng,
+            'oll', self.cases, self.rng, self.orientation,
         )
         self.assertIsInstance(case, Case)
         self.assertIsInstance(scramble, Algorithm)
@@ -438,48 +438,16 @@ class TestTrainerOll(unittest.TestCase):
                 parse_moves('R U'),
                 parse_moves('U R'),
             )
-            trainer('oll', self.cases, self.orientation, self.rng)
+            trainer('oll', self.cases, self.rng, self.orientation)
             mock_rt.assert_called_once()
 
     def test_oll_case_matches_selected(self) -> None:
         """Test that the returned case is a valid case from the input list."""
         case, _, _, _ = trainer(
-            'oll', self.cases, self.orientation, self.rng,
+            'oll', self.cases, self.rng, self.orientation,
         )
         valid_case_codes = {tc.case.code for tc in self.cases}
         self.assertIn(case.code, valid_case_codes)
-
-
-class TestTrainerBluetoothCube(unittest.TestCase):
-    """Tests for trainer function with bluetooth_cube parameter."""
-
-    def setUp(self) -> None:
-        """Set up test fixtures."""
-        self.rng = Random(42)  # noqa: S311
-        self.cases = [make_training_case()]
-        self.orientation = parse_moves('')
-
-    def test_with_bluetooth_cube_copies_state(self) -> None:
-        """Test that a provided bluetooth_cube is used as the base state."""
-        bt_cube = VCube(size=3)
-        bt_cube.rotate('R U')
-
-        _, _, _, cube = trainer(
-            'ecross', self.cases, self.orientation, self.rng,
-            bluetooth_cube=bt_cube,
-        )
-
-        self.assertIsInstance(cube, VCube)
-
-    def test_without_bluetooth_cube_uses_solved(self) -> None:
-        """Test that without bluetooth_cube a fresh solved cube is the base."""
-        with patch('term_timer.scrambler.scramble_easy_cross') as mock_ec:
-            fresh_cube = VCube(size=3)
-            mock_ec.return_value = (parse_moves(''), Algorithm())
-            _, _, _, cube = trainer(
-                'ecross', self.cases, self.orientation, self.rng,
-            )
-            self.assertEqual(cube.state, fresh_cube.state)
 
 
 class TestRandomTraining(unittest.TestCase):
@@ -493,17 +461,16 @@ class TestRandomTraining(unittest.TestCase):
             make_training_case('02', 'OLL'),
             make_training_case('03', 'OLL'),
         ]
-        self.orientation = parse_moves('')
 
     def test_returns_three_tuple(self) -> None:
         """Test that random_training returns a three-element tuple."""
-        result = random_training(self.cases, self.orientation, self.rng)
+        result = random_training(self.cases, self.rng)
         self.assertEqual(len(result), 3)
 
     def test_returns_correct_types(self) -> None:
         """Test that random_training returns correct types."""
         case, scramble, solution = random_training(
-            self.cases, self.orientation, self.rng,
+            self.cases, self.rng,
         )
         self.assertIsInstance(case, Case)
         self.assertIsInstance(scramble, Algorithm)
@@ -514,27 +481,16 @@ class TestRandomTraining(unittest.TestCase):
         valid_codes = {tc.case.code for tc in self.cases}
         for _ in range(10):
             case, _, _ = random_training(
-                self.cases, self.orientation, self.rng,
+                self.cases, self.rng,
             )
             self.assertIn(case.code, valid_codes)
 
     def test_solution_matches_case_main_algorithm(self) -> None:
         """Test that the returned solution is the case's main algorithm."""
         case, _, solution = random_training(
-            self.cases, self.orientation, self.rng,
+            self.cases, self.rng,
         )
         self.assertEqual(str(solution), str(case.main_algorithm))
-
-    def test_orientation_moves_incorporated(self) -> None:
-        """Test that orientation moves are included in scramble generation."""
-        orientation = parse_moves('x y')
-        _, algo1, _ = random_training(
-            self.cases, orientation, Random(42),  # noqa: S311
-        )
-        _, algo2, _ = random_training(
-            self.cases, parse_moves(''), Random(42),  # noqa: S311
-        )
-        self.assertNotEqual(str(algo1), str(algo2))
 
     def test_single_case_always_selected(self) -> None:
         """Test that with a single case it is always selected."""
@@ -542,24 +498,24 @@ class TestRandomTraining(unittest.TestCase):
         expected_code = single_cases[0].case.code
         for _ in range(5):
             case, _, _ = random_training(
-                single_cases, self.orientation, self.rng,
+                single_cases, self.rng,
             )
             self.assertEqual(case.code, expected_code)
 
     def test_scramble_transforms_applied(self) -> None:
         """Test that scramble has degrip and rotation compression applied."""
         cases = [make_training_case('01', 'OLL')]
-        _, scramble, _ = random_training(cases, self.orientation, self.rng)
+        _, scramble, _ = random_training(cases, self.rng)
         algo_str = str(scramble)
         self.assertNotIn('@', algo_str)
 
     def test_rng_determines_selection(self) -> None:
         """Test that the same RNG seed produces the same case selection."""
         case1, _, _ = random_training(
-            self.cases, self.orientation, Random(99),  # noqa: S311
+            self.cases, Random(99),  # noqa: S311
         )
         case2, _, _ = random_training(
-            self.cases, self.orientation, Random(99),  # noqa: S311
+            self.cases, Random(99),  # noqa: S311
         )
         self.assertEqual(case1.code, case2.code)
 
