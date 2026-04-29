@@ -83,13 +83,11 @@ def print_cube_trainer(
         mode: The training mode used (e.g., 'F2L', 'OLL').
 
     """
-    print(  # noqa: T201
-        cube.display(
-            mode=mode,
-            orientation=orientation,
-            palette=CUBE_PALETTE,
-            effect=CUBE_EFFECT,
-            style=CUBE_STYLE,
-        ),
-        end='',
+    cube = cube.oriented_copy(orientation, full=True)
+
+    cube.show(
+        mode=mode,
+        palette=CUBE_PALETTE,
+        effect=CUBE_EFFECT,
+        style=CUBE_STYLE,
     )

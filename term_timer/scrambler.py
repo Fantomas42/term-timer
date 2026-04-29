@@ -13,7 +13,6 @@ from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
 from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.degrip import degrip_moves
-from cubing_algs.transform.invert import invert_moves
 from cubing_algs.transform.rotation import compress_ending_rotations
 from cubing_algs.vcube import VCube
 
@@ -83,9 +82,8 @@ def scrambler(  # noqa: PLR0913
 def trainer(
         step: str,
         cases: list['TrainingCase'],
-        orientation_moves: Algorithm,
         rng: Random,
-        bluetooth_cube: VCube | None = None,
+        orientation_moves: Algorithm | None = None,
 ) -> tuple[
     Case, Algorithm, Algorithm, VCube,
 ]:
@@ -98,18 +96,21 @@ def trainer(
     """
     case = cases[0].case
     solution = Algorithm()
-    cube = (bluetooth_cube and bluetooth_cube.copy()) or VCube(size=3)
+    cube = VCube(size=3)
 
     if step == 'ecross':
         scramble, solution = scramble_easy_cross('normal', rng=rng)
     elif step == 'xcross':
         scramble, solution = scramble_x_cross('normal', rng=rng)
     elif step == 'cross':
-        scramble, _cube = scrambler(3, 12, easy_cross=False, rng=rng)
+        scramble, _cube = scrambler(3, 12, rng=rng)
     else:
         case, scramble, solution = random_training(
-            cases, orientation_moves, rng,
+            cases, rng,
         )
+
+    if orientation_moves:
+        scramble = degrip_moves(orientation_moves + scramble)
 
     cube.rotate(scramble)
 
@@ -118,7 +119,6 @@ def trainer(
 
 def random_training(
         cases: list['TrainingCase'],
-        orientation_moves: Algorithm,
         rng: Random,
 ) -> tuple[
     Case, Algorithm, Algorithm,
@@ -132,11 +132,7 @@ def random_training(
     """
     selected_case = rng.choice(cases)
 
-    algo = (
-        orientation_moves
-        + rng.choice(selected_case.best_setups)
-        + invert_moves(orientation_moves)
-    )
+    algo = rng.choice(selected_case.best_setups)
 
     return (
         selected_case.case,

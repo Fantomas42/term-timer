@@ -424,10 +424,10 @@ class Trainer(SolveInterface):
         self.init_solve()
 
         selected_case, self.scramble, solution, cube = trainer(
-                self.step, self.cases,
-                self.cube_orientation_moves,
+                self.step,
+                self.cases,
                 self.rng,
-                self.bluetooth_cube,
+                self.cube_orientation_moves,
         )
 
         self.scramble_oriented = self.reorient(self.scramble)
