@@ -44,7 +44,7 @@ Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cu
   <h3 id="step-{{ familly }}" class="family">
     <a href="/academy/{{ method }}/{{ step }}/?o={{ orientation_faces }}&p={{ palette }}&family={{ family }}">
       <i class="fa-solid fa-layer-group"></i>
-      {{ family }}
+      {{ family }} ({{ cases|length }})
     </a>
   </h3>
 
@@ -70,6 +70,7 @@ Learn all {{ method }}: {{ step }} cases with algorithms and variations on {{ cu
         <p class="case-meta">
           <i class="fas fa-cube"></i>
           {{ case.algorithms|length }} algorithms
+          ({{ case.probability_label }})
         </p>
       </a>
     </div>
