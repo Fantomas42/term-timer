@@ -735,3 +735,121 @@ class TestScramblerXCrossOrientation(unittest.TestCase):
             cube.state,
             'FFFDFFFLBLRRUULUUBRUDURRRRRBBBBBBLBLDFDRDFFDDULLDLDULU',
         )
+
+
+class TestScramblerEasyCrossDifficulty(unittest.TestCase):
+    """Tests for scrambler reading ecross difficulty from config."""
+
+    def setUp(self) -> None:
+        """Set up a seeded RNG for reproducibility."""
+        self.rng = Random(42)  # noqa: S311
+
+    def test_passes_config_difficulty_to_easy_cross(self) -> None:
+        """Test that the config difficulty is passed to scramble_easy_cross."""
+        with patch('term_timer.scrambler.scramble_easy_cross') as mock_ec:
+            mock_ec.return_value = (parse_moves('R U'), Algorithm())
+            with patch(
+                    'term_timer.scrambler.TRAINER_ECROSS_DIFFICULTY', 'easy',
+            ):
+                scrambler(3, 0, easy_cross=True, rng=self.rng)
+            args, kwargs = mock_ec.call_args
+            difficulty = args[0] if args else kwargs.get('difficulty')
+            self.assertEqual(difficulty, 'easy')
+
+    def test_default_config_passes_normal_difficulty(self) -> None:
+        """Test that 'normal' config difficulty is passed to easy cross."""
+        with patch('term_timer.scrambler.scramble_easy_cross') as mock_ec:
+            mock_ec.return_value = (parse_moves('R U'), Algorithm())
+            with patch(
+                    'term_timer.scrambler.TRAINER_ECROSS_DIFFICULTY', 'normal',
+            ):
+                scrambler(3, 0, easy_cross=True, rng=self.rng)
+            args, kwargs = mock_ec.call_args
+            difficulty = args[0] if args else kwargs.get('difficulty')
+            self.assertEqual(difficulty, 'normal')
+
+
+class TestScramblerXCrossDifficulty(unittest.TestCase):
+    """Tests for scrambler reading xcross difficulty and slots from config."""
+
+    def setUp(self) -> None:
+        """Set up a seeded RNG for reproducibility."""
+        self.rng = Random(42)  # noqa: S311
+
+    def test_passes_config_difficulty_to_x_cross(self) -> None:
+        """Test that the config difficulty is passed to scramble_x_cross."""
+        with patch('term_timer.scrambler.scramble_x_cross') as mock_xc:
+            mock_xc.return_value = (parse_moves('R U'), Algorithm())
+            with patch(
+                    'term_timer.scrambler.TRAINER_XCROSS_DIFFICULTY', 'hard',
+            ):
+                scrambler(3, 0, x_cross=True, rng=self.rng)
+            args, kwargs = mock_xc.call_args
+            difficulty = args[0] if args else kwargs.get('difficulty')
+            self.assertEqual(difficulty, 'hard')
+
+    def test_passes_config_slots_to_x_cross(self) -> None:
+        """Test that the config slots are passed to scramble_x_cross."""
+        with patch('term_timer.scrambler.scramble_x_cross') as mock_xc:
+            mock_xc.return_value = (parse_moves('R U'), Algorithm())
+            with patch(
+                    'term_timer.scrambler.TRAINER_XCROSS_SLOTS', ['FR', 'FL'],
+            ):
+                scrambler(3, 0, x_cross=True, rng=self.rng)
+            args, _ = mock_xc.call_args
+            self.assertEqual(args[1], ['FR', 'FL'])
+
+
+class TestTrainerEasyCrossDifficulty(unittest.TestCase):
+    """Tests for trainer reading ecross difficulty from config."""
+
+    def setUp(self) -> None:
+        """Set up test fixtures."""
+        self.rng = Random(42)  # noqa: S311
+        self.cases = [make_training_case()]
+        self.orientation = parse_moves('')
+
+    def test_passes_config_difficulty_to_easy_cross(self) -> None:
+        """Test that the config difficulty is passed to scramble_easy_cross."""
+        with patch('term_timer.scrambler.scramble_easy_cross') as mock_ec:
+            mock_ec.return_value = (parse_moves('R U'), Algorithm())
+            with patch(
+                    'term_timer.scrambler.TRAINER_ECROSS_DIFFICULTY', 'easy',
+            ):
+                trainer('ecross', self.cases, self.rng, self.orientation)
+            args, kwargs = mock_ec.call_args
+            difficulty = args[0] if args else kwargs.get('difficulty')
+            self.assertEqual(difficulty, 'easy')
+
+
+class TestTrainerXCrossDifficulty(unittest.TestCase):
+    """Tests for trainer reading xcross difficulty and slots from config."""
+
+    def setUp(self) -> None:
+        """Set up test fixtures."""
+        self.rng = Random(42)  # noqa: S311
+        self.cases = [make_training_case()]
+        self.orientation = parse_moves('')
+
+    def test_passes_config_difficulty_to_x_cross(self) -> None:
+        """Test that the config difficulty is passed to scramble_x_cross."""
+        with patch('term_timer.scrambler.scramble_x_cross') as mock_xc:
+            mock_xc.return_value = (parse_moves('R U'), Algorithm())
+            with patch(
+                    'term_timer.scrambler.TRAINER_XCROSS_DIFFICULTY', 'hard',
+            ):
+                trainer('xcross', self.cases, self.rng, self.orientation)
+            args, kwargs = mock_xc.call_args
+            difficulty = args[0] if args else kwargs.get('difficulty')
+            self.assertEqual(difficulty, 'hard')
+
+    def test_passes_config_slots_to_x_cross(self) -> None:
+        """Test that the config slots are passed to scramble_x_cross."""
+        with patch('term_timer.scrambler.scramble_x_cross') as mock_xc:
+            mock_xc.return_value = (parse_moves('R U'), Algorithm())
+            with patch(
+                    'term_timer.scrambler.TRAINER_XCROSS_SLOTS', ['FL', 'BR'],
+            ):
+                trainer('xcross', self.cases, self.rng, self.orientation)
+            args, _ = mock_xc.call_args
+            self.assertEqual(args[1], ['FL', 'BR'])

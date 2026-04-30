@@ -22,6 +22,9 @@ right-handed = true
 
 [trainer]
 step = "oll"
+ecross-difficulty = "normal"
+xcross-difficulty = "normal"
+xcross-slots = ["FR"]
 
 [display]
 scramble = true
@@ -104,5 +107,15 @@ USE_GYROSCOPE: bool = BLUETOOTH_CONFIG.get('use_gyroscope', True)
 ROTATION_THRESHOLD: float = BLUETOOTH_CONFIG.get('rotation_threshold', 75.0)
 
 TRAINER_STEP = TRAINER_CONFIG.get('step')
+
+TRAINER_ECROSS_DIFFICULTY: str = TRAINER_CONFIG.get(
+    'ecross-difficulty', 'normal',
+)
+
+TRAINER_XCROSS_DIFFICULTY: str = TRAINER_CONFIG.get(
+    'xcross-difficulty', 'normal',
+)
+
+TRAINER_XCROSS_SLOTS: list[str] = TRAINER_CONFIG.get('xcross-slots', ['FR'])
 
 DEBUG = bool(os.getenv('TERM_TIMER_DEBUG', None))

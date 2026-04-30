@@ -17,6 +17,9 @@ from cubing_algs.transform.rotation import compress_ending_rotations
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_RIGHT_HANDED
+from term_timer.config import TRAINER_ECROSS_DIFFICULTY
+from term_timer.config import TRAINER_XCROSS_DIFFICULTY
+from term_timer.config import TRAINER_XCROSS_SLOTS
 
 if TYPE_CHECKING:
     from term_timer.annotations import TrainingCase
@@ -45,11 +48,18 @@ def scrambler(  # noqa: PLR0913
     if raw_scramble:
         scrambled = parse_moves(raw_scramble, trust_input=False)
     elif easy_cross:
-        scrambled, _solution = scramble_easy_cross('normal', rng=rng)
+        scrambled, _solution = scramble_easy_cross(
+            TRAINER_ECROSS_DIFFICULTY,
+            rng=rng,
+        )
         if orientation_moves:
             scrambled = degrip_moves(orientation_moves + scrambled)
     elif x_cross:
-        scrambled, _solution = scramble_x_cross('normal', rng=rng)
+        scrambled, _solution = scramble_x_cross(
+            TRAINER_XCROSS_DIFFICULTY,
+            TRAINER_XCROSS_SLOTS,
+            rng=rng,
+        )
         if orientation_moves:
             scrambled = degrip_moves(orientation_moves + scrambled)
     elif edges_oriented:
@@ -99,9 +109,16 @@ def trainer(
     cube = VCube(size=3)
 
     if step == 'ecross':
-        scramble, solution = scramble_easy_cross('normal', rng=rng)
+        scramble, solution = scramble_easy_cross(
+            TRAINER_ECROSS_DIFFICULTY,
+            rng=rng,
+        )
     elif step == 'xcross':
-        scramble, solution = scramble_x_cross('normal', rng=rng)
+        scramble, solution = scramble_x_cross(
+            TRAINER_XCROSS_DIFFICULTY,
+            TRAINER_XCROSS_SLOTS,
+            rng=rng,
+        )
     elif step == 'cross':
         scramble, _cube = scrambler(3, 12, rng=rng)
     else:

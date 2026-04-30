@@ -396,6 +396,20 @@ class CubeSection(ConfigSection):
         }
 
 
+DIFFICULTY_OPTIONS = [
+    ('Easy', 'easy'),
+    ('Normal', 'normal'),
+    ('Hard', 'hard'),
+]
+
+XCROSS_SLOT_OPTIONS = [
+    ('FR', 'FR'),
+    ('FL', 'FL'),
+    ('BR', 'BR'),
+    ('BL', 'BL'),
+]
+
+
 class TrainerSection(ConfigSection):
     """Configuration section for trainer settings."""
 
@@ -431,12 +445,63 @@ class TrainerSection(ConfigSection):
                     classes='field-help',
                 )
 
+            yield Static('Easy Cross Difficulty', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Select(
+                    options=DIFFICULTY_OPTIONS,
+                    id='ecross-difficulty',
+                    allow_blank=False,
+                    value='normal',
+                )
+                yield Static(
+                    'Scramble difficulty for Easy Cross training',
+                    classes='field-help',
+                )
+
+            yield Static('X-Cross Difficulty', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Select(
+                    options=DIFFICULTY_OPTIONS,
+                    id='xcross-difficulty',
+                    allow_blank=False,
+                    value='normal',
+                )
+                yield Static(
+                    'Scramble difficulty for X-Cross training',
+                    classes='field-help',
+                )
+
+            yield Static('X-Cross Slots', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield SelectionList[str](
+                    *XCROSS_SLOT_OPTIONS,
+                    id='xcross-slots',
+                )
+                yield Static(
+                    'F2L slots to aim in X-Cross scrambles',
+                    classes='field-help',
+                )
+
     def load_config(self) -> None:
         """Load trainer configuration."""
         trainer_config = CONFIG.get('trainer', {})
 
         step = self.query_one('#step', Select)
         step.value = trainer_config.get('step', 'oll')
+
+        ecross_difficulty = self.query_one('#ecross-difficulty', Select)
+        ecross_difficulty.value = trainer_config.get(
+            'ecross-difficulty', 'normal',
+        )
+
+        xcross_difficulty = self.query_one('#xcross-difficulty', Select)
+        xcross_difficulty.value = trainer_config.get(
+            'xcross-difficulty', 'normal',
+        )
+
+        xcross_slots = self.query_one('#xcross-slots', SelectionList)
+        for slot in trainer_config.get('xcross-slots', ['FR']):
+            xcross_slots.select(slot)
 
     def get_config_data(
         self,
@@ -445,14 +510,20 @@ class TrainerSection(ConfigSection):
         Get trainer configuration data.
 
         Returns:
-            Trainer configuration dictionary with training step setting.
+            Trainer configuration with step, difficulty and slot settings.
 
         """
         step = self.query_one('#step', Select)
+        ecross_difficulty = self.query_one('#ecross-difficulty', Select)
+        xcross_difficulty = self.query_one('#xcross-difficulty', Select)
+        xcross_slots = self.query_one('#xcross-slots', SelectionList)
 
         return {
             'trainer': {
                 'step': str(step.value),
+                'ecross-difficulty': str(ecross_difficulty.value),
+                'xcross-difficulty': str(xcross_difficulty.value),
+                'xcross-slots': list(xcross_slots.selected),
             },
         }
 
