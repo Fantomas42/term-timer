@@ -55,6 +55,11 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
       </h2>
     </div>
     <div class="stats-grid">
+
+      <div class="stat-card cube-frame">
+          <img src="/cube/?case={{ case.main_algorithm }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&arrows={{ case.arrows }}">
+      </div>
+
       <div class="stat-card">
         <div class="stat-title">Case Code</div>
         <div class="stat-value">{{ case.code }}</div>
@@ -254,6 +259,9 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           {% set metrics = algo.metrics %}
           <div class="algorithm-card moves-card">
             <span class="variation-label">Algorithm #{{ loop.index }}</span>
+            <div class="case-img cube-frame">
+              <img src="/cube/?case={{ algo }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&arrows={{ case.arrows }}">
+            </div>
             <div class="moves-content">
               {% for m in algo %}
                 <span class="move">{{ m }}</span>
@@ -295,6 +303,9 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           {% set metrics = setup.metrics %}
           <div class="algorithm-card moves-card">
             <span class="variation-label">Setup #{{ loop.index }}</span>
+            <div class="case-img cube-frame">
+              <img src="/cube/?algo={{ setup }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&arrows={{ case.arrows }}">
+            </div>
             <div class="moves-content">
               {% for m in setup %}
                 <span class="move">{{ m }}</span>
