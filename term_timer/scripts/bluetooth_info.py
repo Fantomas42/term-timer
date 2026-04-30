@@ -6,9 +6,7 @@ import logging.config
 import sys
 import threading
 from argparse import Namespace
-from collections.abc import Callable
 from contextlib import suppress
-from functools import lru_cache
 from pathlib import Path
 from pprint import pformat
 from typing import Any
@@ -158,20 +156,6 @@ def show_cube(cube: VCube) -> None:
     )
 
 
-@lru_cache
-def translation(
-        orientation_moves: Algorithm,
-) -> Callable[[Algorithm], Algorithm]:
-    """
-    Cache translation function.
-
-    Returns:
-        Function making the Algorithm translation.
-
-    """
-    return translate_moves(orientation_moves)
-
-
 def show_state(
         raw_moves: list[str],
         orientation_moves: Algorithm,
@@ -198,7 +182,7 @@ def show_state(
         return
 
     algo = parse_moves(raw_moves)
-    algo_translated = translation()(algo)
+    algo_translated = translate_moves(orientation_moves)(algo)
 
     first_time = algo[0].timed
     algo_timed_reformatted = ' '.join(
