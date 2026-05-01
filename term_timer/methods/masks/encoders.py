@@ -99,7 +99,7 @@ def oll_case_encoder(facelets: CubeFacelets) -> EncodedMask:
         + facelets[45:48]
     )
 
-    center = facelets_fingerprint[10]
+    center = facelets_fingerprint[4]
     fingerprint = [''] * 21
     for i, facelet in enumerate(facelets_fingerprint):
         fingerprint[i] = '1' if facelet == center else '0'
