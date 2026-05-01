@@ -9,9 +9,8 @@ from cubing_algs.constants import FACE_ORDER
 from cubing_algs.constants import OPPOSITE_FACES
 from cubing_algs.constants import ORIENTATION_FACE_MOVES
 from cubing_algs.parsing import parse_moves
-from cubing_algs.transform.degrip import degrip_full_moves
-from cubing_algs.transform.rotation import remove_ending_rotations
 from cubing_algs.transform.timing import untime_moves
+from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_ORIENTATION
@@ -157,13 +156,12 @@ def get_orientation_faces(
     for front_face in ADJACENT_FACES[top_face]:
         # Build the full algorithm with orientation moves prepended
         # Then apply transforms to normalize it for ergonomic analysis
-        algorithm = (
-            ORIENTATION_FACE_MOVES[top_face + front_face]
-            + untimed_solution
-        ).transform(
-            degrip_full_moves,
-            remove_ending_rotations,
-        )
+        algorithm = translate_moves(
+            parse_moves(
+                ORIENTATION_FACE_MOVES[top_face + front_face],
+            ),
+        )(untimed_solution)
+
         ergonomics = algorithm.ergonomics
 
         # Score based on configured handedness preference
