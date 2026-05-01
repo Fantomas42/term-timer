@@ -23,16 +23,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
         solve = Mock()
         solve.advanced = False
 
-        result = analyse_solve_worker(solve, 'method', full=True)
-
-        self.assertEqual(result, {'steps': {}, 'score': 0.0, 'solve': solve})
-
-    def test_analyse_solve_worker_not_advanced_not_full(self) -> None:
-        """Test worker returns empty results without solve when not full."""
-        solve = Mock()
-        solve.advanced = False
-
-        result = analyse_solve_worker(solve, 'method', full=False)
+        result = analyse_solve_worker(solve, 'method')
 
         self.assertEqual(result, {'steps': {}, 'score': 0.0, 'solve': None})
 
@@ -63,7 +54,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
         with patch('term_timer.aggregator.Solve.compute_tps') as mock_tps:
             mock_tps.side_effect = [1.9, 2.5, 2.0, 2.5]
 
-            result = analyse_solve_worker(solve, 'method', full=True)
+            result = analyse_solve_worker(solve, 'method')
 
         expected_steps: dict[str, StepAnalysis] = {
             'step1': {
@@ -88,7 +79,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
 
         self.assertEqual(result['steps'], expected_steps)
         self.assertEqual(result['score'], 85.5)
-        self.assertEqual(result['solve'], solve)
+        self.assertIsNone(result['solve'])
         self.assertEqual(solve.method_name, 'method')
 
     def test_analyse_solve_worker_advanced_not_full(self) -> None:
@@ -106,7 +97,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
         solve.method_applied.score = 85.5
 
         with patch('term_timer.aggregator.Solve.compute_tps', return_value=2.0):
-            result = analyse_solve_worker(solve, 'method', full=False)
+            result = analyse_solve_worker(solve, 'method')
 
         self.assertIn('steps', result)
         self.assertEqual(result['score'], 85.5)
@@ -158,7 +149,8 @@ class TestSolvesMethodAggregator(unittest.TestCase):
         """Test that collect_analyses processes solves using multiprocessing."""
         mock_pool = MagicMock()
         mock_pool_class.return_value.__enter__.return_value = mock_pool
-        mock_pool.map.return_value = [{'result': 1}, {'result': 2}]
+        mock_pool.map.return_value = [{'result': 1, 'solve': None},
+                                       {'result': 2, 'solve': None}]
 
         aggregator = SolvesMethodAggregator.__new__(SolvesMethodAggregator)
         aggregator.stack = cast('list[Solve]', self.stack)
@@ -167,7 +159,8 @@ class TestSolvesMethodAggregator(unittest.TestCase):
 
         result = aggregator.collect_analyses()
 
-        self.assertEqual(result, [{'result': 1}, {'result': 2}])
+        self.assertEqual(result[0]['solve'], self.mock_solve_advanced)
+        self.assertEqual(result[1]['solve'], self.mock_solve_basic)
         mock_pool_class.assert_called_once_with(processes=3)
         mock_pool.map.assert_called_once()
 

@@ -25,9 +25,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def analyse_solve_worker(solve: Solve,
-                         method_name: str, *,
-                         full: bool = False) -> SolveAnalysis:
+def analyse_solve_worker(solve: Solve, method_name: str) -> SolveAnalysis:
     """
     Analyze solve using specified method and return analysis result.
 
@@ -39,14 +37,10 @@ def analyse_solve_worker(solve: Solve,
         return {
             'steps': {},
             'score': 0.0,
-            'solve': solve if full else None,
+            'solve': None,
         }
 
     solve.method_name = method_name
-
-    if full:
-        _ = solve.score
-
     analysis = cast('Analyser', solve.method_applied)
 
     steps: dict[str, StepAnalysis] = {}
@@ -65,7 +59,7 @@ def analyse_solve_worker(solve: Solve,
     return {
         'steps': steps,
         'score': analysis.score,
-        'solve': solve if full else None,
+        'solve': None,
     }
 
 
@@ -96,11 +90,16 @@ class SolvesMethodAggregator:
         worker_func = partial(
             analyse_solve_worker,
             method_name=self.method_name,
-            full=self.full,
         )
 
         with Pool(processes=num_processes) as pool:
-            return pool.map(worker_func, self.stack)
+            analyses = pool.map(worker_func, self.stack)
+
+        if self.full:
+            for analysis, solve in zip(analyses, self.stack, strict=True):
+                analysis['solve'] = solve
+
+        return analyses
 
     def aggregate(self) -> MethodAnalysis:
         """
