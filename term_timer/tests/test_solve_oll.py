@@ -74,13 +74,13 @@ class TestSolveOLLSkip(unittest.TestCase):
             if info['type'] != 'virtual'
         ]
         outputs = [
-            "L F' . R' . U2 B2 U' F2 D .",
-            "U R' U' R U . B' U B .",
-            "F U F' U' . U2 B U B' .",
-            "F U F' U R U' R' .",
-            "U' U2 . F U F' U' F U F' U' F U F' .",
+            "F R' . B' . U2 L2 U' R2 D .",
+            "U B' U' B U . L' U L .",
+            "R U R' U' . U2 L U L' .",
+            "R U R' U B U' B' .",
+            "U' U2 . R U R' U' R U R' U' R U R' .",
             '',
-            "U . F' U' L' F U F' U' F' L F2 U' F' U' F U F' U F",
+            "U . R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
         ]
 
         for source, expected in zip(inputs, outputs, strict=True):
