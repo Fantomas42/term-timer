@@ -41,7 +41,7 @@ class TestSolveShortAutoOrientation(TestSolveShort):
         """Test reconstruction."""
         self.assertEqual(
             str(self.solve.reconstruction),
-            'U L U B U2',
+            'U R U F U2',
         )
 
     def test_score(self) -> None:
@@ -113,7 +113,7 @@ class TestSolveShortAutoOrientation(TestSolveShort):
         ]
         outputs = [
             (
-                '[pre-auf]U[/pre-auf] L U [pause].[/pause] B '
+                '[pre-auf]U[/pre-auf] R U [pause].[/pause] F '
                 '[reco-pause].[/reco-pause]'
             ),
             '',
@@ -137,7 +137,7 @@ class TestSolveShortAutoOrientation(TestSolveShort):
             if info['type'] != 'virtual'
         ]
         outputs = [
-            'U L U . B .',
+            'U R U . F .',
             '',
             '',
             'U2',
@@ -156,7 +156,7 @@ class TestSolveShortAutoOrientation(TestSolveShort):
 
         self.assertEqual(
             self.solve.orientation_faces,
-            'LU',
+            'LD',
         )
 
 

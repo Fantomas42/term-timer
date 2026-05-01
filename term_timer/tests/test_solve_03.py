@@ -88,9 +88,9 @@ class TestSolve03(unittest.TestCase):  # noqa: PLR0904
         self.solve.orientation = 'auto'
         self.assertEqual(
             str(self.solve.reconstruction),
-            "B L2 B R2 U'",
+            "F R2 F L2 U'",
         )
-        self.assertEqual(str(self.solve.orientation_moves), "x'")
+        self.assertEqual(str(self.solve.orientation_moves), 'y2 x')
 
     def test_tps(self) -> None:
         """Test tps."""
