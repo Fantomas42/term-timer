@@ -49,7 +49,6 @@ theme: dict[str, str] = {
     'localhost': 'bold #FFFFFF on #522081',
     'algcubing': 'bold #FFFFFF on #006060',
     'cubedb': 'bold #FFFFFF on #444444',
-    'cubingfache': 'bold #FFFFFF on #2052CC',
 
     'timer': f'bold { ORANGE }',
     'device': 'bold #CFAAD7',

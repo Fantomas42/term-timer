@@ -44,6 +44,7 @@ from term_timer.formatter import format_cube_db_url
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_fluency
 from term_timer.formatter import format_grade
+from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
 from term_timer.methods import get_method_analyser
 from term_timer.methods.annotations import StepSummary
@@ -764,7 +765,7 @@ class Solve:  # noqa: PLR0904
                 if step['case']:
                     step_code = step['name'].split(' ')[0]
                     step_case = get_case(step_code, step['case'])
-                    link = step_case.cubing_fache_url
+                    link = format_term_timer_case_url(step_case)
 
                     optimal = ''
                     optimal_htm = step_case.optimal_htm

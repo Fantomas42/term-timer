@@ -4,7 +4,7 @@
       {% set case = step.name|get_step_case(step.case) %}
       {% if case.code != 'SKIP' %}
         <div class="step-case-img">{{ case.code }}</div>
-        <a href="{{ case.cubing_fache_url }}" target="_blank" class="link">
+        <a href="{{ case|case_link }}" target="_blank" class="link">
           {% if case.aliases %}
             {{ case.aliases[0] }}
           {% else %}

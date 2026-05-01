@@ -21,6 +21,7 @@ from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_delta
+from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
 from term_timer.in_out import load_trainings
 from term_timer.in_out import save_trainings
@@ -271,7 +272,7 @@ class Trainer(SolveInterface):
             solution: Algorithm,
     ) -> None:
         """Display training case, scramble, and optional solution."""
-        link = selected_case.cubing_fache_url
+        link = format_term_timer_case_url(selected_case)
         name = selected_case.pretty_name
 
         mode = 'cross' if self.step in CROSS_MODES else self.step

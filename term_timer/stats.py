@@ -27,6 +27,7 @@ from term_timer.formatter import format_flag
 from term_timer.formatter import format_fluency
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_score
+from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
 from term_timer.interface.console import console
 from term_timer.printer import print_cube_scrambled
@@ -1138,9 +1139,10 @@ class SolveStatisticsReporter(Statistics):
                 and 'green'
             ) or 'red'
 
+            link = format_term_timer_case_url(case)
             head = (
-                f'[cubingfache][link={ case.cubing_fache_url }]{ case.name }'
-                '[/link][/cubingfache]'
+                f'[localhost][link={ link }]{ case.name }'
+                '[/link][/localhost]'
             )
 
             if 'SKIP' in name:

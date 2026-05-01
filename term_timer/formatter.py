@@ -4,6 +4,7 @@ import re
 from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.cases.case import Case
 from cubing_algs.constants import AUF_CHAR
 from cubing_algs.constants import INNER_MOVES
 from cubing_algs.constants import OUTER_WIDE_MOVES
@@ -348,6 +349,29 @@ def format_term_timer_session_url(cube_size: int, session_name: str) -> str:
     return (
         f'http://{ domain }:{ port }'
         f'/{ cube_size }/{ session_name }/'
+    )
+
+
+def format_term_timer_case_url(case: Case) -> str:
+    """
+    Generate URL for local Term Timer web interface case.
+
+    Args:
+        case: The case to link.
+
+    Returns:
+        Local HTTP URL to view this case in the web interface.
+
+    """
+    domain = SERVER_CONFIG.get('domain', 'localhost')
+    port = SERVER_CONFIG.get('port', 8333)
+
+    if not case.method:
+        return ''
+
+    return (
+        f'http://{ domain }:{ port }'
+        f'/academy/{ case.method }/{ case.step }/{ case.code }/'
     )
 
 

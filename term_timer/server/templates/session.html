@@ -874,7 +874,7 @@
                       </a>
                     </div>
                     {% if case.case.code != 'SKIP' %}
-                      <a href="{{ case.case.cubing_fache_url }}"
+                      <a href="{{ case.case|case_link }}"
                          target="_blank" class="link">
                         {{ case.case.pretty_name }}
                       </a>
