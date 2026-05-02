@@ -255,9 +255,16 @@ class Trainer(SolveInterface):
 
         """
         if self.bluetooth_cube:
+            cube = VCube()
+            applied = Algorithm.parse_moves(
+                ' '.join(m['move'] for m in self.moves),
+            )
+            applied = self.reorient(applied)
+            cube.rotate(self.scramble_oriented + applied)
+
             return FaceletAnalyser().check_step(
                 self.step_code,
-                self.bluetooth_cube_state,
+                cube.state,
             )
         return False
 
