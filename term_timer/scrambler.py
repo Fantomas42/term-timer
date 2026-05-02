@@ -11,9 +11,7 @@ from cubing_algs.scrambler.steps import scramble_edges_oriented
 from cubing_algs.scrambler.steps import scramble_x_cross
 from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
 from cubing_algs.solver import facelets_to_facelets_algorithm
-from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.degrip import degrip_moves
-from cubing_algs.transform.rotation import compress_ending_rotations
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_RIGHT_HANDED
@@ -149,13 +147,8 @@ def random_training(
     """
     selected_case = rng.choice(cases)
 
-    algo = rng.choice(selected_case.best_setups)
-
     return (
         selected_case.case,
-        parse_moves(algo).transform(
-            degrip_full_moves,
-            compress_ending_rotations,
-        ),
+        rng.choice(selected_case.best_setups),
         selected_case.case.main_algorithm,
     )

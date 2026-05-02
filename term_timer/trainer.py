@@ -221,7 +221,19 @@ class Trainer(SolveInterface):
                 raise InvalidCaseError(error_string)
             valid_case = valid_cases[case_code]
 
-            setups = valid_case.setup_algorithms
+            setups = [
+                setup
+                for setup in valid_case.setup_algorithms
+                if not setup.has_internal_rotations
+            ]
+
+            if not setups:
+                error_string = (
+                    f'Invalid case "{ case_code }" for '
+                    f'{ self.method }/{ self.step_upper }: '
+                    'No available setup algorithm.'
+                )
+                raise InvalidCaseError(error_string)
 
             best_setups = sorted(
                 setups,
