@@ -11,25 +11,25 @@ from bottle import Bottle
 from bottle import HTTPError
 from cubing_algs.algorithm import Algorithm
 
-from term_timer.server.app import BLOCK_REGEX
-from term_timer.server.app import CLASS_CONVERTION
-from term_timer.server.app import LEGENDS
-from term_timer.server.app import SPAN_REGEX
-from term_timer.server.app import Error404View
-from term_timer.server.app import Error500View
 from term_timer.server.app import RichHandler
 from term_timer.server.app import Server
-from term_timer.server.app import SessionDetailView
-from term_timer.server.app import SessionListView
-from term_timer.server.app import SolveDeleteView
-from term_timer.server.app import SolveDetailView
-from term_timer.server.app import SolveUpdateFlagView
-from term_timer.server.app import View
-from term_timer.server.app import format_delta
-from term_timer.server.app import format_line
-from term_timer.server.app import format_score
-from term_timer.server.app import normalize_percent
-from term_timer.server.app import normalize_value
+from term_timer.server.filters import BLOCK_REGEX
+from term_timer.server.filters import CLASS_CONVERTION
+from term_timer.server.filters import LEGENDS
+from term_timer.server.filters import SPAN_REGEX
+from term_timer.server.filters import format_delta
+from term_timer.server.filters import format_line
+from term_timer.server.filters import format_score
+from term_timer.server.filters import normalize_percent
+from term_timer.server.filters import normalize_value
+from term_timer.server.views import Error404View
+from term_timer.server.views import Error500View
+from term_timer.server.views import SessionDetailView
+from term_timer.server.views import SessionListView
+from term_timer.server.views import SolveDeleteView
+from term_timer.server.views import SolveDetailView
+from term_timer.server.views import SolveUpdateFlagView
+from term_timer.server.views.base import View
 
 
 class TestConstants(unittest.TestCase):
@@ -269,8 +269,8 @@ class TestView(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             view.get_context()
 
-    @patch('term_timer.server.app.jinja2_template')
-    @patch('term_timer.server.app.gc.collect')
+    @patch('term_timer.server.views.base.jinja2_template')
+    @patch('term_timer.server.views.base.gc.collect')
     def test_view_as_view(self, mock_gc_collect: Mock,
                           mock_jinja2_template: Mock) -> None:
         """Test view as view."""
@@ -290,7 +290,7 @@ class TestView(unittest.TestCase):
         mock_gc_collect.assert_called_once()
         mock_jinja2_template.assert_called_once()
 
-    @patch('term_timer.server.app.jinja2_template')
+    @patch('term_timer.server.views.base.jinja2_template')
     def test_view_template_context(self, mock_jinja2_template: Mock) -> None:
         """Test view template context."""
         mock_jinja2_template.return_value = 'template_result'
@@ -379,8 +379,8 @@ class TestError500View(unittest.TestCase):
 class TestSessionListView(unittest.TestCase):
     """Tests for SessionListView class."""
 
-    @patch('term_timer.server.app.load_all_solves')
-    @patch('term_timer.server.app.Statistics')
+    @patch('term_timer.server.views.sessions.load_all_solves')
+    @patch('term_timer.server.views.sessions.Statistics')
     def test_session_list_view_get_context(
             self, mock_statistics: Mock, mock_load_solves: Mock,
     ) -> None:
@@ -419,8 +419,8 @@ class TestSessionListView(unittest.TestCase):
         self.assertEqual(len(cube3_sessions['session1']['solves']), 2)
         self.assertEqual(len(cube3_sessions['session2']['solves']), 1)
 
-    @patch('term_timer.server.app.load_all_solves')
-    @patch('term_timer.server.app.Statistics')
+    @patch('term_timer.server.views.sessions.load_all_solves')
+    @patch('term_timer.server.views.sessions.Statistics')
     def test_session_list_view_all_sessions(
             self, mock_statistics: Mock, mock_load_solves: Mock,
     ) -> None:
@@ -443,9 +443,9 @@ class TestSessionListView(unittest.TestCase):
 class TestSessionDetailView(unittest.TestCase):
     """Tests for SessionDetailView class."""
 
-    @patch('term_timer.server.app.SolvesMethodAggregator')
-    @patch('term_timer.server.app.SolveStatisticsReporter')
-    @patch('term_timer.server.app.load_all_solves')
+    @patch('term_timer.server.views.sessions.SolvesMethodAggregator')
+    @patch('term_timer.server.views.sessions.SolveStatisticsReporter')
+    @patch('term_timer.server.views.sessions.load_all_solves')
     def test_session_detail_view_initialization(
             self, mock_load_solves: Mock, _mock_stats_reporter: Mock,
             mock_aggregator: Mock) -> None:
@@ -465,9 +465,9 @@ class TestSessionDetailView(unittest.TestCase):
         mock_load_solves.assert_called_once_with(3, ['test-session'], [], [])
 
     @staticmethod
-    @patch('term_timer.server.app.SolvesMethodAggregator')
-    @patch('term_timer.server.app.SolveStatisticsReporter')
-    @patch('term_timer.server.app.load_all_solves')
+    @patch('term_timer.server.views.sessions.SolvesMethodAggregator')
+    @patch('term_timer.server.views.sessions.SolveStatisticsReporter')
+    @patch('term_timer.server.views.sessions.load_all_solves')
     def test_session_detail_view_all_session(
             mock_load_solves: Mock, _mock_stats_reporter: Mock,
             mock_aggregator: Mock) -> None:
@@ -485,9 +485,9 @@ class TestSessionDetailView(unittest.TestCase):
         mock_load_solves.assert_called_once_with(3, [], [], [])
 
     @staticmethod
-    @patch('term_timer.server.app.abort')
-    @patch('term_timer.server.app.SolvesMethodAggregator')
-    @patch('term_timer.server.app.load_all_solves')
+    @patch('term_timer.server.views.sessions.abort')
+    @patch('term_timer.server.views.sessions.SolvesMethodAggregator')
+    @patch('term_timer.server.views.sessions.load_all_solves')
     def test_session_detail_view_no_solves(
             mock_load_solves: Mock, mock_aggregator: Mock,
             mock_abort: Mock) -> None:
@@ -501,9 +501,9 @@ class TestSessionDetailView(unittest.TestCase):
 
         mock_abort.assert_called_once_with(404, 'No solve to display')
 
-    @patch('term_timer.server.app.SolvesMethodAggregator')
-    @patch('term_timer.server.app.SolveStatisticsReporter')
-    @patch('term_timer.server.app.load_all_solves')
+    @patch('term_timer.server.views.sessions.SolvesMethodAggregator')
+    @patch('term_timer.server.views.sessions.SolveStatisticsReporter')
+    @patch('term_timer.server.views.sessions.load_all_solves')
     def test_session_detail_view_step_case_filtering(
             self, mock_load_solves: Mock, _mock_stats_reporter: Mock,
             mock_aggregator: Mock) -> None:
@@ -532,9 +532,9 @@ class TestSessionDetailView(unittest.TestCase):
         mock_solve3 = Mock(session='session2')
 
         with (
-            patch('term_timer.server.app.load_all_solves'),
-            patch('term_timer.server.app.SolvesMethodAggregator'),
-            patch('term_timer.server.app.SolveStatisticsReporter'),
+            patch('term_timer.server.views.sessions.load_all_solves'),
+            patch('term_timer.server.views.sessions.SolvesMethodAggregator'),
+            patch('term_timer.server.views.sessions.SolveStatisticsReporter'),
         ):
             view = SessionDetailView.__new__(SessionDetailView)
             view.stats = Mock()
@@ -548,9 +548,9 @@ class TestSessionDetailView(unittest.TestCase):
     def test_session_detail_view_compute_trend(self) -> None:
         """Test session detail view compute trend."""
         with (
-            patch('term_timer.server.app.load_all_solves'),
-            patch('term_timer.server.app.SolvesMethodAggregator'),
-            patch('term_timer.server.app.SolveStatisticsReporter'),
+            patch('term_timer.server.views.sessions.load_all_solves'),
+            patch('term_timer.server.views.sessions.SolvesMethodAggregator'),
+            patch('term_timer.server.views.sessions.SolveStatisticsReporter'),
         ):
             view = SessionDetailView.__new__(SessionDetailView)
             view.stats = Mock()
@@ -571,9 +571,9 @@ class TestSessionDetailView(unittest.TestCase):
     def test_session_detail_view_compute_distribution(self) -> None:
         """Test session detail view compute distribution."""
         with (
-            patch('term_timer.server.app.load_all_solves'),
-            patch('term_timer.server.app.SolvesMethodAggregator'),
-            patch('term_timer.server.app.SolveStatisticsReporter'),
+            patch('term_timer.server.views.sessions.load_all_solves'),
+            patch('term_timer.server.views.sessions.SolvesMethodAggregator'),
+            patch('term_timer.server.views.sessions.SolveStatisticsReporter'),
         ):
             view = SessionDetailView.__new__(SessionDetailView)
             view.stats = Mock()
@@ -599,9 +599,9 @@ class TestSessionDetailView(unittest.TestCase):
         mock_solve.datetime.astimezone.return_value = mock_dt
 
         with (
-            patch('term_timer.server.app.load_all_solves'),
-            patch('term_timer.server.app.SolvesMethodAggregator'),
-            patch('term_timer.server.app.SolveStatisticsReporter'),
+            patch('term_timer.server.views.sessions.load_all_solves'),
+            patch('term_timer.server.views.sessions.SolvesMethodAggregator'),
+            patch('term_timer.server.views.sessions.SolveStatisticsReporter'),
         ):
             view = SessionDetailView.__new__(SessionDetailView)
             view.stats = Mock()
@@ -617,8 +617,8 @@ class TestSolveDetailView(unittest.TestCase):
     """Tests for SolveDetailView class."""
 
     @staticmethod
-    @patch('term_timer.server.app.load_all_solves')
-    @patch('term_timer.server.app.abort')
+    @patch('term_timer.server.views.solves.load_all_solves')
+    @patch('term_timer.server.views.solves.abort')
     def test_solve_detail_view_invalid_solve_id(
             mock_abort: Mock, mock_load_solves: Mock,
     ) -> None:
@@ -631,7 +631,7 @@ class TestSolveDetailView(unittest.TestCase):
 
         mock_abort.assert_called_once_with(404, 'Invalid solve ID')
 
-    @patch('term_timer.server.app.load_all_solves')
+    @patch('term_timer.server.views.solves.load_all_solves')
     def test_solve_detail_view_initialization(
             self, mock_load_solves: Mock) -> None:
         """Test solve detail view initialization."""
@@ -647,7 +647,7 @@ class TestSolveDetailView(unittest.TestCase):
         self.assertEqual(view.solve, mock_solve)
         self.assertEqual(view.solve.method_name, 'cfop')
 
-    @patch('term_timer.server.app.load_all_solves')
+    @patch('term_timer.server.views.solves.load_all_solves')
     def test_solve_detail_view_get_context_basic(
             self, mock_load_solves: Mock) -> None:
         """Test solve detail view get context basic."""
@@ -671,7 +671,7 @@ class TestSolveDetailView(unittest.TestCase):
         self.assertEqual(context['rank'], 1)
         self.assertEqual(len(context['scatter']), 0)  # No advanced data
 
-    @patch('term_timer.server.app.load_all_solves')
+    @patch('term_timer.server.views.solves.load_all_solves')
     def test_solve_detail_view_get_context_advanced(
             self, mock_load_solves: Mock) -> None:
         """Test solve detail view get context advanced."""
@@ -724,9 +724,9 @@ class TestSolveDetailView(unittest.TestCase):
 class TestSolveUpdateFlagView(unittest.TestCase):
     """Tests for SolveUpdateFlagView class."""
 
-    @patch('term_timer.server.app.redirect')
-    @patch('term_timer.server.app.save_solves')
-    @patch('term_timer.server.app.load_all_solves')
+    @patch('term_timer.server.views.solves.redirect')
+    @patch('term_timer.server.views.solves.save_solves')
+    @patch('term_timer.server.views.solves.load_all_solves')
     def test_solve_update_view_invalid_id(
             self, mock_load_solves: Mock, _mock_save_solves: Mock,
             _mock_redirect: Mock) -> None:
@@ -736,9 +736,9 @@ class TestSolveUpdateFlagView(unittest.TestCase):
         with self.assertRaises(HTTPError):  # abort() raises HTTPError
             SolveUpdateFlagView(3, 'session', 1, 'DNF')
 
-    @patch('term_timer.server.app.redirect')
-    @patch('term_timer.server.app.save_solves')
-    @patch('term_timer.server.app.load_all_solves')
+    @patch('term_timer.server.views.solves.redirect')
+    @patch('term_timer.server.views.solves.save_solves')
+    @patch('term_timer.server.views.solves.load_all_solves')
     def test_solve_update_view_success(
             self, mock_load_solves: Mock, mock_save_solves: Mock,
             _mock_redirect: Mock) -> None:
@@ -756,9 +756,9 @@ class TestSolveUpdateFlagView(unittest.TestCase):
 class TestSolveDeleteView(unittest.TestCase):
     """Tests for SolveDeleteView class."""
 
-    @patch('term_timer.server.app.redirect')
-    @patch('term_timer.server.app.save_solves')
-    @patch('term_timer.server.app.load_all_solves')
+    @patch('term_timer.server.views.solves.redirect')
+    @patch('term_timer.server.views.solves.save_solves')
+    @patch('term_timer.server.views.solves.load_all_solves')
     def test_solve_delete_view_invalid_id(
             self, mock_load_solves: Mock, _mock_save_solves: Mock,
             _mock_redirect: Mock) -> None:
@@ -768,9 +768,9 @@ class TestSolveDeleteView(unittest.TestCase):
         with self.assertRaises(HTTPError):  # abort() raises HTTPError
             SolveDeleteView(3, 'session', 1)
 
-    @patch('term_timer.server.app.redirect')
-    @patch('term_timer.server.app.save_solves')
-    @patch('term_timer.server.app.load_all_solves')
+    @patch('term_timer.server.views.solves.redirect')
+    @patch('term_timer.server.views.solves.save_solves')
+    @patch('term_timer.server.views.solves.load_all_solves')
     def test_solve_delete_view_success(
             self, mock_load_solves: Mock, mock_save_solves: Mock,
             _mock_redirect: Mock) -> None:
