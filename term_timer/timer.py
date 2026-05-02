@@ -132,7 +132,7 @@ class Timer(SolveInterface):
                 end='', style='consign',
             )
 
-    def save_line(self, flag: SolveFlag) -> None:
+    def save_line(self) -> None:
         """Display instructions for saving or canceling the solve."""
         if self.bluetooth_interface:
             self.console.print(
@@ -144,11 +144,7 @@ class Timer(SolveInterface):
         else:
             self.console.print(
                 'Press any key to save and continue,',
-                (
-                    '[key](d)[/key] for DNF,'
-                    if flag != DNF
-                    else '[key](o)[/key] for OK'
-                ),
+                '[key](d)[/key] for DNF,',
                 '[key](2)[/key] for +2,',
                 '[key](z)[/key] to cancel,',
                 '[key](q)[/key] to save and quit.',
@@ -352,11 +348,11 @@ class Timer(SolveInterface):
         self.solve_line(solve)
 
         if not self.free_play:
-            self.save_line(flag)
+            self.save_line()
 
-            quit_solve = await self.save_solve()
+            quit_solving = await self.save_solve()
 
-            if quit_solve:
+            if quit_solving:
                 return False
         else:
             self.counter += 1
