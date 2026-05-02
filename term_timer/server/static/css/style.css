@@ -446,24 +446,58 @@ header {
     background-color: #88CCFF;
 }
 
-.recons-moves .su {
+.recons-moves .hedgeslammer {
+    color: var(--dark);
+    background-color: #FFD966;
+}
+
+.recons-moves .su,
+.recons-moves .sune-trigger {
     color: var(--light);
     background-color: #AA3333;
 }
 
-.recons-moves .sa {
+.recons-moves .sa,
+.recons-moves .sane-trigger {
     color: var(--dark);
     background-color: #FF8888;
 }
 
-.recons-moves .ne {
+.recons-moves .t-perm-trigger {
+    color: var(--dark);
+    background-color: #CC88FF;
+}
+
+.recons-moves .sune {
+    color: var(--dark);
+    background-color: #FF8844;
+}
+
+.recons-moves .sexy-sledge {
+    color: var(--dark);
+    background-color: #FF6699;
+}
+
+.recons-moves .niklas {
+    color: var(--light);
+    background-color: #9966CC;
+}
+
+.recons-moves .ne,
+.recons-moves .slot-extended {
     color: var(--dark);
     background-color: #33FFAA;
 }
 
-.recons-moves .chair {
+.recons-moves .chair,
+.recons-moves .anti-sune {
     color: var(--dark);
     background-color: #20C997;
+}
+
+.recons-moves .wide-sexy {
+    color: var(--dark);
+    background-color: #FF44DD;
 }
 
 .recons-moves .wide {

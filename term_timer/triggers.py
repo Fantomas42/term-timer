@@ -42,11 +42,17 @@ DEFAULT_TRIGGERS: Final = [
     'anti-sune',
     'sexy-move',
     'sledgehammer',
+    'hedgeslammer',
     'sune-trigger',
     'sane-trigger',
+    't-perm-trigger',
+    'sune',
+    'sexy-sledge',
+    'niklas',
     'slot-extended',
     'slot-extract',
     'slot-insert',
+    'wide-sexy',
 ]
 
 
