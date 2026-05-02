@@ -33,11 +33,11 @@ def is_face_complete(cube: VCube, face: str) -> bool:
         face: Face to check (U, R, F, D, L, or B)
 
     Returns:
-        True if all 9 facelets match the center color
+        True if all facelets match the center color
 
     """
     facelets = cube.get_face_by_center(face)
-    return facelets == facelets[4] * 9
+    return facelets == facelets[cube.center_index] * cube.face_size
 
 
 def is_face_truly_completed(cube: VCube, face: str) -> bool:
@@ -69,16 +69,17 @@ def is_face_truly_completed(cube: VCube, face: str) -> bool:
     """
     # Orient cube so the completed face is on top for easier checking
     cube_orientated = cube.oriented_copy(face)
+    f2l_size = cube.face_size - cube.size
 
     for adjacent_face in ADJACENT_FACES[face]:
         # Get first 6 facelets (indices 0-5): top two rows of the face
-        # These 6 facelets capture the first two layers for this face
+        # These facelets capture the first two layers for this face
         adjacent_facelets = cube_orientated.get_face_by_center(
             adjacent_face,
-        )[:6]
+        )[:f2l_size]
 
-        # All 6 facelets must match to confirm first two layers are aligned
-        if adjacent_facelets != adjacent_face * 6:
+        # All facelets must match to confirm first two layers are aligned
+        if adjacent_facelets != adjacent_face * f2l_size:
             return False
 
     return True
