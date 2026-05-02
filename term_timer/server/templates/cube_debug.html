@@ -1,8 +1,8 @@
 {% extends "skeleton.html" %}
 {% from 'macros/display_selectors.html' import display_selectors %}
 
-{% block title %}Cube Debug{% endblock %}
-{% block subtitle %}Cube Rendering Debug{% endblock %}
+{% block title %}Cube Renderer{% endblock %}
+{% block subtitle %}Cube Renderer{% endblock %}
 
 {% block description %}
 Interactive cube rendering debug view with rotation controls.
@@ -23,11 +23,11 @@ Interactive cube rendering debug view with rotation controls.
         <i class="fas fa-cube"></i>
       </div>
       <div>
-        <h2>Cube Rendering Debug</h2>
+        <h2>Algorithm Rendering</h2>
         <p>Preview any algorithm across orientations, sizes, modes and palettes</p>
       </div>
     </div>
-    <form method="get" action="/cube/debug/" class="alg-lookup-form">
+    <form method="get" action="." class="alg-lookup-form">
       <input type="hidden" name="o" value="{{ orientation_faces }}">
       <input type="hidden" name="c" value="{{ cube_size }}">
       <input type="hidden" name="m" value="{{ mode }}">
