@@ -8,6 +8,8 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeOrientation
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
+from cubing_algs.constants import DEFAULT_CUBE_SIZE
+from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.vcube import VCube
 
 from term_timer.annotations import TrainingCase
@@ -449,11 +451,28 @@ class Trainer(SolveInterface):
                 self.rng,
                 self.cube_orientation_moves,
         )
-        cube = VCube(size=3)
-        cube.rotate(self.scramble)
 
-        self.scramble_oriented = self.reorient(self.scramble)
+        if self.bluetooth_cube:
+            cube = VCube(self.bluetooth_cube_state, size=DEFAULT_CUBE_SIZE)
+            cube.rotate(self.scramble)
+        else:
+            cube = VCube(size=DEFAULT_CUBE_SIZE)
+            cube.rotate(self.scramble)
+
         self.facelets_scrambled = cube.state
+
+        if (
+                self.counter == 1
+                and self.bluetooth_cube
+                and not self.bluetooth_cube_is_solved
+        ):
+            scramble = facelets_to_facelets_algorithm(
+                self.bluetooth_cube_state,
+                cube.state,
+            )
+            self.scramble_oriented = self.reorient(scramble)
+        else:
+            self.scramble_oriented = self.reorient(self.scramble)
 
         self.start_line(cube, selected_case, solution)
 
@@ -488,7 +507,7 @@ class Trainer(SolveInterface):
             ) or '',
             session='training',
             solve_id=self.counter,
-            cube_size=3,
+            cube_size=DEFAULT_CUBE_SIZE,
             moves=' '.join(moves),
         )
         solve.method_name = self.method.lower()
