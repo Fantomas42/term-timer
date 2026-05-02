@@ -24,7 +24,9 @@ class TestTriggers(unittest.TestCase):
         for pattern in TRIGGER_PATTERNS:
             name = _slug(pattern.name)
             self.assertIn(name, TRIGGERS)
-            self.assertEqual(len(TRIGGERS[name]) % 8, 0)
+            for seed in [pattern.moves, *pattern.variations]:
+                self.assertIn(seed, TRIGGERS[name])
+            self.assertEqual(len(TRIGGERS[name]), len(set(TRIGGERS[name])))
 
 
 class TestTriggersRegex(unittest.TestCase):

@@ -8,7 +8,6 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.offset import offset_y2_moves
 from cubing_algs.transform.offset import offset_y_moves
 from cubing_algs.transform.offset import offset_yprime_moves
-from cubing_algs.transform.symmetry import symmetry_m_moves
 from cubing_algs.triggers import TRIGGER_PATTERNS
 
 BLOCK_PATTERN: Final = re.compile(r'\[[^\]]+\].*?\[/[^\]]+\]')
@@ -18,14 +17,20 @@ SLUG_PATTERN: Final = re.compile(r'[^a-z0-9]+')
 TRIGGERS: dict[str, list[str]] = {}
 for pattern in TRIGGER_PATTERNS:
     name = SLUG_PATTERN.sub('-', pattern.name.lower()).strip('-')
-    source = parse_moves(pattern.moves)
-    anti = source.transform(symmetry_m_moves)
-    TRIGGERS.setdefault(name, [])
-    for algo in [source, anti]:
-        TRIGGERS[name].append(str(algo))
-        TRIGGERS[name].append(str(algo.transform(offset_y_moves)))
-        TRIGGERS[name].append(str(algo.transform(offset_yprime_moves)))
-        TRIGGERS[name].append(str(algo.transform(offset_y2_moves)))
+    seen: set[str] = set()
+    variants: list[str] = []
+    for seed in [pattern.moves, *pattern.variations]:
+        algo = parse_moves(seed)
+        for variant in [
+            str(algo),
+            str(algo.transform(offset_y_moves)),
+            str(algo.transform(offset_y2_moves)),
+            str(algo.transform(offset_yprime_moves)),
+        ]:
+            if variant not in seen:
+                seen.add(variant)
+                variants.append(variant)
+    TRIGGERS[name] = variants
 
 
 TRIGGERS_REGEX: Final = {
