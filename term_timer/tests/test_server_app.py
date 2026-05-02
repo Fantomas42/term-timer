@@ -43,7 +43,8 @@ class TestConstants(unittest.TestCase):
     def test_legends_constants(self) -> None:
         """Test legends constants."""
         expected_legends = {
-            'pair-ie': 'Pair insertion/extraction',
+            'slot-extract': 'Slot Extract',
+            'slot-insert': 'Slot Insert',
             'sexy-move': 'Sexy Move',
             'pre-auf': 'Pre-AUF',
             'post-auf': 'Post-AUF',

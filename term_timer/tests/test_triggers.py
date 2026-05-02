@@ -3,7 +3,8 @@
 import re
 import unittest
 
-from term_timer.triggers import BASE_TRIGGERS
+from cubing_algs.triggers import TRIGGER_PATTERNS
+
 from term_timer.triggers import BLOCK_PATTERN
 from term_timer.triggers import DEFAULT_TRIGGERS
 from term_timer.triggers import TRIGGERS
@@ -11,29 +12,17 @@ from term_timer.triggers import TRIGGERS_REGEX
 from term_timer.triggers import apply_trigger_outside_blocks
 
 
-class TestBaseTriggers(unittest.TestCase):
-    """Tests for BASE_TRIGGERS mapping."""
-
-    def test_chair_trigger(self) -> None:
-        """Test chair trigger."""
-        self.assertEqual(BASE_TRIGGERS["RU2R'U'RU'R'"], 'chair')
-
-    def test_sexy_move_trigger(self) -> None:
-        """Test sexy move trigger."""
-        self.assertEqual(BASE_TRIGGERS["RUR'U'"], 'sexy-move')
-
-    def test_sledgehammer_trigger(self) -> None:
-        """Test sledgehammer trigger."""
-        self.assertEqual(BASE_TRIGGERS["R'FRF'"], 'sledgehammer')
+def _slug(name: str) -> str:
+    return re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
 
 
 class TestTriggers(unittest.TestCase):
     """Tests for TRIGGERS generation."""
 
-    def test_triggers_generated_from_base(self) -> None:
-        """Test triggers generated from base."""
-        # 8 variationss (2 algos x 4 rotations)
-        for name in BASE_TRIGGERS.values():
+    def test_triggers_generated_from_patterns(self) -> None:
+        """Test triggers generated from cubing_algs TRIGGER_PATTERNS."""
+        for pattern in TRIGGER_PATTERNS:
+            name = _slug(pattern.name)
             self.assertIn(name, TRIGGERS)
             self.assertEqual(len(TRIGGERS[name]) % 8, 0)
 
@@ -43,14 +32,14 @@ class TestTriggersRegex(unittest.TestCase):
 
     def test_regex_compiled_for_all_triggers(self) -> None:
         """Test regex compiled for all triggers."""
-        self.assertEqual(len(TRIGGERS_REGEX), len(set(BASE_TRIGGERS.values())))
+        self.assertEqual(len(TRIGGERS_REGEX), len(TRIGGER_PATTERNS))
 
-    def test_chair_regex_matches(self) -> None:
-        """Test chair regex matches."""
-        chair_regex = TRIGGERS_REGEX['chair']
+    def test_anti_sune_regex_matches(self) -> None:
+        """Test anti-sune regex matches."""
+        anti_sune_regex = TRIGGERS_REGEX['anti-sune']
 
-        for trigger in TRIGGERS['chair']:
-            self.assertIsNotNone(chair_regex.search(trigger))
+        for trigger in TRIGGERS['anti-sune']:
+            self.assertIsNotNone(anti_sune_regex.search(trigger))
 
     def test_regex_negative_lookahead(self) -> None:
         """Test regex negative lookahead."""
@@ -63,11 +52,10 @@ class TestTriggersRegex(unittest.TestCase):
 class TestDefaultTriggers(unittest.TestCase):
     """Tests for DEFAULT_TRIGGERS configuration."""
 
-    def test_all_default_triggers_in_base(self) -> None:
-        """Test all default triggers in base."""
-        base_trigger_names = set(BASE_TRIGGERS.values())
+    def test_all_default_triggers_in_triggers(self) -> None:
+        """Test all default triggers are in TRIGGERS."""
         for trigger in DEFAULT_TRIGGERS:
-            self.assertIn(trigger, base_trigger_names)
+            self.assertIn(trigger, TRIGGERS)
 
 
 class TestBlockPattern(unittest.TestCase):

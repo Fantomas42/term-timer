@@ -328,15 +328,15 @@ class TestSolve54(unittest.TestCase):  # noqa: PLR0904
             ),
             (
                 "U' "
-                "[su]R U R' U[/su] "
-                "[pair-ie]B U' B'[/pair-ie] "
+                "[sune-trigger]R U R' U[/sune-trigger] "
+                "[slot-insert]B U' B'[/slot-insert] "
                 "[reco-pause].[/reco-pause]"
             ),
             (
                 "U "
-                "[pair-ie]F' U F[/pair-ie] "
+                "[slot-insert]F' U F[/slot-insert] "
                 "U' "
-                "[pair-ie]F U F'[/pair-ie] "
+                "[slot-extract]F U F'[/slot-extract] "
                 "[reco-pause].[/reco-pause]"
             ),
             (
@@ -344,18 +344,19 @@ class TestSolve54(unittest.TestCase):  # noqa: PLR0904
                 "R [deletion]U'[/deletion] [deletion]R'[/deletion] "
                 "[addition].[/addition] U [deletion].[/deletion] "
                 "[deletion]U'[/deletion] [deletion]R[/deletion] "
-                "[deletion]U2[/deletion] R' U [pair-ie]F' U' F[/pair-ie] "
+                "[deletion]U2[/deletion] R' U "
+                "[slot-extract]F' U' F[/slot-extract] "
                 "[reco-pause].[/reco-pause]"
             ),
             (
                 "U "
-                "[sa]L U' L' U'[/sa] "
-                "[pair-ie]B' U B[/pair-ie] "
+                "[sane-trigger]L U' L' U'[/sane-trigger] "
+                "[slot-insert]B' U B[/slot-insert] "
                 "[reco-pause].[/reco-pause]"
             ),
             (
                 "[pre-auf]U'[/pre-auf] [pause].[/pause] "
-                "[slice]M[/slice] [pair-ie]F U F'[/pair-ie] "
+                "[slice]M[/slice] [slot-extract]F U F'[/slot-extract] "
                 "[pause].[/pause] U' F' L F [wide]l'[/wide] "
                 "[reco-pause].[/reco-pause]"
             ),
@@ -390,17 +391,17 @@ class TestSolve54(unittest.TestCase):  # noqa: PLR0904
             ),
             (
                 "U' "
-                "[su]R U R' U[/su] "
-                "[pair-ie]B U' B'[/pair-ie] "
+                "[sune-trigger]R U R' U[/sune-trigger] "
+                "[slot-insert]B U' B'[/slot-insert] "
                 "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
                 "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
                 "[reco-pause].[/reco-pause]"
             ),
             (
                 "U "
-                "[pair-ie]F' U F[/pair-ie] "
+                "[slot-insert]F' U F[/slot-insert] "
                 "U' "
-                "[pair-ie]F U F'[/pair-ie] "
+                "[slot-extract]F U F'[/slot-extract] "
                 "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]"
             ),
             (
@@ -409,19 +410,20 @@ class TestSolve54(unittest.TestCase):  # noqa: PLR0904
                 "[addition].[/addition] [addition].[/addition] "
                 "[addition].[/addition] U [deletion].[/deletion] "
                 "[deletion]U'[/deletion] [deletion]R[/deletion] "
-                "[deletion]U2[/deletion] R' U [pair-ie]F' U' F[/pair-ie] "
+                "[deletion]U2[/deletion] R' U "
+                "[slot-extract]F' U' F[/slot-extract] "
                 "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
                 "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]"
             ),
             (
                 "U "
-                "[sa]L U' L' U'[/sa] "
-                "[pair-ie]B' U B[/pair-ie] "
+                "[sane-trigger]L U' L' U'[/sane-trigger] "
+                "[slot-insert]B' U B[/slot-insert] "
                 "[reco-pause].[/reco-pause]"
             ),
             (
                 "[pre-auf]U'[/pre-auf] [pause].[/pause] "
-                "[slice]M[/slice] [pair-ie]F U F'[/pair-ie] "
+                "[slice]M[/slice] [slot-extract]F U F'[/slot-extract] "
                 "[pause].[/pause] U' F' L F [wide]l'[/wide] "
                 "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
                 "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]"

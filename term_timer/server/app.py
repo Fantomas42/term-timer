@@ -109,7 +109,8 @@ CLASS_CONVERTION: Final = {
 }
 
 LEGENDS: Final = {
-    'pair-ie': 'Pair insertion/extraction',
+    'slot-extract': 'Slot Extract',
+    'slot-insert': 'Slot Insert',
     'sexy-move': 'Sexy Move',
     'pre-auf': 'Pre-AUF',
     'post-auf': 'Post-AUF',

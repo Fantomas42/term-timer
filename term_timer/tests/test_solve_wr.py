@@ -93,9 +93,13 @@ class TestSolveWR(unittest.TestCase):
         ]
         outputs = [
             "U R2 U' F' L F' U' L'",
-            "U' [pair-ie]R U R'[/pair-ie]",
-            "R' U [ne]R U2 R'[/ne] U R",
-            "[pre-auf]U[/pre-auf] [su]R' U' R U'[/su] [ne]R' U2 R[/ne]",
+            "U' [slot-extract]R U R'[/slot-extract]",
+            "R' U [slot-extended]R U2 R'[/slot-extended] U R",
+            (
+                "[pre-auf]U[/pre-auf] "
+                "[sune-trigger]R' U' R U'[/sune-trigger] "
+                "[slot-extended]R' U2 R[/slot-extended]"
+            ),
             '[post-auf]U[/post-auf]',
         ]
 

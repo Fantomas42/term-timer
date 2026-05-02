@@ -316,32 +316,35 @@ class TestSolve38(unittest.TestCase):  # noqa: PLR0904
         outputs = [
             "B L' [pause].[/pause] U F2 [reco-pause].[/reco-pause]",
             (
-                "U2 [pair-ie]B U B'[/pair-ie] "
+                "U2 [slot-extract]B U B'[/slot-extract] "
                 "[deletion]U'[/deletion] "
                 "[pause].[/pause] [deletion]U[/deletion] "
-                "[pair-ie]R' U' R[/pair-ie] "
-                "U2 [pair-ie]L U L'[/pair-ie] [reco-pause].[/reco-pause]"
+                "[slot-extract]R' U' R[/slot-extract] "
+                "U2 [slot-extract]L U L'[/slot-extract] "
+                "[reco-pause].[/reco-pause]"
             ),
             (
                 "U [pause].[/pause] "
-                "U R' U [sa]R U' R' U'[/sa] "
+                "U R' U [sane-trigger]R U' R' U'[/sane-trigger] "
                 "R [reco-pause].[/reco-pause]"
             ),
             (
-                "[pair-ie]R U R'[/pair-ie] [deletion]U'[/deletion] "
+                "[slot-extract]R U R'[/slot-extract] [deletion]U'[/deletion] "
                 "[pause].[/pause] [deletion]U[/deletion] U' "
-                "[pause].[/pause] [ne]F U2 F'[/ne] "
-                "U2 [pair-ie]F U' F'[/pair-ie] [reco-pause].[/reco-pause]"
+                "[pause].[/pause] [slot-extended]F U2 F'[/slot-extended] "
+                "U2 [slot-insert]F U' F'[/slot-insert] "
+                "[reco-pause].[/reco-pause]"
             ),
             (
                 "U2 [pause].[/pause] "
-                "F' U [sa]F U' F' U'[/sa] F [reco-pause].[/reco-pause]"
+                "F' U [sane-trigger]F U' F' U'[/sane-trigger] "
+                "F [reco-pause].[/reco-pause]"
             ),
             (
                 "[pre-auf]U'[/pre-auf] [pause].[/pause] "
                 "[pre-auf]U'[/pre-auf] [pause].[/pause] "
                 "[slice]M[/slice] "
-                "[chair]L' U2 L U L' U L[/chair] "
+                "[anti-sune]L' U2 L U L' U L[/anti-sune] "
                 "U "
                 "[slice]M'[/slice] "
                 "[reco-pause].[/reco-pause]"
@@ -349,7 +352,8 @@ class TestSolve38(unittest.TestCase):  # noqa: PLR0904
             (
                 "[pre-auf]U[/pre-auf] R' U' F' "
                 "[sexy-move]R U R' U'[/sexy-move] R' F R2 U' "
-                "[sexy-move]R' U' R U[/sexy-move] [pair-ie]R' U R[/pair-ie] "
+                "[sexy-move]R' U' R U[/sexy-move] "
+                "[slot-insert]R' U R[/slot-insert] "
                 "[post-auf]U2[/post-auf]"
             ),
         ]
@@ -376,35 +380,37 @@ class TestSolve38(unittest.TestCase):  # noqa: PLR0904
                 "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]"
             ),
             (
-                "U2 [pair-ie]B U B'[/pair-ie] "
+                "U2 [slot-extract]B U B'[/slot-extract] "
                 "[deletion]U'[/deletion] "
                 "[pause].[/pause] [deletion]U[/deletion] "
-                "[addition].[/addition] [pair-ie]R' U' R[/pair-ie] "
-                "U2 [pair-ie]L U L'[/pair-ie] [reco-pause].[/reco-pause]"
+                "[addition].[/addition] [slot-extract]R' U' R[/slot-extract] "
+                "U2 [slot-extract]L U L'[/slot-extract] "
+                "[reco-pause].[/reco-pause]"
             ),
             (
                 "U [pause].[/pause] "
-                "U R' U [sa]R U' R' U'[/sa] "
+                "U R' U [sane-trigger]R U' R' U'[/sane-trigger] "
                 "R [reco-pause].[/reco-pause]"
             ),
             (
-                "[pair-ie]R U R'[/pair-ie] [deletion]U'[/deletion] "
+                "[slot-extract]R U R'[/slot-extract] [deletion]U'[/deletion] "
                 "[pause].[/pause] [pause].[/pause] [deletion]U[/deletion] "
                 "U' [pause].[/pause] "
-                "[ne]F U2 F'[/ne] U2 [pair-ie]F U' F'[/pair-ie] "
+                "[slot-extended]F U2 F'[/slot-extended] "
+                "U2 [slot-insert]F U' F'[/slot-insert] "
                 "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause] "
                 "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]"
             ),
             (
                 "U2 [pause].[/pause] "
-                "F' U [sa]F U' F' U'[/sa] F "
+                "F' U [sane-trigger]F U' F' U'[/sane-trigger] F "
                 "[reco-pause].[/reco-pause] [reco-pause].[/reco-pause]"
             ),
             (
                 "[pre-auf]U'[/pre-auf] [pause].[/pause] "
                 "[pre-auf]U'[/pre-auf] [pause].[/pause] "
                 "[slice]M[/slice] "
-                "[chair]L' U2 L U L' U L[/chair] "
+                "[anti-sune]L' U2 L U L' U L[/anti-sune] "
                 "U "
                 "[slice]M'[/slice] "
                 "[reco-pause].[/reco-pause]"
@@ -412,7 +418,8 @@ class TestSolve38(unittest.TestCase):  # noqa: PLR0904
             (
                 "[pre-auf]U[/pre-auf] R' U' F' "
                 "[sexy-move]R U R' U'[/sexy-move] R' F R2 U' "
-                "[sexy-move]R' U' R U[/sexy-move] [pair-ie]R' U R[/pair-ie] "
+                "[sexy-move]R' U' R U[/sexy-move] "
+                "[slot-insert]R' U R[/slot-insert] "
                 "[post-auf]U2[/post-auf]"
             ),
         ]

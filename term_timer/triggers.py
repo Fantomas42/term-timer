@@ -9,36 +9,19 @@ from cubing_algs.transform.offset import offset_y2_moves
 from cubing_algs.transform.offset import offset_y_moves
 from cubing_algs.transform.offset import offset_yprime_moves
 from cubing_algs.transform.symmetry import symmetry_m_moves
+from cubing_algs.triggers import TRIGGER_PATTERNS
 
 BLOCK_PATTERN: Final = re.compile(r'\[[^\]]+\].*?\[/[^\]]+\]')
-
-BASE_TRIGGERS: Final = {
-    "RU2R'U'RU'R'": 'chair',
-
-    "RUR'U'": 'sexy-move',
-
-    "R'FRF'": 'sledgehammer',
-
-    "RUR'U": 'su',
-    "RU'R'U'": 'sa',
-
-    "RU2R'": 'ne',
-    "R'U2R": 'ne',
-
-    "RUR'": 'pair-ie',
-    "RU'R'": 'pair-ie',
-}
+SLUG_PATTERN: Final = re.compile(r'[^a-z0-9]+')
 
 
 TRIGGERS: dict[str, list[str]] = {}
-for algo_string, name in BASE_TRIGGERS.items():
-    source_algo = parse_moves(algo_string)
-    anti_algo = source_algo.transform(
-        symmetry_m_moves,
-    )
-
+for pattern in TRIGGER_PATTERNS:
+    name = SLUG_PATTERN.sub('-', pattern.name.lower()).strip('-')
+    source = parse_moves(pattern.moves)
+    anti = source.transform(symmetry_m_moves)
     TRIGGERS.setdefault(name, [])
-    for algo in [source_algo, anti_algo]:
+    for algo in [source, anti]:
         TRIGGERS[name].append(str(algo))
         TRIGGERS[name].append(str(algo.transform(offset_y_moves)))
         TRIGGERS[name].append(str(algo.transform(offset_yprime_moves)))
@@ -51,13 +34,14 @@ TRIGGERS_REGEX: Final = {
 }
 
 DEFAULT_TRIGGERS: Final = [
-    'chair',
+    'anti-sune',
     'sexy-move',
     'sledgehammer',
-    'su',
-    'sa',
-    'ne',
-    'pair-ie',
+    'sune-trigger',
+    'sane-trigger',
+    'slot-extended',
+    'slot-extract',
+    'slot-insert',
 ]
 
 
