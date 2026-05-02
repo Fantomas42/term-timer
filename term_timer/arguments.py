@@ -1298,15 +1298,16 @@ def config_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
 
 
-def get_arguments() -> Namespace:
+def get_parser() -> ArgumentParser:
     """
-    Parse command-line arguments and return parsed namespace.
+    Build and return the argument parser without parsing.
 
     Returns:
-        Parsed command-line arguments namespace.
+        Configured argument parser for term-timer.
 
     """
     parser = ArgumentParser(
+        prog='term-timer',
         description='Speed cubing timer on your terminal.',
         epilog='Have fun cubing !',
     )
@@ -1333,6 +1334,18 @@ def get_arguments() -> Namespace:
     merge_arguments(subparsers)
     config_arguments(subparsers)
 
+    return parser
+
+
+def get_arguments() -> Namespace:
+    """
+    Parse command-line arguments and return parsed namespace.
+
+    Returns:
+        Parsed command-line arguments namespace.
+
+    """
+    parser = get_parser()
     args = parser.parse_args(sys.argv[1:])
 
     if args.command is None:
