@@ -413,6 +413,18 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
 
     parser.add_argument(
+        'trainings',
+        nargs='?',
+        type=int,
+        default=0,
+        metavar='TRAININGS',
+        help=(
+            'Specify the number of trainings to be done.\n'
+            'Default: Infinite.'
+        ),
+    )
+
+    parser.add_argument(
         '-s', '--step',
         default=TRAINER_STEP,
         choices={'cross', 'ecross', 'xcross', 'f2l', 'af2l', 'oll', 'pll'},

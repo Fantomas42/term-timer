@@ -74,8 +74,6 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
 
     rng = Random(options.seed) if options.seed else Random()  # noqa: S311
 
-    solves_done = 0
-
     timer = Timer(
         cube_size=cube,
         iterations=options.iterations,
@@ -105,6 +103,8 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
         await timer.bluetooth_connect(
             use_gyroscope=options.use_gyroscope,
         )
+
+    solves_done = 0
 
     try:
         while 42:
@@ -181,12 +181,21 @@ async def trainer(options: Namespace) -> int:
             use_gyroscope=options.use_gyroscope,
         )
 
+    trainings_done = 0
+
     try:
         while 42:
             done = await trainer.start()
 
-            if not done:
+            if done:
+                trainings_done += 1
+
+                if options.trainings and trainings_done >= options.trainings:
+                    break
+            else:
                 break
+    except InvalidMoveError as error:
+        console.print('😱', str(error), style='warning')
     finally:
         if trainer.bluetooth_interface:
             await trainer.bluetooth_disconnect()
