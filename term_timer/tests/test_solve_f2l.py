@@ -76,15 +76,15 @@ class TestSolveF2LDouble(unittest.TestCase):
             if info['type'] != 'virtual'
         ]
         outputs = [
-            "R' U L L' D' L R2 B2 .",
+            "B' U F F' D' F B2 L2 .",
             (
-                "U2 . U R' U' R U2 R' U U2 B' U' B . U . U F U' F' U F . "
-                "U2 F U' F' U' . U . U F2 . F U' F' U F F' . U' F' U F . "
-                "U2 B U' B' U' . F R' F' ."
+                "U2 . U B' U' B U2 B' U U2 L' U' L . U . U R U' R' U R . "
+                "U2 R U' R' U' . U . U R2 . R U' R' U R R' . U' R' U R . "
+                "U2 L U' L' U' . R B' R' ."
             ),
-            "R' U R U2 R' U2 R U' R' U R .",
-            "L' U L U F U' F' .",
-            "U' . U2 . F' L F L' U' L' U L .",
+            "B' U B U2 B' U2 B U' B' U B .",
+            "F' U F U R U' R' .",
+            "U' . U2 . R' F R F' U' F' U F .",
             'U U2',
         ]
 

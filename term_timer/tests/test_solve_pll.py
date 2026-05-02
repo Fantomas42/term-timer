@@ -74,12 +74,12 @@ class TestSolvePLLSkipAUF(unittest.TestCase):
             if info['type'] != 'virtual'
         ]
         outputs = [
-            "U' F L . D' R' .",
-            "U R' U' U2 R . U . B' U B .",
-            "U' F' U F U2 U' R' U R .",
-            "R U R' U' . U F' U2 F U' F U2 F' U2 F U' F' .",
-            "U F' U F U2 F' U F .",
-            "F R U R' U' F' B U L U' L' B' .",
+            "U' R F . D' B' .",
+            "U B' U' U2 B . U . L' U L .",
+            "U' R' U R U2 U' B' U B .",
+            "B U B' U' . U R' U2 R U' R U2 R' U2 R U' R' .",
+            "U R' U R U2 R' U R .",
+            "R B U B' U' R' L U F U' F' L' .",
             'U U2',
         ]
 

@@ -17,6 +17,12 @@ from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import CUBE_RIGHT_HANDED
 from term_timer.exceptions import InvalidOrientationError
 
+PREFERRED_FACES: dict[str, int] = (
+    {'U': 3, 'R': 2, 'F': 1, 'M': 1}
+    if CUBE_RIGHT_HANDED else
+    {'U': 3, 'L': 2, 'F': 1, 'M': 1}
+)
+
 
 def is_face_complete(cube: VCube, face: str) -> bool:
     """
@@ -64,7 +70,6 @@ def is_face_truly_completed(cube: VCube, face: str) -> bool:
     # Orient cube so the completed face is on top for easier checking
     cube_orientated = cube.oriented_copy(face)
 
-    # Check each adjacent face (4 faces surrounding the completed one)
     for adjacent_face in ADJACENT_FACES[face]:
         # Get first 6 facelets (indices 0-5): top two rows of the face
         # These 6 facelets capture the first two layers for this face
@@ -72,12 +77,85 @@ def is_face_truly_completed(cube: VCube, face: str) -> bool:
             adjacent_face,
         )[:6]
 
-        # All 6 facelets must match the adjacent face's center color
-        # This confirms the first two layers are properly aligned
+        # All 6 facelets must match to confirm first two layers are aligned
         if adjacent_facelets != adjacent_face * 6:
             return False
 
     return True
+
+
+def detect_top_face(
+        scramble: Algorithm,
+        untimed_solution: Algorithm,
+) -> tuple[str | None, int]:
+    """
+    Replay the solve to find the top face and the index where F2L ends.
+
+    Returns:
+        Tuple of (top_face, f2l_end_index) where f2l_end_index is the
+        number of moves after which the first two layers are complete.
+        Returns (None, 0) if no face completion is detected.
+
+    """
+    cube = VCube(size=3)
+    cube.rotate(scramble)
+
+    for i, move in enumerate(untimed_solution):
+        cube.rotate(move)
+
+        # First filter: find faces where all 9 facelets are monochrome
+        complete_faces = [
+            face for face in FACE_ORDER
+            if is_face_complete(cube, face)
+        ]
+
+        if not complete_faces:
+            continue
+
+        # Second filter: among monochrome faces, find those with first
+        # two layers completed
+        face_completed = [
+            face for face in complete_faces
+            if is_face_truly_completed(cube, face)
+        ]
+
+        # Exactly one completed face unambiguously identifies the cross face.
+        # If 0: keep searching. If 2+: ambiguous state, keep searching.
+        if len(face_completed) == 1:
+            # The completed face is on the bottom (solver's perspective),
+            # so we use its opposite as the top face for viewing
+            return OPPOSITE_FACES[face_completed[0]], i + 1
+
+    return None, 0
+
+
+def score_gen_quality(
+        top_face: str,
+        front_face: str,
+        moves: Algorithm,
+) -> float:
+    """
+    Score a candidate orientation using generator quality.
+
+    Translates moves into the given orientation and scores by how well
+    the generator frequency matches PREFERRED_FACES, weighting each
+    face by ergonomic importance and discounting by position in the
+    frequency list.
+
+    Returns:
+        Weighted quality score; higher is better.
+
+    """
+    orientation_moves = parse_moves(
+        ORIENTATION_FACE_MOVES[top_face + front_face],
+    )
+    algorithm = translate_moves(orientation_moves)(moves)
+    generators = algorithm.metrics.generators
+    return sum(
+        weight / (generators.index(face) + 1)
+        for face, weight in PREFERRED_FACES.items()
+        if face in generators
+    )
 
 
 def get_orientation_faces(
@@ -87,95 +165,46 @@ def get_orientation_faces(
     """
     Calculate optimal cube orientation for solve analysis.
 
-    This function implements a two-phase algorithm:
-
-    Phase 1 - Detect Bottom Face:
-        Replay the solve move-by-move until exactly one face is "truly
-        completed" (monochrome with first two layers completed). This face
-        becomes the bottom, and its opposite becomes the top.
-
-    Phase 2 - Select Front Face:
-        Among the 4 possible front faces (adjacent to top), choose the one
-        that maximizes ergonomic moves (left-hand or right-hand based on
-        user configuration).
-
-    Args:
-        scramble: Scrambling algorithm applied before solution
-        solution: Solution reconstruction with moves (may include timing)
+    Scores each candidate front face using generator quality on last-layer
+    moves (OLL+PLL), which are free of hidden regrip rotations and provide a
+    reliable ergonomic signal. Falls back to full-solve scoring when the
+    last-layer is degenerate (all scores equal).
 
     Returns:
-        Two-character orientation string (e.g., 'UF' for white top,
-        green front). Falls back to CUBE_ORIENTATION if no face
-        completion is detected during the solve.
+        Best CubeOrientation string (top_face + front_face).
 
     """
-    top_face = None
-
-    cube = VCube(size=3)
-    cube.rotate(scramble)
-
     untimed_solution = untime_moves(solution)
-
-    # Phase 1: Detect when the first face is truly completed
-    # We replay the solve move-by-move to find the critical moment
-    for move in untimed_solution:
-        cube.rotate(move)
-
-        # First filter: Find faces where all 9 facelets are monochrome
-        complete_faces = [
-            face for face in FACE_ORDER
-            if is_face_complete(cube, face)
-        ]
-
-        if not complete_faces:
-            continue
-
-        # Second filter: Among monochrome faces, find those with first
-        # two layers completed
-        face_completed = [
-            face for face in complete_faces
-            if is_face_truly_completed(cube, face)
-        ]
-
-        # We need exactly one face to be completed to determine orientation
-        # If 0 faces: keep searching
-        # If 2+ faces: ambiguous state, keep searching for clearer moment
-        if len(face_completed) == 1:
-            # The completed face is on the bottom (solver's perspective)
-            # so we use its opposite as the top face for viewing
-            top_face = OPPOSITE_FACES[face_completed[0]]
-            break
+    top_face, f2l_end = detect_top_face(scramble, untimed_solution)
 
     if not top_face:
         return CUBE_ORIENTATION
 
-    # Phase 2: Select the front face with best ergonomics
-    # We test each of the 4 possible front faces (adjacent to top face)
-    # and score them based on the number of comfortable moves
-    scores = []
-    for front_face in ADJACENT_FACES[top_face]:
-        # Build the full algorithm with orientation moves prepended
-        # Then apply transforms to normalize it for ergonomic analysis
-        algorithm = translate_moves(
-            parse_moves(
-                ORIENTATION_FACE_MOVES[top_face + front_face],
-            ),
-        )(untimed_solution)
+    # Score each of the 4 candidate front faces using last-layer moves only.
+    # OLL/PLL algorithms use genuine RUF moves without hidden regrip rotations,
+    # making them a cleaner ergonomic signal than the full solve.
+    score_moves = untimed_solution[f2l_end:] or untimed_solution
 
-        ergonomics = algorithm.ergonomics
-
-        # Score based on configured handedness preference
-        # Higher score = more moves with preferred hand
-        score = (
-            ergonomics.right_hand_moves if CUBE_RIGHT_HANDED
-            else ergonomics.left_hand_moves
+    scores = [
+        (
+            front_face,
+            score_gen_quality(top_face, front_face, score_moves),
         )
+        for front_face in ADJACENT_FACES[top_face]
+    ]
 
-        scores.append((front_face, score))
+    # Degenerate last-layer (e.g. single U move): all orientations score
+    # identically, so fall back to full-solve scoring.
+    if len({s for _, s in scores}) == 1:
+        scores = [
+            (
+                front_face,
+                score_gen_quality(top_face, front_face, untimed_solution),
+            )
+            for front_face in ADJACENT_FACES[top_face]
+        ]
 
-    best_front_face = max(scores, key=operator.itemgetter(1))[0]
-
-    return top_face + best_front_face
+    return top_face + max(scores, key=operator.itemgetter(1))[0]
 
 
 @lru_cache

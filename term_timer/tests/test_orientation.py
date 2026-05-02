@@ -52,7 +52,7 @@ class TestAutoRotation(unittest.TestCase):
 
         self.assertEqual(
             get_orientation_faces(scramble, solution),
-            'DL',
+            'DF',
         )
 
     def test_solve_roux(self) -> None:
@@ -80,7 +80,7 @@ class TestAutoRotation(unittest.TestCase):
 
         self.assertEqual(
             get_orientation_faces(scramble, solution),
-            'LD',
+            'LB',
         )
 
     def test_solve_wr(self) -> None:
@@ -141,8 +141,8 @@ class TestOrientationDetection(unittest.TestCase):
 
         self.assertEqual(
             result,
-            'DL',
-            f"Expected 'DL' but got '{result}'. "
+            'DF',
+            f"Expected 'DF' but got '{result}'. "
             "Face B completes early but first layer invalid, "
             "should continue to find valid D-top orientation.",
         )
