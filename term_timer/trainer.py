@@ -370,7 +370,10 @@ class Trainer(SolveInterface):
             self.console.print(
                 f'[analysis]Executed #{ self.counter }:[/analysis] [consign]' +
                 solve.reconstruction_step_line(
-                    solve.method_applied.summary[0],
+                    next(
+                        step for step in solve.method_applied.summary
+                        if step['moves']
+                    ),
                     multiple=True,
                 ) + '[/consign]',
                 solve.trainer_line,
