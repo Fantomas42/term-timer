@@ -319,24 +319,16 @@ class TestTrainerEcross(unittest.TestCase):
     def test_returns_four_tuple(self) -> None:
         """Test that trainer returns a four-element tuple."""
         result = trainer('ecross', self.cases, self.rng, self.orientation)
-        self.assertEqual(len(result), 4)
+        self.assertEqual(len(result), 3)
 
     def test_ecross_returns_correct_types(self) -> None:
         """Test that ecross trainer returns correct types for each element."""
-        case, scramble, solution, cube = trainer(
+        case, scramble, solution = trainer(
             'ecross', self.cases, self.rng, self.orientation,
         )
         self.assertIsInstance(case, Case)
         self.assertIsInstance(scramble, Algorithm)
         self.assertIsInstance(solution, Algorithm)
-        self.assertIsInstance(cube, VCube)
-
-    def test_ecross_cube_is_scrambled(self) -> None:
-        """Test that ecross returns a scrambled cube."""
-        _, _, _, cube = trainer(
-            'ecross', self.cases, self.rng, self.orientation,
-        )
-        self.assertNotEqual(cube.state, SOLVED_FACELETS_3x3x3)
 
     def test_ecross_uses_scramble_easy_cross(self) -> None:
         """Test that ecross step calls scramble_easy_cross."""
@@ -357,13 +349,12 @@ class TestTrainerXcross(unittest.TestCase):
 
     def test_xcross_returns_correct_types(self) -> None:
         """Test that xcross trainer returns correct types."""
-        case, scramble, solution, cube = trainer(
+        case, scramble, solution = trainer(
             'xcross', self.cases, self.rng, self.orientation,
         )
         self.assertIsInstance(case, Case)
         self.assertIsInstance(scramble, Algorithm)
         self.assertIsInstance(solution, Algorithm)
-        self.assertIsInstance(cube, VCube)
 
     def test_xcross_uses_scramble_x_cross(self) -> None:
         """Test that xcross step calls scramble_x_cross."""
@@ -384,13 +375,12 @@ class TestTrainerCross(unittest.TestCase):
 
     def test_cross_returns_correct_types(self) -> None:
         """Test that cross trainer returns correct types."""
-        case, scramble, solution, cube = trainer(
+        case, scramble, solution = trainer(
             'cross', self.cases, self.rng, self.orientation,
         )
         self.assertIsInstance(case, Case)
         self.assertIsInstance(scramble, Algorithm)
         self.assertIsInstance(solution, Algorithm)
-        self.assertIsInstance(cube, VCube)
 
     def test_cross_uses_scrambler(self) -> None:
         """Test that cross step uses the scrambler function."""
@@ -401,7 +391,7 @@ class TestTrainerCross(unittest.TestCase):
 
     def test_cross_solution_is_empty(self) -> None:
         """Test that cross step returns an empty solution algorithm."""
-        _, _, solution, _ = trainer(
+        _, _, solution = trainer(
             'cross', self.cases, self.rng, self.orientation,
         )
         self.assertEqual(len(solution), 0)
@@ -421,13 +411,12 @@ class TestTrainerOll(unittest.TestCase):
 
     def test_oll_returns_correct_types(self) -> None:
         """Test that OLL trainer returns correct types."""
-        case, scramble, solution, cube = trainer(
+        case, scramble, solution = trainer(
             'oll', self.cases, self.rng, self.orientation,
         )
         self.assertIsInstance(case, Case)
         self.assertIsInstance(scramble, Algorithm)
         self.assertIsInstance(solution, Algorithm)
-        self.assertIsInstance(cube, VCube)
 
     def test_oll_uses_random_training(self) -> None:
         """Test that non-special steps fall through to random_training."""
@@ -443,7 +432,7 @@ class TestTrainerOll(unittest.TestCase):
 
     def test_oll_case_matches_selected(self) -> None:
         """Test that the returned case is a valid case from the input list."""
-        case, _, _, _ = trainer(
+        case, _, _ = trainer(
             'oll', self.cases, self.rng, self.orientation,
         )
         valid_case_codes = {tc.case.code for tc in self.cases}

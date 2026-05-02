@@ -443,12 +443,14 @@ class Trainer(SolveInterface):
         """
         self.init_solve()
 
-        selected_case, self.scramble, solution, cube = trainer(
+        selected_case, self.scramble, solution = trainer(
                 self.step,
                 self.cases,
                 self.rng,
                 self.cube_orientation_moves,
         )
+        cube = VCube(size=3)
+        cube.rotate(self.scramble)
 
         self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.state

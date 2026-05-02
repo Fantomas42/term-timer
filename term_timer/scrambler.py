@@ -93,18 +93,17 @@ def trainer(
         rng: Random,
         orientation_moves: Algorithm | None = None,
 ) -> tuple[
-    Case, Algorithm, Algorithm, VCube,
+    Case, Algorithm, Algorithm,
 ]:
     """
     Generate training case.
 
     Returns:
-        Tuple of (case, scramble, cube state).
+        Tuple of (case, scramble, solution).
 
     """
     case = cases[0].case
     solution = Algorithm()
-    cube = VCube(size=3)
 
     if step == 'ecross':
         scramble, solution = scramble_easy_cross(
@@ -127,9 +126,7 @@ def trainer(
     if orientation_moves:
         scramble = degrip_moves(orientation_moves + scramble)
 
-    cube.rotate(scramble)
-
-    return case, scramble, solution, cube
+    return case, scramble, solution
 
 
 def random_training(

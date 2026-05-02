@@ -263,9 +263,12 @@ def run_trainer_scenario(  # noqa: PLR0913
     base_was_solved = bt_cube.is_solved if bt_cube else True
     bt_initial = bt_cube.state if bt_cube else None
 
-    selected_case, scramble, solution, target_cube = trainer(
+    selected_case, scramble, solution = trainer(
         step, cases, rng, orientation_moves,
     )
+
+    target_cube = VCube(size=3)
+    target_cube.rotate(scramble)
 
     return TrainerScenarioResult(
         case=selected_case,
