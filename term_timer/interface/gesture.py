@@ -22,8 +22,8 @@ class Gesture:
 
         # Property from Bluetooth mixin
         @property
-        def bluetooth_cube_is_solved(self) -> bool:
-            """Check if the Bluetooth cube is in solved state."""
+        def bluetooth_scramble_is_completed(self) -> bool:
+            """Check if the Bluetooth scramble is completed."""
             ...
 
     def __init__(self) -> None:
@@ -43,7 +43,7 @@ class Gesture:
         if len(self.save_moves) < 2:
             return
 
-        if not self.bluetooth_cube_is_solved:
+        if not self.bluetooth_scramble_is_completed:
             return
 
         algo = self.save_moves.transform(

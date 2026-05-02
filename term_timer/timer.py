@@ -321,7 +321,7 @@ class Timer(SolveInterface):
         flag: SolveFlag = ''
         moves = []
         if self.moves:
-            if self.bluetooth_cube and not self.bluetooth_cube_is_solved:
+            if self.bluetooth_cube and not self.bluetooth_scramble_is_completed:
                 flag = DNF
 
             first_time = self.moves[0]['time']

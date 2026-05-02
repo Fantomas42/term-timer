@@ -246,7 +246,7 @@ class Trainer(SolveInterface):
         return selected_cases
 
     @property
-    def bluetooth_cube_is_solved(self) -> bool:
+    def bluetooth_scramble_is_completed(self) -> bool:
         """
         Check if training step is completed.
 

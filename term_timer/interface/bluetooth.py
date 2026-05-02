@@ -504,7 +504,7 @@ class Bluetooth:
 
             if (
                     not self.solve_completed_event.is_set()
-                    and self.bluetooth_cube_is_solved
+                    and self.bluetooth_scramble_is_completed
             ):
                 self.end_time = clock
                 self.solve_completed_event.set()
@@ -525,3 +525,8 @@ class Bluetooth:
     def bluetooth_cube_state(self) -> str:
         """Returns state of the bluetooth cube if connected."""
         return self.bluetooth_cube.state if self.bluetooth_cube else ''
+
+    @property
+    def bluetooth_scramble_is_completed(self) -> bool:
+        """Return if bluetooth scramble is complete."""
+        return self.bluetooth_cube_is_solved
