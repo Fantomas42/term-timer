@@ -79,7 +79,7 @@ from term_timer.server.annotations import AcademyOverviewContext
 from term_timer.server.annotations import AcademyStepContext
 from term_timer.server.annotations import AlgorithmDetailContext
 from term_timer.server.annotations import AlgorithmVariation
-from term_timer.server.annotations import CubeDebugContext
+from term_timer.server.annotations import CubeRenderContext
 from term_timer.server.annotations import DistributionData
 from term_timer.server.annotations import Error404Context
 from term_timer.server.annotations import Error500Context
@@ -545,7 +545,7 @@ class View:
         | AcademyOverviewContext
         | AcademyStepContext
         | AcademyCaseContext
-        | CubeDebugContext
+        | CubeRenderContext
     ):
         """
         Build template context dictionary.
@@ -1652,17 +1652,17 @@ class AcademyCaseView(AcademyView):
         )
 
 
-class CubeDebugView(View):
-    """View for debugging cube rendering with live rotation."""
+class CubeRenderView(View):
+    """View for cube rendering with live rotation."""
 
-    template_name = 'cube_debug.html'
+    template_name = 'cube_render.html'
 
     def __init__(
             self, orientation: CubeOrientation = '', mode: str = '',
             cube_size: str = '', palette: str = '',
             algorithm: str = '') -> None:
         """
-        Initialize the cube debug view.
+        Initialize the cube render view.
 
         Args:
             orientation: Cube orientation for display.
@@ -1678,9 +1678,9 @@ class CubeDebugView(View):
         self.palette = palette or CUBE_PALETTE
         self.algorithm = algorithm
 
-    def get_context(self) -> CubeDebugContext:
+    def get_context(self) -> CubeRenderContext:
         """
-        Build context for the cube debug template.
+        Build context for the cube render template.
 
         Returns:
             Dictionary with selector options and algorithm.
@@ -1847,16 +1847,16 @@ class Server:
                 request.GET.o,
             ).as_view(debug)
 
-        @app.route('/cube/debug/')  # type: ignore[untyped-decorator]
+        @app.route('/cube/render/')  # type: ignore[untyped-decorator]
         def cube_debug() -> str:
             """
-            Render cube rendering debug page with live rotation.
+            Render cube rendering tool page with live rotation.
 
             Returns:
                 Rendered HTML template.
 
             """
-            return CubeDebugView(
+            return CubeRenderView(
                 orientation=request.GET.o,
                 mode=request.GET.m,
                 cube_size=request.GET.c,

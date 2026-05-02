@@ -204,8 +204,8 @@ class AcademyStepContext(TypedDict):
     available_palettes: list[str]
 
 
-class CubeDebugContext(TypedDict):
-    """Template context for cube rendering debug view."""
+class CubeRenderContext(TypedDict):
+    """Template context for cube rendering view."""
 
     algorithm: str
     orientation_faces: CubeOrientation
