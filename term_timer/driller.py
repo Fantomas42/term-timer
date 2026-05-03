@@ -1,15 +1,14 @@
 """Driller interface for repeating an algorithm to build fluency."""
 import asyncio
+from typing import cast
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeOrientation
 from cubing_algs.move import Move
-from cubing_algs.transform.size import expand_moves
 
 from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.bluetooth.annotations import RotationEventDict
 from term_timer.constants import ESCAPE_CHAR
-from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
@@ -48,9 +47,11 @@ class Driller(SolveInterface):
         self.counter = 1
 
         self.rep_times: list[int] = []
-        self.expected_moves = expand_moves(self.reorient(self.algorithm))
+        self.expected_moves = self.reorient(self.algorithm)
         self.move_index: int = 0
-        self.bad_move: str = ''
+        self.move_accumulated: int = 0
+        self.move_direction: int = 0
+        self.bad_move: Move | str = ''
 
         self.header_line()
 
@@ -103,6 +104,8 @@ class Driller(SolveInterface):
     def reset_drill_state(self) -> None:
         """Reset per-rep drill tracking state after init_solve()."""
         self.move_index = 0
+        self.move_accumulated = 0
+        self.move_direction = 0
         self.bad_move = ''
 
     def handle_bluetooth_move(
@@ -121,32 +124,20 @@ class Driller(SolveInterface):
         """
         move = event['move']
         clock = event['clock']
-        # rotation = event['event'] == 'rotation'
-
-        # timed_move = Move(f'{ move }@{ int(clock / MS_TO_NS_FACTOR) }')
-
-        # if self.state in {'start', 'scrambling'}:
-        #     self.handle_scrambled(timed_move)
-        #     return
-
-        # if self.state == 'saving':
-        #     self.handle_save_gestures(timed_move)
-        #     return
 
         if self.state == 'scrambled':
-            # if rotation:
-            #     return
             self.moves.append({'move': move, 'time': clock})
+
             if not self.solve_started_event.is_set():
                 self.start_time = clock
                 self.solve_started_event.set()
+
             self.validate_drill_move(Move(move), clock)
             return
 
         if self.state == 'solving':
             self.moves.append({'move': move, 'time': clock})
-            # if rotation:
-            #     return
+
             self.validate_drill_move(Move(move), clock)
 
     def validate_drill_move(self, move: Move, clock: int) -> None:
@@ -155,6 +146,10 @@ class Driller(SolveInterface):
 
         Advances the move index on a match, signals completion when
         the full sequence is done, or signals a bad move on mismatch.
+
+        For double moves (U2), both U U and U' U' are accepted since
+        both achieve the same half-turn. Mixed directions (U then U')
+        cancel out and are rejected.
 
         Args:
             move: The move notation received from the bluetooth cube.
@@ -169,7 +164,33 @@ class Driller(SolveInterface):
             self.solve_completed_event.set()
             return
 
-        if move.base_move != self.expected_moves[self.move_index].base_move:
+        expected = self.expected_moves[self.move_index]
+
+        if move.base_move != expected.base_move:
+            self.bad_move = move
+            self.solve_completed_event.set()
+            return
+
+        if expected.is_double:
+            direction = 1 if move.quarter_turns > 0 else -1
+
+            if self.move_direction == 0:
+                self.move_direction = direction
+
+            elif direction != self.move_direction:
+                self.bad_move = move
+                self.solve_completed_event.set()
+                return
+
+            self.move_accumulated += abs(move.quarter_turns)
+
+            if self.move_accumulated < 2:
+                return
+
+            self.move_direction = 0
+            self.move_accumulated = 0
+
+        elif move.quarter_turns != expected.quarter_turns:
             self.bad_move = move
             self.solve_completed_event.set()
             return
@@ -196,10 +217,12 @@ class Driller(SolveInterface):
             self.start_line()
 
             getch_task = asyncio.create_task(self.getch('start'))
-            await self.wait_control([
-                getch_task,
-                asyncio.create_task(self.solve_started_event.wait()),
-            ])
+            await self.wait_control(
+                [
+                    getch_task,
+                    asyncio.create_task(self.solve_started_event.wait()),
+                ],
+            )
 
             if not self.solve_started_event.is_set():
                 char = getch_task.result()
@@ -213,14 +236,23 @@ class Driller(SolveInterface):
 
             if self.bad_move:
                 expected = (
-                    self.expected_moves[self.move_index]
+                    self.reorient(
+                        Algorithm(
+                            [self.expected_moves[self.move_index]],
+                        ),
+                    )
                     if self.move_index < len(self.expected_moves)
                     else '(end of sequence)'
                 )
+                bad_move = self.reorient(
+                    Algorithm([cast('Move', self.bad_move)]),
+                )
+
                 self.clear_line(full=True)
                 self.console.print(
-                    f'[warning]Bad move: [moves]{ self.bad_move }[/moves]'
-                    f' — expected [moves]{ expected }[/moves][/warning]',
+                    '😵 [warning]Bad move: '
+                    f'[moves]{ bad_move }[/moves] - expected '
+                    f'[moves]{ expected }[/moves][/warning]',
                 )
                 await self.bluetooth_disconnect()
                 return False
