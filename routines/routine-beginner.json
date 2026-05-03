@@ -1,0 +1,35 @@
+{
+    "comment": "Beginner-friendly routine: solutions always shown, easy cross reduces solve complexity, free play so nothing is recorded.",
+    "bluetooth": false,
+    "sessions": [
+        {
+            "type": "train",
+            "step": "oll",
+            "count": 5,
+            "show_solution": true,
+            "show_cube": true,
+            "free_play": true
+        },
+        {
+            "type": "train",
+            "step": "pll",
+            "count": 5,
+            "show_solution": true,
+            "show_cube": true,
+            "free_play": true
+        },
+        {
+            "type": "solve",
+            "count": 5,
+            "easy_cross": true,
+            "free_play": true,
+            "show_cube": true,
+            "show_reconstruction": true,
+            "show_cheers": true,
+            "show_time_graph": false,
+            "show_tps_graph": false,
+            "show_fluency_graph": false,
+            "show_recognition_graph": false
+        }
+    ]
+}

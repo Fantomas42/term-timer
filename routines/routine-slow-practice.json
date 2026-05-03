@@ -1,0 +1,29 @@
+{
+    "comment": "Deliberate slow practice: metronome forces rhythm, easy cross removes scramble difficulty, full reconstruction for review.",
+    "bluetooth": true,
+    "use_gyroscope": false,
+    "sessions": [
+        {
+            "type": "train",
+            "step": "f2l",
+            "count": 10,
+            "show_solution": true,
+            "show_cube": true,
+            "metronome": 1.5
+        },
+        {
+            "type": "solve",
+            "count": 10,
+            "session": "slow-practice",
+            "method": "cfop",
+            "easy_cross": true,
+            "metronome": 1.0,
+            "show_reconstruction": true,
+            "show_tps_graph": true,
+            "show_fluency_graph": true,
+            "show_recognition_graph": true,
+            "show_time_graph": false,
+            "show_cheers": false
+        }
+    ]
+}

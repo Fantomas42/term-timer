@@ -1,0 +1,32 @@
+{
+    "comment": "Balanced daily session: stale OLL cases first, then worst PLL times, then recorded solves with full analysis.",
+    "bluetooth": true,
+    "use_gyroscope": true,
+    "sessions": [
+        {
+            "type": "train",
+            "step": "oll",
+            "oldest": 10,
+            "count": 10,
+            "show_cube": true
+        },
+        {
+            "type": "train",
+            "step": "pll",
+            "slowest": 5,
+            "count": 10,
+            "show_cube": true
+        },
+        {
+            "type": "solve",
+            "count": 12,
+            "session": "daily",
+            "method": "cfop",
+            "show_reconstruction": true,
+            "show_recognition_graph": true,
+            "show_time_graph": true,
+            "show_tps_graph": false,
+            "show_fluency_graph": false
+        }
+    ]
+}

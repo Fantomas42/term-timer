@@ -1,0 +1,27 @@
+{
+    "comment": "Pre-competition simulation: full inspection countdown, all PLLs, then a long ao12 with cheers off to stay focused.",
+    "bluetooth": true,
+    "use_gyroscope": true,
+    "sessions": [
+        {
+            "type": "train",
+            "step": "pll",
+            "count": 21,
+            "show_solution": false,
+            "show_cube": true
+        },
+        {
+            "type": "solve",
+            "count": 12,
+            "session": "competition",
+            "method": "cfop",
+            "countdown": 15,
+            "show_cheers": false,
+            "show_reconstruction": true,
+            "show_recognition_graph": true,
+            "show_time_graph": true,
+            "show_tps_graph": true,
+            "show_fluency_graph": true
+        }
+    ]
+}
