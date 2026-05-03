@@ -1,5 +1,6 @@
 """Main timer application entry point."""
 import asyncio
+import json
 from argparse import Namespace
 from contextlib import suppress
 from pathlib import Path
@@ -25,6 +26,10 @@ from term_timer.logger import configure_logging
 from term_timer.manage import ScrambleManager
 from term_timer.manage import SessionManager
 from term_timer.manage import SolveManager
+from term_timer.routine import SessionConfig
+from term_timer.routine import build_solve_instance
+from term_timer.routine import build_train_instance
+from term_timer.routine import run_session
 from term_timer.server.app import Server
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.timer import Timer
@@ -353,6 +358,83 @@ def manage(command: str, options: Namespace) -> int:
     return 0
 
 
+async def routine(options: Namespace) -> int:  # noqa: C901
+    """
+    Run a daily practice routine from a JSON config file.
+
+    Returns:
+        Exit code (0 for success).
+
+    """
+    config_path = Path(options.routine_file)
+    if not config_path.exists():  # noqa: ASYNC240
+        console.print(
+            f'😱 Routine file not found: { config_path }',
+            style='warning',
+        )
+        return 1
+
+    config = json.loads(
+        config_path.read_text(encoding='utf-8'),  # noqa: ASYNC240
+    )
+    sessions: list[SessionConfig] = config.get('sessions', [])
+
+    if not sessions:
+        console.print('🤔 No sessions defined.', style='warning')
+        return 0
+
+    use_bluetooth: bool = bool(config.get('bluetooth'))
+    use_gyroscope: bool = bool(config.get('use_gyroscope'))
+    current: Timer | Trainer | None = None
+
+    try:
+        for index, session_config in enumerate(sessions):
+            session_type = session_config.get('type', '')
+            count = session_config.get('count', 0)
+
+            console.print(
+                f'[trainer]▶ Routine { index + 1 }/{ len(sessions) }:'
+                f' { session_type.upper() }[/trainer]',
+            )
+
+            if session_type == 'train':
+                try:
+                    instance: Timer | Trainer = build_train_instance(
+                        session_config,
+                    )
+                except InvalidCaseError as error:
+                    console.print('😱', str(error), style='warning')
+                    return 1
+            elif session_type == 'solve':
+                instance = build_solve_instance(session_config)
+            else:
+                console.print(
+                    f'😱 Unknown session type: { session_type }',
+                    style='warning',
+                )
+                return 1
+
+            if index == 0 and use_bluetooth:
+                await instance.bluetooth_connect(
+                    use_gyroscope=use_gyroscope,
+                )
+            elif current is not None and current.bluetooth_interface:
+                await current.bluetooth_handoff(instance)
+
+            current = instance
+
+            if not await run_session(instance, count):
+                return 0
+
+    finally:
+        if current and current.bluetooth_interface:
+            await current.bluetooth_disconnect()
+
+    console.print('[success]Routine complete ![/success]')
+
+    return 0
+
+
 def main() -> int:  # noqa: PLR0911
     """
     Run term-timer CLI application.
@@ -373,6 +455,8 @@ def main() -> int:  # noqa: PLR0911
             return asyncio.run(timer(options), debug=DEBUG)
         if command == 'train':
             return asyncio.run(trainer(options), debug=DEBUG)
+        if command == 'routine':
+            return asyncio.run(routine(options), debug=DEBUG)
         if command == 'browse':
             asyncio.run(run_browse(), debug=DEBUG)
             return 0

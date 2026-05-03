@@ -30,7 +30,7 @@ class TestCommandAliases(unittest.TestCase):
         expected_commands = {
             'solve', 'list', 'stats', 'graph', 'cfop', 'detail',
             'import', 'serve', 'train', 'edit', 'delete', 'index',
-            'scramble', 'browse', 'merge', 'config',
+            'scramble', 'browse', 'merge', 'config', 'routine',
         }
         self.assertEqual(set(COMMAND_ALIASES.keys()), expected_commands)
 

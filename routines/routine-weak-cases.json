@@ -1,0 +1,22 @@
+{
+    "comment": "Targeted weak case drilling: pick the 5 worst OLL and PLL by average, repeat until fluent, no solves to keep it focused.",
+    "bluetooth": true,
+    "sessions": [
+        {
+            "type": "train",
+            "step": "oll",
+            "slowest": 5,
+            "count": 20,
+            "show_solution": true,
+            "show_cube": true
+        },
+        {
+            "type": "train",
+            "step": "pll",
+            "slowest": 5,
+            "count": 20,
+            "show_solution": true,
+            "show_cube": true
+        }
+    ]
+}
