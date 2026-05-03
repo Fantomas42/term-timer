@@ -230,8 +230,19 @@ async def driller(options: Namespace) -> int:
             use_gyroscope=options.use_gyroscope,
         )
 
+    drills_done = 0
+
     try:
-        await instance.start()
+        while 42:
+            done = await instance.start()
+
+            if done:
+                drills_done += 1
+
+                if options.times and drills_done >= options.times:
+                    break
+            else:
+                break
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')
     finally:

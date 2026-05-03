@@ -1,4 +1,6 @@
 """Driller interface for repeating an algorithm to build fluency."""
+import asyncio
+
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeOrientation
 from cubing_algs.move import Move
@@ -8,6 +10,7 @@ from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.bluetooth.annotations import RotationEventDict
 from term_timer.constants import ESCAPE_CHAR
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
@@ -81,16 +84,20 @@ class Driller(SolveInterface):
             )
 
     def rep_line(self) -> None:
-        """Display time and optional delta for the completed rep."""
+        """Display time, optional delta, and TPS for the completed rep."""
         extra = ''
         if len(self.rep_times) >= 2:
             delta = self.rep_times[-1] - self.rep_times[-2]
             extra = f' { format_delta(delta) }'
 
+        moves = len(self.expected_moves)
+        tps = moves / (self.elapsed_time / SECOND) if self.elapsed_time else 0
+
         self.console.print(
             f'[duration]Rep #{ self.counter }:[/duration]',
             f'[time]{ format_time(self.elapsed_time) }[/time]'
-            f'{ extra }',
+            f'{ extra }'
+            f' [tps]{ tps:.2f} TPS[/tps]',
         )
 
     def reset_drill_state(self) -> None:
@@ -188,7 +195,16 @@ class Driller(SolveInterface):
             self.set_state('scrambled')
             self.start_line()
 
-            await self.wait_solve()
+            getch_task = asyncio.create_task(self.getch('start'))
+            await self.wait_control([
+                getch_task,
+                asyncio.create_task(self.solve_started_event.wait()),
+            ])
+
+            if not self.solve_started_event.is_set():
+                char = getch_task.result()
+                if char in {'q', ESCAPE_CHAR}:
+                    return False
 
             if self.countdown:
                 await self.inspect_solve()
@@ -233,17 +249,10 @@ class Driller(SolveInterface):
 
     async def start(self) -> bool:
         """
-        Run the drill session.
+        Execute one rep of the drill.
 
         Returns:
             True if completed, False if user quit early.
 
         """
-        if self.times > 0:
-            return await self.drill_rep()
-
-        while 42:
-            if not await self.drill_rep():
-                return False
-
-        return True
+        return await self.drill_rep()
