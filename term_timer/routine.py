@@ -9,6 +9,7 @@ from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import DISPLAY_CONFIG
 from term_timer.config import TIMER_CONFIG
 from term_timer.config import TRAINER_STEP
+from term_timer.driller import Driller
 from term_timer.in_out import load_solves
 from term_timer.interface.console import console
 from term_timer.timer import Timer
@@ -42,6 +43,8 @@ class SessionConfig(TypedDict, total=False):
     show_recognition_graph: bool
     method: str
     countdown: int
+    # drill fields
+    algorithm: str
     # shared
     free_play: bool
     show_cube: bool
@@ -125,8 +128,29 @@ def build_solve_instance(session_config: SessionConfig) -> Timer:
     )
 
 
+def build_drill_instance(session_config: SessionConfig) -> Driller:
+    """
+    Build a Driller from a routine session config dict.
+
+    Returns:
+        Configured Driller instance.
+
+    """
+    return Driller(
+        algorithm=session_config.get('algorithm', ''),
+        times=session_config.get('count', 0),
+        orientation=session_config.get('orientation', CUBE_ORIENTATION),
+        countdown=session_config.get(
+            'countdown', TIMER_CONFIG.get('countdown', 0),
+        ),
+        metronome=session_config.get(
+            'metronome', TIMER_CONFIG.get('metronome', 0.0),
+        ),
+    )
+
+
 async def run_session(
-        instance: Timer | Trainer,
+        instance: Timer | Trainer | Driller,
         count: int,
 ) -> bool:
     """

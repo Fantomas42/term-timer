@@ -15,6 +15,7 @@ from term_timer.arguments import get_arguments
 from term_timer.browse.app import run_browse
 from term_timer.config import DEBUG
 from term_timer.config_edit.app import run_config_edit
+from term_timer.driller import Driller
 from term_timer.exceptions import InvalidCaseError
 from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
@@ -27,6 +28,7 @@ from term_timer.manage import ScrambleManager
 from term_timer.manage import SessionManager
 from term_timer.manage import SolveManager
 from term_timer.routine import SessionConfig
+from term_timer.routine import build_drill_instance
 from term_timer.routine import build_solve_instance
 from term_timer.routine import build_train_instance
 from term_timer.routine import run_session
@@ -208,6 +210,49 @@ async def trainer(options: Namespace) -> int:
     return 0
 
 
+async def driller(options: Namespace) -> int:
+    """
+    Run algorithm drilling session.
+
+    Returns:
+        Exit code (0 for success).
+
+    """
+    instance = Driller(
+        algorithm=options.algorithm,
+        times=options.times,
+        orientation=options.orientation,
+        countdown=options.countdown,
+        metronome=options.metronome,
+    )
+
+    if options.bluetooth:
+        await instance.bluetooth_connect(
+            use_gyroscope=options.use_gyroscope,
+        )
+
+    drills_done = 0
+
+    try:
+        while 42:
+            done = await instance.start()
+
+            if done:
+                drills_done += 1
+
+                if options.times and drills_done >= options.times:
+                    break
+            else:
+                break
+    except InvalidMoveError as error:
+        console.print('😱', str(error), style='warning')
+    finally:
+        if instance.bluetooth_interface:
+            await instance.bluetooth_disconnect()
+
+    return 0
+
+
 def tools(command: str, options: Namespace) -> int:
     """
     Execute tool commands.
@@ -358,7 +403,7 @@ def manage(command: str, options: Namespace) -> int:
     return 0
 
 
-async def routine(options: Namespace) -> int:  # noqa: C901
+async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0911
     """
     Run a daily practice routine from a JSON config file.
 
@@ -385,7 +430,7 @@ async def routine(options: Namespace) -> int:  # noqa: C901
 
     use_bluetooth: bool = bool(config.get('bluetooth'))
     use_gyroscope: bool = bool(config.get('use_gyroscope'))
-    current: Timer | Trainer | None = None
+    current: Timer | Trainer | Driller | None = None
 
     try:
         for index, session_config in enumerate(sessions):
@@ -399,32 +444,59 @@ async def routine(options: Namespace) -> int:  # noqa: C901
 
             if session_type == 'train':
                 try:
-                    instance: Timer | Trainer = build_train_instance(
-                        session_config,
-                    )
+                    train_instance = build_train_instance(session_config)
                 except InvalidCaseError as error:
                     console.print('😱', str(error), style='warning')
                     return 1
+
+                if index == 0 and use_bluetooth:
+                    await train_instance.bluetooth_connect(
+                        use_gyroscope=use_gyroscope,
+                    )
+                elif current is not None and current.bluetooth_interface:
+                    await current.bluetooth_handoff(train_instance)
+
+                current = train_instance
+
+                if not await run_session(train_instance, count):
+                    return 0
+
             elif session_type == 'solve':
-                instance = build_solve_instance(session_config)
+                solve_instance = build_solve_instance(session_config)
+
+                if index == 0 and use_bluetooth:
+                    await solve_instance.bluetooth_connect(
+                        use_gyroscope=use_gyroscope,
+                    )
+                elif current is not None and current.bluetooth_interface:
+                    await current.bluetooth_handoff(solve_instance)
+
+                current = solve_instance
+
+                if not await run_session(solve_instance, count):
+                    return 0
+
+            elif session_type == 'drill':
+                drill_instance = build_drill_instance(session_config)
+
+                if index == 0 and use_bluetooth:
+                    await drill_instance.bluetooth_connect(
+                        use_gyroscope=use_gyroscope,
+                    )
+                elif current is not None and current.bluetooth_interface:
+                    await current.bluetooth_handoff(drill_instance)
+
+                current = drill_instance
+
+                if not await run_session(drill_instance, count):
+                    return 0
+
             else:
                 console.print(
                     f'😱 Unknown session type: { session_type }',
                     style='warning',
                 )
                 return 1
-
-            if index == 0 and use_bluetooth:
-                await instance.bluetooth_connect(
-                    use_gyroscope=use_gyroscope,
-                )
-            elif current is not None and current.bluetooth_interface:
-                await current.bluetooth_handoff(instance)
-
-            current = instance
-
-            if not await run_session(instance, count):
-                return 0
 
     finally:
         if current and current.bluetooth_interface:
@@ -455,6 +527,8 @@ def main() -> int:  # noqa: PLR0911
             return asyncio.run(timer(options), debug=DEBUG)
         if command == 'train':
             return asyncio.run(trainer(options), debug=DEBUG)
+        if command == 'drill':
+            return asyncio.run(driller(options), debug=DEBUG)
         if command == 'routine':
             return asyncio.run(routine(options), debug=DEBUG)
         if command == 'browse':
