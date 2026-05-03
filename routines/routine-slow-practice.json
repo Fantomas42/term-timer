@@ -1,7 +1,6 @@
 {
     "comment": "Deliberate slow practice: metronome forces rhythm, easy cross removes scramble difficulty, full reconstruction for review.",
     "bluetooth": true,
-    "use_gyroscope": false,
     "sessions": [
         {
             "type": "train",
