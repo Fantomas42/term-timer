@@ -1,7 +1,19 @@
 {
-    "comment": "Deliberate slow practice: metronome forces rhythm, easy cross removes scramble difficulty, full reconstruction for review.",
+    "comment": "Deliberate slow practice: metronome drill to lock in rhythm first, then metronome forces rhythm through F2L training and solves, full reconstruction for review.",
     "bluetooth": true,
     "sessions": [
+        {
+            "type": "drill",
+            "algorithm": "R U R' U'",
+            "count": 6,
+            "metronome": 1.5
+        },
+        {
+            "type": "drill",
+            "algorithm": "L' U' L U",
+            "count": 6,
+            "metronome": 1.5
+        },
         {
             "type": "train",
             "step": "f2l",
@@ -14,7 +26,7 @@
             "type": "solve",
             "count": 10,
             "session": "slow-practice",
-            "method": "cfop",
+            "method": "cf4op",
             "easy_cross": true,
             "metronome": 1.0,
             "show_reconstruction": true,

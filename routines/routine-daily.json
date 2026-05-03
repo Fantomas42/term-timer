@@ -1,7 +1,17 @@
 {
-    "comment": "Balanced daily session: stale OLL cases first, then worst PLL times, then recorded solves with full analysis.",
+    "comment": "Balanced daily session: sexy move warm-up, stale OLL cases first, then worst PLL times, then recorded solves with full analysis.",
     "bluetooth": true,
     "sessions": [
+        {
+            "type": "drill",
+            "algorithm": "R U R' U'",
+            "count": 18
+        },
+        {
+            "type": "drill",
+            "algorithm": "L' U' L U",
+            "count": 18
+        },
         {
             "type": "train",
             "step": "oll",
