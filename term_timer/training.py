@@ -73,6 +73,17 @@ class Trainings:
             )
         self.cases[case_code].add_timing(timing, date)
 
+    def pop_timing(self, case_code: str) -> None:
+        """
+        Delete last timing for a specific case.
+
+        Args:
+            case_code: Case identifier (e.g., '27', 'Aa')
+
+        """
+        if case_code in self.cases:
+            self.cases[case_code].timings.pop()
+
     def as_save(self) -> dict[str, CaseTrainingData]:
         """
         Return dictionary representation for serialization.

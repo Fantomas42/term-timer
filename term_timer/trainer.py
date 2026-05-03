@@ -1,4 +1,5 @@
 """Training interface for practicing specific CFOP cases."""
+import asyncio
 from functools import cached_property
 from operator import itemgetter
 from random import Random
@@ -14,7 +15,9 @@ from cubing_algs.vcube import VCube
 
 from term_timer.annotations import TrainingCase
 from term_timer.constants import CROSS_CASE
+from term_timer.constants import DNF
 from term_timer.constants import EASY_CROSS_CASE
+from term_timer.constants import ESCAPE_CHAR
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import X_CROSS_CASE
 from term_timer.constants import SolveFlag
@@ -349,6 +352,15 @@ class Trainer(SolveInterface):
                 end='', style='consign',
             )
 
+    def save_line(self) -> None:
+        """Display instructions for saving or canceling the solve."""
+        self.console.print(
+            'Press any key to save and continue,',
+            '[key](z)[/key] to cancel,',
+            '[key](q)[/key] to save and quit.',
+            end='', style='consign',
+        )
+
     def solve_line(self, solve: Solve, selected_case: Case) -> None:  # noqa: C901
         """Display training solve results and execution details."""
         self.trainings.add_timing(
@@ -438,6 +450,55 @@ class Trainer(SolveInterface):
                     format_delta(new_stats.ao1000 - old_stats.best_ao1000),
                 )
 
+    async def save_training(self, selected_case: Case) -> bool:
+        """
+        Save the completed training with optional flag modifications.
+
+        Waits for user input to mark the training with a flag (DNF) or
+        cancel it. Persists the training to storage and displays confirmation.
+        Handles both keyboard and bluetooth gesture input.
+
+        DNF trainings are not saved.
+
+        Returns:
+            True if user quit (pressed 'q' or ESC), False otherwise.
+
+        """
+        self.set_state('saving')
+
+        if self.bluetooth_interface:
+            getch_task = asyncio.create_task(self.getch('save'))
+            tasks = [
+                getch_task,
+                asyncio.create_task(self.save_gesture_event.wait()),
+            ]
+            await self.wait_control(tasks)
+
+            char = ''
+            if not self.save_gesture_event.is_set():
+                result = getch_task.result()
+                char = result if isinstance(result, str) else ''
+            else:
+                self.clear_line(full=True)
+                char = self.save_gesture
+        else:
+            char = await self.getch('save')
+
+        save_string = ''
+        if char == 'z':
+            self.trainings.pop_timing(selected_case.code)
+            save_string = 'Training cancelled'
+        else:
+            save_trainings(self.trainings)
+
+        if save_string:
+            self.console.print(
+                f'[duration]Duration #{ self.counter }:[/duration] '
+                f'[warning]{ save_string }[/warning]',
+            )
+
+        return char in {'q', ESCAPE_CHAR}
+
     async def start(self) -> bool:
         """
         Execute training workflow for single case.
@@ -465,9 +526,8 @@ class Trainer(SolveInterface):
         self.facelets_scrambled = cube.state
 
         if (
-                self.counter == 1
-                and self.bluetooth_cube
-                and not self.bluetooth_cube_is_solved
+                self.bluetooth_cube
+                and not self.bluetooth_scramble_is_completed
         ):
             scramble = facelets_to_facelets_algorithm(
                 self.bluetooth_cube_state,
@@ -492,6 +552,9 @@ class Trainer(SolveInterface):
         flag: SolveFlag = ''
         moves = []
         if self.moves:
+            if self.bluetooth_cube and not self.bluetooth_scramble_is_completed:
+                flag = DNF
+
             first_time = self.moves[0]['time']
             for move in self.moves:
                 timing = int((move['time'] - first_time) / MS_TO_NS_FACTOR)
@@ -515,10 +578,20 @@ class Trainer(SolveInterface):
         )
         solve.method_name = self.method.lower()
 
+        if flag == DNF:
+            self.counter += 1
+
+            return True
+
         self.solve_line(solve, selected_case)
 
         if not self.free_play:
-            save_trainings(self.trainings)
+            self.save_line()
+
+            quit_training = await self.save_training(selected_case)
+
+            if quit_training:
+                return False
 
         self.counter += 1
 
