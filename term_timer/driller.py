@@ -2,6 +2,7 @@
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeOrientation
 from cubing_algs.move import Move
+from cubing_algs.transform.size import expand_moves
 
 from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.bluetooth.annotations import RotationEventDict
@@ -10,30 +11,6 @@ from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
-
-
-def expand_algorithm(algorithm_str: str) -> list[str]:
-    """
-    Expand an algorithm string into a flat list of elementary moves.
-
-    Double moves (F2, U2, R2) are expanded into two consecutive moves.
-    Rotation moves (x, y, z) are skipped — they are not part of the
-    drill sequence.
-
-    Returns:
-        Flat list of move strings ready for sequential validation.
-
-    """
-    result: list[str] = []
-    for move in Algorithm.parse_moves(algorithm_str):
-        if move.is_rotation_move:
-            continue
-        if move.is_double:
-            base = str(move)[:-1]
-            result.extend([base, base])
-        else:
-            result.append(str(move))
-    return result
 
 
 class Driller(SolveInterface):
@@ -59,7 +36,8 @@ class Driller(SolveInterface):
 
         self.set_state('configure')
 
-        self.algorithm_str = algorithm
+        self.algorithm = Algorithm.parse_moves(algorithm)
+
         self.times = times
         self.orientation_faces = orientation
         self.countdown = countdown
@@ -67,11 +45,7 @@ class Driller(SolveInterface):
         self.counter = 1
 
         self.rep_times: list[int] = []
-        single_moves = expand_algorithm(algorithm)
-        self.single_move_count = len(single_moves)
-        self.expected_moves: list[str] = (
-            single_moves * times if times > 0 else single_moves
-        )
+        self.expected_moves = expand_moves(self.reorient(self.algorithm))
         self.move_index: int = 0
         self.bad_move: str = ''
 
@@ -79,15 +53,14 @@ class Driller(SolveInterface):
 
     def header_line(self) -> None:
         """Display the drill header with algorithm and move count."""
-        move_count = self.single_move_count
         suffix = (
             f' x{ self.times }'
             if self.times > 0
             else ''
         )
         self.console.print(
-            f'Drilling: [moves]{ self.algorithm_str }[/moves]'
-            f' ({ move_count } move{ "s" if move_count > 1 else "" })'
+            f'Drilling: [moves]{ self.algorithm }[/moves]'
+            f' ({ self.algorithm.metrics.htm } HTM)'
             f'{ suffix }',
             style='trainer',
         )
@@ -141,35 +114,35 @@ class Driller(SolveInterface):
         """
         move = event['move']
         clock = event['clock']
-        rotation = event['event'] == 'rotation'
+        # rotation = event['event'] == 'rotation'
 
-        timed_move = Move(f'{ move }@{ int(clock / MS_TO_NS_FACTOR) }')
+        # timed_move = Move(f'{ move }@{ int(clock / MS_TO_NS_FACTOR) }')
 
-        if self.state in {'start', 'scrambling'}:
-            self.handle_scrambled(timed_move)
-            return
+        # if self.state in {'start', 'scrambling'}:
+        #     self.handle_scrambled(timed_move)
+        #     return
 
-        if self.state == 'saving':
-            self.handle_save_gestures(timed_move)
-            return
+        # if self.state == 'saving':
+        #     self.handle_save_gestures(timed_move)
+        #     return
 
         if self.state == 'scrambled':
-            if rotation:
-                return
+            # if rotation:
+            #     return
             self.moves.append({'move': move, 'time': clock})
             if not self.solve_started_event.is_set():
                 self.start_time = clock
                 self.solve_started_event.set()
-            self.validate_drill_move(move, clock)
+            self.validate_drill_move(Move(move), clock)
             return
 
         if self.state == 'solving':
             self.moves.append({'move': move, 'time': clock})
-            if rotation:
-                return
-            self.validate_drill_move(move, clock)
+            # if rotation:
+            #     return
+            self.validate_drill_move(Move(move), clock)
 
-    def validate_drill_move(self, move: str, clock: int) -> None:
+    def validate_drill_move(self, move: Move, clock: int) -> None:
         """
         Validate a move against the expected drill sequence.
 
@@ -189,7 +162,7 @@ class Driller(SolveInterface):
             self.solve_completed_event.set()
             return
 
-        if move != self.expected_moves[self.move_index]:
+        if move.base_move != self.expected_moves[self.move_index].base_move:
             self.bad_move = move
             self.solve_completed_event.set()
             return
