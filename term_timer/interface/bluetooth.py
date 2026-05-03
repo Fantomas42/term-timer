@@ -184,6 +184,36 @@ class Bluetooth:
         else:
             return True
 
+    async def bluetooth_handoff(self, target: 'Bluetooth') -> None:
+        """
+        Transfer Bluetooth connection to another SolveInterface instance.
+
+        Stops the current consumer task, transfers all connection state to
+        target, and starts a new consumer task on target. The underlying
+        Bluetooth connection is not interrupted.
+
+        Args:
+            target: The instance that will take over the connection.
+
+        """
+        if self.bluetooth_queue:
+            await self.bluetooth_queue.put(None)
+        if self.bluetooth_consumer_ref:
+            await self.bluetooth_consumer_ref
+
+        target.bluetooth_queue = self.bluetooth_queue
+        target.bluetooth_interface = self.bluetooth_interface
+        target.bluetooth_cube = self.bluetooth_cube
+        target.bluetooth_cube_orientations = self.bluetooth_cube_orientations
+        target.bluetooth_hardware = self.bluetooth_hardware
+        target.facelets_received_event = self.facelets_received_event
+        target.hardware_received_event = self.hardware_received_event
+
+        if target.bluetooth_queue is not None:
+            target.bluetooth_consumer_ref = asyncio.create_task(
+                target.bluetooth_consumer(),
+            )
+
     async def bluetooth_disconnect(self) -> None:
         """Disconnect from the Bluetooth cube if connected."""
         if (

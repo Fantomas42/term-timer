@@ -31,6 +31,7 @@ COMMAND_ALIASES: Final[dict[str, list[str]]] = {
     'import': ['im', 'i'],
     'serve': ['se', 'h'],
     'train': ['tr', 'w'],
+    'routine': ['ro', 'n'],
     'edit': ['ed', 'e'],
     'delete': ['rm', 'r'],
     'index': ['ix', 'x'],
@@ -1310,6 +1311,34 @@ def config_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
 
 
+def routine_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """
+    Create argument parser for routine command.
+
+    Returns:
+        Configured argument parser for routine command.
+
+    """
+    parser = subparsers.add_parser(
+        'routine',
+        help='Run a daily practice routine from a config file',
+        description=(
+            'Run a sequence of training and solve sessions '
+            'defined in a JSON config file.'
+        ),
+        aliases=COMMAND_ALIASES['routine'],
+    )
+
+    parser.add_argument(
+        'routine_file',
+        type=str,
+        metavar='FILE',
+        help='Path to the routine JSON config file.',
+    )
+
+    return parser
+
+
 def get_parser() -> ArgumentParser:
     """
     Build and return the argument parser without parsing.
@@ -1331,6 +1360,7 @@ def get_parser() -> ArgumentParser:
 
     solve_arguments(subparsers)
     train_arguments(subparsers)
+    routine_arguments(subparsers)
     browse_arguments(subparsers)
     detail_arguments(subparsers)
     edit_arguments(subparsers)
