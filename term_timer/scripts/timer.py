@@ -15,6 +15,7 @@ from term_timer.arguments import get_arguments
 from term_timer.browse.app import run_browse
 from term_timer.config import DEBUG
 from term_timer.config_edit.app import run_config_edit
+from term_timer.driller import Driller
 from term_timer.exceptions import InvalidCaseError
 from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
@@ -204,6 +205,38 @@ async def trainer(options: Namespace) -> int:
     finally:
         if trainer.bluetooth_interface:
             await trainer.bluetooth_disconnect()
+
+    return 0
+
+
+async def driller(options: Namespace) -> int:
+    """
+    Run algorithm drilling session.
+
+    Returns:
+        Exit code (0 for success).
+
+    """
+    instance = Driller(
+        algorithm=options.algorithm,
+        times=options.times,
+        orientation=options.orientation,
+        countdown=options.countdown,
+        metronome=options.metronome,
+    )
+
+    if options.bluetooth:
+        await instance.bluetooth_connect(
+            use_gyroscope=options.use_gyroscope,
+        )
+
+    try:
+        await instance.start()
+    except InvalidMoveError as error:
+        console.print('😱', str(error), style='warning')
+    finally:
+        if instance.bluetooth_interface:
+            await instance.bluetooth_disconnect()
 
     return 0
 
@@ -455,6 +488,8 @@ def main() -> int:  # noqa: PLR0911
             return asyncio.run(timer(options), debug=DEBUG)
         if command == 'train':
             return asyncio.run(trainer(options), debug=DEBUG)
+        if command == 'drill':
+            return asyncio.run(driller(options), debug=DEBUG)
         if command == 'routine':
             return asyncio.run(routine(options), debug=DEBUG)
         if command == 'browse':

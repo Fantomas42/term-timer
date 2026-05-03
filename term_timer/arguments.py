@@ -32,6 +32,7 @@ COMMAND_ALIASES: Final[dict[str, list[str]]] = {
     'serve': ['se', 'h'],
     'train': ['tr', 'w'],
     'routine': ['ro', 'n'],
+    'drill': ['dl', 'dr'],
     'edit': ['ed', 'e'],
     'delete': ['rm', 'r'],
     'index': ['ix', 'x'],
@@ -1295,6 +1296,107 @@ def merge_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     return parser
 
 
+def drill_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """
+    Create argument parser for drill command.
+
+    Returns:
+        Configured argument parser for drill command.
+
+    """
+    countdown = TIMER_CONFIG.get('countdown', 0.0)
+    metronome = TIMER_CONFIG.get('metronome', 0.0)
+
+    parser = subparsers.add_parser(
+        'drill',
+        help='Drill an algorithm repeatedly',
+        description=(
+            'Time repeated executions of an algorithm '
+            'without recording solves.'
+        ),
+        aliases=COMMAND_ALIASES['drill'],
+    )
+
+    parser.add_argument(
+        'algorithm',
+        type=str,
+        metavar='ALGORITHM',
+        help=(
+            "The algorithm to drill (e.g. \"R U R' U'\").\n"
+        ),
+    )
+
+    parser.add_argument(
+        'times',
+        nargs='?',
+        type=int,
+        default=0,
+        metavar='TIMES',
+        help=(
+            'Number of reps to drill.\n'
+            'Default: Infinite.'
+        ),
+    )
+
+    cube = parser.add_argument_group('Cube')
+    cube.add_argument(
+        '-o', '--orientation',
+        default=CUBE_ORIENTATION,
+        choices=ORIENTATIONS_SORTED,
+        metavar='ORIENTATION',
+        help=(
+            'Set the cube orientation used.\n'
+            f'Default: { CUBE_ORIENTATION }.'
+        ),
+    )
+
+    bluetooth = parser.add_argument_group('Bluetooth')
+    bluetooth.add_argument(
+        '-b', '--bluetooth',
+        action='store_true',
+        help=(
+            'Use a Bluetooth-connected cube.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'disable' if USE_GYROSCOPE else 'enable'
+    bluetooth.add_argument(
+        '-g', f'--{ mode }-gyroscope',
+        action='store_const',
+        const=not USE_GYROSCOPE,
+        default=USE_GYROSCOPE,
+        dest='use_gyroscope',
+        help=(
+            f"{ mode.title() } the cube's gyroscope.\n"
+            'Default: False'
+        ),
+    )
+
+    timer = parser.add_argument_group('Timer')
+    timer.add_argument(
+        '-i', '--countdown',
+        type=int,
+        default=countdown,
+        metavar='SECONDS',
+        help=(
+            'Set a countdown before each rep.\n'
+            f'Default: { countdown }.'
+        ),
+    )
+    timer.add_argument(
+        '-k', '--metronome',
+        type=float,
+        default=metronome,
+        metavar='TEMPO',
+        help=(
+            'Set a metronome beep at a specified tempo in seconds.\n'
+            f'Default: { metronome }.'
+        ),
+    )
+
+    return parser
+
+
 def config_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     """
     Create argument parser for config command.
@@ -1360,6 +1462,7 @@ def get_parser() -> ArgumentParser:
 
     solve_arguments(subparsers)
     train_arguments(subparsers)
+    drill_arguments(subparsers)
     routine_arguments(subparsers)
     browse_arguments(subparsers)
     detail_arguments(subparsers)
