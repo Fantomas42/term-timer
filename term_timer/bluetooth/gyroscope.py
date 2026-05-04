@@ -15,7 +15,7 @@ QUATERNION_EPSILON: Final = 1e-10
 NO_ROTATION_THRESHOLD: Final = 0.9999
 
 
-@dataclass
+@dataclass(slots=True)
 class Quaternion:
     """
     Represents a quaternion for 3D rotation calculations.
@@ -136,6 +136,9 @@ class Quaternion:
         """
         Convert quaternion to axis-angle representation.
 
+        Assumes the quaternion is already normalized (unit length). Callers
+        must normalize before calling this method.
+
         The axis-angle representation expresses a rotation as a unit vector
         (the axis) and an angle of rotation around that axis.
 
@@ -145,23 +148,19 @@ class Quaternion:
             rotations.
 
         """
-        # Normalize first
-        q = self.normalize()
-
         # Handle the case where w is very close to 1 (no rotation)
-        if abs(q.w) > NO_ROTATION_THRESHOLD:
+        if abs(self.w) > NO_ROTATION_THRESHOLD:
             return ((1.0, 0.0, 0.0), 0.0)
 
         # Calculate angle
-        angle = 2 * math.acos(max(-1.0, min(1.0, q.w)))
+        angle = 2 * math.acos(max(-1.0, min(1.0, self.w)))
 
         # Calculate axis
-        s = math.sqrt(1 - q.w * q.w)
+        s = math.sqrt(1 - self.w * self.w)
         if s < QUATERNION_EPSILON:
-            # Axis is arbitrary for no rotation
             return ((1.0, 0.0, 0.0), 0.0)
 
-        axis = (q.x / s, q.y / s, q.z / s)
+        axis = (self.x / s, self.y / s, self.z / s)
         return (axis, angle)
 
 
