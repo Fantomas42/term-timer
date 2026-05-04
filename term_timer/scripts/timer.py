@@ -411,7 +411,7 @@ def manage(command: str, options: Namespace) -> int:
     return 0
 
 
-async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0911
+async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912
     """
     Run a daily practice routine from a JSON config file.
 
@@ -467,8 +467,7 @@ async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0911
 
                 current = train_instance
 
-                if not await run_session(train_instance, count):
-                    return 0
+                await run_session(train_instance, count)
 
             elif session_type == 'solve':
                 solve_instance = build_solve_instance(session_config)
@@ -482,8 +481,7 @@ async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0911
 
                 current = solve_instance
 
-                if not await run_session(solve_instance, count):
-                    return 0
+                await run_session(solve_instance, count)
 
             elif session_type == 'drill':
                 drill_instance = build_drill_instance(session_config)
@@ -497,8 +495,7 @@ async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0911
 
                 current = drill_instance
 
-                if not await run_session(drill_instance, count):
-                    return 0
+                await run_session(drill_instance, count)
 
             else:
                 console.print(

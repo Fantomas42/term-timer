@@ -152,14 +152,8 @@ def build_drill_instance(session_config: SessionConfig) -> Driller:
 async def run_session(
         instance: Timer | Trainer | Driller,
         count: int,
-) -> bool:
-    """
-    Run start() in a loop until count is reached or user quits.
-
-    Returns:
-        True to continue to next session, False if user quit.
-
-    """
+) -> None:
+    """Run start() in a loop until count is reached or user quits a step."""
     solves_done = 0
     try:
         while 42:
@@ -168,10 +162,8 @@ async def run_session(
             if done:
                 solves_done += 1
                 if count and solves_done >= count:
-                    return True
+                    return
             else:
-                return False
+                return
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')
-
-    return True
