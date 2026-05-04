@@ -33,6 +33,7 @@ from term_timer.routine import build_solve_instance
 from term_timer.routine import build_train_instance
 from term_timer.routine import run_session
 from term_timer.server.app import Server
+from term_timer.stats import DrillStatistics
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.timer import Timer
 from term_timer.trainer import Trainer
@@ -249,6 +250,13 @@ async def driller(options: Namespace) -> int:
     finally:
         if instance.bluetooth_interface:
             await instance.bluetooth_disconnect()
+
+    if len(instance.rep_times) >= 2:
+        DrillStatistics(
+            instance.rep_times,
+            instance.rep_tps,
+            instance.rep_fluencies,
+        ).resume()
 
     return 0
 

@@ -1275,3 +1275,71 @@ class SolveStatisticsReporter(Statistics):
         plt.ticks_style('bold')
 
         plt.show()
+
+
+class DrillStatistics(Statistics):
+    """Computes and displays statistics for a drill session."""
+
+    def __init__(
+            self,
+            rep_times: list[int],
+            rep_tps: list[float],
+            rep_fluencies: list[int],
+    ) -> None:
+        """Initialize drill statistics from per-rep collected data."""
+        super().__init__(rep_times)
+        self.rep_tps = rep_tps
+        self.rep_fluencies = [f for f in rep_fluencies if f > 0]
+
+    @cached_property
+    def best_tps(self) -> float:
+        """Return the best (highest) TPS across all reps."""
+        return max(self.rep_tps) if self.rep_tps else 0.0
+
+    @cached_property
+    def mean_tps(self) -> float:
+        """Return the mean TPS across all reps."""
+        return float(np.mean(self.rep_tps)) if self.rep_tps else 0.0
+
+    @cached_property
+    def best_fluency(self) -> int:
+        """Return the best (highest) fluency across all reps."""
+        return max(self.rep_fluencies) if self.rep_fluencies else 0
+
+    @cached_property
+    def mean_fluency(self) -> int:
+        """Return the mean fluency across all reps."""
+        return int(np.mean(self.rep_fluencies)) if self.rep_fluencies else 0
+
+    def resume(self) -> None:
+        """Display drill session statistics summary."""
+        console.print('[title]Drill summary[/title]')
+        console.print(
+            '[stats]Reps  :[/stats]',
+            f'[result]{ self.total }[/result]',
+        )
+        console.print(
+            '[stats]Time  :[/stats]',
+            f'[result]{ format_time(self.total_time) }[/result]',
+        )
+        console.print(
+            '[stats]Mean  :[/stats]',
+            f'[result]{ format_time(self.mean) }[/result]',
+            f'[tps]{ self.mean_tps:.2f} TPS[/tps]',
+        )
+        console.print(
+            '[stats]Best  :[/stats]',
+            f'[green]{ format_time(self.best) }[/green]',
+            f'[tps]{ self.best_tps:.2f} TPS[/tps]',
+        )
+        console.print(
+            '[stats]Worst :[/stats]',
+            f'[red]{ format_time(self.worst) }[/red]',
+        )
+        if self.mean_fluency > 0:
+            console.print(
+                '[stats]Fluency:[/stats]',
+                f'{ format_fluency(self.mean_fluency) }',
+                '[stats]Best:[/stats]',
+                f'{ format_fluency(self.best_fluency) }',
+            )

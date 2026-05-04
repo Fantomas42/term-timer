@@ -50,6 +50,8 @@ class Driller(SolveInterface):
         self.counter = 1
 
         self.rep_times: list[int] = []
+        self.rep_fluencies: list[int] = []
+        self.rep_tps: list[float] = []
         self.expected_moves = self.reorient(self.algorithm)
         self.move_index: int = 0
         self.move_accumulated: int = 0
@@ -97,6 +99,7 @@ class Driller(SolveInterface):
         moves = len(self.expected_moves)
         tps = moves / (self.elapsed_time / SECOND) if self.elapsed_time else 0
 
+        fluency = 0
         fluency_line = ''
         if self.moves:
             start = self.moves[0]['time']
@@ -108,6 +111,9 @@ class Driller(SolveInterface):
             fluency = Solve.compute_fluency(timed_alg)
             if fluency > 0:
                 fluency_line = f' { format_fluency(fluency) }'
+
+        self.rep_fluencies.append(fluency)
+        self.rep_tps.append(tps)
 
         self.console.print(
             f'[duration]Rep #{ self.counter }:[/duration]',
