@@ -9,10 +9,13 @@ from cubing_algs.move import Move
 from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.bluetooth.annotations import RotationEventDict
 from term_timer.constants import ESCAPE_CHAR
+from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 from term_timer.formatter import format_delta
+from term_timer.formatter import format_fluency
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
+from term_timer.solve import Solve
 
 
 class Driller(SolveInterface):
@@ -85,7 +88,7 @@ class Driller(SolveInterface):
             )
 
     def rep_line(self) -> None:
-        """Display time, optional delta, and TPS for the completed rep."""
+        """Display time, delta, TPS, and fluency for the completed rep."""
         extra = ''
         if len(self.rep_times) >= 2:
             delta = self.rep_times[-1] - self.rep_times[-2]
@@ -94,11 +97,24 @@ class Driller(SolveInterface):
         moves = len(self.expected_moves)
         tps = moves / (self.elapsed_time / SECOND) if self.elapsed_time else 0
 
+        fluency_line = ''
+        if self.moves:
+            start = self.moves[0]['time']
+            timed_moves = []
+            for m in self.moves:
+                ms = (m['time'] - start) // MS_TO_NS_FACTOR
+                timed_moves.append(Move(f'{ m["move"] }@{ ms }'))
+            timed_alg = Algorithm(timed_moves)
+            fluency = Solve.compute_fluency(timed_alg)
+            if fluency > 0:
+                fluency_line = f' { format_fluency(fluency) }'
+
         self.console.print(
             f'[duration]Rep #{ self.counter }:[/duration]',
             f'[time]{ format_time(self.elapsed_time) }[/time]'
             f'{ extra }'
-            f' [tps]{ tps:.2f} TPS[/tps]',
+            f' [tps]{ tps:.2f} TPS[/tps]'
+            f'{ fluency_line }',
         )
 
     def reset_drill_state(self) -> None:
