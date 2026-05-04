@@ -124,11 +124,12 @@ class Quaternion:
         norm = math.sqrt(self.w**2 + self.x**2 + self.y**2 + self.z**2)
         if norm < QUATERNION_EPSILON:
             return Quaternion(1.0, 0.0, 0.0, 0.0)
+        inv_norm = 1.0 / norm
         return Quaternion(
-            self.w / norm,
-            self.x / norm,
-            self.y / norm,
-            self.z / norm,
+            self.w * inv_norm,
+            self.x * inv_norm,
+            self.y * inv_norm,
+            self.z * inv_norm,
         )
 
     def to_axis_angle(self) -> tuple[tuple[float, float, float], float]:
@@ -294,7 +295,12 @@ class RotationDetector:
 
         """
         # Work entirely in raw sensor frame
-        absolute_raw = Quaternion.from_dict_raw(quaternion_dict)
+        absolute_raw = Quaternion(
+            quaternion_dict['w'],
+            quaternion_dict['x'],
+            quaternion_dict['y'],
+            quaternion_dict['z'],
+        )
 
         # Initialize with first quaternion as neutral orientation
         if (

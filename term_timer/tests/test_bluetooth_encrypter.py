@@ -2,7 +2,6 @@
 # ruff: noqa: SLF001
 import unittest
 from unittest.mock import Mock
-from unittest.mock import patch
 
 from term_timer.bluetooth.encrypter import INVALID_DATA
 from term_timer.bluetooth.encrypter import INVALID_IV
@@ -266,49 +265,35 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):  # noqa: PLR0904
 
         self.assertNotEqual(encrypted1, encrypted2)
 
-    @patch('term_timer.bluetooth.encrypter.Cipher')
-    def test_encrypt_chunk_calls_aes_correctly(
-            self,
-            mock_cipher_class: Mock,
-    ) -> None:
-        """Test that _encrypt_chunk calls AES with correct parameters."""
-        mock_cipher = Mock()
+    def test_encrypt_chunk_uses_cached_cipher(self) -> None:
+        """Test that _encrypt_chunk uses the cached cipher."""
         mock_encryptor = Mock()
         mock_encryptor.update.return_value = b'encrypted_chunk_'
         mock_encryptor.finalize.return_value = b''
-        mock_cipher.encryptor.return_value = mock_encryptor
-        mock_cipher_class.return_value = mock_cipher
+        self.encrypter._cipher = Mock()
+        self.encrypter._cipher.encryptor.return_value = mock_encryptor
 
         buffer = bytearray(32)
         self.encrypter._encrypt_chunk(buffer, 0)
 
-        # Verify Cipher was called with correct parameters
-        mock_cipher_class.assert_called_once()
-        args = mock_cipher_class.call_args[0]
-        self.assertEqual(len(args), 2)  # algorithms.AES, modes.CBC
-        # backend is passed as keyword argument
+        self.encrypter._cipher.encryptor.assert_called_once()
+        mock_encryptor.update.assert_called_once()
+        mock_encryptor.finalize.assert_called_once()
 
-    @patch('term_timer.bluetooth.encrypter.Cipher')
-    def test_decrypt_chunk_calls_aes_correctly(
-        self,
-        mock_cipher_class: Mock,
-    ) -> None:
-        """Test that _decrypt_chunk calls AES with correct parameters."""
-        mock_cipher = Mock()
+    def test_decrypt_chunk_uses_cached_cipher(self) -> None:
+        """Test that _decrypt_chunk uses the cached cipher."""
         mock_decryptor = Mock()
         mock_decryptor.update.return_value = b'decrypted_chunk_'
         mock_decryptor.finalize.return_value = b''
-        mock_cipher.decryptor.return_value = mock_decryptor
-        mock_cipher_class.return_value = mock_cipher
+        self.encrypter._cipher = Mock()
+        self.encrypter._cipher.decryptor.return_value = mock_decryptor
 
         buffer = bytearray(32)
         self.encrypter._decrypt_chunk(buffer, 0)
 
-        # Verify Cipher was called with correct parameters
-        mock_cipher_class.assert_called_once()
-        args = mock_cipher_class.call_args[0]
-        self.assertEqual(len(args), 2)  # algorithms.AES, modes.CBC
-        # backend is passed as keyword argument
+        self.encrypter._cipher.decryptor.assert_called_once()
+        mock_decryptor.update.assert_called_once()
+        mock_decryptor.finalize.assert_called_once()
 
     def test_encryption_deterministic_with_same_inputs(self) -> None:
         """Test that encryption is deterministic with same inputs."""
