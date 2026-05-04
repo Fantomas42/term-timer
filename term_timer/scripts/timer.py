@@ -446,8 +446,9 @@ async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0911
             count = session_config.get('count', 0)
 
             console.print(
-                f'[trainer]▶ Routine { index + 1 }/{ len(sessions) }:'
-                f' { session_type.upper() }[/trainer]',
+                f'🥋 Routine { index + 1 }/{ len(sessions) }:'
+                f' { session_type.title() }',
+                style='routine',
             )
 
             if session_type == 'train':
