@@ -76,6 +76,7 @@ class SolveInterface(
         self.session: str = ''
         self.cube_size: int = 3
         self.stack: list[Solve] = []
+        self.stack_done: list[Solve] = []
 
     def init_solve(self) -> None:
         """
@@ -258,18 +259,22 @@ class SolveInterface(
         save_style = 'warning'
         if char == 'd':
             self.stack[-1].flag = DNF
+            self.stack_done[-1].flag = DNF
             save_string = 'Solve marked as DNF'
             save_style = 'caution'
         elif char == 'o':
             self.stack[-1].flag = ''
+            self.stack_done[-1].flag = ''
             save_string = 'Solve marked as OK'
             save_style = 'success'
         elif char == '2':
             self.stack[-1].flag = PLUS_TWO
+            self.stack_done[-1].flag = PLUS_TWO
             save_string = 'Solve marked as +2'
             save_style = 'caution'
         elif char == 'z':
             self.stack.pop()
+            self.stack_done.pop()
             save_string = 'Solve cancelled'
 
         save_solves(
