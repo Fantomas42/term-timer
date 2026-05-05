@@ -551,6 +551,16 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
 
+    parser.add_argument(
+        '-l', '--list',
+        action='store_true',
+        dest='list_cases',
+        help=(
+            'List all available cases with their training statistics.\n'
+            'Default: False.'
+        ),
+    )
+
     scramble = parser.add_argument_group('Scramble')
     scramble.add_argument(
         '-r', '--seed',

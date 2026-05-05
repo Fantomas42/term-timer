@@ -184,6 +184,10 @@ async def trainer(options: Namespace) -> int:
         console.print('😱', str(error), style='warning')
         return 1
 
+    if options.list_cases:
+        trainer.list_cases()
+        return 0
+
     if options.bluetooth:
         await trainer.bluetooth_connect(
             use_gyroscope=options.use_gyroscope,

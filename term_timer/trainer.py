@@ -1,5 +1,7 @@
 """Training interface for practicing specific CFOP cases."""
 import asyncio
+from datetime import UTC
+from datetime import datetime
 from functools import cached_property
 from operator import itemgetter
 from random import Random
@@ -14,6 +16,8 @@ from cubing_algs.constants import DEFAULT_CUBE_SIZE
 from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
+from rich import box
+from rich.table import Table
 
 from term_timer.annotations import TrainingCase
 from term_timer.constants import CROSS_CASE
@@ -28,6 +32,7 @@ from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_delta
+from term_timer.formatter import format_duration
 from term_timer.formatter import format_fluency
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
@@ -291,6 +296,86 @@ class Trainer(SolveInterface):
                 f'{ self.method }/{ self.step_upper }',
                 style='trainer',
             )
+
+    def list_cases(self) -> None:
+        """Display a table of all available cases with their training stats."""
+        if self.step in CROSS_MODES:
+            valid_cases = {
+                tc.case.code: tc.case for tc in self.cases
+            }
+        else:
+            collection = get_collection(f'{ self.method }/{ self.step }').cases
+            valid_cases = {
+                v.code: v for v in collection.values()
+                if v.setup_algorithms
+            }
+
+        no_ao = '[no-ao]N/A[/no-ao]'
+
+        table = Table(
+            title=f'{ self.method }/{ self.step_upper } stats',
+            box=box.SIMPLE,
+        )
+        table.add_column('Case', width=40)
+        table.add_column('Σ', width=3, justify='right')
+        table.add_column('Last date', width=10, justify='right')
+        table.add_column('Best', width=5, justify='right')
+        table.add_column('Ao5', width=5, justify='right')
+        table.add_column('Ao12', width=5, justify='right')
+
+        for code, case in sorted(valid_cases.items()):
+            link = format_term_timer_case_url(case)
+            if link:
+                head = (
+                    f'[localhost][link={ link }]{ case.pretty_name }'
+                    '[/link][/localhost]'
+                )
+            else:
+                head = case.pretty_name
+
+            if code in self.trainings.cases:
+                case_training = self.trainings.cases[code]
+                count = len(case_training.timings)
+                timings = [
+                    t * MS_TO_NS_FACTOR
+                    for t in case_training.timings
+                ]
+                stats = Statistics(timings)
+
+                last_date = datetime.fromtimestamp(
+                    case_training.last_date, tz=UTC,
+                ).astimezone().strftime('%Y-%m-%d')
+
+                count_str = f'[stats]{ count }[/stats]'
+                best_str = (
+                    f'[duration]{ format_duration(stats.best) }[/duration]'
+                    if count else no_ao
+                )
+                ao5_str = (
+                    f'[ao5]{ format_duration(stats.ao5) }[/ao5]'
+                    if count >= 5 else no_ao
+                )
+                ao12_str = (
+                    f'[ao12]{ format_duration(stats.ao12) }[/ao12]'
+                    if count >= 12 else no_ao
+                )
+            else:
+                last_date = no_ao
+                count_str = '[stats]0[/stats]'
+                best_str = no_ao
+                ao5_str = no_ao
+                ao12_str = no_ao
+
+            table.add_row(
+                head,
+                count_str,
+                last_date,
+                best_str,
+                ao5_str,
+                ao12_str,
+            )
+
+        self.console.print(table)
 
     def start_line(
             self,
