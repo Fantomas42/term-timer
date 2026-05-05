@@ -7,10 +7,12 @@ from typing import Final
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeOrientation
+from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
 from cubing_algs.constants import DEFAULT_CUBE_SIZE
 from cubing_algs.solver import facelets_to_facelets_algorithm
+from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.annotations import TrainingCase
@@ -26,6 +28,7 @@ from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_delta
+from term_timer.formatter import format_fluency
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
 from term_timer.in_out import load_trainings
@@ -361,6 +364,97 @@ class Trainer(SolveInterface):
             end='', style='consign',
         )
 
+    @staticmethod
+    def solve_stats_line(solve: Solve) -> str:
+        """
+        Format the stats summary line for training mode display.
+
+        Returns:
+            Rich-formatted string with HTM, TPS, fluency, missed moves,
+            pauses, and rotations, or empty string if no advanced data.
+
+        """
+        if not solve.advanced:
+            return ''
+
+        htm = solve.reconstruction.metrics.htm
+        metric_string = f'[htm]{ htm } HTM[/htm] '
+
+        missed_line = ''
+        if solve.all_missed_moves:
+            missed_line = (
+                '[exec-overhead]'
+                f'{ solve.all_missed_moves } missed QTM'
+                '[/exec-overhead] '
+            )
+
+        pause_line = ''
+        if solve.execution_pauses:
+            pause_line = (
+                f'[caution]{ solve.execution_pauses } Pauses[/caution]'
+            )
+
+        rotation_line = ''
+        if solve.rotations:
+            rotation_line = (
+                f' [caution]{ solve.rotations } Rotations[/caution]'
+            )
+
+        fluency_line = ''
+        if solve.fluency > 0:
+            fluency_line = f'{ format_fluency(solve.fluency) } '
+
+        return (
+            f'{ metric_string }'
+            f'[tps]{ solve.tps:.2f} TPS[/tps] '
+            f'{ fluency_line }{ missed_line }{ pause_line }{ rotation_line }'
+        )
+
+    @staticmethod
+    def solve_algo_line(solve: Solve) -> str:
+        """
+        Format the algorithm line with AUF and oHTM annotation.
+
+        Returns:
+            Rich-formatted string with executed moves and a comment showing
+            AUF counts and oHTM overhead, or empty string if unavailable.
+
+        """
+        if not solve.method_applied:
+            return ''
+
+        step = next(
+            (s for s in solve.method_applied.summary if s['moves']),
+            None,
+        )
+        if not step:
+            return ''
+
+        aufs = ''
+        if step['aufs'][0]:
+            aufs += f' +{ step["aufs"][0] } pre-AUF'
+        if step['aufs'][1]:
+            aufs += f' +{ step["aufs"][1] } post-AUF'
+
+        optimal = ''
+        if step['case']:
+            step_code = step['name'].split(' ')[0]
+            step_case = get_case(step_code, step['case'])
+            optimal_htm = step_case.optimal_htm
+            if optimal_htm:
+                delta_htm = step['moves_prettified'].transform(
+                    remove_auf_moves,
+                ).metrics.htm - optimal_htm
+                if delta_htm > 0:
+                    optimal = f' +{ delta_htm } oHTM'
+
+        comment = ''
+        if aufs or optimal:
+            comment = f' [comment]//{ aufs }{ optimal }[/comment]'
+
+        algo_str = solve.reconstruction_step_line(step, multiple=True)
+        return f'[consign]{ algo_str }[/consign]{ comment }'
+
     def solve_line(self, solve: Solve, selected_case: Case) -> None:  # noqa: C901
         """Display training solve results and execution details."""
         self.trainings.add_timing(
@@ -379,17 +473,14 @@ class Trainer(SolveInterface):
         self.clear_line(full=True)
 
         if solve.method_applied:
+            indent = ' ' * len(f'Executed #{ self.counter }: ')
             self.console.print(
-                f'[analysis]Executed #{ self.counter }:[/analysis] [consign]' +
-                solve.reconstruction_step_line(
-                    next(
-                        step for step in solve.method_applied.summary
-                        if step['moves']
-                    ),
-                    multiple=True,
-                ) + '[/consign]',
-                solve.trainer_line,
+                f'[analysis]Executed #{ self.counter }:[/analysis]',
+                self.solve_stats_line(solve),
             )
+            algo_line = self.solve_algo_line(solve)
+            if algo_line:
+                self.console.print(indent + algo_line)
 
         extra = ''
         if new_stats.total > 1:

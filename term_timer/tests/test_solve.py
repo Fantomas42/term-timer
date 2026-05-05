@@ -747,11 +747,6 @@ class TestSolveReportLines(unittest.TestCase):
         solve = Solve(1000000000, 1012345678, "R U R'")
         self.assertEqual(solve.report_line, '')
 
-    def test_trainer_line_without_advanced(self) -> None:
-        """Test trainer_line without moves."""
-        solve = Solve(1000000000, 1012345678, "R U R'")
-        self.assertEqual(solve.trainer_line, '')
-
     def test_method_line_without_method_applied(self) -> None:
         """Test method_line without method analysis."""
         solve = Solve(1000000000, 1012345678, "R U R'")

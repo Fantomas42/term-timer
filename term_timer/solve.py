@@ -644,59 +644,6 @@ class Solve:  # noqa: PLR0904
         )
 
     @cached_property
-    def trainer_line(self) -> str:
-        """
-        Generate formatted summary line for training mode.
-
-        Returns:
-            Rich-formatted string with metrics, TPS, and optional missed
-            moves, pauses, and rotations
-
-        """
-        if not self.advanced:
-            return ''
-
-        metric_string = ''
-        metrics = STATS_CONFIG.get('metrics')
-        metrics_dict = self.reconstruction.metrics._asdict()
-        for metric in metrics:
-            value = metrics_dict[metric]
-            metric_string += (
-                f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
-            )
-
-        missed_line = ''
-        missed_moves = self.all_missed_moves
-        if missed_moves:
-            missed_line = (
-                '[exec-overhead]'
-                f'{ missed_moves } missed QTM'
-                '[/exec-overhead] '
-            )
-
-        pause_line = ''
-        if self.execution_pauses:
-            pause_line = (
-                f'[caution]{ self.execution_pauses } Pauses[/caution]'
-            )
-
-        rotation_line = ''
-        if self.rotations:
-            rotation_line = (
-                f' [caution]{ self.rotations } Rotations[/caution]'
-            )
-
-        fluency_line = ''
-        if self.fluency > 0:
-            fluency_line = f'{ format_fluency(self.fluency) } '
-
-        return (
-            f'{ metric_string }'
-            f'[tps]{ self.tps:.2f} TPS[/tps] '
-            f'{ fluency_line }{ missed_line }{ pause_line }{ rotation_line }'
-        )
-
-    @cached_property
     def method_line(self) -> str:  # noqa: C901, PLR0912, PLR0914, PLR0915
         """
         Generate detailed step-by-step method analysis display.
