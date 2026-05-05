@@ -265,35 +265,27 @@ class TestGanGen2CubeEncrypter(unittest.TestCase):  # noqa: PLR0904
 
         self.assertNotEqual(encrypted1, encrypted2)
 
-    def test_encrypt_chunk_uses_cached_cipher(self) -> None:
-        """Test that _encrypt_chunk uses the cached cipher."""
-        mock_encryptor = Mock()
-        mock_encryptor.update.return_value = b'encrypted_chunk_'
-        mock_encryptor.finalize.return_value = b''
-        self.encrypter._cipher = Mock()
-        self.encrypter._cipher.encryptor.return_value = mock_encryptor
+    def test_encrypt_chunk_uses_cached_context(self) -> None:
+        """Test that _encrypt_chunk uses the pre-created persistent context."""
+        mock_ctx = Mock()
+        mock_ctx.update.return_value = b'encrypted_chunk_'
+        self.encrypter._enc_ctx = mock_ctx
 
         buffer = bytearray(32)
         self.encrypter._encrypt_chunk(buffer, 0)
 
-        self.encrypter._cipher.encryptor.assert_called_once()
-        mock_encryptor.update.assert_called_once()
-        mock_encryptor.finalize.assert_called_once()
+        mock_ctx.update.assert_called_once()
 
-    def test_decrypt_chunk_uses_cached_cipher(self) -> None:
-        """Test that _decrypt_chunk uses the cached cipher."""
-        mock_decryptor = Mock()
-        mock_decryptor.update.return_value = b'decrypted_chunk_'
-        mock_decryptor.finalize.return_value = b''
-        self.encrypter._cipher = Mock()
-        self.encrypter._cipher.decryptor.return_value = mock_decryptor
+    def test_decrypt_chunk_uses_cached_context(self) -> None:
+        """Test that _decrypt_chunk uses the pre-created persistent context."""
+        mock_ctx = Mock()
+        mock_ctx.update.return_value = b'decrypted_chunk_'
+        self.encrypter._dec_ctx = mock_ctx
 
         buffer = bytearray(32)
         self.encrypter._decrypt_chunk(buffer, 0)
 
-        self.encrypter._cipher.decryptor.assert_called_once()
-        mock_decryptor.update.assert_called_once()
-        mock_decryptor.finalize.assert_called_once()
+        mock_ctx.update.assert_called_once()
 
     def test_encryption_deterministic_with_same_inputs(self) -> None:
         """Test that encryption is deterministic with same inputs."""
