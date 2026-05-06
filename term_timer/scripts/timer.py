@@ -508,11 +508,11 @@ async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912
                 )
                 return 1
 
+        console.print('🦾 Routine complete !', style='routine')
+
     finally:
         if current and current.bluetooth_interface:
             await current.bluetooth_disconnect()
-
-    console.print('[success]Routine complete ![/success]')
 
     return 0
 
