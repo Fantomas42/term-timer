@@ -1120,7 +1120,7 @@ class Solve:  # noqa: PLR0904
 
         cheers = generate_solve_cheers(self)
 
-        cheer_lines = ['[stats]Summary    :[/stats]']
+        cheer_lines = ['[stats]Highlights :[/stats]']
         cheer_lines.extend(
             f'[cheer] - { cheer }[/cheer]'
             for cheer in cheers
