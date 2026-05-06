@@ -142,7 +142,11 @@ def random_training(
         Tuple of (case, scramble algorithm).
 
     """
-    selected_case = rng.choice(cases)
+    selected_case = rng.choices(
+        cases,
+        weights=[c.case.probability for c in cases],
+        k=1,
+    )
 
     return (
         selected_case.case,
