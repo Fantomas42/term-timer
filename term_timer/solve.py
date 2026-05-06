@@ -22,7 +22,6 @@ from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.timing import untime_moves
 from cubing_algs.transform.translate import translate_moves
 
-from term_timer.cheers import generate_solve_cheers
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import SERVER_CONFIG
@@ -46,6 +45,7 @@ from term_timer.formatter import format_fluency
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
+from term_timer.highlights import generate_solve_highlights
 from term_timer.methods import get_method_analyser
 from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import Analyser
@@ -1104,29 +1104,29 @@ class Solve:  # noqa: PLR0904
 
         plt.show()
 
-    def cheers(self) -> str:
+    def highlights(self) -> str:
         """
-        Generate constructive cheers based on solve performance metrics.
+        Generate constructive highlights based on solve performance metrics.
 
         Analyzes recognition time, execution quality, efficiency, and step
         performance to highlight key successes in the solve.
 
         Returns:
-            Rich-formatted strings with cheers and motivation
+            Rich-formatted strings with highlights and motivation
 
         """
         if not self.advanced or not self.method_applied:
             return ''
 
-        cheers = generate_solve_cheers(self)
+        highlights = generate_solve_highlights(self)
 
-        cheer_lines = ['[stats]Highlights :[/stats]']
-        cheer_lines.extend(
-            f'[cheer] - { cheer }[/cheer]'
-            for cheer in cheers
+        highlight_lines = ['[stats]Highlights :[/stats]']
+        highlight_lines.extend(
+            f'[highlight] - { highlight }[/highlight]'
+            for highlight in highlights
         )
 
-        return '\n'.join(cheer_lines)
+        return '\n'.join(highlight_lines)
 
     @staticmethod
     def missed_moves_pair(algorithm: Algorithm) -> tuple[Algorithm, Algorithm]:

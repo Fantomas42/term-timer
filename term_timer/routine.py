@@ -35,7 +35,7 @@ class SessionConfig(TypedDict, total=False):
     x_cross: bool
     edges_oriented: bool
     scramble: str
-    show_cheers: bool
+    show_highlights: bool
     show_reconstruction: bool
     show_tps_graph: bool
     show_time_graph: bool
@@ -106,7 +106,7 @@ def build_solve_instance(session_config: SessionConfig) -> Timer:
         scrambles=[],
         session=session_name,
         free_play=free_play,
-        show_cheers=display('show_cheers', 'cheers'),
+        show_highlights=display('show_highlights', 'highlights'),
         show_cube=display('show_cube', 'scramble'),
         show_reconstruction=display('show_reconstruction', 'reconstruction'),
         show_tps_graph=display('show_tps_graph', 'tps_graph'),

@@ -29,7 +29,7 @@ xcross-slots = ["FR"]
 [display]
 scramble = true
 reconstruction = true
-cheers = true
+highlights = true
 time_graph = true
 tps_graph = true
 fluency_graph = true

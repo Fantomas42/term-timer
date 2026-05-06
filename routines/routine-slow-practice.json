@@ -34,7 +34,7 @@
             "show_fluency_graph": true,
             "show_recognition_graph": true,
             "show_time_graph": false,
-            "show_cheers": false
+            "show_highlights": false
         }
     ]
 }

@@ -1,5 +1,5 @@
 {
-    "comment": "Pre-competition simulation: T-perm and Ua-perm drill as finger warm-up, full inspection countdown, all PLLs, then a long ao12 with cheers off to stay focused.",
+    "comment": "Pre-competition simulation: T-perm and Ua-perm drill as finger warm-up, full inspection countdown, all PLLs, then a long ao12 with highlights off to stay focused.",
     "bluetooth": true,
     "use_gyroscope": true,
     "sessions": [
@@ -26,7 +26,7 @@
             "session": "competition",
             "method": "cfop",
             "countdown": 15,
-            "show_cheers": false,
+            "show_highlights": false,
             "show_reconstruction": true,
             "show_recognition_graph": true,
             "show_time_graph": true,

@@ -1,4 +1,4 @@
-"""Cheers generation for speedcube solves."""
+"""Highlights generation for speedcube solves."""
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -12,12 +12,12 @@ if TYPE_CHECKING:
     from term_timer.solve import Solve
 
 
-def get_cross_cheer(summary: list['StepSummary']) -> str:
+def get_cross_highlight(summary: list['StepSummary']) -> str:
     """
-    Cheer based on Cross HTM.
+    Highlight based on Cross HTM.
 
     Returns:
-        Cheer message
+        Highlight message
 
     """
     cross_step = next(
@@ -37,12 +37,12 @@ def get_cross_cheer(summary: list['StepSummary']) -> str:
     return ''
 
 
-def get_xcross_cheer(summary: list['StepSummary']) -> str:
+def get_xcross_highlight(summary: list['StepSummary']) -> str:
     """
-    Cheer based on XCross.
+    Highlight based on XCross.
 
     Returns:
-        Cheer message
+        Highlight message
 
     """
     xcross_step = next(
@@ -56,12 +56,12 @@ def get_xcross_cheer(summary: list['StepSummary']) -> str:
     return ''
 
 
-def get_missed_moves_cheer(solve: 'Solve') -> str:
+def get_missed_moves_highlight(solve: 'Solve') -> str:
     """
-    Cheer based on missed moves.
+    Highlight based on missed moves.
 
     Returns:
-        Cheer message
+        Highlight message
 
     """
     if not solve.all_missed_moves:
@@ -70,12 +70,12 @@ def get_missed_moves_cheer(solve: 'Solve') -> str:
     return ''
 
 
-def get_score_cheer(solve: 'Solve') -> str:
+def get_score_highlight(solve: 'Solve') -> str:
     """
-    Cheer based on solve score.
+    Highlight based on solve score.
 
     Returns:
-        Cheer message
+        Highlight message
 
     """
     score = cast('float', solve.score)
@@ -86,9 +86,9 @@ def get_score_cheer(solve: 'Solve') -> str:
     return ''
 
 
-def get_time_cheer(solve: 'Solve') -> str:
+def get_time_highlight(solve: 'Solve') -> str:
     """
-    Generate motivational time cheer.
+    Generate motivational time highlight.
 
     Returns:
         Time aimed message
@@ -101,12 +101,12 @@ def get_time_cheer(solve: 'Solve') -> str:
     )
 
 
-def get_fluency_cheer(solve: 'Solve') -> str:
+def get_fluency_highlight(solve: 'Solve') -> str:
     """
-    Cheer based on solve fluency.
+    Highlight based on solve fluency.
 
     Returns:
-        Cheer message
+        Highlight message
 
     """
     if solve.fluency >= 90:
@@ -116,12 +116,12 @@ def get_fluency_cheer(solve: 'Solve') -> str:
     return ''
 
 
-def get_tps_cheer(solve: 'Solve') -> str:
+def get_tps_highlight(solve: 'Solve') -> str:
     """
-    Cheer based on turning speed.
+    Highlight based on turning speed.
 
     Returns:
-        Cheer message
+        Highlight message
 
     """
     if solve.tps >= 5.0:  # noqa: PLR2004
@@ -131,12 +131,12 @@ def get_tps_cheer(solve: 'Solve') -> str:
     return ''
 
 
-def get_no_pauses_cheer(solve: 'Solve') -> str:
+def get_no_pauses_highlight(solve: 'Solve') -> str:
     """
-    Cheer based on execution pauses.
+    Highlight based on execution pauses.
 
     Returns:
-        Cheer message
+        Highlight message
 
     """
     if solve.execution_pauses == 0:
@@ -146,12 +146,12 @@ def get_no_pauses_cheer(solve: 'Solve') -> str:
     return ''
 
 
-def get_skip_cheer(summary: list['StepSummary']) -> str:
+def get_skip_highlight(summary: list['StepSummary']) -> str:
     """
-    Cheer based on OLL/PLL skips.
+    Highlight based on OLL/PLL skips.
 
     Returns:
-        Cheer message
+        Highlight message
 
     """
     skips = [
@@ -167,12 +167,12 @@ def get_skip_cheer(summary: list['StepSummary']) -> str:
     return ''
 
 
-def get_recognition_cheer(solve: 'Solve') -> str:
+def get_recognition_highlight(solve: 'Solve') -> str:
     """
-    Cheer based on fast recognition.
+    Highlight based on fast recognition.
 
     Returns:
-        Cheer message
+        Highlight message
 
     """
     if solve.time <= 0:
@@ -185,12 +185,12 @@ def get_recognition_cheer(solve: 'Solve') -> str:
     return ''
 
 
-def get_auf_cheer(solve: 'Solve') -> str:
+def get_auf_highlight(solve: 'Solve') -> str:
     """
-    Cheer based on minimal AUFs.
+    Highlight based on minimal AUFs.
 
     Returns:
-        Cheer message
+        Highlight message
 
     """
     if not solve.aufs:
@@ -231,14 +231,14 @@ def is_optimal_ll_step(step: 'StepSummary') -> bool:
     return actual_htm == optimal_htm
 
 
-def get_optimal_ll_cheer(summary: list['StepSummary']) -> str:
+def get_optimal_ll_highlight(summary: list['StepSummary']) -> str:
     """
-    Cheer for optimal OLL or PLL execution.
+    Highlight for optimal OLL or PLL execution.
 
     Checks if OLL or PLL was executed with optimal HTM and no AUFs.
 
     Returns:
-        Cheer message
+        Highlight message
 
     """
     optimal_steps = [
@@ -257,14 +257,14 @@ def get_optimal_ll_cheer(summary: list['StepSummary']) -> str:
     return ''
 
 
-def get_optimal_f2l_cheer(summary: list['StepSummary']) -> str:
+def get_optimal_f2l_highlight(summary: list['StepSummary']) -> str:
     """
-    Cheer for optimal F2L pair execution.
+    Highlight for optimal F2L pair execution.
 
     Checks if any F2L pair was executed with optimal HTM.
 
     Returns:
-        Cheer message
+        Highlight message
 
     """
     optimal_count = 0
@@ -300,14 +300,14 @@ def get_optimal_f2l_cheer(summary: list['StepSummary']) -> str:
     return ''
 
 
-def get_step_recognition_cheer(summary: list['StepSummary']) -> str:
+def get_step_recognition_highlight(summary: list['StepSummary']) -> str:
     """
-    Cheer for exceptionally fast recognition on specific steps.
+    Highlight for exceptionally fast recognition on specific steps.
 
     Checks if OLL or PLL had instant recognition (under 10% of step time).
 
     Returns:
-        Cheer message
+        Highlight message
 
     """
     for step in summary:
@@ -323,9 +323,9 @@ def get_step_recognition_cheer(summary: list['StepSummary']) -> str:
     return ''
 
 
-def generate_solve_cheers(solve: 'Solve') -> list[str]:
+def generate_solve_highlights(solve: 'Solve') -> list[str]:
     """
-    Generate cheers based on solve performance metrics.
+    Generate highlights based on solve performance metrics.
 
     Analyzes recognition time, execution quality, efficiency, and step
     performance to highlight key successes in the solve.
@@ -334,7 +334,7 @@ def generate_solve_cheers(solve: 'Solve') -> list[str]:
         solve: Solve instance with reconstruction data
 
     Returns:
-        List of strings with cheers and motivation
+        List of strings with highlights and motivation
 
     """
     if not solve.method_applied:
@@ -342,21 +342,21 @@ def generate_solve_cheers(solve: 'Solve') -> list[str]:
 
     summary = solve.method_applied.summary
 
-    cheer_lines = [
-        get_cross_cheer(summary),
-        get_xcross_cheer(summary),
-        get_skip_cheer(summary),
-        get_optimal_f2l_cheer(summary),
-        get_optimal_ll_cheer(summary),
-        get_missed_moves_cheer(solve),
-        get_fluency_cheer(solve),
-        get_tps_cheer(solve),
-        get_no_pauses_cheer(solve),
-        get_recognition_cheer(solve),
-        get_step_recognition_cheer(summary),
-        get_auf_cheer(solve),
-        get_score_cheer(solve),
-        get_time_cheer(solve),
+    highlight_lines = [
+        get_cross_highlight(summary),
+        get_xcross_highlight(summary),
+        get_skip_highlight(summary),
+        get_optimal_f2l_highlight(summary),
+        get_optimal_ll_highlight(summary),
+        get_missed_moves_highlight(solve),
+        get_fluency_highlight(solve),
+        get_tps_highlight(solve),
+        get_no_pauses_highlight(solve),
+        get_recognition_highlight(solve),
+        get_step_recognition_highlight(summary),
+        get_auf_highlight(solve),
+        get_score_highlight(solve),
+        get_time_highlight(solve),
     ]
 
-    return [cheer for cheer in cheer_lines if cheer]
+    return [highlight for highlight in highlight_lines if highlight]

@@ -7,10 +7,10 @@ from bottle import redirect
 from cubing_algs.annotations import CubeOrientation
 from cubing_algs.constants import ORIENTATION_FACE_MOVES
 
-from term_timer.cheers import generate_solve_cheers
 from term_timer.constants import SECOND
 from term_timer.constants import SolveFlag
 from term_timer.constants import SolveFlagInput
+from term_timer.highlights import generate_solve_highlights
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import save_solves
 from term_timer.methods import METHOD_ANALYSERS
@@ -157,7 +157,7 @@ class SolveDetailView(View):
             'solves': self.solves,
             'scatter': scatter,
             'steps': steps,
-            'cheers': generate_solve_cheers(self.solve),
+            'highlights': generate_solve_highlights(self.solve),
             'tps': tps,
             'fluencies': fluencies,
             'recognitions': recognitions,

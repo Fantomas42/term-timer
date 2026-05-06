@@ -557,11 +557,11 @@ class DisplaySection(ConfigSection):
                     id='reconstruction',
                 )
 
-            yield Static('Show Cheers', classes='field-label')
+            yield Static('Show Highlights', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Checkbox(
-                    'Display cheers after analysis',
-                    id='cheers',
+                    'Display highlights after analysis',
+                    id='highlights',
                 )
 
             yield Static('Show Time Graph', classes='field-label')
@@ -602,8 +602,8 @@ class DisplaySection(ConfigSection):
         reconstruction = self.query_one('#reconstruction', Checkbox)
         reconstruction.value = display_config.get('reconstruction', True)
 
-        cheers = self.query_one('#cheers', Checkbox)
-        cheers.value = display_config.get('cheers', True)
+        highlights = self.query_one('#highlights', Checkbox)
+        highlights.value = display_config.get('highlights', True)
 
         time_graph = self.query_one('#time_graph', Checkbox)
         time_graph.value = display_config.get('time_graph', True)
@@ -629,7 +629,7 @@ class DisplaySection(ConfigSection):
         """
         scramble = self.query_one('#scramble', Checkbox)
         reconstruction = self.query_one('#reconstruction', Checkbox)
-        cheers = self.query_one('#cheers', Checkbox)
+        highlights = self.query_one('#highlights', Checkbox)
         time_graph = self.query_one('#time_graph', Checkbox)
         tps_graph = self.query_one('#tps_graph', Checkbox)
         fluency_graph = self.query_one('#fluency_graph', Checkbox)
@@ -639,7 +639,7 @@ class DisplaySection(ConfigSection):
             'display': {
                 'scramble': scramble.value,
                 'reconstruction': reconstruction.value,
-                'cheers': cheers.value,
+                'highlights': highlights.value,
                 'time_graph': time_graph.value,
                 'tps_graph': tps_graph.value,
                 'fluency_graph': fluency_graph.value,

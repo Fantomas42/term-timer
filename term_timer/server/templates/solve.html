@@ -1321,7 +1321,7 @@
       {% endif %}
     </div>
 
-    {% if cheers %}
+    {% if highlights %}
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">
@@ -1329,10 +1329,10 @@
             <a href="#summary" id="summary">Summary</a>
           </h2>
         </div>
-        <div class="cheers-card">
+        <div class="highlights-card">
           <ul>
-            {% for cheer in cheers %}
-              <li>{{ cheer }}</li>
+            {% for highlight in highlights %}
+              <li>{{ highlight }}</li>
             {% endfor %}
           </ul>
         </div>

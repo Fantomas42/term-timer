@@ -145,7 +145,7 @@ class SolveDetailContext(TypedDict):
     solves: list[Solve]
     scatter: list[ScatterPoint]
     steps: list[StepMarker]
-    cheers: list[str]
+    highlights: list[str]
     tps: list[TPSData]
     fluencies: list[FluencyData]
     recognitions: list[RecognitionData]

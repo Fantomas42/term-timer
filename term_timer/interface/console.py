@@ -30,7 +30,7 @@ theme: dict[str, str] = {
     'recognition': f'{ TEXT_LIGHT } on #5F00D7',
     'execution': f'{ TEXT_LIGHT } on #4D0092',
     'consign': '#CECECE',
-    'cheer': f'bold { TEXT_LIGHT }',
+    'highlight': f'bold { TEXT_LIGHT }',
     'trainer': f'bold { TEXT_LIGHT } on #5555CC',
     'routine': f'bold { TEXT_DARK } on #55CCFF',
     'key':  f'bold { TEXT_LIGHT }',

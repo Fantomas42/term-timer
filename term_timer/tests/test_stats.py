@@ -483,7 +483,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
                 show_time_graph=False,
                 show_recognition_graph=False,
                 show_fluency_graph=False,
-                show_cheers=False,
+                show_highlights=False,
                 orientation='DF',
                 disable_rotations=False,
             )
@@ -579,7 +579,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
                         show_time_graph=False,
                         show_recognition_graph=False,
                         show_fluency_graph=False,
-                        show_cheers=False,
+                        show_highlights=False,
                         orientation='DF',
                         disable_rotations=False,
                     )
@@ -661,7 +661,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
                 show_time_graph=False,
                 show_recognition_graph=False,
                 show_fluency_graph=False,
-                show_cheers=False,
+                show_highlights=False,
                 orientation='DF',
                 disable_rotations=False,
             )
@@ -744,7 +744,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
                 show_time_graph=True,
                 show_recognition_graph=True,
                 show_fluency_graph=False,
-                show_cheers=False,
+                show_highlights=False,
                 orientation='DF',
                 disable_rotations=False,
             )

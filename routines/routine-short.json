@@ -30,7 +30,7 @@
             "free_play": true,
             "show_cube": true,
             "show_reconstruction": true,
-            "show_cheers": true,
+            "show_highlights": true,
             "show_time_graph": false,
             "show_tps_graph": false,
             "show_fluency_graph": false,
