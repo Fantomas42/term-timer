@@ -127,22 +127,23 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
                     break
             else:
                 break
+
+        if len(timer.stack) > len(timer.stack_done):
+            session_stats = SolveStatisticsReporter(cube, timer.stack)
+            session_stats.resume('Session ')
+
+        if len(timer.stack_done) > 1:
+            round_stats = SolveStatisticsReporter(cube, timer.stack_done)
+            round_stats.resume(
+                'Free Play ' if options.free_play else 'Current ',
+                'round',
+            )
+
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')
     finally:
         if timer.bluetooth_interface:
             await timer.bluetooth_disconnect()
-
-    if len(timer.stack) > len(timer.stack_done):
-        session_stats = SolveStatisticsReporter(cube, timer.stack)
-        session_stats.resume('Session ')
-
-    if len(timer.stack_done) > 1:
-        round_stats = SolveStatisticsReporter(cube, timer.stack_done)
-        round_stats.resume(
-            'Free Play ' if options.free_play else 'Current ',
-            'round',
-        )
 
     return 0
 
