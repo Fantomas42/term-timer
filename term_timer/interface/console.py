@@ -32,7 +32,7 @@ theme: dict[str, str] = {
     'consign': '#CECECE',
     'cheer': f'bold { TEXT_LIGHT }',
     'trainer': f'bold { TEXT_LIGHT } on #5555CC',
-    'routine': f'bold { TEXT_DARK } on #55CC55',
+    'routine': f'bold { TEXT_DARK } on #55CCFF',
     'key':  f'bold { TEXT_LIGHT }',
     'confirm': TEXT_LIGHT,
     'step': 'bold #00AFFF',

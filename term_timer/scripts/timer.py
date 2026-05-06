@@ -1,6 +1,7 @@
 """Main timer application entry point."""
 import asyncio
 import json
+import time
 from argparse import Namespace
 from contextlib import suppress
 from pathlib import Path
@@ -17,6 +18,7 @@ from term_timer.config import DEBUG
 from term_timer.config_edit.app import run_config_edit
 from term_timer.driller import Driller
 from term_timer.exceptions import InvalidCaseError
+from term_timer.formatter import format_time
 from term_timer.importers import Importer
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_scrambles
@@ -415,7 +417,7 @@ def manage(command: str, options: Namespace) -> int:
     return 0
 
 
-async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912
+async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
     """
     Run a daily practice routine from a JSON config file.
 
@@ -443,6 +445,7 @@ async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912
     use_bluetooth: bool = bool(config.get('bluetooth'))
     use_gyroscope: bool = bool(config.get('use_gyroscope'))
     current: Timer | Trainer | Driller | None = None
+    started_at = time.monotonic_ns()
 
     try:
         for index, session_config in enumerate(sessions):
@@ -508,7 +511,12 @@ async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912
                 )
                 return 1
 
-        console.print('🦾 Routine complete !', style='routine')
+        elapsed_ns = time.monotonic_ns() - started_at
+        duration = format_time(elapsed_ns, allow_dnf=False)
+        console.print(
+            f'[routine]🏆 Routine complete ![/routine] '
+            f'[time]{ duration }[/time]',
+        )
 
     finally:
         if current and current.bluetooth_interface:
