@@ -251,18 +251,19 @@ async def driller(options: Namespace) -> int:
                     break
             else:
                 break
+
+        if len(instance.rep_times) >= 2:
+            DrillStatistics(
+                instance.rep_times,
+                instance.rep_tps,
+                instance.rep_fluencies,
+            ).resume()
+
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')
     finally:
         if instance.bluetooth_interface:
             await instance.bluetooth_disconnect()
-
-    if len(instance.rep_times) >= 2:
-        DrillStatistics(
-            instance.rep_times,
-            instance.rep_tps,
-            instance.rep_fluencies,
-        ).resume()
 
     return 0
 
