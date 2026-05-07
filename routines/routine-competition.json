@@ -6,12 +6,14 @@
         {
             "type": "drill",
             "algorithm": "R U R' U' R' F R2 U' R' U' R U R' F'",
-            "count": 2
+            "count": 2,
+            "show_stats": true
         },
         {
             "type": "drill",
             "algorithm": "M2 U M U2 M' U M2",
-            "count": 3
+            "count": 3,
+            "show_stats": true
         },
         {
             "type": "train",
@@ -24,6 +26,7 @@
             "type": "solve",
             "count": 12,
             "session": "competition",
+            "show_stats": true,
             "method": "cfop",
             "countdown": 15,
             "show_highlights": false,

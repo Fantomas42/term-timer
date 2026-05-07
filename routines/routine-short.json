@@ -5,7 +5,8 @@
         {
             "type": "drill",
             "algorithm": "R U R' U'",
-            "count": 6
+            "count": 6,
+            "show_stats": true
         },
         {
             "type": "train",

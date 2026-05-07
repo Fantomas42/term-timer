@@ -5,12 +5,14 @@
         {
             "type": "drill",
             "algorithm": "R U R' U'",
-            "count": 18
+            "count": 18,
+            "show_stats": true
         },
         {
             "type": "drill",
             "algorithm": "L' U' L U",
-            "count": 18
+            "count": 18,
+            "show_stats": true
         },
         {
             "type": "train",
@@ -30,6 +32,7 @@
             "type": "solve",
             "count": 12,
             "session": "daily",
+            "show_stats": true,
             "method": "cf4op",
             "show_reconstruction": true,
             "show_recognition_graph": true,

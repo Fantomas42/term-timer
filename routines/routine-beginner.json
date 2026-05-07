@@ -4,7 +4,8 @@
         {
             "type": "drill",
             "algorithm": "R U R' U'",
-            "count": 18
+            "count": 18,
+            "show_stats": true
         },
         {
             "type": "train",
@@ -27,6 +28,7 @@
             "count": 5,
             "easy_cross": true,
             "free_play": true,
+            "show_stats": true,
             "show_cube": true,
             "show_reconstruction": true,
             "show_highlights": true,

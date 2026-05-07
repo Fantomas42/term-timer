@@ -6,13 +6,15 @@
             "type": "drill",
             "algorithm": "R U R' U'",
             "count": 6,
-            "metronome": 1.5
+            "metronome": 1.5,
+            "show_stats": true
         },
         {
             "type": "drill",
             "algorithm": "L' U' L U",
             "count": 6,
-            "metronome": 1.5
+            "metronome": 1.5,
+            "show_stats": true
         },
         {
             "type": "train",
@@ -26,6 +28,7 @@
             "type": "solve",
             "count": 10,
             "session": "slow-practice",
+            "show_stats": true,
             "method": "cf4op",
             "easy_cross": true,
             "metronome": 1.0,
