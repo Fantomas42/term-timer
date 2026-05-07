@@ -78,10 +78,11 @@ class TestSolveArguments(unittest.TestCase):
         self.assertEqual(parser.prog.split()[-1], 'solve')
 
     def test_solve_default_arguments(self) -> None:
-        """Test solve default arguments."""
-        main_parser = ArgumentParser()
-        subparsers = main_parser.add_subparsers(dest='command')
-        solve_arguments(subparsers)
+        """Test solve default arguments without a configured device address."""
+        with patch('term_timer.arguments.DEVICE_ADDRESS', ''):
+            main_parser = ArgumentParser()
+            subparsers = main_parser.add_subparsers(dest='command')
+            solve_arguments(subparsers)
 
         args = main_parser.parse_args(['solve'])
         self.assertEqual(args.command, 'solve')
@@ -90,17 +91,38 @@ class TestSolveArguments(unittest.TestCase):
         self.assertFalse(args.bluetooth)
         self.assertFalse(args.free_play)
 
+    def test_solve_default_bluetooth_when_address_configured(self) -> None:
+        """Test bluetooth defaults to True when a device address is set."""
+        with patch('term_timer.arguments.DEVICE_ADDRESS', 'AA:BB:CC:DD:EE:FF'):
+            main_parser = ArgumentParser()
+            subparsers = main_parser.add_subparsers(dest='command')
+            solve_arguments(subparsers)
+
+        args = main_parser.parse_args(['solve'])
+        self.assertTrue(args.bluetooth)
+
     def test_solve_with_arguments(self) -> None:
-        """Test solve with arguments."""
-        main_parser = ArgumentParser()
-        subparsers = main_parser.add_subparsers(dest='command')
-        solve_arguments(subparsers)
+        """Test solve enables bluetooth when no address configured."""
+        with patch('term_timer.arguments.DEVICE_ADDRESS', ''):
+            main_parser = ArgumentParser()
+            subparsers = main_parser.add_subparsers(dest='command')
+            solve_arguments(subparsers)
 
         args = main_parser.parse_args(['solve', '10', '-c', '4', '-b', '-f'])
         self.assertEqual(args.solves, 10)
         self.assertEqual(args.cube, 4)
         self.assertTrue(args.bluetooth)
         self.assertTrue(args.free_play)
+
+    def test_solve_disable_bluetooth_when_address_configured(self) -> None:
+        """Test -b disables bluetooth when a device address is configured."""
+        with patch('term_timer.arguments.DEVICE_ADDRESS', 'AA:BB:CC:DD:EE:FF'):
+            main_parser = ArgumentParser()
+            subparsers = main_parser.add_subparsers(dest='command')
+            solve_arguments(subparsers)
+
+        args = main_parser.parse_args(['solve', '-b'])
+        self.assertFalse(args.bluetooth)
 
 
 class TestTrainArguments(unittest.TestCase):
@@ -115,14 +137,45 @@ class TestTrainArguments(unittest.TestCase):
         self.assertIsInstance(parser, ArgumentParser)
 
     def test_train_default_arguments(self) -> None:
-        """Test train default arguments."""
-        main_parser = ArgumentParser()
-        subparsers = main_parser.add_subparsers(dest='command')
-        train_arguments(subparsers)
+        """Test train default arguments without a configured device address."""
+        with patch('term_timer.arguments.DEVICE_ADDRESS', ''):
+            main_parser = ArgumentParser()
+            subparsers = main_parser.add_subparsers(dest='command')
+            train_arguments(subparsers)
 
         args = main_parser.parse_args(['train'])
         self.assertEqual(args.command, 'train')
         self.assertEqual(args.case_codes, [])
+        self.assertFalse(args.bluetooth)
+
+    def test_train_enable_bluetooth_without_address(self) -> None:
+        """Test -b enables bluetooth on train when no address is configured."""
+        with patch('term_timer.arguments.DEVICE_ADDRESS', ''):
+            main_parser = ArgumentParser()
+            subparsers = main_parser.add_subparsers(dest='command')
+            train_arguments(subparsers)
+
+        args = main_parser.parse_args(['train', '-b'])
+        self.assertTrue(args.bluetooth)
+
+    def test_train_default_bluetooth_when_address_configured(self) -> None:
+        """Test bluetooth defaults to True on train when address is set."""
+        with patch('term_timer.arguments.DEVICE_ADDRESS', 'AA:BB:CC:DD:EE:FF'):
+            main_parser = ArgumentParser()
+            subparsers = main_parser.add_subparsers(dest='command')
+            train_arguments(subparsers)
+
+        args = main_parser.parse_args(['train'])
+        self.assertTrue(args.bluetooth)
+
+    def test_train_disable_bluetooth_when_address_configured(self) -> None:
+        """Test -b disables bluetooth on train when address is configured."""
+        with patch('term_timer.arguments.DEVICE_ADDRESS', 'AA:BB:CC:DD:EE:FF'):
+            main_parser = ArgumentParser()
+            subparsers = main_parser.add_subparsers(dest='command')
+            train_arguments(subparsers)
+
+        args = main_parser.parse_args(['train', '-b'])
         self.assertFalse(args.bluetooth)
 
 

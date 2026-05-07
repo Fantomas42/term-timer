@@ -10,6 +10,7 @@ from cubing_algs.constants import ORIENTATIONS
 from term_timer.argparser import ArgumentParser
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.config import DEVICE_ADDRESS
 from term_timer.config import DISPLAY_CONFIG
 from term_timer.config import SERVER_CONFIG
 from term_timer.config import TIMER_CONFIG
@@ -171,12 +172,17 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
     )
 
     bluetooth = parser.add_argument_group('Bluetooth')
+    use_bluetooth = bool(DEVICE_ADDRESS)
+    mode = 'disable' if use_bluetooth else 'enable'
     bluetooth.add_argument(
-        '-b', '--bluetooth',
-        action='store_true',
+        '-b', f'--{ mode }-bluetooth',
+        action='store_const',
+        const=not use_bluetooth,
+        default=use_bluetooth,
+        dest='bluetooth',
         help=(
-            'Use a Bluetooth-connected cube.\n'
-            'Default: False.'
+            f'{ mode.title() } the Bluetooth-connected cube.\n'
+            f'Default: { use_bluetooth }.'
         ),
     )
     mode = 'disable' if USE_GYROSCOPE else 'enable'
@@ -508,12 +514,17 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
 
     bluetooth = parser.add_argument_group('Bluetooth')
+    use_bluetooth = bool(DEVICE_ADDRESS)
+    mode = 'disable' if use_bluetooth else 'enable'
     bluetooth.add_argument(
-        '-b', '--bluetooth',
-        action='store_true',
+        '-b', f'--{ mode }-bluetooth',
+        action='store_const',
+        const=not use_bluetooth,
+        default=use_bluetooth,
+        dest='bluetooth',
         help=(
-            'Use a Bluetooth-connected cube.\n'
-            'Default: False.'
+            f'{ mode.title() } the Bluetooth-connected cube.\n'
+            f'Default: { use_bluetooth }.'
         ),
     )
     mode = 'disable' if USE_GYROSCOPE else 'enable'
@@ -1361,12 +1372,17 @@ def drill_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
 
     bluetooth = parser.add_argument_group('Bluetooth')
+    use_bluetooth = bool(DEVICE_ADDRESS)
+    mode = 'disable' if use_bluetooth else 'enable'
     bluetooth.add_argument(
-        '-b', '--bluetooth',
-        action='store_true',
+        '-b', f'--{ mode }-bluetooth',
+        action='store_const',
+        const=not use_bluetooth,
+        default=use_bluetooth,
+        dest='bluetooth',
         help=(
-            'Use a Bluetooth-connected cube.\n'
-            'Default: False.'
+            f'{ mode.title() } the Bluetooth-connected cube.\n'
+            f'Default: { use_bluetooth }.'
         ),
     )
     mode = 'disable' if USE_GYROSCOPE else 'enable'
