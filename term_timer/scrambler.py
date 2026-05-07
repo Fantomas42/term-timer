@@ -146,7 +146,7 @@ def random_training(
         cases,
         weights=[c.case.probability for c in cases],
         k=1,
-    )
+    )[0]
 
     return (
         selected_case.case,
