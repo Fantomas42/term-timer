@@ -95,8 +95,22 @@ def build_solve_instance(session_config: SessionConfig) -> Timer:
         )
 
     cube_size = session_config.get('cube', 3)
-    session_name = session_config.get('session', '')
     free_play = session_config.get('free_play', False)
+
+    session_parts = []
+    if session_config.get('session'):
+        session_parts.append(session_config['session'])
+    if not session_config.get('scramble'):
+        if session_config.get('easy_cross'):
+            session_parts.append('easy-cross')
+        elif session_config.get('x_cross'):
+            session_parts.append('x-cross')
+        elif session_config.get('edges_oriented'):
+            session_parts.append('edges-oriented')
+        elif session_config.get('iterations'):
+            session_parts.append(f'iterations-{ session_config["iterations"] }')
+    session_name = '-'.join(session_parts)
+
     stack = [] if free_play else load_solves(cube_size, session_name)
 
     return Timer(
