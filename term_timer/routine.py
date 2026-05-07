@@ -12,6 +12,8 @@ from term_timer.config import TRAINER_STEP
 from term_timer.driller import Driller
 from term_timer.in_out import load_solves
 from term_timer.interface.console import console
+from term_timer.stats import DrillStatistics
+from term_timer.stats import SolveStatisticsReporter
 from term_timer.timer import Timer
 from term_timer.trainer import Trainer
 
@@ -50,6 +52,7 @@ class SessionConfig(TypedDict, total=False):
     show_cube: bool
     orientation: str
     metronome: float
+    show_stats: bool
 
 
 def build_train_instance(session_config: SessionConfig) -> Trainer:
@@ -149,9 +152,27 @@ def build_drill_instance(session_config: SessionConfig) -> Driller:
     )
 
 
+def show_instance_stats(instance: Timer | Trainer | Driller) -> None:
+    """Display end-of-session statistics for solve and drill instances."""
+    if isinstance(instance, Timer):
+        if len(instance.stack_done) > 1:
+            SolveStatisticsReporter(
+                instance.cube_size,
+                instance.stack_done,
+            ).resume('Session ')
+    elif isinstance(instance, Driller) and len(instance.rep_times) >= 2:
+        DrillStatistics(
+            instance.rep_times,
+            instance.rep_tps,
+            instance.rep_fluencies,
+        ).resume()
+
+
 async def run_session(
         instance: Timer | Trainer | Driller,
         count: int,
+        *,
+        show_stats: bool = False,
 ) -> None:
     """Run start() in a loop until count is reached or user quits a step."""
     solves_done = 0
@@ -162,8 +183,11 @@ async def run_session(
             if done:
                 solves_done += 1
                 if count and solves_done >= count:
-                    return
+                    break
             else:
-                return
+                break
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')
+
+    if show_stats:
+        show_instance_stats(instance)

@@ -326,7 +326,11 @@ async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
 
                 current = train_instance
 
-                await run_session(train_instance, count)
+                await run_session(
+                    train_instance,
+                    count,
+                    show_stats=session_config.get('show_stats', False),
+                )
 
             elif session_type == 'solve':
                 solve_instance = build_solve_instance(session_config)
@@ -340,7 +344,11 @@ async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
 
                 current = solve_instance
 
-                await run_session(solve_instance, count)
+                await run_session(
+                    solve_instance,
+                    count,
+                    show_stats=session_config.get('show_stats', False),
+                )
 
             elif session_type == 'drill':
                 drill_instance = build_drill_instance(session_config)
@@ -354,7 +362,11 @@ async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
 
                 current = drill_instance
 
-                await run_session(drill_instance, count)
+                await run_session(
+                    drill_instance,
+                    count,
+                    show_stats=session_config.get('show_stats', False),
+                )
 
             else:
                 console.print(
