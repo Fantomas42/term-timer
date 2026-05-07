@@ -674,6 +674,17 @@ class BluetoothSection(ConfigSection):
                     classes='field-help',
                 )
 
+            yield Static('Device Name', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Input(
+                    id='name',
+                    placeholder='GAN 356 i3',
+                )
+                yield Static(
+                    'Friendly name for the smart cube (optional)',
+                    classes='field-help',
+                )
+
             yield Static('Use Gyroscope', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Checkbox(
@@ -700,6 +711,9 @@ class BluetoothSection(ConfigSection):
         address = self.query_one('#address', Input)
         address.value = bluetooth_config.get('address', '')
 
+        name = self.query_one('#name', Input)
+        name.value = bluetooth_config.get('name', '')
+
         use_gyroscope = self.query_one('#use_gyroscope', Checkbox)
         use_gyroscope.value = bluetooth_config.get('use_gyroscope', True)
 
@@ -719,12 +733,14 @@ class BluetoothSection(ConfigSection):
 
         """
         address = self.query_one('#address', Input)
+        name = self.query_one('#name', Input)
         use_gyroscope = self.query_one('#use_gyroscope', Checkbox)
         rotation_threshold = self.query_one('#rotation_threshold', Input)
 
         return {
             'bluetooth': {
                 'address': address.value,
+                'name': name.value,
                 'use_gyroscope': use_gyroscope.value,
                 'rotation_threshold': float(
                     rotation_threshold.value or '75.0',

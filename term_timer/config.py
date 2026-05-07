@@ -36,6 +36,7 @@ fluency_graph = true
 recognition_graph = true
 
 [bluetooth]
+name = ""
 address = ""
 use_gyroscope = true
 rotation_threshold = 75.0
@@ -101,6 +102,10 @@ CUBE_STYLE: str = CUBE_CONFIG.get('style', '')
 CUBE_LINEAR: bool = CUBE_CONFIG.get('linear', False)
 
 CUBE_RIGHT_HANDED: bool = CUBE_CONFIG.get('right-handed', True)
+
+DEVICE_NAME: str = BLUETOOTH_CONFIG.get('name', '')
+
+DEVICE_ADDRESS: str = BLUETOOTH_CONFIG.get('address', '')
 
 USE_GYROSCOPE: bool = BLUETOOTH_CONFIG.get('use_gyroscope', True)
 

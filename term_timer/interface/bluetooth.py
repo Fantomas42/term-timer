@@ -28,7 +28,8 @@ from term_timer.bluetooth.annotations import MoveInfo
 from term_timer.bluetooth.annotations import RotationEventDict
 from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
-from term_timer.config import BLUETOOTH_CONFIG
+from term_timer.config import DEVICE_ADDRESS
+from term_timer.config import DEVICE_NAME
 from term_timer.config import USE_GYROSCOPE
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import CubeNotFoundError
@@ -102,7 +103,7 @@ class Bluetooth:
             True if connection and initialization succeeded, False otherwise.
 
         """
-        address = BLUETOOTH_CONFIG.get('address', '')
+        address = DEVICE_ADDRESS
 
         self.bluetooth_queue = asyncio.Queue()
 
@@ -124,8 +125,7 @@ class Bluetooth:
             else:
                 self.console.print(
                     '[bluetooth]📡Bluetooth:[/bluetooth] '
-                    'Connecting to Bluetooth cube address '
-                    f'[b]{ address }[/b]...',
+                    f'Connecting to [b]{ DEVICE_NAME or address }[/b]...',
                     end='',
                 )
 
@@ -236,10 +236,14 @@ class Bluetooth:
         if not self.bluetooth_interface or not self.bluetooth_interface.client:
             return ''
 
-        device_label = self.bluetooth_interface.client.name
+        device_label = DEVICE_NAME
+        if not device_label:
+            device_label = self.bluetooth_interface.client.name
 
-        if 'hardware_version' in self.bluetooth_hardware:
-            device_label += f'v{ self.bluetooth_hardware["hardware_version"] }'
+            if 'hardware_version' in self.bluetooth_hardware:
+                device_label += (
+                    f'v{ self.bluetooth_hardware["hardware_version"] }'
+                )
 
         battery_level = self.bluetooth_hardware.get('battery_level')
         if isinstance(battery_level, int):
@@ -308,7 +312,7 @@ class Bluetooth:
                                 '[bluetooth]🫤Bluetooth:[/bluetooth] '
                                 '[warning]'
                                 'Cube is not in solved state. '
-                                'Use "bt-info --cube-reset" if needed.'
+                                'Run "bt-info --cube-reset" if needed.'
                                 '[/warning]',
                             )
 
