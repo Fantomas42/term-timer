@@ -455,7 +455,6 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
     test method per scenario — no subclassing required.
 
     Example:
-    -------
         async def test_oll_01_uf(self) -> None:
             await self.run_scenario(
                 step='oll',
@@ -585,6 +584,59 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
             solve_moves=[str(m) for m in solution],
             save_char='z',
         )
+
+    async def test_chained_training_cycles(self) -> None:
+        """
+        Two OLL-01 cycles chain correctly; BT cube stays unsolved between
+        rounds — verified for both UF and DF orientations.
+
+        alg[3] passes the OLL check_step but is not the inverse of setup[0],
+        so the BT cube is left in a non-solved state after each cycle.  Cycle 2
+        starts from that unsolved state; facelets_scrambled must incorporate
+        that state (verified post-cycle via the defining formula).
+        """
+        oll_case = get_case('OLL', '01')
+        alg3 = list(oll_case.algorithms)[3]
+
+        for orientation in ('UF', 'DF'):
+            with self.subTest(orientation=orientation):
+                reorient = translate_moves(get_orientation_moves(orientation))
+                solve_moves = [str(m) for m in reorient(alg3)]
+
+                t = build_trainer(
+                    step='oll',
+                    case_codes=['01'],
+                    seed=42,
+                    orientation=orientation,
+                )
+
+                # Cycle 1
+                await run_full_cycle(t, solve_moves, save_char='q')
+
+                self.assertFalse(
+                    t.bluetooth_cube_is_solved,
+                    'BT cube must not be fully solved after an OLL solve',
+                )
+
+                # Cycle 2
+                state_before_cycle2 = t.bluetooth_cube_state
+
+                await run_full_cycle(t, solve_moves, save_char='q')
+
+                expected = VCube(state_before_cycle2, size=3, check=False)
+                expected.rotate(t.scramble)
+                self.assertEqual(
+                    t.facelets_scrambled,
+                    expected.state,
+                    'facelets_scrambled must be computed from the unsolved '
+                    'BT cube state',
+                )
+
+                self.assertFalse(
+                    t.bluetooth_cube_is_solved,
+                    'BT cube must not be fully solved after the final OLL '
+                    'solve',
+                )
 
     async def test_oll_01_unsolved_initial_bt_cube(self) -> None:
         """
