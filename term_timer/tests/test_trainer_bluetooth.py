@@ -343,16 +343,12 @@ class BluetoothTrainerTestCase(unittest.IsolatedAsyncioTestCase):
         )
 
 
-class TestTrainerSetup(BluetoothTrainerTestCase):
-    """
-    Unit-level: inspect Trainer state without running start().
-
-    These tests do not need asyncio because they only check properties set
-    during __init__ or set directly by the test.
-    """
+class TestTrainerOLL01(BluetoothTrainerTestCase):
+    """Unit and integration tests for OLL case 01, UF/DF orientations."""
 
     step = 'oll'
     case_codes: ClassVar[list[str]] = ['01']
+    seed = 42
 
     def test_cases_match_requested_codes(self) -> None:
         """Trainer exposes exactly the requested cases."""
@@ -373,47 +369,6 @@ class TestTrainerSetup(BluetoothTrainerTestCase):
         self.assertFalse(t.bluetooth_cube_is_solved)
         self.assertEqual(t.bluetooth_cube_state, initial.state)
 
-    def test_select_oldest_cases_prioritises_unpractised(self) -> None:
-        """Cases with no training data sort before practised ones."""
-        t = self.make_trainer(seed=0)
-
-        # Build a two-case dict from the real OLL collection
-        collection = get_collection('CFOP/oll').cases
-        valid_cases = {
-            code: case
-            for code, case in collection.items()
-            if case.setup_algorithms
-        }
-        two_cases = dict(list(valid_cases.items())[:2])
-        first_code, second_code = list(two_cases.keys())
-
-        # Mark first_code as recently practised; second_code is unseen
-        t.trainings.cases[first_code] = CaseTraining(
-            code=first_code, last_date=9_999_999_999, timings=[1000],
-        )
-
-        selected = t.select_oldest_cases(two_cases, count=1)
-
-        # Unpractised case should be prioritised
-        self.assertEqual(selected, [second_code])
-
-
-
-class TestBTCubeInitialState(BluetoothTrainerTestCase):
-    """
-    Scenarios where the BT cube is not solved at connection time.
-
-    When initial_cube is not solved Trainer.start() still uses the normal
-    scramble (bluetooth_scramble_is_completed with empty state returns True
-    for OLL, so the delta branch is never taken). However facelets_scrambled
-    is computed from BT_cube_state.rotate(scramble) instead of
-    solved.rotate(scramble), giving a different completion target for the
-    scramble phase. The solve phase is unaffected.
-    """
-
-    step = 'oll'
-    case_codes: ClassVar[list[str]] = ['01']
-
     def test_initial_bt_cube_is_not_solved(self) -> None:
         """Unit guard: initial cube passed in is reflected on the trainer."""
         oll_case = get_case('OLL', '01')
@@ -426,93 +381,67 @@ class TestBTCubeInitialState(BluetoothTrainerTestCase):
         self.assertFalse(t.bluetooth_cube_is_solved)
         self.assertEqual(t.bluetooth_cube_state, initial.state)
 
-class TestScrambleOrientedProperties(BluetoothTrainerTestCase):
-    """
-    Verify t.scramble, t.scramble_oriented, and t.facelets_scrambled as set
-    by start() for UF and DF orientations.
+    def test_select_oldest_cases_prioritises_unpractised(self) -> None:
+        """Cases with no training data sort before practised ones."""
+        t = self.make_trainer(seed=0)
 
-    UF orientation (standard hold, U on top F facing front)
-    -------------------------------------------------------
-    reorient is the identity transform, so:
-      scramble_oriented == scramble  (same algorithm, same notation)
-      scramble is one of the case's raw setup algorithms
+        collection = get_collection('CFOP/oll').cases
+        valid_cases = {
+            code: case
+            for code, case in collection.items()
+            if case.setup_algorithms
+        }
+        two_cases = dict(list(valid_cases.items())[:2])
+        first_code, second_code = list(two_cases.keys())
 
-    DF orientation (cube held with D on top, F facing front → z2 rotation)
-    ----------------------------------------------------------------------
-    trainer() adapts the setup for the DF frame (U→D, R→L, etc.), so:
-      scramble uses D-face moves — NOT in the case's raw UF setup list
-      scramble_oriented == reorient(scramble) translates BACK to UF notation
-        and equals the UF scramble (canonical form regardless of orientation)
+        t.trainings.cases[first_code] = CaseTraining(
+            code=first_code, last_date=9_999_999_999, timings=[1000],
+        )
 
-    Solve moves for DF
-    ------------------
-    bluetooth_scramble_is_completed checks the virtual UF-frame cube:
-      VCube().rotate(scramble_oriented + reorient(injected_moves))
-    scramble_oriented is already in UF, so injected_moves must also result
-    in UF notation after reorient. Injecting reorient_DF(solution_UF) means
-    reorient(reorient_DF(solution_UF)) = solution_UF → check passes correctly.
-    """
+        selected = t.select_oldest_cases(two_cases, count=1)
 
-    step = 'oll'
-    case_codes: ClassVar[list[str]] = ['01']
-    seed = 42
+        self.assertEqual(selected, [second_code])
 
-    async def test_scramble_properties_uf_orientation(self) -> None:
+    async def test_scramble_properties_by_orientation(self) -> None:
         """
-        With UF orientation (no reorientation).
+        Verify scramble/scramble_oriented/facelets_scrambled per orientation.
 
-        Verifies:
-        - scramble is one of the case's raw setup algorithms
-        - scramble_oriented == scramble
-        - facelets_scrambled == VCube().rotate(scramble).state
+        UF: no reorientation — scramble == scramble_oriented, both in setups.
+        DF: z2 reorientation — scramble uses D-face moves (not in raw setups),
+            scramble_oriented translates back to canonical UF form.
+        Solve moves must be expressed in the orientation frame so that
+        bluetooth_scramble_is_completed can translate them back to UF.
         """
         oll_case = get_case('OLL', '01')
         solution = next(iter(oll_case.algorithms))
         valid_setups = {str(s) for s in oll_case.setup_algorithms}
-
-        t = self.make_trainer(orientation='UF')
-        await run_full_cycle(t, [str(m) for m in solution], save_char='q')
-
-        self.assertIn(str(t.scramble), valid_setups)
-        self.assertEqual(str(t.scramble_oriented), str(t.scramble))
-
-        expected = VCube(size=3)
-        expected.rotate(t.scramble)
-        self.assertEqual(t.facelets_scrambled, expected.state)
-
-    async def test_scramble_properties_df_orientation(self) -> None:
-        """
-        With DF orientation (z2 reorientation).
-
-        Verifies:
-        - scramble uses D-face moves — not in the case's raw UF setup list
-        - scramble_oriented translates back to UF and equals the UF scramble
-        - facelets_scrambled == VCube().rotate(scramble).state (DF moves)
-        - solve moves must be reoriented so the virtual UF-frame check passes
-        """
-        oll_case = get_case('OLL', '01')
-        solution = next(iter(oll_case.algorithms))
-        valid_setups = {str(s) for s in oll_case.setup_algorithms}
-
-        # Reorient the solution from UF notation into DF notation so that
-        # bluetooth_scramble_is_completed can translate it back to UF for
-        # the check
         reorient_df = translate_moves(get_orientation_moves('DF'))
-        solve_moves_df = [str(m) for m in reorient_df(solution)]
 
-        t = self.make_trainer(orientation='DF')
-        await run_full_cycle(t, solve_moves_df, save_char='q')
+        scenarios = [
+            ('UF', [str(m) for m in solution]),
+            ('DF', [str(m) for m in reorient_df(solution)]),
+        ]
 
-        # scramble is orientation-adapted — uses D, not U
-        self.assertNotIn(str(t.scramble), valid_setups)
+        for orientation, solve_moves in scenarios:
+            with self.subTest(orientation=orientation):
+                t = self.make_trainer(orientation=orientation)
+                await run_full_cycle(t, solve_moves, save_char='q')
 
-        # scramble_oriented is the canonical UF form of the scramble
-        self.assertNotEqual(str(t.scramble_oriented), str(t.scramble))
-        self.assertIn(str(t.scramble_oriented), valid_setups)
+                # scramble_oriented is always the canonical UF form
+                self.assertIn(str(t.scramble_oriented), valid_setups)
 
-        expected = VCube(size=3)
-        expected.rotate(t.scramble)
-        self.assertEqual(t.facelets_scrambled, expected.state)
+                # facelets_scrambled formula holds regardless of orientation
+                expected = VCube(size=3)
+                expected.rotate(t.scramble)
+                self.assertEqual(t.facelets_scrambled, expected.state)
+
+                if orientation == 'UF':
+                    self.assertEqual(str(t.scramble_oriented), str(t.scramble))
+                else:
+                    self.assertNotIn(str(t.scramble), valid_setups)
+                    self.assertNotEqual(
+                        str(t.scramble_oriented), str(t.scramble),
+                    )
 
 
 class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
@@ -522,7 +451,7 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
     Each test method calls run_scenario() with explicit values.  Add a new
     test method per scenario — no subclassing required.
 
-    Example
+    Example:
     -------
         async def test_oll_01_uf(self) -> None:
             await self.run_scenario(
@@ -533,6 +462,7 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
                 expected_scramble="R U R'",
                 expected_scramble_oriented="R U R'",
             )
+
     """
 
     async def run_scenario(  # noqa: PLR0913
@@ -558,7 +488,8 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
             scramble_moves: Moves that bring the BT cube to facelets_scrambled.
             solve_moves: Moves that make bluetooth_scramble_is_completed True.
             expected_scramble: Expected str(t.scramble); skipped when None.
-            expected_scramble_oriented: Expected str(t.scramble_oriented); skipped when None.
+            expected_scramble_oriented: Expected str(t.scramble_oriented);
+                skipped when None.
             initial_facelet_state: 54-char facelet string for the BT cube at
                 connection time, or None for a solved cube.
             orientation: Cube orientation ('UF', 'DF', …).
@@ -601,9 +532,14 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
         if expected_scramble is not None:
             self.assertEqual(str(t.scramble), expected_scramble)
         if expected_scramble_oriented is not None:
-            self.assertEqual(str(t.scramble_oriented), expected_scramble_oriented)
+            self.assertEqual(
+                str(t.scramble_oriented), expected_scramble_oriented,
+            )
 
-        cube = VCube(initial.state, size=3, check=False) if initial else VCube(size=3)
+        if initial:
+            cube = VCube(initial.state, size=3, check=False)
+        else:
+            cube = VCube(size=3)
         cube.rotate(t.scramble)
         self.assertEqual(t.facelets_scrambled, cube.state)
 
@@ -620,7 +556,7 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
         return t
 
     async def test_oll_01_elapsed_time_and_timing(self) -> None:
-        """OLL case 01: elapsed_time recorded and timing saved after a full solve."""
+        """OLL case 01: elapsed_time and timing saved after a full solve."""
         solution = next(iter(get_case('OLL', '01').algorithms))
         solve_moves = [str(m) for m in solution]
 
@@ -646,7 +582,7 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
 
     async def test_oll_01_unsolved_initial_bt_cube(self) -> None:
         """
-        OLL case 01: full cycle completes when BT cube is not solved at connection.
+        OLL case 01: full cycle completes when BT cube is unsolved at start.
 
         facelets_scrambled is derived from the actual BT cube state, not a
         solved baseline — the extra assertion below confirms this.
