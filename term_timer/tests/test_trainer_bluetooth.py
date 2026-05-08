@@ -32,6 +32,8 @@ from cubing_algs.vcube import VCube
 
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import MoveEventDict
+from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.constants import SECOND
 from term_timer.orientation import get_orientation_moves
 from term_timer.trainer import Trainer
 from term_timer.training import CaseTraining
@@ -150,7 +152,7 @@ async def inject_moves(
         moves: list[str],
         *,
         clock_start: int = 0,
-        clock_step: int = 100_000_000,
+        clock_step: int = 100 * MS_TO_NS_FACTOR,
 ) -> None:
     """
     Feed a sequence of BT move events into the trainer queue.
@@ -265,7 +267,7 @@ async def run_full_cycle(
             await asyncio.sleep(0.05)
 
             # Phase 2: first solve move (starts the timer)
-            solve_clock = len(s_moves) * 100_000_000 + 1_000_000_000
+            solve_clock = len(s_moves) * (100 * MS_TO_NS_FACTOR) + SECOND
             await inject_moves(
                 trainer, [solve_moves[0]], clock_start=solve_clock,
             )
@@ -282,7 +284,7 @@ async def run_full_cycle(
                 await inject_moves(
                     trainer,
                     solve_moves[1:],
-                    clock_start=solve_clock + 200_000_000,
+                    clock_start=solve_clock + 200 * MS_TO_NS_FACTOR,
                 )
             await asyncio.wait_for(
                 trainer.solve_completed_event.wait(), timeout=2.0,
@@ -314,9 +316,9 @@ class BluetoothTrainerTestCase(unittest.IsolatedAsyncioTestCase):
 
     """
 
-    step: str = 'oll'
+    step: ClassVar[str] = 'oll'
     case_codes: ClassVar[list[str]] = []
-    seed: int = 42
+    seed: ClassVar[int] = 42
 
     def make_trainer(
             self,
@@ -544,14 +546,17 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(t.facelets_scrambled, cube.state)
 
         self.assertGreater(t.elapsed_time, 0)
-        expected_timings = 0 if save_char == 'z' else 1
-        if case_code in t.trainings.cases:
-            self.assertEqual(
-                len(t.trainings.cases[case_code].timings),
-                expected_timings,
+        if save_char == 'z':
+            case_entry = t.trainings.cases.get(case_code)
+            if case_entry is not None:
+                self.assertEqual(len(case_entry.timings), 0)
+        else:
+            self.assertIn(
+                case_code,
+                t.trainings.cases,
+                f'case {case_code!r} missing from trainings after save',
             )
-        elif expected_timings == 1:
-            self.fail(f'case {case_code!r} missing from trainings after save')
+            self.assertEqual(len(t.trainings.cases[case_code].timings), 1)
 
         return t
 
