@@ -515,7 +515,7 @@ class TestScrambleOrientedProperties(BluetoothTrainerTestCase):
         self.assertEqual(t.facelets_scrambled, expected.state)
 
 
-class TestConcreteScenarios(BluetoothTrainerTestCase):
+class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
     """
     Concrete-value scenarios driven by run_scenario().
 
@@ -534,8 +534,6 @@ class TestConcreteScenarios(BluetoothTrainerTestCase):
                 expected_scramble_oriented="R U R'",
             )
     """
-
-    step = 'oll'
 
     async def run_scenario(  # noqa: PLR0913
             self,
