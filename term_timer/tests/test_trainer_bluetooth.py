@@ -80,7 +80,8 @@ def make_move_event(move: str, clock: int = 0) -> list[EventDict]:
         'direction': 0,
         'move': move,
     }
-    return cast('list[EventDict]', [event])
+    result: list[EventDict] = [event]
+    return result
 
 
 def build_trainer(  # noqa: PLR0913
