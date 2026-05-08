@@ -167,11 +167,11 @@ class Trainer(SolveInterface):
                 has_enough = len(case_training.timings) >= 12
 
                 if ao12 == -1:
-                    case_ao12s.append((case_code, 999999999, False))
+                    case_ao12s.append((case_code, 999_999_999, False))
                 else:
                     case_ao12s.append((case_code, ao12, has_enough))
             else:
-                case_ao12s.append((case_code, 999999999, False))
+                case_ao12s.append((case_code, 999_999_999, False))
 
         sorted_cases = sorted(
             case_ao12s,
