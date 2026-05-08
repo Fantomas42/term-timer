@@ -398,103 +398,6 @@ class TestTrainerSetup(BluetoothTrainerTestCase):
         self.assertEqual(selected, [second_code])
 
 
-class TestFullOLLRun(BluetoothTrainerTestCase):
-    """
-    Full start() run: inject BT moves to drive all phases.
-
-    Injection timing
-    ----------------
-    The BT consumer and start() task both run on the same event loop thread.
-    We must yield between injection steps so the state machine can advance:
-
-      Phase 1  scramble_completed_event  fires when bluetooth_cube matches
-                                         facelets_scrambled (checked by
-                                         handle_scrambled)
-      Phase 2  solve_started_event       fires on the first move in 'scrambled'
-                                         state
-      Phase 3  solve_completed_event     fires when
-                                         bluetooth_scramble_is_completed
-                                         returns True (step check, virtual cube)
-      Phase 4  getch('save')             returns save_char immediately via mock
-
-    Scramble vs solve moves
-    -----------------------
-    Scramble moves must bring bluetooth_cube from initial_cube.state to
-    facelets_scrambled. The easiest source is t.scramble (the algorithm that
-    start() generated) — read it after the initial sleep(0.05).
-
-    Solve moves must make bluetooth_scramble_is_completed True. That property
-    checks: VCube().rotate(scramble_oriented + moves_so_far) has the step
-    solved. Inject the case algorithm (i.e. the OLL solution).
-
-    Between phases 2 and 3: wait for solve_started_event, then sleep briefly
-    so the state transitions through 'scrambled' → 'solving' before the
-    remaining solve moves land. Moves processed in 'solving' state trigger the
-    completion check; moves in 'scrambled' state only advance the timer.
-
-    Clock values
-    ------------
-    Use strictly increasing nanosecond clocks across all injections for
-    consistent timing reconstruction. Pass clock_start= to inject_moves().
-    """
-
-    step = 'oll'
-    case_codes: ClassVar[list[str]] = ['01']
-    seed = 42
-
-    async def _full_run(
-            self,
-            solve_moves: list[str],
-            *,
-            save_char: str = 'q',
-            scramble_moves: list[str] | None = None,
-    ) -> Trainer:
-        """
-        Drive one full OLL training cycle and return the Trainer.
-
-        Returns:
-            The Trainer instance after start() has returned.
-
-        """
-        t = self.make_trainer()
-        return await run_full_cycle(
-            t, solve_moves, save_char=save_char, scramble_moves=scramble_moves,
-        )
-
-    async def test_elapsed_time_is_recorded(self) -> None:
-        """A completed solve records elapsed_time and moves on the Trainer."""
-        solution = next(iter(get_case('OLL', '01').algorithms))
-        solve_moves = [str(m) for m in solution]
-
-        t = await self._full_run(solve_moves, save_char='q')
-
-        self.assertGreater(t.elapsed_time, 0)
-        self.assertGreater(len(t.moves), 0)
-
-    async def test_timing_recorded_in_trainings(self) -> None:
-        """
-        With save_char='' (save), training data is updated in memory.
-
-        save_trainings is mocked; the in-memory Trainings is still updated.
-        """
-        solution = next(iter(get_case('OLL', '01').algorithms))
-        solve_moves = [str(m) for m in solution]
-
-        t = await self._full_run(solve_moves, save_char='')
-
-        self.assertIn('01', t.trainings.cases)
-        self.assertEqual(len(t.trainings.cases['01'].timings), 1)
-
-    async def test_cancel_discards_timing(self) -> None:
-        """Pressing 'z' at the save prompt cancels — timing is removed."""
-        solution = next(iter(get_case('OLL', '01').algorithms))
-        solve_moves = [str(m) for m in solution]
-
-        t = await self._full_run(solve_moves, save_char='z')
-
-        if '01' in t.trainings.cases:
-            self.assertEqual(len(t.trainings.cases['01'].timings), 0)
-
 
 class TestBTCubeInitialState(BluetoothTrainerTestCase):
     """
@@ -522,68 +425,6 @@ class TestBTCubeInitialState(BluetoothTrainerTestCase):
 
         self.assertFalse(t.bluetooth_cube_is_solved)
         self.assertEqual(t.bluetooth_cube_state, initial.state)
-
-    async def test_full_run_with_unsolved_initial_bt_cube(self) -> None:
-        """
-        A full start() cycle completes correctly when the BT cube starts in
-        an unsolved state (OLL case already applied before training begins).
-
-        What differs from the solved-cube case
-        --------------------------------------
-        start() computes facelets_scrambled as VCube(bt_state).rotate(scramble)
-        instead of VCube().rotate(scramble), giving a different completion
-        target for the scramble phase. handle_scrambled() waits for
-        bluetooth_cube to reach that state. Injecting t.scramble still works:
-          VCube(bt_state).rotate(scramble) == facelets_scrambled by definition.
-
-        The solve phase is unaffected: bluetooth_scramble_is_completed uses
-        VCube().rotate(scramble_oriented + moves), not the physical cube.
-
-        Assertions
-        ----------
-        1. elapsed_time > 0
-           - timing loop ran from start_time to end_time
-
-        2. case '01' has one timing entry
-           - solve_line() called add_timing() on the in-memory Trainings
-
-        3. facelets_scrambled == VCube(initial_state).rotate(t.scramble).state
-           - start() used the actual BT cube state as the scramble origin,
-             not an assumed solved baseline; both t.scramble and
-             t.facelets_scrambled come from the run, nothing is set manually
-
-        4. facelets_scrambled != VCube().rotate(t.scramble).state
-           - confirms the unsolved origin produces a different target than
-             the solved-cube path would
-        """
-        oll_case = get_case('OLL', '01')
-        setup = next(iter(oll_case.setup_algorithms))
-        solution = next(iter(oll_case.algorithms))
-
-        initial = VCube(size=3)
-        initial.rotate(setup)
-
-        t = self.make_trainer(initial_cube=initial)
-        solve_moves = [str(m) for m in solution]
-        await run_full_cycle(t, solve_moves, save_char='')
-
-        # 1. Timer ran
-        self.assertGreater(t.elapsed_time, 0)
-
-        # 2. Timing saved
-        self.assertIn('01', t.trainings.cases)
-        self.assertEqual(len(t.trainings.cases['01'].timings), 1)
-
-        # 3. facelets_scrambled formula holds for unsolved initial cube
-        expected = VCube(initial.state, size=3, check=False)
-        expected.rotate(t.scramble)
-        self.assertEqual(t.facelets_scrambled, expected.state)
-
-        # 4. that target differs from the solved-initial path
-        solved_target = VCube(size=3)
-        solved_target.rotate(t.scramble)
-        self.assertNotEqual(t.facelets_scrambled, solved_target.state)
-
 
 class TestScrambleOrientedProperties(BluetoothTrainerTestCase):
     """
@@ -672,3 +513,161 @@ class TestScrambleOrientedProperties(BluetoothTrainerTestCase):
         expected = VCube(size=3)
         expected.rotate(t.scramble)
         self.assertEqual(t.facelets_scrambled, expected.state)
+
+
+class TestConcreteScenarios(BluetoothTrainerTestCase):
+    """
+    Concrete-value scenarios driven by run_scenario().
+
+    Each test method calls run_scenario() with explicit values.  Add a new
+    test method per scenario — no subclassing required.
+
+    Example
+    -------
+        async def test_oll_01_uf(self) -> None:
+            await self.run_scenario(
+                step='oll',
+                case_code='01',
+                scramble_moves=["R", "U", "R'"],
+                solve_moves=["R", "U'", "R'"],
+                expected_scramble="R U R'",
+                expected_scramble_oriented="R U R'",
+            )
+    """
+
+    step = 'oll'
+
+    async def run_scenario(  # noqa: PLR0913
+            self,
+            *,
+            step: str,
+            case_code: str,
+            scramble_moves: list[str],
+            solve_moves: list[str],
+            expected_scramble: str | None = None,
+            expected_scramble_oriented: str | None = None,
+            initial_facelet_state: str | None = None,
+            orientation: str = 'UF',
+            seed: int = 42,
+            save_char: str = '',
+    ) -> Trainer:
+        """
+        Drive one complete Trainer cycle and assert all scenario properties.
+
+        Args:
+            step: Training step ('oll', 'pll', …).
+            case_code: Single case code to train (e.g. '01').
+            scramble_moves: Moves that bring the BT cube to facelets_scrambled.
+            solve_moves: Moves that make bluetooth_scramble_is_completed True.
+            expected_scramble: Expected str(t.scramble); skipped when None.
+            expected_scramble_oriented: Expected str(t.scramble_oriented); skipped when None.
+            initial_facelet_state: 54-char facelet string for the BT cube at
+                connection time, or None for a solved cube.
+            orientation: Cube orientation ('UF', 'DF', …).
+            seed: RNG seed for scramble selection.
+            save_char: '' = save, 'z' = cancel, 'q' = save-and-quit.
+
+        Asserts:
+            - BT cube initial state matches initial_facelet_state.
+            - t.scramble == expected_scramble (when not None).
+            - t.scramble_oriented == expected_scramble_oriented (when not None).
+            - t.facelets_scrambled == VCube(initial).rotate(t.scramble).state.
+            - elapsed_time > 0 and one timing entry recorded for case_code.
+
+        Returns:
+            The Trainer after start() completes (for extra per-test assertions).
+
+        """
+        initial: VCube | None = None
+        if initial_facelet_state is not None:
+            initial = VCube(initial_facelet_state, size=3, check=False)
+
+        t = build_trainer(
+            step=step,
+            case_codes=[case_code],
+            initial_cube=initial,
+            seed=seed,
+            orientation=orientation,
+        )
+
+        expected_initial = (initial or VCube(size=3)).state
+        self.assertEqual(t.bluetooth_cube_state, expected_initial)
+
+        await run_full_cycle(
+            t,
+            solve_moves,
+            save_char=save_char,
+            scramble_moves=scramble_moves,
+        )
+
+        if expected_scramble is not None:
+            self.assertEqual(str(t.scramble), expected_scramble)
+        if expected_scramble_oriented is not None:
+            self.assertEqual(str(t.scramble_oriented), expected_scramble_oriented)
+
+        cube = VCube(initial.state, size=3, check=False) if initial else VCube(size=3)
+        cube.rotate(t.scramble)
+        self.assertEqual(t.facelets_scrambled, cube.state)
+
+        self.assertGreater(t.elapsed_time, 0)
+        expected_timings = 0 if save_char == 'z' else 1
+        if case_code in t.trainings.cases:
+            self.assertEqual(
+                len(t.trainings.cases[case_code].timings),
+                expected_timings,
+            )
+        elif expected_timings == 1:
+            self.fail(f'case {case_code!r} missing from trainings after save')
+
+        return t
+
+    async def test_oll_01_elapsed_time_and_timing(self) -> None:
+        """OLL case 01: elapsed_time recorded and timing saved after a full solve."""
+        solution = next(iter(get_case('OLL', '01').algorithms))
+        solve_moves = [str(m) for m in solution]
+
+        t = await self.run_scenario(
+            step='oll',
+            case_code='01',
+            scramble_moves=[],
+            solve_moves=solve_moves,
+        )
+
+        self.assertGreater(len(t.moves), 0)
+
+    async def test_oll_01_cancel_discards_timing(self) -> None:
+        """Pressing 'z' at the save prompt cancels — timing is removed."""
+        solution = next(iter(get_case('OLL', '01').algorithms))
+        await self.run_scenario(
+            step='oll',
+            case_code='01',
+            scramble_moves=[],
+            solve_moves=[str(m) for m in solution],
+            save_char='z',
+        )
+
+    async def test_oll_01_unsolved_initial_bt_cube(self) -> None:
+        """
+        OLL case 01: full cycle completes when BT cube is not solved at connection.
+
+        facelets_scrambled is derived from the actual BT cube state, not a
+        solved baseline — the extra assertion below confirms this.
+        """
+        oll_case = get_case('OLL', '01')
+        setup = next(iter(oll_case.setup_algorithms))
+        solution = next(iter(oll_case.algorithms))
+
+        initial = VCube(size=3)
+        initial.rotate(setup)
+
+        t = await self.run_scenario(
+            step='oll',
+            case_code='01',
+            scramble_moves=[],
+            solve_moves=[str(m) for m in solution],
+            initial_facelet_state=initial.state,
+        )
+
+        solved_target = VCube(size=3)
+        solved_target.rotate(t.scramble)
+        self.assertNotEqual(t.facelets_scrambled, solved_target.state)
