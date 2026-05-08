@@ -27,6 +27,7 @@ from unittest.mock import patch
 
 from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
+from cubing_algs.transform.degrip import degrip_moves
 from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
@@ -598,10 +599,10 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
         oll_case = get_case('OLL', '01')
         alg3 = list(oll_case.algorithms)[3]
 
-        for orientation in ('UF', 'DF'):
+        for orientation in ('UF', 'DF', 'RD'):
             with self.subTest(orientation=orientation):
-                reorient = translate_moves(get_orientation_moves(orientation))
-                solve_moves = [str(m) for m in reorient(alg3)]
+                om = get_orientation_moves(orientation)
+                solve_moves = [str(m) for m in degrip_moves(om + alg3)]
 
                 t = build_trainer(
                     step='oll',
