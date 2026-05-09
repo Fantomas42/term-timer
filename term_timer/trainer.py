@@ -695,21 +695,16 @@ class Trainer(SolveInterface):
                 self.cube_orientation_moves,
         )
 
-        if self.bluetooth_cube:
-            if self.bluetooth_scramble_is_completed:
-                cube = VCube(
-                    self.bluetooth_cube_state,
-                    size=DEFAULT_CUBE_SIZE,
-                    check=False,
-                )
-                cube.rotate(self.scramble)
-            else:
-                cube = VCube(size=DEFAULT_CUBE_SIZE)
-                cube.rotate(self.scramble)
+        if self.bluetooth_cube and self.bluetooth_scramble_is_completed:
+            cube = VCube(
+                self.bluetooth_cube_state,
+                size=DEFAULT_CUBE_SIZE,
+                check=False,
+            )
         else:
             cube = VCube(size=DEFAULT_CUBE_SIZE)
-            cube.rotate(self.scramble)
 
+        cube.rotate(self.scramble)
         self.facelets_scrambled = cube.state
 
         if (
