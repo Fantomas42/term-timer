@@ -630,26 +630,61 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
             expected_scramble_oriented="L F' L' F U F2 R' F' R U' F'",
         )
 
-    async def test_oll_01_unsolved_initial_bt_cube(self) -> None:
+    async def test_oll_01_scramble_completed_bt_cube(self) -> None:
         """
-        OLL case 01: full cycle completes when BT cube is unsolved at start.
+        OLL case 01: full cycle completes when BT cube is unsolved at start,
+        and the scramble is considered completed.
 
         facelets_scrambled is derived from the actual BT cube state, not a
         solved baseline — the extra assertion below confirms this.
         """
         oll_case = get_case('OLL', '01')
-        setup = next(iter(oll_case.setup_algorithms))
         solution = next(iter(oll_case.algorithms))
+        solve_moves = [str(m) for m in solution]
 
         initial = VCube(size=3)
-        initial.rotate(setup)
+        # T-Perm: break OLL, but consider scramble is solved
+        initial.rotate("R U R' U' R' F R2 U' R' U' R U R' F'")
 
         t = await self.run_scenario(
             step='oll',
             case_code='01',
             scramble_moves=[],
-            solve_moves=[str(m) for m in solution],
+            solve_moves=solve_moves,
             initial_facelet_state=initial.state,
+            expected_scramble="L F' L' F U F2 R' F' R U' F'",
+            expected_scramble_oriented="L F' L' F U F2 R' F' R U' F'",
+        )
+
+        solved_target = VCube(size=3)
+        solved_target.rotate(t.scramble)
+        self.assertNotEqual(
+            t.facelets_scrambled,
+            solved_target.state,
+        )
+
+    async def test_oll_01_highly_scrambled_bt_cube(self) -> None:
+        """
+        OLL case 01: full cycle completes when BT cube is unsolved at start,
+        and the scramble is considered not completed.
+
+        facelets_scrambled is derived from the actual BT cube state, not a
+        solved baseline — the extra assertion below confirms this.
+        """
+        oll_case = get_case('OLL', '01')
+        solution = next(iter(oll_case.algorithms))
+        solve_moves = [str(m) for m in solution]
+
+        initial = VCube(size=3)
+        initial.rotate("R2 B D2 L U F2 R2 D L2 B' U2 R' D")
+
+        t = await self.run_scenario(
+            step='oll',
+            case_code='01',
+            scramble_moves=[],
+            solve_moves=solve_moves,
+            initial_facelet_state=initial.state,
+            # TODO(me): Should be different
             expected_scramble="L F' L' F U F2 R' F' R U' F'",
             expected_scramble_oriented="L F' L' F U F2 R' F' R U' F'",
         )
