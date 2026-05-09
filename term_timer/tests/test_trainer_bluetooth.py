@@ -742,3 +742,182 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
                     'facelets_scrambled must be computed from the unsolved '
                     'BT cube state',
                 )
+
+    async def test_bad_solve_interrupted_then_valid_solve(self) -> None:
+        """
+        Two-cycle OLL-01 scenario where cycle 1 is a DNF.
+
+        Cycle 1: scramble completes normally, user makes bad moves during
+        solving, then interrupts by pressing a key (getch 'stop' fires).
+        The solve is flagged DNF - not saved to trainings - and the BT cube
+        is left in a scrambled state (neither solved nor at OLL case).
+
+        Cycle 2: bluetooth_scramble_is_completed is False, so the trainer
+        computes a facelets-to-facelets path from the scrambled BT cube
+        state to the OLL 01 target as scramble_oriented. Injecting those
+        moves brings the BT cube to facelets_scrambled; the user then
+        solves OLL correctly and timing is saved.
+        """
+        oll_case = get_case('OLL', '01')
+        solution = next(iter(oll_case.algorithms))
+        solve_moves = [str(m) for m in solution]
+
+        # F R U R' U' F' changes corner orientations without solving OLL 01
+        bad_solve_moves = ['F', 'R', 'U', "R'", "U'", "F'"]
+
+        t = build_trainer(step='oll', case_codes=['01'], seed=42)
+
+        # Cycle 1: good scramble, bad solve, keyboard interrupt
+        stop_event = asyncio.Event()
+
+        async def _getch_cycle1(mode: str, *_: object) -> str:
+            if mode == 'stop':
+                await stop_event.wait()
+                return ' '
+            await asyncio.sleep(3600)
+            return ''
+
+        consumer = asyncio.create_task(t.bluetooth_consumer())
+        t.bluetooth_consumer_ref = consumer
+
+        try:
+            with patch.object(t, 'getch', side_effect=_getch_cycle1):
+                run_task = asyncio.create_task(t.start())
+                await asyncio.sleep(0.05)
+
+                s_moves = [str(m) for m in t.scramble]
+                await inject_moves(
+                    t,
+                    s_moves,
+                    clock_start=0,
+                )
+                await asyncio.wait_for(
+                    t.scramble_completed_event.wait(),
+                    timeout=2.0,
+                )
+                await asyncio.sleep(0.05)
+
+                solve_clock = len(s_moves) * (100 * MS_TO_NS_FACTOR) + SECOND
+                await inject_moves(
+                    t,
+                    bad_solve_moves[:1],
+                    clock_start=solve_clock,
+                )
+                await asyncio.wait_for(
+                    t.solve_started_event.wait(),
+                    timeout=1.0,
+                )
+                await asyncio.sleep(0.05)
+
+                await inject_moves(
+                    t,
+                    bad_solve_moves[1:],
+                    clock_start=solve_clock + 200 * MS_TO_NS_FACTOR,
+                )
+                await asyncio.sleep(0.05)
+
+                stop_event.set()
+                cycle1_result = await asyncio.wait_for(
+                    run_task,
+                    timeout=2.0,
+                )
+        finally:
+            queue = cast(
+                'asyncio.Queue[list[EventDict] | None]', t.bluetooth_queue,
+            )
+            await queue.put(None)
+            await consumer
+
+        # DNF: start() returns True (continue), no timing saved
+        self.assertTrue(cycle1_result)
+        self.assertIsNone(t.trainings.cases.get('01'))
+        self.assertFalse(t.bluetooth_cube_is_solved)
+        self.assertFalse(
+            t.bluetooth_scramble_is_completed,
+            'bad moves must not accidentally complete OLL',
+        )
+
+        # Cycle 2: scramble from messy BT state, valid OLL solve
+        consumer2 = asyncio.create_task(t.bluetooth_consumer())
+        t.bluetooth_consumer_ref = consumer2
+
+        try:
+            with patch.object(
+                    t, 'getch', side_effect=make_auto_getch(''),
+            ):
+                run_task2 = asyncio.create_task(t.start())
+                await asyncio.sleep(0.05)
+
+                # scramble_oriented is the facelets-to-facelets path from the
+                # scrambled BT cube to the OLL 01 target state
+                s_moves2 = [str(m) for m in t.scramble_oriented]
+                await inject_moves(
+                    t,
+                    s_moves2,
+                    clock_start=0,
+                )
+                await asyncio.wait_for(
+                    t.scramble_completed_event.wait(),
+                    timeout=5.0,
+                )
+                await asyncio.sleep(0.05)
+
+                solve_clock2 = (
+                    len(s_moves2) * (100 * MS_TO_NS_FACTOR) + SECOND
+                )
+                await inject_moves(
+                    t,
+                    [solve_moves[0]],
+                    clock_start=solve_clock2,
+                )
+                await asyncio.wait_for(
+                    t.solve_started_event.wait(),
+                    timeout=1.0,
+                )
+                await asyncio.sleep(0.05)
+
+                if len(solve_moves) > 1:
+                    await inject_moves(
+                        t,
+                        solve_moves[1:],
+                        clock_start=solve_clock2 + 200 * MS_TO_NS_FACTOR,
+                    )
+                await asyncio.wait_for(
+                    t.solve_completed_event.wait(),
+                    timeout=2.0,
+                )
+                await asyncio.wait_for(
+                    run_task2,
+                    timeout=2.0,
+                )
+        finally:
+            queue2 = cast(
+                'asyncio.Queue[list[EventDict] | None]', t.bluetooth_queue,
+            )
+            await queue2.put(None)
+            await consumer2
+
+        self.assertIn('01', t.trainings.cases)
+        self.assertEqual(len(t.trainings.cases['01'].timings), 1)
+        self.assertGreater(t.elapsed_time, 0)
+        self.assertTrue(t.bluetooth_scramble_is_completed)
+
+        # When bluetooth_scramble_is_completed was False at cycle-2 start,
+        # facelets_scrambled is computed from a solved base (not the BT cube
+        # state) - the BT cube state only influences scramble_oriented (the
+        # path used to navigate to the target from the messy state)
+        expected_from_solved = VCube(size=3)
+        expected_from_solved.rotate(t.scramble)
+        self.assertEqual(
+            t.facelets_scrambled,
+            expected_from_solved.state,
+        )
+
+        # scramble_oriented differs from scramble because it is the
+        # facelets-to-facelets path from state after Cycle 1 to the OLL case
+        self.assertNotEqual(
+            str(t.scramble_oriented),
+            str(t.scramble),
+            'scramble_oriented must be the facelets-to-facelets path '
+            'through the messy BT cube state, not the raw OLL setup',
+        )
