@@ -267,19 +267,11 @@ class Trainer(SolveInterface):
             True if the step is solved, False otherwise.
 
         """
-        if self.bluetooth_cube:
-            cube = VCube()
-            applied = Algorithm.parse_moves(
-                ' '.join(m['move'] for m in self.moves),
-            )
-            applied = self.reorient(applied)
-            cube.rotate(self.scramble_oriented + applied)
-
-            return FaceletAnalyser().check_step(
-                self.step_code,
-                cube.state,
-            )
-        return False
+        return FaceletAnalyser().check_step(
+            self.step_code,
+            self.bluetooth_cube.oriented_copy(self.orientation_faces).state,
+            self.orientation_faces,
+        )
 
     def trainer_line(self) -> None:
         """Display training summary."""
@@ -693,8 +685,12 @@ class Trainer(SolveInterface):
         )
 
         if self.bluetooth_cube:
-            cube = VCube(self.bluetooth_cube_state, size=DEFAULT_CUBE_SIZE)
-            cube.rotate(self.scramble)
+            if self.bluetooth_scramble_is_completed:
+                cube = VCube(self.bluetooth_cube_state, size=DEFAULT_CUBE_SIZE)
+                cube.rotate(self.scramble)
+            else:
+                cube = VCube(size=DEFAULT_CUBE_SIZE)
+                cube.rotate(self.scramble)
         else:
             cube = VCube(size=DEFAULT_CUBE_SIZE)
             cube.rotate(self.scramble)
