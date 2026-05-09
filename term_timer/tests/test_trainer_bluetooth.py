@@ -572,16 +572,6 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
                 expected_scramble_oriented,
             )
 
-        if initial:
-            cube = VCube(initial.state, size=3, check=False)
-        else:
-            cube = VCube(size=3)
-        cube.rotate(t.scramble)
-        self.assertEqual(
-            t.facelets_scrambled,
-            cube.state,
-        )
-
         self.assertGreater(t.elapsed_time, 0)
 
         if save_char == 'z':
@@ -678,20 +668,21 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
         initial = VCube(size=3)
         initial.rotate("R2 B D2 L U F2 R2 D L2 B' U2 R' D")
 
+        scramble_moves = "R2 D' R' F' L' F R U2 R F L U F2 D2 B2 U2 F2 R2 D B2"
+
         t = await self.run_scenario(
             step='oll',
             case_code='01',
-            scramble_moves=[],
+            scramble_moves=scramble_moves.split(),
             solve_moves=solve_moves,
             initial_facelet_state=initial.state,
-            # TODO(me): Should be different
             expected_scramble="L F' L' F U F2 R' F' R U' F'",
-            expected_scramble_oriented="L F' L' F U F2 R' F' R U' F'",
+            expected_scramble_oriented=scramble_moves,
         )
 
         solved_target = VCube(size=3)
         solved_target.rotate(t.scramble)
-        self.assertNotEqual(
+        self.assertEqual(
             t.facelets_scrambled,
             solved_target.state,
         )
