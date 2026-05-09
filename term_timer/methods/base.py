@@ -13,6 +13,8 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeFacelets
 from cubing_algs.annotations import CubeMask
 from cubing_algs.annotations import CubeOrientation
+from cubing_algs.constants import DEFAULT_CUBE_SIZE
+from cubing_algs.constants import ORIENTATION_FACE_MOVES
 from cubing_algs.masks import CENTERS_MASK
 from cubing_algs.masks import CROSS_BOTTOM_MASK
 from cubing_algs.masks import F2L_BL_MASK
@@ -25,7 +27,6 @@ from cubing_algs.masks import L1_MASK
 from cubing_algs.masks import OLL_MASK
 from cubing_algs.masks import union_masks
 from cubing_algs.parsing import parse_moves
-from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.transform.rotation import remove_rotations
 from cubing_algs.transform.translate import translate_moves
@@ -138,7 +139,10 @@ class FaceletAnalyser:
 
     @staticmethod
     @lru_cache
-    def matching_mask(step: str) -> tuple[CubeFacelets, CubeMask]:
+    def matching_mask(
+            step: str,
+            orientation_faces: CubeOrientation,
+    ) -> tuple[CubeFacelets, CubeMask]:
         """
         Return facelets masked and mask for checking step.
 
@@ -146,6 +150,7 @@ class FaceletAnalyser:
 
         Args:
             step: Name of the solving step to check.
+            orientation_faces: Orientation of the cube.
 
         Returns:
             The matching mask and the mask oriented.
@@ -153,13 +158,23 @@ class FaceletAnalyser:
         """
         mask = get_step_config(step, 'mask')
 
+        cube = VCube(
+            size=DEFAULT_CUBE_SIZE,
+        )
+        cube.rotate(ORIENTATION_FACE_MOVES[orientation_faces])
+
         matching_mask = facelets_masked(
-            SOLVED_FACELETS_3x3x3, mask,
+            cube.state,
+            mask,
         )
 
         return matching_mask, mask
 
-    def check_step(self, step: str, facelets: CubeFacelets) -> bool:
+    def check_step(
+            self, step: str,
+            facelets: CubeFacelets,
+            orientation_faces: CubeOrientation = 'UF',
+    ) -> bool:
         """
         Verify if a solving step has been completed.
 
@@ -169,12 +184,13 @@ class FaceletAnalyser:
         Args:
             step: Name of the solving step to check.
             facelets: Current 54-character facelet string.
+            orientation_faces: Cube orientation to check.
 
         Returns:
             True if step is completed, False otherwise.
 
         """
-        matching_mask, mask = self.matching_mask(step)
+        matching_mask, mask = self.matching_mask(step, orientation_faces)
 
         return matching_mask == facelets_masked(
             facelets, mask,
