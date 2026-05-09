@@ -13,6 +13,7 @@ from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
 from cubing_algs.constants import DEFAULT_CUBE_SIZE
+from cubing_algs.constants import ORIENTATION_FACE_MOVES
 from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
@@ -267,9 +268,19 @@ class Trainer(SolveInterface):
             True if the step is solved, False otherwise.
 
         """
+        cube = VCube(
+            self.bluetooth_cube_state,
+            size=DEFAULT_CUBE_SIZE,
+            check=False,
+        )
+
+        orientation_moves = ORIENTATION_FACE_MOVES[self.orientation_faces]
+        if orientation_moves:
+            cube.rotate(orientation_moves)
+
         return FaceletAnalyser().check_step(
             self.step_code,
-            self.bluetooth_cube.oriented_copy(self.orientation_faces).state,
+            cube.state,
             self.orientation_faces,
         )
 
@@ -686,7 +697,11 @@ class Trainer(SolveInterface):
 
         if self.bluetooth_cube:
             if self.bluetooth_scramble_is_completed:
-                cube = VCube(self.bluetooth_cube_state, size=DEFAULT_CUBE_SIZE)
+                cube = VCube(
+                    self.bluetooth_cube_state,
+                    size=DEFAULT_CUBE_SIZE,
+                    check=False,
+                )
                 cube.rotate(self.scramble)
             else:
                 cube = VCube(size=DEFAULT_CUBE_SIZE)
