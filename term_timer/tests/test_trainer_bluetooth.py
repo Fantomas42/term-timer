@@ -48,7 +48,7 @@ class FakeBluetoothClient:
 
 
 class FakeBluetoothInterface:
-    """Truthy BT interface stub — no real BLE calls."""
+    """Truthy BT interface stub - no real BLE calls."""
 
     client: FakeBluetoothClient = FakeBluetoothClient()
     driver: None = None
@@ -107,7 +107,7 @@ def build_trainer(  # noqa: PLR0913
         step: Training step ('oll', 'pll', 'f2l', 'cross', 'ecross', 'xcross').
         case_codes: Cases to include; empty list means all available cases.
         initial_cube: BT cube state at connection time. Defaults to solved.
-        seed: RNG seed — use a fixed value for reproducible scramble selection.
+        seed: RNG seed - use a fixed value for reproducible scramble selection.
         free_play: Skip the save-and-confirm phase at the end of each solve.
         orientation: The orientation of the cube.
 
@@ -411,8 +411,8 @@ class TestTrainerOLL01(BluetoothTrainerTestCase):
         """
         Verify scramble/scramble_oriented/facelets_scrambled per orientation.
 
-        UF: no reorientation — scramble == scramble_oriented, both in setups.
-        DF: z2 reorientation — scramble uses D-face moves (not in raw setups),
+        UF: no reorientation - scramble == scramble_oriented, both in setups.
+        DF: z2 reorientation - scramble uses D-face moves (not in raw setups),
             scramble_oriented translates back to canonical UF form.
         Solve moves must be expressed in the orientation frame so that
         bluetooth_scramble_is_completed can translate them back to UF.
@@ -479,7 +479,7 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
     Concrete-value scenarios driven by run_scenario().
 
     Each test method calls run_scenario() with explicit values.  Add a new
-    test method per scenario — no subclassing required.
+    test method per scenario - no subclassing required.
 
     Example:
         async def test_oll_01_uf(self) -> None:
@@ -616,7 +616,7 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(len(t.moves), 0)
 
     async def test_oll_01_cancel_discards_timing(self) -> None:
-        """Pressing 'z' at the save prompt cancels — timing is removed."""
+        """Pressing 'z' at the save prompt cancels - timing is removed."""
         solution = next(iter(get_case('OLL', '01').algorithms))
         solve_moves = [str(m) for m in solution]
 
@@ -636,7 +636,7 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
         and the scramble is considered completed.
 
         facelets_scrambled is derived from the actual BT cube state, not a
-        solved baseline — the extra assertion below confirms this.
+        solved baseline - the extra assertion below confirms this.
         """
         oll_case = get_case('OLL', '01')
         solution = next(iter(oll_case.algorithms))
@@ -669,7 +669,7 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
         and the scramble is considered not completed.
 
         facelets_scrambled is derived from the actual BT cube state, not a
-        solved baseline — the extra assertion below confirms this.
+        solved baseline - the extra assertion below confirms this.
         """
         oll_case = get_case('OLL', '01')
         solution = next(iter(oll_case.algorithms))
@@ -699,7 +699,7 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
     async def test_chained_training_cycles(self) -> None:
         """
         Two OLL-01 cycles chain correctly; BT cube stays unsolved between
-        rounds — verified for both UF and DF orientations.
+        rounds - verified for both UF and DF orientations.
 
         alg[3] passes the OLL check_step but is not the inverse of setup[0],
         so the BT cube is left in a non-solved state after each cycle.  Cycle 2
