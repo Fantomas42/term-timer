@@ -275,7 +275,7 @@ class SolveInterface(
         elif char in {'z', 'k'}:
             self.stack.pop()
             self.stack_done.pop()
-            save_string = 'Solve cancelled'
+            save_string = 'Solve discarded'
 
         save_solves(
             self.cube_size,

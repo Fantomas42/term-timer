@@ -111,25 +111,29 @@ class Timer(SolveInterface):
                 self.console.print(
                     'Apply the scramble on the cube to start the inspection,',
                     '[key](q)[/key] to quit.',
-                    end='', style='consign',
+                    style='consign',
+                    end='',
                 )
             else:
                 self.console.print(
                     'Apply the scramble on the cube to init the timer,',
                     '[key](q)[/key] to quit.',
-                    end='', style='consign',
+                    style='consign',
+                    end='',
                 )
         elif self.countdown:
             self.console.print(
                 'Press any key once scrambled to start the inspection,',
                 '[key](q)[/key] to quit.',
-                end='', style='consign',
+                style='consign',
+                end='',
             )
         else:
             self.console.print(
                 'Press any key once scrambled to start/stop the timer,',
                 '[key](q)[/key] to quit.',
-                end='', style='consign',
+                style='consign',
+                end='',
             )
 
     def save_line(self) -> None:
@@ -137,18 +141,22 @@ class Timer(SolveInterface):
         if self.bluetooth_interface:
             self.console.print(
                 'Press any key to save and continue,',
-                '[key](z)[/key] to cancel,',
-                '[key](q)[/key] to save and quit.',
-                end='', style='consign',
+                '[key](z)[/key] discard,',
+                '[key](k)[/key] quit,',
+                '[key](q)[/key] save & quit.',
+                style='consign',
+                end='',
             )
         else:
             self.console.print(
                 'Press any key to save and continue,',
-                '[key](d)[/key] for DNF,',
-                '[key](2)[/key] for +2,',
-                '[key](z)[/key] to cancel,',
-                '[key](q)[/key] to save and quit.',
-                end='', style='consign',
+                '[key](d)[/key] DNF,',
+                '[key](2)[/key] +2,',
+                '[key](z)[/key] discard,',
+                '[key](k)[/key] quit,',
+                '[key](q)[/key] save & quit.',
+                style='consign',
+                end='',
             )
 
     def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912
