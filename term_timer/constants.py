@@ -77,3 +77,10 @@ X_CROSS_CASE = Case(
         code='xcross',
     ),
 )
+
+for directory in (
+        SOLVES_DIRECTORY,
+        TRAININGS_DIRECTORY,
+        LOGGING_DIRECTORY,
+):
+    directory.mkdir(parents=True, exist_ok=True)
