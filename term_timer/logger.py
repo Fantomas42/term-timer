@@ -5,7 +5,6 @@ import logging.config
 import logging.handlers
 import queue
 import threading
-from pathlib import Path
 from typing import Final
 
 from term_timer.config import DEBUG
@@ -152,7 +151,6 @@ log_listener: AsyncioLogListener | None = None
 def configure_logging() -> None:
     """Configure async logging with queue handler."""
     if DEBUG:
-        Path(LOGGING_DIRECTORY).mkdir(parents=True, exist_ok=True)
         logging.config.dictConfig(LOGGING_CONF)
 
         root_logger = logging.getLogger()

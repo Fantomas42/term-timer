@@ -18,12 +18,6 @@ from term_timer.training import Trainings
 
 SCRAMBLE_LINE = re.compile(r'Scramble #\d+:\s*(.+?)(?:\s*//.*)?$')
 
-if not SOLVES_DIRECTORY.exists():
-    SOLVES_DIRECTORY.mkdir(parents=True, exist_ok=True)
-
-if not TRAININGS_DIRECTORY.exists():
-    TRAININGS_DIRECTORY.mkdir(parents=True, exist_ok=True)
-
 
 def load_solves(cube: int, session: str) -> list[Solve]:
     """

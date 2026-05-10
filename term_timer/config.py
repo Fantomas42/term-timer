@@ -6,6 +6,9 @@ from typing import Final
 import rtoml
 
 from term_timer.constants import CONFIG_FILE
+from term_timer.constants import LOGGING_DIRECTORY
+from term_timer.constants import SOLVES_DIRECTORY
+from term_timer.constants import TRAININGS_DIRECTORY
 
 DEFAULT_CONFIG: Final = """[timer]
 countdown = 0.0
@@ -69,6 +72,9 @@ def load_config() -> dict[str, Any]:
             fd.write(DEFAULT_CONFIG)
 
         return rtoml.loads(DEFAULT_CONFIG)
+
+    for directory in [SOLVES_DIRECTORY, TRAININGS_DIRECTORY, LOGGING_DIRECTORY]:
+        directory.mkdir(parents=True, exist_ok=True)
 
     return rtoml.load(CONFIG_FILE)
 

@@ -34,6 +34,7 @@ from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import ROTATION_THRESHOLD
 from term_timer.config import USE_GYROSCOPE
+from term_timer.constants import LOGGING_DIRECTORY
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 from term_timer.constants import Face
@@ -42,7 +43,6 @@ from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
 from term_timer.interface.console import console
 from term_timer.interface.terminal import Terminal
-from term_timer.constants import LOGGING_DIRECTORY
 from term_timer.opengl.thread import CubeGLThread
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
@@ -50,8 +50,6 @@ from term_timer.transform import prettify_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 
 logger = logging.getLogger(__name__)
-
-Path(LOGGING_DIRECTORY).mkdir(parents=True, exist_ok=True)
 
 LEVEL_COLORS: Final = {
     'DEBUG': '\033[36m',
