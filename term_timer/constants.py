@@ -20,6 +20,8 @@ SOLVES_DIRECTORY: Final = TT_DIRECTORY / 'solves'
 
 TRAININGS_DIRECTORY: Final = TT_DIRECTORY / 'trainings'
 
+ROUTINES_DIRECTORY: Final = TT_DIRECTORY / 'routines'
+
 LOGGING_DIRECTORY: Final = TT_DIRECTORY / 'logs'
 
 CONFIG_FILE: Final = TT_DIRECTORY / 'config.toml'
@@ -81,6 +83,7 @@ X_CROSS_CASE = Case(
 for directory in (
         SOLVES_DIRECTORY,
         TRAININGS_DIRECTORY,
+        ROUTINES_DIRECTORY,
         LOGGING_DIRECTORY,
 ):
     directory.mkdir(parents=True, exist_ok=True)
