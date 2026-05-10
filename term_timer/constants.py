@@ -20,6 +20,8 @@ SOLVES_DIRECTORY: Final = TT_DIRECTORY / 'solves'
 
 TRAININGS_DIRECTORY: Final = TT_DIRECTORY / 'trainings'
 
+LOGGING_DIRECTORY: Final = TT_DIRECTORY / 'logs'
+
 CONFIG_FILE: Final = TT_DIRECTORY / 'config.toml'
 
 TEMPLATES_DIRECTORY: Final = Path(__file__).parent / 'server' / 'templates'

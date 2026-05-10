@@ -42,7 +42,7 @@ from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
 from term_timer.interface.console import console
 from term_timer.interface.terminal import Terminal
-from term_timer.logger import LOGGING_DIR
+from term_timer.constants import LOGGING_DIRECTORY
 from term_timer.opengl.thread import CubeGLThread
 from term_timer.orientation import get_orientation_moves
 from term_timer.transform import humanize_moves
@@ -51,7 +51,7 @@ from term_timer.triggers import DEFAULT_TRIGGERS
 
 logger = logging.getLogger(__name__)
 
-Path(LOGGING_DIR).mkdir(parents=True, exist_ok=True)
+Path(LOGGING_DIRECTORY).mkdir(parents=True, exist_ok=True)
 
 LEVEL_COLORS: Final = {
     'DEBUG': '\033[36m',
@@ -113,7 +113,7 @@ LOGGING_CONF: Final = {
             'backupCount': 5,
             'maxBytes': 50000000,
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGGING_DIR / 'bt-info.log',
+            'filename': LOGGING_DIRECTORY / 'bt-info.log',
         },
         'consoleHandler': {
             'formatter': 'consoleFormatter',

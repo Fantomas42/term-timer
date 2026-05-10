@@ -9,12 +9,11 @@ from pathlib import Path
 from typing import Final
 
 from term_timer.config import DEBUG
-
-LOGGING_DIR: Final = Path(__file__).parent.parent / 'logs'
+from term_timer.constants import LOGGING_DIRECTORY
 
 LOGGING_FILE: Final = 'term-timer.log'
 
-LOGGING_PATH: Final = LOGGING_DIR / LOGGING_FILE
+LOGGING_PATH: Final = LOGGING_DIRECTORY / LOGGING_FILE
 
 
 class DbusSignalFilter(logging.Filter):
@@ -153,7 +152,7 @@ log_listener: AsyncioLogListener | None = None
 def configure_logging() -> None:
     """Configure async logging with queue handler."""
     if DEBUG:
-        Path(LOGGING_DIR).mkdir(parents=True, exist_ok=True)
+        Path(LOGGING_DIRECTORY).mkdir(parents=True, exist_ok=True)
         logging.config.dictConfig(LOGGING_CONF)
 
         root_logger = logging.getLogger()
