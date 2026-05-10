@@ -640,7 +640,7 @@ class Trainer(SolveInterface):
         DNF trainings are not saved.
 
         Returns:
-            True if user quit (pressed 'q' or ESC), False otherwise.
+            True if user quit (pressed 'q', 'k' or ESC), False otherwise.
 
         """
         self.set_state('saving')
@@ -664,7 +664,7 @@ class Trainer(SolveInterface):
             char = await self.getch('save')
 
         save_string = ''
-        if char == 'z':
+        if char in {'z', 'k'}:
             self.trainings.pop_timing(selected_case.code)
             save_string = 'Training cancelled'
         else:
@@ -676,7 +676,7 @@ class Trainer(SolveInterface):
                 f'[warning]{ save_string }[/warning]',
             )
 
-        return char in {'q', ESCAPE_CHAR}
+        return char in {'q', 'k', ESCAPE_CHAR}
 
     async def start(self) -> bool:
         """

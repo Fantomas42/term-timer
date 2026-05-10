@@ -232,7 +232,7 @@ class SolveInterface(
         Handles both keyboard and bluetooth gesture input.
 
         Returns:
-            True if user quit (pressed 'q' or ESC), False otherwise.
+            True if user quit (pressed 'q', 'k' or ESC), False otherwise.
 
         """
         self.set_state('saving')
@@ -272,7 +272,7 @@ class SolveInterface(
             self.stack_done[-1].flag = PLUS_TWO
             save_string = 'Solve marked as +2'
             save_style = 'caution'
-        elif char == 'z':
+        elif char in {'z', 'k'}:
             self.stack.pop()
             self.stack_done.pop()
             save_string = 'Solve cancelled'
@@ -289,7 +289,7 @@ class SolveInterface(
                 f'[{ save_style }]{ save_string }[/{ save_style }]',
             )
 
-        if char != 'z':
+        if char not in {'z', 'k'}:
             self.counter += 1
 
-        return char in {'q', ESCAPE_CHAR}
+        return char in {'q', 'k', ESCAPE_CHAR}

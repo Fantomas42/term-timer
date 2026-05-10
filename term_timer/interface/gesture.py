@@ -66,8 +66,10 @@ class Gesture:
 
         if base_move in {'F', 'R', 'U', 'B', 'L'}:
             self.save_gesture = ''
-        elif base_move in {'M', 'S', 'E'}:
+        elif base_move in {'M', 'S'}:
             self.save_gesture = 'z'
+        elif base_move == 'E':
+            self.save_gesture = 'k'
         elif base_move == 'D':
             self.save_gesture = 'q'
         else:
