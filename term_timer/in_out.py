@@ -18,6 +18,12 @@ from term_timer.training import Trainings
 
 SCRAMBLE_LINE = re.compile(r'Scramble #\d+:\s*(.+?)(?:\s*//.*)?$')
 
+if not SOLVES_DIRECTORY.exists():
+    SOLVES_DIRECTORY.mkdir(parents=True, exist_ok=True)
+
+if not TRAININGS_DIRECTORY.exists():
+    TRAININGS_DIRECTORY.mkdir(parents=True, exist_ok=True)
+
 
 def load_solves(cube: int, session: str) -> list[Solve]:
     """
@@ -51,10 +57,12 @@ def load_solves(cube: int, session: str) -> list[Solve]:
     return []
 
 
-def load_all_solves(cube: int,
-                    includes: list[str],
-                    excludes: list[str],
-                    devices: list[str]) -> list[Solve]:
+def load_all_solves(
+        cube: int,
+        includes: list[str],
+        excludes: list[str],
+        devices: list[str],
+) -> list[Solve]:
     """
     Load all solves from multiple sessions with filters.
 
@@ -119,9 +127,6 @@ def save_solves(cube: int, session: str, solves: list[Solve]) -> bool:
     data = [s.as_save for s in solves]
 
     dumped = json.dumps(data, indent=1)
-
-    if not SOLVES_DIRECTORY.exists():
-        SOLVES_DIRECTORY.mkdir()
 
     with source.open('w+', encoding='utf-8') as fd:
         fd.write(dumped)

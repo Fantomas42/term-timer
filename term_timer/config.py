@@ -63,6 +63,8 @@ def load_config() -> dict[str, Any]:
 
     """
     if not CONFIG_FILE.exists():
+        CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
         with CONFIG_FILE.open('w+', encoding='utf-8') as fd:
             fd.write(DEFAULT_CONFIG)
 

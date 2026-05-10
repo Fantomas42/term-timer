@@ -14,11 +14,13 @@ PAUSE_FACTOR: Final = 2
 
 STEP_BAR: Final = 17
 
-SOLVES_DIRECTORY: Final = Path.home() / '.solves'
+TT_DIRECTORY: Final = Path.home() / '.term_timer'
 
-TRAININGS_DIRECTORY: Final = Path.home() / '.trainings'
+SOLVES_DIRECTORY: Final = TT_DIRECTORY / 'solves'
 
-CONFIG_FILE: Final = Path('~/.term_timer').expanduser()
+TRAININGS_DIRECTORY: Final = TT_DIRECTORY / 'trainings'
+
+CONFIG_FILE: Final = TT_DIRECTORY / 'config.toml'
 
 TEMPLATES_DIRECTORY: Final = Path(__file__).parent / 'server' / 'templates'
 
