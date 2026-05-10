@@ -726,10 +726,10 @@ class Trainer(SolveInterface):
 
         self.start_line(cube, selected_case, solution)
 
-        quit_solve = await self.scramble_solve()
+        quit_training = await self.scramble_solve()
 
-        if quit_solve is not None:
-            return quit_solve
+        if quit_training is not None:
+            return quit_training
 
         await self.wait_solve()
         await self.time_solve()

@@ -308,10 +308,10 @@ class Timer(SolveInterface):
 
         self.start_line(cube)
 
-        quit_solve = await self.scramble_solve()
+        quit_solving = await self.scramble_solve()
 
-        if quit_solve is not None:
-            return quit_solve
+        if quit_solving is not None:
+            return quit_solving
 
         if self.countdown:
             await self.inspect_solve()
