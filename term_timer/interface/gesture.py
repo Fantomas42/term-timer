@@ -43,9 +43,6 @@ class Gesture:
         if len(self.save_moves) < 2:
             return
 
-        if not self.bluetooth_scramble_is_completed:
-            return
-
         algo = self.save_moves.transform(
             humanize_moves_unsecured,
         )
