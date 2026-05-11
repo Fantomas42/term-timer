@@ -40,6 +40,7 @@ COMMAND_ALIASES: Final[dict[str, list[str]]] = {
     'scramble': ['sc', 'z'],
     'merge': ['mg', 'j'],
     'config': ['cf', 'k'],
+    'reset': ['rs', 'q'],
 }
 
 COMMAND_RESOLUTIONS: dict[str, str] = {}
@@ -1472,6 +1473,32 @@ def routine_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     return parser
 
 
+def reset_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """
+    Create argument parser for reset command.
+
+    Returns:
+        Configured argument parser for reset command.
+
+    """
+    parser = subparsers.add_parser(
+        'reset',
+        help='Reset the state of the Bluetooth cube',
+        description='Connect to a Bluetooth cube and send a reset command.',
+        aliases=COMMAND_ALIASES['reset'],
+    )
+
+    parser.add_argument(
+        '-f', '--filter-name',
+        type=str,
+        metavar='FILTER',
+        default='',
+        help='Filter device name to connect to.',
+    )
+
+    return parser
+
+
 def get_parser() -> ArgumentParser:
     """
     Build and return the argument parser without parsing.
@@ -1495,6 +1522,7 @@ def get_parser() -> ArgumentParser:
     train_arguments(subparsers)
     drill_arguments(subparsers)
     routine_arguments(subparsers)
+    reset_arguments(subparsers)
     browse_arguments(subparsers)
     detail_arguments(subparsers)
     edit_arguments(subparsers)

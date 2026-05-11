@@ -12,6 +12,7 @@ from term_timer.interface.terminal import Terminal
 from term_timer.logger import configure_logging
 from term_timer.scripts.commands.driller import driller
 from term_timer.scripts.commands.manage import manage
+from term_timer.scripts.commands.reset import reset
 from term_timer.scripts.commands.routine import routine
 from term_timer.scripts.commands.timer import timer
 from term_timer.scripts.commands.tools import tools
@@ -44,6 +45,8 @@ def main() -> int:  # noqa: C901, PLR0911
             return asyncio.run(driller(options), debug=DEBUG)
         if command == 'routine':
             return asyncio.run(routine(options), debug=DEBUG)
+        if command == 'reset':
+            return asyncio.run(reset(options), debug=DEBUG)
         if command == 'browse':
             asyncio.run(run_browse(), debug=DEBUG)
             return 0
