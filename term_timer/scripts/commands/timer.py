@@ -1,0 +1,119 @@
+"""Timer command."""
+from argparse import Namespace
+from pathlib import Path
+from random import Random
+
+from cubing_algs.exceptions import InvalidMoveError
+
+from term_timer.in_out import load_scrambles
+from term_timer.in_out import load_solves
+from term_timer.interface.console import console
+from term_timer.stats import SolveStatisticsReporter
+from term_timer.timer import Timer
+
+
+async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
+    """
+    Run speedcubing timer with scrambles and solve tracking.
+
+    Returns:
+        Exit code (0 for success).
+
+    """
+    cube = options.cube
+
+    session_parts = []
+    if options.session:
+        session_parts.append(options.session)
+
+    scrambles = []
+    if options.scrambles_file:
+        scrambles_file = Path(options.scrambles_file)
+        scrambles = load_scrambles(scrambles_file)
+        if not scrambles:
+            console.print(
+                f'🤔 No scrambles in { scrambles_file.name }.',
+                style='warning',
+            )
+            return 0
+        session_parts.append(f'scrambles-{ scrambles_file.stem }')
+    elif not options.scramble:
+        if options.seed:
+            session_parts.append(f'seed-{ options.seed }')
+        if options.easy_cross:
+            session_parts.append('easy-cross')
+        elif options.x_cross:
+            session_parts.append('x-cross')
+        elif options.edges_oriented:
+            session_parts.append('edges-oriented')
+        elif options.iterations:
+            session_parts.append(f'iterations-{ options.iterations }')
+
+    session = '-'.join(session_parts)
+
+    stack = [] if options.free_play else load_solves(cube, session)
+
+    rng = Random(options.seed) if options.seed else Random()  # noqa: S311
+
+    instance = Timer(
+        cube_size=cube,
+        iterations=options.iterations,
+        easy_cross=options.easy_cross,
+        x_cross=options.x_cross,
+        edges_oriented=options.edges_oriented,
+        scramble=options.scramble,
+        scrambles=scrambles,
+        session=session,
+        free_play=options.free_play,
+        show_highlights=options.show_highlights,
+        show_cube=options.show_cube,
+        show_reconstruction=options.show_reconstruction,
+        show_tps_graph=options.show_tps_graph,
+        show_time_graph=options.show_time_graph,
+        show_fluency_graph=options.show_fluency_graph,
+        show_recognition_graph=options.show_recognition_graph,
+        method=options.method,
+        orientation=options.orientation,
+        countdown=options.countdown,
+        metronome=options.metronome,
+        stack=stack,
+        rng=rng,
+    )
+
+    if options.bluetooth:
+        await instance.bluetooth_connect(
+            use_gyroscope=options.use_gyroscope,
+        )
+
+    solves_done = 0
+
+    try:
+        while 42:
+            done = await instance.start()
+
+            if done:
+                solves_done += 1
+
+                if options.solves and solves_done >= options.solves:
+                    break
+            else:
+                break
+
+        if len(instance.stack) > len(instance.stack_done):
+            session_stats = SolveStatisticsReporter(cube, instance.stack)
+            session_stats.resume('Session ')
+
+        if len(instance.stack_done) > 1:
+            round_stats = SolveStatisticsReporter(cube, instance.stack_done)
+            round_stats.resume(
+                'Free Play ' if options.free_play else 'Current ',
+                'round',
+            )
+
+    except InvalidMoveError as error:
+        console.print('😱', str(error), style='warning')
+    finally:
+        if instance.bluetooth_interface:
+            await instance.bluetooth_disconnect()
+
+    return 0
