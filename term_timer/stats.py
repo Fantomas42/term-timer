@@ -1343,3 +1343,70 @@ class DrillStatistics(Statistics):
                 '[stats]Best:[/stats]',
                 f'{ format_fluency(self.best_fluency) }',
             )
+
+
+class TrainerStatistics:
+    """Computes and displays statistics for a training session."""
+
+    def __init__(
+            self,
+            session_data: list[tuple[str, str, int]],
+    ) -> None:
+        """Initialize trainer statistics from per-training collected data."""
+        self.session_data = session_data
+
+    def resume(self) -> None:
+        """Display training session statistics summary."""
+        if not self.session_data:
+            return
+
+        all_times = [elapsed for _, _, elapsed in self.session_data]
+        global_stats = Statistics(all_times)
+
+        console.print('[title]Training summary[/title]')
+        console.print(
+            '[stats]Count :[/stats]',
+            f'[result]{ global_stats.total }[/result]',
+        )
+        console.print(
+            '[stats]Time  :[/stats]',
+            f'[result]{ format_time(global_stats.total_time) }[/result]',
+        )
+        console.print(
+            '[stats]Mean  :[/stats]',
+            f'[result]{ format_time(global_stats.mean) }[/result]',
+        )
+        console.print(
+            '[stats]Best  :[/stats]',
+            f'[green]{ format_time(global_stats.best) }[/green]',
+        )
+        console.print(
+            '[stats]Worst :[/stats]',
+            f'[red]{ format_time(global_stats.worst) }[/red]',
+        )
+
+        case_groups: dict[str, tuple[str, list[int]]] = {}
+        for code, name, elapsed in self.session_data:
+            if code not in case_groups:
+                case_groups[code] = (name, [])
+            case_groups[code][1].append(elapsed)
+
+        if len(case_groups) < 2:
+            return
+
+        table = Table(box=box.SIMPLE)
+        table.add_column('Case', width=40)
+        table.add_column('Σ', width=3, justify='right')
+        table.add_column('Mean', width=5, justify='right')
+        table.add_column('Best', width=5, justify='right')
+
+        for _, (name, times) in sorted(case_groups.items()):
+            stats = Statistics(times)
+            table.add_row(
+                name,
+                f'[stats]{ stats.total }[/stats]',
+                f'[result]{ format_duration(stats.mean) }[/result]',
+                f'[green]{ format_duration(stats.best) }[/green]',
+            )
+
+        console.print(table)

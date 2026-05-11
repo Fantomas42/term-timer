@@ -96,6 +96,7 @@ class Trainer(SolveInterface):
 
         self.cases = self.get_cases()
         self.counter = 1
+        self.session_data: list[tuple[str, str, int]] = []
 
         self.trainer_line()
 
@@ -673,6 +674,13 @@ class Trainer(SolveInterface):
             save_string = 'Training discarded'
         else:
             save_trainings(self.trainings)
+            self.session_data.append(
+                (
+                    selected_case.code,
+                    selected_case.pretty_name,
+                    self.elapsed_time,
+                ),
+            )
 
         if save_string:
             self.console.print(
@@ -779,6 +787,14 @@ class Trainer(SolveInterface):
 
             if quit_training:
                 return False
+        else:
+            self.session_data.append(
+                (
+                    selected_case.code,
+                    selected_case.pretty_name,
+                    self.elapsed_time,
+                )
+            )
 
         self.counter += 1
 

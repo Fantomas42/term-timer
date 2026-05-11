@@ -6,10 +6,11 @@ from cubing_algs.exceptions import InvalidMoveError
 
 from term_timer.exceptions import InvalidCaseError
 from term_timer.interface.console import console
+from term_timer.stats import TrainerStatistics
 from term_timer.trainer import Trainer
 
 
-async def trainer(options: Namespace) -> int:
+async def trainer(options: Namespace) -> int:  # noqa: C901
     """
     Generate training case.
 
@@ -70,6 +71,9 @@ async def trainer(options: Namespace) -> int:
                     break
             else:
                 break
+        if len(instance.session_data) >= 2:
+            TrainerStatistics(instance.session_data).resume()
+
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')
     finally:
