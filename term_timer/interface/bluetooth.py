@@ -312,7 +312,7 @@ class Bluetooth:
                                 '[bluetooth]🫤Bluetooth:[/bluetooth] '
                                 '[warning]'
                                 'Cube is not in solved state. '
-                                'Run "bt-info --cube-reset" if needed.'
+                                'Run "term-timer reset" if needed.'
                                 '[/warning]',
                             )
 
