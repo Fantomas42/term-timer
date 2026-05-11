@@ -118,12 +118,9 @@ def build_trainer(  # noqa: PLR0913
     cube = (initial_cube or VCube(size=3)).copy()
     empty_trainings = Trainings(method='CFOP', step=step.upper(), cases={})
 
-    with (
-        patch(
-            'term_timer.trainer.load_trainings',
-            return_value=empty_trainings,
-        ),
-        patch('term_timer.trainer.save_trainings'),
+    with patch(
+        'term_timer.trainer.load_trainings',
+        return_value=empty_trainings,
     ):
         instance = Trainer(
             step=step,
@@ -333,6 +330,11 @@ class BluetoothTrainerTestCase(unittest.IsolatedAsyncioTestCase):
     case_codes: ClassVar[list[str]] = []
     seed: ClassVar[int] = 42
 
+    def setUp(self) -> None:
+        patcher = patch('term_timer.trainer.save_trainings')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def make_trainer(
             self,
             *,
@@ -493,6 +495,11 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
             )
 
     """
+
+    def setUp(self) -> None:
+        patcher = patch('term_timer.trainer.save_trainings')
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     async def run_scenario(  # noqa: PLR0913
             self,
