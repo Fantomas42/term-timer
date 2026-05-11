@@ -312,7 +312,17 @@ async def run_full_cycle(
     return trainer
 
 
-class BluetoothTrainerTestCase(unittest.IsolatedAsyncioTestCase):
+class SaveTrainingsPatchedTestCase(unittest.IsolatedAsyncioTestCase):
+    """Base test case that patches save_trainings to prevent writes."""
+
+    def setUp(self) -> None:
+        """Patch save_trainings for the duration of each test."""
+        patcher = patch('term_timer.trainer.save_trainings')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+
+class BluetoothTrainerTestCase(SaveTrainingsPatchedTestCase):
     """
     Base class for Trainer bluetooth scenario tests.
 
@@ -329,11 +339,6 @@ class BluetoothTrainerTestCase(unittest.IsolatedAsyncioTestCase):
     step: ClassVar[str] = 'oll'
     case_codes: ClassVar[list[str]] = []
     seed: ClassVar[int] = 42
-
-    def setUp(self) -> None:
-        patcher = patch('term_timer.trainer.save_trainings')
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
     def make_trainer(
             self,
@@ -476,7 +481,7 @@ class TestTrainerOLL01(BluetoothTrainerTestCase):
                     )
 
 
-class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
+class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
     """
     Concrete-value scenarios driven by run_scenario().
 
@@ -495,11 +500,6 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
             )
 
     """
-
-    def setUp(self) -> None:
-        patcher = patch('term_timer.trainer.save_trainings')
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
     async def run_scenario(  # noqa: PLR0913
             self,
@@ -594,6 +594,77 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(len(t.trainings.cases[case_code].timings), 1)
 
         return t
+
+    @staticmethod
+    async def run_interrupted_solve_cycle(
+            trainer: Trainer,
+            bad_solve_moves: list[str],
+    ) -> bool:
+        """
+        Run one DNF cycle: normal scramble, bad solve moves, keyboard interrupt.
+
+        Args:
+            trainer: Target Trainer instance with fake BT attached.
+            bad_solve_moves: Moves to inject during the solve phase before
+                the keyboard interrupt fires.
+
+        Returns:
+            The bool returned by start() (True = continue, False = quit).
+
+        """
+        stop_event = asyncio.Event()
+
+        async def getch_with_stop(mode: str, *_: object) -> str:
+            if mode == 'stop':
+                await stop_event.wait()
+                return ' '
+            await asyncio.sleep(3600)
+            return ''
+
+        consumer = asyncio.create_task(trainer.bluetooth_consumer())
+        trainer.bluetooth_consumer_ref = consumer
+        try:
+            with patch.object(trainer, 'getch', side_effect=getch_with_stop):
+                run_task = asyncio.create_task(trainer.start())
+                await asyncio.sleep(0.05)
+
+                s_moves = [str(m) for m in trainer.scramble]
+                await inject_moves(trainer, s_moves, clock_start=0)
+                await asyncio.wait_for(
+                    trainer.scramble_completed_event.wait(),
+                    timeout=2.0,
+                )
+                await asyncio.sleep(0.05)
+
+                solve_clock = len(s_moves) * (100 * MS_TO_NS_FACTOR) + SECOND
+                await inject_moves(
+                    trainer,
+                    bad_solve_moves[:1],
+                    clock_start=solve_clock,
+                )
+                await asyncio.wait_for(
+                    trainer.solve_started_event.wait(),
+                    timeout=1.0,
+                )
+                await asyncio.sleep(0.05)
+
+                if len(bad_solve_moves) > 1:
+                    await inject_moves(
+                        trainer,
+                        bad_solve_moves[1:],
+                        clock_start=solve_clock + 200 * MS_TO_NS_FACTOR,
+                    )
+                await asyncio.sleep(0.05)
+
+                stop_event.set()
+                return await asyncio.wait_for(run_task, timeout=2.0)
+        finally:
+            queue = cast(
+                'asyncio.Queue[list[EventDict] | None]',
+                trainer.bluetooth_queue,
+            )
+            await queue.put(None)
+            await consumer
 
     async def test_oll_01_elapsed_time_and_timing(self) -> None:
         """OLL case 01: elapsed_time and timing saved after a full solve."""
@@ -775,65 +846,9 @@ class TestConcreteScenarios(unittest.IsolatedAsyncioTestCase):
         t = build_trainer(step='oll', case_codes=['01'], seed=42)
 
         # Cycle 1: good scramble, bad solve, keyboard interrupt
-        stop_event = asyncio.Event()
-
-        async def _getch_cycle1(mode: str, *_: object) -> str:
-            if mode == 'stop':
-                await stop_event.wait()
-                return ' '
-            await asyncio.sleep(3600)
-            return ''
-
-        consumer = asyncio.create_task(t.bluetooth_consumer())
-        t.bluetooth_consumer_ref = consumer
-
-        try:
-            with patch.object(t, 'getch', side_effect=_getch_cycle1):
-                run_task = asyncio.create_task(t.start())
-                await asyncio.sleep(0.05)
-
-                s_moves = [str(m) for m in t.scramble]
-                await inject_moves(
-                    t,
-                    s_moves,
-                    clock_start=0,
-                )
-                await asyncio.wait_for(
-                    t.scramble_completed_event.wait(),
-                    timeout=2.0,
-                )
-                await asyncio.sleep(0.05)
-
-                solve_clock = len(s_moves) * (100 * MS_TO_NS_FACTOR) + SECOND
-                await inject_moves(
-                    t,
-                    bad_solve_moves[:1],
-                    clock_start=solve_clock,
-                )
-                await asyncio.wait_for(
-                    t.solve_started_event.wait(),
-                    timeout=1.0,
-                )
-                await asyncio.sleep(0.05)
-
-                await inject_moves(
-                    t,
-                    bad_solve_moves[1:],
-                    clock_start=solve_clock + 200 * MS_TO_NS_FACTOR,
-                )
-                await asyncio.sleep(0.05)
-
-                stop_event.set()
-                cycle1_result = await asyncio.wait_for(
-                    run_task,
-                    timeout=2.0,
-                )
-        finally:
-            queue = cast(
-                'asyncio.Queue[list[EventDict] | None]', t.bluetooth_queue,
-            )
-            await queue.put(None)
-            await consumer
+        cycle1_result = await TestConcreteScenarios.run_interrupted_solve_cycle(
+            t, bad_solve_moves,
+        )
 
         # DNF: start() returns True (continue), no timing saved
         self.assertTrue(cycle1_result)
