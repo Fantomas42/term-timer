@@ -793,7 +793,7 @@ class Trainer(SolveInterface):
                     selected_case.code,
                     selected_case.pretty_name,
                     self.elapsed_time,
-                )
+                ),
             )
 
         self.counter += 1

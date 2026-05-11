@@ -14,6 +14,7 @@ from term_timer.in_out import load_solves
 from term_timer.interface.console import console
 from term_timer.stats import DrillStatistics
 from term_timer.stats import SolveStatisticsReporter
+from term_timer.stats import TrainerStatistics
 from term_timer.timer import Timer
 from term_timer.trainer import Trainer
 
@@ -174,6 +175,10 @@ def show_instance_stats(instance: Timer | Trainer | Driller) -> None:
                 instance.cube_size,
                 instance.stack_done,
             ).resume('Session ')
+    elif isinstance(instance, Trainer) and len(instance.session_data) >= 2:
+        TrainerStatistics(
+            instance.session_data,
+        ).resume()
     elif isinstance(instance, Driller) and len(instance.rep_times) >= 2:
         DrillStatistics(
             instance.rep_times,
