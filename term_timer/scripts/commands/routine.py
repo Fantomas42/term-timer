@@ -82,16 +82,20 @@ async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
     if not options.routine_file:
         return list_routines()
 
-    config_path = Path(options.routine_file)
-    if not config_path.exists():  # noqa: ASYNC240
+    if options.routine_file.endswith('.json'):
+        config_path = Path(options.routine_file)
+    else:
+        config_path = ROUTINES_DIRECTORY / f'{ options.routine_file }.json'
+
+    if not config_path.exists():
         console.print(
-            f'😱 Routine file not found: { config_path }',
+            f'😱 Routine not found: { options.routine_file }',
             style='warning',
         )
         return 1
 
     config = json.loads(
-        config_path.read_text(encoding='utf-8'),  # noqa: ASYNC240
+        config_path.read_text(encoding='utf-8'),
     )
     sessions: list[SessionConfig] = config.get('sessions', [])
 
