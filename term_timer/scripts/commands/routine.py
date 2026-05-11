@@ -42,10 +42,10 @@ def list_routines() -> int:
         title=f'Routines in { ROUTINES_DIRECTORY }',
         box=box.SIMPLE,
     )
-    table.add_column('File', width=30)
-    table.add_column('Sessions', width=8, justify='right')
+    table.add_column('Name')
+    table.add_column('Steps', width=8, justify='right')
     table.add_column('Bluetooth', width=9, justify='center')
-    table.add_column('Comment', width=40)
+    table.add_column('Comment')
 
     for path in routine_files:
         try:
@@ -58,10 +58,13 @@ def list_routines() -> int:
         comment = config.get('comment', '')
 
         session_count = f'[stats]{ len(sessions) }[/stats]'
-        bt_str = '[ao5]yes[/ao5]' if bluetooth else '[no-ao]no[/no-ao]'
+        bt_str = (
+            '[success]Yes[/success]'
+            if bluetooth else '[warning]No[/warning]'
+        )
 
         table.add_row(
-            f'[localhost]{ path.name }[/localhost]',
+            f'[localhost]{ path.name.replace(".json", "") }[/localhost]',
             session_count,
             bt_str,
             f'[comment]{ comment }[/comment]' if comment else '',
