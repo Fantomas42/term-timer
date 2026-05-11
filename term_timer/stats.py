@@ -1298,6 +1298,11 @@ class DrillStatistics(Statistics):
         return max(self.rep_tps) if self.rep_tps else 0.0
 
     @cached_property
+    def worst_tps(self) -> float:
+        """Return the worst (lowest) TPS across all reps."""
+        return min(self.rep_tps) if self.rep_tps else 0.0
+
+    @cached_property
     def mean_tps(self) -> float:
         """Return the mean TPS across all reps."""
         return float(np.mean(self.rep_tps)) if self.rep_tps else 0.0
@@ -1336,6 +1341,7 @@ class DrillStatistics(Statistics):
         console.print(
             '[stats]Worst :[/stats]',
             f'[red]{ format_time(self.worst) }[/red]',
+            f'[tps]{ self.worst_tps:.2f} TPS[/tps]',
         )
         if self.mean_fluency > 0:
             console.print(
