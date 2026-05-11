@@ -96,7 +96,7 @@ class Trainer(SolveInterface):
 
         self.cases = self.get_cases()
         self.counter = 1
-        self.session_data: list[tuple[str, str, int]] = []
+        self.session_data: list[tuple[str, Case, int]] = []
 
         self.trainer_line()
 
@@ -677,7 +677,7 @@ class Trainer(SolveInterface):
             self.session_data.append(
                 (
                     selected_case.code,
-                    selected_case.pretty_name,
+                    selected_case,
                     self.elapsed_time,
                 ),
             )
@@ -791,7 +791,7 @@ class Trainer(SolveInterface):
             self.session_data.append(
                 (
                     selected_case.code,
-                    selected_case.pretty_name,
+                    selected_case,
                     self.elapsed_time,
                 ),
             )

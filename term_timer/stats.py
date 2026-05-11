@@ -6,6 +6,7 @@ from typing import cast
 import numpy as np
 import plotext as plt
 from cubing_algs.annotations import CubeOrientation
+from cubing_algs.cases.case import Case
 from cubing_algs.vcube import VCube
 from rich import box
 from rich.table import Table
@@ -1350,7 +1351,7 @@ class TrainerStatistics:
 
     def __init__(
             self,
-            session_data: list[tuple[str, str, int]],
+            session_data: list[tuple[str, Case, int]],
     ) -> None:
         """Initialize trainer statistics from per-training collected data."""
         self.session_data = session_data
@@ -1385,10 +1386,10 @@ class TrainerStatistics:
             f'[red]{ format_time(global_stats.worst) }[/red]',
         )
 
-        case_groups: dict[str, tuple[str, list[int]]] = {}
-        for code, name, elapsed in self.session_data:
+        case_groups: dict[str, tuple[Case, list[int]]] = {}
+        for code, case, elapsed in self.session_data:
             if code not in case_groups:
-                case_groups[code] = (name, [])
+                case_groups[code] = (case, [])
             case_groups[code][1].append(elapsed)
 
         if len(case_groups) < 2:
@@ -1400,10 +1401,18 @@ class TrainerStatistics:
         table.add_column('Mean', width=5, justify='right')
         table.add_column('Best', width=5, justify='right')
 
-        for _, (name, times) in sorted(case_groups.items()):
+        for _, (case, times) in sorted(case_groups.items()):
+            link = format_term_timer_case_url(case)
+            if link:
+                head = (
+                    f'[localhost][link={ link }]{ case.pretty_name }'
+                    '[/link][/localhost]'
+                )
+            else:
+                head = case.pretty_name
             stats = Statistics(times)
             table.add_row(
-                name,
+                head,
                 f'[stats]{ stats.total }[/stats]',
                 f'[result]{ format_duration(stats.mean) }[/result]',
                 f'[green]{ format_duration(stats.best) }[/green]',
