@@ -239,7 +239,7 @@ class Trainer(SolveInterface):
             setups = [
                 setup
                 for setup in valid_case.setup_algorithms
-                if not setup.has_internal_rotations
+                if not setup.has_internal_rotations and not setup.has_rotations
             ]
 
             if not setups:
