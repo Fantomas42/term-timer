@@ -19,7 +19,7 @@ from term_timer.scripts.commands.trainer import trainer
 from term_timer.server.app import Server
 
 
-def main() -> int:  # noqa: PLR0911
+def main() -> int:  # noqa: C901, PLR0911
     """
     Run term-timer CLI application.
 

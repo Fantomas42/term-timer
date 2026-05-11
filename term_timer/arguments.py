@@ -1459,9 +1459,14 @@ def routine_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
     parser.add_argument(
         'routine_file',
+        nargs='?',
         type=str,
+        default='',
         metavar='FILE',
-        help='Path to the routine JSON config file.',
+        help=(
+            'Path to the routine JSON config file.\n'
+            'Default: List available routines.'
+        ),
     )
 
     return parser

@@ -3,8 +3,12 @@ import json
 import time
 from argparse import Namespace
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from term_timer.driller import Driller
+from rich import box
+from rich.table import Table
+
+from term_timer.constants import ROUTINES_DIRECTORY
 from term_timer.exceptions import InvalidCaseError
 from term_timer.formatter import format_time
 from term_timer.interface.console import console
@@ -13,8 +17,58 @@ from term_timer.routine import build_drill_instance
 from term_timer.routine import build_solve_instance
 from term_timer.routine import build_train_instance
 from term_timer.routine import run_session
-from term_timer.timer import Timer
-from term_timer.trainer import Trainer
+
+if TYPE_CHECKING:
+    from term_timer.driller import Driller
+    from term_timer.timer import Timer
+    from term_timer.trainer import Trainer
+
+
+def list_routines() -> int:
+    """
+    List available routine files from the routines directory.
+
+    Returns:
+        Exit code (0 for success).
+
+    """
+    routine_files = sorted(ROUTINES_DIRECTORY.glob('*.json'))
+
+    if not routine_files:
+        console.print('🤔 No routines found.', style='warning')
+        return 0
+
+    table = Table(
+        title=f'Routines in { ROUTINES_DIRECTORY }',
+        box=box.SIMPLE,
+    )
+    table.add_column('File', width=30)
+    table.add_column('Sessions', width=8, justify='right')
+    table.add_column('Bluetooth', width=9, justify='center')
+    table.add_column('Comment', width=40)
+
+    for path in routine_files:
+        try:
+            config = json.loads(path.read_text(encoding='utf-8'))
+        except (json.JSONDecodeError, OSError):
+            continue
+
+        sessions = config.get('sessions', [])
+        bluetooth = config.get('bluetooth', False)
+        comment = config.get('comment', '')
+
+        session_count = f'[stats]{ len(sessions) }[/stats]'
+        bt_str = '[ao5]yes[/ao5]' if bluetooth else '[no-ao]no[/no-ao]'
+
+        table.add_row(
+            f'[localhost]{ path.name }[/localhost]',
+            session_count,
+            bt_str,
+            f'[comment]{ comment }[/comment]' if comment else '',
+        )
+
+    console.print(table)
+    return 0
 
 
 async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
@@ -25,6 +79,9 @@ async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
         Exit code (0 for success).
 
     """
+    if not options.routine_file:
+        return list_routines()
+
     config_path = Path(options.routine_file)
     if not config_path.exists():  # noqa: ASYNC240
         console.print(
