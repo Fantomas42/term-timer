@@ -150,45 +150,78 @@ class SolveInterface(
 
         return None
 
-    async def inspect_solve(self) -> None:
+    async def inspect_solve(self) -> bool:
         """
         Execute the inspection countdown phase before solve start.
 
         Runs the inspection countdown task and waits for either keyboard
         input or bluetooth solve start event. Sets the inspection completed
         event when finished. Handles both bluetooth and non-bluetooth modes.
+
+        Returns:
+            True if user quit (pressed 'q' or ESC) in bluetooth mode,
+            False otherwise.
+
         """
         inspection_task = asyncio.create_task(self.inspection())
 
         if self.bluetooth_interface:
+            getch_task = asyncio.create_task(
+                self.getch('inspected', self.countdown),
+            )
             tasks = [
-                asyncio.create_task(self.getch('inspected', self.countdown)),
+                getch_task,
                 asyncio.create_task(self.solve_started_event.wait()),
             ]
             await self.wait_control(tasks)
 
             if not self.inspection_completed_event.is_set():
                 self.inspection_completed_event.set()
+
+            if not self.solve_started_event.is_set():
+                result = getch_task.result()
+                char = result if isinstance(result, str) else ''
+                if char in {'q', ESCAPE_CHAR}:
+                    await inspection_task
+                    return True
         else:
-            await self.getch('inspected', self.countdown)
+            char = await self.getch('inspected', self.countdown)
             self.inspection_completed_event.set()
+            if char in {'q', ESCAPE_CHAR}:
+                await inspection_task
+                return True
 
         await inspection_task
+        return False
 
-    async def wait_solve(self) -> None:
+    async def wait_solve(self) -> bool:
         """
         Wait for solve start trigger from keyboard or bluetooth cube.
 
         In bluetooth mode, races keyboard input against the solve started
         event from the bluetooth cube. Ensures the solve begins only when
         triggered by the appropriate input source.
+
+        Returns:
+            True if user quit (pressed 'q' or ESC) in bluetooth mode,
+            False otherwise.
+
         """
         if self.bluetooth_interface:
+            getch_task = asyncio.create_task(self.getch('start'))
             tasks = [
-                asyncio.create_task(self.getch('start')),
+                getch_task,
                 asyncio.create_task(self.solve_started_event.wait()),
             ]
             await self.wait_control(tasks)
+
+            if not self.solve_started_event.is_set():
+                result = getch_task.result()
+                char = result if isinstance(result, str) else ''
+                if char in {'q', ESCAPE_CHAR}:
+                    return True
+
+        return False
 
     async def time_solve(self) -> None:
         """

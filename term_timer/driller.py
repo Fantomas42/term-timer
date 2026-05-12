@@ -252,7 +252,9 @@ class Driller(SolveInterface):
                     return False
 
             if self.countdown:
-                await self.inspect_solve()
+                quit_drilling = await self.inspect_solve()
+                if quit_drilling:
+                    return False
 
             await self.time_solve()
 
@@ -287,7 +289,9 @@ class Driller(SolveInterface):
                 return False
 
             if self.countdown:
-                await self.inspect_solve()
+                quit_drilling = await self.inspect_solve()
+                if quit_drilling:
+                    return False
 
             await self.time_solve()
 

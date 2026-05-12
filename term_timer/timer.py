@@ -314,9 +314,13 @@ class Timer(SolveInterface):
             return quit_solving
 
         if self.countdown:
-            await self.inspect_solve()
+            quit_solving = await self.inspect_solve()
+            if quit_solving:
+                return False
         else:
-            await self.wait_solve()
+            quit_solving = await self.wait_solve()
+            if quit_solving:
+                return False
 
         await self.time_solve()
 

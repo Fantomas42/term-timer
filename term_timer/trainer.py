@@ -690,7 +690,7 @@ class Trainer(SolveInterface):
 
         return char in {'q', 'k', ESCAPE_CHAR}
 
-    async def start(self) -> bool:
+    async def start(self) -> bool:  # noqa: C901, PLR0912
         """
         Execute training workflow for single case.
 
@@ -739,7 +739,10 @@ class Trainer(SolveInterface):
         if quit_training is not None:
             return quit_training
 
-        await self.wait_solve()
+        quit_training = await self.wait_solve()
+        if quit_training:
+            return False
+
         await self.time_solve()
 
         self.elapsed_time = self.end_time - self.start_time
