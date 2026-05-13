@@ -1148,14 +1148,22 @@ class Solve:  # noqa: PLR0904
             items = items[:count]
 
         diagnostic_lines = ['[stats]Diagnostics:[/stats]']
-        diagnostic_lines.extend(
-            (
-                f'[diagnostic] - { item["recommendation"] }[/diagnostic]\n'
-                f'[examen]   [{ item["severity"].upper() }] '
-                f'{ item["impact_seconds"] }s[/examen]'
+        if items:
+            diagnostic_lines.extend(
+                (
+                    f'[diagnostic] - { item["description"] }[/diagnostic]\n'
+                    '[advice]   ' +
+                    item['recommendation'].replace('. ', '.\n   ') +
+                    '[/advice]\n'
+                    f'[examen]   [{ item["severity"].upper() }] '
+                    f'{item["impact_seconds"]:.2f}s[/examen]'
+                )
+                for item in items
             )
-            for item in items
-        )
+        else:
+            diagnostic_lines.append(
+                '[success] - No issue detected, sane solve ![/success]',
+            )
 
         return '\n'.join(diagnostic_lines)
 

@@ -8,8 +8,8 @@ personalized improvement recommendations.
 """
 from enum import StrEnum
 from operator import itemgetter
-from typing import Final
 from typing import TYPE_CHECKING
+from typing import Final
 from typing import TypedDict
 
 from term_timer.constants import SECOND
@@ -204,7 +204,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'location': 'global',
                 'metric_name': 'tps',
                 'actual_value': solve.tps,
-                'expected_value': (5.0, 8.0),  # TODO(me): review
+                'expected_value': (2.5, 4.5),
                 'description': (
                     f'Low TPS ({solve.tps:.2f}). Turning speed needs '
                     'improvement for competitive times.'
@@ -231,7 +231,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'location': 'global',
                 'metric_name': 'tps',
                 'actual_value': solve.tps,
-                'expected_value': (5.0, 8.0),  # TODO(me): review
+                'expected_value': (2.5, 4.5),
                 'description': (
                     f'Moderate TPS ({solve.tps:.2f}). Room for improvement '
                     'in turning speed.'
@@ -246,7 +246,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
 
     execution_pauses = solve.execution_pauses
     if execution_pauses > 8:
-        estimated_impact = execution_pauses * solve.pause_threshold
+        estimated_impact = execution_pauses * solve.pause_threshold / SECOND
         issues.append(
             {
                 'severity': DiagnosticSeverity.CRITICAL,
@@ -270,7 +270,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
             },
         )
     elif execution_pauses > 4:
-        estimated_impact = execution_pauses * solve.pause_threshold
+        estimated_impact = execution_pauses * solve.pause_threshold / SECOND
         issues.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
@@ -294,7 +294,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
         )
 
     fluency = solve.fluency
-    if fluency < 50:
+    if fluency < 55:
         issues.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
@@ -303,7 +303,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'location': 'global',
                 'metric_name': 'fluency',
                 'actual_value': float(fluency),
-                'expected_value': (70.0, 100.0),  # TODO(me): review
+                'expected_value': (55.0, 100.0),
                 'description': (
                     f'Very low fluency ({fluency}/100). Highly inconsistent '
                     'timing between moves indicates lack of muscle memory.'
@@ -316,7 +316,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'command': '',
             },
         )
-    elif fluency < 70:
+    elif fluency < 60:
         issues.append(
             {
                 'severity': DiagnosticSeverity.MEDIUM,
@@ -325,7 +325,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'location': 'global',
                 'metric_name': 'fluency',
                 'actual_value': float(fluency),
-                'expected_value': (70.0, 100.0),  # TODO(me): review
+                'expected_value': (60.0, 100.0),
                 'description': (
                     f'Moderate fluency ({fluency}/100). Some inconsistency '
                     'in turning rhythm.'
@@ -357,12 +357,13 @@ def check_global_rotation(solve: 'Solve') -> list[Diagnostic]:
         List of detected rotation issues
 
     """
-    # TODO(me): review
     issues: list[Diagnostic] = []
 
     rotations = solve.rotations
+    tps = solve.move_speed * 1.2 / SECOND
+
     if rotations > 8:
-        estimated_impact = rotations * 0.15
+        estimated_impact = rotations * tps
         issues.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
@@ -385,7 +386,7 @@ def check_global_rotation(solve: 'Solve') -> list[Diagnostic]:
             },
         )
     elif rotations > 4:
-        estimated_impact = rotations * 0.1
+        estimated_impact = rotations * tps
         issues.append(
             {
                 'severity': DiagnosticSeverity.MEDIUM,
@@ -409,7 +410,7 @@ def check_global_rotation(solve: 'Solve') -> list[Diagnostic]:
 
     aufs = solve.aufs
     if aufs > 6:
-        estimated_impact = aufs * 0.08
+        estimated_impact = aufs * solve.move_speed * 1.05 / SECOND
         issues.append(
             {
                 'severity': DiagnosticSeverity.MEDIUM,
@@ -450,6 +451,7 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
         List of detected recognition issues
 
     """
+    # TODO(me): review
     issues: list[Diagnostic] = []
 
     rec_percent = solve.recognition_percent
