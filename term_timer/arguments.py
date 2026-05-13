@@ -107,7 +107,7 @@ def set_session_arguments(
     return session
 
 
-def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR0914
+def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR0914, PLR0915
     """
     Create argument parser for solve command.
 
@@ -125,6 +125,7 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
     show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
     show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
     show_highlights = DISPLAY_CONFIG.get('highlights', True)
+    show_doctor = DISPLAY_CONFIG.get('doctor', True)
 
     parser = subparsers.add_parser(
         'solve',
@@ -231,6 +232,18 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
         dest='show_highlights',
         help=(
             f'{ mode.title() } highlights after analysis.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_doctor else 'show'
+    bluetooth.add_argument(
+        f'--{ mode }-doctor',
+        action='store_const',
+        const=not show_doctor,
+        default=show_doctor,
+        dest='show_doctor',
+        help=(
+            f'{ mode.title() } doctor main diagnostic after analysis.\n'
             'Default: False.'
         ),
     )
@@ -906,6 +919,7 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
     show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
     show_highlights = DISPLAY_CONFIG.get('highlights', True)
+    show_doctor = DISPLAY_CONFIG.get('doctor', True)
 
     parser = subparsers.add_parser(
         'detail',
@@ -988,6 +1002,18 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         dest='show_highlights',
         help=(
             f'{ mode.title() } highlights after analysis.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_doctor else 'show'
+    analyze.add_argument(
+        f'--{ mode }-doctor',
+        action='store_const',
+        const=not show_doctor,
+        default=show_doctor,
+        dest='show_doctor',
+        help=(
+            f'{ mode.title() } doctor diagnostics after analysis.\n'
             'Default: False.'
         ),
     )

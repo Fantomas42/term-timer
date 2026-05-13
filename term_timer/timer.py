@@ -41,6 +41,7 @@ class Timer(SolveInterface):
             session: str,
             free_play: bool,
             show_highlights: bool,
+            show_doctor: bool,
             show_cube: bool,
             show_reconstruction: bool,
             show_tps_graph: bool,
@@ -69,6 +70,7 @@ class Timer(SolveInterface):
         self.scrambles = scrambles
         self.scramble_index = 0
         self.show_highlights = show_highlights
+        self.show_doctor = show_doctor
         self.show_cube = show_cube
         self.show_reconstruction = show_reconstruction
         self.show_tps_graph = show_tps_graph
@@ -159,7 +161,7 @@ class Timer(SolveInterface):
                 end='',
             )
 
-    def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912
+    def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912, PLR0915
         """Display solve results, statistics, and record achievements."""
         old_stats = SolveStatisticsReporter(self.cube_size, self.stack)
 
@@ -183,6 +185,8 @@ class Timer(SolveInterface):
                     solve.recognition_graph()
                 if self.show_highlights:
                     self.console.print(solve.highlights())
+                if self.show_doctor:
+                    self.console.print(solve.diagnostics(1))
 
                 link = (
                     solve.link_term_timer

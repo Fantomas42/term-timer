@@ -66,6 +66,7 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
         session=session,
         free_play=options.free_play,
         show_highlights=options.show_highlights,
+        show_doctor=options.show_doctor,
         show_cube=options.show_cube,
         show_reconstruction=options.show_reconstruction,
         show_tps_graph=options.show_tps_graph,

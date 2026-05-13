@@ -39,6 +39,7 @@ class SessionConfig(TypedDict, total=False):
     edges_oriented: bool
     scramble: str
     show_highlights: bool
+    show_doctor: bool
     show_reconstruction: bool
     show_tps_graph: bool
     show_time_graph: bool
@@ -125,6 +126,7 @@ def build_solve_instance(session_config: SessionConfig) -> Timer:
         session=session_name,
         free_play=free_play,
         show_highlights=display('show_highlights', 'highlights'),
+        show_doctor=display('show_doctor', 'doctor'),
         show_cube=display('show_cube', 'scramble'),
         show_reconstruction=display('show_reconstruction', 'reconstruction'),
         show_tps_graph=display('show_tps_graph', 'tps_graph'),
