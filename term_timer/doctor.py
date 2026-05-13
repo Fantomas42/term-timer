@@ -552,6 +552,6 @@ def generate_solve_diagnostics(solve: 'Solve') -> list[Diagnostic]:
     diagnostics.extend(check_global_rotation(solve))
     diagnostics.extend(check_global_recognition(solve))
 
-    diagnostics.sort(key=itemgetter('impact_seconds'))
+    diagnostics.sort(key=itemgetter('impact_seconds'), reverse=True)
 
     return diagnostics

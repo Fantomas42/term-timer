@@ -1149,7 +1149,11 @@ class Solve:  # noqa: PLR0904
 
         diagnostic_lines = ['[stats]Diagnostics:[/stats]']
         diagnostic_lines.extend(
-            f'[diagnostic] - { item }[/diagnostic]'
+            (
+                f'[diagnostic] - { item["recommendation"] }[/diagnostic]\n'
+                f'[examen]   [{ item["severity"].upper() }] '
+                f'{ item["impact_seconds"] }s[/examen]'
+            )
             for item in items
         )
 
