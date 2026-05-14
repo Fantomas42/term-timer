@@ -53,17 +53,27 @@ class StepDef(NamedTuple):
 
     step_code: str
     printer_mode: str
+    display_name: str
     training_case: TrainingCase | None = None
 
 
 STEP_CONFIGS: Final[dict[str, StepDef]] = {
-    'cross': StepDef('Cross', 'cross', TrainingCase(CROSS_CASE, [])),
-    'ecross': StepDef('Cross', 'cross', TrainingCase(EASY_CROSS_CASE, [])),
-    'xcross': StepDef('Cross', 'cross', TrainingCase(X_CROSS_CASE, [])),
-    'f2l': StepDef('F2L', 'f2l'),
-    'af2l': StepDef('F2L', 'af2l'),
-    'oll': StepDef('OLL', 'oll'),
-    'pll': StepDef('PLL', 'pll'),
+    'cross': StepDef(
+        'Cross', 'cross', 'Cross',
+        TrainingCase(CROSS_CASE, []),
+    ),
+    'xcross': StepDef(
+        'Cross', 'cross', 'X-Cross',
+        TrainingCase(X_CROSS_CASE, []),
+    ),
+    'ecross': StepDef(
+        'Cross', 'cross', 'Easy Cross',
+        TrainingCase(EASY_CROSS_CASE, []),
+    ),
+    'oll': StepDef('OLL', 'oll', 'OLL'),
+    'pll': StepDef('PLL', 'pll', 'PLL'),
+    'f2l': StepDef('F2L', 'f2l', 'F2L'),
+    'af2l': StepDef('F2L', 'af2l', 'Advanced F2L'),
 }
 
 
@@ -96,7 +106,9 @@ class Trainer(SolveInterface):
 
         self.method = 'CFOP'
         self.step = step
-        self.step_upper = step.upper()
+        self.step_config = STEP_CONFIGS[step]
+        self.step_label = f'{ self.method }/{ self.step_config.display_name }'
+
         self.free_play = free_play
         self.show_solution = show_solution
         self.show_cube = show_cube
@@ -107,10 +119,7 @@ class Trainer(SolveInterface):
         self.rng = rng
         self.orientation_faces = orientation
 
-        self.trainings = load_trainings(
-            self.method,
-            self.step_upper,
-        )
+        self.trainings = load_trainings(self.method, self.step.upper())
 
         self.cases = self.get_cases()
         self.counter = 1
@@ -206,9 +215,8 @@ class Trainer(SolveInterface):
             InvalidCaseError: If selected case is not valid for the step.
 
         """
-        config = STEP_CONFIGS[self.step]
-        if config.training_case is not None:
-            return [config.training_case]
+        if self.step_config.training_case is not None:
+            return [self.step_config.training_case]
 
         cases = get_collection(f'{ self.method }/{ self.step }').cases
         valid_cases: dict[str, Case] = {
@@ -240,8 +248,8 @@ class Trainer(SolveInterface):
         for case_code in case_codes:
             if case_code not in valid_cases:
                 error_string = (
-                    f'Invalid case "{ case_code }" for '
-                    f'{ self.method }/{ self.step_upper }'
+                    f'Invalid case "{ case_code }" for { self.step_label }: '
+                    'Case is unknown.'
                 )
                 raise InvalidCaseError(error_string)
             valid_case = valid_cases[case_code]
@@ -254,8 +262,7 @@ class Trainer(SolveInterface):
 
             if not setups:
                 error_string = (
-                    f'Invalid case "{ case_code }" for '
-                    f'{ self.method }/{ self.step_upper }: '
+                    f'Invalid case "{ case_code }" for { self.step_label }: '
                     'No available setup algorithm.'
                 )
                 raise InvalidCaseError(error_string)
@@ -290,30 +297,29 @@ class Trainer(SolveInterface):
             cube.rotate(orientation_moves)
 
         return FaceletAnalyser().check_step(
-            STEP_CONFIGS[self.step].step_code,
+            self.step_config.step_code,
             cube.state,
             self.orientation_faces,
         )
 
     def trainer_line(self) -> None:
         """Display training summary."""
-        if STEP_CONFIGS[self.step].training_case is not None:
+        if self.step_config.training_case is not None:
             self.console.print(
-                f'Training on '
-                f'{ self.method }/{ self.step_upper }',
+                f'Training on { self.step_label }',
                 style='trainer',
             )
         else:
             self.console.print(
                 f'Training on { len(self.cases) } '
                 f'case{ "s" if len(self.cases) > 1 else "" } on '
-                f'{ self.method }/{ self.step_upper }',
+                f'{ self.step_label }',
                 style='trainer',
             )
 
     def list_cases(self) -> None:
         """Display a table of all available cases with their training stats."""
-        if STEP_CONFIGS[self.step].training_case is not None:
+        if self.step_config.training_case is not None:
             valid_cases = {
                 tc.case.code: tc.case for tc in self.cases
             }
@@ -327,7 +333,7 @@ class Trainer(SolveInterface):
         no_ao = '[no-ao]N/A[/no-ao]'
 
         table = Table(
-            title=f'{ self.method }/{ self.step_upper } stats',
+            title=f'{ self.step_label } stats',
             box=box.SIMPLE,
         )
         table.add_column('Case', width=40)
@@ -401,10 +407,12 @@ class Trainer(SolveInterface):
         link = format_term_timer_case_url(selected_case)
         name = selected_case.pretty_name
 
-        mode = STEP_CONFIGS[self.step].printer_mode
-
         if self.show_cube:
-            print_cube_trainer(cube, self.orientation_faces, mode)
+            print_cube_trainer(
+                cube,
+                self.orientation_faces,
+                self.step_config.printer_mode,
+            )
 
         scramble_line = f'[moves]{ self.scramble_oriented }[/moves]'
         if self.cube_orientation_moves:
