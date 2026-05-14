@@ -25,6 +25,7 @@ from term_timer.methods.base import Analyser
 from term_timer.methods.base import get_step_config
 from term_timer.solve import Solve
 from term_timer.transform import humanize_moves
+from term_timer.triggers import DEFAULT_TRIGGERS
 
 SPAN_REGEX: Final = re.compile(r'(<span[^>]*>.*?</span>)')
 BLOCK_REGEX: Final = re.compile(r'\[([\w-]+)\](.*?)\[/([\w-]+)\]')
@@ -140,6 +141,34 @@ def format_line(value: str) -> str:
             )
 
     return ' '.join(processed_parts)
+
+
+def format_algorithm(algorithm: Algorithm) -> str:
+    """
+    Format algorithm into styled HTML spans.
+
+    Converts algorithm into HTML with semantic markup for
+    individual moves and triggers, adding CSS classes and tooltips.
+
+    Args:
+        algorithm: Algorithm to format.
+
+    Returns:
+        HTML string with each move wrapped in styled span elements.
+
+    """
+    algorithm_string = format_alg_triggers(
+        format_alg_moves(
+            format_alg_aufs(
+                str(algorithm),
+                1,
+                1,
+            ),
+        ),
+        DEFAULT_TRIGGERS,
+    )
+
+    return format_line(algorithm_string)
 
 
 def get_step_case(step_name: str, code_case: str) -> Case:

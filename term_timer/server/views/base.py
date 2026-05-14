@@ -22,6 +22,7 @@ from term_timer.server.annotations import SessionListContext
 from term_timer.server.annotations import SolveDetailContext
 from term_timer.server.filters import case_number
 from term_timer.server.filters import first_case
+from term_timer.server.filters import format_algorithm
 from term_timer.server.filters import format_delta
 from term_timer.server.filters import format_line
 from term_timer.server.filters import format_score
@@ -119,6 +120,7 @@ class View:
                         'format_time': format_time,
                         'format_score': format_score,
                         'format_line': format_line,
+                        'format_algorithm': format_algorithm,
                         'format_session_name': format_session_name,
                         'case_link': format_term_timer_case_url,
                         'get_step_case': get_step_case,
