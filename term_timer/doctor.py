@@ -19,6 +19,12 @@ if TYPE_CHECKING:
 
 TPS_LOW_THRESHOLD: Final = 1.5
 TPS_MEDIUM_THRESHOLD: Final = 2.3
+TPS_EXPECTED_MIN: Final = 2.5
+TPS_EXPECTED_MAX: Final = 4.5
+
+FLUENCY_LOW_THRESHOLD: Final = 55
+FLUENCY_MEDIUM_THRESHOLD: Final = 60
+FLUENCY_IMPACT_FACTOR: Final = 0.15
 
 
 class DiagnosticSeverity(StrEnum):
@@ -40,7 +46,6 @@ class DiagnosticCategory(StrEnum):
     EXECUTION_PAUSES = 'execution_pauses'
     EXECUTION_FLUENCY = 'execution_fluency'
     RECOGNITION_SLOW = 'recognition_slow'
-    RECOGNITION_BALANCE = 'recognition_balance'
     PLANNING_CROSS = 'planning_cross'
     PLANNING_LOOKAHEAD = 'planning_lookahead'
     AUFS_EXCESSIVE = 'aufs_excessive'
@@ -193,9 +198,9 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
 
     if solve.tps < TPS_LOW_THRESHOLD:
         estimated_impact = (
-            (1 / solve.tps - 1 / 6.0) * len(solve.solution)
+            (1 / solve.tps - 1 / TPS_EXPECTED_MIN) * len(solve.solution)
             if solve.tps > 0 else 0
-        )  # TODO(me): review
+        )
         issues.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
@@ -220,9 +225,9 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
         )
     elif solve.tps < TPS_MEDIUM_THRESHOLD:
         estimated_impact = (
-            (1 / solve.tps - 1 / 7.0) * len(solve.solution)
+            (1 / solve.tps - 1 / TPS_EXPECTED_MAX) * len(solve.solution)
             if solve.tps > 0 else 0
-        )  # TODO(me): review
+        )
         issues.append(
             {
                 'severity': DiagnosticSeverity.MEDIUM,
@@ -294,16 +299,21 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
         )
 
     fluency = solve.fluency
-    if fluency < 55:
+    if fluency < FLUENCY_LOW_THRESHOLD:
         issues.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
                 'category': DiagnosticCategory.EXECUTION_FLUENCY,
-                'impact_seconds': 1.0,  # TODO(me): hard to tell
+                'impact_seconds': (
+                    solve.execution_time / SECOND
+                    * (FLUENCY_LOW_THRESHOLD - fluency)
+                    / FLUENCY_LOW_THRESHOLD
+                    * FLUENCY_IMPACT_FACTOR
+                ),
                 'location': 'global',
                 'metric_name': 'fluency',
                 'actual_value': float(fluency),
-                'expected_value': (55.0, 100.0),
+                'expected_value': (float(FLUENCY_LOW_THRESHOLD), 100.0),
                 'description': (
                     f'Very low fluency ({fluency}/100). Highly inconsistent '
                     'timing between moves indicates lack of muscle memory.'
@@ -316,16 +326,21 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'command': '',
             },
         )
-    elif fluency < 60:
+    elif fluency < FLUENCY_MEDIUM_THRESHOLD:
         issues.append(
             {
                 'severity': DiagnosticSeverity.MEDIUM,
                 'category': DiagnosticCategory.EXECUTION_FLUENCY,
-                'impact_seconds': 0.5,  # TODO(me): hard to tell
+                'impact_seconds': (
+                    solve.execution_time / SECOND
+                    * (FLUENCY_MEDIUM_THRESHOLD - fluency)
+                    / FLUENCY_MEDIUM_THRESHOLD
+                    * FLUENCY_IMPACT_FACTOR
+                ),
                 'location': 'global',
                 'metric_name': 'fluency',
                 'actual_value': float(fluency),
-                'expected_value': (60.0, 100.0),
+                'expected_value': (float(FLUENCY_MEDIUM_THRESHOLD), 100.0),
                 'description': (
                     f'Moderate fluency ({fluency}/100). Some inconsistency '
                     'in turning rhythm.'
@@ -451,14 +466,21 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
         List of detected recognition issues
 
     """
-    # TODO(me): review
     issues: list[Diagnostic] = []
 
-    rec_percent = solve.recognition_percent
-    exec_percent = solve.execution_percent
+    if not solve.method_applied:
+        return issues
+    solve_norms = solve.method_applied.norms['solve']
+    rec_norm = solve_norms['recognition']
+    rec_norm_max = float(rec_norm[1])  # type: ignore[index]
 
-    if rec_percent > 40:
-        estimated_impact = solve.recognition_time / SECOND * 0.3
+    rec_percent = solve.recognition_percent
+
+    if rec_percent > rec_norm_max * 2:
+        estimated_impact = (
+            solve.recognition_time / SECOND
+            * (1 - rec_norm_max / rec_percent)
+        )
         issues.append(
             {
                 'severity': DiagnosticSeverity.CRITICAL,
@@ -467,7 +489,7 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
                 'location': 'global',
                 'metric_name': 'recognition_percent',
                 'actual_value': rec_percent,
-                'expected_value': (0.0, 20.0),
+                'expected_value': rec_norm,
                 'description': (
                     f'Very high recognition time ({rec_percent:.1f}%). '
                     'Spending too much time identifying cases instead of '
@@ -482,8 +504,11 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
                 'command': '',
             },
         )
-    elif rec_percent > 25:
-        estimated_impact = solve.recognition_time / SECOND * 0.2
+    elif rec_percent > rec_norm_max * 1.25:
+        estimated_impact = (
+            solve.recognition_time / SECOND
+            * (1 - rec_norm_max / rec_percent)
+        )
         issues.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
@@ -492,7 +517,7 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
                 'location': 'global',
                 'metric_name': 'recognition_percent',
                 'actual_value': rec_percent,
-                'expected_value': (0.0, 20.0),
+                'expected_value': rec_norm,
                 'description': (
                     f'High recognition time ({rec_percent:.1f}%). '
                     'Case identification is slowing down the solve.'
@@ -501,30 +526,6 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
                     'Increase frequency of case recognition drills. '
                     'Focus on pattern recognition for slow-to-identify cases. '
                     'Practice F2L pair tracking during cross.'
-                ),
-                'command': '',
-            },
-        )
-
-    if exec_percent < 60:
-        issues.append(
-            {
-                'severity': DiagnosticSeverity.HIGH,
-                'category': DiagnosticCategory.RECOGNITION_BALANCE,
-                'impact_seconds': 0.5,
-                'location': 'global',
-                'metric_name': 'execution_percent',
-                'actual_value': exec_percent,
-                'expected_value': (80.0, 100.0),
-                'description': (
-                    f'Poor recognition/execution balance '
-                    f'({exec_percent:.1f}% execution). '
-                    'Too much time spent thinking vs turning.'
-                ),
-                'recommendation': (
-                    'Work on both recognition speed and execution speed. '
-                    'The goal is 80%+ execution time. Practice recognizing '
-                    'cases faster and improve TPS to shift the balance.'
                 ),
                 'command': '',
             },

@@ -237,9 +237,9 @@ def format_fluency(fluency: int) -> str:
 
     """
     fluency_klass = 'warning'
-    if fluency >= 75:
+    if fluency >= 65:
         fluency_klass = 'success'
-    elif fluency >= 50:
+    elif fluency >= 55:
         fluency_klass = 'caution'
 
     return (
