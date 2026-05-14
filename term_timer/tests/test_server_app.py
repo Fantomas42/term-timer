@@ -647,9 +647,13 @@ class TestSolveDetailView(unittest.TestCase):
         self.assertEqual(view.solve, mock_solve)
         self.assertEqual(view.solve.method_name, 'cfop')
 
+    @patch('term_timer.server.views.solves.generate_solve_diagnostics')
     @patch('term_timer.server.views.solves.load_all_solves')
     def test_solve_detail_view_get_context_basic(
-            self, mock_load_solves: Mock) -> None:
+        self,
+        mock_load_solves: Mock,
+        _mock_diagnostics: Mock,
+    ) -> None:
         """Test solve detail view get context basic."""
         mock_solve = Mock()
         mock_solve.final_time = 5000000000
@@ -671,9 +675,13 @@ class TestSolveDetailView(unittest.TestCase):
         self.assertEqual(context['rank'], 1)
         self.assertEqual(len(context['scatter']), 0)  # No advanced data
 
+    @patch('term_timer.server.views.solves.generate_solve_diagnostics')
     @patch('term_timer.server.views.solves.load_all_solves')
     def test_solve_detail_view_get_context_advanced(
-            self, mock_load_solves: Mock) -> None:
+        self,
+        mock_load_solves: Mock,
+        _mock_diagnostics: Mock,
+    ) -> None:
         """Test solve detail view get context advanced."""
         mock_solve = Mock()
         mock_solve.final_time = 5000000000
