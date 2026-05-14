@@ -2,7 +2,6 @@
 import asyncio
 from datetime import UTC
 from datetime import datetime
-from functools import cached_property
 from operator import itemgetter
 from random import Random
 from typing import Final
@@ -118,11 +117,6 @@ class Trainer(SolveInterface):
         self.session_data: list[tuple[str, Case, int]] = []
 
         self.trainer_line()
-
-    @cached_property
-    def step_code(self) -> str:
-        """Step code used for checking step."""
-        return STEP_CONFIGS[self.step].step_code
 
     def select_oldest_cases(
             self,
@@ -296,7 +290,7 @@ class Trainer(SolveInterface):
             cube.rotate(orientation_moves)
 
         return FaceletAnalyser().check_step(
-            self.step_code,
+            STEP_CONFIGS[self.step].step_code,
             cube.state,
             self.orientation_faces,
         )
@@ -717,10 +711,10 @@ class Trainer(SolveInterface):
         self.init_solve()
 
         selected_case, self.scramble, solution = trainer(
-                self.step,
-                self.cases,
-                self.rng,
-                self.cube_orientation_moves,
+            self.step,
+            self.cases,
+            self.rng,
+            self.cube_orientation_moves,
         )
 
         bt_scramble_done = (
