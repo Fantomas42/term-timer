@@ -6,6 +6,7 @@ from functools import cached_property
 from operator import itemgetter
 from random import Random
 from typing import Final
+from typing import NamedTuple
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeOrientation
@@ -47,7 +48,24 @@ from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.triggers import DEFAULT_TRIGGERS
 
-CROSS_MODES: Final = ('cross', 'ecross', 'xcross')
+
+class StepDef(NamedTuple):
+    """Definition of a training step."""
+
+    step_code: str
+    printer_mode: str
+    training_case: TrainingCase | None = None
+
+
+STEP_CONFIGS: Final[dict[str, StepDef]] = {
+    'cross': StepDef('Cross', 'cross', TrainingCase(CROSS_CASE, [])),
+    'ecross': StepDef('Cross', 'cross', TrainingCase(EASY_CROSS_CASE, [])),
+    'xcross': StepDef('Cross', 'cross', TrainingCase(X_CROSS_CASE, [])),
+    'f2l': StepDef('F2L', 'f2l'),
+    'af2l': StepDef('F2L', 'af2l'),
+    'oll': StepDef('OLL', 'oll'),
+    'pll': StepDef('PLL', 'pll'),
+}
 
 
 class Trainer(SolveInterface):
@@ -59,7 +77,8 @@ class Trainer(SolveInterface):
     """
 
     def __init__(  # noqa: PLR0913
-            self, *,
+            self,
+            *,
             step: str,
             case_codes: list[str],
             oldest: int,
@@ -102,10 +121,8 @@ class Trainer(SolveInterface):
 
     @cached_property
     def step_code(self) -> str:
-        """Step code used for cheching step."""
-        if self.step in CROSS_MODES:
-            return 'Cross'
-        return self.step_upper
+        """Step code used for checking step."""
+        return STEP_CONFIGS[self.step].step_code
 
     def select_oldest_cases(
             self,
@@ -129,10 +146,12 @@ class Trainer(SolveInterface):
 
         for case_code in valid_cases:
             if case_code in self.trainings.cases:
-                case_dates.append((
-                    case_code,
-                    self.trainings.cases[case_code].last_date,
-                ))
+                case_dates.append(
+                    (
+                        case_code,
+                        self.trainings.cases[case_code].last_date,
+                    ),
+                )
             else:
                 case_dates.append((case_code, 0))
 
@@ -193,12 +212,9 @@ class Trainer(SolveInterface):
             InvalidCaseError: If selected case is not valid for the step.
 
         """
-        if self.step == 'ecross':
-            return [TrainingCase(EASY_CROSS_CASE, [])]
-        if self.step == 'xcross':
-            return [TrainingCase(X_CROSS_CASE, [])]
-        if self.step == 'cross':
-            return [TrainingCase(CROSS_CASE, [])]
+        config = STEP_CONFIGS[self.step]
+        if config.training_case is not None:
+            return [config.training_case]
 
         cases = get_collection(f'{ self.method }/{ self.step }').cases
         valid_cases: dict[str, Case] = {
@@ -287,7 +303,7 @@ class Trainer(SolveInterface):
 
     def trainer_line(self) -> None:
         """Display training summary."""
-        if self.step in CROSS_MODES:
+        if STEP_CONFIGS[self.step].training_case is not None:
             self.console.print(
                 f'Training on '
                 f'{ self.method }/{ self.step_upper }',
@@ -303,7 +319,7 @@ class Trainer(SolveInterface):
 
     def list_cases(self) -> None:
         """Display a table of all available cases with their training stats."""
-        if self.step in CROSS_MODES:
+        if STEP_CONFIGS[self.step].training_case is not None:
             valid_cases = {
                 tc.case.code: tc.case for tc in self.cases
             }
@@ -391,7 +407,7 @@ class Trainer(SolveInterface):
         link = format_term_timer_case_url(selected_case)
         name = selected_case.pretty_name
 
-        mode = 'cross' if self.step in CROSS_MODES else self.step
+        mode = STEP_CONFIGS[self.step].printer_mode
 
         if self.show_cube:
             print_cube_trainer(cube, self.orientation_faces, mode)
