@@ -15,6 +15,7 @@ from typing import TypedDict
 from term_timer.constants import SECOND
 
 if TYPE_CHECKING:
+    from term_timer.methods.annotations import StepSummary
     from term_timer.solve import Solve
 
 TPS_LOW_THRESHOLD: Final = 1.5
@@ -534,6 +535,496 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
     return issues
 
 
+def check_step_cross(
+    solve: 'Solve',
+    step: 'StepSummary',
+) -> list[Diagnostic]:
+    """
+    Detect issues specific to the Cross step.
+
+    Checks for:
+    - Inefficient cross (above move norm)
+    - High cross time percentage
+
+    Args:
+        solve: Solve instance with reconstruction data
+        step: Step summary for Cross
+
+    Returns:
+        List of detected Cross-specific diagnostics
+
+    """
+    diagnostics: list[Diagnostic] = []
+
+    if not solve.method_applied:
+        return diagnostics
+
+    if step['type'] == 'skipped':
+        return diagnostics
+
+    norms = solve.method_applied.norms
+    step_name = step['name']
+    raw_move = norms['moves'].get(step_name, norms['moves']['Cross'])
+    move_norm = float(raw_move)  # type: ignore[arg-type]
+    raw_percent = norms['percent'].get(step_name, norms['percent']['Cross'])
+    percent_norm = float(raw_percent)  # type: ignore[arg-type]
+    expected_moves: tuple[float, float] = (
+        float(move_norm * 0.67), float(move_norm + 2),
+    )
+    spm = solve.move_speed / SECOND
+    htm = step['moves_prettified'].metrics.htm
+
+    if htm > move_norm + 4:
+        extra_moves = htm - move_norm
+        diagnostics.append(
+            {
+                'severity': DiagnosticSeverity.HIGH,
+                'category': DiagnosticCategory.PLANNING_CROSS,
+                'impact_seconds': extra_moves * spm,
+                'location': step_name,
+                'metric_name': 'htm',
+                'actual_value': float(htm),
+                'expected_value': expected_moves,
+                'description': (
+                    f'Very inefficient cross ({htm} HTM). Optimal cross '
+                    f'should be {int(move_norm + 2)} moves or fewer.'
+                ),
+                'recommendation': (
+                    'Practice cross planning during inspection. '
+                    'Learn efficient cross solutions for different scrambles. '
+                    'Study cross optimization techniques (tracking pieces, '
+                    'planning edge insertion order). Use cross trainers online.'
+                ),
+                'command': 'term-timer train -s cross',
+            },
+        )
+    elif htm > move_norm + 2:
+        extra_moves = htm - move_norm
+        diagnostics.append(
+            {
+                'severity': DiagnosticSeverity.MEDIUM,
+                'category': DiagnosticCategory.PLANNING_CROSS,
+                'impact_seconds': extra_moves * spm,
+                'location': step_name,
+                'metric_name': 'htm',
+                'actual_value': float(htm),
+                'expected_value': expected_moves,
+                'description': (
+                    f'Inefficient cross ({htm} HTM). Could be optimized '
+                    f'to {int(move_norm + 2)} moves or fewer.'
+                ),
+                'recommendation': (
+                    'Work on cross planning during inspection. '
+                    'Try to find fewer-move solutions before executing.'
+                ),
+                'command': 'term-timer train -s cross',
+            },
+        )
+
+    if step['total_percent'] > percent_norm * 1.25:
+        diagnostics.append(
+            {
+                'severity': DiagnosticSeverity.MEDIUM,
+                'category': DiagnosticCategory.TIMING_DISTRIBUTION,
+                'impact_seconds': 0.3,
+                'location': step_name,
+                'metric_name': 'total_percent',
+                'actual_value': step['total_percent'],
+                'expected_value': percent_norm,
+                'description': (
+                    f'Cross took {step["total_percent"]:.1f}% of solve time. '
+                    'Too much time spent on cross relative to total solve.'
+                ),
+                'recommendation': (
+                    'Practice cross execution speed. Work on planning '
+                    'entire cross during inspection. Consider planning '
+                    'first F2L pair during cross execution.'
+                ),
+                'command': 'term-timer train -s cross',
+            },
+        )
+
+    return diagnostics
+
+
+def check_step_f2l(
+    solve: 'Solve',
+    step: 'StepSummary',
+) -> list[Diagnostic]:
+    """
+    Detect issues specific to the F2L step.
+
+    Checks for:
+    - Excessive F2L time percentage
+    - High recognition time in F2L
+    - Low execution percentage in F2L
+
+    Only called for the aggregated virtual F2L step (CF4OP) or the single
+    F2L step (CFOP). Individual pair substeps are not checked here.
+
+    Args:
+        solve: Solve instance with reconstruction data
+        step: Step summary for the F2L step or virtual aggregate
+
+    Returns:
+        List of detected F2L-specific diagnostics
+
+    """
+    diagnostics: list[Diagnostic] = []
+
+    if not solve.method_applied:
+        return diagnostics
+
+    norms = solve.method_applied.norms
+    step_name = step['name']
+    percent_norm = float(norms['percent']['F2L'])  # type: ignore[arg-type]
+    rec_norm = norms['recognition'].get(
+        step_name, norms['recognition']['F2L'],
+    )
+    rec_norm_max = float(rec_norm[1])  # type: ignore[index]
+    exec_norm = norms['execution'].get(
+        step_name, norms['execution']['F2L'],
+    )
+    exec_norm_min = float(exec_norm[0])  # type: ignore[index]
+
+    if step['total_percent'] > percent_norm * 1.1:
+        diagnostics.append(
+            {
+                'severity': DiagnosticSeverity.HIGH,
+                'category': DiagnosticCategory.TIMING_DISTRIBUTION,
+                'impact_seconds': 1.0,
+                'location': step_name,
+                'metric_name': 'total_percent',
+                'actual_value': step['total_percent'],
+                'expected_value': (percent_norm * 0.9, percent_norm),
+                'description': (
+                    f'{step_name} took {step["total_percent"]:.1f}% '
+                    'of solve time. F2L is taking too long.'
+                ),
+                'recommendation': (
+                    'Focus on F2L efficiency and lookahead. '
+                    'Practice slow solves maintaining continuous turning. '
+                    'Work on predicting pair locations during cross. '
+                    'Learn efficient F2L algorithms for common cases.'
+                ),
+                'command': 'term-timer train -s f2l',
+            },
+        )
+
+    if step['step_recognition_percent'] > rec_norm_max:
+        estimated_impact = step['recognition'] / SECOND * 0.2
+        diagnostics.append(
+            {
+                'severity': DiagnosticSeverity.HIGH,
+                'category': DiagnosticCategory.PLANNING_LOOKAHEAD,
+                'impact_seconds': estimated_impact,
+                'location': step_name,
+                'metric_name': 'step_recognition_percent',
+                'actual_value': step['step_recognition_percent'],
+                'expected_value': rec_norm,
+                'description': (
+                    f'{step_name} recognition is '
+                    f'{step["step_recognition_percent"]:.1f}% of step time. '
+                    'Poor lookahead - spending too long finding next pair.'
+                ),
+                'recommendation': (
+                    'Practice F2L lookahead drills. Track the next pair '
+                    'while solving current one. Solve at 50% speed while '
+                    'maintaining continuous turning. '
+                    'Practice blind F2L (solve without looking at cube).'
+                ),
+                'command': 'term-timer train -s f2l',
+            },
+        )
+
+    if step['step_execution_percent'] < exec_norm_min:
+        diagnostics.append(
+            {
+                'severity': DiagnosticSeverity.MEDIUM,
+                'category': DiagnosticCategory.RECOGNITION_SLOW,
+                'impact_seconds': 0.3,
+                'location': step_name,
+                'metric_name': 'step_execution_percent',
+                'actual_value': step['step_execution_percent'],
+                'expected_value': exec_norm,
+                'description': (
+                    f'{step_name} execution is only '
+                    f'{step["step_execution_percent"]:.1f}% of step time. '
+                    'Spending too much time thinking vs turning.'
+                ),
+                'recommendation': (
+                    'Improve both recognition speed and turning speed for F2L. '
+                    'Practice identifying pair states quickly during '
+                    'cross/previous pair execution.'
+                ),
+                'command': 'term-timer train -s f2l',
+            },
+        )
+
+    return diagnostics
+
+
+def check_step_oll(
+    solve: 'Solve',
+    step: 'StepSummary',
+) -> list[Diagnostic]:
+    """
+    Detect issues specific to the OLL step.
+
+    Checks for:
+    - High recognition time
+    - Low execution percentage
+    - Excessive move count
+
+    Args:
+        solve: Solve instance with reconstruction data
+        step: Step summary for OLL
+
+    Returns:
+        List of detected OLL-specific diagnostics
+
+    """
+    diagnostics: list[Diagnostic] = []
+
+    if not solve.method_applied:
+        return diagnostics
+
+    if step['type'] == 'skipped' or step['case'] == 'SKIP':
+        return diagnostics
+
+    norms = solve.method_applied.norms
+    case_name = step['case']
+    oll_cmd = (
+        f'term-timer train -s oll -c "{case_name}"' if case_name else ''
+    )
+    rec_norm = norms['recognition']['OLL']
+    rec_norm_max = float(rec_norm[1])  # type: ignore[index]
+    exec_norm = norms['execution']['OLL']
+    exec_norm_min = float(exec_norm[0])  # type: ignore[index]
+    move_norm = float(norms['moves']['OLL'])  # type: ignore[arg-type]
+
+    if step['step_recognition_percent'] > rec_norm_max:
+        diagnostics.append(
+            {
+                'severity': DiagnosticSeverity.HIGH,
+                'category': DiagnosticCategory.RECOGNITION_SLOW,
+                'impact_seconds': step['recognition'] / SECOND * 0.3,
+                'location': 'OLL',
+                'metric_name': 'step_recognition_percent',
+                'actual_value': step['step_recognition_percent'],
+                'expected_value': rec_norm,
+                'description': (
+                    f'OLL recognition is '
+                    f'{step["step_recognition_percent"]:.1f}% '
+                    'of step time. Case identification is too slow.'
+                ),
+                'recommendation': (
+                    'Practice OLL recognition drills with flashcards or apps. '
+                    'Focus on recognizing patterns (dot, line, L-shape, etc.) '
+                    'rather than memorizing all 57 cases visually. '
+                    'Learn 2-look OLL patterns first if not comfortable with '
+                    'full OLL.'
+                ),
+                'command': oll_cmd,
+            },
+        )
+
+    if step['step_execution_percent'] < exec_norm_min:
+        diagnostics.append(
+            {
+                'severity': DiagnosticSeverity.MEDIUM,
+                'category': DiagnosticCategory.RECOGNITION_SLOW,
+                'impact_seconds': 0.2,
+                'location': 'OLL',
+                'metric_name': 'step_execution_percent',
+                'actual_value': step['step_execution_percent'],
+                'expected_value': exec_norm,
+                'description': (
+                    f'OLL execution is only '
+                    f'{step["step_execution_percent"]:.1f}% '
+                    'of step time. Should be 80-90% execution for last layer.'
+                ),
+                'recommendation': (
+                    'Work on faster OLL recognition and smooth algorithm '
+                    'execution. OLL should be mostly execution with minimal '
+                    'recognition time.'
+                ),
+                'command': oll_cmd,
+            },
+        )
+
+    htm = step['moves_prettified'].metrics.htm
+    if htm > move_norm * 1.05:
+        diagnostics.append(
+            {
+                'severity': DiagnosticSeverity.MEDIUM,
+                'category': DiagnosticCategory.EFFICIENCY_ALGORITHMS,
+                'impact_seconds': 0.3,
+                'location': 'OLL',
+                'metric_name': 'htm',
+                'actual_value': float(htm),
+                'expected_value': (float(move_norm * 0.7), float(move_norm)),
+                'description': (
+                    f'OLL used {htm} HTM. May be using a sub-optimal '
+                    'algorithm or wrong variant.'
+                ),
+                'recommendation': (
+                    'Review your OLL algorithm choice for this case. '
+                    'Consider learning faster/shorter algorithms. '
+                    'Check if you used the correct algorithm or made '
+                    'execution errors.'
+                ),
+                'command': oll_cmd,
+            },
+        )
+
+    return diagnostics
+
+
+def check_step_pll(
+    solve: 'Solve',
+    step: 'StepSummary',
+) -> list[Diagnostic]:
+    """
+    Detect issues specific to the PLL step.
+
+    Checks for:
+    - High recognition time
+    - Low execution percentage
+    - Excessive move count
+    - Excessive AUF
+
+    Args:
+        solve: Solve instance with reconstruction data
+        step: Step summary for PLL
+
+    Returns:
+        List of detected PLL-specific diagnostics
+
+    """
+    diagnostics: list[Diagnostic] = []
+
+    if not solve.method_applied:
+        return diagnostics
+
+    if step['type'] == 'skipped' or step['case'] == 'SKIP':
+        return diagnostics
+
+    norms = solve.method_applied.norms
+    case_name = step['case']
+    pll_cmd = (
+        f'term-timer train -s pll -c "{case_name}"' if case_name else ''
+    )
+    rec_norm = norms['recognition']['PLL']
+    rec_norm_max = float(rec_norm[1])  # type: ignore[index]
+    exec_norm = norms['execution']['PLL']
+    exec_norm_min = float(exec_norm[0])  # type: ignore[index]
+    move_norm = float(norms['moves']['PLL'])  # type: ignore[arg-type]
+
+    if step['step_recognition_percent'] > rec_norm_max:
+        diagnostics.append(
+            {
+                'severity': DiagnosticSeverity.HIGH,
+                'category': DiagnosticCategory.RECOGNITION_SLOW,
+                'impact_seconds': step['recognition'] / SECOND * 0.4,
+                'location': 'PLL',
+                'metric_name': 'step_recognition_percent',
+                'actual_value': step['step_recognition_percent'],
+                'expected_value': rec_norm,
+                'description': (
+                    f'PLL recognition is '
+                    f'{step["step_recognition_percent"]:.1f}% '
+                    'of step time. Case identification is too slow.'
+                ),
+                'recommendation': (
+                    'Practice 2-side PLL recognition (looking at 2 adjacent '
+                    'sides to identify case). Drill PLL recognition with '
+                    'apps/flashcards. Focus on headlights, blocks, and bars '
+                    'as recognition features. Learn to recognize PLL during '
+                    'OLL execution.'
+                ),
+                'command': pll_cmd,
+            },
+        )
+
+    if step['step_execution_percent'] < exec_norm_min:
+        diagnostics.append(
+            {
+                'severity': DiagnosticSeverity.MEDIUM,
+                'category': DiagnosticCategory.RECOGNITION_SLOW,
+                'impact_seconds': 0.15,
+                'location': 'PLL',
+                'metric_name': 'step_execution_percent',
+                'actual_value': step['step_execution_percent'],
+                'expected_value': exec_norm,
+                'description': (
+                    f'PLL execution is only '
+                    f'{step["step_execution_percent"]:.1f}% '
+                    'of step time. Should be 90-95% execution.'
+                ),
+                'recommendation': (
+                    'PLL recognition should be nearly instant. '
+                    'Practice recognizing PLL cases from all angles. '
+                    'Work on executing PLL algorithms smoothly and quickly.'
+                ),
+                'command': pll_cmd,
+            },
+        )
+
+    htm = step['moves_prettified'].metrics.htm
+    if htm > move_norm * 1.33:
+        diagnostics.append(
+            {
+                'severity': DiagnosticSeverity.MEDIUM,
+                'category': DiagnosticCategory.EFFICIENCY_ALGORITHMS,
+                'impact_seconds': 0.25,
+                'location': 'PLL',
+                'metric_name': 'htm',
+                'actual_value': float(htm),
+                'expected_value': (float(move_norm * 0.74), float(move_norm)),
+                'description': (
+                    f'PLL used {htm} HTM. May be using a sub-optimal '
+                    'algorithm or made execution errors.'
+                ),
+                'recommendation': (
+                    'Review your PLL algorithm choice. '
+                    'Learn faster PLL algorithms (J-perm, Y-perm variants). '
+                    'Check for execution mistakes that added extra moves.'
+                ),
+                'command': pll_cmd,
+            },
+        )
+
+    total_auf = (step['aufs'][0] or 0) + (step['aufs'][1] or 0)
+    if total_auf > 4:
+        diagnostics.append(
+            {
+                'severity': DiagnosticSeverity.MEDIUM,
+                'category': DiagnosticCategory.AUFS_EXCESSIVE,
+                'impact_seconds': 0.15,
+                'location': 'PLL',
+                'metric_name': 'aufs',
+                'actual_value': float(total_auf),
+                'expected_value': (0.0, 2.0),
+                'description': (
+                    f'PLL used {total_auf} QTM in AUF '
+                    f'(pre: {step["aufs"][0] or 0}, '
+                    f'post: {step["aufs"][1] or 0}). '
+                    'Excessive U-face adjustments.'
+                ),
+                'recommendation': (
+                    'Learn PLL algorithm variants with different AUF. '
+                    'Practice recognizing optimal angles to minimize total '
+                    'AUF. Consider starting PLL from different angles to '
+                    'reduce post-AUF.'
+                ),
+                'command': pll_cmd,
+            },
+        )
+
+    return diagnostics
+
+
 def generate_solve_diagnostics(solve: 'Solve') -> list[Diagnostic]:
     """
     Generate all diagnostics for a solve at both global and step levels.
@@ -554,6 +1045,17 @@ def generate_solve_diagnostics(solve: 'Solve') -> list[Diagnostic]:
     diagnostics.extend(check_global_execution(solve))
     diagnostics.extend(check_global_rotation(solve))
     diagnostics.extend(check_global_recognition(solve))
+
+    for step in solve.method_applied.summary:
+        step_name = step['name']
+        if 'Cross' in step_name:
+            diagnostics.extend(check_step_cross(solve, step))
+        elif 'F2L' in step_name and step['type'] in {'step', 'virtual'}:
+            diagnostics.extend(check_step_f2l(solve, step))
+        elif step_name == 'OLL':
+            diagnostics.extend(check_step_oll(solve, step))
+        elif step_name == 'PLL':
+            diagnostics.extend(check_step_pll(solve, step))
 
     diagnostics.sort(key=itemgetter('impact_seconds'), reverse=True)
 
