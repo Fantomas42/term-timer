@@ -564,6 +564,13 @@ class DisplaySection(ConfigSection):
                     id='highlights',
                 )
 
+            yield Static('Show Doctor', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Display doctor diagnostics after analysis',
+                    id='doctor',
+                )
+
             yield Static('Show Time Graph', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Checkbox(
@@ -605,6 +612,9 @@ class DisplaySection(ConfigSection):
         highlights = self.query_one('#highlights', Checkbox)
         highlights.value = display_config.get('highlights', True)
 
+        doctor = self.query_one('#doctor', Checkbox)
+        doctor.value = display_config.get('doctor', True)
+
         time_graph = self.query_one('#time_graph', Checkbox)
         time_graph.value = display_config.get('time_graph', True)
 
@@ -630,6 +640,7 @@ class DisplaySection(ConfigSection):
         scramble = self.query_one('#scramble', Checkbox)
         reconstruction = self.query_one('#reconstruction', Checkbox)
         highlights = self.query_one('#highlights', Checkbox)
+        doctor = self.query_one('#doctor', Checkbox)
         time_graph = self.query_one('#time_graph', Checkbox)
         tps_graph = self.query_one('#tps_graph', Checkbox)
         fluency_graph = self.query_one('#fluency_graph', Checkbox)
@@ -640,6 +651,7 @@ class DisplaySection(ConfigSection):
                 'scramble': scramble.value,
                 'reconstruction': reconstruction.value,
                 'highlights': highlights.value,
+                'doctor': doctor.value,
                 'time_graph': time_graph.value,
                 'tps_graph': tps_graph.value,
                 'fluency_graph': fluency_graph.value,

@@ -22,6 +22,7 @@ class TestTimerModule(unittest.TestCase):
             free_play=True,
             show_cube=False,
             show_highlights=True,
+            show_doctor=True,
             show_reconstruction=False,
             show_time_graph=False,
             show_tps_graph=False,

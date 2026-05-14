@@ -835,6 +835,7 @@ class SolveStatisticsReporter(Statistics):
             *,
             disable_rotations: bool,
             show_highlights: bool,
+            show_doctor: bool,
             show_cube: bool,
             show_reconstruction: bool,
             show_tps_graph: bool,
@@ -854,6 +855,7 @@ class SolveStatisticsReporter(Statistics):
             orientation: Cube orientation string (e.g., 'UF').
             disable_rotations: Disable rotations for analysis.
             show_highlights: Whether to display highlights after analyse.
+            show_doctor: Whether to display doctor diagnostics after analyse.
             show_cube: Whether to display scrambled cube state.
             show_reconstruction: Whether to show move sequence breakdown.
             show_tps_graph: Whether to display turns per second graph.
@@ -1092,6 +1094,8 @@ class SolveStatisticsReporter(Statistics):
                 solve.recognition_graph()
             if show_highlights:
                 console.print(solve.highlights())
+            if show_doctor:
+                console.print(solve.diagnostics())
 
     @staticmethod
     def case_table(title: str, items: dict[str, CaseStats],

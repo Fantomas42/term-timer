@@ -30,6 +30,7 @@ xcross-slots = ["FR"]
 scramble = true
 reconstruction = true
 highlights = true
+doctor = true
 time_graph = true
 tps_graph = true
 fluency_graph = true

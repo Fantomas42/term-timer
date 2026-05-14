@@ -33,6 +33,7 @@ from term_timer.constants import PAUSE_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.constants import SolveFlag
+from term_timer.doctor import generate_solve_diagnostics
 from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_cubing_url
 from term_timer.formatter import format_alg_diff
@@ -1127,6 +1128,44 @@ class Solve:  # noqa: PLR0904
         )
 
         return '\n'.join(highlight_lines)
+
+    def diagnostics(self, count: int | None = None) -> str:
+        """
+        Generate diagnostics based on solve performance metrics.
+
+        Args:
+            count: Maximum number of diagnostics to return, or None for all.
+
+        Returns:
+            Rich-formatted diagnostic string.
+
+        """
+        if not self.advanced or not self.method_applied:
+            return ''
+
+        items = generate_solve_diagnostics(self)
+        if count is not None:
+            items = items[:count]
+
+        diagnostic_lines = ['[stats]Diagnostics:[/stats]']
+        if items:
+            diagnostic_lines.extend(
+                (
+                    f'[diagnostic] - { item["description"] }[/diagnostic]\n'
+                    '[advice]   ' +
+                    item['recommendation'].replace('. ', '.\n   ') +
+                    '[/advice]\n'
+                    f'[examen]   [{ item["severity"].upper() }] '
+                    f'{item["impact_seconds"]:.2f}s[/examen]'
+                )
+                for item in items
+            )
+        else:
+            diagnostic_lines.append(
+                '[success] - No issue detected, sane solve ![/success]',
+            )
+
+        return '\n'.join(diagnostic_lines)
 
     @staticmethod
     def missed_moves_pair(algorithm: Algorithm) -> tuple[Algorithm, Algorithm]:

@@ -84,6 +84,7 @@ def tools(command: str, options: Namespace) -> int:
                 options.orientation,
                 disable_rotations=options.disable_rotations,
                 show_highlights=options.show_highlights,
+                show_doctor=options.show_doctor,
                 show_cube=options.show_cube,
                 show_reconstruction=options.show_reconstruction,
                 show_tps_graph=options.show_tps_graph,

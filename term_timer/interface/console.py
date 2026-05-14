@@ -31,6 +31,8 @@ theme: dict[str, str] = {
     'execution': f'{ TEXT_LIGHT } on #4D0092',
     'consign': '#CECECE',
     'highlight': f'bold { TEXT_LIGHT }',
+    'diagnostic': f'bold { TEXT_LIGHT }',
+    'examen': '#FF6E6E',
     'trainer': f'bold { TEXT_LIGHT } on #5555CC',
     'routine': f'bold { TEXT_DARK } on #55CCFF',
     'key':  f'bold { TEXT_LIGHT }',
