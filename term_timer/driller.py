@@ -278,7 +278,6 @@ class Driller(SolveInterface):
                     f'[moves]{ bad_move }[/moves] - expected '
                     f'[moves]{ expected }[/moves][/warning]',
                 )
-                await self.bluetooth_disconnect()
                 return False
 
         else:
