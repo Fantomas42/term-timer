@@ -1156,7 +1156,8 @@ class Solve:  # noqa: PLR0904
                     item['recommendation'].replace('. ', '.\n   ') +
                     '[/advice]\n'
                     f'[examen]   [{ item["severity"].upper() }] '
-                    f'{item["impact_seconds"]:.2f}s[/examen]'
+                    f'{item["impact_seconds"]:.2f}s[/examen] '
+                    f'[localhost]{ item['command'] }[/localhost]'
                 )
                 for item in items
             )
