@@ -103,14 +103,14 @@ def check_global_efficiency(solve: 'Solve') -> list[Diagnostic]:
 
     all_missed_moves = solve.all_missed_moves
     transition_missed_moves = solve.transition_missed_moves
-    tps = solve.move_speed * 1.05 / SECOND
+    spm = solve.move_speed * 1.05 / SECOND
 
     if all_missed_moves > 10:
         issues.append(
             {
                 'severity': DiagnosticSeverity.CRITICAL,
                 'category': DiagnosticCategory.EFFICIENCY_MOVECOUNT,
-                'impact_seconds': all_missed_moves * tps,
+                'impact_seconds': all_missed_moves * spm,
                 'location': 'global',
                 'metric_name': 'all_missed_moves',
                 'actual_value': float(all_missed_moves),
@@ -134,7 +134,7 @@ def check_global_efficiency(solve: 'Solve') -> list[Diagnostic]:
             {
                 'severity': DiagnosticSeverity.HIGH,
                 'category': DiagnosticCategory.EFFICIENCY_MOVECOUNT,
-                'impact_seconds': all_missed_moves * tps,
+                'impact_seconds': all_missed_moves * spm,
                 'location': 'global',
                 'metric_name': 'all_missed_moves',
                 'actual_value': float(all_missed_moves),
@@ -157,7 +157,7 @@ def check_global_efficiency(solve: 'Solve') -> list[Diagnostic]:
             {
                 'severity': DiagnosticSeverity.HIGH,
                 'category': DiagnosticCategory.EFFICIENCY_TRANSITIONS,
-                'impact_seconds': transition_missed_moves * tps,
+                'impact_seconds': transition_missed_moves * spm,
                 'location': 'global',
                 'metric_name': 'transition_missed_moves',
                 'actual_value': float(transition_missed_moves),
@@ -375,10 +375,10 @@ def check_global_rotation(solve: 'Solve') -> list[Diagnostic]:
     issues: list[Diagnostic] = []
 
     rotations = solve.rotations
-    tps = solve.move_speed * 1.2 / SECOND
+    spm = solve.move_speed * 1.2 / SECOND
 
     if rotations > 8:
-        estimated_impact = rotations * tps
+        estimated_impact = rotations * spm
         issues.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
@@ -401,7 +401,7 @@ def check_global_rotation(solve: 'Solve') -> list[Diagnostic]:
             },
         )
     elif rotations > 4:
-        estimated_impact = rotations * tps
+        estimated_impact = rotations * spm
         issues.append(
             {
                 'severity': DiagnosticSeverity.MEDIUM,
