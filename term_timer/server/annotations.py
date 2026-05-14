@@ -8,6 +8,7 @@ from cubing_algs.cases.case import Case
 from cubing_algs.move import Move
 
 from term_timer.aggregator import SolvesMethodAggregator
+from term_timer.doctor import Diagnostic
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.stats import Statistics
@@ -146,6 +147,7 @@ class SolveDetailContext(TypedDict):
     scatter: list[ScatterPoint]
     steps: list[StepMarker]
     highlights: list[str]
+    diagnostics: list[Diagnostic]
     tps: list[TPSData]
     fluencies: list[FluencyData]
     recognitions: list[RecognitionData]

@@ -10,6 +10,7 @@ from cubing_algs.constants import ORIENTATION_FACE_MOVES
 from term_timer.constants import SECOND
 from term_timer.constants import SolveFlag
 from term_timer.constants import SolveFlagInput
+from term_timer.doctor import generate_solve_diagnostics
 from term_timer.highlights import generate_solve_highlights
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import save_solves
@@ -158,6 +159,7 @@ class SolveDetailView(View):
             'scatter': scatter,
             'steps': steps,
             'highlights': generate_solve_highlights(self.solve),
+            'diagnostics': generate_solve_diagnostics(self.solve),
             'tps': tps,
             'fluencies': fluencies,
             'recognitions': recognitions,

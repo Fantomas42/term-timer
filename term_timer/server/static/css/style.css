@@ -2443,3 +2443,115 @@ a.academy-header[href]:hover {
 .cube-debug-controls #play-btn i {
     margin-right: 0.4rem;
 }
+
+/* Diagnostics */
+.diagnostics-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+}
+
+.diagnostic-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.diagnostic-critical {
+    border-left-color: var(--danger);
+}
+
+.diagnostic-high {
+    border-left-color: var(--warning);
+}
+
+.diagnostic-medium {
+    border-left-color: var(--info);
+}
+
+.diagnostic-low {
+    border-left-color: var(--success);
+}
+
+.diagnostic-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.diagnostic-severity {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 0.25rem;
+    letter-spacing: 0.05em;
+}
+
+.diagnostic-severity-critical {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--danger);
+}
+
+.diagnostic-severity-high {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--warning);
+}
+
+.diagnostic-severity-medium {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--info);
+}
+
+.diagnostic-severity-low {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--success);
+}
+
+.diagnostic-location {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.diagnostic-impact {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-left: auto;
+}
+
+.diagnostic-description {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.diagnostic-recommendation {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.diagnostic-recommendation i {
+    color: var(--warning);
+    margin-right: 0.3rem;
+}
+
+.diagnostic-command {
+    display: inline-block;
+    font-family: monospace;
+    font-size: 0.8rem;
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--success);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--border-color);
+}

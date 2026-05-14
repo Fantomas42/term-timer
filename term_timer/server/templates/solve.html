@@ -1339,6 +1339,39 @@
       </div>
     {% endif %}
 
+    {% if diagnostics %}
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-stethoscope"></i>
+            <a href="#diagnostics" id="diagnostics">Diagnostics</a>
+          </h2>
+        </div>
+        <div class="diagnostics-card">
+          {% for diag in diagnostics %}
+            <div class="diagnostic-item diagnostic-{{ diag.severity }}">
+              <div class="diagnostic-header">
+                <span class="diagnostic-severity diagnostic-severity-{{ diag.severity }}">
+                  {{ diag.severity|upper }}
+                </span>
+                <span class="diagnostic-location">{{ diag.location }}</span>
+                {% if diag.impact_seconds > 0 %}
+                  <span class="diagnostic-impact">~{{ "%.2f"|format(diag.impact_seconds) }}s impact</span>
+                {% endif %}
+              </div>
+              <p class="diagnostic-description">{{ diag.description }}</p>
+              <p class="diagnostic-recommendation">
+                <i class="fas fa-lightbulb"></i> {{ diag.recommendation }}
+              </p>
+              {% if diag.command %}
+                <code class="diagnostic-command">{{ diag.command }}</code>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">
