@@ -92,6 +92,7 @@ class Trainer(SolveInterface):
             case_codes: list[str],
             oldest: int,
             slowest: int,
+            filters: list[str],
             free_play: bool,
             show_solution: bool,
             show_cube: bool,
@@ -116,6 +117,7 @@ class Trainer(SolveInterface):
         self.case_codes = case_codes
         self.oldest = oldest
         self.slowest = slowest
+        self.filters = [f.lower() for f in filters]
         self.rng = rng
         self.orientation_faces = orientation
 
@@ -223,6 +225,13 @@ class Trainer(SolveInterface):
             v.code: v for v in cases.values()
             if v.setup_algorithms
         }
+
+        if self.filters:
+            valid_cases = {
+                code: case for code, case in valid_cases.items()
+                if (case.family or '').lower() in self.filters
+                or any(g.lower() in self.filters for g in (case.groups or []))
+            }
 
         case_codes = self.case_codes or list(valid_cases.keys())
 

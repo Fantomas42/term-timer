@@ -471,6 +471,19 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
     cases.add_argument(
+        '-i', '--filter',
+        nargs='+',
+        default=[],
+        metavar='FILTER',
+        dest='filters',
+        help=(
+            'Filter cases by family or group (e.g. Dot, Cross, OCLL).\n'
+            'Multiple values are combined with OR logic.\n'
+            'Incompatible with --cases.\n'
+            'Default: All.'
+        ),
+    )
+    cases.add_argument(
         '-d', '--oldest',
         type=int,
         default=0,

@@ -10,7 +10,7 @@ from term_timer.stats import TrainerStatistics
 from term_timer.trainer import Trainer
 
 
-async def trainer(options: Namespace) -> int:  # noqa: C901
+async def trainer(options: Namespace) -> int:  # noqa: C901, PLR0912
     """
     Generate training case.
 
@@ -18,6 +18,13 @@ async def trainer(options: Namespace) -> int:  # noqa: C901
         Exit code (0 for success).
 
     """
+    if options.case_codes and options.filters:
+        console.print(
+            '😱 --cases and --filter cannot be used together',
+            style='warning',
+        )
+        return 1
+
     active_filters = sum([
         bool(options.case_codes),
         options.oldest > 0,
@@ -38,6 +45,7 @@ async def trainer(options: Namespace) -> int:  # noqa: C901
             case_codes=options.case_codes,
             oldest=options.oldest,
             slowest=options.slowest,
+            filters=options.filters,
             free_play=options.free_play,
             orientation=options.orientation,
             show_solution=options.show_solution,

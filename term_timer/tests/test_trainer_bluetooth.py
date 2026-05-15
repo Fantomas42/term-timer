@@ -127,6 +127,7 @@ def build_trainer(  # noqa: PLR0913
             case_codes=case_codes or [],
             oldest=0,
             slowest=0,
+            filters=[],
             free_play=free_play,
             show_solution=False,
             show_cube=False,
