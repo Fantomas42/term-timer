@@ -41,6 +41,7 @@ from term_timer.formatter import format_time
 from term_timer.in_out import load_trainings
 from term_timer.in_out import save_trainings
 from term_timer.interface import SolveInterface
+from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import FaceletAnalyser
 from term_timer.printer import print_cube_trainer
 from term_timer.scrambler import trainer
@@ -536,25 +537,15 @@ class Trainer(SolveInterface):
         )
 
     @staticmethod
-    def solve_algo_line(solve: Solve) -> str:
+    def solve_algo_line(solve: Solve, step: StepSummary) -> str:
         """
-        Format the algorithm line with AUF and oHTM annotation.
+        Format the algorithm line for a single step with AUF and oHTM annotation.
 
         Returns:
             Rich-formatted string with executed moves and a comment showing
             AUF counts and oHTM overhead, or empty string if unavailable.
 
         """
-        if not solve.method_applied:
-            return ''
-
-        step = next(
-            (s for s in solve.method_applied.summary if s['moves']),
-            None,
-        )
-        if not step:
-            return ''
-
         aufs = ''
         if step['aufs'][0]:
             aufs += f' +{ step["aufs"][0] } pre-AUF'
@@ -580,6 +571,43 @@ class Trainer(SolveInterface):
         algo_str = solve.reconstruction_step_line(step, multiple=True)
         return f'[consign]{ algo_str }[/consign]{ comment }'
 
+    @staticmethod
+    def solve_algo_lines(solve: Solve, indent_width: int = 0) -> list[str]:
+        """
+        Format algorithm lines for all steps with moves.
+
+        For multi-step solves, each line is prefixed with the step name
+        left-aligned and padded to indent_width so moves stay aligned.
+        For single-step solves, lines have no prefix.
+
+        Returns:
+            List of Rich-formatted strings, one per step with moves.
+
+        """
+        if not solve.method_applied:
+            return []
+
+        steps = [s for s in solve.method_applied.summary if s['moves']]
+        if not steps:
+            return []
+
+        multi = len(steps) > 1
+        lines = []
+
+        for step in steps:
+            line = Trainer.solve_algo_line(solve, step)
+            if not line:
+                continue
+            if multi:
+                step_name = step['name'].split(' ')[0]
+                padding = ' ' * (indent_width - len(step_name) - 1)
+                line = f'[step]{ step_name }:[/step]{ padding }{ line }'
+            else:
+                line = ' ' * indent_width + line
+            lines.append(line)
+
+        return lines
+
     def solve_line(self, solve: Solve, selected_case: Case) -> None:  # noqa: C901
         """Display training solve results and execution details."""
         self.trainings.add_timing(
@@ -598,14 +626,13 @@ class Trainer(SolveInterface):
         self.clear_line(full=True)
 
         if solve.method_applied:
-            indent = ' ' * len(f'Executed #{ self.counter }: ')
+            indent_width = len(f'Executed #{ self.counter }: ')
             self.console.print(
                 f'[analysis]Executed #{ self.counter }:[/analysis]',
                 self.solve_stats_line(solve),
             )
-            algo_line = self.solve_algo_line(solve)
-            if algo_line:
-                self.console.print(indent + algo_line)
+            for algo_line in self.solve_algo_lines(solve, indent_width):
+                self.console.print(algo_line)
 
         extra = ''
         if new_stats.total > 1:
