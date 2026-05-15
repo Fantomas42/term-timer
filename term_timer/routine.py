@@ -144,6 +144,7 @@ def build_solve_instance(session_config: SessionConfig) -> Timer:
             'metronome', TIMER_CONFIG.get('metronome', 0.0),
         ),
         stack=stack,
+        counter_start=0,
         rng=Random(),  # noqa: S311
     )
 

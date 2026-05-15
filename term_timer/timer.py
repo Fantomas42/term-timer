@@ -53,6 +53,7 @@ class Timer(SolveInterface):
             countdown: int,
             metronome: float,
             stack: list[Solve],
+            counter_start: int | None = None,
             rng: Random) -> None:
         """Initialize timer with configuration and existing solve stack."""
         super().__init__()
@@ -85,7 +86,10 @@ class Timer(SolveInterface):
         self.stack_done: list[Solve] = []
         self.rng = rng
 
-        self.counter = len(stack) + 1
+        self.counter = (
+            counter_start if counter_start is not None
+            else len(stack)
+        ) + 1
 
         if self.free_play:
             self.console.print(
@@ -353,7 +357,7 @@ class Timer(SolveInterface):
                 and self.bluetooth_interface.client.name
             ) or '',
             session=self.session,
-            solve_id=self.counter,
+            solve_id=len(self.stack) + 1,
             cube_size=self.cube_size,
             moves=' '.join(moves),
         )
