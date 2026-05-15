@@ -8,6 +8,7 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.scrambler.nxn import scramble
 from cubing_algs.scrambler.steps import scramble_easy_cross
 from cubing_algs.scrambler.steps import scramble_edges_oriented
+from cubing_algs.scrambler.steps import scramble_step
 from cubing_algs.scrambler.steps import scramble_x_cross
 from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
 from cubing_algs.solver import facelets_to_facelets_algorithm
@@ -118,6 +119,8 @@ def trainer(
         )
     elif step == 'cross':
         scramble, _cube = scrambler(3, 12, rng=rng)
+    elif step == 'll':
+        scramble = scramble_step('ll', rng=rng)
     else:
         case, scramble, solution = random_training(
             cases, rng,

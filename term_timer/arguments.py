@@ -449,11 +449,15 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     parser.add_argument(
         '-s', '--step',
         default=TRAINER_STEP,
-        choices={'cross', 'ecross', 'xcross', 'f2l', 'af2l', 'oll', 'pll'},
+        choices={
+            'cross', 'ecross', 'xcross',
+            'f2l', 'af2l',
+            'oll', 'pll', 'll',
+        },
         metavar='STEP',
         help=(
             'Specify the training mode : '
-            'cross, ecross, xcross, f2l, af2l, oll or pll.\n'
+            'cross, ecross, xcross, f2l, af2l, oll, ll or ll.\n'
             f'Default: { TRAINER_STEP }.'
         ),
     )

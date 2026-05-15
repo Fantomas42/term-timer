@@ -25,6 +25,7 @@ from term_timer.constants import CROSS_CASE
 from term_timer.constants import DNF
 from term_timer.constants import EASY_CROSS_CASE
 from term_timer.constants import ESCAPE_CHAR
+from term_timer.constants import LL_CASE
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import X_CROSS_CASE
 from term_timer.constants import SolveFlag
@@ -69,6 +70,10 @@ STEP_CONFIGS: Final[dict[str, StepDef]] = {
     'ecross': StepDef(
         'Cross', 'cross', 'Easy Cross',
         TrainingCase(EASY_CROSS_CASE, []),
+    ),
+    'll': StepDef(
+        'PLL', 'll', 'LL',
+        TrainingCase(LL_CASE, []),
     ),
     'oll': StepDef('OLL', 'oll', 'OLL'),
     'pll': StepDef('PLL', 'pll', 'PLL'),

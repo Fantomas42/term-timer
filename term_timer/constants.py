@@ -80,6 +80,14 @@ X_CROSS_CASE = Case(
     ),
 )
 
+LL_CASE = Case(
+    '', 'LL',
+    CaseData(
+        name='LL',
+        code='ll',
+    ),
+)
+
 for directory in (
         SOLVES_DIRECTORY,
         TRAININGS_DIRECTORY,
