@@ -159,8 +159,9 @@ class StopWatch:
                         self.console.print(
                             f'[{ style }]Go Go Go:[/{ style }]',
                             f'[result]{ format_time(elapsed_time) }[/result]',
-                            f'[step]{ step_name }[/step] done',
+                            f'[step]{ step_name }[/step]',
                         )
+                        self.beep()
                         steps_progress += 1
                         previous_style = ''
                     else:
