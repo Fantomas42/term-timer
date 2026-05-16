@@ -8,7 +8,6 @@ from cubing_algs.exceptions import InvalidMoveError
 
 from term_timer.constants import DAILY_DIRECTORY
 from term_timer.in_out import load_solves
-from term_timer.in_out import save_solves
 from term_timer.interface.console import console
 from term_timer.scrambler import scrambler
 from term_timer.stats import SolveStatisticsReporter
@@ -82,30 +81,19 @@ async def daily(options: Namespace) -> int:
         stack=stack,
         rng=rng,
     )
+    instance.save_directory = DAILY_DIRECTORY
 
     if options.bluetooth:
         await instance.bluetooth_connect(
             use_gyroscope=options.use_gyroscope,
         )
 
-    solves_done = 0
-
     try:
         while 42:
             done = await instance.start()
 
-            if done:
-                solves_done += 1
-            else:
+            if not done:
                 break
-
-        if not options.free_play and instance.stack_done:
-            save_solves(
-                cube,
-                session,
-                instance.stack,
-                directory=DAILY_DIRECTORY,
-            )
 
         if len(instance.stack_done) > 1:
             round_stats = SolveStatisticsReporter(cube, instance.stack_done)
