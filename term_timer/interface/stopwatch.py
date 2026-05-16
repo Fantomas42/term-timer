@@ -71,6 +71,41 @@ class StopWatch:
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
 
+    def print_step(self, style: str, elapsed_time: int, step_name: str) -> None:
+        """Print a completed step with its time."""
+        self.clear_line(full=False)
+        self.console.print(
+            f'[{ style }]Go Go Go:[/{ style }]',
+            f'[result]{ format_time(elapsed_time) }[/result]',
+            f'[step]{ step_name }[/step]',
+        )
+        self.beep()
+
+    def build_oriented_facelets(self) -> tuple[str, 'CubeOrientation']:
+        """
+        Build oriented facelets and orientation from bluetooth state.
+
+        Returns:
+            A tuple of (facelets string, orientation).
+
+        """
+        orientation = (
+            CUBE_ORIENTATION
+            if self.orientation_faces == 'auto'
+            else self.orientation_faces
+        )
+        cube = VCube(
+            self.bluetooth_cube_state,
+            size=DEFAULT_CUBE_SIZE,
+            check=False,
+        )
+        orientation_moves = ORIENTATION_FACE_MOVES[orientation]
+
+        if orientation_moves:
+            cube.rotate(orientation_moves)
+
+        return cube.state, orientation
+
     async def stopwatch(self) -> None:  # noqa: C901, PLR0912, PLR0915
         """
         Display a running stopwatch timer until solve is completed.
@@ -93,7 +128,7 @@ class StopWatch:
         last_facelets = ''
         if self.show_steps and self.step_list:
             facelet_analyser = FaceletAnalyser()
-            steps_to_track = self.step_list[:-1]
+            steps_to_track = self.step_list
 
         while not self.solve_completed_event.is_set():
             elapsed_time = time.perf_counter_ns() - self.start_time
@@ -134,34 +169,14 @@ class StopWatch:
                 and self.bluetooth_cube_state != last_facelets
             ):
                 last_facelets = self.bluetooth_cube_state
-
-                orientation = (
-                    CUBE_ORIENTATION
-                    if self.orientation_faces == 'auto'
-                    else self.orientation_faces
-                )
-                cube = VCube(
-                    self.bluetooth_cube_state,
-                    size=DEFAULT_CUBE_SIZE,
-                    check=False,
-                )
-                orientation_moves = ORIENTATION_FACE_MOVES[orientation]
-                if orientation_moves:
-                    cube.rotate(orientation_moves)
-                facelets = cube.state
+                facelets, orientation = self.build_oriented_facelets()
 
                 while steps_progress < len(steps_to_track):
                     step_name = steps_to_track[steps_progress]
                     if facelet_analyser.check_step(
                         step_name, facelets, orientation,
                     ):
-                        self.clear_line(full=False)
-                        self.console.print(
-                            f'[{ style }]Go Go Go:[/{ style }]',
-                            f'[result]{ format_time(elapsed_time) }[/result]',
-                            f'[step]{ step_name }[/step]',
-                        )
-                        self.beep()
+                        self.print_step(style, elapsed_time, step_name)
                         steps_progress += 1
                         previous_style = ''
                     else:
@@ -183,5 +198,18 @@ class StopWatch:
                 )
 
             await asyncio.sleep(REFRESH)
+
+        if (
+            facelet_analyser is not None
+            and steps_progress < len(steps_to_track)
+            and self.bluetooth_cube is not None
+        ):
+            facelets, orientation = self.build_oriented_facelets()
+            step_name = steps_to_track[steps_progress]
+
+            if facelet_analyser.check_step(
+                    step_name, facelets, orientation,
+            ):
+                self.print_step(style, elapsed_time, step_name)
 
         self.set_state('stop')
