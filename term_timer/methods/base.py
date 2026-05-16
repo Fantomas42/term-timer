@@ -216,6 +216,7 @@ class Analyser(FaceletAnalyser):
 
     name = ''
     step_list: tuple[str, ...] = ()
+    step_groups: tuple[tuple[tuple[str, str | None], ...], ...] = ()
     norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {}
     aufs: ClassVar[dict[str, list[bool]]] = {}
     aggregate: ClassVar[dict[str, int]] = {}

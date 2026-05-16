@@ -11,6 +11,7 @@ from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
 from term_timer.formatter import format_time
+from term_timer.methods import get_method_analyser
 from term_timer.methods.base import FaceletAnalyser
 
 if TYPE_CHECKING:
@@ -46,6 +47,7 @@ class StopWatch:
 
         # Attributes from Cube mixin
         orientation_faces: CubeOrientation
+        method: str
 
         # Methods from State mixin
         def set_state(self, state: str, timestamp: int | None = None) -> None:  # noqa: D102
@@ -66,7 +68,6 @@ class StopWatch:
 
         self.metronome: float = 0.0
         self.show_steps: bool = False
-        self.step_list: tuple[str, ...] = ()
 
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
@@ -123,12 +124,16 @@ class StopWatch:
         self.set_state('solving', self.start_time)
 
         facelet_analyser: FaceletAnalyser | None = None
-        steps_to_track: tuple[str, ...] = ()
-        steps_progress = 0
+        groups_to_track: tuple[tuple[tuple[str, str | None], ...], ...] = ()
+        group_progress = 0
+        completed_in_group: set[str] = set()
         last_facelets = ''
-        if self.show_steps and self.step_list:
+        if self.show_steps:
+            analyser_class = get_method_analyser(self.method)
             facelet_analyser = FaceletAnalyser()
-            steps_to_track = self.step_list
+            groups_to_track = analyser_class.step_groups or tuple(
+                ((step, None),) for step in analyser_class.step_list
+            )
 
         while not self.solve_completed_event.is_set():
             elapsed_time = time.perf_counter_ns() - self.start_time
@@ -164,23 +169,30 @@ class StopWatch:
 
             if (
                 facelet_analyser is not None
-                and steps_progress < len(steps_to_track)
+                and group_progress < len(groups_to_track)
                 and self.bluetooth_cube is not None
                 and self.bluetooth_cube_state != last_facelets
             ):
                 last_facelets = self.bluetooth_cube_state
                 facelets, orientation = self.build_oriented_facelets()
+                current_group = groups_to_track[group_progress]
 
-                while steps_progress < len(steps_to_track):
-                    step_name = steps_to_track[steps_progress]
-                    if facelet_analyser.check_step(
-                        step_name, facelets, orientation,
+                for step_name, display_name in current_group:
+                    if (
+                        step_name not in completed_in_group
+                        and facelet_analyser.check_step(
+                            step_name, facelets, orientation,
+                        )
                     ):
-                        self.print_step(style, elapsed_time, step_name)
-                        steps_progress += 1
+                        self.print_step(
+                            style, elapsed_time, display_name or step_name,
+                        )
+                        completed_in_group.add(step_name)
                         previous_style = ''
-                    else:
-                        break
+
+                if len(completed_in_group) == len(current_group):
+                    group_progress += 1
+                    completed_in_group = set()
 
             if style != previous_style:
                 previous_style = style
@@ -201,15 +213,21 @@ class StopWatch:
 
         if (
             facelet_analyser is not None
-            and steps_progress < len(steps_to_track)
+            and group_progress < len(groups_to_track)
             and self.bluetooth_cube is not None
         ):
             facelets, orientation = self.build_oriented_facelets()
-            step_name = steps_to_track[steps_progress]
+            current_group = groups_to_track[group_progress]
 
-            if facelet_analyser.check_step(
-                    step_name, facelets, orientation,
-            ):
-                self.print_step(style, elapsed_time, step_name)
+            for step_name, display_name in current_group:
+                if (
+                    step_name not in completed_in_group
+                    and facelet_analyser.check_step(
+                        step_name, facelets, orientation,
+                    )
+                ):
+                    self.print_step(
+                        style, elapsed_time, display_name or step_name,
+                    )
 
         self.set_state('stop')

@@ -13,7 +13,6 @@ from term_timer.constants import SolveFlag
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
-from term_timer.methods import get_method_analyser
 from term_timer.printer import print_cube_scrambled
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
@@ -81,9 +80,6 @@ class Timer(SolveInterface):
         self.show_fluency_graph = show_fluency_graph
         self.show_recognition_graph = show_recognition_graph
         self.show_steps = show_steps
-        self.step_list = (
-            get_method_analyser(method).step_list if show_steps else ()
-        )
         self.method = method
         self.orientation_faces = orientation
         self.countdown = countdown

@@ -268,6 +268,15 @@ class CF4OPAnalyser(CFOPAnalyser):
         'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4',
         'OLL', 'PLL',
     )
+    step_groups: tuple[tuple[tuple[str, str | None], ...], ...] = (
+        (('Cross', None),),
+        (
+            ('F2L 1', 'F2L FR'), ('F2L 2', 'F2L FL'),
+            ('F2L 3', 'F2L BR'), ('F2L 4', 'F2L BL'),
+        ),
+        (('OLL', None),),
+        (('PLL', None),),
+    )
     aufs: ClassVar[dict[str, list[bool]]] = {
         'OLL': [True, True],
         'PLL': [True, True],
