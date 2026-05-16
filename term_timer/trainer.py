@@ -539,7 +539,7 @@ class Trainer(SolveInterface):
     @staticmethod
     def solve_algo_line(solve: Solve, step: StepSummary) -> str:
         """
-        Format the algorithm line for a single step with AUF and oHTM annotation.
+        Format the algorithm line for a single step with AUF and oHTM.
 
         Returns:
             Rich-formatted string with executed moves and a comment showing
