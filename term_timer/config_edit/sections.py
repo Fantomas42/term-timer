@@ -186,6 +186,17 @@ class TimerSection(ConfigSection):
                     classes='field-help',
                 )
 
+            yield Static('Show Steps', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Show completed steps during the solve',
+                    id='steps',
+                )
+                yield Static(
+                    'Apply when a Bluetooth smart cube is connected',
+                    classes='field-help',
+                )
+
     def load_config(self) -> None:
         """Load timer configuration."""
         timer_config = CONFIG.get('timer', {})
@@ -196,6 +207,9 @@ class TimerSection(ConfigSection):
         metronome = self.query_one('#metronome', Input)
         metronome.value = str(timer_config.get('metronome', 0.0))
 
+        steps = self.query_one('#steps', Checkbox)
+        steps.value = timer_config.get('steps', True)
+
     def get_config_data(
         self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
@@ -203,16 +217,18 @@ class TimerSection(ConfigSection):
         Get timer configuration data.
 
         Returns:
-            Timer configuration dictionary with countdown and metronome values.
+            Timer configuration dictionary with countdown, metronome and steps.
 
         """
         countdown = self.query_one('#countdown', Input)
         metronome = self.query_one('#metronome', Input)
+        steps = self.query_one('#steps', Checkbox)
 
         return {
             'timer': {
                 'countdown': float(countdown.value or '0.0'),
                 'metronome': float(metronome.value or '0.0'),
+                'steps': steps.value,
             },
         }
 

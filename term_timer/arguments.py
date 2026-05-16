@@ -126,6 +126,7 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
     show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
     show_highlights = DISPLAY_CONFIG.get('highlights', True)
     show_doctor = DISPLAY_CONFIG.get('doctor', True)
+    show_steps = TIMER_CONFIG.get('steps', True)
 
     parser = subparsers.add_parser(
         'solve',
@@ -184,7 +185,7 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
         dest='bluetooth',
         help=(
             f'{ mode.title() } the Bluetooth-connected cube.\n'
-            f'Default: { use_bluetooth }.'
+            f'Default: False.'
         ),
     )
     mode = 'disable' if USE_GYROSCOPE else 'enable'
@@ -209,6 +210,18 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
         help=(
             'Set the method of analyse used.\n'
             f'Default: { CUBE_METHOD }.'
+        ),
+    )
+    mode = 'hide' if show_steps else 'show'
+    bluetooth.add_argument(
+        '-j', f'--{ mode }-steps',
+        action='store_const',
+        const=not show_steps,
+        default=show_steps,
+        dest='show_steps',
+        help=(
+            f'{ mode.title() } completed steps during the solve.\n'
+            f'Default: False.'
         ),
     )
     mode = 'hide' if show_reconstruction else 'show'
@@ -292,16 +305,6 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
         dest='show_recognition_graph',
         help=(
             f'{ mode.title() } the recognition graph of the solve.\n'
-            'Default: False.'
-        ),
-    )
-    bluetooth.add_argument(
-        '-j', '--steps',
-        action='store_true',
-        default=False,
-        dest='show_steps',
-        help=(
-            'Show completed steps during the solve.\n'
             'Default: False.'
         ),
     )
@@ -565,7 +568,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         dest='bluetooth',
         help=(
             f'{ mode.title() } the Bluetooth-connected cube.\n'
-            f'Default: { use_bluetooth }.'
+            f'Default: False.'
         ),
     )
     mode = 'disable' if USE_GYROSCOPE else 'enable'
@@ -1436,7 +1439,7 @@ def drill_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         dest='bluetooth',
         help=(
             f'{ mode.title() } the Bluetooth-connected cube.\n'
-            f'Default: { use_bluetooth }.'
+            f'Default: False.'
         ),
     )
     mode = 'disable' if USE_GYROSCOPE else 'enable'

@@ -10,6 +10,7 @@ from term_timer.constants import CONFIG_FILE
 DEFAULT_CONFIG: Final = """[timer]
 countdown = 0.0
 metronome = 0.0
+steps = true
 
 [cube]
 orientation = "DF"
