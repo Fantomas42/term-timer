@@ -56,7 +56,8 @@ class StopWatch:
         # Methods from Terminal mixin
         def clear_line(self, *, full: bool) -> None: ...  # noqa: D102
         def back(self, size: int) -> None: ...  # noqa: D102
-        def beep(self) -> None: ...  # noqa: D102
+        def beep_metronome(self) -> None: ...  # noqa: D102
+        def beep_step(self) -> None: ...  # noqa: D102
 
     def __init__(self) -> None:
         """Initialize the stopwatch with default timing values and events."""
@@ -80,7 +81,7 @@ class StopWatch:
             f'[result]{ format_time(elapsed_time) }[/result]',
             f'[step]{ step_name }[/step]',
         )
-        self.beep()
+        self.beep_step()
 
     def build_oriented_facelets(self) -> tuple[str, 'CubeOrientation']:
         """
@@ -165,7 +166,7 @@ class StopWatch:
             if tempo_elapsed != new_tempo:
                 tempo_elapsed = new_tempo
                 if self.metronome:
-                    self.beep()
+                    self.beep_metronome()
 
             if (
                 facelet_analyser is not None

@@ -43,8 +43,8 @@ class OrienterScrambler(Orienter, Scrambler):
     def clear_line(self, *, full: bool) -> None:
         """Fake clear_line."""
 
-    def beep(self) -> None:
-        """Fake beep_line."""
+    def beep_scramble(self) -> None:
+        """Fake beep_scramble."""
 
 
 class TestComputeScrambleDisplayComplete(unittest.TestCase):

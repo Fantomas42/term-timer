@@ -33,8 +33,8 @@ class Inspecter:
             """Move the cursor back by the specified number of characters."""
             ...
 
-        def beep(self) -> None:
-            """Emit an audible beep sound."""
+        def beep_countdown(self) -> None:
+            """Emit an audible countdown warning beep."""
             ...
 
     def __init__(self) -> None:
@@ -82,7 +82,7 @@ class Inspecter:
             if remaining_time_rounded != state:
                 state = remaining_time_rounded
                 if state in {2, 1, 0}:
-                    self.beep()
+                    self.beep_countdown()
 
             if remaining_time < 1:
                 klass = 'warning'

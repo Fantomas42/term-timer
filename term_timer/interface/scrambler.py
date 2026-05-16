@@ -41,8 +41,8 @@ class Scrambler:
             """Clear the current terminal line."""
             ...
 
-        def beep(self) -> None:
-            """Emit a terminal beep sound."""
+        def beep_scramble(self) -> None:
+            """Emit a confirmation tone when scramble is finalized."""
             ...
 
     def __init__(self) -> None:
@@ -104,7 +104,7 @@ class Scrambler:
 
         if is_complete:
             self.scramble_completed_event.set()
-            self.beep()
+            self.beep_scramble()
 
         out, full_clear = self.compute_scramble_display(
             scrambled=self.scrambled,
