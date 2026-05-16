@@ -237,7 +237,7 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
     )
     mode = 'hide' if show_doctor else 'show'
     bluetooth.add_argument(
-        f'--{ mode }-doctor',
+        '-e', f'--{ mode }-doctor',
         action='store_const',
         const=not show_doctor,
         default=show_doctor,
@@ -296,7 +296,7 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
         ),
     )
     bluetooth.add_argument(
-        '--steps',
+        '-j', '--steps',
         action='store_true',
         default=False,
         dest='show_steps',
@@ -1034,7 +1034,7 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
     mode = 'hide' if show_doctor else 'show'
     analyze.add_argument(
-        f'--{ mode }-doctor',
+        '-e', f'--{ mode }-doctor',
         action='store_const',
         const=not show_doctor,
         default=show_doctor,
