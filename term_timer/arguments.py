@@ -295,6 +295,16 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
             'Default: False.'
         ),
     )
+    bluetooth.add_argument(
+        '--steps',
+        action='store_true',
+        default=False,
+        dest='show_steps',
+        help=(
+            'Show completed steps during the solve.\n'
+            'Default: False.'
+        ),
+    )
 
     session = parser.add_argument_group('Session')
     session.add_argument(

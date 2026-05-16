@@ -46,6 +46,7 @@ class SessionConfig(TypedDict, total=False):
     show_time_graph: bool
     show_fluency_graph: bool
     show_recognition_graph: bool
+    show_steps: bool
     method: str
     countdown: int
     # drill fields
@@ -137,6 +138,7 @@ def build_solve_instance(session_config: SessionConfig) -> Timer:
         show_recognition_graph=display(
             'show_recognition_graph', 'recognition_graph',
         ),
+        show_steps=session_config.get('show_steps', False),
         method=session_config.get('method', CUBE_METHOD),
         orientation=session_config.get('orientation', CUBE_ORIENTATION),
         countdown=session_config.get(
