@@ -28,7 +28,7 @@ class TestCommandAliases(unittest.TestCase):
     def test_command_aliases_structure(self) -> None:
         """Test that COMMAND_ALIASES contains all expected commands."""
         expected_commands = {
-            'solve', 'list', 'stats', 'graph', 'cfop', 'detail',
+            'daily', 'solve', 'list', 'stats', 'graph', 'cfop', 'detail',
             'import', 'serve', 'train', 'edit', 'delete', 'index',
             'scramble', 'browse', 'merge', 'config', 'routine', 'drill',
             'reset',

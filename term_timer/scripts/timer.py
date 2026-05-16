@@ -10,6 +10,7 @@ from term_timer.config_edit.app import run_config_edit
 from term_timer.importers import Importer
 from term_timer.interface.terminal import Terminal
 from term_timer.logger import configure_logging
+from term_timer.scripts.commands.daily import daily
 from term_timer.scripts.commands.driller import driller
 from term_timer.scripts.commands.manage import manage
 from term_timer.scripts.commands.reset import reset
@@ -37,6 +38,8 @@ def main() -> int:  # noqa: C901, PLR0911
         Terminal.set_title(f'{ command.title() } - Term-Timer')
 
     with suppress(KeyboardInterrupt):
+        if command == 'daily':
+            return asyncio.run(daily(options), debug=DEBUG)
         if command == 'solve':
             return asyncio.run(timer(options), debug=DEBUG)
         if command == 'train':
