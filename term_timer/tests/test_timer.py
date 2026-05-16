@@ -28,6 +28,7 @@ class TestTimerModule(unittest.TestCase):
             show_tps_graph=False,
             show_fluency_graph=False,
             show_recognition_graph=False,
+            show_steps=False,
             countdown=0,
             metronome=0,
             orientation='DF',

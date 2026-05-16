@@ -73,6 +73,7 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
         show_time_graph=options.show_time_graph,
         show_fluency_graph=options.show_fluency_graph,
         show_recognition_graph=options.show_recognition_graph,
+        show_steps=options.show_steps,
         method=options.method,
         orientation=options.orientation,
         countdown=options.countdown,

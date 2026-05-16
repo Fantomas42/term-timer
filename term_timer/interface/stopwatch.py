@@ -3,11 +3,18 @@ import asyncio
 import time
 from typing import TYPE_CHECKING
 
+from cubing_algs.constants import DEFAULT_CUBE_SIZE
+from cubing_algs.constants import ORIENTATION_FACE_MOVES
+from cubing_algs.vcube import VCube
+
+from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
 from term_timer.formatter import format_time
+from term_timer.methods.base import FaceletAnalyser
 
 if TYPE_CHECKING:
+    from cubing_algs.annotations import CubeOrientation
     from rich.console import Console as RichConsole
 
 
@@ -33,6 +40,13 @@ class StopWatch:
         # Attributes from Console mixin
         console: RichConsole
 
+        # Attributes from Bluetooth mixin
+        bluetooth_cube: VCube | None
+        bluetooth_cube_state: str
+
+        # Attributes from Cube mixin
+        orientation_faces: CubeOrientation
+
         # Methods from State mixin
         def set_state(self, state: str, timestamp: int | None = None) -> None:  # noqa: D102
             ...
@@ -51,11 +65,13 @@ class StopWatch:
         self.elapsed_time: int = 0
 
         self.metronome: float = 0.0
+        self.show_steps: bool = False
+        self.step_list: tuple[str, ...] = ()
 
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
 
-    async def stopwatch(self) -> None:  # noqa: C901, PLR0912
+    async def stopwatch(self) -> None:  # noqa: C901, PLR0912, PLR0915
         """
         Display a running stopwatch timer until solve is completed.
 
@@ -70,6 +86,14 @@ class StopWatch:
         previous_style = ''
 
         self.set_state('solving', self.start_time)
+
+        facelet_analyser: FaceletAnalyser | None = None
+        steps_to_track: tuple[str, ...] = ()
+        steps_progress = 0
+        last_facelets = ''
+        if self.show_steps and self.step_list:
+            facelet_analyser = FaceletAnalyser()
+            steps_to_track = self.step_list[:-1]
 
         while not self.solve_completed_event.is_set():
             elapsed_time = time.perf_counter_ns() - self.start_time
@@ -102,6 +126,45 @@ class StopWatch:
                 tempo_elapsed = new_tempo
                 if self.metronome:
                     self.beep()
+
+            if (
+                facelet_analyser is not None
+                and steps_progress < len(steps_to_track)
+                and self.bluetooth_cube is not None
+                and self.bluetooth_cube_state != last_facelets
+            ):
+                last_facelets = self.bluetooth_cube_state
+
+                orientation = (
+                    CUBE_ORIENTATION
+                    if self.orientation_faces == 'auto'
+                    else self.orientation_faces
+                )
+                cube = VCube(
+                    self.bluetooth_cube_state,
+                    size=DEFAULT_CUBE_SIZE,
+                    check=False,
+                )
+                orientation_moves = ORIENTATION_FACE_MOVES[orientation]
+                if orientation_moves:
+                    cube.rotate(orientation_moves)
+                facelets = cube.state
+
+                while steps_progress < len(steps_to_track):
+                    step_name = steps_to_track[steps_progress]
+                    if facelet_analyser.check_step(
+                        step_name, facelets, orientation,
+                    ):
+                        self.clear_line(full=False)
+                        self.console.print(
+                            f'[{ style }]Go Go Go:[/{ style }]',
+                            f'[result]{ format_time(elapsed_time) }[/result]',
+                            f'[step]{ step_name }[/step] done',
+                        )
+                        steps_progress += 1
+                        previous_style = ''
+                    else:
+                        break
 
             if style != previous_style:
                 previous_style = style
