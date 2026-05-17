@@ -297,6 +297,7 @@ class Driller(SolveInterface):
         self.elapsed_time = self.end_time - self.start_time
         self.rep_times.append(self.elapsed_time)
 
+        self.beep_success()
         self.clear_line(full=True)
         self.rep_line()
 

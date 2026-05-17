@@ -623,6 +623,7 @@ class Trainer(SolveInterface):
         old_stats = Statistics(timings[:-1])
         new_stats = Statistics(timings)
 
+        self.beep_success()
         self.clear_line(full=True)
 
         if solve.method_applied:

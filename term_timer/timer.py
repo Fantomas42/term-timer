@@ -175,6 +175,7 @@ class Timer(SolveInterface):
         self.stack = [*self.stack, solve]
         new_stats = SolveStatisticsReporter(self.cube_size, self.stack)
 
+        self.beep_success()
         self.clear_line(full=True)
 
         if solve.advanced:
