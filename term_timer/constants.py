@@ -18,6 +18,8 @@ TT_DIRECTORY: Final = Path.home() / '.term_timer'
 
 SOLVES_DIRECTORY: Final = TT_DIRECTORY / 'solves'
 
+DAILY_DIRECTORY: Final = SOLVES_DIRECTORY / 'daily'
+
 TRAININGS_DIRECTORY: Final = TT_DIRECTORY / 'trainings'
 
 ROUTINES_DIRECTORY: Final = TT_DIRECTORY / 'routines'
@@ -90,6 +92,7 @@ LL_CASE = Case(
 
 for directory in (
         SOLVES_DIRECTORY,
+        DAILY_DIRECTORY,
         TRAININGS_DIRECTORY,
         ROUTINES_DIRECTORY,
         LOGGING_DIRECTORY,

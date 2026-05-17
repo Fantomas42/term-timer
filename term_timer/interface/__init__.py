@@ -11,6 +11,7 @@ from cubing_algs.algorithm import Algorithm
 from term_timer.constants import DNF
 from term_timer.constants import ESCAPE_CHAR
 from term_timer.constants import PLUS_TWO
+from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.in_out import save_solves
 from term_timer.interface.bluetooth import Bluetooth
 from term_timer.interface.console import Console
@@ -77,6 +78,7 @@ class SolveInterface(
         self.cube_size: int = 3
         self.stack: list[Solve] = []
         self.stack_done: list[Solve] = []
+        self.save_directory = SOLVES_DIRECTORY
 
     def init_solve(self) -> None:
         """
@@ -314,6 +316,7 @@ class SolveInterface(
             self.cube_size,
             self.session,
             self.stack,
+            self.save_directory,
         )
 
         if save_string:

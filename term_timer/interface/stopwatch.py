@@ -108,7 +108,7 @@ class StopWatch:
 
         return cube.state, orientation
 
-    async def stopwatch(self) -> None:  # noqa: C901, PLR0912, PLR0915
+    async def stopwatch(self) -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
         """
         Display a running stopwatch timer until solve is completed.
 
@@ -186,7 +186,9 @@ class StopWatch:
                         )
                     ):
                         self.print_step(
-                            style, elapsed_time, display_name or step_name,
+                            style,
+                            elapsed_time,
+                            display_name or step_name,
                         )
                         completed_in_group.add(step_name)
                         previous_style = ''
@@ -219,6 +221,7 @@ class StopWatch:
         ):
             facelets, orientation = self.build_oriented_facelets()
             current_group = groups_to_track[group_progress]
+            final_elapsed_time = self.end_time - self.start_time
 
             for step_name, display_name in current_group:
                 if (
@@ -228,7 +231,9 @@ class StopWatch:
                     )
                 ):
                     self.print_step(
-                        style, elapsed_time, display_name or step_name,
+                        style,
+                        final_elapsed_time,
+                        display_name or step_name,
                     )
 
         self.set_state('stop')

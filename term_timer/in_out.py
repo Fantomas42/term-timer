@@ -19,7 +19,11 @@ from term_timer.training import Trainings
 SCRAMBLE_LINE = re.compile(r'Scramble #\d+:\s*(.+?)(?:\s*//.*)?$')
 
 
-def load_solves(cube: int, session: str) -> list[Solve]:
+def load_solves(
+        cube: int,
+        session: str,
+        directory: Path = SOLVES_DIRECTORY,
+) -> list[Solve]:
     """
     Load solves from file for given cube size and session.
 
@@ -32,7 +36,7 @@ def load_solves(cube: int, session: str) -> list[Solve]:
 
     suffix = (session and f'-{ session }') or ''
 
-    source = SOLVES_DIRECTORY / f'{ cube }x{ cube }x{ cube }{ suffix }.json'
+    source = directory / f'{ cube }x{ cube }x{ cube }{ suffix }.json'
 
     if source.exists():
         with source.open('r', encoding='utf-8') as fd:
@@ -103,7 +107,12 @@ def load_all_solves(
     return sorted(uniques.values(), key=operator.attrgetter('date'))
 
 
-def save_solves(cube: int, session: str, solves: list[Solve]) -> bool:
+def save_solves(
+        cube: int,
+        session: str,
+        solves: list[Solve],
+        directory: Path = SOLVES_DIRECTORY,
+) -> bool:
     """
     Save solves to file for given cube size and session.
 
@@ -116,7 +125,7 @@ def save_solves(cube: int, session: str, solves: list[Solve]) -> bool:
 
     suffix = (session and f'-{ session }') or ''
 
-    source = SOLVES_DIRECTORY / f'{ cube }x{ cube }x{ cube }{ suffix }.json'
+    source = directory / f'{ cube }x{ cube }x{ cube }{ suffix }.json'
 
     data = [s.as_save for s in solves]
 

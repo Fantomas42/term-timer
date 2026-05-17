@@ -440,13 +440,6 @@ class Trainer(SolveInterface):
         if selected_case.code in self.trainings.cases:
             attempt = len(self.trainings.cases[selected_case.code].timings) + 1
 
-        self.console.print(
-            f'[scramble]Training #{ self.counter }:[/scramble]',
-            scramble_line,
-            f'[comment]// [link={ link }]{ name }[/link] '
-            f'#{ attempt }[/comment]',
-        )
-
         if self.show_solution and solution:
             formatted_algorithm = format_alg_triggers(
                 format_alg_moves(
@@ -463,6 +456,13 @@ class Trainer(SolveInterface):
                 f'[solution]Solution #{ self.counter }:[/solution]',
                 f'[moves]{ formatted_algorithm }[/moves]',
             )
+
+        self.console.print(
+            f'[scramble]Training #{ self.counter }:[/scramble]',
+            scramble_line,
+            f'[comment]// [link={ link }]{ name }[/link] '
+            f'#{ attempt }[/comment]',
+        )
 
         if self.bluetooth_interface:
             self.console.print(
