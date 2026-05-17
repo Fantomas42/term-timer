@@ -9,7 +9,8 @@ import numpy as np
 try:
     import sounddevice as sd
     SOUNDDEVICE_AVAILABLE = True
-except ImportError:
+except OSError:
+    print('No PortAudio installed. Try install libportaudio2 package.')
     SOUNDDEVICE_AVAILABLE = False
 
 SAMPLE_RATE = 44100
