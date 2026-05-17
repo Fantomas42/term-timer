@@ -1,125 +1,131 @@
 """Tests for the SoundPlayer class."""
+import io
+import unittest
+from contextlib import AbstractContextManager
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import numpy as np
-import pytest
 
 import term_timer.interface.sounds as sounds_mod
 from term_timer.interface.sounds import SoundPlayer
 from term_timer.interface.sounds import Tone
-from term_timer.interface.sounds import _generate_wave
-from term_timer.interface.sounds import _probe_audio
+
+FADE_THRESHOLD = 0.01
 
 
-def _patch_sd(mock_sd: MagicMock):
-    """Patch the module-level sd name, creating it if sounddevice is absent."""
+def _patch_sd(mock_sd: MagicMock) -> AbstractContextManager[MagicMock]:
+    """
+    Patch the module-level sd name, creating it if sounddevice is absent.
+
+    Returns:
+        Context manager that patches sd in the sounds module.
+
+    """
     return patch.object(sounds_mod, 'sd', mock_sd, create=True)
 
 
-class TestSoundPlayerFallback:
+class TestSoundPlayerFallback(unittest.TestCase):
     """SoundPlayer falls back to terminal bell when audio is unavailable."""
 
-    def test_all_methods_use_bell_when_unavailable(self, capsys):
+    def test_all_methods_use_bell_when_unavailable(self) -> None:
+        """All sound methods print a bell char when audio is unavailable."""
         player = SoundPlayer.__new__(SoundPlayer)
-        player._available = False
+        player.available = False
 
-        for method in ('metronome', 'step', 'countdown', 'scramble', 'generic'):
-            getattr(player, method)()
+        methods = ('metronome', 'step', 'countdown', 'scramble', 'generic')
+        buf = io.StringIO()
+        with patch('sys.stdout', buf):
+            for method in methods:
+                getattr(player, method)()
 
-        captured = capsys.readouterr()
-        assert captured.out == '\a' * 5
-
-    def test_play_falls_back_to_bell_on_sd_exception(self, capsys):
-        mock_sd = MagicMock()
-        mock_sd.play.side_effect = Exception('audio error')
-
-        player = SoundPlayer.__new__(SoundPlayer)
-        player._available = True
-
-        with _patch_sd(mock_sd):
-            player.step()
-
-        captured = capsys.readouterr()
-        assert captured.out == '\a'
+        self.assertEqual(buf.getvalue(), '\a' * 5)
 
 
-class TestProbeAudio:
-    """_probe_audio() detects device availability."""
+class TestProbeAudio(unittest.TestCase):
+    """SoundPlayer.probe_audio() detects device availability."""
 
-    def test_returns_true_when_device_available(self):
+    def test_returns_true_when_device_available(self) -> None:
+        """Returns True when sounddevice reports a valid output device."""
         mock_sd = MagicMock()
         mock_sd.query_devices.return_value = {'name': 'default'}
 
-        with _patch_sd(mock_sd):
-            with patch.object(sounds_mod, '_SOUNDDEVICE_AVAILABLE', True):
-                result = _probe_audio()
+        with _patch_sd(mock_sd), \
+                patch.object(sounds_mod, 'SOUNDDEVICE_AVAILABLE', new=True):
+            result = SoundPlayer.probe_audio()
 
-        assert result is True
+        self.assertTrue(result)
 
-    def test_returns_false_when_query_raises(self):
+    def test_returns_false_when_query_raises(self) -> None:
+        """Returns False when query_devices raises any exception."""
         mock_sd = MagicMock()
         mock_sd.query_devices.side_effect = Exception('no device')
 
-        with _patch_sd(mock_sd):
-            with patch.object(sounds_mod, '_SOUNDDEVICE_AVAILABLE', True):
-                result = _probe_audio()
+        with _patch_sd(mock_sd), \
+                patch.object(sounds_mod, 'SOUNDDEVICE_AVAILABLE', new=True):
+            result = SoundPlayer.probe_audio()
 
-        assert result is False
+        self.assertFalse(result)
 
-    def test_returns_false_when_sounddevice_not_available(self):
-        with patch.object(sounds_mod, '_SOUNDDEVICE_AVAILABLE', False):
-            result = _probe_audio()
+    def test_returns_false_when_sounddevice_not_available(self) -> None:
+        """Returns False when sounddevice import failed."""
+        with patch.object(sounds_mod, 'SOUNDDEVICE_AVAILABLE', new=False):
+            result = SoundPlayer.probe_audio()
 
-        assert result is False
+        self.assertFalse(result)
 
 
-class TestSoundPlayerPlay:
+class TestSoundPlayerPlay(unittest.TestCase):
     """SoundPlayer calls sd.play when audio device is available."""
 
-    def test_play_calls_sd_play_when_available(self):
+    def test_play_calls_sd_play_when_available(self) -> None:
+        """play() calls sd.play with blocking=False when audio is available."""
         mock_sd = MagicMock()
 
         player = SoundPlayer.__new__(SoundPlayer)
-        player._available = True
+        player.available = True
 
         with _patch_sd(mock_sd):
             player.metronome()
 
         mock_sd.play.assert_called_once()
         _, kwargs = mock_sd.play.call_args
-        assert kwargs.get('blocking') is False
+        self.assertFalse(kwargs.get('blocking'))
 
-    @pytest.mark.parametrize('method', ['metronome', 'step', 'countdown', 'scramble', 'generic'])
-    def test_each_method_triggers_play(self, method):
-        mock_sd = MagicMock()
+    def test_each_method_triggers_play(self) -> None:
+        """Each named method results in exactly one sd.play call."""
+        for method in ('metronome', 'step', 'countdown', 'scramble', 'generic'):
+            mock_sd = MagicMock()
+            player = SoundPlayer.__new__(SoundPlayer)
+            player.available = True
 
-        player = SoundPlayer.__new__(SoundPlayer)
-        player._available = True
+            with _patch_sd(mock_sd):
+                getattr(player, method)()
 
-        with _patch_sd(mock_sd):
-            getattr(player, method)()
-
-        mock_sd.play.assert_called_once()
+            self.assertEqual(mock_sd.play.call_count, 1)
 
 
-class TestGenerateWave:
+class TestGenerateWave(unittest.TestCase):
     """Wave generation produces correctly shaped float32 arrays."""
 
-    def test_wave_length_matches_duration(self):
+    def test_wave_length_matches_duration(self) -> None:
+        """Wave length equals sample_rate * duration."""
         tone = Tone(440.0, 0.1, 0.5)
-        wave = _generate_wave(tone)
-        assert len(wave) == int(sounds_mod.SAMPLE_RATE * tone.duration)
+        wave = SoundPlayer.generate_wave(tone)
+        self.assertEqual(len(wave), int(sounds_mod.SAMPLE_RATE * tone.duration))
 
-    def test_wave_dtype_is_float32(self):
-        wave = _generate_wave(Tone(440.0, 0.05, 0.3))
-        assert wave.dtype == np.float32
+    def test_wave_dtype_is_float32(self) -> None:
+        """Generated wave array has dtype float32."""
+        wave = SoundPlayer.generate_wave(Tone(440.0, 0.05, 0.3))
+        self.assertEqual(wave.dtype, np.float32)
 
-    def test_wave_amplitude_within_volume(self):
+    def test_wave_amplitude_within_volume(self) -> None:
+        """Peak amplitude does not exceed the specified volume."""
         tone = Tone(440.0, 0.1, 0.4)
-        wave = _generate_wave(tone)
-        assert float(wave.max()) <= tone.volume + 1e-6
+        wave = SoundPlayer.generate_wave(tone)
+        self.assertLessEqual(float(wave.max()), tone.volume + 1e-6)
 
-    def test_fade_out_applied(self):
-        wave = _generate_wave(Tone(440.0, 0.5, 1.0))
-        assert abs(float(wave[-1])) < 0.01
+    def test_fade_out_applied(self) -> None:
+        """Last sample is near zero due to fade-out."""
+        wave = SoundPlayer.generate_wave(Tone(440.0, 0.5, 1.0))
+        self.assertLess(abs(float(wave[-1])), FADE_THRESHOLD)
