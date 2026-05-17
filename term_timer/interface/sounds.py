@@ -1,4 +1,5 @@
 """Sound player with sounddevice/numpy backend and terminal bell fallback."""
+# ruff: noqa: T201
 import math
 from functools import lru_cache
 from typing import NamedTuple
@@ -29,6 +30,7 @@ TONES: dict[str, Tone] = {
     'scramble':  Tone(660.0, 0.25, 0.35),
     'generic':   Tone(880.0, 0.10, 0.3),
 }
+
 
 class SoundPlayer:
     """Play tones via sounddevice or fall back to terminal bell."""
@@ -79,7 +81,7 @@ class SoundPlayer:
             wave = self.generate_wave(TONES[name])
             sd.play(wave, SAMPLE_RATE, blocking=False)
         else:
-            print('\a', end='', flush=True)  # noqa: T201
+            print('\a', end='', flush=True)
 
     def metronome(self) -> None:
         """Play a short neutral tick for metronome beats."""
@@ -100,3 +102,39 @@ class SoundPlayer:
     def generic(self) -> None:
         """Play a generic beep for miscellaneous notifications."""
         self.play('generic')
+
+
+if __name__ == '__main__':
+    import sys
+    import time
+
+    player = SoundPlayer()
+    names = list(TONES)
+
+    if not player.available:
+        print('No audio device found, using terminal bell fallback.')
+
+    if len(sys.argv) > 1:
+        name = sys.argv[1]
+        if name not in TONES:
+            print(f'Unknown sound: {name!r}')
+            print(f'Available: {", ".join(names)}')
+            sys.exit(1)
+        print(f'Playing: {name} (Ctrl+C to quit)')
+        try:
+            while True:
+                player.play(name)
+                time.sleep(TONES[name].duration + 1.0)
+        except KeyboardInterrupt:
+            print('\nDone.')
+    else:
+        print(f'Playing all sounds: {", ".join(names)} (Ctrl+C to quit)')
+        try:
+            while True:
+                for name in names:
+                    print(f'  {name}')
+                    player.play(name)
+                    time.sleep(TONES[name].duration + 0.3)
+                time.sleep(1.0)
+        except KeyboardInterrupt:
+            print('\nDone.')
