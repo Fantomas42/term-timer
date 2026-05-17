@@ -25,11 +25,13 @@ class Tone(NamedTuple):
 
 
 TONES: dict[str, Tone] = {
-    'metronome': Tone(800.0, 0.05, 0.2),
-    'step':      Tone(1100.0, 0.10, 0.35),
-    'countdown': Tone(440.0, 0.15, 0.4),
-    'scramble':  Tone(660.0, 0.25, 0.35),
-    'generic':   Tone(880.0, 0.10, 0.3),
+    'metronome':  Tone(800.0, 0.05, 0.2),
+    'step':       Tone(1100.0, 0.10, 0.35),
+    'countdown':  Tone(440.0, 0.15, 0.4),
+    'scramble':   Tone(660.0, 0.25, 0.35),
+    'generic':    Tone(880.0, 0.10, 0.3),
+    'connected':  Tone(523.0, 0.12, 0.25),
+    'success':    Tone(1046.0, 0.20, 0.35),
 }
 
 
@@ -103,6 +105,14 @@ class SoundPlayer:
     def generic(self) -> None:
         """Play a generic beep for miscellaneous notifications."""
         self.play('generic')
+
+    def connected(self) -> None:
+        """Play a soft chime when a Bluetooth cube connects."""
+        self.play('connected')
+
+    def success(self) -> None:
+        """Play a bright tone on solve, training, or drill completion."""
+        self.play('success')
 
 
 if __name__ == '__main__':
