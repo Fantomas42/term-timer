@@ -59,6 +59,10 @@ class Bluetooth:
             """Clear current terminal line."""
             ...
 
+        def beep_connected(self) -> None:
+            """Emit a soft chime when a Bluetooth cube connects."""
+            ...
+
         # Methods from Scrambler mixin
         def handle_scrambled(self, timed_move: Move) -> None:
             """Handle a move during scrambling phase."""
@@ -173,6 +177,7 @@ class Bluetooth:
                 f'[result]{ self.bluetooth_device_label } '
                 'initialized successfully ![/result]',
             )
+            self.beep_connected()
         except CubeNotFoundError:
             self.clear_line(full=True)
             self.console.print(

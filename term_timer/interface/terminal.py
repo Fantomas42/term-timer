@@ -47,6 +47,16 @@ class Terminal:
         SOUND_PLAYER.scramble()
 
     @staticmethod
+    def beep_connected() -> None:
+        """Emit a soft chime when a Bluetooth cube connects."""
+        SOUND_PLAYER.connected()
+
+    @staticmethod
+    def beep_success() -> None:
+        """Emit a bright tone on solve, training, or drill completion."""
+        SOUND_PLAYER.success()
+
+    @staticmethod
     def set_title(title: str) -> None:
         """Set the terminal window title."""
         print(f'\033]0;{title}\007', end='', flush=True)

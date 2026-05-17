@@ -493,6 +493,7 @@ async def client_cb(  # noqa: PLR0913
         filter_name=filter_name,
         use_gyroscope=True,
     )
+    Terminal.beep_connected()
 
     await bluetooth_interface.send_command('REQUEST_FACELETS')
     await bluetooth_interface.send_command('REQUEST_HARDWARE')
