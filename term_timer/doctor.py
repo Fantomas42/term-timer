@@ -252,7 +252,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
 
     execution_pauses = solve.execution_pauses
     if execution_pauses > 8:
-        estimated_impact = execution_pauses * solve.pause_threshold / SECOND
+        estimated_impact = execution_pauses * solve.move_speed / SECOND
         issues.append(
             {
                 'severity': DiagnosticSeverity.CRITICAL,
@@ -276,7 +276,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
             },
         )
     elif execution_pauses > 4:
-        estimated_impact = execution_pauses * solve.pause_threshold / SECOND
+        estimated_impact = execution_pauses * solve.move_speed / SECOND
         issues.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
