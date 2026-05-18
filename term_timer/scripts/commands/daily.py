@@ -14,7 +14,7 @@ from term_timer.stats import SolveStatisticsReporter
 from term_timer.timer import Timer
 
 
-def _parse_date(raw: str) -> date:
+def parse_date(raw: str) -> date:
     """
     Parse a YYYY-MM-DD string into a date, defaulting to today.
 
@@ -36,7 +36,7 @@ async def daily(options: Namespace) -> int:
 
     """
     cube = options.cube
-    daily_date = _parse_date(options.date)
+    daily_date = parse_date(options.date)
     date_str = daily_date.strftime('%Y-%m-%d')
     session = date_str
 
@@ -45,8 +45,8 @@ async def daily(options: Namespace) -> int:
     scramble_str = str(daily_scramble)
 
     console.print(
-        f'[scramble]Daily Scramble — { date_str }[/scramble]',
-        style='bold',
+        f'📅 Daily Scramble - { date_str }',
+        style='routine',
     )
 
     stack = [] if options.free_play else load_solves(
