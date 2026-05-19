@@ -25,11 +25,10 @@ class Tone(NamedTuple):
 
 
 TONES: dict[str, Tone] = {
-    'metronome':  Tone(800.0, 0.05, 0.2),
+    'LA_3':  Tone(440.0, 0.15, 0.4),
+    'LA_4':  Tone(880.0, 0.10, 0.3),
     'step':       Tone(1100.0, 0.10, 0.35),
-    'countdown':  Tone(440.0, 0.15, 0.4),
     'scramble':   Tone(660.0, 0.25, 0.35),
-    'generic':    Tone(880.0, 0.10, 0.3),
     'connected':  Tone(523.0, 0.12, 0.25),
     'success':    Tone(1046.0, 0.20, 0.35),
 }
@@ -78,6 +77,25 @@ class SoundPlayer:
 
         return wave.astype(np.float32)
 
+    @staticmethod
+    @lru_cache
+    def generate_metronome_wave() -> np.ndarray:
+        """
+        Generate a downward chirp (800→300 Hz) with exponential decay.
+
+        Returns:
+            Float32 array of audio samples.
+
+        """
+        duration = 0.07
+        samples = int(SAMPLE_RATE * duration)
+        t = np.linspace(0, duration, samples, endpoint=False)
+        freq_t = 800.0 + (300.0 - 800.0) * (t / duration)
+        phase = 2 * math.pi * np.cumsum(freq_t) / SAMPLE_RATE
+        wave = 0.32 * np.sin(phase)
+        env = np.exp(-25.0 * t / duration)
+        return (wave * env).astype(np.float32)
+
     def play(self, name: str) -> None:
         """Play a sound else fallback."""
         if self.available:
@@ -88,23 +106,30 @@ class SoundPlayer:
 
     def metronome(self) -> None:
         """Play a short neutral tick for metronome beats."""
-        self.play('metronome')
+        if self.available:
+            sd.play(
+                self.generate_metronome_wave(),
+                SAMPLE_RATE,
+                blocking=False,
+            )
+        else:
+            print('\a', end='', flush=True)
+
+    def la_3(self) -> None:
+        """Play a LA 3."""
+        self.play('LA_3')
+
+    def la_4(self) -> None:
+        """Play a LA 4."""
+        self.play('LA_4')
 
     def step(self) -> None:
         """Play a higher-pitched beep when a solve step is completed."""
         self.play('step')
 
-    def countdown(self) -> None:
-        """Play a low urgent beep for inspection countdown warnings."""
-        self.play('countdown')
-
     def scramble(self) -> None:
         """Play a confirmation tone when scramble is finalized."""
         self.play('scramble')
-
-    def generic(self) -> None:
-        """Play a generic beep for miscellaneous notifications."""
-        self.play('generic')
 
     def connected(self) -> None:
         """Play a soft chime when a Bluetooth cube connects."""

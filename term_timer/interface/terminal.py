@@ -22,11 +22,6 @@ class Terminal:
         print('\b' * size, end='')
 
     @staticmethod
-    def beep() -> None:
-        """Emit a generic beep sound."""
-        SOUND_PLAYER.generic()
-
-    @staticmethod
     def beep_metronome() -> None:
         """Emit a short neutral tick for metronome beats."""
         SOUND_PLAYER.metronome()
