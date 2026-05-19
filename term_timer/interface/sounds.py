@@ -25,13 +25,18 @@ class Tone(NamedTuple):
 
 
 TONES: dict[str, Tone] = {
-    'LA_3':  Tone(440.0, 0.15, 0.4),
-    'LA_4':  Tone(880.0, 0.10, 0.3),
-    'step':       Tone(1100.0, 0.10, 0.35),
-    'scrambled':  Tone(660.0, 0.25, 0.35),
-    'connected':  Tone(523.0, 0.12, 0.25),
-    'success':    Tone(1046.0, 0.20, 0.35),
+    'LA_3':      Tone(440.0, 0.15, 0.4),
+    'LA_4':      Tone(880.0, 0.10, 0.3),
+    'step':      Tone(1100.0, 0.10, 0.35),
+    'scrambled': Tone(660.0, 0.25, 0.35),
+    'success':   Tone(1046.0, 0.20, 0.35),
 }
+
+CONNECTED_FREQS    = (900.0, 1300.0, 1800.0)
+DISCONNECTED_FREQS = (1800.0, 1300.0, 900.0)
+TRIO_DURATIONS     = (0.05, 0.05, 0.07)
+TRIO_GAP           = 0.03
+TRIO_VOLUME        = 0.25
 
 
 class SoundPlayer:
@@ -76,6 +81,34 @@ class SoundPlayer:
         wave[-fade:] *= np.linspace(1.0, 0.0, fade)
 
         return wave.astype(np.float32)
+
+    @staticmethod
+    @lru_cache
+    def generate_trio_wave(
+        freqs: tuple[float, ...],
+        durations: tuple[float, ...],
+        gap: float,
+        volume: float,
+    ) -> np.ndarray:
+        """
+        Generate a sequence of sine tones separated by silence.
+
+        Returns:
+            Float32 array of concatenated beeps with fade-outs.
+
+        """
+        parts: list[np.ndarray] = []
+        gap_samples = np.zeros(int(SAMPLE_RATE * gap), dtype=np.float32)
+        for i, (freq, dur) in enumerate(zip(freqs, durations)):
+            samples = int(SAMPLE_RATE * dur)
+            t = np.linspace(0, dur, samples, endpoint=False)
+            wave = volume * np.sin(2 * math.pi * freq * t)
+            fade = min(int(SAMPLE_RATE * 0.008), samples // 4)
+            wave[-fade:] *= np.linspace(1.0, 0.0, fade)
+            parts.append(wave.astype(np.float32))
+            if i < len(freqs) - 1:
+                parts.append(gap_samples)
+        return np.concatenate(parts)
 
     @staticmethod
     @lru_cache
@@ -132,8 +165,24 @@ class SoundPlayer:
         self.play('scrambled')
 
     def connected(self) -> None:
-        """Play a soft chime when a Bluetooth cube connects."""
-        self.play('connected')
+        """Play an ascending triple beep when a Bluetooth cube connects."""
+        if self.available:
+            wave = self.generate_trio_wave(
+                CONNECTED_FREQS, TRIO_DURATIONS, TRIO_GAP, TRIO_VOLUME,
+            )
+            sd.play(wave, SAMPLE_RATE, blocking=False)
+        else:
+            print('\a', end='', flush=True)
+
+    def disconnected(self) -> None:
+        """Play a descending triple beep when a Bluetooth cube disconnects."""
+        if self.available:
+            wave = self.generate_trio_wave(
+                DISCONNECTED_FREQS, TRIO_DURATIONS, TRIO_GAP, TRIO_VOLUME,
+            )
+            sd.play(wave, SAMPLE_RATE, blocking=False)
+        else:
+            print('\a', end='', flush=True)
 
     def success(self) -> None:
         """Play a bright tone on solve, training, or drill completion."""

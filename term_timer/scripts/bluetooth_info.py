@@ -343,7 +343,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
         events = await queue.get()
 
         if events is None:
-            SOUND_PLAYER.success()
+            SOUND_PLAYER.disconnected()
             logger.info(
                 'CONSUMER: Got message from client about disconnection. '
                 'Exiting consumer loop...',

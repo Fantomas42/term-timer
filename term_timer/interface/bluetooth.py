@@ -223,6 +223,7 @@ class Bluetooth:
                 and self.bluetooth_interface.client
                 and self.bluetooth_interface.client.is_connected
         ):
+            SOUND_PLAYER.disconnected()
             self.console.print(
                 '[bluetooth]🔗Bluetooth:[/bluetooth] '
                 f'{ self.bluetooth_device_label } disconnecting...',
