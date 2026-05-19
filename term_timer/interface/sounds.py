@@ -148,22 +148,6 @@ class SoundPlayer:
         else:
             print('\a', end='', flush=True)
 
-    def la_3(self) -> None:
-        """Play a LA 3."""
-        self.play('LA_3')
-
-    def la_4(self) -> None:
-        """Play a LA 4."""
-        self.play('LA_4')
-
-    def step(self) -> None:
-        """Play a higher-pitched beep when a solve step is completed."""
-        self.play('step')
-
-    def scrambled(self) -> None:
-        """Play a confirmation tone when scramble is finalized."""
-        self.play('scrambled')
-
     def connected(self) -> None:
         """Play an ascending triple beep when a Bluetooth cube connects."""
         if self.available:
@@ -183,6 +167,22 @@ class SoundPlayer:
             sd.play(wave, SAMPLE_RATE, blocking=False)
         else:
             print('\a', end='', flush=True)
+
+    def la_3(self) -> None:
+        """Play a LA 3."""
+        self.play('LA_3')
+
+    def la_4(self) -> None:
+        """Play a LA 4."""
+        self.play('LA_4')
+
+    def step(self) -> None:
+        """Play a higher-pitched beep when a solve step is completed."""
+        self.play('step')
+
+    def scrambled(self) -> None:
+        """Play a confirmation tone when scramble is finalized."""
+        self.play('scrambled')
 
     def success(self) -> None:
         """Play a bright tone on solve, training, or drill completion."""
