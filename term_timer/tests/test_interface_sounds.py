@@ -33,7 +33,8 @@ class TestSoundPlayerFallback(unittest.TestCase):
         player = SoundPlayer.__new__(SoundPlayer)
         player.available = False
 
-        methods = ('metronome', 'step', 'countdown', 'scramble', 'generic')
+        methods = ('metronome', 'step', 'scrambled',
+                   'connected', 'success')
         buf = io.StringIO()
         with patch('sys.stdout', buf):
             for method in methods:
@@ -94,7 +95,8 @@ class TestSoundPlayerPlay(unittest.TestCase):
 
     def test_each_method_triggers_play(self) -> None:
         """Each named method results in exactly one sd.play call."""
-        for method in ('metronome', 'step', 'countdown', 'scramble', 'generic'):
+        for method in ('metronome', 'step', 'scrambled',
+                       'connected', 'success'):
             mock_sd = MagicMock()
             player = SoundPlayer.__new__(SoundPlayer)
             player.available = True

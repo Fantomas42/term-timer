@@ -14,7 +14,6 @@ from term_timer.constants import PLUS_TWO
 from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.in_out import save_solves
 from term_timer.interface.bluetooth import Bluetooth
-from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.interface.console import Console
 from term_timer.interface.controler import Controler
 from term_timer.interface.cube import Orienter
@@ -22,6 +21,7 @@ from term_timer.interface.gesture import Gesture
 from term_timer.interface.getcher import Getcher
 from term_timer.interface.inspection import Inspecter
 from term_timer.interface.scrambler import Scrambler
+from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.interface.state import State
 from term_timer.interface.stopwatch import StopWatch
 from term_timer.interface.terminal import Terminal

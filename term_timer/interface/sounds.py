@@ -32,11 +32,11 @@ TONES: dict[str, Tone] = {
     'success':   Tone(1046.0, 0.20, 0.35),
 }
 
-CONNECTED_FREQS    = (900.0, 1300.0, 1800.0)
+CONNECTED_FREQS = (900.0, 1300.0, 1800.0)
 DISCONNECTED_FREQS = (1800.0, 1300.0, 900.0)
-TRIO_DURATIONS     = (0.05, 0.05, 0.07)
-TRIO_GAP           = 0.03
-TRIO_VOLUME        = 0.25
+TRIO_DURATIONS = (0.05, 0.05, 0.07)
+TRIO_GAP = 0.03
+TRIO_VOLUME = 0.25
 
 
 class SoundPlayer:
@@ -99,7 +99,7 @@ class SoundPlayer:
         """
         parts: list[np.ndarray] = []
         gap_samples = np.zeros(int(SAMPLE_RATE * gap), dtype=np.float32)
-        for i, (freq, dur) in enumerate(zip(freqs, durations)):
+        for i, (freq, dur) in enumerate(zip(freqs, durations, strict=True)):
             samples = int(SAMPLE_RATE * dur)
             t = np.linspace(0, dur, samples, endpoint=False)
             wave = volume * np.sin(2 * math.pi * freq * t)
