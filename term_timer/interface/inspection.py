@@ -64,6 +64,7 @@ class Inspecter:
 
         state = 0
         first = True
+        display_width = len(str(int(self.countdown))) + 3  # digits + ".XX"
         inspection_start_time = time.perf_counter_ns()
 
         self.set_state('inspecting', inspection_start_time)
@@ -88,18 +89,19 @@ class Inspecter:
             elif remaining_time < 3:
                 klass = 'caution'
 
+            formatted = f'{remaining_time:0{display_width}.2f}'
             if first:
                 first = False
                 self.clear_line(full=False)
                 self.console.print(
                     '[inspection]Inspection :[/inspection]',
-                    f'[{ klass }]{ remaining_time:.2f}[/{ klass }]',
+                    f'[{ klass }]{ formatted }[/{ klass }]',
                     end='',
                 )
             else:
-                self.back(4)
+                self.back(display_width)
                 self.console.print(
-                    f'[{ klass }]{ remaining_time:.2f}[/{ klass }]',
+                    f'[{ klass }]{ formatted }[/{ klass }]',
                     end='',
                 )
 
