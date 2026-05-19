@@ -516,6 +516,10 @@ class Bluetooth:
         elif self.state == 'saving':
             self.handle_save_gestures(timed_move)
 
+        elif self.state == 'inspecting':
+            if not rotation:
+                self.solve_started_event.set()
+
         elif self.state == 'scrambled':
             if rotation:
                 return
