@@ -14,6 +14,7 @@ from term_timer.constants import PLUS_TWO
 from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.in_out import save_solves
 from term_timer.interface.bluetooth import Bluetooth
+from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.interface.console import Console
 from term_timer.interface.controler import Controler
 from term_timer.interface.cube import Orienter
@@ -183,11 +184,15 @@ class SolveInterface(
             if not self.solve_started_event.is_set():
                 result = getch_task.result()
                 char = result if isinstance(result, str) else ''
-                if char in {'q', ESCAPE_CHAR}:
+                if not char:
+                    SOUND_PLAYER.la_4()
+                elif char in {'q', ESCAPE_CHAR}:
                     await inspection_task
                     return True
         else:
             char = await self.getch('inspected', self.countdown)
+            if not char:
+                SOUND_PLAYER.la_4()
             self.inspection_completed_event.set()
             if char in {'q', ESCAPE_CHAR}:
                 await inspection_task

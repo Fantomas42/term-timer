@@ -79,10 +79,8 @@ class Inspecter:
 
             if remaining_time_rounded != state:
                 state = remaining_time_rounded
-                if state in {3, 2, 1}:
+                if state in {2, 1, 0}:
                     SOUND_PLAYER.la_3()
-                elif state == 0:
-                    SOUND_PLAYER.la_4()
 
             if remaining_time < 1:
                 klass = 'warning'
