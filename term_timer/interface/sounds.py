@@ -28,7 +28,7 @@ TONES: dict[str, Tone] = {
     'LA_3':  Tone(440.0, 0.15, 0.4),
     'LA_4':  Tone(880.0, 0.10, 0.3),
     'step':       Tone(1100.0, 0.10, 0.35),
-    'scramble':   Tone(660.0, 0.25, 0.35),
+    'scrambled':  Tone(660.0, 0.25, 0.35),
     'connected':  Tone(523.0, 0.12, 0.25),
     'success':    Tone(1046.0, 0.20, 0.35),
 }
@@ -127,9 +127,9 @@ class SoundPlayer:
         """Play a higher-pitched beep when a solve step is completed."""
         self.play('step')
 
-    def scramble(self) -> None:
+    def scrambled(self) -> None:
         """Play a confirmation tone when scramble is finalized."""
-        self.play('scramble')
+        self.play('scrambled')
 
     def connected(self) -> None:
         """Play a soft chime when a Bluetooth cube connects."""

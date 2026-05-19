@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
+from term_timer.interface.sounds import SOUND_PLAYER
 
 if TYPE_CHECKING:
     from rich.console import Console as RichConsole
@@ -31,10 +32,6 @@ class Inspecter:
 
         def back(self, size: int) -> None:
             """Move the cursor back by the specified number of characters."""
-            ...
-
-        def beep_countdown(self) -> None:
-            """Emit an audible countdown warning beep."""
             ...
 
     def __init__(self) -> None:
@@ -81,8 +78,10 @@ class Inspecter:
 
             if remaining_time_rounded != state:
                 state = remaining_time_rounded
-                if state in {2, 1, 0}:
-                    self.beep_countdown()
+                if state in {3, 2, 1}:
+                    SOUND_PLAYER.la_3()
+                elif state == 0:
+                    SOUND_PLAYER.la_4()
 
             if remaining_time < 1:
                 klass = 'warning'

@@ -13,6 +13,7 @@ from term_timer.constants import SolveFlag
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
+from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.printer import print_cube_scrambled
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
@@ -175,7 +176,7 @@ class Timer(SolveInterface):
         self.stack = [*self.stack, solve]
         new_stats = SolveStatisticsReporter(self.cube_size, self.stack)
 
-        self.beep_success()
+        SOUND_PLAYER.success()
         self.clear_line(full=True)
 
         if solve.advanced:

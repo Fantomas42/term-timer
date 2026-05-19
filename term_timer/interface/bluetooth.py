@@ -33,6 +33,7 @@ from term_timer.config import DEVICE_NAME
 from term_timer.config import USE_GYROSCOPE
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import CubeNotFoundError
+from term_timer.interface.sounds import SOUND_PLAYER
 
 if TYPE_CHECKING:
     from rich.console import Console as RichConsole
@@ -57,10 +58,6 @@ class Bluetooth:
         # Methods from Terminal mixin
         def clear_line(self, *, full: bool) -> None:
             """Clear current terminal line."""
-            ...
-
-        def beep_connected(self) -> None:
-            """Emit a soft chime when a Bluetooth cube connects."""
             ...
 
         # Methods from Scrambler mixin
@@ -177,7 +174,7 @@ class Bluetooth:
                 f'[result]{ self.bluetooth_device_label } '
                 'initialized successfully ![/result]',
             )
-            self.beep_connected()
+            SOUND_PLAYER.connected()
         except CubeNotFoundError:
             self.clear_line(full=True)
             self.console.print(
