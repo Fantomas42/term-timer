@@ -1,4 +1,5 @@
 """Bluetooth cube interface for scanning, connecting, and communication."""
+import asyncio
 import logging
 from asyncio import Queue
 from typing import Final
@@ -157,7 +158,10 @@ class BluetoothInterface:
             await self.client.stop_notify(
                 self.driver.state_characteristic_uid,
             )
-            await self.client.disconnect()
+            try:
+                await asyncio.wait_for(self.client.disconnect(), timeout=0.5)
+            except asyncio.TimeoutError:  # noqa: UP041
+                logger.debug('Disconnect timed out, leaving cleanup to OS')
 
     async def notification_handler(self, sender: BleakGATTCharacteristic,
                                    data: bytearray) -> None:
