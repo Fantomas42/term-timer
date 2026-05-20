@@ -25,9 +25,8 @@ class Tone(NamedTuple):
 
 
 TONES: dict[str, Tone] = {
-    'LA_3':      Tone(440.0, 0.15, 0.4),
-    'LA_4':      Tone(880.0, 0.10, 0.3),
-    'success':   Tone(1046.0, 0.20, 0.35),
+    'LA_3': Tone(440.0, 0.15, 0.4),
+    'LA_4': Tone(880.0, 0.10, 0.3),
 }
 
 CONNECTED_FREQS = (900.0, 1300.0, 1800.0)
@@ -172,6 +171,46 @@ class SoundPlayer:
 
     @staticmethod
     @lru_cache
+    def generate_success_wave() -> np.ndarray:
+        """
+        Generate an ascending four-note fanfare using additive synthesis.
+
+        Five inharmonic partials (x1, x2.76, x5.40, x8.93, x13) applied to
+        E5→G5→C6→E6, staccato tempo (0.07s notes, 0.010s gap, 0.20s last note).
+
+        Returns:
+            Float32 array of audio samples.
+
+        """
+        partials = (
+            (1.00, 0.55, 4.0),
+            (2.76, 1.00, 8.0),
+            (5.40, 1.20, 8.0),
+            (8.93, 1.10, 14.0),
+            (13.00, 0.60, 30.0),
+        )
+        freqs = (659.25, 783.99, 1046.50, 1318.51)
+        durs = (0.07, 0.07, 0.07, 0.20)
+        volume = 0.22
+        gap_samples = np.zeros(int(SAMPLE_RATE * 0.010), dtype=np.float32)
+        parts: list[np.ndarray] = []
+        for i, (freq, dur) in enumerate(zip(freqs, durs, strict=True)):
+            samples = int(SAMPLE_RATE * dur)
+            t = np.linspace(0, dur, samples, endpoint=False)
+            wave = np.zeros(samples, dtype=np.float64)
+            for ratio, amp, decay in partials:
+                env = np.exp(-decay * t / dur)
+                wave += amp * env * np.sin(2 * math.pi * freq * ratio * t)
+            result = (volume * wave).astype(np.float32)
+            fade = min(int(SAMPLE_RATE * 0.012), samples // 4)
+            result[-fade:] *= np.linspace(1.0, 0.0, fade)
+            parts.append(result)
+            if i < len(freqs) - 1:
+                parts.append(gap_samples)
+        return np.concatenate(parts)
+
+    @staticmethod
+    @lru_cache
     def generate_metronome_wave() -> np.ndarray:
         """
         Generate a downward chirp (800→300 Hz) with exponential decay.
@@ -244,6 +283,14 @@ class SoundPlayer:
         else:
             print('\a', end='', flush=True)
 
+    def success(self) -> None:
+        """Play a bright tone on solve, training, or drill completion."""
+        if self.available:
+            wave = self.generate_success_wave()
+            sd.play(wave, SAMPLE_RATE, blocking=False)
+        else:
+            print('\a', end='', flush=True)
+
     def la_3(self) -> None:
         """Play a LA 3."""
         self.play('LA_3')
@@ -251,10 +298,6 @@ class SoundPlayer:
     def la_4(self) -> None:
         """Play a LA 4."""
         self.play('LA_4')
-
-    def success(self) -> None:
-        """Play a bright tone on solve, training, or drill completion."""
-        self.play('success')
 
 
 if __name__ == '__main__':
