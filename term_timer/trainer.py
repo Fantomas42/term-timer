@@ -624,7 +624,11 @@ class Trainer(SolveInterface):
         old_stats = Statistics(timings[:-1])
         new_stats = Statistics(timings)
 
-        SOUND_PLAYER.success()
+        if solve.flag == DNF:
+            SOUND_PLAYER.failed()
+        else:
+            SOUND_PLAYER.success()
+
         self.clear_line(full=True)
 
         if solve.method_applied:

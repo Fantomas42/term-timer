@@ -273,6 +273,7 @@ class Driller(SolveInterface):
                     Algorithm([cast('Move', self.bad_move)]),
                 )
 
+                SOUND_PLAYER.failed()
                 self.clear_line(full=True)
                 self.console.print(
                     '😵 [warning]Bad move: '
