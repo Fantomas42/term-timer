@@ -271,7 +271,7 @@ class SoundPlayer:
                 parts.append(gap_samples)
         return np.concatenate(parts)
 
-    def play(self, name: str) -> None:
+    def play_tone(self, name: str) -> None:
         """Play a sound else fallback."""
         if self.available:
             wave = self.generate_wave(TONES[name])
@@ -343,11 +343,11 @@ class SoundPlayer:
 
     def la_3(self) -> None:
         """Play a LA 3."""
-        self.play('LA_3')
+        self.play_tone('LA_3')
 
     def la_4(self) -> None:
         """Play a LA 4."""
-        self.play('LA_4')
+        self.play_tone('LA_4')
 
 
 SOUND_PLAYER = SoundPlayer()

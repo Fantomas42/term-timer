@@ -322,7 +322,7 @@ class SaveTrainingsPatchedTestCase(unittest.IsolatedAsyncioTestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        sound_patcher = patch('term_timer.interface.sounds.SoundPlayer.play')
+        sound_patcher = patch('term_timer.interface.sounds.sd')
         sound_patcher.start()
         self.addCleanup(sound_patcher.stop)
 
