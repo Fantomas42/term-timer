@@ -204,7 +204,6 @@ class SoundPlayer:
         else:
             print('\a', end='', flush=True)
 
-
     def la_3(self) -> None:
         """Play a LA 3."""
         self.play('LA_3')
@@ -216,6 +215,7 @@ class SoundPlayer:
     def scrambled(self) -> None:
         """Play a confirmation tone when scramble is finalized."""
         self.play('scrambled')
+
     def success(self) -> None:
         """Play a bright tone on solve, training, or drill completion."""
         self.play('success')
