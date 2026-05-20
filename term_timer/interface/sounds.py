@@ -228,6 +228,49 @@ class SoundPlayer:
         env = np.exp(-25.0 * t / duration)
         return (wave * env).astype(np.float32)
 
+    @staticmethod
+    @lru_cache
+    def generate_failed_wave() -> np.ndarray:
+        """
+        Generate a descending four-note minor fanfare using additive synthesis.
+
+        Same five inharmonic partials as success but applied to E5→C5→Ab4→Eb4
+        (one octave lower, Ab minor descent) with a decrescendo volume envelope
+        and 0.040s gaps — slow, sombre mirror of the success sound.
+
+        Returns:
+            Float32 array of audio samples.
+
+        """
+        partials = (
+            (1.00, 0.55, 4.0),
+            (2.76, 1.00, 8.0),
+            (5.40, 1.20, 8.0),
+            (8.93, 1.10, 14.0),
+            (13.00, 0.60, 30.0),
+        )
+        freqs = (659.25, 523.25, 415.30, 311.13)
+        durs = (0.07, 0.07, 0.07, 0.20)
+        vols = (0.28, 0.22, 0.17, 0.14)
+        gap_samples = np.zeros(int(SAMPLE_RATE * 0.040), dtype=np.float32)
+        parts: list[np.ndarray] = []
+        for i, (freq, dur, vol) in enumerate(
+            zip(freqs, durs, vols, strict=True),
+        ):
+            samples = int(SAMPLE_RATE * dur)
+            t = np.linspace(0, dur, samples, endpoint=False)
+            wave = np.zeros(samples, dtype=np.float64)
+            for ratio, amp, decay in partials:
+                env = np.exp(-decay * t / dur)
+                wave += amp * env * np.sin(2 * math.pi * freq * ratio * t)
+            result = (vol * wave).astype(np.float32)
+            fade = min(int(SAMPLE_RATE * 0.012), samples // 4)
+            result[-fade:] *= np.linspace(1.0, 0.0, fade)
+            parts.append(result)
+            if i < len(freqs) - 1:
+                parts.append(gap_samples)
+        return np.concatenate(parts)
+
     def play(self, name: str) -> None:
         """Play a sound else fallback."""
         if self.available:
@@ -288,6 +331,13 @@ class SoundPlayer:
         if self.available:
             wave = self.generate_success_wave()
             sd.play(wave, SAMPLE_RATE, blocking=False)
+        else:
+            print('\a', end='', flush=True)
+
+    def failed(self) -> None:
+        """Play a sombre descending tone on failed solve or drill."""
+        if self.available:
+            sd.play(self.generate_failed_wave(), SAMPLE_RATE, blocking=False)
         else:
             print('\a', end='', flush=True)
 
