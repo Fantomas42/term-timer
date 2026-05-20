@@ -27,7 +27,6 @@ class Tone(NamedTuple):
 TONES: dict[str, Tone] = {
     'LA_3':      Tone(440.0, 0.15, 0.4),
     'LA_4':      Tone(880.0, 0.10, 0.3),
-    'scrambled': Tone(660.0, 0.25, 0.35),
     'success':   Tone(1046.0, 0.20, 0.35),
 }
 
@@ -140,6 +139,39 @@ class SoundPlayer:
 
     @staticmethod
     @lru_cache
+    def generate_scrambled_wave() -> np.ndarray:
+        """
+        Generate a confirmation ping using additive synthesis.
+
+        Four inharmonic partials (x1, x2.76, x5.40, x8.93) at 880 Hz with the
+        upper partials dominant — bright metallic attack that cuts through.
+
+        Returns:
+            Float32 array of audio samples.
+
+        """
+        fundamental = 880.0
+        duration = 0.55
+        volume = 0.20
+        partials = (
+            (1.00, 0.55, 4.0),
+            (2.76, 1.00, 8.0),
+            (5.40, 0.80, 14.0),
+            (8.93, 0.75, 24.0),
+        )
+        samples = int(SAMPLE_RATE * duration)
+        t = np.linspace(0, duration, samples, endpoint=False)
+        wave = np.zeros(samples, dtype=np.float64)
+        for ratio, amp, decay in partials:
+            env = np.exp(-decay * t / duration)
+            wave += amp * env * np.sin(2 * math.pi * fundamental * ratio * t)
+        result = (volume * wave).astype(np.float32)
+        fade = min(int(SAMPLE_RATE * 0.012), samples // 4)
+        result[-fade:] *= np.linspace(1.0, 0.0, fade)
+        return result
+
+    @staticmethod
+    @lru_cache
     def generate_metronome_wave() -> np.ndarray:
         """
         Generate a downward chirp (800→300 Hz) with exponential decay.
@@ -196,6 +228,14 @@ class SoundPlayer:
         else:
             print('\a', end='', flush=True)
 
+    def scrambled(self) -> None:
+        """Play a confirmation tone when scramble is finalized."""
+        if self.available:
+            wave = self.generate_scrambled_wave()
+            sd.play(wave, SAMPLE_RATE, blocking=False)
+        else:
+            print('\a', end='', flush=True)
+
     def step(self) -> None:
         """Play a higher-pitched beep when a solve step is completed."""
         if self.available:
@@ -211,10 +251,6 @@ class SoundPlayer:
     def la_4(self) -> None:
         """Play a LA 4."""
         self.play('LA_4')
-
-    def scrambled(self) -> None:
-        """Play a confirmation tone when scramble is finalized."""
-        self.play('scrambled')
 
     def success(self) -> None:
         """Play a bright tone on solve, training, or drill completion."""
