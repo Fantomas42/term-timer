@@ -21,6 +21,7 @@ from term_timer.interface.gesture import Gesture
 from term_timer.interface.getcher import Getcher
 from term_timer.interface.inspection import Inspecter
 from term_timer.interface.scrambler import Scrambler
+from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.interface.state import State
 from term_timer.interface.stopwatch import StopWatch
 from term_timer.interface.terminal import Terminal
@@ -183,11 +184,15 @@ class SolveInterface(
             if not self.solve_started_event.is_set():
                 result = getch_task.result()
                 char = result if isinstance(result, str) else ''
-                if char in {'q', ESCAPE_CHAR}:
+                if not char:
+                    SOUND_PLAYER.la_4()
+                elif char in {'q', ESCAPE_CHAR}:
                     await inspection_task
                     return True
         else:
             char = await self.getch('inspected', self.countdown)
+            if not char:
+                SOUND_PLAYER.la_4()
             self.inspection_completed_event.set()
             if char in {'q', ESCAPE_CHAR}:
                 await inspection_task

@@ -1,6 +1,7 @@
 """Tests for interface scrambler."""
 import unittest
 from unittest.mock import Mock
+from unittest.mock import patch
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeOrientation
@@ -43,8 +44,8 @@ class OrienterScrambler(Orienter, Scrambler):
     def clear_line(self, *, full: bool) -> None:
         """Fake clear_line."""
 
-    def beep(self) -> None:
-        """Fake beep_line."""
+    def beep_scramble(self) -> None:
+        """Fake beep_scramble."""
 
 
 class TestComputeScrambleDisplayComplete(unittest.TestCase):
@@ -823,6 +824,12 @@ class TestComputeDisplayRotationRealCases(unittest.TestCase):
 
 class TestScrambleCompletionVerification(unittest.TestCase):
     """Tests verifying is_complete using handle_scrambled method."""
+
+    def setUp(self) -> None:
+        """Patch SOUND_PLAYER to avoid playing real audio during tests."""
+        patcher = patch('term_timer.interface.scrambler.SOUND_PLAYER')
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def check_completion(self, scrambled: Algorithm,
                          scramble_oriented: Algorithm) -> None:

@@ -26,7 +26,8 @@ dependencies = [
     "kociemba==1.2.1",
     "cubing_algs==1.0.20",
     "rtoml>=0.12.0",
-    "numpy>=2.4.0"
+    "numpy>=2.4.0",
+    "sounddevice>=0.5.3"
 ]
 
 [project.urls]

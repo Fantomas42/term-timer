@@ -10,6 +10,7 @@ from cubing_algs.transform.timing import untime_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.formatter import format_alg_moves
+from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.transform import humanize_moves
 
 if TYPE_CHECKING:
@@ -39,10 +40,6 @@ class Scrambler:
         # Methods from Terminal mixin
         def clear_line(self, *, full: bool) -> None:
             """Clear the current terminal line."""
-            ...
-
-        def beep(self) -> None:
-            """Emit a terminal beep sound."""
             ...
 
     def __init__(self) -> None:
@@ -104,7 +101,7 @@ class Scrambler:
 
         if is_complete:
             self.scramble_completed_event.set()
-            self.beep()
+            SOUND_PLAYER.scrambled()
 
         out, full_clear = self.compute_scramble_display(
             scrambled=self.scrambled,

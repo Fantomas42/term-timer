@@ -15,6 +15,7 @@ from term_timer.formatter import format_delta
 from term_timer.formatter import format_fluency
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
+from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.solve import Solve
 
 
@@ -272,6 +273,7 @@ class Driller(SolveInterface):
                     Algorithm([cast('Move', self.bad_move)]),
                 )
 
+                SOUND_PLAYER.failed()
                 self.clear_line(full=True)
                 self.console.print(
                     '😵 [warning]Bad move: '
@@ -297,6 +299,7 @@ class Driller(SolveInterface):
         self.elapsed_time = self.end_time - self.start_time
         self.rep_times.append(self.elapsed_time)
 
+        SOUND_PLAYER.success()
         self.clear_line(full=True)
         self.rep_line()
 

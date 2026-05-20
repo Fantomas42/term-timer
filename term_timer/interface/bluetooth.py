@@ -33,6 +33,7 @@ from term_timer.config import DEVICE_NAME
 from term_timer.config import USE_GYROSCOPE
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import CubeNotFoundError
+from term_timer.interface.sounds import SOUND_PLAYER
 
 if TYPE_CHECKING:
     from rich.console import Console as RichConsole
@@ -173,6 +174,7 @@ class Bluetooth:
                 f'[result]{ self.bluetooth_device_label } '
                 'initialized successfully ![/result]',
             )
+            SOUND_PLAYER.connected()
         except CubeNotFoundError:
             self.clear_line(full=True)
             self.console.print(
@@ -221,6 +223,7 @@ class Bluetooth:
                 and self.bluetooth_interface.client
                 and self.bluetooth_interface.client.is_connected
         ):
+            SOUND_PLAYER.disconnected()
             self.console.print(
                 '[bluetooth]🔗Bluetooth:[/bluetooth] '
                 f'{ self.bluetooth_device_label } disconnecting...',
@@ -513,6 +516,10 @@ class Bluetooth:
 
         elif self.state == 'saving':
             self.handle_save_gestures(timed_move)
+
+        elif self.state == 'inspecting':
+            if not rotation:
+                self.solve_started_event.set()
 
         elif self.state == 'scrambled':
             if rotation:

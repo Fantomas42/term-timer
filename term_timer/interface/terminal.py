@@ -19,11 +19,6 @@ class Terminal:
         print('\b' * size, end='')
 
     @staticmethod
-    def beep() -> None:
-        """Emit a terminal beep sound."""
-        print('\a', end='', flush=True)
-
-    @staticmethod
     def set_title(title: str) -> None:
         """Set the terminal window title."""
         print(f'\033]0;{title}\007', end='', flush=True)

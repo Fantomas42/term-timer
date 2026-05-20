@@ -9,6 +9,7 @@ from term_timer.config import DEVICE_ADDRESS
 from term_timer.config import DEVICE_NAME
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.interface.console import console
+from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.interface.terminal import Terminal
 
 if TYPE_CHECKING:
@@ -67,7 +68,7 @@ async def reset(options: Namespace) -> int:
     )
 
     await bluetooth_interface.send_command('REQUEST_RESET')
-    Terminal.beep()
+    SOUND_PLAYER.success()
 
     await bluetooth_interface.__aexit__(None, None, None)
 

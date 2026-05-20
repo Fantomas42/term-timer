@@ -11,6 +11,7 @@ from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
 from term_timer.formatter import format_time
+from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.methods import get_method_analyser
 from term_timer.methods.base import FaceletAnalyser
 
@@ -56,7 +57,6 @@ class StopWatch:
         # Methods from Terminal mixin
         def clear_line(self, *, full: bool) -> None: ...  # noqa: D102
         def back(self, size: int) -> None: ...  # noqa: D102
-        def beep(self) -> None: ...  # noqa: D102
 
     def __init__(self) -> None:
         """Initialize the stopwatch with default timing values and events."""
@@ -80,7 +80,7 @@ class StopWatch:
             f'[result]{ format_time(elapsed_time) }[/result]',
             f'[step]{ step_name }[/step]',
         )
-        self.beep()
+        SOUND_PLAYER.step()
 
     def build_oriented_facelets(self) -> tuple[str, 'CubeOrientation']:
         """
@@ -165,7 +165,7 @@ class StopWatch:
             if tempo_elapsed != new_tempo:
                 tempo_elapsed = new_tempo
                 if self.metronome:
-                    self.beep()
+                    SOUND_PLAYER.metronome()
 
             if (
                 facelet_analyser is not None

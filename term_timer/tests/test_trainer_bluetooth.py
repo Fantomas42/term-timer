@@ -317,10 +317,14 @@ class SaveTrainingsPatchedTestCase(unittest.IsolatedAsyncioTestCase):
     """Base test case that patches save_trainings to prevent writes."""
 
     def setUp(self) -> None:
-        """Patch save_trainings for the duration of each test."""
+        """Patch save_trainings and sound playback for each test."""
         patcher = patch('term_timer.trainer.save_trainings')
         patcher.start()
         self.addCleanup(patcher.stop)
+
+        sound_patcher = patch('term_timer.interface.sounds.sd')
+        sound_patcher.start()
+        self.addCleanup(sound_patcher.stop)
 
 
 class BluetoothTrainerTestCase(SaveTrainingsPatchedTestCase):

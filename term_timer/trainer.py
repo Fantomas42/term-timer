@@ -41,6 +41,7 @@ from term_timer.formatter import format_time
 from term_timer.in_out import load_trainings
 from term_timer.in_out import save_trainings
 from term_timer.interface import SolveInterface
+from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import FaceletAnalyser
 from term_timer.printer import print_cube_trainer
@@ -622,6 +623,11 @@ class Trainer(SolveInterface):
         ]
         old_stats = Statistics(timings[:-1])
         new_stats = Statistics(timings)
+
+        if solve.flag == DNF:
+            SOUND_PLAYER.failed()
+        else:
+            SOUND_PLAYER.success()
 
         self.clear_line(full=True)
 
