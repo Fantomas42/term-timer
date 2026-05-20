@@ -350,39 +350,43 @@ class SoundPlayer:
         self.play('LA_4')
 
 
+SOUND_PLAYER = SoundPlayer()
+
 if __name__ == '__main__':
     import sys
     import time
 
-    player = SoundPlayer()
-    names = list(TONES)
+    sounds = [
+        'metronome', 'connected', 'disconnected',
+        'scrambled', 'step', 'success', 'failed',
+        'la_3', 'la_4',
+    ]
 
-    if not player.available:
+    if not SOUND_PLAYER.available:
         print('No audio device found, using terminal bell fallback.')
 
     if len(sys.argv) > 1:
         name = sys.argv[1]
-        if name not in TONES:
+        if name not in sounds:
             print(f'Unknown sound: {name!r}')
-            print(f'Available: {", ".join(names)}')
+            print(f'Available: {", ".join(sounds)}')
             sys.exit(1)
+        method = getattr(SOUND_PLAYER, name)
         print(f'Playing: {name} (Ctrl+C to quit)')
         try:
             while True:
-                player.play(name)
-                time.sleep(TONES[name].duration + 1.0)
+                method()
+                time.sleep(1.5)
         except KeyboardInterrupt:
             print('\nDone.')
     else:
-        print(f'Playing all sounds: {", ".join(names)} (Ctrl+C to quit)')
+        print(f'Playing all sounds: {", ".join(sounds)} (Ctrl+C to quit)')
         try:
             while True:
-                for name in names:
+                for name in sounds:
                     print(f'  {name}')
-                    player.play(name)
-                    time.sleep(TONES[name].duration + 0.3)
+                    getattr(SOUND_PLAYER, name)()
+                    time.sleep(1.5)
                 time.sleep(1.0)
         except KeyboardInterrupt:
             print('\nDone.')
-
-SOUND_PLAYER = SoundPlayer()
