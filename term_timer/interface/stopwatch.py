@@ -72,7 +72,14 @@ class StopWatch:
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
 
-    def print_step(self, style: str, elapsed_time: int, step_name: str) -> None:
+    def print_step(
+            self,
+            style: str,
+            elapsed_time: int,
+            step_name: str,
+            *,
+            last: bool = False,
+    ) -> None:
         """Print a completed step with its time."""
         self.clear_line(full=False)
         self.console.print(
@@ -80,7 +87,8 @@ class StopWatch:
             f'[result]{ format_time(elapsed_time) }[/result]',
             f'[step]{ step_name }[/step]',
         )
-        SOUND_PLAYER.step()
+        if not last:
+            SOUND_PLAYER.step()
 
     def build_oriented_facelets(self) -> tuple[str, 'CubeOrientation']:
         """
@@ -233,6 +241,7 @@ class StopWatch:
                         style,
                         final_elapsed_time,
                         display_name or step_name,
+                        last=True,
                     )
 
         self.set_state('stop')
