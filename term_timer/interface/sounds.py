@@ -36,7 +36,7 @@ TRIO_GAP = 0.03
 TRIO_VOLUME = 0.25
 
 
-class SoundPlayer:
+class SoundPlayer:  # noqa: PLR0904
     """Play tones via sounddevice or fall back to terminal bell."""
 
     def __init__(self) -> None:
@@ -230,6 +230,36 @@ class SoundPlayer:
 
     @staticmethod
     @lru_cache
+    def generate_missed_wave() -> np.ndarray:
+        """
+        Generate a short sawtooth buzz at 650 Hz — klaxon-style alert.
+
+        Sawtooth approximated by 8 Fourier harmonics with exponential decay
+        and a 4ms attack to avoid clicks.
+
+        Returns:
+            Float32 array of audio samples.
+
+        """
+        freq = 650.0
+        duration = 0.12
+        volume = 0.20
+        decay = 10.0
+        n_harmonics = 8
+        samples = int(SAMPLE_RATE * duration)
+        t = np.linspace(0, duration, samples, endpoint=False)
+        wave = np.zeros(samples, dtype=np.float64)
+        for k in range(1, n_harmonics + 1):
+            wave += ((-1.0) ** (k + 1) / k) * np.sin(2 * math.pi * freq * k * t)
+        env = np.exp(-decay * t / duration)
+        attack_s = min(int(SAMPLE_RATE * 0.004), samples // 4)
+        env[:attack_s] *= np.linspace(0.0, 1.0, attack_s)
+        fade = min(int(SAMPLE_RATE * 0.005), samples // 4)
+        env[-fade:] *= np.linspace(1.0, 0.0, fade)
+        return (volume * env * wave).astype(np.float32)
+
+    @staticmethod
+    @lru_cache
     def generate_failed_wave() -> np.ndarray:
         """
         Generate a descending four-note minor fanfare using additive synthesis.
@@ -337,7 +367,16 @@ class SoundPlayer:
     def failed(self) -> None:
         """Play a sombre descending tone on failed solve or drill."""
         if self.available:
-            sd.play(self.generate_failed_wave(), SAMPLE_RATE, blocking=False)
+            wave = self.generate_failed_wave()
+            sd.play(wave, SAMPLE_RATE, blocking=False)
+        else:
+            print('\a', end='', flush=True)
+
+    def missed(self) -> None:
+        """Play a short klaxon buzz when a move is executed incorrectly."""
+        if self.available:
+            wave = self.generate_missed_wave()
+            sd.play(wave, SAMPLE_RATE, blocking=False)
         else:
             print('\a', end='', flush=True)
 
@@ -358,7 +397,7 @@ if __name__ == '__main__':
 
     sounds = [
         'metronome', 'connected', 'disconnected',
-        'scrambled', 'step', 'success', 'failed',
+        'scrambled', 'step', 'success', 'failed', 'missed',
         'la_3', 'la_4',
     ]
 

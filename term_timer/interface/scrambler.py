@@ -110,6 +110,9 @@ class Scrambler:
             is_complete=is_complete,
         )
 
+        if out.endswith('[/warning] ') and not full_clear:
+            SOUND_PLAYER.missed()
+
         self.clear_line(full=full_clear)
 
         self.console.print(
