@@ -609,7 +609,7 @@ class Trainer(SolveInterface):
 
         return lines
 
-    def solve_line(self, solve: Solve, selected_case: Case) -> None:  # noqa: C901
+    def solve_line(self, solve: Solve, selected_case: Case) -> None:  # noqa: C901, PLR0912
         """Display training solve results and execution details."""
         self.trainings.add_timing(
             selected_case.code,

@@ -103,14 +103,14 @@ class Scrambler:
             self.scramble_completed_event.set()
             SOUND_PLAYER.scrambled()
 
-        out, full_clear = self.compute_scramble_display(
+        out, full_clear, wrong_move_added = self.compute_scramble_display(
             scrambled=self.scrambled,
             scramble_oriented=self.scramble_oriented,
             cube_orientation_moves=self.cube_orientation_moves,
             is_complete=is_complete,
         )
 
-        if out.endswith('[/warning] ') and not full_clear:
+        if wrong_move_added:
             SOUND_PLAYER.missed()
 
         self.clear_line(full=full_clear)
@@ -126,8 +126,9 @@ class Scrambler:
             scrambled: Algorithm,
             scramble_oriented: Algorithm,
             cube_orientation_moves: Algorithm,
-            *, is_complete: bool,
-    ) -> tuple[str, bool]:
+            *,
+            is_complete: bool,
+    ) -> tuple[str, bool, bool]:
         """
         Compute the formatted display output for scramble progress.
 
@@ -144,8 +145,9 @@ class Scrambler:
             is_complete: Whether the scramble has been fully completed.
 
         Returns:
-            A tuple containing the formatted output string with Rich markup and
-            a boolean indicating whether to perform a full line clear.
+            A tuple containing the formatted output string with Rich markup,
+            a boolean indicating whether to perform a full line clear, and
+            a boolean indicating whether the last move was a wrong move.
 
         """
         if is_complete:
@@ -154,6 +156,7 @@ class Scrambler:
                 '[consign]Start solving to launch the timer.[/consign]'
             )
             full_clear = True
+            wrong_move_added = False
         else:
             out = ''
             if cube_orientation_moves:
@@ -173,6 +176,7 @@ class Scrambler:
             )
 
             on_good_way = True
+            wrong_move_added = False
             algo_size = len(algo)
             for i, move in enumerate(algo):
                 try:
@@ -180,14 +184,18 @@ class Scrambler:
                 except IndexError:
                     expected = Move('.')
 
-                style = 'move' if i + 1 < algo_size else 'moves'
+                is_last = i + 1 == algo_size
+                style = 'move' if not is_last else 'moves'
                 if not on_good_way:
                     style = 'warning'
                 elif expected != move:
                     on_good_way = False
                     style = 'caution' if expected[0] == move[0] else 'warning'
 
+                if is_last and style == 'warning' and len(algo) >= len(p_algo):
+                    wrong_move_added = True
+
                 out += f'[{ style }]{ move }[/{ style }] '
             full_clear = len(algo) < len(p_algo) or len(algo) <= 1
 
-        return out, full_clear
+        return out, full_clear, wrong_move_added
