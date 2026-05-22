@@ -1,10 +1,13 @@
 """Sound player with sounddevice/numpy backend and terminal bell fallback."""
 # ruff: noqa: T201
 import math
+from collections.abc import Callable
 from functools import lru_cache
 from typing import NamedTuple
 
 import numpy as np
+
+from term_timer.config import TIMER_SOUND
 
 try:
     import sounddevice as sd
@@ -65,6 +68,27 @@ class SoundPlayer:  # noqa: PLR0904
             return False
         else:
             return True
+
+    @staticmethod
+    def bell() -> None:
+        """Emit the terminal bell character."""
+        print('\a', end='', flush=True)
+
+    def play(self, get_wave: Callable[[], np.ndarray]) -> None:
+        """
+        Dispatch audio output according to the configured sound mode.
+
+        Generates and plays audio when mode is 'audio' and a device is
+        available, falls back to terminal bell for 'terminal' mode or when
+        no audio device is present, and does nothing when mode is 'off'.
+
+        """
+        if TIMER_SOUND == 'off':
+            return
+        if TIMER_SOUND == 'audio' and self.available:
+            sd.play(get_wave(), SAMPLE_RATE, blocking=False)
+        else:
+            self.bell()
 
     @staticmethod
     @lru_cache
@@ -307,99 +331,66 @@ class SoundPlayer:  # noqa: PLR0904
         return np.concatenate(parts)
 
     def play_tone(self, name: str) -> None:
-        """Play a sound else fallback."""
-        if self.available:
-            wave = self.generate_wave(TONES[name])
-            sd.play(wave, SAMPLE_RATE, blocking=False)
-        else:
-            print('\a', end='', flush=True)
+        """Play a named tone."""
+        tone = TONES[name]
+        self.play(lambda: self.generate_wave(tone))
 
     def metronome(self) -> None:
         """Play a short neutral tick for metronome beats."""
-        if self.available:
-            sd.play(
-                self.generate_metronome_wave(),
-                SAMPLE_RATE,
-                blocking=False,
-            )
-        else:
-            print('\a', end='', flush=True)
+        self.play(self.generate_metronome_wave)
 
     def connected(self) -> None:
         """Play an ascending triple beep when a Bluetooth cube connects."""
-        if self.available:
-            wave = self.generate_trio_wave(
-                CONNECTED_FREQS, TRIO_DURATIONS, TRIO_GAP, TRIO_VOLUME,
-            )
-            sd.play(wave, SAMPLE_RATE, blocking=False)
-        else:
-            print('\a', end='', flush=True)
+        self.play(
+            lambda: self.generate_trio_wave(
+                CONNECTED_FREQS,
+                TRIO_DURATIONS,
+                TRIO_GAP,
+                TRIO_VOLUME,
+            ),
+        )
 
     def not_connected(self) -> None:
         """Play a low descending beep when Bluetooth cube is unavailable."""
-        if self.available:
-            wave = self.generate_trio_wave(
+        self.play(
+            lambda: self.generate_trio_wave(
                 NOT_CONNECTED_FREQS,
                 NOT_CONNECTED_DURATIONS,
                 TRIO_GAP,
                 NOT_CONNECTED_VOLUME,
-            )
-            sd.play(wave, SAMPLE_RATE, blocking=False)
-        else:
-            print('\a', end='', flush=True)
+            ),
+        )
 
     def disconnected(self) -> None:
         """Play a descending triple beep when a Bluetooth cube disconnects."""
-        if self.available:
-            wave = self.generate_trio_wave(
+        self.play(
+            lambda: self.generate_trio_wave(
                 DISCONNECTED_FREQS,
                 DISCONNECTED_DURATIONS,
                 TRIO_GAP,
                 DISCONNECTED_VOLUME,
-            )
-            sd.play(wave, SAMPLE_RATE, blocking=False)
-        else:
-            print('\a', end='', flush=True)
+            ),
+        )
 
     def scrambled(self) -> None:
         """Play a confirmation tone when scramble is finalized."""
-        if self.available:
-            wave = self.generate_scrambled_wave()
-            sd.play(wave, SAMPLE_RATE, blocking=False)
-        else:
-            print('\a', end='', flush=True)
+        self.play(self.generate_scrambled_wave)
 
     def step(self) -> None:
         """Play a higher-pitched beep when a solve step is completed."""
-        if self.available:
-            wave = self.generate_step_wave()
-            sd.play(wave, SAMPLE_RATE, blocking=False)
-        else:
-            print('\a', end='', flush=True)
+        self.play(self.generate_step_wave)
 
     def success(self) -> None:
         """Play a bright tone on solve, training, or drill completion."""
-        if self.available:
-            wave = self.generate_success_wave()
-            sd.play(wave, SAMPLE_RATE, blocking=False)
-        else:
-            print('\a', end='', flush=True)
+        self.play(self.generate_success_wave)
 
     def failed(self) -> None:
         """Play a sombre descending tone on failed solve or drill."""
-        if self.available:
-            wave = self.generate_failed_wave()
-            sd.play(wave, SAMPLE_RATE, blocking=False)
-        else:
-            print('\a', end='', flush=True)
+        self.play(self.generate_failed_wave)
 
     def missed(self) -> None:
         """Play a short klaxon buzz when a move is executed incorrectly."""
-        if self.available:
-            wave = self.generate_missed_wave()
-            sd.play(wave, SAMPLE_RATE, blocking=False)
-        else:
-            print('\a', end='', flush=True)
+        self.play(self.generate_missed_wave)
 
     def la_3(self) -> None:
         """Play a LA 3."""
