@@ -162,6 +162,23 @@ class TimerSection(ConfigSection):
 
         """
         with Grid():
+            yield Static('Sound', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Select(
+                    options=[
+                        ('Audio', 'audio'),
+                        ('Terminal bell', 'terminal'),
+                        ('Off', 'off'),
+                    ],
+                    id='sound',
+                    allow_blank=False,
+                    value='audio',
+                )
+                yield Static(
+                    'Sound output mode (audio, terminal bell, or off)',
+                    classes='field-help',
+                )
+
             yield Static('Countdown', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Input(
@@ -201,6 +218,9 @@ class TimerSection(ConfigSection):
         """Load timer configuration."""
         timer_config = CONFIG.get('timer', {})
 
+        sound = self.query_one('#sound', Select)
+        sound.value = timer_config.get('sound', 'audio')
+
         countdown = self.query_one('#countdown', Input)
         countdown.value = str(timer_config.get('countdown', 0.0))
 
@@ -220,12 +240,14 @@ class TimerSection(ConfigSection):
             Timer configuration dictionary with countdown, metronome and steps.
 
         """
+        sound = self.query_one('#sound', Select)
         countdown = self.query_one('#countdown', Input)
         metronome = self.query_one('#metronome', Input)
         steps = self.query_one('#steps', Checkbox)
 
         return {
             'timer': {
+                'sound': str(sound.value),
                 'countdown': float(countdown.value or '0.0'),
                 'metronome': float(metronome.value or '0.0'),
                 'steps': steps.value,

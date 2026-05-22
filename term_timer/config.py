@@ -8,6 +8,7 @@ import rtoml
 from term_timer.constants import CONFIG_FILE
 
 DEFAULT_CONFIG: Final = """[timer]
+sound = "audio"
 countdown = 0.0
 metronome = 0.0
 steps = true
@@ -78,6 +79,8 @@ CONFIG = load_config()
 STATS_CONFIG = CONFIG.get('statistics', {})
 
 TIMER_CONFIG = CONFIG.get('timer', {})
+
+TIMER_SOUND: str = TIMER_CONFIG.get('sound', 'audio')
 
 DISPLAY_CONFIG = CONFIG.get('display', {})
 
