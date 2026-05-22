@@ -926,6 +926,122 @@ class TestComputeScrambleDisplayWrongMoveAdded(unittest.TestCase):
 
         self.assertTrue(wrong_move_added)
 
+    def test_double_wrong_move_triggers_wrong_move_added(self) -> None:
+        """Test D+D=D2 (wrong move growing) triggers wrong_move_added."""
+        scrambled = parse_moves('D D')
+        scramble_oriented = parse_moves('F')
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('D2')
+
+        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertTrue(wrong_move_added)
+
+    def test_partial_correction_does_not_trigger_wrong_move_added(
+        self,
+    ) -> None:
+        """Test D2+D'=D (partial correction) does not trigger it."""
+        scrambled = parse_moves("D D D'")
+        scramble_oriented = parse_moves('F')
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('D')
+
+        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertFalse(wrong_move_added)
+
+
+class TestComputeScrambleDisplayWrongMoveAddedTimed(unittest.TestCase):
+    """
+    Tests for wrong_move_added with timed moves (as received from Bluetooth).
+
+    These tests reproduce bugs that only manifest with timed moves because
+    str(p_algo) without untime_moves includes '@timestamp' suffixes, making
+    naive string-length comparisons unreliable.
+    """
+
+    def setUp(self) -> None:
+        """Test setup."""
+        self.scrambler = MockScrambler()
+
+    def test_first_timed_wrong_move_triggers_wrong_move_added(self) -> None:
+        """Test first timed wrong move sets wrong_move_added."""
+        scrambled = parse_moves('R@1000')
+        scramble_oriented = parse_moves('U')
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('R')
+
+        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertTrue(wrong_move_added)
+
+    def test_timed_double_wrong_move_triggers_wrong_move_added(self) -> None:
+        """Test D@t+D@t=D2 (timed) triggers wrong_move_added both times."""
+        scrambled = parse_moves('D@1000 D@2000')
+        scramble_oriented = parse_moves('F')
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('D2')
+
+        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertTrue(wrong_move_added)
+
+    def test_timed_partial_correction_does_not_trigger_wrong_move_added(
+        self,
+    ) -> None:
+        """Test D2+D'=D (timed partial correction) does not trigger it."""
+        scrambled = parse_moves("D@1000 D@2000 D'@3000")
+        scramble_oriented = parse_moves('F')
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('D')
+
+        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertFalse(wrong_move_added)
+
+    def test_timed_full_correction_does_not_trigger_wrong_move_added(
+        self,
+    ) -> None:
+        """Test D+D'=nothing (timed full correction) does not trigger it."""
+        scrambled = parse_moves("D@1000 D'@2000")
+        scramble_oriented = parse_moves('F')
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('')
+
+        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertFalse(wrong_move_added)
+
 
 class TestScrambleCompletionVerification(unittest.TestCase):
     """Tests verifying is_complete using handle_scrambled method."""

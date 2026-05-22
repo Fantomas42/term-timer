@@ -173,7 +173,10 @@ class Scrambler:
             p_algo = scrambled[:-1].transform(
                 humanize_moves,
                 compress_moves,
+                untime_moves,
             )
+
+            is_correcting = len(str(algo)) < len(str(p_algo))
 
             on_good_way = True
             wrong_move_added = False
@@ -192,7 +195,7 @@ class Scrambler:
                     on_good_way = False
                     style = 'caution' if expected[0] == move[0] else 'warning'
 
-                if is_last and style == 'warning' and len(algo) >= len(p_algo):
+                if is_last and style == 'warning' and not is_correcting:
                     wrong_move_added = True
 
                 out += f'[{ style }]{ move }[/{ style }] '
