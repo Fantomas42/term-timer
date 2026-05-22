@@ -30,10 +30,15 @@ TONES: dict[str, Tone] = {
 }
 
 CONNECTED_FREQS = (900.0, 1300.0, 1800.0)
-DISCONNECTED_FREQS = (1800.0, 1300.0, 900.0)
+DISCONNECTED_FREQS = (700.0, 500.0, 350.0)
 TRIO_DURATIONS = (0.05, 0.05, 0.07)
 TRIO_GAP = 0.03
 TRIO_VOLUME = 0.25
+DISCONNECTED_DURATIONS = (0.05, 0.05, 0.09)
+DISCONNECTED_VOLUME = 0.27
+NOT_CONNECTED_FREQS = (570.0, 840.0, 200.0)
+NOT_CONNECTED_DURATIONS = (0.05, 0.05, 0.17)
+NOT_CONNECTED_VOLUME = 0.25
 
 
 class SoundPlayer:  # noqa: PLR0904
@@ -330,11 +335,27 @@ class SoundPlayer:  # noqa: PLR0904
         else:
             print('\a', end='', flush=True)
 
+    def not_connected(self) -> None:
+        """Play a low descending beep when Bluetooth cube is unavailable."""
+        if self.available:
+            wave = self.generate_trio_wave(
+                NOT_CONNECTED_FREQS,
+                NOT_CONNECTED_DURATIONS,
+                TRIO_GAP,
+                NOT_CONNECTED_VOLUME,
+            )
+            sd.play(wave, SAMPLE_RATE, blocking=False)
+        else:
+            print('\a', end='', flush=True)
+
     def disconnected(self) -> None:
         """Play a descending triple beep when a Bluetooth cube disconnects."""
         if self.available:
             wave = self.generate_trio_wave(
-                DISCONNECTED_FREQS, TRIO_DURATIONS, TRIO_GAP, TRIO_VOLUME,
+                DISCONNECTED_FREQS,
+                DISCONNECTED_DURATIONS,
+                TRIO_GAP,
+                DISCONNECTED_VOLUME,
             )
             sd.play(wave, SAMPLE_RATE, blocking=False)
         else:
@@ -396,7 +417,7 @@ if __name__ == '__main__':
     import time
 
     sounds = [
-        'metronome', 'connected', 'disconnected',
+        'metronome', 'connected', 'disconnected', 'not_connected',
         'scrambled', 'step', 'success', 'failed', 'missed',
         'la_3', 'la_4',
     ]
