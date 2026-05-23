@@ -45,10 +45,15 @@ DISCONNECTED_VOLUME = 0.27
 NOT_CONNECTED_FREQS = (570.0, 840.0, 200.0)
 NOT_CONNECTED_DURATIONS = (0.05, 0.05, 0.17)
 NOT_CONNECTED_VOLUME = 0.25
+MISSED_FREQS = (400.0, 1200.0, 180.0)
+MISSED_DURATIONS = (0.045, 0.045, 0.140)
+MISSED_GAP = 0.018
+MISSED_VOLUME = 0.27
 
 CONNECTED_PAN: PanDirection = 'left_to_right'
 DISCONNECTED_PAN: PanDirection = 'right_to_left'
 NOT_CONNECTED_PAN: PanDirection = 'right_to_left'
+MISSED_PAN: PanDirection = 'right_to_left'
 
 
 class SoundPlayer:  # noqa: PLR0904
@@ -283,40 +288,6 @@ class SoundPlayer:  # noqa: PLR0904
 
     @staticmethod
     @lru_cache
-    def generate_missed_wave() -> np.ndarray:
-        """
-        Generate a 3-note arch (400→1200→180 Hz) signalling a wrong move.
-
-        Ascending then descending melody: low note draws attention, high note
-        marks the error, long low note emphasises the mistake. Pure sines with
-        soft attack (3ms) and fade-out (6ms), 18ms gap between notes.
-
-        Returns:
-            Float32 array of audio samples.
-
-        """
-        freqs = (400.0, 1200.0, 180.0)
-        durations = (0.045, 0.045, 0.140)
-        volumes = (0.25, 0.29, 0.27)
-        gap_samples = np.zeros(int(SAMPLE_RATE * 0.018), dtype=np.float32)
-        parts: list[np.ndarray] = []
-        for i, (freq, dur, vol) in enumerate(
-            zip(freqs, durations, volumes, strict=True),
-        ):
-            samples = int(SAMPLE_RATE * dur)
-            t = np.linspace(0, dur, samples, endpoint=False)
-            wave = vol * np.sin(2 * math.pi * freq * t)
-            attack = min(int(SAMPLE_RATE * 0.003), samples // 4)
-            wave[:attack] *= np.linspace(0.0, 1.0, attack)
-            fade = min(int(SAMPLE_RATE * 0.006), samples // 4)
-            wave[-fade:] *= np.linspace(1.0, 0.0, fade)
-            parts.append(wave.astype(np.float32))
-            if i < len(freqs) - 1:
-                parts.append(gap_samples)
-        return np.concatenate(parts)
-
-    @staticmethod
-    @lru_cache
     def generate_failed_wave() -> np.ndarray:
         """
         Generate a descending four-note minor fanfare using additive synthesis.
@@ -421,7 +392,15 @@ class SoundPlayer:  # noqa: PLR0904
 
     def missed(self) -> None:
         """Play a short klaxon buzz when a move is executed incorrectly."""
-        self.play(self.generate_missed_wave)
+        self.play(
+            lambda: self.generate_trio_wave(
+                MISSED_FREQS,
+                MISSED_DURATIONS,
+                MISSED_GAP,
+                MISSED_VOLUME,
+                MISSED_PAN,
+            ),
+        )
 
     def la_3(self) -> None:
         """Play a LA 3."""
