@@ -177,9 +177,9 @@ class Timer(SolveInterface):
         new_stats = SolveStatisticsReporter(self.cube_size, self.stack)
 
         if solve.flag == DNF:
-            SOUND_PLAYER.failed()
+            SOUND_PLAYER.solve_failed()
         else:
-            SOUND_PLAYER.success()
+            SOUND_PLAYER.solve_success()
 
         self.clear_line(full=True)
 

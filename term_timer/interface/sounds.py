@@ -350,11 +350,11 @@ class SoundPlayer:  # noqa: PLR0904
         tone = TONES[name]
         self.play(lambda: self.generate_wave(tone))
 
-    def metronome(self) -> None:
+    def metronome_tick(self) -> None:
         """Play a short neutral tick for metronome beats."""
         self.play(self.generate_metronome_wave)
 
-    def connected(self) -> None:
+    def cube_connected(self) -> None:
         """Play an ascending triple beep when a Bluetooth cube connects."""
         self.play(
             lambda: self.generate_trio_wave(
@@ -366,7 +366,7 @@ class SoundPlayer:  # noqa: PLR0904
             ),
         )
 
-    def not_connected(self) -> None:
+    def cube_not_connected(self) -> None:
         """Play a low descending beep when Bluetooth cube is unavailable."""
         self.play(
             lambda: self.generate_trio_wave(
@@ -378,7 +378,7 @@ class SoundPlayer:  # noqa: PLR0904
             ),
         )
 
-    def disconnected(self) -> None:
+    def cube_disconnected(self) -> None:
         """Play a descending triple beep when a Bluetooth cube disconnects."""
         self.play(
             lambda: self.generate_trio_wave(
@@ -390,23 +390,23 @@ class SoundPlayer:  # noqa: PLR0904
             ),
         )
 
-    def scrambled(self) -> None:
+    def solve_scrambled(self) -> None:
         """Play a confirmation tone when scramble is finalized."""
         self.play(self.generate_scrambled_wave)
 
-    def step(self) -> None:
+    def solve_step(self) -> None:
         """Play a higher-pitched beep when a solve step is completed."""
         self.play(self.generate_step_wave)
 
-    def success(self) -> None:
+    def solve_success(self) -> None:
         """Play a bright tone on solve, training, or drill completion."""
         self.play(self.generate_success_wave)
 
-    def failed(self) -> None:
+    def solve_failed(self) -> None:
         """Play a sombre descending tone on failed solve or drill."""
         self.play(self.generate_failed_wave)
 
-    def missed(self) -> None:
+    def cube_move_missed(self) -> None:
         """Play a short klaxon buzz when a move is executed incorrectly."""
         self.play(
             lambda: self.generate_trio_wave(
@@ -434,9 +434,17 @@ if __name__ == '__main__':
     import time
 
     sounds = [
-        'metronome', 'connected', 'disconnected', 'not_connected',
-        'scrambled', 'step', 'success', 'failed', 'missed',
-        'la_3', 'la_4',
+        'cube_connected',
+        'cube_not_connected',
+        'cube_disconnected',
+        'cube_move_missed',
+        'solve_scrambled',
+        'solve_step',
+        'solve_success',
+        'solve_failed',
+        'metronome_tick',
+        'la_3',
+        'la_4',
     ]
 
     if not SOUND_PLAYER.available:

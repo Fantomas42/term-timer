@@ -159,7 +159,7 @@ class Bluetooth:
                     timeout=10.0,
                 )
             except asyncio.TimeoutError:  # noqa: UP041
-                SOUND_PLAYER.not_connected()
+                SOUND_PLAYER.cube_not_connected()
                 self.clear_line(full=True)
                 self.console.print(
                     '[bluetooth]😱Bluetooth:[/bluetooth] '
@@ -168,7 +168,7 @@ class Bluetooth:
                 )
                 return False
 
-            SOUND_PLAYER.connected()
+            SOUND_PLAYER.cube_connected()
             self.clear_line(full=True)
             self.console.print(
                 '[bluetooth]🤓Bluetooth:[/bluetooth] '
@@ -176,7 +176,7 @@ class Bluetooth:
                 'initialized successfully ![/result]',
             )
         except CubeNotFoundError:
-            SOUND_PLAYER.not_connected()
+            SOUND_PLAYER.cube_not_connected()
             self.clear_line(full=True)
             self.console.print(
                 '[bluetooth]😥Bluetooth:[/bluetooth] '
@@ -224,7 +224,7 @@ class Bluetooth:
                 and self.bluetooth_interface.client
                 and self.bluetooth_interface.client.is_connected
         ):
-            SOUND_PLAYER.disconnected()
+            SOUND_PLAYER.cube_disconnected()
             self.console.print(
                 '[bluetooth]🔗Bluetooth:[/bluetooth] '
                 f'{ self.bluetooth_device_label } disconnecting...',

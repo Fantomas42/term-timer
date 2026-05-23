@@ -101,7 +101,7 @@ class Scrambler:
 
         if is_complete:
             self.scramble_completed_event.set()
-            SOUND_PLAYER.scrambled()
+            SOUND_PLAYER.solve_scrambled()
 
         out, full_clear, wrong_move_added = self.compute_scramble_display(
             scrambled=self.scrambled,
@@ -111,7 +111,7 @@ class Scrambler:
         )
 
         if wrong_move_added:
-            SOUND_PLAYER.missed()
+            SOUND_PLAYER.cube_move_missed()
 
         self.clear_line(full=full_clear)
 

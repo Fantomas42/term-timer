@@ -88,7 +88,7 @@ class StopWatch:
             f'[step]{ step_name }[/step]',
         )
         if not last:
-            SOUND_PLAYER.step()
+            SOUND_PLAYER.solve_step()
 
     def build_oriented_facelets(self) -> tuple[str, 'CubeOrientation']:
         """
@@ -173,7 +173,7 @@ class StopWatch:
             if tempo_elapsed != new_tempo:
                 tempo_elapsed = new_tempo
                 if self.metronome:
-                    SOUND_PLAYER.metronome()
+                    SOUND_PLAYER.metronome_tick()
 
             if (
                 facelet_analyser is not None

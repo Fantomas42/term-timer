@@ -343,7 +343,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
         events = await queue.get()
 
         if events is None:
-            SOUND_PLAYER.disconnected()
+            SOUND_PLAYER.cube_disconnected()
             logger.info(
                 'CONSUMER: Got message from client about disconnection. '
                 'Exiting consumer loop...',
@@ -494,7 +494,7 @@ async def client_cb(  # noqa: PLR0913
         filter_name=filter_name,
         use_gyroscope=True,
     )
-    SOUND_PLAYER.connected()
+    SOUND_PLAYER.cube_connected()
 
     await bluetooth_interface.send_command('REQUEST_FACELETS')
     await bluetooth_interface.send_command('REQUEST_HARDWARE')

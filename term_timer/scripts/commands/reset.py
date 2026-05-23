@@ -68,7 +68,7 @@ async def reset(options: Namespace) -> int:
     )
 
     await bluetooth_interface.send_command('REQUEST_RESET')
-    SOUND_PLAYER.success()
+    SOUND_PLAYER.solve_success()
 
     await bluetooth_interface.__aexit__(None, None, None)
 
