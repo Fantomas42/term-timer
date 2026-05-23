@@ -117,7 +117,7 @@ class Driller(SolveInterface):
         self.rep_tps.append(tps)
 
         self.console.print(
-            f'[duration]Rep #{ self.counter }:[/duration]',
+            f'[duration]Rep #{ self.counter:03d}:[/duration]',
             f'[time]{ format_time(self.elapsed_time) }[/time]'
             f'{ extra }'
             f' [tps]{ tps:.2f} TPS[/tps]'
@@ -273,7 +273,6 @@ class Driller(SolveInterface):
                     Algorithm([cast('Move', self.bad_move)]),
                 )
 
-                SOUND_PLAYER.failed()
                 self.clear_line(full=True)
                 self.console.print(
                     '😵 [warning]Bad move: '
@@ -299,7 +298,7 @@ class Driller(SolveInterface):
         self.elapsed_time = self.end_time - self.start_time
         self.rep_times.append(self.elapsed_time)
 
-        SOUND_PLAYER.success()
+        SOUND_PLAYER.step()
         self.clear_line(full=True)
         self.rep_line()
 
