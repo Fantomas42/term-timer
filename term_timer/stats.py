@@ -1317,12 +1317,19 @@ class DrillStatistics(Statistics):
         return max(self.rep_fluencies) if self.rep_fluencies else 0
 
     @cached_property
+    def worst_fluency(self) -> float:
+        """Return the worst (lowest) fluency across all reps."""
+        return min(self.rep_fluencies) if self.rep_fluencies else 0
+
+    @cached_property
     def mean_fluency(self) -> int:
         """Return the mean fluency across all reps."""
         return int(np.mean(self.rep_fluencies)) if self.rep_fluencies else 0
 
     def resume(self) -> None:
         """Display drill session statistics summary."""
+        has_fluency = bool(self.mean_fluency)
+
         console.print('[title]Drill summary[/title]')
         console.print(
             '[stats]Reps  :[/stats]',
@@ -1336,24 +1343,20 @@ class DrillStatistics(Statistics):
             '[stats]Mean  :[/stats]',
             f'[result]{ format_time(self.mean) }[/result]',
             f'[tps]{ self.mean_tps:05.2f} TPS[/tps]',
+            f'{ format_fluency(self.mean_fluency) if has_fluency else "" }',
         )
         console.print(
             '[stats]Best  :[/stats]',
             f'[green]{ format_time(self.best) }[/green]',
             f'[tps]{ self.best_tps:05.2f} TPS[/tps]',
+            f'{ format_fluency(self.best_fluency) if has_fluency else "" }',
         )
         console.print(
             '[stats]Worst :[/stats]',
             f'[red]{ format_time(self.worst) }[/red]',
             f'[tps]{ self.worst_tps:05.2f} TPS[/tps]',
+            f'{ format_fluency(self.worst_fluency) if has_fluency else "" }',
         )
-        if self.mean_fluency > 0:
-            console.print(
-                '[stats]Fluency:[/stats]',
-                f'{ format_fluency(self.mean_fluency) }',
-                '[stats]Best:[/stats]',
-                f'{ format_fluency(self.best_fluency) }',
-            )
 
 
 class TrainerStatistics:
