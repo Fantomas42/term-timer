@@ -332,5 +332,8 @@ class SolveInterface(
 
         if char not in {'z', 'k'}:
             self.counter += 1
+            SOUND_PLAYER.save_confirmed()
+        else:
+            SOUND_PLAYER.save_discarded()
 
         return char in {'q', 'k', ESCAPE_CHAR}

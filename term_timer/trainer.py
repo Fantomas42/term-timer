@@ -736,9 +736,11 @@ class Trainer(SolveInterface):
         save_string = ''
         if char in {'z', 'k'}:
             self.trainings.pop_timing(selected_case.code)
+            SOUND_PLAYER.save_discarded()
             save_string = 'Training discarded'
         else:
             save_trainings(self.trainings)
+            SOUND_PLAYER.save_confirmed()
             self.session_data.append(
                 (
                     selected_case.code,
