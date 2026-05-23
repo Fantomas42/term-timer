@@ -103,6 +103,25 @@ class SoundPlayer:  # noqa: PLR0904
             self.bell()
 
     @staticmethod
+    def apply_sine_pan(mono: np.ndarray, direction: PanDirection) -> np.ndarray:
+        """
+        Apply a sine-eased equal-power stereo pan sweep to a mono signal.
+
+        Returns:
+            Float32 stereo (N, 2) array.
+
+        """
+        t = np.linspace(0.0, 1.0, len(mono), dtype=np.float32)
+        if direction == 'left_to_right':
+            pan = (1.0 - np.cos(math.pi * t)) / 2.0
+        else:
+            pan = (1.0 + np.cos(math.pi * t)) / 2.0
+        angle = pan * (math.pi / 2)
+        return np.stack(
+            [mono * np.cos(angle), mono * np.sin(angle)], axis=1,
+        ).astype(np.float32)
+
+    @staticmethod
     @lru_cache
     def generate_wave(tone: Tone) -> np.ndarray:
         """
@@ -154,16 +173,7 @@ class SoundPlayer:  # noqa: PLR0904
         mono = np.concatenate(parts)
         if pan_direction == 'center':
             return mono
-        n = len(mono)
-        t_pan = np.linspace(0.0, 1.0, n, dtype=np.float32)
-        if pan_direction == 'left_to_right':
-            pan = (1.0 - np.cos(math.pi * t_pan)) / 2.0
-        else:
-            pan = (1.0 + np.cos(math.pi * t_pan)) / 2.0
-        angle = pan.astype(np.float32) * (math.pi / 2)
-        left = mono * np.cos(angle)
-        right = mono * np.sin(angle)
-        return np.stack([left, right], axis=1).astype(np.float32)
+        return SoundPlayer.apply_sine_pan(mono, pan_direction)
 
     @staticmethod
     @lru_cache
@@ -235,9 +245,11 @@ class SoundPlayer:  # noqa: PLR0904
 
         Five inharmonic partials (x1, x2.76, x5.40, x8.93, x13) applied to
         E5→G5→C6→E6, staccato tempo (0.07s notes, 0.010s gap, 0.20s last note).
+        A sine-eased stereo sweep from left to right is applied over the full
+        duration.
 
         Returns:
-            Float32 array of audio samples.
+            Float32 stereo (N, 2) array of audio samples.
 
         """
         partials = (
@@ -265,7 +277,8 @@ class SoundPlayer:  # noqa: PLR0904
             parts.append(result)
             if i < len(freqs) - 1:
                 parts.append(gap_samples)
-        return np.concatenate(parts)
+        mono = np.concatenate(parts)
+        return SoundPlayer.apply_sine_pan(mono, 'left_to_right')
 
     @staticmethod
     @lru_cache
@@ -294,10 +307,12 @@ class SoundPlayer:  # noqa: PLR0904
 
         Same five inharmonic partials as success but applied to E5→C5→Ab4→Eb4
         (one octave lower, Ab minor descent) with a decrescendo volume envelope
-        and 0.040s gaps — slow, sombre mirror of the success sound.
+        and 0.040s gaps — slow, sombre mirror of the success sound. A
+        sine-eased stereo sweep from right to left is applied over the full
+        duration.
 
         Returns:
-            Float32 array of audio samples.
+            Float32 stereo (N, 2) array of audio samples.
 
         """
         partials = (
@@ -327,7 +342,8 @@ class SoundPlayer:  # noqa: PLR0904
             parts.append(result)
             if i < len(freqs) - 1:
                 parts.append(gap_samples)
-        return np.concatenate(parts)
+        mono = np.concatenate(parts)
+        return SoundPlayer.apply_sine_pan(mono, 'right_to_left')
 
     def play_tone(self, name: str) -> None:
         """Play a named tone."""
