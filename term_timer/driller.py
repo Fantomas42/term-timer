@@ -132,9 +132,9 @@ class Driller(SolveInterface):
         self.console.print(
             f'[duration]Rep #{ self.counter:03d}:[/duration]',
             f'[time]{ format_time(self.elapsed_time) }[/time]'
-            f'{ extra }'
             f' [tps]{ tps:05.2f} TPS[/tps]'
-            f'{ fluency_line }',
+            f'{ fluency_line }'
+            f'{ extra }',
         )
 
     def reset_drill_state(self) -> None:
