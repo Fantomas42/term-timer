@@ -1335,17 +1335,17 @@ class DrillStatistics(Statistics):
         console.print(
             '[stats]Mean  :[/stats]',
             f'[result]{ format_time(self.mean) }[/result]',
-            f'[tps]{ self.mean_tps:.2f} TPS[/tps]',
+            f'[tps]{ self.mean_tps:05.2f} TPS[/tps]',
         )
         console.print(
             '[stats]Best  :[/stats]',
             f'[green]{ format_time(self.best) }[/green]',
-            f'[tps]{ self.best_tps:.2f} TPS[/tps]',
+            f'[tps]{ self.best_tps:05.2f} TPS[/tps]',
         )
         console.print(
             '[stats]Worst :[/stats]',
             f'[red]{ format_time(self.worst) }[/red]',
-            f'[tps]{ self.worst_tps:.2f} TPS[/tps]',
+            f'[tps]{ self.worst_tps:05.2f} TPS[/tps]',
         )
         if self.mean_fluency > 0:
             console.print(
