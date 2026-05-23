@@ -261,31 +261,35 @@ class SoundPlayer:  # noqa: PLR0904
     @lru_cache
     def generate_missed_wave() -> np.ndarray:
         """
-        Generate a short sawtooth buzz at 650 Hz — klaxon-style alert.
+        Generate a 3-note arch (400→1200→180 Hz) signalling a wrong move.
 
-        Sawtooth approximated by 8 Fourier harmonics with exponential decay
-        and a 4ms attack to avoid clicks.
+        Ascending then descending melody: low note draws attention, high note
+        marks the error, long low note emphasises the mistake. Pure sines with
+        soft attack (3ms) and fade-out (6ms), 18ms gap between notes.
 
         Returns:
             Float32 array of audio samples.
 
         """
-        freq = 650.0
-        duration = 0.12
-        volume = 0.20
-        decay = 10.0
-        n_harmonics = 8
-        samples = int(SAMPLE_RATE * duration)
-        t = np.linspace(0, duration, samples, endpoint=False)
-        wave = np.zeros(samples, dtype=np.float64)
-        for k in range(1, n_harmonics + 1):
-            wave += ((-1.0) ** (k + 1) / k) * np.sin(2 * math.pi * freq * k * t)
-        env = np.exp(-decay * t / duration)
-        attack_s = min(int(SAMPLE_RATE * 0.004), samples // 4)
-        env[:attack_s] *= np.linspace(0.0, 1.0, attack_s)
-        fade = min(int(SAMPLE_RATE * 0.005), samples // 4)
-        env[-fade:] *= np.linspace(1.0, 0.0, fade)
-        return (volume * env * wave).astype(np.float32)
+        freqs = (400.0, 1200.0, 180.0)
+        durations = (0.045, 0.045, 0.140)
+        volumes = (0.25, 0.29, 0.27)
+        gap_samples = np.zeros(int(SAMPLE_RATE * 0.018), dtype=np.float32)
+        parts: list[np.ndarray] = []
+        for i, (freq, dur, vol) in enumerate(
+            zip(freqs, durations, volumes, strict=True),
+        ):
+            samples = int(SAMPLE_RATE * dur)
+            t = np.linspace(0, dur, samples, endpoint=False)
+            wave = vol * np.sin(2 * math.pi * freq * t)
+            attack = min(int(SAMPLE_RATE * 0.003), samples // 4)
+            wave[:attack] *= np.linspace(0.0, 1.0, attack)
+            fade = min(int(SAMPLE_RATE * 0.006), samples // 4)
+            wave[-fade:] *= np.linspace(1.0, 0.0, fade)
+            parts.append(wave.astype(np.float32))
+            if i < len(freqs) - 1:
+                parts.append(gap_samples)
+        return np.concatenate(parts)
 
     @staticmethod
     @lru_cache
