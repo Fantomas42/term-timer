@@ -11,6 +11,7 @@ from term_timer.bluetooth.annotations import RotationEventDict
 from term_timer.constants import ESCAPE_CHAR
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
+from term_timer.exceptions import InvalidAlgorithmError
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_fluency
 from term_timer.formatter import format_time
@@ -37,12 +38,24 @@ class Driller(SolveInterface):
             countdown: int,
             metronome: float,
     ) -> None:
-        """Initialize driller with the algorithm and display options."""
+        """
+        Initialize driller with the algorithm and display options.
+
+        Raises:
+            InvalidAlgorithmError: If provided algorithm is too short.
+
+        """
         super().__init__()
 
         self.set_state('configure')
 
         self.algorithm = Algorithm.parse_moves(algorithm)
+
+        if len(self.algorithm) < 2:
+            error_string = (
+                f'Invalid algorithm, "{ self.algorithm }" is too short.'
+            )
+            raise InvalidAlgorithmError(error_string)
 
         self.times = times
         self.orientation_faces = orientation

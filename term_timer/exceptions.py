@@ -9,5 +9,9 @@ class InvalidCaseError(Exception):
     """Raised when an invalid training case is selected."""
 
 
+class InvalidAlgorithmError(Exception):
+    """Raised when an invalid algorithm is given."""
+
+
 class InvalidOrientationError(Exception):
     """Raised when an invalid cube orientation is specified."""

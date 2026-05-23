@@ -4,6 +4,7 @@ from argparse import Namespace
 from cubing_algs.exceptions import InvalidMoveError
 
 from term_timer.driller import Driller
+from term_timer.exceptions import InvalidAlgorithmError
 from term_timer.interface.console import console
 from term_timer.stats import DrillStatistics
 
@@ -16,13 +17,17 @@ async def driller(options: Namespace) -> int:
         Exit code (0 for success).
 
     """
-    instance = Driller(
-        algorithm=options.algorithm,
-        times=options.times,
-        orientation=options.orientation,
-        countdown=options.countdown,
-        metronome=options.metronome,
-    )
+    try:
+        instance = Driller(
+            algorithm=options.algorithm,
+            times=options.times,
+            orientation=options.orientation,
+            countdown=options.countdown,
+            metronome=options.metronome,
+        )
+    except InvalidAlgorithmError as error:
+        console.print('😱', str(error), style='warning')
+        return 1
 
     if options.bluetooth:
         await instance.bluetooth_connect(
