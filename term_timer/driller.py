@@ -133,7 +133,7 @@ class Driller(SolveInterface):
             f'[duration]Rep #{ self.counter:03d}:[/duration]',
             f'[time]{ format_time(self.elapsed_time) }[/time]'
             f'{ extra }'
-            f' [tps]{ tps:.2f} TPS[/tps]'
+            f' [tps]{ tps:05.2f} TPS[/tps]'
             f'{ fluency_line }',
         )
 
