@@ -3,6 +3,7 @@
 import math
 from collections.abc import Callable
 from functools import lru_cache
+from typing import Literal
 from typing import NamedTuple
 
 import numpy as np
@@ -17,6 +18,8 @@ except OSError:
     SOUNDDEVICE_AVAILABLE = False
 
 SAMPLE_RATE = 44100
+
+PanDirection = Literal['left_to_right', 'right_to_left', 'center']
 
 
 class Tone(NamedTuple):
@@ -42,6 +45,10 @@ DISCONNECTED_VOLUME = 0.27
 NOT_CONNECTED_FREQS = (570.0, 840.0, 200.0)
 NOT_CONNECTED_DURATIONS = (0.05, 0.05, 0.17)
 NOT_CONNECTED_VOLUME = 0.25
+
+CONNECTED_PAN: PanDirection = 'left_to_right'
+DISCONNECTED_PAN: PanDirection = 'right_to_left'
+NOT_CONNECTED_PAN: PanDirection = 'right_to_left'
 
 
 class SoundPlayer:  # noqa: PLR0904
@@ -115,12 +122,17 @@ class SoundPlayer:  # noqa: PLR0904
         durations: tuple[float, ...],
         gap: float,
         volume: float,
+        pan_direction: PanDirection = 'center',
     ) -> np.ndarray:
         """
         Generate a sequence of sine tones separated by silence.
 
+        When pan_direction is 'left_to_right' or 'right_to_left', applies a
+        sine-eased stereo sweep and returns a (N, 2) float32 array. Otherwise
+        returns a mono (N,) float32 array.
+
         Returns:
-            Float32 array of concatenated beeps with fade-outs.
+            Float32 array of concatenated beeps, mono or stereo.
 
         """
         parts: list[np.ndarray] = []
@@ -134,7 +146,19 @@ class SoundPlayer:  # noqa: PLR0904
             parts.append(wave.astype(np.float32))
             if i < len(freqs) - 1:
                 parts.append(gap_samples)
-        return np.concatenate(parts)
+        mono = np.concatenate(parts)
+        if pan_direction == 'center':
+            return mono
+        n = len(mono)
+        t_pan = np.linspace(0.0, 1.0, n, dtype=np.float32)
+        if pan_direction == 'left_to_right':
+            pan = (1.0 - np.cos(math.pi * t_pan)) / 2.0
+        else:
+            pan = (1.0 + np.cos(math.pi * t_pan)) / 2.0
+        angle = pan.astype(np.float32) * (math.pi / 2)
+        left = mono * np.cos(angle)
+        right = mono * np.sin(angle)
+        return np.stack([left, right], axis=1).astype(np.float32)
 
     @staticmethod
     @lru_cache
@@ -351,6 +375,7 @@ class SoundPlayer:  # noqa: PLR0904
                 TRIO_DURATIONS,
                 TRIO_GAP,
                 TRIO_VOLUME,
+                CONNECTED_PAN,
             ),
         )
 
@@ -362,6 +387,7 @@ class SoundPlayer:  # noqa: PLR0904
                 NOT_CONNECTED_DURATIONS,
                 TRIO_GAP,
                 NOT_CONNECTED_VOLUME,
+                NOT_CONNECTED_PAN,
             ),
         )
 
@@ -373,6 +399,7 @@ class SoundPlayer:  # noqa: PLR0904
                 DISCONNECTED_DURATIONS,
                 TRIO_GAP,
                 DISCONNECTED_VOLUME,
+                DISCONNECTED_PAN,
             ),
         )
 
