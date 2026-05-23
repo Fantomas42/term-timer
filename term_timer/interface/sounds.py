@@ -282,6 +282,75 @@ class SoundPlayer:  # noqa: PLR0904
 
     @staticmethod
     @lru_cache
+    def generate_save_confirmed_wave() -> np.ndarray:
+        """
+        Generate a high bell ting using additive synthesis.
+
+        Four inharmonic partials (x1, x2.76, x5.40, x8.93) at 1200 Hz with
+        differential decay rates — bright metallic attack with clean ring.
+
+        Returns:
+            Float32 array of audio samples.
+
+        """
+        fundamental = 1200.0
+        duration = 0.32
+        volume = 0.20
+        partials = (
+            (1.00, 1.00, 4.0),
+            (2.76, 0.80, 10.0),
+            (5.40, 0.50, 18.0),
+            (8.93, 0.25, 30.0),
+        )
+        samples = int(SAMPLE_RATE * duration)
+        t = np.linspace(0, duration, samples, endpoint=False)
+        wave = np.zeros(samples, dtype=np.float64)
+        for ratio, amp, decay in partials:
+            env = np.exp(-decay * t / duration)
+            wave += amp * env * np.sin(2 * math.pi * fundamental * ratio * t)
+        result = (volume * wave).astype(np.float32)
+        attack = min(int(SAMPLE_RATE * 0.004), samples // 8)
+        result[:attack] *= np.linspace(0.0, 1.0, attack).astype(np.float32)
+        fade = min(int(SAMPLE_RATE * 0.010), samples // 4)
+        result[-fade:] *= np.linspace(1.0, 0.0, fade).astype(np.float32)
+        return result
+
+    @staticmethod
+    @lru_cache
+    def generate_save_discarded_wave() -> np.ndarray:
+        """
+        Generate a low buzz thud using additive synthesis.
+
+        Three partials (x1, x1.5, x2.1) at 220 Hz with slow decay —
+        heavy, rounded low-end thud.
+
+        Returns:
+            Float32 array of audio samples.
+
+        """
+        fundamental = 220.0
+        duration = 0.28
+        volume = 0.30
+        partials = (
+            (1.00, 1.00, 3.5),
+            (1.50, 0.80, 6.0),
+            (2.10, 0.55, 11.0),
+        )
+        samples = int(SAMPLE_RATE * duration)
+        t = np.linspace(0, duration, samples, endpoint=False)
+        wave = np.zeros(samples, dtype=np.float64)
+        for ratio, amp, decay in partials:
+            env = np.exp(-decay * t / duration)
+            wave += amp * env * np.sin(2 * math.pi * fundamental * ratio * t)
+        result = (volume * wave).astype(np.float32)
+        attack = min(int(SAMPLE_RATE * 0.004), samples // 8)
+        result[:attack] *= np.linspace(0.0, 1.0, attack).astype(np.float32)
+        fade = min(int(SAMPLE_RATE * 0.010), samples // 4)
+        result[-fade:] *= np.linspace(1.0, 0.0, fade).astype(np.float32)
+        return result
+
+    @staticmethod
+    @lru_cache
     def generate_metronome_wave() -> np.ndarray:
         """
         Generate a downward chirp (800→300 Hz) with exponential decay.
@@ -406,6 +475,14 @@ class SoundPlayer:  # noqa: PLR0904
         """Play a sombre descending tone on failed solve or drill."""
         self.play(self.generate_failed_wave)
 
+    def save_confirmed(self) -> None:
+        """Play a high bell ting when results are saved."""
+        self.play(self.generate_save_confirmed_wave)
+
+    def save_discarded(self) -> None:
+        """Play a low buzz thud when results are discarded."""
+        self.play(self.generate_save_discarded_wave)
+
     def cube_move_missed(self) -> None:
         """Play a short klaxon buzz when a move is executed incorrectly."""
         self.play(
@@ -442,6 +519,8 @@ if __name__ == '__main__':
         'solve_step',
         'solve_success',
         'solve_failed',
+        'save_confirmed',
+        'save_discarded',
         'metronome_tick',
         'la_3',
         'la_4',
