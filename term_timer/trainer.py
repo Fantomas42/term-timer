@@ -627,7 +627,7 @@ class Trainer(SolveInterface):
         if solve.flag == DNF:
             SOUND_PLAYER.solve_failed()
         else:
-            SOUND_PLAYER.solve_success()
+            SOUND_PLAYER.solve_step()
 
         self.clear_line(full=True)
 
