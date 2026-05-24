@@ -53,6 +53,7 @@ async def driller(options: Namespace) -> int:
                 instance.rep_times,
                 instance.rep_tps,
                 instance.rep_fluencies,
+                qtm=instance.algorithm.metrics.qtm,
             ).resume()
 
     except InvalidMoveError as error:

@@ -1290,11 +1290,18 @@ class DrillStatistics(Statistics):
             rep_times: list[int],
             rep_tps: list[float],
             rep_fluencies: list[int],
+            qtm: int = 0,
     ) -> None:
         """Initialize drill statistics from per-rep collected data."""
         super().__init__(rep_times)
         self.rep_tps = rep_tps
         self.rep_fluencies = [f for f in rep_fluencies if f > 0]
+        self.qtm = qtm
+
+    @cached_property
+    def total_moves(self) -> int:
+        """Return total moves performed across all reps."""
+        return self.qtm * self.total
 
     @cached_property
     def best_tps(self) -> float:
@@ -1364,6 +1371,11 @@ class DrillStatistics(Statistics):
             '[stats]Reps  :[/stats]',
             f'[result]{ self.total }[/result]',
         )
+        if self.total_moves:
+            console.print(
+                '[stats]Moves :[/stats]',
+                f'[result]{ self.total_moves }[/result]',
+            )
         console.print(
             '[stats]Time  :[/stats]',
             f'[result]{ format_time(self.total_time) }[/result]',

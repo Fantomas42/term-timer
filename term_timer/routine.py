@@ -191,6 +191,7 @@ def show_instance_stats(instance: Timer | Trainer | Driller) -> None:
             instance.rep_times,
             instance.rep_tps,
             instance.rep_fluencies,
+            qtm=instance.algorithm.metrics.qtm,
         ).resume()
 
 
