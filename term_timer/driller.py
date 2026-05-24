@@ -51,7 +51,7 @@ class Driller(SolveInterface):
 
         self.algorithm = Algorithm.parse_moves(algorithm)
 
-        if len(self.algorithm) < 2:
+        if self.algorithm.metrics.qtm < 2:
             error_string = (
                 f'Invalid algorithm, "{ self.algorithm }" is too short.'
             )
