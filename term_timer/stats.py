@@ -1317,7 +1317,7 @@ class DrillStatistics(Statistics):
         return max(self.rep_fluencies) if self.rep_fluencies else 0
 
     @cached_property
-    def worst_fluency(self) -> float:
+    def worst_fluency(self) -> int:
         """Return the worst (lowest) fluency across all reps."""
         return min(self.rep_fluencies) if self.rep_fluencies else 0
 
@@ -1325,6 +1325,35 @@ class DrillStatistics(Statistics):
     def mean_fluency(self) -> int:
         """Return the mean fluency across all reps."""
         return int(np.mean(self.rep_fluencies)) if self.rep_fluencies else 0
+
+    def time_graph(self) -> None:
+        """Display a terminal line graph of rep times."""
+        plt.clear_figure()
+        times = [t / SECOND for t in self.stack_time]
+        plt.plot(times, marker='fhd', label='Time')
+        plt.hline(self.mean / SECOND, 'red')
+        plt.xticks(list(range(1, len(times) + 1)))
+        plt.title('Rep Times (seconds)')
+        plt.plot_size(height=15)
+        plt.canvas_color('default')
+        plt.axes_color('default')
+        plt.ticks_color((0, 175, 255))
+        plt.ticks_style('bold')
+        plt.show()
+
+    def tps_graph(self) -> None:
+        """Display a terminal line graph of TPS per rep."""
+        plt.clear_figure()
+        plt.plot(self.rep_tps, marker='fhd', label='TPS', color=119)
+        plt.hline(self.mean_tps, 'red')
+        plt.xticks(list(range(1, len(self.rep_tps) + 1)))
+        plt.title('Turns Per Second')
+        plt.plot_size(height=15)
+        plt.canvas_color('default')
+        plt.axes_color('default')
+        plt.ticks_color((0, 175, 255))
+        plt.ticks_style('bold')
+        plt.show()
 
     def resume(self) -> None:
         """Display drill session statistics summary."""
@@ -1357,6 +1386,8 @@ class DrillStatistics(Statistics):
             f'[tps]{ self.worst_tps:05.2f} TPS[/tps]',
             f'{ format_fluency(self.worst_fluency) if has_fluency else "" }',
         )
+        self.time_graph()
+        self.tps_graph()
 
 
 class TrainerStatistics:
