@@ -6,7 +6,7 @@ from cubing_algs.move import Move
 from term_timer.driller import Driller
 
 
-def make_driller(algorithm: str) -> Driller:
+def make_driller(algorithm: str, *, duration: int = 0) -> Driller:
     """
     Create a Driller ready to validate moves.
 
@@ -19,6 +19,7 @@ def make_driller(algorithm: str) -> Driller:
     driller = Driller(
         algorithm=algorithm,
         times=1,
+        duration=duration,
         orientation='UF',
         countdown=0,
         metronome=0,
@@ -26,6 +27,20 @@ def make_driller(algorithm: str) -> Driller:
     driller.init_solve()
     driller.reset_drill_state()
     return driller
+
+
+class TestDrillerInit(unittest.TestCase):
+    """Validate Driller initialisation with duration."""
+
+    def test_duration_zero_by_default(self) -> None:
+        """Duration defaults to 0 (infinite session)."""
+        driller = make_driller('U R')
+        self.assertEqual(driller.duration, 0)
+
+    def test_duration_stored(self) -> None:
+        """Supplied duration is stored on the instance."""
+        driller = make_driller('U R', duration=120)
+        self.assertEqual(driller.duration, 120)
 
 
 class TestValidateSingleMoves(unittest.TestCase):

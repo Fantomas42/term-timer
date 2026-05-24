@@ -51,6 +51,7 @@ class SessionConfig(TypedDict, total=False):
     countdown: int
     # drill fields
     algorithm: str
+    duration: int
     # shared
     free_play: bool
     show_cube: bool
@@ -164,6 +165,7 @@ def build_drill_instance(session_config: SessionConfig) -> Driller:
     return Driller(
         algorithm=session_config.get('algorithm', ''),
         times=session_config.get('count', 0),
+        duration=session_config.get('duration', 0),
         orientation=session_config.get('orientation', CUBE_ORIENTATION),
         countdown=session_config.get(
             'countdown', TIMER_CONFIG.get('countdown', 0),

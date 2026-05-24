@@ -30,10 +30,11 @@ class Driller(SolveInterface):
     warning.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
             self, *,
             algorithm: str,
             times: int,
+            duration: int,
             orientation: CubeOrientation,
             countdown: int,
             metronome: float,
@@ -58,6 +59,7 @@ class Driller(SolveInterface):
             raise InvalidAlgorithmError(error_string)
 
         self.times = times
+        self.duration = duration
         self.orientation_faces = orientation
         self.countdown = countdown
         self.metronome = metronome
@@ -81,6 +83,14 @@ class Driller(SolveInterface):
             if self.times > 0
             else ''
         )
+        if self.duration > 0:
+            minutes, seconds = divmod(self.duration, 60)
+            duration_str = (
+                f'{ minutes }:{ seconds:02d}'
+                if minutes
+                else f'{ seconds }s'
+            )
+            suffix += f' | { duration_str }'
         self.console.print(
             f'Drilling: [moves]{ self.algorithm }[/moves]'
             f' ({ self.algorithm.metrics.htm } HTM)'

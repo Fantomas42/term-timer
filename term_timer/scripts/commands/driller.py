@@ -1,4 +1,6 @@
 """Driller command."""
+import asyncio
+import time
 from argparse import Namespace
 
 from cubing_algs.exceptions import InvalidMoveError
@@ -9,7 +11,7 @@ from term_timer.interface.console import console
 from term_timer.stats import DrillStatistics
 
 
-async def driller(options: Namespace) -> int:
+async def driller(options: Namespace) -> int:  # noqa: C901, PLR0912
     """
     Run algorithm drilling session.
 
@@ -21,6 +23,7 @@ async def driller(options: Namespace) -> int:
         instance = Driller(
             algorithm=options.algorithm,
             times=options.times,
+            duration=options.duration,
             orientation=options.orientation,
             countdown=options.countdown,
             metronome=options.metronome,
@@ -35,10 +38,23 @@ async def driller(options: Namespace) -> int:
         )
 
     drills_done = 0
+    session_start = time.monotonic()
 
     try:
         while 42:
-            done = await instance.start()
+            if options.duration:
+                elapsed = time.monotonic() - session_start
+                remaining = options.duration - elapsed
+                if remaining <= 0:
+                    break
+                try:
+                    done = await asyncio.wait_for(
+                        instance.start(), timeout=remaining,
+                    )
+                except TimeoutError:
+                    break
+            else:
+                done = await instance.start()
 
             if done:
                 drills_done += 1

@@ -1653,13 +1653,23 @@ def drill_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
 
     parser.add_argument(
-        'times',
-        nargs='?',
+        '-t', '--times',
         type=int,
         default=0,
         metavar='TIMES',
         help=(
             'Number of reps to drill.\n'
+            'Default: Infinite.'
+        ),
+    )
+
+    parser.add_argument(
+        '-d', '--duration',
+        type=int,
+        default=0,
+        metavar='SECONDS',
+        help=(
+            'Stop drilling after this many seconds.\n'
             'Default: Infinite.'
         ),
     )
