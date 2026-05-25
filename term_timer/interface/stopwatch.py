@@ -24,6 +24,15 @@ if TYPE_CHECKING:
 
     from term_timer.bluetooth.annotations import MoveInfo
 
+STYLE_THRESHOLDS = (
+    (50, 'timer_50'),
+    (45, 'timer_45'), (40, 'timer_40'),
+    (35, 'timer_35'), (30, 'timer_30'),
+    (25, 'timer_25'), (20, 'timer_20'),
+    (15, 'timer_15'), (10, 'timer_10'),
+    (5, 'timer_05'),
+)
+
 
 class StopWatch:
     """
@@ -81,6 +90,18 @@ class StopWatch:
         self.metronome: float = 0.0
         self.show_steps: bool = False
         self.step_width: int = 0
+
+        self.facelet_analyser: FaceletAnalyser | None = None
+        self.groups_to_track: (
+            tuple[tuple[tuple[str, str | None], ...], ...]
+        ) = ()
+        self.group_progress: int = 0
+        self.completed_in_group: set[str] = set()
+        self.last_facelets: str = ''
+        self.previous_step_time: int = 0
+        self.previous_move_index: int = 0
+        self.first_step: bool = True
+        self.previous_style: str = ''
 
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
@@ -141,7 +162,108 @@ class StopWatch:
 
         return cube.state, orientation
 
-    async def stopwatch(self) -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
+    def init_step_tracking(self) -> None:
+        """Initialize step tracking state for a new solve."""
+        self.facelet_analyser = None
+        self.groups_to_track = ()
+        self.group_progress = 0
+        self.completed_in_group = set()
+        self.last_facelets = ''
+        self.previous_step_time = 0
+        self.previous_move_index = 0
+        self.first_step = True
+        self.previous_style = ''
+        self.step_width = 0
+
+        if not self.show_steps:
+            return
+
+        analyser_class = get_method_analyser(self.method)
+        self.facelet_analyser = FaceletAnalyser()
+        self.groups_to_track = analyser_class.step_groups or tuple(
+            ((step, None),) for step in analyser_class.step_list
+        )
+        self.step_width = max(
+            (
+                len(display_name or step_name)
+                for group in self.groups_to_track
+                for step_name, display_name in group
+            ),
+            default=0,
+        )
+
+    def check_and_print_steps(
+            self,
+            elapsed_time: int,
+            style: str,
+            *,
+            final: bool = False,
+    ) -> None:
+        """Detect completed steps and print them."""
+        if (
+            self.facelet_analyser is None
+            or self.group_progress >= len(self.groups_to_track)
+            or self.bluetooth_cube is None
+        ):
+            return
+        if not final and self.bluetooth_cube_state == self.last_facelets:
+            return
+
+        if not final:
+            self.last_facelets = self.bluetooth_cube_state
+
+        facelets, orientation = self.build_oriented_facelets()
+        current_group = self.groups_to_track[self.group_progress]
+
+        for step_name, display_name in current_group:
+            if (
+                step_name not in self.completed_in_group
+                and self.facelet_analyser.check_step(
+                    step_name, facelets, orientation,
+                )
+            ):
+                delta_time = elapsed_time - self.previous_step_time
+                step_htm = parse_moves(
+                    [m['move'] for m in self.moves[self.previous_move_index:]],
+                ).transform(optimize_double_moves).metrics.htm
+
+                show_delta = final or not self.first_step
+                self.print_step(
+                    style,
+                    elapsed_time,
+                    display_name or step_name,
+                    delta_time=delta_time if show_delta else None,
+                    htm=step_htm,
+                    last=final,
+                )
+                self.first_step = False
+                self.previous_step_time = elapsed_time
+                self.previous_move_index = len(self.moves)
+                self.completed_in_group.add(step_name)
+                self.previous_style = ''
+
+        if not final and len(self.completed_in_group) == len(current_group):
+            self.group_progress += 1
+            self.completed_in_group = set()
+
+    def print_timer(self, elapsed_time: int, style: str) -> None:
+        """Print or update the running timer display."""
+        if style != self.previous_style:
+            self.previous_style = style
+            self.clear_line(full=False)
+            self.console.print(
+                f'[{ style }]Go Go Go:[/{ style }]',
+                f'[result]{ format_time(elapsed_time) }[/result]',
+                end='',
+            )
+        else:
+            self.back(9)
+            self.console.print(
+                f'[result]{ format_time(elapsed_time) }[/result]',
+                end='',
+            )
+
+    async def stopwatch(self) -> None:
         """
         Display a running stopwatch timer until solve is completed.
 
@@ -151,46 +273,11 @@ class StopWatch:
         the solve_completed_event is set.
         """
         self.clear_line(full=True)
+        self.set_state('solving', self.start_time)
+        self.init_step_tracking()
 
         tempo_elapsed = 0
         style = 'timer_base'
-        previous_style = ''
-
-        self.set_state('solving', self.start_time)
-
-        style_thresholds = (
-            (50, 'timer_50'),
-            (45, 'timer_45'), (40, 'timer_40'),
-            (35, 'timer_35'), (30, 'timer_30'),
-            (25, 'timer_25'), (20, 'timer_20'),
-            (15, 'timer_15'), (10, 'timer_10'),
-            (5, 'timer_05'),
-        )
-
-        facelet_analyser: FaceletAnalyser | None = None
-        groups_to_track: tuple[tuple[tuple[str, str | None], ...], ...] = ()
-        group_progress = 0
-        completed_in_group: set[str] = set()
-        last_facelets = ''
-        previous_step_time: int = 0
-        previous_move_index: int = 0
-        first_step = True
-
-        self.step_width = 0
-        if self.show_steps:
-            analyser_class = get_method_analyser(self.method)
-            facelet_analyser = FaceletAnalyser()
-            groups_to_track = analyser_class.step_groups or tuple(
-                ((step, None),) for step in analyser_class.step_list
-            )
-            self.step_width = max(
-                (
-                    len(display_name or step_name)
-                    for group in groups_to_track
-                    for step_name, display_name in group
-                ),
-                default=0,
-            )
 
         while not self.solve_completed_event.is_set():
             elapsed_time = time.perf_counter_ns() - self.start_time
@@ -198,7 +285,7 @@ class StopWatch:
             new_tempo = int(elapsed_time / (SECOND * self.metronome or 1))
 
             style = next(
-                (s for t, s in style_thresholds if elapsed_seconds > t),
+                (s for t, s in STYLE_THRESHOLDS if elapsed_seconds > t),
                 'timer_base',
             )
 
@@ -207,96 +294,12 @@ class StopWatch:
                 if self.metronome:
                     SOUND_PLAYER.metronome_tick()
 
-            if (
-                facelet_analyser is not None
-                and group_progress < len(groups_to_track)
-                and self.bluetooth_cube is not None
-                and self.bluetooth_cube_state != last_facelets
-            ):
-                last_facelets = self.bluetooth_cube_state
-                facelets, orientation = self.build_oriented_facelets()
-                current_group = groups_to_track[group_progress]
-
-                for step_name, display_name in current_group:
-                    if (
-                        step_name not in completed_in_group
-                        and facelet_analyser.check_step(
-                            step_name, facelets, orientation,
-                        )
-                    ):
-                        delta_time = elapsed_time - previous_step_time
-                        step_htm = parse_moves(
-                            [m['move'] for m in self.moves[previous_move_index:]],
-                        ).transform(
-                            optimize_double_moves,
-                        ).metrics.htm
-
-                        self.print_step(
-                            style,
-                            elapsed_time,
-                            display_name or step_name,
-                            delta_time=None if first_step else delta_time,
-                            htm=step_htm,
-                        )
-                        first_step = False
-                        previous_step_time = elapsed_time
-                        previous_move_index = len(self.moves)
-                        completed_in_group.add(step_name)
-                        previous_style = ''
-
-                if len(completed_in_group) == len(current_group):
-                    group_progress += 1
-                    completed_in_group = set()
-
-            if style != previous_style:
-                previous_style = style
-                self.clear_line(full=False)
-                self.console.print(
-                    f'[{ style }]Go Go Go:[/{ style }]',
-                    f'[result]{ format_time(elapsed_time) }[/result]',
-                    end='',
-                )
-            else:
-                self.back(9)
-                self.console.print(
-                    f'[result]{ format_time(elapsed_time) }[/result]',
-                    end='',
-                )
+            self.check_and_print_steps(elapsed_time, style)
+            self.print_timer(elapsed_time, style)
 
             await asyncio.sleep(REFRESH)
 
-        if (
-            facelet_analyser is not None
-            and group_progress < len(groups_to_track)
-            and self.bluetooth_cube is not None
-        ):
-            facelets, orientation = self.build_oriented_facelets()
-            current_group = groups_to_track[group_progress]
-            final_elapsed_time = self.end_time - self.start_time
-
-            for step_name, display_name in current_group:
-                if (
-                    step_name not in completed_in_group
-                    and facelet_analyser.check_step(
-                        step_name, facelets, orientation,
-                    )
-                ):
-                    delta_time = final_elapsed_time - previous_step_time
-                    step_htm = parse_moves(
-                        [m['move'] for m in self.moves[previous_move_index:]],
-                    ).transform(
-                        optimize_double_moves,
-                    ).metrics.htm
-
-                    self.print_step(
-                        style,
-                        final_elapsed_time,
-                        display_name or step_name,
-                        delta_time=delta_time,
-                        htm=step_htm,
-                        last=True,
-                    )
-                    previous_step_time = final_elapsed_time
-                    previous_move_index = len(self.moves)
-
+        self.check_and_print_steps(
+            self.end_time - self.start_time, style, final=True,
+        )
         self.set_state('stop')
