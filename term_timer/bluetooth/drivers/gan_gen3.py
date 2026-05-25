@@ -58,6 +58,7 @@ class GanGen3Driver(GanGen2Driver):
         self.last_serial: int = -1
         self.last_local_timestamp: datetime | None = None
         self.move_buffer: list[MoveEventDict] = []
+        self.history_request_pending: bool = False
 
     def send_command_handler(self, command: str) -> bytes | bool:
         """
@@ -160,7 +161,9 @@ class GanGen3Driver(GanGen2Driver):
             diff = 1 if self.last_serial == -1 else (
                 buffer_head['serial'] - self.last_serial) & 0xFF
             if diff > 1:
-                await self.request_move_history(buffer_head['serial'], diff)
+                if not self.history_request_pending:
+                    self.history_request_pending = True
+                    await self.request_move_history(buffer_head['serial'], diff)
                 break
 
             evicted_events.append(self.move_buffer.pop(0))
@@ -246,11 +249,12 @@ class GanGen3Driver(GanGen2Driver):
         """
         diff = (self.serial - self.last_serial) & 0xFF
 
-        if diff > 0 and self.serial != 0:
+        if diff > 0 and self.serial != 0 and not self.history_request_pending:
             buffer_head = self.move_buffer[0] if self.move_buffer else None
             start_serial = buffer_head['serial'] if buffer_head else (
                 self.serial + 1
             ) & 0xFF
+            self.history_request_pending = True
             await self.request_move_history(start_serial, diff + 1)
 
     async def event_handler(  # noqa: C901, PLR0912, PLR0914, PLR0915
@@ -370,6 +374,7 @@ class GanGen3Driver(GanGen2Driver):
             self.add_event(events, facelets_payload)
 
         elif event == 0x06:  # Move history
+            self.history_request_pending = False
             start_serial = msg.get_bit_word(24, 8)
             count = (data_size - 1) * 2
 
