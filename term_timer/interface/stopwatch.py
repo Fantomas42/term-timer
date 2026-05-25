@@ -57,12 +57,18 @@ class StopWatch:
         method: str
 
         # Methods from State mixin
-        def set_state(self, state: str, timestamp: int | None = None) -> None:  # noqa: D102
+        def set_state(self, state: str, timestamp: int | None = None) -> None:
+            """Set the current state and log the transition."""
             ...
 
         # Methods from Terminal mixin
-        def clear_line(self, *, full: bool) -> None: ...  # noqa: D102
-        def back(self, size: int) -> None: ...  # noqa: D102
+        def clear_line(self, *, full: bool) -> None:
+            """Clear the current terminal line."""
+            ...
+
+        def back(self, size: int) -> None:
+            """Move cursor back by specified number of characters."""
+            ...
 
     def __init__(self) -> None:
         """Initialize the stopwatch with default timing values and events."""
@@ -74,6 +80,7 @@ class StopWatch:
 
         self.metronome: float = 0.0
         self.show_steps: bool = False
+        self.step_width: int = 0
 
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
@@ -87,13 +94,13 @@ class StopWatch:
             delta_time: int | None = None,
             htm: int = 0,
             last: bool = False,
-            step_width: int = 0,
     ) -> None:
         """Print a completed step with its time."""
         self.clear_line(full=False)
 
         padded_name = (
-            f'{ step_name:<{ step_width }}' if step_width else step_name
+            f'{ step_name:<{ self.step_width }}'
+            if self.step_width else step_name
         )
         extras = ''
         if htm:
@@ -169,14 +176,14 @@ class StopWatch:
         previous_move_index: int = 0
         first_step = True
 
-        step_width = 0
+        self.step_width = 0
         if self.show_steps:
             analyser_class = get_method_analyser(self.method)
             facelet_analyser = FaceletAnalyser()
             groups_to_track = analyser_class.step_groups or tuple(
                 ((step, None),) for step in analyser_class.step_list
             )
-            step_width = max(
+            self.step_width = max(
                 (
                     len(display_name or step_name)
                     for group in groups_to_track
@@ -230,7 +237,6 @@ class StopWatch:
                             display_name or step_name,
                             delta_time=None if first_step else delta_time,
                             htm=step_htm,
-                            step_width=step_width,
                         )
                         first_step = False
                         previous_step_time = elapsed_time
@@ -289,7 +295,6 @@ class StopWatch:
                         delta_time=delta_time,
                         htm=step_htm,
                         last=True,
-                        step_width=step_width,
                     )
                     previous_step_time = final_elapsed_time
                     previous_move_index = len(self.moves)
