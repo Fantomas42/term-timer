@@ -196,6 +196,12 @@ class BluetoothInterface:
                 logger.debug('Event: %s', event['event'].upper())
         await self.queue.put(events)
 
+    async def send_init_commands(self) -> None:
+        """Send the driver's required initialization command sequence."""
+        self.driver = cast('Driver', self.driver)
+        for command in self.driver.init_commands:
+            await self.send_command(command)
+
     async def send_command(self, command: str) -> bool:
         """
         Send a command to the connected Bluetooth cube.

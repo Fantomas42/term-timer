@@ -21,6 +21,11 @@ class Driver:
     service_uid: ClassVar[str] = ''
     state_characteristic_uid: ClassVar[str] = ''
     command_characteristic_uid: ClassVar[str] = ''
+    init_commands: ClassVar[list[str]] = [
+        'REQUEST_FACELETS',
+        'REQUEST_HARDWARE',
+        'REQUEST_BATTERY',
+    ]
 
     def __init__(self, client: BleakClient,
                  *, use_gyroscope: bool) -> None:

@@ -496,9 +496,7 @@ async def client_cb(  # noqa: PLR0913
     )
     SOUND_PLAYER.cube_connected()
 
-    await bluetooth_interface.send_command('REQUEST_FACELETS')
-    await bluetooth_interface.send_command('REQUEST_HARDWARE')
-    await bluetooth_interface.send_command('REQUEST_BATTERY')
+    await bluetooth_interface.send_init_commands()
 
     if gyroscope_disable:
         await bluetooth_interface.send_command('REQUEST_DISABLE_GYRO')

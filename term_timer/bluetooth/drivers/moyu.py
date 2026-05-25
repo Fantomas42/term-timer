@@ -40,6 +40,13 @@ class MoyuWeilong10Driver(Driver):
     command_characteristic_uid: ClassVar[str] = MOYU_WEILONG_COMMAND_CHARACTERISTIC  # noqa: E501
     encrypter: ClassVar[type[GanGen2CubeEncrypter]] = GanGen2CubeEncrypter
     factor: ClassVar[int] = pow(2, 30)
+    # HARDWARE must precede FACELETS: the cube ignores facelets requests
+    # until it has processed a hardware request first.
+    init_commands: ClassVar[list[str]] = [
+        'REQUEST_HARDWARE',
+        'REQUEST_FACELETS',
+        'REQUEST_BATTERY',
+    ]
 
     def __init__(self, client: BleakClient,
                  *, use_gyroscope: bool) -> None:
