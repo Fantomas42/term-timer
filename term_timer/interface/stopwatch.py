@@ -87,21 +87,25 @@ class StopWatch:
             delta_time: int | None = None,
             htm: int = 0,
             last: bool = False,
+            step_width: int = 0,
     ) -> None:
         """Print a completed step with its time."""
         self.clear_line(full=False)
 
+        padded_name = (
+            f'{ step_name:<{ step_width }}' if step_width else step_name
+        )
         extras = ''
         if delta_time is not None:
             extras = (
+                f' [htm]{ htm:>2} HTM[/htm]'
                 f' [green]+{ format_duration(delta_time) }[/green]'
-                f' [htm]{ htm } HTM[/htm]'
             )
 
         self.console.print(
             f'[{ style }]Go Go Go:[/{ style }]',
             f'[result]{ format_time(elapsed_time) }[/result]',
-            f'[step]{ step_name }[/step]{ extras }',
+            f'[step]{ padded_name }[/step]{ extras }',
         )
         if not last:
             SOUND_PLAYER.solve_step()
@@ -165,11 +169,20 @@ class StopWatch:
         previous_step_time: int = 0
         previous_move_index: int = 0
 
+        step_width = 0
         if self.show_steps:
             analyser_class = get_method_analyser(self.method)
             facelet_analyser = FaceletAnalyser()
             groups_to_track = analyser_class.step_groups or tuple(
                 ((step, None),) for step in analyser_class.step_list
+            )
+            step_width = max(
+                (
+                    len(display_name or step_name)
+                    for group in groups_to_track
+                    for step_name, display_name in group
+                ),
+                default=0,
             )
 
         while not self.solve_completed_event.is_set():
@@ -217,6 +230,7 @@ class StopWatch:
                             display_name or step_name,
                             delta_time=delta_time,
                             htm=step_htm,
+                            step_width=step_width,
                         )
                         previous_step_time = elapsed_time
                         previous_move_index = len(self.moves)
@@ -274,6 +288,7 @@ class StopWatch:
                         delta_time=delta_time,
                         htm=step_htm,
                         last=True,
+                        step_width=step_width,
                     )
                     previous_step_time = final_elapsed_time
                     previous_move_index = len(self.moves)
