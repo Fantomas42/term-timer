@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 
 from cubing_algs.constants import DEFAULT_CUBE_SIZE
 from cubing_algs.constants import ORIENTATION_FACE_MOVES
+from cubing_algs.parsing import parse_moves
+from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_ORIENTATION
@@ -18,6 +20,8 @@ from term_timer.methods.base import FaceletAnalyser
 if TYPE_CHECKING:
     from cubing_algs.annotations import CubeOrientation
     from rich.console import Console as RichConsole
+
+    from term_timer.bluetooth.annotations import MoveInfo
 
 
 class StopWatch:
@@ -45,6 +49,7 @@ class StopWatch:
         # Attributes from Bluetooth mixin
         bluetooth_cube: VCube | None
         bluetooth_cube_state: str
+        moves: list[MoveInfo]
 
         # Attributes from Cube mixin
         orientation_faces: CubeOrientation
@@ -72,20 +77,28 @@ class StopWatch:
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
 
-    def print_step(
+    def print_step(  # noqa: PLR0913
             self,
             style: str,
             elapsed_time: int,
             step_name: str,
             *,
+            delta_time: int | None = None,
+            htm: int = 0,
             last: bool = False,
     ) -> None:
         """Print a completed step with its time."""
         self.clear_line(full=False)
+        extras = ''
+        if delta_time is not None:
+            extras = (
+                f' [green]+{ format_time(delta_time) }[/green]'
+                f' [htm]{ htm } HTM[/htm]'
+            )
         self.console.print(
             f'[{ style }]Go Go Go:[/{ style }]',
             f'[result]{ format_time(elapsed_time) }[/result]',
-            f'[step]{ step_name }[/step]',
+            f'[step]{ step_name }[/step]{ extras }',
         )
         if not last:
             SOUND_PLAYER.solve_step()
@@ -127,15 +140,28 @@ class StopWatch:
         self.clear_line(full=True)
 
         tempo_elapsed = 0
+        style = 'timer_base'
         previous_style = ''
 
         self.set_state('solving', self.start_time)
+
+        style_thresholds = (
+            (50, 'timer_50'),
+            (45, 'timer_45'), (40, 'timer_40'),
+            (35, 'timer_35'), (30, 'timer_30'),
+            (25, 'timer_25'), (20, 'timer_20'),
+            (15, 'timer_15'), (10, 'timer_10'),
+            (5, 'timer_05'),
+        )
 
         facelet_analyser: FaceletAnalyser | None = None
         groups_to_track: tuple[tuple[tuple[str, str | None], ...], ...] = ()
         group_progress = 0
         completed_in_group: set[str] = set()
         last_facelets = ''
+        previous_step_time: int = 0
+        previous_move_index: int = 0
+
         if self.show_steps:
             analyser_class = get_method_analyser(self.method)
             facelet_analyser = FaceletAnalyser()
@@ -148,27 +174,10 @@ class StopWatch:
             elapsed_seconds = elapsed_time / SECOND
             new_tempo = int(elapsed_time / (SECOND * self.metronome or 1))
 
-            style = 'timer_base'
-            if elapsed_seconds > 50:
-                style = 'timer_50'
-            elif elapsed_seconds > 45:
-                style = 'timer_45'
-            elif elapsed_seconds > 40:
-                style = 'timer_40'
-            elif elapsed_seconds > 35:
-                style = 'timer_35'
-            elif elapsed_seconds > 30:
-                style = 'timer_30'
-            elif elapsed_seconds > 25:
-                style = 'timer_25'
-            elif elapsed_seconds > 20:
-                style = 'timer_20'
-            elif elapsed_seconds > 15:
-                style = 'timer_15'
-            elif elapsed_seconds > 10:
-                style = 'timer_10'
-            elif elapsed_seconds > 5:
-                style = 'timer_05'
+            style = next(
+                (s for t, s in style_thresholds if elapsed_seconds > t),
+                'timer_base',
+            )
 
             if tempo_elapsed != new_tempo:
                 tempo_elapsed = new_tempo
@@ -192,11 +201,26 @@ class StopWatch:
                             step_name, facelets, orientation,
                         )
                     ):
+                        delta_time = (
+                            elapsed_time - previous_step_time
+                            if previous_step_time
+                            else None
+                        )
+                        step_htm = parse_moves(
+                            m['move'] for m in self.moves[previous_move_index:]
+                        ).transform(
+                            optimize_double_moves,
+                        ).metrics.htm
+
                         self.print_step(
                             style,
                             elapsed_time,
                             display_name or step_name,
+                            delta_time=delta_time,
+                            htm=step_htm,
                         )
+                        previous_step_time = elapsed_time
+                        previous_move_index = len(self.moves)
                         completed_in_group.add(step_name)
                         previous_style = ''
 
@@ -237,11 +261,26 @@ class StopWatch:
                         step_name, facelets, orientation,
                     )
                 ):
+                    delta_time = (
+                        final_elapsed_time - previous_step_time
+                        if previous_step_time
+                        else None
+                    )
+                    step_htm = parse_moves(
+                        m['move'] for m in self.moves[previous_move_index:]
+                    ).transform(
+                        optimize_double_moves,
+                    ).metrics.htm
+
                     self.print_step(
                         style,
                         final_elapsed_time,
                         display_name or step_name,
+                        delta_time=delta_time,
+                        htm=step_htm,
                         last=True,
                     )
+                    previous_step_time = final_elapsed_time
+                    previous_move_index = len(self.moves)
 
         self.set_state('stop')
