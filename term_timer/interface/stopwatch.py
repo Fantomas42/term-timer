@@ -12,6 +12,7 @@ from cubing_algs.vcube import VCube
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
+from term_timer.formatter import format_duration
 from term_timer.formatter import format_time
 from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.methods import get_method_analyser
@@ -89,12 +90,14 @@ class StopWatch:
     ) -> None:
         """Print a completed step with its time."""
         self.clear_line(full=False)
+
         extras = ''
         if delta_time is not None:
             extras = (
-                f' [green]+{ format_time(delta_time) }[/green]'
+                f' [green]+{ format_duration(delta_time) }[/green]'
                 f' [htm]{ htm } HTM[/htm]'
             )
+
         self.console.print(
             f'[{ style }]Go Go Go:[/{ style }]',
             f'[result]{ format_time(elapsed_time) }[/result]',
@@ -201,13 +204,9 @@ class StopWatch:
                             step_name, facelets, orientation,
                         )
                     ):
-                        delta_time = (
-                            elapsed_time - previous_step_time
-                            if previous_step_time
-                            else None
-                        )
+                        delta_time = elapsed_time - previous_step_time
                         step_htm = parse_moves(
-                            m['move'] for m in self.moves[previous_move_index:]
+                            [m['move'] for m in self.moves[previous_move_index:]],
                         ).transform(
                             optimize_double_moves,
                         ).metrics.htm
@@ -261,13 +260,9 @@ class StopWatch:
                         step_name, facelets, orientation,
                     )
                 ):
-                    delta_time = (
-                        final_elapsed_time - previous_step_time
-                        if previous_step_time
-                        else None
-                    )
+                    delta_time = final_elapsed_time - previous_step_time
                     step_htm = parse_moves(
-                        m['move'] for m in self.moves[previous_move_index:]
+                        [m['move'] for m in self.moves[previous_move_index:]],
                     ).transform(
                         optimize_double_moves,
                     ).metrics.htm
