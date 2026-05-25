@@ -10,6 +10,7 @@ from bleak import BleakClient
 from bleak import BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.backends.device import BLEDevice
+from bleak.exc import BleakDBusError
 from bleak.exc import BleakError
 
 from term_timer.bluetooth.annotations import EventDict
@@ -139,10 +140,18 @@ class BluetoothInterface:
             logger.debug('No driver found')
             raise CubeNotFoundError
 
-        await self.client.start_notify(
-            self.driver.state_characteristic_uid,
-            self.notification_handler,
-        )
+        try:
+            await self.client.start_notify(
+                self.driver.state_characteristic_uid,
+                self.notification_handler,
+            )
+        except BleakDBusError as error:
+            logger.debug(
+                'start_notify failed: %r'
+                ' (cube may be bonded to another device)',
+                error,
+            )
+            raise CubeNotFoundError from error
 
         return self
 
