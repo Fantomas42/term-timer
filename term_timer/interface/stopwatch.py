@@ -96,11 +96,10 @@ class StopWatch:
             f'{ step_name:<{ step_width }}' if step_width else step_name
         )
         extras = ''
+        if htm:
+            extras += f' [htm]{ htm:>2} HTM[/htm]'
         if delta_time is not None:
-            extras = (
-                f' [htm]{ htm:>2} HTM[/htm]'
-                f' [green]+{ format_duration(delta_time) }[/green]'
-            )
+            extras += f' [green]+{ format_duration(delta_time) }[/green]'
 
         self.console.print(
             f'[{ style }]Go Go Go:[/{ style }]',
@@ -168,6 +167,7 @@ class StopWatch:
         last_facelets = ''
         previous_step_time: int = 0
         previous_move_index: int = 0
+        first_step = True
 
         step_width = 0
         if self.show_steps:
@@ -228,10 +228,11 @@ class StopWatch:
                             style,
                             elapsed_time,
                             display_name or step_name,
-                            delta_time=delta_time,
+                            delta_time=None if first_step else delta_time,
                             htm=step_htm,
                             step_width=step_width,
                         )
+                        first_step = False
                         previous_step_time = elapsed_time
                         previous_move_index = len(self.moves)
                         completed_in_group.add(step_name)
