@@ -440,6 +440,8 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
                     break
 
         values = [st / SECOND for st in self.stack_time_sorted]
+        if not values:
+            return []
 
         min_val = int((np.min(values) // best_bin) * best_bin)
         max_val = int(((np.max(values) // best_bin) + 1) * best_bin)
