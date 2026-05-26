@@ -972,8 +972,9 @@ class Solve:  # noqa: PLR0904
         plt.clear_figure()
         plt.scatter(
             [m[1] / 1000 for m in self.move_times],
-            marker='fhd',
+            marker='braille',
             label='Time',
+            color=45,
         )
 
         yticks = []

@@ -1253,24 +1253,25 @@ class SolveStatisticsReporter(Statistics):
 
         plt.plot(
             times,
-            marker='fhd',
+            marker='braille',
             label='Time',
+            color=45,
         )
 
         if any(ao5s):
             plt.plot(
                 ao5s,
-                marker='fhd',
+                marker='braille',
                 label='AO5',
-                color='red',
+                color=196,
             )
 
         if any(ao12s):
             plt.plot(
                 ao12s,
-                marker='fhd',
+                marker='braille',
                 label='AO12',
-                color='blue',
+                color=119,
             )
 
         plt.title(f'Tendencies { self.cube_name }')
@@ -1339,7 +1340,7 @@ class DrillStatistics(Statistics):
         """Display a terminal line graph of rep times."""
         plt.clear_figure()
         times = [t / SECOND for t in self.stack_time]
-        plt.plot(times, marker='fhd', label='Time')
+        plt.plot(times, marker='braille', label='Time', color=45)
         plt.hline(self.mean / SECOND, 'red')
         plt.xticks(list(range(1, len(times) + 1)))
         plt.title('Rep Times (seconds)')
@@ -1353,7 +1354,7 @@ class DrillStatistics(Statistics):
     def tps_graph(self) -> None:
         """Display a terminal line graph of TPS per rep."""
         plt.clear_figure()
-        plt.plot(self.rep_tps, marker='fhd', label='TPS', color=119)
+        plt.plot(self.rep_tps, marker='braille', label='TPS', color=119)
         plt.hline(self.mean_tps, 'red')
         plt.xticks(list(range(1, len(self.rep_tps) + 1)))
         plt.title('Turns Per Second')
