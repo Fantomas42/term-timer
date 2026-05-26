@@ -40,6 +40,19 @@ async def daily(options: Namespace) -> int:
     date_str = daily_date.strftime('%Y-%m-%d')
     session = date_str
 
+    if options.review:
+        stack = load_solves(cube, session, directory=DAILY_DIRECTORY)
+        if not stack:
+            console.print(
+                f'🤔 No solves recorded for daily { date_str }.',
+                style='warning',
+            )
+            return 1
+        round_stats = SolveStatisticsReporter(cube, stack)
+        round_stats.resume(f'Daily { date_str } ', 'round')
+        round_stats.graph()
+        return 0
+
     rng = Random(date_str)  # noqa: S311
     daily_scramble, _ = scrambler(cube, 0, rng=rng)
     scramble_str = str(daily_scramble)

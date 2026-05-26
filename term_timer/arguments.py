@@ -351,6 +351,14 @@ def daily_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
             'Default: today.'
         ),
     )
+    date.add_argument(
+        '-r', '--review',
+        action='store_true',
+        help=(
+            'Review the stats of the daily session for the given date.\n'
+            'Default: False.'
+        ),
+    )
 
     return parser
 
