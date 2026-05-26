@@ -359,6 +359,14 @@ def daily_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
             'Default: False.'
         ),
     )
+    date.add_argument(
+        '-l', '--summary',
+        action='store_true',
+        help=(
+            'Show a summary of all daily solves across every session.\n'
+            'Default: False.'
+        ),
+    )
 
     return parser
 

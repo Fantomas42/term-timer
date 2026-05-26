@@ -7,6 +7,7 @@ from random import Random
 from cubing_algs.exceptions import InvalidMoveError
 
 from term_timer.constants import DAILY_DIRECTORY
+from term_timer.in_out import load_all_daily_solves
 from term_timer.in_out import load_solves
 from term_timer.interface.console import console
 from term_timer.scrambler import scrambler
@@ -27,6 +28,48 @@ def parse_date(raw: str) -> date:
     return date.today()  # noqa: DTZ011
 
 
+def daily_review(cube: int, date_str: str) -> int:
+    """
+    Show stats and graph for a single daily session.
+
+    Returns:
+        Exit code (0 for success, 1 if no solves found).
+
+    """
+    stack = load_solves(cube, date_str, directory=DAILY_DIRECTORY)
+    if not stack:
+        console.print(
+            f'🤔 No solves recorded for daily { date_str }.',
+            style='warning',
+        )
+        return 1
+    round_stats = SolveStatisticsReporter(cube, stack)
+    round_stats.resume(f'Daily { date_str } ', 'round')
+    round_stats.graph()
+    return 0
+
+
+def daily_summary(cube: int) -> int:
+    """
+    Show stats and graph across all daily sessions.
+
+    Returns:
+        Exit code (0 for success, 1 if no solves found).
+
+    """
+    stack = load_all_daily_solves(cube)
+    if not stack:
+        console.print(
+            '🤔 No daily solves recorded yet.',
+            style='warning',
+        )
+        return 1
+    all_stats = SolveStatisticsReporter(cube, stack)
+    all_stats.resume('Daily - All sessions ', show_title=True)
+    all_stats.graph()
+    return 0
+
+
 async def daily(options: Namespace) -> int:
     """
     Run the daily scramble session.
@@ -38,21 +81,14 @@ async def daily(options: Namespace) -> int:
     cube = options.cube
     daily_date = parse_date(options.date)
     date_str = daily_date.strftime('%Y-%m-%d')
-    session = date_str
+
+    if options.summary:
+        return daily_summary(cube)
 
     if options.review:
-        stack = load_solves(cube, session, directory=DAILY_DIRECTORY)
-        if not stack:
-            console.print(
-                f'🤔 No solves recorded for daily { date_str }.',
-                style='warning',
-            )
-            return 1
-        round_stats = SolveStatisticsReporter(cube, stack)
-        round_stats.resume(f'Daily { date_str } ', 'round')
-        round_stats.graph()
-        return 0
+        return daily_review(cube, date_str)
 
+    session = date_str
     rng = Random(date_str)  # noqa: S311
     daily_scramble, _ = scrambler(cube, 0, rng=rng)
     scramble_str = str(daily_scramble)

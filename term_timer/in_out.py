@@ -8,6 +8,7 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.exceptions import InvalidMoveError
 from cubing_algs.parsing import parse_moves
 
+from term_timer.constants import DAILY_DIRECTORY
 from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.constants import TRAININGS_DIRECTORY
 from term_timer.solve import Solve
@@ -105,6 +106,33 @@ def load_all_solves(
         uniques[solve.date] = solve
 
     return sorted(uniques.values(), key=operator.attrgetter('date'))
+
+
+def load_all_daily_solves(cube: int) -> list[Solve]:
+    """
+    Load all solves from all daily sessions.
+
+    Returns:
+        Sorted list of Solve objects from every daily session file.
+
+    """
+    prefix = f'{ cube }x{ cube }x{ cube }-'
+
+    solves = []
+    if DAILY_DIRECTORY.exists():
+        for f in sorted(DAILY_DIRECTORY.iterdir()):
+            is_session = (
+                f.is_file()
+                and f.name.startswith(prefix)
+                and not f.name.endswith('~')
+            )
+            if is_session:
+                session = f.name.split(prefix, 1)[1].replace('.json', '')
+                solves.extend(
+                    load_solves(cube, session, directory=DAILY_DIRECTORY),
+                )
+
+    return sorted(solves, key=operator.attrgetter('date'))
 
 
 def save_solves(
