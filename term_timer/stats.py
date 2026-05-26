@@ -1277,6 +1277,13 @@ class SolveStatisticsReporter(Statistics):
         plt.title(f'Tendencies { self.cube_name }')
         plt.plot_size(height=25)
 
+        n = len(times)
+        step = max(1, n // 10)
+        xticks = list(range(step, n + 1, step))
+        if n not in xticks:
+            xticks.append(n)
+        plt.xticks(xticks)
+
         plt.canvas_color('default')
         plt.axes_color('default')
         plt.ticks_color((0, 175, 255))

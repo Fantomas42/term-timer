@@ -98,6 +98,7 @@ async def daily(options: Namespace) -> int:
         if len(instance.stack_done) > 1:
             round_stats = SolveStatisticsReporter(cube, instance.stack_done)
             round_stats.resume(f'Daily { date_str } ', 'round')
+            round_stats.graph()
 
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')
