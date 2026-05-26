@@ -3,6 +3,7 @@ import json
 import operator
 import re
 from pathlib import Path
+from typing import cast
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.exceptions import InvalidMoveError
@@ -11,6 +12,8 @@ from cubing_algs.parsing import parse_moves
 from term_timer.constants import DAILY_DIRECTORY
 from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.constants import TRAININGS_DIRECTORY
+from term_timer.fsrs.types import Card
+from term_timer.fsrs.types import CardDict
 from term_timer.solve import Solve
 from term_timer.solve import SolveData
 from term_timer.training import CaseTraining
@@ -18,6 +21,19 @@ from term_timer.training import CaseTrainingData
 from term_timer.training import Trainings
 
 SCRAMBLE_LINE = re.compile(r'Scramble #\d+:\s*(.+?)(?:\s*//.*)?$')
+
+
+def fsrs_card_from_data(raw: 'CaseTrainingData') -> Card | None:
+    """
+    Deserialize an optional FSRS card from raw training data.
+
+    Returns:
+        Card instance if fsrs data is present, None otherwise.
+
+    """
+    if 'fsrs' not in raw:
+        return None
+    return Card.from_dict(cast('CardDict', raw['fsrs']))
 
 
 def load_solves(
@@ -190,6 +206,7 @@ def load_trainings(method: str, step: str) -> Trainings:
                 code=case_code,
                 last_date=data['last_date'],
                 timings=data['timings'],
+                fsrs_card=fsrs_card_from_data(data),
             )
             for case_code, data in raw_data.items()
         }

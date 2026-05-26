@@ -29,10 +29,11 @@ async def trainer(options: Namespace) -> int:  # noqa: C901, PLR0912
         bool(options.case_codes),
         options.oldest > 0,
         options.slowest > 0,
+        options.random,
     ])
     if active_filters > 1:
         console.print(
-            '😱 Only one of --cases, --oldest, or --slowest can be used',
+            '😱 Only one of --cases, --oldest, --slowest, --random can be used',
             style='warning',
         )
         return 1
@@ -52,6 +53,7 @@ async def trainer(options: Namespace) -> int:  # noqa: C901, PLR0912
             show_cube=options.show_cube,
             metronome=options.metronome,
             rng=rng,
+            random=options.random,
         )
     except InvalidCaseError as error:
         console.print('😱', str(error), style='warning')

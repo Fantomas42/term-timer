@@ -739,7 +739,11 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
 
-    cases = parser.add_argument_group('Case Selection')
+    cases = parser.add_argument_group(
+        'Case Selection',
+        'By default, cases are selected by FSRS (spaced repetition). '
+        'All options below disable FSRS.',
+    )
     cases.add_argument(
         '-c', '--cases',
         nargs='*',
@@ -747,8 +751,8 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         metavar='CASES',
         dest='case_codes',
         help=(
-            'Names of the step cases to solve.\n'
-            'Default: All.'
+            'Practice specific cases by name.\n'
+            'Disables FSRS. Incompatible with --filter, --oldest, --slowest.'
         ),
     )
     cases.add_argument(
@@ -760,8 +764,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Filter cases by family or group (e.g. Dot, Cross, OCLL).\n'
             'Multiple values are combined with OR logic.\n'
-            'Incompatible with --cases.\n'
-            'Default: All.'
+            'Disables FSRS. Incompatible with --cases.'
         ),
     )
     cases.add_argument(
@@ -772,7 +775,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Select N cases least recently practiced.\n'
             'Cases never practiced are prioritized.\n'
-            'Mutually exclusive with --cases and --slowest.'
+            'Disables FSRS. Mutually exclusive with --cases and --slowest.'
         ),
     )
     cases.add_argument(
@@ -783,7 +786,16 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Select N cases with worst average of 12.\n'
             'Cases with fewer than 12 attempts are prioritized.\n'
-            'Mutually exclusive with --cases and --oldest.'
+            'Disables FSRS. Mutually exclusive with --cases and --oldest.'
+        ),
+    )
+    cases.add_argument(
+        '-n', '--random',
+        action='store_true',
+        dest='random',
+        help=(
+            'Select cases randomly, disabling FSRS.\n'
+            'Mutually exclusive with --oldest and --slowest.'
         ),
     )
 

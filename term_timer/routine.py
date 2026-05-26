@@ -84,6 +84,7 @@ def build_train_instance(session_config: SessionConfig) -> Trainer:
             'metronome', TIMER_CONFIG.get('metronome', 0.0),
         ),
         rng=Random(),  # noqa: S311
+        random=bool(session_config.get('random', False)),
     )
 
 

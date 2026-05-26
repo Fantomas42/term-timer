@@ -4,6 +4,7 @@ from datetime import UTC
 from datetime import datetime
 from operator import itemgetter
 from random import Random
+from typing import TYPE_CHECKING
 from typing import Final
 from typing import NamedTuple
 
@@ -38,6 +39,9 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_fluency
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
+from term_timer.fsrs.rating import PerformanceRater
+from term_timer.fsrs.scheduler import FSRSScheduler
+from term_timer.fsrs.types import Rating
 from term_timer.in_out import load_trainings
 from term_timer.in_out import save_trainings
 from term_timer.interface import SolveInterface
@@ -49,6 +53,9 @@ from term_timer.scrambler import trainer
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.triggers import DEFAULT_TRIGGERS
+
+if TYPE_CHECKING:
+    from term_timer.training import CaseTraining
 
 
 class StepDef(NamedTuple):
@@ -106,6 +113,7 @@ class Trainer(SolveInterface):
             orientation: CubeOrientation,
             metronome: float,
             rng: Random,
+            random: bool = False,
     ) -> None:
         """Initialize trainer with step configuration and display options."""
         super().__init__()
@@ -127,12 +135,24 @@ class Trainer(SolveInterface):
         self.filters = [f.lower() for f in filters]
         self.rng = rng
         self.orientation_faces = orientation
+        self.random = random
 
         self.trainings = load_trainings(self.method, self.step.upper())
 
         self.cases = self.get_cases()
         self.counter = 1
         self.session_data: list[tuple[str, Case, int]] = []
+
+        self.fsrs_active = (
+            self.step_config.training_case is None
+            and self.oldest == 0
+            and self.slowest == 0
+            and not self.case_codes
+            and not self.filters
+            and not self.random
+        )
+        self.fsrs_scheduler = FSRSScheduler() if self.fsrs_active else None
+        self.fsrs_rater = PerformanceRater() if self.fsrs_active else None
 
         self.trainer_line()
 
@@ -336,28 +356,26 @@ class Trainer(SolveInterface):
     def list_cases(self) -> None:
         """Display a table of all available cases with their training stats."""
         if self.step_config.training_case is not None:
-            valid_cases = {
-                tc.case.code: tc.case for tc in self.cases
-            }
+            valid_cases = {tc.case.code: tc.case for tc in self.cases}
         else:
             collection = get_collection(f'{ self.method }/{ self.step }').cases
             valid_cases = {
-                v.code: v for v in collection.values()
-                if v.setup_algorithms
+                v.code: v for v in collection.values() if v.setup_algorithms
             }
 
+        show_fsrs = self.step_config.training_case is None
         no_ao = '[no-ao]N/A[/no-ao]'
 
-        table = Table(
-            title=f'{ self.step_label } stats',
-            box=box.SIMPLE,
-        )
+        table = Table(title=f'{ self.step_label } stats', box=box.SIMPLE)
         table.add_column('Case', width=40)
         table.add_column('Σ', width=3, justify='right')
         table.add_column('Last date', width=10, justify='right')
         table.add_column('Best', width=5, justify='right')
         table.add_column('Ao5', width=5, justify='right')
         table.add_column('Ao12', width=5, justify='right')
+        if show_fsrs:
+            table.add_column('FSRS', width=10, justify='right')
+            table.add_column('Due', width=10, justify='right')
 
         for code, case in sorted(valid_cases.items()):
             link = format_term_timer_case_url(case)
@@ -368,50 +386,80 @@ class Trainer(SolveInterface):
                 )
             else:
                 head = case.pretty_name
-
-            if code in self.trainings.cases:
-                case_training = self.trainings.cases[code]
-                count = len(case_training.timings)
-                timings = [
-                    t * MS_TO_NS_FACTOR
-                    for t in case_training.timings
-                ]
-                stats = Statistics(timings)
-
-                last_date = datetime.fromtimestamp(
-                    case_training.last_date, tz=UTC,
-                ).astimezone().strftime('%Y-%m-%d')
-
-                count_str = f'[stats]{ count }[/stats]'
-                best_str = (
-                    f'[duration]{ format_duration(stats.best) }[/duration]'
-                    if count else no_ao
-                )
-                ao5_str = (
-                    f'[ao5]{ format_duration(stats.ao5) }[/ao5]'
-                    if count >= 5 else no_ao
-                )
-                ao12_str = (
-                    f'[ao12]{ format_duration(stats.ao12) }[/ao12]'
-                    if count >= 12 else no_ao
-                )
-            else:
-                last_date = no_ao
-                count_str = '[stats]0[/stats]'
-                best_str = no_ao
-                ao5_str = no_ao
-                ao12_str = no_ao
-
-            table.add_row(
-                head,
-                count_str,
-                last_date,
-                best_str,
-                ao5_str,
-                ao12_str,
-            )
+            case_training = self.trainings.cases.get(code)
+            timing_cells = self.timing_cells(case_training, no_ao)
+            row = [head, *timing_cells]
+            if show_fsrs:
+                row += self.fsrs_cells(case_training, no_ao)
+            table.add_row(*row)
 
         self.console.print(table)
+
+    @staticmethod
+    def timing_cells(
+            case_training: 'CaseTraining | None',
+            no_ao: str,
+    ) -> list[str]:
+        """
+        Build the timing stat cells for a list_cases table row.
+
+        Returns:
+            List of [count, last_date, best, ao5, ao12] Rich strings.
+
+        """
+        if case_training is None:
+            return ['[stats]0[/stats]', no_ao, no_ao, no_ao, no_ao]
+
+        count = len(case_training.timings)
+        timings = [t * MS_TO_NS_FACTOR for t in case_training.timings]
+        stats = Statistics(timings)
+        last_date = datetime.fromtimestamp(
+            case_training.last_date, tz=UTC,
+        ).astimezone().strftime('%Y-%m-%d')
+
+        best_str = (
+            f'[duration]{ format_duration(stats.best) }[/duration]'
+            if count else no_ao
+        )
+        ao5_str = (
+            f'[ao5]{ format_duration(stats.ao5) }[/ao5]'
+            if count >= 5 else no_ao
+        )
+        ao12_str = (
+            f'[ao12]{ format_duration(stats.ao12) }[/ao12]'
+            if count >= 12 else no_ao
+        )
+        return [
+            f'[stats]{ count }[/stats]', last_date, best_str, ao5_str, ao12_str,
+        ]
+
+    @staticmethod
+    def fsrs_cells(
+            case_training: 'CaseTraining | None',
+            no_ao: str,
+    ) -> list[str]:
+        """
+        Build the FSRS state and due-date cells for a list_cases table row.
+
+        Returns:
+            List of [state, due] Rich strings.
+
+        """
+        fsrs_states = {0: 'New', 1: 'Learning', 2: 'Review', 3: 'Relearning'}
+
+        if case_training is None or case_training.fsrs_card is None:
+            return [no_ao, no_ao]
+
+        card = case_training.fsrs_card
+        state_str = f'[comment]{ fsrs_states.get(card.state, "?") }[/comment]'
+        due = card.due.astimezone()
+        now = datetime.now(UTC).astimezone()
+        due_str = (
+            '[warning]overdue[/warning]'
+            if due <= now
+            else f'[no-ao]{ due.strftime("%Y-%m-%d") }[/no-ao]'
+        )
+        return [state_str, due_str]
 
     def start_line(
             self,
@@ -699,7 +747,11 @@ class Trainer(SolveInterface):
                     format_delta(new_stats.ao1000 - old_stats.best_ao1000),
                 )
 
-    async def save_training(self, selected_case: Case) -> bool:
+    async def save_training(
+            self,
+            selected_case: Case,
+            solve: Solve,
+    ) -> bool:
         """
         Save the completed training with optional flag modifications.
 
@@ -739,6 +791,24 @@ class Trainer(SolveInterface):
             SOUND_PLAYER.save_discarded()
             save_string = 'Training discarded'
         else:
+            if (
+                self.fsrs_active
+                and self.fsrs_scheduler is not None
+                and self.fsrs_rater is not None
+                and selected_case.code in self.trainings.cases
+            ):
+                case_training = self.trainings.cases[selected_case.code]
+                rating = self.fsrs_rater.rate(
+                    solve,
+                    case_training.timings[:-1],
+                    self.step,
+                )
+                case_training.fsrs_card = self.fsrs_scheduler.update_card(
+                    case_training.fsrs_card,
+                    rating,
+                )
+                self.fsrs_display_line(selected_case.code, rating)
+
             save_trainings(self.trainings)
             SOUND_PLAYER.save_confirmed()
             self.session_data.append(
@@ -757,6 +827,18 @@ class Trainer(SolveInterface):
 
         return char in {'q', 'k', ESCAPE_CHAR}
 
+    def fsrs_display_line(self, case_code: str, rating: Rating) -> None:
+        """Display FSRS rating and next due date after saving."""
+        if case_code not in self.trainings.cases:
+            return
+        card = self.trainings.cases[case_code].fsrs_card
+        if card is None:
+            return
+        due = card.due.strftime('%Y-%m-%d')
+        self.console.print(
+            f'[comment]// FSRS: { rating.name } → review { due }[/comment]',
+        )
+
     async def start(self) -> bool:  # noqa: C901, PLR0912
         """
         Execute training workflow for single case.
@@ -767,11 +849,30 @@ class Trainer(SolveInterface):
         """
         self.init_solve()
 
+        fsrs_selected: TrainingCase | None = None
+        if self.fsrs_active and self.fsrs_scheduler is not None:
+            cards = {
+                code: ct.fsrs_card
+                for code, ct in self.trainings.cases.items()
+                if ct.fsrs_card is not None
+            }
+            available_codes = [tc.case.code for tc in self.cases]
+            chosen_code = self.fsrs_scheduler.select_next_case(
+                cards,
+                available_codes,
+                new_card_limit=5,
+            )
+            fsrs_selected = next(
+                (tc for tc in self.cases if tc.case.code == chosen_code),
+                None,
+            )
+
         selected_case, self.scramble, solution = trainer(
             self.step,
             self.cases,
             self.rng,
             self.cube_orientation_moves,
+            selected_case=fsrs_selected,
         )
 
         bt_scramble_done = (
@@ -853,7 +954,7 @@ class Trainer(SolveInterface):
         if not self.free_play:
             self.save_line()
 
-            quit_training = await self.save_training(selected_case)
+            quit_training = await self.save_training(selected_case, solve)
 
             if quit_training:
                 return False

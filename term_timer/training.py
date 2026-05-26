@@ -1,6 +1,22 @@
 """Training data."""
 from dataclasses import dataclass
+from dataclasses import field
+from typing import NotRequired
 from typing import TypedDict
+
+from term_timer.fsrs.types import Card
+
+
+class FSRSCardData(TypedDict):
+    """Serialized FSRS card state stored inside the training JSON."""
+
+    card_id: int
+    state: int
+    step: int
+    stability: float | None
+    difficulty: float | None
+    due: str
+    last_review: str | None
 
 
 class CaseTrainingData(TypedDict):
@@ -8,6 +24,7 @@ class CaseTrainingData(TypedDict):
 
     last_date: int
     timings: list[int]
+    fsrs: NotRequired[FSRSCardData]
 
 
 @dataclass
@@ -17,6 +34,7 @@ class CaseTraining:
     code: str
     last_date: int
     timings: list[int]
+    fsrs_card: Card | None = field(default=None)
 
     def add_timing(self, timing: int, date: int) -> None:
         """
@@ -36,13 +54,29 @@ class CaseTraining:
         Return dictionary representation for serialization.
 
         Returns:
-            Dictionary with last_date and timings for JSON serialization.
+            Dictionary with last_date, timings, and optional fsrs data.
 
         """
-        return {
+        data: CaseTrainingData = {
             'last_date': self.last_date,
             'timings': self.timings,
         }
+        if self.fsrs_card is not None:
+            raw = self.fsrs_card.to_dict()
+            data['fsrs'] = FSRSCardData(
+                card_id=int(raw['card_id']),
+                state=int(raw['state']),
+                step=int(raw['step']) if raw['step'] is not None else 0,
+                stability=raw['stability'],
+                difficulty=raw['difficulty'],
+                due=str(raw['due']),
+                last_review=(
+                    str(raw['last_review'])
+                    if raw['last_review'] is not None
+                    else None
+                ),
+            )
+        return data
 
 
 @dataclass
