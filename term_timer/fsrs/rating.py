@@ -51,11 +51,11 @@ class PerformanceRater:
             FSRS Rating: Again (1), Hard (2), Good (3), or Easy (4).
 
         """
+        if not solve.advanced:
+            return self.rate_without_bluetooth(solve.time, step)
+
         baseline = self.compute_baseline(timings, step)
         time_ratio = (solve.time / SECOND) / (baseline / SECOND)
-
-        if not solve.advanced:
-            return self.score_to_rating(time_ratio)
 
         pauses = solve.execution_pauses
         missed_qtm = solve.all_missed_moves
@@ -89,6 +89,32 @@ class PerformanceRater:
         """
         baseline = self.compute_baseline(timings, step)
         ratio = (elapsed_time / SECOND) / (baseline / SECOND)
+        return self.score_to_rating(ratio)
+
+    def rate_without_bluetooth(
+        self,
+        elapsed_time: int,
+        step: str,
+    ) -> Rating:
+        """
+        Rate performance using the fixed step target as baseline.
+
+        Used when no Bluetooth move data is available. Always compares
+        against the canonical step target time (e.g. 2.0s for PLL,
+        2.5s for OLL) regardless of personal history, so that absolute
+        speed goals drive the rating rather than relative improvement.
+
+        Args:
+            elapsed_time: Elapsed time in nanoseconds
+            step: Step name used to look up the target in TARGET_TIMES
+
+        Returns:
+            FSRS Rating based on ratio vs step target.
+
+        """
+        target = TARGET_TIMES.get(step.lower(), 3.0)
+        target_ns = int(target * SECOND)
+        ratio = elapsed_time / target_ns
         return self.score_to_rating(ratio)
 
     @staticmethod
