@@ -1112,8 +1112,8 @@ def cfop_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         '-s', '--sort',
         default='count',
         choices={
-            'case', 'count', 'frequency', 'probability',
-            'inspection', 'execution', 'time',
+            'case', 'count', 'frequency',
+            'recognition', 'execution', 'time',
             'ao5', 'ao12', 'qtm', 'tps', 'etps',
         },
         metavar='SORT',
