@@ -22,6 +22,18 @@ TARGET_TIMES: dict[str, float] = {
     'ecross': 4.0,
 }
 
+# Target turns per second per step.
+# tps_score = target_tps / actual_tps: higher = slower = worse,
+# consistent with time_ratio so score_to_rating applies uniformly.
+TARGET_TPS: dict[str, float] = {
+    'oll': 6.0,
+    'pll': 8.0,
+    'f2l': 4.0,
+    'af2l': 3.5,
+    'cross': 5.0,
+    'ecross': 4.0,
+}
+
 SCORE_AGAIN: float = 1.5
 SCORE_HARD: float = 1.2
 SCORE_EASY: float = 0.8
@@ -54,19 +66,14 @@ class PerformanceRater:
         if not solve.advanced:
             return self.rate_without_bluetooth(solve.time, step)
 
-        baseline = self.compute_baseline(timings, step)
-        time_ratio = (solve.time / SECOND) / (baseline / SECOND)
-
+        tps_score = self.compute_tps_score(solve, step)
         pauses = solve.execution_pauses
         missed_qtm = solve.all_missed_moves
         delta_htm = self.compute_delta_htm(solve, step)
 
-        score = (
-            time_ratio * 0.5
-            + pauses * 0.2
-            + missed_qtm * 0.2
-            + delta_htm * 0.1
-        )
+        # tps_score is the base: at target TPS with no quality issues,
+        # score = 1.0 → Good. Execution penalties add to the score.
+        score = tps_score + pauses * 0.2 + missed_qtm * 0.2 + delta_htm * 0.1
         return self.score_to_rating(score)
 
     def rate_performance(
@@ -160,6 +167,34 @@ class PerformanceRater:
 
         target = TARGET_TIMES.get(step.lower(), 3.0)
         return int(target * SECOND)
+
+    @staticmethod
+    def compute_tps_score(solve: 'Solve', step: str) -> float:
+        """
+        Compute TPS score: target_tps / actual_tps.
+
+        Higher score means slower execution (consistent with time_ratio so
+        score_to_rating applies uniformly). Reaching the target TPS gives
+        exactly 1.0 (Good territory). Below target → score > 1.0 (Hard/Again).
+        Above target → score < 1.0 (Easy).
+
+        TPS is computed from the full move reconstruction (``solve.solution``),
+        which covers the entire training step without recognition time.
+
+        Args:
+            solve: Completed solve with BT move data
+            step: Step name used to look up the target in TARGET_TPS
+
+        Returns:
+            tps_score clamped to [0.3, 3.0].
+
+        """
+        htm = solve.solution.metrics.htm
+        if htm == 0 or solve.time == 0:
+            return 1.0  # neutral: no moves recorded
+        actual_tps = htm / (solve.time / SECOND)
+        target = TARGET_TPS.get(step.lower(), 5.0)
+        return max(0.3, min(target / actual_tps, 3.0))
 
     @staticmethod
     def compute_delta_htm(solve: 'Solve', step: str) -> int:
