@@ -216,7 +216,8 @@ class GanGen3Driver(GanGen2Driver):
         if len(self.move_buffer) > 0:
             buffer_head = self.move_buffer[0]
 
-            if any(e['event'] == 'move' and e['serial'] == move['serial']
+            if any(e['event'] in {'move', 'move_history'}
+                   and e['serial'] == move['serial']
                    for e in self.move_buffer):
                 return
 

@@ -320,7 +320,7 @@ class Bluetooth:
 
                         self.facelets_received_event.set()
 
-                elif event_name == 'move':
+                elif event_name in {'move', 'move_history'}:
                     move_event = cast('MoveEventDict', event)
 
                     self.handle_bluetooth_cube_move(move_event['move'])
