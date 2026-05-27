@@ -4,6 +4,7 @@ from fsrs import Card
 from fsrs import Rating
 from fsrs import ReviewLog
 from fsrs import Scheduler
+from fsrs import State
 from fsrs.card import CardDict
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     'Rating',
     'ReviewLog',
     'Scheduler',
+    'State',
 ]

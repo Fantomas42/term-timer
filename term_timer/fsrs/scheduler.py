@@ -7,6 +7,9 @@ from random import choices
 from term_timer.fsrs.types import Card
 from term_timer.fsrs.types import Rating
 from term_timer.fsrs.types import Scheduler
+from term_timer.fsrs.types import State
+
+EXPLORATION_THRESHOLD = 0.2
 
 
 class FSRSScheduler:
@@ -70,6 +73,60 @@ class FSRSScheduler:
         available = list(probabilities.keys())
         weights = list(probabilities.values())
         return choices(available, weights=weights, k=1)[0]  # noqa: S311
+
+    @staticmethod
+    def compute_session_focus(
+        cards: dict[str, Card],
+        probabilities: dict[str, float],
+    ) -> str:
+        """
+        Determine the training session focus from current card states.
+
+        Returns a short human-readable label with a count, describing what
+        kind of work the session is focused on:
+
+        - ``exploration`` — fewer than 20 % of cases have been seen yet
+        - ``remediation`` — one or more cards are in Relearning state
+          (were in Review but got rated Again)
+        - ``learning`` — majority of seen cards are still in Learning state
+        - ``review`` — most seen cards are in Review and several are due
+        - ``maintenance`` — most cards are in Review with few or no dues
+
+        Args:
+            cards: FSRS cards keyed by case code (only seen cases)
+            probabilities: All available case codes with their probabilities
+
+        Returns:
+            Focus label string, e.g. ``'learning (8)'`` or ``'review (5 due)'``.
+
+        """
+        total = len(probabilities)
+        if total == 0 or not cards:
+            return f'exploration (0/{total} seen)'
+
+        seen = len(cards)
+        if seen / total < EXPLORATION_THRESHOLD:
+            return f'exploration ({seen}/{total} seen)'
+
+        relearning = [c for c, card in cards.items()
+                      if card.state == State.Relearning]
+        if relearning:
+            return f'remediation ({len(relearning)} relearning)'
+
+        now = datetime.now(UTC)
+        learning = [c for c, card in cards.items()
+                    if card.state == State.Learning]
+        review = [c for c, card in cards.items()
+                  if card.state == State.Review]
+        due = [c for c, card in cards.items() if card.due <= now]
+
+        if len(learning) >= len(review):
+            return f'learning ({len(learning)})'
+
+        if due:
+            return f'review ({len(due)} due)'
+
+        return 'maintenance'
 
     @staticmethod
     def get_due_cards(cards: dict[str, Card]) -> list[str]:

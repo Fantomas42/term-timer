@@ -828,15 +828,23 @@ class Trainer(SolveInterface):
         return char in {'q', 'k', ESCAPE_CHAR}
 
     def fsrs_display_line(self, case_code: str, rating: Rating) -> None:
-        """Display FSRS rating and next due date after saving."""
+        """Display FSRS rating, next due date, and session focus after saving."""
         if case_code not in self.trainings.cases:
             return
         card = self.trainings.cases[case_code].fsrs_card
         if card is None:
             return
         due = card.due.strftime('%Y-%m-%d')
+        cards = {
+            code: ct.fsrs_card
+            for code, ct in self.trainings.cases.items()
+            if ct.fsrs_card is not None
+        }
+        probabilities = {tc.case.code: tc.case.probability for tc in self.cases}
+        focus = FSRSScheduler.compute_session_focus(cards, probabilities)
         self.console.print(
-            f'[comment]// FSRS: { rating.name } → review { due }[/comment]',
+            f'[comment]// FSRS: { rating.name } → review { due }'
+            f'  [{ focus }][/comment]',
         )
 
     async def start(self) -> bool:  # noqa: C901, PLR0912
