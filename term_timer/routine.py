@@ -31,6 +31,7 @@ class SessionConfig(TypedDict, total=False):
     slowest: int
     filters: list[str]
     show_solution: bool
+    random: bool
     # solve fields
     cube: int
     session: str
@@ -74,6 +75,7 @@ def build_train_instance(session_config: SessionConfig) -> Trainer:
         oldest=session_config.get('oldest', 0),
         slowest=session_config.get('slowest', 0),
         filters=session_config.get('filters', []),
+        random=bool(session_config.get('random', False)),
         free_play=session_config.get('free_play', False),
         show_solution=session_config.get('show_solution', False),
         show_cube=session_config.get(
@@ -84,7 +86,6 @@ def build_train_instance(session_config: SessionConfig) -> Trainer:
             'metronome', TIMER_CONFIG.get('metronome', 0.0),
         ),
         rng=Random(),  # noqa: S311
-        random=bool(session_config.get('random', False)),
     )
 
 
