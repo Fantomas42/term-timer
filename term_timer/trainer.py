@@ -798,11 +798,7 @@ class Trainer(SolveInterface):
                 and selected_case.code in self.trainings.cases
             ):
                 case_training = self.trainings.cases[selected_case.code]
-                rating = self.fsrs_rater.rate(
-                    solve,
-                    case_training.timings[:-1],
-                    self.step,
-                )
+                rating = self.fsrs_rater.rate(solve, self.step)
                 case_training.fsrs_card = self.fsrs_scheduler.update_card(
                     case_training.fsrs_card,
                     rating,
@@ -828,7 +824,7 @@ class Trainer(SolveInterface):
         return char in {'q', 'k', ESCAPE_CHAR}
 
     def fsrs_display_line(self, case_code: str, rating: Rating) -> None:
-        """Display FSRS rating, next due date, and session focus after saving."""
+        """Display FSRS rating, due date, and session focus after saving."""
         if case_code not in self.trainings.cases:
             return
         card = self.trainings.cases[case_code].fsrs_card
@@ -842,9 +838,13 @@ class Trainer(SolveInterface):
         }
         probabilities = {tc.case.code: tc.case.probability for tc in self.cases}
         focus = FSRSScheduler.compute_session_focus(cards, probabilities)
+        mastered, total = FSRSScheduler.compute_mastery(cards, probabilities)
+        mastery_str = (
+            f'  { mastered }/{ total } mastered' if mastered > 0 else ''
+        )
         self.console.print(
             f'[comment]// FSRS: { rating.name } → review { due }'
-            f'  [{ focus }][/comment]',
+            f'  [{ focus }]{ mastery_str }[/comment]',
         )
 
     async def start(self) -> bool:  # noqa: C901, PLR0912

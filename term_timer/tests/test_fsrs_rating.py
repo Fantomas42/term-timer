@@ -102,13 +102,13 @@ class TestRateDispatchWithoutBluetooth(unittest.TestCase):
         """Without Bluetooth, history is ignored: target drives the rating."""
         # PLL target = 2.0s; execution = 1.9s -> Good regardless of history.
         solve = make_solve(int(1.9 * SECOND), moves=None)
-        rating = self.rater.rate(solve, self.fast_history, 'pll')
+        rating = self.rater.rate(solve, 'pll')
         self.assertEqual(rating, Rating.Good)
 
     def test_rate_no_moves_again_on_slow(self) -> None:
         """Without Bluetooth, slow execution -> Again vs the step target."""
         solve = make_solve(int(4.0 * SECOND), moves=None)
-        rating = self.rater.rate(solve, [], 'pll')
+        rating = self.rater.rate(solve, 'pll')
         self.assertEqual(rating, Rating.Again)
 
 
@@ -120,7 +120,10 @@ class TestRateWithBluetooth(unittest.TestCase):
         # Patch method_applied to None so execution_pauses / step_pauses
         # return 0 without triggering full CFOP analysis on minimal test solves.
         patcher = patch.object(
-            Solve, 'method_applied', new_callable=PropertyMock, return_value=None,
+            Solve,
+            'method_applied',
+            new_callable=PropertyMock,
+            return_value=None,
         )
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -132,7 +135,7 @@ class TestRateWithBluetooth(unittest.TestCase):
         tps_score = 8.0 / 8.0 = 1.0, no quality penalties -> score = 1.0.
         """
         solve = make_bt_solve(htm=8, elapsed_s=1.0)
-        rating = self.rater.rate(solve, [], 'pll')
+        rating = self.rater.rate(solve, 'pll')
         self.assertEqual(rating, Rating.Good)
 
     def test_above_target_tps_is_easy(self) -> None:
@@ -142,7 +145,7 @@ class TestRateWithBluetooth(unittest.TestCase):
         tps_score = 8.0 / 11.4 ≈ 0.70 < 0.8 -> Easy.
         """
         solve = make_bt_solve(htm=8, elapsed_s=0.7)
-        rating = self.rater.rate(solve, [], 'pll')
+        rating = self.rater.rate(solve, 'pll')
         self.assertEqual(rating, Rating.Easy)
 
     def test_below_target_tps_is_hard(self) -> None:
@@ -153,7 +156,7 @@ class TestRateWithBluetooth(unittest.TestCase):
         8 moves in 1.4s ≈ 5.7 TPS -> tps_score = 8/5.7 ≈ 1.4 -> Hard.
         """
         solve = make_bt_solve(htm=8, elapsed_s=1.4)
-        rating = self.rater.rate(solve, [], 'pll')
+        rating = self.rater.rate(solve, 'pll')
         self.assertEqual(rating, Rating.Hard)
 
     def test_well_below_target_tps_is_again(self) -> None:
@@ -163,7 +166,7 @@ class TestRateWithBluetooth(unittest.TestCase):
         tps_score = 8.0 / 4.0 = 2.0 > 1.5 -> Again.
         """
         solve = make_bt_solve(htm=8, elapsed_s=2.0)
-        rating = self.rater.rate(solve, [], 'pll')
+        rating = self.rater.rate(solve, 'pll')
         self.assertEqual(rating, Rating.Again)
 
     def test_bt_path_differs_from_no_bt(self) -> None:
@@ -176,8 +179,8 @@ class TestRateWithBluetooth(unittest.TestCase):
         """
         solve_no_bt = make_solve(int(1.9 * SECOND), moves=None)
         solve_bt = make_bt_solve(htm=8, elapsed_s=1.9)
-        rating_no_bt = self.rater.rate(solve_no_bt, [], 'pll')
-        rating_bt = self.rater.rate(solve_bt, [], 'pll')
+        rating_no_bt = self.rater.rate(solve_no_bt, 'pll')
+        rating_bt = self.rater.rate(solve_bt, 'pll')
         self.assertNotEqual(rating_no_bt, rating_bt)
 
 
@@ -259,5 +262,5 @@ class TestTargetTps(unittest.TestCase):
         self.assertGreater(TARGET_TPS['pll'], TARGET_TPS['oll'])
 
     def test_f2l_slower_than_oll(self) -> None:
-        """F2L target TPS is lower than OLL (more look-ahead pauses expected)."""
+        """F2L target TPS is lower than OLL (more look-ahead pauses)."""
         self.assertLess(TARGET_TPS['f2l'], TARGET_TPS['oll'])

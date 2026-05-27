@@ -11,6 +11,11 @@ from term_timer.fsrs.types import State
 
 EXPLORATION_THRESHOLD = 0.2
 
+# Minimum FSRS stability (days) for a case to be considered mastered.
+# Stability represents how long the memory holds at 90% retention.
+# 14 days = two-week interval, reliably in long-term memory.
+MASTERY_STABILITY_DAYS: float = 14.0
+
 
 class FSRSScheduler:
     """Manages FSRS-based case selection and card updates."""
@@ -127,6 +132,38 @@ class FSRSScheduler:
             return f'review ({len(due)} due)'
 
         return 'maintenance'
+
+    @staticmethod
+    def compute_mastery(
+        cards: dict[str, Card],
+        probabilities: dict[str, float],
+    ) -> tuple[int, int]:
+        """
+        Count mastered cases out of all available cases.
+
+        A case is mastered when its FSRS card is in Review state and has
+        accumulated enough stability to be considered long-term memory.
+        The threshold is ``MASTERY_STABILITY_DAYS`` (default 14 days).
+
+        Args:
+            cards: FSRS cards keyed by case code (only seen cases)
+            probabilities: All available case codes with their probabilities
+
+        Returns:
+            ``(mastered, total)`` where ``mastered`` is the number of cases
+            meeting the mastery criteria and ``total`` is all available cases.
+
+        """
+        total = len(probabilities)
+        mastered = sum(
+            1
+            for card in cards.values()
+            if (
+                card.state == State.Review
+                and (card.stability or 0.0) >= MASTERY_STABILITY_DAYS
+            )
+        )
+        return mastered, total
 
     @staticmethod
     def get_due_cards(cards: dict[str, Card]) -> list[str]:

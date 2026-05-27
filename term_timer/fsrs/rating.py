@@ -45,18 +45,16 @@ class PerformanceRater:
     def rate(
         self,
         solve: 'Solve',
-        timings: list[int],
         step: str,
     ) -> Rating:
         """
         Rate performance using a composite score.
 
-        Combines time ratio with execution quality signals when advanced
+        Combines TPS score with execution quality signals when advanced
         Bluetooth data is available. Falls back to time-only rating otherwise.
 
         Args:
             solve: Completed solve with optional advanced analysis
-            timings: Historical timings for this case (milliseconds)
             step: Step name (e.g. 'oll', 'pll')
 
         Returns:
