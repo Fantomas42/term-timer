@@ -2,7 +2,7 @@
 
 from datetime import UTC
 from datetime import datetime
-from random import choice
+from random import choices
 
 from term_timer.fsrs.types import Card
 from term_timer.fsrs.types import Rating
@@ -34,20 +34,22 @@ class FSRSScheduler:
     def select_next_case(
         self,
         cards: dict[str, Card],
-        available_cases: list[str],
+        probabilities: dict[str, float],
         new_card_limit: int,
     ) -> str:
         """
         Select next case to practice using FSRS scheduling.
 
         Priority order:
-        1. Overdue cards (past due date)
-        2. New cards (not yet seen, up to limit)
-        3. Random from available cases
+        1. Overdue cards (past due date), sorted by urgency
+        2. New cards (not yet seen, up to limit), weighted by probability
+        3. Weighted-random from all available cases by probability
 
         Args:
             cards: FSRS cards keyed by case code
-            available_cases: All available case codes
+            probabilities: All available case codes mapped to their probability
+                (how often the case appears in real solves). Used to weight
+                random selection so common cases are practised more often.
             new_card_limit: Maximum number of new cards to introduce
 
         Returns:
@@ -59,12 +61,15 @@ class FSRSScheduler:
         if due_cards:
             return self.prioritize_by_urgency(cards, due_cards)[0]
 
-        new_cards = self.get_new_cards(cards, available_cases, new_card_limit)
+        new_cards = self.get_new_cards(cards, probabilities, new_card_limit)
 
         if new_cards:
-            return choice(new_cards)  # noqa: S311
+            new_weights = [probabilities[c] for c in new_cards]
+            return choices(new_cards, weights=new_weights, k=1)[0]  # noqa: S311
 
-        return choice(available_cases)  # noqa: S311
+        available = list(probabilities.keys())
+        weights = list(probabilities.values())
+        return choices(available, weights=weights, k=1)[0]  # noqa: S311
 
     @staticmethod
     def get_due_cards(cards: dict[str, Card]) -> list[str]:
@@ -84,22 +89,26 @@ class FSRSScheduler:
     @staticmethod
     def get_new_cards(
         cards: dict[str, Card],
-        available_cases: list[str],
+        probabilities: dict[str, float],
         limit: int,
     ) -> list[str]:
         """
-        Return unseen case codes up to limit.
+        Return unseen case codes up to limit, ordered by probability.
+
+        Higher-probability cases (more common in real solves) are introduced
+        first so the learner practises the most impactful cases sooner.
 
         Args:
             cards: FSRS cards keyed by case code (known cases)
-            available_cases: All available case codes
+            probabilities: All available case codes with their probabilities
             limit: Maximum number of new cases to return
 
         Returns:
-            List of unseen case codes (up to limit).
+            List of unseen case codes (up to limit), highest probability first.
 
         """
-        new_cases = [c for c in available_cases if c not in cards]
+        new_cases = [c for c in probabilities if c not in cards]
+        new_cases.sort(key=lambda c: probabilities[c], reverse=True)
         return new_cases[:limit]
 
     @staticmethod

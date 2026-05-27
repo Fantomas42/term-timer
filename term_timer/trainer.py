@@ -856,10 +856,12 @@ class Trainer(SolveInterface):
                 for code, ct in self.trainings.cases.items()
                 if ct.fsrs_card is not None
             }
-            available_codes = [tc.case.code for tc in self.cases]
+            probabilities = {
+                tc.case.code: tc.case.probability for tc in self.cases
+            }
             chosen_code = self.fsrs_scheduler.select_next_case(
                 cards,
-                available_codes,
+                probabilities,
                 new_card_limit=5,
             )
             fsrs_selected = next(
