@@ -5,10 +5,8 @@ from typing import TYPE_CHECKING
 from cubing_algs.cases import get_case
 from cubing_algs.transform.auf import remove_auf_moves
 
-from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 from term_timer.fsrs.types import Rating
-from term_timer.stats import Statistics
 
 if TYPE_CHECKING:
     from term_timer.solve import Solve
@@ -74,28 +72,6 @@ class PerformanceRater:
         score = tps_score + pauses * 0.2 + missed_qtm * 0.2 + delta_htm * 0.1
         return self.score_to_rating(score)
 
-    def rate_performance(
-        self,
-        elapsed_time: int,
-        timings: list[int],
-        step: str,
-    ) -> Rating:
-        """
-        Rate performance from raw elapsed time (time-only fallback).
-
-        Args:
-            elapsed_time: Elapsed time in nanoseconds
-            timings: Historical timings for this case (milliseconds)
-            step: Step name
-
-        Returns:
-            FSRS Rating based on time ratio vs baseline.
-
-        """
-        baseline = self.compute_baseline(timings, step)
-        ratio = (elapsed_time / SECOND) / (baseline / SECOND)
-        return self.score_to_rating(ratio)
-
     def rate_without_bluetooth(
         self,
         elapsed_time: int,
@@ -138,33 +114,6 @@ class PerformanceRater:
         if score < SCORE_EASY:
             return Rating.Easy
         return Rating.Good
-
-    @staticmethod
-    def compute_baseline(timings: list[int], step: str) -> int:
-        """
-        Compute baseline time in nanoseconds.
-
-        Uses Ao12 if available, mean if some data exists, or step target.
-
-        Args:
-            timings: Historical timings in milliseconds
-            step: Step name for target lookup
-
-        Returns:
-            Baseline in nanoseconds.
-
-        """
-        if len(timings) >= 12:
-            stats = Statistics([t * MS_TO_NS_FACTOR for t in timings])
-            ao12 = stats.ao12
-            if ao12 > 0:
-                return ao12
-
-        if timings:
-            return int(sum(timings) / len(timings) * MS_TO_NS_FACTOR)
-
-        target = TARGET_TIMES.get(step.lower(), 3.0)
-        return int(target * SECOND)
 
     @staticmethod
     def compute_tps_score(solve: 'Solve', step: str) -> float:
