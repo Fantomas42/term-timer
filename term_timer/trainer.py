@@ -140,6 +140,9 @@ class Trainer(SolveInterface):
         self.trainings = load_trainings(self.method, self.step.upper())
 
         self.cases = self.get_cases()
+        self.fsrs_probabilities = {
+            tc.case.code: tc.case.probability for tc in self.cases
+        }
         self.counter = 1
         self.session_data: list[tuple[str, Case, int]] = []
 
@@ -834,9 +837,9 @@ class Trainer(SolveInterface):
             for code, ct in self.trainings.cases.items()
             if ct.fsrs_card is not None
         }
-        probabilities = {tc.case.code: tc.case.probability for tc in self.cases}
-        focus = FSRSScheduler.compute_session_focus(cards, probabilities)
-        mastered, total = FSRSScheduler.compute_mastery(cards, probabilities)
+        probs = self.fsrs_probabilities
+        focus = FSRSScheduler.compute_session_focus(cards, probs)
+        mastered, total = FSRSScheduler.compute_mastery(cards, probs)
         mastery_str = (
             f'  { mastered }/{ total } mastered' if mastered > 0 else ''
         )
@@ -862,12 +865,9 @@ class Trainer(SolveInterface):
                 for code, ct in self.trainings.cases.items()
                 if ct.fsrs_card is not None
             }
-            probabilities = {
-                tc.case.code: tc.case.probability for tc in self.cases
-            }
             chosen_code = self.fsrs_scheduler.select_next_case(
                 cards,
-                probabilities,
+                self.fsrs_probabilities,
                 new_card_limit=5,
             )
             fsrs_selected = next(
