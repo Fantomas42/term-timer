@@ -828,7 +828,7 @@ class Trainer(SolveInterface):
         card = self.trainings.cases[case_code].fsrs_card
         if card is None:
             return
-        due = card.due.strftime('%Y-%m-%d')
+        due = card.due.astimezone().strftime('%Y-%m-%d')
         cards = {
             code: ct.fsrs_card
             for code, ct in self.trainings.cases.items()
