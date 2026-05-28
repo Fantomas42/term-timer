@@ -445,13 +445,11 @@ class Trainer(SolveInterface):
             List of [state, due] Rich strings.
 
         """
-        fsrs_states = {0: 'New', 1: 'Learning', 2: 'Review', 3: 'Relearning'}
-
         if case_training is None or case_training.fsrs_card is None:
             return [no_ao, no_ao]
 
         card = case_training.fsrs_card
-        state_str = f'[comment]{ fsrs_states.get(card.state, "?") }[/comment]'
+        state_str = f'[comment]{ card.state.name }[/comment]'
         due = card.due.astimezone()
         now = datetime.now(UTC).astimezone()
         due_str = (
