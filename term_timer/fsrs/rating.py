@@ -176,8 +176,8 @@ class PerformanceRater:
         exactly 1.0 (Good territory). Below target → score > 1.0 (Hard/Again).
         Above target → score < 1.0 (Easy).
 
-        TPS is computed from the full move reconstruction (``solve.solution``),
-        which covers the entire training step without recognition time.
+        TPS is computed using ``solve.time`` (total solve time including
+        recognition), so recognition latency penalises the score.
 
         Args:
             solve: Completed solve with BT move data
