@@ -54,6 +54,7 @@ async def trainer(options: Namespace) -> int:  # noqa: C901, PLR0912
             metronome=options.metronome,
             rng=rng,
             random=options.random,
+            new_card_limit=options.new_cards,
         )
     except InvalidCaseError as error:
         console.print('😱', str(error), style='warning')

@@ -76,7 +76,10 @@ class FSRSScheduler:
             return choices(new_cards, weights=new_weights, k=1)[0]  # noqa: S311
 
         available = list(probabilities.keys())
-        weights = list(probabilities.values())
+        if new_card_limit == 0:
+            seen = set(cards.keys())
+            available = [c for c in available if c in seen] or available
+        weights = [probabilities[c] for c in available]
         return choices(available, weights=weights, k=1)[0]  # noqa: S311
 
     @staticmethod

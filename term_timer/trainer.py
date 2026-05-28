@@ -114,6 +114,7 @@ class Trainer(SolveInterface):
             metronome: float,
             rng: Random,
             random: bool = False,
+            new_card_limit: int = 5,
     ) -> None:
         """Initialize trainer with step configuration and display options."""
         super().__init__()
@@ -136,6 +137,7 @@ class Trainer(SolveInterface):
         self.rng = rng
         self.orientation_faces = orientation
         self.random = random
+        self.new_card_limit = new_card_limit
 
         self.trainings = load_trainings(self.method, self.step.upper())
 
@@ -868,7 +870,7 @@ class Trainer(SolveInterface):
             chosen_code = self.fsrs_scheduler.select_next_case(
                 cards,
                 self.fsrs_probabilities,
-                new_card_limit=5,
+                new_card_limit=self.new_card_limit,
             )
             fsrs_selected = next(
                 (tc for tc in self.cases if tc.case.code == chosen_code),

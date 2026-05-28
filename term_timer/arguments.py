@@ -800,6 +800,18 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
 
     parser.add_argument(
+        '--new-cards',
+        type=int,
+        default=5,
+        metavar='N',
+        dest='new_cards',
+        help=(
+            'Maximum new cases to introduce per session (default: 5).\n'
+            'Only applies when FSRS is active.'
+        ),
+    )
+
+    parser.add_argument(
         '-v', '--solution',
         action='store_true',
         dest='show_solution',
