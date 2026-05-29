@@ -834,13 +834,13 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         nargs='?',
         type=int,
         default=0,
-        const=5,
+        const=-1,
         metavar='N',
         dest='random',
         help=(
             'Select N cases randomly.\n'
-            'Disables FSRS case selection (cards are still updated).\n'
-            'Default N: 5.'
+            'If N is omitted, all valid cases are used in random order.\n'
+            'Disables FSRS case selection (cards are still updated).'
         ),
     )
 

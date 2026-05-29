@@ -301,11 +301,11 @@ class Trainer(SolveInterface):
                 valid_cases,
                 self.slowest,
             )
-        elif self.random > 0:
-            case_codes = self.select_random_cases(
-                valid_cases,
-                self.random,
+        elif self.random != 0:
+            count = (
+                len(valid_cases) if self.random == -1 else self.random
             )
+            case_codes = self.select_random_cases(valid_cases, count)
 
         def setup_sorter(algorithm: Algorithm) -> tuple[float, float]:
             ergonomics = algorithm.ergonomics
@@ -387,12 +387,16 @@ class Trainer(SolveInterface):
         has_filter = bool(self.filters)
 
         if has_filter:
-            count_suffix = (
-                f' ({ self.filtered_cases } matching,'
+            filter_label = ' & '.join(self.filters)
+            filter_plural = 's' if len(self.filters) > 1 else ''
+            suffix = (
+                f' ({ filter_label }'
+                f' filter{ filter_plural },'
+                f' { self.filtered_cases } matching,'
                 f' { self.total_cases } total)'
             )
         else:
-            count_suffix = f' ({ self.total_cases } total)'
+            suffix = f' ({ self.total_cases } total)'
 
         if self.case_codes:
             msg = (
@@ -401,28 +405,27 @@ class Trainer(SolveInterface):
         elif self.oldest > 0:
             msg = (
                 f'Training on the { n } least practiced'
-                f' case{ plural } on { label }{ count_suffix }'
+                f' case{ plural } on { label }{ suffix }'
             )
         elif self.slowest > 0:
             msg = (
                 f'Training on the { n } slowest'
-                f' case{ plural } on { label }{ count_suffix }'
+                f' case{ plural } on { label }{ suffix }'
+            )
+        elif self.random == -1:
+            msg = (
+                f'Training on all { n } case{ plural } on { label }'
+                f' in random order{ suffix if has_filter else "" }'
             )
         elif self.random > 0:
             msg = (
                 f'Training on { n } randomly selected'
-                f' case{ plural } on { label }{ count_suffix }'
-            )
-        elif has_filter:
-            filter_label = ', '.join(self.filters)
-            msg = (
-                f'Training on all { n } case{ plural } on { label }'
-                f' with spaced repetition ({ filter_label } filter)'
+                f' case{ plural } on { label }{ suffix }'
             )
         else:
             msg = (
                 f'Training on all { n } case{ plural } on { label }'
-                f' with spaced repetition'
+                f' with spaced repetition{ suffix if has_filter else "" }'
             )
 
         self.console.print(msg, style='trainer')
