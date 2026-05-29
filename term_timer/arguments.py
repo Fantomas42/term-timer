@@ -738,6 +738,24 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             f'Default: { TRAINER_STEP }.'
         ),
     )
+    parser.add_argument(
+        '-l', '--list',
+        action='store_true',
+        dest='list_cases',
+        help=(
+            'List all available cases with their training statistics.\n'
+            'Default: False.'
+        ),
+    )
+    parser.add_argument(
+        '-v', '--solution',
+        action='store_true',
+        dest='show_solution',
+        help=(
+            'Show the main solution of the case if exists.\n'
+            'Default: False.'
+        ),
+    )
 
     cases = parser.add_argument_group(
         'Case Selection',
@@ -752,7 +770,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         dest='case_codes',
         help=(
             'Practice specific cases by name.\n'
-            'Disables FSRS. Incompatible with --filter, --oldest, --slowest.'
+            'Disables FSRS. Incompatible with --filter, --oldest, --slowest and --random.'
         ),
     )
     cases.add_argument(
@@ -764,7 +782,8 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Filter cases by family or group (e.g. Dot, Cross, OCLL).\n'
             'Multiple values are combined with OR logic.\n'
-            'Restricts FSRS scheduling to the filtered subset. Incompatible with --cases.'
+            'Restricts FSRS scheduling to the filtered subset.\n'
+            'Incompatible with --cases.'
         ),
     )
     cases.add_argument(
@@ -775,7 +794,8 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Select N cases least recently practiced.\n'
             'Cases never practiced are prioritized.\n'
-            'Restricts FSRS scheduling to the N oldest cases. Mutually exclusive with --cases and --slowest.'
+            'Restricts FSRS scheduling to the N oldest cases.\n'
+            'Mutually exclusive with --cases and --slowest.'
         ),
     )
     cases.add_argument(
@@ -786,7 +806,8 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Select N cases with worst average of 12.\n'
             'Cases with fewer than 12 attempts are prioritized.\n'
-            'Restricts FSRS scheduling to the N slowest cases. Mutually exclusive with --cases and --oldest.'
+            'Restricts FSRS scheduling to the N slowest cases.\n'
+            'Mutually exclusive with --cases and --oldest.'
         ),
     )
     cases.add_argument(
@@ -795,11 +816,11 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         dest='random',
         help=(
             'Select cases randomly, disabling FSRS.\n'
-            'Mutually exclusive with --oldest and --slowest.'
+            'Mutually exclusive with --cases, --oldest and --slowest.'
         ),
     )
 
-    parser.add_argument(
+    cases.add_argument(
         '--new-cards',
         type=int,
         default=5,
@@ -808,16 +829,6 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Maximum new cases to introduce per session (default: 5).\n'
             'Only applies when FSRS is active.'
-        ),
-    )
-
-    parser.add_argument(
-        '-v', '--solution',
-        action='store_true',
-        dest='show_solution',
-        help=(
-            'Show the main solution of the case.\n'
-            'Default: False.'
         ),
     )
 
@@ -891,16 +902,6 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Set a metronome beep at a specified tempo in seconds.\n'
             f'Default: { metronome }.'
-        ),
-    )
-
-    parser.add_argument(
-        '-l', '--list',
-        action='store_true',
-        dest='list_cases',
-        help=(
-            'List all available cases with their training statistics.\n'
-            'Default: False.'
         ),
     )
 
