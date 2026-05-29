@@ -192,7 +192,7 @@ class TestTrainerModule(unittest.TestCase):
 
 
 class TestFSRSWithFilter(unittest.TestCase):
-    """FSRS stays active when --filter is used without conflicting options."""
+    """fsrs_selection and fsrs_update behave correctly across option combinations."""
 
     def make_trainer(
             self,
@@ -218,14 +218,49 @@ class TestFSRSWithFilter(unittest.TestCase):
             random=random,
         )
 
-    def test_fsrs_active_with_filter(self) -> None:
-        """fsrs_active is True when only --filter is set."""
+    def test_fsrs_selection_with_filter(self) -> None:
+        """fsrs_selection is True when only --filter is set."""
         timer = self.make_trainer(filters=['Dot'])
-        self.assertTrue(timer.fsrs_active)
+        self.assertTrue(timer.fsrs_selection)
 
-    def test_fsrs_scheduler_instantiated_with_filter(self) -> None:
-        """fsrs_scheduler is not None when FSRS is active with a filter."""
-        timer = self.make_trainer(filters=['Dot'])
+    def test_fsrs_selection_with_oldest(self) -> None:
+        """fsrs_selection is True when --oldest restricts the pool."""
+        timer = self.make_trainer(oldest=3)
+        self.assertTrue(timer.fsrs_selection)
+
+    def test_fsrs_selection_with_slowest(self) -> None:
+        """fsrs_selection is True when --slowest restricts the pool."""
+        timer = self.make_trainer(slowest=3)
+        self.assertTrue(timer.fsrs_selection)
+
+    def test_fsrs_selection_with_filter_and_oldest(self) -> None:
+        """fsrs_selection is True when --filter and --oldest are combined."""
+        timer = self.make_trainer(filters=['Dot'], oldest=3)
+        self.assertTrue(timer.fsrs_selection)
+
+    def test_fsrs_selection_false_with_cases(self) -> None:
+        """fsrs_selection is False with --cases: FSRS does not drive selection."""
+        timer = self.make_trainer(case_codes=['01', '02'])
+        self.assertFalse(timer.fsrs_selection)
+
+    def test_fsrs_selection_false_with_random(self) -> None:
+        """fsrs_selection is False with --random: FSRS does not drive selection."""
+        timer = self.make_trainer(random=True)
+        self.assertFalse(timer.fsrs_selection)
+
+    def test_fsrs_update_true_with_cases(self) -> None:
+        """fsrs_update is True with --cases: solves still update FSRS cards."""
+        timer = self.make_trainer(case_codes=['01', '02'])
+        self.assertTrue(timer.fsrs_update)
+
+    def test_fsrs_update_true_with_random(self) -> None:
+        """fsrs_update is True with --random: solves still update FSRS cards."""
+        timer = self.make_trainer(random=True)
+        self.assertTrue(timer.fsrs_update)
+
+    def test_fsrs_scheduler_instantiated_with_cases(self) -> None:
+        """fsrs_scheduler is not None with --cases so card updates can run."""
+        timer = self.make_trainer(case_codes=['01', '02'])
         self.assertIsNotNone(timer.fsrs_scheduler)
 
     def test_fsrs_probabilities_restricted_to_filter(self) -> None:
@@ -242,16 +277,6 @@ class TestFSRSWithFilter(unittest.TestCase):
         all_keys = set(timer_all.fsrs_probabilities.keys())
         self.assertTrue(filtered_keys < all_keys)
 
-    def test_fsrs_active_with_oldest(self) -> None:
-        """fsrs_active is True when --oldest restricts the pool."""
-        timer = self.make_trainer(oldest=3)
-        self.assertTrue(timer.fsrs_active)
-
-    def test_fsrs_active_with_slowest(self) -> None:
-        """fsrs_active is True when --slowest restricts the pool."""
-        timer = self.make_trainer(slowest=3)
-        self.assertTrue(timer.fsrs_active)
-
     def test_fsrs_probabilities_restricted_to_oldest(self) -> None:
         """fsrs_probabilities contains only the N oldest cases."""
         timer = self.make_trainer(oldest=3)
@@ -261,13 +286,3 @@ class TestFSRSWithFilter(unittest.TestCase):
         """fsrs_probabilities contains only the N slowest cases."""
         timer = self.make_trainer(slowest=3)
         self.assertEqual(len(timer.fsrs_probabilities), 3)
-
-    def test_fsrs_active_with_filter_and_oldest(self) -> None:
-        """FSRS is active when --filter and --oldest are combined."""
-        timer = self.make_trainer(filters=['Dot'], oldest=3)
-        self.assertTrue(timer.fsrs_active)
-
-    def test_fsrs_inactive_with_filter_and_random(self) -> None:
-        """--random still disables FSRS even when --filter is set."""
-        timer = self.make_trainer(filters=['Dot'], random=True)
-        self.assertFalse(timer.fsrs_active)

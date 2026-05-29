@@ -149,13 +149,14 @@ class Trainer(SolveInterface):
         self.counter = 1
         self.session_data: list[tuple[str, Case, int]] = []
 
-        self.fsrs_active = (
-            self.step_config.training_case is None
+        self.fsrs_update = self.step_config.training_case is None
+        self.fsrs_selection = (
+            self.fsrs_update
             and not self.case_codes
             and not self.random
         )
-        self.fsrs_scheduler = FSRSScheduler() if self.fsrs_active else None
-        self.fsrs_rater = PerformanceRater() if self.fsrs_active else None
+        self.fsrs_scheduler = FSRSScheduler() if self.fsrs_update else None
+        self.fsrs_rater = PerformanceRater() if self.fsrs_update else None
         self.fsrs_pending_rating: RatingBreakdown | None = None
 
         self.trainer_line()
@@ -794,7 +795,7 @@ class Trainer(SolveInterface):
             save_string = 'Training discarded'
         else:
             if (
-                self.fsrs_active
+                self.fsrs_update
                 and self.fsrs_scheduler is not None
                 and self.fsrs_rater is not None
                 and selected_case.code in self.trainings.cases
@@ -891,7 +892,7 @@ class Trainer(SolveInterface):
         self.init_solve()
 
         fsrs_selected: TrainingCase | None = None
-        if self.fsrs_active and self.fsrs_scheduler is not None:
+        if self.fsrs_selection and self.fsrs_scheduler is not None:
             cards = {
                 code: ct.fsrs_card
                 for code, ct in self.trainings.cases.items()
@@ -993,7 +994,7 @@ class Trainer(SolveInterface):
         self.solve_line(solve, selected_case)
 
         if not self.free_play:
-            if self.fsrs_active:
+            if self.fsrs_update:
                 self.fsrs_preview_line(solve, selected_case)
             self.save_line()
 
