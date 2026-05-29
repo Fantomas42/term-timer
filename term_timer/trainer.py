@@ -107,6 +107,8 @@ class Trainer(SolveInterface):
             case_codes: list[str],
             oldest: int,
             slowest: int,
+            random: int,
+            new_cases_limit: int,
             filters: list[str],
             free_play: bool,
             show_solution: bool,
@@ -114,8 +116,6 @@ class Trainer(SolveInterface):
             orientation: CubeOrientation,
             metronome: float,
             rng: Random,
-            random: int = 0,
-            new_card_limit: int = 5,
     ) -> None:
         """Initialize trainer with step configuration and display options."""
         super().__init__()
@@ -138,7 +138,7 @@ class Trainer(SolveInterface):
         self.rng = rng
         self.orientation_faces = orientation
         self.random = random
-        self.new_card_limit = new_card_limit
+        self.new_cases_limit = new_cases_limit
 
         self.trainings = load_trainings(self.method, self.step.upper())
 
@@ -926,7 +926,7 @@ class Trainer(SolveInterface):
             chosen_code = self.fsrs_scheduler.select_next_case(
                 cards,
                 self.fsrs_probabilities,
-                new_card_limit=self.new_card_limit,
+                new_cases_limit=self.new_cases_limit,
             )
             fsrs_selected = next(
                 (tc for tc in self.cases if tc.case.code == chosen_code),

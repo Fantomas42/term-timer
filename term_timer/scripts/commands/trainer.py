@@ -46,15 +46,16 @@ async def trainer(options: Namespace) -> int:  # noqa: C901, PLR0912
             case_codes=options.case_codes,
             oldest=options.oldest,
             slowest=options.slowest,
+            random=options.random,
             filters=options.filters,
+            new_card_limit=options.new_cases,
             free_play=options.free_play,
             orientation=options.orientation,
             show_solution=options.show_solution,
             show_cube=options.show_cube,
             metronome=options.metronome,
             rng=rng,
-            random=options.random,
-            new_card_limit=options.new_cards,
+
         )
     except InvalidCaseError as error:
         console.print('😱', str(error), style='warning')

@@ -824,11 +824,11 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
 
     cases.add_argument(
-        '--new-cards',
+        '-m', '--new-cases',
         type=int,
         default=5,
         metavar='N',
-        dest='new_cards',
+        dest='new_cases',
         help=(
             'Maximum new cases to introduce per session (default: 5).\n'
             'Only applies when FSRS is active.'

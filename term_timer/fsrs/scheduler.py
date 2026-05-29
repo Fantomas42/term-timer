@@ -43,7 +43,7 @@ class FSRSScheduler:
         self,
         cards: dict[str, Card],
         probabilities: dict[str, float],
-        new_card_limit: int,
+        new_cases_limit: int,
     ) -> str:
         """
         Select next case to practice using FSRS scheduling.
@@ -58,7 +58,7 @@ class FSRSScheduler:
             probabilities: All available case codes mapped to their probability
                 (how often the case appears in real solves). Used to weight
                 random selection so common cases are practised more often.
-            new_card_limit: Maximum number of new cards to introduce
+            new_cases_limit: Maximum number of new cases to introduce
 
         Returns:
             Case code to practice next.
@@ -69,14 +69,14 @@ class FSRSScheduler:
         if due_cards:
             return self.prioritize_by_urgency(cards, due_cards)[0]
 
-        new_cards = self.get_new_cards(cards, probabilities, new_card_limit)
+        new_cards = self.get_new_cards(cards, probabilities, new_cases_limit)
 
         if new_cards:
             new_weights = [probabilities[c] for c in new_cards]
             return choices(new_cards, weights=new_weights, k=1)[0]  # noqa: S311
 
         available = list(probabilities.keys())
-        if new_card_limit == 0:
+        if new_cases_limit == 0:
             seen = set(cards.keys())
             available = [c for c in available if c in seen] or available
         weights = [probabilities[c] for c in available]
