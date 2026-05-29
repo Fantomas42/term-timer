@@ -428,6 +428,25 @@ class Trainer(SolveInterface):
 
         self.console.print(msg, style='trainer')
 
+        if self.fsrs_selection:
+            cards = {
+                code: ct.fsrs_card
+                for code, ct in self.trainings.cases.items()
+                if ct.fsrs_card is not None
+            }
+            focus = FSRSScheduler.compute_session_focus(
+                cards, self.fsrs_probabilities,
+            )
+            mastered, total = FSRSScheduler.compute_mastery(
+                cards, self.fsrs_probabilities,
+            )
+            mastery_str = (
+                f'{ mastered }/{ total } mastered' if mastered > 0 else ''
+            )
+            self.console.print(
+                f'[comment]// FSRS focus: { focus } { mastery_str }[/comment]',
+            )
+
     def list_cases(self) -> None:
         """Display a table of all available cases with their training stats."""
         if self.step_config.training_case is not None:
@@ -928,27 +947,15 @@ class Trainer(SolveInterface):
         )
 
     def fsrs_display_line(self, case_code: str, rating: Rating) -> None:
-        """Display FSRS rating, due date, and session focus after saving."""
+        """Display FSRS rating and due date after saving."""
         if case_code not in self.trainings.cases:
             return
         card = self.trainings.cases[case_code].fsrs_card
         if card is None:
             return
         due = card.due.astimezone().strftime('%Y-%m-%d')
-        cards = {
-            code: ct.fsrs_card
-            for code, ct in self.trainings.cases.items()
-            if ct.fsrs_card is not None
-        }
-        probs = self.fsrs_probabilities
-        focus = FSRSScheduler.compute_session_focus(cards, probs)
-        mastered, total = FSRSScheduler.compute_mastery(cards, probs)
-        mastery_str = (
-            f'  { mastered }/{ total } mastered' if mastered > 0 else ''
-        )
         self.console.print(
-            f'[comment]// FSRS: { rating.name } → review { due }'
-            f'  [{ focus }]{ mastery_str }[/comment]',
+            f'[comment]// FSRS: { rating.name } → review { due }[/comment]',
         )
 
     async def start(self) -> bool:  # noqa: C901, PLR0912
