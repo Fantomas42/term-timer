@@ -142,6 +142,8 @@ class Trainer(SolveInterface):
 
         self.trainings = load_trainings(self.method, self.step.upper())
 
+        self.total_cases: int = 0
+        self.filtered_cases: int = 0
         self.cases = self.get_cases()
         self.fsrs_probabilities = {
             tc.case.code: tc.case.probability for tc in self.cases
@@ -277,6 +279,7 @@ class Trainer(SolveInterface):
             v.code: v for v in cases.values()
             if v.setup_algorithms
         }
+        self.total_cases = len(valid_cases)
 
         if self.filters:
             valid_cases = {
@@ -284,6 +287,7 @@ class Trainer(SolveInterface):
                 if (case.family or '').lower() in self.filters
                 or any(g.lower() in self.filters for g in (case.groups or []))
             }
+        self.filtered_cases = len(valid_cases)
 
         case_codes = self.case_codes or list(valid_cases.keys())
 
@@ -375,13 +379,53 @@ class Trainer(SolveInterface):
                 f'Training on { self.step_label }',
                 style='trainer',
             )
-        else:
-            self.console.print(
-                f'Training on { len(self.cases) } '
-                f'case{ "s" if len(self.cases) > 1 else "" } on '
-                f'{ self.step_label }',
-                style='trainer',
+            return
+
+        n = len(self.cases)
+        plural = 's' if n > 1 else ''
+        label = self.step_label
+        has_filter = bool(self.filters)
+
+        if has_filter:
+            count_suffix = (
+                f' ({ self.filtered_cases } matching,'
+                f' { self.total_cases } total)'
             )
+        else:
+            count_suffix = f' ({ self.total_cases } total)'
+
+        if self.case_codes:
+            msg = (
+                f'Training on { n } selected case{ plural } on { label }'
+            )
+        elif self.oldest > 0:
+            msg = (
+                f'Training on the { n } least practiced'
+                f' case{ plural } on { label }{ count_suffix }'
+            )
+        elif self.slowest > 0:
+            msg = (
+                f'Training on the { n } slowest'
+                f' case{ plural } on { label }{ count_suffix }'
+            )
+        elif self.random > 0:
+            msg = (
+                f'Training on { n } randomly selected'
+                f' case{ plural } on { label }{ count_suffix }'
+            )
+        elif has_filter:
+            filter_label = ', '.join(self.filters)
+            msg = (
+                f'Training on all { n } case{ plural } on { label }'
+                f' with spaced repetition ({ filter_label } filter)'
+            )
+        else:
+            msg = (
+                f'Training on all { n } case{ plural } on { label }'
+                f' with spaced repetition'
+            )
+
+        self.console.print(msg, style='trainer')
 
     def list_cases(self) -> None:
         """Display a table of all available cases with their training stats."""
