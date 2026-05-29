@@ -444,14 +444,14 @@ class Trainer(SolveInterface):
         no_ao = '[no-ao]N/A[/no-ao]'
 
         table = Table(title=f'{ self.step_label } stats', box=box.SIMPLE)
-        table.add_column('Case', width=40)
+        table.add_column('Case', width=35)
         table.add_column('Σ', width=3, justify='right')
         table.add_column('Last date', width=10, justify='right')
         table.add_column('Best', width=5, justify='right')
         table.add_column('Ao5', width=5, justify='right')
         table.add_column('Ao12', width=5, justify='right')
         if show_fsrs:
-            table.add_column('FSRS', width=10, justify='right')
+            table.add_column('State', width=8, justify='right')
             table.add_column('Due', width=10, justify='right')
 
         for code, case in sorted(valid_cases.items()):
@@ -530,7 +530,7 @@ class Trainer(SolveInterface):
         due = card.due.astimezone()
         now = datetime.now(UTC).astimezone()
         due_str = (
-            '[warning]overdue[/warning]'
+            '[warning]Overdue[/warning]'
             if due <= now
             else f'[no-ao]{ due.strftime("%Y-%m-%d") }[/no-ao]'
         )
