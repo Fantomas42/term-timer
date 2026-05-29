@@ -756,33 +756,21 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Default: False.'
         ),
     )
-    parser.add_argument(
-        '-m', '--new-cases',
-        type=int,
-        default=5,
-        metavar='N',
-        dest='new_cases',
-        help=(
-            'Maximum new cases to introduce per session (default: 5).\n'
-            'Only applies when FSRS is active.'
-        ),
-    )
-
     cases = parser.add_argument_group(
         'Case Selection',
         'By default, cases are selected by FSRS (spaced repetition). '
         'All options below disable FSRS.',
     )
     cases.add_argument(
-        '-c', '--cases',
-        nargs='*',
-        default=[],
-        metavar='CASES',
-        dest='case_codes',
+        '-m', '--new-cases',
+        type=int,
+        default=5,
+        metavar='N',
+        dest='new_cases',
         help=(
-            'Practice specific cases by name.\n'
-            'Disables FSRS case selection (cards are still updated).\n'
-            'Incompatible with --filter, --oldest, --slowest and --random.'
+            'Maximum new cases to introduce per session.\n'
+            'Only applies when FSRS is active.\n'
+            'Default: 5.'
         ),
     )
     cases.add_argument(
@@ -798,7 +786,21 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Incompatible with --cases.'
         ),
     )
-    cases.add_argument(
+
+    selection = cases.add_mutually_exclusive_group()
+    selection.add_argument(
+        '-c', '--cases',
+        nargs='*',
+        default=[],
+        metavar='CASES',
+        dest='case_codes',
+        help=(
+            'Practice specific cases by name.\n'
+            'Disables FSRS case selection (cards are still updated).\n'
+            'Incompatible with --filter, --oldest, --slowest and --random.'
+        ),
+    )
+    selection.add_argument(
         '-d', '--oldest',
         type=int,
         default=0,
@@ -806,11 +808,10 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Select N cases least recently practiced.\n'
             'Cases never practiced are prioritized.\n'
-            'Restricts FSRS scheduling to the N oldest cases.\n'
-            'Mutually exclusive with --cases, --slowest and --random.'
+            'Restricts FSRS scheduling to the N oldest cases.'
         ),
     )
-    cases.add_argument(
+    selection.add_argument(
         '-t', '--slowest',
         type=int,
         default=0,
@@ -818,19 +819,18 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Select N cases with worst average of 12.\n'
             'Cases with fewer than 12 attempts are prioritized.\n'
-            'Restricts FSRS scheduling to the N slowest cases.\n'
-            'Mutually exclusive with --cases, --oldest and --random.'
+            'Restricts FSRS scheduling to the N slowest cases.'
         ),
     )
-    cases.add_argument(
+    selection.add_argument(
         '-n', '--random',
         type=int,
         default=0,
         metavar='N',
         dest='random',
         help=(
-            'Select N cases randomly, disabling FSRS case selection (cards are still updated).\n'
-            'Mutually exclusive with --cases, --oldest and --slowest.'
+            'Select N cases randomly.\n'
+            'Disables FSRS case selection (cards are still updated).'
         ),
     )
 
