@@ -29,7 +29,7 @@ async def trainer(options: Namespace) -> int:  # noqa: C901, PLR0912
         bool(options.case_codes),
         options.oldest > 0,
         options.slowest > 0,
-        options.random,
+        options.random > 0,
     ])
     if active_filters > 1:
         console.print(

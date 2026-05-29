@@ -200,7 +200,7 @@ class TestFSRSWithFilter(unittest.TestCase):
             case_codes: list[str] | None = None,
             oldest: int = 0,
             slowest: int = 0,
-            random: bool = False,
+            random: int = 0,
     ) -> Trainer:
         """Build a minimal OLL Trainer for testing."""
         return Trainer(
@@ -245,7 +245,7 @@ class TestFSRSWithFilter(unittest.TestCase):
 
     def test_fsrs_selection_false_with_random(self) -> None:
         """fsrs_selection is False with --random: FSRS does not drive selection."""
-        timer = self.make_trainer(random=True)
+        timer = self.make_trainer(random=5)
         self.assertFalse(timer.fsrs_selection)
 
     def test_fsrs_update_true_with_cases(self) -> None:
@@ -255,7 +255,7 @@ class TestFSRSWithFilter(unittest.TestCase):
 
     def test_fsrs_update_true_with_random(self) -> None:
         """fsrs_update is True with --random: solves still update FSRS cards."""
-        timer = self.make_trainer(random=True)
+        timer = self.make_trainer(random=5)
         self.assertTrue(timer.fsrs_update)
 
     def test_fsrs_scheduler_instantiated_with_cases(self) -> None:

@@ -813,10 +813,12 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
     cases.add_argument(
         '-n', '--random',
-        action='store_true',
+        type=int,
+        default=0,
+        metavar='N',
         dest='random',
         help=(
-            'Select cases randomly, disabling FSRS case selection (cards are still updated).\n'
+            'Select N cases randomly, disabling FSRS case selection (cards are still updated).\n'
             'Mutually exclusive with --cases, --oldest and --slowest.'
         ),
     )

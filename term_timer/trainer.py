@@ -114,7 +114,7 @@ class Trainer(SolveInterface):
             orientation: CubeOrientation,
             metronome: float,
             rng: Random,
-            random: bool = False,
+            random: int = 0,
             new_card_limit: int = 5,
     ) -> None:
         """Initialize trainer with step configuration and display options."""
@@ -238,6 +238,26 @@ class Trainer(SolveInterface):
 
         return [code for code, _, _ in sorted_cases[:count]]
 
+    def select_random_cases(
+            self,
+            valid_cases: dict[str, Case],
+            count: int,
+    ) -> list[str]:
+        """
+        Select cases randomly.
+
+        Args:
+            valid_cases: Dictionary of valid cases for the step
+            count: Number of cases to select
+
+        Returns:
+            List of randomly selected case codes
+
+        """
+        codes = list(valid_cases.keys())
+        self.rng.shuffle(codes)
+        return codes[:count]
+
     def get_cases(self) -> list[TrainingCase]:
         """
         Build list of trained cases.
@@ -276,6 +296,11 @@ class Trainer(SolveInterface):
             case_codes = self.select_slowest_cases(
                 valid_cases,
                 self.slowest,
+            )
+        elif self.random > 0:
+            case_codes = self.select_random_cases(
+                valid_cases,
+                self.random,
             )
 
         def setup_sorter(algorithm: Algorithm) -> tuple[float, float]:
