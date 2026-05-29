@@ -52,6 +52,8 @@ async def trainer(options: Namespace) -> int:  # noqa: C901
         instance.list_cases()
         return 0
 
+    instance.trainer_line()
+
     if options.bluetooth:
         await instance.bluetooth_connect(
             use_gyroscope=options.use_gyroscope,

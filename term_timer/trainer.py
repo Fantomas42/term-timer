@@ -161,8 +161,6 @@ class Trainer(SolveInterface):
         self.fsrs_rater = PerformanceRater() if self.fsrs_update else None
         self.fsrs_pending_rating: RatingBreakdown | None = None
 
-        self.trainer_line()
-
     def select_oldest_cases(
             self,
             valid_cases: dict[str, Case],

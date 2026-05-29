@@ -70,7 +70,7 @@ def build_train_instance(session_config: SessionConfig) -> Trainer:
         Configured Trainer instance.
 
     """
-    return Trainer(
+    instance = Trainer(
         step=session_config.get('step', TRAINER_STEP or 'oll'),
         case_codes=session_config.get('cases', []),
         oldest=session_config.get('oldest', 0),
@@ -89,6 +89,8 @@ def build_train_instance(session_config: SessionConfig) -> Trainer:
         new_cases_limit=session_config.get('new_cases_limit', 5),
         rng=Random(),  # noqa: S311
     )
+    instance.trainer_line()
+    return instance
 
 
 def build_solve_instance(session_config: SessionConfig) -> Timer:
