@@ -1,4 +1,29 @@
-"""Performance rating for FSRS using a composite score."""
+"""
+Performance rating for FSRS using a composite score.
+
+Score semantics
+---------------
+The score is a **difficulty ratio**: higher is worse, lower is better.
+
+- score == 1.0  → exactly on target → Good
+- score  > 1.0  → slower / more errors than target → Hard or Again
+- score  < 1.0  → better than target → Easy
+
+Thresholds: Again > 1.5, Hard > 1.2, Easy < 0.8, Good otherwise.
+
+Reaching Easy (score < 0.8)
+----------------------------
+Easy requires being at least 25% better than the target (time or TPS).
+With Bluetooth data it is even harder: quality penalties (pauses, missed
+moves, delta HTM) are strictly additive — they can only push the score
+*up*, never down.  A single pause adds 0.2 to the score, which alone can
+prevent Easy even when execution speed is well above target.
+
+Example: PLL target TPS is 8.0.  To reach Easy despite one pause the
+solver would need a TPS score ≤ 0.6, i.e. executing at 13+ TPS.
+Easy is therefore reserved for cases that are genuinely mastered with
+clean, fast, pause-free execution.
+"""
 
 from typing import TYPE_CHECKING
 from typing import NamedTuple
