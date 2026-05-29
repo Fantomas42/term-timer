@@ -189,3 +189,85 @@ class TestTrainerModule(unittest.TestCase):
         codes_dot = {tc.case.code for tc in timer_dot.cases}
         codes_cross = {tc.case.code for tc in timer_cross.cases}
         self.assertEqual(codes_combined, codes_dot | codes_cross)
+
+
+class TestFSRSWithFilter(unittest.TestCase):
+    """FSRS stays active when --filter is used without conflicting options."""
+
+    def make_trainer(
+            self,
+            filters: list[str] | None = None,
+            case_codes: list[str] | None = None,
+            oldest: int = 0,
+            slowest: int = 0,
+            random: bool = False,
+    ) -> Trainer:
+        """Build a minimal OLL Trainer for testing."""
+        return Trainer(
+            step='oll',
+            case_codes=case_codes or [],
+            oldest=oldest,
+            slowest=slowest,
+            filters=filters or [],
+            free_play=True,
+            show_solution=False,
+            show_cube=False,
+            metronome=0,
+            orientation='DF',
+            rng=Random(),  # noqa: S311
+            random=random,
+        )
+
+    def test_fsrs_active_with_filter(self) -> None:
+        """fsrs_active is True when only --filter is set."""
+        timer = self.make_trainer(filters=['Dot'])
+        self.assertTrue(timer.fsrs_active)
+
+    def test_fsrs_scheduler_instantiated_with_filter(self) -> None:
+        """fsrs_scheduler is not None when FSRS is active with a filter."""
+        timer = self.make_trainer(filters=['Dot'])
+        self.assertIsNotNone(timer.fsrs_scheduler)
+
+    def test_fsrs_probabilities_restricted_to_filter(self) -> None:
+        """fsrs_probabilities contains only cases from the filtered subset."""
+        timer = self.make_trainer(filters=['Dot'])
+        filtered_codes = {tc.case.code for tc in timer.cases}
+        self.assertEqual(set(timer.fsrs_probabilities.keys()), filtered_codes)
+
+    def test_fsrs_probabilities_subset_of_all_cases(self) -> None:
+        """Filtered fsrs_probabilities is a strict subset of the full set."""
+        timer_filtered = self.make_trainer(filters=['Dot'])
+        timer_all = self.make_trainer()
+        filtered_keys = set(timer_filtered.fsrs_probabilities.keys())
+        all_keys = set(timer_all.fsrs_probabilities.keys())
+        self.assertTrue(filtered_keys < all_keys)
+
+    def test_fsrs_active_with_oldest(self) -> None:
+        """fsrs_active is True when --oldest restricts the pool."""
+        timer = self.make_trainer(oldest=3)
+        self.assertTrue(timer.fsrs_active)
+
+    def test_fsrs_active_with_slowest(self) -> None:
+        """fsrs_active is True when --slowest restricts the pool."""
+        timer = self.make_trainer(slowest=3)
+        self.assertTrue(timer.fsrs_active)
+
+    def test_fsrs_probabilities_restricted_to_oldest(self) -> None:
+        """fsrs_probabilities contains only the N oldest cases."""
+        timer = self.make_trainer(oldest=3)
+        self.assertEqual(len(timer.fsrs_probabilities), 3)
+
+    def test_fsrs_probabilities_restricted_to_slowest(self) -> None:
+        """fsrs_probabilities contains only the N slowest cases."""
+        timer = self.make_trainer(slowest=3)
+        self.assertEqual(len(timer.fsrs_probabilities), 3)
+
+    def test_fsrs_active_with_filter_and_oldest(self) -> None:
+        """FSRS is active when --filter and --oldest are combined."""
+        timer = self.make_trainer(filters=['Dot'], oldest=3)
+        self.assertTrue(timer.fsrs_active)
+
+    def test_fsrs_inactive_with_filter_and_random(self) -> None:
+        """--random still disables FSRS even when --filter is set."""
+        timer = self.make_trainer(filters=['Dot'], random=True)
+        self.assertFalse(timer.fsrs_active)

@@ -151,8 +151,6 @@ class Trainer(SolveInterface):
 
         self.fsrs_active = (
             self.step_config.training_case is None
-            and self.oldest == 0
-            and self.slowest == 0
             and not self.case_codes
             and not self.random
         )
