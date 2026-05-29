@@ -916,7 +916,7 @@ class Trainer(SolveInterface):
         due = preview_card.due.astimezone().strftime('%Y-%m-%d')
 
         debug = (
-            f'  [tps:{breakdown.tps_score:.2f}'
+            rf'  \[tps:{breakdown.tps_score:.2f}'
             f' +pauses:{breakdown.pauses:.2f}'
             f' +missed:{breakdown.missed:.2f}'
             f' +Δhtm:{breakdown.delta_htm}'
