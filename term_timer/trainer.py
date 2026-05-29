@@ -41,6 +41,7 @@ from term_timer.formatter import format_fluency
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
 from term_timer.fsrs.rating import PerformanceRater
+from term_timer.fsrs.rating import RatingBreakdown
 from term_timer.fsrs.scheduler import FSRSScheduler
 from term_timer.in_out import load_trainings
 from term_timer.in_out import save_trainings
@@ -158,6 +159,7 @@ class Trainer(SolveInterface):
         )
         self.fsrs_scheduler = FSRSScheduler() if self.fsrs_active else None
         self.fsrs_rater = PerformanceRater() if self.fsrs_active else None
+        self.fsrs_pending_rating: RatingBreakdown | None = None
 
         self.trainer_line()
 
@@ -801,7 +803,11 @@ class Trainer(SolveInterface):
                 and selected_case.code in self.trainings.cases
             ):
                 case_training = self.trainings.cases[selected_case.code]
-                rating = self.fsrs_rater.rate(solve, self.step)
+                pending = self.fsrs_pending_rating
+                rating = (
+                    pending.rating if pending is not None
+                    else self.fsrs_rater.rate(solve, self.step)
+                )
                 case_training.fsrs_card = self.fsrs_scheduler.update_card(
                     case_training.fsrs_card,
                     rating,
@@ -825,6 +831,33 @@ class Trainer(SolveInterface):
             )
 
         return char in {'q', 'k', ESCAPE_CHAR}
+
+    def fsrs_preview_line(self, solve: Solve, selected_case: Case) -> None:
+        """Compute and display FSRS rating preview before the save prompt."""
+        if self.fsrs_rater is None or self.fsrs_scheduler is None:
+            return
+        breakdown = self.fsrs_rater.rate_with_details(solve, self.step)
+        self.fsrs_pending_rating = breakdown
+
+        preview_card = self.fsrs_scheduler.update_card(
+            self.trainings.cases[selected_case.code].fsrs_card
+            if selected_case.code in self.trainings.cases
+            else None,
+            breakdown.rating,
+        )
+        due = preview_card.due.astimezone().strftime('%Y-%m-%d')
+
+        debug = (
+            f'  [tps:{breakdown.tps_score:.2f}'
+            f' +pauses:{breakdown.pauses:.2f}'
+            f' +missed:{breakdown.missed:.2f}'
+            f' +Δhtm:{breakdown.delta_htm}'
+            f' score:{breakdown.score:.2f}]'
+        )
+        self.console.print(
+            f'[comment]// FSRS preview: { breakdown.rating.name }'
+            f' → review { due }{ debug }[/comment]',
+        )
 
     def fsrs_display_line(self, case_code: str, rating: Rating) -> None:
         """Display FSRS rating, due date, and session focus after saving."""
@@ -959,9 +992,12 @@ class Trainer(SolveInterface):
 
             return True
 
+        self.fsrs_pending_rating = None
         self.solve_line(solve, selected_case)
 
         if not self.free_play:
+            if self.fsrs_active:
+                self.fsrs_preview_line(solve, selected_case)
             self.save_line()
 
             quit_training = await self.save_training(selected_case, solve)

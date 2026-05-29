@@ -1,6 +1,7 @@
 """Performance rating for FSRS using a composite score."""
 
 from typing import TYPE_CHECKING
+from typing import NamedTuple
 
 from cubing_algs.cases import get_case
 from cubing_algs.transform.auf import remove_auf_moves
@@ -37,8 +38,46 @@ SCORE_HARD: float = 1.2
 SCORE_EASY: float = 0.8
 
 
+class RatingBreakdown(NamedTuple):
+    """Detailed score components for a FSRS rating computation."""
+
+    rating: Rating
+    tps_score: float
+    pauses: float
+    missed: float
+    delta_htm: float
+    score: float
+
+
 class PerformanceRater:
     """Converts solve performance into FSRS ratings."""
+
+    def rate_with_details(
+        self,
+        solve: 'Solve',
+        step: str,
+    ) -> RatingBreakdown:
+        """
+        Rate performance and return full score breakdown.
+
+        Returns:
+            RatingBreakdown with rating and all intermediate score components.
+
+        """
+        if not solve.advanced:
+            ratio = self.compute_time_ratio(solve.time, step)
+            rating = self.score_to_rating(ratio)
+            return RatingBreakdown(rating, ratio, 0.0, 0.0, 0, ratio)
+
+        tps_score = self.compute_tps_score(solve, step)
+        pauses = solve.execution_pauses
+        missed_qtm = solve.all_missed_moves
+        delta_htm = self.compute_delta_htm(solve, step)
+        score = tps_score + pauses * 0.2 + missed_qtm * 0.2 + delta_htm * 0.1
+        rating = self.score_to_rating(score)
+        return RatingBreakdown(
+            rating, tps_score, pauses * 0.2, missed_qtm * 0.2, delta_htm, score,
+        )
 
     def rate(
         self,
@@ -93,10 +132,24 @@ class PerformanceRater:
             FSRS Rating based on ratio vs step target.
 
         """
+        return self.score_to_rating(self.compute_time_ratio(elapsed_time, step))
+
+    @staticmethod
+    def compute_time_ratio(elapsed_time: int, step: str) -> float:
+        """
+        Compute elapsed time / target time ratio for the given step.
+
+        Args:
+            elapsed_time: Elapsed time in nanoseconds
+            step: Step name used to look up the target in TARGET_TIMES
+
+        Returns:
+            Ratio of elapsed time to target time (1.0 = exactly on target).
+
+        """
         target = TARGET_TIMES.get(step.lower(), 3.0)
         target_ns = int(target * SECOND)
-        ratio = elapsed_time / target_ns
-        return self.score_to_rating(ratio)
+        return elapsed_time / target_ns
 
     @staticmethod
     def score_to_rating(score: float) -> Rating:
