@@ -154,7 +154,6 @@ class Trainer(SolveInterface):
             and self.oldest == 0
             and self.slowest == 0
             and not self.case_codes
-            and not self.filters
             and not self.random
         )
         self.fsrs_scheduler = FSRSScheduler() if self.fsrs_active else None

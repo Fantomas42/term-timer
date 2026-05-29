@@ -764,7 +764,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Filter cases by family or group (e.g. Dot, Cross, OCLL).\n'
             'Multiple values are combined with OR logic.\n'
-            'Disables FSRS. Incompatible with --cases.'
+            'Restricts FSRS scheduling to the filtered subset. Incompatible with --cases.'
         ),
     )
     cases.add_argument(
