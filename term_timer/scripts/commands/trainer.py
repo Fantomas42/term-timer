@@ -35,7 +35,7 @@ async def trainer(options: Namespace) -> int:  # noqa: C901
             slowest=options.slowest,
             random=options.random,
             filters=options.filters,
-            new_card_limit=options.new_cases,
+            new_cases_limit=options.new_cases,
             free_play=options.free_play,
             orientation=options.orientation,
             show_solution=options.show_solution,

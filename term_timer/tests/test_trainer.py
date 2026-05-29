@@ -208,17 +208,23 @@ class TestTrainerModule(unittest.TestCase):
 
 
 class TestFSRSWithFilter(unittest.TestCase):
-    """fsrs_selection and fsrs_update behave correctly across option combinations."""
+    """fsrs_selection and fsrs_update behave correctly across combinations."""
 
+    @staticmethod
     def make_trainer(
-            self,
             filters: list[str] | None = None,
             case_codes: list[str] | None = None,
             oldest: int = 0,
             slowest: int = 0,
             random: int = 0,
     ) -> Trainer:
-        """Build a minimal OLL Trainer for testing."""
+        """
+        Build a minimal OLL Trainer for testing.
+
+        Returns:
+            Configured Trainer instance with free_play enabled.
+
+        """
         return Trainer(
             step='oll',
             case_codes=case_codes or [],
@@ -256,12 +262,12 @@ class TestFSRSWithFilter(unittest.TestCase):
         self.assertTrue(timer.fsrs_selection)
 
     def test_fsrs_selection_false_with_cases(self) -> None:
-        """fsrs_selection is False with --cases: FSRS does not drive selection."""
+        """fsrs_selection is False with --cases: FSRS skips selection."""
         timer = self.make_trainer(case_codes=['01', '02'])
         self.assertFalse(timer.fsrs_selection)
 
     def test_fsrs_selection_false_with_random(self) -> None:
-        """fsrs_selection is False with --random: FSRS does not drive selection."""
+        """fsrs_selection is False with --random: FSRS skips selection."""
         timer = self.make_trainer(random=5)
         self.assertFalse(timer.fsrs_selection)
 
