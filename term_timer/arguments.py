@@ -770,7 +770,8 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         dest='case_codes',
         help=(
             'Practice specific cases by name.\n'
-            'Disables FSRS. Incompatible with --filter, --oldest, --slowest and --random.'
+            'Disables FSRS case selection (cards are still updated).\n'
+            'Incompatible with --filter, --oldest, --slowest and --random.'
         ),
     )
     cases.add_argument(
@@ -782,7 +783,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Filter cases by family or group (e.g. Dot, Cross, OCLL).\n'
             'Multiple values are combined with OR logic.\n'
-            'Restricts FSRS scheduling to the filtered subset.\n'
+            'Restricts the case pool; compatible with --oldest, --slowest and --random.\n'
             'Incompatible with --cases.'
         ),
     )
@@ -795,7 +796,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Select N cases least recently practiced.\n'
             'Cases never practiced are prioritized.\n'
             'Restricts FSRS scheduling to the N oldest cases.\n'
-            'Mutually exclusive with --cases and --slowest.'
+            'Mutually exclusive with --cases, --slowest and --random.'
         ),
     )
     cases.add_argument(
@@ -807,7 +808,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Select N cases with worst average of 12.\n'
             'Cases with fewer than 12 attempts are prioritized.\n'
             'Restricts FSRS scheduling to the N slowest cases.\n'
-            'Mutually exclusive with --cases and --oldest.'
+            'Mutually exclusive with --cases, --oldest and --random.'
         ),
     )
     cases.add_argument(
@@ -815,7 +816,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         action='store_true',
         dest='random',
         help=(
-            'Select cases randomly, disabling FSRS.\n'
+            'Select cases randomly, disabling FSRS case selection (cards are still updated).\n'
             'Mutually exclusive with --cases, --oldest and --slowest.'
         ),
     )
