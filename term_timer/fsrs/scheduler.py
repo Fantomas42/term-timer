@@ -4,10 +4,10 @@ from datetime import UTC
 from datetime import datetime
 from random import choices
 
-from term_timer.fsrs.types import Card
-from term_timer.fsrs.types import Rating
-from term_timer.fsrs.types import Scheduler
-from term_timer.fsrs.types import State
+from fsrs import Card
+from fsrs import Rating
+from fsrs import Scheduler
+from fsrs import State
 
 EXPLORATION_THRESHOLD = 0.2
 

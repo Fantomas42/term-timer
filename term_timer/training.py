@@ -4,7 +4,7 @@ from dataclasses import field
 from typing import NotRequired
 from typing import TypedDict
 
-from term_timer.fsrs.types import Card
+from fsrs import Card
 
 
 class FSRSCardData(TypedDict):

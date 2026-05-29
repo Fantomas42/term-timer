@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 
 from cubing_algs.cases import get_case
 from cubing_algs.transform.auf import remove_auf_moves
+from fsrs import Rating
 
 from term_timer.constants import SECOND
-from term_timer.fsrs.types import Rating
 
 if TYPE_CHECKING:
     from term_timer.solve import Solve

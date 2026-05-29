@@ -5,11 +5,12 @@ from datetime import datetime
 from unittest.mock import PropertyMock
 from unittest.mock import patch
 
+from fsrs import Rating
+
 from term_timer.constants import SECOND
 from term_timer.fsrs.rating import TARGET_TIMES
 from term_timer.fsrs.rating import TARGET_TPS
 from term_timer.fsrs.rating import PerformanceRater
-from term_timer.fsrs.types import Rating
 from term_timer.solve import Solve
 
 

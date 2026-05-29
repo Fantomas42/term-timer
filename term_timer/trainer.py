@@ -18,6 +18,7 @@ from cubing_algs.constants import ORIENTATION_FACE_MOVES
 from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
+from fsrs import Rating
 from rich import box
 from rich.table import Table
 
@@ -41,7 +42,6 @@ from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
 from term_timer.fsrs.rating import PerformanceRater
 from term_timer.fsrs.scheduler import FSRSScheduler
-from term_timer.fsrs.types import Rating
 from term_timer.in_out import load_trainings
 from term_timer.in_out import save_trainings
 from term_timer.interface import SolveInterface

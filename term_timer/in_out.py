@@ -3,17 +3,20 @@ import json
 import operator
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import cast
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.exceptions import InvalidMoveError
 from cubing_algs.parsing import parse_moves
+from fsrs import Card
+
+if TYPE_CHECKING:
+    from fsrs.card import CardDict
 
 from term_timer.constants import DAILY_DIRECTORY
 from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.constants import TRAININGS_DIRECTORY
-from term_timer.fsrs.types import Card
-from term_timer.fsrs.types import CardDict
 from term_timer.solve import Solve
 from term_timer.solve import SolveData
 from term_timer.training import CaseTraining

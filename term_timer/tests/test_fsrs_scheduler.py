@@ -4,10 +4,11 @@ from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
 
+from fsrs import Card
+from fsrs import State
+
 from term_timer.fsrs.scheduler import MASTERY_STABILITY_DAYS
 from term_timer.fsrs.scheduler import FSRSScheduler
-from term_timer.fsrs.types import Card
-from term_timer.fsrs.types import State
 
 
 def make_card(
