@@ -782,7 +782,8 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Filter cases by family or group (e.g. Dot, Cross, OCLL).\n'
             'Multiple values are combined with OR logic.\n'
-            'Restricts the case pool; compatible with --oldest, --slowest and --random.\n'
+            'Restricts the case pool; compatible with --oldest, --slowest'
+            ' and --random.\n'
             'Incompatible with --cases.'
         ),
     )
@@ -802,35 +803,44 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
     selection.add_argument(
         '-d', '--oldest',
+        nargs='?',
         type=int,
         default=0,
+        const=5,
         metavar='N',
         help=(
             'Select N cases least recently practiced.\n'
             'Cases never practiced are prioritized.\n'
-            'Restricts FSRS scheduling to the N oldest cases.'
+            'Restricts FSRS scheduling to the N oldest cases.\n'
+            'Default N: 5.'
         ),
     )
     selection.add_argument(
         '-t', '--slowest',
+        nargs='?',
         type=int,
         default=0,
+        const=5,
         metavar='N',
         help=(
             'Select N cases with worst average of 12.\n'
             'Cases with fewer than 12 attempts are prioritized.\n'
-            'Restricts FSRS scheduling to the N slowest cases.'
+            'Restricts FSRS scheduling to the N slowest cases.\n'
+            'Default N: 5.'
         ),
     )
     selection.add_argument(
         '-n', '--random',
+        nargs='?',
         type=int,
         default=0,
+        const=5,
         metavar='N',
         dest='random',
         help=(
             'Select N cases randomly.\n'
-            'Disables FSRS case selection (cards are still updated).'
+            'Disables FSRS case selection (cards are still updated).\n'
+            'Default N: 5.'
         ),
     )
 
