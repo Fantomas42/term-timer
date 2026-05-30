@@ -92,7 +92,7 @@ STEP_CONFIGS: Final[dict[str, StepDef]] = {
 }
 
 
-class Trainer(SolveInterface):
+class Trainer(SolveInterface):  # noqa: PLR0904
     """
     Training interface for practicing specific CFOP cases.
 
@@ -160,6 +160,7 @@ class Trainer(SolveInterface):
         self.fsrs_scheduler = FSRSScheduler() if self.fsrs_update else None
         self.fsrs_rater = PerformanceRater() if self.fsrs_update else None
         self.fsrs_pending_rating: RatingBreakdown | None = None
+        self.fsrs_last_focus: str | None = None
 
     def select_oldest_cases(
             self,
@@ -428,25 +429,6 @@ class Trainer(SolveInterface):
 
         self.console.print(msg, style='trainer')
 
-        if self.fsrs_selection:
-            cards = {
-                code: ct.fsrs_card
-                for code, ct in self.trainings.cases.items()
-                if ct.fsrs_card is not None
-            }
-            focus = FSRSScheduler.compute_session_focus(
-                cards, self.fsrs_probabilities,
-            )
-            mastered, total = FSRSScheduler.compute_mastery(
-                cards, self.fsrs_probabilities,
-            )
-            mastery_str = (
-                f'{ mastered }/{ total } mastered' if mastered > 0 else ''
-            )
-            self.console.print(
-                f'[comment]// FSRS focus: { focus } { mastery_str }[/comment]',
-            )
-
     def list_cases(self) -> None:
         """Display a table of all available cases with their training stats."""
         if self.step_config.training_case is not None:
@@ -553,6 +535,32 @@ class Trainer(SolveInterface):
         )
         return [state_str, due_str]
 
+    def fsrs_focus_line(self) -> None:
+        """Display FSRS session focus and mastery stats if they changed."""
+        if not self.fsrs_selection:
+            return
+        cards = {
+            code: ct.fsrs_card
+            for code, ct in self.trainings.cases.items()
+            if ct.fsrs_card is not None
+        }
+        focus = FSRSScheduler.compute_session_focus(
+            cards, self.fsrs_probabilities,
+        )
+        mastered, total = FSRSScheduler.compute_mastery(
+            cards, self.fsrs_probabilities,
+        )
+        mastery_str = (
+            f'{ mastered }/{ total } mastered' if mastered > 0 else ''
+        )
+        focus_str = f'{ focus } { mastery_str }'.strip()
+        if focus_str == self.fsrs_last_focus:
+            return
+        self.fsrs_last_focus = focus_str
+        self.console.print(
+            f'[comment]// FSRS focus: { focus_str }[/comment]',
+        )
+
     def start_line(
             self,
             cube: VCube,
@@ -560,6 +568,8 @@ class Trainer(SolveInterface):
             solution: Algorithm,
     ) -> None:
         """Display training case, scramble, and optional solution."""
+        self.fsrs_focus_line()
+
         link = format_term_timer_case_url(selected_case)
         name = selected_case.pretty_name
 
