@@ -18,7 +18,6 @@ from cubing_algs.constants import ORIENTATION_FACE_MOVES
 from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
-from fsrs import Rating
 from rich import box
 from rich.table import Table
 
@@ -92,7 +91,7 @@ STEP_CONFIGS: Final[dict[str, StepDef]] = {
 }
 
 
-class Trainer(SolveInterface):  # noqa: PLR0904
+class Trainer(SolveInterface):
     """
     Training interface for practicing specific CFOP cases.
 
@@ -914,7 +913,6 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                     case_training.fsrs_card,
                     rating,
                 )
-                self.fsrs_display_line(selected_case.code, rating)
 
             save_trainings(self.trainings)
             SOUND_PLAYER.save_confirmed()
@@ -938,6 +936,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         """Compute and display FSRS rating preview before the save prompt."""
         if self.fsrs_rater is None or self.fsrs_scheduler is None:
             return
+
         breakdown = self.fsrs_rater.rate_with_details(solve, self.step)
         self.fsrs_pending_rating = breakdown
 
@@ -956,22 +955,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             f' +Δhtm:{breakdown.delta_htm}'
             f' score:{breakdown.score:.2f}]'
         )
+
         self.console.print(
             f'FSRS preview: { breakdown.rating.name }'
             f' → review { due }{ debug }',
-            style='fsrs',
-        )
-
-    def fsrs_display_line(self, case_code: str, rating: Rating) -> None:
-        """Display FSRS rating and due date after saving."""
-        if case_code not in self.trainings.cases:
-            return
-        card = self.trainings.cases[case_code].fsrs_card
-        if card is None:
-            return
-        due = card.due.astimezone().strftime('%Y-%m-%d')
-        self.console.print(
-            f'FSRS: { rating.name } → review { due }',
             style='fsrs',
         )
 
