@@ -110,16 +110,16 @@ class FSRSScheduler:
         """
         total = len(probabilities)
         if total == 0 or not cards:
-            return f'exploration (0/{total} seen)'
+            return f'Exploration (0/{total} seen)'
 
         seen = len(cards)
         if seen / total < EXPLORATION_THRESHOLD:
-            return f'exploration ({seen}/{total} seen)'
+            return f'Exploration ({seen}/{total} seen)'
 
         relearning = [c for c, card in cards.items()
                       if card.state == State.Relearning]
         if relearning:
-            return f'remediation ({len(relearning)} relearning)'
+            return f'Remediation ({len(relearning)} relearning)'
 
         now = datetime.now(UTC)
         learning = [c for c, card in cards.items()
@@ -129,12 +129,12 @@ class FSRSScheduler:
         due = [c for c, card in cards.items() if card.due <= now]
 
         if len(learning) >= len(review):
-            return f'learning ({len(learning)})'
+            return f'Learning ({len(learning)})'
 
         if due:
-            return f'review ({len(due)} due)'
+            return f'Review ({len(due)} due)'
 
-        return 'maintenance'
+        return 'Maintenance'
 
     @staticmethod
     def compute_mastery(

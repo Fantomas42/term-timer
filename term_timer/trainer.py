@@ -561,8 +561,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.fsrs_last_focus = focus_str
 
         self.console.print(
-            f'Training focus: { focus_str }',
-            style='fsrs',
+            f'[fsrs]Training Focus:[/fsrs] [context]{ focus_str }[/context]',
         )
 
     def fsrs_case_line(self, selected_case: Case) -> None:
@@ -575,8 +574,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         if case_training is None or case_training.fsrs_card is None:
             self.console.print(
-                f'{ name }  [comment]New[/comment]',
-                style='fsrs',
+                f'[fsrs]{ name }[/fsrs] [new]New[/new]',
             )
             return
 
@@ -598,9 +596,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         metrics_str = ''
         if card.stability is not None:
-            metrics_str += f'  S:[comment]{ card.stability:.1f}d[/comment]'
+            metrics_str += f' S:[comment]{ card.stability:.1f}d[/comment]'
         if card.difficulty is not None:
-            metrics_str += f'  D:[comment]{ card.difficulty:.1f}[/comment]'
+            metrics_str += f' D:[comment]{ card.difficulty:.1f}[/comment]'
 
         due = card.due.astimezone()
         now = datetime.now(UTC).astimezone()
@@ -612,21 +610,20 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             s = 's' if n > 1 else ''
             delta_str = f'[warning]{ n } day{ s } ago[/warning]'
             due_str = (
-                f'  [warning]Overdue[/warning]'
-                f'  { due_date_str }  { delta_str }'
+                f' [warning]Overdue[/warning]'
+                f' { due_date_str } { delta_str }'
             )
         elif delta_days == 0:
-            due_str = f'  [warning]Due today[/warning]  { due_date_str }'
+            due_str = f' [warning]Due today[/warning] { due_date_str }'
         else:
             delta_str = (
                 f'[comment]in { delta_days }'
                 f' day{ "s" if delta_days > 1 else "" }[/comment]'
             )
-            due_str = f'  → { due_date_str }  { delta_str }'
+            due_str = f' { due_date_str } { delta_str }'
 
         self.console.print(
-            f'{ name }  { state_str }{ metrics_str }{ due_str }',
-            style='fsrs',
+            f'[fsrs]{ name }[/fsrs] { state_str }{ metrics_str }{ due_str }',
         )
 
     def start_line(
