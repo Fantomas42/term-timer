@@ -539,6 +539,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         """Display FSRS session focus and mastery stats if they changed."""
         if not self.fsrs_selection:
             return
+
         cards = {
             code: ct.fsrs_card
             for code, ct in self.trainings.cases.items()
@@ -554,11 +555,15 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             f'{ mastered }/{ total } mastered' if mastered > 0 else ''
         )
         focus_str = f'{ focus } { mastery_str }'.strip()
+
         if focus_str == self.fsrs_last_focus:
             return
+
         self.fsrs_last_focus = focus_str
+
         self.console.print(
-            f'[comment]// FSRS focus: { focus_str }[/comment]',
+            f'Training focus: { focus_str }',
+            style='fsrs',
         )
 
     def start_line(
@@ -952,8 +957,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             f' score:{breakdown.score:.2f}]'
         )
         self.console.print(
-            f'[comment]// FSRS preview: { breakdown.rating.name }'
-            f' → review { due }{ debug }[/comment]',
+            f'FSRS preview: { breakdown.rating.name }'
+            f' → review { due }{ debug }',
+            style='fsrs',
         )
 
     def fsrs_display_line(self, case_code: str, rating: Rating) -> None:
@@ -965,7 +971,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             return
         due = card.due.astimezone().strftime('%Y-%m-%d')
         self.console.print(
-            f'[comment]// FSRS: { rating.name } → review { due }[/comment]',
+            f'FSRS: { rating.name } → review { due }',
+            style='fsrs',
         )
 
     async def start(self) -> bool:  # noqa: C901, PLR0912
