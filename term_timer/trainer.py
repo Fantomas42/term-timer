@@ -91,7 +91,7 @@ STEP_CONFIGS: Final[dict[str, StepDef]] = {
 }
 
 
-class Trainer(SolveInterface):
+class Trainer(SolveInterface):  # noqa: PLR0904
     """
     Training interface for practicing specific CFOP cases.
 
@@ -565,6 +565,70 @@ class Trainer(SolveInterface):
             style='fsrs',
         )
 
+    def fsrs_case_line(self, selected_case: Case) -> None:
+        """Display FSRS card state, metrics, due date and delta."""
+        if not self.fsrs_update or self.fsrs_scheduler is None:
+            return
+
+        name = selected_case.pretty_name
+        case_training = self.trainings.cases.get(selected_case.code)
+
+        if case_training is None or case_training.fsrs_card is None:
+            self.console.print(
+                f'{ name }  [comment]New[/comment]',
+                style='fsrs',
+            )
+            return
+
+        card = case_training.fsrs_card
+        inner_scheduler = self.fsrs_scheduler.scheduler
+
+        if card.step is not None:
+            total_steps = (
+                len(inner_scheduler.relearning_steps)
+                if card.state.name == 'Relearning'
+                else len(inner_scheduler.learning_steps)
+            )
+            state_str = (
+                f'[comment]{ card.state.name }'
+                f' ({ card.step + 1 }/{ total_steps })[/comment]'
+            )
+        else:
+            state_str = f'[comment]{ card.state.name }[/comment]'
+
+        metrics_str = ''
+        if card.stability is not None:
+            metrics_str += f'  S:[comment]{ card.stability:.1f}d[/comment]'
+        if card.difficulty is not None:
+            metrics_str += f'  D:[comment]{ card.difficulty:.1f}[/comment]'
+
+        due = card.due.astimezone()
+        now = datetime.now(UTC).astimezone()
+        delta_days = (due.date() - now.date()).days
+        due_date_str = f'[no-ao]{ due.strftime("%Y-%m-%d") }[/no-ao]'
+
+        if delta_days < 0:
+            n = abs(delta_days)
+            s = 's' if n > 1 else ''
+            delta_str = f'[warning]{ n } day{ s } ago[/warning]'
+            due_str = (
+                f'  [warning]Overdue[/warning]'
+                f'  { due_date_str }  { delta_str }'
+            )
+        elif delta_days == 0:
+            due_str = f'  [warning]Due today[/warning]  { due_date_str }'
+        else:
+            delta_str = (
+                f'[comment]in { delta_days }'
+                f' day{ "s" if delta_days > 1 else "" }[/comment]'
+            )
+            due_str = f'  → { due_date_str }  { delta_str }'
+
+        self.console.print(
+            f'{ name }  { state_str }{ metrics_str }{ due_str }',
+            style='fsrs',
+        )
+
     def start_line(
             self,
             cube: VCube,
@@ -573,6 +637,7 @@ class Trainer(SolveInterface):
     ) -> None:
         """Display training case, scramble, and optional solution."""
         self.fsrs_focus_line()
+        self.fsrs_case_line(selected_case)
 
         link = format_term_timer_case_url(selected_case)
         name = selected_case.pretty_name
