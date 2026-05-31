@@ -579,6 +579,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             return
 
         card = case_training.fsrs_card
+        state_klass = card.state.name.lower()
         inner_scheduler = self.fsrs_scheduler.scheduler
 
         if card.step is not None:
@@ -588,42 +589,43 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 else len(inner_scheduler.learning_steps)
             )
             state_str = (
-                f'[comment]{ card.state.name }'
-                f' ({ card.step + 1 }/{ total_steps })[/comment]'
+                f'[{ state_klass }]{ card.state.name }'
+                f' ({ card.step + 1 }/{ total_steps })'
+                f'[/{ state_klass }]'
             )
         else:
-            state_str = f'[comment]{ card.state.name }[/comment]'
+            state_str = (
+                f'[{ state_klass }]{ card.state.name }[/{ state_klass }]'
+            )
 
         metrics_str = ''
         if card.stability is not None:
-            metrics_str += f' S:[comment]{ card.stability:.1f}d[/comment]'
-        if card.difficulty is not None:
-            metrics_str += f' D:[comment]{ card.difficulty:.1f}[/comment]'
+            metrics_str = (
+                f' (S:{ card.stability:.1f}d '
+                f'D:{ card.difficulty:.1f})'
+            )
 
         due = card.due.astimezone()
         now = datetime.now(UTC).astimezone()
         delta_days = (due.date() - now.date()).days
-        due_date_str = f'[no-ao]{ due.strftime("%Y-%m-%d") }[/no-ao]'
 
         if delta_days < 0:
             n = abs(delta_days)
             s = 's' if n > 1 else ''
-            delta_str = f'[warning]{ n } day{ s } ago[/warning]'
-            due_str = (
-                f' [warning]Overdue[/warning]'
-                f' { due_date_str } { delta_str }'
-            )
+            delta_str = f'{ n } day{ s } ago'
+            due_str = f' [warning]overdue { delta_str }[/warning]'
+
         elif delta_days == 0:
-            due_str = f' [warning]Due today[/warning] { due_date_str }'
+            due_str = ' [caution]due today[/caution]'
+
         else:
-            delta_str = (
-                f'[comment]in { delta_days }'
-                f' day{ "s" if delta_days > 1 else "" }[/comment]'
+            due_str = (
+                f' in { delta_days }'
+                f' day{ "s" if delta_days > 1 else "" }'
             )
-            due_str = f' { due_date_str } { delta_str }'
 
         self.console.print(
-            f'[fsrs]{ name }[/fsrs] { state_str }{ metrics_str }{ due_str }',
+            f'[fsrs]{ name }[/fsrs] { state_str }{ due_str }{ metrics_str }',
         )
 
     def start_line(
