@@ -49,6 +49,10 @@ theme: dict[str, str] = {
     'learning': f'bold { YELLOW }',
     'relearning': 'bold #FFCC00',
     'review': 'bold #00FFAF',
+    'easy': 'bold #00AFFF',
+    'good': f'bold { GREEN }',
+    'hard': f'bold { ORANGE }',
+    'again': f'bold { RED}',
 
     'recognition-p': TEXT_LIGHT,
     'execution-p': TEXT_LIGHT,

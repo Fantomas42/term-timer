@@ -564,7 +564,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             f'[fsrs]Training Focus:[/fsrs] [context]{ focus_str }[/context]',
         )
 
-    def fsrs_case_line(self, selected_case: Case) -> None:
+    def fsrs_case_line(self, selected_case: Case) -> None:  # noqa: PLR0914
         """Display FSRS card state, metrics, due date and delta."""
         if not self.fsrs_update or self.fsrs_scheduler is None:
             return
@@ -1034,16 +1034,19 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             due_str = f'in { delta_days } day{ "s" if delta_days > 1 else "" }'
 
         debug = (
-            rf'  \[tps:{breakdown.tps_score:.2f}'
+            rf' \[tps:{breakdown.tps_score:.2f}'
             f' +pauses:{breakdown.pauses:.2f}'
             f' +missed:{breakdown.missed:.2f}'
             f' +Δhtm:{breakdown.delta_htm}'
             f' score:{breakdown.score:.2f}]'
         )
 
+        rating_klass = breakdown.rating.name.lower()
+
         self.console.print(
-            f'[fsrs]FSRS preview:[/fsrs] { breakdown.rating.name }'
-            f' -> review { due_str }{ debug }',
+            f'[fsrs]{ selected_case.pretty_name }[/fsrs] '
+            f'[{ rating_klass }]{ breakdown.rating.name }[/{ rating_klass }], '
+            f'review { due_str }{ debug }',
         )
 
     async def start(self) -> bool:  # noqa: C901, PLR0912
