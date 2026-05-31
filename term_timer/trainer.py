@@ -619,11 +619,11 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             delta_minutes = int((due - now).total_seconds() / 60)
             if delta_minutes > 0:
                 h, m = divmod(delta_minutes, 60)
-                hm = f'{ h }h{ m }' if h > 0 else f'{ m } min'
+                hm = f'{ h } hours' if h > 0 else f'{ m + 1 } minutes'
                 due_str = f' in { hm }'
             elif delta_minutes < 0:
                 h, m = divmod(abs(delta_minutes), 60)
-                hm = f'{ h }h{ m }' if h > 0 else f'{ m } min'
+                hm = f'{ h } hours' if h > 0 else f'{ m + 1 } minutes'
                 due_str = f' [caution]overdue { hm } ago[/caution]'
             else:
                 due_str = ' [caution]due now[/caution]'
@@ -1027,7 +1027,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         if delta_days == 0:
             delta_minutes = int((due - now).total_seconds() / 60)
             if delta_minutes > 0:
-                due_str = f'in { delta_minutes } min'
+                due_str = f'in { delta_minutes + 1 } minutes'
             else:
                 due_str = '[caution]due now[/caution]'
         else:
