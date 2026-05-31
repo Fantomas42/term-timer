@@ -660,7 +660,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             new_klass = preview_card.state.name.lower()
             state_str = (
                 f' [{ old_klass }]{ old_label }[/{ old_klass }]'
-                f' → [{ new_klass }]{ preview_card.state.name }[/{ new_klass }]'
+                f' -> [{ new_klass }]{ preview_card.state.name }[/{ new_klass }]'
             )
         else:
             state_str = ''
