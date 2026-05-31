@@ -55,6 +55,8 @@ from term_timer.stats import Statistics
 from term_timer.triggers import DEFAULT_TRIGGERS
 
 if TYPE_CHECKING:
+    from fsrs import Card
+
     from term_timer.training import CaseTraining
 
 
@@ -638,6 +640,67 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             f'[fsrs]{ name }[/fsrs] { state_str }{ due_str }{ metrics_str }',
         )
 
+    @staticmethod
+    def format_card_change(
+            current_card: 'Card | None',
+            preview_card: 'Card',
+    ) -> str:
+        """
+        Format state transition and metric deltas for FSRS preview.
+
+        Returns:
+            Rich-formatted string with optional state change arrow and
+            stability/difficulty values with signed deltas.
+
+        """
+        current_state = current_card.state if current_card is not None else None
+        if current_state != preview_card.state:
+            old_klass = current_state.name.lower() if current_state else 'new'
+            old_label = current_state.name if current_state else 'New'
+            new_klass = preview_card.state.name.lower()
+            state_str = (
+                f' [{ old_klass }]{ old_label }[/{ old_klass }]'
+                f' → [{ new_klass }]{ preview_card.state.name }[/{ new_klass }]'
+            )
+        else:
+            state_str = ''
+
+        new_s = preview_card.stability
+        new_d = preview_card.difficulty
+        if new_s is None or new_d is None:
+            return state_str
+
+        if (
+            current_card is not None
+            and current_card.stability is not None
+            and current_card.difficulty is not None
+        ):
+            ds = new_s - current_card.stability
+            dd = new_d - current_card.difficulty
+            s_style = 'green' if ds > 0 else 'red'
+            d_style = 'red' if dd > 0 else 'green'
+            s_delta = (
+                (
+                    f' [{ s_style }]{ "+" if ds > 0 else "" }'
+                    f'{ ds:.1f}[/{ s_style }]'
+                )
+                if ds != 0 else ''
+            )
+            d_delta = (
+                (
+                    f' [{ d_style }]{ "+" if dd > 0 else "" }'
+                    f'{ dd:.1f}[/{ d_style }]'
+                )
+                if dd != 0 else ''
+            )
+        else:
+            s_delta = d_delta = ''
+
+        metrics_str = (
+            f' (S:{ new_s:.1f}d{ s_delta } D:{ new_d:.1f}{ d_delta })'
+        )
+        return state_str + metrics_str
+
     def fsrs_preview_line(self, solve: Solve, selected_case: Case) -> None:
         """Compute and display FSRS rating preview before the save prompt."""
         if self.fsrs_rater is None or self.fsrs_scheduler is None:
@@ -646,10 +709,13 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         breakdown = self.fsrs_rater.rate_with_details(solve, self.step)
         self.fsrs_pending_rating = breakdown
 
-        preview_card = self.fsrs_scheduler.update_card(
+        current_card = (
             self.trainings.cases[selected_case.code].fsrs_card
             if selected_case.code in self.trainings.cases
-            else None,
+            else None
+        )
+        preview_card = self.fsrs_scheduler.update_card(
+            current_card,
             breakdown.rating,
         )
         due = preview_card.due.astimezone()
@@ -665,8 +731,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         else:
             due_str = f'in { delta_days } day{ "s" if delta_days > 1 else "" }'
 
+        card_change_str = self.format_card_change(current_card, preview_card)
+
         debug = (
-            rf' \[tps:{breakdown.tps_score:.2f}'
+            rf'\[tps:{breakdown.tps_score:.2f}'
             f' +pauses:{breakdown.pauses:.2f}'
             f' +missed:{breakdown.missed:.2f}'
             f' +Δhtm:{breakdown.delta_htm}'
@@ -677,8 +745,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         self.console.print(
             f'[fsrs]{ selected_case.pretty_name }[/fsrs] '
-            f'[{ rating_klass }]{ breakdown.rating.name }[/{ rating_klass }], '
-            f'review { due_str }{ debug }',
+            f'[{ rating_klass }]{ breakdown.rating.name }[/{ rating_klass }],'
+            f'{ card_change_str } review { due_str }\n{ debug }',
         )
 
     def start_line(
