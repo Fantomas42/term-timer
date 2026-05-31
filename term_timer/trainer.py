@@ -638,6 +638,49 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             f'[fsrs]{ name }[/fsrs] { state_str }{ due_str }{ metrics_str }',
         )
 
+    def fsrs_preview_line(self, solve: Solve, selected_case: Case) -> None:
+        """Compute and display FSRS rating preview before the save prompt."""
+        if self.fsrs_rater is None or self.fsrs_scheduler is None:
+            return
+
+        breakdown = self.fsrs_rater.rate_with_details(solve, self.step)
+        self.fsrs_pending_rating = breakdown
+
+        preview_card = self.fsrs_scheduler.update_card(
+            self.trainings.cases[selected_case.code].fsrs_card
+            if selected_case.code in self.trainings.cases
+            else None,
+            breakdown.rating,
+        )
+        due = preview_card.due.astimezone()
+        now = datetime.now(UTC).astimezone()
+        delta_days = (due.date() - now.date()).days
+
+        if delta_days == 0:
+            delta_minutes = int((due - now).total_seconds() / 60)
+            if delta_minutes > 0:
+                due_str = f'in { delta_minutes + 1 } minutes'
+            else:
+                due_str = '[caution]due now[/caution]'
+        else:
+            due_str = f'in { delta_days } day{ "s" if delta_days > 1 else "" }'
+
+        debug = (
+            rf' \[tps:{breakdown.tps_score:.2f}'
+            f' +pauses:{breakdown.pauses:.2f}'
+            f' +missed:{breakdown.missed:.2f}'
+            f' +Δhtm:{breakdown.delta_htm}'
+            f' score:{breakdown.score:.2f}]'
+        )
+
+        rating_klass = breakdown.rating.name.lower()
+
+        self.console.print(
+            f'[fsrs]{ selected_case.pretty_name }[/fsrs] '
+            f'[{ rating_klass }]{ breakdown.rating.name }[/{ rating_klass }], '
+            f'review { due_str }{ debug }',
+        )
+
     def start_line(
             self,
             cube: VCube,
@@ -1005,49 +1048,6 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             )
 
         return char in {'q', 'k', ESCAPE_CHAR}
-
-    def fsrs_preview_line(self, solve: Solve, selected_case: Case) -> None:
-        """Compute and display FSRS rating preview before the save prompt."""
-        if self.fsrs_rater is None or self.fsrs_scheduler is None:
-            return
-
-        breakdown = self.fsrs_rater.rate_with_details(solve, self.step)
-        self.fsrs_pending_rating = breakdown
-
-        preview_card = self.fsrs_scheduler.update_card(
-            self.trainings.cases[selected_case.code].fsrs_card
-            if selected_case.code in self.trainings.cases
-            else None,
-            breakdown.rating,
-        )
-        due = preview_card.due.astimezone()
-        now = datetime.now(UTC).astimezone()
-        delta_days = (due.date() - now.date()).days
-
-        if delta_days == 0:
-            delta_minutes = int((due - now).total_seconds() / 60)
-            if delta_minutes > 0:
-                due_str = f'in { delta_minutes + 1 } minutes'
-            else:
-                due_str = '[caution]due now[/caution]'
-        else:
-            due_str = f'in { delta_days } day{ "s" if delta_days > 1 else "" }'
-
-        debug = (
-            rf' \[tps:{breakdown.tps_score:.2f}'
-            f' +pauses:{breakdown.pauses:.2f}'
-            f' +missed:{breakdown.missed:.2f}'
-            f' +Δhtm:{breakdown.delta_htm}'
-            f' score:{breakdown.score:.2f}]'
-        )
-
-        rating_klass = breakdown.rating.name.lower()
-
-        self.console.print(
-            f'[fsrs]{ selected_case.pretty_name }[/fsrs] '
-            f'[{ rating_klass }]{ breakdown.rating.name }[/{ rating_klass }], '
-            f'review { due_str }{ debug }',
-        )
 
     async def start(self) -> bool:  # noqa: C901, PLR0912
         """
