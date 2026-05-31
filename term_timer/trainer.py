@@ -616,7 +616,17 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             due_str = f' [warning]overdue { delta_str }[/warning]'
 
         elif delta_days == 0:
-            due_str = ' [caution]due today[/caution]'
+            delta_minutes = int((due - now).total_seconds() / 60)
+            if delta_minutes > 0:
+                h, m = divmod(delta_minutes, 60)
+                hm = f'{ h }h{ m }' if h > 0 else f'{ m } min'
+                due_str = f' in { hm }'
+            elif delta_minutes < 0:
+                h, m = divmod(abs(delta_minutes), 60)
+                hm = f'{ h }h{ m }' if h > 0 else f'{ m } min'
+                due_str = f' [caution]overdue { hm } ago[/caution]'
+            else:
+                due_str = ' [caution]due now[/caution]'
 
         else:
             due_str = (
@@ -1010,7 +1020,18 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             else None,
             breakdown.rating,
         )
-        due = preview_card.due.astimezone().strftime('%Y-%m-%d')
+        due = preview_card.due.astimezone()
+        now = datetime.now(UTC).astimezone()
+        delta_days = (due.date() - now.date()).days
+
+        if delta_days == 0:
+            delta_minutes = int((due - now).total_seconds() / 60)
+            if delta_minutes > 0:
+                due_str = f'in { delta_minutes } min'
+            else:
+                due_str = '[caution]due now[/caution]'
+        else:
+            due_str = f'in { delta_days } day{ "s" if delta_days > 1 else "" }'
 
         debug = (
             rf'  \[tps:{breakdown.tps_score:.2f}'
@@ -1021,9 +1042,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         )
 
         self.console.print(
-            f'FSRS preview: { breakdown.rating.name }'
-            f' → review { due }{ debug }',
-            style='fsrs',
+            f'[fsrs]FSRS preview:[/fsrs] { breakdown.rating.name }'
+            f' -> review { due_str }{ debug }',
         )
 
     async def start(self) -> bool:  # noqa: C901, PLR0912
