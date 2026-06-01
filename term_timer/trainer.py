@@ -741,11 +741,11 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         card_change_str = self.format_card_change(current_card, preview_card)
 
         debug = (
-            rf'\[tps:{breakdown.tps_score:.2f}'
-            f' +pauses:{breakdown.pauses:.2f}'
-            f' +missed:{breakdown.missed:.2f}'
-            f' +Δhtm:{breakdown.delta_htm}'
-            f' score:{breakdown.score:.2f}]'
+            rf'\[time:{breakdown.time_s:.2f}s'
+            f' htm:{breakdown.htm}'
+            f' tps:{breakdown.tps:.1f}'
+            f' pauses:{breakdown.pauses}'
+            f' missed:{breakdown.missed_qtm}]'
         )
 
         rating_klass = breakdown.rating.name.lower()

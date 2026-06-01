@@ -1,35 +1,20 @@
 """
-Performance rating for FSRS using a composite score.
+Performance rating for FSRS using a rule-based decision tree.
 
-Score semantics
----------------
-The score is a **difficulty ratio**: higher is worse, lower is better.
+With Bluetooth data, the rating reflects memorisation quality:
 
-- score == 1.0  → exactly on target → Good
-- score  > 1.0  → slower / more errors than target → Hard or Again
-- score  < 1.0  → better than target → Easy
+  AGAIN  — case not known: time > MAX_TIME_S or too many moves
+  HARD   — execution error: cancelled/missed moves detected
+  GOOD   — hesitation: more than MAX_PAUSES pauses, or TPS below MIN_TPS
+  EASY   — clean execution: fast, few moves, no errors, no hesitation
 
-Thresholds: Again > 1.5, Hard > 1.2, Easy < 0.8, Good otherwise.
-
-Reaching Easy (score < 0.8)
-----------------------------
-Easy requires being at least 25% better than the target (time or TPS).
-With Bluetooth data it is even harder: quality penalties (pauses, missed
-moves, delta HTM) are strictly additive — they can only push the score
-*up*, never down.  A single pause adds 0.2 to the score, which alone can
-prevent Easy even when execution speed is well above target.
-
-Example: PLL target TPS is 8.0.  To reach Easy despite one pause the
-solver would need a TPS score ≤ 0.6, i.e. executing at 13+ TPS.
-Easy is therefore reserved for cases that are genuinely mastered with
-clean, fast, pause-free execution.
+Without Bluetooth data, falls back to a time-ratio comparison against
+fixed step targets (TARGET_TIMES). This fallback will be refined later.
 """
 
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 
-from cubing_algs.cases import get_case
-from cubing_algs.transform.auf import remove_auf_moves
 from fsrs import Rating
 
 from term_timer.constants import SECOND
@@ -46,17 +31,18 @@ TARGET_TIMES: dict[str, float] = {
     'ecross': 4.0,
 }
 
-# Target turns per second per step.
-# tps_score = target_tps / actual_tps: higher = slower = worse,
-# consistent with time_ratio so score_to_rating applies uniformly.
-TARGET_TPS: dict[str, float] = {
-    'oll': 6.0,
-    'pll': 8.0,
-    'f2l': 4.0,
-    'af2l': 3.5,
-    'cross': 5.0,
-    'ecross': 4.0,
+MAX_MOVES: dict[str, int] = {
+    'oll': 17,
+    'pll': 20,
+    'f2l': 15,
+    'af2l': 15,
+    'cross': 15,
+    'ecross': 15,
 }
+
+MIN_TPS: float = 4.0
+MAX_TIME_S: float = 5.0
+MAX_PAUSES: int = 2
 
 SCORE_AGAIN: float = 1.5
 SCORE_HARD: float = 1.2
@@ -64,14 +50,14 @@ SCORE_EASY: float = 0.8
 
 
 class RatingBreakdown(NamedTuple):
-    """Detailed score components for a FSRS rating computation."""
+    """Detailed components for a FSRS rating computation."""
 
     rating: Rating
-    tps_score: float
-    pauses: float
-    missed: float
-    delta_htm: float
-    score: float
+    time_s: float
+    htm: int
+    missed_qtm: int
+    pauses: int
+    tps: float
 
 
 class PerformanceRater:
@@ -83,26 +69,23 @@ class PerformanceRater:
         step: str,
     ) -> RatingBreakdown:
         """
-        Rate performance and return full score breakdown.
+        Rate performance and return full breakdown.
 
         Returns:
-            RatingBreakdown with rating and all intermediate score components.
+            RatingBreakdown with rating and all diagnostic components.
 
         """
-        if not solve.advanced:
-            ratio = self.compute_time_ratio(solve.time, step)
-            rating = self.score_to_rating(ratio)
-            return RatingBreakdown(rating, ratio, 0.0, 0.0, 0, ratio)
+        rating = self.rate(solve, step)
+        time_s = solve.time / SECOND
 
-        tps_score = self.compute_tps_score(solve, step)
-        pauses = solve.execution_pauses
+        if not solve.advanced:
+            return RatingBreakdown(rating, time_s, 0, 0, 0, 0.0)
+
+        htm = solve.solution.metrics.htm
         missed_qtm = solve.all_missed_moves
-        delta_htm = self.compute_delta_htm(solve, step)
-        score = tps_score + pauses * 0.2 + missed_qtm * 0.2 + delta_htm * 0.1
-        rating = self.score_to_rating(score)
-        return RatingBreakdown(
-            rating, tps_score, pauses * 0.2, missed_qtm * 0.2, delta_htm, score,
-        )
+        pauses = solve.execution_pauses
+        tps = htm / time_s if time_s > 0 and htm > 0 else 0.0
+        return RatingBreakdown(rating, time_s, htm, missed_qtm, pauses, tps)
 
     def rate(
         self,
@@ -110,10 +93,10 @@ class PerformanceRater:
         step: str,
     ) -> Rating:
         """
-        Rate performance using a composite score.
+        Rate performance using a rule-based decision tree.
 
-        Combines TPS score with execution quality signals when advanced
-        Bluetooth data is available. Falls back to time-only rating otherwise.
+        Uses execution errors and hesitation signals to assess memorisation
+        quality. Falls back to time-ratio comparison without Bluetooth data.
 
         Args:
             solve: Completed solve with optional advanced analysis
@@ -126,15 +109,22 @@ class PerformanceRater:
         if not solve.advanced:
             return self.rate_without_bluetooth(solve.time, step)
 
-        tps_score = self.compute_tps_score(solve, step)
-        pauses = solve.execution_pauses
-        missed_qtm = solve.all_missed_moves
-        delta_htm = self.compute_delta_htm(solve, step)
+        time_s = solve.time / SECOND
+        htm = solve.solution.metrics.htm
 
-        # tps_score is the base: at target TPS with no quality issues,
-        # score = 1.0 → Good. Execution penalties add to the score.
-        score = tps_score + pauses * 0.2 + missed_qtm * 0.2 + delta_htm * 0.1
-        return self.score_to_rating(score)
+        if time_s > MAX_TIME_S:
+            return Rating.Again
+        if htm > MAX_MOVES.get(step.lower(), 15):
+            return Rating.Again
+
+        if solve.all_missed_moves > 0:
+            return Rating.Hard
+
+        tps = htm / time_s if time_s > 0 else 0.0
+        if solve.execution_pauses > MAX_PAUSES or tps < MIN_TPS:
+            return Rating.Good
+
+        return Rating.Easy
 
     def rate_without_bluetooth(
         self,
@@ -146,8 +136,7 @@ class PerformanceRater:
 
         Used when no Bluetooth move data is available. Always compares
         against the canonical step target time (e.g. 2.0s for PLL,
-        2.5s for OLL) regardless of personal history, so that absolute
-        speed goals drive the rating rather than relative improvement.
+        2.5s for OLL) regardless of personal history.
 
         Args:
             elapsed_time: Elapsed time in nanoseconds
@@ -192,68 +181,3 @@ class PerformanceRater:
         if score < SCORE_EASY:
             return Rating.Easy
         return Rating.Good
-
-    @staticmethod
-    def compute_tps_score(solve: 'Solve', step: str) -> float:
-        """
-        Compute TPS score: target_tps / actual_tps.
-
-        Higher score means slower execution (consistent with time_ratio so
-        score_to_rating applies uniformly). Reaching the target TPS gives
-        exactly 1.0 (Good territory). Below target → score > 1.0 (Hard/Again).
-        Above target → score < 1.0 (Easy).
-
-        TPS is computed using ``solve.time`` (total solve time including
-        recognition), so recognition latency penalises the score.
-
-        Args:
-            solve: Completed solve with BT move data
-            step: Step name used to look up the target in TARGET_TPS
-
-        Returns:
-            tps_score clamped to [0.3, 3.0].
-
-        """
-        htm = solve.solution.metrics.htm
-        if htm == 0 or solve.time == 0:
-            return 1.0  # neutral: no moves recorded
-        actual_tps = htm / (solve.time / SECOND)
-        target = TARGET_TPS.get(step.lower(), 5.0)
-        return max(0.3, min(target / actual_tps, 3.0))
-
-    @staticmethod
-    def compute_delta_htm(solve: 'Solve', step: str) -> int:
-        """
-        Compute extra HTM moves vs optimal for the first matching step.
-
-        Args:
-            solve: Completed solve with method analysis
-            step: Step name used to look up optimal HTM
-
-        Returns:
-            Number of extra moves above optimal (0 if unavailable).
-
-        """
-        if not solve.method_applied:
-            return 0
-
-        step_code = step.upper()
-        for step_summary in solve.method_applied.summary:
-            if not step_summary['moves'] or not step_summary['case']:
-                continue
-            name_prefix = step_summary['name'].split(' ')[0]
-            if name_prefix.upper() != step_code:
-                continue
-            try:
-                case = get_case(name_prefix, step_summary['case'])
-            except Exception:  # noqa: BLE001
-                return 0
-            optimal = case.optimal_htm
-            if not optimal:
-                return 0
-            executed = step_summary['moves_prettified'].transform(
-                remove_auf_moves,
-            ).metrics.htm
-            return max(0, executed - optimal)
-
-        return 0

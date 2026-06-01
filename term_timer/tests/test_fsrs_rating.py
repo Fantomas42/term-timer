@@ -8,8 +8,10 @@ from unittest.mock import patch
 from fsrs import Rating
 
 from term_timer.constants import SECOND
+from term_timer.fsrs.rating import MAX_MOVES
+from term_timer.fsrs.rating import MAX_PAUSES
+from term_timer.fsrs.rating import MAX_TIME_S
 from term_timer.fsrs.rating import TARGET_TIMES
-from term_timer.fsrs.rating import TARGET_TPS
 from term_timer.fsrs.rating import PerformanceRater
 from term_timer.solve import Solve
 
@@ -96,12 +98,10 @@ class TestRateDispatchWithoutBluetooth(unittest.TestCase):
 
     def setUp(self) -> None:  # noqa: D102
         self.rater = PerformanceRater()
-        # Generous history so baseline would differ from target if used.
-        self.fast_history = [500] * 15  # 500 ms Ao12 baseline
 
-    def test_rate_no_moves_ignores_history(self) -> None:
-        """Without Bluetooth, history is ignored: target drives the rating."""
-        # PLL target = 2.0s; execution = 1.9s -> Good regardless of history.
+    def test_rate_no_moves_uses_target(self) -> None:
+        """Without Bluetooth, target time drives the rating."""
+        # PLL target = 2.0s; execution = 1.9s -> Good.
         solve = make_solve(int(1.9 * SECOND), moves=None)
         rating = self.rater.rate(solve, 'pll')
         self.assertEqual(rating, Rating.Good)
@@ -114,123 +114,140 @@ class TestRateDispatchWithoutBluetooth(unittest.TestCase):
 
 
 class TestRateWithBluetooth(unittest.TestCase):
-    """rate() uses TPS-based composite score when solve has move data."""
+    """rate() uses rule-based decision tree when solve has move data."""
 
     def setUp(self) -> None:  # noqa: D102
         self.rater = PerformanceRater()
-        # Patch method_applied to None so execution_pauses / step_pauses
-        # return 0 without triggering full CFOP analysis on minimal test solves.
-        patcher = patch.object(
+        # Default: no pauses, no missed moves, no CFOP step analysis.
+        patcher_method = patch.object(
             Solve,
             'method_applied',
             new_callable=PropertyMock,
             return_value=None,
         )
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        patcher_pauses = patch.object(
+            Solve,
+            'execution_pauses',
+            new_callable=PropertyMock,
+            return_value=0,
+        )
+        patcher_missed = patch.object(
+            Solve,
+            'all_missed_moves',
+            new_callable=PropertyMock,
+            return_value=0,
+        )
+        patcher_method.start()
+        patcher_pauses.start()
+        patcher_missed.start()
+        self.addCleanup(patcher_method.stop)
+        self.addCleanup(patcher_pauses.stop)
+        self.addCleanup(patcher_missed.stop)
 
-    def test_at_target_tps_no_penalty_is_good(self) -> None:
-        """
-        PLL target = 8 TPS: 8 moves in 1.0s = exactly 8.0 TPS -> Good.
-
-        tps_score = 8.0 / 8.0 = 1.0, no quality penalties -> score = 1.0.
-        """
-        solve = make_bt_solve(htm=8, elapsed_s=1.0)
-        rating = self.rater.rate(solve, 'pll')
-        self.assertEqual(rating, Rating.Good)
-
-    def test_above_target_tps_is_easy(self) -> None:
-        """
-        PLL target = 8 TPS: 8 moves in 0.7s ≈ 11.4 TPS -> Easy.
-
-        tps_score = 8.0 / 11.4 ≈ 0.70 < 0.8 -> Easy.
-        """
-        solve = make_bt_solve(htm=8, elapsed_s=0.7)
-        rating = self.rater.rate(solve, 'pll')
-        self.assertEqual(rating, Rating.Easy)
-
-    def test_below_target_tps_is_hard(self) -> None:
-        """
-        PLL target = 8 TPS: 8 moves in 1.6s = 5.0 TPS -> Hard.
-
-        tps_score = 8.0 / 5.0 = 1.6 > 1.5 -> Again... let's use 1.4s.
-        8 moves in 1.4s ≈ 5.7 TPS -> tps_score = 8/5.7 ≈ 1.4 -> Hard.
-        """
-        solve = make_bt_solve(htm=8, elapsed_s=1.4)
-        rating = self.rater.rate(solve, 'pll')
-        self.assertEqual(rating, Rating.Hard)
-
-    def test_well_below_target_tps_is_again(self) -> None:
-        """
-        PLL target = 8 TPS: 8 moves in 2.0s = 4.0 TPS -> Again.
-
-        tps_score = 8.0 / 4.0 = 2.0 > 1.5 -> Again.
-        """
-        solve = make_bt_solve(htm=8, elapsed_s=2.0)
+    def test_over_time_limit_is_again(self) -> None:
+        """Execution time > MAX_TIME_S -> AGAIN."""
+        solve = make_bt_solve(htm=8, elapsed_s=MAX_TIME_S + 0.1)
         rating = self.rater.rate(solve, 'pll')
         self.assertEqual(rating, Rating.Again)
 
-    def test_bt_path_differs_from_no_bt(self) -> None:
-        """
-        BT and non-BT paths give different ratings for the same elapsed time.
+    def test_within_time_limit_is_not_again_by_time(self) -> None:
+        """Execution time <= MAX_TIME_S doesn't trigger AGAIN by time."""
+        # Use enough moves for TPS >= MIN_TPS: 8 moves in 1.9s = 4.2 TPS.
+        solve = make_bt_solve(htm=8, elapsed_s=MAX_TIME_S - 0.1)
+        rating = self.rater.rate(solve, 'pll')
+        self.assertNotEqual(rating, Rating.Again)
 
-        PLL target time = 2.0s, PLL target TPS = 8.0.
-        8 moves in 1.9s without BT -> ratio 1.9/2.0 = 0.95 -> Good.
-        8 moves in 1.9s with BT -> TPS = 4.2, tps_score = 1.9 -> Again.
-        """
-        solve_no_bt = make_solve(int(1.9 * SECOND), moves=None)
-        solve_bt = make_bt_solve(htm=8, elapsed_s=1.9)
-        rating_no_bt = self.rater.rate(solve_no_bt, 'pll')
-        rating_bt = self.rater.rate(solve_bt, 'pll')
-        self.assertNotEqual(rating_no_bt, rating_bt)
+    def test_over_move_limit_is_again(self) -> None:
+        """HTM > MAX_MOVES for step -> AGAIN."""
+        limit = MAX_MOVES.get('pll', 15)
+        solve = make_bt_solve(htm=limit + 1, elapsed_s=2.0)
+        rating = self.rater.rate(solve, 'pll')
+        self.assertEqual(rating, Rating.Again)
 
+    def test_at_move_limit_is_not_again_by_moves(self) -> None:
+        """HTM == MAX_MOVES does not trigger AGAIN."""
+        limit = MAX_MOVES.get('pll', 15)
+        # limit moves in 2.0s: TPS = limit / 2.0; if < 4.0 → GOOD, not AGAIN.
+        solve = make_bt_solve(htm=limit, elapsed_s=2.0)
+        rating = self.rater.rate(solve, 'pll')
+        self.assertNotEqual(rating, Rating.Again)
 
-class TestComputeTpsScore(unittest.TestCase):
-    """compute_tps_score() converts HTM + time into a normalised score."""
+    def test_time_beats_missed_for_again(self) -> None:
+        """AGAIN from time takes priority over HARD from missed moves."""
+        with patch.object(
+            Solve,
+            'all_missed_moves',
+            new_callable=PropertyMock,
+            return_value=2,
+        ):
+            solve = make_bt_solve(htm=8, elapsed_s=MAX_TIME_S + 1.0)
+            rating = self.rater.rate(solve, 'pll')
+            self.assertEqual(rating, Rating.Again)
 
-    def setUp(self) -> None:  # noqa: D102
-        self.rater = PerformanceRater()
+    def test_missed_moves_is_hard(self) -> None:
+        """Cancelled moves -> HARD when time and HTM are within limits."""
+        with patch.object(
+            Solve,
+            'all_missed_moves',
+            new_callable=PropertyMock,
+            return_value=1,
+        ):
+            # 8 moves in 1.5s = 5.3 TPS, well within all limits.
+            solve = make_bt_solve(htm=8, elapsed_s=1.5)
+            rating = self.rater.rate(solve, 'pll')
+            self.assertEqual(rating, Rating.Hard)
 
-    def test_at_target_returns_one(self) -> None:
-        """Exactly hitting target TPS gives score = 1.0."""
-        # OLL target = 6.0 TPS: 12 moves in 2.0s = 6.0 TPS
-        solve = make_bt_solve(htm=12, elapsed_s=2.0)
-        score = self.rater.compute_tps_score(solve, 'oll')
-        self.assertAlmostEqual(score, 1.0, places=5)
+    def test_too_many_pauses_is_good(self) -> None:
+        """More than MAX_PAUSES pauses -> GOOD."""
+        with patch.object(
+            Solve,
+            'execution_pauses',
+            new_callable=PropertyMock,
+            return_value=MAX_PAUSES + 1,
+        ):
+            solve = make_bt_solve(htm=8, elapsed_s=1.5)
+            rating = self.rater.rate(solve, 'pll')
+            self.assertEqual(rating, Rating.Good)
 
-    def test_twice_target_returns_half(self) -> None:
-        """Double the target TPS gives score = 0.5."""
-        # OLL target = 6.0: 12 moves in 1.0s = 12.0 TPS -> 6/12 = 0.5
-        solve = make_bt_solve(htm=12, elapsed_s=1.0)
-        score = self.rater.compute_tps_score(solve, 'oll')
-        self.assertAlmostEqual(score, 0.5, places=5)
+    def test_exactly_max_pauses_is_not_good(self) -> None:
+        """Exactly MAX_PAUSES pauses doesn't trigger GOOD by pauses alone."""
+        with patch.object(
+            Solve,
+            'execution_pauses',
+            new_callable=PropertyMock,
+            return_value=MAX_PAUSES,
+        ):
+            # 8 moves in 1.5s = 5.3 TPS >= MIN_TPS → EASY.
+            solve = make_bt_solve(htm=8, elapsed_s=1.5)
+            rating = self.rater.rate(solve, 'pll')
+            self.assertEqual(rating, Rating.Easy)
 
-    def test_zero_htm_returns_neutral(self) -> None:
-        """Empty move list returns neutral score 1.0."""
-        solve = make_solve(int(1.0 * SECOND), moves='')
-        score = self.rater.compute_tps_score(solve, 'oll')
-        self.assertEqual(score, 1.0)
+    def test_low_tps_is_good(self) -> None:
+        """TPS < MIN_TPS -> GOOD."""
+        # 8 moves in 3.0s = 2.67 TPS < 4.0, within time and move limits.
+        solve = make_bt_solve(htm=8, elapsed_s=3.0)
+        rating = self.rater.rate(solve, 'pll')
+        self.assertEqual(rating, Rating.Good)
 
-    def test_unknown_step_uses_default(self) -> None:
-        """Unknown step uses 5.0 TPS default."""
-        # 10 moves in 1.0s = 10 TPS -> 5.0 / 10.0 = 0.5
-        solve = make_bt_solve(htm=10, elapsed_s=1.0)
-        score = self.rater.compute_tps_score(solve, 'unknown_step')
-        self.assertAlmostEqual(score, 0.5, places=5)
+    def test_tps_at_minimum_is_easy(self) -> None:
+        """TPS == MIN_TPS does not trigger GOOD (boundary is strict <)."""
+        # 8 moves in 2.0s = exactly 4.0 TPS.
+        solve = make_bt_solve(htm=8, elapsed_s=2.0)
+        rating = self.rater.rate(solve, 'pll')
+        self.assertEqual(rating, Rating.Easy)
 
-    def test_score_clamped_at_minimum(self) -> None:
-        """Extremely fast TPS is clamped to 0.3 (not arbitrarily small)."""
-        # 100 moves in 0.1s = 1000 TPS -> 6/1000 = 0.006, clamped to 0.3
-        solve = make_bt_solve(htm=100, elapsed_s=0.1)
-        score = self.rater.compute_tps_score(solve, 'oll')
-        self.assertEqual(score, 0.3)
+    def test_clean_execution_is_easy(self) -> None:
+        """No errors, no hesitation, fast execution -> EASY."""
+        # 8 moves in 1.5s = 5.3 TPS, within all limits.
+        solve = make_bt_solve(htm=8, elapsed_s=1.5)
+        rating = self.rater.rate(solve, 'pll')
+        self.assertEqual(rating, Rating.Easy)
 
-    def test_score_clamped_at_maximum(self) -> None:
-        """Extremely slow TPS is clamped to 3.0 (not arbitrarily large)."""
-        # 1 move in 100s = 0.01 TPS -> 6/0.01 = 600, clamped to 3.0
-        solve = make_bt_solve(htm=1, elapsed_s=100.0)
-        score = self.rater.compute_tps_score(solve, 'oll')
-        self.assertEqual(score, 3.0)
+    def test_unknown_step_uses_default_max_moves(self) -> None:
+        """Unknown step uses 15 as default MAX_MOVES."""
+        solve = make_bt_solve(htm=16, elapsed_s=2.0)
+        rating = self.rater.rate(solve, 'unknown_step')
+        self.assertEqual(rating, Rating.Again)
 
 
 class TestTargetTimes(unittest.TestCase):
@@ -250,18 +267,23 @@ class TestTargetTimes(unittest.TestCase):
         self.assertEqual(TARGET_TIMES['oll'], 2.5)
 
 
-class TestTargetTps(unittest.TestCase):
-    """Validate that TARGET_TPS covers the expected steps."""
+class TestMaxMoves(unittest.TestCase):
+    """Validate that MAX_MOVES covers the expected steps."""
 
     def test_known_steps_present(self) -> None:
-        """All standard CFOP steps should have a target TPS."""
+        """All standard CFOP steps should have a max moves entry."""
         for step in ('oll', 'pll', 'f2l', 'af2l', 'cross', 'ecross'):
-            self.assertIn(step, TARGET_TPS)
+            self.assertIn(step, MAX_MOVES)
 
-    def test_pll_faster_than_oll(self) -> None:
-        """PLL target TPS should be higher than OLL (shorter algorithm)."""
-        self.assertGreater(TARGET_TPS['pll'], TARGET_TPS['oll'])
+    def test_all_values_are_positive(self) -> None:
+        """Every MAX_MOVES value must be a positive integer."""
+        for step, limit in MAX_MOVES.items():
+            self.assertGreater(limit, 0, msg=f'{step} has non-positive limit')
 
-    def test_f2l_slower_than_oll(self) -> None:
-        """F2L target TPS is lower than OLL (more look-ahead pauses)."""
-        self.assertLess(TARGET_TPS['f2l'], TARGET_TPS['oll'])
+    def test_pll_is_twenty(self) -> None:
+        """PLL limit is 20 (algos commonly reach 16-20 HTM)."""
+        self.assertEqual(MAX_MOVES['pll'], 20)
+
+    def test_oll_is_seventeen(self) -> None:
+        """OLL limit is 17 (algos commonly reach 14-17 HTM)."""
+        self.assertEqual(MAX_MOVES['oll'], 17)
