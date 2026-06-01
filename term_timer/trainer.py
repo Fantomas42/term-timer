@@ -1,5 +1,6 @@
 """Training interface for practicing specific CFOP cases."""
 import asyncio
+import math
 from datetime import UTC
 from datetime import datetime
 from operator import itemgetter
@@ -620,12 +621,16 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         elif delta_days == 0:
             delta_minutes = int((due - now).total_seconds() / 60)
             if delta_minutes > 0:
-                h, m = divmod(delta_minutes, 60)
-                hm = f'{ h } hours' if h > 0 else f'{ m + 1 } minutes'
+                h, m = divmod(
+                    math.ceil((due - now).total_seconds() / 60), 60,
+                )
+                hm = f'{ h } hours' if h > 0 else f'{ m } minutes'
                 due_str = f' in { hm }'
             elif delta_minutes < 0:
-                h, m = divmod(abs(delta_minutes), 60)
-                hm = f'{ h } hours' if h > 0 else f'{ m + 1 } minutes'
+                h, m = divmod(
+                    math.ceil((now - due).total_seconds() / 60), 60,
+                )
+                hm = f'{ h } hours' if h > 0 else f'{ m } minutes'
                 due_str = f' [caution]overdue { hm } ago[/caution]'
             else:
                 due_str = ' [caution]due now[/caution]'
@@ -658,9 +663,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             old_klass = current_state.name.lower() if current_state else 'new'
             old_label = current_state.name if current_state else 'New'
             new_klass = preview_card.state.name.lower()
+            new_name = preview_card.state.name
             state_str = (
                 f' [{ old_klass }]{ old_label }[/{ old_klass }]'
-                f' -> [{ new_klass }]{ preview_card.state.name }[/{ new_klass }]'
+                f' -> [{ new_klass }]{ new_name }[/{ new_klass }]'
             )
         else:
             state_str = ''
@@ -725,7 +731,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         if delta_days == 0:
             delta_minutes = int((due - now).total_seconds() / 60)
             if delta_minutes > 0:
-                due_str = f'in { delta_minutes + 1 } minutes'
+                mins = math.ceil((due - now).total_seconds() / 60)
+                due_str = f'in { mins } minutes'
             else:
                 due_str = '[caution]due now[/caution]'
         else:
