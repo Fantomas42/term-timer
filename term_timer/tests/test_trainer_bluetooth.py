@@ -34,10 +34,10 @@ from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
+from term_timer.fsrs.storage import CaseTraining
+from term_timer.fsrs.storage import Trainings
 from term_timer.orientation import get_orientation_moves
 from term_timer.trainer import Trainer
-from term_timer.training import CaseTraining
-from term_timer.training import Trainings
 
 
 class FakeBluetoothClient:

@@ -58,7 +58,7 @@ from term_timer.triggers import DEFAULT_TRIGGERS
 if TYPE_CHECKING:
     from fsrs import Card
 
-    from term_timer.training import CaseTraining
+    from term_timer.fsrs.storage import CaseTraining
 
 
 class StepDef(NamedTuple):

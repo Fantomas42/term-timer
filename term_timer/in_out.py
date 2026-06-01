@@ -17,11 +17,11 @@ if TYPE_CHECKING:
 from term_timer.constants import DAILY_DIRECTORY
 from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.constants import TRAININGS_DIRECTORY
+from term_timer.fsrs.storage import CaseTraining
+from term_timer.fsrs.storage import CaseTrainingData
+from term_timer.fsrs.storage import Trainings
 from term_timer.solve import Solve
 from term_timer.solve import SolveData
-from term_timer.training import CaseTraining
-from term_timer.training import CaseTrainingData
-from term_timer.training import Trainings
 
 SCRAMBLE_LINE = re.compile(r'Scramble #\d+:\s*(.+?)(?:\s*//.*)?$')
 
