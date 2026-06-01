@@ -684,14 +684,14 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                     f' [{ s_style }]{ "+" if ds > 0 else "" }'
                     f'{ ds:.1f}[/{ s_style }]'
                 )
-                if ds != 0 else ''
+                if round(ds, 1) != 0 else ''
             )
             d_delta = (
                 (
                     f' [{ d_style }]{ "+" if dd > 0 else "" }'
                     f'{ dd:.1f}[/{ d_style }]'
                 )
-                if dd != 0 else ''
+                if round(dd, 1) != 0 else ''
             )
         else:
             s_delta = d_delta = ''
