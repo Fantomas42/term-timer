@@ -180,14 +180,14 @@ class TestComputeSessionFocus(unittest.TestCase):
         """No cards seen yet → exploration."""
         probs = dict.fromkeys('ABCD', 0.25)
         focus = FSRSScheduler.compute_session_focus({}, probs)
-        self.assertIn('exploration', focus)
+        self.assertIn('Exploration', focus)
 
     def test_exploration_when_few_seen(self) -> None:
         """Fewer than 20% seen → exploration."""
         probs = {str(i): 0.1 for i in range(10)}
         cards = {'0': make_card(state=State.Learning)}
         focus = FSRSScheduler.compute_session_focus(cards, probs)
-        self.assertIn('exploration', focus)
+        self.assertIn('Exploration', focus)
 
     def test_remediation_when_relearning(self) -> None:
         """Any card in Relearning state → remediation."""
@@ -195,14 +195,14 @@ class TestComputeSessionFocus(unittest.TestCase):
         cards = {c: make_card(state=State.Review) for c in 'ABCD'}
         cards['A'] = make_card(state=State.Relearning)
         focus = FSRSScheduler.compute_session_focus(cards, probs)
-        self.assertIn('remediation', focus)
+        self.assertIn('Remediation', focus)
 
     def test_learning_when_majority_learning(self) -> None:
         """Majority of seen cards in Learning → learning."""
         probs = dict.fromkeys('ABCD', 0.25)
         cards = {c: make_card(state=State.Learning) for c in 'ABCD'}
         focus = FSRSScheduler.compute_session_focus(cards, probs)
-        self.assertIn('learning', focus)
+        self.assertIn('Learning', focus)
 
     def test_review_when_cards_due(self) -> None:
         """Most cards in Review and some due → review."""
@@ -214,7 +214,7 @@ class TestComputeSessionFocus(unittest.TestCase):
             'D': make_card(state=State.Review, due_offset_days=1.0),
         }
         focus = FSRSScheduler.compute_session_focus(cards, probs)
-        self.assertIn('review', focus)
+        self.assertIn('Review', focus)
 
     def test_maintenance_when_review_nothing_due(self) -> None:
         """All cards in Review and none due → maintenance."""
@@ -222,7 +222,7 @@ class TestComputeSessionFocus(unittest.TestCase):
         cards = {c: make_card(state=State.Review, due_offset_days=5.0)
                  for c in 'ABCD'}
         focus = FSRSScheduler.compute_session_focus(cards, probs)
-        self.assertEqual(focus, 'maintenance')
+        self.assertEqual(focus, 'Maintenance')
 
 
 class TestComputeMastery(unittest.TestCase):
