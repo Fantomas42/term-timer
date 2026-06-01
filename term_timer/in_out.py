@@ -232,7 +232,7 @@ def save_trainings(trainings: Trainings) -> bool:
 
     data = trainings.as_save()
 
-    dumped = json.dumps(data, indent=1)
+    dumped = json.dumps(data, indent=1, sort_keys=True)
 
     with source.open('w+', encoding='utf-8') as fd:
         fd.write(dumped)
