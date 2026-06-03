@@ -12,9 +12,11 @@ Without Bluetooth data, falls back to a time-ratio comparison against
 fixed step targets (TARGET_TIMES). This fallback will be refined later.
 """
 
+from functools import cache
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 
+from cubing_algs.cases import get_collection
 from fsrs import Rating
 
 from term_timer.constants import SECOND
@@ -39,6 +41,48 @@ MAX_MOVES: dict[str, int] = {
     'cross': 15,
     'ecross': 15,
 }
+
+
+COLLECTION_STEP: dict[str, str] = {
+    'CFOP/OLL': 'oll',
+    'CFOP/PLL': 'pll',
+    'CFOP/F2L': 'f2l',
+    'CFOP/AF2L': 'af2l',
+}
+
+STEP_COLLECTION: dict[str, str] = {v: k for k, v in COLLECTION_STEP.items()}
+
+
+@cache
+def build_case_max_moves(step: str) -> dict[str, int]:
+    """
+    Build per-case HTM threshold for a single step, lazily on first use.
+
+    P90 rather than max makes the threshold robust to outlier algorithms in
+    the DB (e.g. OLL 04 has a 28 HTM algorithm despite a P90 of 15).
+    Result is cached so subsequent calls for the same step are free.
+
+    Args:
+        step: Step name (e.g. 'oll', 'pll').
+
+    Returns:
+        Dict mapping case_code to HTM threshold (e.g. {'T': 16, 'F': 18}).
+        Empty dict if the step has no known collection.
+
+    """
+    collection_name = STEP_COLLECTION.get(step)
+    if collection_name is None:
+        return {}
+    collection = get_collection(collection_name)
+    result: dict[str, int] = {}
+    for case in collection.cases.values():
+        if not case.algorithms:
+            continue
+        htms = sorted(a.metrics.htm for a in case.algorithms)
+        p90 = htms[int(len(htms) * 0.9)]
+        result[case.code] = p90 + 2
+    return result
+
 
 MIN_TPS: float = 4.0
 MAX_TIME_S: float = 5.0
@@ -67,6 +111,7 @@ class PerformanceRater:
         self,
         solve: 'Solve',
         step: str,
+        case_name: str | None = None,
     ) -> RatingBreakdown:
         """
         Rate performance and return full breakdown.
@@ -75,7 +120,7 @@ class PerformanceRater:
             RatingBreakdown with rating and all diagnostic components.
 
         """
-        rating = self.rate(solve, step)
+        rating = self.rate(solve, step, case_name)
         time_s = solve.time / SECOND
 
         if not solve.advanced:
@@ -91,6 +136,7 @@ class PerformanceRater:
         self,
         solve: 'Solve',
         step: str,
+        case_name: str | None = None,
     ) -> Rating:
         """
         Rate performance using a rule-based decision tree.
@@ -101,6 +147,7 @@ class PerformanceRater:
         Args:
             solve: Completed solve with optional advanced analysis
             step: Step name (e.g. 'oll', 'pll')
+            case_name: Case code (e.g. 'F', '13') for per-case HTM threshold
 
         Returns:
             FSRS Rating: Again (1), Hard (2), Good (3), or Easy (4).
@@ -114,7 +161,16 @@ class PerformanceRater:
 
         if time_s > MAX_TIME_S:
             return Rating.Again
-        if htm > MAX_MOVES.get(step.lower(), 15):
+        step_lower = step.lower()
+        max_moves = (
+            build_case_max_moves(step_lower).get(
+                case_name,
+                MAX_MOVES.get(step_lower, 15),
+            )
+            if case_name is not None
+            else MAX_MOVES.get(step_lower, 15)
+        )
+        if htm > max_moves:
             return Rating.Again
 
         if solve.all_missed_moves > 0:

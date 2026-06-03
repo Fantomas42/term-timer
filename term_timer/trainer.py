@@ -712,7 +712,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         if self.fsrs_rater is None or self.fsrs_scheduler is None:
             return
 
-        breakdown = self.fsrs_rater.rate_with_details(solve, self.step)
+        breakdown = self.fsrs_rater.rate_with_details(
+            solve, self.step, selected_case.code,
+        )
         self.fsrs_pending_rating = breakdown
 
         current_card = (
@@ -1098,8 +1100,11 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 case_training = self.trainings.cases[selected_case.code]
                 pending = self.fsrs_pending_rating
                 rating = (
-                    pending.rating if pending is not None
-                    else self.fsrs_rater.rate(solve, self.step)
+                    pending.rating
+                    if pending is not None
+                    else self.fsrs_rater.rate(
+                            solve, self.step, selected_case.code,
+                    )
                 )
                 case_training.fsrs_card = self.fsrs_scheduler.update_card(
                     case_training.fsrs_card,

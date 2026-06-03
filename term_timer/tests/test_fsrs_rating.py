@@ -13,6 +13,7 @@ from term_timer.fsrs.rating import MAX_PAUSES
 from term_timer.fsrs.rating import MAX_TIME_S
 from term_timer.fsrs.rating import TARGET_TIMES
 from term_timer.fsrs.rating import PerformanceRater
+from term_timer.fsrs.rating import build_case_max_moves
 from term_timer.solve import Solve
 
 
@@ -287,3 +288,88 @@ class TestMaxMoves(unittest.TestCase):
     def test_oll_is_seventeen(self) -> None:
         """OLL limit is 17 (algos commonly reach 14-17 HTM)."""
         self.assertEqual(MAX_MOVES['oll'], 17)
+
+
+class TestCaseMaxMoves(unittest.TestCase):
+    """Validate the per-case HTM thresholds built from cubing_algs."""
+
+    def test_known_cases_present(self) -> None:
+        """Key OLL and PLL cases must have a threshold entry."""
+        cases = [
+            ('pll', 'T'), ('pll', 'F'), ('pll', 'Aa'),
+            ('oll', '26'), ('oll', '07'),
+        ]
+        for step, code in cases:
+            self.assertIn(code, build_case_max_moves(step))
+
+    def test_all_values_are_positive(self) -> None:
+        """Every build_case_max_moves value must be a positive integer."""
+        for step in ('oll', 'pll', 'f2l', 'af2l'):
+            for code, limit in build_case_max_moves(step).items():
+                self.assertGreater(
+                    limit, 0, msg=f'{step}:{code} has non-positive limit',
+                )
+
+    def test_case_name_overrides_step_fallback(self) -> None:
+        """rate() uses build_case_max_moves when case_name is provided."""
+        rater = PerformanceRater()
+        # PLL Gd: P90 HTM in DB is 22, threshold = 24 > step PLL limit (20).
+        # An HTM between the two should pass with case_name='Gd' but trigger
+        # AGAIN with the step-level fallback (no case_name).
+        case_threshold = build_case_max_moves('pll')['Gd']
+        step_limit = MAX_MOVES['pll']
+        self.assertGreater(case_threshold, step_limit)
+        htm_between = step_limit + 2  # above step limit, below case threshold
+        self.assertLess(htm_between, case_threshold)
+        with (
+            patch.object(
+                Solve,
+                'execution_pauses',
+                new_callable=PropertyMock,
+                return_value=0,
+            ),
+            patch.object(
+                Solve,
+                'all_missed_moves',
+                new_callable=PropertyMock,
+                return_value=0,
+            ),
+            patch.object(
+                Solve,
+                'method_applied',
+                new_callable=PropertyMock,
+                return_value=None,
+            ),
+        ):
+            solve = make_bt_solve(htm=htm_between, elapsed_s=1.0)
+            self.assertNotEqual(rater.rate(solve, 'pll', 'Gd'), Rating.Again)
+            self.assertEqual(rater.rate(solve, 'pll'), Rating.Again)
+
+    def test_unknown_case_falls_back_to_step(self) -> None:
+        """rate() with an unknown case_name falls back to step-level limit."""
+        rater = PerformanceRater()
+        limit = MAX_MOVES.get('pll', 15)
+        with (
+            patch.object(
+                Solve,
+                'execution_pauses',
+                new_callable=PropertyMock,
+                return_value=0,
+            ),
+            patch.object(
+                Solve,
+                'all_missed_moves',
+                new_callable=PropertyMock,
+                return_value=0,
+            ),
+            patch.object(
+                Solve,
+                'method_applied',
+                new_callable=PropertyMock,
+                return_value=None,
+            ),
+        ):
+            solve = make_bt_solve(htm=limit + 1, elapsed_s=1.0)
+            self.assertEqual(
+                rater.rate(solve, 'pll', 'UNKNOWN_CASE'), Rating.Again,
+            )
