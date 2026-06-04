@@ -1,12 +1,22 @@
 """
-Performance rating for FSRS using a rule-based decision tree.
+Performance rating for FSRS from execution metrics.
 
-With Bluetooth data, the rating reflects memorisation quality:
+With Bluetooth data the rating reflects muscle-memory quality through a
+continuous penalty score mapped to four bands, rather than a hard cascade.
+A hard cascade made the per-case distribution bimodal (AGAIN <-> EASY): the
+slow tail of a *known* case crashed straight to AGAIN (an FSRS lapse) with
+no GOOD/HARD cushion. The continuous score gives a slow-but-clean known case
+a middle band instead.
 
-  AGAIN  — case not known: time > MAX_TIME_S or too many moves
-  HARD   — execution error: cancelled/missed moves detected
-  GOOD   — hesitation: more than MAX_PAUSES pauses, or TPS below MIN_TPS
-  EASY   — clean execution: fast, few moves, no errors, no hesitation
+  score = tps_pen + pause_pen + missed_pen + time_pen
+
+  - TPS is the primary signal (penalty grows below a per-step reference).
+  - One pause is a legitimate regrip; only extra pauses are penalised.
+  - A missed QTM (after AUF stripping) is a real cancellation error.
+  - Time is a soft guard past TIME_SOFT_S, not a cliff.
+
+An alg far over its per-case move budget is a categorical AGAIN override
+(OCLL forcing = case structurally not memorised).
 
 Without Bluetooth data, falls back to a time-ratio comparison against
 fixed step targets (TARGET_TIMES). This fallback will be refined later.
@@ -17,6 +27,8 @@ from typing import TYPE_CHECKING
 from typing import NamedTuple
 
 from cubing_algs.cases import get_collection
+from cubing_algs.constants import AUF_CHAR
+from cubing_algs.transform.trim import trim_moves
 from fsrs import Rating
 
 from term_timer.constants import SECOND
@@ -84,10 +96,36 @@ def build_case_max_moves(step: str) -> dict[str, int]:
     return result
 
 
-MIN_TPS: float = 4.0
-MAX_TIME_S: float = 5.0
-MAX_PAUSES: int = 2
+# Graded score: TPS is the primary signal. At or above the per-step
+# reference the case feels grooved (no penalty); below it the penalty grows
+# linearly over TPS_SCALE. The reference is per-step because F2L's natural
+# TPS is lower than OLL/PLL (relative calibration, no per-case storage).
+TPS_REF_STEP: dict[str, float] = {
+    'oll': 4.6,
+    'pll': 4.9,
+    'f2l': 4.2,
+}
+TPS_REF_DEFAULT: float = 4.6
+TPS_SCALE: float = 1.5
 
+# A single pause is a legitimate regrip; only extra pauses are penalised.
+PAUSE_TOLERANCE: int = 1
+PAUSE_WEIGHT: float = 0.25
+
+# After AUF stripping, a missed QTM is a real cancellation error.
+MISSED_WEIGHT: float = 0.30
+
+# Time is a soft guard, not a cliff: it only adds penalty past TIME_SOFT_S,
+# to catch genuinely-stuck executions that TPS alone might miss.
+TIME_SOFT_S: float = 5.5
+TIME_SCALE: float = 2.0
+
+# Continuous score -> four bands. The middle (GOOD/HARD) is now reachable.
+BAND_EASY: float = 0.5
+BAND_GOOD: float = 1.0
+BAND_AGAIN: float = 1.5
+
+# Non-Bluetooth fallback: time-ratio thresholds (unchanged).
 SCORE_AGAIN: float = 1.5
 SCORE_HARD: float = 1.2
 SCORE_EASY: float = 0.8
@@ -107,6 +145,44 @@ class RatingBreakdown(NamedTuple):
 class PerformanceRater:
     """Converts solve performance into FSRS ratings."""
 
+    @staticmethod
+    def execution_metrics(
+        solve: 'Solve',
+    ) -> tuple[float, int, int, int, float]:
+        """
+        Compute execution metrics with trailing AUF stripped.
+
+        The final AUF (alignment moves at the end of the algorithm) pollutes
+        the HTM, missed-move and pause signals: a wrong AUF inflates the move
+        count, registers as missed QTM, and the recognition gap before it is
+        counted as a pause. Stripping it isolates the muscle-memory signal.
+
+        The solution is first reoriented into the canonical frame (last layer
+        on U) so the AUF is expressed as ``U``; without this the recorded
+        moves keep the cube frame (last layer often on D) and the trim would
+        match nothing. Only the trailing AUF is trimmed; the leading edge is
+        kept intact. TPS uses the full HTM so hand speed is not deflated.
+
+        Args:
+            solve: Completed solve with Bluetooth move data.
+
+        Returns:
+            Tuple of (time_s, htm, missed_qtm, pauses, tps), where htm,
+            missed_qtm and pauses are computed on the AUF-stripped algorithm.
+
+        """
+        time_s = solve.time / SECOND
+        oriented = solve.translation(solve.solution)
+        algorithm = oriented.transform(
+            trim_moves(AUF_CHAR, start=False, end=True),
+        )
+        htm = algorithm.metrics.htm
+        missed_qtm = solve.missed_moves(algorithm)
+        pauses = solve.pauses(algorithm)
+        full_htm = oriented.metrics.htm
+        tps = full_htm / time_s if time_s > 0 and full_htm > 0 else 0.0
+        return time_s, htm, missed_qtm, pauses, tps
+
     def rate_with_details(
         self,
         solve: 'Solve',
@@ -121,15 +197,11 @@ class PerformanceRater:
 
         """
         rating = self.rate(solve, step, case_name)
-        time_s = solve.time / SECOND
 
         if not solve.advanced:
-            return RatingBreakdown(rating, time_s, 0, 0, 0, 0.0)
+            return RatingBreakdown(rating, solve.time / SECOND, 0, 0, 0, 0.0)
 
-        htm = solve.solution.metrics.htm
-        missed_qtm = solve.all_missed_moves
-        pauses = solve.execution_pauses
-        tps = htm / time_s if time_s > 0 and htm > 0 else 0.0
+        time_s, htm, missed_qtm, pauses, tps = self.execution_metrics(solve)
         return RatingBreakdown(rating, time_s, htm, missed_qtm, pauses, tps)
 
     def rate(
@@ -139,10 +211,11 @@ class PerformanceRater:
         case_name: str | None = None,
     ) -> Rating:
         """
-        Rate performance using a rule-based decision tree.
+        Rate performance from a continuous execution score.
 
-        Uses execution errors and hesitation signals to assess memorisation
-        quality. Falls back to time-ratio comparison without Bluetooth data.
+        An alg over its per-case move budget is a categorical AGAIN (forcing);
+        otherwise the penalty score maps to a band. Falls back to time-ratio
+        comparison without Bluetooth data.
 
         Args:
             solve: Completed solve with optional advanced analysis
@@ -156,11 +229,8 @@ class PerformanceRater:
         if not solve.advanced:
             return self.rate_without_bluetooth(solve.time, step)
 
-        time_s = solve.time / SECOND
-        htm = solve.solution.metrics.htm
+        time_s, htm, missed_qtm, pauses, tps = self.execution_metrics(solve)
 
-        if time_s > MAX_TIME_S:
-            return Rating.Again
         step_lower = step.lower()
         max_moves = (
             build_case_max_moves(step_lower).get(
@@ -173,14 +243,53 @@ class PerformanceRater:
         if htm > max_moves:
             return Rating.Again
 
-        if solve.all_missed_moves > 0:
-            return Rating.Hard
+        score = self.execution_score(
+            time_s, missed_qtm, pauses, tps, step_lower,
+        )
+        return self.score_to_band(score)
 
-        tps = htm / time_s if time_s > 0 else 0.0
-        if solve.execution_pauses > MAX_PAUSES or tps < MIN_TPS:
+    @staticmethod
+    def execution_score(
+        time_s: float,
+        missed_qtm: int,
+        pauses: int,
+        tps: float,
+        step: str,
+    ) -> float:
+        """
+        Compute the continuous penalty score from execution metrics.
+
+        Higher means worse. TPS below the per-step reference is the primary
+        driver; pauses beyond one regrip, missed QTM, and time past the soft
+        guard add on top.
+
+        Returns:
+            Non-negative penalty score (0.0 = flawless, grooved execution).
+
+        """
+        tps_ref = TPS_REF_STEP.get(step, TPS_REF_DEFAULT)
+        tps_pen = max(0.0, (tps_ref - tps) / TPS_SCALE)
+        pause_pen = max(0, pauses - PAUSE_TOLERANCE) * PAUSE_WEIGHT
+        missed_pen = missed_qtm * MISSED_WEIGHT
+        time_pen = max(0.0, (time_s - TIME_SOFT_S) / TIME_SCALE)
+        return tps_pen + pause_pen + missed_pen + time_pen
+
+    @staticmethod
+    def score_to_band(score: float) -> Rating:
+        """
+        Map a continuous penalty score to a FSRS band.
+
+        Returns:
+            Easy if score < 0.5, Good if < 1.0, Hard if < 1.5, else Again.
+
+        """
+        if score < BAND_EASY:
+            return Rating.Easy
+        if score < BAND_GOOD:
             return Rating.Good
-
-        return Rating.Easy
+        if score < BAND_AGAIN:
+            return Rating.Hard
+        return Rating.Again
 
     def rate_without_bluetooth(
         self,
