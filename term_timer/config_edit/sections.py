@@ -463,6 +463,17 @@ class TrainerSection(ConfigSection):
 
         """
         with Grid():
+            yield Static('FSRS', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Enable spaced repetition case selection',
+                    id='fsrs',
+                )
+                yield Static(
+                    'Use FSRS to automatically schedule case reviews',
+                    classes='field-help',
+                )
+
             yield Static('Step', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Select(
@@ -541,6 +552,9 @@ class TrainerSection(ConfigSection):
         for slot in trainer_config.get('xcross-slots', ['FR']):
             xcross_slots.select(slot)
 
+        fsrs = self.query_one('#fsrs', Checkbox)
+        fsrs.value = trainer_config.get('fsrs', True)
+
     def get_config_data(
         self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
@@ -555,9 +569,11 @@ class TrainerSection(ConfigSection):
         ecross_difficulty = self.query_one('#ecross-difficulty', Select)
         xcross_difficulty = self.query_one('#xcross-difficulty', Select)
         xcross_slots = self.query_one('#xcross-slots', SelectionList)
+        fsrs = self.query_one('#fsrs', Checkbox)
 
         return {
             'trainer': {
+                'fsrs': fsrs.value,
                 'step': str(step.value),
                 'ecross-difficulty': str(ecross_difficulty.value),
                 'xcross-difficulty': str(xcross_difficulty.value),

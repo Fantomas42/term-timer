@@ -24,6 +24,7 @@ from rich import box
 from rich.table import Table
 
 from term_timer.annotations import TrainingCase
+from term_timer.config import TRAINER_FSRS
 from term_timer.constants import CROSS_CASE
 from term_timer.constants import DNF
 from term_timer.constants import EASY_CROSS_CASE
@@ -162,7 +163,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.counter = 1
         self.session_data: list[tuple[str, Case, int]] = []
 
-        self.fsrs_update = self.step_config.training_case is None
+        self.fsrs_update = (
+            TRAINER_FSRS and self.step_config.training_case is None
+        )
         self.fsrs_selection = (
             self.fsrs_update
             and not self.case_codes

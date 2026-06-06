@@ -23,6 +23,7 @@ linear = false
 right-handed = true
 
 [trainer]
+fsrs = true
 step = "oll"
 ecross-difficulty = "normal"
 xcross-difficulty = "normal"
@@ -115,6 +116,8 @@ DEVICE_ADDRESS: str = BLUETOOTH_CONFIG.get('address', '')
 USE_GYROSCOPE: bool = BLUETOOTH_CONFIG.get('use_gyroscope', True)
 
 ROTATION_THRESHOLD: float = BLUETOOTH_CONFIG.get('rotation_threshold', 75.0)
+
+TRAINER_FSRS: bool = TRAINER_CONFIG.get('fsrs', True)
 
 TRAINER_STEP = TRAINER_CONFIG.get('step')
 
