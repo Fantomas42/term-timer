@@ -758,8 +758,10 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
     cases = parser.add_argument_group(
         'Case Selection',
-        'By default, cases are selected by FSRS (spaced repetition). '
-        'All options below disable FSRS.',
+        'By default, cases are selected by FSRS.\n'
+        '--oldest, --slowest and --filter restrict the pool while keeping '
+        'FSRS active;\n--cases and --random disable FSRS selection '
+        '(cards are still updated).',
     )
     cases.add_argument(
         '-m', '--new-cases',
