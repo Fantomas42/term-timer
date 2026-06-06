@@ -474,6 +474,23 @@ class TrainerSection(ConfigSection):
                     classes='field-help',
                 )
 
+            yield Static('FSRS Rating', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Select(
+                    options=[
+                        ('Auto (performance-based)', 'auto'),
+                        ('Manual (1-4 keys)', 'manual'),
+                    ],
+                    id='fsrs-rating',
+                    allow_blank=False,
+                    value='auto',
+                )
+                yield Static(
+                    'Auto rates from execution data; Manual lets you'
+                    ' rate with 1-4 keys (useful with Bluetooth)',
+                    classes='field-help',
+                )
+
             yield Static('Step', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Select(
@@ -555,6 +572,9 @@ class TrainerSection(ConfigSection):
         fsrs = self.query_one('#fsrs', Checkbox)
         fsrs.value = trainer_config.get('fsrs', True)
 
+        fsrs_rating = self.query_one('#fsrs-rating', Select)
+        fsrs_rating.value = trainer_config.get('fsrs-rating', 'auto')
+
     def get_config_data(
         self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
@@ -566,14 +586,16 @@ class TrainerSection(ConfigSection):
 
         """
         step = self.query_one('#step', Select)
+        fsrs = self.query_one('#fsrs', Checkbox)
+        fsrs_rating = self.query_one('#fsrs-rating', Select)
         ecross_difficulty = self.query_one('#ecross-difficulty', Select)
         xcross_difficulty = self.query_one('#xcross-difficulty', Select)
         xcross_slots = self.query_one('#xcross-slots', SelectionList)
-        fsrs = self.query_one('#fsrs', Checkbox)
 
         return {
             'trainer': {
                 'fsrs': fsrs.value,
+                'fsrs-rating': str(fsrs_rating.value),
                 'step': str(step.value),
                 'ecross-difficulty': str(ecross_difficulty.value),
                 'xcross-difficulty': str(xcross_difficulty.value),

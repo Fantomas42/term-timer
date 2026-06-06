@@ -25,6 +25,7 @@ from rich.table import Table
 
 from term_timer.annotations import TrainingCase
 from term_timer.config import TRAINER_FSRS
+from term_timer.config import TRAINER_FSRS_RATING
 from term_timer.constants import CROSS_CASE
 from term_timer.constants import DNF
 from term_timer.constants import EASY_CROSS_CASE
@@ -1116,7 +1117,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         else:
             char = await self.getch('save')
 
-        manual = self.fsrs_update and self.bluetooth_interface is None
+        manual = self.fsrs_update and (
+            self.bluetooth_interface is None
+            or TRAINER_FSRS_RATING == 'manual'
+        )
         manual_rating = MANUAL_RATING_KEYS.get(char) if manual else None
 
         # Manual mode requires an explicit 1-4 verdict to save; any other key
@@ -1287,7 +1291,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 self.fsrs_preview_line(solve, selected_case)
             self.save_line(
                 manual_rating=(
-                    self.fsrs_update and self.bluetooth_interface is None
+                    self.fsrs_update and (
+                        self.bluetooth_interface is None
+                        or TRAINER_FSRS_RATING == 'manual'
+                    )
                 ),
             )
 
