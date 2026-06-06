@@ -13,7 +13,6 @@ from term_timer.fsrs.rating import BAND_GOOD
 from term_timer.fsrs.rating import MAX_MOVES
 from term_timer.fsrs.rating import MISSED_WEIGHT
 from term_timer.fsrs.rating import PAUSE_WEIGHT
-from term_timer.fsrs.rating import TARGET_TIMES
 from term_timer.fsrs.rating import TIME_SCALE
 from term_timer.fsrs.rating import TIME_SOFT_S
 from term_timer.fsrs.rating import TPS_REF_STEP
@@ -59,66 +58,32 @@ def make_bt_solve(htm: int, elapsed_s: float) -> Solve:
 
 
 class TestRateWithoutBluetooth(unittest.TestCase):
-    """rate_without_bluetooth() always uses TARGET_TIMES as baseline."""
+    """Without execution data the rater is not consulted (manual rating)."""
 
     def setUp(self) -> None:  # noqa: D102
         self.rater = PerformanceRater()
 
-    def test_pll_under_target_is_good(self) -> None:
-        """2.0s target for PLL: execution at 1.9s -> Good."""
-        elapsed = int(1.9 * SECOND)
-        rating = self.rater.rate_without_bluetooth(elapsed, 'pll')
-        self.assertEqual(rating, Rating.Good)
+    def test_rate_no_moves_returns_good_default(self) -> None:
+        """
+        Without Bluetooth, rate() returns Good regardless of time.
 
-    def test_pll_well_under_target_is_easy(self) -> None:
-        """2.0s target for PLL: execution at 1.5s (< 0.8x2.0) -> Easy."""
-        elapsed = int(1.5 * SECOND)
-        rating = self.rater.rate_without_bluetooth(elapsed, 'pll')
-        self.assertEqual(rating, Rating.Easy)
+        The no-Bluetooth path collects a manual 1-4 rating from the user, so
+        this defensive default is never reached on the trainer path.
+        """
+        fast = make_solve(int(1.0 * SECOND), moves=None)
+        slow = make_solve(int(8.0 * SECOND), moves=None)
+        self.assertEqual(self.rater.rate(fast, 'pll'), Rating.Good)
+        self.assertEqual(self.rater.rate(slow, 'pll'), Rating.Good)
 
-    def test_pll_over_hard_threshold_is_hard(self) -> None:
-        """2.0s target for PLL: execution at 2.5s (> 1.2x2.0) -> Hard."""
-        elapsed = int(2.5 * SECOND)
-        rating = self.rater.rate_without_bluetooth(elapsed, 'pll')
-        self.assertEqual(rating, Rating.Hard)
-
-    def test_pll_over_again_threshold_is_again(self) -> None:
-        """2.0s target for PLL: execution at 3.5s (> 1.5x2.0) -> Again."""
-        elapsed = int(3.5 * SECOND)
-        rating = self.rater.rate_without_bluetooth(elapsed, 'pll')
-        self.assertEqual(rating, Rating.Again)
-
-    def test_oll_uses_own_target(self) -> None:
-        """OLL target is 2.5s: 1.9s (< 0.8x2.5=2.0s) -> Easy."""
-        elapsed = int(1.9 * SECOND)
-        rating = self.rater.rate_without_bluetooth(elapsed, 'oll')
-        self.assertEqual(rating, Rating.Easy)
-
-    def test_unknown_step_uses_default_3s(self) -> None:
-        """Unknown step falls back to 3.0s default target."""
-        elapsed = int(2.9 * SECOND)
-        rating = self.rater.rate_without_bluetooth(elapsed, 'unknown')
-        self.assertEqual(rating, Rating.Good)
-
-
-class TestRateDispatchWithoutBluetooth(unittest.TestCase):
-    """rate() uses rate_without_bluetooth() when solve has no moves."""
-
-    def setUp(self) -> None:  # noqa: D102
-        self.rater = PerformanceRater()
-
-    def test_rate_no_moves_uses_target(self) -> None:
-        """Without Bluetooth, target time drives the rating."""
-        # PLL target = 2.0s; execution = 1.9s -> Good.
-        solve = make_solve(int(1.9 * SECOND), moves=None)
-        rating = self.rater.rate(solve, 'pll')
-        self.assertEqual(rating, Rating.Good)
-
-    def test_rate_no_moves_again_on_slow(self) -> None:
-        """Without Bluetooth, slow execution -> Again vs the step target."""
-        solve = make_solve(int(4.0 * SECOND), moves=None)
-        rating = self.rater.rate(solve, 'pll')
-        self.assertEqual(rating, Rating.Again)
+    def test_rate_with_details_no_moves_is_zeroed(self) -> None:
+        """Without Bluetooth, the breakdown carries no execution metrics."""
+        solve = make_solve(int(2.0 * SECOND), moves=None)
+        breakdown = self.rater.rate_with_details(solve, 'pll')
+        self.assertEqual(breakdown.rating, Rating.Good)
+        self.assertEqual(breakdown.htm, 0)
+        self.assertEqual(breakdown.missed_qtm, 0)
+        self.assertEqual(breakdown.pauses, 0)
+        self.assertEqual(breakdown.tps, 0.0)
 
 
 class TestExecutionScore(unittest.TestCase):
@@ -298,23 +263,6 @@ class TestRateWithBluetooth(unittest.TestCase):
         """Unknown step uses 15 as default move limit."""
         solve = make_bt_solve(htm=16, elapsed_s=2.0)
         self.assertEqual(self.rater.rate(solve, 'unknown_step'), Rating.Again)
-
-
-class TestTargetTimes(unittest.TestCase):
-    """Validate that TARGET_TIMES covers the expected steps."""
-
-    def test_known_steps_present(self) -> None:
-        """All standard CFOP steps should have a target time."""
-        for step in ('oll', 'pll', 'f2l', 'af2l', 'cross', 'ecross'):
-            self.assertIn(step, TARGET_TIMES)
-
-    def test_pll_target_is_2s(self) -> None:
-        """PLL target should be 2.0 seconds."""
-        self.assertEqual(TARGET_TIMES['pll'], 2.0)
-
-    def test_oll_target_is_2_5s(self) -> None:
-        """OLL target should be 2.5 seconds."""
-        self.assertEqual(TARGET_TIMES['oll'], 2.5)
 
 
 class TestMaxMoves(unittest.TestCase):

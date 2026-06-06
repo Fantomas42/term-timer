@@ -18,8 +18,9 @@ a middle band instead.
 An alg far over its per-case move budget is a categorical AGAIN override
 (OCLL forcing = case structurally not memorised).
 
-Without Bluetooth data, falls back to a time-ratio comparison against
-fixed step targets (TARGET_TIMES). This fallback will be refined later.
+Without Bluetooth data there is no execution signal to rate, so the user
+declares the rating manually at the keyboard; this module is not consulted
+on that path.
 """
 
 from functools import cache
@@ -35,15 +36,6 @@ from term_timer.constants import SECOND
 
 if TYPE_CHECKING:
     from term_timer.solve import Solve
-
-TARGET_TIMES: dict[str, float] = {
-    'oll': 2.5,
-    'pll': 2.0,
-    'f2l': 5.0,
-    'af2l': 6.0,
-    'cross': 3.0,
-    'ecross': 4.0,
-}
 
 MAX_MOVES: dict[str, int] = {
     'oll': 17,
@@ -124,11 +116,6 @@ TIME_SCALE: float = 2.0
 BAND_EASY: float = 0.5
 BAND_GOOD: float = 1.0
 BAND_AGAIN: float = 1.5
-
-# Non-Bluetooth fallback: time-ratio thresholds (unchanged).
-SCORE_AGAIN: float = 1.5
-SCORE_HARD: float = 1.2
-SCORE_EASY: float = 0.8
 
 
 class RatingBreakdown(NamedTuple):
@@ -214,8 +201,9 @@ class PerformanceRater:
         Rate performance from a continuous execution score.
 
         An alg over its per-case move budget is a categorical AGAIN (forcing);
-        otherwise the penalty score maps to a band. Falls back to time-ratio
-        comparison without Bluetooth data.
+        otherwise the penalty score maps to a band. Without Bluetooth data the
+        rating is collected manually, so this is not reached on the trainer
+        path; it returns Good as a defensive default.
 
         Args:
             solve: Completed solve with optional advanced analysis
@@ -227,7 +215,7 @@ class PerformanceRater:
 
         """
         if not solve.advanced:
-            return self.rate_without_bluetooth(solve.time, step)
+            return Rating.Good
 
         time_s, htm, missed_qtm, pauses, tps = self.execution_metrics(solve)
 
@@ -290,59 +278,3 @@ class PerformanceRater:
         if score < BAND_AGAIN:
             return Rating.Hard
         return Rating.Again
-
-    def rate_without_bluetooth(
-        self,
-        elapsed_time: int,
-        step: str,
-    ) -> Rating:
-        """
-        Rate performance using the fixed step target as baseline.
-
-        Used when no Bluetooth move data is available. Always compares
-        against the canonical step target time (e.g. 2.0s for PLL,
-        2.5s for OLL) regardless of personal history.
-
-        Args:
-            elapsed_time: Elapsed time in nanoseconds
-            step: Step name used to look up the target in TARGET_TIMES
-
-        Returns:
-            FSRS Rating based on ratio vs step target.
-
-        """
-        return self.score_to_rating(self.compute_time_ratio(elapsed_time, step))
-
-    @staticmethod
-    def compute_time_ratio(elapsed_time: int, step: str) -> float:
-        """
-        Compute elapsed time / target time ratio for the given step.
-
-        Args:
-            elapsed_time: Elapsed time in nanoseconds
-            step: Step name used to look up the target in TARGET_TIMES
-
-        Returns:
-            Ratio of elapsed time to target time (1.0 = exactly on target).
-
-        """
-        target = TARGET_TIMES.get(step.lower(), 3.0)
-        target_ns = int(target * SECOND)
-        return elapsed_time / target_ns
-
-    @staticmethod
-    def score_to_rating(score: float) -> Rating:
-        """
-        Map composite score to FSRS Rating.
-
-        Returns:
-            Again if score > 1.5, Hard if > 1.2, Easy if < 0.8, Good otherwise.
-
-        """
-        if score > SCORE_AGAIN:
-            return Rating.Again
-        if score > SCORE_HARD:
-            return Rating.Hard
-        if score < SCORE_EASY:
-            return Rating.Easy
-        return Rating.Good

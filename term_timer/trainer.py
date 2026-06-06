@@ -19,6 +19,7 @@ from cubing_algs.constants import ORIENTATION_FACE_MOVES
 from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
+from fsrs import Rating
 from rich import box
 from rich.table import Table
 
@@ -91,6 +92,14 @@ STEP_CONFIGS: Final[dict[str, StepDef]] = {
     'pll': StepDef('PLL', 'pll', 'PLL'),
     'f2l': StepDef('F2L', 'f2l', 'F2L'),
     'af2l': StepDef('F2L', 'af2l', 'Advanced F2L'),
+}
+
+# Without Bluetooth the user declares the rating with a 1-4 key.
+MANUAL_RATING_KEYS: Final[dict[str, Rating]] = {
+    '1': Rating.Again,
+    '2': Rating.Hard,
+    '3': Rating.Good,
+    '4': Rating.Easy,
 }
 
 
@@ -712,6 +721,11 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         if self.fsrs_rater is None or self.fsrs_scheduler is None:
             return
 
+        if not solve.advanced:
+            # No execution data: the rating is collected manually, there is
+            # nothing to preview.
+            return
+
         breakdown = self.fsrs_rater.rate_with_details(
             solve, self.step, selected_case.code,
         )
@@ -828,8 +842,22 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 end='',
             )
 
-    def save_line(self) -> None:
+    def save_line(self, *, manual_rating: bool = False) -> None:
         """Display instructions for saving or canceling the solve."""
+        if manual_rating:
+            self.console.print(
+                'Rate:',
+                '[key](1)[/key] Again,',
+                '[key](2)[/key] Hard,',
+                '[key](3)[/key] Good,',
+                '[key](4)[/key] Easy,',
+                '[key](z)[/key] discard,',
+                '[key](q)[/key] quit.',
+                style='consign',
+                end='',
+            )
+            return
+
         self.console.print(
             'Press any key to continue,',
             '[key](z)[/key] discard,',
@@ -1085,8 +1113,15 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         else:
             char = await self.getch('save')
 
+        manual = self.fsrs_update and self.bluetooth_interface is None
+        manual_rating = MANUAL_RATING_KEYS.get(char) if manual else None
+
+        # Manual mode requires an explicit 1-4 verdict to save; any other key
+        # discards the unrated rep.
+        discard = manual_rating is None if manual else char in {'z', 'k'}
+
         save_string = ''
-        if char in {'z', 'k'}:
+        if discard:
             self.trainings.pop_timing(selected_case.code)
             SOUND_PLAYER.save_discarded()
             save_string = 'Training discarded'
@@ -1098,14 +1133,17 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 and selected_case.code in self.trainings.cases
             ):
                 case_training = self.trainings.cases[selected_case.code]
-                pending = self.fsrs_pending_rating
-                rating = (
-                    pending.rating
-                    if pending is not None
-                    else self.fsrs_rater.rate(
-                            solve, self.step, selected_case.code,
+                if manual_rating is not None:
+                    rating = manual_rating
+                else:
+                    pending = self.fsrs_pending_rating
+                    rating = (
+                        pending.rating
+                        if pending is not None
+                        else self.fsrs_rater.rate(
+                                solve, self.step, selected_case.code,
+                        )
                     )
-                )
                 case_training.fsrs_card = self.fsrs_scheduler.update_card(
                     case_training.fsrs_card,
                     rating,
@@ -1244,7 +1282,11 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         if not self.free_play:
             if self.fsrs_update:
                 self.fsrs_preview_line(solve, selected_case)
-            self.save_line()
+            self.save_line(
+                manual_rating=(
+                    self.fsrs_update and self.bluetooth_interface is None
+                ),
+            )
 
             quit_training = await self.save_training(selected_case, solve)
 

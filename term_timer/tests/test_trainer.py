@@ -1,9 +1,19 @@
 """Tests for trainer."""
+import asyncio
 import unittest
+from datetime import UTC
+from datetime import datetime
 from random import Random
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 from cubing_algs.cases import get_collection
+from fsrs import Card
+from fsrs import Rating
 
+from term_timer.fsrs.storage import Trainings
+from term_timer.solve import Solve
+from term_timer.trainer import MANUAL_RATING_KEYS
 from term_timer.trainer import Trainer
 
 
@@ -309,3 +319,141 @@ class TestFSRSWithFilter(unittest.TestCase):
         """fsrs_probabilities contains only the N slowest cases."""
         timer = self.make_trainer(slowest=3)
         self.assertEqual(len(timer.fsrs_probabilities), 3)
+
+
+class TestManualRatingKeys(unittest.TestCase):
+    """The 1-4 keyboard keys map to the FSRS ratings."""
+
+    def test_keys_map_to_ascending_ratings(self) -> None:
+        """1=Again, 2=Hard, 3=Good, 4=Easy (ascending FSRS values)."""
+        self.assertEqual(MANUAL_RATING_KEYS['1'], Rating.Again)
+        self.assertEqual(MANUAL_RATING_KEYS['2'], Rating.Hard)
+        self.assertEqual(MANUAL_RATING_KEYS['3'], Rating.Good)
+        self.assertEqual(MANUAL_RATING_KEYS['4'], Rating.Easy)
+
+    def test_only_four_keys(self) -> None:
+        """Only the digits 1-4 are bound."""
+        self.assertEqual(set(MANUAL_RATING_KEYS), {'1', '2', '3', '4'})
+
+
+class TestSaveTrainingManualRating(unittest.IsolatedAsyncioTestCase):
+    """save_training() collects a manual 1-4 rating when there is no BT."""
+
+    CASE_CODE = 'T'
+
+    def make_trainer(self) -> Trainer:
+        """
+        Build a no-Bluetooth PLL trainer with one rated case.
+
+        Returns:
+            A Trainer with fsrs_update on, no BT interface, and a single
+            CaseTraining ready to be rated.
+
+        """
+        empty = Trainings(method='CFOP', step='PLL', cases={})
+        with patch(
+            'term_timer.trainer.load_trainings', return_value=empty,
+        ):
+            timer = Trainer(
+                step='pll',
+                case_codes=[],
+                oldest=0,
+                slowest=0,
+                random=0,
+                new_cases_limit=5,
+                filters=[],
+                free_play=False,
+                show_solution=False,
+                show_cube=False,
+                metronome=0,
+                orientation='DF',
+                rng=Random(),  # noqa: S311
+            )
+        timer.bluetooth_interface = None
+        timer.console = MagicMock()
+        date = int(datetime.now(tz=UTC).timestamp())
+        timer.trainings.add_timing(self.CASE_CODE, 2000, date)
+        return timer
+
+    def selected_case(self, timer: Trainer) -> object:
+        """
+        Return the Case object matching CASE_CODE from the trainer pool.
+
+        Returns:
+            The cubing_algs Case for CASE_CODE.
+
+        """
+        return next(
+            tc.case for tc in timer.cases if tc.case.code == self.CASE_CODE
+        )
+
+    async def run_save(
+            self, char: str,
+    ) -> tuple[Trainer, MagicMock, bool]:
+        """
+        Run save_training with a fixed key and a captured update_card.
+
+        Returns:
+            Tuple of (trainer, update_card mock, quit flag).
+
+        """
+        timer = self.make_trainer()
+        case = self.selected_case(timer)
+        solve = Solve(
+            date=datetime.now(tz=UTC).timestamp(),
+            time=2_000_000_000,
+            scramble="R U R' U'",
+            moves=None,
+        )
+        update_card = MagicMock(return_value=Card())
+
+        async def fake_getch(_mode: str, *_: object) -> str:
+            await asyncio.sleep(0)
+            return char
+
+        with (
+            patch('term_timer.trainer.save_trainings'),
+            patch('term_timer.trainer.SOUND_PLAYER'),
+            patch.object(timer.fsrs_scheduler, 'update_card', update_card),
+            patch.object(timer, 'getch', side_effect=fake_getch),
+        ):
+            quit_flag = await timer.save_training(case, solve)  # type: ignore[arg-type]
+        return timer, update_card, quit_flag
+
+    async def test_rating_key_updates_card(self) -> None:
+        """Each 1-4 key updates the card with the mapped rating."""
+        for char, rating in MANUAL_RATING_KEYS.items():
+            timer, update_card, quit_flag = await self.run_save(char)
+            update_card.assert_called_once()
+            self.assertEqual(update_card.call_args.args[1], rating)
+            self.assertFalse(quit_flag)
+            self.assertEqual(
+                len(timer.trainings.cases[self.CASE_CODE].timings), 1,
+            )
+
+    async def test_discard_key_pops_timing(self) -> None:
+        """'z' discards the rep without updating the card and continues."""
+        timer, update_card, quit_flag = await self.run_save('z')
+        update_card.assert_not_called()
+        self.assertFalse(quit_flag)
+        self.assertEqual(
+            len(timer.trainings.cases[self.CASE_CODE].timings), 0,
+        )
+
+    async def test_quit_key_discards_and_quits(self) -> None:
+        """'q' discards the unrated rep and quits."""
+        timer, update_card, quit_flag = await self.run_save('q')
+        update_card.assert_not_called()
+        self.assertTrue(quit_flag)
+        self.assertEqual(
+            len(timer.trainings.cases[self.CASE_CODE].timings), 0,
+        )
+
+    async def test_invalid_key_discards_and_continues(self) -> None:
+        """Any unrecognised key discards the unrated rep and continues."""
+        timer, update_card, quit_flag = await self.run_save('x')
+        update_card.assert_not_called()
+        self.assertFalse(quit_flag)
+        self.assertEqual(
+            len(timer.trainings.cases[self.CASE_CODE].timings), 0,
+        )
