@@ -10,7 +10,7 @@ from term_timer.stats import TrainerStatistics
 from term_timer.trainer import Trainer
 
 
-async def trainer(options: Namespace) -> int:  # noqa: C901, PLR0912
+async def trainer(options: Namespace) -> int:  # noqa: C901
     """
     Generate training case.
 
@@ -25,18 +25,6 @@ async def trainer(options: Namespace) -> int:  # noqa: C901, PLR0912
         )
         return 1
 
-    active_filters = sum([
-        bool(options.case_codes),
-        options.oldest > 0,
-        options.slowest > 0,
-    ])
-    if active_filters > 1:
-        console.print(
-            '😱 Only one of --cases, --oldest, or --slowest can be used',
-            style='warning',
-        )
-        return 1
-
     rng = Random(options.seed) if options.seed else Random()  # noqa: S311
 
     try:
@@ -45,13 +33,16 @@ async def trainer(options: Namespace) -> int:  # noqa: C901, PLR0912
             case_codes=options.case_codes,
             oldest=options.oldest,
             slowest=options.slowest,
+            random=options.random,
             filters=options.filters,
+            new_cases_limit=options.new_cases,
             free_play=options.free_play,
             orientation=options.orientation,
             show_solution=options.show_solution,
             show_cube=options.show_cube,
             metronome=options.metronome,
             rng=rng,
+
         )
     except InvalidCaseError as error:
         console.print('😱', str(error), style='warning')
@@ -60,6 +51,8 @@ async def trainer(options: Namespace) -> int:  # noqa: C901, PLR0912
     if options.list_cases:
         instance.list_cases()
         return 0
+
+    instance.trainer_line()
 
     if options.bluetooth:
         await instance.bluetooth_connect(

@@ -93,11 +93,19 @@ def trainer(
         cases: list['TrainingCase'],
         rng: Random,
         orientation_moves: Algorithm | None = None,
+        selected_case: 'TrainingCase | None' = None,
 ) -> tuple[
     Case, Algorithm, Algorithm,
 ]:
     """
     Generate training case.
+
+    Args:
+        step: Step name (e.g. 'oll', 'pll')
+        cases: Available training cases
+        rng: Random number generator
+        orientation_moves: Optional orientation prefix to apply
+        selected_case: Force a specific case (used by FSRS scheduler)
 
     Returns:
         Tuple of (case, scramble, solution).
@@ -121,15 +129,35 @@ def trainer(
         scramble, _cube = scrambler(3, 12, rng=rng)
     elif step == 'll':
         scramble = scramble_step('ll', rng=rng)
+    elif selected_case is not None:
+        case, scramble, solution = forced_training(selected_case, rng)
     else:
-        case, scramble, solution = random_training(
-            cases, rng,
-        )
+        case, scramble, solution = random_training(cases, rng)
 
     if orientation_moves:
         scramble = degrip_moves(orientation_moves + scramble)
 
     return case, scramble, solution
+
+
+def forced_training(
+        training_case: 'TrainingCase',
+        rng: Random,
+) -> tuple[
+    Case, Algorithm, Algorithm,
+]:
+    """
+    Generate a scramble for a specific (FSRS-selected) training case.
+
+    Returns:
+        Tuple of (case, scramble algorithm, solution).
+
+    """
+    return (
+        training_case.case,
+        rng.choice(training_case.best_setups),
+        training_case.case.main_algorithm,
+    )
 
 
 def random_training(

@@ -1,9 +1,11 @@
 """Training interface for practicing specific CFOP cases."""
 import asyncio
+import math
 from datetime import UTC
 from datetime import datetime
 from operator import itemgetter
 from random import Random
+from typing import TYPE_CHECKING
 from typing import Final
 from typing import NamedTuple
 
@@ -17,10 +19,13 @@ from cubing_algs.constants import ORIENTATION_FACE_MOVES
 from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
+from fsrs import Rating
 from rich import box
 from rich.table import Table
 
 from term_timer.annotations import TrainingCase
+from term_timer.config import TRAINER_FSRS
+from term_timer.config import TRAINER_FSRS_RATING
 from term_timer.constants import CROSS_CASE
 from term_timer.constants import DNF
 from term_timer.constants import EASY_CROSS_CASE
@@ -38,6 +43,9 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_fluency
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
+from term_timer.fsrs.rating import PerformanceRater
+from term_timer.fsrs.rating import RatingBreakdown
+from term_timer.fsrs.scheduler import FSRSScheduler
 from term_timer.in_out import load_trainings
 from term_timer.in_out import save_trainings
 from term_timer.interface import SolveInterface
@@ -49,6 +57,11 @@ from term_timer.scrambler import trainer
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.triggers import DEFAULT_TRIGGERS
+
+if TYPE_CHECKING:
+    from fsrs import Card
+
+    from term_timer.fsrs.storage import CaseTraining
 
 
 class StepDef(NamedTuple):
@@ -83,8 +96,16 @@ STEP_CONFIGS: Final[dict[str, StepDef]] = {
     'af2l': StepDef('F2L', 'af2l', 'Advanced F2L'),
 }
 
+# Without Bluetooth the user declares the rating with a 1-4 key.
+MANUAL_RATING_KEYS: Final[dict[str, Rating]] = {
+    '1': Rating.Again,
+    '2': Rating.Hard,
+    '3': Rating.Good,
+    '4': Rating.Easy,
+}
 
-class Trainer(SolveInterface):
+
+class Trainer(SolveInterface):  # noqa: PLR0904
     """
     Training interface for practicing specific CFOP cases.
 
@@ -99,6 +120,8 @@ class Trainer(SolveInterface):
             case_codes: list[str],
             oldest: int,
             slowest: int,
+            random: int,
+            new_cases_limit: int,
             filters: list[str],
             free_play: bool,
             show_solution: bool,
@@ -127,14 +150,32 @@ class Trainer(SolveInterface):
         self.filters = [f.lower() for f in filters]
         self.rng = rng
         self.orientation_faces = orientation
+        self.random = random
+        self.new_cases_limit = new_cases_limit
 
         self.trainings = load_trainings(self.method, self.step.upper())
 
+        self.total_cases: int = 0
+        self.filtered_cases: int = 0
         self.cases = self.get_cases()
+        self.fsrs_probabilities = {
+            tc.case.code: tc.case.probability for tc in self.cases
+        }
         self.counter = 1
         self.session_data: list[tuple[str, Case, int]] = []
 
-        self.trainer_line()
+        self.fsrs_update = (
+            TRAINER_FSRS and self.step_config.training_case is None
+        )
+        self.fsrs_selection = (
+            self.fsrs_update
+            and not self.case_codes
+            and not self.random
+        )
+        self.fsrs_scheduler = FSRSScheduler() if self.fsrs_update else None
+        self.fsrs_rater = PerformanceRater() if self.fsrs_update else None
+        self.fsrs_pending_rating: RatingBreakdown | None = None
+        self.fsrs_last_focus: str | None = None
 
     def select_oldest_cases(
             self,
@@ -213,6 +254,26 @@ class Trainer(SolveInterface):
 
         return [code for code, _, _ in sorted_cases[:count]]
 
+    def select_random_cases(
+            self,
+            valid_cases: dict[str, Case],
+            count: int,
+    ) -> list[str]:
+        """
+        Select cases randomly.
+
+        Args:
+            valid_cases: Dictionary of valid cases for the step
+            count: Number of cases to select
+
+        Returns:
+            List of randomly selected case codes
+
+        """
+        codes = list(valid_cases.keys())
+        self.rng.shuffle(codes)
+        return codes[:count]
+
     def get_cases(self) -> list[TrainingCase]:
         """
         Build list of trained cases.
@@ -232,6 +293,7 @@ class Trainer(SolveInterface):
             v.code: v for v in cases.values()
             if v.setup_algorithms
         }
+        self.total_cases = len(valid_cases)
 
         if self.filters:
             valid_cases = {
@@ -239,6 +301,7 @@ class Trainer(SolveInterface):
                 if (case.family or '').lower() in self.filters
                 or any(g.lower() in self.filters for g in (case.groups or []))
             }
+        self.filtered_cases = len(valid_cases)
 
         case_codes = self.case_codes or list(valid_cases.keys())
 
@@ -252,6 +315,11 @@ class Trainer(SolveInterface):
                 valid_cases,
                 self.slowest,
             )
+        elif self.random != 0:
+            count = (
+                len(valid_cases) if self.random == -1 else self.random
+            )
+            case_codes = self.select_random_cases(valid_cases, count)
 
         def setup_sorter(algorithm: Algorithm) -> tuple[float, float]:
             ergonomics = algorithm.ergonomics
@@ -325,39 +393,80 @@ class Trainer(SolveInterface):
                 f'Training on { self.step_label }',
                 style='trainer',
             )
-        else:
-            self.console.print(
-                f'Training on { len(self.cases) } '
-                f'case{ "s" if len(self.cases) > 1 else "" } on '
-                f'{ self.step_label }',
-                style='trainer',
+            return
+
+        n = len(self.cases)
+        plural = 's' if n > 1 else ''
+        label = self.step_label
+        has_filter = bool(self.filters)
+
+        if has_filter:
+            filter_label = ' & '.join(self.filters)
+            filter_plural = 's' if len(self.filters) > 1 else ''
+            suffix = (
+                f' ({ filter_label }'
+                f' filter{ filter_plural },'
+                f' { self.filtered_cases } matching,'
+                f' { self.total_cases } total)'
             )
+        else:
+            suffix = f' ({ self.total_cases } total)'
+
+        if self.case_codes:
+            msg = (
+                f'Training on { n } selected case{ plural } on { label }'
+            )
+        elif self.oldest > 0:
+            msg = (
+                f'Training on the { n } least practiced'
+                f' case{ plural } on { label }{ suffix }'
+            )
+        elif self.slowest > 0:
+            msg = (
+                f'Training on the { n } slowest'
+                f' case{ plural } on { label }{ suffix }'
+            )
+        elif self.random == -1:
+            msg = (
+                f'Training on all { n } case{ plural } on { label }'
+                f' in random order{ suffix if has_filter else "" }'
+            )
+        elif self.random > 0:
+            msg = (
+                f'Training on { n } randomly selected'
+                f' case{ plural } on { label }{ suffix }'
+            )
+        else:
+            msg = (
+                f'Training on all { n } case{ plural } on { label }'
+                f' with spaced repetition{ suffix if has_filter else "" }'
+            )
+
+        self.console.print(msg, style='trainer')
 
     def list_cases(self) -> None:
         """Display a table of all available cases with their training stats."""
         if self.step_config.training_case is not None:
-            valid_cases = {
-                tc.case.code: tc.case for tc in self.cases
-            }
+            valid_cases = {tc.case.code: tc.case for tc in self.cases}
         else:
             collection = get_collection(f'{ self.method }/{ self.step }').cases
             valid_cases = {
-                v.code: v for v in collection.values()
-                if v.setup_algorithms
+                v.code: v for v in collection.values() if v.setup_algorithms
             }
 
+        show_fsrs = self.step_config.training_case is None
         no_ao = '[no-ao]N/A[/no-ao]'
 
-        table = Table(
-            title=f'{ self.step_label } stats',
-            box=box.SIMPLE,
-        )
-        table.add_column('Case', width=40)
+        table = Table(title=f'{ self.step_label } stats', box=box.SIMPLE)
+        table.add_column('Case', width=35)
         table.add_column('Σ', width=3, justify='right')
         table.add_column('Last date', width=10, justify='right')
         table.add_column('Best', width=5, justify='right')
         table.add_column('Ao5', width=5, justify='right')
         table.add_column('Ao12', width=5, justify='right')
+        if show_fsrs:
+            table.add_column('State', width=8, justify='right')
+            table.add_column('Due', width=10, justify='right')
 
         for code, case in sorted(valid_cases.items()):
             link = format_term_timer_case_url(case)
@@ -368,50 +477,304 @@ class Trainer(SolveInterface):
                 )
             else:
                 head = case.pretty_name
-
-            if code in self.trainings.cases:
-                case_training = self.trainings.cases[code]
-                count = len(case_training.timings)
-                timings = [
-                    t * MS_TO_NS_FACTOR
-                    for t in case_training.timings
-                ]
-                stats = Statistics(timings)
-
-                last_date = datetime.fromtimestamp(
-                    case_training.last_date, tz=UTC,
-                ).astimezone().strftime('%Y-%m-%d')
-
-                count_str = f'[stats]{ count }[/stats]'
-                best_str = (
-                    f'[duration]{ format_duration(stats.best) }[/duration]'
-                    if count else no_ao
-                )
-                ao5_str = (
-                    f'[ao5]{ format_duration(stats.ao5) }[/ao5]'
-                    if count >= 5 else no_ao
-                )
-                ao12_str = (
-                    f'[ao12]{ format_duration(stats.ao12) }[/ao12]'
-                    if count >= 12 else no_ao
-                )
-            else:
-                last_date = no_ao
-                count_str = '[stats]0[/stats]'
-                best_str = no_ao
-                ao5_str = no_ao
-                ao12_str = no_ao
-
-            table.add_row(
-                head,
-                count_str,
-                last_date,
-                best_str,
-                ao5_str,
-                ao12_str,
-            )
+            case_training = self.trainings.cases.get(code)
+            timing_cells = self.timing_cells(case_training, no_ao)
+            row = [head, *timing_cells]
+            if show_fsrs:
+                row += self.fsrs_cells(case_training, no_ao)
+            table.add_row(*row)
 
         self.console.print(table)
+
+    @staticmethod
+    def timing_cells(
+            case_training: 'CaseTraining | None',
+            no_ao: str,
+    ) -> list[str]:
+        """
+        Build the timing stat cells for a list_cases table row.
+
+        Returns:
+            List of [count, last_date, best, ao5, ao12] Rich strings.
+
+        """
+        if case_training is None:
+            return ['[stats]0[/stats]', no_ao, no_ao, no_ao, no_ao]
+
+        count = len(case_training.timings)
+        timings = [t * MS_TO_NS_FACTOR for t in case_training.timings]
+        stats = Statistics(timings)
+        last_date = datetime.fromtimestamp(
+            case_training.last_date, tz=UTC,
+        ).astimezone().strftime('%Y-%m-%d')
+
+        best_str = (
+            f'[duration]{ format_duration(stats.best) }[/duration]'
+            if count else no_ao
+        )
+        ao5_str = (
+            f'[ao5]{ format_duration(stats.ao5) }[/ao5]'
+            if count >= 5 else no_ao
+        )
+        ao12_str = (
+            f'[ao12]{ format_duration(stats.ao12) }[/ao12]'
+            if count >= 12 else no_ao
+        )
+        return [
+            f'[stats]{ count }[/stats]', last_date, best_str, ao5_str, ao12_str,
+        ]
+
+    @staticmethod
+    def fsrs_cells(
+            case_training: 'CaseTraining | None',
+            no_ao: str,
+    ) -> list[str]:
+        """
+        Build the FSRS state and due-date cells for a list_cases table row.
+
+        Returns:
+            List of [state, due] Rich strings.
+
+        """
+        if case_training is None or case_training.fsrs_card is None:
+            return [no_ao, no_ao]
+
+        card = case_training.fsrs_card
+        state_str = f'[comment]{ card.state.name }[/comment]'
+        due = card.due.astimezone()
+        now = datetime.now(UTC).astimezone()
+        due_str = (
+            '[warning]Overdue[/warning]'
+            if due <= now
+            else f'[no-ao]{ due.strftime("%Y-%m-%d") }[/no-ao]'
+        )
+        return [state_str, due_str]
+
+    def fsrs_focus_line(self) -> None:
+        """Display FSRS session focus and mastery stats if they changed."""
+        if not self.fsrs_selection:
+            return
+
+        cards = {
+            code: ct.fsrs_card
+            for code, ct in self.trainings.cases.items()
+            if ct.fsrs_card is not None
+        }
+        focus = FSRSScheduler.compute_session_focus(
+            cards, self.fsrs_probabilities,
+        )
+        mastered, total = FSRSScheduler.compute_mastery(
+            cards, self.fsrs_probabilities,
+        )
+        mastery_str = (
+            f'{ mastered }/{ total } mastered' if mastered > 0 else ''
+        )
+        focus_str = f'{ focus } { mastery_str }'.strip()
+
+        if focus_str == self.fsrs_last_focus:
+            return
+
+        self.fsrs_last_focus = focus_str
+
+        self.console.print(
+            f'[fsrs]Training Focus:[/fsrs] [context]{ focus_str }[/context]',
+        )
+
+    def fsrs_case_line(self, selected_case: Case) -> None:  # noqa: PLR0914
+        """Display FSRS card state, metrics, due date and delta."""
+        if not self.fsrs_update or self.fsrs_scheduler is None:
+            return
+
+        name = selected_case.pretty_name
+        case_training = self.trainings.cases.get(selected_case.code)
+
+        if case_training is None or case_training.fsrs_card is None:
+            self.console.print(
+                f'[fsrs]{ name }[/fsrs] [new]New[/new]',
+            )
+            return
+
+        card = case_training.fsrs_card
+        state_klass = card.state.name.lower()
+        inner_scheduler = self.fsrs_scheduler.scheduler
+
+        if card.step is not None:
+            total_steps = (
+                len(inner_scheduler.relearning_steps)
+                if card.state.name == 'Relearning'
+                else len(inner_scheduler.learning_steps)
+            )
+            state_str = (
+                f'[{ state_klass }]{ card.state.name }'
+                f' ({ card.step + 1 }/{ total_steps })'
+                f'[/{ state_klass }]'
+            )
+        else:
+            state_str = (
+                f'[{ state_klass }]{ card.state.name }[/{ state_klass }]'
+            )
+
+        metrics_str = ''
+        if card.stability is not None:
+            metrics_str = (
+                f' (S:{ card.stability:.1f}d '
+                f'D:{ card.difficulty:.1f})'
+            )
+
+        due = card.due.astimezone()
+        now = datetime.now(UTC).astimezone()
+        delta_days = (due.date() - now.date()).days
+
+        if delta_days < 0:
+            n = abs(delta_days)
+            s = 's' if n > 1 else ''
+            delta_str = f'{ n } day{ s } ago'
+            due_str = f' [warning]overdue { delta_str }[/warning]'
+
+        elif delta_days == 0:
+            delta_minutes = int((due - now).total_seconds() / 60)
+            if delta_minutes > 0:
+                h, m = divmod(
+                    math.ceil((due - now).total_seconds() / 60), 60,
+                )
+                hm = f'{ h } hours' if h > 0 else f'{ m } minutes'
+                due_str = f' in { hm }'
+            elif delta_minutes < 0:
+                h, m = divmod(
+                    math.ceil((now - due).total_seconds() / 60), 60,
+                )
+                hm = f'{ h } hours' if h > 0 else f'{ m } minutes'
+                due_str = f' [caution]overdue { hm } ago[/caution]'
+            else:
+                due_str = ' [caution]due now[/caution]'
+
+        else:
+            due_str = (
+                f' in { delta_days }'
+                f' day{ "s" if delta_days > 1 else "" }'
+            )
+
+        self.console.print(
+            f'[fsrs]{ name }[/fsrs] { state_str }{ due_str }{ metrics_str }',
+        )
+
+    @staticmethod
+    def format_card_change(
+            current_card: 'Card | None',
+            preview_card: 'Card',
+    ) -> str:
+        """
+        Format state transition and metric deltas for FSRS preview.
+
+        Returns:
+            Rich-formatted string with optional state change arrow and
+            stability/difficulty values with signed deltas.
+
+        """
+        current_state = current_card.state if current_card is not None else None
+        if current_state != preview_card.state:
+            old_klass = current_state.name.lower() if current_state else 'new'
+            old_label = current_state.name if current_state else 'New'
+            new_klass = preview_card.state.name.lower()
+            new_name = preview_card.state.name
+            state_str = (
+                f' [{ old_klass }]{ old_label }[/{ old_klass }]'
+                f' -> [{ new_klass }]{ new_name }[/{ new_klass }]'
+            )
+        else:
+            state_str = ''
+
+        new_s = preview_card.stability
+        new_d = preview_card.difficulty
+        if new_s is None or new_d is None:
+            return state_str
+
+        if (
+            current_card is not None
+            and current_card.stability is not None
+            and current_card.difficulty is not None
+        ):
+            ds = new_s - current_card.stability
+            dd = new_d - current_card.difficulty
+            s_style = 'green' if ds > 0 else 'red'
+            d_style = 'red' if dd > 0 else 'green'
+            s_delta = (
+                (
+                    f' [{ s_style }]{ "+" if ds > 0 else "" }'
+                    f'{ ds:.1f}[/{ s_style }]'
+                )
+                if round(ds, 1) != 0 else ''
+            )
+            d_delta = (
+                (
+                    f' [{ d_style }]{ "+" if dd > 0 else "" }'
+                    f'{ dd:.1f}[/{ d_style }]'
+                )
+                if round(dd, 1) != 0 else ''
+            )
+        else:
+            s_delta = d_delta = ''
+
+        metrics_str = (
+            f' (S:{ new_s:.1f}d{ s_delta } D:{ new_d:.1f}{ d_delta })'
+        )
+        return state_str + metrics_str
+
+    def fsrs_preview_line(self, solve: Solve, selected_case: Case) -> None:
+        """Compute and display FSRS rating preview before the save prompt."""
+        if self.fsrs_rater is None or self.fsrs_scheduler is None:
+            return
+
+        if not solve.advanced:
+            # No execution data: the rating is collected manually, there is
+            # nothing to preview.
+            return
+
+        breakdown = self.fsrs_rater.rate_with_details(
+            solve, self.step, selected_case.code,
+        )
+        self.fsrs_pending_rating = breakdown
+
+        current_card = (
+            self.trainings.cases[selected_case.code].fsrs_card
+            if selected_case.code in self.trainings.cases
+            else None
+        )
+        preview_card = self.fsrs_scheduler.update_card(
+            current_card,
+            breakdown.rating,
+        )
+        due = preview_card.due.astimezone()
+        now = datetime.now(UTC).astimezone()
+        delta_days = (due.date() - now.date()).days
+
+        if delta_days == 0:
+            delta_minutes = int((due - now).total_seconds() / 60)
+            if delta_minutes > 0:
+                mins = math.ceil((due - now).total_seconds() / 60)
+                due_str = f'in { mins } minutes'
+            else:
+                due_str = '[caution]due now[/caution]'
+        else:
+            due_str = f'in { delta_days } day{ "s" if delta_days > 1 else "" }'
+
+        card_change_str = self.format_card_change(current_card, preview_card)
+
+        debug = (
+            rf'\[time:{breakdown.time_s:.2f}s'
+            f' htm:{breakdown.htm}'
+            f' tps:{breakdown.tps:.1f}'
+            f' pauses:{breakdown.pauses}'
+            f' missed:{breakdown.missed_qtm}]'
+        )
+
+        rating_klass = breakdown.rating.name.lower()
+
+        self.console.print(
+            f'[fsrs]{ selected_case.pretty_name }[/fsrs] '
+            f'[{ rating_klass }]{ breakdown.rating.name }[/{ rating_klass }],'
+            f'{ card_change_str } review { due_str }\n{ debug }',
+        )
 
     def start_line(
             self,
@@ -420,6 +783,9 @@ class Trainer(SolveInterface):
             solution: Algorithm,
     ) -> None:
         """Display training case, scramble, and optional solution."""
+        self.fsrs_focus_line()
+        self.fsrs_case_line(selected_case)
+
         link = format_term_timer_case_url(selected_case)
         name = selected_case.pretty_name
 
@@ -480,8 +846,22 @@ class Trainer(SolveInterface):
                 end='',
             )
 
-    def save_line(self) -> None:
+    def save_line(self, *, manual_rating: bool = False) -> None:
         """Display instructions for saving or canceling the solve."""
+        if manual_rating:
+            self.console.print(
+                'Rate:',
+                '[key](1)[/key] Again,',
+                '[key](2)[/key] Hard,',
+                '[key](3)[/key] Good,',
+                '[key](4)[/key] Easy,',
+                '[key](z)[/key] discard,',
+                '[key](q)[/key] quit.',
+                style='consign',
+                end='',
+            )
+            return
+
         self.console.print(
             'Press any key to continue,',
             '[key](z)[/key] discard,',
@@ -699,7 +1079,11 @@ class Trainer(SolveInterface):
                     format_delta(new_stats.ao1000 - old_stats.best_ao1000),
                 )
 
-    async def save_training(self, selected_case: Case) -> bool:
+    async def save_training(
+            self,
+            selected_case: Case,
+            solve: Solve,
+    ) -> bool:
         """
         Save the completed training with optional flag modifications.
 
@@ -733,12 +1117,45 @@ class Trainer(SolveInterface):
         else:
             char = await self.getch('save')
 
+        manual = self.fsrs_update and (
+            self.bluetooth_interface is None
+            or TRAINER_FSRS_RATING == 'manual'
+        )
+        manual_rating = MANUAL_RATING_KEYS.get(char) if manual else None
+
+        # Manual mode requires an explicit 1-4 verdict to save; any other key
+        # discards the unrated rep.
+        discard = manual_rating is None if manual else char in {'z', 'k'}
+
         save_string = ''
-        if char in {'z', 'k'}:
+        if discard:
             self.trainings.pop_timing(selected_case.code)
             SOUND_PLAYER.save_discarded()
             save_string = 'Training discarded'
         else:
+            if (
+                self.fsrs_update
+                and self.fsrs_scheduler is not None
+                and self.fsrs_rater is not None
+                and selected_case.code in self.trainings.cases
+            ):
+                case_training = self.trainings.cases[selected_case.code]
+                if manual_rating is not None:
+                    rating = manual_rating
+                else:
+                    pending = self.fsrs_pending_rating
+                    rating = (
+                        pending.rating
+                        if pending is not None
+                        else self.fsrs_rater.rate(
+                                solve, self.step, selected_case.code,
+                        )
+                    )
+                case_training.fsrs_card = self.fsrs_scheduler.update_card(
+                    case_training.fsrs_card,
+                    rating,
+                )
+
             save_trainings(self.trainings)
             SOUND_PLAYER.save_confirmed()
             self.session_data.append(
@@ -767,11 +1184,29 @@ class Trainer(SolveInterface):
         """
         self.init_solve()
 
+        fsrs_selected: TrainingCase | None = None
+        if self.fsrs_selection and self.fsrs_scheduler is not None:
+            cards = {
+                code: ct.fsrs_card
+                for code, ct in self.trainings.cases.items()
+                if ct.fsrs_card is not None
+            }
+            chosen_code = self.fsrs_scheduler.select_next_case(
+                cards,
+                self.fsrs_probabilities,
+                new_cases_limit=self.new_cases_limit,
+            )
+            fsrs_selected = next(
+                (tc for tc in self.cases if tc.case.code == chosen_code),
+                None,
+            )
+
         selected_case, self.scramble, solution = trainer(
             self.step,
             self.cases,
             self.rng,
             self.cube_orientation_moves,
+            selected_case=fsrs_selected,
         )
 
         bt_scramble_done = (
@@ -848,12 +1283,22 @@ class Trainer(SolveInterface):
 
             return True
 
+        self.fsrs_pending_rating = None
         self.solve_line(solve, selected_case)
 
         if not self.free_play:
-            self.save_line()
+            if self.fsrs_update:
+                self.fsrs_preview_line(solve, selected_case)
+            self.save_line(
+                manual_rating=(
+                    self.fsrs_update and (
+                        self.bluetooth_interface is None
+                        or TRAINER_FSRS_RATING == 'manual'
+                    )
+                ),
+            )
 
-            quit_training = await self.save_training(selected_case)
+            quit_training = await self.save_training(selected_case, solve)
 
             if quit_training:
                 return False

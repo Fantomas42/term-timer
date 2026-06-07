@@ -29,6 +29,8 @@ class SessionConfig(TypedDict, total=False):
     cases: list[str]
     oldest: int
     slowest: int
+    random: int
+    new_cases_limit: int
     filters: list[str]
     show_solution: bool
     # solve fields
@@ -68,11 +70,12 @@ def build_train_instance(session_config: SessionConfig) -> Trainer:
         Configured Trainer instance.
 
     """
-    return Trainer(
+    instance = Trainer(
         step=session_config.get('step', TRAINER_STEP or 'oll'),
         case_codes=session_config.get('cases', []),
         oldest=session_config.get('oldest', 0),
         slowest=session_config.get('slowest', 0),
+        random=int(session_config.get('random', 0)),
         filters=session_config.get('filters', []),
         free_play=session_config.get('free_play', False),
         show_solution=session_config.get('show_solution', False),
@@ -83,8 +86,11 @@ def build_train_instance(session_config: SessionConfig) -> Trainer:
         metronome=session_config.get(
             'metronome', TIMER_CONFIG.get('metronome', 0.0),
         ),
+        new_cases_limit=session_config.get('new_cases_limit', 5),
         rng=Random(),  # noqa: S311
     )
+    instance.trainer_line()
+    return instance
 
 
 def build_solve_instance(session_config: SessionConfig) -> Timer:
