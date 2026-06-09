@@ -463,20 +463,20 @@ class TestSaveTrainingManualRating(unittest.IsolatedAsyncioTestCase):
             len(timer.trainings.cases[self.CASE_CODE].timings), 0,
         )
 
-    async def test_quit_key_discards_and_quits(self) -> None:
-        """'q' discards the unrated rep and quits."""
+    async def test_quit_key_saves_and_quits(self) -> None:
+        """'q' saves the timing without FSRS update and quits."""
         timer, update_card, quit_flag = await self.run_save('q')
         update_card.assert_not_called()
         self.assertTrue(quit_flag)
         self.assertEqual(
-            len(timer.trainings.cases[self.CASE_CODE].timings), 0,
+            len(timer.trainings.cases[self.CASE_CODE].timings), 1,
         )
 
-    async def test_invalid_key_discards_and_continues(self) -> None:
-        """Any unrecognised key discards the unrated rep and continues."""
+    async def test_invalid_key_saves_without_fsrs(self) -> None:
+        """Any unrecognised key saves the timing but skips FSRS update."""
         timer, update_card, quit_flag = await self.run_save('x')
         update_card.assert_not_called()
         self.assertFalse(quit_flag)
         self.assertEqual(
-            len(timer.trainings.cases[self.CASE_CODE].timings), 0,
+            len(timer.trainings.cases[self.CASE_CODE].timings), 1,
         )

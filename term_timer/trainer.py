@@ -1153,9 +1153,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         )
         manual_rating = MANUAL_RATING_KEYS.get(char) if manual else None
 
-        # Manual mode requires an explicit 1-4 verdict to save; any other key
-        # discards the unrated rep.
-        discard = manual_rating is None if manual else char in {'z', 'k'}
+        # Any key other than z/k saves; invalid keys in manual mode skip FSRS.
+        discard = char in {'z', 'k'}
+        skip_fsrs = manual and manual_rating is None
 
         save_string = ''
         if discard:
@@ -1164,7 +1164,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             save_string = 'Training discarded'
         else:
             if (
-                self.fsrs_update
+                not skip_fsrs
+                and self.fsrs_update
                 and self.fsrs_scheduler is not None
                 and self.fsrs_rater is not None
                 and selected_case.code in self.trainings.cases
