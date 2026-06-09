@@ -2,6 +2,7 @@
 
 from datetime import UTC
 from datetime import datetime
+from datetime import timedelta
 from random import choices
 
 from fsrs import Card
@@ -16,13 +17,47 @@ EXPLORATION_THRESHOLD = 0.2
 # 14 days = two-week interval, reliably in long-term memory.
 MASTERY_STABILITY_DAYS: float = 14.0
 
+# Cadence policy, not a memory-model parameter: maximum_interval only clamps
+# the scheduled due date (min(interval, cap)), never stability/difficulty/the
+# rating. Capping at 7 days forces every case back at least weekly. Procedural
+# (muscle) memory degrades in fluency (TPS drops, pauses return) long before it
+# "lapses" in recall, so a motor pattern is refreshed more often than FSRS
+# would space a declarative fact. Because it never touches stability, this knob
+# is invisible to the high-stab% trajectory test; its before/after is the
+# review cadence, not the rating distribution.
+MAXIMUM_INTERVAL_DAYS: int = 7
+
+# Massed/blocked practice in the acquisition phase. learning_steps and
+# relearning_steps live in the short-term regime that FSRS itself models only
+# crudely, so this is where domain knowledge is injected without fighting the
+# DSR model. More short steps make the trainer re-serve a card several times
+# within the same session before it graduates to spaced Review: a new case is
+# drilled 4 times over ~8 min, a lapsed known case is re-grooved twice before
+# re-spacing. This matches the motor-learning rule "massed first to build
+# coordination, spaced later to maintain".
+LEARNING_STEPS: tuple[timedelta, ...] = (
+    timedelta(seconds=30),
+    timedelta(minutes=1),
+    timedelta(minutes=2),
+    timedelta(minutes=5),
+)
+RELEARNING_STEPS: tuple[timedelta, ...] = (
+    timedelta(seconds=30),
+    timedelta(minutes=2),
+)
+
 
 class FSRSScheduler:
     """Manages FSRS-based case selection and card updates."""
 
     def __init__(self) -> None:
         """Initialize the FSRS scheduler."""
-        self.scheduler = Scheduler(maximum_interval=30)
+        self.scheduler = Scheduler(
+            learning_steps=LEARNING_STEPS,
+            relearning_steps=RELEARNING_STEPS,
+            maximum_interval=MAXIMUM_INTERVAL_DAYS,
+            enable_fuzzing=True,
+        )
 
     def update_card(self, card: Card | None, rating: Rating) -> Card:
         """
