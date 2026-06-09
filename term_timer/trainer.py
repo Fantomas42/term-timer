@@ -554,7 +554,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             return [no_ao, no_ao]
 
         card = case_training.fsrs_card
-        state_str = f'[comment]{ card.state.name }[/comment]'
+        state_klass = card.state.name.lower()
+        state_str = f'[{ state_klass }]{ card.state.name }[/{ state_klass }]'
         due = card.due.astimezone()
         now = datetime.now(UTC).astimezone()
         due_str = (
