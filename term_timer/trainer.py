@@ -178,6 +178,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.fsrs_rater = PerformanceRater() if self.fsrs_update else None
         self.fsrs_pending_rating: RatingBreakdown | None = None
         self.fsrs_last_focus: str | None = None
+        self.fsrs_new_cases_introduced: int = 0
 
     def select_oldest_cases(
             self,
@@ -1211,7 +1212,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         return char in {'q', 'k', ESCAPE_CHAR}
 
-    async def start(self) -> bool:  # noqa: C901, PLR0912
+    async def start(self) -> bool:  # noqa: C901, PLR0912, PLR0914, PLR0915
         """
         Execute training workflow for single case.
 
@@ -1222,17 +1223,22 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.init_solve()
 
         fsrs_selected: TrainingCase | None = None
+        was_new_case = False
         if self.fsrs_selection and self.fsrs_scheduler is not None:
             cards = {
                 code: ct.fsrs_card
                 for code, ct in self.trainings.cases.items()
                 if ct.fsrs_card is not None
             }
+            effective_limit = max(
+                0, self.new_cases_limit - self.fsrs_new_cases_introduced,
+            )
             chosen_code = self.fsrs_scheduler.select_next_case(
                 cards,
                 self.fsrs_probabilities,
-                new_cases_limit=self.new_cases_limit,
+                new_cases_limit=effective_limit,
             )
+            was_new_case = chosen_code not in cards
             fsrs_selected = next(
                 (tc for tc in self.cases if tc.case.code == chosen_code),
                 None,
@@ -1335,7 +1341,11 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 ),
             )
 
+            session_len_before = len(self.session_data)
             quit_training = await self.save_training(selected_case, solve)
+
+            if was_new_case and len(self.session_data) > session_len_before:
+                self.fsrs_new_cases_introduced += 1
 
             if quit_training:
                 return False
