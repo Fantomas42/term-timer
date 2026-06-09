@@ -680,6 +680,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         Returns a Rich-formatted string like:
             [dim]E<0.5<[/dim][good]G:0.73<1.0[/good][dim]<H<1.5<A[/dim]
+
+        Returns:
+            Rich-formatted band scale string with the current score embedded.
+
         """
         e = f'E<{BAND_EASY}'
         g = f'G<{BAND_GOOD}'

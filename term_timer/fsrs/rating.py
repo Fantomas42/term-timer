@@ -187,11 +187,15 @@ class PerformanceRater:
         rating = self.rate(solve, step, case_name)
 
         if not solve.advanced:
-            return RatingBreakdown(rating, solve.time / SECOND, 0, 0, 0, 0.0, 0.0)
+            return RatingBreakdown(
+                rating, solve.time / SECOND, 0, 0, 0, 0.0, 0.0,
+            )
 
         time_s, htm, missed_qtm, pauses, tps = self.execution_metrics(solve)
         score = self.execution_score(time_s, missed_qtm, pauses, tps, step)
-        return RatingBreakdown(rating, time_s, htm, missed_qtm, pauses, tps, score)
+        return RatingBreakdown(
+            rating, time_s, htm, missed_qtm, pauses, tps, score,
+        )
 
     def rate(
         self,
