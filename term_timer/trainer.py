@@ -730,6 +730,49 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         )
         return state_str + metrics_str
 
+    def fsrs_result_line(
+            self,
+            selected_case: Case,
+            rating: Rating,
+            old_card: 'Card | None',
+            new_card: 'Card',
+            breakdown: RatingBreakdown | None = None,
+    ) -> None:
+        """Display FSRS card evolution after a rating is applied."""
+        due = new_card.due.astimezone()
+        now = datetime.now(UTC).astimezone()
+        delta_days = (due.date() - now.date()).days
+
+        if delta_days == 0:
+            delta_minutes = int((due - now).total_seconds() / 60)
+            if delta_minutes > 0:
+                mins = math.ceil((due - now).total_seconds() / 60)
+                due_str = f'in { mins } minutes'
+            else:
+                due_str = '[caution]due now[/caution]'
+        else:
+            due_str = f'in { delta_days } day{ "s" if delta_days > 1 else "" }'
+
+        card_change_str = self.format_card_change(old_card, new_card)
+        rating_klass = rating.name.lower()
+
+        suffix = ''
+        if breakdown is not None:
+            suffix = (
+                f'\n'
+                rf'\[time:{breakdown.time_s:.2f}s'
+                f' htm:{breakdown.htm}'
+                f' tps:{breakdown.tps:.1f}'
+                f' pauses:{breakdown.pauses}'
+                f' missed:{breakdown.missed_qtm}]'
+            )
+
+        self.console.print(
+            f'[fsrs]{ selected_case.pretty_name }[/fsrs] '
+            f'[{ rating_klass }]{ rating.name }[/{ rating_klass }],'
+            f'{ card_change_str } review { due_str }{ suffix }',
+        )
+
     def fsrs_preview_line(self, solve: Solve, selected_case: Case) -> None:
         """Compute and display FSRS rating preview before the save prompt."""
         if self.fsrs_rater is None or self.fsrs_scheduler is None:
@@ -754,36 +797,12 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             current_card,
             breakdown.rating,
         )
-        due = preview_card.due.astimezone()
-        now = datetime.now(UTC).astimezone()
-        delta_days = (due.date() - now.date()).days
-
-        if delta_days == 0:
-            delta_minutes = int((due - now).total_seconds() / 60)
-            if delta_minutes > 0:
-                mins = math.ceil((due - now).total_seconds() / 60)
-                due_str = f'in { mins } minutes'
-            else:
-                due_str = '[caution]due now[/caution]'
-        else:
-            due_str = f'in { delta_days } day{ "s" if delta_days > 1 else "" }'
-
-        card_change_str = self.format_card_change(current_card, preview_card)
-
-        debug = (
-            rf'\[time:{breakdown.time_s:.2f}s'
-            f' htm:{breakdown.htm}'
-            f' tps:{breakdown.tps:.1f}'
-            f' pauses:{breakdown.pauses}'
-            f' missed:{breakdown.missed_qtm}]'
-        )
-
-        rating_klass = breakdown.rating.name.lower()
-
-        self.console.print(
-            f'[fsrs]{ selected_case.pretty_name }[/fsrs] '
-            f'[{ rating_klass }]{ breakdown.rating.name }[/{ rating_klass }],'
-            f'{ card_change_str } review { due_str }\n{ debug }',
+        self.fsrs_result_line(
+            selected_case,
+            breakdown.rating,
+            current_card,
+            preview_card,
+            breakdown,
         )
 
     def start_line(
@@ -1161,10 +1180,18 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                                 solve, self.step, selected_case.code,
                         )
                     )
+                old_card = case_training.fsrs_card
                 case_training.fsrs_card = self.fsrs_scheduler.update_card(
-                    case_training.fsrs_card,
+                    old_card,
                     rating,
                 )
+                if manual_rating is not None:
+                    self.fsrs_result_line(
+                        selected_case,
+                        rating,
+                        old_card,
+                        case_training.fsrs_card,
+                    )
 
             save_trainings(self.trainings)
             SOUND_PLAYER.save_confirmed()
