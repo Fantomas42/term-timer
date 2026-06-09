@@ -765,7 +765,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 f' htm:{breakdown.htm}'
                 f' tps:{breakdown.tps:.1f}'
                 f' pauses:{breakdown.pauses}'
-                f' missed:{breakdown.missed_qtm}]'
+                f' missed:{breakdown.missed_qtm}'
+                f' score:{breakdown.score:.2f}]'
             )
 
         self.console.print(
