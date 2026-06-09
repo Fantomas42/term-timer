@@ -22,7 +22,7 @@ class FSRSScheduler:
 
     def __init__(self) -> None:
         """Initialize the FSRS scheduler."""
-        self.scheduler = Scheduler()
+        self.scheduler = Scheduler(maximum_interval=30)
 
     def update_card(self, card: Card | None, rating: Rating) -> Card:
         """
