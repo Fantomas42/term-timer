@@ -190,23 +190,24 @@ class FSRSScheduler:
         limit: int,
     ) -> list[str]:
         """
-        Return unseen case codes up to limit, ordered by probability.
+        Return all unseen case codes, or empty list when limit is zero.
 
-        Higher-probability cases (more common in real solves) are introduced
-        first so the learner practises the most impactful cases sooner.
+        Returns the full pool of unseen cases so that the weighted-random
+        selection in select_next_case can favour high-probability cases
+        naturally, without hard-coding a deterministic top-N order.
 
         Args:
             cards: FSRS cards keyed by case code (known cases)
             probabilities: All available case codes with their probabilities
-            limit: Maximum number of new cases to return
+            limit: Session budget; when 0 no new cases are returned
 
         Returns:
-            List of unseen case codes (up to limit), highest probability first.
+            All unseen case codes, or [] when limit is 0.
 
         """
-        new_cases = [c for c in probabilities if c not in cards]
-        new_cases.sort(key=lambda c: probabilities[c], reverse=True)
-        return new_cases[:limit]
+        if limit == 0:
+            return []
+        return [c for c in probabilities if c not in cards]
 
     @staticmethod
     def prioritize_by_urgency(

@@ -66,7 +66,7 @@ class TestGetDueCards(unittest.TestCase):
 
 
 class TestGetNewCards(unittest.TestCase):
-    """get_new_cards() returns unseen cases up to limit, by probability."""
+    """get_new_cards() returns all unseen cases, or [] when limit is 0."""
 
     def setUp(self) -> None:  # noqa: D102
         self.cards = {'A': make_card()}
@@ -77,16 +77,10 @@ class TestGetNewCards(unittest.TestCase):
         result = FSRSScheduler.get_new_cards(self.cards, self.probs, limit=5)
         self.assertNotIn('A', result)
 
-    def test_ordered_by_probability_descending(self) -> None:
-        """Unseen cases are returned highest probability first."""
-        result = FSRSScheduler.get_new_cards({}, self.probs, limit=5)
-        self.assertEqual(result, ['A', 'B', 'C'])
-
-    def test_limit_respected(self) -> None:
-        """At most `limit` new cases are returned."""
+    def test_returns_all_unseen_when_limit_positive(self) -> None:
+        """All unseen cases are returned when limit > 0."""
         result = FSRSScheduler.get_new_cards({}, self.probs, limit=2)
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result, ['A', 'B'])
+        self.assertEqual(set(result), {'A', 'B', 'C'})
 
     def test_limit_zero_returns_empty(self) -> None:
         """limit=0 returns no new cases."""
