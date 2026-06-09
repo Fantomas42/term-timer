@@ -1152,7 +1152,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             self.bluetooth_interface is None
             or TRAINER_FSRS_RATING == 'manual'
         )
-        manual_rating = MANUAL_RATING_KEYS.get(char) if manual else None
+        manual_rating = (
+            MANUAL_RATING_KEYS.get(char) if self.fsrs_update else None
+        )
 
         # Any key other than z/k saves; invalid keys in manual mode skip FSRS.
         discard = char in {'z', 'k'}
