@@ -43,6 +43,9 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_fluency
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
+from term_timer.fsrs.rating import BAND_AGAIN
+from term_timer.fsrs.rating import BAND_EASY
+from term_timer.fsrs.rating import BAND_GOOD
 from term_timer.fsrs.rating import PerformanceRater
 from term_timer.fsrs.rating import RatingBreakdown
 from term_timer.fsrs.scheduler import FSRSScheduler
@@ -670,6 +673,58 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         )
 
     @staticmethod
+    def format_score_bands(score: float, rating_klass: str) -> str:
+        """
+        Format the score positioned within a colored band scale.
+
+        Returns a Rich-formatted string like:
+            [dim]E<0.5<[/dim][good]G:0.73<1.0[/good][dim]<H<1.5<A[/dim]
+        """
+        e = f'E<{BAND_EASY}'
+        g = f'G<{BAND_GOOD}'
+        h = f'H<{BAND_AGAIN}'
+        a = 'A'
+        bands = [
+            (e, 'easy'),
+            (g, 'good'),
+            (h, 'hard'),
+            (a, 'again'),
+        ]
+        if score < BAND_EASY:
+            active = 'easy'
+        elif score < BAND_GOOD:
+            active = 'good'
+        elif score < BAND_AGAIN:
+            active = 'hard'
+        else:
+            active = 'again'
+
+        parts = []
+        pre: list[str] = []
+        post: list[str] = []
+        found = False
+        for label, klass in bands:
+            if klass == active:
+                found = True
+                if label == a:
+                    active_label = f'{label}:{score:.2f}'
+                else:
+                    active_label = label.replace('<', f':{score:.2f}<', 1)
+                parts.append(f'[{rating_klass}]{active_label}[/{rating_klass}]')
+            elif not found:
+                pre.append(label)
+            else:
+                post.append(label)
+
+        result = ''
+        if pre:
+            result += f'[dim]{"<".join(pre)}<[/dim]'
+        result += parts[0]
+        if post:
+            result += f'[dim]<{"<".join(post)}[/dim]'
+        return result
+
+    @staticmethod
     def format_card_change(
             current_card: 'Card | None',
             preview_card: 'Card',
@@ -759,6 +814,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         suffix = ''
         if breakdown is not None:
+            bands = self.format_score_bands(breakdown.score, rating_klass)
             suffix = (
                 f'\n'
                 rf'\[time:{breakdown.time_s:.2f}s'
@@ -766,7 +822,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 f' tps:{breakdown.tps:.1f}'
                 f' pauses:{breakdown.pauses}'
                 f' missed:{breakdown.missed_qtm}'
-                f' score:{breakdown.score:.2f}]'
+                f' {bands}]'
             )
 
         self.console.print(
