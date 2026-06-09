@@ -886,14 +886,15 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 '[key](3)[/key] Good,',
                 '[key](4)[/key] Easy,',
                 '[key](z)[/key] discard,',
-                '[key](q)[/key] quit.',
+                '[key](k)[/key] quit,',
+                '[key](q)[/key] save & quit.',
                 style='consign',
                 end='',
             )
             return
 
         self.console.print(
-            'Press any key to continue,',
+            'Press any key to save and continue,',
             '[key](z)[/key] discard,',
             '[key](k)[/key] quit,',
             '[key](q)[/key] save & quit.',
