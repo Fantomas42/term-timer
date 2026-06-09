@@ -232,7 +232,7 @@ class TestFSRSWithFilter(unittest.TestCase):
         Build a minimal OLL Trainer for testing.
 
         Returns:
-            Configured Trainer instance with free_play enabled.
+            Configured Trainer instance.
 
         """
         return Trainer(
@@ -243,7 +243,7 @@ class TestFSRSWithFilter(unittest.TestCase):
             random=random,
             new_cases_limit=5,
             filters=filters or [],
-            free_play=True,
+            free_play=False,
             show_solution=False,
             show_cube=False,
             metronome=0,
@@ -319,6 +319,29 @@ class TestFSRSWithFilter(unittest.TestCase):
         """fsrs_probabilities contains only the N slowest cases."""
         timer = self.make_trainer(slowest=3)
         self.assertEqual(len(timer.fsrs_probabilities), 3)
+
+    def test_fsrs_disabled_in_free_play(self) -> None:
+        """free_play disables fsrs_update and fsrs_selection to avoid loops."""
+        timer = Trainer(
+            step='oll', case_codes=[], oldest=0, slowest=0, random=0,
+            new_cases_limit=5, filters=[], free_play=True,
+            show_solution=False, show_cube=False, metronome=0,
+            orientation='DF', rng=Random(),  # noqa: S311
+        )
+        self.assertFalse(timer.fsrs_update)
+        self.assertFalse(timer.fsrs_selection)
+        self.assertIsNone(timer.fsrs_scheduler)
+
+    def test_fsrs_disabled_in_free_play_with_filter(self) -> None:
+        """free_play disables FSRS even when a filter is active."""
+        timer = Trainer(
+            step='oll', case_codes=[], oldest=0, slowest=0, random=0,
+            new_cases_limit=5, filters=['Dot'], free_play=True,
+            show_solution=False, show_cube=False, metronome=0,
+            orientation='DF', rng=Random(),  # noqa: S311
+        )
+        self.assertFalse(timer.fsrs_update)
+        self.assertFalse(timer.fsrs_selection)
 
 
 class TestManualRatingKeys(unittest.TestCase):

@@ -902,7 +902,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         '-f', '--free-play',
         action='store_true',
         help=(
-            'Enable free play mode to disable recording of solves.\n'
+            'Enable free play mode: disables saving and FSRS scheduling.\n'
             'Default: False.'
         ),
     )

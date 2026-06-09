@@ -165,7 +165,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.session_data: list[tuple[str, Case, int]] = []
 
         self.fsrs_update = (
-            TRAINER_FSRS and self.step_config.training_case is None
+            TRAINER_FSRS
+            and self.step_config.training_case is None
+            and not self.free_play
         )
         self.fsrs_selection = (
             self.fsrs_update
@@ -436,11 +438,19 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 f'Training on { n } randomly selected'
                 f' case{ plural } on { label }{ suffix }'
             )
-        else:
+        elif self.fsrs_selection:
             msg = (
                 f'Training on all { n } case{ plural } on { label }'
                 f' with spaced repetition{ suffix if has_filter else "" }'
             )
+        else:
+            msg = (
+                f'Training on all { n } case{ plural } on { label }'
+                f'{ suffix if has_filter else "" }'
+            )
+
+        if self.free_play:
+            msg += ' (free play)'
 
         self.console.print(msg, style='trainer')
 
