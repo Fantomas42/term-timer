@@ -752,7 +752,9 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         action='store_true',
         dest='show_solution',
         help=(
-            'Show the main solution of the case if exists.\n'
+            'Always show the main solution of the case if exists.\n'
+            'Without this flag, the solution is still shown when the '
+            'FSRS card\nof the case is in Learning or Relearning state.\n'
             'Default: False.'
         ),
     )

@@ -4,12 +4,15 @@ import unittest
 from datetime import UTC
 from datetime import datetime
 from random import Random
+from typing import cast
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 from cubing_algs.cases import get_collection
+from cubing_algs.parsing import parse_moves
 from fsrs import Card
 from fsrs import Rating
+from fsrs import State
 
 from term_timer.fsrs.storage import Trainings
 from term_timer.solve import Solve
@@ -480,3 +483,133 @@ class TestSaveTrainingManualRating(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             len(timer.trainings.cases[self.CASE_CODE].timings), 1,
         )
+
+
+class TestSolutionDisplayInLearningPhase(unittest.TestCase):
+    """The solution is shown for cards in Learning or Relearning state."""
+
+    CASE_CODE = 'T'
+
+    def make_trainer(self, *, free_play: bool = False) -> Trainer:
+        """
+        Build a no-Bluetooth PLL trainer with one trained case.
+
+        Returns:
+            A Trainer with a mocked console and a single CaseTraining.
+
+        """
+        empty = Trainings(method='CFOP', step='PLL', cases={})
+        with patch(
+            'term_timer.trainer.load_trainings', return_value=empty,
+        ):
+            timer = Trainer(
+                step='pll',
+                case_codes=[],
+                oldest=0,
+                slowest=0,
+                random=0,
+                new_cases_limit=5,
+                filters=[],
+                free_play=free_play,
+                show_solution=False,
+                show_cube=False,
+                metronome=0,
+                orientation='DF',
+                rng=Random(),  # noqa: S311
+            )
+        timer.bluetooth_interface = None
+        timer.console = MagicMock()
+        timer.scramble_oriented = parse_moves("R U R' U'")
+        timer.cube_orientation_moves = parse_moves('')
+        date = int(datetime.now(tz=UTC).timestamp())
+        timer.trainings.add_timing(self.CASE_CODE, 2000, date)
+        return timer
+
+    def selected_case(self, timer: Trainer) -> object:
+        """
+        Return the Case object matching CASE_CODE from the trainer pool.
+
+        Returns:
+            The cubing_algs Case for CASE_CODE.
+
+        """
+        return next(
+            tc.case for tc in timer.cases if tc.case.code == self.CASE_CODE
+        )
+
+    def set_card_state(self, timer: Trainer, state: State) -> None:
+        """Attach an FSRS card with the given state to the trained case."""
+        card = Card()
+        card.state = state
+        timer.trainings.cases[self.CASE_CODE].fsrs_card = card
+
+    @staticmethod
+    def printed_text(timer: Trainer) -> str:
+        """
+        Join every console.print argument into a single string.
+
+        Returns:
+            Concatenated text of all printed arguments.
+
+        """
+        console = cast('MagicMock', timer.console)
+        return ' '.join(
+            str(arg)
+            for call in console.print.call_args_list
+            for arg in call.args
+        )
+
+    def test_no_card_is_not_learning(self) -> None:
+        """A case without an FSRS card is not in a learning phase."""
+        timer = self.make_trainer()
+        case = self.selected_case(timer)
+        self.assertFalse(timer.case_in_learning_phase(case))  # type: ignore[arg-type]
+
+    def test_learning_card_is_learning(self) -> None:
+        """A card in Learning state is in a learning phase."""
+        timer = self.make_trainer()
+        self.set_card_state(timer, State.Learning)
+        case = self.selected_case(timer)
+        self.assertTrue(timer.case_in_learning_phase(case))  # type: ignore[arg-type]
+
+    def test_relearning_card_is_learning(self) -> None:
+        """A card in Relearning state is in a learning phase."""
+        timer = self.make_trainer()
+        self.set_card_state(timer, State.Relearning)
+        case = self.selected_case(timer)
+        self.assertTrue(timer.case_in_learning_phase(case))  # type: ignore[arg-type]
+
+    def test_review_card_is_not_learning(self) -> None:
+        """A card in Review state is not in a learning phase."""
+        timer = self.make_trainer()
+        self.set_card_state(timer, State.Review)
+        case = self.selected_case(timer)
+        self.assertFalse(timer.case_in_learning_phase(case))  # type: ignore[arg-type]
+
+    def test_fsrs_disabled_is_not_learning(self) -> None:
+        """With FSRS off (free play) the learning phase is never active."""
+        timer = self.make_trainer(free_play=True)
+        timer.trainings.add_timing(
+            self.CASE_CODE, 2000, int(datetime.now(tz=UTC).timestamp()),
+        )
+        self.set_card_state(timer, State.Learning)
+        case = self.selected_case(timer)
+        self.assertFalse(timer.case_in_learning_phase(case))  # type: ignore[arg-type]
+
+    def test_start_line_shows_solution_when_learning(self) -> None:
+        """start_line prints the solution for a Learning card without -v."""
+        timer = self.make_trainer()
+        self.set_card_state(timer, State.Learning)
+        case = self.selected_case(timer)
+        solution = parse_moves("R U R' U' R' F R F'")
+        timer.start_line(MagicMock(), case, solution)  # type: ignore[arg-type]
+        self.assertIn('Solution', self.printed_text(timer))
+
+    def test_start_line_hides_solution_when_review(self) -> None:
+        """start_line keeps the solution hidden for a Review card."""
+        timer = self.make_trainer()
+        self.set_card_state(timer, State.Review)
+        case = self.selected_case(timer)
+        solution = parse_moves("R U R' U' R' F R F'")
+        timer.start_line(MagicMock(), case, solution)  # type: ignore[arg-type]
+        self.assertNotIn('Solution', self.printed_text(timer))

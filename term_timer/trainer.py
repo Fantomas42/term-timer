@@ -20,6 +20,7 @@ from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
 from fsrs import Rating
+from fsrs import State
 from rich import box
 from rich.table import Table
 
@@ -869,6 +870,31 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             breakdown,
         )
 
+    def case_in_learning_phase(self, selected_case: Case) -> bool:
+        """
+        Check whether the FSRS card of a case is in a learning phase.
+
+        A case is in a learning phase when its card is in the Learning
+        or Relearning state. Cases never trained have no card yet and
+        are deliberately excluded: the first attempt acts as an
+        unbiased probe of prior knowledge.
+
+        Returns:
+            True when the card exists and is Learning or Relearning.
+
+        """
+        if not self.fsrs_update:
+            return False
+
+        case_training = self.trainings.cases.get(selected_case.code)
+        if case_training is None or case_training.fsrs_card is None:
+            return False
+
+        return case_training.fsrs_card.state in {
+            State.Learning,
+            State.Relearning,
+        }
+
     def start_line(
             self,
             cube: VCube,
@@ -900,7 +926,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         if selected_case.code in self.trainings.cases:
             attempt = len(self.trainings.cases[selected_case.code].timings) + 1
 
-        if self.show_solution and solution:
+        if solution and (
+                self.show_solution
+                or self.case_in_learning_phase(selected_case)
+        ):
             formatted_algorithm = format_alg_triggers(
                 format_alg_moves(
                     format_alg_aufs(
