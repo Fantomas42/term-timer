@@ -479,7 +479,11 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         show_fsrs = self.step_config.training_case is None
         no_ao = '[no-ao]N/A[/no-ao]'
 
-        table = Table(title=f'{ self.step_label } stats', box=box.SIMPLE)
+        table = Table(
+            title=f'{ self.step_label } stats',
+            box=box.SIMPLE,
+            pad_edge=False,
+        )
         table.add_column('Case', width=35)
         table.add_column('Σ', width=3, justify='right')
         table.add_column('Last date', width=10, justify='right')
