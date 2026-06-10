@@ -170,29 +170,35 @@ class TestScoreToBand(unittest.TestCase):
             self.rater.score_to_band(BAND_EASY - 0.01), Rating.Easy,
         )
 
-    def test_easy_cut_is_good(self) -> None:
-        """Score exactly at BAND_EASY -> Good (Easy is strict <)."""
-        self.assertEqual(self.rater.score_to_band(BAND_EASY), Rating.Good)
+    def test_easy_cut_is_easy(self) -> None:
+        """Score exactly at BAND_EASY -> Easy (inclusive <=)."""
+        self.assertEqual(self.rater.score_to_band(BAND_EASY), Rating.Easy)
 
     def test_good_band_is_good(self) -> None:
-        """Score in [BAND_EASY, BAND_GOOD) -> Good."""
+        """Score in (BAND_EASY, BAND_GOOD] -> Good."""
         self.assertEqual(
             self.rater.score_to_band(BAND_GOOD - 0.01), Rating.Good,
         )
 
-    def test_good_cut_is_hard(self) -> None:
-        """Score exactly at BAND_GOOD -> Hard."""
-        self.assertEqual(self.rater.score_to_band(BAND_GOOD), Rating.Hard)
+    def test_good_cut_is_good(self) -> None:
+        """Score exactly at BAND_GOOD -> Good (inclusive <=)."""
+        self.assertEqual(self.rater.score_to_band(BAND_GOOD), Rating.Good)
 
     def test_hard_band_is_hard(self) -> None:
-        """Score in [BAND_GOOD, BAND_AGAIN) -> Hard."""
+        """Score in (BAND_GOOD, BAND_AGAIN] -> Hard."""
         self.assertEqual(
             self.rater.score_to_band(BAND_AGAIN - 0.01), Rating.Hard,
         )
 
-    def test_again_cut_is_again(self) -> None:
-        """Score at or above BAND_AGAIN -> Again."""
-        self.assertEqual(self.rater.score_to_band(BAND_AGAIN), Rating.Again)
+    def test_again_cut_is_hard(self) -> None:
+        """Score exactly at BAND_AGAIN -> Hard (inclusive <=)."""
+        self.assertEqual(self.rater.score_to_band(BAND_AGAIN), Rating.Hard)
+
+    def test_above_again_is_again(self) -> None:
+        """Score strictly above BAND_AGAIN -> Again."""
+        self.assertEqual(
+            self.rater.score_to_band(BAND_AGAIN + 0.01), Rating.Again,
+        )
         self.assertEqual(self.rater.score_to_band(3.0), Rating.Again)
 
 
