@@ -846,16 +846,17 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             # nothing to preview.
             return
 
-        breakdown = self.fsrs_rater.rate_with_details(
-            solve, self.step, selected_case.code,
-        )
-        self.fsrs_pending_rating = breakdown
-
         current_card = (
             self.trainings.cases[selected_case.code].fsrs_card
             if selected_case.code in self.trainings.cases
             else None
         )
+        stability = current_card.stability if current_card is not None else None
+
+        breakdown = self.fsrs_rater.rate_with_details(
+            solve, self.step, selected_case.code, stability,
+        )
+        self.fsrs_pending_rating = breakdown
         preview_card = self.fsrs_scheduler.update_card(
             current_card,
             breakdown.rating,
@@ -1244,7 +1245,12 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                         pending.rating
                         if pending is not None
                         else self.fsrs_rater.rate(
-                                solve, self.step, selected_case.code,
+                            solve,
+                            self.step,
+                            selected_case.code,
+                            case_training.fsrs_card.stability
+                            if case_training.fsrs_card is not None
+                            else None,
                         )
                     )
                 old_card = case_training.fsrs_card

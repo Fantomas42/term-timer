@@ -117,6 +117,12 @@ BAND_EASY: float = 0.5
 BAND_GOOD: float = 1.0
 BAND_AGAIN: float = 1.5
 
+# A purely speed-driven Again (clean execution, no missed moves, no
+# htm-forcing) is floored to Hard on high-stability cards so a known-but-slow
+# rep does not wipe weeks of accumulated stability. Missed moves and
+# htm-forcing still produce Again unconditionally — structural non-memorisation.
+HIGH_STABILITY_FLOOR_DAYS: float = 14.0
+
 
 class RatingBreakdown(NamedTuple):
     """Detailed components for a FSRS rating computation."""
@@ -176,15 +182,23 @@ class PerformanceRater:
         solve: 'Solve',
         step: str,
         case_name: str | None = None,
+        stability: float | None = None,
     ) -> RatingBreakdown:
         """
         Rate performance and return full breakdown.
+
+        Args:
+            solve: Completed solve with optional advanced analysis.
+            step: Step name (e.g. 'oll', 'pll').
+            case_name: Case code for per-case HTM threshold.
+            stability: Current FSRS stability in days, used to floor Again to
+                Hard on high-stability cards with clean execution.
 
         Returns:
             RatingBreakdown with rating and all diagnostic components.
 
         """
-        rating = self.rate(solve, step, case_name)
+        rating = self.rate(solve, step, case_name, stability)
 
         if not solve.advanced:
             return RatingBreakdown(
@@ -202,6 +216,7 @@ class PerformanceRater:
         solve: 'Solve',
         step: str,
         case_name: str | None = None,
+        stability: float | None = None,
     ) -> Rating:
         """
         Rate performance from a continuous execution score.
@@ -211,10 +226,17 @@ class PerformanceRater:
         rating is collected manually, so this is not reached on the trainer
         path; it returns Good as a defensive default.
 
+        A purely speed-driven Again is floored to Hard when the execution was
+        clean (no missed moves, pause within tolerance) and the card already
+        has high stability: a known-but-slow rep should not reset weeks of
+        muscle memory. htm-forcing and missed moves still produce Again
+        unconditionally as they signal structural non-memorisation.
+
         Args:
-            solve: Completed solve with optional advanced analysis
-            step: Step name (e.g. 'oll', 'pll')
-            case_name: Case code (e.g. 'F', '13') for per-case HTM threshold
+            solve: Completed solve with optional advanced analysis.
+            step: Step name (e.g. 'oll', 'pll').
+            case_name: Case code (e.g. 'F', '13') for per-case HTM threshold.
+            stability: Current FSRS stability in days; None disables the floor.
 
         Returns:
             FSRS Rating: Again (1), Hard (2), Good (3), or Easy (4).
@@ -240,7 +262,16 @@ class PerformanceRater:
         score = self.execution_score(
             time_s, missed_qtm, pauses, tps, step_lower,
         )
-        return self.score_to_band(score)
+        rating = self.score_to_band(score)
+        if (
+            rating == Rating.Again
+            and missed_qtm == 0
+            and pauses <= PAUSE_TOLERANCE
+            and stability is not None
+            and stability >= HIGH_STABILITY_FLOOR_DAYS
+        ):
+            return Rating.Hard
+        return rating
 
     @staticmethod
     def execution_score(

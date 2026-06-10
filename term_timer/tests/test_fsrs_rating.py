@@ -10,8 +10,10 @@ from term_timer.constants import SECOND
 from term_timer.fsrs.rating import BAND_AGAIN
 from term_timer.fsrs.rating import BAND_EASY
 from term_timer.fsrs.rating import BAND_GOOD
+from term_timer.fsrs.rating import HIGH_STABILITY_FLOOR_DAYS
 from term_timer.fsrs.rating import MAX_MOVES
 from term_timer.fsrs.rating import MISSED_WEIGHT
+from term_timer.fsrs.rating import PAUSE_TOLERANCE
 from term_timer.fsrs.rating import PAUSE_WEIGHT
 from term_timer.fsrs.rating import TIME_SCALE
 from term_timer.fsrs.rating import TIME_SOFT_S
@@ -338,3 +340,75 @@ class TestCaseMaxMoves(unittest.TestCase):
             self.assertEqual(
                 rater.rate(solve, 'pll', 'UNKNOWN_CASE'), Rating.Again,
             )
+
+
+class TestHighStabilityFloor(unittest.TestCase):
+    """
+    High-stability cards are protected from purely speed-driven lapses.
+
+    A score-path Again (TPS too low) is floored to Hard when execution was
+    clean (no missed moves, pauses within tolerance) and the card already has
+    stability >= HIGH_STABILITY_FLOOR_DAYS. htm-forcing and missed moves still
+    produce Again unconditionally.
+    """
+
+    # PLL ref 4.9 TPS; 8 moves / 4.0s = 2.0 TPS -> score 1.93 -> Again.
+    SLOW_HTM = 8
+    SLOW_S = 4.0
+
+    def setUp(self) -> None:  # noqa: D102
+        self.rater = PerformanceRater()
+        patcher_pauses = patch.object(Solve, 'pauses', return_value=0)
+        patcher_missed = patch.object(Solve, 'missed_moves', return_value=0)
+        patcher_pauses.start()
+        patcher_missed.start()
+        self.addCleanup(patcher_pauses.stop)
+        self.addCleanup(patcher_missed.stop)
+
+    def test_slow_clean_high_stability_floors_to_hard(self) -> None:
+        """TPS-only Again on a high-stability card is floored to Hard."""
+        solve = make_bt_solve(htm=self.SLOW_HTM, elapsed_s=self.SLOW_S)
+        # Sanity: without stability the score produces Again.
+        self.assertEqual(self.rater.rate(solve, 'pll'), Rating.Again)
+        # With high stability and clean execution: floored to Hard.
+        self.assertEqual(
+            self.rater.rate(
+                solve, 'pll', stability=HIGH_STABILITY_FLOOR_DAYS,
+            ),
+            Rating.Hard,
+        )
+
+    def test_slow_clean_low_stability_stays_again(self) -> None:
+        """TPS-only Again on a low-stability card is not floored."""
+        solve = make_bt_solve(htm=self.SLOW_HTM, elapsed_s=self.SLOW_S)
+        self.assertEqual(
+            self.rater.rate(
+                solve, 'pll', stability=HIGH_STABILITY_FLOOR_DAYS - 1.0,
+            ),
+            Rating.Again,
+        )
+
+    def test_missed_moves_high_stability_stays_again(self) -> None:
+        """Missed moves are a structural signal: floor does not apply."""
+        with patch.object(
+            Solve, 'missed_moves', return_value=PAUSE_TOLERANCE + 1,
+        ):
+            solve = make_bt_solve(htm=self.SLOW_HTM, elapsed_s=self.SLOW_S)
+            self.assertEqual(
+                self.rater.rate(
+                    solve, 'pll', stability=HIGH_STABILITY_FLOOR_DAYS,
+                ),
+                Rating.Again,
+            )
+
+    def test_htm_forcing_high_stability_stays_again(self) -> None:
+        """htm-forcing is categorical: floor does not apply at high stab."""
+        limit = MAX_MOVES.get('pll', 15)
+        # A fast solve that would be Easy by score but is over the move budget.
+        solve = make_bt_solve(htm=limit + 1, elapsed_s=1.0)
+        self.assertEqual(
+            self.rater.rate(
+                solve, 'pll', stability=HIGH_STABILITY_FLOOR_DAYS,
+            ),
+            Rating.Again,
+        )
