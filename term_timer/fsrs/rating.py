@@ -305,13 +305,13 @@ class PerformanceRater:
         Map a continuous penalty score to a FSRS band.
 
         Returns:
-            Easy if score < 0.5, Good if < 1.0, Hard if < 1.5, else Again.
+            Easy if score <= 0.5, Good if <= 1.0, Hard if <= 1.5, else Again.
 
         """
-        if score < BAND_EASY:
+        if score <= BAND_EASY:
             return Rating.Easy
-        if score < BAND_GOOD:
+        if score <= BAND_GOOD:
             return Rating.Good
-        if score < BAND_AGAIN:
+        if score <= BAND_AGAIN:
             return Rating.Hard
         return Rating.Again

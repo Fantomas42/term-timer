@@ -734,9 +734,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             Rich-formatted band scale string with the current score embedded.
 
         """
-        e = f'E<{BAND_EASY}'
-        g = f'G<{BAND_GOOD}'
-        h = f'H<{BAND_AGAIN}'
+        e = f'E<={BAND_EASY}'
+        g = f'G<={BAND_GOOD}'
+        h = f'H<={BAND_AGAIN}'
         a = 'A'
         bands = [
             (e, 'easy'),
@@ -744,11 +744,11 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             (h, 'hard'),
             (a, 'again'),
         ]
-        if score < BAND_EASY:
+        if score <= BAND_EASY:
             active = 'easy'
-        elif score < BAND_GOOD:
+        elif score <= BAND_GOOD:
             active = 'good'
-        elif score < BAND_AGAIN:
+        elif score <= BAND_AGAIN:
             active = 'hard'
         else:
             active = 'again'
