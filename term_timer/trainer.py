@@ -484,9 +484,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         table.add_column('Σ', width=3, justify='right')
         table.add_column('Last date', width=10, justify='right')
         table.add_column('Best', width=5, justify='right')
-        table.add_column('Ao5', width=5, justify='right')
+        table.add_column('Ao5', width=7, justify='right')
         table.add_column('Ao12', width=5, justify='right')
-        table.add_column('Trend', width=7, justify='right')
         if show_fsrs:
             table.add_column('State', width=8, justify='right')
             table.add_column('Due', width=10, justify='right')
@@ -555,7 +554,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         """
         if case_training is None:
-            return ['[stats]0[/stats]', no_ao, no_ao, no_ao, no_ao, no_ao]
+            return ['[stats]0[/stats]', no_ao, no_ao, no_ao, no_ao]
 
         count = len(case_training.timings)
         timings = [t * MS_TO_NS_FACTOR for t in case_training.timings]
@@ -568,18 +567,24 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             f'[duration]{ format_duration(stats.best) }[/duration]'
             if count else no_ao
         )
-        ao5_str = (
-            f'[ao5]{ format_duration(stats.ao5) }[/ao5]'
-            if count >= 5 else no_ao
-        )
+        trend_str = Trainer.speed_trend(stats)
+        if '↘' in trend_str:
+            trend_str = '[trend-down]↘[/trend-down]'
+        if count < 5:
+            ao5_str = no_ao
+        elif trend_str:
+            ao5_str = (
+                f'[ao5]{ format_duration(stats.ao5) }[/ao5] { trend_str }'
+            )
+        else:
+            ao5_str = f'[ao5]{ format_duration(stats.ao5) }[/ao5]'
         ao12_str = (
             f'[ao12]{ format_duration(stats.ao12) }[/ao12]'
             if count >= 12 else no_ao
         )
-        trend_str = Trainer.speed_trend(stats) or no_ao
         return [
             f'[stats]{ count }[/stats]', last_date, best_str, ao5_str,
-            ao12_str, trend_str,
+            ao12_str,
         ]
 
     @staticmethod
