@@ -16,7 +16,9 @@ from fsrs import State
 
 from term_timer.fsrs.storage import Trainings
 from term_timer.solve import Solve
+from term_timer.stats import Statistics
 from term_timer.trainer import MANUAL_RATING_KEYS
+from term_timer.trainer import TREND_MIN_TIMINGS
 from term_timer.trainer import Trainer
 
 
@@ -613,3 +615,41 @@ class TestSolutionDisplayInLearningPhase(unittest.TestCase):
         solution = parse_moves("R U R' U' R' F R F'")
         timer.start_line(MagicMock(), case, solution)  # type: ignore[arg-type]
         self.assertNotIn('Solution', self.printed_text(timer))
+
+
+class TestSpeedTrend(unittest.TestCase):
+    """speed_trend compares the current Ao5 to the best Ao12 ever."""
+
+    def test_not_enough_history(self) -> None:
+        """Fewer than TREND_MIN_TIMINGS timings yields no trend."""
+        stats = Statistics([1000] * (TREND_MIN_TIMINGS - 1))
+        self.assertEqual(Trainer.speed_trend(stats), '')
+
+    def test_at_peak(self) -> None:
+        """A current Ao5 at the peak level is an upward trend."""
+        stats = Statistics([1000] * TREND_MIN_TIMINGS)
+        self.assertIn('↗', Trainer.speed_trend(stats))
+
+    def test_near_peak_within_tolerance(self) -> None:
+        """A current Ao5 within 10% of the peak is still upward."""
+        stats = Statistics([1000] * TREND_MIN_TIMINGS + [1080] * 5)
+        self.assertIn('↗', Trainer.speed_trend(stats))
+
+    def test_plateau(self) -> None:
+        """A current Ao5 between 10% and 30% above peak is a plateau."""
+        stats = Statistics([1000] * TREND_MIN_TIMINGS + [1200] * 5)
+        self.assertIn('→', Trainer.speed_trend(stats))
+
+    def test_degraded(self) -> None:
+        """A current Ao5 over 30% above peak is a downward trend."""
+        stats = Statistics([1000] * TREND_MIN_TIMINGS + [1400] * 5)
+        trend = Trainer.speed_trend(stats)
+        self.assertIn('↘', trend)
+        self.assertIn('+40%', trend)
+
+    def test_timing_cells_include_trend(self) -> None:
+        """timing_cells appends the trend cell after Ao12."""
+        no_ao = '[no-ao]N/A[/no-ao]'
+        cells = Trainer.timing_cells(None, no_ao)
+        self.assertEqual(len(cells), 6)
+        self.assertEqual(cells[-1], no_ao)

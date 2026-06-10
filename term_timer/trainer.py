@@ -108,6 +108,13 @@ MANUAL_RATING_KEYS: Final[dict[str, Rating]] = {
     '4': Rating.Easy,
 }
 
+# Speed trend of a case: current Ao5 compared to the best Ao12 ever
+# achieved (peak sustained performance). Display only, never feeds the
+# FSRS rating or scheduling.
+TREND_MIN_TIMINGS: Final[int] = 12
+TREND_AT_PEAK: Final[float] = 1.10
+TREND_DEGRADED: Final[float] = 1.30
+
 
 class Trainer(SolveInterface):  # noqa: PLR0904
     """
@@ -479,6 +486,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         table.add_column('Best', width=5, justify='right')
         table.add_column('Ao5', width=5, justify='right')
         table.add_column('Ao12', width=5, justify='right')
+        table.add_column('Trend', width=7, justify='right')
         if show_fsrs:
             table.add_column('State', width=8, justify='right')
             table.add_column('Due', width=10, justify='right')
@@ -502,6 +510,38 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.console.print(table)
 
     @staticmethod
+    def speed_trend(stats: Statistics) -> str:
+        """
+        Format the speed trend of a case against its peak performance.
+
+        Compares the current Ao5 to the best Ao12 ever achieved: at or
+        near the peak the case is progressing or holding its best level,
+        well above it the muscle memory is degrading. Display only,
+        never feeds the FSRS rating or scheduling.
+
+        Returns:
+            Rich-formatted trend marker, or empty string when fewer
+            than TREND_MIN_TIMINGS timings are available.
+
+        """
+        if len(stats.stack_time) < TREND_MIN_TIMINGS:
+            return ''
+
+        ao5 = stats.ao5
+        peak = stats.best_ao12
+        if ao5 <= 0 or peak <= 0:
+            return ''
+
+        ratio = ao5 / peak
+        if ratio <= TREND_AT_PEAK:
+            return '[trend-up]↗[/trend-up]'
+        if ratio >= TREND_DEGRADED:
+            return (
+                f'[trend-down]↘ +{ (ratio - 1) * 100:.0f}%[/trend-down]'
+            )
+        return '[trend-flat]→[/trend-flat]'
+
+    @staticmethod
     def timing_cells(
             case_training: 'CaseTraining | None',
             no_ao: str,
@@ -510,11 +550,12 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         Build the timing stat cells for a list_cases table row.
 
         Returns:
-            List of [count, last_date, best, ao5, ao12] Rich strings.
+            List of [count, last_date, best, ao5, ao12, trend] Rich
+            strings.
 
         """
         if case_training is None:
-            return ['[stats]0[/stats]', no_ao, no_ao, no_ao, no_ao]
+            return ['[stats]0[/stats]', no_ao, no_ao, no_ao, no_ao, no_ao]
 
         count = len(case_training.timings)
         timings = [t * MS_TO_NS_FACTOR for t in case_training.timings]
@@ -535,8 +576,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             f'[ao12]{ format_duration(stats.ao12) }[/ao12]'
             if count >= 12 else no_ao
         )
+        trend_str = Trainer.speed_trend(stats) or no_ao
         return [
-            f'[stats]{ count }[/stats]', last_date, best_str, ao5_str, ao12_str,
+            f'[stats]{ count }[/stats]', last_date, best_str, ao5_str,
+            ao12_str, trend_str,
         ]
 
     @staticmethod
@@ -1158,6 +1201,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             if new_stats.total >= 12:
                 ao12 = new_stats.ao12
                 extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
+
+            trend = self.speed_trend(new_stats)
+            if trend:
+                extra += f' { trend }'
 
         self.console.print(
             f'[duration]Duration #{ self.counter }:[/duration]',

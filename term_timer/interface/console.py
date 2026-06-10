@@ -123,6 +123,10 @@ theme: dict[str, str] = {
     'ao1000': 'bold #CCFF99',
     'no-ao': 'bold #666666',
 
+    'trend-up': f'bold { GREEN }',
+    'trend-flat': 'bold #888888',
+    'trend-down': f'bold { RED }',
+
     'tps': 'bold #00DFFF',
     'tps-e': 'bold #00AAAA',
     'exec-overhead': 'bold #FF4444',
