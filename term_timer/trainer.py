@@ -47,6 +47,13 @@ from term_timer.formatter import format_time
 from term_timer.fsrs.rating import BAND_AGAIN
 from term_timer.fsrs.rating import BAND_EASY
 from term_timer.fsrs.rating import BAND_GOOD
+from term_timer.fsrs.rating import HIGH_STABILITY_FLOOR_DAYS
+from term_timer.fsrs.rating import MISSED_WEIGHT
+from term_timer.fsrs.rating import PAUSE_TOLERANCE
+from term_timer.fsrs.rating import PAUSE_WEIGHT
+from term_timer.fsrs.rating import TIME_SCALE
+from term_timer.fsrs.rating import TIME_SOFT_S
+from term_timer.fsrs.rating import TPS_SCALE
 from term_timer.fsrs.rating import PerformanceRater
 from term_timer.fsrs.rating import RatingBreakdown
 from term_timer.fsrs.scheduler import FSRSScheduler
@@ -618,6 +625,17 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         )
         return [state_str, due_str]
 
+    @property
+    def fsrs_new_cases_remaining(self) -> int:
+        """
+        Remaining session budget for introducing new cases.
+
+        Returns:
+            Number of new cases the session may still introduce.
+
+        """
+        return max(0, self.new_cases_limit - self.fsrs_new_cases_introduced)
+
     def fsrs_focus_line(self) -> None:
         """Display FSRS session focus and mastery stats if they changed."""
         if not self.fsrs_selection:
@@ -629,7 +647,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             if ct.fsrs_card is not None
         }
         focus = FSRSScheduler.compute_session_focus(
-            cards, self.fsrs_probabilities,
+            cards, self.fsrs_probabilities, self.fsrs_new_cases_remaining,
         )
         mastered, total = FSRSScheduler.compute_mastery(
             cards, self.fsrs_probabilities,
@@ -783,6 +801,101 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         return result
 
     @staticmethod
+    def format_penalty_cell(value: float) -> str:
+        """
+        Format a score penalty contribution, dimmed when null.
+
+        Returns:
+            Rich-formatted signed penalty string.
+
+        """
+        if value > 0:
+            return f'[caution]+{ value:.2f}[/caution]'
+        return f'[no-ao]+{ value:.2f}[/no-ao]'
+
+    @staticmethod
+    def format_breakdown_lines(
+            breakdown: RatingBreakdown,
+            rating_klass: str,
+    ) -> list[str]:
+        """
+        Format the debug lines detailing a FSRS rating breakdown.
+
+        One line per criterion showing the raw value, the reference it
+        is compared against, and its exact contribution to the final
+        score, followed by the score line positioned in the bands and
+        the categorical overrides (HTM forcing, high-stability floor)
+        when they fired.
+
+        Returns:
+            List of Rich-formatted debug lines.
+
+        """
+        cell = Trainer.format_penalty_cell
+        rows = [
+            (
+                'tps',
+                f'{ breakdown.tps:.2f}',
+                f'ref { breakdown.tps_ref }, /{ TPS_SCALE }',
+                cell(breakdown.tps_pen),
+            ),
+            (
+                'pauses',
+                str(breakdown.pauses),
+                f'free { PAUSE_TOLERANCE }, x{ PAUSE_WEIGHT }',
+                cell(breakdown.pause_pen),
+            ),
+            (
+                'missed',
+                str(breakdown.missed_qtm),
+                f'x{ MISSED_WEIGHT }',
+                cell(breakdown.missed_pen),
+            ),
+            (
+                'time',
+                f'{ breakdown.time_s:.2f}s',
+                f'soft { TIME_SOFT_S }s, /{ TIME_SCALE }',
+                cell(breakdown.time_pen),
+            ),
+        ]
+
+        if breakdown.htm_forced:
+            htm_impact = '[again]over budget -> Again[/again]'
+        else:
+            htm_impact = '[no-ao]within budget[/no-ao]'
+        rows.append(
+            (
+                'htm',
+                str(breakdown.htm),
+                f'max { breakdown.max_moves }',
+                htm_impact,
+            ),
+        )
+
+        lines = [
+            f'  [consign]{ label:<7}[/consign]'
+            f'{ value:<7}'
+            f'[no-ao]{ f"({ ref })":<20}[/no-ao]'
+            f'{ impact }'
+            for label, value, ref, impact in rows
+        ]
+
+        bands = Trainer.format_score_bands(breakdown.score, rating_klass)
+        score_line = (
+            f'  [consign]score  [/consign]'
+            f'{ breakdown.score:<7.2f}'
+            f'{ bands }'
+        )
+        if breakdown.floored:
+            score_line += (
+                ' [hard]floored Again -> Hard'
+                f' (S >= { HIGH_STABILITY_FLOOR_DAYS:.0f}d, clean)[/hard]'
+            )
+        lines.append(score_line)
+
+        return lines
+
+    @staticmethod
     def format_card_change(
             current_card: 'Card | None',
             preview_card: 'Card',
@@ -872,15 +985,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         suffix = ''
         if breakdown is not None:
-            bands = self.format_score_bands(breakdown.score, rating_klass)
-            suffix = (
-                f'\n'
-                rf'\[time:{breakdown.time_s:.2f}s'
-                f' htm:{breakdown.htm}'
-                f' tps:{breakdown.tps:.1f}'
-                f' pauses:{breakdown.pauses}'
-                f' missed:{breakdown.missed_qtm}'
-                f' {bands}]'
+            suffix = '\n' + '\n'.join(
+                self.format_breakdown_lines(breakdown, rating_klass),
             )
 
         self.console.print(
@@ -1387,13 +1493,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 for code, ct in self.trainings.cases.items()
                 if ct.fsrs_card is not None
             }
-            effective_limit = max(
-                0, self.new_cases_limit - self.fsrs_new_cases_introduced,
-            )
             chosen_code = self.fsrs_scheduler.select_next_case(
                 cards,
                 self.fsrs_probabilities,
-                new_cases_limit=effective_limit,
+                new_cases_limit=self.fsrs_new_cases_remaining,
             )
             was_new_case = chosen_code not in cards
             fsrs_selected = next(

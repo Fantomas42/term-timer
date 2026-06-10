@@ -10,8 +10,6 @@ from fsrs import Rating
 from fsrs import Scheduler
 from fsrs import State
 
-EXPLORATION_THRESHOLD = 0.2
-
 # Minimum FSRS stability (days) for a case to be considered mastered.
 # Stability represents how long the memory holds at 90% retention.
 # 14 days = two-week interval, reliably in long-term memory.
@@ -121,53 +119,56 @@ class FSRSScheduler:
     def compute_session_focus(
         cards: dict[str, Card],
         probabilities: dict[str, float],
+        new_cases_limit: int,
     ) -> str:
         """
         Determine the training session focus from current card states.
 
-        Returns a short human-readable label with a count, describing what
-        kind of work the session is focused on:
+        Mirrors the select_next_case priority order so the label can
+        never contradict what the session will actually serve next:
 
-        - ``exploration`` — fewer than 20 % of cases have been seen yet
-        - ``remediation`` — one or more cards are in Relearning state
-          (were in Review but got rated Again)
-        - ``learning`` — majority of seen cards are still in Learning state
-        - ``review`` — most seen cards are in Review and several are due
-        - ``maintenance`` — most cards are in Review with few or no dues
+        - ``remediation``/``review`` — one or more cards are due now and
+          will be served first (remediation when due lapses are being
+          re-grooved)
+        - ``exploration`` — nothing due and the session still has budget
+          to introduce unseen cases
+        - ``learning`` — cards in Learning/Relearning are mid-acquisition
+          and will come due again within the session
+        - ``maintenance`` — every case is grooved, weighted random
+          practice over the seen pool
 
         Args:
             cards: FSRS cards keyed by case code (only seen cases)
             probabilities: All available case codes with their probabilities
+            new_cases_limit: Remaining session budget for unseen cases
 
         Returns:
-            Focus label string, e.g. ``'learning (8)'`` or ``'review (5 due)'``.
+            Focus label string, e.g. ``'Learning (8)'`` or
+            ``'Review (5 due)'``.
 
         """
         total = len(probabilities)
-        if total == 0 or not cards:
-            return f'Exploration (0/{total} seen)'
+        if not cards:
+            return f'Exploration (0/{ total } seen)'
 
-        seen = len(cards)
-        if seen / total < EXPLORATION_THRESHOLD:
-            return f'Exploration ({seen}/{total} seen)'
-
-        relearning = [c for c, card in cards.items()
-                      if card.state == State.Relearning]
-        if relearning:
-            return f'Remediation ({len(relearning)} relearning)'
-
-        now = datetime.now(UTC)
-        learning = [c for c, card in cards.items()
-                    if card.state == State.Learning]
-        review = [c for c, card in cards.items()
-                  if card.state == State.Review]
-        due = [c for c, card in cards.items() if card.due <= now]
-
-        if len(learning) >= len(review):
-            return f'Learning ({len(learning)})'
-
+        due = FSRSScheduler.get_due_cards(cards)
         if due:
-            return f'Review ({len(due)} due)'
+            relearning = [
+                c for c in due if cards[c].state == State.Relearning
+            ]
+            if relearning:
+                return f'Remediation ({ len(relearning) } relearning)'
+            return f'Review ({ len(due) } due)'
+
+        if FSRSScheduler.get_new_cards(cards, probabilities, new_cases_limit):
+            return f'Exploration ({ len(cards) }/{ total } seen)'
+
+        acquiring = [
+            c for c, card in cards.items()
+            if card.state in {State.Learning, State.Relearning}
+        ]
+        if acquiring:
+            return f'Learning ({ len(acquiring) })'
 
         return 'Maintenance'
 

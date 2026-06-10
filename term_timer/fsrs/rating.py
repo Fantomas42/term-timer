@@ -134,6 +134,35 @@ class RatingBreakdown(NamedTuple):
     pauses: int
     tps: float
     score: float
+    tps_ref: float = 0.0
+    tps_pen: float = 0.0
+    pause_pen: float = 0.0
+    missed_pen: float = 0.0
+    time_pen: float = 0.0
+    max_moves: int = 0
+    htm_forced: bool = False
+    floored: bool = False
+
+
+class ExecutionPenalties(NamedTuple):
+    """Individual penalty components of the execution score."""
+
+    tps_ref: float
+    tps_pen: float
+    pause_pen: float
+    missed_pen: float
+    time_pen: float
+
+    @property
+    def score(self) -> float:
+        """
+        Total continuous penalty score, higher means worse.
+
+        Returns:
+            Sum of all penalty components (0.0 = flawless execution).
+
+        """
+        return self.tps_pen + self.pause_pen + self.missed_pen + self.time_pen
 
 
 class PerformanceRater:
@@ -187,40 +216,6 @@ class PerformanceRater:
         """
         Rate performance and return full breakdown.
 
-        Args:
-            solve: Completed solve with optional advanced analysis.
-            step: Step name (e.g. 'oll', 'pll').
-            case_name: Case code for per-case HTM threshold.
-            stability: Current FSRS stability in days, used to floor Again to
-                Hard on high-stability cards with clean execution.
-
-        Returns:
-            RatingBreakdown with rating and all diagnostic components.
-
-        """
-        rating = self.rate(solve, step, case_name, stability)
-
-        if not solve.advanced:
-            return RatingBreakdown(
-                rating, solve.time / SECOND, 0, 0, 0, 0.0, 0.0,
-            )
-
-        time_s, htm, missed_qtm, pauses, tps = self.execution_metrics(solve)
-        score = self.execution_score(time_s, missed_qtm, pauses, tps, step)
-        return RatingBreakdown(
-            rating, time_s, htm, missed_qtm, pauses, tps, score,
-        )
-
-    def rate(
-        self,
-        solve: 'Solve',
-        step: str,
-        case_name: str | None = None,
-        stability: float | None = None,
-    ) -> Rating:
-        """
-        Rate performance from a continuous execution score.
-
         An alg over its per-case move budget is a categorical AGAIN (forcing);
         otherwise the penalty score maps to a band. Without Bluetooth data the
         rating is collected manually, so this is not reached on the trainer
@@ -236,14 +231,17 @@ class PerformanceRater:
             solve: Completed solve with optional advanced analysis.
             step: Step name (e.g. 'oll', 'pll').
             case_name: Case code (e.g. 'F', '13') for per-case HTM threshold.
-            stability: Current FSRS stability in days; None disables the floor.
+            stability: Current FSRS stability in days, used to floor Again to
+                Hard on high-stability cards with clean execution.
 
         Returns:
-            FSRS Rating: Again (1), Hard (2), Good (3), or Easy (4).
+            RatingBreakdown with rating and all diagnostic components.
 
         """
         if not solve.advanced:
-            return Rating.Good
+            return RatingBreakdown(
+                Rating.Good, solve.time / SECOND, 0, 0, 0, 0.0, 0.0,
+            )
 
         time_s, htm, missed_qtm, pauses, tps = self.execution_metrics(solve)
 
@@ -256,48 +254,85 @@ class PerformanceRater:
             if case_name is not None
             else MAX_MOVES.get(step_lower, 15)
         )
-        if htm > max_moves:
-            return Rating.Again
 
-        score = self.execution_score(
+        pens = self.execution_penalties(
             time_s, missed_qtm, pauses, tps, step_lower,
         )
-        rating = self.score_to_band(score)
-        if (
+
+        htm_forced = htm > max_moves
+        rating = self.score_to_band(pens.score)
+        floored = False
+        if htm_forced:
+            rating = Rating.Again
+        elif (
             rating == Rating.Again
             and missed_qtm == 0
             and pauses <= PAUSE_TOLERANCE
             and stability is not None
             and stability >= HIGH_STABILITY_FLOOR_DAYS
         ):
-            return Rating.Hard
-        return rating
+            rating = Rating.Hard
+            floored = True
+
+        return RatingBreakdown(
+            rating, time_s, htm, missed_qtm, pauses, tps, pens.score,
+            pens.tps_ref, pens.tps_pen, pens.pause_pen, pens.missed_pen,
+            pens.time_pen, max_moves, htm_forced, floored,
+        )
+
+    def rate(
+        self,
+        solve: 'Solve',
+        step: str,
+        case_name: str | None = None,
+        stability: float | None = None,
+    ) -> Rating:
+        """
+        Rate performance from a continuous execution score.
+
+        Thin wrapper over rate_with_details() for callers that only need
+        the final rating; see that method for the full decision policy.
+
+        Args:
+            solve: Completed solve with optional advanced analysis.
+            step: Step name (e.g. 'oll', 'pll').
+            case_name: Case code (e.g. 'F', '13') for per-case HTM threshold.
+            stability: Current FSRS stability in days; None disables the floor.
+
+        Returns:
+            FSRS Rating: Again (1), Hard (2), Good (3), or Easy (4).
+
+        """
+        return self.rate_with_details(solve, step, case_name, stability).rating
 
     @staticmethod
-    def execution_score(
+    def execution_penalties(
         time_s: float,
         missed_qtm: int,
         pauses: int,
         tps: float,
         step: str,
-    ) -> float:
+    ) -> ExecutionPenalties:
         """
-        Compute the continuous penalty score from execution metrics.
+        Compute the individual penalty components of the execution score.
 
-        Higher means worse. TPS below the per-step reference is the primary
-        driver; pauses beyond one regrip, missed QTM, and time past the soft
-        guard add on top.
+        TPS below the per-step reference is the primary driver; pauses
+        beyond one regrip, missed QTM, and time past the soft guard add
+        on top.
 
         Returns:
-            Non-negative penalty score (0.0 = flawless, grooved execution).
+            ExecutionPenalties with each component and the TPS reference
+            used; its score property sums them.
 
         """
         tps_ref = TPS_REF_STEP.get(step, TPS_REF_DEFAULT)
-        tps_pen = max(0.0, (tps_ref - tps) / TPS_SCALE)
-        pause_pen = max(0, pauses - PAUSE_TOLERANCE) * PAUSE_WEIGHT
-        missed_pen = missed_qtm * MISSED_WEIGHT
-        time_pen = max(0.0, (time_s - TIME_SOFT_S) / TIME_SCALE)
-        return tps_pen + pause_pen + missed_pen + time_pen
+        return ExecutionPenalties(
+            tps_ref=tps_ref,
+            tps_pen=max(0.0, (tps_ref - tps) / TPS_SCALE),
+            pause_pen=max(0, pauses - PAUSE_TOLERANCE) * PAUSE_WEIGHT,
+            missed_pen=missed_qtm * MISSED_WEIGHT,
+            time_pen=max(0.0, (time_s - TIME_SOFT_S) / TIME_SCALE),
+        )
 
     @staticmethod
     def score_to_band(score: float) -> Rating:

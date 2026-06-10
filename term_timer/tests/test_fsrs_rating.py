@@ -17,6 +17,7 @@ from term_timer.fsrs.rating import PAUSE_TOLERANCE
 from term_timer.fsrs.rating import PAUSE_WEIGHT
 from term_timer.fsrs.rating import TIME_SCALE
 from term_timer.fsrs.rating import TIME_SOFT_S
+from term_timer.fsrs.rating import TPS_REF_DEFAULT
 from term_timer.fsrs.rating import TPS_REF_STEP
 from term_timer.fsrs.rating import TPS_SCALE
 from term_timer.fsrs.rating import PerformanceRater
@@ -88,8 +89,8 @@ class TestRateWithoutBluetooth(unittest.TestCase):
         self.assertEqual(breakdown.tps, 0.0)
 
 
-class TestExecutionScore(unittest.TestCase):
-    """execution_score() builds the continuous penalty from metrics."""
+class TestExecutionPenalties(unittest.TestCase):
+    """execution_penalties() builds the continuous penalty from metrics."""
 
     def setUp(self) -> None:  # noqa: D102
         self.rater = PerformanceRater()
@@ -97,64 +98,75 @@ class TestExecutionScore(unittest.TestCase):
 
     def test_flawless_execution_is_zero(self) -> None:
         """TPS at/above ref, no pauses/missed, fast time -> 0.0."""
-        score = self.rater.execution_score(2.0, 0, 0, self.ref, 'pll')
-        self.assertEqual(score, 0.0)
+        pens = self.rater.execution_penalties(2.0, 0, 0, self.ref, 'pll')
+        self.assertEqual(pens.score, 0.0)
 
     def test_tps_above_ref_adds_no_penalty(self) -> None:
         """TPS above the per-step reference contributes nothing."""
-        score = self.rater.execution_score(2.0, 0, 0, self.ref + 1.0, 'pll')
-        self.assertEqual(score, 0.0)
+        pens = self.rater.execution_penalties(
+            2.0, 0, 0, self.ref + 1.0, 'pll',
+        )
+        self.assertEqual(pens.score, 0.0)
 
     def test_tps_below_ref_scales_linearly(self) -> None:
         """TPS one full SCALE below ref yields a 1.0 penalty."""
         tps = self.ref - TPS_SCALE
-        score = self.rater.execution_score(2.0, 0, 0, tps, 'pll')
-        self.assertAlmostEqual(score, 1.0)
+        pens = self.rater.execution_penalties(2.0, 0, 0, tps, 'pll')
+        self.assertAlmostEqual(pens.score, 1.0)
+        self.assertAlmostEqual(pens.tps_pen, 1.0)
 
     def test_one_pause_is_tolerated(self) -> None:
         """A single regrip pause adds no penalty."""
-        score = self.rater.execution_score(2.0, 0, 1, self.ref, 'pll')
-        self.assertEqual(score, 0.0)
+        pens = self.rater.execution_penalties(2.0, 0, 1, self.ref, 'pll')
+        self.assertEqual(pens.score, 0.0)
 
     def test_extra_pauses_are_penalised(self) -> None:
         """Pauses beyond the tolerated one add PAUSE_WEIGHT each."""
-        score = self.rater.execution_score(2.0, 0, 3, self.ref, 'pll')
-        self.assertAlmostEqual(score, 2 * PAUSE_WEIGHT)
+        pens = self.rater.execution_penalties(2.0, 0, 3, self.ref, 'pll')
+        self.assertAlmostEqual(pens.score, 2 * PAUSE_WEIGHT)
+        self.assertAlmostEqual(pens.pause_pen, 2 * PAUSE_WEIGHT)
 
     def test_missed_qtm_is_penalised(self) -> None:
         """Each missed QTM adds MISSED_WEIGHT."""
-        score = self.rater.execution_score(2.0, 2, 0, self.ref, 'pll')
-        self.assertAlmostEqual(score, 2 * MISSED_WEIGHT)
+        pens = self.rater.execution_penalties(2.0, 2, 0, self.ref, 'pll')
+        self.assertAlmostEqual(pens.score, 2 * MISSED_WEIGHT)
+        self.assertAlmostEqual(pens.missed_pen, 2 * MISSED_WEIGHT)
 
     def test_time_below_soft_guard_adds_nothing(self) -> None:
         """Time at the soft guard contributes nothing."""
-        score = self.rater.execution_score(TIME_SOFT_S, 0, 0, self.ref, 'pll')
-        self.assertEqual(score, 0.0)
+        pens = self.rater.execution_penalties(
+            TIME_SOFT_S, 0, 0, self.ref, 'pll',
+        )
+        self.assertEqual(pens.score, 0.0)
 
     def test_time_past_soft_guard_scales(self) -> None:
         """Time one full SCALE past the guard yields a 1.0 penalty."""
-        score = self.rater.execution_score(
+        pens = self.rater.execution_penalties(
             TIME_SOFT_S + TIME_SCALE, 0, 0, self.ref, 'pll',
         )
-        self.assertAlmostEqual(score, 1.0)
+        self.assertAlmostEqual(pens.score, 1.0)
+        self.assertAlmostEqual(pens.time_pen, 1.0)
 
     def test_components_sum(self) -> None:
         """Penalty components add together."""
         tps = self.ref - TPS_SCALE  # 1.0 from tps
-        score = self.rater.execution_score(2.0, 1, 3, tps, 'pll')
-        self.assertAlmostEqual(score, 1.0 + MISSED_WEIGHT + 2 * PAUSE_WEIGHT)
+        pens = self.rater.execution_penalties(2.0, 1, 3, tps, 'pll')
+        self.assertAlmostEqual(
+            pens.score, 1.0 + MISSED_WEIGHT + 2 * PAUSE_WEIGHT,
+        )
 
     def test_reference_is_step_relative(self) -> None:
         """Same TPS is penalised less for F2L (lower reference)."""
         tps = 4.0
-        pll_score = self.rater.execution_score(2.0, 0, 0, tps, 'pll')
-        f2l_score = self.rater.execution_score(2.0, 0, 0, tps, 'f2l')
-        self.assertGreater(pll_score, f2l_score)
+        pll_pens = self.rater.execution_penalties(2.0, 0, 0, tps, 'pll')
+        f2l_pens = self.rater.execution_penalties(2.0, 0, 0, tps, 'f2l')
+        self.assertGreater(pll_pens.score, f2l_pens.score)
 
     def test_unknown_step_uses_default_reference(self) -> None:
         """An unknown step falls back to TPS_REF_DEFAULT."""
-        score = self.rater.execution_score(2.0, 0, 0, 10.0, 'unknown')
-        self.assertEqual(score, 0.0)
+        pens = self.rater.execution_penalties(2.0, 0, 0, 10.0, 'unknown')
+        self.assertEqual(pens.tps_ref, TPS_REF_DEFAULT)
+        self.assertEqual(pens.score, 0.0)
 
 
 class TestScoreToBand(unittest.TestCase):
