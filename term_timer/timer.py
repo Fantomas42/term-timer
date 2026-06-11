@@ -241,7 +241,7 @@ class Timer(SolveInterface):
         )
 
         if new_stats.total > 1:
-            mc = 10 + len(str(len(self.stack))) - 1
+            mc = 9 + len(str(self.counter))
             if new_stats.best < old_stats.best:
                 self.console.print(
                     f'[record]:rocket:{ "New PB !".center(mc) }[/record]',
