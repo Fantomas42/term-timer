@@ -606,6 +606,7 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
     async def run_interrupted_solve_cycle(
             trainer: Trainer,
             bad_solve_moves: list[str],
+            save_char: str = 'z',
     ) -> bool:
         """
         Run one DNF cycle: normal scramble, bad solve moves, keyboard interrupt.
@@ -614,6 +615,8 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
             trainer: Target Trainer instance with fake BT attached.
             bad_solve_moves: Moves to inject during the solve phase before
                 the keyboard interrupt fires.
+            save_char: Character returned at the DNF save prompt
+                ('z' discards, any other key rates Again).
 
         Returns:
             The bool returned by start() (True = continue, False = quit).
@@ -625,6 +628,8 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
             if mode == 'stop':
                 await stop_event.wait()
                 return ' '
+            if mode == 'save':
+                return save_char
             await asyncio.sleep(3600)
             return ''
 

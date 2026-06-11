@@ -487,6 +487,155 @@ class TestSaveTrainingManualRating(unittest.IsolatedAsyncioTestCase):
         )
 
 
+class TestSaveTrainingDNF(unittest.IsolatedAsyncioTestCase):
+    """save_training(dnf=True) rates Again by default, never saves timing."""
+
+    CASE_CODE = 'T'
+
+    def make_trainer(self, *, with_timing: bool = False) -> Trainer:
+        """
+        Build a no-Bluetooth PLL trainer with FSRS enabled.
+
+        Returns:
+            A Trainer with fsrs_update on, no BT interface, and
+            optionally one prior timing for CASE_CODE.
+
+        """
+        empty = Trainings(method='CFOP', step='PLL', cases={})
+        with patch(
+            'term_timer.trainer.load_trainings', return_value=empty,
+        ):
+            timer = Trainer(
+                step='pll',
+                case_codes=[],
+                oldest=0,
+                slowest=0,
+                random=0,
+                new_cases_limit=5,
+                filters=[],
+                free_play=False,
+                show_solution=False,
+                show_cube=False,
+                metronome=0,
+                orientation='DF',
+                rng=Random(),  # noqa: S311
+            )
+        timer.bluetooth_interface = None
+        timer.console = MagicMock()
+        if with_timing:
+            date = int(datetime.now(tz=UTC).timestamp())
+            timer.trainings.add_timing(self.CASE_CODE, 2000, date)
+        return timer
+
+    def selected_case(self, timer: Trainer) -> object:
+        """
+        Return the Case object matching CASE_CODE from the trainer pool.
+
+        Returns:
+            The cubing_algs Case for CASE_CODE.
+
+        """
+        return next(
+            tc.case for tc in timer.cases if tc.case.code == self.CASE_CODE
+        )
+
+    async def run_save(
+            self, char: str, *, with_timing: bool = False,
+    ) -> tuple[Trainer, MagicMock, bool]:
+        """
+        Run save_training(dnf=True) with a fixed key.
+
+        Returns:
+            Tuple of (trainer, update_card mock, quit flag).
+
+        """
+        timer = self.make_trainer(with_timing=with_timing)
+        case = self.selected_case(timer)
+        timer.date = datetime.now(tz=UTC).timestamp()
+        solve = Solve(
+            date=timer.date,
+            time=2_000_000_000,
+            scramble="R U R' U'",
+            flag='DNF',
+            moves=None,
+        )
+        update_card = MagicMock(return_value=Card())
+
+        async def fake_getch(_mode: str, *_: object) -> str:
+            await asyncio.sleep(0)
+            return char
+
+        with (
+            patch('term_timer.trainer.save_trainings'),
+            patch('term_timer.trainer.SOUND_PLAYER'),
+            patch.object(timer.fsrs_scheduler, 'update_card', update_card),
+            patch.object(timer, 'getch', side_effect=fake_getch),
+        ):
+            quit_flag = await timer.save_training(
+                case,  # type: ignore[arg-type]
+                solve,
+                dnf=True,
+            )
+        return timer, update_card, quit_flag
+
+    async def test_any_key_rates_again_without_timing(self) -> None:
+        """Any key applies an Again rating and records no timing."""
+        timer, update_card, quit_flag = await self.run_save('x')
+        update_card.assert_called_once()
+        self.assertEqual(update_card.call_args.args[1], Rating.Again)
+        self.assertFalse(quit_flag)
+        self.assertEqual(
+            len(timer.trainings.cases[self.CASE_CODE].timings), 0,
+        )
+        self.assertEqual(timer.session_data, [])
+
+    async def test_creates_case_entry_with_card(self) -> None:
+        """A DNF on a never-trained case creates an entry with a card."""
+        timer, update_card, _ = await self.run_save('x')
+        case_training = timer.trainings.cases[self.CASE_CODE]
+        self.assertIsNotNone(case_training.fsrs_card)
+        update_card.assert_called_once()
+
+    async def test_manual_key_overrides_again(self) -> None:
+        """A 1-4 key overrides the default Again rating."""
+        timer, update_card, quit_flag = await self.run_save('3')
+        update_card.assert_called_once()
+        self.assertEqual(update_card.call_args.args[1], Rating.Good)
+        self.assertFalse(quit_flag)
+        self.assertEqual(
+            len(timer.trainings.cases[self.CASE_CODE].timings), 0,
+        )
+
+    async def test_discard_key_skips_rating(self) -> None:
+        """'z' discards without rating or creating a case entry."""
+        timer, update_card, quit_flag = await self.run_save('z')
+        update_card.assert_not_called()
+        self.assertFalse(quit_flag)
+        self.assertNotIn(self.CASE_CODE, timer.trainings.cases)
+
+    async def test_discard_keeps_prior_timings(self) -> None:
+        """'z' on a trained case never pops an existing timing."""
+        timer, update_card, _ = await self.run_save('z', with_timing=True)
+        update_card.assert_not_called()
+        self.assertEqual(
+            len(timer.trainings.cases[self.CASE_CODE].timings), 1,
+        )
+
+    async def test_quit_key_rates_again_and_quits(self) -> None:
+        """'q' applies the Again rating and quits."""
+        _, update_card, quit_flag = await self.run_save('q')
+        update_card.assert_called_once()
+        self.assertEqual(update_card.call_args.args[1], Rating.Again)
+        self.assertTrue(quit_flag)
+
+    async def test_quit_discard_key_skips_rating_and_quits(self) -> None:
+        """'k' discards without rating and quits."""
+        timer, update_card, quit_flag = await self.run_save('k')
+        update_card.assert_not_called()
+        self.assertTrue(quit_flag)
+        self.assertNotIn(self.CASE_CODE, timer.trainings.cases)
+
+
 class TestSolutionDisplayInLearningPhase(unittest.TestCase):
     """The solution is shown for cards in Learning or Relearning state."""
 

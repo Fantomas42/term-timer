@@ -57,6 +57,7 @@ from term_timer.fsrs.rating import TPS_SCALE
 from term_timer.fsrs.rating import PerformanceRater
 from term_timer.fsrs.rating import RatingBreakdown
 from term_timer.fsrs.scheduler import FSRSScheduler
+from term_timer.fsrs.storage import CaseTraining
 from term_timer.in_out import load_trainings
 from term_timer.in_out import save_trainings
 from term_timer.interface import SolveInterface
@@ -71,8 +72,6 @@ from term_timer.triggers import DEFAULT_TRIGGERS
 
 if TYPE_CHECKING:
     from fsrs import Card
-
-    from term_timer.fsrs.storage import CaseTraining
 
 
 class StepDef(NamedTuple):
@@ -1031,6 +1030,27 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             breakdown,
         )
 
+    def fsrs_dnf_preview_line(self, selected_case: Case) -> None:
+        """Display the Again rating applied when saving a DNF attempt."""
+        if self.fsrs_scheduler is None:
+            return
+
+        current_card = (
+            self.trainings.cases[selected_case.code].fsrs_card
+            if selected_case.code in self.trainings.cases
+            else None
+        )
+        preview_card = self.fsrs_scheduler.update_card(
+            current_card,
+            Rating.Again,
+        )
+        self.fsrs_result_line(
+            selected_case,
+            Rating.Again,
+            current_card,
+            preview_card,
+        )
+
     def case_in_learning_phase(self, selected_case: Case) -> bool:
         """
         Check whether the FSRS card of a case is in a learning phase.
@@ -1129,8 +1149,24 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 end='',
             )
 
-    def save_line(self, *, manual_rating: bool = False) -> None:
+    def save_line(
+            self,
+            *,
+            manual_rating: bool = False,
+            dnf: bool = False,
+    ) -> None:
         """Display instructions for saving or canceling the solve."""
+        if dnf:
+            self.console.print(
+                'Press any key to rate [again]Again[/again] and continue,',
+                '[key](z)[/key] discard,',
+                '[key](k)[/key] quit,',
+                '[key](q)[/key] rate & quit.',
+                style='consign',
+                end='',
+            )
+            return
+
         if manual_rating:
             self.console.print(
                 'Rate:',
@@ -1367,10 +1403,24 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                     format_delta(new_stats.ao1000 - old_stats.best_ao1000),
                 )
 
-    async def save_training(
+    def dnf_line(self) -> None:
+        """Display a DNF training attempt; its timing is never recorded."""
+        SOUND_PLAYER.solve_failed()
+
+        self.clear_line(full=True)
+
+        self.console.print(
+            f'[duration]Duration #{ self.counter }:[/duration]',
+            f'[time]{ format_time(self.elapsed_time) }[/time]',
+            '[dnf]DNF[/dnf]',
+        )
+
+    async def save_training(  # noqa: C901, PLR0912
             self,
             selected_case: Case,
             solve: Solve,
+            *,
+            dnf: bool = False,
     ) -> bool:
         """
         Save the completed training with optional flag modifications.
@@ -1379,7 +1429,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         cancel it. Persists the training to storage and displays confirmation.
         Handles both keyboard and bluetooth gesture input.
 
-        DNF trainings are not saved.
+        DNF trainings never record a timing: saving one only applies an
+        FSRS rating, Again by default, overridable with the 1-4 keys.
 
         Returns:
             True if user quit (pressed 'q', 'k' or ESC), False otherwise.
@@ -1413,16 +1464,32 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             MANUAL_RATING_KEYS.get(char) if self.fsrs_update else None
         )
 
-        # Any key other than z/k saves; invalid keys in manual mode skip FSRS.
+        # Any key other than z/k saves; invalid keys in manual mode skip
+        # FSRS. A DNF always carries a rating, Again unless overridden.
         discard = char in {'z', 'k'}
-        skip_fsrs = manual and manual_rating is None
+        skip_fsrs = manual and manual_rating is None and not dnf
 
         save_string = ''
         if discard:
-            self.trainings.pop_timing(selected_case.code)
+            if not dnf:
+                self.trainings.pop_timing(selected_case.code)
             SOUND_PLAYER.save_discarded()
             save_string = 'Training discarded'
         else:
+            if (
+                dnf
+                and not skip_fsrs
+                and self.fsrs_update
+                and selected_case.code not in self.trainings.cases
+            ):
+                # DNF on a never-trained case: no timing is recorded,
+                # create the entry so the FSRS card can be persisted.
+                self.trainings.cases[selected_case.code] = CaseTraining(
+                    code=selected_case.code,
+                    last_date=int(self.date),
+                    timings=[],
+                )
+
             if (
                 not skip_fsrs
                 and self.fsrs_update
@@ -1433,6 +1500,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 case_training = self.trainings.cases[selected_case.code]
                 if manual_rating is not None:
                     rating = manual_rating
+                elif dnf:
+                    rating = Rating.Again
                 else:
                     pending = self.fsrs_pending_rating
                     rating = (
@@ -1462,13 +1531,14 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
             save_trainings(self.trainings)
             SOUND_PLAYER.save_confirmed()
-            self.session_data.append(
-                (
-                    selected_case.code,
-                    selected_case,
-                    self.elapsed_time,
-                ),
-            )
+            if not dnf:
+                self.session_data.append(
+                    (
+                        selected_case.code,
+                        selected_case,
+                        self.elapsed_time,
+                    ),
+                )
 
         if save_string:
             self.console.print(
@@ -1478,7 +1548,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         return char in {'q', 'k', ESCAPE_CHAR}
 
-    async def start(self) -> bool:  # noqa: C901, PLR0912, PLR0914, PLR0915
+    async def start(  # noqa: C901, PLR0911, PLR0912, PLR0914, PLR0915
+            self,
+    ) -> bool:
         """
         Execute training workflow for single case.
 
@@ -1595,6 +1667,32 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         solve.method_name = self.method.lower()
 
         if flag == DNF:
+            # A DNF never records a timing: saving only applies an FSRS
+            # rating, Again by default, overridable with the 1-4 keys.
+            self.fsrs_pending_rating = None
+            self.dnf_line()
+
+            if not self.free_play and self.fsrs_update:
+                self.fsrs_dnf_preview_line(selected_case)
+                self.save_line(dnf=True)
+
+                quit_training = await self.save_training(
+                    selected_case,
+                    solve,
+                    dnf=True,
+                )
+
+                case_training = self.trainings.cases.get(selected_case.code)
+                if (
+                        was_new_case
+                        and case_training is not None
+                        and case_training.fsrs_card is not None
+                ):
+                    self.fsrs_new_cases_introduced += 1
+
+                if quit_training:
+                    return False
+
             self.counter += 1
 
             return True
