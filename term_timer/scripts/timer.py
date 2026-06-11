@@ -1,11 +1,14 @@
 """Main timer application entry point."""
 import asyncio
+import os
 from contextlib import suppress
 
 from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
+from term_timer.banner import show_banner
 from term_timer.browse.app import run_browse
 from term_timer.config import DEBUG
+from term_timer.config import DISPLAY_CONFIG
 from term_timer.config_edit.app import run_config_edit
 from term_timer.importers import Importer
 from term_timer.interface.terminal import Terminal
@@ -20,8 +23,17 @@ from term_timer.scripts.commands.tools import tools
 from term_timer.scripts.commands.trainer import trainer
 from term_timer.server.app import Server
 
+BANNER_MODES = {
+    'daily': 'Daily',
+    'drill': 'Drilling',
+    'routine': 'Routine',
+    'serve': 'Server',
+    'solve': 'Timer',
+    'train': 'Training',
+}
 
-def main() -> int:  # noqa: C901, PLR0911
+
+def main() -> int:  # noqa: C901, PLR0911, PLR0912
     """
     Run term-timer CLI application.
 
@@ -36,6 +48,13 @@ def main() -> int:  # noqa: C901, PLR0911
 
     if command not in {'merge', 'import'}:
         Terminal.set_title(f'{ command.title() } - Term-Timer')
+
+    if (
+            command in BANNER_MODES
+            and DISPLAY_CONFIG.get('banner', True)
+            and not os.getenv('BOTTLE_CHILD')
+    ):
+        show_banner(BANNER_MODES[command])
 
     with suppress(KeyboardInterrupt):
         if command == 'daily':

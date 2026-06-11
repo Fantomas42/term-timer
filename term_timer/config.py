@@ -31,6 +31,7 @@ xcross-difficulty = "normal"
 xcross-slots = ["FR"]
 
 [display]
+banner = true
 scramble = true
 reconstruction = true
 highlights = true

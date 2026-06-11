@@ -619,6 +619,13 @@ class DisplaySection(ConfigSection):
 
         """
         with Grid():
+            yield Static('Show Banner', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Display splash screen banner at startup',
+                    id='banner',
+                )
+
             yield Static('Show Scramble', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Checkbox(
@@ -679,6 +686,9 @@ class DisplaySection(ConfigSection):
         """Load display configuration."""
         display_config = CONFIG.get('display', {})
 
+        banner = self.query_one('#banner', Checkbox)
+        banner.value = display_config.get('banner', True)
+
         scramble = self.query_one('#scramble', Checkbox)
         scramble.value = display_config.get('scramble', True)
 
@@ -713,6 +723,7 @@ class DisplaySection(ConfigSection):
             Display configuration with visibility settings for various elements.
 
         """
+        banner = self.query_one('#banner', Checkbox)
         scramble = self.query_one('#scramble', Checkbox)
         reconstruction = self.query_one('#reconstruction', Checkbox)
         highlights = self.query_one('#highlights', Checkbox)
@@ -724,6 +735,7 @@ class DisplaySection(ConfigSection):
 
         return {
             'display': {
+                'banner': banner.value,
                 'scramble': scramble.value,
                 'reconstruction': reconstruction.value,
                 'highlights': highlights.value,
