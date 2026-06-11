@@ -31,6 +31,10 @@ BANNER_MODES = {
     'solve': 'Timer',
     'train': 'Training',
     'cfop': 'CFOP',
+    'list': 'Listing',
+    'stats': 'Stats',
+    'graph': 'Graph',
+    'detail': 'Detail',
 }
 
 
