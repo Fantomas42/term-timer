@@ -285,6 +285,56 @@ class TestRateWithBluetooth(unittest.TestCase):
         self.assertEqual(self.rater.rate(solve, 'unknown_step'), Rating.Again)
 
 
+class TestExecutionMetricsDoubleMerge(unittest.TestCase):
+    """
+    Doubles executed as two quarter turns count once in the HTM budget.
+
+    A Bluetooth cube only emits quarter turns: every U2 of an algorithm
+    arrives as ``U U``. The HTM compared to the per-case budget must be
+    counted in merged notation, like the database algorithms the budget
+    is built from.
+    """
+
+    def setUp(self) -> None:  # noqa: D102
+        self.rater = PerformanceRater()
+        # The test solves carry no timing data, on which the real pause
+        # detection chokes; both signals are orthogonal to the HTM merge.
+        patcher_pauses = patch.object(Solve, 'pauses', return_value=0)
+        patcher_missed = patch.object(Solve, 'missed_moves', return_value=0)
+        patcher_pauses.start()
+        patcher_missed.start()
+        self.addCleanup(patcher_pauses.stop)
+        self.addCleanup(patcher_missed.stop)
+
+    def test_htm_merges_consecutive_quarter_turns(self) -> None:
+        """``R U U R F`` counts 4 HTM (``R U2 R F``), not 5."""
+        solve = make_solve(int(2.0 * SECOND), moves='R U U R F')
+        breakdown = self.rater.rate_with_details(solve, 'oll')
+        self.assertEqual(breakdown.htm, 4)
+
+    def test_tps_keeps_unmerged_move_count(self) -> None:
+        """TPS still reflects physical quarter turns (hand speed)."""
+        solve = make_solve(int(2.0 * SECOND), moves='R U U R F')
+        breakdown = self.rater.rate_with_details(solve, 'oll')
+        self.assertEqual(breakdown.tps, 5 / 2.0)
+
+    def test_oll_14_clean_solve_regression(self) -> None:
+        """
+        A clean OLL 14 with pre-AUF U2 must not be htm-forced to Again.
+
+        Regression: the 15 HTM algorithm plus a U2 pre-AUF, all doubles
+        executed as quarter-turn pairs, gave a raw stream of 18 moves
+        against a budget of 17 (P90 15 + 2) and forced Again on a
+        flawless execution (score 0.00). Merged, the stream is 16 HTM.
+        """
+        moves = "U U R U R' U' R' F R F' R U U R' U' R U' R'"
+        solve = make_solve(int(3.57 * SECOND), moves=moves)
+        breakdown = self.rater.rate_with_details(solve, 'oll', '14')
+        self.assertEqual(breakdown.htm, 16)
+        self.assertFalse(breakdown.htm_forced)
+        self.assertEqual(breakdown.rating, Rating.Easy)
+
+
 class TestMaxMoves(unittest.TestCase):
     """Validate that MAX_MOVES covers the expected steps."""
 

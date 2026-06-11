@@ -29,6 +29,7 @@ from typing import NamedTuple
 
 from cubing_algs.cases import get_collection
 from cubing_algs.constants import AUF_CHAR
+from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.trim import trim_moves
 from fsrs import Rating
 
@@ -186,6 +187,14 @@ class PerformanceRater:
         match nothing. Only the trailing AUF is trimmed; the leading edge is
         kept intact. TPS uses the full HTM so hand speed is not deflated.
 
+        A Bluetooth cube only emits quarter turns, so every double move is
+        recorded as two moves (``U U`` instead of ``U2``). The HTM compared
+        to the per-case budget is computed after merging them back, since
+        the budget comes from database algorithms in merged notation.
+        Pauses and missed moves stay on the unmerged stream: merging drops
+        one timestamp per double (distorting pause detection) and changes
+        how the cancellation optimizers match.
+
         Args:
             solve: Completed solve with Bluetooth move data.
 
@@ -199,11 +208,10 @@ class PerformanceRater:
         algorithm = oriented.transform(
             trim_moves(AUF_CHAR, start=False, end=True),
         )
-        htm = algorithm.metrics.htm
+        htm = algorithm.transform(optimize_double_moves).metrics.htm
         missed_qtm = solve.missed_moves(algorithm)
         pauses = solve.pauses(algorithm)
-        full_htm = oriented.metrics.htm
-        tps = full_htm / time_s if time_s > 0 and full_htm > 0 else 0.0
+        tps = solve.compute_tps(oriented.metrics.htm, solve.time)
         return time_s, htm, missed_qtm, pauses, tps
 
     def rate_with_details(
