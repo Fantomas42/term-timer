@@ -657,7 +657,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         )
         focus_str = f'{ focus } { mastery_str }'.strip()
 
-        if focus_str[:6] == self.fsrs_last_focus[:6]:
+        if (
+                self.fsrs_last_focus is not None
+                and focus_str[:6] == self.fsrs_last_focus[:6]
+        ):
             return
 
         self.fsrs_last_focus = focus_str
