@@ -1190,7 +1190,8 @@ class Solve:  # noqa: PLR0904
         )
         return algorithm, compressed
 
-    def missed_moves(self, algorithm: Algorithm) -> int:
+    @staticmethod
+    def missed_moves(algorithm: Algorithm) -> int:
         """
         Count inefficient moves that could have been optimized.
 
@@ -1201,7 +1202,7 @@ class Solve:  # noqa: PLR0904
             Number of extra QTM from do-undo sequences, triple moves, etc.
 
         """
-        source, compressed = self.missed_moves_pair(algorithm)
+        source, compressed = Solve.missed_moves_pair(algorithm)
 
         return source.metrics.qtm - compressed.metrics.qtm
 
