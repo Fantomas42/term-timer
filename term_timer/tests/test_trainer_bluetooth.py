@@ -673,6 +673,95 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
             await queue.put(None)
             await consumer
 
+    @staticmethod
+    async def run_keyboard_only_cycle(
+            trainer: Trainer,
+            getch_modes: list[str],
+    ) -> bool:
+        """
+        Run one cycle started and stopped from the keyboard, no cube move.
+
+        The scramble is applied on the BT cube, then the timer is started
+        with a key press and stopped with another one, without any move
+        being made on the cube.
+
+        Args:
+            trainer: Target Trainer instance with fake BT attached.
+            getch_modes: Output list collecting the getch modes requested.
+
+        Returns:
+            The bool returned by start() (True = continue, False = quit).
+
+        """
+        stop_event = asyncio.Event()
+
+        async def getch_keyboard(mode: str, *_: object) -> str:
+            getch_modes.append(mode)
+            if mode == 'start':
+                return ' '
+            if mode == 'stop':
+                await stop_event.wait()
+                return ' '
+            if mode == 'save':
+                return ''
+            await asyncio.sleep(3600)
+            return ''
+
+        consumer = asyncio.create_task(trainer.bluetooth_consumer())
+        trainer.bluetooth_consumer_ref = consumer
+        try:
+            with patch.object(trainer, 'getch', side_effect=getch_keyboard):
+                run_task = asyncio.create_task(trainer.start())
+                await asyncio.sleep(0.05)
+
+                s_moves = [str(m) for m in trainer.scramble]
+                await inject_moves(trainer, s_moves, clock_start=0)
+                await asyncio.wait_for(
+                    trainer.scramble_completed_event.wait(),
+                    timeout=2.0,
+                )
+                await asyncio.sleep(0.05)
+
+                stop_event.set()
+                return await asyncio.wait_for(run_task, timeout=2.0)
+        finally:
+            queue = cast(
+                'asyncio.Queue[list[EventDict] | None]',
+                trainer.bluetooth_queue,
+            )
+            await queue.put(None)
+            await consumer
+
+    async def test_keyboard_start_stop_without_moves_discards(self) -> None:
+        """
+        Keyboard start + stop with zero cube moves discards the attempt.
+
+        The scramble is applied on the BT cube, then the timer is started
+        and stopped from the keyboard without any cube move. The step is
+        not completed: this is a misfire, not an attempt. Nothing must be
+        recorded - no timing, no FSRS card - and the save prompt must not
+        be shown.
+        """
+        t = build_trainer(step='oll', case_codes=['01'], seed=42)
+        getch_modes: list[str] = []
+
+        result = await TestConcreteScenarios.run_keyboard_only_cycle(
+            t, getch_modes,
+        )
+
+        self.assertTrue(result, 'training must continue after a misfire')
+        self.assertEqual(len(t.moves), 0)
+        self.assertFalse(t.bluetooth_scramble_is_completed)
+        self.assertIsNone(
+            t.trainings.cases.get('01'),
+            'a keyboard-only attempt with no cube move must not record '
+            'a timing nor create an FSRS card',
+        )
+        self.assertNotIn(
+            'save', getch_modes,
+            'a discarded misfire must not show the save prompt',
+        )
+
     async def test_oll_01_elapsed_time_and_timing(self) -> None:
         """OLL case 01: elapsed_time and timing saved after a full solve."""
         solution = next(iter(get_case('OLL', '01').algorithms))

@@ -277,7 +277,7 @@ class Timer(SolveInterface):
                     format_delta(new_stats.ao1000 - old_stats.best_ao1000),
                 )
 
-    async def start(self) -> bool:  # noqa: C901, PLR0912
+    async def start(self) -> bool:  # noqa: C901, PLR0911, PLR0912
         """
         Execute complete solve workflow from scramble to save.
 
@@ -342,12 +342,22 @@ class Timer(SolveInterface):
 
         self.elapsed_time = self.end_time - self.start_time
 
+        if (
+                self.bluetooth_cube
+                and not self.moves
+                and not self.bluetooth_scramble_is_completed
+        ):
+            # Keyboard start/stop without any move on the connected
+            # cube: a misfire, not an attempt, nothing to record.
+            self.clear_line(full=True)
+            return True
+
         flag: SolveFlag = ''
+        if self.bluetooth_cube and not self.bluetooth_scramble_is_completed:
+            flag = DNF
+
         moves = []
         if self.moves:
-            if self.bluetooth_cube and not self.bluetooth_scramble_is_completed:
-                flag = DNF
-
             first_time = self.moves[0]['time']
             for move in self.moves:
                 timing = int((move['time'] - first_time) / MS_TO_NS_FACTOR)
