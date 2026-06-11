@@ -30,18 +30,25 @@ MAXIMUM_INTERVAL_DAYS: int = 7
 # crudely, so this is where domain knowledge is injected without fighting the
 # DSR model. More short steps make the trainer re-serve a card several times
 # within the same session before it graduates to spaced Review: a new case is
-# drilled 4 times over ~8 min, a lapsed known case is re-grooved twice before
+# drilled 4 times over ~30 min, a lapsed known case is re-grooved twice before
 # re-spacing. This matches the motor-learning rule "massed first to build
 # coordination, spaced later to maintain".
+#
+# steps[0] is the loop period of a failing card: an Again resets the card to
+# step 0, due in steps[0]. It must exceed one full rep cycle (scramble +
+# execution + review, ~45-90 s) or a failing card re-preempts the session
+# before any other case can be served (due cards have absolute priority in
+# select_next_case). 2 min lets 1-3 other cases interleave between re-serves
+# while keeping all reps within the same session.
 LEARNING_STEPS: tuple[timedelta, ...] = (
-    timedelta(seconds=30),
-    timedelta(minutes=1),
     timedelta(minutes=2),
     timedelta(minutes=5),
+    timedelta(minutes=10),
+    timedelta(minutes=15),
 )
 RELEARNING_STEPS: tuple[timedelta, ...] = (
-    timedelta(seconds=30),
     timedelta(minutes=2),
+    timedelta(minutes=5),
 )
 
 
