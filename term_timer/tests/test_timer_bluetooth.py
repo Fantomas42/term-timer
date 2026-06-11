@@ -10,13 +10,17 @@ import unittest
 from random import Random
 from typing import TYPE_CHECKING
 from typing import cast
+from unittest.mock import AsyncMock
 from unittest.mock import patch
 
 from cubing_algs.vcube import VCube
 
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
+from term_timer.constants import SolveFlag
+from term_timer.solve import Solve
 from term_timer.tests.test_trainer_bluetooth import FakeBluetoothInterface
 from term_timer.tests.test_trainer_bluetooth import make_move_event
 from term_timer.timer import Timer
@@ -218,6 +222,84 @@ class TestTimerKeyboardStopBluetooth(unittest.IsolatedAsyncioTestCase):
             'save', getch_modes,
             'a discarded misfire must not show the save prompt',
         )
+
+    @staticmethod
+    async def run_save_solve(
+            char: str,
+            *,
+            flag: SolveFlag = '',
+            bluetooth: bool = True,
+    ) -> Timer:
+        """
+        Run save_solve() on a Timer holding one solve with the given flag.
+
+        Args:
+            char: Character returned by the mocked getch at the prompt.
+            flag: Initial flag of the solve in the stack.
+            bluetooth: Keep the fake BT interface attached or strip it
+                to emulate manual mode.
+
+        Returns:
+            The Timer after save_solve() has returned.
+
+        """
+        t = build_timer("R U R' U'")
+        if not bluetooth:
+            t.bluetooth_interface = None
+            t.bluetooth_cube = None
+            t.bluetooth_queue = None
+
+        solve = Solve(1000000000, 1012345678, "R U R'", flag=flag)
+        t.stack = [solve]
+        t.stack_done = [solve]
+
+        with patch.object(t, 'getch', new=AsyncMock(return_value=char)):
+            await t.save_solve()
+
+        return t
+
+    async def test_bluetooth_dnf_cannot_be_marked_ok(self) -> None:
+        """
+        In bluetooth mode 'o' is a plain save key, the DNF flag stays.
+
+        With a BT cube the flag is derived from the cube state: a DNF
+        cannot be whitewashed into a valid solve at the save prompt.
+        """
+        t = await self.run_save_solve('o', flag=DNF)
+
+        self.assertEqual(t.stack[-1].flag, DNF)
+        self.assertEqual(t.stack_done[-1].flag, DNF)
+        self.save_solves_mock.assert_called()
+
+    async def test_bluetooth_ignores_manual_flag_keys(self) -> None:
+        """In bluetooth mode 'd' and '2' are plain save keys, no flag set."""
+        for char in ('d', '2'):
+            with self.subTest(char=char):
+                t = await self.run_save_solve(char)
+
+                self.assertEqual(t.stack[-1].flag, '')
+                self.assertEqual(len(t.stack), 1, 'solve must be saved')
+
+    async def test_manual_flag_keys_still_work(self) -> None:
+        """In manual mode 'd' and '2' still set the DNF and +2 flags."""
+        for char, expected in (('d', DNF), ('2', PLUS_TWO)):
+            with self.subTest(char=char):
+                t = await self.run_save_solve(char, bluetooth=False)
+
+                self.assertEqual(t.stack[-1].flag, expected)
+                self.assertEqual(t.stack_done[-1].flag, expected)
+
+    async def test_manual_o_is_a_plain_save_key(self) -> None:
+        """
+        The 'o' override is gone: in manual mode it is a plain save key.
+
+        A manual solve is never DNF before the prompt, so there is no
+        flag left to clear - 'o' saves like any other key.
+        """
+        t = await self.run_save_solve('o', bluetooth=False)
+
+        self.assertEqual(t.stack[-1].flag, '')
+        self.assertEqual(len(t.stack), 1, 'solve must be saved')
 
     async def test_keyboard_stop_with_moves_is_dnf(self) -> None:
         """

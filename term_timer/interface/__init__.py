@@ -267,9 +267,11 @@ class SolveInterface(
         """
         Save the completed solve with optional flag modifications.
 
-        Waits for user input to mark the solve with a flag (DNF, +2, OK) or
-        cancel it. Persists the solve to storage and displays confirmation.
-        Handles both keyboard and bluetooth gesture input.
+        Waits for user input to mark the solve with a flag (DNF, +2) or
+        cancel it. Flag keys are only honored in manual mode: with a
+        Bluetooth cube the flag is derived from the cube state and
+        cannot be edited. Persists the solve to storage and displays
+        confirmation. Handles both keyboard and bluetooth gesture input.
 
         Returns:
             True if user quit (pressed 'q', 'k' or ESC), False otherwise.
@@ -297,17 +299,13 @@ class SolveInterface(
 
         save_string = ''
         save_style = 'warning'
-        if char == 'd':
+        manual = self.bluetooth_interface is None
+        if manual and char == 'd':
             self.stack[-1].flag = DNF
             self.stack_done[-1].flag = DNF
             save_string = 'Solve marked as DNF'
             save_style = 'caution'
-        elif char == 'o':
-            self.stack[-1].flag = ''
-            self.stack_done[-1].flag = ''
-            save_string = 'Solve marked as OK'
-            save_style = 'success'
-        elif char == '2':
+        elif manual and char == '2':
             self.stack[-1].flag = PLUS_TWO
             self.stack_done[-1].flag = PLUS_TWO
             save_string = 'Solve marked as +2'
