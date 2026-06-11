@@ -30,6 +30,7 @@ BANNER_MODES = {
     'serve': 'Server',
     'solve': 'Timer',
     'train': 'Training',
+    'cfop': 'CFOP',
 }
 
 
