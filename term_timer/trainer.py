@@ -676,7 +676,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         if case_training is None or case_training.fsrs_card is None:
             self.console.print(
-                f'[fsrs]{ name }[/fsrs] [new]New[/new]',
+                f'[fsrs]{ name }[/fsrs] [new]New case evaluation[/new]',
             )
             return
 
