@@ -1155,16 +1155,12 @@ class Solve:  # noqa: PLR0904
                 location = group['location']
                 title = 'Global' if location == 'global' else location
 
-                header = (
-                    f'[step]{ title }[/step] '
-                    f'[examen]{ group["impact_seconds"]:.2f}s[/examen]'
-                )
-                if group['command']:
-                    header += f' [localhost]{ group["command"] }[/localhost]'
-
                 if index:
                     diagnostic_lines.append('')
-                diagnostic_lines.append(header)
+                diagnostic_lines.append(
+                    f'[step]{ title }[/step] '
+                    f'[title]{ group["impact_seconds"]:.2f}s[/title]',
+                )
 
                 diagnostic_lines.extend(
                     (
@@ -1172,11 +1168,19 @@ class Solve:  # noqa: PLR0904
                         '[advice]   ' +
                         item['recommendation'].replace('. ', '.\n   ') +
                         '[/advice]\n'
-                        f'[examen]   [{ item["severity"].upper() }] '
-                        f'{item["impact_seconds"]:.2f}s[/examen]'
+                        f'   [{ item["severity"] }]'
+                        f'[{ item["severity"].upper() }]'
+                        f'[/{ item["severity"] }] '
+                        f'[context]{ item["impact_seconds"]:.2f}s[/context]'
                     )
                     for item in group['diagnostics']
                 )
+
+                if group['command']:
+                    command_line = (
+                        f'   → [localhost]{ group["command"] }[/localhost]'
+                    )
+                    diagnostic_lines.extend(('', command_line))
         else:
             diagnostic_lines.append(
                 '[success] - No issue detected, sane solve ![/success]',
