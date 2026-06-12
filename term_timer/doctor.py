@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 from typing import Final
 from typing import TypedDict
 
+from cubing_algs.cases import get_case
+
 from term_timer.constants import SECOND
 
 if TYPE_CHECKING:
@@ -794,7 +796,6 @@ def check_step_oll(
     )
     rec_norm = norms['recognition']['OLL']
     rec_norm_max = float(rec_norm[1])  # type: ignore[index]
-    move_norm = float(norms['moves']['OLL'])  # type: ignore[arg-type]
 
     if step['step_recognition_percent'] > rec_norm_max:
         diagnostics.append(
@@ -822,20 +823,28 @@ def check_step_oll(
             },
         )
 
+    if not case_name:
+        return diagnostics
+
     htm = step['moves_prettified'].metrics.htm
-    if htm > move_norm * 1.05:
+    optimal_htm = float(get_case('OLL', case_name).optimal_htm)
+    target_htm = optimal_htm + 2  # AUF allowance
+
+    if htm > (optimal_htm * 1.33) + 2:
+        extra_moves = htm - target_htm
         diagnostics.append(
             {
                 'severity': DiagnosticSeverity.MEDIUM,
                 'category': DiagnosticCategory.EFFICIENCY_ALGORITHMS,
-                'impact_seconds': 0.3,
+                'impact_seconds': extra_moves * solve.move_speed / SECOND,
                 'location': 'OLL',
                 'metric_name': 'htm',
                 'actual_value': float(htm),
-                'expected_value': (float(move_norm * 0.7), float(move_norm)),
+                'expected_value': (optimal_htm, target_htm),
                 'description': (
-                    f'OLL used {htm} HTM. May be using a sub-optimal '
-                    'algorithm or wrong variant.'
+                    f'OLL used {htm} HTM, while the case optimal is '
+                    f'{optimal_htm:.0f} HTM plus AUF. May be using '
+                    'a sub-optimal algorithm or wrong variant.'
                 ),
                 'recommendation': (
                     'Review your OLL algorithm choice for this case. '
@@ -885,7 +894,6 @@ def check_step_pll(
     )
     rec_norm = norms['recognition']['PLL']
     rec_norm_max = float(rec_norm[1])  # type: ignore[index]
-    move_norm = float(norms['moves']['PLL'])  # type: ignore[arg-type]
 
     if step['step_recognition_percent'] > rec_norm_max:
         diagnostics.append(
@@ -913,20 +921,28 @@ def check_step_pll(
             },
         )
 
+    if not case_name:
+        return diagnostics
+
     htm = step['moves_prettified'].metrics.htm
-    if htm > move_norm * 1.33:
+    optimal_htm = float(get_case('PLL', case_name).optimal_htm)
+    target_htm = optimal_htm + 2  # AUF allowance
+
+    if htm > (optimal_htm * 1.33) + 2:
+        extra_moves = htm - target_htm
         diagnostics.append(
             {
                 'severity': DiagnosticSeverity.MEDIUM,
                 'category': DiagnosticCategory.EFFICIENCY_ALGORITHMS,
-                'impact_seconds': 0.25,
+                'impact_seconds': extra_moves * solve.move_speed / SECOND,
                 'location': 'PLL',
                 'metric_name': 'htm',
                 'actual_value': float(htm),
-                'expected_value': (float(move_norm * 0.74), float(move_norm)),
+                'expected_value': (optimal_htm, target_htm),
                 'description': (
-                    f'PLL used {htm} HTM. May be using a sub-optimal '
-                    'algorithm or made execution errors.'
+                    f'PLL used {htm} HTM, while the case optimal is '
+                    f'{optimal_htm:.0f} HTM plus AUF. May be using '
+                    'a sub-optimal algorithm or made execution errors.'
                 ),
                 'recommendation': (
                     'Review your PLL algorithm choice. '
