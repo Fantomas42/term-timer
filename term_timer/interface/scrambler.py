@@ -60,6 +60,8 @@ class Scrambler:
 
         self.facelets_scrambled = ''
 
+        self.misoriented_signaled = False
+
         self.scramble_completed_event = asyncio.Event()
 
     def handle_scrambled(self, timed_move: Move) -> None:
@@ -69,7 +71,9 @@ class Scrambler:
         Tracks scramble progress by appending moves to the scrambled algorithm,
         checking for completion against the target cube state, and updating the
         terminal display with color-coded progress feedback. Emits a beep when
-        the scramble is completed.
+        the scramble is completed, a klaxon when a wrong face is turned, and a
+        softer cue (only once per mistake) when the right face is turned in
+        the wrong direction.
 
         Args:
             timed_move: The move received from the Bluetooth cube, including
@@ -103,7 +107,10 @@ class Scrambler:
             self.scramble_completed_event.set()
             SOUND_PLAYER.solve_scrambled()
 
-        out, full_clear, wrong_move_added = self.compute_scramble_display(
+        (
+            out, full_clear,
+            wrong_move_added, misoriented_move,
+        ) = self.compute_scramble_display(
             scrambled=self.scrambled,
             scramble_oriented=self.scramble_oriented,
             cube_orientation_moves=self.cube_orientation_moves,
@@ -112,6 +119,12 @@ class Scrambler:
 
         if wrong_move_added:
             SOUND_PLAYER.cube_move_missed()
+        elif misoriented_move:
+            if not self.misoriented_signaled:
+                self.misoriented_signaled = True
+                SOUND_PLAYER.cube_move_misoriented()
+        else:
+            self.misoriented_signaled = False
 
         self.clear_line(full=full_clear)
 
@@ -128,7 +141,7 @@ class Scrambler:
             cube_orientation_moves: Algorithm,
             *,
             is_complete: bool,
-    ) -> tuple[str, bool, bool]:
+    ) -> tuple[str, bool, bool, bool]:
         """
         Compute the formatted display output for scramble progress.
 
@@ -146,8 +159,10 @@ class Scrambler:
 
         Returns:
             A tuple containing the formatted output string with Rich markup,
-            a boolean indicating whether to perform a full line clear, and
-            a boolean indicating whether the last move was a wrong move.
+            a boolean indicating whether to perform a full line clear,
+            a boolean indicating whether the last move was a wrong move, and
+            a boolean indicating whether the last move turned the right face
+            in the wrong direction while a non-double move was expected.
 
         """
         if is_complete:
@@ -157,6 +172,7 @@ class Scrambler:
             )
             full_clear = True
             wrong_move_added = False
+            misoriented_move = False
         else:
             out = ''
             if cube_orientation_moves:
@@ -180,6 +196,7 @@ class Scrambler:
 
             on_good_way = True
             wrong_move_added = False
+            misoriented_move = False
             algo_size = len(algo)
             for i, move in enumerate(algo):
                 try:
@@ -198,7 +215,10 @@ class Scrambler:
                 if is_last and style == 'warning' and not is_correcting:
                     wrong_move_added = True
 
+                if is_last and style == 'caution' and not expected.is_double:
+                    misoriented_move = True
+
                 out += f'[{ style }]{ move }[/{ style }] '
             full_clear = len(algo) < len(p_algo) or len(algo) <= 1
 
-        return out, full_clear, wrong_move_added
+        return out, full_clear, wrong_move_added, misoriented_move

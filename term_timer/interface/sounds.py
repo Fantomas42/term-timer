@@ -49,6 +49,14 @@ MISSED_FREQS = (400.0, 1200.0, 180.0)
 MISSED_DURATIONS = (0.045, 0.045, 0.140)
 MISSED_GAP = 0.018
 MISSED_VOLUME = 0.27
+MISORIENTED_FREQS = (400.0, 1200.0)
+MISORIENTED_DURATIONS = (0.045, 0.045)
+MISORIENTED_THUD = Tone(110.0, 0.180, 0.30)
+THUD_PARTIALS = (
+    (1.00, 1.00, 4.0),
+    (1.50, 0.70, 7.0),
+    (2.10, 0.40, 12.0),
+)
 
 CONNECTED_PAN: PanDirection = 'left_to_right'
 DISCONNECTED_PAN: PanDirection = 'right_to_left'
@@ -351,6 +359,62 @@ class SoundPlayer:  # noqa: PLR0904
 
     @staticmethod
     @lru_cache
+    def generate_thud_wave(
+        tone: Tone,
+        partials: tuple[tuple[float, float, float], ...],
+    ) -> np.ndarray:
+        """
+        Generate a rounded low thud using additive synthesis.
+
+        Sums sine partials with individual exponential decay rates for a
+        muffled, dying-out character.
+
+        Returns:
+            Float32 array of audio samples.
+
+        """
+        samples = int(SAMPLE_RATE * tone.duration)
+        t = np.linspace(0, tone.duration, samples, endpoint=False)
+        wave = np.zeros(samples, dtype=np.float64)
+        for ratio, amp, decay in partials:
+            env = np.exp(-decay * t / tone.duration)
+            wave += amp * env * np.sin(
+                2 * math.pi * tone.frequency * ratio * t,
+            )
+        result = (tone.volume * wave).astype(np.float32)
+        fade = min(int(SAMPLE_RATE * 0.008), samples // 4)
+        result[-fade:] *= np.linspace(1.0, 0.0, fade)
+        return result
+
+    @staticmethod
+    @lru_cache
+    def generate_misoriented_wave() -> np.ndarray:
+        """
+        Generate a klaxon variant ending on a muffled low thud.
+
+        Same two opening tones as the missed klaxon (400 then 1200 Hz) but
+        the final note is a rounded 110 Hz thud — a duller close that marks
+        a wrong-direction turn apart from a wrong-face turn. The same
+        right-to-left stereo sweep as the missed klaxon is applied over the
+        full duration.
+
+        Returns:
+            Float32 stereo (N, 2) array of audio samples.
+
+        """
+        klaxon = SoundPlayer.generate_trio_wave(
+            MISORIENTED_FREQS,
+            MISORIENTED_DURATIONS,
+            MISSED_GAP,
+            MISSED_VOLUME,
+        )
+        thud = SoundPlayer.generate_thud_wave(MISORIENTED_THUD, THUD_PARTIALS)
+        gap = np.zeros(int(SAMPLE_RATE * MISSED_GAP), dtype=np.float32)
+        mono = np.concatenate([klaxon, gap, thud])
+        return SoundPlayer.apply_sine_pan(mono, MISSED_PAN)
+
+    @staticmethod
+    @lru_cache
     def generate_metronome_wave() -> np.ndarray:
         """
         Generate a downward chirp (800→300 Hz) with exponential decay.
@@ -495,6 +559,10 @@ class SoundPlayer:  # noqa: PLR0904
             ),
         )
 
+    def cube_move_misoriented(self) -> None:
+        """Play a muffled klaxon when a face is turned the wrong way."""
+        self.play(self.generate_misoriented_wave)
+
     def la_3(self) -> None:
         """Play a LA 3."""
         self.play_tone('LA_3')
@@ -515,6 +583,7 @@ if __name__ == '__main__':
         'cube_not_connected',
         'cube_disconnected',
         'cube_move_missed',
+        'cube_move_misoriented',
         'solve_scrambled',
         'solve_step',
         'solve_success',

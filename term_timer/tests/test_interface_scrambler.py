@@ -61,7 +61,7 @@ class TestComputeScrambleDisplayComplete(unittest.TestCase):
         scramble_oriented = parse_moves("R U R' U'")
         cube_orientation_moves = parse_moves('')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -83,7 +83,7 @@ class TestComputeScrambleDisplayComplete(unittest.TestCase):
         scramble_oriented = parse_moves("R U R' U'")
         cube_orientation_moves = parse_moves('x y')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -103,7 +103,7 @@ class TestComputeScrambleDisplayComplete(unittest.TestCase):
         scramble_oriented = parse_moves('')
         cube_orientation_moves = parse_moves('')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -132,7 +132,7 @@ class TestComputeScrambleDisplayIncomplete(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -149,7 +149,7 @@ class TestComputeScrambleDisplayIncomplete(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -167,7 +167,7 @@ class TestComputeScrambleDisplayIncomplete(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R U')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -185,7 +185,7 @@ class TestComputeScrambleDisplayIncomplete(unittest.TestCase):
         cube_orientation_moves = parse_moves('x y')
         self.scrambler.reorient_return_value = parse_moves('R')
 
-        out, _, _ = self.scrambler.compute_scramble_display(
+        out, _, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -214,7 +214,7 @@ class TestComputeScrambleDisplayCorrectMoves(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves("R U R' U'")
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -234,7 +234,7 @@ class TestComputeScrambleDisplayCorrectMoves(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R U')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -260,7 +260,7 @@ class TestComputeScrambleDisplayCautionStyling(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -278,7 +278,7 @@ class TestComputeScrambleDisplayCautionStyling(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R2')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -296,7 +296,7 @@ class TestComputeScrambleDisplayCautionStyling(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R U')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -322,7 +322,7 @@ class TestComputeScrambleDisplayWarningStyling(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -340,7 +340,7 @@ class TestComputeScrambleDisplayWarningStyling(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R F')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -366,7 +366,7 @@ class TestComputeScrambleDisplayOffTrackBehavior(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R F U')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -386,7 +386,7 @@ class TestComputeScrambleDisplayOffTrackBehavior(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R F D')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -406,7 +406,7 @@ class TestComputeScrambleDisplayOffTrackBehavior(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R U F')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -426,7 +426,7 @@ class TestComputeScrambleDisplayOffTrackBehavior(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R U F D L B')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -461,7 +461,7 @@ class TestComputeScrambleDisplayFullClearBehavior(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R')
 
-        _, full_clear, _ = self.scrambler.compute_scramble_display(
+        _, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -477,7 +477,7 @@ class TestComputeScrambleDisplayFullClearBehavior(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R')
 
-        _, full_clear, _ = self.scrambler.compute_scramble_display(
+        _, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -493,7 +493,7 @@ class TestComputeScrambleDisplayFullClearBehavior(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('')
 
-        _, full_clear, _ = self.scrambler.compute_scramble_display(
+        _, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -511,7 +511,7 @@ class TestComputeScrambleDisplayFullClearBehavior(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R U')
 
-        _, full_clear, _ = self.scrambler.compute_scramble_display(
+        _, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -529,7 +529,7 @@ class TestComputeScrambleDisplayFullClearBehavior(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R U F')
 
-        _, full_clear, _ = self.scrambler.compute_scramble_display(
+        _, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -556,7 +556,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves(long_scramble_str)
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -576,7 +576,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R2 U2')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -594,7 +594,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('Rw Uw')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -612,7 +612,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('M E S')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -630,7 +630,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         cube_orientation_moves = parse_moves('x y')
         self.scrambler.reorient_return_value = parse_moves('F R')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -651,7 +651,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves("R U' F D")
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -674,7 +674,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R U F')
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -694,7 +694,7 @@ class TestComputeScrambleDisplayEdgeCases(unittest.TestCase):
         cube_orientation_moves = parse_moves("x' y2")
         self.scrambler.reorient_return_value = parse_moves("R U R' U'")
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -730,7 +730,7 @@ class TestComputeDisplayRotationRealCases(unittest.TestCase):
         )
         scramble_oriented = parse_moves("F R U R' d R' U' R U' R'")
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=parse_moves('z2'),
@@ -763,7 +763,7 @@ class TestComputeDisplayRotationRealCases(unittest.TestCase):
         )
         scramble_oriented = parse_moves("B' R' U' R d' R U R' U R")
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=parse_moves('z2'),
@@ -797,7 +797,7 @@ class TestComputeDisplayRotationRealCases(unittest.TestCase):
         )
         scramble_oriented = parse_moves("F R U R' d R' U' R U' R'")
 
-        out, full_clear, _ = self.scrambler.compute_scramble_display(
+        out, full_clear, _, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=parse_moves('z2'),
@@ -836,7 +836,7 @@ class TestComputeScrambleDisplayWrongMoveAdded(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R')
 
-        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+        _, _, wrong_move_added, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -852,7 +852,7 @@ class TestComputeScrambleDisplayWrongMoveAdded(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R')
 
-        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+        _, _, wrong_move_added, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -868,7 +868,7 @@ class TestComputeScrambleDisplayWrongMoveAdded(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R')
 
-        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+        _, _, wrong_move_added, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -884,7 +884,7 @@ class TestComputeScrambleDisplayWrongMoveAdded(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R')
 
-        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+        _, _, wrong_move_added, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -901,7 +901,7 @@ class TestComputeScrambleDisplayWrongMoveAdded(unittest.TestCase):
         scramble_oriented = parse_moves('R U')
         cube_orientation_moves = parse_moves('')
 
-        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+        _, _, wrong_move_added, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -917,7 +917,7 @@ class TestComputeScrambleDisplayWrongMoveAdded(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R F U')
 
-        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+        _, _, wrong_move_added, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -933,7 +933,7 @@ class TestComputeScrambleDisplayWrongMoveAdded(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('D2')
 
-        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+        _, _, wrong_move_added, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -951,7 +951,7 @@ class TestComputeScrambleDisplayWrongMoveAdded(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('D')
 
-        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+        _, _, wrong_move_added, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -981,7 +981,7 @@ class TestComputeScrambleDisplayWrongMoveAddedTimed(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('R')
 
-        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+        _, _, wrong_move_added, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -997,7 +997,7 @@ class TestComputeScrambleDisplayWrongMoveAddedTimed(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('D2')
 
-        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+        _, _, wrong_move_added, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -1015,7 +1015,7 @@ class TestComputeScrambleDisplayWrongMoveAddedTimed(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('D')
 
-        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+        _, _, wrong_move_added, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -1033,7 +1033,7 @@ class TestComputeScrambleDisplayWrongMoveAddedTimed(unittest.TestCase):
         cube_orientation_moves = parse_moves('')
         self.scrambler.reorient_return_value = parse_moves('')
 
-        _, _, wrong_move_added = self.scrambler.compute_scramble_display(
+        _, _, wrong_move_added, _ = self.scrambler.compute_scramble_display(
             scrambled=scrambled,
             scramble_oriented=scramble_oriented,
             cube_orientation_moves=cube_orientation_moves,
@@ -1041,6 +1041,304 @@ class TestComputeScrambleDisplayWrongMoveAddedTimed(unittest.TestCase):
         )
 
         self.assertFalse(wrong_move_added)
+
+
+class TestComputeScrambleDisplayMisorientedMove(unittest.TestCase):
+    """Tests for misoriented_move flag behavior."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        self.scrambler = MockScrambler()
+
+    def test_wrong_direction_triggers_misoriented(self) -> None:
+        """Test R when R' expected sets misoriented_move."""
+        scrambled = parse_moves('R')
+        scramble_oriented = parse_moves("R'")
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('R')
+
+        _, _, _, misoriented = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertTrue(misoriented)
+
+    def test_partial_double_does_not_trigger_misoriented(self) -> None:
+        """Test R when R2 expected does not set misoriented_move."""
+        scrambled = parse_moves('R')
+        scramble_oriented = parse_moves('R2')
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('R')
+
+        _, _, _, misoriented = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertFalse(misoriented)
+
+    def test_reverse_partial_double_does_not_trigger_misoriented(
+        self,
+    ) -> None:
+        """Test R' when R2 expected does not set misoriented_move."""
+        scrambled = parse_moves("R'")
+        scramble_oriented = parse_moves('R2')
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves("R'")
+
+        _, _, _, misoriented = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertFalse(misoriented)
+
+    def test_overshoot_double_triggers_misoriented(self) -> None:
+        """Test R2 when R expected sets misoriented_move."""
+        scrambled = parse_moves('R2')
+        scramble_oriented = parse_moves('R')
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('R2')
+
+        _, _, _, misoriented = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertTrue(misoriented)
+
+    def test_correct_move_does_not_trigger_misoriented(self) -> None:
+        """Test correct move does not set misoriented_move."""
+        scrambled = parse_moves('R')
+        scramble_oriented = parse_moves('R')
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('R')
+
+        _, _, _, misoriented = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertFalse(misoriented)
+
+    def test_wrong_face_does_not_trigger_misoriented(self) -> None:
+        """Test wrong face (warning) does not set misoriented_move."""
+        scrambled = parse_moves('R')
+        scramble_oriented = parse_moves('U')
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('R')
+
+        _, _, _, misoriented = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertFalse(misoriented)
+
+    def test_second_move_wrong_direction_triggers_misoriented(self) -> None:
+        """Test U when U' expected as second move sets misoriented_move."""
+        scrambled = parse_moves('R U')
+        scramble_oriented = parse_moves("R U'")
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('R U')
+
+        _, _, _, misoriented = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertTrue(misoriented)
+
+    def test_off_track_earlier_does_not_trigger_misoriented(self) -> None:
+        """Test divergence before last move does not set misoriented_move."""
+        scrambled = parse_moves('R U F')
+        scramble_oriented = parse_moves("R' U F")
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('R U F')
+
+        _, _, _, misoriented = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertFalse(misoriented)
+
+    def test_correction_through_double_still_flags_misoriented(self) -> None:
+        """Test R+R=R2 when R' expected keeps misoriented_move set."""
+        scrambled = parse_moves('R R')
+        scramble_oriented = parse_moves("R'")
+        cube_orientation_moves = parse_moves('')
+        self.scrambler.reorient_return_value = parse_moves('R2')
+
+        _, _, _, misoriented = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=False,
+        )
+
+        self.assertTrue(misoriented)
+
+    def test_complete_does_not_trigger_misoriented(self) -> None:
+        """Test complete scramble does not set misoriented_move."""
+        scrambled = parse_moves('R U')
+        scramble_oriented = parse_moves('R U')
+        cube_orientation_moves = parse_moves('')
+
+        _, _, _, misoriented = self.scrambler.compute_scramble_display(
+            scrambled=scrambled,
+            scramble_oriented=scramble_oriented,
+            cube_orientation_moves=cube_orientation_moves,
+            is_complete=True,
+        )
+
+        self.assertFalse(misoriented)
+
+
+class TestHandleScrambledMisorientedSound(unittest.TestCase):
+    """Tests for once-only misoriented sound emission in handle_scrambled."""
+
+    def setUp(self) -> None:
+        """Patch SOUND_PLAYER to track calls without playing real audio."""
+        patcher = patch('term_timer.interface.scrambler.SOUND_PLAYER')
+        self.sound_player = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    @staticmethod
+    def build_scrambler(scramble: str) -> OrienterScrambler:
+        """
+        Build a scrambler targeting the given scramble, without orientation.
+
+        Returns:
+            An OrienterScrambler ready to receive moves.
+
+        """
+        cube = VCube(size=3)
+        cube.rotate(scramble)
+
+        scrambler = OrienterScrambler('UF')
+        scrambler.bluetooth_cube = VCube(size=3)
+        scrambler.facelets_scrambled = cube.state
+        scrambler.scramble_oriented = parse_moves(scramble)
+        scrambler.console = Mock()
+
+        return scrambler
+
+    @staticmethod
+    def turn(scrambler: OrienterScrambler, move_str: str) -> None:
+        """Apply a physical move to the cube and feed it to the scrambler."""
+        move = parse_moves(move_str)[0]
+        if scrambler.bluetooth_cube is not None:
+            scrambler.bluetooth_cube.rotate(move.untimed)
+        scrambler.handle_scrambled(move)
+
+    def test_wrong_direction_sound_played_once_going_through_double(
+        self,
+    ) -> None:
+        """Test R+R+R for expected R' plays the sound only once."""
+        scrambler = self.build_scrambler("R'")
+
+        self.turn(scrambler, 'R@1000')
+        self.assertEqual(
+            self.sound_player.cube_move_misoriented.call_count, 1,
+        )
+
+        self.turn(scrambler, 'R@2000')
+        self.assertEqual(
+            self.sound_player.cube_move_misoriented.call_count, 1,
+        )
+
+        self.turn(scrambler, 'R@3000')
+        self.assertEqual(
+            self.sound_player.cube_move_misoriented.call_count, 1,
+        )
+        self.sound_player.cube_move_missed.assert_not_called()
+        self.assertTrue(scrambler.scramble_completed_event.is_set())
+
+    def test_wrong_direction_sound_played_once_with_undo_correction(
+        self,
+    ) -> None:
+        """Test R then R'+R' for expected R' plays the sound only once."""
+        scrambler = self.build_scrambler("R'")
+
+        self.turn(scrambler, 'R@1000')
+        self.turn(scrambler, "R'@2000")
+        self.turn(scrambler, "R'@3000")
+
+        self.assertEqual(
+            self.sound_player.cube_move_misoriented.call_count, 1,
+        )
+        self.sound_player.cube_move_missed.assert_not_called()
+        self.assertTrue(scrambler.scramble_completed_event.is_set())
+
+    def test_partial_double_move_is_silent(self) -> None:
+        """Test R+R for expected R2 plays no error sound."""
+        scrambler = self.build_scrambler('R2')
+
+        self.turn(scrambler, 'R@1000')
+        self.turn(scrambler, 'R@2000')
+
+        self.sound_player.cube_move_misoriented.assert_not_called()
+        self.sound_player.cube_move_missed.assert_not_called()
+        self.assertTrue(scrambler.scramble_completed_event.is_set())
+
+    def test_reverse_partial_double_move_is_silent(self) -> None:
+        """Test R'+R' for expected R2 plays no error sound."""
+        scrambler = self.build_scrambler('R2')
+
+        self.turn(scrambler, "R'@1000")
+        self.turn(scrambler, "R'@2000")
+
+        self.sound_player.cube_move_misoriented.assert_not_called()
+        self.sound_player.cube_move_missed.assert_not_called()
+        self.assertTrue(scrambler.scramble_completed_event.is_set())
+
+    def test_new_mistake_plays_sound_again(self) -> None:
+        """Test a second direction mistake on a later move plays again."""
+        scrambler = self.build_scrambler("R' U'")
+
+        self.turn(scrambler, 'R@1000')
+        self.turn(scrambler, 'R@2000')
+        self.turn(scrambler, 'R@3000')
+        self.assertEqual(
+            self.sound_player.cube_move_misoriented.call_count, 1,
+        )
+
+        self.turn(scrambler, 'U@4000')
+        self.turn(scrambler, 'U@5000')
+        self.turn(scrambler, 'U@6000')
+
+        self.assertEqual(
+            self.sound_player.cube_move_misoriented.call_count, 2,
+        )
+        self.sound_player.cube_move_missed.assert_not_called()
+        self.assertTrue(scrambler.scramble_completed_event.is_set())
+
+    def test_wrong_face_plays_missed_sound_not_misoriented(self) -> None:
+        """Test a wrong face keeps the klaxon and no misoriented sound."""
+        scrambler = self.build_scrambler('U')
+
+        self.turn(scrambler, 'R@1000')
+
+        self.sound_player.cube_move_missed.assert_called_once()
+        self.sound_player.cube_move_misoriented.assert_not_called()
 
 
 class TestScrambleCompletionVerification(unittest.TestCase):
