@@ -107,9 +107,8 @@ def check_global_efficiency(solve: 'Solve') -> list[Diagnostic]:
     Detect efficiency issues at the global solve level.
 
     Checks for:
-    - Excessive total movecount
-    - Transition inefficiencies
-    - Wasted moves (do-undo sequences)
+    - Wasted moves within step execution (do-undo sequences)
+    - Transition inefficiencies between steps
 
     Args:
         solve: Solve instance with reconstruction data
@@ -120,24 +119,25 @@ def check_global_efficiency(solve: 'Solve') -> list[Diagnostic]:
     """
     issues: list[Diagnostic] = []
 
-    all_missed_moves = solve.all_missed_moves
+    step_missed_moves = solve.step_missed_moves
     transition_missed_moves = solve.transition_missed_moves
     spm = solve.move_speed * 1.05 / SECOND
 
-    if all_missed_moves > 10:
+    if step_missed_moves > 10:
         issues.append(
             {
                 'severity': DiagnosticSeverity.CRITICAL,
                 'category': DiagnosticCategory.EFFICIENCY_MOVECOUNT,
-                'impact_seconds': all_missed_moves * spm,
+                'impact_seconds': step_missed_moves * spm,
                 'location': 'global',
-                'metric_name': 'all_missed_moves',
-                'actual_value': float(all_missed_moves),
+                'metric_name': 'step_missed_moves',
+                'actual_value': float(step_missed_moves),
                 'expected_value': 0.0,
                 'description': (
-                    f'Solve contains {all_missed_moves} missed QTM '
-                    '(wasted moves from do-undo sequences or inefficient '
-                    'execution). This significantly impacts solve time.'
+                    f'Solve contains {step_missed_moves} missed QTM '
+                    'within steps (wasted moves from do-undo sequences or '
+                    'inefficient execution). This significantly impacts '
+                    'solve time.'
                 ),
                 'recommendation': (
                     'Practice slow solves focusing on move efficiency. '
@@ -148,19 +148,20 @@ def check_global_efficiency(solve: 'Solve') -> list[Diagnostic]:
                 'command': '',
             },
         )
-    elif all_missed_moves > 5:
+    elif step_missed_moves > 5:
         issues.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
                 'category': DiagnosticCategory.EFFICIENCY_MOVECOUNT,
-                'impact_seconds': all_missed_moves * spm,
+                'impact_seconds': step_missed_moves * spm,
                 'location': 'global',
-                'metric_name': 'all_missed_moves',
-                'actual_value': float(all_missed_moves),
+                'metric_name': 'step_missed_moves',
+                'actual_value': float(step_missed_moves),
                 'expected_value': 0.0,
                 'description': (
-                    f'Solve contains {all_missed_moves} missed QTM. '
-                    'Some inefficiency detected in move execution.'
+                    f'Solve contains {step_missed_moves} missed QTM '
+                    'within steps. Some inefficiency detected in move '
+                    'execution.'
                 ),
                 'recommendation': (
                     'Focus on executing algorithms cleanly without '
@@ -582,8 +583,14 @@ def check_step_cross(
 
     norms = solve.method_applied.norms
     step_name = step['name']
-    raw_move = norms['moves'].get(step_name, norms['moves']['Cross'])
-    move_norm = float(raw_move)  # type: ignore[arg-type]
+    # Detection cannot distinguish a planned XCross from a fortuitous
+    # merge of cross and F2L pairs, so extended crosses are compared to
+    # the combined norm (cross + n pairs) instead of planned-XCross norms.
+    pair_count = step_name.count('X')
+    move_norm = float(norms['moves']['Cross'])  # type: ignore[arg-type]
+    if pair_count:
+        pair_norm = float(norms['moves']['F2L']) / 4  # type: ignore[arg-type]
+        move_norm += pair_count * pair_norm
     raw_percent = norms['percent'].get(step_name, norms['percent']['Cross'])
     percent_norm = float(raw_percent)  # type: ignore[arg-type]
     expected_moves: tuple[float, float] = (

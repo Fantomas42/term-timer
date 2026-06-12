@@ -299,7 +299,10 @@ class CF4OPAnalyser(CFOPAnalyser):
         },
         'percent': {
             'Cross': 12.0,
-            'XCross': 16.0,
+            'XCross': 20.0,
+            'XXCross': 30.0,
+            'XXXCross': 40.0,
+            'XXXXCross': 50.0,
             'F2L': 50.0,
             'F2L 1': 12.5,
             'F2L 2': 12.5,
