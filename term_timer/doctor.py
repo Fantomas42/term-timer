@@ -228,7 +228,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'location': 'global',
                 'metric_name': 'tps',
                 'actual_value': solve.tps,
-                'expected_value': (2.5, 4.5),
+                'expected_value': (TPS_EXPECTED_MIN, TPS_EXPECTED_MAX),
                 'description': (
                     f'Low TPS ({solve.tps:.2f}). Turning speed needs '
                     'improvement for competitive times.'
@@ -244,7 +244,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
         )
     elif solve.tps < TPS_MEDIUM_THRESHOLD:
         estimated_impact = (
-            (1 / solve.tps - 1 / TPS_EXPECTED_MAX) * len(solve.solution)
+            (1 / solve.tps - 1 / TPS_EXPECTED_MIN) * len(solve.solution)
             if solve.tps > 0 else 0
         )
         issues.append(
@@ -255,7 +255,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'location': 'global',
                 'metric_name': 'tps',
                 'actual_value': solve.tps,
-                'expected_value': (2.5, 4.5),
+                'expected_value': (TPS_EXPECTED_MIN, TPS_EXPECTED_MAX),
                 'description': (
                     f'Moderate TPS ({solve.tps:.2f}). Room for improvement '
                     'in turning speed.'
@@ -675,7 +675,6 @@ def check_step_f2l(
     Checks for:
     - Excessive F2L time percentage
     - High recognition time in F2L
-    - Low execution percentage in F2L
 
     Only called for the aggregated virtual F2L step (CF4OP) or the single
     F2L step (CFOP). Individual pair substeps are not checked here.
@@ -700,10 +699,6 @@ def check_step_f2l(
         step_name, norms['recognition']['F2L'],
     )
     rec_norm_max = float(rec_norm[1])  # type: ignore[index]
-    exec_norm = norms['execution'].get(
-        step_name, norms['execution']['F2L'],
-    )
-    exec_norm_min = float(exec_norm[0])  # type: ignore[index]
 
     if step['total_percent'] > percent_norm * 1.1:
         diagnostics.append(
@@ -755,30 +750,6 @@ def check_step_f2l(
             },
         )
 
-    if step['step_execution_percent'] < exec_norm_min:
-        diagnostics.append(
-            {
-                'severity': DiagnosticSeverity.MEDIUM,
-                'category': DiagnosticCategory.RECOGNITION_SLOW,
-                'impact_seconds': 0.3,
-                'location': step_name,
-                'metric_name': 'step_execution_percent',
-                'actual_value': step['step_execution_percent'],
-                'expected_value': exec_norm,
-                'description': (
-                    f'{step_name} execution is only '
-                    f'{step["step_execution_percent"]:.1f}% of step time. '
-                    'Spending too much time thinking vs turning.'
-                ),
-                'recommendation': (
-                    'Improve both recognition speed and turning speed for F2L. '
-                    'Practice identifying pair states quickly during '
-                    'cross/previous pair execution.'
-                ),
-                'command': 'term-timer train -s f2l',
-            },
-        )
-
     return diagnostics
 
 
@@ -791,7 +762,6 @@ def check_step_oll(
 
     Checks for:
     - High recognition time
-    - Low execution percentage
     - Excessive move count
 
     Args:
@@ -817,8 +787,6 @@ def check_step_oll(
     )
     rec_norm = norms['recognition']['OLL']
     rec_norm_max = float(rec_norm[1])  # type: ignore[index]
-    exec_norm = norms['execution']['OLL']
-    exec_norm_min = float(exec_norm[0])  # type: ignore[index]
     move_norm = float(norms['moves']['OLL'])  # type: ignore[arg-type]
 
     if step['step_recognition_percent'] > rec_norm_max:
@@ -842,30 +810,6 @@ def check_step_oll(
                     'rather than memorizing all 57 cases visually. '
                     'Learn 2-look OLL patterns first if not comfortable with '
                     'full OLL.'
-                ),
-                'command': oll_cmd,
-            },
-        )
-
-    if step['step_execution_percent'] < exec_norm_min:
-        diagnostics.append(
-            {
-                'severity': DiagnosticSeverity.MEDIUM,
-                'category': DiagnosticCategory.RECOGNITION_SLOW,
-                'impact_seconds': 0.2,
-                'location': 'OLL',
-                'metric_name': 'step_execution_percent',
-                'actual_value': step['step_execution_percent'],
-                'expected_value': exec_norm,
-                'description': (
-                    f'OLL execution is only '
-                    f'{step["step_execution_percent"]:.1f}% '
-                    'of step time. Should be 80-90% execution for last layer.'
-                ),
-                'recommendation': (
-                    'Work on faster OLL recognition and smooth algorithm '
-                    'execution. OLL should be mostly execution with minimal '
-                    'recognition time.'
                 ),
                 'command': oll_cmd,
             },
@@ -908,7 +852,6 @@ def check_step_pll(
 
     Checks for:
     - High recognition time
-    - Low execution percentage
     - Excessive move count
     - Excessive AUF
 
@@ -935,8 +878,6 @@ def check_step_pll(
     )
     rec_norm = norms['recognition']['PLL']
     rec_norm_max = float(rec_norm[1])  # type: ignore[index]
-    exec_norm = norms['execution']['PLL']
-    exec_norm_min = float(exec_norm[0])  # type: ignore[index]
     move_norm = float(norms['moves']['PLL'])  # type: ignore[arg-type]
 
     if step['step_recognition_percent'] > rec_norm_max:
@@ -960,30 +901,6 @@ def check_step_pll(
                     'apps/flashcards. Focus on headlights, blocks, and bars '
                     'as recognition features. Learn to recognize PLL during '
                     'OLL execution.'
-                ),
-                'command': pll_cmd,
-            },
-        )
-
-    if step['step_execution_percent'] < exec_norm_min:
-        diagnostics.append(
-            {
-                'severity': DiagnosticSeverity.MEDIUM,
-                'category': DiagnosticCategory.RECOGNITION_SLOW,
-                'impact_seconds': 0.15,
-                'location': 'PLL',
-                'metric_name': 'step_execution_percent',
-                'actual_value': step['step_execution_percent'],
-                'expected_value': exec_norm,
-                'description': (
-                    f'PLL execution is only '
-                    f'{step["step_execution_percent"]:.1f}% '
-                    'of step time. Should be 90-95% execution.'
-                ),
-                'recommendation': (
-                    'PLL recognition should be nearly instant. '
-                    'Practice recognizing PLL cases from all angles. '
-                    'Work on executing PLL algorithms smoothly and quickly.'
                 ),
                 'command': pll_cmd,
             },
