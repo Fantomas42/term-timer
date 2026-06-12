@@ -34,6 +34,7 @@ from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.constants import SolveFlag
 from term_timer.doctor import generate_solve_diagnostics
+from term_timer.doctor import group_solve_diagnostics
 from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_cubing_url
 from term_timer.formatter import format_alg_diff
@@ -1150,18 +1151,32 @@ class Solve:  # noqa: PLR0904
 
         diagnostic_lines = ['[stats]Diagnostics:[/stats]']
         if items:
-            diagnostic_lines.extend(
-                (
-                    f'[diagnostic] - { item["description"] }[/diagnostic]\n'
-                    '[advice]   ' +
-                    item['recommendation'].replace('. ', '.\n   ') +
-                    '[/advice]\n'
-                    f'[examen]   [{ item["severity"].upper() }] '
-                    f'{item["impact_seconds"]:.2f}s[/examen] '
-                    f'[localhost]{ item['command'] }[/localhost]'
+            for index, group in enumerate(group_solve_diagnostics(items)):
+                location = group['location']
+                title = 'Global' if location == 'global' else location
+
+                header = (
+                    f'[step]{ title }[/step] '
+                    f'[examen]{ group["impact_seconds"]:.2f}s[/examen]'
                 )
-                for item in items
-            )
+                if group['command']:
+                    header += f' [localhost]{ group["command"] }[/localhost]'
+
+                if index:
+                    diagnostic_lines.append('')
+                diagnostic_lines.append(header)
+
+                diagnostic_lines.extend(
+                    (
+                        f'[diagnostic] - { item["description"] }[/diagnostic]\n'
+                        '[advice]   ' +
+                        item['recommendation'].replace('. ', '.\n   ') +
+                        '[/advice]\n'
+                        f'[examen]   [{ item["severity"].upper() }] '
+                        f'{item["impact_seconds"]:.2f}s[/examen]'
+                    )
+                    for item in group['diagnostics']
+                )
         else:
             diagnostic_lines.append(
                 '[success] - No issue detected, sane solve ![/success]',

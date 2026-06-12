@@ -84,6 +84,24 @@ class Diagnostic(TypedDict):
     command: str
 
 
+class DiagnosticGroup(TypedDict):
+    """
+    Represents diagnostics aggregated by location.
+
+    Attributes:
+        location: Where the issues occur ('global' or step name)
+        command: Command to practice the issues of the group
+        impact_seconds: Sum of estimated time improvements (seconds)
+        diagnostics: Diagnostics detected at this location
+
+    """
+
+    location: str
+    command: str
+    impact_seconds: float
+    diagnostics: list[Diagnostic]
+
+
 def check_global_efficiency(solve: 'Solve') -> list[Diagnostic]:
     """
     Detect efficiency issues at the global solve level.
@@ -1060,3 +1078,41 @@ def generate_solve_diagnostics(solve: 'Solve') -> list[Diagnostic]:
     diagnostics.sort(key=itemgetter('impact_seconds'), reverse=True)
 
     return diagnostics
+
+
+def group_solve_diagnostics(
+    diagnostics: list[Diagnostic],
+) -> list[DiagnosticGroup]:
+    """
+    Aggregate diagnostics by location.
+
+    Args:
+        diagnostics: Diagnostics sorted by impact.
+
+    Returns:
+        List of groups sorted by aggregated impact.
+
+    """
+    groups: dict[str, DiagnosticGroup] = {}
+
+    for diagnostic in diagnostics:
+        location = diagnostic['location']
+        group = groups.setdefault(
+            location,
+            {
+                'location': location,
+                'command': '',
+                'impact_seconds': 0.0,
+                'diagnostics': [],
+            },
+        )
+        group['impact_seconds'] += diagnostic['impact_seconds']
+        group['diagnostics'].append(diagnostic)
+        if not group['command']:
+            group['command'] = diagnostic['command']
+
+    return sorted(
+        groups.values(),
+        key=itemgetter('impact_seconds'),
+        reverse=True,
+    )
