@@ -10,6 +10,7 @@ from cubing_algs.cases import get_case
 
 from term_timer.annotations import ListingFilters
 from term_timer.constants import DNF
+from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
@@ -868,6 +869,214 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
 
         # Should have called print for title and solves
         self.assertTrue(len(call_args_list) > 1)
+
+
+def build_statistics(
+        times: list[float],
+        dnf_indexes: set[int] | None = None,
+) -> Statistics:
+    """
+    Build a Statistics instance from times in seconds.
+
+    Args:
+        times: Solve times in seconds.
+        dnf_indexes: 0-based indexes of solves flagged DNF.
+
+    Returns:
+        Statistics computed over the solves final times.
+
+    """
+    dnf_indexes = dnf_indexes or set()
+    solves = [
+        Solve(
+            1000000000 + index,
+            int(time * SECOND),
+            'F R U',
+            DNF if index in dnf_indexes else '',
+        )
+        for index, time in enumerate(times)
+    ]
+    return Statistics([s.final_time for s in solves])
+
+
+class TestStatisticsDNFCsTimer(unittest.TestCase):
+    """
+    Tests reflecting csTimer DNF semantics.
+
+    csTimer reference behaviour:
+    - A DNF has no time: it is excluded from best, mean and median.
+    - A moN whose window contains a DNF is DNF.
+    - For aoN, DNFs count as the *worst* times and are trimmed first.
+      If the window contains more DNFs than the trim cap, aoN is DNF.
+    - Best moN / best aoN ignore DNF windows; if every window is DNF,
+      the best is DNF.
+
+    Convention: a DNF result is represented by 0, consistent with
+    Solve.final_time and format_time which renders 0 as 'DNF'.
+    """
+
+    def test_mo_with_dnf_in_window_is_dnf(self) -> None:
+        """A mo3 containing a DNF must be DNF, not a lowered mean."""
+        stats = build_statistics([10, 15, 20], dnf_indexes={2})
+        self.assertEqual(stats.mo3, 0)
+
+    def test_mo_with_dnf_outside_window_is_unaffected(self) -> None:
+        """A DNF outside the mo3 window must not change the mo3."""
+        stats = build_statistics([10, 15, 20, 25], dnf_indexes={0})
+        self.assertEqual(stats.mo3, 20 * SECOND)
+
+    def test_ao5_with_one_dnf_trims_dnf_as_worst(self) -> None:
+        """
+        A single DNF in an ao5 counts as the worst time.
+
+        The DNF and the best time (10) are trimmed, the ao5 is the
+        mean of the remaining times: (15 + 20 + 25) / 3 = 20.
+        """
+        stats = build_statistics([10, 15, 20, 30, 25], dnf_indexes={3})
+        self.assertEqual(stats.ao5, 20 * SECOND)
+
+    def test_ao5_with_two_dnfs_is_dnf(self) -> None:
+        """Two DNFs exceed the ao5 trim cap of 1: the ao5 is DNF."""
+        stats = build_statistics([10, 15, 20, 30, 25], dnf_indexes={2, 3})
+        self.assertEqual(stats.ao5, 0)
+
+    def test_ao12_with_one_dnf_trims_dnf_as_worst(self) -> None:
+        """
+        A single DNF in an ao12 counts as the worst time.
+
+        The DNF and the best time (10) are trimmed, the ao12 is the
+        mean of the 10 remaining times: (11 + ... + 20) / 10 = 15.5.
+        """
+        times = [float(t) for t in range(10, 22)]  # 10..21
+        stats = build_statistics(times, dnf_indexes={11})
+        self.assertEqual(stats.ao12, int(15.5 * SECOND))
+
+    def test_ao12_with_two_dnfs_is_dnf(self) -> None:
+        """Two DNFs exceed the ao12 trim cap of 1: the ao12 is DNF."""
+        times = [float(t) for t in range(10, 22)]  # 10..21
+        stats = build_statistics(times, dnf_indexes={10, 11})
+        self.assertEqual(stats.ao12, 0)
+
+    def test_best_excludes_dnf(self) -> None:
+        """The best single must ignore DNF solves."""
+        stats = build_statistics([5, 10, 15], dnf_indexes={0})
+        self.assertEqual(stats.best, 10 * SECOND)
+
+    def test_mean_excludes_dnf(self) -> None:
+        """The session mean is computed over non-DNF solves only."""
+        stats = build_statistics([10, 20, 15, 30], dnf_indexes={2})
+        self.assertEqual(stats.mean, 20 * SECOND)
+
+    def test_median_excludes_dnf(self) -> None:
+        """The session median is computed over non-DNF solves only."""
+        stats = build_statistics([10, 20, 15, 30], dnf_indexes={2})
+        self.assertEqual(stats.median, 20 * SECOND)
+
+    def test_best_mo_skips_dnf_windows(self) -> None:
+        """
+        Windows containing a DNF are not eligible for best mo3.
+
+        Only [10, 15, 20] is DNF-free: best mo3 is 15, even if a
+        window containing the DNF would yield a lower raw mean.
+        """
+        stats = build_statistics([10, 15, 20, 30, 25], dnf_indexes={3})
+        self.assertEqual(stats.best_mo3, 15 * SECOND)
+
+    def test_best_mo_all_windows_dnf_is_dnf(self) -> None:
+        """If every mo3 window contains a DNF, the best mo3 is DNF."""
+        stats = build_statistics([10, 15, 20], dnf_indexes={1})
+        self.assertEqual(stats.best_mo3, 0)
+
+    def test_best_ao_skips_dnf_windows(self) -> None:
+        """
+        DNF windows are skipped, single-DNF windows trim the DNF.
+
+        Windows: [10, 15, 20, 30, 25] -> 20, one DNF -> 25,
+        two DNFs -> DNF. The best ao5 is 20.
+        """
+        stats = build_statistics(
+            [10, 15, 20, 30, 25, 40, 40], dnf_indexes={5, 6},
+        )
+        self.assertEqual(stats.best_ao5, 20 * SECOND)
+
+    def test_best_ao_all_windows_dnf_is_dnf(self) -> None:
+        """If every ao5 window contains 2+ DNFs, the best ao5 is DNF."""
+        stats = build_statistics([10, 15, 20, 30, 25], dnf_indexes={0, 1})
+        self.assertEqual(stats.best_ao5, 0)
+
+
+class TestSolveStatisticsReporterTotalTimeDNF(unittest.TestCase):
+    """Tests for total_time accounting of DNF solves."""
+
+    def test_total_time_includes_dnf_real_time(self) -> None:
+        """
+        The total time spent solving counts DNF solves real time.
+
+        A DNF has no final time but the time was really spent:
+        10 + 20 (DNF real time) + 5 + 2 (+2 penalty) = 37.
+        """
+        solves = [
+            Solve(1000000000, 10 * SECOND, 'F R U', ''),
+            Solve(2000000000, 20 * SECOND, 'R U F', DNF),
+            Solve(3000000000, 5 * SECOND, 'U F R', PLUS_TWO),
+        ]
+        reporter = SolveStatisticsReporter(3, solves)
+        self.assertEqual(reporter.total_time, 37 * SECOND)
+
+
+class TestStatisticsDNFCsTimerScenarios(unittest.TestCase):
+    """
+    Scenario tests replaying a real csTimer session.
+
+    The session contains 7 solves; csTimer values are taken from the
+    csTimer interface with 0, 1 and 2 solves flagged DNF.
+    """
+
+    TIMES: tuple[float, ...] = (4.03, 4.64, 5.02, 3.27, 5.90, 5.68, 4.32)
+
+    @staticmethod
+    def seconds(value: int) -> float:
+        """
+        Convert a nanoseconds stat to rounded seconds.
+
+        Returns:
+            Time in seconds rounded to 2 decimals.
+
+        """
+        return round(value / SECOND, 2)
+
+    def test_session_without_dnf(self) -> None:
+        """Sanity check: csTimer values without any DNF."""
+        stats = build_statistics(list(self.TIMES))
+
+        self.assertEqual(self.seconds(stats.best), 3.27)
+        self.assertEqual(self.seconds(stats.mean), 4.69)
+        self.assertEqual(self.seconds(stats.mo3), 5.30)
+        self.assertEqual(self.seconds(stats.ao5), 5.01)
+        self.assertEqual(self.seconds(stats.best_mo3), 4.31)
+        self.assertEqual(self.seconds(stats.best_ao5), 4.56)
+
+    def test_session_with_one_dnf(self) -> None:
+        """CsTimer values with solve #5 (5.90) flagged DNF."""
+        stats = build_statistics(list(self.TIMES), dnf_indexes={4})
+
+        self.assertEqual(self.seconds(stats.best), 3.27)
+        self.assertEqual(self.seconds(stats.mean), 4.49)
+        self.assertEqual(stats.mo3, 0)  # DNF
+        self.assertEqual(self.seconds(stats.ao5), 5.01)
+        self.assertEqual(self.seconds(stats.best_mo3), 4.31)
+        self.assertEqual(self.seconds(stats.best_ao5), 4.56)
+
+    def test_session_with_two_dnfs(self) -> None:
+        """CsTimer values with solves #4 and #5 flagged DNF."""
+        stats = build_statistics(list(self.TIMES), dnf_indexes={3, 4})
+
+        self.assertEqual(self.seconds(stats.best), 4.03)
+        self.assertEqual(self.seconds(stats.mean), 4.74)
+        self.assertEqual(stats.mo3, 0)  # DNF
+        self.assertEqual(stats.ao5, 0)  # DNF
+        self.assertEqual(self.seconds(stats.best_mo3), 4.56)
+        self.assertEqual(stats.best_ao5, 0)  # DNF
 
 
 class TestListingFilters(unittest.TestCase):

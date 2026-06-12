@@ -64,18 +64,26 @@ class StatisticsTools:
         """
         Calculate the mean of N (moN) for the last N times.
 
+        A DNF time (0) in the window makes the whole moN a DNF,
+        following csTimer/WCA semantics.
+
         Args:
             limit: Number of most recent times to include.
             stack_elapsed: List of times in milliseconds.
 
         Returns:
-            Mean time in milliseconds, or -1 if insufficient data.
+            Mean time in milliseconds, 0 if the window contains a DNF,
+            or -1 if insufficient data.
 
         """
         if limit > len(stack_elapsed):
             return -1
 
-        return int(np.mean(stack_elapsed[-limit:]))
+        last_of = stack_elapsed[-limit:]
+        if 0 in last_of:
+            return 0
+
+        return int(np.mean(last_of))
 
     @staticmethod
     def ao(limit: int, stack_elapsed: list[int]) -> int:
@@ -85,12 +93,17 @@ class StatisticsTools:
         Removes the top and bottom 5% of times before averaging, following
         WCA (World Cube Association) competition rules.
 
+        DNF times (0) count as the worst times and are trimmed first;
+        if the window contains more DNFs than the trim cap, the whole
+        aoN is a DNF, following csTimer/WCA semantics.
+
         Args:
             limit: Number of most recent times to include.
             stack_elapsed: List of times in milliseconds.
 
         Returns:
-            Average time in milliseconds, or -1 if insufficient data.
+            Average time in milliseconds, 0 if the window contains too
+            many DNFs, or -1 if insufficient data.
 
         """
         if limit > len(stack_elapsed):
@@ -99,9 +112,16 @@ class StatisticsTools:
         cap = int(np.ceil(limit * 5 / 100))
 
         last_of = stack_elapsed[-limit:]
+
+        dnfs = last_of.count(0)
+        if dnfs > cap:
+            return 0
+
+        last_of = [time for time in last_of if time]
+        for _ in range(cap - dnfs):
+            last_of.remove(max(last_of))
         for _ in range(cap):
             last_of.remove(min(last_of))
-            last_of.remove(max(last_of))
 
         return int(np.mean(last_of))
 
@@ -110,7 +130,7 @@ class StatisticsTools:
         Find the best mean of N across all rolling windows.
 
         Iterates through all possible consecutive time windows to find
-        the minimum mean time.
+        the minimum mean time. Windows containing a DNF are skipped.
 
         Args:
             limit: Window size for calculating mean.
@@ -144,7 +164,7 @@ class StatisticsTools:
         Find the best average of N across all rolling windows.
 
         Iterates through all possible consecutive time windows to find
-        the minimum average time.
+        the minimum average time. Windows counting as DNF are skipped.
 
         Args:
             limit: Window size for calculating average.
@@ -347,35 +367,41 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
     @cached_property
     def mean(self) -> int:
         """
-        Calculate mean time across all times.
+        Calculate mean time across all times, excluding DNFs.
 
         Returns:
-            Mean time in milliseconds.
+            Mean time in milliseconds, or 0 if no valid times.
 
         """
-        return int(np.mean(self.stack_time))
+        if self.stack_time_sorted:
+            return int(np.mean(self.stack_time_sorted))
+        return 0
 
     @cached_property
     def median(self) -> int:
         """
-        Calculate median time across all times.
+        Calculate median time across all times, excluding DNFs.
 
         Returns:
-            Median time in milliseconds.
+            Median time in milliseconds, or 0 if no valid times.
 
         """
-        return int(np.median(self.stack_time))
+        if self.stack_time_sorted:
+            return int(np.median(self.stack_time_sorted))
+        return 0
 
     @cached_property
     def stdev(self) -> int:
         """
-        Calculate standard deviation of times.
+        Calculate standard deviation of times, excluding DNFs.
 
         Returns:
-            Standard deviation in milliseconds.
+            Standard deviation in milliseconds, or 0 if no valid times.
 
         """
-        return int(np.std(self.stack_time))
+        if self.stack_time_sorted:
+            return int(np.std(self.stack_time_sorted))
+        return 0
 
     @cached_property
     def delta(self) -> int:
@@ -503,6 +529,18 @@ class SolveStatisticsReporter(Statistics):
             )
 
         return 0
+
+    @cached_property
+    def total_time(self) -> int:
+        """
+        Override calculate cumulative time spent solving, counting
+        the real time of DNF solves.
+
+        Returns:
+            Total time in milliseconds.
+
+        """
+        return sum(s.final_time or s.time for s in self.stack)
 
     @cached_property
     def advanced_solves(self) -> float:
@@ -666,7 +704,7 @@ class SolveStatisticsReporter(Statistics):
                 format_delta(self.ao1000 - self.best_ao1000),
             )
 
-        if self.total > 1:
+        if self.total > 1 and self.repartition:
             max_count = compute_padding(
                 max(c for c, e in self.repartition),
             )
@@ -1239,12 +1277,16 @@ class SolveStatisticsReporter(Statistics):
         ao5s = []
         ao12s = []
         times = []
+        plot_times = []
 
         plt.clear_figure()
 
         for time in self.stack_time:
             seconds = time // SECOND
             times.append(seconds)
+            # DNF times (0) stay in times to invalidate ao windows,
+            # but are plotted as gaps
+            plot_times.append(seconds if time else None)
 
             ao5 = self.ao(5, times)
             ao12 = self.ao(12, times)
@@ -1252,7 +1294,7 @@ class SolveStatisticsReporter(Statistics):
             ao12s.append((ao12 > 0 and ao12) or None)
 
         plt.plot(
-            times,
+            plot_times,
             marker='braille',
             label='Time',
             color=45,
