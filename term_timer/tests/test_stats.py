@@ -223,8 +223,9 @@ class TestSolveStatisticsReporterListing(unittest.TestCase):
         # The index should be #4 (for the 4th solve)
         self.assertIn('#4', call_args[0])
 
-        # The time should be formatted
-        self.assertIn('[success]00:01.000[/success]', call_args[1])
+        # The time should be formatted; solve #4 is a +2 (final_time 3s),
+        # the worst of the session, so it is highlighted as warning
+        self.assertIn('[warning]00:01.000[/warning]', call_args[1])
 
         # The date should be included
         self.assertIn('[date]2191-10-27', call_args[2])

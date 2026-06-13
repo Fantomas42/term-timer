@@ -833,7 +833,9 @@ class SolveStatisticsReporter(Statistics):
         indices = range(*s.indices(filtered_size))
 
         if sorting == 'time':
-            filtered_solves.sort(key=lambda x: x[1].time)
+            filtered_solves.sort(
+                key=lambda x: (x[1].final_time == 0, x[1].final_time),
+            )
 
         for indice in indices:
             original_index, solve = filtered_solves[indice]
@@ -847,9 +849,9 @@ class SolveStatisticsReporter(Statistics):
             )
 
             time_klass = 'result'
-            if solve.time == self.best:
+            if solve.final_time == self.best:
                 time_klass = 'success'
-            elif solve.time == self.worst:
+            elif solve.final_time == self.worst:
                 time_klass = 'warning'
 
             footer = ''

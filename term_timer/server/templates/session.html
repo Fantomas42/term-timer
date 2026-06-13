@@ -794,7 +794,7 @@
                   {% endif %}
                 </a>
               </td>
-              <td class="solve-time {% if solve.time == stats.best %}time-best{% elif solve.time == stats.worst %}time-worst{% endif %}">
+              <td class="solve-time {% if solve.final_time == stats.best %}time-best{% elif solve.final_time == stats.worst %}time-worst{% endif %}">
                 {{ solve.time|format_time }}
                 {% if solve.device %}
                   <span class="tooltip">{{ solve.device }}</span>
