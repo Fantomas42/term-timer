@@ -635,16 +635,33 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         """
         return max(0, self.new_cases_limit - self.fsrs_new_cases_introduced)
 
+    @property
+    def fsrs_cards(self) -> 'dict[str, Card]':
+        """
+        FSRS cards of the trained cases restricted to the selected pool.
+
+        Cards for cases outside the active pool (e.g. excluded by
+        ``--oldest``, ``--slowest`` or ``--filter``) are dropped so the
+        focus, mastery and case selection all reason about the same set
+        of cases the session can actually serve.
+
+        Returns:
+            FSRS cards keyed by case code, only for in-pool seen cases.
+
+        """
+        return {
+            code: ct.fsrs_card
+            for code, ct in self.trainings.cases.items()
+            if ct.fsrs_card is not None
+            and code in self.fsrs_probabilities
+        }
+
     def fsrs_focus_line(self) -> None:
         """Display FSRS session focus and mastery stats if they changed."""
         if not self.fsrs_selection:
             return
 
-        cards = {
-            code: ct.fsrs_card
-            for code, ct in self.trainings.cases.items()
-            if ct.fsrs_card is not None
-        }
+        cards = self.fsrs_cards
         focus = FSRSScheduler.compute_session_focus(
             cards, self.fsrs_probabilities, self.fsrs_new_cases_remaining,
         )
@@ -1563,11 +1580,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         fsrs_selected: TrainingCase | None = None
         was_new_case = False
         if self.fsrs_selection and self.fsrs_scheduler is not None:
-            cards = {
-                code: ct.fsrs_card
-                for code, ct in self.trainings.cases.items()
-                if ct.fsrs_card is not None
-            }
+            cards = self.fsrs_cards
             chosen_code = self.fsrs_scheduler.select_next_case(
                 cards,
                 self.fsrs_probabilities,

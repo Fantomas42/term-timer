@@ -3,7 +3,9 @@ import asyncio
 import unittest
 from datetime import UTC
 from datetime import datetime
+from datetime import timedelta
 from random import Random
+from typing import ClassVar
 from typing import cast
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -14,6 +16,8 @@ from fsrs import Card
 from fsrs import Rating
 from fsrs import State
 
+from term_timer.fsrs.scheduler import FSRSScheduler
+from term_timer.fsrs.storage import CaseTraining
 from term_timer.fsrs.storage import Trainings
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -347,6 +351,108 @@ class TestFSRSWithFilter(unittest.TestCase):
         )
         self.assertFalse(timer.fsrs_update)
         self.assertFalse(timer.fsrs_selection)
+
+
+class TestFSRSCardsPool(unittest.TestCase):
+    """fsrs_cards restricts FSRS reasoning to the selected case pool."""
+
+    # OLL codes given a recent practice date and a due FSRS card. They
+    # sit outside an --oldest pool (which prefers never-practiced cases)
+    # so they exercise the in-pool filtering.
+    SEEN_CODES: ClassVar[list[str]] = ['01', '02', '03', '04', '05']
+
+    def make_trainer(self, *, oldest: int = 0) -> Trainer:
+        """
+        Build an OLL trainer whose seen due cards sit outside the pool.
+
+        The seen cases carry a recent last_date, so --oldest selects only
+        never-practiced cases, leaving every due card out of the pool.
+
+        Returns:
+            Configured Trainer with a patched trainings store.
+
+        """
+        recent = int(datetime.now(tz=UTC).timestamp())
+        past = datetime.now(tz=UTC) - timedelta(days=1)
+        cases = {}
+        for code in self.SEEN_CODES:
+            card = Card()
+            card.due = past
+            cases[code] = CaseTraining(
+                code=code,
+                last_date=recent,
+                timings=[2000],
+                fsrs_card=card,
+            )
+        trainings = Trainings(method='CFOP', step='OLL', cases=cases)
+
+        with patch(
+            'term_timer.trainer.load_trainings', return_value=trainings,
+        ):
+            timer = Trainer(
+                step='oll',
+                case_codes=[],
+                oldest=oldest,
+                slowest=0,
+                random=0,
+                new_cases_limit=5,
+                filters=[],
+                free_play=False,
+                show_solution=False,
+                show_cube=False,
+                metronome=0,
+                orientation='DF',
+                rng=Random(),  # noqa: S311
+            )
+        timer.console = MagicMock()
+        return timer
+
+    def test_seen_cards_excluded_when_out_of_pool(self) -> None:
+        """fsrs_cards drops cards whose case is outside the --oldest pool."""
+        timer = self.make_trainer(oldest=3)
+        pool = set(timer.fsrs_probabilities)
+
+        self.assertTrue(pool.isdisjoint(self.SEEN_CODES))
+        self.assertEqual(timer.fsrs_cards, {})
+
+    def test_cards_kept_when_in_pool(self) -> None:
+        """fsrs_cards keeps the seen cards when no pool restriction applies."""
+        timer = self.make_trainer()
+
+        self.assertEqual(set(timer.fsrs_cards), set(self.SEEN_CODES))
+
+    def test_cards_are_always_a_subset_of_the_pool(self) -> None:
+        """Every fsrs_cards key belongs to the selected pool."""
+        timer = self.make_trainer(oldest=10)
+
+        self.assertTrue(
+            set(timer.fsrs_cards) <= set(timer.fsrs_probabilities),
+        )
+
+    def test_focus_is_exploration_not_review(self) -> None:
+        """Out-of-pool due cards never push the focus into Review mode."""
+        timer = self.make_trainer(oldest=3)
+        timer.fsrs_focus_line()
+
+        console = cast('MagicMock', timer.console)
+        printed = ' '.join(
+            str(call.args[0]) for call in console.print.call_args_list
+        )
+        self.assertIn('Exploration', printed)
+        self.assertNotIn('Review', printed)
+
+    def test_select_next_case_stays_in_pool(self) -> None:
+        """select_next_case never returns a case outside the pool."""
+        timer = self.make_trainer(oldest=3)
+        scheduler = FSRSScheduler()
+
+        for _ in range(20):
+            chosen = scheduler.select_next_case(
+                timer.fsrs_cards,
+                timer.fsrs_probabilities,
+                new_cases_limit=timer.fsrs_new_cases_remaining,
+            )
+            self.assertIn(chosen, timer.fsrs_probabilities)
 
 
 class TestManualRatingKeys(unittest.TestCase):
