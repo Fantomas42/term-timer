@@ -618,9 +618,15 @@ class SolveStatisticsReporter(Statistics):
                 f'[title]Statistics for { self.cube_name }[/title]',
             )
 
+        dnf_count = sum(1 for s in self.stack if s.flag == DNF)
+        total_display = (
+            f'{ self.total - dnf_count }/{ self.total }'
+            if dnf_count
+            else str(self.total)
+        )
         console.print(
             f'[{ style }]{ prefix }Total :[/{ style }]',
-            f'[result]{ self.total }[/result]',
+            f'[result]{ total_display }[/result]',
         )
         console.print(
             f'[{ style }]{ prefix }Time  :[/{ style }]',

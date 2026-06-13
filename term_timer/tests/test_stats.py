@@ -182,6 +182,30 @@ class TestStatisticsResumeReporter(unittest.TestCase):
             # Verify that console.print was called multiple times
             self.assertTrue(mock_print.call_count > 5)
 
+    def test_resume_total_without_dnf(self) -> None:
+        """Total line shows the plain count when there is no DNF."""
+        stats = SolveStatisticsReporter(self.puzzle, self.solves)
+
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            stats.resume()
+
+        total_line = mock_print.call_args_list[0][0]
+        self.assertIn('[result]5[/result]', total_line)
+
+    def test_resume_total_with_dnf(self) -> None:
+        """Total line shows completed/total when DNFs are present."""
+        solves = [
+            *self.solves,
+            Solve(6000000000000, 6020000000000, 'U R F', DNF),
+        ]
+        stats = SolveStatisticsReporter(self.puzzle, solves)
+
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            stats.resume()
+
+        total_line = mock_print.call_args_list[0][0]
+        self.assertIn('[result]5/6[/result]', total_line)
+
 
 class TestSolveStatisticsReporterListing(unittest.TestCase):
     """Tests for SolveStatisticsReporter listing method."""
