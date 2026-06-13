@@ -1284,16 +1284,17 @@ class SolveStatisticsReporter(Statistics):
         plt.clear_figure()
 
         for time in self.stack_time:
-            seconds = time // SECOND
-            times.append(seconds)
+            # Keep raw milliseconds in times so ao() retains full
+            # precision; only the plotted values are float seconds.
+            times.append(time)
             # DNF times (0) stay in times to invalidate ao windows,
             # but are plotted as gaps
-            plot_times.append(seconds if time else None)
+            plot_times.append(time / SECOND if time else None)
 
             ao5 = self.ao(5, times)
             ao12 = self.ao(12, times)
-            ao5s.append((ao5 > 0 and ao5) or None)
-            ao12s.append((ao12 > 0 and ao12) or None)
+            ao5s.append(ao5 / SECOND if ao5 > 0 else None)
+            ao12s.append(ao12 / SECOND if ao12 > 0 else None)
 
         plt.plot(
             plot_times,
