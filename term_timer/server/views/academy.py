@@ -1,4 +1,5 @@
 """Academy overview, step, and case views."""
+from hashlib import sha1
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import cast
@@ -9,6 +10,8 @@ from cubing_algs.annotations import CubeOrientation
 from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
 from cubing_algs.constants import ORIENTATION_FACE_MOVES
+from cubing_algs.transform.invert import invert_moves
+from cubing_algs.vcube import VCube
 
 if TYPE_CHECKING:
     from cubing_algs.cases.case import Case
@@ -19,9 +22,11 @@ from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import CUBE_PALETTE
 from term_timer.constants import CUBE_SIZES
 from term_timer.orientation import get_orientation_moves
+from term_timer.server.annotations import AcademyCaseAlgorithmsDebugContext
 from term_timer.server.annotations import AcademyCaseContext
 from term_timer.server.annotations import AcademyOverviewContext
 from term_timer.server.annotations import AcademyStepContext
+from term_timer.server.annotations import AlgorithmImpactGroup
 from term_timer.server.annotations import MethodInfo
 from term_timer.server.views.base import View
 
@@ -339,3 +344,55 @@ class AcademyCaseAlgorithmsDebugView(AcademyCaseView):
     """Debug view listing a case's algorithms with sortable scores."""
 
     template_name = 'academy/case_debug.html'
+
+    def group_algorithms_by_impact(self) -> list[AlgorithmImpactGroup]:
+        """
+        Group the case algorithms by their real impact on the cube.
+
+        Each algorithm is inverted and applied on a solved virtual cube;
+        algorithms producing the same resulting state share the same impact
+        and are grouped together, revealing real duplicates.
+
+        Returns:
+            Impact groups ordered by descending number of algorithms.
+
+        """
+        size = self.methods[self.method]['cube_size']
+
+        grouped: dict[str, list[Algorithm]] = {}
+        for algorithm in self.case.algorithms:
+            cube = VCube(size=size)
+            cube.rotate(algorithm.transform(invert_moves))
+            grouped.setdefault(cube.state, []).append(algorithm)
+
+        ordered_states = sorted(
+            grouped.items(),
+            key=lambda item: (-len(item[1]), item[0]),
+        )
+
+        return [
+            {
+                'group_id': sha1(
+                    state.encode(), usedforsecurity=False,
+                ).hexdigest()[:8],
+                'state': state,
+                'algorithms': algorithms,
+            }
+            for state, algorithms in ordered_states
+        ]
+
+    def get_context(self) -> AcademyCaseAlgorithmsDebugContext:
+        """
+        Build context with case details and impact-grouped algorithms.
+
+        Returns:
+            Dictionary with case information and algorithm impact groups.
+
+        """
+        return cast(
+            'AcademyCaseAlgorithmsDebugContext',
+            {
+                **super().get_context(),
+                'impact_groups': self.group_algorithms_by_impact(),
+            },
+        )

@@ -237,3 +237,17 @@ class AcademyCaseContext(TypedDict):
     available_cube_sizes: list[int]
     palette: str
     available_palettes: list[str]
+
+
+class AlgorithmImpactGroup(TypedDict):
+    """Algorithms sharing the same permutation impact on the cube."""
+
+    group_id: str
+    state: str
+    algorithms: list[Algorithm]
+
+
+class AcademyCaseAlgorithmsDebugContext(AcademyCaseContext):
+    """Template context for academy case algorithms debug view."""
+
+    impact_groups: list[AlgorithmImpactGroup]

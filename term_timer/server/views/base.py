@@ -10,6 +10,7 @@ from term_timer.formatter import format_grade
 from term_timer.formatter import format_session_name
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
+from term_timer.server.annotations import AcademyCaseAlgorithmsDebugContext
 from term_timer.server.annotations import AcademyCaseContext
 from term_timer.server.annotations import AcademyOverviewContext
 from term_timer.server.annotations import AcademyStepContext
@@ -55,6 +56,7 @@ class View:
         | AcademyOverviewContext
         | AcademyStepContext
         | AcademyCaseContext
+        | AcademyCaseAlgorithmsDebugContext
         | CubeRenderContext
     ):
         """

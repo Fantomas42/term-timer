@@ -3,6 +3,67 @@
 {% from 'macros/actions.html' import algorithm_button_detail %}
 {% from 'macros/display_selectors.html' import display_selectors %}
 
+{% macro algorithm_table(algorithms, case, cube_size, orientation_faces, mode, palette, show_cube=True) %}
+  <div class="algo-debug-table-wrapper">
+    <table class="algo-debug-table">
+      <colgroup>
+        <col class="col-index">
+        {% if show_cube %}<col class="col-cube">{% endif %}
+        <col class="col-algo">
+        <col class="col-htm">
+        <col class="col-ergo">
+        <col class="col-memo">
+        <col class="col-actions">
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="no-sort">#</th>
+          {% if show_cube %}<th class="no-sort">Cube</th>{% endif %}
+          <th>Algorithm</th>
+          <th>HTM</th>
+          <th>Ergonomic</th>
+          <th>Memorization</th>
+          <th class="no-sort">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for algo in algorithms|sort_algorithms %}
+          <tr>
+            <td data-sort="{{ loop.index }}">{{ loop.index }}</td>
+            {% if show_cube %}
+            <td class="algo-cube" data-sort="{{ loop.index }}">
+              <div class="case-img cube-frame">
+                <img src="/cube/?case={{ algo }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&arrows={{ case.arrows }}">
+              </div>
+            </td>
+            {% endif %}
+            <td class="algo-moves" data-sort="{{ algo }}">
+              <div class="moves-content">
+                {% for m in algo %}
+                  <span class="move">{{ m }}</span>
+                {% endfor %}
+              </div>
+            </td>
+            <td data-sort="{{ algo.metrics.htm }}">
+              <span class="spec-label htm">{{ algo.metrics.htm }}</span>
+            </td>
+            <td data-sort="{{ algo.ergonomics.ergonomic_score }}">
+              <span class="spec-label ergo">{{ "%0.1f"|format(algo.ergonomics.ergonomic_score * 100) }}</span>
+            </td>
+            <td data-sort="{{ algo.memory.memory_score }}">
+              <span class="spec-label memo">{{ "%0.1f"|format(algo.memory.memory_score) }}</span>
+            </td>
+            <td class="no-sort">
+              {{ algorithm_button_detail(algo) }}
+              {{ algorithm_button_copy(algo) }}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endmacro %}
+
 {% block title %}{{ method }}/{{ case.name }} algorithms{% endblock %}
 {% block subtitle %}
   <a class="academy-header" href="/academy/?o={{ orientation_faces }}&p={{ palette }}">Academy</a>
@@ -75,7 +136,6 @@ Debug view of {{ method }} {{ case.name }} algorithms sorted by ergonomic and me
 {% endblock script %}
 
 {% block body %}
-  {% set all_algorithms = case.algorithms|sort_algorithms %}
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">
@@ -84,56 +144,42 @@ Debug view of {{ method }} {{ case.name }} algorithms sorted by ergonomic and me
       </h2>
     </div>
     <p class="card-description">
-      {{ all_algorithms|length }} algorithm(s) for this case.
-      Click on the <b>HTM</b>, <b>ERGO</b> or <b>MEMO</b> column headers to sort.
+      {{ case.algorithms|length }} algorithm(s) for this case.
+      Click on the <b>HTM</b>, <b>Ergonomic</b> or <b>Memorization</b> column headers to sort.
       Default order uses the combined ergonomic then memory ranking.
     </p>
-    <div class="algo-debug-table-wrapper">
-      <table class="algo-debug-table">
-        <thead>
-          <tr>
-            <th class="no-sort">#</th>
-            <th class="no-sort">Cube</th>
-            <th>Algorithm</th>
-            <th>HTM</th>
-            <th>Ergonomic</th>
-            <th>Memorization</th>
-            <th class="no-sort">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for algo in all_algorithms %}
-            <tr>
-              <td data-sort="{{ loop.index }}">{{ loop.index }}</td>
-              <td class="algo-cube" data-sort="{{ loop.index }}">
-                <div class="case-img cube-frame">
-                  <img src="/cube/?case={{ algo }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&arrows={{ case.arrows }}">
-                </div>
-              </td>
-              <td class="algo-moves" data-sort="{{ algo }}">
-                <div class="moves-content">
-                  {% for m in algo %}
-                    <span class="move">{{ m }}</span>
-                  {% endfor %}
-                </div>
-              </td>
-              <td data-sort="{{ algo.metrics.htm }}">
-                <span class="spec-label htm">{{ algo.metrics.htm }}</span>
-              </td>
-              <td data-sort="{{ algo.ergonomics.ergonomic_score }}">
-                <span class="spec-label ergo">{{ "%0.1f"|format(algo.ergonomics.ergonomic_score * 100) }}</span>
-              </td>
-              <td data-sort="{{ algo.memory.memory_score }}">
-                <span class="spec-label memo">{{ "%0.1f"|format(algo.memory.memory_score) }}</span>
-              </td>
-              <td class="no-sort">
-                {{ algorithm_button_detail(algo) }}
-                {{ algorithm_button_copy(algo) }}
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    {{ algorithm_table(case.algorithms, case, cube_size, orientation_faces, mode, palette) }}
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-layer-group"></i>
+        <a href="#impact-groups" id="impact-groups">Impact Groups</a>
+      </h2>
     </div>
+    <p class="card-description">
+      {{ impact_groups|length }} group(s) of algorithms sharing the exact same
+      permutation impact on the cube (inverted algorithm applied on a solved
+      cube). Algorithms in the same group are real duplicates: pick the best
+      one for a given configuration.
+    </p>
+    {% set group_mode = 'll' if 'll' in step.lower() else 'full' %}
+    {% for group in impact_groups %}
+      {% set representative = (group.algorithms|sort_algorithms)[0] %}
+      <div class="impact-group">
+        <div class="impact-group-header">
+          <div class="case-img cube-frame impact-group-cube">
+            <img src="/cube/?case={{ representative }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ group_mode }}&p={{ palette }}&arrows={{ case.arrows }}">
+          </div>
+          <div class="impact-group-meta">
+            <h3 class="impact-group-title">Group</h3>
+            <code class="impact-group-id">{{ group.group_id }}</code>
+            <span class="spec-label">{{ group.algorithms|length }} algorithm(s)</span>
+          </div>
+        </div>
+        {{ algorithm_table(group.algorithms, case, cube_size, orientation_faces, mode, palette, show_cube=False) }}
+      </div>
+    {% endfor %}
   </div>
 {% endblock %}
