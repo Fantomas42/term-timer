@@ -251,6 +251,8 @@ class Bluetooth:
         if isinstance(battery_level, int):
             if battery_level <= 15:
                 device_label += f' ([warning]{ battery_level }[/warning]%)'
+            elif battery_level <= 30:
+                device_label += f' ([caution]{ battery_level }[/caution]%)'
             else:
                 device_label += f' ({ battery_level }%)'
 
