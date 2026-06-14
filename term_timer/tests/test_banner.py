@@ -1,15 +1,20 @@
 """Tests for banner."""
 import re
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
 from term_timer import __version__
 from term_timer.banner import AFTERNOON_RAMP
+from term_timer.banner import COMMIT_HASH
 from term_timer.banner import EVENING_RAMP
 from term_timer.banner import MORNING_RAMP
 from term_timer.banner import NIGHT_RAMP
 from term_timer.banner import RESET
 from term_timer.banner import colorize
 from term_timer.banner import get_banner
+from term_timer.banner import get_commit_hash
 from term_timer.banner import palette_for_hour
 
 ANSI_REGEX = re.compile(r'\033\[[0-9;]*m')
@@ -106,13 +111,69 @@ class ColorizeTestCase(unittest.TestCase):
         )
 
 
+class GetCommitHashTestCase(unittest.TestCase):
+    """Tests for the get_commit_hash function."""
+
+    def setUp(self) -> None:
+        """Create a fake .git directory for each test."""
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.git_dir = Path(self.tmp.name)
+        patcher = mock.patch('term_timer.banner.GIT_DIR', self.git_dir)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def write(self, name: str, content: str) -> None:
+        """Write a file inside the fake .git directory."""
+        path = self.git_dir / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+
+    def test_loose_ref(self) -> None:
+        """Test the hash is read from a loose ref."""
+        self.write('HEAD', 'ref: refs/heads/develop\n')
+        self.write('refs/heads/develop', 'abcdef1234567890\n')
+        self.assertEqual(get_commit_hash(), 'abcdef1')
+
+    def test_packed_ref(self) -> None:
+        """Test the hash is read from packed-refs when loose is absent."""
+        self.write('HEAD', 'ref: refs/heads/develop\n')
+        self.write(
+            'packed-refs',
+            '# pack-refs with: peeled fully-peeled sorted\n'
+            'fedcba9876543210 refs/heads/develop\n'
+            '^0123456789abcdef\n',
+        )
+        self.assertEqual(get_commit_hash(), 'fedcba9')
+
+    def test_detached_head(self) -> None:
+        """Test the hash is read directly from a detached HEAD."""
+        self.write('HEAD', '1234567890abcdef\n')
+        self.assertEqual(get_commit_hash(), '1234567')
+
+    def test_no_git_directory(self) -> None:
+        """Test None is returned when HEAD is missing."""
+        self.assertIsNone(get_commit_hash())
+
+    def test_ref_not_found(self) -> None:
+        """Test None is returned when the ref resolves to nothing."""
+        self.write('HEAD', 'ref: refs/heads/develop\n')
+        self.write('packed-refs', 'fedcba9876543210 refs/heads/master\n')
+        self.assertIsNone(get_commit_hash())
+
+    def test_empty_head(self) -> None:
+        """Test None is returned for an empty HEAD file."""
+        self.write('HEAD', '\n')
+        self.assertIsNone(get_commit_hash())
+
+
 class GetBannerTestCase(unittest.TestCase):
     """Tests for the get_banner function."""
 
     def test_contains_version(self) -> None:
-        """Test banner displays the package version."""
+        """Test banner displays the version or commit hash."""
         self.assertIn(
-            f'v{ __version__ }',
+            f'v{ COMMIT_HASH or __version__ }',
             strip_ansi(get_banner(hour=12)),
         )
 
@@ -143,7 +204,7 @@ class GetBannerTestCase(unittest.TestCase):
     def test_default_hour_uses_current_time(self) -> None:
         """Test banner builds without an explicit hour."""
         banner = get_banner()
-        self.assertIn(f'v{ __version__ }', strip_ansi(banner))
+        self.assertIn(f'v{ COMMIT_HASH or __version__ }', strip_ansi(banner))
 
 
 if __name__ == '__main__':

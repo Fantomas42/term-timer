@@ -1,6 +1,7 @@
 """Splash screen banner with a time-of-day color palette."""
 from datetime import UTC
 from datetime import datetime
+from pathlib import Path
 
 from rich.text import Text
 
@@ -8,6 +9,9 @@ from term_timer import __version__
 from term_timer.interface.console import console
 
 RESET = '\033[0m'
+
+GIT_DIR = Path(__file__).resolve().parent.parent / '.git'
+SHORT_HASH_LENGTH = 7
 
 TERM_LINES = [
     '  ______',
@@ -96,6 +100,54 @@ def colorize(lines: list[str], ramp: tuple[int, ...]) -> str:
     return '\n'.join(colorized)
 
 
+def get_commit_hash() -> str | None:
+    """
+    Read the short hash of the current commit for git installations.
+
+    The git refs are read directly from the .git directory to avoid
+    spawning an external process. Both loose and packed refs are
+    supported.
+
+    Returns:
+        The short commit hash, or None if not installed from git.
+
+    """
+    head = GIT_DIR / 'HEAD'
+    try:
+        content = head.read_text().strip()
+    except OSError:
+        return None
+
+    if not content.startswith('ref:'):
+        return content[:SHORT_HASH_LENGTH] or None
+
+    ref = content.removeprefix('ref:').strip()
+
+    loose = GIT_DIR / ref
+    try:
+        return loose.read_text().strip()[:SHORT_HASH_LENGTH] or None
+    except OSError:
+        pass
+
+    packed = GIT_DIR / 'packed-refs'
+    try:
+        lines = packed.read_text().splitlines()
+    except OSError:
+        return None
+
+    for line in lines:
+        if line.startswith(('#', '^')):
+            continue
+        commit, _, name = line.partition(' ')
+        if name == ref:
+            return commit[:SHORT_HASH_LENGTH] or None
+
+    return None
+
+
+COMMIT_HASH = get_commit_hash()
+
+
 def get_banner(mode: str | None = None, hour: int | None = None) -> str:
     """
     Build the colorized splash screen banner.
@@ -111,7 +163,7 @@ def get_banner(mode: str | None = None, hour: int | None = None) -> str:
     if hour is None:
         hour = datetime.now(UTC).astimezone().hour
 
-    footer = f'v{ __version__ }'
+    footer = f'v{ COMMIT_HASH or __version__ }'
     if mode:
         footer += f' [{ mode.upper() }]'
 
