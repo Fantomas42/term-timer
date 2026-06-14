@@ -249,11 +249,9 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <i class="fas fa-rotate"></i>
           <a href="#all-algorithms" id="all-algorithms">All Known Algorithms</a>
         </h2>
-        {% if DEBUG %}
-          <a class="btn btn-small" href="/academy/{{ method }}/{{ step }}/{{ case.code }}/debug/?o={{ orientation_faces }}&p={{ palette }}">
-            <i class="fas fa-table"></i> Sortable DEBUG
-          </a>
-        {% endif %}
+        <a class="btn btn-small" href="/academy/{{ method }}/{{ step }}/{{ case.code }}/debug/?o={{ orientation_faces }}&p={{ palette }}">
+          <i class="fas fa-table"></i> Sortable DEBUG
+        </a>
       </div>
       <p class="card-description">
         {{ all_algorithms|length }} total algorithm(s) in the database for this case.
