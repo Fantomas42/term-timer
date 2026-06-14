@@ -1,0 +1,139 @@
+{% extends "skeleton.html" %}
+{% from 'macros/actions.html' import algorithm_button_copy %}
+{% from 'macros/actions.html' import algorithm_button_detail %}
+{% from 'macros/display_selectors.html' import display_selectors %}
+
+{% block title %}{{ method }}/{{ case.name }} algorithms{% endblock %}
+{% block subtitle %}
+  <a class="academy-header" href="/academy/?o={{ orientation_faces }}&p={{ palette }}">Academy</a>
+  <a class="academy-header academy-step-header" href="/academy/{{ method }}/{{ step }}/?o={{ orientation_faces }}&p={{ palette }}">{{ method }} / {{ step }}</a>
+  <a class="academy-header academy-step-header" href="/academy/{{ method }}/{{ step }}/{{ case.code }}/?o={{ orientation_faces }}&p={{ palette }}">{{ case.pretty_name }}</a>
+  <a class="academy-header">Algorithms debug</a>
+{% endblock %}
+
+{% block description %}
+Debug view of {{ method }} {{ case.name }} algorithms sorted by ergonomic and memory scores.
+{% endblock %}
+
+{% block selectors %}
+{% if DEBUG %}
+{{ display_selectors(available_orientations, orientation_faces,
+                     available_modes, mode,
+                     available_cube_sizes, cube_size,
+                     available_palettes, palette) }}
+{% endif %}
+{% endblock %}
+
+{% block script %}
+  <script>
+   document.addEventListener('DOMContentLoaded', function() {
+     initializeSortableTables();
+   });
+
+   function initializeSortableTables() {
+     const tables = document.querySelectorAll('.algo-debug-table');
+
+     tables.forEach(table => {
+       const headers = table.querySelectorAll('th');
+
+       headers.forEach((header, index) => {
+         if (header.classList.contains('no-sort')) return;
+         header.addEventListener('click', function() {
+           sortTable(table, index, this);
+         });
+       });
+     });
+   }
+
+   function sortTable(table, columnIndex, header) {
+     const rows = Array.from(table.querySelectorAll('tbody tr'));
+     const isAsc = !header.classList.contains('sort-asc');
+
+     table.querySelectorAll('th').forEach(th => {
+       th.classList.remove('sort-asc', 'sort-desc');
+     });
+
+     header.classList.add(isAsc ? 'sort-asc' : 'sort-desc');
+
+     rows.sort((a, b) => {
+       const valueA = a.cells[columnIndex].dataset.sort;
+       const valueB = b.cells[columnIndex].dataset.sort;
+
+       if (!isNaN(valueA) && !isNaN(valueB)) {
+         return isAsc ? valueA - valueB : valueB - valueA;
+       }
+
+       return isAsc
+            ? valueA.localeCompare(valueB)
+            : valueB.localeCompare(valueA);
+     });
+
+     const tbody = table.querySelector('tbody');
+     rows.forEach(row => tbody.appendChild(row));
+   }
+  </script>
+{% endblock script %}
+
+{% block body %}
+  {% set all_algorithms = case.algorithms|sort_algorithms %}
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-rotate"></i>
+        <a href="#all-algorithms" id="all-algorithms">{{ case.name }} Algorithms</a>
+      </h2>
+    </div>
+    <p class="card-description">
+      {{ all_algorithms|length }} algorithm(s) for this case.
+      Click on the <b>HTM</b>, <b>ERGO</b> or <b>MEMO</b> column headers to sort.
+      Default order uses the combined ergonomic then memory ranking.
+    </p>
+    <div class="algo-debug-table-wrapper">
+      <table class="algo-debug-table">
+        <thead>
+          <tr>
+            <th class="no-sort">#</th>
+            <th class="no-sort">Cube</th>
+            <th>Algorithm</th>
+            <th>HTM</th>
+            <th>Ergonomic</th>
+            <th>Memorization</th>
+            <th class="no-sort">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for algo in all_algorithms %}
+            <tr>
+              <td data-sort="{{ loop.index }}">{{ loop.index }}</td>
+              <td class="algo-cube" data-sort="{{ loop.index }}">
+                <div class="case-img cube-frame">
+                  <img src="/cube/?case={{ algo }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&arrows={{ case.arrows }}">
+                </div>
+              </td>
+              <td class="algo-moves" data-sort="{{ algo }}">
+                <div class="moves-content">
+                  {% for m in algo %}
+                    <span class="move">{{ m }}</span>
+                  {% endfor %}
+                </div>
+              </td>
+              <td data-sort="{{ algo.metrics.htm }}">
+                <span class="spec-label htm">{{ algo.metrics.htm }}</span>
+              </td>
+              <td data-sort="{{ algo.ergonomics.ergonomic_score }}">
+                <span class="spec-label ergo">{{ "%0.1f"|format(algo.ergonomics.ergonomic_score * 100) }}</span>
+              </td>
+              <td data-sort="{{ algo.memory.memory_score }}">
+                <span class="spec-label memo">{{ "%0.1f"|format(algo.memory.memory_score) }}</span>
+              </td>
+              <td class="no-sort">
+                {{ algorithm_button_detail(algo) }}
+                {{ algorithm_button_copy(algo) }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

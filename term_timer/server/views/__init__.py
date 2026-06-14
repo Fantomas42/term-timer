@@ -1,4 +1,5 @@
 """Web server views package."""
+from term_timer.server.views.academy import AcademyCaseAlgorithmsDebugView
 from term_timer.server.views.academy import AcademyCaseView
 from term_timer.server.views.academy import AcademyStepView
 from term_timer.server.views.academy import AcademyView
@@ -15,6 +16,7 @@ from term_timer.server.views.solves import SolveUpdateCommentView
 from term_timer.server.views.solves import SolveUpdateFlagView
 
 __all__ = [
+    'AcademyCaseAlgorithmsDebugView',
     'AcademyCaseView',
     'AcademyStepView',
     'AcademyView',

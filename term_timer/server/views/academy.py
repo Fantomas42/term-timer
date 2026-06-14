@@ -333,3 +333,9 @@ class AcademyCaseView(AcademyView):
                 ),
             },
         )
+
+
+class AcademyCaseAlgorithmsDebugView(AcademyCaseView):
+    """Debug view listing a case's algorithms with sortable scores."""
+
+    template_name = 'academy/case_debug.html'

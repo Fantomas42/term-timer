@@ -908,6 +908,91 @@ twisty-alg-viewer {
     color: var(--light);
 }
 
+/* Academy case algorithms debug table */
+.algo-debug-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.algo-debug-table th,
+.algo-debug-table td {
+    padding: 0.6rem 0.9rem;
+    text-align: left;
+    color: var(--text-primary);
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.algo-debug-table th {
+    background-color: var(--header);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.algo-debug-table th:not(.no-sort) {
+    cursor: pointer;
+}
+
+.algo-debug-table th.sort-asc:after {
+    content: '\25B2';
+    font-size: 0.7em;
+    margin-left: 0.4em;
+    color: var(--light);
+}
+
+.algo-debug-table th.sort-desc:after {
+    content: '\25BC';
+    font-size: 0.7em;
+    margin-left: 0.4em;
+    color: var(--light);
+}
+
+.algo-debug-table tbody tr:nth-of-type(even) {
+    background-color: var(--main-bg);
+}
+
+.algo-debug-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.algo-debug-table td.algo-cube {
+    width: 80px;
+}
+
+.algo-debug-table td.algo-cube .cube-frame {
+    padding: 0.4rem;
+    margin-bottom: 0;
+}
+
+.algo-debug-table td.algo-cube img {
+    display: block;
+    max-width: 56px;
+    height: auto;
+}
+
+.algo-debug-table .moves-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3em;
+}
+
+.algo-debug-table .move {
+    font-weight: bold;
+    background-color: var(--primary);
+    padding: 0.25em 0;
+    min-width: 2em;
+    display: inline-block;
+    border-radius: 0.375rem;
+    text-align: center;
+    cursor: pointer;
+}
+
+.algo-debug-table .move:hover {
+    background-color: var(--link);
+    color: var(--dark);
+}
+
 .grade-s { color: #FF7F7E; }
 .grade-aplus { color: #FFBF7F; }
 .grade-a { color: #FFBF7F; }

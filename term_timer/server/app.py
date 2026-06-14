@@ -15,6 +15,7 @@ from bottle import static_file
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
 from term_timer.interface.console import console
+from term_timer.server.views import AcademyCaseAlgorithmsDebugView
 from term_timer.server.views import AcademyCaseView
 from term_timer.server.views import AcademyStepView
 from term_timer.server.views import AcademyView
@@ -183,6 +184,25 @@ class Server:
 
             """
             return AcademyCaseView(
+                method, step, case_id,
+                request.GET.o,
+                mode=request.GET.m,
+                cube_size=request.GET.c,
+                palette=request.GET.p,
+            ).as_view(debug)
+
+        @app.route('/academy/<method>/<step>/<case_id>/debug/')  # type: ignore[untyped-decorator]
+        def academy_case_algorithms_debug(
+                method: str, step: str, case_id: str,
+        ) -> str:
+            """
+            Render academy case algorithms debug page.
+
+            Returns:
+                Rendered HTML template.
+
+            """
+            return AcademyCaseAlgorithmsDebugView(
                 method, step, case_id,
                 request.GET.o,
                 mode=request.GET.m,
