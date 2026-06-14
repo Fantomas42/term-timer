@@ -752,6 +752,7 @@ class TestSolveUpdateFlagView(unittest.TestCase):
             _mock_redirect: Mock) -> None:
         """Test solve update view success."""
         mock_solve = Mock()
+        mock_solve.advanced = False
         mock_load_solves.return_value = [mock_solve]
 
         with contextlib.suppress(HTTPError):
@@ -759,6 +760,22 @@ class TestSolveUpdateFlagView(unittest.TestCase):
 
         self.assertEqual(mock_solve.flag, 'DNF')
         mock_save_solves.assert_called_once_with(3, 'session', [mock_solve])
+
+    @patch('term_timer.server.views.solves.redirect')
+    @patch('term_timer.server.views.solves.save_solves')
+    @patch('term_timer.server.views.solves.load_all_solves')
+    def test_solve_update_view_advanced_forbidden(
+            self, mock_load_solves: Mock, mock_save_solves: Mock,
+            _mock_redirect: Mock) -> None:
+        """Test flag update is forbidden on an advanced solve."""
+        mock_solve = Mock()
+        mock_solve.advanced = True
+        mock_load_solves.return_value = [mock_solve]
+
+        with self.assertRaises(HTTPError):  # abort() raises HTTPError
+            SolveUpdateFlagView(3, 'session', 1, 'DNF')
+
+        mock_save_solves.assert_not_called()
 
 
 class TestSolveDeleteView(unittest.TestCase):

@@ -130,6 +130,14 @@ class SolveManager:
         if self.solve is None:
             return
 
+        if self.solve.advanced:
+            console.print(
+                f'Solve #{ self.solve_id } flag cannot be edited: '
+                'the recorded moves are authoritative',
+                style='warning',
+            )
+            return
+
         if yes or self.confirm(
                 f'Are you sure to mark this solve as "{ flag }" ?',
         ):

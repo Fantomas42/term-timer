@@ -592,14 +592,16 @@
 {% endblock %}
 
 {% block actions %}
-  {% if solve.flag %}
-    <button class="action-btn btn-ok" onclick="handleOK();">OK</button>
-  {% endif %}
-  {% if solve.flag != 'DNF' %}
-    <button class="action-btn btn-dnf" onclick="handleDNF();">DNF</button>
-  {% endif %}
-  {% if solve.flag != '+2' %}
-    <button class="action-btn btn-plus2" onclick="handlePlus2();">+2</button>
+  {% if not solve.advanced %}
+    {% if solve.flag %}
+      <button class="action-btn btn-ok" onclick="handleOK();">OK</button>
+    {% endif %}
+    {% if solve.flag != 'DNF' %}
+      <button class="action-btn btn-dnf" onclick="handleDNF();">DNF</button>
+    {% endif %}
+    {% if solve.flag != '+2' %}
+      <button class="action-btn btn-plus2" onclick="handlePlus2();">+2</button>
+    {% endif %}
   {% endif %}
   <button class="action-btn btn-delete" onclick="handleDelete();">Delete</button>
 {% endblock %}

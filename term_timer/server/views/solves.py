@@ -204,6 +204,9 @@ class SolveUpdateFlagView:
         except IndexError:
             abort(404, 'Invalid solve ID')
 
+        if self.solve.advanced:
+            abort(403, 'Flag cannot be edited on an advanced solve')
+
         normalized_flag: SolveFlag = '' if flag == 'OK' else flag
         self.solves[self.solve_index].flag = normalized_flag
         save_solves(cube, session, self.solves)
