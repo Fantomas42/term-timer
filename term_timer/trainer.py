@@ -681,8 +681,11 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         self.fsrs_last_focus = focus_str
 
+        mc = 10 + len(str(self.counter))
+
         self.console.print(
-            f'[fsrs]Training Focus:[/fsrs] [context]{ focus_str }[/context]',
+            f'[fsrs]{ "Practicing".ljust(mc) }:[/fsrs] '
+            f'[context]{ focus_str }[/context]',
         )
 
     def fsrs_case_line(self, selected_case: Case) -> None:  # noqa: PLR0914
