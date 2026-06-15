@@ -693,12 +693,13 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         if not self.fsrs_update or self.fsrs_scheduler is None:
             return
 
-        name = selected_case.pretty_name
+        mc = 10 + len(str(self.counter))
+        name = selected_case.name.center(mc)
         case_training = self.trainings.cases.get(selected_case.code)
 
         if case_training is None or case_training.fsrs_card is None:
             self.console.print(
-                f'[fsrs]{ name }[/fsrs] [new]New case evaluation[/new]',
+                f'[fsrs]{ name }:[/fsrs] [new]New case evaluation[/new]',
             )
             return
 
@@ -763,7 +764,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             )
 
         self.console.print(
-            f'[fsrs]{ name }[/fsrs] { state_str }{ due_str }{ metrics_str }',
+            f'[fsrs]{ name }:[/fsrs] { state_str }{ due_str }{ metrics_str }',
         )
 
     @staticmethod
@@ -1011,8 +1012,11 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 self.format_breakdown_lines(breakdown, rating_klass),
             )
 
+        mc = 10 + len(str(self.counter))
+        name = selected_case.name.center(mc)
+
         self.console.print(
-            f'[fsrs]{ selected_case.pretty_name }[/fsrs] '
+            f'[fsrs]{ name }:[/fsrs] '
             f'[{ rating_klass }]{ rating.name }[/{ rating_klass }],'
             f'{ card_change_str } review { due_str }{ suffix }',
         )
