@@ -16,6 +16,7 @@ from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
 from cubing_algs.constants import DEFAULT_CUBE_SIZE
 from cubing_algs.constants import ORIENTATION_FACE_MOVES
+from cubing_algs.move import Move
 from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
@@ -1100,6 +1101,32 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             State.Relearning,
         }
 
+    def compute_pre_aufs(self, solution: Algorithm) -> Move | None:
+        """
+        Find the pre-AUF that lets the solution complete the step.
+
+        Tries each U-face rotation before the solution and returns the
+        first one that solves the training step from the scrambled state.
+
+        Returns:
+            The pre-AUF move, or None when no rotation is needed.
+
+        """
+        cube = VCube(size=DEFAULT_CUBE_SIZE)
+        cube.rotate(self.scramble_oriented)
+
+        fa = FaceletAnalyser()
+
+        for rotation in ['', 'U', "U'", 'U2']:
+            cube_copy = cube.copy()
+            cube_copy.rotate(rotation)
+            cube_copy.rotate(solution)
+
+            if fa.check_step(self.step_config.step_code, cube_copy.state):
+                return Move(rotation) if rotation else None
+
+        return None
+
     def start_line(
             self,
             cube: VCube,
@@ -1135,6 +1162,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 self.show_solution
                 or self.case_in_learning_phase(selected_case)
         ):
+            pre_aufs = self.compute_pre_aufs(solution)
+            if pre_aufs:
+                solution.insert(0, pre_aufs)
+
             formatted_algorithm = format_alg_triggers(
                 format_alg_moves(
                     format_alg_aufs(
