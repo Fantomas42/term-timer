@@ -11,7 +11,6 @@ from term_timer.fsrs.rating import BAND_AGAIN
 from term_timer.fsrs.rating import BAND_EASY
 from term_timer.fsrs.rating import BAND_GOOD
 from term_timer.fsrs.rating import HIGH_STABILITY_FLOOR_DAYS
-from term_timer.fsrs.rating import MAX_MOVES
 from term_timer.fsrs.rating import MISSED_WEIGHT
 from term_timer.fsrs.rating import PAUSE_TOLERANCE
 from term_timer.fsrs.rating import PAUSE_WEIGHT
@@ -75,13 +74,13 @@ class TestRateWithoutBluetooth(unittest.TestCase):
         """
         fast = make_solve(int(1.0 * SECOND), moves=None)
         slow = make_solve(int(8.0 * SECOND), moves=None)
-        self.assertEqual(self.rater.rate(fast, 'pll'), Rating.Good)
-        self.assertEqual(self.rater.rate(slow, 'pll'), Rating.Good)
+        self.assertEqual(self.rater.rate(fast, 'pll', 'T'), Rating.Good)
+        self.assertEqual(self.rater.rate(slow, 'pll', 'T'), Rating.Good)
 
     def test_rate_with_details_no_moves_is_zeroed(self) -> None:
         """Without Bluetooth, the breakdown carries no execution metrics."""
         solve = make_solve(int(2.0 * SECOND), moves=None)
-        breakdown = self.rater.rate_with_details(solve, 'pll')
+        breakdown = self.rater.rate_with_details(solve, 'pll', 'T')
         self.assertEqual(breakdown.rating, Rating.Good)
         self.assertEqual(breakdown.htm, 0)
         self.assertEqual(breakdown.missed_qtm, 0)
@@ -232,57 +231,58 @@ class TestRateWithBluetooth(unittest.TestCase):
         """TPS above ref, no pauses/missed -> EASY."""
         # 10 moves in 2.0s = 5.0 TPS > PLL ref 4.9.
         solve = make_bt_solve(htm=10, elapsed_s=2.0)
-        self.assertEqual(self.rater.rate(solve, 'pll'), Rating.Easy)
+        self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Easy)
 
     def test_moderately_low_tps_is_hard(self) -> None:
         """TPS well below ref grades to HARD, not straight to AGAIN."""
         # 9 moves in 3.0s = 3.0 TPS; (4.9-3.0)/1.5 = 1.27 -> Hard.
         solve = make_bt_solve(htm=9, elapsed_s=3.0)
-        self.assertEqual(self.rater.rate(solve, 'pll'), Rating.Hard)
+        self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Hard)
 
     def test_very_low_tps_is_again(self) -> None:
         """A very low TPS pushes the score past the AGAIN cut."""
         # 8 moves in 4.0s = 2.0 TPS; (4.9-2.0)/1.5 = 1.93 -> Again.
         solve = make_bt_solve(htm=8, elapsed_s=4.0)
-        self.assertEqual(self.rater.rate(solve, 'pll'), Rating.Again)
+        self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Again)
 
     def test_missed_moves_grade_down(self) -> None:
         """Missed QTM on an otherwise-clean solve -> GOOD."""
         with patch.object(Solve, 'missed_moves', return_value=2):
             # tps clean (0) + 2*0.30 missed = 0.6 -> Good.
             solve = make_bt_solve(htm=10, elapsed_s=2.0)
-            self.assertEqual(self.rater.rate(solve, 'pll'), Rating.Good)
+            self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Good)
 
     def test_extra_pauses_grade_down(self) -> None:
         """Several pauses on an otherwise-clean solve -> GOOD."""
         with patch.object(Solve, 'pauses', return_value=4):
             # (4-1)*0.25 = 0.75 -> Good.
             solve = make_bt_solve(htm=10, elapsed_s=2.0)
-            self.assertEqual(self.rater.rate(solve, 'pll'), Rating.Good)
+            self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Good)
 
     def test_single_pause_stays_easy(self) -> None:
         """One regrip pause does not move a clean solve off EASY."""
         with patch.object(Solve, 'pauses', return_value=1):
             solve = make_bt_solve(htm=10, elapsed_s=2.0)
-            self.assertEqual(self.rater.rate(solve, 'pll'), Rating.Easy)
+            self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Easy)
 
     def test_over_move_limit_is_again(self) -> None:
         """HTM > per-case limit is a categorical AGAIN, before scoring."""
-        limit = MAX_MOVES.get('pll', 15)
+        limit = build_case_max_moves('pll')['T']
         # Fast (would be Easy by score) but over the move budget -> Again.
         solve = make_bt_solve(htm=limit + 1, elapsed_s=1.0)
-        self.assertEqual(self.rater.rate(solve, 'pll'), Rating.Again)
+        self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Again)
 
     def test_at_move_limit_is_not_again_by_moves(self) -> None:
         """HTM == limit does not trigger the categorical AGAIN."""
-        limit = MAX_MOVES.get('pll', 15)
+        limit = build_case_max_moves('pll')['T']
         solve = make_bt_solve(htm=limit, elapsed_s=2.0)
-        self.assertNotEqual(self.rater.rate(solve, 'pll'), Rating.Again)
+        self.assertNotEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Again)
 
-    def test_unknown_step_uses_default_max_moves(self) -> None:
-        """Unknown step uses 15 as default move limit."""
+    def test_unknown_step_raises(self) -> None:
+        """An unknown step has no collection: the lookup raises KeyError."""
         solve = make_bt_solve(htm=16, elapsed_s=2.0)
-        self.assertEqual(self.rater.rate(solve, 'unknown_step'), Rating.Again)
+        with self.assertRaises(KeyError):
+            self.rater.rate(solve, 'unknown_step', 'T')
 
 
 class TestExecutionMetricsDoubleMerge(unittest.TestCase):
@@ -309,13 +309,13 @@ class TestExecutionMetricsDoubleMerge(unittest.TestCase):
     def test_htm_merges_consecutive_quarter_turns(self) -> None:
         """``R U U R F`` counts 4 HTM (``R U2 R F``), not 5."""
         solve = make_solve(int(2.0 * SECOND), moves='R U U R F')
-        breakdown = self.rater.rate_with_details(solve, 'oll')
+        breakdown = self.rater.rate_with_details(solve, 'oll', '26')
         self.assertEqual(breakdown.htm, 4)
 
     def test_tps_keeps_unmerged_move_count(self) -> None:
         """TPS still reflects physical quarter turns (hand speed)."""
         solve = make_solve(int(2.0 * SECOND), moves='R U U R F')
-        breakdown = self.rater.rate_with_details(solve, 'oll')
+        breakdown = self.rater.rate_with_details(solve, 'oll', '26')
         self.assertEqual(breakdown.tps, 5 / 2.0)
 
     def test_oll_14_clean_solve_regression(self) -> None:
@@ -333,28 +333,6 @@ class TestExecutionMetricsDoubleMerge(unittest.TestCase):
         self.assertEqual(breakdown.htm, 16)
         self.assertFalse(breakdown.htm_forced)
         self.assertEqual(breakdown.rating, Rating.Easy)
-
-
-class TestMaxMoves(unittest.TestCase):
-    """Validate that MAX_MOVES covers the expected steps."""
-
-    def test_known_steps_present(self) -> None:
-        """All standard CFOP steps should have a max moves entry."""
-        for step in ('oll', 'pll', 'f2l', 'af2l', 'cross', 'ecross'):
-            self.assertIn(step, MAX_MOVES)
-
-    def test_all_values_are_positive(self) -> None:
-        """Every MAX_MOVES value must be a positive integer."""
-        for step, limit in MAX_MOVES.items():
-            self.assertGreater(limit, 0, msg=f'{step} has non-positive limit')
-
-    def test_pll_is_twenty(self) -> None:
-        """PLL limit is 20 (algos commonly reach 16-20 HTM)."""
-        self.assertEqual(MAX_MOVES['pll'], 20)
-
-    def test_oll_is_seventeen(self) -> None:
-        """OLL limit is 17 (algos commonly reach 14-17 HTM)."""
-        self.assertEqual(MAX_MOVES['oll'], 17)
 
 
 class TestCaseMaxMoves(unittest.TestCase):
@@ -377,37 +355,36 @@ class TestCaseMaxMoves(unittest.TestCase):
                     limit, 0, msg=f'{step}:{code} has non-positive limit',
                 )
 
-    def test_case_name_overrides_step_fallback(self) -> None:
-        """rate() uses build_case_max_moves when case_name is provided."""
+    def test_threshold_is_per_case(self) -> None:
+        """
+        The HTM budget differs per case: a tight case forces, a loose one
+        does not, at the same HTM.
+        """
         rater = PerformanceRater()
-        # PLL Gd: P90 HTM in DB is 22, threshold = 24 > step PLL limit (20).
-        # An HTM between the two should pass with case_name='Gd' but trigger
-        # AGAIN with the step-level fallback (no case_name).
-        case_threshold = build_case_max_moves('pll')['Gd']
-        step_limit = MAX_MOVES['pll']
-        self.assertGreater(case_threshold, step_limit)
-        htm_between = step_limit + 2  # above step limit, below case threshold
-        self.assertLess(htm_between, case_threshold)
+        # PLL Ab P90+2 = 17 (tight); PLL Gd P90+2 = 24 (loose).
+        tight = build_case_max_moves('pll')['Ab']
+        loose = build_case_max_moves('pll')['Gd']
+        self.assertLess(tight, loose)
+        htm_between = tight + 2  # above the tight budget, below the loose one
+        self.assertLess(htm_between, loose)
         with (
             patch.object(Solve, 'pauses', return_value=0),
             patch.object(Solve, 'missed_moves', return_value=0),
         ):
             solve = make_bt_solve(htm=htm_between, elapsed_s=1.0)
+            self.assertEqual(rater.rate(solve, 'pll', 'Ab'), Rating.Again)
             self.assertNotEqual(rater.rate(solve, 'pll', 'Gd'), Rating.Again)
-            self.assertEqual(rater.rate(solve, 'pll'), Rating.Again)
 
-    def test_unknown_case_falls_back_to_step(self) -> None:
-        """rate() with an unknown case_name falls back to step-level limit."""
+    def test_unknown_case_raises(self) -> None:
+        """An unknown case code raises KeyError instead of a silent fallback."""
         rater = PerformanceRater()
-        limit = MAX_MOVES.get('pll', 15)
         with (
             patch.object(Solve, 'pauses', return_value=0),
             patch.object(Solve, 'missed_moves', return_value=0),
         ):
-            solve = make_bt_solve(htm=limit + 1, elapsed_s=1.0)
-            self.assertEqual(
-                rater.rate(solve, 'pll', 'UNKNOWN_CASE'), Rating.Again,
-            )
+            solve = make_bt_solve(htm=16, elapsed_s=2.0)
+            with self.assertRaises(KeyError):
+                rater.rate(solve, 'pll', 'UNKNOWN_CASE')
 
 
 class TestHighStabilityFloor(unittest.TestCase):
@@ -437,11 +414,11 @@ class TestHighStabilityFloor(unittest.TestCase):
         """TPS-only Again on a high-stability card is floored to Hard."""
         solve = make_bt_solve(htm=self.SLOW_HTM, elapsed_s=self.SLOW_S)
         # Sanity: without stability the score produces Again.
-        self.assertEqual(self.rater.rate(solve, 'pll'), Rating.Again)
+        self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Again)
         # With high stability and clean execution: floored to Hard.
         self.assertEqual(
             self.rater.rate(
-                solve, 'pll', stability=HIGH_STABILITY_FLOOR_DAYS,
+                solve, 'pll', 'T', stability=HIGH_STABILITY_FLOOR_DAYS,
             ),
             Rating.Hard,
         )
@@ -451,7 +428,7 @@ class TestHighStabilityFloor(unittest.TestCase):
         solve = make_bt_solve(htm=self.SLOW_HTM, elapsed_s=self.SLOW_S)
         self.assertEqual(
             self.rater.rate(
-                solve, 'pll', stability=HIGH_STABILITY_FLOOR_DAYS - 1.0,
+                solve, 'pll', 'T', stability=HIGH_STABILITY_FLOOR_DAYS - 1.0,
             ),
             Rating.Again,
         )
@@ -464,19 +441,19 @@ class TestHighStabilityFloor(unittest.TestCase):
             solve = make_bt_solve(htm=self.SLOW_HTM, elapsed_s=self.SLOW_S)
             self.assertEqual(
                 self.rater.rate(
-                    solve, 'pll', stability=HIGH_STABILITY_FLOOR_DAYS,
+                    solve, 'pll', 'T', stability=HIGH_STABILITY_FLOOR_DAYS,
                 ),
                 Rating.Again,
             )
 
     def test_htm_forcing_high_stability_stays_again(self) -> None:
         """htm-forcing is categorical: floor does not apply at high stab."""
-        limit = MAX_MOVES.get('pll', 15)
+        limit = build_case_max_moves('pll')['T']
         # A fast solve that would be Easy by score but is over the move budget.
         solve = make_bt_solve(htm=limit + 1, elapsed_s=1.0)
         self.assertEqual(
             self.rater.rate(
-                solve, 'pll', stability=HIGH_STABILITY_FLOOR_DAYS,
+                solve, 'pll', 'T', stability=HIGH_STABILITY_FLOOR_DAYS,
             ),
             Rating.Again,
         )

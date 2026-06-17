@@ -38,16 +38,6 @@ from term_timer.constants import SECOND
 if TYPE_CHECKING:
     from term_timer.solve import Solve
 
-MAX_MOVES: dict[str, int] = {
-    'oll': 17,
-    'pll': 20,
-    'f2l': 15,
-    'af2l': 15,
-    'cross': 15,
-    'ecross': 15,
-}
-
-
 COLLECTION_STEP: dict[str, str] = {
     'CFOP/OLL': 'oll',
     'CFOP/PLL': 'pll',
@@ -218,7 +208,7 @@ class PerformanceRater:
         self,
         solve: 'Solve',
         step: str,
-        case_name: str | None = None,
+        case_name: str,
         stability: float | None = None,
     ) -> RatingBreakdown:
         """
@@ -238,7 +228,10 @@ class PerformanceRater:
         Args:
             solve: Completed solve with optional advanced analysis.
             step: Step name (e.g. 'oll', 'pll').
-            case_name: Case code (e.g. 'F', '13') for per-case HTM threshold.
+            case_name: Case code (e.g. 'F', '13') for the per-case HTM
+                threshold. Must belong to the step's collection: an unknown
+                code raises KeyError on purpose (it can only mean a caller
+                bug, never a normal trainer path).
             stability: Current FSRS stability in days, used to floor Again to
                 Hard on high-stability cards with clean execution.
 
@@ -254,14 +247,7 @@ class PerformanceRater:
         time_s, htm, missed_qtm, pauses, tps = self.execution_metrics(solve)
 
         step_lower = step.lower()
-        max_moves = (
-            build_case_max_moves(step_lower).get(
-                case_name,
-                MAX_MOVES.get(step_lower, 15),
-            )
-            if case_name is not None
-            else MAX_MOVES.get(step_lower, 15)
-        )
+        max_moves = build_case_max_moves(step_lower)[case_name]
 
         pens = self.execution_penalties(
             time_s, missed_qtm, pauses, tps, step_lower,
@@ -292,7 +278,7 @@ class PerformanceRater:
         self,
         solve: 'Solve',
         step: str,
-        case_name: str | None = None,
+        case_name: str,
         stability: float | None = None,
     ) -> Rating:
         """
@@ -304,7 +290,8 @@ class PerformanceRater:
         Args:
             solve: Completed solve with optional advanced analysis.
             step: Step name (e.g. 'oll', 'pll').
-            case_name: Case code (e.g. 'F', '13') for per-case HTM threshold.
+            case_name: Case code (e.g. 'F', '13') for the per-case HTM
+                threshold; an unknown code raises KeyError on purpose.
             stability: Current FSRS stability in days; None disables the floor.
 
         Returns:
