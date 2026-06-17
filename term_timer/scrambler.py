@@ -156,7 +156,7 @@ def forced_training(
     return (
         training_case.case,
         rng.choice(training_case.best_setups),
-        training_case.case.main_algorithm,
+        training_case.solution,
     )
 
 
@@ -182,5 +182,5 @@ def random_training(
     return (
         selected_case.case,
         rng.choice(selected_case.best_setups),
-        selected_case.case.main_algorithm,
+        selected_case.solution,
     )

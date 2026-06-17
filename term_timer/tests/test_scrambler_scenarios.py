@@ -257,6 +257,7 @@ def run_trainer_scenario(  # noqa: PLR0913
             TrainingCase(
                 case=case_obj,
                 best_setups=list(case_obj.setup_algorithms[:5]),
+                solution=case_obj.main_algorithm,
             ),
         )
 

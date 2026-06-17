@@ -24,6 +24,7 @@ class CaseTrainingData(TypedDict):
 
     last_date: int
     timings: list[int]
+    solution: NotRequired[str]
     fsrs: NotRequired[FSRSCardData]
 
 
@@ -35,6 +36,7 @@ class CaseTraining:
     last_date: int
     timings: list[int]
     fsrs_card: Card | None = field(default=None)
+    solution: str = ''
 
     def add_timing(self, timing: int, date: int) -> None:
         """
@@ -61,6 +63,9 @@ class CaseTraining:
             'last_date': self.last_date,
             'timings': self.timings,
         }
+        if self.solution:
+            data['solution'] = self.solution
+
         if self.fsrs_card is not None:
             raw = self.fsrs_card.to_dict()
             data['fsrs'] = FSRSCardData(

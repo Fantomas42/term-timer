@@ -16,7 +16,9 @@ from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
 from cubing_algs.constants import DEFAULT_CUBE_SIZE
 from cubing_algs.constants import ORIENTATION_FACE_MOVES
+from cubing_algs.exceptions import InvalidMoveError
 from cubing_algs.move import Move
+from cubing_algs.parsing import parse_moves
 from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.vcube import VCube
@@ -378,9 +380,39 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 reverse=False,
             )[:5]
 
-            selected_cases.append(TrainingCase(valid_case, best_setups))
+            solution = self.resolve_solution(valid_case)
+
+            selected_cases.append(
+                TrainingCase(valid_case, best_setups, solution),
+            )
 
         return selected_cases
+
+    def resolve_solution(self, case: Case) -> Algorithm:
+        """
+        Resolve the solution to train for a case.
+
+        A user can store a preferred solution per case in the training
+        file under the ``solution`` key. When present, it is parsed and
+        used as-is, with no verification that it solves the case; an
+        unparsable string silently falls back to the cubing_algs
+        main algorithm.
+
+        Returns:
+            The custom solution when one is defined and parsable, otherwise
+            the cubing_algs main algorithm of the case.
+
+        """
+        case_training = self.trainings.cases.get(case.code)
+        if case_training is not None and case_training.solution:
+            try:
+                return parse_moves(
+                    case_training.solution, trust_input=False,
+                )
+            except InvalidMoveError:
+                pass  # fall back to the cubing_algs solution
+
+        return case.main_algorithm
 
     @property
     def bluetooth_scramble_is_completed(self) -> bool:

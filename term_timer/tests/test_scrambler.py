@@ -28,7 +28,11 @@ def make_training_case(
 
     """
     case = get_case(step, case_code)
-    return TrainingCase(case=case, best_setups=list(case.setup_algorithms[:2]))
+    return TrainingCase(
+        case=case,
+        best_setups=list(case.setup_algorithms[:2]),
+        solution=case.main_algorithm,
+    )
 
 
 class TestScramblerRawScramble(unittest.TestCase):

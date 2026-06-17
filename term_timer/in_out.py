@@ -210,6 +210,7 @@ def load_trainings(method: str, step: str) -> Trainings:
                 last_date=data['last_date'],
                 timings=data['timings'],
                 fsrs_card=fsrs_card_from_data(data),
+                solution=data.get('solution', ''),
             )
             for case_code, data in raw_data.items()
         }

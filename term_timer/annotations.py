@@ -33,6 +33,7 @@ Analyser.summary (StepSummary list)
         → MethodAnalysis produced
 """
 from dataclasses import dataclass
+from dataclasses import field
 from typing import TypedDict
 
 from cubing_algs.algorithm import Algorithm
@@ -121,3 +122,4 @@ class TrainingCase:
 
     case: Case
     best_setups: list[Algorithm]
+    solution: Algorithm = field(default_factory=Algorithm)

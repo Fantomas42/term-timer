@@ -872,6 +872,166 @@ class TestSolutionDisplayInLearningPhase(unittest.TestCase):
         self.assertNotIn('Solution', self.printed_text(timer))
 
 
+class TestResolveSolution(unittest.TestCase):
+    """resolve_solution prefers the stored solution over cubing_algs."""
+
+    CASE_CODE = 'T'
+
+    @staticmethod
+    def make_trainer(
+            cases: 'dict[str, CaseTraining] | None' = None,
+    ) -> Trainer:
+        """
+        Build a no-Bluetooth PLL trainer with optional preloaded trainings.
+
+        Returns:
+            A Trainer with a mocked console.
+
+        """
+        trainings = Trainings(
+            method='CFOP', step='PLL', cases=cases or {},
+        )
+        with patch(
+            'term_timer.trainer.load_trainings', return_value=trainings,
+        ):
+            timer = Trainer(
+                step='pll',
+                case_codes=[],
+                oldest=0,
+                slowest=0,
+                random=0,
+                new_cases_limit=5,
+                filters=[],
+                free_play=False,
+                show_solution=False,
+                show_cube=False,
+                metronome=0,
+                orientation='DF',
+                rng=Random(),  # noqa: S311
+            )
+        timer.console = MagicMock()
+        return timer
+
+    def case_for(self, timer: Trainer) -> object:
+        """
+        Return the Case object matching CASE_CODE from the trainer pool.
+
+        Returns:
+            The cubing_algs Case for CASE_CODE.
+
+        """
+        return next(
+            tc.case for tc in timer.cases if tc.case.code == self.CASE_CODE
+        )
+
+    def training_case_for(self, timer: Trainer) -> object:
+        """
+        Return the TrainingCase matching CASE_CODE from the trainer pool.
+
+        Returns:
+            The TrainingCase for CASE_CODE.
+
+        """
+        return next(
+            tc for tc in timer.cases if tc.case.code == self.CASE_CODE
+        )
+
+    def test_resolve_uses_custom_solution_when_defined(self) -> None:
+        """A stored custom solution is returned in place of main_algorithm."""
+        timer = self.make_trainer(
+            {
+                self.CASE_CODE: CaseTraining(
+                    code=self.CASE_CODE,
+                    last_date=0,
+                    timings=[],
+                    solution="R U R' U'",
+                ),
+            },
+        )
+        case = self.case_for(timer)
+
+        resolved = timer.resolve_solution(case)  # type: ignore[arg-type]
+
+        self.assertEqual(str(resolved), "R U R' U'")
+
+    def test_resolve_falls_back_without_custom_solution(self) -> None:
+        """Without a stored solution the cubing_algs main algorithm is used."""
+        timer = self.make_trainer()
+        case = self.case_for(timer)
+
+        resolved = timer.resolve_solution(case)  # type: ignore[arg-type]
+
+        self.assertEqual(str(resolved), str(case.main_algorithm))  # type: ignore[attr-defined]
+
+    def test_resolve_falls_back_on_invalid_custom_solution(self) -> None:
+        """An unparsable custom solution falls back to main_algorithm."""
+        timer = self.make_trainer(
+            {
+                self.CASE_CODE: CaseTraining(
+                    code=self.CASE_CODE,
+                    last_date=0,
+                    timings=[],
+                    solution='not a move',
+                ),
+            },
+        )
+        case = self.case_for(timer)
+
+        resolved = timer.resolve_solution(case)  # type: ignore[arg-type]
+
+        self.assertEqual(str(resolved), str(case.main_algorithm))  # type: ignore[attr-defined]
+
+    def test_training_case_carries_custom_solution(self) -> None:
+        """get_cases injects the resolved solution into the TrainingCase."""
+        timer = self.make_trainer(
+            {
+                self.CASE_CODE: CaseTraining(
+                    code=self.CASE_CODE,
+                    last_date=0,
+                    timings=[],
+                    solution="R U R' U'",
+                ),
+            },
+        )
+        training_case = self.training_case_for(timer)
+
+        self.assertEqual(str(training_case.solution), "R U R' U'")  # type: ignore[attr-defined]
+
+    def test_training_case_defaults_to_main_algorithm(self) -> None:
+        """Without a custom solution the TrainingCase carries main_algorithm."""
+        timer = self.make_trainer()
+        training_case = self.training_case_for(timer)
+
+        self.assertEqual(
+            str(training_case.solution),  # type: ignore[attr-defined]
+            str(training_case.case.main_algorithm),  # type: ignore[attr-defined]
+        )
+
+    def test_fixed_case_step_has_empty_solution(self) -> None:
+        """Cross-like steps (fixed training_case) carry an empty solution."""
+        empty = Trainings(method='CFOP', step='CROSS', cases={})
+        with patch(
+            'term_timer.trainer.load_trainings', return_value=empty,
+        ):
+            timer = Trainer(
+                step='cross',
+                case_codes=[],
+                oldest=0,
+                slowest=0,
+                random=0,
+                new_cases_limit=5,
+                filters=[],
+                free_play=False,
+                show_solution=False,
+                show_cube=False,
+                metronome=0,
+                orientation='DF',
+                rng=Random(),  # noqa: S311
+            )
+
+        self.assertEqual(str(timer.cases[0].solution), '')
+
+
 class TestSpeedTrend(unittest.TestCase):
     """speed_trend compares the current Ao5 to the best Ao12 ever."""
 
