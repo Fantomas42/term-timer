@@ -407,7 +407,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         if case_training is not None and case_training.solution:
             try:
                 return parse_moves(
-                    case_training.solution, trust_input=False,
+                    case_training.solution,
+                    trust_input=True,
                 )
             except InvalidMoveError:
                 pass  # fall back to the cubing_algs solution
