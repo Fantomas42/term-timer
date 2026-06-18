@@ -28,9 +28,9 @@ from rich import box
 from rich.table import Table
 
 from term_timer.annotations import TrainingCase
+from term_timer.config import DEBUG
 from term_timer.config import TRAINER_FSRS
 from term_timer.config import TRAINER_FSRS_RATING
-from term_timer.config import DEBUG
 from term_timer.constants import CROSS_CASE
 from term_timer.constants import DNF
 from term_timer.constants import EASY_CROSS_CASE
