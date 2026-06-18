@@ -11,6 +11,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 from cubing_algs.cases import get_collection
+from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
 from fsrs import Card
 from fsrs import Rating
@@ -870,6 +871,41 @@ class TestSolutionDisplayInLearningPhase(unittest.TestCase):
         solution = parse_moves("R U R' U' R' F R F'")
         timer.start_line(MagicMock(), case, solution)  # type: ignore[arg-type]
         self.assertNotIn('Solution', self.printed_text(timer))
+
+
+class TestBuildReferenceSolution(TestSolutionDisplayInLearningPhase):
+    """build_reference_solution prepends the pre-AUF without mutating."""
+
+    def test_empty_solution_returns_empty(self) -> None:
+        """No solution yields an empty reference."""
+        timer = self.make_trainer()
+        reference = timer.build_reference_solution(parse_moves(''))
+        self.assertEqual(len(reference), 0)
+
+    def test_no_pre_auf_returns_solution_unchanged(self) -> None:
+        """When no pre-AUF is needed the solution is returned as-is."""
+        timer = self.make_trainer()
+        solution = parse_moves("R U R' U' R' F R F'")
+        with patch.object(timer, 'compute_pre_aufs', return_value=None):
+            reference = timer.build_reference_solution(solution)
+        self.assertEqual(str(reference), str(solution))
+
+    def test_pre_auf_is_prepended(self) -> None:
+        """A computed pre-AUF is prepended to the solution."""
+        timer = self.make_trainer()
+        solution = parse_moves("R U R' U' R' F R F'")
+        with patch.object(timer, 'compute_pre_aufs', return_value=Move('U2')):
+            reference = timer.build_reference_solution(solution)
+        self.assertEqual(str(reference), "U2 R U R' U' R' F R F'")
+
+    def test_original_solution_is_not_mutated(self) -> None:
+        """Building the reference leaves the source solution untouched."""
+        timer = self.make_trainer()
+        solution = parse_moves("R U R' U' R' F R F'")
+        original = str(solution)
+        with patch.object(timer, 'compute_pre_aufs', return_value=Move('U2')):
+            timer.build_reference_solution(solution)
+        self.assertEqual(str(solution), original)
 
 
 class TestResolveSolution(unittest.TestCase):

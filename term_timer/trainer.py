@@ -197,6 +197,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.fsrs_scheduler = FSRSScheduler() if self.fsrs_update else None
         self.fsrs_rater = PerformanceRater() if self.fsrs_update else None
         self.fsrs_pending_rating: RatingBreakdown | None = None
+        self.fsrs_reference_solution: Algorithm = Algorithm()
         self.fsrs_last_focus: str | None = None
         self.fsrs_new_cases_introduced: int = 0
 
@@ -916,16 +917,16 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             ),
         ]
 
-        if breakdown.htm_forced:
-            htm_impact = '[again]over budget -> Again[/again]'
+        if breakdown.forced:
+            forcing_impact = '[again]over solution -> Again[/again]'
         else:
-            htm_impact = '[no-ao]within budget[/no-ao]'
+            forcing_impact = '[no-ao]within solution[/no-ao]'
         rows.append(
             (
-                'htm',
-                str(breakdown.htm),
-                f'max { breakdown.max_moves }',
-                htm_impact,
+                'qtm',
+                str(breakdown.executed_qtm),
+                f'solution { breakdown.reference_qtm }',
+                forcing_impact,
             ),
         )
 
@@ -1073,7 +1074,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         stability = current_card.stability if current_card is not None else None
 
         breakdown = self.fsrs_rater.rate_with_details(
-            solve, self.step, selected_case.code, stability,
+            solve, self.step, self.fsrs_reference_solution, stability,
         )
         self.fsrs_pending_rating = breakdown
         preview_card = self.fsrs_scheduler.update_card(
@@ -1160,6 +1161,32 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         return None
 
+    def build_reference_solution(self, solution: Algorithm) -> Algorithm:
+        """
+        Build the reference solution for this attempt, with pre-AUF.
+
+        Returns a new Algorithm (the original is left untouched) made of the
+        computed pre-AUF followed by the solution, so it matches what the cube
+        must actually perform from the scrambled state. This is the reference
+        the FSRS rater compares the execution against to detect forcing.
+
+        Returns:
+            The pre-AUF prepended to the solution, or the solution unchanged
+            when no pre-AUF is needed, or an empty Algorithm when no solution
+            is available.
+
+        """
+        if not solution:
+            return Algorithm()
+
+        pre_auf = self.compute_pre_aufs(solution)
+        if pre_auf is None:
+            return solution
+
+        # TODO: check if solution start with AUF,
+        # to merge pre_auf and solution[0;?]
+        return Algorithm([pre_auf, *solution])
+
     def start_line(
             self,
             cube: VCube,
@@ -1195,10 +1222,6 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 self.show_solution
                 or self.case_in_learning_phase(selected_case)
         ):
-            pre_aufs = self.compute_pre_aufs(solution)
-            if pre_aufs:
-                solution.insert(0, pre_aufs)
-
             formatted_algorithm = format_alg_triggers(
                 format_alg_moves(
                     format_alg_aufs(
@@ -1598,7 +1621,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                         else self.fsrs_rater.rate(
                             solve,
                             self.step,
-                            selected_case.code,
+                            self.fsrs_reference_solution,
                             case_training.fsrs_card.stability
                             if case_training.fsrs_card is not None
                             else None,
@@ -1696,7 +1719,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         else:
             self.scramble_oriented = self.reorient(self.scramble)
 
-        self.start_line(cube, selected_case, solution)
+        self.fsrs_reference_solution = self.build_reference_solution(solution)
+        self.start_line(cube, selected_case, self.fsrs_reference_solution)
 
         quit_training = await self.scramble_solve()
 

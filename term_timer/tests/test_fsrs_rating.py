@@ -4,6 +4,8 @@ from datetime import UTC
 from datetime import datetime
 from unittest.mock import patch
 
+from cubing_algs.algorithm import Algorithm
+from cubing_algs.parsing import parse_moves
 from fsrs import Rating
 
 from term_timer.constants import SECOND
@@ -20,7 +22,6 @@ from term_timer.fsrs.rating import TPS_REF_DEFAULT
 from term_timer.fsrs.rating import TPS_REF_STEP
 from term_timer.fsrs.rating import TPS_SCALE
 from term_timer.fsrs.rating import PerformanceRater
-from term_timer.fsrs.rating import build_case_max_moves
 from term_timer.solve import Solve
 
 
@@ -40,23 +41,51 @@ def make_solve(elapsed_ns: int, moves: str | None = None) -> Solve:
     )
 
 
+def turns(count: int) -> str:
+    """
+    Build a string of ``count`` single quarter turns that never cancel.
+
+    R / F / L never cancel with each other and contain no U, so the
+    trailing-AUF trim leaves the move count intact and missed_moves stays 0.
+    For single turns QTM equals the move count.
+
+    Returns:
+        A space-separated move string of ``count`` quarter turns.
+
+    """
+    move_cycle = ['R', 'F', 'L']
+    return ' '.join(move_cycle[i % len(move_cycle)] for i in range(count))
+
+
 def make_bt_solve(htm: int, elapsed_s: float) -> Solve:
     """
-    Create a BT solve with a controlled HTM count and elapsed time.
+    Create a BT solve with a controlled move count and elapsed time.
 
     Builds a moves string of exactly ``htm`` single-turn moves so that
-    ``solve.solution.metrics.htm == htm`` without relying on timing data.
+    ``solve.solution.metrics.qtm == htm`` without relying on timing data.
 
     Returns:
         A Solve instance with move data, the given elapsed time, and the
-        requested HTM count.
+        requested move count.
 
     """
-    # R / F / L never cancel with each other and contain no U, so the
-    # trailing-AUF trim leaves the move count intact and missed_moves stays 0.
-    move_cycle = ['R', 'F', 'L']
-    moves = ' '.join(move_cycle[i % len(move_cycle)] for i in range(htm))
-    return make_solve(int(elapsed_s * SECOND), moves=moves)
+    return make_solve(int(elapsed_s * SECOND), moves=turns(htm))
+
+
+def make_reference(qtm: int) -> Algorithm:
+    """
+    Build a reference solution of ``qtm`` quarter turns.
+
+    Returns:
+        An Algorithm whose reference QTM equals ``qtm``.
+
+    """
+    return parse_moves(turns(qtm))
+
+
+# A reference long enough that the score path, not the forcing override,
+# decides the rating in score-focused tests.
+LONG_REFERENCE = make_reference(60)
 
 
 class TestRateWithoutBluetooth(unittest.TestCase):
@@ -74,15 +103,18 @@ class TestRateWithoutBluetooth(unittest.TestCase):
         """
         fast = make_solve(int(1.0 * SECOND), moves=None)
         slow = make_solve(int(8.0 * SECOND), moves=None)
-        self.assertEqual(self.rater.rate(fast, 'pll', 'T'), Rating.Good)
-        self.assertEqual(self.rater.rate(slow, 'pll', 'T'), Rating.Good)
+        ref = make_reference(10)
+        self.assertEqual(self.rater.rate(fast, 'pll', ref), Rating.Good)
+        self.assertEqual(self.rater.rate(slow, 'pll', ref), Rating.Good)
 
     def test_rate_with_details_no_moves_is_zeroed(self) -> None:
         """Without Bluetooth, the breakdown carries no execution metrics."""
         solve = make_solve(int(2.0 * SECOND), moves=None)
-        breakdown = self.rater.rate_with_details(solve, 'pll', 'T')
+        breakdown = self.rater.rate_with_details(
+            solve, 'pll', make_reference(10),
+        )
         self.assertEqual(breakdown.rating, Rating.Good)
-        self.assertEqual(breakdown.htm, 0)
+        self.assertEqual(breakdown.executed_qtm, 0)
         self.assertEqual(breakdown.missed_qtm, 0)
         self.assertEqual(breakdown.pauses, 0)
         self.assertEqual(breakdown.tps, 0.0)
@@ -231,74 +263,65 @@ class TestRateWithBluetooth(unittest.TestCase):
         """TPS above ref, no pauses/missed -> EASY."""
         # 10 moves in 2.0s = 5.0 TPS > PLL ref 4.9.
         solve = make_bt_solve(htm=10, elapsed_s=2.0)
-        self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Easy)
+        self.assertEqual(
+            self.rater.rate(solve, 'pll', LONG_REFERENCE), Rating.Easy,
+        )
 
     def test_moderately_low_tps_is_hard(self) -> None:
         """TPS well below ref grades to HARD, not straight to AGAIN."""
         # 9 moves in 3.0s = 3.0 TPS; (4.9-3.0)/1.5 = 1.27 -> Hard.
         solve = make_bt_solve(htm=9, elapsed_s=3.0)
-        self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Hard)
+        self.assertEqual(
+            self.rater.rate(solve, 'pll', LONG_REFERENCE), Rating.Hard,
+        )
 
     def test_very_low_tps_is_again(self) -> None:
         """A very low TPS pushes the score past the AGAIN cut."""
         # 8 moves in 4.0s = 2.0 TPS; (4.9-2.0)/1.5 = 1.93 -> Again.
         solve = make_bt_solve(htm=8, elapsed_s=4.0)
-        self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Again)
+        self.assertEqual(
+            self.rater.rate(solve, 'pll', LONG_REFERENCE), Rating.Again,
+        )
 
     def test_missed_moves_grade_down(self) -> None:
         """Missed QTM on an otherwise-clean solve -> GOOD."""
         with patch.object(Solve, 'missed_moves', return_value=2):
             # tps clean (0) + 2*0.30 missed = 0.6 -> Good.
             solve = make_bt_solve(htm=10, elapsed_s=2.0)
-            self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Good)
+            self.assertEqual(
+                self.rater.rate(solve, 'pll', LONG_REFERENCE), Rating.Good,
+            )
 
     def test_extra_pauses_grade_down(self) -> None:
         """Several pauses on an otherwise-clean solve -> GOOD."""
         with patch.object(Solve, 'pauses', return_value=4):
             # (4-1)*0.25 = 0.75 -> Good.
             solve = make_bt_solve(htm=10, elapsed_s=2.0)
-            self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Good)
+            self.assertEqual(
+                self.rater.rate(solve, 'pll', LONG_REFERENCE), Rating.Good,
+            )
 
     def test_single_pause_stays_easy(self) -> None:
         """One regrip pause does not move a clean solve off EASY."""
         with patch.object(Solve, 'pauses', return_value=1):
             solve = make_bt_solve(htm=10, elapsed_s=2.0)
-            self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Easy)
-
-    def test_over_move_limit_is_again(self) -> None:
-        """HTM > per-case limit is a categorical AGAIN, before scoring."""
-        limit = build_case_max_moves('pll')['T']
-        # Fast (would be Easy by score) but over the move budget -> Again.
-        solve = make_bt_solve(htm=limit + 1, elapsed_s=1.0)
-        self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Again)
-
-    def test_at_move_limit_is_not_again_by_moves(self) -> None:
-        """HTM == limit does not trigger the categorical AGAIN."""
-        limit = build_case_max_moves('pll')['T']
-        solve = make_bt_solve(htm=limit, elapsed_s=2.0)
-        self.assertNotEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Again)
-
-    def test_unknown_step_raises(self) -> None:
-        """An unknown step has no collection: the lookup raises KeyError."""
-        solve = make_bt_solve(htm=16, elapsed_s=2.0)
-        with self.assertRaises(KeyError):
-            self.rater.rate(solve, 'unknown_step', 'T')
+            self.assertEqual(
+                self.rater.rate(solve, 'pll', LONG_REFERENCE), Rating.Easy,
+            )
 
 
-class TestExecutionMetricsDoubleMerge(unittest.TestCase):
+class TestForcingDetection(unittest.TestCase):
     """
-    Doubles executed as two quarter turns count once in the HTM budget.
+    Forcing is detected by comparing executed QTM to the reference solution.
 
-    A Bluetooth cube only emits quarter turns: every U2 of an algorithm
-    arrives as ``U U``. The HTM compared to the per-case budget must be
-    counted in merged notation, like the database algorithms the budget
-    is built from.
+    An execution that needs more turns than the reference (case algorithm plus
+    pre-AUF) signals OCLL forcing: a categorical AGAIN before the score. The
+    comparison is in QTM (invariant to ``U2`` vs ``U U``) and on the execution
+    with fumbles stripped, so a small slip does not read as forcing.
     """
 
     def setUp(self) -> None:  # noqa: D102
         self.rater = PerformanceRater()
-        # The test solves carry no timing data, on which the real pause
-        # detection chokes; both signals are orthogonal to the HTM merge.
         patcher_pauses = patch.object(Solve, 'pauses', return_value=0)
         patcher_missed = patch.object(Solve, 'missed_moves', return_value=0)
         patcher_pauses.start()
@@ -306,85 +329,75 @@ class TestExecutionMetricsDoubleMerge(unittest.TestCase):
         self.addCleanup(patcher_pauses.stop)
         self.addCleanup(patcher_missed.stop)
 
-    def test_htm_merges_consecutive_quarter_turns(self) -> None:
-        """``R U U R F`` counts 4 HTM (``R U2 R F``), not 5."""
+    def test_over_reference_is_again(self) -> None:
+        """Executed QTM above the reference is a categorical AGAIN."""
+        # Fast (would be Easy by score) but longer than the reference.
+        solve = make_bt_solve(htm=12, elapsed_s=1.0)
+        self.assertEqual(
+            self.rater.rate(solve, 'pll', make_reference(10)), Rating.Again,
+        )
+
+    def test_at_reference_is_not_forced(self) -> None:
+        """Executed QTM equal to the reference does not force."""
+        solve = make_bt_solve(htm=10, elapsed_s=2.0)
+        self.assertNotEqual(
+            self.rater.rate(solve, 'pll', make_reference(10)), Rating.Again,
+        )
+
+    def test_under_reference_is_not_forced(self) -> None:
+        """A shorter-than-reference execution never forces."""
+        solve = make_bt_solve(htm=8, elapsed_s=2.0)
+        breakdown = self.rater.rate_with_details(
+            solve, 'pll', make_reference(12),
+        )
+        self.assertFalse(breakdown.forced)
+
+    def test_fumble_compressed_under_reference_is_not_forced(self) -> None:
+        """
+        A do-undo fumble inflates the raw stream but is stripped first.
+
+        The raw execution ``R U R' F R R'`` is 6 QTM, above the 4 QTM
+        reference, but ``R R'`` cancels: the compared execution is 4 QTM, so
+        the slip does not read as forcing.
+        """
+        solve = make_solve(int(2.0 * SECOND), moves="R U R' F R R'")
+        breakdown = self.rater.rate_with_details(
+            solve, 'pll', parse_moves("R U R' F"),
+        )
+        self.assertEqual(breakdown.executed_qtm, 4)
+        self.assertEqual(breakdown.reference_qtm, 4)
+        self.assertFalse(breakdown.forced)
+
+    def test_double_executed_as_quarters_matches_reference(self) -> None:
+        """
+        ``U U`` execution equals a ``U2`` reference in QTM (no forcing).
+
+        A Bluetooth cube emits a double as two quarter turns; QTM counts both
+        forms identically, so no double-merge is needed.
+        """
         solve = make_solve(int(2.0 * SECOND), moves='R U U R F')
-        breakdown = self.rater.rate_with_details(solve, 'oll', '26')
-        self.assertEqual(breakdown.htm, 4)
+        breakdown = self.rater.rate_with_details(
+            solve, 'oll', parse_moves('R U2 R F'),
+        )
+        self.assertEqual(breakdown.executed_qtm, 5)
+        self.assertEqual(breakdown.reference_qtm, 5)
+        self.assertFalse(breakdown.forced)
+
+    def test_empty_reference_disables_forcing(self) -> None:
+        """With no reference solution the forcing override is skipped."""
+        # Long and fast: would force against any real reference.
+        solve = make_bt_solve(htm=30, elapsed_s=1.0)
+        breakdown = self.rater.rate_with_details(solve, 'pll', Algorithm())
+        self.assertEqual(breakdown.reference_qtm, 0)
+        self.assertFalse(breakdown.forced)
 
     def test_tps_keeps_unmerged_move_count(self) -> None:
         """TPS still reflects physical quarter turns (hand speed)."""
         solve = make_solve(int(2.0 * SECOND), moves='R U U R F')
-        breakdown = self.rater.rate_with_details(solve, 'oll', '26')
+        breakdown = self.rater.rate_with_details(
+            solve, 'oll', parse_moves('R U2 R F'),
+        )
         self.assertEqual(breakdown.tps, 5 / 2.0)
-
-    def test_oll_14_clean_solve_regression(self) -> None:
-        """
-        A clean OLL 14 with pre-AUF U2 must not be htm-forced to Again.
-
-        Regression: the 15 HTM algorithm plus a U2 pre-AUF, all doubles
-        executed as quarter-turn pairs, gave a raw stream of 18 moves
-        against a budget of 17 (P90 15 + 2) and forced Again on a
-        flawless execution (score 0.00). Merged, the stream is 16 HTM.
-        """
-        moves = "U U R U R' U' R' F R F' R U U R' U' R U' R'"
-        solve = make_solve(int(3.57 * SECOND), moves=moves)
-        breakdown = self.rater.rate_with_details(solve, 'oll', '14')
-        self.assertEqual(breakdown.htm, 16)
-        self.assertFalse(breakdown.htm_forced)
-        self.assertEqual(breakdown.rating, Rating.Easy)
-
-
-class TestCaseMaxMoves(unittest.TestCase):
-    """Validate the per-case HTM thresholds built from cubing_algs."""
-
-    def test_known_cases_present(self) -> None:
-        """Key OLL and PLL cases must have a threshold entry."""
-        cases = [
-            ('pll', 'T'), ('pll', 'F'), ('pll', 'Aa'),
-            ('oll', '26'), ('oll', '07'),
-        ]
-        for step, code in cases:
-            self.assertIn(code, build_case_max_moves(step))
-
-    def test_all_values_are_positive(self) -> None:
-        """Every build_case_max_moves value must be a positive integer."""
-        for step in ('oll', 'pll', 'f2l', 'af2l'):
-            for code, limit in build_case_max_moves(step).items():
-                self.assertGreater(
-                    limit, 0, msg=f'{step}:{code} has non-positive limit',
-                )
-
-    def test_threshold_is_per_case(self) -> None:
-        """
-        The HTM budget differs per case: a tight case forces, a loose one
-        does not, at the same HTM.
-        """
-        rater = PerformanceRater()
-        # PLL Ab P90+2 = 17 (tight); PLL Gd P90+2 = 24 (loose).
-        tight = build_case_max_moves('pll')['Ab']
-        loose = build_case_max_moves('pll')['Gd']
-        self.assertLess(tight, loose)
-        htm_between = tight + 2  # above the tight budget, below the loose one
-        self.assertLess(htm_between, loose)
-        with (
-            patch.object(Solve, 'pauses', return_value=0),
-            patch.object(Solve, 'missed_moves', return_value=0),
-        ):
-            solve = make_bt_solve(htm=htm_between, elapsed_s=1.0)
-            self.assertEqual(rater.rate(solve, 'pll', 'Ab'), Rating.Again)
-            self.assertNotEqual(rater.rate(solve, 'pll', 'Gd'), Rating.Again)
-
-    def test_unknown_case_raises(self) -> None:
-        """An unknown case code raises KeyError instead of a silent fallback."""
-        rater = PerformanceRater()
-        with (
-            patch.object(Solve, 'pauses', return_value=0),
-            patch.object(Solve, 'missed_moves', return_value=0),
-        ):
-            solve = make_bt_solve(htm=16, elapsed_s=2.0)
-            with self.assertRaises(KeyError):
-                rater.rate(solve, 'pll', 'UNKNOWN_CASE')
 
 
 class TestHighStabilityFloor(unittest.TestCase):
@@ -414,11 +427,14 @@ class TestHighStabilityFloor(unittest.TestCase):
         """TPS-only Again on a high-stability card is floored to Hard."""
         solve = make_bt_solve(htm=self.SLOW_HTM, elapsed_s=self.SLOW_S)
         # Sanity: without stability the score produces Again.
-        self.assertEqual(self.rater.rate(solve, 'pll', 'T'), Rating.Again)
+        self.assertEqual(
+            self.rater.rate(solve, 'pll', LONG_REFERENCE), Rating.Again,
+        )
         # With high stability and clean execution: floored to Hard.
         self.assertEqual(
             self.rater.rate(
-                solve, 'pll', 'T', stability=HIGH_STABILITY_FLOOR_DAYS,
+                solve, 'pll', LONG_REFERENCE,
+                stability=HIGH_STABILITY_FLOOR_DAYS,
             ),
             Rating.Hard,
         )
@@ -428,7 +444,8 @@ class TestHighStabilityFloor(unittest.TestCase):
         solve = make_bt_solve(htm=self.SLOW_HTM, elapsed_s=self.SLOW_S)
         self.assertEqual(
             self.rater.rate(
-                solve, 'pll', 'T', stability=HIGH_STABILITY_FLOOR_DAYS - 1.0,
+                solve, 'pll', LONG_REFERENCE,
+                stability=HIGH_STABILITY_FLOOR_DAYS - 1.0,
             ),
             Rating.Again,
         )
@@ -441,19 +458,20 @@ class TestHighStabilityFloor(unittest.TestCase):
             solve = make_bt_solve(htm=self.SLOW_HTM, elapsed_s=self.SLOW_S)
             self.assertEqual(
                 self.rater.rate(
-                    solve, 'pll', 'T', stability=HIGH_STABILITY_FLOOR_DAYS,
+                    solve, 'pll', LONG_REFERENCE,
+                    stability=HIGH_STABILITY_FLOOR_DAYS,
                 ),
                 Rating.Again,
             )
 
-    def test_htm_forcing_high_stability_stays_again(self) -> None:
-        """htm-forcing is categorical: floor does not apply at high stab."""
-        limit = build_case_max_moves('pll')['T']
-        # A fast solve that would be Easy by score but is over the move budget.
-        solve = make_bt_solve(htm=limit + 1, elapsed_s=1.0)
+    def test_forcing_high_stability_stays_again(self) -> None:
+        """Forcing is categorical: the floor does not apply at high stab."""
+        # A fast solve that would be Easy by score but longer than reference.
+        solve = make_bt_solve(htm=12, elapsed_s=1.0)
         self.assertEqual(
             self.rater.rate(
-                solve, 'pll', 'T', stability=HIGH_STABILITY_FLOOR_DAYS,
+                solve, 'pll', make_reference(10),
+                stability=HIGH_STABILITY_FLOOR_DAYS,
             ),
             Rating.Again,
         )

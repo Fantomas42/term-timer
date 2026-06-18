@@ -15,69 +15,27 @@ a middle band instead.
   - A missed QTM (after AUF stripping) is a real cancellation error.
   - Time is a soft guard past TIME_SOFT_S, not a cliff.
 
-An alg far over its per-case move budget is a categorical AGAIN override
-(OCLL forcing = case structurally not memorised).
+An execution that needs more turns than the reference solution shown in the
+trainer is a categorical AGAIN override (OCLL forcing = case structurally not
+memorised). The comparison is done in QTM, the quarter-turn metric, which is
+invariant to whether a double turn is recorded as ``U2`` or as two ``U`` (the
+Bluetooth cube only emits quarter turns); fumbles (do-undo, triples) are
+stripped from the execution first so a small slip does not read as forcing.
 
 Without Bluetooth data there is no execution signal to rate, so the user
 declares the rating manually at the keyboard; this module is not consulted
 on that path.
 """
 
-from functools import cache
-from typing import TYPE_CHECKING
 from typing import NamedTuple
 
-from cubing_algs.cases import get_collection
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.constants import AUF_CHAR
-from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.trim import trim_moves
 from fsrs import Rating
 
 from term_timer.constants import SECOND
-
-if TYPE_CHECKING:
-    from term_timer.solve import Solve
-
-COLLECTION_STEP: dict[str, str] = {
-    'CFOP/OLL': 'oll',
-    'CFOP/PLL': 'pll',
-    'CFOP/F2L': 'f2l',
-    'CFOP/AF2L': 'af2l',
-}
-
-STEP_COLLECTION: dict[str, str] = {v: k for k, v in COLLECTION_STEP.items()}
-
-
-@cache
-def build_case_max_moves(step: str) -> dict[str, int]:
-    """
-    Build per-case HTM threshold for a single step, lazily on first use.
-
-    P90 rather than max makes the threshold robust to outlier algorithms in
-    the DB (e.g. OLL 04 has a 28 HTM algorithm despite a P90 of 15).
-    Result is cached so subsequent calls for the same step are free.
-
-    Args:
-        step: Step name (e.g. 'oll', 'pll').
-
-    Returns:
-        Dict mapping case_code to HTM threshold (e.g. {'T': 16, 'F': 18}).
-        Empty dict if the step has no known collection.
-
-    """
-    collection_name = STEP_COLLECTION.get(step)
-    if collection_name is None:
-        return {}
-    collection = get_collection(collection_name)
-    result: dict[str, int] = {}
-    for case in collection.cases.values():
-        if not case.algorithms:
-            continue
-        htms = sorted(a.metrics.htm for a in case.algorithms)
-        p90 = htms[int(len(htms) * 0.9)]
-        result[case.code] = p90 + 2
-    return result
-
+from term_timer.solve import Solve
 
 # Graded score: TPS is the primary signal. At or above the per-step
 # reference the case feels grooved (no penalty); below it the penalty grows
@@ -109,9 +67,9 @@ BAND_GOOD: float = 1.0
 BAND_AGAIN: float = 1.5
 
 # A purely speed-driven Again (clean execution, no missed moves, no
-# htm-forcing) is floored to Hard on high-stability cards so a known-but-slow
+# forcing) is floored to Hard on high-stability cards so a known-but-slow
 # rep does not wipe weeks of accumulated stability. Missed moves and
-# htm-forcing still produce Again unconditionally — structural non-memorisation.
+# forcing still produce Again unconditionally — structural non-memorisation.
 HIGH_STABILITY_FLOOR_DAYS: float = 14.0
 
 
@@ -120,7 +78,7 @@ class RatingBreakdown(NamedTuple):
 
     rating: Rating
     time_s: float
-    htm: int
+    executed_qtm: int
     missed_qtm: int
     pauses: int
     tps: float
@@ -130,8 +88,8 @@ class RatingBreakdown(NamedTuple):
     pause_pen: float = 0.0
     missed_pen: float = 0.0
     time_pen: float = 0.0
-    max_moves: int = 0
-    htm_forced: bool = False
+    reference_qtm: int = 0
+    forced: bool = False
     floored: bool = False
 
 
@@ -161,15 +119,16 @@ class PerformanceRater:
 
     @staticmethod
     def execution_metrics(
-        solve: 'Solve',
+        solve: Solve,
     ) -> tuple[float, int, int, int, float]:
         """
         Compute execution metrics with trailing AUF stripped.
 
         The final AUF (alignment moves at the end of the algorithm) pollutes
-        the HTM, missed-move and pause signals: a wrong AUF inflates the move
-        count, registers as missed QTM, and the recognition gap before it is
-        counted as a pause. Stripping it isolates the muscle-memory signal.
+        the move-count, missed-move and pause signals: a wrong AUF inflates
+        the move count, registers as missed QTM, and the recognition gap
+        before it is counted as a pause. Stripping it isolates the
+        muscle-memory signal.
 
         The solution is first reoriented into the canonical frame (last layer
         on U) so the AUF is expressed as ``U``; without this the recorded
@@ -177,20 +136,20 @@ class PerformanceRater:
         match nothing. Only the trailing AUF is trimmed; the leading edge is
         kept intact. TPS uses the full HTM so hand speed is not deflated.
 
-        A Bluetooth cube only emits quarter turns, so every double move is
-        recorded as two moves (``U U`` instead of ``U2``). The HTM compared
-        to the per-case budget is computed after merging them back, since
-        the budget comes from database algorithms in merged notation.
-        Pauses and missed moves stay on the unmerged stream: merging drops
-        one timestamp per double (distorting pause detection) and changes
-        how the cancellation optimizers match.
+        The executed QTM compared to the reference solution is measured after
+        stripping fumbles (do-undo, triples, repeats) so a small slip does not
+        read as forcing. QTM is invariant to whether a double turn is recorded
+        as ``U2`` or as two ``U`` (the Bluetooth cube only emits quarter
+        turns), so no double-merge is needed. Pauses and missed moves stay on
+        the unmerged stream: the cancellation optimizers match on it directly.
 
         Args:
             solve: Completed solve with Bluetooth move data.
 
         Returns:
-            Tuple of (time_s, htm, missed_qtm, pauses, tps), where htm,
-            missed_qtm and pauses are computed on the AUF-stripped algorithm.
+            Tuple of (time_s, executed_qtm, missed_qtm, pauses, tps), where
+            executed_qtm, missed_qtm and pauses are computed on the
+            AUF-stripped algorithm.
 
         """
         time_s = solve.time / SECOND
@@ -198,40 +157,61 @@ class PerformanceRater:
         algorithm = oriented.transform(
             trim_moves(AUF_CHAR, start=False, end=True),
         )
-        htm = algorithm.transform(optimize_double_moves).metrics.htm
+        executed_qtm = Solve.missed_moves_pair(algorithm)[1].metrics.qtm
         missed_qtm = solve.missed_moves(algorithm)
         pauses = solve.pauses(algorithm)
+        # TODO: not sure of the unit, prefers QTM ? also use algorithm as source ?
         tps = solve.compute_tps(oriented.metrics.htm, solve.time)
-        return time_s, htm, missed_qtm, pauses, tps
+        return time_s, executed_qtm, missed_qtm, pauses, tps
+
+    @staticmethod
+    def reference_qtm(reference: Algorithm) -> int:
+        """
+        QTM of the reference solution with its trailing AUF stripped.
+
+        The reference (case algorithm plus the computed pre-AUF) is already in
+        the canonical frame, so only the trailing AUF is trimmed — symmetric
+        with the executed side, which keeps its leading pre-AUF too.
+
+        Args:
+            reference: Reference solution shown in the trainer.
+
+        Returns:
+            Reference QTM, or 0 when no reference is available.
+
+        """
+        return reference.transform(
+            trim_moves(AUF_CHAR, start=False, end=True),
+        ).metrics.qtm
 
     def rate_with_details(
         self,
-        solve: 'Solve',
+        solve: Solve,
         step: str,
-        case_name: str,
+        reference: Algorithm,
         stability: float | None = None,
     ) -> RatingBreakdown:
         """
         Rate performance and return full breakdown.
 
-        An alg over its per-case move budget is a categorical AGAIN (forcing);
-        otherwise the penalty score maps to a band. Without Bluetooth data the
-        rating is collected manually, so this is not reached on the trainer
-        path; it returns Good as a defensive default.
+        An execution needing more turns than the reference solution is a
+        categorical AGAIN (forcing); otherwise the penalty score maps to a
+        band. Without Bluetooth data the rating is collected manually, so this
+        is not reached on the trainer path; it returns Good as a defensive
+        default.
 
         A purely speed-driven Again is floored to Hard when the execution was
         clean (no missed moves, pause within tolerance) and the card already
         has high stability: a known-but-slow rep should not reset weeks of
-        muscle memory. htm-forcing and missed moves still produce Again
+        muscle memory. Forcing and missed moves still produce Again
         unconditionally as they signal structural non-memorisation.
 
         Args:
             solve: Completed solve with optional advanced analysis.
             step: Step name (e.g. 'oll', 'pll').
-            case_name: Case code (e.g. 'F', '13') for the per-case HTM
-                threshold. Must belong to the step's collection: an unknown
-                code raises KeyError on purpose (it can only mean a caller
-                bug, never a normal trainer path).
+            reference: Reference solution shown in the trainer (case algorithm
+                plus computed pre-AUF). An empty reference disables the forcing
+                override (nothing to compare against).
             stability: Current FSRS stability in days, used to floor Again to
                 Hard on high-stability cards with clean execution.
 
@@ -244,19 +224,20 @@ class PerformanceRater:
                 Rating.Good, solve.time / SECOND, 0, 0, 0, 0.0, 0.0,
             )
 
-        time_s, htm, missed_qtm, pauses, tps = self.execution_metrics(solve)
+        time_s, executed_qtm, missed_qtm, pauses, tps = (
+            self.execution_metrics(solve)
+        )
+        reference_qtm = self.reference_qtm(reference)
 
         step_lower = step.lower()
-        max_moves = build_case_max_moves(step_lower)[case_name]
-
         pens = self.execution_penalties(
             time_s, missed_qtm, pauses, tps, step_lower,
         )
 
-        htm_forced = htm > max_moves
+        forced = reference_qtm > 0 and executed_qtm > reference_qtm
         rating = self.score_to_band(pens.score)
         floored = False
-        if htm_forced:
+        if forced:
             rating = Rating.Again
         elif (
             rating == Rating.Again
@@ -269,16 +250,28 @@ class PerformanceRater:
             floored = True
 
         return RatingBreakdown(
-            rating, time_s, htm, missed_qtm, pauses, tps, pens.score,
-            pens.tps_ref, pens.tps_pen, pens.pause_pen, pens.missed_pen,
-            pens.time_pen, max_moves, htm_forced, floored,
+            rating,
+            time_s,
+            executed_qtm,
+            missed_qtm,
+            pauses,
+            tps,
+            pens.score,
+            pens.tps_ref,
+            pens.tps_pen,
+            pens.pause_pen,
+            pens.missed_pen,
+            pens.time_pen,
+            reference_qtm,
+            forced,
+            floored,
         )
 
     def rate(
         self,
-        solve: 'Solve',
+        solve: Solve,
         step: str,
-        case_name: str,
+        reference: Algorithm,
         stability: float | None = None,
     ) -> Rating:
         """
@@ -290,15 +283,17 @@ class PerformanceRater:
         Args:
             solve: Completed solve with optional advanced analysis.
             step: Step name (e.g. 'oll', 'pll').
-            case_name: Case code (e.g. 'F', '13') for the per-case HTM
-                threshold; an unknown code raises KeyError on purpose.
+            reference: Reference solution shown in the trainer; an empty
+                reference disables the forcing override.
             stability: Current FSRS stability in days; None disables the floor.
 
         Returns:
             FSRS Rating: Again (1), Hard (2), Good (3), or Easy (4).
 
         """
-        return self.rate_with_details(solve, step, case_name, stability).rating
+        return self.rate_with_details(
+            solve, step, reference, stability,
+        ).rating
 
     @staticmethod
     def execution_penalties(
@@ -321,6 +316,7 @@ class PerformanceRater:
 
         """
         tps_ref = TPS_REF_STEP.get(step, TPS_REF_DEFAULT)
+
         return ExecutionPenalties(
             tps_ref=tps_ref,
             tps_pen=max(0.0, (tps_ref - tps) / TPS_SCALE),
