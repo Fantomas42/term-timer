@@ -388,8 +388,20 @@ class TestSolveTPS(unittest.TestCase):
             1000000000, 10 * SECOND, "R U R'",
             moves="R U R' U' R' F R2 U' R' U'",
         )
-        expected_tps = 10 / 10
+        # QTM is 11 (R2 counts as 2 quarter turns), not the 10 raw moves.
+        expected_tps = 11 / 10
         self.assertEqual(solve.tps, expected_tps)
+
+    def test_tps_uses_qtm_not_raw_count(self) -> None:
+        """TPS numerator is the QTM, ignoring rotations and merging doubles."""
+        solve = Solve(
+            1000000000, 10 * SECOND, "R U R'",
+            moves="R U R' U2 y R U2 R' F2",
+        )
+        # len(solution) == 9 (rotation counted, doubles collapsed) would give
+        # 0.9; the QTM is 11 (doubles count 2, the y rotation counts 0).
+        self.assertEqual(solve.solution.metrics.qtm, 11)
+        self.assertEqual(solve.tps, 11 / 10)
 
     def test_tps_without_moves(self) -> None:
         """Test TPS with no moves."""

@@ -334,11 +334,16 @@ class Solve:  # noqa: PLR0904
         """
         Calculate overall turns per second for the solve.
 
+        Uses the solution QTM as the numerator to stay consistent with the
+        per-step TPS (which is computed on ``step['qtm']``). A raw move count
+        would diverge: it counts rotations as turns and collapses doubles to
+        one, inflating or deflating the figure relative to the step bars.
+
         Returns:
-            TPS based on total solution length and solve time
+            TPS based on the solution QTM and solve time
 
         """
-        return self.compute_tps(len(self.solution), self.time)
+        return self.compute_tps(self.solution.metrics.qtm, self.time)
 
     @cached_property
     def aufs(self) -> int:
