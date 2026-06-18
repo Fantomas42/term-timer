@@ -999,8 +999,8 @@ class TestResolveSolution(unittest.TestCase):
 
         self.assertEqual(str(resolved), str(case.main_algorithm))  # type: ignore[attr-defined]
 
-    def test_resolve_falls_back_on_invalid_custom_solution(self) -> None:
-        """An unparsable custom solution falls back to main_algorithm."""
+    def test_resolve_uses_invalid_custom_solution_as_is(self) -> None:
+        """An invalid custom solution is used as-is, not validated."""
         timer = self.make_trainer(
             {
                 self.CASE_CODE: CaseTraining(
@@ -1015,7 +1015,7 @@ class TestResolveSolution(unittest.TestCase):
 
         resolved = timer.resolve_solution(case)  # type: ignore[arg-type]
 
-        self.assertEqual(str(resolved), str(case.main_algorithm))  # type: ignore[attr-defined]
+        self.assertEqual(str(resolved), 'not a move')
 
     def test_training_case_carries_custom_solution(self) -> None:
         """get_cases injects the resolved solution into the TrainingCase."""

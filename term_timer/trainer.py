@@ -16,7 +16,6 @@ from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
 from cubing_algs.constants import DEFAULT_CUBE_SIZE
 from cubing_algs.constants import ORIENTATION_FACE_MOVES
-from cubing_algs.exceptions import InvalidMoveError
 from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
 from cubing_algs.solver import facelets_to_facelets_algorithm
@@ -396,24 +395,21 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         A user can store a preferred solution per case in the training
         file under the ``solution`` key. When present, it is parsed and
-        used as-is, with no verification that it solves the case; an
-        unparsable string silently falls back to the cubing_algs
-        main algorithm.
+        used as-is, with no verification that it solves the case or that
+        it is a valid algorithm; an invalid value is the user's
+        responsibility.
 
         Returns:
-            The custom solution when one is defined and parsable, otherwise
-            the cubing_algs main algorithm of the case.
+            The custom solution when one is defined, otherwise the
+            cubing_algs main algorithm of the case.
 
         """
         case_training = self.trainings.cases.get(case.code)
         if case_training is not None and case_training.solution:
-            try:
-                return parse_moves(
-                    case_training.solution,
-                    trust_input=True,
-                )
-            except InvalidMoveError:
-                pass  # fall back to the cubing_algs solution
+            return parse_moves(
+                case_training.solution,
+                trust_input=True,
+            )
 
         return case.main_algorithm
 
