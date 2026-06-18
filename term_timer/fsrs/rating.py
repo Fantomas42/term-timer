@@ -134,7 +134,8 @@ class PerformanceRater:
         on U) so the AUF is expressed as ``U``; without this the recorded
         moves keep the cube frame (last layer often on D) and the trim would
         match nothing. Only the trailing AUF is trimmed; the leading edge is
-        kept intact. TPS uses the full HTM so hand speed is not deflated.
+        kept intact. TPS is the solve's canonical ``solve.tps`` (full,
+        untrimmed move count) so hand speed is not deflated.
 
         The executed QTM compared to the reference solution is measured after
         stripping fumbles (do-undo, triples, repeats) so a small slip does not
@@ -160,9 +161,8 @@ class PerformanceRater:
         executed_qtm = Solve.missed_moves_pair(algorithm)[1].metrics.qtm
         missed_qtm = solve.missed_moves(algorithm)
         pauses = solve.pauses(algorithm)
-        # TODO: not sure of the unit, prefers QTM ? also use algorithm as source ?
-        tps = solve.compute_tps(oriented.metrics.htm, solve.time)
-        return time_s, executed_qtm, missed_qtm, pauses, tps
+
+        return time_s, executed_qtm, missed_qtm, pauses, solve.tps
 
     @staticmethod
     def reference_qtm(reference: Algorithm) -> int:
