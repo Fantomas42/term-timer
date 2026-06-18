@@ -907,6 +907,46 @@ class TestBuildReferenceSolution(TestSolutionDisplayInLearningPhase):
             timer.build_reference_solution(solution)
         self.assertEqual(str(solution), original)
 
+    def test_pre_auf_merges_with_leading_u_move(self) -> None:
+        """A pre-AUF merges into a solution starting with the same move."""
+        timer = self.make_trainer()
+        solution = parse_moves("U R U R' U' R' F R F'")
+        with patch.object(timer, 'compute_pre_aufs', return_value=Move('U')):
+            reference = timer.build_reference_solution(solution)
+        self.assertEqual(str(reference), "U2 R U R' U' R' F R F'")
+
+    def test_pre_auf_cancels_leading_reverse_u_move(self) -> None:
+        """A pre-AUF cancels out against an opposite leading U move."""
+        timer = self.make_trainer()
+        solution = parse_moves("U' R U R' U' R' F R F'")
+        with patch.object(timer, 'compute_pre_aufs', return_value=Move('U')):
+            reference = timer.build_reference_solution(solution)
+        self.assertEqual(str(reference), "R U R' U' R' F R F'")
+
+    def test_pre_auf_merges_with_leading_u2_move(self) -> None:
+        """A pre-AUF merges into a solution starting with a double move."""
+        timer = self.make_trainer()
+        solution = parse_moves("U2 R U R' U' R' F R F'")
+        with patch.object(timer, 'compute_pre_aufs', return_value=Move('U')):
+            reference = timer.build_reference_solution(solution)
+        self.assertEqual(str(reference), "U' R U R' U' R' F R F'")
+
+    def test_pre_auf_not_merged_with_unrelated_first_move(self) -> None:
+        """A pre-AUF is left as a separate move before an unrelated face."""
+        timer = self.make_trainer()
+        solution = parse_moves("F R U R' U' R' F R F'")
+        with patch.object(timer, 'compute_pre_aufs', return_value=Move('U')):
+            reference = timer.build_reference_solution(solution)
+        self.assertEqual(str(reference), "U F R U R' U' R' F R F'")
+
+    def test_pre_auf_not_merged_with_opposite_layer_move(self) -> None:
+        """A pre-AUF on U is not merged with a same-axis D layer move."""
+        timer = self.make_trainer()
+        solution = parse_moves("D R U R' U' R' F R F'")
+        with patch.object(timer, 'compute_pre_aufs', return_value=Move('U')):
+            reference = timer.build_reference_solution(solution)
+        self.assertEqual(str(reference), "U D R U R' U' R' F R F'")
+
 
 class TestResolveSolution(unittest.TestCase):
     """resolve_solution prefers the stored solution over cubing_algs."""

@@ -20,6 +20,7 @@ from cubing_algs.move import Move
 from cubing_algs.parsing import parse_moves
 from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.transform.auf import remove_auf_moves
+from cubing_algs.transform.size import compress_moves
 from cubing_algs.vcube import VCube
 from fsrs import Rating
 from fsrs import State
@@ -1168,7 +1169,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         the FSRS rater compares the execution against to detect forcing.
 
         Returns:
-            The pre-AUF prepended to the solution, or the solution unchanged
+            The pre-AUF merged into the solution, or the solution unchanged
             when no pre-AUF is needed, or an empty Algorithm when no solution
             is available.
 
@@ -1180,9 +1181,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         if pre_auf is None:
             return solution
 
-        # TODO: check if solution start with AUF,
-        # to merge pre_auf and solution[0;?]
-        return Algorithm([pre_auf, *solution])
+        merged_head = compress_moves(Algorithm([pre_auf, solution[0]]))
+        return Algorithm([*merged_head, *solution[1:]])
 
     def start_line(
             self,
