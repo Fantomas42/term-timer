@@ -30,6 +30,7 @@ from rich.table import Table
 from term_timer.annotations import TrainingCase
 from term_timer.config import TRAINER_FSRS
 from term_timer.config import TRAINER_FSRS_RATING
+from term_timer.config import DEBUG
 from term_timer.constants import CROSS_CASE
 from term_timer.constants import DNF
 from term_timer.constants import EASY_CROSS_CASE
@@ -1042,7 +1043,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         rating_klass = rating.name.lower()
 
         suffix = ''
-        if breakdown is not None:
+        if DEBUG and breakdown is not None:
             suffix = '\n' + '\n'.join(
                 self.format_breakdown_lines(breakdown, rating_klass),
             )
