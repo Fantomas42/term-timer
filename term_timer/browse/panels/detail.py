@@ -1,15 +1,16 @@
 """Detail panel for displaying solve information."""
-from typing import cast
-
+from rich.color import ColorSystem
+from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
 from textual.widgets import RichLog
 from textual.widgets import Static
 
-from term_timer.formatter import format_grade
-from term_timer.formatter import format_score
-from term_timer.formatter import format_time
+from term_timer.config import CUBE_METHOD
+from term_timer.config import DISPLAY_CONFIG
+from term_timer.interface.console import console
 from term_timer.solve import Solve
+from term_timer.stats import SolveStatisticsReporter
 
 
 class DetailPanel(VerticalScroll):
@@ -48,199 +49,110 @@ class DetailPanel(VerticalScroll):
 
         """
         yield Static('Solve Detail')
-        yield RichLog(highlight=True, markup=True, wrap=True)
+        yield RichLog(
+            highlight=True, markup=True, wrap=True, auto_scroll=False,
+        )
 
-    def display_solve(  # noqa: C901, PLR0912, PLR0914, PLR0915
+    def display_solve(
         self,
         solve: Solve,
         solve_index: int,
         cube_size: int,
+        stack: list[Solve],
     ) -> None:
         """
         Display detailed information for a solve.
 
+        Reuses the rendering of the ``detail`` command
+        (SolveStatisticsReporter.detail) by capturing its Rich console
+        output and replaying it in the panel, keeping the browser and the
+        CLI strictly consistent.
+
         Args:
             solve: Solve object to display.
-            solve_index: 1-based index of the solve.
+            solve_index: 1-based index of the solve within the stack.
             cube_size: Cube dimension (e.g., 3 for 3x3x3).
+            stack: Full list of solves for the session, used as the
+                reporter stack so the solve can be analysed in context.
 
         """
         self.current_solve = solve
-        self.current_solve.orientation = 'auto'
 
-        # Update header
         header = self.query_one(Static)
         header.update(
             f'Solve Detail: { cube_size }x{ cube_size }x{ cube_size } '
             f'#{ solve_index }',
         )
 
-        # Get log widget
         log = self.query_one(RichLog)
         log.clear()
 
-        # Format date
-        date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
+        reporter = SolveStatisticsReporter(cube_size, stack)
 
-        # Basic information
-        log.write(
-            f'[bold cyan]Time:[/bold cyan]        '
-            f'[green]{ format_time(solve.time) }[/green] {solve.flag}',
-        )
-        log.write(f'[bold cyan]Date:[/bold cyan]        [dim]{date}[/dim]')
-        log.write(
-            f'[bold cyan]Session:[/bold cyan]     '
-            f'[yellow]{ solve.session.title() }[/yellow]',
-        )
+        rendered = self.render_detail(reporter, solve_index, log)
+        log.write(rendered)
 
-        if solve.device:
-            log.write(
-                f'[bold cyan]Cube:[/bold cyan]        '
-                f'[magenta]{ solve.device }[/magenta]',
-            )
+        # Keep the panel pinned to the top when switching solves rather
+        # than following the freshly written content to the bottom.
+        log.scroll_home(animate=False)
+        self.scroll_home(animate=False)
 
-        if solve.timer:
-            log.write(
-                f'[bold cyan]Timer:[/bold cyan]       '
-                f'[magenta]{ solve.timer }[/magenta]',
-            )
+    @staticmethod
+    def render_detail(
+        reporter: SolveStatisticsReporter,
+        solve_index: int,
+        log: RichLog,
+    ) -> Text:
+        """
+        Render the detail command output to a Rich Text object.
 
-        if solve.comment:
-            log.write(
-                f'[bold cyan]Comment:[/bold cyan]     '
-                f'[yellow]{ solve.comment }[/yellow]',
-            )
+        Forces a truecolor system and a fixed width on the shared console,
+        captures everything the detail command prints (metrics, scramble,
+        reconstruction, graphs, highlights and doctor diagnostics), then
+        converts the captured ANSI back to a styled Text.
 
-        # Advanced metrics (if available)
-        if solve.advanced:
-            log.write('')
-            log.write('[bold yellow]═══ Metrics ═══[/bold yellow]')
+        Args:
+            reporter: Reporter holding the session stack.
+            solve_index: 1-based index of the solve to detail.
+            log: Target log widget, used to match the capture width.
 
-            solve_score = cast('float', solve.score)
-            grade = format_grade(solve_score)
-            grade_text = f'{grade:<2} { format_score(solve_score) }'
-            log.write(
-                f'[bold cyan]Grade:[/bold cyan]       '
-                f'[bold green]{ grade_text }[/bold green]',
-            )
+        Returns:
+            Styled Text reproducing the detail command output.
 
-            method_applied = cast('object', solve.method_applied)
-            if hasattr(method_applied, 'score'):
-                method_score = method_applied.score
-                method_grade = format_grade(method_score)
-                method_grade_text = (
-                    f'{ method_grade:<2} {format_score(method_score)}'
+        """
+        width = log.content_size.width or 80
+
+        original_width = console.width
+        # Rich exposes no public setter for the color system, but it must
+        # be forced so the capture keeps ANSI styling even when the console
+        # is not attached to a color-capable terminal.
+        original_color_system = console._color_system  # noqa: SLF001
+        console.width = width
+        console._color_system = ColorSystem.TRUECOLOR  # noqa: SLF001
+        try:
+            with console.capture() as capture:
+                reporter.detail(
+                    solve_index,
+                    CUBE_METHOD,
+                    'auto',
+                    disable_rotations=False,
+                    show_highlights=DISPLAY_CONFIG.get('highlights', True),
+                    show_doctor=DISPLAY_CONFIG.get('doctor', True),
+                    show_cube=DISPLAY_CONFIG.get('scramble', True),
+                    show_reconstruction=DISPLAY_CONFIG.get(
+                        'reconstruction', True,
+                    ),
+                    show_tps_graph=DISPLAY_CONFIG.get('tps_graph', True),
+                    show_time_graph=DISPLAY_CONFIG.get('time_graph', True),
+                    show_fluency_graph=DISPLAY_CONFIG.get(
+                        'fluency_graph', True,
+                    ),
+                    show_recognition_graph=DISPLAY_CONFIG.get(
+                        'recognition_graph', True,
+                    ),
                 )
-                log.write(
-                    f'[bold cyan]Method:[/bold cyan]      '
-                    f'[bold green]{ method_grade_text }[/bold green]',
-                )
+        finally:
+            console.width = original_width
+            console._color_system = original_color_system  # noqa: SLF001
 
-            recognition_time = format_time(
-                solve.recognition_time,
-                allow_dnf=False,
-            )
-            log.write(
-                f'[bold cyan]Recognition:[/bold cyan] '
-                f'{ recognition_time } ({ solve.recognition_percent:.2f}%)',
-            )
-
-            execution_time = format_time(
-                solve.execution_time,
-                allow_dnf=False,
-            )
-            log.write(
-                f'[bold cyan]Execution:[/bold cyan]   '
-                f'{ execution_time } ({ solve.execution_percent:.2f}%)',
-            )
-
-            # Metrics
-            if hasattr(solve, 'reconstruction'):
-                metrics = solve.reconstruction.metrics
-                log.write(
-                    f'[bold cyan]Metrics:[/bold cyan]     '
-                    f'{ metrics.htm } HTM, { metrics.qtm } QTM, '
-                    f'{ solve.tps:.2f} TPS',
-                )
-
-            # Overhead
-            all_missed = solve.all_missed_moves
-            if all_missed:
-                overhead_text = f'{ all_missed } QTM overhead'
-                if solve.execution_missed_moves:
-                    overhead_text += (
-                        f' (+{ solve.execution_missed_moves } execution)'
-                    )
-                if solve.transition_missed_moves:
-                    overhead_text += (
-                        f' (+{ solve.transition_missed_moves } transition)'
-                    )
-                log.write(
-                    '[bold cyan]Overhead:[/bold cyan]    '
-                    f'[red]{ overhead_text }[/red]',
-                )
-            else:
-                log.write(
-                    '[bold cyan]Overhead:[/bold cyan]    '
-                    '[green]Optimal execution[/green]',
-                )
-
-            # Pauses
-            if solve.execution_pauses:
-                log.write(
-                    f'[bold cyan]Pauses:[/bold cyan]      '
-                    f'[yellow]{ solve.execution_pauses }[/yellow]',
-                )
-            else:
-                log.write(
-                    '[bold cyan]Pauses:[/bold cyan]      [green]None[/green]',
-                )
-
-            # Rotations and AUFs
-            if solve.rotations:
-                log.write(
-                    f'[bold cyan]Rotations:[/bold cyan]   '
-                    f'[yellow]{ solve.rotations }[/yellow]',
-                )
-
-            if solve.aufs:
-                log.write(
-                    f'[bold cyan]AUFs:[/bold cyan]        '
-                    f'[dim]{ solve.aufs }[/dim]',
-                )
-
-        # Scramble
-        log.write('')
-        log.write('[bold yellow]═══ Scramble ═══[/bold yellow]')
-        log.write(f'[dim]{ solve.scramble }[/dim]')
-
-        # Reconstruction
-        if solve.advanced and hasattr(solve, 'method_line'):
-            log.write('')
-            log.write(
-                f'[bold yellow]═══ Reconstruction '
-                f'({ solve.method_analyser.name }) ═══[/bold yellow]',
-            )
-
-            # Display method line (with Rich markup)
-            method_line = solve.method_line
-            if method_line:
-                # Split into lines and write each
-                for line in method_line.split('\n'):
-                    if line.strip():
-                        log.write(line)
-
-            # Links
-            log.write('')
-            log.write(
-                f'[link={ solve.link_term_timer }]'
-                'View in Term-Timer[/link]',
-            )
-            log.write(
-                f'[link={ solve.link_alg_cubing }]'
-                'View on alg.cubing.net[/link]',
-            )
-            log.write(
-                f'[link={ solve.link_cube_db }]'
-                'View on cubedb.net[/link]',
-            )
+        return Text.from_ansi(capture.get())

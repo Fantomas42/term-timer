@@ -48,11 +48,13 @@ class SolvesPanel(VerticalScroll):
             solve: Solve,
             solve_index: int,
             cube_size: int,
+            stack: list[Solve],
         ) -> None:
             """Initialize message with solve info."""
             self.solve = solve
             self.solve_index = solve_index
             self.cube_size = cube_size
+            self.stack = stack
             super().__init__()
 
     def __init__(self) -> None:
@@ -245,5 +247,6 @@ class SolvesPanel(VerticalScroll):
                 solve=solve,
                 solve_index=solve_num,
                 cube_size=self.current_cube_size,
+                stack=self.solves,
             ),
         )

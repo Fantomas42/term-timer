@@ -93,6 +93,7 @@ class BrowseApp(App[None]):
             event.solve,
             event.solve_index,
             event.cube_size,
+            event.stack,
         )
 
         # Focus on detail panel after loading
