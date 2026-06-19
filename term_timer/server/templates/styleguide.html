@@ -26,7 +26,10 @@
             {{ group.title }}
           </a>
         {% endfor %}
-        <a href="#components" class="sg-toc-link">Components</a>
+        <a href="#components-buttons" class="sg-toc-link">Buttons &amp; controls</a>
+        <a href="#components-badges" class="sg-toc-link">Badges &amp; indicators</a>
+        <a href="#components-layout" class="sg-toc-link">Layout &amp; cards</a>
+        <a href="#components-data" class="sg-toc-link">Data &amp; algorithm</a>
       </nav>
     </div>
 
@@ -58,10 +61,14 @@
     {% endfor %}
 
     {# ── Component catalogue ──────────────────────────────────────── #}
-    <div class="card" id="components">
+    {# Grouped by semantic family. Demos with an .sg-ref line are       #}
+    {# recurring page blocks tracked as composable (macro) candidates.  #}
+
+    {# ── Buttons & controls ──────────────────────────────────────── #}
+    <div class="card" id="components-buttons">
       <div class="card-header">
-        <h3 class="card-title">Components</h3>
-        <span class="title-secondary">live, using the tokens above</span>
+        <h3 class="card-title">Buttons &amp; controls</h3>
+        <span class="title-secondary">actions, links, form controls</span>
       </div>
 
       <h4 class="sg-label">Action buttons</h4>
@@ -80,6 +87,58 @@
         <button class="btn btn-small">Small</button>
       </div>
 
+      <h4 class="sg-label">Detail link buttons</h4>
+      <code class="sg-ref">.solve-detail-btn.alg-cubing/.cube-db</code>
+      <div class="sg-row">
+        <a href="#components-buttons" class="solve-detail-btn alg-cubing">
+          <i class="fas fa-external-link-alt"></i> alg.cubing.net
+        </a>
+        <a href="#components-buttons" class="solve-detail-btn cube-db">
+          <i class="fas fa-external-link-alt"></i> cubedb.net
+        </a>
+      </div>
+
+      <h4 class="sg-label">Feature tag pills</h4>
+      <code class="sg-ref">.feature-tag</code>
+      <div class="sg-row">
+        <a href="#components-buttons" class="feature-tag">
+          <i class="fas fa-cube"></i> F2L Cases
+        </a>
+        <a href="#components-buttons" class="feature-tag">
+          <i class="fas fa-layer-group"></i> OLL Algorithms
+        </a>
+        <a href="#components-buttons" class="feature-tag">
+          <i class="fas fa-sync-alt"></i> PLL Permutations
+        </a>
+      </div>
+
+      <h4 class="sg-label">Selector controls</h4>
+      <code class="sg-ref">.control-group · .control-select · macro: display_selectors</code>
+      <div class="sg-row">
+        <div class="control-group">
+          <label for="sg-orientation">Orientation:</label>
+          <select id="sg-orientation" class="control-select">
+            <option>white-green</option>
+            <option>yellow-blue</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="sg-size">Size:</label>
+          <select id="sg-size" class="control-select">
+            <option>3x3x3</option>
+            <option>2x2x2</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {# ── Badges & indicators ─────────────────────────────────────── #}
+    <div class="card" id="components-badges">
+      <div class="card-header">
+        <h3 class="card-title">Badges &amp; indicators</h3>
+        <span class="title-secondary">labels, scales, color signals</span>
+      </div>
+
       <h4 class="sg-label">Badges &amp; labels</h4>
       <div class="sg-row">
         <span class="session-badge">3x3x3
@@ -90,6 +149,16 @@
         <span class="spec-label ergo">ERGO</span>
         <span class="spec-label memo">MEMO</span>
         <span class="academy-header">Academy</span>
+      </div>
+
+      <h4 class="sg-label">Metric &amp; frequency badges</h4>
+      <code class="sg-ref">.metric-success/.metric-caution/.metric-warning · .frequency-higher/.frequency-lower</code>
+      <div class="sg-row">
+        <span class="metric-success">88%</span>
+        <span class="metric-caution">62%</span>
+        <span class="metric-warning">34%</span>
+        <span class="frequency-higher">12.40%</span>
+        <span class="frequency-lower">3.10%</span>
       </div>
 
       <h4 class="sg-label">Grade scale (S → F)</h4>
@@ -134,6 +203,14 @@
         <span class="trigger slice">slice</span>
         <span class="trigger m">M</span>
       </div>
+    </div>
+
+    {# ── Layout & cards ──────────────────────────────────────────── #}
+    <div class="card" id="components-layout">
+      <div class="card-header">
+        <h3 class="card-title">Layout &amp; cards</h3>
+        <span class="title-secondary">section scaffolding, stat &amp; content cards</span>
+      </div>
 
       <h4 class="sg-label">Tabs</h4>
       <div class="tabs">
@@ -142,17 +219,173 @@
         <div class="tab">Another</div>
       </div>
 
-      <h4 class="sg-label">Nested card</h4>
+      <h4 class="sg-label">Section card header</h4>
+      <code class="sg-ref">.card &gt; .card-header &gt; .card-title (icon + anchor) · .title-secondary · .card-description</code>
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">Card title
-            <span class="title-secondary">secondary</span>
-          </h3>
+          <h2 class="card-title">
+            <i class="fas fa-chart-line"></i>
+            <a href="#components-layout">Key Statistics</a>
+          </h2>
+          <span class="title-secondary">every page section</span>
         </div>
-        <p class="card-description">A card with a description below it.</p>
+        <p class="card-description">
+          The standard section wrapper used on every view.
+        </p>
+      </div>
+
+      <h4 class="sg-label">Stat card — with meta &amp; delta</h4>
+      <code class="sg-ref">.stat-card · .stat-meta · .stat-best/.stat-worst · .stat-delta.positive/.negative · .stat-value.time-best/.time-worst/.stat-warning</code>
+      <div class="stats-grid">
         <div class="stat-card">
-          <span class="stat-title">Best</span>
-          <span class="stat-value time-best">7.42</span>
+          <div class="stat-title">Best</div>
+          <div class="stat-value time-best">7.42</div>
+          <div class="stat-meta">
+            <span class="stat-best">BPA: 8.10</span>
+            <span class="stat-delta negative">-0.68</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Worst</div>
+          <div class="stat-value time-worst">21.30</div>
+          <div class="stat-meta">
+            <span class="stat-worst">WPA: 19.90</span>
+            <span class="stat-delta positive">+1.40</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Cycle Order</div>
+          <div class="stat-value stat-warning">42</div>
+        </div>
+      </div>
+
+      <h4 class="sg-label">Rating box</h4>
+      <code class="sg-ref">.alg-rating-box · .alg-comfort-score (.score-*) · .alg-rating-label</code>
+      <div class="alg-rating-box">
+        <div class="alg-comfort-score score-good">82.0</div>
+        <div class="alg-rating-label">Comfortable</div>
+      </div>
+
+      <h4 class="sg-label">Footer info item</h4>
+      <code class="sg-ref">.info-item (icon + .key + .value)</code>
+      <div class="footer-info">
+        <div class="info-item">
+          <i class="fas fa-cube"></i>
+          <span class="key">Puzzle:</span>
+          <span class="value">3x3x3</span>
+        </div>
+        <div class="info-item">
+          <i class="fas fa-clock"></i>
+          <span class="key">Last solve:</span>
+          <span class="value">Sat 20 Jun 2026 14:32 CEST</span>
+        </div>
+      </div>
+
+      <h4 class="sg-label">Comment card</h4>
+      <code class="sg-ref">.comment-card · .comment · .comment-placeholder · .comment-btn.comment-btn-save/.comment-btn-cancel</code>
+      <div class="comment-card">
+        <div class="comment">
+          <p class="comment-placeholder">Click to add a comment...</p>
+        </div>
+        <div class="comment-actions">
+          <button class="comment-btn comment-btn-save">Save</button>
+          <button class="comment-btn comment-btn-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    {# ── Data & algorithm ────────────────────────────────────────── #}
+    <div class="card" id="components-data">
+      <div class="card-header">
+        <h3 class="card-title">Data &amp; algorithm</h3>
+        <span class="title-secondary">tables, move cards, case blocks</span>
+      </div>
+
+      <h4 class="sg-label">Algorithm move card</h4>
+      <code class="sg-ref">.algorithm-card.moves-card · .variation-label · .moves-content/.move · .moves-footer · .spec-label.htm/.ergo/.memo · macro: algorithm_button_copy/detail</code>
+      <div class="algorithm-card moves-card">
+        <span class="variation-label">Inverse</span>
+        <div class="moves-content">
+          {% for move in ['R', 'U', "R'", "U'", 'R', 'U', "R'"] %}
+            <span class="move">{{ move }}</span>
+          {% endfor %}
+        </div>
+        <div class="moves-footer">
+          <a href="#components-data" class="algorithm-detail">
+            <i class="fas fa-info-circle"></i> Details
+          </a>
+          <button class="algorithm-copy" data-algorithm="R U R' U'">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+          <span class="spec-label htm">HTM: 7</span>
+          <span class="spec-label ergo">ERGO: 82.0</span>
+          <span class="spec-label memo">MEMO: 14.3</span>
+        </div>
+      </div>
+
+      <h4 class="sg-label">Key/value table</h4>
+      <code class="sg-ref">.alg-table · .alg-value · .alg-section-title</code>
+      <h3 class="alg-section-title">Move Counts</h3>
+      <table class="alg-table">
+        <tr>
+          <td><strong>HTM</strong> (Half Turn Metric)</td>
+          <td class="alg-value">7</td>
+        </tr>
+        <tr>
+          <td><strong>QTM</strong> (Quarter Turn Metric)</td>
+          <td class="alg-value">9</td>
+        </tr>
+        <tr>
+          <td><strong>STM</strong> (Slice Turn Metric)</td>
+          <td class="alg-value">7</td>
+        </tr>
+      </table>
+
+      <h4 class="sg-label">Sortable data table</h4>
+      <code class="sg-ref">.table-container · table.solve-list · th.sort-asc/.sort-desc · .solve-time.time-best/.time-worst · .link</code>
+      <div class="table-container">
+        <table class="solve-list">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th class="sort-asc">Time</th>
+              <th>Date</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="solve-id"><a href="#components-data" class="link">#1</a></td>
+              <td class="solve-time time-best">7.42</td>
+              <td class="solve-date">2026-06-20 14:30</td>
+              <td class="solve-grade"><span class="grade-s">S</span></td>
+            </tr>
+            <tr>
+              <td class="solve-id"><a href="#components-data" class="link">#2</a></td>
+              <td class="solve-time time-worst">21.30</td>
+              <td class="solve-date">2026-06-20 14:32</td>
+              <td class="solve-grade"><span class="grade-d">D</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 class="sg-label">Mono data block</h4>
+      <code class="sg-ref">.alg-generators · .alg-transformation-mask</code>
+      <div class="alg-transformation-mask">
+        <div class="alg-generators">[R: [U, R' D R]]</div>
+      </div>
+
+      <h4 class="sg-label">Step case</h4>
+      <code class="sg-ref">.step-case · .step-case-img · .link · .skip · macro: step_case</code>
+      <div class="sg-row">
+        <div class="step-case">
+          <div class="step-case-img">OLL 27</div>
+          <a href="#components-data" class="link">Sune</a>
+        </div>
+        <div class="step-case">
+          <div class="step-case-img">N/A</div>
+          <span class="skip">SKIP</span>
         </div>
       </div>
     </div>
