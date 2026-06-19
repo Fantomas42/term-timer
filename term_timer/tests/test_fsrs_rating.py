@@ -16,9 +16,8 @@ from term_timer.fsrs.rating import HIGH_STABILITY_FLOOR_DAYS
 from term_timer.fsrs.rating import MISSED_WEIGHT
 from term_timer.fsrs.rating import PAUSE_TOLERANCE
 from term_timer.fsrs.rating import PAUSE_WEIGHT
+from term_timer.fsrs.rating import STEP_REFERENCE
 from term_timer.fsrs.rating import TIME_SCALE
-from term_timer.fsrs.rating import TIME_SOFT_S
-from term_timer.fsrs.rating import TPS_REF_STEP
 from term_timer.fsrs.rating import TPS_SCALE
 from term_timer.fsrs.rating import PerformanceRater
 from term_timer.solve import Solve
@@ -124,7 +123,8 @@ class TestExecutionPenalties(unittest.TestCase):
 
     def setUp(self) -> None:  # noqa: D102
         self.rater = PerformanceRater()
-        self.ref = TPS_REF_STEP['pll']
+        self.ref = STEP_REFERENCE['pll'].tps_ref
+        self.time_soft = STEP_REFERENCE['pll'].time_soft
 
     def test_flawless_execution_is_zero(self) -> None:
         """TPS at/above ref, no pauses/missed, fast time -> 0.0."""
@@ -165,14 +165,14 @@ class TestExecutionPenalties(unittest.TestCase):
     def test_time_below_soft_guard_adds_nothing(self) -> None:
         """Time at the soft guard contributes nothing."""
         pens = self.rater.execution_penalties(
-            TIME_SOFT_S, 0, 0, self.ref, 'pll',
+            self.time_soft, 0, 0, self.ref, 'pll',
         )
         self.assertEqual(pens.score, 0.0)
 
     def test_time_past_soft_guard_scales(self) -> None:
         """Time one full SCALE past the guard yields a 1.0 penalty."""
         pens = self.rater.execution_penalties(
-            TIME_SOFT_S + TIME_SCALE, 0, 0, self.ref, 'pll',
+            self.time_soft + TIME_SCALE, 0, 0, self.ref, 'pll',
         )
         self.assertAlmostEqual(pens.score, 1.0)
         self.assertAlmostEqual(pens.time_pen, 1.0)
@@ -191,6 +191,14 @@ class TestExecutionPenalties(unittest.TestCase):
         pll_pens = self.rater.execution_penalties(2.0, 0, 0, tps, 'pll')
         f2l_pens = self.rater.execution_penalties(2.0, 0, 0, tps, 'f2l')
         self.assertGreater(pll_pens.score, f2l_pens.score)
+
+    def test_time_guard_is_step_relative(self) -> None:
+        """The same time is penalised more for F2L (lower soft guard)."""
+        time_s = 4.5
+        pll_pens = self.rater.execution_penalties(time_s, 0, 0, 10.0, 'pll')
+        f2l_pens = self.rater.execution_penalties(time_s, 0, 0, 10.0, 'f2l')
+        self.assertEqual(pll_pens.time_pen, 0.0)
+        self.assertGreater(f2l_pens.time_pen, 0.0)
 
     def test_unknown_step_raises_key_error(self) -> None:
         """An unknown step has no reference and raises KeyError."""

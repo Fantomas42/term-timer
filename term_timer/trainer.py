@@ -56,7 +56,6 @@ from term_timer.fsrs.rating import MISSED_WEIGHT
 from term_timer.fsrs.rating import PAUSE_TOLERANCE
 from term_timer.fsrs.rating import PAUSE_WEIGHT
 from term_timer.fsrs.rating import TIME_SCALE
-from term_timer.fsrs.rating import TIME_SOFT_S
 from term_timer.fsrs.rating import TPS_SCALE
 from term_timer.fsrs.rating import PerformanceRater
 from term_timer.fsrs.rating import RatingBreakdown
@@ -910,7 +909,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             (
                 'time',
                 f'{ breakdown.time_s:.2f}s',
-                f'soft { TIME_SOFT_S }s, /{ TIME_SCALE }',
+                f'soft { breakdown.time_soft }s, /{ TIME_SCALE }',
                 cell(breakdown.time_pen),
             ),
         ]

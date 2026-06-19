@@ -13,7 +13,7 @@ a middle band instead.
   - TPS is the primary signal (penalty grows below a per-step reference).
   - One pause is a legitimate regrip; only extra pauses are penalised.
   - A missed QTM (after AUF stripping) is a real cancellation error.
-  - Time is a soft guard past TIME_SOFT_S, not a cliff.
+  - Time is a soft guard past a per-step threshold, not a cliff.
 
 An execution that needs more turns than the reference solution shown in the
 trainer is a categorical AGAIN override (OCLL forcing = case structurally not
@@ -37,17 +37,37 @@ from fsrs import Rating
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
 
-# Graded score: TPS is the primary signal. At or above the per-step
-# reference the case feels grooved (no penalty); below it the penalty grows
-# linearly over TPS_SCALE. The reference is per-step because F2L's natural
-# TPS is lower than OLL/PLL (relative calibration, no per-case storage).
-TPS_REF_STEP: dict[str, float] = {
-    'oll': 4.6,
-    'pll': 4.9,
-    'f2l': 4.2,
-    'af2l': 4.5,
+
+# Per-step calibration references for the execution score. Both signals are
+# step-relative and share the same keys, so they live in one table rather
+# than two parallel dicts:
+#
+#   - tps_ref: TPS is the primary signal. At or above the reference the case
+#     feels grooved (no penalty); below it the penalty grows linearly over
+#     TPS_SCALE. It is per-step because F2L's natural TPS is lower than
+#     OLL/PLL (relative calibration, no per-case storage).
+#   - time_soft: a soft guard, not a cliff. Time only adds penalty past it,
+#     to catch genuinely-stuck executions that TPS alone might miss (a
+#     wall-clock freeze TPS averages away). It is per-step because a single
+#     F2L pair finishes in less wall-clock time than a full last layer, and
+#     it stays absolute rather than derived from the move count: a reference
+#     of qtm / tps_ref would just restate the TPS penalty (time exceeds the
+#     expected duration exactly when tps falls below tps_ref).
+class StepReference(NamedTuple):
+    """Per-step TPS and time references for the execution score."""
+
+    tps_ref: float
+    time_soft: float
+
+
+STEP_REFERENCE: dict[str, StepReference] = {
+    'oll': StepReference(tps_ref=4.6, time_soft=5.0),
+    'pll': StepReference(tps_ref=4.9, time_soft=5.5),
+    'f2l': StepReference(tps_ref=4.2, time_soft=4.0),
+    'af2l': StepReference(tps_ref=4.5, time_soft=4.3),
 }
 TPS_SCALE: float = 1.5
+TIME_SCALE: float = 2.0
 
 # A single pause is a legitimate regrip; only extra pauses are penalised.
 PAUSE_TOLERANCE: int = 1
@@ -55,12 +75,6 @@ PAUSE_WEIGHT: float = 0.25
 
 # After AUF stripping, a missed QTM is a real cancellation error.
 MISSED_WEIGHT: float = 0.30
-
-# Time is a soft guard, not a cliff: it only adds penalty past TIME_SOFT_S,
-# to catch genuinely-stuck executions that TPS alone might miss.
-# TODO(me): could be step based values
-TIME_SOFT_S: float = 5.5
-TIME_SCALE: float = 2.0
 
 # Continuous score -> four bands. The middle (GOOD/HARD) is now reachable.
 BAND_EASY: float = 0.5
@@ -85,6 +99,7 @@ class RatingBreakdown(NamedTuple):
     tps: float
     score: float
     tps_ref: float = 0.0
+    time_soft: float = 0.0
     tps_pen: float = 0.0
     pause_pen: float = 0.0
     missed_pen: float = 0.0
@@ -98,6 +113,7 @@ class ExecutionPenalties(NamedTuple):
     """Individual penalty components of the execution score."""
 
     tps_ref: float
+    time_soft: float
     tps_pen: float
     pause_pen: float
     missed_pen: float
@@ -259,6 +275,7 @@ class PerformanceRater:
             tps,
             pens.score,
             pens.tps_ref,
+            pens.time_soft,
             pens.tps_pen,
             pens.pause_pen,
             pens.missed_pen,
@@ -311,22 +328,23 @@ class PerformanceRater:
         beyond one regrip, missed QTM, and time past the soft guard add
         on top.
 
-        The step must be a key of TPS_REF_STEP (only steps without a
+        The step must be a key of STEP_REFERENCE (only steps without a
         training_case reach this path); an unknown step raises KeyError.
 
         Returns:
-            ExecutionPenalties with each component and the TPS reference
-            used; its score property sums them.
+            ExecutionPenalties with each component and the per-step TPS and
+            time references used; its score property sums them.
 
         """
-        tps_ref = TPS_REF_STEP[step]
+        ref = STEP_REFERENCE[step]
 
         return ExecutionPenalties(
-            tps_ref=tps_ref,
-            tps_pen=max(0.0, (tps_ref - tps) / TPS_SCALE),
+            tps_ref=ref.tps_ref,
+            time_soft=ref.time_soft,
+            tps_pen=max(0.0, (ref.tps_ref - tps) / TPS_SCALE),
             pause_pen=max(0, pauses - PAUSE_TOLERANCE) * PAUSE_WEIGHT,
             missed_pen=missed_qtm * MISSED_WEIGHT,
-            time_pen=max(0.0, (time_s - TIME_SOFT_S) / TIME_SCALE),
+            time_pen=max(0.0, (time_s - ref.time_soft) / TIME_SCALE),
         )
 
     @staticmethod
