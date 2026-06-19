@@ -45,8 +45,8 @@ TPS_REF_STEP: dict[str, float] = {
     'oll': 4.6,
     'pll': 4.9,
     'f2l': 4.2,
+    'af2l': 4.5,
 }
-TPS_REF_DEFAULT: float = 4.6
 TPS_SCALE: float = 1.5
 
 # A single pause is a legitimate regrip; only extra pauses are penalised.
@@ -58,6 +58,7 @@ MISSED_WEIGHT: float = 0.30
 
 # Time is a soft guard, not a cliff: it only adds penalty past TIME_SOFT_S,
 # to catch genuinely-stuck executions that TPS alone might miss.
+# TODO(me): could be step based values
 TIME_SOFT_S: float = 5.5
 TIME_SCALE: float = 2.0
 
@@ -310,12 +311,15 @@ class PerformanceRater:
         beyond one regrip, missed QTM, and time past the soft guard add
         on top.
 
+        The step must be a key of TPS_REF_STEP (only steps without a
+        training_case reach this path); an unknown step raises KeyError.
+
         Returns:
             ExecutionPenalties with each component and the TPS reference
             used; its score property sums them.
 
         """
-        tps_ref = TPS_REF_STEP.get(step, TPS_REF_DEFAULT)
+        tps_ref = TPS_REF_STEP[step]
 
         return ExecutionPenalties(
             tps_ref=tps_ref,

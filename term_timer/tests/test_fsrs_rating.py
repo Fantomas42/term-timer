@@ -18,7 +18,6 @@ from term_timer.fsrs.rating import PAUSE_TOLERANCE
 from term_timer.fsrs.rating import PAUSE_WEIGHT
 from term_timer.fsrs.rating import TIME_SCALE
 from term_timer.fsrs.rating import TIME_SOFT_S
-from term_timer.fsrs.rating import TPS_REF_DEFAULT
 from term_timer.fsrs.rating import TPS_REF_STEP
 from term_timer.fsrs.rating import TPS_SCALE
 from term_timer.fsrs.rating import PerformanceRater
@@ -193,11 +192,10 @@ class TestExecutionPenalties(unittest.TestCase):
         f2l_pens = self.rater.execution_penalties(2.0, 0, 0, tps, 'f2l')
         self.assertGreater(pll_pens.score, f2l_pens.score)
 
-    def test_unknown_step_uses_default_reference(self) -> None:
-        """An unknown step falls back to TPS_REF_DEFAULT."""
-        pens = self.rater.execution_penalties(2.0, 0, 0, 10.0, 'unknown')
-        self.assertEqual(pens.tps_ref, TPS_REF_DEFAULT)
-        self.assertEqual(pens.score, 0.0)
+    def test_unknown_step_raises_key_error(self) -> None:
+        """An unknown step has no reference and raises KeyError."""
+        with self.assertRaises(KeyError):
+            self.rater.execution_penalties(2.0, 0, 0, 10.0, 'unknown')
 
 
 class TestScoreToBand(unittest.TestCase):
