@@ -21,6 +21,7 @@ from term_timer.server.annotations import Error500Context
 from term_timer.server.annotations import SessionDetailContext
 from term_timer.server.annotations import SessionListContext
 from term_timer.server.annotations import SolveDetailContext
+from term_timer.server.annotations import StyleguideContext
 from term_timer.server.filters import case_number
 from term_timer.server.filters import first_case
 from term_timer.server.filters import format_algorithm
@@ -58,6 +59,7 @@ class View:
         | AcademyCaseContext
         | AcademyCaseAlgorithmsDebugContext
         | CubeRenderContext
+        | StyleguideContext
     ):
         """
         Build template context dictionary.

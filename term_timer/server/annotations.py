@@ -251,3 +251,24 @@ class AcademyCaseAlgorithmsDebugContext(AcademyCaseContext):
     """Template context for academy case algorithms debug view."""
 
     impact_groups: list[AlgorithmImpactGroup]
+
+
+class StyleguideToken(TypedDict):
+    """A single design token parsed from the stylesheet :root block."""
+
+    name: str
+    value: str
+    note: str
+
+
+class StyleguideGroup(TypedDict):
+    """A titled family of design tokens for the styleguide."""
+
+    title: str
+    tokens: list[StyleguideToken]
+
+
+class StyleguideContext(TypedDict):
+    """Template context for the styleguide view."""
+
+    token_groups: list[StyleguideGroup]

@@ -14,6 +14,7 @@ from term_timer.server.views.solves import SolveDeleteView
 from term_timer.server.views.solves import SolveDetailView
 from term_timer.server.views.solves import SolveUpdateCommentView
 from term_timer.server.views.solves import SolveUpdateFlagView
+from term_timer.server.views.styleguide import StyleguideView
 
 __all__ = [
     'AcademyCaseAlgorithmsDebugView',
@@ -31,4 +32,5 @@ __all__ = [
     'SolveDetailView',
     'SolveUpdateCommentView',
     'SolveUpdateFlagView',
+    'StyleguideView',
 ]

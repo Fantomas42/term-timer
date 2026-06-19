@@ -1,0 +1,161 @@
+{% extends "skeleton.html" %}
+
+{% block description %}Design tokens and component styleguide{% endblock %}
+
+{% block title %}Styleguide{% endblock %}
+
+{% block subtitle %}Styleguide{% endblock %}
+
+{% block body %}
+  <div class="sg">
+
+    {# ── Table of contents ───────────────────────────────────────── #}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Styleguide</h2>
+        <span class="title-secondary">living source of truth</span>
+      </div>
+      <p class="card-description">
+        Tokens are read live from the <code>:root</code> block of
+        <code>style.css</code>. Add a token there and it shows up here
+        automatically — this page never drifts from the stylesheet.
+      </p>
+      <nav class="sg-toc">
+        {% for group in token_groups %}
+          <a href="#group-{{ loop.index }}" class="sg-toc-link">
+            {{ group.title }}
+          </a>
+        {% endfor %}
+        <a href="#components" class="sg-toc-link">Components</a>
+      </nav>
+    </div>
+
+    {# ── Token swatches (generated from :root) ────────────────────── #}
+    {% for group in token_groups %}
+      <div class="card" id="group-{{ loop.index }}">
+        <div class="card-header">
+          <h3 class="card-title">{{ group.title }}</h3>
+          <span class="title-secondary">{{ group.tokens|length }} tokens</span>
+        </div>
+        <div class="sg-grid">
+          {% for token in group.tokens %}
+            <div class="sg-swatch">
+              {% if token.value.startswith('#') %}
+                <div class="sg-swatch-color"
+                     style="background-color: var({{ token.name }});"></div>
+              {% else %}
+                <div class="sg-swatch-dim">{{ token.value }}</div>
+              {% endif %}
+              <code class="sg-swatch-name">{{ token.name }}</code>
+              <span class="sg-swatch-value">{{ token.value }}</span>
+              {% if token.note %}
+                <span class="sg-swatch-note">{{ token.note }}</span>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+
+    {# ── Component catalogue ──────────────────────────────────────── #}
+    <div class="card" id="components">
+      <div class="card-header">
+        <h3 class="card-title">Components</h3>
+        <span class="title-secondary">live, using the tokens above</span>
+      </div>
+
+      <h4 class="sg-label">Action buttons</h4>
+      <div class="sg-row">
+        <button class="action-btn btn-ok">OK</button>
+        <button class="action-btn btn-dnf">DNF</button>
+        <button class="action-btn btn-plus2">+2</button>
+        <button class="action-btn btn-delete">Delete</button>
+      </div>
+
+      <h4 class="sg-label">Academy buttons</h4>
+      <div class="sg-row">
+        <button class="btn">Primary</button>
+        <button class="btn btn-secondary">Secondary</button>
+        <button class="btn btn-copy">Copy</button>
+        <button class="btn btn-small">Small</button>
+      </div>
+
+      <h4 class="sg-label">Badges &amp; labels</h4>
+      <div class="sg-row">
+        <span class="session-badge">3x3x3
+          <span class="session-count">42</span>
+        </span>
+        <span class="case-code">OLL 27</span>
+        <span class="spec-label htm">HTM</span>
+        <span class="spec-label ergo">ERGO</span>
+        <span class="spec-label memo">MEMO</span>
+        <span class="academy-header">Academy</span>
+      </div>
+
+      <h4 class="sg-label">Grade scale (S → F)</h4>
+      <div class="sg-row sg-row-text">
+        {% for grade in ['s', 'a', 'b', 'c', 'd', 'e', 'f'] %}
+          <span class="grade-{{ grade }}">{{ grade|upper }}</span>
+        {% endfor %}
+      </div>
+
+      <h4 class="sg-label">Score colors</h4>
+      <div class="sg-row sg-row-text">
+        <span class="score-excellent">Excellent</span>
+        <span class="score-good">Good</span>
+        <span class="score-fair">Fair</span>
+        <span class="score-poor">Poor</span>
+        <span class="score-very-poor">Very poor</span>
+      </div>
+
+      <h4 class="sg-label">Heatmap levels</h4>
+      <div class="sg-row">
+        {% for level in [0, 1, 2, 3, 4] %}
+          <span class="day-square level-{{ level }}"></span>
+        {% endfor %}
+      </div>
+
+      <h4 class="sg-label">Move triggers</h4>
+      <div class="recons-moves sg-row">
+        <span class="trigger sexy-move">sexy</span>
+        <span class="trigger sledgehammer">sledge</span>
+        <span class="trigger hedgeslammer">hedge</span>
+        <span class="trigger sune">sune</span>
+        <span class="trigger sune-trigger">sune-t</span>
+        <span class="trigger sane-trigger">sane-t</span>
+        <span class="trigger t-perm-trigger">t-perm</span>
+        <span class="trigger sexy-sledge">sx-sl</span>
+        <span class="trigger niklas">niklas</span>
+        <span class="trigger pair-ie">pair</span>
+        <span class="trigger slot-extended">slot</span>
+        <span class="trigger anti-sune">a-sune</span>
+        <span class="trigger wide-sexy">w-sexy</span>
+        <span class="trigger wide">wide</span>
+        <span class="trigger slice">slice</span>
+        <span class="trigger m">M</span>
+      </div>
+
+      <h4 class="sg-label">Tabs</h4>
+      <div class="tabs">
+        <div class="tab active">Active</div>
+        <div class="tab">Inactive</div>
+        <div class="tab">Another</div>
+      </div>
+
+      <h4 class="sg-label">Nested card</h4>
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Card title
+            <span class="title-secondary">secondary</span>
+          </h3>
+        </div>
+        <p class="card-description">A card with a description below it.</p>
+        <div class="stat-card">
+          <span class="stat-title">Best</span>
+          <span class="stat-value time-best">7.42</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+{% endblock %}

@@ -30,6 +30,7 @@ from term_timer.server.views import SolveDeleteView
 from term_timer.server.views import SolveDetailView
 from term_timer.server.views import SolveUpdateCommentView
 from term_timer.server.views import SolveUpdateFlagView
+from term_timer.server.views import StyleguideView
 
 
 class RichHandler(WSGIRequestHandler):
@@ -138,6 +139,17 @@ class Server:
 
             """
             return SessionListView().as_view(debug)
+
+        @app.route('/styleguide/')  # type: ignore[untyped-decorator]
+        def styleguide() -> str:
+            """
+            Render the design-token and component styleguide.
+
+            Returns:
+                Rendered HTML template.
+
+            """
+            return StyleguideView().as_view(debug)
 
         @app.route('/academy/')  # type: ignore[untyped-decorator]
         def academy_overview() -> str:
