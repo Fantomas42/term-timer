@@ -370,6 +370,23 @@ class TestStatisticsComprehensive(unittest.TestCase):
             # Should use configured bin size (line 205->210)
             self.assertIsInstance(result, list)
 
+    def test_repartition_subsecond_bins(self) -> None:
+        """Tight sessions select sub-second bins without collapsing."""
+        times = [
+            int(t * SECOND) for t in (
+                8.4, 9.1, 9.8, 8.6, 10.2, 9.4, 8.9, 9.7, 8.8, 9.3,
+            )
+        ]
+        with patch('term_timer.stats.STATS_CONFIG', {}):
+            stats = Statistics(times)
+            result = stats.repartition
+
+        # Edges keep their fractional part (no truncation to whole seconds)
+        edges = [edge for _, edge in result]
+        self.assertTrue(any(edge != int(edge) for edge in edges))
+        # Every solve is accounted for across the bins
+        self.assertEqual(sum(count for count, _ in result), len(times))
+
 
 class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
     """Tests for SolveStatisticsReporter comprehensive coverage."""

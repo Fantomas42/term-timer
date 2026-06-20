@@ -290,6 +290,17 @@ class TestFormatEdge(unittest.TestCase):
         result = format_edge(125, 600)
         self.assertEqual(result, '+02:05')
 
+    def test_format_edge_decimals_subsecond(self) -> None:
+        """Test format edge with sub-second decimals."""
+        self.assertEqual(format_edge(8.5, 11.5, 1), '+08.5s')
+        self.assertEqual(format_edge(8.0, 11.5, 1), '+08.0s')
+        self.assertEqual(format_edge(11.5, 11.5, 1), '+11.5s')
+
+    def test_format_edge_decimals_zero_unchanged(self) -> None:
+        """Test that decimals=0 keeps integer-second formatting."""
+        self.assertEqual(format_edge(8.5, 11.5, 0), '+08s')
+        self.assertEqual(format_edge(8.5, 11.5), '+08s')
+
 
 class TestFormatDelta(unittest.TestCase):
     """Tests for format_delta function."""

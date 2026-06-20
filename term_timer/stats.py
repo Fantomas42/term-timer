@@ -469,14 +469,11 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
         if not values:
             return []
 
-        min_val = int((np.min(values) // best_bin) * best_bin)
-        max_val = int(((np.max(values) // best_bin) + 1) * best_bin)
+        min_val = (np.min(values) // best_bin) * best_bin
+        max_val = ((np.max(values) // best_bin) + 1) * best_bin
 
-        bins = np.arange(
-            int(min_val),
-            int(max_val + best_bin),
-            best_bin,
-        )
+        bin_count = round(float(max_val - min_val) / best_bin) + 1
+        bins = np.linspace(min_val, max_val, bin_count)
 
         (histo, bin_edges) = np.histogram(values, bins=bins)
 
@@ -716,13 +713,18 @@ class SolveStatisticsReporter(Statistics):
             )
 
             max_edge = max(e for c, e in self.repartition)
+            decimals = 1 if any(
+                e != int(e) for c, e in self.repartition
+            ) else 0
             total_percent = 0.0
             for count, edge in self.repartition:
                 percent = (count / self.total)
                 total_percent += percent
 
                 start = f'[{ style }]{ count!s:{" "}>{max_count}} '
-                start += f'([edge]{ format_edge(edge, max_edge) }[/edge])'
+                start += (
+                    f'([edge]{ format_edge(edge, max_edge, decimals) }[/edge])'
+                )
                 start = start.ljust(26 + len(prefix))
 
                 console.print(

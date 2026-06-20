@@ -38,7 +38,7 @@ PLUS_TWO: Final = '+2'
 
 CUBE_SIZES: Final = list(range(2, 8))
 
-SECOND_BINS: Final = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
+SECOND_BINS: Final = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
 
 REFRESH: Final = 0.01
 

@@ -103,13 +103,16 @@ def format_duration(elapsed_ns: int) -> str:
     return f'{ elapsed_ns / SECOND:.2f}'
 
 
-def format_edge(edge: int, max_edge: int) -> str:
+def format_edge(edge: float, max_edge: float, decimals: int = 0) -> str:
     """
     Format time edge value for graph display.
 
     Args:
         edge: The time edge value in seconds.
         max_edge: Maximum edge value to determine formatting style.
+        decimals: Number of decimal places for sub-second bins. When
+            greater than zero, sub-minute edges keep their fractional
+            part (e.g. ``+08.5s``) so finer histograms stay readable.
 
     Returns:
         Formatted edge string with appropriate padding and units.
@@ -118,6 +121,8 @@ def format_edge(edge: int, max_edge: int) -> str:
     mins, secs = divmod(int(edge), 60)
 
     if max_edge < 60:
+        if decimals:
+            return f'+{edge:0{3 + decimals}.{decimals}f}s'
         return f'+{secs:02}s'
 
     _, mins = divmod(mins, 60)

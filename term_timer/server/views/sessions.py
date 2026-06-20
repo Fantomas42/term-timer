@@ -236,7 +236,7 @@ class SessionDetailView(View):
         dist_labels: list[str] = []
         dist_counts: list[int] = []
         for count, edge in self.stats.repartition:
-            dist_labels.append(f'{ edge }s')
+            dist_labels.append(f'{edge:g}s')
             dist_counts.append(int(count))
 
         return {
