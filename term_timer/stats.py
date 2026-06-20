@@ -8,6 +8,7 @@ import plotext as plt
 from cubing_algs.annotations import CubeOrientation
 from cubing_algs.cases.case import Case
 from cubing_algs.vcube import VCube
+from numpy.lib.stride_tricks import sliding_window_view
 from rich import box
 from rich.table import Table
 
@@ -136,28 +137,24 @@ class StatisticsTools:
             limit: Window size for calculating mean.
 
         Returns:
-            Best mean time in milliseconds, or 0 if no valid windows.
+            Best mean time in milliseconds, 0 if no valid windows, or -1
+            if there are fewer times than the window size.
 
         """
-        mos: list[int] = []
-        stack = list(self.stack_time[:-1])
+        if limit > len(self.stack_time):
+            return -1
 
-        current_mo = getattr(self, f'mo{ limit }')
-        if current_mo:
-            mos.append(current_mo)
+        windows = sliding_window_view(
+            np.asarray(self.stack_time, dtype=np.float64),
+            limit,
+        )
 
-        while 42:
-            mo = self.mo(limit, stack)
-            if mo == -1:
-                break
-            if mo:
-                mos.append(mo)
-            stack.pop()
+        # A DNF (0) anywhere in a window invalidates it
+        valid = ~(windows == 0).any(axis=1)
+        if not valid.any():
+            return 0
 
-        if mos:
-            return min(mos)
-
-        return 0
+        return int(windows[valid].mean(axis=1).min())
 
     def best_ao(self, limit: int) -> int:
         """
@@ -170,28 +167,30 @@ class StatisticsTools:
             limit: Window size for calculating average.
 
         Returns:
-            Best average time in milliseconds, or 0 if no valid windows.
+            Best average time in milliseconds, 0 if no valid windows, or
+            -1 if there are fewer times than the window size.
 
         """
-        aos: list[int] = []
-        stack = list(self.stack_time[:-1])
+        if limit > len(self.stack_time):
+            return -1
 
-        current_ao = getattr(self, f'ao{ limit }')
-        if current_ao:
-            aos.append(current_ao)
+        cap = int(np.ceil(limit * 5 / 100))
 
-        while 42:
-            ao = self.ao(limit, stack)
-            if ao == -1:
-                break
-            if ao:
-                aos.append(ao)
-            stack.pop()
+        # DNF (0) maps to +inf so it sorts as a worst time and is trimmed
+        # from the top first, mirroring the WCA/csTimer semantics
+        arr = np.asarray(self.stack_time, dtype=np.float64)
+        arr = np.where(arr == 0, np.inf, arr)
 
-        if aos:
-            return min(aos)
+        windows = np.sort(sliding_window_view(arr, limit), axis=1)
+        trimmed = windows[:, cap:limit - cap]
 
-        return 0
+        # A window with more DNFs than the trim cap keeps an inf and is
+        # itself a DNF, so it is excluded from the best average
+        valid = np.isfinite(trimmed).all(axis=1)
+        if not valid.any():
+            return 0
+
+        return int(trimmed[valid].mean(axis=1).min())
 
 
 class Statistics(StatisticsTools):  # noqa: PLR0904

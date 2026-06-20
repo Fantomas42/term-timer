@@ -1,5 +1,6 @@
 """Tests for stats."""
 # ruff: noqa: ANN401, ERA001
+import random
 import unittest
 from typing import TYPE_CHECKING
 from typing import Any
@@ -1045,6 +1046,76 @@ class TestStatisticsDNFCsTimer(unittest.TestCase):
         """If every ao5 window contains 2+ DNFs, the best ao5 is DNF."""
         stats = build_statistics([10, 15, 20, 30, 25], dnf_indexes={0, 1})
         self.assertEqual(stats.best_ao5, 0)
+
+
+class TestBestRollingDNFEquivalence(unittest.TestCase):
+    """
+    Freezes the vectorized best_mo/best_ao against a brute-force model.
+
+    The fast implementations (`sliding_window_view` + numpy sort, DNF
+    mapped to +inf) must stay bit-identical to a naive per-window
+    reference built from the audited `mo`/`ao` static methods, including
+    every DNF trimming edge case.
+    """
+
+    @staticmethod
+    def reference_best(stack: list[int], limit: int, kind: str) -> int:
+        """
+        Naive best moN/aoN over every consecutive window.
+
+        Returns:
+            Best value in milliseconds, 0 if every window is DNF, or -1
+            if there are fewer times than the window size.
+
+        """
+        if limit > len(stack):
+            return -1
+        compute = Statistics.mo if kind == 'mo' else Statistics.ao
+        values = [
+            result
+            for end in range(limit, len(stack) + 1)
+            for result in [compute(limit, stack[end - limit:end])]
+            if result
+        ]
+        return min(values) if values else 0
+
+    def assert_equivalent(self, stack: list[int], limit: int) -> None:
+        """Both best_mo and best_ao match the reference for a stack."""
+        stats = Statistics(stack)
+        self.assertEqual(
+            stats.best_mo(limit),
+            self.reference_best(stack, limit, 'mo'),
+            msg=f'best_mo({limit}) mismatch for {stack}',
+        )
+        self.assertEqual(
+            stats.best_ao(limit),
+            self.reference_best(stack, limit, 'ao'),
+            msg=f'best_ao({limit}) mismatch for {stack}',
+        )
+
+    def test_dnf_at_trim_cap_boundary(self) -> None:
+        """ao25 (cap 2): 2 DNFs trim away, 3 DNFs make the window DNF."""
+        times = [float(t) for t in range(10, 35)]  # 25 solves
+        # Exactly cap DNFs: window stays valid (DNFs trimmed as worst)
+        at_cap = build_statistics(times, dnf_indexes={0, 1})
+        self.assertGreater(at_cap.best_ao(25), 0)
+        # One more DNF than the cap: the only window is DNF
+        over_cap = build_statistics(times, dnf_indexes={0, 1, 2})
+        self.assertEqual(over_cap.best_ao(25), 0)
+
+    def test_random_stacks_match_reference(self) -> None:
+        """Randomized DNF stacks stay equivalent to the reference."""
+        rng = random.Random(20260620)  # noqa: S311
+        limits = [3, 5, 12, 25, 50]
+        for _ in range(2000):
+            size = rng.randint(0, 60)
+            dnf_rate = rng.choice([0.0, 0.05, 0.2, 0.5, 0.9, 1.0])
+            stack = [
+                0 if rng.random() < dnf_rate else rng.randint(1, 30000)
+                for _ in range(size)
+            ]
+            for limit in limits:
+                self.assert_equivalent(stack, limit)
 
 
 class TestSolveStatisticsReporterTotalTimeDNF(unittest.TestCase):
