@@ -68,7 +68,7 @@ class StatisticsTools:
         Calculate the mean of N (moN) for the last N times.
 
         A DNF time (0) in the window makes the whole moN a DNF,
-        following csTimer/WCA semantics.
+        following WCA semantics.
 
         Args:
             limit: Number of most recent times to include.
@@ -93,17 +93,16 @@ class StatisticsTools:
         """
         Compute how many solves to drop from each end of a window.
 
-        Mirrors csTimer's ``getNTrim`` (``stats/timestat.js:12``) and the
-        symmetric branch of ``getNTrimLR`` (``stats/timestat.js:22``):
+        Supports three trim modes:
 
         - ``pN`` trims ``ceil(limit * N / 100)`` per side (percentage,
           WCA = 5)
         - ``m`` trims ``limit // 2`` per side (median)
         - a bare integer trims that many solves per side (fixed count)
 
-        csTimer steps the trim back by one when both sides together would
-        consume the whole window; a final clamp keeps at least one solve
-        for degenerate configurations.
+        The trim steps back by one when both sides together would consume
+        the whole window; a final clamp keeps at least one solve for
+        degenerate configurations.
 
         Args:
             spec: Trim specification (``pN``, ``m`` or an integer string).
@@ -130,9 +129,9 @@ class StatisticsTools:
         """
         Validate and normalise a trim specification string.
 
-        Accepts csTimer-style specs — ``pN`` (percentage), ``m`` (median)
-        or a bare integer (fixed count) — and falls back to the WCA
-        default ``p5`` for anything unrecognised.
+        Accepts trim specs — ``pN`` (percentage), ``m`` (median) or a bare
+        integer (fixed count) — and falls back to the WCA default ``p5``
+        for anything unrecognised.
 
         Args:
             spec: Raw trim specification to validate.
@@ -161,7 +160,7 @@ class StatisticsTools:
 
         DNF times (0) count as the worst times and are trimmed first;
         if the window contains more DNFs than the trim cap, the whole
-        aoN is a DNF, following csTimer/WCA semantics.
+        aoN is a DNF, following WCA semantics.
 
         Args:
             limit: Number of most recent times to include.
@@ -242,7 +241,7 @@ class StatisticsTools:
         cap = self.trim_count(STATS_TRIM, limit)
 
         # DNF (0) maps to +inf so it sorts as a worst time and is trimmed
-        # from the top first, mirroring the WCA/csTimer semantics
+        # from the top first, mirroring the WCA semantics
         arr = np.asarray(self.stack_time, dtype=np.float64)
         arr = np.where(arr == 0, np.inf, arr)
 

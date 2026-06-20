@@ -145,7 +145,7 @@ class TestStatisticsTrim(unittest.TestCase):
 
 
 class TestTrimCount(unittest.TestCase):
-    """Tests for trim_count, mirroring csTimer getNTrim/getNTrimLR."""
+    """Tests for trim_count across percentage, median and fixed modes."""
 
     def test_percentage_default(self) -> None:
         """Default p5 trims 1 per side for the usual window sizes."""
@@ -1040,11 +1040,11 @@ def build_statistics(
     return Statistics([s.final_time for s in solves])
 
 
-class TestStatisticsDNFCsTimer(unittest.TestCase):
+class TestStatisticsDNF(unittest.TestCase):
     """
-    Tests reflecting csTimer DNF semantics.
+    Tests reflecting WCA DNF semantics.
 
-    csTimer reference behaviour:
+    Reference behaviour:
     - A DNF has no time: it is excluded from best, mean and median.
     - A moN whose window contains a DNF is DNF.
     - For aoN, DNFs count as the *worst* times and are trimmed first.
@@ -1235,12 +1235,12 @@ class TestSolveStatisticsReporterTotalTimeDNF(unittest.TestCase):
         self.assertEqual(reporter.total_time, 37 * SECOND)
 
 
-class TestStatisticsDNFCsTimerScenarios(unittest.TestCase):
+class TestStatisticsDNFScenarios(unittest.TestCase):
     """
-    Scenario tests replaying a real csTimer session.
+    Scenario tests replaying a real session.
 
-    The session contains 7 solves; csTimer values are taken from the
-    csTimer interface with 0, 1 and 2 solves flagged DNF.
+    The session contains 7 solves; expected values are computed with 0, 1
+    and 2 solves flagged DNF.
     """
 
     TIMES: tuple[float, ...] = (4.03, 4.64, 5.02, 3.27, 5.90, 5.68, 4.32)
@@ -1257,7 +1257,7 @@ class TestStatisticsDNFCsTimerScenarios(unittest.TestCase):
         return round(value / SECOND, 2)
 
     def test_session_without_dnf(self) -> None:
-        """Sanity check: csTimer values without any DNF."""
+        """Sanity check: expected values without any DNF."""
         stats = build_statistics(list(self.TIMES))
 
         self.assertEqual(self.seconds(stats.best), 3.27)
@@ -1268,7 +1268,7 @@ class TestStatisticsDNFCsTimerScenarios(unittest.TestCase):
         self.assertEqual(self.seconds(stats.best_ao5), 4.56)
 
     def test_session_with_one_dnf(self) -> None:
-        """CsTimer values with solve #5 (5.90) flagged DNF."""
+        """Expected values with solve #5 (5.90) flagged DNF."""
         stats = build_statistics(list(self.TIMES), dnf_indexes={4})
 
         self.assertEqual(self.seconds(stats.best), 3.27)
@@ -1279,7 +1279,7 @@ class TestStatisticsDNFCsTimerScenarios(unittest.TestCase):
         self.assertEqual(self.seconds(stats.best_ao5), 4.56)
 
     def test_session_with_two_dnfs(self) -> None:
-        """CsTimer values with solves #4 and #5 flagged DNF."""
+        """Expected values with solves #4 and #5 flagged DNF."""
         stats = build_statistics(list(self.TIMES), dnf_indexes={3, 4})
 
         self.assertEqual(self.seconds(stats.best), 4.03)
