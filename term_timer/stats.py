@@ -257,6 +257,84 @@ class StatisticsTools:
 
         return int(trimmed[valid].mean(axis=1).min())
 
+    @staticmethod
+    def bpa(limit: int, stack_elapsed: list[int]) -> int:
+        """
+        Calculate the best possible average on the next solve (BPA).
+
+        Returns the aoN you would obtain if the next solve were perfect.
+        The window is the last ``limit - 1`` real solves plus a synthetic
+        perfect solve (0 ms, the best possible time), trimmed with the same
+        caps as ``ao``.
+
+        DNF times (0) count as the worst and are trimmed first; if the
+        existing window already holds more DNFs than the trim cap, even a
+        perfect solve cannot save it and the BPA is a DNF.
+
+        Args:
+            limit: Window size of the average being projected.
+            stack_elapsed: List of times in milliseconds.
+
+        Returns:
+            Best possible average in milliseconds, 0 if the window is a DNF,
+            or -1 if there are fewer than ``limit - 1`` times.
+
+        """
+        if limit - 1 > len(stack_elapsed):
+            return -1
+
+        cap = StatisticsTools.trim_count(STATS_TRIM, limit)
+
+        window = stack_elapsed[len(stack_elapsed) - (limit - 1):]
+        if window.count(0) > cap:
+            return 0
+
+        # DNF (0) maps to +inf to sort and trim as the worst; the perfect
+        # next solve enters as a genuine 0 ms, the absolute best time
+        arr = np.asarray(window, dtype=np.float64)
+        arr = np.where(arr == 0, np.inf, arr)
+        arr = np.sort(np.append(arr, 0.0))
+
+        return int(arr[cap:limit - cap].mean())
+
+    @staticmethod
+    def wpa(limit: int, stack_elapsed: list[int]) -> int:
+        """
+        Calculate the worst possible average on the next solve (WPA).
+
+        Returns the aoN you would obtain if the next solve were a DNF.
+        The window is the last ``limit - 1`` real solves plus a synthetic
+        DNF, trimmed with the same caps as ``ao``.
+
+        The synthetic DNF counts as the worst time and is trimmed first; if
+        adding it pushes the DNF count beyond the trim cap, the WPA is a DNF.
+
+        Args:
+            limit: Window size of the average being projected.
+            stack_elapsed: List of times in milliseconds.
+
+        Returns:
+            Worst possible average in milliseconds, 0 if the window is a DNF,
+            or -1 if there are fewer than ``limit - 1`` times.
+
+        """
+        if limit - 1 > len(stack_elapsed):
+            return -1
+
+        cap = StatisticsTools.trim_count(STATS_TRIM, limit)
+
+        window = stack_elapsed[len(stack_elapsed) - (limit - 1):]
+        if window.count(0) + 1 > cap:
+            return 0
+
+        # DNF (0) and the synthetic DNF next solve map to +inf, sorting and
+        # trimming as the worst times
+        arr = np.asarray(window, dtype=np.float64)
+        arr = np.where(arr == 0, np.inf, arr)
+        arr = np.sort(np.append(arr, np.inf))
+
+        return int(arr[cap:limit - cap].mean())
+
 
 class Statistics(StatisticsTools):  # noqa: PLR0904
     """
@@ -401,6 +479,54 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
 
         """
         return self.best_ao(1000)
+
+    @cached_property
+    def bpa5(self) -> int:
+        """
+        Best possible average of 5 on the next solve.
+
+        Returns:
+            Best possible ao5 in milliseconds, 0 if a DNF, or -1 if
+            insufficient data.
+
+        """
+        return self.bpa(5, self.stack_time)
+
+    @cached_property
+    def wpa5(self) -> int:
+        """
+        Worst possible average of 5 on the next solve.
+
+        Returns:
+            Worst possible ao5 in milliseconds, 0 if a DNF, or -1 if
+            insufficient data.
+
+        """
+        return self.wpa(5, self.stack_time)
+
+    @cached_property
+    def bpa12(self) -> int:
+        """
+        Best possible average of 12 on the next solve.
+
+        Returns:
+            Best possible ao12 in milliseconds, 0 if a DNF, or -1 if
+            insufficient data.
+
+        """
+        return self.bpa(12, self.stack_time)
+
+    @cached_property
+    def wpa12(self) -> int:
+        """
+        Worst possible average of 12 on the next solve.
+
+        Returns:
+            Worst possible ao12 in milliseconds, 0 if a DNF, or -1 if
+            insufficient data.
+
+        """
+        return self.wpa(12, self.stack_time)
 
     @cached_property
     def best(self) -> int:

@@ -1290,6 +1290,149 @@ class TestStatisticsDNFCsTimerScenarios(unittest.TestCase):
         self.assertEqual(stats.best_ao5, 0)  # DNF
 
 
+def brute_projection(
+        times: list[int],
+        limit: int,
+        cap: int,
+        *,
+        next_dnf: bool,
+) -> int:
+    """
+    Pure-Python oracle for BPA/WPA.
+
+    Projects the next solve onto the rolling window: the last ``limit - 1``
+    real solves plus a synthetic next solve (perfect ``0`` for BPA, DNF for
+    WPA), trimmed ``cap`` per side. Deliberately independent of the numpy
+    implementation so it can serve as a differential reference.
+
+    Returns:
+        Projected average in milliseconds, or 0 if the projection is a DNF.
+
+    """
+    window = times[len(times) - (limit - 1):]
+    real_dnf = window.count(0)
+    if real_dnf + (1 if next_dnf else 0) > cap:
+        return 0
+
+    values = [float('inf') if time == 0 else float(time) for time in window]
+    values.append(float('inf') if next_dnf else 0.0)
+    values.sort()
+
+    kept = values[cap:limit - cap]
+    return int(sum(kept) / len(kept))
+
+
+class TestBpaWpa(unittest.TestCase):
+    """
+    Tests for the best/worst possible average projections.
+
+    BPA is the average you would get if the next solve were perfect (0 ms);
+    WPA if the next solve were a DNF. Both project onto the last ``limit - 1``
+    real solves and trim with the same caps as ``ao``.
+    """
+
+    def test_bpa5_clean_window_at_boundary(self) -> None:
+        """BPA5 is available from 4 solves and trims the perfect solve."""
+        tools = StatisticsTools([10 * SECOND, 20 * SECOND,
+                                 30 * SECOND, 40 * SECOND])
+        # Sorted [0, 10, 20, 30, 40], trim 1/side -> (10+20+30)/3
+        self.assertEqual(tools.bpa(5, tools.stack_time), 20 * SECOND)
+
+    def test_wpa5_clean_window_at_boundary(self) -> None:
+        """WPA5 trims the synthetic DNF as the single worst time."""
+        tools = StatisticsTools([10 * SECOND, 20 * SECOND,
+                                 30 * SECOND, 40 * SECOND])
+        # Sorted [10, 20, 30, 40, inf], trim 1/side -> (20+30+40)/3
+        self.assertEqual(tools.wpa(5, tools.stack_time), 30 * SECOND)
+
+    def test_bpa_uses_only_last_window(self) -> None:
+        """Older solves outside the last limit-1 are ignored."""
+        tools = StatisticsTools([99 * SECOND, 10 * SECOND, 20 * SECOND,
+                                 30 * SECOND, 40 * SECOND])
+        self.assertEqual(tools.bpa(5, tools.stack_time), 20 * SECOND)
+        self.assertEqual(tools.wpa(5, tools.stack_time), 30 * SECOND)
+
+    def test_bpa5_with_one_dnf_in_window(self) -> None:
+        """A single DNF fits under the trim cap, so BPA stays finite."""
+        tools = StatisticsTools([10 * SECOND, 20 * SECOND, 0, 40 * SECOND])
+        # [0, 10, 20, 40, inf] trim 1/side -> (10+20+40)/3
+        self.assertEqual(tools.bpa(5, tools.stack_time), int(70 / 3 * SECOND))
+
+    def test_wpa5_with_one_dnf_is_dnf(self) -> None:
+        """An existing DNF plus the synthetic DNF exceeds the cap -> DNF."""
+        tools = StatisticsTools([10 * SECOND, 20 * SECOND, 0, 40 * SECOND])
+        self.assertEqual(tools.wpa(5, tools.stack_time), 0)
+
+    def test_bpa5_with_two_dnfs_is_dnf(self) -> None:
+        """Two DNFs already exceed the ao5 trim cap, so even BPA is DNF."""
+        tools = StatisticsTools([10 * SECOND, 0, 0, 40 * SECOND])
+        self.assertEqual(tools.bpa(5, tools.stack_time), 0)
+
+    def test_bpa12_clean_window(self) -> None:
+        """BPA12 over 11 solves trims one per side after adding 0."""
+        times = [t * SECOND for t in range(1, 12)]
+        tools = StatisticsTools(times)
+        # [0..11] trim 1/side -> mean(1..10) = 5.5
+        self.assertEqual(tools.bpa(12, tools.stack_time), int(5.5 * SECOND))
+
+    def test_wpa12_clean_window(self) -> None:
+        """WPA12 trims the synthetic DNF as the single worst time."""
+        times = [t * SECOND for t in range(1, 12)]
+        tools = StatisticsTools(times)
+        # [1..11, inf] trim 1/side -> mean(2..11) = 6.5
+        self.assertEqual(tools.wpa(12, tools.stack_time), int(6.5 * SECOND))
+
+    def test_insufficient_data_returns_minus_one(self) -> None:
+        """Fewer than limit-1 solves yields -1 for both BPA and WPA."""
+        tools = StatisticsTools([10 * SECOND, 20 * SECOND, 30 * SECOND])
+        self.assertEqual(tools.bpa(5, tools.stack_time), -1)
+        self.assertEqual(tools.wpa(5, tools.stack_time), -1)
+
+    def test_bpa_is_best_case_wpa_is_worst_case(self) -> None:
+        """For a clean window BPA <= current ao5 <= WPA."""
+        times = [30 * SECOND, 10 * SECOND, 50 * SECOND,
+                 20 * SECOND, 40 * SECOND]
+        tools = StatisticsTools(times)
+        # ao5 projects onto the last 4 + next solve, like BPA/WPA
+        bpa = tools.bpa(5, tools.stack_time)
+        wpa = tools.wpa(5, tools.stack_time)
+        self.assertLess(bpa, wpa)
+        # Best case beats the worst real time in the projected window
+        self.assertLessEqual(bpa, wpa)
+
+    def test_cached_properties_match_methods(self) -> None:
+        """Statistics.bpa5/wpa5/bpa12/wpa12 wrap the underlying methods."""
+        times = [t * SECOND for t in range(1, 12)]
+        stats = Statistics(times)
+        self.assertEqual(stats.bpa5, stats.bpa(5, stats.stack_time))
+        self.assertEqual(stats.wpa5, stats.wpa(5, stats.stack_time))
+        self.assertEqual(stats.bpa12, stats.bpa(12, stats.stack_time))
+        self.assertEqual(stats.wpa12, stats.wpa(12, stats.stack_time))
+
+    def test_differential_against_brute_force(self) -> None:
+        """Random windows (incl. DNFs) match the pure-Python oracle."""
+        dnf_probability = 0.15
+        rng = random.Random(20260620)  # noqa: S311
+        for _ in range(2000):
+            limit = rng.choice([5, 12])
+            count = rng.randint(limit - 1, limit + 8)
+            times = [
+                0 if rng.random() < dnf_probability
+                else rng.randint(1, 60) * 100
+                for _ in range(count)
+            ]
+            tools = StatisticsTools(times)
+            cap = StatisticsTools.trim_count('p5', limit)
+            self.assertEqual(
+                tools.bpa(limit, tools.stack_time),
+                brute_projection(times, limit, cap, next_dnf=False),
+            )
+            self.assertEqual(
+                tools.wpa(limit, tools.stack_time),
+                brute_projection(times, limit, cap, next_dnf=True),
+            )
+
+
 class TestListingFilters(unittest.TestCase):
     """Tests for ListingFilters dataclass."""
 
