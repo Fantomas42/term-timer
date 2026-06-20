@@ -26,11 +26,91 @@
             {{ group.title }}
           </a>
         {% endfor %}
+        <a href="#components-themes" class="sg-toc-link">Prototypes de thèmes</a>
         <a href="#components-buttons" class="sg-toc-link">Buttons &amp; controls</a>
         <a href="#components-badges" class="sg-toc-link">Badges &amp; indicators</a>
         <a href="#components-layout" class="sg-toc-link">Layout &amp; cards</a>
         <a href="#components-data" class="sg-toc-link">Data &amp; algorithm</a>
       </nav>
+    </div>
+
+    {# ── Theme prototypes (comparatif de directions d'art) ────────── #}
+    {# Staging only : chaque panneau [data-theme] remappe les tokens.  #}
+    {# Rien en prod ne change tant qu'une direction n'est pas choisie. #}
+    <div class="card" id="components-themes">
+      <div class="card-header">
+        <h3 class="card-title">Prototypes de thèmes</h3>
+        <span class="title-secondary">3 directions à comparer</span>
+      </div>
+      <p class="card-description">
+        Trois directions d'art rendues avec de vrais composants. Surfaces,
+        rayons, ombres et typographie sont pilotés par
+        <code>[data-theme]</code> ; les barèmes catégoriels (grades, scores,
+        triggers) restent partagés. Les pages live sont inchangées.
+      </p>
+      <div class="sg-themes">
+        {% for t in [
+          {'id': 'refined-dark', 'name': 'Refined dark (hybride)',
+           'tag': 'Violet Linear + chiffres mono + arrondis serrés', 'dots': 1},
+          {'id': 'cube-terminal', 'name': 'Cube terminal',
+           'tag': 'Identité speedcubing — mono + stickers', 'dots': 5},
+          {'id': 'warm-teal', 'name': 'Warm dark + teal',
+           'tag': 'Glass, accent unique, neutres chauds', 'dots': 1}
+        ] %}
+          <div class="sg-theme" data-theme="{{ t.id }}">
+            <div class="sg-theme-name">{{ t.name }}</div>
+            <span class="sg-theme-tagline">{{ t.tag }}</span>
+
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">
+                  <i class="fas fa-chart-line"></i> Best Ao5
+                </h2>
+                <span class="title-secondary">3x3x3</span>
+              </div>
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <div class="stat-title">Best</div>
+                  <div class="stat-value time-best">7.42</div>
+                  <div class="stat-meta">
+                    <span class="stat-delta negative">-0.68</span>
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-title">Mean</div>
+                  <div class="stat-value">10.18</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sg-row">
+              <button class="btn">Action</button>
+              <button class="btn btn-secondary">Secondary</button>
+              <span class="case-code">OLL 27</span>
+            </div>
+
+            <div class="algorithm-card moves-card">
+              <div class="moves-content">
+                {% for move in ['R', 'U', "R'", "U'", 'F'] %}
+                  <span class="move">{{ move }}</span>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="sg-row sg-row-text">
+              {% for grade in ['s', 'a', 'b', 'c', 'd'] %}
+                <span class="grade-{{ grade }}">{{ grade|upper }}</span>
+              {% endfor %}
+            </div>
+
+            <div class="sg-accent-row">
+              {% for _ in range(t.dots) %}
+                <span class="sg-accent-dot"></span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
     </div>
 
     {# ── Token swatches (generated from :root) ────────────────────── #}

@@ -113,6 +113,51 @@
 
     /* ── Dimensions ───────────────────────────────────── */
     --square-size: 1.5rem;
+
+    /* ── Système thématique (radius / ombres / typo) ──── */
+    /* Valeurs par défaut = look actuel ; surchargées dans  */
+    /* les blocs [data-theme] (prototypes styleguide).      */
+    --radius-card: 0.5rem;
+    --radius-sm: 0.375rem;
+    --card-border: 1px solid transparent;
+    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                   0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --chip-bg: rgba(255, 255, 255, 0.07);  /* chips .move : surface translucide levée */
+    --accent: var(--primary);
+    --font-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                 Roboto, sans-serif;
+    --font-display: var(--font-base);  /* titres / labels */
+    --font-num: var(--font-base);      /* chronos / chiffres */
+
+    /* ── Palettes prototypes (comparatif styleguide) ──── */
+    /* Hex bruts ici ; les blocs [data-theme] remappent les */
+    /* tokens sémantiques vers ces couleurs.                */
+    /* Refined dark (Linear/Vercel) */
+    --rd-bg: #0B0B12;
+    --rd-card: #15141F;
+    --rd-text: #ECECF4;
+    --rd-text-dim: #8A8AA0;
+    --rd-accent: #7C6CFF;        /* violet clair : texte / icônes / signature */
+    --rd-fill: #5B4BD6;          /* violet bouton : contraste AA (~5.3:1) */
+    --rd-fill-strong: #4F3FCF;   /* hover bouton/move */
+    --rd-accent-2: #4DD0E1;      /* cyan : liens / données */
+    /* Cube terminal (identité speedcubing) */
+    --ct-bg: #16181D;
+    --ct-card: #1F2228;
+    --ct-text: #F2F2EC;
+    --ct-text-dim: #9A9A90;
+    --ct-green: #00B84D;
+    --ct-green-strong: #00A043;
+    --ct-red: #EE2233;
+    --ct-blue: #1166DD;
+    --ct-yellow: #FFB400;
+    --ct-orange: #FF7000;
+    /* Warm dark / teal signature */
+    --wt-bg: #14130F;
+    --wt-text: #F4F2EC;
+    --wt-text-dim: #9C988C;
+    --wt-teal: #16C7B0;
+    --wt-teal-dark: #0E9E8C;
 }
 
 * {
@@ -2927,4 +2972,174 @@ a.academy-header[href]:hover {
 
 .sg-row .day-square {
     border: 1px solid var(--border-color);
+}
+
+/* ──────────────────────────────────────────────────────
+   Prototypes de thèmes (comparatif styleguide uniquement)
+   Chaque panneau [data-theme] est une surface autonome qui
+   remappe les tokens sémantiques + le système thématique.
+   Rien hors d'un panneau n'est affecté : pages live intactes.
+   ────────────────────────────────────────────────────── */
+.sg-themes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.sg-theme {
+    background-color: var(--main-bg);
+    color: var(--text-primary);
+    font-family: var(--font-base);
+    border: var(--card-border);
+    border-radius: var(--radius-card);
+    padding: 1.25rem;
+    overflow: hidden;
+}
+
+.sg-theme-name {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: var(--text-primary);
+}
+
+.sg-theme-tagline {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+/* Surfaces réelles rendues dans le panneau : on branche les
+   composants existants sur le système thématique. */
+.sg-theme .card {
+    background-color: var(--card-bg);
+    border: var(--card-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.sg-theme .card-title {
+    font-family: var(--font-display);
+}
+
+.sg-theme .stat-card {
+    border-radius: var(--radius-sm);
+}
+
+.sg-theme .stat-value,
+.sg-theme .solve-time,
+.sg-theme .move,
+.sg-theme .alg-value {
+    font-family: var(--font-num);
+}
+
+/* Chips .move : surface translucide plus claire que le      */
+/* conteneur (mécanisme du thème 3), uniforme sur tous les   */
+/* thèmes. Le hover reste prioritaire (spécificité +).       */
+.sg-theme .moves-card .move {
+    background-color: var(--chip-bg);
+}
+
+.sg-theme .moves-card .move:hover {
+    background-color: var(--primary);
+}
+
+.sg-theme .btn,
+.sg-theme .action-btn {
+    border-radius: var(--radius-sm);
+}
+
+/* Pastille d'accent signature du thème. */
+.sg-accent-row {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    margin-top: 0.75rem;
+}
+
+.sg-accent-dot {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background-color: var(--accent);
+}
+
+/* ── Thème : Refined dark (Linear/Vercel) ───────────── */
+.sg-theme[data-theme="refined-dark"] {
+    --main-bg: var(--rd-bg);
+    --card-bg: var(--rd-card);
+    --text-primary: var(--rd-text);
+    --text-secondary: var(--rd-text-dim);
+    --border-color: rgba(255, 255, 255, 0.07);
+    --primary: var(--rd-fill);          /* remplis boutons/moves : texte clair lisible */
+    --primary-strong: var(--rd-fill-strong);
+    --info: var(--rd-fill-strong);      /* hover .btn cohérent (violet, pas bleu) */
+    --accent: var(--rd-accent);         /* violet clair : signature / icônes / liens */
+    --link: var(--rd-accent-2);
+    --card-border: 1px solid rgba(255, 255, 255, 0.06);
+    --radius-card: 6px;                 /* arrondis Cube terminal */
+    --radius-sm: 4px;
+    --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --font-num: 'JetBrains Mono', ui-monospace, 'Courier New', monospace;
+}
+
+/* ── Thème : Cube terminal (identité) ───────────────── */
+.sg-theme[data-theme="cube-terminal"] {
+    --main-bg: var(--ct-bg);
+    --card-bg: var(--ct-card);
+    --text-primary: var(--ct-text);
+    --text-secondary: var(--ct-text-dim);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --primary: var(--ct-green);
+    --primary-strong: var(--ct-green-strong);
+    --accent: var(--ct-green);
+    --link: var(--ct-blue);
+    --card-border: 1px solid rgba(255, 255, 255, 0.08);
+    --radius-card: 6px;
+    --radius-sm: 4px;
+    --shadow-card: 0 2px 0 rgba(0, 0, 0, 0.5);
+    --font-display: 'JetBrains Mono', ui-monospace, 'Courier New', monospace;
+    --font-num: 'JetBrains Mono', ui-monospace, 'Courier New', monospace;
+}
+
+/* Rangée d'accents couleurs-stickers, propre au cube terminal. */
+.sg-theme[data-theme="cube-terminal"] .sg-accent-row .sg-accent-dot:nth-child(1) {
+    background-color: var(--ct-green);
+}
+.sg-theme[data-theme="cube-terminal"] .sg-accent-row .sg-accent-dot:nth-child(2) {
+    background-color: var(--ct-red);
+}
+.sg-theme[data-theme="cube-terminal"] .sg-accent-row .sg-accent-dot:nth-child(3) {
+    background-color: var(--ct-blue);
+}
+.sg-theme[data-theme="cube-terminal"] .sg-accent-row .sg-accent-dot:nth-child(4) {
+    background-color: var(--ct-yellow);
+}
+.sg-theme[data-theme="cube-terminal"] .sg-accent-row .sg-accent-dot:nth-child(5) {
+    background-color: var(--ct-orange);
+}
+
+/* ── Thème : Warm dark / teal ───────────────────────── */
+.sg-theme[data-theme="warm-teal"] {
+    --main-bg: var(--wt-bg);
+    --card-bg: rgba(255, 255, 255, 0.04);
+    --text-primary: var(--wt-text);
+    --text-secondary: var(--wt-text-dim);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --primary: var(--wt-teal);
+    --primary-strong: var(--wt-teal-dark);
+    --accent: var(--wt-teal);
+    --link: var(--wt-teal);
+    --card-border: 1px solid rgba(255, 255, 255, 0.08);
+    --radius-card: 14px;
+    --radius-sm: 10px;
+    --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.sg-theme[data-theme="warm-teal"] .card {
+    backdrop-filter: blur(8px);
 }
