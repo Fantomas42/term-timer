@@ -89,12 +89,75 @@ class StatisticsTools:
         return int(np.mean(last_of))
 
     @staticmethod
+    def trim_count(spec: str, limit: int) -> int:
+        """
+        Compute how many solves to drop from each end of a window.
+
+        Mirrors csTimer's ``getNTrim`` (``stats/timestat.js:12``) and the
+        symmetric branch of ``getNTrimLR`` (``stats/timestat.js:22``):
+
+        - ``pN`` trims ``ceil(limit * N / 100)`` per side (percentage,
+          WCA = 5)
+        - ``m`` trims ``limit // 2`` per side (median)
+        - a bare integer trims that many solves per side (fixed count)
+
+        csTimer steps the trim back by one when both sides together would
+        consume the whole window; a final clamp keeps at least one solve
+        for degenerate configurations.
+
+        Args:
+            spec: Trim specification (``pN``, ``m`` or an integer string).
+            limit: Window size.
+
+        Returns:
+            Number of solves to drop from each end of the window.
+
+        """
+        if spec.startswith('p'):
+            count = int(np.ceil(limit * int(spec[1:]) / 100))
+        elif spec == 'm':
+            count = limit // 2
+        else:
+            count = int(spec)
+
+        if 2 * count == limit:
+            count = max(count - 1, 0)
+
+        return min(count, (limit - 1) // 2)
+
+    @staticmethod
+    def normalize_trim(spec: str) -> str:
+        """
+        Validate and normalise a trim specification string.
+
+        Accepts csTimer-style specs — ``pN`` (percentage), ``m`` (median)
+        or a bare integer (fixed count) — and falls back to the WCA
+        default ``p5`` for anything unrecognised.
+
+        Args:
+            spec: Raw trim specification to validate.
+
+        Returns:
+            A valid trim specification string.
+
+        """
+        spec = spec.strip()
+        if spec == 'm':
+            return spec
+        if spec.startswith('p') and spec[1:].isdigit():
+            return spec
+        if spec.isdigit():
+            return spec
+
+        return 'p5'
+
+    @staticmethod
     def ao(limit: int, stack_elapsed: list[int]) -> int:
         """
         Calculate the average of N (aoN) excluding best/worst times.
 
-        Removes the top and bottom 5% of times before averaging, following
-        WCA (World Cube Association) competition rules.
+        Trims the top and bottom of the window before averaging, using the
+        configured trim mode (default WCA 5% per side); see ``trim_count``.
 
         DNF times (0) count as the worst times and are trimmed first;
         if the window contains more DNFs than the trim cap, the whole
@@ -112,9 +175,7 @@ class StatisticsTools:
         if limit > len(stack_elapsed):
             return -1
 
-        cap = int(np.ceil(limit * STATS_TRIM / 100))
-        # Keep at least one time in the window for extreme trim settings
-        cap = min(cap, (limit - 1) // 2)
+        cap = StatisticsTools.trim_count(STATS_TRIM, limit)
 
         last_of = stack_elapsed[-limit:]
 
@@ -178,9 +239,7 @@ class StatisticsTools:
         if limit > len(self.stack_time):
             return -1
 
-        cap = int(np.ceil(limit * STATS_TRIM / 100))
-        # Keep at least one time in the window for extreme trim settings
-        cap = min(cap, (limit - 1) // 2)
+        cap = self.trim_count(STATS_TRIM, limit)
 
         # DNF (0) maps to +inf so it sorts as a worst time and is trimmed
         # from the top first, mirroring the WCA/csTimer semantics

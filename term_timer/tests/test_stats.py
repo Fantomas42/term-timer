@@ -98,29 +98,100 @@ class TestStatisticsTrim(unittest.TestCase):
 
     def test_ao_default_trim_five_percent(self) -> None:
         """Default 5% trim drops 1 each side: mean of the middle three."""
-        with patch('term_timer.stats.STATS_TRIM', 5):
+        with patch('term_timer.stats.STATS_TRIM', 'p5'):
             ao5 = self.stats_tools.ao(5, self.stats_tools.stack_time)
         # (20 + 40 + 50) / 3
         self.assertEqual(ao5, int((110 / 3) * SECOND))
 
     def test_ao_larger_trim_drops_more(self) -> None:
         """A 40% trim drops 2 each side: only the median remains."""
-        with patch('term_timer.stats.STATS_TRIM', 40):
+        with patch('term_timer.stats.STATS_TRIM', 'p40'):
             ao5 = self.stats_tools.ao(5, self.stats_tools.stack_time)
         self.assertEqual(ao5, 40 * SECOND)
 
     def test_ao_extreme_trim_keeps_one_time(self) -> None:
         """A trim that would empty the window is clamped to keep one time."""
-        with patch('term_timer.stats.STATS_TRIM', 90):
+        with patch('term_timer.stats.STATS_TRIM', 'p90'):
+            ao5 = self.stats_tools.ao(5, self.stats_tools.stack_time)
+        self.assertEqual(ao5, 40 * SECOND)
+
+    def test_ao_median_mode_odd_window(self) -> None:
+        """Median mode on an odd window keeps the single middle time."""
+        with patch('term_timer.stats.STATS_TRIM', 'm'):
+            ao5 = self.stats_tools.ao(5, self.stats_tools.stack_time)
+        self.assertEqual(ao5, 40 * SECOND)
+
+    def test_ao_median_mode_even_window(self) -> None:
+        """Median mode on an even window keeps the two middle times."""
+        times = [10 * SECOND, 20 * SECOND, 40 * SECOND, 60 * SECOND]
+        tools = StatisticsTools(times)
+        with patch('term_timer.stats.STATS_TRIM', 'm'):
+            ao4 = tools.ao(4, tools.stack_time)
+        # pullback to 1 per side: (20 + 40) / 2
+        self.assertEqual(ao4, 30 * SECOND)
+
+    def test_ao_fixed_mode_drops_fixed_count(self) -> None:
+        """Fixed mode drops the given number of times per side."""
+        with patch('term_timer.stats.STATS_TRIM', '2'):
             ao5 = self.stats_tools.ao(5, self.stats_tools.stack_time)
         self.assertEqual(ao5, 40 * SECOND)
 
     def test_best_ao_respects_trim(self) -> None:
         """best_ao uses the configured trim for its rolling windows."""
         stats = Statistics(self.times)
-        with patch('term_timer.stats.STATS_TRIM', 40):
+        with patch('term_timer.stats.STATS_TRIM', 'p40'):
             best_ao5 = stats.best_ao(5)
         self.assertEqual(best_ao5, 40 * SECOND)
+
+
+class TestTrimCount(unittest.TestCase):
+    """Tests for trim_count, mirroring csTimer getNTrim/getNTrimLR."""
+
+    def test_percentage_default(self) -> None:
+        """Default p5 trims 1 per side for the usual window sizes."""
+        self.assertEqual(StatisticsTools.trim_count('p5', 5), 1)
+        self.assertEqual(StatisticsTools.trim_count('p5', 12), 1)
+        self.assertEqual(StatisticsTools.trim_count('p5', 100), 5)
+
+    def test_median_odd_keeps_one(self) -> None:
+        """Median mode leaves a single middle time for odd windows."""
+        self.assertEqual(StatisticsTools.trim_count('m', 5), 2)
+        self.assertEqual(StatisticsTools.trim_count('m', 3), 1)
+
+    def test_median_even_pullback(self) -> None:
+        """Median mode steps back one side when the window is even."""
+        self.assertEqual(StatisticsTools.trim_count('m', 4), 1)
+        self.assertEqual(StatisticsTools.trim_count('m', 12), 5)
+
+    def test_fixed_count(self) -> None:
+        """A bare integer trims that many times per side."""
+        self.assertEqual(StatisticsTools.trim_count('2', 12), 2)
+
+    def test_pullback_when_window_consumed(self) -> None:
+        """A fixed trim consuming the whole window is stepped back."""
+        self.assertEqual(StatisticsTools.trim_count('2', 4), 1)
+
+    def test_clamp_keeps_one_time(self) -> None:
+        """Degenerate trims are clamped to keep at least one time."""
+        self.assertEqual(StatisticsTools.trim_count('p90', 5), 2)
+        self.assertEqual(StatisticsTools.trim_count('10', 5), 2)
+
+
+class TestNormalizeTrim(unittest.TestCase):
+    """Tests for the trim specification validation helper."""
+
+    def test_valid_specs_kept(self) -> None:
+        """Recognised specs are returned untouched (whitespace stripped)."""
+        self.assertEqual(StatisticsTools.normalize_trim('p5'), 'p5')
+        self.assertEqual(StatisticsTools.normalize_trim('m'), 'm')
+        self.assertEqual(StatisticsTools.normalize_trim('3'), '3')
+        self.assertEqual(StatisticsTools.normalize_trim(' p40 '), 'p40')
+
+    def test_invalid_specs_fall_back_to_default(self) -> None:
+        """Anything unrecognised falls back to the WCA default p5."""
+        self.assertEqual(StatisticsTools.normalize_trim(''), 'p5')
+        self.assertEqual(StatisticsTools.normalize_trim('foo'), 'p5')
+        self.assertEqual(StatisticsTools.normalize_trim('pX'), 'p5')
 
 
 @patch('term_timer.stats.np.histogram')

@@ -17,6 +17,7 @@ from textual.widgets import SelectionList
 from textual.widgets import Static
 
 from term_timer.config import CONFIG
+from term_timer.stats import StatisticsTools
 
 
 class ConfigSection(VerticalScroll):
@@ -868,11 +869,11 @@ class StatisticsSection(ConfigSection):
             with Vertical(classes='field-container'):
                 yield Input(
                     id='trim',
-                    type='integer',
-                    placeholder='5',
+                    placeholder='p5',
                 )
                 yield Static(
-                    'Trim percentage for averages (WCA = 5)',
+                    'Trim for averages: pN percent (WCA = p5), '
+                    'm median, or N fixed count per side',
                     classes='field-help',
                 )
 
@@ -914,7 +915,7 @@ class StatisticsSection(ConfigSection):
         stats_config = CONFIG.get('statistics', {})
 
         trim = self.query_one('#trim', Input)
-        trim.value = str(stats_config.get('trim', 5))
+        trim.value = str(stats_config.get('trim', 'p5'))
 
         distribution = self.query_one('#distribution', Input)
         distribution.value = str(stats_config.get('distribution', 0))
@@ -942,7 +943,7 @@ class StatisticsSection(ConfigSection):
 
         return {
             'statistics': {
-                'trim': int(trim.value or '5'),
+                'trim': StatisticsTools.normalize_trim(trim.value),
                 'distribution': int(distribution.value or '0'),
                 'metrics': metrics_list,
             },
