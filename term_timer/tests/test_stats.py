@@ -120,15 +120,15 @@ class TestStatistics(unittest.TestCase):
         stats = Statistics([s.final_time for s in self.solves])
         self.assertEqual(stats.worst, 30 * SECOND)
 
-    def test_bpa_property(self, *_mocks: Any) -> None:
-        """Test bpa property."""
+    def test_mean_best3_property(self, *_mocks: Any) -> None:
+        """Test mean_best3 property."""
         stats = Statistics([s.final_time for s in self.solves])
-        self.assertEqual(stats.bpa, 15 * SECOND)
+        self.assertEqual(stats.mean_best3, 15 * SECOND)
 
-    def test_wpa_property(self, *_mocks: Any) -> None:
-        """Test wpa property."""
+    def test_mean_worst3_property(self, *_mocks: Any) -> None:
+        """Test mean_worst3 property."""
         stats = Statistics([s.final_time for s in self.solves])
-        self.assertEqual(stats.wpa, 25 * SECOND)
+        self.assertEqual(stats.mean_worst3, 25 * SECOND)
 
     def test_mean_property(self, *_mocks: Any) -> None:
         """Test mean property."""

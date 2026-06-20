@@ -537,8 +537,8 @@
           <div class="stat-value">{{ stats.best|format_time }}</div>
           {% if stats.total >= 3 %}
             <div class="stat-meta">
-              <span class="stat-best">BPA: {{ stats.bpa|format_time }}</span>
-              {% set delta = (stats.bpa - stats.best)|format_delta %}
+              <span class="stat-best">MB3: {{ stats.mean_best3|format_time }}</span>
+              {% set delta = (stats.mean_best3 - stats.best)|format_delta %}
               <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
                 {{ delta }}
               </span>
@@ -550,8 +550,8 @@
           <div class="stat-value">{{ stats.worst|format_time }}</div>
           {% if stats.total >= 3 %}
             <div class="stat-meta">
-              <span class="stat-worst">WPA: {{ stats.wpa|format_time }}</span>
-              {% set delta = (stats.wpa - stats.worst)|format_delta %}
+              <span class="stat-worst">MW3: {{ stats.mean_worst3|format_time }}</span>
+              {% set delta = (stats.mean_worst3 - stats.worst)|format_delta %}
               <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
                 {{ delta }}
               </span>

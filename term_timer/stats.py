@@ -203,9 +203,9 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
     """
 
     @cached_property
-    def bpa(self) -> int:
+    def mean_best3(self) -> int:
         """
-        Calculate best of 3 average (mean of 3 fastest times).
+        Calculate the mean of the 3 fastest times of the session.
 
         Returns:
             Average of 3 best times in milliseconds, or 0 if insufficient.
@@ -216,9 +216,9 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
         return 0
 
     @cached_property
-    def wpa(self) -> int:
+    def mean_worst3(self) -> int:
         """
-        Calculate worst of 3 average (mean of 3 slowest times).
+        Calculate the mean of the 3 slowest times of the session.
 
         Returns:
             Average of 3 worst times in milliseconds, or 0 if insufficient.
@@ -646,16 +646,16 @@ class SolveStatisticsReporter(Statistics):
                 console.print(
                     f'[{ style }]{ prefix }Best  :[/{ style }]',
                     f'[green]{ format_time(self.best) }[/green]',
-                    f'[{ style }]BPA  :[/{ style }]',
-                    f'[result]{ format_time(self.bpa) }[/result]',
-                    format_delta(self.bpa - self.best),
+                    f'[{ style }]MB3  :[/{ style }]',
+                    f'[result]{ format_time(self.mean_best3) }[/result]',
+                    format_delta(self.mean_best3 - self.best),
                 )
                 console.print(
                     f'[{ style }]{ prefix }Worst :[/{ style }]',
                     f'[red]{ format_time(self.worst) }[/red]',
-                    f'[{ style }]WPA  :[/{ style }]',
-                    f'[result]{ format_time(self.wpa) }[/result]',
-                    format_delta(self.wpa - self.worst),
+                    f'[{ style }]MW3  :[/{ style }]',
+                    f'[result]{ format_time(self.mean_worst3) }[/result]',
+                    format_delta(self.mean_worst3 - self.worst),
                 )
             else:
                 console.print(
