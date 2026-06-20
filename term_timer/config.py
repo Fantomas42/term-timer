@@ -48,6 +48,7 @@ use_gyroscope = true
 rotation_threshold = 75.0
 
 [statistics]
+trim = 5
 distribution = 0
 metrics = ["htm", "qtm", "stm"]
 
@@ -80,6 +81,12 @@ def load_config() -> dict[str, Any]:
 CONFIG = load_config()
 
 STATS_CONFIG = CONFIG.get('statistics', {})
+
+STATS_TRIM: int = STATS_CONFIG.get('trim', 5)
+
+STATS_DISTRIBUTION: int = STATS_CONFIG.get('distribution', 0)
+
+STATS_METRICS: list[str] = STATS_CONFIG.get('metrics', ['htm', 'qtm', 'stm'])
 
 TIMER_CONFIG = CONFIG.get('timer', {})
 

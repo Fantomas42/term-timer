@@ -864,6 +864,18 @@ class StatisticsSection(ConfigSection):
 
         """
         with Grid():
+            yield Static('Trim', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Input(
+                    id='trim',
+                    type='integer',
+                    placeholder='5',
+                )
+                yield Static(
+                    'Trim percentage for averages (WCA = 5)',
+                    classes='field-help',
+                )
+
             yield Static('Distribution', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Input(
@@ -901,6 +913,9 @@ class StatisticsSection(ConfigSection):
         """Load statistics configuration."""
         stats_config = CONFIG.get('statistics', {})
 
+        trim = self.query_one('#trim', Input)
+        trim.value = str(stats_config.get('trim', 5))
+
         distribution = self.query_one('#distribution', Input)
         distribution.value = str(stats_config.get('distribution', 0))
 
@@ -919,6 +934,7 @@ class StatisticsSection(ConfigSection):
             Statistics configuration with distribution and metrics settings.
 
         """
+        trim = self.query_one('#trim', Input)
         distribution = self.query_one('#distribution', Input)
         metrics = self.query_one('#metrics', SelectionList)
 
@@ -926,6 +942,7 @@ class StatisticsSection(ConfigSection):
 
         return {
             'statistics': {
+                'trim': int(trim.value or '5'),
                 'distribution': int(distribution.value or '0'),
                 'metrics': metrics_list,
             },

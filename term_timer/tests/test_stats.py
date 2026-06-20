@@ -86,6 +86,43 @@ class TestStatisticsTools(unittest.TestCase):
         self.assertEqual(best_ao5, 20 * SECOND)
 
 
+class TestStatisticsTrim(unittest.TestCase):
+    """Tests for the configurable trim percentage."""
+
+    def setUp(self) -> None:
+        """Set up a window whose result changes with the trim level."""
+        # Sorted: [10, 20, 40, 50, 90]
+        self.times = [10 * SECOND, 20 * SECOND, 40 * SECOND,
+                      50 * SECOND, 90 * SECOND]
+        self.stats_tools = StatisticsTools(self.times)
+
+    def test_ao_default_trim_five_percent(self) -> None:
+        """Default 5% trim drops 1 each side: mean of the middle three."""
+        with patch('term_timer.stats.STATS_TRIM', 5):
+            ao5 = self.stats_tools.ao(5, self.stats_tools.stack_time)
+        # (20 + 40 + 50) / 3
+        self.assertEqual(ao5, int((110 / 3) * SECOND))
+
+    def test_ao_larger_trim_drops_more(self) -> None:
+        """A 40% trim drops 2 each side: only the median remains."""
+        with patch('term_timer.stats.STATS_TRIM', 40):
+            ao5 = self.stats_tools.ao(5, self.stats_tools.stack_time)
+        self.assertEqual(ao5, 40 * SECOND)
+
+    def test_ao_extreme_trim_keeps_one_time(self) -> None:
+        """A trim that would empty the window is clamped to keep one time."""
+        with patch('term_timer.stats.STATS_TRIM', 90):
+            ao5 = self.stats_tools.ao(5, self.stats_tools.stack_time)
+        self.assertEqual(ao5, 40 * SECOND)
+
+    def test_best_ao_respects_trim(self) -> None:
+        """best_ao uses the configured trim for its rolling windows."""
+        stats = Statistics(self.times)
+        with patch('term_timer.stats.STATS_TRIM', 40):
+            best_ao5 = stats.best_ao(5)
+        self.assertEqual(best_ao5, 40 * SECOND)
+
+
 @patch('term_timer.stats.np.histogram')
 @patch('term_timer.stats.console')
 class TestStatistics(unittest.TestCase):
@@ -362,9 +399,7 @@ class TestStatisticsComprehensive(unittest.TestCase):
 
     def test_repartition_configured_bin_size(self) -> None:
         """Test repartition with configured bin size."""
-        with patch('term_timer.stats.STATS_CONFIG') as mock_config:
-            mock_config.get.return_value = 5  # Configured bin size
-
+        with patch('term_timer.stats.STATS_DISTRIBUTION', 5):
             stats = Statistics([s.final_time for s in self.solves])
             result = stats.repartition
 
@@ -378,7 +413,7 @@ class TestStatisticsComprehensive(unittest.TestCase):
                 8.4, 9.1, 9.8, 8.6, 10.2, 9.4, 8.9, 9.7, 8.8, 9.3,
             )
         ]
-        with patch('term_timer.stats.STATS_CONFIG', {}):
+        with patch('term_timer.stats.STATS_DISTRIBUTION', 0):
             stats = Statistics(times)
             result = stats.repartition
 
@@ -515,10 +550,8 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
 
         reporter = SolveStatisticsReporter(3, [mock_solve])
 
-        with patch('term_timer.stats.STATS_CONFIG') as mock_config, \
+        with patch('term_timer.stats.STATS_METRICS', ['qtm', 'htm']), \
              patch('term_timer.interface.console.console.print') as mock_print:
-
-            mock_config.get.return_value = ['qtm', 'htm']
 
             reporter.detail(
                 1, 'CFOP', show_cube=False,
@@ -611,12 +644,10 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
                 reporter = SolveStatisticsReporter(3, [mock_solve])
 
                 with patch(
-                        'term_timer.stats.STATS_CONFIG',
-                ) as mock_config, patch(
+                        'term_timer.stats.STATS_METRICS', ['qtm'],
+                ), patch(
                          'term_timer.interface.console.console.print',
                 ) as mock_print:
-                    mock_config.get.return_value = ['qtm']
-
                     reporter.detail(
                         1, 'CFOP', show_cube=False,
                         show_reconstruction=False,
@@ -695,10 +726,8 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
 
         reporter = SolveStatisticsReporter(3, [mock_solve])
 
-        with patch('term_timer.stats.STATS_CONFIG') as mock_config, \
+        with patch('term_timer.stats.STATS_METRICS', ['qtm']), \
              patch('term_timer.interface.console.console.print') as mock_print:
-
-            mock_config.get.return_value = ['qtm']
 
             reporter.detail(
                 1, 'CFOP', show_cube=False,
@@ -779,10 +808,8 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
 
         reporter = SolveStatisticsReporter(3, [mock_solve])
 
-        with patch('term_timer.stats.STATS_CONFIG') as mock_config, \
+        with patch('term_timer.stats.STATS_METRICS', ['qtm']), \
              patch('term_timer.interface.console.console.print'):
-
-            mock_config.get.return_value = ['qtm']
 
             reporter.detail(
                 1, 'CFOP', show_cube=False,

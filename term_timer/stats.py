@@ -15,7 +15,9 @@ from rich.table import Table
 from term_timer.annotations import CaseStats
 from term_timer.annotations import ListingFilters
 from term_timer.annotations import MethodAnalysis
-from term_timer.config import STATS_CONFIG
+from term_timer.config import STATS_DISTRIBUTION
+from term_timer.config import STATS_METRICS
+from term_timer.config import STATS_TRIM
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
@@ -110,7 +112,9 @@ class StatisticsTools:
         if limit > len(stack_elapsed):
             return -1
 
-        cap = int(np.ceil(limit * 5 / 100))
+        cap = int(np.ceil(limit * STATS_TRIM / 100))
+        # Keep at least one time in the window for extreme trim settings
+        cap = min(cap, (limit - 1) // 2)
 
         last_of = stack_elapsed[-limit:]
 
@@ -174,7 +178,9 @@ class StatisticsTools:
         if limit > len(self.stack_time):
             return -1
 
-        cap = int(np.ceil(limit * 5 / 100))
+        cap = int(np.ceil(limit * STATS_TRIM / 100))
+        # Keep at least one time in the window for extreme trim settings
+        cap = min(cap, (limit - 1) // 2)
 
         # DNF (0) maps to +inf so it sorts as a worst time and is trimmed
         # from the top first, mirroring the WCA/csTimer semantics
@@ -457,7 +463,7 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
         """
         gap = (self.worst - self.best) / SECOND
 
-        best_bin = STATS_CONFIG.get('distribution', 0)
+        best_bin: float = STATS_DISTRIBUTION
         if not best_bin:
             for second in SECOND_BINS:
                 if gap / 10 < second:
@@ -1017,7 +1023,7 @@ class SolveStatisticsReporter(Statistics):
 
             metrics_dict = solve.reconstruction.metrics._asdict()
             metric_string = '[stats]Metrics    :[/stats] '
-            for metric in STATS_CONFIG.get('metrics', []):
+            for metric in STATS_METRICS:
                 value = metrics_dict[metric]
                 metric_string += (
                     f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
