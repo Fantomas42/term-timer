@@ -14,6 +14,8 @@ from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.solve import Solve
+from term_timer.stats import TARGET_ALWAYS
+from term_timer.stats import TARGET_NEVER
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsTools
@@ -1430,6 +1432,148 @@ class TestBpaWpa(unittest.TestCase):
             self.assertEqual(
                 tools.wpa(limit, tools.stack_time),
                 brute_projection(times, limit, cap, next_dnf=True),
+            )
+
+
+def trimmed_mean(window: list[int], cap: int) -> float:
+    """
+    Trimmed mean of a window with DNF (0) as the worst time.
+
+    Returns:
+        The trimmed mean in milliseconds, or +inf if too many DNFs.
+
+    """
+    values = sorted(float('inf') if time == 0 else float(time)
+                    for time in window)
+    kept = values[cap:len(window) - cap]
+    return sum(kept) / len(kept)
+
+
+def brute_target(times: list[int], limit: int, cap: int) -> int:
+    """
+    Pure-Python oracle for target_to_beat_best_ao.
+
+    Computes the session best aoN by brute force, then locates the crossing
+    time within the kept band by bisecting the projected aoN. Deliberately
+    independent of the closed-form implementation.
+
+    Returns:
+        Target time in milliseconds, ``TARGET_ALWAYS``, ``TARGET_NEVER``, or
+        -1 if there are fewer than ``limit`` times.
+
+    """
+    if limit > len(times):
+        return -1
+
+    carried = times[len(times) - (limit - 1):]
+    if carried.count(0) > cap:
+        return TARGET_NEVER
+
+    averages = [
+        trimmed_mean(times[start:start + limit], cap)
+        for start in range(len(times) - limit + 1)
+        if times[start:start + limit].count(0) <= cap
+    ]
+    if not averages:
+        return TARGET_ALWAYS
+    best = int(min(averages))
+
+    def projected(next_time: int) -> float:
+        return trimmed_mean([*carried, next_time], cap)
+
+    arr = sorted(float('inf') if time == 0 else float(time)
+                 for time in carried)
+    lower = arr[cap - 1]
+    upper = arr[limit - 1 - cap]
+
+    # Below lower / above upper the projected average saturates: the fastest
+    # solve cannot even tie the best, or the slowest still beats it
+    if projected(int(lower)) > best:
+        return TARGET_NEVER
+    if upper < float('inf') and projected(int(upper) + 1) < best:
+        return TARGET_ALWAYS
+
+    # Strictly increasing across the kept band, so the crossing is unique
+    low = int(lower)
+    high = int(upper) if upper < float('inf') else 10 ** 15
+    while low < high:
+        mid = (low + high + 1) // 2
+        if projected(mid) <= best:
+            low = mid
+        else:
+            high = mid - 1
+    return low
+
+
+class TestTargetToBeatBestAo(unittest.TestCase):
+    """
+    Tests for the time needed to set a new best average.
+
+    target_to_beat_best_ao(N) returns the slowest next-solve time that still
+    ties the session's best aoN, or a sentinel when any time would do it
+    (TARGET_ALWAYS) or none can (TARGET_NEVER).
+    """
+
+    def test_target_ties_the_best_ao5(self) -> None:
+        """The returned time, played next, exactly ties the best ao5."""
+        # Window [10, 20, 30, 40, 50] -> best ao5 = mean(20, 30, 40) = 30
+        stats = Statistics([50 * SECOND, 10 * SECOND, 20 * SECOND,
+                            30 * SECOND, 40 * SECOND])
+        target = stats.target_to_beat_best_ao(5)
+        # Need 3*30 - (20 + 30) = 40 s on the next solve
+        self.assertEqual(target, 40 * SECOND)
+
+        # Playing the target next reaches an ao5 equal to the former best
+        extended = Statistics([*stats.stack_time, target])
+        self.assertEqual(extended.ao5, 30 * SECOND)
+
+    def test_never_when_record_is_out_of_reach(self) -> None:
+        """A strong record with slow recent solves can never be beaten."""
+        stats = Statistics([10 * SECOND] * 5 + [99 * SECOND] * 4)
+        self.assertEqual(stats.target_to_beat_best_ao(5), TARGET_NEVER)
+
+    def test_never_when_next_window_forced_dnf(self) -> None:
+        """Too many DNFs in the carried window force the next aoN to DNF."""
+        stats = Statistics([30 * SECOND, 40 * SECOND, 50 * SECOND,
+                            20 * SECOND, 0, 0])
+        self.assertEqual(stats.target_to_beat_best_ao(5), TARGET_NEVER)
+
+    def test_always_when_no_valid_record(self) -> None:
+        """With every past window a DNF, any next time sets the first best."""
+        stats = Statistics([0, 0, 0, 0, 10 * SECOND, 0,
+                            20 * SECOND, 30 * SECOND])
+        self.assertEqual(stats.target_to_beat_best_ao(5), TARGET_ALWAYS)
+
+    def test_insufficient_data_returns_minus_one(self) -> None:
+        """Fewer than limit solves yields -1."""
+        stats = Statistics([10 * SECOND, 20 * SECOND,
+                            30 * SECOND, 40 * SECOND])
+        self.assertEqual(stats.target_to_beat_best_ao(5), -1)
+
+    def test_cached_properties_match_method(self) -> None:
+        """ao5_target/ao12_target wrap the underlying method."""
+        times = [t * SECOND for t in range(1, 14)]
+        stats = Statistics(times)
+        self.assertEqual(stats.ao5_target, stats.target_to_beat_best_ao(5))
+        self.assertEqual(stats.ao12_target, stats.target_to_beat_best_ao(12))
+
+    def test_differential_against_brute_force(self) -> None:
+        """Random sessions (incl. DNFs) match the pure-Python oracle."""
+        dnf_probability = 0.15
+        rng = random.Random(20260621)  # noqa: S311
+        for _ in range(2000):
+            limit = rng.choice([5, 12])
+            count = rng.randint(limit, limit + 10)
+            times = [
+                0 if rng.random() < dnf_probability
+                else rng.randint(1, 60) * 100
+                for _ in range(count)
+            ]
+            stats = Statistics(times)
+            cap = StatisticsTools.trim_count('p5', limit)
+            self.assertEqual(
+                stats.target_to_beat_best_ao(limit),
+                brute_target(times, limit, cap),
             )
 
 

@@ -41,6 +41,12 @@ if TYPE_CHECKING:
     from term_timer.methods.base import Analyser
 
 
+# Sentinels returned by target_to_beat_best_ao alongside a positive target
+# time: no next solve can set a new best, or any next solve will
+TARGET_NEVER = -2
+TARGET_ALWAYS = -3
+
+
 class StatisticsTools:
     """
     Provides core statistical calculation tools for timed sessions.
@@ -334,6 +340,57 @@ class StatisticsTools:
 
         return int(arr[cap:limit - cap].mean())
 
+    def target_to_beat_best_ao(self, limit: int) -> int:
+        """
+        Time to hit on the next solve to set a new best average of N.
+
+        Answers: how fast must the next solve be so the resulting aoN ties
+        or beats the session's current best aoN? The projected window is the
+        last ``limit - 1`` real solves plus the upcoming solve, trimmed with
+        the same caps as ``ao``.
+
+        Returns:
+            A positive target time in milliseconds (solve that or faster to
+            set a new best); ``TARGET_ALWAYS`` if any time would do it (no
+            valid best yet); ``TARGET_NEVER`` if no time can (the target
+            would be unreachable or the projected window is a DNF); or -1 if
+            there are fewer than ``limit`` times.
+
+        """
+        if limit > len(self.stack_time):
+            return -1
+
+        cap = StatisticsTools.trim_count(STATS_TRIM, limit)
+        neff = limit - 2 * cap
+
+        # The next solve is a real time; the carried part is the last
+        # limit - 1 solves. Too many DNFs there force the next aoN to a DNF.
+        window = self.stack_time[len(self.stack_time) - (limit - 1):]
+        if window.count(0) > cap:
+            return TARGET_NEVER
+
+        # No valid best average yet (every past window was a DNF): the next
+        # solve sets the first one, whatever its time
+        best = self.best_ao(limit)
+        if best == 0:
+            return TARGET_ALWAYS
+
+        # Sort the carried solves, DNF (0) -> +inf at the worst end. The next
+        # solve lands in the kept band between lower and upper; outside it the
+        # trimmed average saturates, which the two sentinels capture.
+        arr = sorted(np.inf if time == 0 else float(time) for time in window)
+        lower = arr[cap - 1] if cap else 0.0
+        upper = arr[limit - 1 - cap] if cap else np.inf
+        kept_sum = sum(arr[cap:limit - 1 - cap])
+
+        target = best * neff - kept_sum
+        if target <= 0 or target < lower:
+            return TARGET_NEVER
+        if upper < target:
+            return TARGET_ALWAYS
+
+        return int(target)
+
 
 class Statistics(StatisticsTools):  # noqa: PLR0904
     """
@@ -526,6 +583,30 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
 
         """
         return self.wpa(12, self.stack_time)
+
+    @cached_property
+    def ao5_target(self) -> int:
+        """
+        Time to hit on the next solve to set a new best ao5.
+
+        Returns:
+            Target time in milliseconds, ``TARGET_ALWAYS``, ``TARGET_NEVER``,
+            or -1 if insufficient data.
+
+        """
+        return self.target_to_beat_best_ao(5)
+
+    @cached_property
+    def ao12_target(self) -> int:
+        """
+        Time to hit on the next solve to set a new best ao12.
+
+        Returns:
+            Target time in milliseconds, ``TARGET_ALWAYS``, ``TARGET_NEVER``,
+            or -1 if insufficient data.
+
+        """
+        return self.target_to_beat_best_ao(12)
 
     @cached_property
     def best(self) -> int:
