@@ -623,7 +623,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
 
         reporter = SolveStatisticsReporter(3, [mock_solve])
 
-        with patch('term_timer.stats.STATS_METRICS', ['qtm', 'htm']), \
+        with patch('term_timer.stats.STATS_SOLVE_METRICS', ['qtm', 'htm']), \
              patch('term_timer.interface.console.console.print') as mock_print:
 
             reporter.detail(
@@ -717,7 +717,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
                 reporter = SolveStatisticsReporter(3, [mock_solve])
 
                 with patch(
-                        'term_timer.stats.STATS_METRICS', ['qtm'],
+                        'term_timer.stats.STATS_SOLVE_METRICS', ['qtm'],
                 ), patch(
                          'term_timer.interface.console.console.print',
                 ) as mock_print:
@@ -799,7 +799,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
 
         reporter = SolveStatisticsReporter(3, [mock_solve])
 
-        with patch('term_timer.stats.STATS_METRICS', ['qtm']), \
+        with patch('term_timer.stats.STATS_SOLVE_METRICS', ['qtm']), \
              patch('term_timer.interface.console.console.print') as mock_print:
 
             reporter.detail(
@@ -881,7 +881,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
 
         reporter = SolveStatisticsReporter(3, [mock_solve])
 
-        with patch('term_timer.stats.STATS_METRICS', ['qtm']), \
+        with patch('term_timer.stats.STATS_SOLVE_METRICS', ['qtm']), \
              patch('term_timer.interface.console.console.print'):
 
             reporter.detail(

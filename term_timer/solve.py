@@ -25,7 +25,7 @@ from cubing_algs.transform.translate import translate_moves
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import SERVER_CONFIG
-from term_timer.config import STATS_METRICS
+from term_timer.config import STATS_SOLVE_METRICS
 from term_timer.constants import DNF
 from term_timer.constants import FLUENCY_EXPONENTIAL_DECAY
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -588,7 +588,7 @@ class Solve:  # noqa: PLR0904
 
         metric_string = ''
         metrics_dict = self.reconstruction.metrics._asdict()
-        for metric in STATS_METRICS:
+        for metric in STATS_SOLVE_METRICS:
             value = metrics_dict[metric]
             metric_string += (
                 f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '

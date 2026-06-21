@@ -889,7 +889,7 @@ class StatisticsSection(ConfigSection):
                     classes='field-help',
                 )
 
-            yield Static('Metrics', classes='field-label')
+            yield Static('Solve Metrics', classes='field-label')
             with Vertical(classes='field-container'):
                 yield SelectionList[str](
                     ('HTM', 'htm'),
@@ -903,10 +903,10 @@ class StatisticsSection(ConfigSection):
                     ('RBTM', 'rbtm'),
                     ('BTM', 'btm'),
                     ('BQTM', 'bqtm'),
-                    id='metrics',
+                    id='solve_metrics',
                 )
                 yield Static(
-                    'Move count metrics to track',
+                    'Move count metrics to track on solves',
                     classes='field-help',
                 )
 
@@ -921,7 +921,7 @@ class StatisticsSection(ConfigSection):
                 )
                 yield Static(
                     'Show next-solve BPA/WPA range and PB target '
-                    'for these averages',
+                    'for these averages when solving',
                     classes='field-help',
                 )
 
@@ -935,8 +935,8 @@ class StatisticsSection(ConfigSection):
         distribution = self.query_one('#distribution', Input)
         distribution.value = str(stats_config.get('distribution', 0))
 
-        metrics = self.query_one('#metrics', SelectionList)
-        metrics_list = stats_config.get('metrics', ['htm', 'qtm', 'stm'])
+        metrics = self.query_one('#solve_metrics', SelectionList)
+        metrics_list = stats_config.get('solve_metrics', ['htm', 'qtm', 'stm'])
         for m in metrics_list:
             metrics.select(m)
 
@@ -956,7 +956,7 @@ class StatisticsSection(ConfigSection):
         """
         trim = self.query_one('#trim', Input)
         distribution = self.query_one('#distribution', Input)
-        metrics = self.query_one('#metrics', SelectionList)
+        metrics = self.query_one('#solve_metrics', SelectionList)
         projections = self.query_one('#ao_projections', SelectionList)
 
         metrics_list = metrics.selected
@@ -965,7 +965,7 @@ class StatisticsSection(ConfigSection):
             'statistics': {
                 'trim': StatisticsTools.normalize_trim(trim.value),
                 'distribution': int(distribution.value or '0'),
-                'metrics': metrics_list,
+                'solve_metrics': metrics_list,
                 'ao_projections': sorted(projections.selected),
             },
         }

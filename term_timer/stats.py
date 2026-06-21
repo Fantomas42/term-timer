@@ -16,7 +16,7 @@ from term_timer.annotations import CaseStats
 from term_timer.annotations import ListingFilters
 from term_timer.annotations import MethodAnalysis
 from term_timer.config import STATS_DISTRIBUTION
-from term_timer.config import STATS_METRICS
+from term_timer.config import STATS_SOLVE_METRICS
 from term_timer.config import STATS_TRIM
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
@@ -1288,7 +1288,7 @@ class SolveStatisticsReporter(Statistics):
 
             metrics_dict = solve.reconstruction.metrics._asdict()
             metric_string = '[stats]Metrics    :[/stats] '
-            for metric in STATS_METRICS:
+            for metric in STATS_SOLVE_METRICS:
                 value = metrics_dict[metric]
                 metric_string += (
                     f'[{ metric }]{ value } { metric.upper() }[/{ metric }] '
