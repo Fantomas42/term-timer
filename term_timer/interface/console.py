@@ -22,6 +22,7 @@ theme: dict[str, str] = {
 
     'scramble': f'{ TEXT_DARK } on { GREEN }',
     'duration': f'{ TEXT_DARK } on { ORANGE }',
+    'estimate': f'{ TEXT_DARK } on #00FFD7',
     'record': f'{ TEXT_DARK } on #5FFFAF',
     'solution': f'{ TEXT_DARK } on #9999FF',
 

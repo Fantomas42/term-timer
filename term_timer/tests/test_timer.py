@@ -156,7 +156,7 @@ class TestProjectionLine(unittest.TestCase):
         stats = self.stats([12, 13, 11.5, 14, 11])
         with patch('term_timer.timer.STATS_AO_PROJECTIONS', [5]):
             output = self.render(stats)
-        self.assertIn('Next #2', output)
+        self.assertIn('Estimate #2', output)
         self.assertIn('Ao5', output)
         self.assertIn('-', output)
         self.assertIn('PB', output)

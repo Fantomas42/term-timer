@@ -310,16 +310,14 @@ class Timer(SolveInterface):
             return
 
         width = max(len(f'Ao{ limit }') for limit, *_ in rows)
-        self.console.print(
-            f':dart: [consign]Next #{ self.counter + 1 }[/consign]',
-        )
         for limit, bpa, wpa, target in rows:
             style = f'ao{ limit }' if limit in {5, 12, 100, 1000} else 'result'
             label = f'Ao{ limit }'.ljust(width)
             low = format_time(bpa).strip()
             high = format_time(wpa).strip()
             line = (
-                f'  [{ style }]{ label }[/{ style }] '
+                f'[estimate]Estimate #{ self.counter + 1 }:[/estimate] '
+                f'[{ style }]{ label }[/{ style }] '
                 f'[result]\\[{ low } - { high }][/result]'
             )
             if target == TARGET_ALWAYS:
