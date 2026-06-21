@@ -7,6 +7,7 @@ from cubing_algs.annotations import CubeOrientation
 from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.vcube import VCube
 
+from term_timer.config import STATS_AO_PROJECTIONS
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SolveFlag
@@ -17,6 +18,7 @@ from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.printer import print_cube_scrambled
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
+from term_timer.stats import TARGET_ALWAYS
 from term_timer.stats import SolveStatisticsReporter
 
 logger = logging.getLogger(__name__)
@@ -276,6 +278,55 @@ class Timer(SolveInterface):
                     f'[best]{ format_time(new_stats.ao1000) }[/best]',
                     format_delta(new_stats.ao1000 - old_stats.best_ao1000),
                 )
+
+        self.projection_line(new_stats)
+
+    def projection_line(self, stats: SolveStatisticsReporter) -> None:
+        """
+        Display next-solve average projections.
+
+        For each average size in ``STATS_AO_PROJECTIONS`` shows the range
+        still reachable on the next solve, ``[BPA - WPA]``, and the time
+        that solve must beat to set a new best average (PB target). The
+        range alone appears one solve before a window is complete; the PB
+        target appears once a best average exists.
+
+        Args:
+            stats: Statistics including the solve that just finished.
+
+        """
+        if not STATS_AO_PROJECTIONS:
+            return
+
+        rows = []
+        for limit in STATS_AO_PROJECTIONS:
+            bpa = stats.bpa(limit, stats.stack_time)
+            wpa = stats.wpa(limit, stats.stack_time)
+            if bpa == -1 and wpa == -1:
+                continue
+            rows.append((limit, bpa, wpa, stats.target_to_beat_best_ao(limit)))
+
+        if not rows:
+            return
+
+        width = max(len(f'Ao{ limit }') for limit, *_ in rows)
+        self.console.print(
+            f':dart: [consign]Next #{ self.counter + 1 }[/consign]',
+        )
+        for limit, bpa, wpa, target in rows:
+            style = f'ao{ limit }' if limit in {5, 12, 100, 1000} else 'result'
+            label = f'Ao{ limit }'.ljust(width)
+            low = format_time(bpa).strip()
+            high = format_time(wpa).strip()
+            line = (
+                f'  [{ style }]{ label }[/{ style }] '
+                f'[result]\\[{ low } - { high }][/result]'
+            )
+            if target == TARGET_ALWAYS:
+                line += ' [record]PB any[/record]'
+            elif target >= 0:
+                line += f' [best]PB ≤ { format_time(target).strip() }[/best]'
+            self.console.print(line)
 
     async def start(self) -> bool:  # noqa: C901, PLR0911, PLR0912
         """

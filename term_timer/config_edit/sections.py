@@ -910,6 +910,21 @@ class StatisticsSection(ConfigSection):
                     classes='field-help',
                 )
 
+            yield Static('Ao Projections', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield SelectionList[int](
+                    ('Ao5', 5),
+                    ('Ao12', 12),
+                    ('Ao100', 100),
+                    ('Ao1000', 1000),
+                    id='ao_projections',
+                )
+                yield Static(
+                    'Show next-solve BPA/WPA range and PB target '
+                    'for these averages',
+                    classes='field-help',
+                )
+
     def load_config(self) -> None:
         """Load statistics configuration."""
         stats_config = CONFIG.get('statistics', {})
@@ -925,6 +940,10 @@ class StatisticsSection(ConfigSection):
         for m in metrics_list:
             metrics.select(m)
 
+        projections = self.query_one('#ao_projections', SelectionList)
+        for limit in stats_config.get('ao_projections', []):
+            projections.select(limit)
+
     def get_config_data(
         self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
@@ -938,6 +957,7 @@ class StatisticsSection(ConfigSection):
         trim = self.query_one('#trim', Input)
         distribution = self.query_one('#distribution', Input)
         metrics = self.query_one('#metrics', SelectionList)
+        projections = self.query_one('#ao_projections', SelectionList)
 
         metrics_list = metrics.selected
 
@@ -946,6 +966,7 @@ class StatisticsSection(ConfigSection):
                 'trim': StatisticsTools.normalize_trim(trim.value),
                 'distribution': int(distribution.value or '0'),
                 'metrics': metrics_list,
+                'ao_projections': sorted(projections.selected),
             },
         }
 
