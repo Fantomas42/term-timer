@@ -65,6 +65,38 @@ class TestStatisticsTools(unittest.TestCase):
         ao6 = self.stats_tools.ao(6, self.stats_tools.stack_time)
         self.assertEqual(ao6, -1)
 
+    def test_mb_valid(self) -> None:
+        """Test mean of the 3 fastest times with sufficient solves."""
+        # 3 fastest: (10 + 15 + 20) / 3 = 15
+        mb3 = self.stats_tools.mb(3, self.stats_tools.stack_time)
+        self.assertEqual(mb3, 15 * SECOND)
+
+    def test_mb_insufficient_solves(self) -> None:
+        """Test mean of N fastest with insufficient solves."""
+        mb6 = self.stats_tools.mb(6, self.stats_tools.stack_time)
+        self.assertEqual(mb6, -1)
+
+    def test_mw_valid(self) -> None:
+        """Test mean of the 3 slowest times with sufficient solves."""
+        # 3 slowest: (20 + 25 + 30) / 3 = 25
+        mw3 = self.stats_tools.mw(3, self.stats_tools.stack_time)
+        self.assertEqual(mw3, 25 * SECOND)
+
+    def test_mw_insufficient_solves(self) -> None:
+        """Test mean of N slowest with insufficient solves."""
+        mw6 = self.stats_tools.mw(6, self.stats_tools.stack_time)
+        self.assertEqual(mw6, -1)
+
+    def test_mb_all_dnf(self) -> None:
+        """Test mean of N fastest when every time is a DNF."""
+        tools = StatisticsTools([0, 0, 0])
+        self.assertEqual(tools.mb(3, tools.stack_time), 0)
+
+    def test_mw_all_dnf(self) -> None:
+        """Test mean of N slowest when every time is a DNF."""
+        tools = StatisticsTools([0, 0, 0])
+        self.assertEqual(tools.mw(3, tools.stack_time), 0)
+
     def test_best_mo(self) -> None:
         """Test finding the best mean of N in the history."""
         # For mo3, we can have 3 different mo3s:
@@ -231,15 +263,33 @@ class TestStatistics(unittest.TestCase):
         stats = Statistics([s.final_time for s in self.solves])
         self.assertEqual(stats.worst, 30 * SECOND)
 
-    def test_mean_best3_property(self, *_mocks: Any) -> None:
-        """Test mean_best3 property."""
+    def test_mb3_property(self, *_mocks: Any) -> None:
+        """Test mb3 property."""
         stats = Statistics([s.final_time for s in self.solves])
-        self.assertEqual(stats.mean_best3, 15 * SECOND)
+        self.assertEqual(stats.mb3, 15 * SECOND)
 
-    def test_mean_worst3_property(self, *_mocks: Any) -> None:
-        """Test mean_worst3 property."""
+    def test_mw3_property(self, *_mocks: Any) -> None:
+        """Test mw3 property."""
         stats = Statistics([s.final_time for s in self.solves])
-        self.assertEqual(stats.mean_worst3, 25 * SECOND)
+        self.assertEqual(stats.mw3, 25 * SECOND)
+
+    def test_mb10_property(self, *_mocks: Any) -> None:
+        """Test mb10 property with insufficient and sufficient data."""
+        stats = Statistics([s.final_time for s in self.solves])
+        self.assertEqual(stats.mb10, -1)
+
+        times = [t * SECOND for t in range(1, 13)]
+        # 10 fastest: 1..10 -> mean 5.5
+        self.assertEqual(Statistics(times).mb10, int(5.5 * SECOND))
+
+    def test_mw10_property(self, *_mocks: Any) -> None:
+        """Test mw10 property with insufficient and sufficient data."""
+        stats = Statistics([s.final_time for s in self.solves])
+        self.assertEqual(stats.mw10, -1)
+
+        times = [t * SECOND for t in range(1, 13)]
+        # 10 slowest: 3..12 -> mean 7.5
+        self.assertEqual(Statistics(times).mw10, int(7.5 * SECOND))
 
     def test_mean_property(self, *_mocks: Any) -> None:
         """Test mean property."""

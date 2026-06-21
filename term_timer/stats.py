@@ -95,6 +95,60 @@ class StatisticsTools:
         return int(np.mean(last_of))
 
     @staticmethod
+    def mb(limit: int, stack_elapsed: list[int]) -> int:
+        """
+        Calculate the mean of the N fastest times (mbN).
+
+        DNF times (0) are the worst possible results and never rank among
+        the fastest, so they are excluded before averaging; a session made
+        entirely of DNFs has no valid best and is itself a DNF.
+
+        Args:
+            limit: Number of fastest times to include.
+            stack_elapsed: List of times in milliseconds.
+
+        Returns:
+            Mean of the N best times in milliseconds, 0 if every time is a
+            DNF, or -1 if insufficient data.
+
+        """
+        if limit > len(stack_elapsed):
+            return -1
+
+        valid = sorted(time for time in stack_elapsed if time)
+        if not valid:
+            return 0
+
+        return int(np.mean(valid[:limit]))
+
+    @staticmethod
+    def mw(limit: int, stack_elapsed: list[int]) -> int:
+        """
+        Calculate the mean of the N slowest times (mwN).
+
+        DNF times (0) carry no real duration and are excluded before
+        averaging; a session made entirely of DNFs has no valid worst and
+        is itself a DNF.
+
+        Args:
+            limit: Number of slowest times to include.
+            stack_elapsed: List of times in milliseconds.
+
+        Returns:
+            Mean of the N worst times in milliseconds, 0 if every time is a
+            DNF, or -1 if insufficient data.
+
+        """
+        if limit > len(stack_elapsed):
+            return -1
+
+        valid = sorted(time for time in stack_elapsed if time)
+        if not valid:
+            return 0
+
+        return int(np.mean(valid[-limit:]))
+
+    @staticmethod
     def trim_count(spec: str, limit: int) -> int:
         """
         Compute how many solves to drop from each end of a window.
@@ -401,30 +455,50 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
     """
 
     @cached_property
-    def mean_best3(self) -> int:
+    def mb3(self) -> int:
         """
-        Calculate the mean of the 3 fastest times of the session.
+        Calculate mean of the 3 fastest times.
 
         Returns:
-            Average of 3 best times in milliseconds, or 0 if insufficient.
+            Mean of 3 best times in milliseconds, or -1 if insufficient data.
 
         """
-        if self.stack_time_sorted:
-            return int(np.mean(self.stack_time_sorted[:3]))
-        return 0
+        return self.mb(3, self.stack_time)
 
     @cached_property
-    def mean_worst3(self) -> int:
+    def mw3(self) -> int:
         """
-        Calculate the mean of the 3 slowest times of the session.
+        Calculate mean of the 3 slowest times.
 
         Returns:
-            Average of 3 worst times in milliseconds, or 0 if insufficient.
+            Mean of 3 worst times in milliseconds, or -1 if insufficient data.
 
         """
-        if self.stack_time_sorted:
-            return int(np.mean(self.stack_time_sorted[-3:]))
-        return 0
+        return self.mw(3, self.stack_time)
+
+    @cached_property
+    def mb10(self) -> int:
+        """
+        Calculate mean of the 10 fastest times.
+
+        Returns:
+            Mean of 10 best times in milliseconds, or -1 if insufficient
+            data.
+
+        """
+        return self.mb(10, self.stack_time)
+
+    @cached_property
+    def mw10(self) -> int:
+        """
+        Calculate mean of the 10 slowest times.
+
+        Returns:
+            Mean of 10 worst times in milliseconds, or -1 if insufficient
+            data.
+
+        """
+        return self.mw(10, self.stack_time)
 
     @cached_property
     def mo3(self) -> int:
@@ -917,15 +991,15 @@ class SolveStatisticsReporter(Statistics):
                     f'[{ style }]{ prefix }Best  :[/{ style }]',
                     f'[green]{ format_time(self.best) }[/green]',
                     f'[{ style }]MB3  :[/{ style }]',
-                    f'[result]{ format_time(self.mean_best3) }[/result]',
-                    format_delta(self.mean_best3 - self.best),
+                    f'[result]{ format_time(self.mb3) }[/result]',
+                    format_delta(self.mb3 - self.best),
                 )
                 console.print(
                     f'[{ style }]{ prefix }Worst :[/{ style }]',
                     f'[red]{ format_time(self.worst) }[/red]',
                     f'[{ style }]MW3  :[/{ style }]',
-                    f'[result]{ format_time(self.mean_worst3) }[/result]',
-                    format_delta(self.mean_worst3 - self.worst),
+                    f'[result]{ format_time(self.mw3) }[/result]',
+                    format_delta(self.mw3 - self.worst),
                 )
             else:
                 console.print(
