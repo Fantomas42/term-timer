@@ -14,6 +14,20 @@ PAUSE_FACTOR: Final = 2
 
 STEP_BAR: Final = 17
 
+# Maximum number of average curves drawn on the console trend graph
+# (in addition to the always-plotted Time curve).
+GRAPH_CONSOLE_LIMIT: Final = 2
+
+# Per-token plotext colors for the console trend graph, with a fallback
+# for tokens without a dedicated color.
+GRAPH_CONSOLE_COLORS: Final = {
+    'ao5': 196,
+    'ao12': 119,
+    'ao100': 244,
+    'ao1000': 231,
+}
+GRAPH_CONSOLE_FALLBACK: Final = 213
+
 TT_DIRECTORY: Final = Path.home() / '.term_timer'
 
 SOLVES_DIRECTORY: Final = TT_DIRECTORY / 'solves'

@@ -6,6 +6,7 @@ from bottle import abort
 
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.config import CUBE_METHOD
+from term_timer.config import STATS_GRAPH_SERIES
 from term_timer.constants import CUBE_SIZES
 from term_timer.constants import SECOND
 from term_timer.in_out import load_all_solves
@@ -14,6 +15,7 @@ from term_timer.server.annotations import SessionDetailContext
 from term_timer.server.annotations import SessionInfo
 from term_timer.server.annotations import SessionListContext
 from term_timer.server.annotations import TrendData
+from term_timer.server.annotations import TrendSeries
 from term_timer.server.views.base import View
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.stats import Statistics
@@ -189,40 +191,47 @@ class SessionDetailView(View):
         Calculate rolling averages and time trends.
 
         Returns:
-            Dictionary with solve indices, times, and rolling averages
-            (ao5, ao12, ao100, ao1000) for trend visualization.
+            Dictionary with solve indices, times, and the rolling-average
+            series configured in ``STATS_GRAPH_SERIES``. Only series with
+            enough solves (``total >= size``) are included.
 
         """
-        ao5s: list[float | None] = []
-        ao12s: list[float | None] = []
-        ao100s: list[float | None] = []
-        ao1000s: list[float | None] = []
+        total = self.stats.total
+        active = [
+            (kind, size)
+            for kind, size in STATS_GRAPH_SERIES
+            if total >= size
+        ]
+        series_values: list[list[float | None]] = [[] for _ in active]
         times: list[float] = []
         indices: list[str] = []
 
         stack_time = list(self.stats.stack_time)
         for i, time in enumerate(stack_time):
-            seconds = time / SECOND
-            times.append(seconds)
+            times.append(time / SECOND)
             indices.append(str(i + 1))
 
-            ao5 = self.stats.ao(5, stack_time[:i + 1])
-            ao12 = self.stats.ao(12, stack_time[:i + 1])
-            ao100 = self.stats.ao(100, stack_time[:i + 1])
-            ao1000 = self.stats.ao(1000, stack_time[:i + 1])
+            window = stack_time[:i + 1]
+            for index, (kind, size) in enumerate(active):
+                value = getattr(self.stats, kind)(size, window)
+                series_values[index].append(
+                    value / SECOND if value > 0 else None,
+                )
 
-            ao5s.append(ao5 / SECOND if ao5 > 0 else None)
-            ao12s.append(ao12 / SECOND if ao12 > 0 else None)
-            ao100s.append(ao100 / SECOND if ao100 > 0 else None)
-            ao1000s.append(ao1000 / SECOND if ao1000 > 0 else None)
+        series: list[TrendSeries] = []
+        for (kind, size), values in zip(active, series_values, strict=True):
+            token = f'{kind}{size}'
+            series.append({
+                'token': token,
+                'label': token.upper(),
+                'size': size,
+                'data': values,
+            })
 
         return {
             'indices': indices,
             'times': times,
-            'ao5s': ao5s,
-            'ao12s': ao12s,
-            'ao100s': ao100s,
-            'ao1000s': ao1000s,
+            'series': series,
         }
 
     def compute_distribution(self) -> DistributionData:

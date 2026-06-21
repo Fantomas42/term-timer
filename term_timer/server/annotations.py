@@ -28,15 +28,21 @@ class AlgorithmVariation(TypedDict):
     algorithm: Algorithm
 
 
+class TrendSeries(TypedDict):
+    """A single configurable rolling-average curve of the trend graph."""
+
+    token: str
+    label: str
+    size: int
+    data: list[float | None]
+
+
 class TrendData(TypedDict):
     """Trend data for solve time visualization."""
 
     indices: list[str]
     times: list[float]
-    ao5s: list[float | None]
-    ao12s: list[float | None]
-    ao100s: list[float | None]
-    ao1000s: list[float | None]
+    series: list[TrendSeries]
 
 
 class DistributionData(TypedDict):

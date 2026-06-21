@@ -11,6 +11,7 @@ from bottle import Bottle
 from bottle import HTTPError
 from cubing_algs.algorithm import Algorithm
 
+from term_timer.constants import SECOND
 from term_timer.server.app import RichHandler
 from term_timer.server.app import Server
 from term_timer.server.filters import BLOCK_REGEX
@@ -30,6 +31,8 @@ from term_timer.server.views import SolveDeleteView
 from term_timer.server.views import SolveDetailView
 from term_timer.server.views import SolveUpdateFlagView
 from term_timer.server.views.base import View
+from term_timer.solve import Solve
+from term_timer.stats import SolveStatisticsReporter
 
 
 class TestConstants(unittest.TestCase):
@@ -554,6 +557,7 @@ class TestSessionDetailView(unittest.TestCase):
         ):
             view = SessionDetailView.__new__(SessionDetailView)
             view.stats = Mock()
+            view.stats.total = 12
             view.stats.stack_time = [
                 5000000000,
                 6000000000,
@@ -894,3 +898,53 @@ class TestServer(unittest.TestCase):
         # Check that error handlers are registered
         self.assertIn(404, app.error_handler)
         self.assertIn(500, app.error_handler)
+
+
+class TestComputeTrend(unittest.TestCase):
+    """Tests for SessionDetailView.compute_trend series filtering."""
+
+    def setUp(self) -> None:
+        """Build a stats reporter with 12 solves."""
+        solves = [
+            Solve(
+                (i + 1) * 1000000000000,
+                (10 + i) * SECOND,
+                'F R U', '',
+            )
+            for i in range(12)
+        ]
+        self.view = object.__new__(SessionDetailView)
+        self.view.stats = SolveStatisticsReporter(3, solves)
+
+    def test_only_returns_series_with_enough_solves(self) -> None:
+        """Series whose size exceeds the total are dropped."""
+        with patch(
+                'term_timer.server.views.sessions.STATS_GRAPH_SERIES',
+                [('ao', 5), ('ao', 12), ('ao', 100), ('ao', 1000)],
+        ):
+            trend = self.view.compute_trend()
+
+        tokens = [serie['token'] for serie in trend['series']]
+        self.assertEqual(tokens, ['ao5', 'ao12'])
+
+    def test_series_order_preserved(self) -> None:
+        """Returned series keep the configured order."""
+        with patch(
+                'term_timer.server.views.sessions.STATS_GRAPH_SERIES',
+                [('ao', 12), ('ao', 5)],
+        ):
+            trend = self.view.compute_trend()
+
+        tokens = [serie['token'] for serie in trend['series']]
+        self.assertEqual(tokens, ['ao12', 'ao5'])
+
+    def test_series_data_length_matches_indices(self) -> None:
+        """Each series produces one data point per solve."""
+        with patch(
+                'term_timer.server.views.sessions.STATS_GRAPH_SERIES',
+                [('ao', 5)],
+        ):
+            trend = self.view.compute_trend()
+
+        self.assertEqual(len(trend['indices']), 12)
+        self.assertEqual(len(trend['series'][0]['data']), 12)

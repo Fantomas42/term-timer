@@ -1,11 +1,14 @@
 """Configuration loading and management from TOML files."""
 import os
+import re
 from typing import Any
 from typing import Final
 
 import rtoml
 
 from term_timer.constants import CONFIG_FILE
+
+GRAPH_SERIES_RE: Final = re.compile(r'^(mo|ao|mb|mw)(\d+)$')
 
 DEFAULT_CONFIG: Final = """[timer]
 sound = "audio"
@@ -52,6 +55,7 @@ trim = "p5"
 distribution = 0
 solve_metrics = ["htm", "qtm", "stm"]
 ao_projections = []
+graph_series = ["ao5", "ao12", "ao100", "ao1000"]
 
 [server]
 domain = "localhost"
@@ -60,6 +64,43 @@ port = 8333
 [ui]
 
 """
+
+
+def parse_graph_series(tokens: list[str]) -> list[tuple[str, int]]:
+    """
+    Parse trend graph series tokens into kind/size pairs.
+
+    Each token is a kind (``mo``, ``ao``, ``mb`` or ``mw``) followed by
+    an integer size (e.g. ``ao5``, ``mb3``), per ``GRAPH_SERIES_RE``.
+    The order given by the user is preserved as-is; duplicates are
+    dropped on their first occurrence and unrecognised tokens are
+    silently ignored.
+
+    Args:
+        tokens: Raw series tokens from the configuration.
+
+    Returns:
+        List of ``(kind, size)`` pairs, kept in their original order.
+
+    """
+    series: list[tuple[str, int]] = []
+    seen: set[str] = set()
+
+    for token in tokens:
+        match = GRAPH_SERIES_RE.match(str(token).strip().lower())
+        if match is None:
+            continue
+
+        kind = match.group(1)
+        size = int(match.group(2))
+        key = f'{ kind }{ size }'
+        if key in seen:
+            continue
+
+        seen.add(key)
+        series.append((kind, size))
+
+    return series
 
 
 def load_config() -> dict[str, Any]:
@@ -92,6 +133,10 @@ STATS_SOLVE_METRICS: list[str] = STATS_CONFIG.get(
 )
 
 STATS_AO_PROJECTIONS: list[int] = STATS_CONFIG.get('ao_projections', [])
+
+STATS_GRAPH_SERIES: list[tuple[str, int]] = parse_graph_series(
+    STATS_CONFIG.get('graph_series', ['ao5', 'ao12', 'ao100', 'ao1000']),
+)
 
 TIMER_CONFIG = CONFIG.get('timer', {})
 

@@ -16,9 +16,13 @@ from term_timer.annotations import CaseStats
 from term_timer.annotations import ListingFilters
 from term_timer.annotations import MethodAnalysis
 from term_timer.config import STATS_DISTRIBUTION
+from term_timer.config import STATS_GRAPH_SERIES
 from term_timer.config import STATS_SOLVE_METRICS
 from term_timer.config import STATS_TRIM
 from term_timer.constants import DNF
+from term_timer.constants import GRAPH_CONSOLE_COLORS
+from term_timer.constants import GRAPH_CONSOLE_FALLBACK
+from term_timer.constants import GRAPH_CONSOLE_LIMIT
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.constants import SECOND_BINS
@@ -1625,13 +1629,14 @@ class SolveStatisticsReporter(Statistics):
         """
         Display a terminal-based graph of solve times and trends.
 
-        Plots individual solve times along with rolling ao5 and ao12
-        averages to visualize performance trends over the session.
+        Plots individual solve times along with the rolling averages
+        configured in ``STATS_GRAPH_SERIES`` (capped to the first two
+        entries) to visualize performance trends over the session.
         """
-        ao5s = []
-        ao12s = []
-        times = []
-        plot_times = []
+        series = STATS_GRAPH_SERIES[:GRAPH_CONSOLE_LIMIT]
+        series_values: list[list[float | None]] = [[] for _ in series]
+        times: list[int] = []
+        plot_times: list[float | None] = []
 
         plt.clear_figure()
 
@@ -1643,10 +1648,11 @@ class SolveStatisticsReporter(Statistics):
             # but are plotted as gaps
             plot_times.append(time / SECOND if time else None)
 
-            ao5 = self.ao(5, times)
-            ao12 = self.ao(12, times)
-            ao5s.append(ao5 / SECOND if ao5 > 0 else None)
-            ao12s.append(ao12 / SECOND if ao12 > 0 else None)
+            for index, (kind, size) in enumerate(series):
+                value = getattr(self, kind)(size, times)
+                series_values[index].append(
+                    value / SECOND if value > 0 else None,
+                )
 
         plt.plot(
             plot_times,
@@ -1655,21 +1661,17 @@ class SolveStatisticsReporter(Statistics):
             color=45,
         )
 
-        if any(ao5s):
-            plt.plot(
-                ao5s,
-                marker='braille',
-                label='AO5',
-                color=196,
-            )
-
-        if any(ao12s):
-            plt.plot(
-                ao12s,
-                marker='braille',
-                label='AO12',
-                color=119,
-            )
+        for (kind, size), values in zip(series, series_values, strict=True):
+            if any(values):
+                token = f'{ kind }{ size }'
+                plt.plot(
+                    values,
+                    marker='braille',
+                    label=token.upper(),
+                    color=GRAPH_CONSOLE_COLORS.get(
+                        token, GRAPH_CONSOLE_FALLBACK,
+                    ),
+                )
 
         plt.title(f'Tendencies { self.cube_name }')
         plt.plot_size(height=25)

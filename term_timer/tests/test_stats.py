@@ -2203,3 +2203,52 @@ class TestListingWithFilters(unittest.TestCase):
         call_args = [str(call) for call in mock_console.call_args_list]
         index_found = any('#3' in call for call in call_args)
         self.assertTrue(index_found)
+
+
+class TestSolveStatisticsReporterGraph(unittest.TestCase):
+    """Tests for SolveStatisticsReporter graph trend curves."""
+
+    def setUp(self) -> None:
+        """Set up a session with enough solves for ao5 and ao12."""
+        self.solves = [
+            Solve(
+                (i + 1) * 1000000000000,
+                (10 + i) * SECOND,
+                'F R U', '',
+            )
+            for i in range(12)
+        ]
+
+    def test_graph_respects_console_cap(self) -> None:
+        """Only the first two configured average curves are drawn."""
+        stats = SolveStatisticsReporter(3, self.solves)
+
+        with patch('term_timer.stats.plt') as mock_plt, \
+                patch(
+                    'term_timer.stats.STATS_GRAPH_SERIES',
+                    [('ao', 5), ('ao', 12), ('mo', 3)],
+                ):
+            stats.graph()
+
+        labels = [
+            call.kwargs.get('label')
+            for call in mock_plt.plot.call_args_list
+        ]
+        self.assertEqual(labels, ['Time', 'AO5', 'AO12'])
+
+    def test_graph_order_follows_configuration(self) -> None:
+        """Curves follow the user-provided series order."""
+        stats = SolveStatisticsReporter(3, self.solves)
+
+        with patch('term_timer.stats.plt') as mock_plt, \
+                patch(
+                    'term_timer.stats.STATS_GRAPH_SERIES',
+                    [('ao', 12), ('ao', 5)],
+                ):
+            stats.graph()
+
+        labels = [
+            call.kwargs.get('label')
+            for call in mock_plt.plot.call_args_list
+        ]
+        self.assertEqual(labels, ['Time', 'AO12', 'AO5'])

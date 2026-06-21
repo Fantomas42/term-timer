@@ -1,4 +1,5 @@
 """Configuration section widgets for different config categories."""
+import re
 from typing import Any
 
 from cubing_algs.constants import ORIENTATIONS
@@ -17,6 +18,7 @@ from textual.widgets import SelectionList
 from textual.widgets import Static
 
 from term_timer.config import CONFIG
+from term_timer.config import parse_graph_series
 from term_timer.stats import StatisticsTools
 
 
@@ -925,6 +927,18 @@ class StatisticsSection(ConfigSection):
                     classes='field-help',
                 )
 
+            yield Static('Graph Series', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Input(
+                    id='graph_series',
+                    placeholder='ao5 ao12 ao100 ao1000',
+                )
+                yield Static(
+                    'Trend graph curves, in the order entered: '
+                    'ao/mo/mb/mw + solve count (ao5 = average of last 5)',
+                    classes='field-help',
+                )
+
     def load_config(self) -> None:
         """Load statistics configuration."""
         stats_config = CONFIG.get('statistics', {})
@@ -944,6 +958,14 @@ class StatisticsSection(ConfigSection):
         for limit in stats_config.get('ao_projections', []):
             projections.select(limit)
 
+        graph_series = self.query_one('#graph_series', Input)
+        graph_series.value = ' '.join(
+            str(token)
+            for token in stats_config.get(
+                'graph_series', ['ao5', 'ao12', 'ao100', 'ao1000'],
+            )
+        )
+
     def get_config_data(
         self,
     ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
@@ -958,8 +980,15 @@ class StatisticsSection(ConfigSection):
         distribution = self.query_one('#distribution', Input)
         metrics = self.query_one('#solve_metrics', SelectionList)
         projections = self.query_one('#ao_projections', SelectionList)
+        graph_series = self.query_one('#graph_series', Input)
 
         metrics_list = metrics.selected
+
+        raw_tokens = re.split(r'[\s,]+', graph_series.value.strip())
+        graph_series_list = [
+            f'{kind}{size}'
+            for kind, size in parse_graph_series(raw_tokens)
+        ]
 
         return {
             'statistics': {
@@ -967,6 +996,7 @@ class StatisticsSection(ConfigSection):
                 'distribution': int(distribution.value or '0'),
                 'solve_metrics': metrics_list,
                 'ao_projections': sorted(projections.selected),
+                'graph_series': graph_series_list,
             },
         }
 

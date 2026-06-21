@@ -220,6 +220,13 @@
      const ctx = document.getElementById('progressChart');
      const totalPoints = {{ trend.indices|length }};
 
+     {% set seriesColors = {
+          'ao5': ['#EF4444', 'rgba(239, 68, 68, 0.3)'],
+          'ao12': ['#10B981', 'rgba(16, 185, 129, 0.3)'],
+          'ao100': ['#64748B', 'rgba(100, 116, 139, 0.3)'],
+          'ao1000': ['#F8FAFC', 'rgba(248, 250, 252, 0.3)']
+        } %}
+     {% set fallbackColor = ['#A855F7', 'rgba(168, 85, 247, 0.3)'] %}
      const progressData = {
        labels: {{ trend.indices|tojson }},
        datasets: [
@@ -234,50 +241,20 @@
            pointHoverRadius: 12,
            pointHitRadius: 12,
          },
-         {% if stats.total >= 5 %}
+         {% for serie in trend.series %}
+         {% if stats.total >= serie.size %}
+         {% set color = seriesColors.get(serie.token, fallbackColor) %}
          {
-           label: 'AO5',
-           data: {{ trend.ao5s|tojson }},
-           borderColor: '#EF4444',
-           backgroundColor: 'rgba(239, 68, 68, 0.3)',
+           label: '{{ serie.label }}',
+           data: {{ serie.data|tojson }},
+           borderColor: '{{ color[0] }}',
+           backgroundColor: '{{ color[1] }}',
            tension: 0.2,
            borderWidth: 2,
            pointRadius: 0,
          },
          {% endif %}
-         {% if stats.total >= 12 %}
-         {
-           label: 'AO12',
-           data: {{ trend.ao12s|tojson }},
-           borderColor: '#10B981',
-           backgroundColor: 'rgba(16, 185, 129, 0.3)',
-           tension: 0.2,
-           borderWidth: 2,
-           pointRadius: 0,
-         },
-         {% endif %}
-         {% if stats.total >= 100 %}
-         {
-           label: 'AO100',
-           data: {{ trend.ao100s|tojson }},
-           borderColor: '#64748B',
-           backgroundColor: 'rgba(100, 116, 139, 0.3)',
-           tension: 0.2,
-           borderWidth: 2,
-           pointRadius: 0,
-         },
-         {% endif %}
-         {% if stats.total >= 1000 %}
-         {
-           label: 'AO1000',
-           data: {{ trend.ao1000s|tojson }},
-           borderColor: '#F8FAFC',
-           backgroundColor: 'rgba(248, 250, 252, 0.3)',
-           tension: 0.2,
-           borderWidth: 2,
-           pointRadius: 0,
-         },
-         {% endif %}
+         {% endfor %}
        ]
      };
 
@@ -537,8 +514,8 @@
           <div class="stat-value">{{ stats.best|format_time }}</div>
           {% if stats.total >= 3 %}
             <div class="stat-meta">
-              <span class="stat-best">MB3: {{ stats.mean_best3|format_time }}</span>
-              {% set delta = (stats.mean_best3 - stats.best)|format_delta %}
+              <span class="stat-best">MB3: {{ stats.mb3|format_time }}</span>
+              {% set delta = (stats.mb3 - stats.best)|format_delta %}
               <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
                 {{ delta }}
               </span>
@@ -550,8 +527,8 @@
           <div class="stat-value">{{ stats.worst|format_time }}</div>
           {% if stats.total >= 3 %}
             <div class="stat-meta">
-              <span class="stat-worst">MW3: {{ stats.mean_worst3|format_time }}</span>
-              {% set delta = (stats.mean_worst3 - stats.worst)|format_delta %}
+              <span class="stat-worst">MW3: {{ stats.mw3|format_time }}</span>
+              {% set delta = (stats.mw3 - stats.worst)|format_delta %}
               <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
                 {{ delta }}
               </span>
