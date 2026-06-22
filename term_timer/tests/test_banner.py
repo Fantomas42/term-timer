@@ -205,7 +205,3 @@ class GetBannerTestCase(unittest.TestCase):
         """Test banner builds without an explicit hour."""
         banner = get_banner()
         self.assertIn(f'v{ COMMIT_HASH or __version__ }', strip_ansi(banner))
-
-
-if __name__ == '__main__':
-    unittest.main()
