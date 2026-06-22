@@ -1,0 +1,165 @@
+"""Configurable rolling-average series rendering for solves."""
+from typing import TYPE_CHECKING
+
+from term_timer.formatter import format_delta
+from term_timer.formatter import format_time
+from term_timer.interface.console import theme
+
+if TYPE_CHECKING:
+    from rich.console import Console as RichConsole
+
+    from term_timer.stats import Statistics
+
+# Generic style used when a series token has no dedicated console style
+SERIES_STYLE_FALLBACK = 'average'
+
+# Emoji celebrating a freshly broken record, per series entry, with a
+# generic fallback for any size/kind not listed
+SERIES_RECORD_EMOJI: dict[tuple[str, int], str] = {
+    ('ao', 5): ':boom:',
+    ('ao', 12): ':muscle:',
+    ('ao', 100): ':crown:',
+    ('ao', 1000): ':trophy:',
+}
+SERIES_RECORD_EMOJI_FALLBACK = ':sparkles:'
+
+
+class SeriesReporter:
+    """
+    Mixin rendering configurable rolling-average series for solves.
+
+    Factorises the per-solve display once duplicated between the timer
+    and the trainer: the inline ``extra`` stats line and the broken-records
+    watch. Both are driven by a configurable series of ``(kind, size)``
+    pairs (see ``parse_series``), so the timer, the trainer and the session
+    table all render the same averages from a single place.
+    """
+
+    if TYPE_CHECKING:
+        # Attributes from Console mixin
+        console: RichConsole
+
+        # Attributes from Scrambler mixin
+        counter: int
+
+    @staticmethod
+    def series_style(token: str) -> str:
+        """
+        Return the console style for a series token, with a fallback.
+
+        Args:
+            token: Series token such as ``ao5`` or ``mo3``.
+
+        Returns:
+            The dedicated style name when one exists in the theme, otherwise
+            the generic ``average`` fallback style.
+
+        """
+        return token if token in theme else SERIES_STYLE_FALLBACK
+
+    @staticmethod
+    def series_label(kind: str, size: int) -> str:
+        """
+        Format a human-readable label for a series entry.
+
+        Args:
+            kind: Series kind (``mo``, ``ao``, ``mb`` or ``mw``).
+            size: Window size of the average.
+
+        Returns:
+            Capitalised label such as ``Ao5`` or ``Mo3``.
+
+        """
+        return f'{ kind.capitalize() }{ size }'
+
+    @classmethod
+    def format_series_line(
+            cls,
+            stats: 'Statistics',
+            series: list[tuple[str, int]],
+            *,
+            suffix: str = '',
+    ) -> str:
+        """
+        Build the inline per-solve stats line for a configurable series.
+
+        Starts with the delta against the previous solve, then appends each
+        series entry whose window is reachable (``total >= size``). An
+        optional suffix is appended last (used by the trainer for its speed
+        trend).
+
+        Args:
+            stats: Statistics for the session up to and including this solve.
+            series: Series of ``(kind, size)`` pairs to display.
+            suffix: Extra markup appended at the end of the line.
+
+        Returns:
+            Rich-formatted line, or an empty string for the first solve.
+
+        """
+        if stats.total <= 1:
+            return ''
+
+        parts = [format_delta(stats.delta)]
+
+        for kind, size in series:
+            if stats.total < size:
+                continue
+
+            value = getattr(stats, kind)(size, stats.stack_time)
+            token = f'{ kind }{ size }'
+            style = cls.series_style(token)
+            label = cls.series_label(kind, size)
+            parts.append(
+                f'[{ style }]{ label } { format_time(value) }[/{ style }]',
+            )
+
+        line = ' '.join(parts)
+        if suffix:
+            line += f' { suffix }'
+
+        return line
+
+    def print_session_records(
+            self,
+            new_stats: 'Statistics',
+            old_stats: 'Statistics',
+            series: list[tuple[str, int]],
+    ) -> None:
+        """
+        Print a record line for each series average beaten by this solve.
+
+        Compares each new rolling average against the session best held
+        before the solve and celebrates the ones that improved. The overall
+        ``New PB`` line is handled by the caller and stays outside the series.
+
+        Args:
+            new_stats: Statistics including the latest solve.
+            old_stats: Statistics before the latest solve.
+            series: Series of ``(kind, size)`` pairs to watch.
+
+        """
+        if new_stats.total <= 1:
+            return
+
+        mc = 9 + len(str(self.counter))
+
+        for kind, size in series:
+            if new_stats.total < size:
+                continue
+
+            value = getattr(new_stats, kind)(size, new_stats.stack_time)
+            best = getattr(old_stats, f'best_{ kind }')(size)
+
+            if value <= 0 or value >= best:
+                continue
+
+            emoji = SERIES_RECORD_EMOJI.get(
+                (kind, size), SERIES_RECORD_EMOJI_FALLBACK,
+            )
+            label = f'Best { self.series_label(kind, size) }'
+            self.console.print(
+                f'[record]{ emoji }{ label.center(mc) }[/record]',
+                f'[best]{ format_time(value) }[/best]',
+                format_delta(value - best),
+            )

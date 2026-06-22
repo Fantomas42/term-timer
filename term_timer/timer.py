@@ -8,6 +8,8 @@ from cubing_algs.solver import facelets_to_facelets_algorithm
 from cubing_algs.vcube import VCube
 
 from term_timer.config import STATS_AO_PROJECTIONS
+from term_timer.config import STATS_LIVE_SERIES
+from term_timer.config import STATS_SESSION_SERIES
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SolveFlag
@@ -170,7 +172,7 @@ class Timer(SolveInterface):
                 end='',
             )
 
-    def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912, PLR0915
+    def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912
         """Display solve results, statistics, and record achievements."""
         old_stats = SolveStatisticsReporter(self.cube_size, self.stack)
 
@@ -220,64 +222,23 @@ class Timer(SolveInterface):
                 )
                 return
 
-        extra = ''
-        if new_stats.total > 1:
-            extra += format_delta(new_stats.delta)
-
-            if new_stats.total >= 3:
-                mo3 = new_stats.mo3
-                extra += f' [mo3]Mo3 { format_time(mo3) }[/mo3]'
-
-            if new_stats.total >= 5:
-                ao5 = new_stats.ao5
-                extra += f' [ao5]Ao5 { format_time(ao5) }[/ao5]'
-
-            if new_stats.total >= 12:
-                ao12 = new_stats.ao12
-                extra += f' [ao12]Ao12 { format_time(ao12) }[/ao12]'
-
         self.console.print(
             f'[duration]Duration #{ self.counter }:[/duration]',
             f'[time]{ format_time(self.elapsed_time) }[/time]',
-            extra,
+            self.format_series_line(new_stats, STATS_LIVE_SERIES),
         )
 
-        if new_stats.total > 1:
+        if new_stats.total > 1 and new_stats.best < old_stats.best:
             mc = 9 + len(str(self.counter))
-            if new_stats.best < old_stats.best:
-                self.console.print(
-                    f'[record]:rocket:{ "New PB !".center(mc) }[/record]',
-                    f'[best]{ format_time(new_stats.best) }[/best]',
-                    format_delta(new_stats.best - old_stats.best),
-                )
+            self.console.print(
+                f'[record]:rocket:{ "New PB !".center(mc) }[/record]',
+                f'[best]{ format_time(new_stats.best) }[/best]',
+                format_delta(new_stats.best - old_stats.best),
+            )
 
-            if new_stats.ao5 < old_stats.best_ao5:
-                self.console.print(
-                    f'[record]:boom:{ "Best Ao5".center(mc) }[/record]',
-                    f'[best]{ format_time(new_stats.ao5) }[/best]',
-                    format_delta(new_stats.ao5 - old_stats.best_ao5),
-                )
-
-            if new_stats.ao12 < old_stats.best_ao12:
-                self.console.print(
-                    f'[record]:muscle:{ "Best Ao12".center(mc) }[/record]',
-                    f'[best]{ format_time(new_stats.ao12) }[/best]',
-                    format_delta(new_stats.ao12 - old_stats.best_ao12),
-                )
-
-            if new_stats.ao100 < old_stats.best_ao100:
-                self.console.print(
-                    f'[record]:crown:{ "Best Ao100".center(mc) }[/record]',
-                    f'[best]{ format_time(new_stats.ao100) }[/best]',
-                    format_delta(new_stats.ao100 - old_stats.best_ao100),
-                )
-
-            if new_stats.ao1000 < old_stats.best_ao1000:
-                self.console.print(
-                    f'[record]:trophy:{ "Best Ao1000".center(mc) }[/record]',
-                    f'[best]{ format_time(new_stats.ao1000) }[/best]',
-                    format_delta(new_stats.ao1000 - old_stats.best_ao1000),
-                )
+        self.print_session_records(
+            new_stats, old_stats, STATS_SESSION_SERIES,
+        )
 
         self.projection_line(new_stats)
 

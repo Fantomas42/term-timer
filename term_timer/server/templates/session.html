@@ -536,71 +536,19 @@
           {% endif %}
         </div>
       {% endif %}
-      {% if stats.total >= 3 %}
+      {% for entry in session_series %}
         <div class="stat-card">
-          <div class="stat-title">Current Mo3</div>
-          <div class="stat-value">{{ stats.mo3|format_time }}</div>
+          <div class="stat-title">Current {{ entry.label }}</div>
+          <div class="stat-value">{{ entry.value|format_time }}</div>
           <div class="stat-meta">
-            <span class="stat-best">Best: {{ stats.best_mo3|format_time }}</span>
-            {% set delta = (stats.mo3 - stats.best_mo3)|format_delta %}
+            <span class="stat-best">Best: {{ entry.best|format_time }}</span>
+            {% set delta = (entry.value - entry.best)|format_delta %}
             <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
               {{ delta }}
             </span>
           </div>
         </div>
-      {% endif %}
-      {% if stats.total >= 5 %}
-        <div class="stat-card">
-          <div class="stat-title">Current Ao5</div>
-          <div class="stat-value">{{ stats.ao5|format_time }}</div>
-          <div class="stat-meta">
-            <span class="stat-best">Best: {{ stats.best_ao5|format_time }}</span>
-            {% set delta = (stats.ao5 - stats.best_ao5)|format_delta %}
-            <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
-              {{ delta }}
-            </span>
-          </div>
-        </div>
-      {% endif %}
-      {% if stats.total >= 12 %}
-        <div class="stat-card">
-          <div class="stat-title">Current Ao12</div>
-          <div class="stat-value">{{ stats.ao12|format_time }}</div>
-          <div class="stat-meta">
-            <span class="stat-best">Best: {{ stats.best_ao12|format_time }}</span>
-            {% set delta = (stats.ao12 - stats.best_ao12)|format_delta %}
-            <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
-              {{ delta }}
-            </span>
-          </div>
-        </div>
-      {% endif %}
-      {% if stats.total >= 100 %}
-        <div class="stat-card">
-          <div class="stat-title">Current Ao100</div>
-          <div class="stat-value">{{ stats.ao100|format_time }}</div>
-          <div class="stat-meta">
-            <span class="stat-best">Best: {{ stats.best_ao100|format_time }}</span>
-            {% set delta = (stats.ao100 - stats.best_ao100)|format_delta %}
-            <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
-              {{ delta }}
-            </span>
-          </div>
-        </div>
-      {% endif %}
-      {% if stats.total >= 1000 %}
-        <div class="stat-card">
-          <div class="stat-title">Current Ao1000</div>
-          <div class="stat-value">{{ stats.ao1000|format_time }}</div>
-          <div class="stat-meta">
-            <span class="stat-best">Best: {{ stats.best_ao1000|format_time }}</span>
-            {% set delta = (stats.ao1000 - stats.best_ao1000)|format_delta %}
-            <span class="stat-delta {% if '-' in delta %}negative{% else %}positive{% endif %}">
-              {{ delta }}
-            </span>
-          </div>
-        </div>
-      {% endif %}
+      {% endfor %}
 
       <div class="stat-card">
         <div class="stat-title">Grade</div>

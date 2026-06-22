@@ -7,13 +7,16 @@ from bottle import abort
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.config import CUBE_METHOD
 from term_timer.config import STATS_GRAPH_SERIES
+from term_timer.config import STATS_SESSION_SERIES
 from term_timer.constants import CUBE_SIZES
 from term_timer.constants import SECOND
 from term_timer.in_out import load_all_solves
+from term_timer.interface.series import SeriesReporter
 from term_timer.server.annotations import DistributionData
 from term_timer.server.annotations import SessionDetailContext
 from term_timer.server.annotations import SessionInfo
 from term_timer.server.annotations import SessionListContext
+from term_timer.server.annotations import SessionSeriesEntry
 from term_timer.server.annotations import TrendData
 from term_timer.server.annotations import TrendSeries
 from term_timer.server.views.base import View
@@ -163,6 +166,7 @@ class SessionDetailView(View):
             'session': self.session,
             'stats': self.stats,
             'sessions': self.compute_sessions(),
+            'session_series': self.compute_session_series(),
             'trend': self.compute_trend(),
             'distribution': self.compute_distribution(),
             'punchcard': self.compute_punchcard(),
@@ -170,6 +174,36 @@ class SessionDetailView(View):
             'case_uid': self.case_uid,
             'method_aggregation': self.method_aggregation,
         }
+
+    def compute_session_series(self) -> list[SessionSeriesEntry]:
+        """
+        Build the configurable session rolling averages.
+
+        Returns:
+            One entry per ``STATS_SESSION_SERIES`` average with enough
+            solves (``total >= size``), each carrying its current value
+            and the session best for that average.
+
+        """
+        total = self.stats.total
+        stack_time = list(self.stats.stack_time)
+
+        series: list[SessionSeriesEntry] = []
+        for kind, size in STATS_SESSION_SERIES:
+            if total < size:
+                continue
+
+            value = getattr(self.stats, kind)(size, stack_time)
+            best = getattr(self.stats, f'best_{ kind }')(size)
+            series.append({
+                'token': f'{ kind }{ size }',
+                'label': SeriesReporter.series_label(kind, size),
+                'size': size,
+                'value': value,
+                'best': best,
+            })
+
+        return series
 
     def compute_sessions(self) -> dict[str, int]:
         """

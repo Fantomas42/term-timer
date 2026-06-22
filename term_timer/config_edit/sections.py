@@ -18,7 +18,9 @@ from textual.widgets import SelectionList
 from textual.widgets import Static
 
 from term_timer.config import CONFIG
-from term_timer.config import parse_graph_series
+from term_timer.config import SERIES_AVERAGE_KINDS
+from term_timer.config import SERIES_KINDS
+from term_timer.config import parse_series
 from term_timer.stats import StatisticsTools
 
 
@@ -927,6 +929,30 @@ class StatisticsSection(ConfigSection):
                     classes='field-help',
                 )
 
+            yield Static('Live Series', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Input(
+                    id='live_series',
+                    placeholder='mo3 ao5 ao12',
+                )
+                yield Static(
+                    'Averages shown inline after each solve, in the '
+                    'order entered: ao/mo + solve count (ao5 = last 5)',
+                    classes='field-help',
+                )
+
+            yield Static('Session Series', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Input(
+                    id='session_series',
+                    placeholder='mo3 ao5 ao12 ao100 ao1000',
+                )
+                yield Static(
+                    'Session table averages and tracked records, in the '
+                    'order entered: ao/mo + solve count (ao5 = last 5)',
+                    classes='field-help',
+                )
+
             yield Static('Graph Series', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Input(
@@ -958,6 +984,22 @@ class StatisticsSection(ConfigSection):
         for limit in stats_config.get('ao_projections', []):
             projections.select(limit)
 
+        live_series = self.query_one('#live_series', Input)
+        live_series.value = ' '.join(
+            str(token)
+            for token in stats_config.get(
+                'live_series', ['mo3', 'ao5', 'ao12'],
+            )
+        )
+
+        session_series = self.query_one('#session_series', Input)
+        session_series.value = ' '.join(
+            str(token)
+            for token in stats_config.get(
+                'session_series', ['mo3', 'ao5', 'ao12', 'ao100', 'ao1000'],
+            )
+        )
+
         graph_series = self.query_one('#graph_series', Input)
         graph_series.value = ' '.join(
             str(token)
@@ -980,15 +1022,19 @@ class StatisticsSection(ConfigSection):
         distribution = self.query_one('#distribution', Input)
         metrics = self.query_one('#solve_metrics', SelectionList)
         projections = self.query_one('#ao_projections', SelectionList)
+        live_series = self.query_one('#live_series', Input)
+        session_series = self.query_one('#session_series', Input)
         graph_series = self.query_one('#graph_series', Input)
 
         metrics_list = metrics.selected
 
-        raw_tokens = re.split(r'[\s,]+', graph_series.value.strip())
-        graph_series_list = [
-            f'{kind}{size}'
-            for kind, size in parse_graph_series(raw_tokens)
-        ]
+        live_series_list = self.normalize_series(
+            live_series.value, SERIES_AVERAGE_KINDS,
+        )
+        session_series_list = self.normalize_series(
+            session_series.value, SERIES_AVERAGE_KINDS,
+        )
+        graph_series_list = self.normalize_series(graph_series.value)
 
         return {
             'statistics': {
@@ -996,9 +1042,37 @@ class StatisticsSection(ConfigSection):
                 'distribution': int(distribution.value or '0'),
                 'solve_metrics': metrics_list,
                 'ao_projections': sorted(projections.selected),
+                'live_series': live_series_list,
+                'session_series': session_series_list,
                 'graph_series': graph_series_list,
             },
         }
+
+    @staticmethod
+    def normalize_series(
+            value: str,
+            kinds: tuple[str, ...] = SERIES_KINDS,
+    ) -> list[str]:
+        """
+        Normalise a free-text series field into a list of tokens.
+
+        Splits on whitespace or commas, then runs the tokens through
+        ``parse_series`` to drop duplicates and invalid entries while
+        keeping the order entered.
+
+        Args:
+            value: Raw text typed in the series input.
+            kinds: Kinds to accept; defaults to every supported kind.
+
+        Returns:
+            Ordered list of normalised ``kindsize`` tokens.
+
+        """
+        raw_tokens = re.split(r'[\s,]+', value.strip())
+        return [
+            f'{ kind }{ size }'
+            for kind, size in parse_series(raw_tokens, kinds)
+        ]
 
 
 class ServerSection(ConfigSection):

@@ -127,6 +127,16 @@ class SessionListContext(TypedDict):
     sessions: dict[int, dict[str, SessionInfo]]
 
 
+class SessionSeriesEntry(TypedDict):
+    """A single configurable rolling average shown in the session table."""
+
+    token: str
+    label: str
+    size: int
+    value: int
+    best: int
+
+
 class SessionDetailContext(TypedDict):
     """Template context for session detail view."""
 
@@ -134,6 +144,7 @@ class SessionDetailContext(TypedDict):
     session: str
     stats: SolveStatisticsReporter
     sessions: dict[str, int]
+    session_series: list[SessionSeriesEntry]
     trend: TrendData
     distribution: DistributionData
     punchcard: dict[str, dict[str, int]]

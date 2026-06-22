@@ -8,7 +8,14 @@ import rtoml
 
 from term_timer.constants import CONFIG_FILE
 
-GRAPH_SERIES_RE: Final = re.compile(r'^(mo|ao|mb|mw)(\d+)$')
+SERIES_RE: Final = re.compile(r'^(mo|ao|mb|mw)(\d+)$')
+
+# Kinds accepted in any configurable series
+SERIES_KINDS: Final = ('mo', 'ao', 'mb', 'mw')
+
+# Kinds meaningful as rolling averages (session table and live line):
+# their best counterparts (best_mo/best_ao) exist for record tracking
+SERIES_AVERAGE_KINDS: Final = ('mo', 'ao')
 
 DEFAULT_CONFIG: Final = """[timer]
 sound = "audio"
@@ -55,6 +62,8 @@ trim = "p5"
 distribution = 0
 solve_metrics = ["htm", "qtm", "stm"]
 ao_projections = []
+live_series = ["mo3", "ao5", "ao12"]
+session_series = ["mo3", "ao5", "ao12", "ao100", "ao1000"]
 graph_series = ["ao5", "ao12", "ao100", "ao1000"]
 
 [server]
@@ -66,18 +75,26 @@ port = 8333
 """
 
 
-def parse_graph_series(tokens: list[str]) -> list[tuple[str, int]]:
+def parse_series(
+        tokens: list[str],
+        kinds: tuple[str, ...] = SERIES_KINDS,
+) -> list[tuple[str, int]]:
     """
-    Parse trend graph series tokens into kind/size pairs.
+    Parse configurable series tokens into kind/size pairs.
 
     Each token is a kind (``mo``, ``ao``, ``mb`` or ``mw``) followed by
-    an integer size (e.g. ``ao5``, ``mb3``), per ``GRAPH_SERIES_RE``.
-    The order given by the user is preserved as-is; duplicates are
-    dropped on their first occurrence and unrecognised tokens are
-    silently ignored.
+    an integer size (e.g. ``ao5``, ``mb3``), per ``SERIES_RE``. The order
+    given by the user is preserved as-is; duplicates are dropped on their
+    first occurrence and unrecognised tokens are silently ignored. Tokens
+    whose kind is not in ``kinds`` are also ignored, which lets callers
+    restrict a series to a subset (e.g. only ``mo``/``ao``).
+
+    Shared by every configurable series: trend graphs, the session table
+    and the per-solve live line.
 
     Args:
         tokens: Raw series tokens from the configuration.
+        kinds: Kinds to accept; defaults to every supported kind.
 
     Returns:
         List of ``(kind, size)`` pairs, kept in their original order.
@@ -87,11 +104,14 @@ def parse_graph_series(tokens: list[str]) -> list[tuple[str, int]]:
     seen: set[str] = set()
 
     for token in tokens:
-        match = GRAPH_SERIES_RE.match(str(token).strip().lower())
+        match = SERIES_RE.match(str(token).strip().lower())
         if match is None:
             continue
 
         kind = match.group(1)
+        if kind not in kinds:
+            continue
+
         size = int(match.group(2))
         key = f'{ kind }{ size }'
         if key in seen:
@@ -134,9 +154,22 @@ STATS_SOLVE_METRICS: list[str] = STATS_CONFIG.get(
 
 STATS_AO_PROJECTIONS: list[int] = STATS_CONFIG.get('ao_projections', [])
 
-STATS_GRAPH_SERIES: list[tuple[str, int]] = parse_graph_series(
+STATS_LIVE_SERIES: list[tuple[str, int]] = parse_series(
+    STATS_CONFIG.get('live_series', ['mo3', 'ao5', 'ao12']),
+    SERIES_AVERAGE_KINDS,
+)
+
+STATS_SESSION_SERIES: list[tuple[str, int]] = parse_series(
+    STATS_CONFIG.get(
+        'session_series', ['mo3', 'ao5', 'ao12', 'ao100', 'ao1000'],
+    ),
+    SERIES_AVERAGE_KINDS,
+)
+
+STATS_GRAPH_SERIES: list[tuple[str, int]] = parse_series(
     STATS_CONFIG.get('graph_series', ['ao5', 'ao12', 'ao100', 'ao1000']),
 )
+
 
 TIMER_CONFIG = CONFIG.get('timer', {})
 

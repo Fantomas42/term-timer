@@ -21,6 +21,7 @@ from term_timer.interface.gesture import Gesture
 from term_timer.interface.getcher import Getcher
 from term_timer.interface.inspection import Inspecter
 from term_timer.interface.scrambler import Scrambler
+from term_timer.interface.series import SeriesReporter
 from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.interface.state import State
 from term_timer.interface.stopwatch import StopWatch
@@ -42,6 +43,7 @@ class SolveInterface(
         StopWatch,
         Inspecter,
         Scrambler,
+        SeriesReporter,
         Gesture,
         Bluetooth,
 ):
@@ -59,6 +61,7 @@ class SolveInterface(
     - StopWatch: Timer functionality
     - Inspecter: Inspection countdown
     - Scrambler: Scramble tracking
+    - SeriesReporter: Rolling-average series display
     - Gesture: Gesture detection
     - Bluetooth: Bluetooth cube integration
 

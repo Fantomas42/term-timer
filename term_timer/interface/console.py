@@ -124,8 +124,13 @@ theme: dict[str, str] = {
     'mo3': f'bold { ORANGE }',
     'ao5': 'bold #00FFFF',
     'ao12': 'bold #FF00FF',
+    'ao25': 'bold #99FFCC',
+    'ao50': 'bold #FF99CC',
     'ao100': 'bold #FFCC99',
+    'ao200': 'bold #99CCFF',
+    'ao500': 'bold #CC99FF',
     'ao1000': 'bold #CCFF99',
+    'average': f'bold { TEXT_LIGHT }',
     'no-ao': 'bold #666666',
 
     'trend-up': f'bold { GREEN }',

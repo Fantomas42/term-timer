@@ -17,6 +17,7 @@ from term_timer.annotations import ListingFilters
 from term_timer.annotations import MethodAnalysis
 from term_timer.config import STATS_DISTRIBUTION
 from term_timer.config import STATS_GRAPH_SERIES
+from term_timer.config import STATS_SESSION_SERIES
 from term_timer.config import STATS_SOLVE_METRICS
 from term_timer.config import STATS_TRIM
 from term_timer.constants import DNF
@@ -38,6 +39,7 @@ from term_timer.formatter import format_score
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
 from term_timer.interface.console import console
+from term_timer.interface.series import SeriesReporter
 from term_timer.printer import print_cube_scrambled
 from term_timer.solve import Solve
 
@@ -944,7 +946,7 @@ class SolveStatisticsReporter(Statistics):
             cast('float', s.score) for s in self.stack if s.advanced
         ) / self.total
 
-    def resume(self, prefix: str = '', style: str = 'stats', *,  # noqa: C901
+    def resume(self, prefix: str = '', style: str = 'stats', *,
                show_title: bool = False) -> None:
         """
         Display comprehensive statistics summary to the console.
@@ -1014,45 +1016,21 @@ class SolveStatisticsReporter(Statistics):
                     f'[{ style }]{ prefix }Worst :[/{ style }]',
                     f'[red]{ format_time(self.worst) }[/red]',
                 )
-        if self.total >= 3:
+        for kind, size in STATS_SESSION_SERIES:
+            if self.total < size:
+                continue
+
+            value = getattr(self, kind)(size, self.stack_time)
+            best = getattr(self, f'best_{ kind }')(size)
+            token = f'{ kind }{ size }'
+            value_style = SeriesReporter.series_style(token)
+            label = SeriesReporter.series_label(kind, size)
             console.print(
-                f'[{ style }]{ prefix }Mo3   :[/{ style }]',
-                f'[mo3]{ format_time(self.mo3) }[/mo3]',
+                f'[{ style }]{ prefix }{ label:<6}:[/{ style }]',
+                f'[{ value_style }]{ format_time(value) }[/{ value_style }]',
                 f'[{ style }]Best :[/{ style }]',
-                f'[result]{ format_time(self.best_mo3) }[/result]',
-                format_delta(self.mo3 - self.best_mo3),
-            )
-        if self.total >= 5:
-            console.print(
-                f'[{ style }]{ prefix }Ao5   :[/{ style }]',
-                f'[ao5]{ format_time(self.ao5) }[/ao5]',
-                f'[{ style }]Best :[/{ style }]',
-                f'[result]{ format_time(self.best_ao5) }[/result]',
-                format_delta(self.ao5 - self.best_ao5),
-            )
-        if self.total >= 12:
-            console.print(
-                f'[{ style }]{ prefix }Ao12  :[/{ style }]',
-                f'[ao12]{ format_time(self.ao12) }[/ao12]',
-                f'[{ style }]Best :[/{ style }]',
-                f'[result]{ format_time(self.best_ao12) }[/result]',
-                format_delta(self.ao12 - self.best_ao12),
-            )
-        if self.total >= 100:
-            console.print(
-                f'[{ style }]{ prefix }Ao100 :[/{ style }]',
-                f'[ao100]{ format_time(self.ao100) }[/ao100]',
-                f'[{ style }]Best :[/{ style }]',
-                f'[result]{ format_time(self.best_ao100) }[/result]',
-                format_delta(self.ao100 - self.best_ao100),
-            )
-        if self.total >= 1000:
-            console.print(
-                f'[{ style }]{ prefix }Ao1000:[/{ style }]',
-                f'[ao1000]{ format_time(self.ao1000) }[/ao1000]',
-                f'[{ style }]Best :[/{ style }]',
-                f'[result]{ format_time(self.best_ao1000) }[/result]',
-                format_delta(self.ao1000 - self.best_ao1000),
+                f'[result]{ format_time(best) }[/result]',
+                format_delta(value - best),
             )
 
         if self.total > 1 and self.repartition:
