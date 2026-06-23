@@ -4,6 +4,7 @@ from collections.abc import Callable
 from datetime import datetime
 from datetime import timezone
 from functools import cached_property
+from itertools import pairwise
 from typing import TypedDict
 
 import plotext as plt
@@ -452,6 +453,48 @@ class Solve:  # noqa: PLR0904
         return self.all_missed_moves - self.step_missed_moves
 
     @cached_property
+    def transition_overheads(self) -> dict[int, int]:
+        """
+        Localize transition overhead at each step boundary.
+
+        Transition overhead is the redundancy that only appears when two
+        consecutive steps are concatenated (e.g. the last moves of OLL
+        undoing the first moves of PLL), which neither step can detect on
+        its own. The sum of all boundaries equals transition_missed_moves.
+
+        Returns:
+            Mapping from a step's index in method_applied.summary to the
+            extra QTM lost at the boundary with the previous executed step.
+            The overhead is keyed on the following step, so it can be
+            displayed under the step the transition leads into. Only
+            boundaries with a non-zero overhead are included.
+
+        """
+        if not self.method_applied:
+            return {}
+
+        executed = [
+            (index, step)
+            for index, step in enumerate(self.method_applied.summary)
+            if step['type'] not in {'virtual', 'skipped'} and step['moves']
+        ]
+
+        overheads: dict[int, int] = {}
+        for (_, current), (following_index, following) in pairwise(executed):
+            combined = parse_moves(
+                list(current['moves']) + list(following['moves']),
+            )
+            overhead = (
+                self.missed_moves(combined)
+                - self.missed_moves(current['moves'])
+                - self.missed_moves(following['moves'])
+            )
+            if overhead:
+                overheads[following_index] = overhead
+
+        return overheads
+
+    @cached_property
     def method_analyser(self) -> type[Analyser]:
         """
         Get the analyser class for the configured solving method.
@@ -671,7 +714,7 @@ class Solve:  # noqa: PLR0904
             )
 
         step: StepSummary
-        for step in self.method_applied.summary:
+        for index, step in enumerate(self.method_applied.summary):
 
             header = ''
             if step['type'] == 'substep':
@@ -784,6 +827,14 @@ class Solve:  # noqa: PLR0904
                 f'{ fluency_line }'
                 f'{ footer }\n'
             )
+
+            transition_overhead = self.transition_overheads.get(index)
+            if transition_overhead:
+                line += (
+                    '             [trans-overhead]'
+                    f'↳ +{ transition_overhead } QTM lost in transition'
+                    '[/trans-overhead]\n'
+                )
 
         return line
 
