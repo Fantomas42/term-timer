@@ -17,9 +17,19 @@ class RawAnalyser(Analyser):
     name = 'Raw'
     step_list = ('RAW',)
     norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
+        'moves': {},
+        'percent': {
+            'RAW': 100.0,
+        },
+        'recognition': {
+            'RAW': (0.0, 0.0),
+        },
+        'execution': {
+            'RAW': (100.0, 100.0),
+        },
         'solve': {
-            'recognition': 0,
-            'execution': 100,
+            'recognition': (0.0, 0.0),
+            'execution': (100.0, 100.0),
         },
     }
 

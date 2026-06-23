@@ -19,16 +19,31 @@ class LBLAnalyser(Analyser):
     norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
         'moves': {
             'Cross': 6,
+            'F1L': 12, ##
             'F2L': 30,
+            'LL': 45, ##
         },
         'percent': {
             'Cross': 12.0,
+            'F1L': 15.0,
             'F2L': 50.0,
-            'LL': 38,
+            'LL': 38.0,
+        },
+        'recognition': {
+            'Cross': 0.0,
+            'F1L': 0.0,
+            'F2L': (30.0, 40.0),
+            'LL': (10.0, 20.0),
+        },
+        'execution': {
+            'Cross': 100.0,
+            'F1L': 100.0,
+            'F2L': (60.0, 70.0),
+            'LL': (80.0, 90.0),
         },
         'solve': {
-            'recognition': (0, 30),
-            'execution': (70, 100),
+            'recognition': (0.0, 30.0),
+            'execution': (70.0, 100.0),
         },
     }
 
