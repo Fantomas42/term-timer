@@ -175,6 +175,9 @@ def get_recognition_highlight(solve: 'Solve') -> str:
         Highlight message
 
     """
+    if solve.method_name not in {'cfop', 'cf4op'}:
+        return ''
+
     if solve.time <= 0:
         return ''
 
@@ -193,6 +196,9 @@ def get_auf_highlight(solve: 'Solve') -> str:
         Highlight message
 
     """
+    if solve.method_name not in {'cfop', 'cf4op'}:
+        return ''
+
     if not solve.aufs:
         return 'No AUFs - great case mastery.'
     if solve.aufs <= 2:
