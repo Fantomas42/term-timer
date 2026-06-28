@@ -49,11 +49,22 @@ class SolveNorms(TypedDict):
     execution: NormRange
 
 
-class MethodNorms(TypedDict):
-    """Per-step performance benchmarks for a solving method."""
+class MethodNormsRequired(TypedDict):
+    """Mandatory per-step benchmarks every method must provide."""
 
     moves: dict[str, float]
     percent: dict[str, float]
+
+
+class MethodNorms(MethodNormsRequired, total=False):
+    """
+    Per-step performance benchmarks for a solving method.
+
+    Only ``moves`` and ``percent`` are required. ``recognition``,
+    ``execution`` and ``solve`` are optional: omit them when a method has
+    no meaningful data instead of filling in placeholder values.
+    """
+
     recognition: dict[str, NormRange]
     execution: dict[str, NormRange]
     solve: SolveNorms

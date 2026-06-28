@@ -492,7 +492,9 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
 
     if not solve.method_applied:
         return issues
-    solve_norms = solve.method_applied.norms['solve']
+    solve_norms = solve.method_applied.norms.get('solve')
+    if solve_norms is None:
+        return issues
     rec_norm = solve_norms['recognition']
     rec_norm_max = rec_norm.high
 
@@ -701,12 +703,10 @@ def check_step_f2l(
         return diagnostics
 
     norms = solve.method_applied.norms
+    recognition = norms.get('recognition', {})
     step_name = step['name']
     percent_norm = norms['percent']['F2L']
-    rec_norm = norms['recognition'].get(
-        step_name, norms['recognition']['F2L'],
-    )
-    rec_norm_max = rec_norm.high
+    rec_norm = recognition.get(step_name) or recognition.get('F2L')
 
     if step['total_percent'] > percent_norm * 1.1:
         diagnostics.append(
@@ -732,7 +732,9 @@ def check_step_f2l(
             },
         )
 
-    if step['step_recognition_percent'] > rec_norm_max:
+    if rec_norm is not None and (
+            step['step_recognition_percent'] > rec_norm.high
+    ):
         estimated_impact = step['recognition'] / SECOND * 0.2
         diagnostics.append(
             {
@@ -793,10 +795,11 @@ def check_step_oll(
     oll_cmd = (
         f'term-timer train -s oll -c "{case_name}"' if case_name else ''
     )
-    rec_norm = norms['recognition']['OLL']
-    rec_norm_max = rec_norm.high
+    rec_norm = norms.get('recognition', {}).get('OLL')
 
-    if step['step_recognition_percent'] > rec_norm_max:
+    if rec_norm is not None and (
+            step['step_recognition_percent'] > rec_norm.high
+    ):
         diagnostics.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
@@ -891,10 +894,11 @@ def check_step_pll(
     pll_cmd = (
         f'term-timer train -s pll -c "{case_name}"' if case_name else ''
     )
-    rec_norm = norms['recognition']['PLL']
-    rec_norm_max = rec_norm.high
+    rec_norm = norms.get('recognition', {}).get('PLL')
 
-    if step['step_recognition_percent'] > rec_norm_max:
+    if rec_norm is not None and (
+            step['step_recognition_percent'] > rec_norm.high
+    ):
         diagnostics.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
