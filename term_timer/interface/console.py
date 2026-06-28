@@ -33,7 +33,7 @@ theme: dict[str, str] = {
     'consign': '#CECECE',
     'highlight': f'bold { TEXT_LIGHT }',
     'diagnostic': f'bold { TEXT_LIGHT }',
-    'examen': '#FF6E6E',
+    'examen': f'bold { TEXT_LIGHT } on #2E8B57',
     'critical': f'bold { RED }',
     'high': f'bold { ORANGE }',
     'medium': f'bold { YELLOW }',

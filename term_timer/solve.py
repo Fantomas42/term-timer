@@ -1211,7 +1211,7 @@ class Solve:  # noqa: PLR0904
                 title = 'Global' if location == 'global' else location
 
                 section_line = (
-                    f'[step]{ title }[/step] '
+                    f'[examen] { title } [/examen] '
                     f'[title]{ group["impact_seconds"]:.2f}s[/title]'
                 )
                 if group['command']:
@@ -1222,11 +1222,12 @@ class Solve:  # noqa: PLR0904
 
                 diagnostic_lines.extend(
                     (
-                        f'[diagnostic] - { item["description"] }[/diagnostic]\n'
-                        '[advice]   ' +
-                        item['recommendation'].replace('. ', '.\n   ') +
+                        f'  [diagnostic] - { item["description"] }'
+                        '[/diagnostic]\n'
+                        '  [advice]   ' +
+                        item['recommendation'].replace('. ', '.\n     ') +
                         '[/advice]\n'
-                        f'   [{ item["severity"] }]'
+                        f'     [{ item["severity"] }]'
                         f'[{ item["severity"].upper() }]'
                         f'[/{ item["severity"] }] '
                         f'[context]{ item["impact_seconds"]:.2f}s[/context]'
