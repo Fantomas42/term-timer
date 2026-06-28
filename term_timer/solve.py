@@ -1206,12 +1206,10 @@ class Solve:  # noqa: PLR0904
 
         diagnostic_lines = ['[stats]Diagnostics:[/stats]']
         if items:
-            for index, group in enumerate(group_solve_diagnostics(items)):
+            for group in group_solve_diagnostics(items):
                 location = group['location']
                 title = 'Global' if location == 'global' else location
 
-                if index:
-                    diagnostic_lines.append('')
                 section_line = (
                     f'[step]{ title }[/step] '
                     f'[title]{ group["impact_seconds"]:.2f}s[/title]'
