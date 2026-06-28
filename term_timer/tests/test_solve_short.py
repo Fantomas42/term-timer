@@ -294,7 +294,6 @@ class TestSolveShortLBLAutoOrientation(TestSolveShort):
 
         inputs = method_applied.summary
         outputs = [
-            ('Cross', 'skipped'),
             ('F1L', 'skipped'),
             ('F2L', 'step'),
             ('LL', 'step'),
@@ -327,8 +326,7 @@ class TestSolveShortLBLDFOrientation(TestSolveShort):
 
         inputs = method_applied.summary
         outputs = [
-            ('Cross', 'step'),
-            ('F1L', 'skipped'),
+            ('F1L', 'step'),
             ('F2L', 'skipped'),
             ('LL', 'skipped'),
         ]
