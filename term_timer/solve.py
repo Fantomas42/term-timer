@@ -1212,10 +1212,15 @@ class Solve:  # noqa: PLR0904
 
                 if index:
                     diagnostic_lines.append('')
-                diagnostic_lines.append(
+                section_line = (
                     f'[step]{ title }[/step] '
-                    f'[title]{ group["impact_seconds"]:.2f}s[/title]',
+                    f'[title]{ group["impact_seconds"]:.2f}s[/title]'
                 )
+                if group['command']:
+                    section_line += (
+                        f' [localhost]{ group["command"] }[/localhost]'
+                    )
+                diagnostic_lines.append(section_line)
 
                 diagnostic_lines.extend(
                     (
@@ -1230,12 +1235,6 @@ class Solve:  # noqa: PLR0904
                     )
                     for item in group['diagnostics']
                 )
-
-                if group['command']:
-                    command_line = (
-                        f'   → [localhost]{ group["command"] }[/localhost]'
-                    )
-                    diagnostic_lines.extend(('', command_line))
         else:
             diagnostic_lines.append(
                 '[success] - No issue detected, sane solve ![/success]',
