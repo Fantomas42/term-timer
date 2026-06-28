@@ -596,6 +596,7 @@ class TestGetRecognitionHighlight(unittest.TestCase):
     def test_recognition_exactly_20_percent(self) -> None:
         """Test highlight for recognition of exactly 20%."""
         solve = Mock()
+        solve.method_name = 'cfop'
         solve.time = 10 * SECOND
         solve.recognition_time = 2 * SECOND
         result = get_recognition_highlight(solve)
@@ -604,6 +605,7 @@ class TestGetRecognitionHighlight(unittest.TestCase):
     def test_recognition_below_20_percent(self) -> None:
         """Test highlight for recognition below 20%."""
         solve = Mock()
+        solve.method_name = 'cfop'
         solve.time = 10 * SECOND
         solve.recognition_time = int(1.5 * SECOND)
         result = get_recognition_highlight(solve)
@@ -612,6 +614,7 @@ class TestGetRecognitionHighlight(unittest.TestCase):
     def test_recognition_zero_percent(self) -> None:
         """Test highlight for zero recognition time."""
         solve = Mock()
+        solve.method_name = 'cfop'
         solve.time = 10 * SECOND
         solve.recognition_time = 0
         result = get_recognition_highlight(solve)
@@ -620,6 +623,7 @@ class TestGetRecognitionHighlight(unittest.TestCase):
     def test_recognition_above_20_percent(self) -> None:
         """Test no highlight for recognition above 20%."""
         solve = Mock()
+        solve.method_name = 'cfop'
         solve.time = 10 * SECOND
         solve.recognition_time = int(2.1 * SECOND)
         result = get_recognition_highlight(solve)
@@ -628,6 +632,7 @@ class TestGetRecognitionHighlight(unittest.TestCase):
     def test_recognition_50_percent(self) -> None:
         """Test no highlight for high recognition time."""
         solve = Mock()
+        solve.method_name = 'cfop'
         solve.time = 10 * SECOND
         solve.recognition_time = 5 * SECOND
         result = get_recognition_highlight(solve)
@@ -636,6 +641,7 @@ class TestGetRecognitionHighlight(unittest.TestCase):
     def test_recognition_zero_time_solve(self) -> None:
         """Test no highlight when solve time is zero."""
         solve = Mock()
+        solve.method_name = 'cfop'
         solve.time = 0
         solve.recognition_time = 0
         result = get_recognition_highlight(solve)
@@ -644,6 +650,7 @@ class TestGetRecognitionHighlight(unittest.TestCase):
     def test_recognition_negative_time_solve(self) -> None:
         """Test no highlight when solve time is negative."""
         solve = Mock()
+        solve.method_name = 'cfop'
         solve.time = -10 * SECOND
         solve.recognition_time = 1 * SECOND
         result = get_recognition_highlight(solve)
@@ -656,6 +663,7 @@ class TestGetAufHighlight(unittest.TestCase):
     def test_zero_aufs(self) -> None:
         """Test highlight for zero AUFs."""
         solve = Mock()
+        solve.method_name = 'cfop'
         solve.aufs = 0
         result = get_auf_highlight(solve)
         self.assertEqual(result, 'No AUFs - great case mastery.')
@@ -663,6 +671,7 @@ class TestGetAufHighlight(unittest.TestCase):
     def test_one_auf(self) -> None:
         """Test highlight for one AUF."""
         solve = Mock()
+        solve.method_name = 'cfop'
         solve.aufs = 1
         result = get_auf_highlight(solve)
         self.assertEqual(result, 'Minimal AUFs - great prediction.')
@@ -670,6 +679,7 @@ class TestGetAufHighlight(unittest.TestCase):
     def test_two_aufs(self) -> None:
         """Test highlight for exactly two AUFs."""
         solve = Mock()
+        solve.method_name = 'cfop'
         solve.aufs = 2
         result = get_auf_highlight(solve)
         self.assertEqual(result, 'Minimal AUFs - great prediction.')
@@ -677,6 +687,7 @@ class TestGetAufHighlight(unittest.TestCase):
     def test_three_aufs(self) -> None:
         """Test no highlight for three AUFs."""
         solve = Mock()
+        solve.method_name = 'cfop'
         solve.aufs = 3
         result = get_auf_highlight(solve)
         self.assertEqual(result, '')
@@ -684,6 +695,7 @@ class TestGetAufHighlight(unittest.TestCase):
     def test_many_aufs(self) -> None:
         """Test no highlight for many AUFs."""
         solve = Mock()
+        solve.method_name = 'cfop'
         solve.aufs = 10
         result = get_auf_highlight(solve)
         self.assertEqual(result, '')
