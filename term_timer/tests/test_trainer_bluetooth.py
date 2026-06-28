@@ -39,6 +39,26 @@ from term_timer.fsrs.storage import Trainings
 from term_timer.orientation import get_orientation_moves
 from term_timer.trainer import Trainer
 
+WAIT_UNTIL_TIMEOUT = 2.0
+
+
+async def wait_until(predicate: Callable[[], bool]) -> None:
+    """
+    Yield to the event loop until ``predicate`` becomes true.
+
+    Deterministic replacement for fixed ``asyncio.sleep`` settles: it
+    round-robins the cooperating coroutines without consuming wall-clock
+    time and returns as soon as the awaited transition has happened. The
+    WAIT_UNTIL_TIMEOUT ceiling guards against a hang, not an expected wait.
+
+    Args:
+        predicate: Condition to wait for, polled between loop turns.
+
+    """
+    async with asyncio.timeout(WAIT_UNTIL_TIMEOUT):
+        while not predicate():  # noqa: ASYNC110
+            await asyncio.sleep(0)
+
 
 class FakeBluetoothClient:
     """Minimal BLE client stub that satisfies truthy checks and .client.name."""
@@ -253,7 +273,7 @@ async def run_full_cycle(
             run_task = asyncio.create_task(trainer.start())
 
             # Let start() call trainer() and set scramble / facelets_scrambled
-            await asyncio.sleep(0.05)
+            await wait_until(lambda: trainer.state == 'scrambling')
 
             # Phase 1: scramble
             s_moves = scramble_moves or [str(m) for m in trainer.scramble]
@@ -270,7 +290,7 @@ async def run_full_cycle(
             # scramble_solve() to call set_state('scrambled') before we inject
             # the first solve move (must land in 'scrambled', not
             # 'scrambling')
-            await asyncio.sleep(0.05)
+            await wait_until(lambda: trainer.state == 'scrambled')
 
             # Phase 2: first solve move (starts the timer)
             solve_clock = len(s_moves) * (100 * MS_TO_NS_FACTOR) + SECOND
@@ -286,7 +306,7 @@ async def run_full_cycle(
             # Let wait_solve() return and stopwatch() call set_state('solving')
             # before remaining moves land; only 'solving'-state moves trigger
             # the bluetooth_scramble_is_completed check
-            await asyncio.sleep(0.05)
+            await wait_until(lambda: trainer.state == 'solving')
 
             # Phase 3: remaining solve moves (trigger completion)
             if len(solve_moves) > 1:
@@ -638,7 +658,7 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
         try:
             with patch.object(trainer, 'getch', side_effect=getch_with_stop):
                 run_task = asyncio.create_task(trainer.start())
-                await asyncio.sleep(0.05)
+                await wait_until(lambda: trainer.state == 'scrambling')
 
                 s_moves = [str(m) for m in trainer.scramble]
                 await inject_moves(trainer, s_moves, clock_start=0)
@@ -646,7 +666,7 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
                     trainer.scramble_completed_event.wait(),
                     timeout=2.0,
                 )
-                await asyncio.sleep(0.05)
+                await wait_until(lambda: trainer.state == 'scrambled')
 
                 solve_clock = len(s_moves) * (100 * MS_TO_NS_FACTOR) + SECOND
                 await inject_moves(
@@ -658,7 +678,7 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
                     trainer.solve_started_event.wait(),
                     timeout=1.0,
                 )
-                await asyncio.sleep(0.05)
+                await wait_until(lambda: trainer.state == 'solving')
 
                 if len(bad_solve_moves) > 1:
                     await inject_moves(
@@ -666,7 +686,10 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
                         bad_solve_moves[1:],
                         clock_start=solve_clock + 200 * MS_TO_NS_FACTOR,
                     )
-                await asyncio.sleep(0.05)
+                await wait_until(
+                    lambda: not trainer.bluetooth_queue
+                    or trainer.bluetooth_queue.empty(),
+                )
 
                 stop_event.set()
                 return await asyncio.wait_for(run_task, timeout=2.0)
@@ -717,7 +740,7 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
         try:
             with patch.object(trainer, 'getch', side_effect=getch_keyboard):
                 run_task = asyncio.create_task(trainer.start())
-                await asyncio.sleep(0.05)
+                await wait_until(lambda: trainer.state == 'scrambling')
 
                 s_moves = [str(m) for m in trainer.scramble]
                 await inject_moves(trainer, s_moves, clock_start=0)
@@ -725,7 +748,7 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
                     trainer.scramble_completed_event.wait(),
                     timeout=2.0,
                 )
-                await asyncio.sleep(0.05)
+                await wait_until(lambda: trainer.state == 'scrambled')
 
                 stop_event.set()
                 return await asyncio.wait_for(run_task, timeout=2.0)
@@ -969,7 +992,7 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
                     t, 'getch', side_effect=make_auto_getch(''),
             ):
                 run_task2 = asyncio.create_task(t.start())
-                await asyncio.sleep(0.05)
+                await wait_until(lambda: t.state == 'scrambling')
 
                 # scramble_oriented is the facelets-to-facelets path from the
                 # scrambled BT cube to the OLL 01 target state
@@ -983,7 +1006,7 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
                     t.scramble_completed_event.wait(),
                     timeout=5.0,
                 )
-                await asyncio.sleep(0.05)
+                await wait_until(lambda: t.state == 'scrambled')
 
                 solve_clock2 = (
                     len(s_moves2) * (100 * MS_TO_NS_FACTOR) + SECOND
@@ -997,7 +1020,7 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
                     t.solve_started_event.wait(),
                     timeout=1.0,
                 )
-                await asyncio.sleep(0.05)
+                await wait_until(lambda: t.state == 'solving')
 
                 if len(solve_moves) > 1:
                     await inject_moves(

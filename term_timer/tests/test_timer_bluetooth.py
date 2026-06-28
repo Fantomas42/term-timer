@@ -23,6 +23,7 @@ from term_timer.constants import SolveFlag
 from term_timer.solve import Solve
 from term_timer.tests.test_trainer_bluetooth import FakeBluetoothInterface
 from term_timer.tests.test_trainer_bluetooth import make_move_event
+from term_timer.tests.test_trainer_bluetooth import wait_until
 from term_timer.timer import Timer
 
 if TYPE_CHECKING:
@@ -162,7 +163,7 @@ class TestTimerKeyboardStopBluetooth(unittest.IsolatedAsyncioTestCase):
         try:
             with patch.object(timer, 'getch', side_effect=getch_keyboard):
                 run_task = asyncio.create_task(timer.start())
-                await asyncio.sleep(0.05)
+                await wait_until(lambda: timer.state == 'scrambling')
 
                 s_moves = [str(m) for m in timer.scramble]
                 await inject_timer_moves(timer, s_moves, clock_start=0)
@@ -170,7 +171,7 @@ class TestTimerKeyboardStopBluetooth(unittest.IsolatedAsyncioTestCase):
                     timer.scramble_completed_event.wait(),
                     timeout=2.0,
                 )
-                await asyncio.sleep(0.05)
+                await wait_until(lambda: timer.state == 'scrambled')
 
                 if solve_moves:
                     solve_clock = (
@@ -181,7 +182,10 @@ class TestTimerKeyboardStopBluetooth(unittest.IsolatedAsyncioTestCase):
                         solve_moves,
                         clock_start=solve_clock,
                     )
-                    await asyncio.sleep(0.05)
+                    await wait_until(
+                        lambda: not timer.bluetooth_queue
+                        or timer.bluetooth_queue.empty(),
+                    )
 
                 stop_event.set()
                 return await asyncio.wait_for(run_task, timeout=2.0)
