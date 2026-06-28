@@ -61,8 +61,12 @@ STEPS_CONFIG: Final[dict[str, StepConfig]] = {
     'Cross': {
         'mask': CROSS_CENTER_MASK,
     },
-    'F1L': {
+    'FL': {  # LBL first layer (whole first layer solved)
         'mask': union_masks(CENTERS_MASK, L1_MASK),
+        'triggers': DEFAULT_TRIGGERS,
+    },
+    'SL': {  # LBL second layer (first two layers solved)
+        'mask': union_masks(CENTERS_MASK, F2L_MASK),
         'triggers': DEFAULT_TRIGGERS,
     },
     'F2L': {

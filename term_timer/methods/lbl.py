@@ -12,20 +12,21 @@ class LBLAnalyser(Analyser):
     """
     Analyser for Layer-by-Layer solving method.
 
-    Tracks solve progress through Cross, F1L, F2L, and Last Layer steps.
+    Tracks solve progress through First Layer (FL), Second Layer (SL),
+    and Last Layer (LL) steps.
     """
 
     name = 'LBL'
-    step_list = ('F1L', 'F2L', 'LL')
+    step_list = ('FL', 'SL', 'LL')
     norms: ClassVar[MethodNorms] = {
         'moves': {
-            'F1L': 24,
-            'F2L': 30,
+            'FL': 24,
+            'SL': 30,
             'LL': 45,
         },
         'percent': {
-            'F1L': 25.0,
-            'F2L': 25.0,
+            'FL': 25.0,
+            'SL': 25.0,
             'LL': 50.0,
         },
     }
