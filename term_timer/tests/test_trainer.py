@@ -491,7 +491,7 @@ class TestSaveTrainingManualRating(unittest.IsolatedAsyncioTestCase):
         ):
             timer = Trainer(
                 step='pll',
-                case_codes=[],
+                case_codes=[self.CASE_CODE],
                 oldest=0,
                 slowest=0,
                 random=0,
@@ -614,7 +614,7 @@ class TestSaveTrainingDNF(unittest.IsolatedAsyncioTestCase):
         ):
             timer = Trainer(
                 step='pll',
-                case_codes=[],
+                case_codes=[self.CASE_CODE],
                 oldest=0,
                 slowest=0,
                 random=0,
@@ -762,7 +762,7 @@ class TestSolutionDisplayInLearningPhase(unittest.TestCase):
         ):
             timer = Trainer(
                 step='pll',
-                case_codes=[],
+                case_codes=[self.CASE_CODE],
                 oldest=0,
                 slowest=0,
                 random=0,
@@ -972,7 +972,7 @@ class TestResolveSolution(unittest.TestCase):
         ):
             timer = Trainer(
                 step='pll',
-                case_codes=[],
+                case_codes=[TestResolveSolution.CASE_CODE],
                 oldest=0,
                 slowest=0,
                 random=0,
