@@ -31,9 +31,10 @@ class TestAnalyseSolveWorker(unittest.TestCase):
         """Test that worker processes advanced solve with full analysis."""
         solve = Mock()
         solve.advanced = True
-        solve.method_analyser.aggregate = {'step1': 0, 'step2': 1}
+        solve.method_analyser.aggregate = {'step1': 'A', 'step2': 'B'}
         solve.method_applied.summary = [
             {
+                'name': 'A',
                 'case': 'case_a',
                 'total': 10,
                 'execution': 8,
@@ -41,6 +42,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
                 'qtm': 20,
             },
             {
+                'name': 'B',
                 'case': 'case_b',
                 'total': 15,
                 'execution': 12,
@@ -86,8 +88,9 @@ class TestAnalyseSolveWorker(unittest.TestCase):
         """Test that worker processes advanced solve without full data."""
         solve = Mock()
         solve.advanced = True
-        solve.method_analyser.aggregate = {'step1': 0}
+        solve.method_analyser.aggregate = {'step1': 'A'}
         solve.method_applied.summary = [{
+            'name': 'A',
             'case': 'case_a',
             'total': 10.5,
             'execution': 8.0,

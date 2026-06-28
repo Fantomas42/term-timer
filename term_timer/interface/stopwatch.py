@@ -16,6 +16,7 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_time
 from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.methods import get_method_analyser
+from term_timer.methods.annotations import TrackedStep
 from term_timer.methods.base import FaceletAnalyser
 
 if TYPE_CHECKING:
@@ -92,9 +93,7 @@ class StopWatch:
         self.step_width: int = 0
 
         self.facelet_analyser: FaceletAnalyser | None = None
-        self.groups_to_track: (
-            tuple[tuple[tuple[str, str | None], ...], ...]
-        ) = ()
+        self.groups_to_track: tuple[tuple[TrackedStep, ...], ...] = ()
         self.group_progress: int = 0
         self.completed_in_group: set[str] = set()
         self.last_facelets: str = ''
@@ -181,7 +180,8 @@ class StopWatch:
         analyser_class = get_method_analyser(self.method)
         self.facelet_analyser = FaceletAnalyser()
         self.groups_to_track = analyser_class.step_groups or tuple(
-            ((step, None),) for step in analyser_class.step_list
+            (TrackedStep(step, None),)
+            for step in analyser_class.step_list
         )
         self.step_width = max(
             (

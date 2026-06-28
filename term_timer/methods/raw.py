@@ -3,6 +3,8 @@ from typing import ClassVar
 
 from cubing_algs.solved_state import SOLVED_FACELETS_3x3x3
 
+from term_timer.methods.annotations import MethodNorms
+from term_timer.methods.annotations import NormRange
 from term_timer.methods.annotations import StepInfo
 from term_timer.methods.base import Analyser
 
@@ -16,20 +18,20 @@ class RawAnalyser(Analyser):
 
     name = 'Raw'
     step_list = ('RAW',)
-    norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
+    norms: ClassVar[MethodNorms] = {
         'moves': {},
         'percent': {
             'RAW': 100.0,
         },
         'recognition': {
-            'RAW': (0.0, 0.0),
+            'RAW': NormRange(0.0, 0.0),
         },
         'execution': {
-            'RAW': (100.0, 100.0),
+            'RAW': NormRange(100.0, 100.0),
         },
         'solve': {
-            'recognition': (0.0, 0.0),
-            'execution': (100.0, 100.0),
+            'recognition': NormRange(0.0, 0.0),
+            'execution': NormRange(100.0, 100.0),
         },
     }
 

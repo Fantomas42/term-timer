@@ -1,6 +1,7 @@
 """Base classes for solving method analysis and step detection."""
 from collections.abc import Callable
 from collections.abc import Iterable
+from collections.abc import Mapping
 from contextlib import suppress
 from functools import cached_property
 from functools import lru_cache
@@ -8,6 +9,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import Final
+from typing import cast
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeFacelets
@@ -33,11 +35,16 @@ from cubing_algs.transform.translate import translate_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.constants import MS_TO_NS_FACTOR
+from term_timer.methods.annotations import AufCounts
+from term_timer.methods.annotations import AufFlags
 from term_timer.methods.annotations import CaseMaskInfo
 from term_timer.methods.annotations import EncodedMask
+from term_timer.methods.annotations import MethodNorms
+from term_timer.methods.annotations import NormRange
 from term_timer.methods.annotations import StepConfig
 from term_timer.methods.annotations import StepInfo
 from term_timer.methods.annotations import StepSummary
+from term_timer.methods.annotations import TrackedStep
 from term_timer.methods.masks import CASES_MASKS
 from term_timer.methods.masks.encoders import facelets_masked
 from term_timer.transform import humanize_moves_unsecured
@@ -216,10 +223,19 @@ class Analyser(FaceletAnalyser):
 
     name = ''
     step_list: tuple[str, ...] = ()
-    step_groups: tuple[tuple[tuple[str, str | None], ...], ...] = ()
-    norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {}
-    aufs: ClassVar[dict[str, list[bool]]] = {}
-    aggregate: ClassVar[dict[str, int]] = {}
+    step_groups: tuple[tuple[TrackedStep, ...], ...] = ()
+    norms: ClassVar[MethodNorms] = {
+        'moves': {},
+        'percent': {},
+        'recognition': {},
+        'execution': {},
+        'solve': {
+            'recognition': NormRange(0.0, 0.0),
+            'execution': NormRange(0.0, 0.0),
+        },
+    }
+    aufs: ClassVar[dict[str, AufFlags]] = {}
+    aggregate: ClassVar[dict[str, str]] = {}
 
     def __init__(
             self,
@@ -451,7 +467,7 @@ class Analyser(FaceletAnalyser):
 
         return summary
 
-    def get_aufs(self, name: str, moves: Algorithm) -> list[int | None]:
+    def get_aufs(self, name: str, moves: Algorithm) -> AufCounts:
         """
         Detect pre-AUF and post-AUF moves for a step's algorithm.
 
@@ -463,11 +479,11 @@ class Analyser(FaceletAnalyser):
             moves: Algorithm sequence to analyze.
 
         Returns:
-            List containing [pre-AUF count or None, post-AUF count or None].
+            AufCounts with pre-AUF and post-AUF counts (None if not checked).
 
         """
         pre_auf, post_auf = None, None
-        pre, post = self.aufs.get(name, [False, False])
+        pre, post = self.aufs.get(name, AufFlags(pre=False, post=False))
 
         if pre and len(moves.metrics.generators) > 1:
             pre_auf = self.get_auf(moves, 'pre')
@@ -475,7 +491,7 @@ class Analyser(FaceletAnalyser):
         if post:
             post_auf = self.get_auf(moves, 'post')
 
-        return [pre_auf, post_auf]
+        return AufCounts(pre_auf, post_auf)
 
     def get_auf(self, moves: Algorithm, mode: str) -> int:
         """
@@ -543,7 +559,7 @@ class Analyser(FaceletAnalyser):
             'execution': 0,
             'recognition': 0,
             'post_pause': 0,
-            'aufs': [None, None],
+            'aufs': AufCounts(None, None),
             'total_percent': 0,
             'execution_percent': 0,
             'recognition_percent': 0,
@@ -574,20 +590,15 @@ class Analyser(FaceletAnalyser):
             Performance status: 'success', 'caution', 'warning', or default.
 
         """
-        norm = self.norms.get(metric, {}).get(name)
+        category = cast(
+            'Mapping[str, float | NormRange]',
+            self.norms.get(metric, {}),
+        )
+        norm = category.get(name)
         if norm is None:
             return default
 
-        if isinstance(norm, (int | float)):
-            if value <= norm:
-                return 'success'
-
-            if value >= norm * threshold:
-                return 'warning'
-
-            return 'caution'
-
-        if isinstance(norm, (tuple | list)) and len(norm) == 2:
+        if isinstance(norm, NormRange):
             threshold_down, threshold_up = norm
 
             if threshold_down <= value <= threshold_up:
@@ -601,7 +612,13 @@ class Analyser(FaceletAnalyser):
 
             return 'caution'
 
-        return default
+        if value <= norm:
+            return 'success'
+
+        if value >= norm * threshold:
+            return 'warning'
+
+        return 'caution'
 
     @cached_property
     def score(self) -> float:

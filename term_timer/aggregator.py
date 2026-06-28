@@ -43,9 +43,10 @@ def analyse_solve_worker(solve: Solve, method_name: str) -> SolveAnalysis:
     solve.method_name = method_name
     analysis = cast('Analyser', solve.method_applied)
 
+    summary_by_name = {step['name']: step for step in analysis.summary}
     steps: dict[str, StepAnalysis] = {}
-    for step_name, step_index in solve.method_analyser.aggregate.items():
-        step: StepSummary = analysis.summary[step_index]
+    for step_name, summary_name in solve.method_analyser.aggregate.items():
+        step: StepSummary = summary_by_name[summary_name]
         steps[step_name] = {
             'case': step['case'],
             'time': step['total'],

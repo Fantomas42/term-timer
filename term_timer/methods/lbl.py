@@ -3,6 +3,8 @@ from typing import ClassVar
 
 from cubing_algs.annotations import CubeFacelets
 
+from term_timer.methods.annotations import MethodNorms
+from term_timer.methods.annotations import NormRange
 from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import Analyser
 
@@ -16,12 +18,12 @@ class LBLAnalyser(Analyser):
 
     name = 'LBL'
     step_list = ('Cross', 'F1L', 'F2L', 'LL')
-    norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
+    norms: ClassVar[MethodNorms] = {
         'moves': {
             'Cross': 6,
-            'F1L': 12, ##
+            'F1L': 12,
             'F2L': 30,
-            'LL': 45, ##
+            'LL': 45,
         },
         'percent': {
             'Cross': 12.0,
@@ -30,20 +32,24 @@ class LBLAnalyser(Analyser):
             'LL': 38.0,
         },
         'recognition': {
-            'Cross': 0.0,
-            'F1L': 0.0,
-            'F2L': (30.0, 40.0),
-            'LL': (10.0, 20.0),
+            'Cross': NormRange(0.0, 0.0),
+            # TODO: degenerate range never reachable (F1L has real
+            # recognition time, unlike Cross) -> use a tolerant band
+            'F1L': NormRange(0.0, 0.0),
+            'F2L': NormRange(30.0, 40.0),
+            'LL': NormRange(10.0, 20.0),
         },
         'execution': {
-            'Cross': 100.0,
-            'F1L': 100.0,
-            'F2L': (60.0, 70.0),
-            'LL': (80.0, 90.0),
+            'Cross': NormRange(100.0, 100.0),
+            # TODO: degenerate range never reachable (F1L has real
+            # recognition time, unlike Cross) -> use a tolerant band
+            'F1L': NormRange(100.0, 100.0),
+            'F2L': NormRange(60.0, 70.0),
+            'LL': NormRange(80.0, 90.0),
         },
         'solve': {
-            'recognition': (0.0, 30.0),
-            'execution': (70.0, 100.0),
+            'recognition': NormRange(0.0, 30.0),
+            'execution': NormRange(70.0, 100.0),
         },
     }
 

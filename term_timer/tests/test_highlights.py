@@ -25,6 +25,7 @@ from term_timer.highlights import get_time_highlight
 from term_timer.highlights import get_tps_highlight
 from term_timer.highlights import get_xcross_highlight
 from term_timer.highlights import is_optimal_ll_step
+from term_timer.methods.annotations import AufCounts
 
 if TYPE_CHECKING:
     from term_timer.methods.annotations import StepSummary
@@ -55,7 +56,7 @@ class TestGetCrossHighlight(unittest.TestCase):
             'execution': 0,
             'recognition': 0,
             'post_pause': 0,
-            'aufs': [None, None],
+            'aufs': AufCounts(None, None),
             'total_percent': 0.0,
             'execution_percent': 0.0,
             'recognition_percent': 0.0,
@@ -141,7 +142,7 @@ class TestGetXcrossHighlight(unittest.TestCase):
             'execution': 0,
             'recognition': 0,
             'post_pause': 0,
-            'aufs': [None, None],
+            'aufs': AufCounts(None, None),
             'total_percent': 0.0,
             'execution_percent': 0.0,
             'recognition_percent': 0.0,
@@ -516,7 +517,7 @@ class TestGetSkipHighlight(unittest.TestCase):
             'execution': 0,
             'recognition': 0,
             'post_pause': 0,
-            'aufs': [None, None],
+            'aufs': AufCounts(None, None),
             'total_percent': 0.0,
             'execution_percent': 0.0,
             'recognition_percent': 0.0,
@@ -718,7 +719,7 @@ class TestIsOptimalLlStep(unittest.TestCase):
             'execution': 0,
             'recognition': 0,
             'post_pause': 0,
-            'aufs': [pre_auf, post_auf],
+            'aufs': AufCounts(pre_auf, post_auf),
             'total_percent': 0.0,
             'execution_percent': 0.0,
             'recognition_percent': 0.0,
@@ -845,7 +846,7 @@ class TestGetOptimalLlHighlight(unittest.TestCase):
             'execution': 0,
             'recognition': 0,
             'post_pause': 0,
-            'aufs': [None, None],
+            'aufs': AufCounts(None, None),
             'total_percent': 0.0,
             'execution_percent': 0.0,
             'recognition_percent': 0.0,
@@ -956,7 +957,7 @@ class TestGetOptimalF2lHighlight(unittest.TestCase):
             'execution': 0,
             'recognition': 0,
             'post_pause': 0,
-            'aufs': [None, None],
+            'aufs': AufCounts(None, None),
             'total_percent': 0.0,
             'execution_percent': 0.0,
             'recognition_percent': 0.0,
@@ -1155,7 +1156,7 @@ class TestGetStepRecognitionHighlight(unittest.TestCase):
             'execution': 0,
             'recognition': 0,
             'post_pause': 0,
-            'aufs': [None, None],
+            'aufs': AufCounts(None, None),
             'total_percent': 0.0,
             'execution_percent': 0.0,
             'recognition_percent': 0.0,

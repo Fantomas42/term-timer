@@ -11,8 +11,13 @@ from cubing_algs.masks import F2L_FL_MASK
 from cubing_algs.masks import F2L_FR_MASK
 
 from term_timer.constants import SECOND
+from term_timer.methods.annotations import AufCounts
+from term_timer.methods.annotations import AufFlags
 from term_timer.methods.annotations import EncodedMask
+from term_timer.methods.annotations import MethodNorms
+from term_timer.methods.annotations import NormRange
 from term_timer.methods.annotations import StepSummary
+from term_timer.methods.annotations import TrackedStep
 from term_timer.methods.base import Analyser
 from term_timer.methods.masks.encoders import f2l_case_encoder
 from term_timer.methods.masks.encoders import oll_case_encoder
@@ -56,11 +61,11 @@ class CFOPAnalyser(Analyser):
 
     name = 'CFOP'
     step_list: tuple[str, ...] = ('Cross', 'F2L', 'OLL', 'PLL')
-    aufs: ClassVar[dict[str, list[bool]]] = {
-        'OLL': [True, False],
-        'PLL': [True, True],
+    aufs: ClassVar[dict[str, AufFlags]] = {
+        'OLL': AufFlags(pre=True, post=False),
+        'PLL': AufFlags(pre=True, post=True),
     }
-    norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
+    norms: ClassVar[MethodNorms] = {
         'moves': {
             'Cross': 6,
             # Mean of shortest algs for each cases + aufs
@@ -75,25 +80,25 @@ class CFOPAnalyser(Analyser):
             'PLL': 21.5,
         },
         'recognition': {
-            'Cross': 0.0,
-            'F2L': (30.0, 40.0),
-            'OLL': (10.0, 20.0),
-            'PLL': (5.0, 10.0),
+            'Cross': NormRange(0.0, 0.0),
+            'F2L': NormRange(30.0, 40.0),
+            'OLL': NormRange(10.0, 20.0),
+            'PLL': NormRange(5.0, 10.0),
         },
         'execution': {
-            'Cross': 100.0,
-            'F2L': (60.0, 70.0),
-            'OLL': (80.0, 90.0),
-            'PLL': (90.0, 95.0),
+            'Cross': NormRange(100.0, 100.0),
+            'F2L': NormRange(60.0, 70.0),
+            'OLL': NormRange(80.0, 90.0),
+            'PLL': NormRange(90.0, 95.0),
         },
         'solve': {
-            'recognition': (0, 20),
-            'execution': (80, 100),
+            'recognition': NormRange(0, 20),
+            'execution': NormRange(80, 100),
         },
     }
-    aggregate: ClassVar[dict[str, int]] = {
-        'oll': -2,
-        'pll': -1,
+    aggregate: ClassVar[dict[str, str]] = {
+        'oll': 'OLL',
+        'pll': 'PLL',
     }
 
     def compute_progress(
@@ -159,8 +164,8 @@ class CFOPAnalyser(Analyser):
 
         malus = 0.0
         if 'Cross' in step_one['name'] and step_one['type'] != 'skipped':
-            cross_norm = self.norms.get('moves', {}).get(step_one['name'], 0)
-            if cross_norm and isinstance(cross_norm, (int | float)):
+            cross_norm = self.norms['moves'].get(step_one['name'], 0)
+            if cross_norm:
                 malus += (
                     step_one['moves_prettified'].metrics.htm
                     - cross_norm
@@ -268,20 +273,22 @@ class CF4OPAnalyser(CFOPAnalyser):
         'F2L 1', 'F2L 2', 'F2L 3', 'F2L 4',
         'OLL', 'PLL',
     )
-    step_groups: tuple[tuple[tuple[str, str | None], ...], ...] = (
-        (('Cross', None),),
+    step_groups: tuple[tuple[TrackedStep, ...], ...] = (
+        (TrackedStep('Cross', None),),
         (
-            ('F2L 1', 'F2L FR'), ('F2L 2', 'F2L FL'),
-            ('F2L 3', 'F2L BR'), ('F2L 4', 'F2L BL'),
+            TrackedStep('F2L 1', 'F2L FR'),
+            TrackedStep('F2L 2', 'F2L FL'),
+            TrackedStep('F2L 3', 'F2L BR'),
+            TrackedStep('F2L 4', 'F2L BL'),
         ),
-        (('OLL', None),),
-        (('PLL', None),),
+        (TrackedStep('OLL', None),),
+        (TrackedStep('PLL', None),),
     )
-    aufs: ClassVar[dict[str, list[bool]]] = {
-        'OLL': [True, True],
-        'PLL': [True, True],
+    aufs: ClassVar[dict[str, AufFlags]] = {
+        'OLL': AufFlags(pre=True, post=True),
+        'PLL': AufFlags(pre=True, post=True),
     }
-    norms: ClassVar[dict[str, dict[str, float | tuple[float, float]]]] = {
+    norms: ClassVar[MethodNorms] = {
         'moves': {
             'Cross': 6,
             'XCross': 8,
@@ -312,28 +319,28 @@ class CF4OPAnalyser(CFOPAnalyser):
             'PLL': 21.5,
         },
         'recognition': {
-            'Cross': 0.0,
-            'F2L': (30.0, 40.0),
-            'F2L 1': (30.0, 40.0),
-            'F2L 2': (30.0, 40.0),
-            'F2L 3': (30.0, 40.0),
-            'F2L 4': (30.0, 40.0),
-            'OLL': (10.0, 20.0),
-            'PLL': (5.0, 10.0),
+            'Cross': NormRange(0.0, 0.0),
+            'F2L': NormRange(30.0, 40.0),
+            'F2L 1': NormRange(30.0, 40.0),
+            'F2L 2': NormRange(30.0, 40.0),
+            'F2L 3': NormRange(30.0, 40.0),
+            'F2L 4': NormRange(30.0, 40.0),
+            'OLL': NormRange(10.0, 20.0),
+            'PLL': NormRange(5.0, 10.0),
         },
         'execution': {
-            'Cross': 100.0,
-            'F2L': (60.0, 70.0),
-            'F2L 1': (60.0, 70.0),
-            'F2L 2': (60.0, 70.0),
-            'F2L 3': (60.0, 70.0),
-            'F2L 4': (60.0, 70.0),
-            'OLL': (80.0, 90.0),
-            'PLL': (90.0, 95.0),
+            'Cross': NormRange(100.0, 100.0),
+            'F2L': NormRange(60.0, 70.0),
+            'F2L 1': NormRange(60.0, 70.0),
+            'F2L 2': NormRange(60.0, 70.0),
+            'F2L 3': NormRange(60.0, 70.0),
+            'F2L 4': NormRange(60.0, 70.0),
+            'OLL': NormRange(80.0, 90.0),
+            'PLL': NormRange(90.0, 95.0),
         },
         'solve': {
-            'recognition': (0, 40),
-            'execution': (60, 100),
+            'recognition': NormRange(0, 40),
+            'execution': NormRange(60, 100),
         },
     }
 
@@ -500,10 +507,7 @@ class CF4OPAnalyser(CFOPAnalyser):
             f2l['step_execution_percent'] /= f2l_steps
             f2l['step_recognition_percent'] /= f2l_steps
 
-        if auf_0_sum:
-            f2l['aufs'][0] = auf_0_sum
-        if auf_1_sum:
-            f2l['aufs'][1] = auf_1_sum
+        f2l['aufs'] = AufCounts(auf_0_sum or None, auf_1_sum or None)
 
         summary.insert(1, f2l)
 

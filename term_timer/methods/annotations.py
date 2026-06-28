@@ -1,6 +1,7 @@
 """Type definitions for methods."""
 from collections.abc import Callable
 from typing import Literal
+from typing import NamedTuple
 from typing import TypeAlias
 from typing import TypedDict
 
@@ -11,6 +12,51 @@ EncodedMask: TypeAlias = str  # noqa: UP040
 # Orientation like "FR", "FL y", etc.
 Configuration: TypeAlias = str  # noqa: UP040
 CaseMasks: TypeAlias = dict[EncodedMask, list[Configuration]]  # noqa: UP040
+
+
+class NormRange(NamedTuple):
+    """Inclusive lower/upper bounds for a banded performance norm."""
+
+    low: float
+    high: float
+
+
+class AufFlags(NamedTuple):
+    """Per-step config: whether to detect pre-/post-AUF moves."""
+
+    pre: bool
+    post: bool
+
+
+class AufCounts(NamedTuple):
+    """Per-step result: detected pre-/post-AUF counts (None = not checked)."""
+
+    pre: int | None
+    post: int | None
+
+
+class TrackedStep(NamedTuple):
+    """One entry of a step group: a step name and its optional display label."""
+
+    name: str
+    label: str | None
+
+
+class SolveNorms(TypedDict):
+    """Whole-solve recognition/execution percentage bands."""
+
+    recognition: NormRange
+    execution: NormRange
+
+
+class MethodNorms(TypedDict):
+    """Per-step performance benchmarks for a solving method."""
+
+    moves: dict[str, float]
+    percent: dict[str, float]
+    recognition: dict[str, NormRange]
+    execution: dict[str, NormRange]
+    solve: SolveNorms
 
 
 class CaseMask(TypedDict):
@@ -73,7 +119,7 @@ class StepSummary(TypedDict):
     execution: int
     recognition: int
     post_pause: int
-    aufs: list[int | None]
+    aufs: AufCounts
     total_percent: float
     execution_percent: float
     recognition_percent: float

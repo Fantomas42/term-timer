@@ -494,7 +494,7 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
         return issues
     solve_norms = solve.method_applied.norms['solve']
     rec_norm = solve_norms['recognition']
-    rec_norm_max = float(rec_norm[1])  # type: ignore[index]
+    rec_norm_max = rec_norm.high
 
     rec_percent = solve.recognition_percent
 
@@ -589,12 +589,11 @@ def check_step_cross(
     # merge of cross and F2L pairs, so extended crosses are compared to
     # the combined norm (cross + n pairs) instead of planned-XCross norms.
     pair_count = step_name.count('X')
-    move_norm = float(norms['moves']['Cross'])  # type: ignore[arg-type]
+    move_norm = norms['moves']['Cross']
     if pair_count:
-        pair_norm = float(norms['moves']['F2L']) / 4  # type: ignore[arg-type]
+        pair_norm = norms['moves']['F2L'] / 4
         move_norm += pair_count * pair_norm
-    raw_percent = norms['percent'].get(step_name, norms['percent']['Cross'])
-    percent_norm = float(raw_percent)  # type: ignore[arg-type]
+    percent_norm = norms['percent'].get(step_name, norms['percent']['Cross'])
     expected_moves: tuple[float, float] = (
         float(move_norm * 0.67), float(move_norm + 2),
     )
@@ -703,11 +702,11 @@ def check_step_f2l(
 
     norms = solve.method_applied.norms
     step_name = step['name']
-    percent_norm = float(norms['percent']['F2L'])  # type: ignore[arg-type]
+    percent_norm = norms['percent']['F2L']
     rec_norm = norms['recognition'].get(
         step_name, norms['recognition']['F2L'],
     )
-    rec_norm_max = float(rec_norm[1])  # type: ignore[index]
+    rec_norm_max = rec_norm.high
 
     if step['total_percent'] > percent_norm * 1.1:
         diagnostics.append(
@@ -795,7 +794,7 @@ def check_step_oll(
         f'term-timer train -s oll -c "{case_name}"' if case_name else ''
     )
     rec_norm = norms['recognition']['OLL']
-    rec_norm_max = float(rec_norm[1])  # type: ignore[index]
+    rec_norm_max = rec_norm.high
 
     if step['step_recognition_percent'] > rec_norm_max:
         diagnostics.append(
@@ -893,7 +892,7 @@ def check_step_pll(
         f'term-timer train -s pll -c "{case_name}"' if case_name else ''
     )
     rec_norm = norms['recognition']['PLL']
-    rec_norm_max = float(rec_norm[1])  # type: ignore[index]
+    rec_norm_max = rec_norm.high
 
     if step['step_recognition_percent'] > rec_norm_max:
         diagnostics.append(
