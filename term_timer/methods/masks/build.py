@@ -82,7 +82,7 @@ def compute_masks(
             if debug:
                 print('*' * 25)
                 print(f'{ name }: { case_algorithm }')
-                cube.show(mode=CFOP_CASE_MASKS.get(mode, ''))
+                cube.show(mask=CFOP_CASE_MASKS.get(mode, ''))
 
             encoded_case = CFOP_CASE_ENCODERS[
                 f'{mode} {scheme}'.strip()
