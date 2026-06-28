@@ -19,7 +19,7 @@ plain JSON files you fully own.
 - Move-by-move solve reconstruction and deep CFOP analysis
 - Orientation-aware analyser that detects the orientation you actually used
 - FSRS spaced-repetition trainer for OLL/PLL/F2L and more
-- The Doctor: per-step diagnostics with personalized, LLM-ready advice
+- The Doctor: per-step diagnostics with personalized, actionable advice
 - Detailed statistics, trend graphs and distribution histograms
 - Drill, daily scramble and scriptable practice routines
 - Interactive browse/config TUIs and local HTML reports
@@ -109,8 +109,8 @@ Every recorded solve (especially with a smart cube) gets a full breakdown:
 - Optional graphs: **time scatter**, **TPS**, **fluency**, **recognition**
 - **The Doctor** — a diagnostic engine that inspects efficiency, execution,
   rotations and recognition at both the global and per-step level, rates each
-  issue by severity and estimated time impact, and formats the result for an
-  LLM to turn into personalized improvement advice
+  issue by severity and estimated time impact, and turns the result into
+  personalized improvement advice
 
 ### Training that actually schedules your learning
 

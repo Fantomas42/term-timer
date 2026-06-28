@@ -3,8 +3,8 @@ Comprehensive solve diagnostics and issue detection.
 
 This module analyzes solve performance at both global and step-specific levels,
 identifying issues across multiple categories with severity ratings and
-estimated impact. Output is formatted for LLM processing to generate
-personalized improvement recommendations.
+estimated impact. Output is formatted to generate personalized improvement
+recommendations.
 """
 from enum import StrEnum
 from operator import itemgetter
