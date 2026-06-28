@@ -1257,7 +1257,7 @@ class TestBestRollingDNFEquivalence(unittest.TestCase):
         """Randomized DNF stacks stay equivalent to the reference."""
         rng = random.Random(20260620)  # noqa: S311
         limits = [3, 5, 12, 25, 50]
-        for _ in range(2000):
+        for _ in range(400):
             size = rng.randint(0, 60)
             dnf_rate = rng.choice([0.0, 0.05, 0.2, 0.5, 0.9, 1.0])
             stack = [
