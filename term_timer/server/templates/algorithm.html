@@ -228,11 +228,11 @@
      const ergonomicsRadarCtx = document.getElementById('ergonomicsRadarChart');
      if (ergonomicsRadarCtx) {
        const ergonomicScore = {{ "%.2f"|format(ergonomics.ergonomic_score) }} * 100;
-       const executionSpeed = Math.max(0, 100 - ({{ "%.2f"|format(ergonomics.estimated_execution_time) }} * 10));
+       const executionSpeed = Math.min(100, {{ "%.2f"|format(ergonomics.estimated_tps) }} / 6 * 100);
        const handBalance = {{ "%.2f"|format(ergonomics.hand_balance_ratio) }} * 100;
-       const fingerDifficulty = Math.max(0, 100 - ({{ "%.2f"|format(ergonomics.fingertrick_difficulty) }} * 20));
+       const fingertrickComfort = {{ "%.2f"|format(ergonomics.fingertrick_comfort) }} * 100;
        const regripPenalty = Math.max(0, 100 - ({{ ergonomics.regrip_count }} * 10));
-       const flowScore = Math.max(0, 100 - ({{ ergonomics.flow_score }} * 15));
+       const flowScore = {{ "%.2f"|format(ergonomics.flow_score) }} * 100;
 
        new Chart(ergonomicsRadarCtx, {
          type: 'radar',
@@ -251,7 +251,7 @@
                ergonomicScore,
                executionSpeed,
                handBalance,
-               fingerDifficulty,
+               fingertrickComfort,
                flowScore,
                regripPenalty
              ],
@@ -945,8 +945,8 @@
             {{ "%.1f"|format(ergonomics.estimated_tps) }}
           </div>
           <div class="alg-metric-row">
-            <strong>Fingertrick Difficulty:</strong>
-            {{ "%.2f"|format(ergonomics.fingertrick_difficulty) }}
+            <strong>Fingertrick Comfort:</strong>
+            {{ "%.2f"|format(ergonomics.fingertrick_comfort) }}
           </div>
           <div class="alg-metric-row">
             <strong>Ergonomic Score:</strong>

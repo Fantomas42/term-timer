@@ -19,7 +19,7 @@ for pattern in TRIGGER_PATTERNS:
     name = SLUG_PATTERN.sub('-', pattern.name.lower()).strip('-')
     seen: set[str] = set()
     variants: list[str] = []
-    for seed in [pattern.moves, *pattern.variations]:
+    for seed in [pattern.moves, *(v.moves for v in pattern.variations)]:
         algo = parse_moves(seed)
         for variant in [
             str(algo),
