@@ -56,7 +56,7 @@ Interactive cube rendering debug view with rotation controls.
   <section class="cube-debug-viewer">
     <div class="cube-frame">
       <img id="cube-img" alt="Cube"
-           src="/cube/?algo={{ algorithm | urlencode }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&s=500&rotation=y45x-34&l=cube">
+           src="/cube/?algo={{ algorithm | urlencode }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&s=500&rotation=y45x-34&l=mirror">
     </div>
     <div class="cube-angle">Angle: <span id="angle-val">45</span>°</div>
   </section>
@@ -137,7 +137,7 @@ Interactive cube rendering debug view with rotation controls.
         params.set(k, v);
       }
       params.set('rotation', buildRotation(angle));
-      params.set('l', 'cube');
+      params.set('l', 'mirror');
       return '/cube/?' + params.toString();
     }
 
