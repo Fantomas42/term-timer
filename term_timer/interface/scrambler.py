@@ -109,7 +109,7 @@ class Scrambler:
 
         (
             out, full_clear,
-            wrong_move_added, misoriented_move,
+            wrong_move_added, misoriented_move, has_mismatch,
         ) = self.compute_scramble_display(
             scrambled=self.scrambled,
             scramble_oriented=self.scramble_oriented,
@@ -123,7 +123,7 @@ class Scrambler:
             if not self.misoriented_signaled:
                 self.misoriented_signaled = True
                 SOUND_PLAYER.cube_move_misoriented()
-        else:
+        elif not has_mismatch:
             self.misoriented_signaled = False
 
         self.clear_line(full=full_clear)
@@ -141,7 +141,7 @@ class Scrambler:
             cube_orientation_moves: Algorithm,
             *,
             is_complete: bool,
-    ) -> tuple[str, bool, bool, bool]:
+    ) -> tuple[str, bool, bool, bool, bool]:
         """
         Compute the formatted display output for scramble progress.
 
@@ -160,9 +160,11 @@ class Scrambler:
         Returns:
             A tuple containing the formatted output string with Rich markup,
             a boolean indicating whether to perform a full line clear,
-            a boolean indicating whether the last move was a wrong move, and
+            a boolean indicating whether the last move was a wrong move,
             a boolean indicating whether the last move turned the right face
-            in the wrong direction while a non-double move was expected.
+            in the wrong direction while a non-double move was expected, and
+            a boolean indicating whether any move in the sequence still
+            diverges from the expected scramble.
 
         """
         if is_complete:
@@ -173,6 +175,7 @@ class Scrambler:
             full_clear = True
             wrong_move_added = False
             misoriented_move = False
+            has_mismatch = False
         else:
             out = ''
             if cube_orientation_moves:
@@ -220,5 +223,9 @@ class Scrambler:
 
                 out += f'[{ style }]{ move }[/{ style }] '
             full_clear = len(algo) < len(p_algo) or len(algo) <= 1
+            has_mismatch = not on_good_way
 
-        return out, full_clear, wrong_move_added, misoriented_move
+        return (
+            out, full_clear,
+            wrong_move_added, misoriented_move, has_mismatch,
+        )
