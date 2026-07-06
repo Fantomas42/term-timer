@@ -164,7 +164,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           ERGO: {{ "%0.1f"|format(case.main_algorithm.ergonomics.ergonomic_score * 100) }}
         </span>
         <span class="spec-label memo">
-          MEMO: {{ "%0.1f"|format(case.main_algorithm.memory.memory_score) }}
+          MEMO: {{ "%0.1f"|format(case.main_algorithm.memory.memory_score * 100) }}
         </span>
       </div>
     </div>
@@ -280,7 +280,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
                 ERGO: {{ "%0.1f"|format(algo.ergonomics.ergonomic_score * 100) }}
               </span>
               <span class="spec-label memo">
-                MEMO: {{ "%0.1f"|format(algo.memory.memory_score) }}
+                MEMO: {{ "%0.1f"|format(algo.memory.memory_score * 100) }}
               </span>
             </div>
           </div>
@@ -324,7 +324,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
                 ERGO: {{ "%0.2f"|format(setup.ergonomics.ergonomic_score * 100) }}
               </span>
               <span class="spec-label memo">
-                MEMO: {{ "%0.2f"|format(setup.memory.memory_score) }}
+                MEMO: {{ "%0.2f"|format(setup.memory.memory_score * 100) }}
               </span>
             </div>
           </div>
@@ -362,7 +362,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
               ERGO: {{ "%0.1f"|format(algorithm.ergonomics.ergonomic_score * 100) }}
             </span>
             <span class="spec-label memo">
-              MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
+              MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score * 100) }}
             </span>
           </div>
         </div>
@@ -411,7 +411,7 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
             ERGO: {{ "%0.1f"|format(algorithm.ergonomics.ergonomic_score * 100) }}
           </span>
           <span class="spec-label memo">
-            MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
+            MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score * 100) }}
           </span>
         </div>
       </div>

@@ -51,7 +51,7 @@
               <span class="spec-label ergo">{{ "%0.1f"|format(algo.ergonomics.ergonomic_score * 100) }}</span>
             </td>
             <td data-sort="{{ algo.memory.memory_score }}">
-              <span class="spec-label memo">{{ "%0.1f"|format(algo.memory.memory_score) }}</span>
+              <span class="spec-label memo">{{ "%0.1f"|format(algo.memory.memory_score * 100) }}</span>
             </td>
             <td class="no-sort">
               {{ algorithm_button_detail(algo) }}

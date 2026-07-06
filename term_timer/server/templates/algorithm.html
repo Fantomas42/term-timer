@@ -383,20 +383,20 @@
              'Chunking',
              'Structure',
              'Repetition',
-             'Face Diversity',
+             'Face Familiarity',
              'Flow',
              'Familiarity'
            ],
            datasets: [{
-             label: 'Difficulty Score',
+             label: 'Memorability Score',
              data: [
-               {{ "%.1f"|format(memory.length_score) }},
-               {{ "%.1f"|format(memory.chunk_score) }},
-               {{ "%.1f"|format(memory.structure_score) }},
-               {{ "%.1f"|format(memory.repetition_score) }},
-               {{ "%.1f"|format(memory.face_diversity_score) }},
-               {{ "%.1f"|format(memory.flow_score) }},
-               {{ "%.1f"|format(memory.move_familiarity_score) }}
+               {{ "%.1f"|format(memory.length_score * 100) }},
+               {{ "%.1f"|format(memory.chunk_score * 100) }},
+               {{ "%.1f"|format(memory.structure_score * 100) }},
+               {{ "%.1f"|format(memory.repetition_score * 100) }},
+               {{ "%.1f"|format(memory.face_familiarity_score * 100) }},
+               {{ "%.1f"|format(memory.flow_score * 100) }},
+               {{ "%.1f"|format(memory.move_familiarity_score * 100) }}
              ],
              backgroundColor: 'rgba(255, 99, 132, 0.2)',
              borderColor: 'rgba(255, 99, 132, 1)',
@@ -414,7 +414,7 @@
              legend: { display: false },
              title: {
                display: true,
-               text: 'Memory Difficulty Breakdown',
+               text: 'Memorability Breakdown',
                font: { size: 16 }
              }
            },
@@ -473,7 +473,7 @@
           ERGO: {{ "%0.1f"|format(algorithm.ergonomics.ergonomic_score * 100) }}
         </a>
         <a class="spec-label memo" href="#memory">
-          MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score) }}
+          MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score * 100) }}
         </a>
       </div>
     </div>
@@ -541,7 +541,7 @@
           ERGO: {{ "%0.1f"|format(inverse_variation.ergonomics.ergonomic_score * 100) }}
         </span>
         <span class="spec-label memo">
-          MEMO: {{ "%0.1f"|format(inverse_variation.memory.memory_score) }}
+          MEMO: {{ "%0.1f"|format(inverse_variation.memory.memory_score * 100) }}
         </span>
       </div>
     </div>
@@ -600,7 +600,7 @@
             ERGO: {{ "%0.1f"|format(variation.algorithm.ergonomics.ergonomic_score * 100) }}
           </span>
           <span class="spec-label memo">
-            MEMO: {{ "%0.1f"|format(variation.algorithm.memory.memory_score) }}
+            MEMO: {{ "%0.1f"|format(variation.algorithm.memory.memory_score * 100) }}
           </span>
         </div>
       </div>
@@ -636,7 +636,7 @@
             ERGO: {{ "%0.1f"|format(variation.algorithm.ergonomics.ergonomic_score * 100) }}
           </span>
           <span class="spec-label memo">
-            MEMO: {{ "%0.1f"|format(variation.algorithm.memory.memory_score) }}
+            MEMO: {{ "%0.1f"|format(variation.algorithm.memory.memory_score * 100) }}
           </span>
         </div>
       </div>
@@ -1076,8 +1076,8 @@
         <div>
           <h3 class="alg-section-title">Overall Rating</h3>
           <div class="alg-rating-box">
-            <div class="alg-comfort-score {% if memory.memory_score >= 80 %}score-very-poor{% elif memory.memory_score >= 60 %}score-poor{% elif memory.memory_score >= 40 %}score-fair{% elif memory.memory_score >= 20 %}score-good{% else %}score-excellent{% endif %}">
-              {{ "%.1f"|format(memory.memory_score) }}
+            <div class="alg-comfort-score {% if memory.memory_score >= 0.8 %}score-excellent{% elif memory.memory_score >= 0.6 %}score-good{% elif memory.memory_score >= 0.4 %}score-fair{% elif memory.memory_score >= 0.2 %}score-poor{% else %}score-very-poor{% endif %}">
+              {{ "%.1f"|format(memory.memory_score * 100) }}
             </div>
             <div class="alg-rating-label">
               {{ memory.memory_rating }}
@@ -1099,31 +1099,31 @@
           <table class="alg-table">
             <tr>
               <td><strong>Length</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.length_score) }}</td>
+              <td class="alg-value">{{ "%.1f"|format(memory.length_score * 100) }}</td>
             </tr>
             <tr>
               <td><strong>Chunking</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.chunk_score) }}</td>
+              <td class="alg-value">{{ "%.1f"|format(memory.chunk_score * 100) }}</td>
             </tr>
             <tr>
               <td><strong>Structure</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.structure_score) }}</td>
+              <td class="alg-value">{{ "%.1f"|format(memory.structure_score * 100) }}</td>
             </tr>
             <tr>
               <td><strong>Repetition</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.repetition_score) }}</td>
+              <td class="alg-value">{{ "%.1f"|format(memory.repetition_score * 100) }}</td>
             </tr>
             <tr>
-              <td><strong>Face Diversity</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.face_diversity_score) }}</td>
+              <td><strong>Face Familiarity</strong></td>
+              <td class="alg-value">{{ "%.1f"|format(memory.face_familiarity_score * 100) }}</td>
             </tr>
             <tr>
               <td><strong>Flow</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.flow_score) }}</td>
+              <td class="alg-value">{{ "%.1f"|format(memory.flow_score * 100) }}</td>
             </tr>
             <tr>
               <td><strong>Move Familiarity</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.move_familiarity_score) }}</td>
+              <td class="alg-value">{{ "%.1f"|format(memory.move_familiarity_score * 100) }}</td>
             </tr>
           </table>
         </div>
