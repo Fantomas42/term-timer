@@ -26,10 +26,15 @@
   <div class="control-group">
     <label for="mode-select">Mode:</label>
     <select id="mode-select" class="control-select" onchange="updateUrlParams({m: this.value})">
-      {% for m in available_modes %}
-        <option value="{{ m }}" {% if m == mode %}selected{% endif %}>
-          {{ m.upper() or 'DEFAULT' }}
-        </option>
+      <option value="" {% if not mode %}selected{% endif %}>DEFAULT</option>
+      {% for group, modes in available_modes %}
+        <optgroup label="{{ group }}">
+          {% for m in modes %}
+            <option value="{{ m }}" {% if m == mode %}selected{% endif %}>
+              {{ m.upper() }}
+            </option>
+          {% endfor %}
+        </optgroup>
       {% endfor %}
     </select>
   </div>

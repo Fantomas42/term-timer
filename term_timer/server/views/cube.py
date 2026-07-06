@@ -3,7 +3,6 @@ from bottle import response
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeOrientation
 from cubing_algs.constants import ORIENTATION_FACE_MOVES
-from cubing_algs.display.mode import MODE_CONFIGS
 from cubing_algs.display.palettes import PALETTES
 from cubing_algs.transform.invert import invert_moves
 from cubing_algs.vcube import VCube
@@ -13,6 +12,7 @@ from term_timer.config import CUBE_PALETTE
 from term_timer.constants import CUBE_SIZES
 from term_timer.orientation import get_orientation_moves
 from term_timer.server.annotations import CubeRenderContext
+from term_timer.server.modes import get_mode_groups
 from term_timer.server.views.base import View
 
 
@@ -141,7 +141,7 @@ class CubeRenderView(View):
             'orientation_moves': get_orientation_moves(self.orientation),
             'available_orientations': ORIENTATION_FACE_MOVES,
             'mode': self.display_mode,
-            'available_modes': ['', *sorted(MODE_CONFIGS.keys())],
+            'available_modes': get_mode_groups(),
             'cube_size': self.cube_size,
             'available_cube_sizes': CUBE_SIZES,
             'palette': self.palette,

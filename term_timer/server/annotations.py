@@ -196,7 +196,7 @@ class AcademyOverviewContext(TypedDict):
     orientation_moves: Algorithm
     available_orientations: dict[str, str]
     mode: str
-    available_modes: list[str]
+    available_modes: list[tuple[str, list[str]]]
     cube_size: int
     available_cube_sizes: list[int]
     palette: str
@@ -217,7 +217,7 @@ class AcademyStepContext(TypedDict):
     orientation_faces: CubeOrientation
     available_orientations: dict[str, str]
     mode: str
-    available_modes: list[str]
+    available_modes: list[tuple[str, list[str]]]
     available_cube_sizes: list[int]
     palette: str
     available_palettes: list[str]
@@ -231,7 +231,7 @@ class CubeRenderContext(TypedDict):
     orientation_moves: Algorithm
     available_orientations: dict[str, str]
     mode: str
-    available_modes: list[str]
+    available_modes: list[tuple[str, list[str]]]
     cube_size: int
     available_cube_sizes: list[int]
     palette: str
@@ -250,7 +250,7 @@ class AcademyCaseContext(TypedDict):
     orientation_faces: CubeOrientation
     available_orientations: dict[str, str]
     mode: str
-    available_modes: list[str]
+    available_modes: list[tuple[str, list[str]]]
     available_cube_sizes: list[int]
     palette: str
     available_palettes: list[str]

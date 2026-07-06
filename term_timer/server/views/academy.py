@@ -15,7 +15,6 @@ from cubing_algs.vcube import VCube
 
 if TYPE_CHECKING:
     from cubing_algs.cases.case import Case
-from cubing_algs.display.mode import MODE_CONFIGS
 from cubing_algs.display.palettes import PALETTES
 
 from term_timer.config import CUBE_ORIENTATION
@@ -28,6 +27,7 @@ from term_timer.server.annotations import AcademyOverviewContext
 from term_timer.server.annotations import AcademyStepContext
 from term_timer.server.annotations import AlgorithmImpactGroup
 from term_timer.server.annotations import MethodInfo
+from term_timer.server.modes import get_mode_groups
 from term_timer.server.views.base import View
 
 
@@ -142,7 +142,8 @@ class AcademyView(View):
 
     def get_display_context(self, default_mode: str = '') -> dict[
         str,
-        str | Algorithm | dict[str, str] | int | list[str] | list[int],
+        str | Algorithm | dict[str, str] | int | list[str] | list[int]
+        | list[tuple[str, list[str]]],
     ]:
         """
         Build shared display parameter context for academy views.
@@ -163,7 +164,7 @@ class AcademyView(View):
             'orientation_moves': get_orientation_moves(orientation_faces),
             'available_orientations': ORIENTATION_FACE_MOVES,
             'mode': mode,
-            'available_modes': ['', *sorted(MODE_CONFIGS.keys())],
+            'available_modes': get_mode_groups(),
             'cube_size': self.cube_size,
             'available_cube_sizes': CUBE_SIZES,
             'palette': palette,
