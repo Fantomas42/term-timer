@@ -2489,6 +2489,14 @@ a.academy-header[href]:hover {
     z-index: 1;
 }
 
+.alg-lookup-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
 .alg-lookup-field {
     flex: 1;
     position: relative;

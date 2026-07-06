@@ -1,5 +1,6 @@
 {% extends "skeleton.html" %}
 {% from 'macros/display_selectors.html' import display_selectors %}
+{% from 'macros/actions.html' import algorithm_button_detail %}
 
 {% block title %}Cube Renderer{% endblock %}
 {% block subtitle %}Cube Renderer{% endblock %}
@@ -51,6 +52,11 @@ Interactive cube rendering debug view with rotation controls.
         Apply
       </button>
     </form>
+    {% if algorithm %}
+    <div class="alg-lookup-actions">
+      {{ algorithm_button_detail(algorithm) }}
+    </div>
+    {% endif %}
   </div>
 
   <section class="cube-debug-viewer">
