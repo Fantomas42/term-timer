@@ -167,6 +167,46 @@ class TestSelectNextCase(unittest.TestCase):
             self.assertIn(result, self.probs)
 
 
+class TestWeightedChoice(unittest.TestCase):
+    """weighted_choice() guards random.choices against all-zero weights."""
+
+    def test_all_zero_pool_falls_back_to_uniform(self) -> None:
+        """An all-zero pool draws uniformly instead of raising."""
+        probs = {'A': 0.0, 'B': 0.0, 'C': 0.0}
+        for _ in range(20):
+            result = FSRSScheduler.weighted_choice(list(probs), probs)
+            self.assertIn(result, probs)
+
+    def test_zero_weight_case_stays_unselectable_in_mixed_pool(self) -> None:
+        """A zero-weight case keeps its real weight in a mixed pool."""
+        probs = {'A': 1.0, 'B': 0.0}
+        for _ in range(30):
+            result = FSRSScheduler.weighted_choice(list(probs), probs)
+            self.assertEqual(result, 'A')
+
+    def test_normal_pool_returns_a_candidate(self) -> None:
+        """A normal pool returns one of its candidates."""
+        probs = {'A': 0.5, 'B': 0.3, 'C': 0.2}
+        for _ in range(20):
+            result = FSRSScheduler.weighted_choice(list(probs), probs)
+            self.assertIn(result, probs)
+
+    def test_select_next_case_all_zero_probabilities(self) -> None:
+        """select_next_case survives an all-zero probability pool."""
+        scheduler = FSRSScheduler()
+        probs = {'A': 0.0, 'B': 0.0, 'C': 0.0}
+        # New-card path: A seen with a future due, B/C unseen.
+        cards = {'A': make_card(due_offset_days=1.0)}
+        for _ in range(10):
+            result = scheduler.select_next_case(cards, probs, 5)
+            self.assertIn(result, {'B', 'C'})
+        # Random fallback path: everything seen, nothing due.
+        cards = {c: make_card(due_offset_days=1.0) for c in probs}
+        for _ in range(10):
+            result = scheduler.select_next_case(cards, probs, 5)
+            self.assertIn(result, probs)
+
+
 class TestComputeSessionFocus(unittest.TestCase):
     """compute_session_focus() mirrors the select_next_case priority."""
 

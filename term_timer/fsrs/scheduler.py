@@ -115,15 +115,37 @@ class FSRSScheduler:
         new_cards = self.get_new_cards(cards, probabilities, new_cases_limit)
 
         if new_cards:
-            new_weights = [probabilities[c] for c in new_cards]
-            return choices(new_cards, weights=new_weights, k=1)[0]  # noqa: S311
+            return self.weighted_choice(new_cards, probabilities)
 
         available = list(probabilities.keys())
         if new_cases_limit == 0:
             seen = set(cards.keys())
             available = [c for c in available if c in seen] or available
-        weights = [probabilities[c] for c in available]
-        return choices(available, weights=weights, k=1)[0]  # noqa: S311
+        return self.weighted_choice(available, probabilities)
+
+    @staticmethod
+    def weighted_choice(
+        candidates: list[str],
+        probabilities: dict[str, float],
+    ) -> str:
+        """
+        Pick a case code at random, weighted by its probability.
+
+        Probabilities default to 0 in cubing_algs, and random.choices
+        raises ValueError when every weight is zero: an all-zero pool
+        falls back to a uniform draw. A zero-weight case in a mixed
+        pool keeps its real weight and stays unselectable.
+
+        Returns:
+            One case code from the candidates.
+
+        """
+        weights = [probabilities[c] for c in candidates]
+
+        if not any(weights):
+            weights = [1.0] * len(candidates)
+
+        return choices(candidates, weights=weights, k=1)[0]  # noqa: S311
 
     @staticmethod
     def compute_session_focus(
