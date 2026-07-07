@@ -1305,6 +1305,18 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             )
             return
 
+        if self.fsrs_update:
+            self.console.print(
+                'Press any key to save and continue,',
+                '[key](1-4)[/key] override rating,',
+                '[key](z)[/key] discard,',
+                '[key](k)[/key] quit,',
+                '[key](q)[/key] save & quit.',
+                style='consign',
+                end='',
+            )
+            return
+
         self.console.print(
             'Press any key to save and continue,',
             '[key](z)[/key] discard,',
@@ -1511,7 +1523,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         Handles both keyboard and bluetooth gesture input.
 
         DNF trainings never record a timing: saving one only applies an
-        FSRS rating, Again by default, overridable with the 1-4 keys.
+        FSRS Again rating, which cannot be overridden.
 
         Returns:
             True if user quit (pressed 'q', 'k' or ESC), False otherwise.
@@ -1539,11 +1551,13 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         manual = self.fsrs_manual_rating
         manual_rating = (
-            MANUAL_RATING_KEYS.get(char) if self.fsrs_update else None
+            MANUAL_RATING_KEYS.get(char)
+            if self.fsrs_update and not dnf
+            else None
         )
 
         # Any key other than z/k saves; invalid keys in manual mode skip
-        # FSRS. A DNF always carries a rating, Again unless overridden.
+        # FSRS. A DNF always rates Again.
         discard = char in {'z', 'k'}
         skip_fsrs = manual and manual_rating is None and not dnf
 
@@ -1743,7 +1757,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         if flag == DNF:
             # A DNF never records a timing: saving only applies an FSRS
-            # rating, Again by default, overridable with the 1-4 keys.
+            # Again rating, which cannot be overridden.
             self.fsrs_pending_rating = None
             self.dnf_line()
 

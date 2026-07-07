@@ -8,6 +8,7 @@ from random import Random
 from typing import ClassVar
 from typing import cast
 from unittest.mock import MagicMock
+from unittest.mock import PropertyMock
 from unittest.mock import patch
 
 from cubing_algs.cases import get_collection
@@ -17,6 +18,7 @@ from fsrs import Card
 from fsrs import Rating
 from fsrs import State
 
+from term_timer.fsrs.rating import RatingBreakdown
 from term_timer.fsrs.scheduler import FSRSScheduler
 from term_timer.fsrs.storage import CaseTraining
 from term_timer.fsrs.storage import Trainings
@@ -594,6 +596,130 @@ class TestSaveTrainingManualRating(unittest.IsolatedAsyncioTestCase):
         )
 
 
+class TestSaveTrainingAutoRatingOverride(unittest.IsolatedAsyncioTestCase):
+    """In auto rating mode, the 1-4 keys override the pending rating."""
+
+    CASE_CODE = 'T'
+
+    def make_trainer(self) -> Trainer:
+        """
+        Build a PLL trainer simulating auto rating mode.
+
+        Returns:
+            A Trainer with fsrs_update on, a pending Good auto rating,
+            and a single CaseTraining ready to be rated.
+
+        """
+        empty = Trainings(method='CFOP', step='PLL', cases={})
+        with patch(
+            'term_timer.trainer.load_trainings', return_value=empty,
+        ):
+            timer = Trainer(
+                step='pll',
+                case_codes=[self.CASE_CODE],
+                oldest=0,
+                slowest=0,
+                random=0,
+                new_cases_limit=5,
+                filters=[],
+                free_play=False,
+                show_solution=False,
+                show_cube=False,
+                metronome=0,
+                orientation='DF',
+                rng=Random(),  # noqa: S311
+            )
+        timer.bluetooth_interface = None
+        timer.console = MagicMock()
+        date = int(datetime.now(tz=UTC).timestamp())
+        timer.trainings.add_timing(self.CASE_CODE, 2000, date)
+        timer.fsrs_pending_rating = RatingBreakdown(
+            rating=Rating.Good,
+            time_s=2.0,
+            executed_qtm=9,
+            missed_qtm=0,
+            pauses=0,
+            tps=4.5,
+            score=1.0,
+        )
+        return timer
+
+    def selected_case(self, timer: Trainer) -> object:
+        """
+        Return the Case object matching CASE_CODE from the trainer pool.
+
+        Returns:
+            The cubing_algs Case for CASE_CODE.
+
+        """
+        return next(
+            tc.case for tc in timer.cases if tc.case.code == self.CASE_CODE
+        )
+
+    async def run_save(
+            self, char: str,
+    ) -> tuple[Trainer, MagicMock, bool]:
+        """
+        Run save_training in auto rating mode with a fixed key.
+
+        The fsrs_manual_rating property is forced to False to emulate a
+        Bluetooth trainer in auto rating mode while keeping the simple
+        keyboard input path.
+
+        Returns:
+            Tuple of (trainer, update_card mock, quit flag).
+
+        """
+        timer = self.make_trainer()
+        case = self.selected_case(timer)
+        solve = Solve(
+            date=datetime.now(tz=UTC).timestamp(),
+            time=2_000_000_000,
+            scramble="R U R' U'",
+            moves=None,
+        )
+        update_card = MagicMock(return_value=Card())
+
+        async def fake_getch(_mode: str, *_: object) -> str:
+            await asyncio.sleep(0)
+            return char
+
+        with (
+            patch('term_timer.trainer.save_trainings'),
+            patch('term_timer.trainer.SOUND_PLAYER'),
+            patch.object(
+                Trainer,
+                'fsrs_manual_rating',
+                new_callable=PropertyMock,
+                return_value=False,
+            ),
+            patch.object(timer.fsrs_scheduler, 'update_card', update_card),
+            patch.object(timer, 'getch', side_effect=fake_getch),
+        ):
+            quit_flag = await timer.save_training(case, solve)  # type: ignore[arg-type]
+        return timer, update_card, quit_flag
+
+    async def test_rating_key_overrides_auto_rating(self) -> None:
+        """A 1-4 key replaces the pending auto rating."""
+        timer, update_card, quit_flag = await self.run_save('1')
+        update_card.assert_called_once()
+        self.assertEqual(update_card.call_args.args[1], Rating.Again)
+        self.assertFalse(quit_flag)
+        self.assertEqual(
+            len(timer.trainings.cases[self.CASE_CODE].timings), 1,
+        )
+
+    async def test_plain_key_applies_pending_rating(self) -> None:
+        """Any non-rating key saves with the pending auto rating."""
+        timer, update_card, quit_flag = await self.run_save('x')
+        update_card.assert_called_once()
+        self.assertEqual(update_card.call_args.args[1], Rating.Good)
+        self.assertFalse(quit_flag)
+        self.assertEqual(
+            len(timer.trainings.cases[self.CASE_CODE].timings), 1,
+        )
+
+
 class TestSaveTrainingDNF(unittest.IsolatedAsyncioTestCase):
     """save_training(dnf=True) rates Again by default, never saves timing."""
 
@@ -703,11 +829,11 @@ class TestSaveTrainingDNF(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(case_training.fsrs_card)
         update_card.assert_called_once()
 
-    async def test_manual_key_overrides_again(self) -> None:
-        """A 1-4 key overrides the default Again rating."""
+    async def test_rating_key_does_not_override_again(self) -> None:
+        """A 1-4 key cannot override the Again rating on a DNF."""
         timer, update_card, quit_flag = await self.run_save('3')
         update_card.assert_called_once()
-        self.assertEqual(update_card.call_args.args[1], Rating.Good)
+        self.assertEqual(update_card.call_args.args[1], Rating.Again)
         self.assertFalse(quit_flag)
         self.assertEqual(
             len(timer.trainings.cases[self.CASE_CODE].timings), 0,
