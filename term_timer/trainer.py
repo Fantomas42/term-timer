@@ -670,6 +670,20 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         return max(0, self.new_cases_limit - self.fsrs_new_cases_introduced)
 
     @property
+    def fsrs_manual_rating(self) -> bool:
+        """
+        Whether FSRS ratings are collected at the keyboard.
+
+        Returns:
+            True when ratings must be entered manually with the 1-4 keys.
+
+        """
+        return self.fsrs_update and (
+            self.bluetooth_interface is None
+            or TRAINER_FSRS_RATING == 'manual'
+        )
+
+    @property
     def fsrs_cards(self) -> 'dict[str, Card]':
         """
         FSRS cards of the trained cases restricted to the selected pool.
@@ -1523,10 +1537,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         else:
             char = await self.getch('save')
 
-        manual = self.fsrs_update and (
-            self.bluetooth_interface is None
-            or TRAINER_FSRS_RATING == 'manual'
-        )
+        manual = self.fsrs_manual_rating
         manual_rating = (
             MANUAL_RATING_KEYS.get(char) if self.fsrs_update else None
         )
@@ -1767,14 +1778,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         if not self.free_play:
             if self.fsrs_update:
                 self.fsrs_preview_line(solve, selected_case)
-            self.save_line(
-                manual_rating=(
-                    self.fsrs_update and (
-                        self.bluetooth_interface is None
-                        or TRAINER_FSRS_RATING == 'manual'
-                    )
-                ),
-            )
+            self.save_line(manual_rating=self.fsrs_manual_rating)
 
             session_len_before = len(self.session_data)
             quit_training = await self.save_training(selected_case, solve)
