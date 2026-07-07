@@ -720,6 +720,190 @@ class TestSaveTrainingAutoRatingOverride(unittest.IsolatedAsyncioTestCase):
         )
 
 
+class TestSaveTrainingPendingCardReuse(unittest.IsolatedAsyncioTestCase):
+    """save_training() reuses the previewed card when ratings match."""
+
+    CASE_CODE = 'T'
+
+    def make_trainer(self) -> Trainer:
+        """
+        Build a PLL trainer with a pending Good rating and preview card.
+
+        Returns:
+            A Trainer with fsrs_update on, a pending Good auto rating,
+            a previewed card, and a single CaseTraining ready to be
+            rated.
+
+        """
+        empty = Trainings(method='CFOP', step='PLL', cases={})
+        with patch(
+            'term_timer.trainer.load_trainings', return_value=empty,
+        ):
+            timer = Trainer(
+                step='pll',
+                case_codes=[self.CASE_CODE],
+                oldest=0,
+                slowest=0,
+                random=0,
+                new_cases_limit=5,
+                filters=[],
+                free_play=False,
+                show_solution=False,
+                show_cube=False,
+                metronome=0,
+                orientation='DF',
+                rng=Random(),  # noqa: S311
+            )
+        timer.bluetooth_interface = None
+        timer.console = MagicMock()
+        date = int(datetime.now(tz=UTC).timestamp())
+        timer.trainings.add_timing(self.CASE_CODE, 2000, date)
+        timer.fsrs_pending_rating = RatingBreakdown(
+            rating=Rating.Good,
+            time_s=2.0,
+            executed_qtm=9,
+            missed_qtm=0,
+            pauses=0,
+            tps=4.5,
+            score=1.0,
+        )
+        timer.fsrs_pending_card = Card()
+        return timer
+
+    def selected_case(self, timer: Trainer) -> object:
+        """
+        Return the Case object matching CASE_CODE from the trainer pool.
+
+        Returns:
+            The cubing_algs Case for CASE_CODE.
+
+        """
+        return next(
+            tc.case for tc in timer.cases if tc.case.code == self.CASE_CODE
+        )
+
+    async def run_save(
+            self, char: str, *, dnf: bool = False,
+    ) -> tuple[Trainer, MagicMock, Card]:
+        """
+        Run save_training in auto rating mode with a fixed key.
+
+        Returns:
+            Tuple of (trainer, update_card mock, pending card).
+
+        """
+        timer = self.make_trainer()
+        case = self.selected_case(timer)
+        pending_card = cast('Card', timer.fsrs_pending_card)
+        solve = Solve(
+            date=datetime.now(tz=UTC).timestamp(),
+            time=2_000_000_000,
+            scramble="R U R' U'",
+            moves=None,
+        )
+        update_card = MagicMock(return_value=Card())
+
+        async def fake_getch(_mode: str, *_: object) -> str:
+            await asyncio.sleep(0)
+            return char
+
+        with (
+            patch('term_timer.trainer.save_trainings'),
+            patch('term_timer.trainer.SOUND_PLAYER'),
+            patch.object(
+                Trainer,
+                'fsrs_manual_rating',
+                new_callable=PropertyMock,
+                return_value=False,
+            ),
+            patch.object(timer.fsrs_scheduler, 'update_card', update_card),
+            patch.object(timer, 'getch', side_effect=fake_getch),
+        ):
+            await timer.save_training(case, solve, dnf=dnf)  # type: ignore[arg-type]
+        return timer, update_card, pending_card
+
+    async def test_plain_key_reuses_previewed_card(self) -> None:
+        """Saving with the pending rating stores the previewed card."""
+        timer, update_card, pending_card = await self.run_save('x')
+        update_card.assert_not_called()
+        self.assertIs(
+            timer.trainings.cases[self.CASE_CODE].fsrs_card,
+            pending_card,
+        )
+
+    async def test_matching_override_reuses_previewed_card(self) -> None:
+        """An override equal to the pending rating keeps the preview."""
+        timer, update_card, pending_card = await self.run_save('3')
+        update_card.assert_not_called()
+        self.assertIs(
+            timer.trainings.cases[self.CASE_CODE].fsrs_card,
+            pending_card,
+        )
+
+    async def test_diverging_override_recomputes_card(self) -> None:
+        """An override different from the preview recomputes the card."""
+        timer, update_card, pending_card = await self.run_save('1')
+        update_card.assert_called_once()
+        self.assertEqual(update_card.call_args.args[1], Rating.Again)
+        self.assertIs(
+            timer.trainings.cases[self.CASE_CODE].fsrs_card,
+            update_card.return_value,
+        )
+        self.assertIsNot(
+            timer.trainings.cases[self.CASE_CODE].fsrs_card,
+            pending_card,
+        )
+
+    async def test_dnf_reuses_previewed_card(self) -> None:
+        """A DNF save reuses the card previewed with Again."""
+        timer, update_card, pending_card = await self.run_save(
+            'x', dnf=True,
+        )
+        update_card.assert_not_called()
+        self.assertIs(
+            timer.trainings.cases[self.CASE_CODE].fsrs_card,
+            pending_card,
+        )
+
+    async def test_no_pending_card_recomputes(self) -> None:
+        """Without a previewed card the scheduler is called."""
+        timer = self.make_trainer()
+        timer.fsrs_pending_card = None
+        case = self.selected_case(timer)
+        solve = Solve(
+            date=datetime.now(tz=UTC).timestamp(),
+            time=2_000_000_000,
+            scramble="R U R' U'",
+            moves=None,
+        )
+        update_card = MagicMock(return_value=Card())
+
+        async def fake_getch(_mode: str, *_: object) -> str:
+            await asyncio.sleep(0)
+            return 'x'
+
+        with (
+            patch('term_timer.trainer.save_trainings'),
+            patch('term_timer.trainer.SOUND_PLAYER'),
+            patch.object(
+                Trainer,
+                'fsrs_manual_rating',
+                new_callable=PropertyMock,
+                return_value=False,
+            ),
+            patch.object(timer.fsrs_scheduler, 'update_card', update_card),
+            patch.object(timer, 'getch', side_effect=fake_getch),
+        ):
+            await timer.save_training(case, solve)  # type: ignore[arg-type]
+
+        update_card.assert_called_once()
+        self.assertEqual(update_card.call_args.args[1], Rating.Good)
+        self.assertIs(
+            timer.trainings.cases[self.CASE_CODE].fsrs_card,
+            update_card.return_value,
+        )
+
+
 class TestFSRSNewCaseBudget(unittest.IsolatedAsyncioTestCase):
     """fsrs_track_new_case() only consumes budget when a card was created."""
 

@@ -199,6 +199,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.fsrs_scheduler = FSRSScheduler() if self.fsrs_update else None
         self.fsrs_rater = PerformanceRater() if self.fsrs_update else None
         self.fsrs_pending_rating: RatingBreakdown | None = None
+        self.fsrs_pending_card: Card | None = None
         self.pending_previous_date: int | None = None
         self.fsrs_reference_solution: Algorithm = Algorithm()
         self.fsrs_last_focus: str | None = None
@@ -1115,6 +1116,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             current_card,
             breakdown.rating,
         )
+        self.fsrs_pending_card = preview_card
         self.fsrs_result_line(
             selected_case,
             breakdown.rating,
@@ -1137,6 +1139,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             current_card,
             Rating.Again,
         )
+        self.fsrs_pending_card = preview_card
         self.fsrs_result_line(
             selected_case,
             Rating.Again,
@@ -1529,6 +1532,37 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             '[dnf]DNF[/dnf]',
         )
 
+    def resolve_fsrs_rating(
+            self,
+            solve: Solve,
+            rater: PerformanceRater,
+            old_card: 'Card | None',
+            manual_rating: Rating | None,
+            *,
+            dnf: bool,
+    ) -> Rating:
+        """
+        Resolve the FSRS rating to apply for a saved attempt.
+
+        Returns:
+            The manual override when given, Again for a DNF, the
+            pending previewed rating, or a freshly computed rating.
+
+        """
+        if manual_rating is not None:
+            return manual_rating
+        if dnf:
+            return Rating.Again
+        pending = self.fsrs_pending_rating
+        if pending is not None:
+            return pending.rating
+        return rater.rate(
+            solve,
+            self.step,
+            self.fsrs_reference_solution,
+            old_card.stability if old_card is not None else None,
+        )
+
     async def save_training(  # noqa: C901, PLR0912
             self,
             selected_case: Case,
@@ -1614,29 +1648,30 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 and selected_case.code in self.trainings.cases
             ):
                 case_training = self.trainings.cases[selected_case.code]
-                if manual_rating is not None:
-                    rating = manual_rating
-                elif dnf:
-                    rating = Rating.Again
-                else:
-                    pending = self.fsrs_pending_rating
-                    rating = (
-                        pending.rating
-                        if pending is not None
-                        else self.fsrs_rater.rate(
-                            solve,
-                            self.step,
-                            self.fsrs_reference_solution,
-                            case_training.fsrs_card.stability
-                            if case_training.fsrs_card is not None
-                            else None,
-                        )
-                    )
                 old_card = case_training.fsrs_card
-                case_training.fsrs_card = self.fsrs_scheduler.update_card(
+                rating = self.resolve_fsrs_rating(
+                    solve,
+                    self.fsrs_rater,
                     old_card,
-                    rating,
+                    manual_rating,
+                    dnf=dnf,
                 )
+                pending = self.fsrs_pending_rating
+                pending_card = self.fsrs_pending_card
+                # Fuzz is redrawn at each review_card call: reuse the
+                # previewed card when the applied rating is the previewed
+                # one, so the saved due date matches the one displayed.
+                # A DNF preview is always rated Again, like its save.
+                if pending_card is not None and (
+                    dnf
+                    or (pending is not None and rating == pending.rating)
+                ):
+                    case_training.fsrs_card = pending_card
+                else:
+                    case_training.fsrs_card = self.fsrs_scheduler.update_card(
+                        old_card,
+                        rating,
+                    )
                 if manual_rating is not None:
                     self.fsrs_result_line(
                         selected_case,
@@ -1783,6 +1818,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             # A DNF never records a timing: saving only applies an FSRS
             # Again rating, which cannot be overridden.
             self.fsrs_pending_rating = None
+            self.fsrs_pending_card = None
             self.dnf_line()
 
             if not self.free_play and self.fsrs_update:
@@ -1808,6 +1844,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             return True
 
         self.fsrs_pending_rating = None
+        self.fsrs_pending_card = None
         self.solve_line(solve, selected_case)
 
         if not self.free_play:
