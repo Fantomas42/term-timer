@@ -12,7 +12,7 @@ class FSRSCardData(TypedDict):
 
     card_id: int
     state: int
-    step: int
+    step: int | None
     stability: float | None
     difficulty: float | None
     due: str
@@ -71,7 +71,7 @@ class CaseTraining:
             data['fsrs'] = FSRSCardData(
                 card_id=int(raw['card_id']),
                 state=int(raw['state']),
-                step=int(raw['step']) if raw['step'] is not None else 0,
+                step=raw['step'],
                 stability=raw['stability'],
                 difficulty=raw['difficulty'],
                 due=str(raw['due']),

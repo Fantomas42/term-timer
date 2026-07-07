@@ -3,16 +3,12 @@ import json
 import operator
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING
-from typing import cast
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.exceptions import InvalidMoveError
 from cubing_algs.parsing import parse_moves
 from fsrs import Card
-
-if TYPE_CHECKING:
-    from fsrs.card import CardDict
+from fsrs import State
 
 from term_timer.constants import DAILY_DIRECTORY
 from term_timer.constants import SOLVES_DIRECTORY
@@ -36,7 +32,15 @@ def fsrs_card_from_data(raw: 'CaseTrainingData') -> Card | None:
     """
     if 'fsrs' not in raw:
         return None
-    return Card.from_dict(cast('CardDict', raw['fsrs']))
+
+    card = Card.from_dict(raw['fsrs'])
+    if card.state == State.Review:
+        # Temporary repair, to remove once existing training files have
+        # been re-saved: legacy files serialized step 0 instead of None,
+        # violating the py-fsrs invariant for Review cards.
+        card.step = None
+
+    return card
 
 
 def load_solves(

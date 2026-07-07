@@ -1,10 +1,15 @@
 """Tests for FSRS training storage structures."""
+import json
 import unittest
+from datetime import UTC
+from datetime import datetime
 
 from fsrs import Card
+from fsrs import State
 
 from term_timer.fsrs.storage import CaseTraining
 from term_timer.fsrs.storage import Trainings
+from term_timer.in_out import fsrs_card_from_data
 
 
 def make_trainings() -> Trainings:
@@ -16,6 +21,92 @@ def make_trainings() -> Trainings:
 
     """
     return Trainings(method='CFOP', step='PLL', cases={})
+
+
+def round_trip(card: Card) -> Card:
+    """
+    Serialize a card through JSON and deserialize it back.
+
+    Returns:
+        The card rebuilt by fsrs_card_from_data.
+
+    Raises:
+        AssertionError: If no card comes back from the round-trip.
+
+    """
+    training = CaseTraining(
+        code='Aa',
+        last_date=100,
+        timings=[2000],
+        fsrs_card=card,
+    )
+    data = json.loads(json.dumps(training.as_save))
+    restored = fsrs_card_from_data(data)
+    if restored is None:
+        msg = 'No FSRS card came back from the round-trip'
+        raise AssertionError(msg)
+    return restored
+
+
+class TestFSRSCardRoundTrip(unittest.TestCase):
+    """FSRS cards survive an as_save -> JSON -> load round-trip intact."""
+
+    def test_learning_card(self) -> None:
+        """A Learning card round-trips with its step preserved."""
+        card = Card()
+        restored = round_trip(card)
+        self.assertEqual(restored.to_dict(), card.to_dict())
+
+    def test_review_card_keeps_step_none(self) -> None:
+        """A Review card keeps step None, per the py-fsrs invariant."""
+        now = datetime.now(tz=UTC)
+        card = Card(
+            state=State.Review,
+            stability=15.0,
+            difficulty=5.0,
+            due=now,
+            last_review=now,
+        )
+        restored = round_trip(card)
+        self.assertIsNone(restored.step)
+        self.assertEqual(restored.to_dict(), card.to_dict())
+
+    def test_relearning_card(self) -> None:
+        """A Relearning card round-trips with its step preserved."""
+        now = datetime.now(tz=UTC)
+        card = Card(
+            state=State.Relearning,
+            step=0,
+            stability=3.0,
+            difficulty=6.0,
+            due=now,
+            last_review=now,
+        )
+        restored = round_trip(card)
+        self.assertEqual(restored.step, 0)
+        self.assertEqual(restored.to_dict(), card.to_dict())
+
+    def test_legacy_review_card_with_step_zero_is_repaired(self) -> None:
+        """A legacy file with a Review card at step 0 loads step None."""
+        now = datetime.now(tz=UTC).isoformat()
+        data = {
+            'last_date': 100,
+            'timings': [2000],
+            'fsrs': {
+                'card_id': 1751800000000,
+                'state': int(State.Review),
+                'step': 0,
+                'stability': 15.0,
+                'difficulty': 5.0,
+                'due': now,
+                'last_review': now,
+            },
+        }
+        card = fsrs_card_from_data(data)  # type: ignore[arg-type]
+        if card is None:
+            self.fail('No FSRS card parsed from legacy data')
+        self.assertEqual(card.state, State.Review)
+        self.assertIsNone(card.step)
 
 
 class TestTrainingsAddTiming(unittest.TestCase):
