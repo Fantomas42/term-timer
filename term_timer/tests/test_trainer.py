@@ -573,9 +573,9 @@ class TestSaveTrainingManualRating(unittest.IsolatedAsyncioTestCase):
         timer, update_card, quit_flag = await self.run_save('z')
         update_card.assert_not_called()
         self.assertFalse(quit_flag)
-        self.assertEqual(
-            len(timer.trainings.cases[self.CASE_CODE].timings), 0,
-        )
+        # The discarded rep was the only content of the entry: it is
+        # pruned entirely instead of being persisted empty.
+        self.assertNotIn(self.CASE_CODE, timer.trainings.cases)
 
     async def test_quit_key_saves_and_quits(self) -> None:
         """'q' saves the timing without FSRS update and quits."""

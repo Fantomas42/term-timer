@@ -199,6 +199,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.fsrs_scheduler = FSRSScheduler() if self.fsrs_update else None
         self.fsrs_rater = PerformanceRater() if self.fsrs_update else None
         self.fsrs_pending_rating: RatingBreakdown | None = None
+        self.pending_previous_date: int | None = None
         self.fsrs_reference_solution: Algorithm = Algorithm()
         self.fsrs_last_focus: str | None = None
         self.fsrs_new_cases_introduced: int = 0
@@ -1466,7 +1467,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
     def solve_line(self, solve: Solve, selected_case: Case) -> None:
         """Display training solve results and execution details."""
-        self.trainings.add_timing(
+        self.pending_previous_date = self.trainings.add_timing(
             selected_case.code,
             int(self.elapsed_time / MS_TO_NS_FACTOR),
             int(self.date),
@@ -1584,7 +1585,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         save_string = ''
         if discard:
             if not dnf:
-                self.trainings.pop_timing(selected_case.code)
+                self.trainings.pop_timing(
+                    selected_case.code,
+                    self.pending_previous_date,
+                )
             SOUND_PLAYER.save_discarded()
             save_string = 'Training discarded'
         else:

@@ -92,7 +92,7 @@ class Trainings:
     step: str
     cases: dict[str, CaseTraining]
 
-    def add_timing(self, case_code: str, timing: int, date: int) -> None:
+    def add_timing(self, case_code: str, timing: int, date: int) -> int | None:
         """
         Add a timing for a specific case.
 
@@ -103,25 +103,57 @@ class Trainings:
             timing: Timing value in milliseconds
             date: Unix timestamp
 
+        Returns:
+            The last_date the case had before this timing, or None if
+            the entry was just created. Meant to be handed back to
+            pop_timing() should the timing be discarded.
+
         """
+        previous = None
+
         if case_code not in self.cases:
             self.cases[case_code] = CaseTraining(
                 code=case_code,
                 last_date=date,
                 timings=[],
             )
+        else:
+            previous = self.cases[case_code].last_date
+
         self.cases[case_code].add_timing(timing, date)
 
-    def pop_timing(self, case_code: str) -> None:
+        return previous
+
+    def pop_timing(self, case_code: str, previous_date: int | None) -> None:
         """
         Delete last timing for a specific case.
 
+        Restores the last_date the case had before the popped timing,
+        and drops the entry entirely when nothing remains worth keeping
+        (no timing, no FSRS card, no custom solution).
+
         Args:
             case_code: Case identifier (e.g., '27', 'Aa')
+            previous_date: last_date to restore, as returned by
+                add_timing(); None if the entry was created by it.
 
         """
-        if case_code in self.cases:
-            self.cases[case_code].timings.pop()
+        case = self.cases.get(case_code)
+
+        if case is None:
+            return
+
+        case.timings.pop()
+        empty = (
+            not case.timings
+            and case.fsrs_card is None
+            and not case.solution
+        )
+
+        if empty:
+            del self.cases[case_code]
+        elif previous_date is not None:
+            case.last_date = previous_date
 
     def as_save(self) -> dict[str, CaseTrainingData]:
         """
