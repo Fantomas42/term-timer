@@ -10,10 +10,13 @@ from fsrs import Rating
 from fsrs import Scheduler
 from fsrs import State
 
+from term_timer.constants import STABILITY_LONG_TERM_DAYS
+
 # Minimum FSRS stability (days) for a case to be considered mastered.
 # Stability represents how long the memory holds at 90% retention.
 # 14 days = two-week interval, reliably in long-term memory.
-MASTERY_STABILITY_DAYS: float = 14.0
+# Shared with the rating floor — see term_timer/constants.py.
+MASTERY_STABILITY_DAYS: float = STABILITY_LONG_TERM_DAYS
 
 # Cadence policy, not a memory-model parameter: maximum_interval only clamps
 # the scheduled due date (min(interval, cap)), never stability/difficulty/the

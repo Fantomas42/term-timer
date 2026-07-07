@@ -12,6 +12,11 @@ MS_TO_NS_FACTOR: Final = 1_000_000
 
 PAUSE_FACTOR: Final = 2
 
+# Stability (days) past which a case is considered anchored in long-term
+# muscle memory. Used both as the FSRS mastery threshold (fsrs/scheduler.py)
+# and as the floor protecting clean-but-slow reps from a speed-driven Again.
+STABILITY_LONG_TERM_DAYS: Final = 14.0
+
 STEP_BAR: Final = 17
 
 # Maximum number of average curves drawn on the console trend graph

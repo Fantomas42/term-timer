@@ -35,6 +35,7 @@ from cubing_algs.transform.trim import trim_moves
 from fsrs import Rating
 
 from term_timer.constants import SECOND
+from term_timer.constants import STABILITY_LONG_TERM_DAYS
 from term_timer.solve import Solve
 
 
@@ -85,7 +86,8 @@ BAND_AGAIN: float = 1.5
 # forcing) is floored to Hard on high-stability cards so a known-but-slow
 # rep does not wipe weeks of accumulated stability. Missed moves and
 # forcing still produce Again unconditionally — structural non-memorisation.
-HIGH_STABILITY_FLOOR_DAYS: float = 14.0
+# Shared with the scheduler mastery threshold — see term_timer/constants.py.
+HIGH_STABILITY_FLOOR_DAYS: float = STABILITY_LONG_TERM_DAYS
 
 
 class RatingBreakdown(NamedTuple):
