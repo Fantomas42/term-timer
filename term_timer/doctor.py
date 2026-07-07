@@ -456,7 +456,7 @@ def check_global_rotation(solve: 'Solve') -> list[Diagnostic]:
                 'location': 'global',
                 'metric_name': 'aufs',
                 'actual_value': float(aufs),
-                'expected_value': (0.0, 4.0),
+                'expected_value': (0.0, 6.0),
                 'description': (
                     f'Excessive AUFs ({aufs} QTM). Too many U-face adjustments '
                     'before/after algorithms.'
@@ -497,6 +497,9 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
         return issues
     rec_norm = solve_norms['recognition']
     rec_norm_max = rec_norm.high
+    # No-flag range: HIGH fires past 1.25x the norm, CRITICAL past 2x.
+    rec_limit = rec_norm_max * 1.25
+    rec_expected = (rec_norm.low, rec_limit)
 
     rec_percent = solve.recognition_percent
 
@@ -513,7 +516,7 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
                 'location': 'global',
                 'metric_name': 'recognition_percent',
                 'actual_value': rec_percent,
-                'expected_value': rec_norm,
+                'expected_value': rec_expected,
                 'description': (
                     f'Very high recognition time ({rec_percent:.1f}%). '
                     'Spending too much time identifying cases instead of '
@@ -528,7 +531,7 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
                 'command': '',
             },
         )
-    elif rec_percent > rec_norm_max * 1.25:
+    elif rec_percent > rec_limit:
         estimated_impact = (
             solve.recognition_time / SECOND
             * (1 - rec_norm_max / rec_percent)
@@ -541,7 +544,7 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
                 'location': 'global',
                 'metric_name': 'recognition_percent',
                 'actual_value': rec_percent,
-                'expected_value': rec_norm,
+                'expected_value': rec_expected,
                 'description': (
                     f'High recognition time ({rec_percent:.1f}%). '
                     'Case identification is slowing down the solve.'
@@ -596,8 +599,10 @@ def check_step_cross(
         pair_norm = norms['moves']['F2L'] / 4
         move_norm += pair_count * pair_norm
     percent_norm = norms['percent'].get(step_name, norms['percent']['Cross'])
+    # Displayed range matches the triggers below: target is the move
+    # norm, with a +2 tolerance before the MEDIUM diagnostic fires.
     expected_moves: tuple[float, float] = (
-        float(move_norm * 0.67), float(move_norm + 2),
+        float(move_norm), float(move_norm + 2),
     )
     spm = solve.move_speed / SECOND
     htm = step['moves_prettified'].metrics.htm
@@ -649,7 +654,8 @@ def check_step_cross(
             },
         )
 
-    if step['total_percent'] > percent_norm * 1.25:
+    percent_limit = percent_norm * 1.25
+    if step['total_percent'] > percent_limit:
         diagnostics.append(
             {
                 'severity': DiagnosticSeverity.MEDIUM,
@@ -658,7 +664,7 @@ def check_step_cross(
                 'location': step_name,
                 'metric_name': 'total_percent',
                 'actual_value': step['total_percent'],
-                'expected_value': percent_norm,
+                'expected_value': (percent_norm, percent_limit),
                 'description': (
                     f'Cross took {step["total_percent"]:.1f}% of solve time. '
                     'Too much time spent on cross relative to total solve.'
@@ -708,7 +714,8 @@ def check_step_f2l(
     percent_norm = norms['percent']['F2L']
     rec_norm = recognition.get(step_name) or recognition.get('F2L')
 
-    if step['total_percent'] > percent_norm * 1.1:
+    percent_limit = percent_norm * 1.1
+    if step['total_percent'] > percent_limit:
         diagnostics.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
@@ -717,7 +724,7 @@ def check_step_f2l(
                 'location': step_name,
                 'metric_name': 'total_percent',
                 'actual_value': step['total_percent'],
-                'expected_value': (percent_norm * 0.9, percent_norm),
+                'expected_value': (percent_norm, percent_limit),
                 'description': (
                     f'{step_name} took {step["total_percent"]:.1f}% '
                     'of solve time. F2L is taking too long.'
@@ -831,8 +838,9 @@ def check_step_oll(
     htm = step['moves_prettified'].metrics.htm
     optimal_htm = float(get_case('OLL', case_name).optimal_htm)
     target_htm = optimal_htm + 2  # AUF allowance
+    htm_limit = (optimal_htm * 1.33) + 2
 
-    if htm > (optimal_htm * 1.33) + 2:
+    if htm > htm_limit:
         extra_moves = htm - target_htm
         diagnostics.append(
             {
@@ -842,7 +850,7 @@ def check_step_oll(
                 'location': 'OLL',
                 'metric_name': 'htm',
                 'actual_value': float(htm),
-                'expected_value': (optimal_htm, target_htm),
+                'expected_value': (optimal_htm, htm_limit),
                 'description': (
                     f'OLL used {htm} HTM, while the case optimal is '
                     f'{optimal_htm:.0f} HTM plus AUF. May be using '
@@ -930,8 +938,9 @@ def check_step_pll(
     htm = step['moves_prettified'].metrics.htm
     optimal_htm = float(get_case('PLL', case_name).optimal_htm)
     target_htm = optimal_htm + 2  # AUF allowance
+    htm_limit = (optimal_htm * 1.33) + 2
 
-    if htm > (optimal_htm * 1.33) + 2:
+    if htm > htm_limit:
         extra_moves = htm - target_htm
         diagnostics.append(
             {
@@ -941,7 +950,7 @@ def check_step_pll(
                 'location': 'PLL',
                 'metric_name': 'htm',
                 'actual_value': float(htm),
-                'expected_value': (optimal_htm, target_htm),
+                'expected_value': (optimal_htm, htm_limit),
                 'description': (
                     f'PLL used {htm} HTM, while the case optimal is '
                     f'{optimal_htm:.0f} HTM plus AUF. May be using '
@@ -966,7 +975,7 @@ def check_step_pll(
                 'location': 'PLL',
                 'metric_name': 'aufs',
                 'actual_value': float(total_auf),
-                'expected_value': (0.0, 2.0),
+                'expected_value': (0.0, 4.0),
                 'description': (
                     f'PLL used {total_auf} QTM in AUF '
                     f'(pre: {step["aufs"][0] or 0}, '
