@@ -66,6 +66,7 @@ class FSRSScheduler:
             maximum_interval=MAXIMUM_INTERVAL_DAYS,
             enable_fuzzing=True,
         )
+        self.last_case: str | None = None
 
     def update_card(self, card: Card | None, rating: Rating) -> Card:
         """
@@ -96,6 +97,12 @@ class FSRSScheduler:
         2. New cards (not yet seen, up to limit), weighted by probability
         3. Weighted-random from all available cases by probability
 
+        The random fallback never serves the same case twice in a row
+        (when the pool allows it). Due cards are exempt: immediate
+        repetition of a due card is the massed practice the learning
+        steps are designed for. New cards cannot repeat by construction
+        (a served case gains a card and leaves the new pool).
+
         Args:
             cards: FSRS cards keyed by case code
             probabilities: All available case codes mapped to their probability
@@ -110,18 +117,25 @@ class FSRSScheduler:
         due_cards = self.get_due_cards(cards)
 
         if due_cards:
-            return self.prioritize_by_urgency(cards, due_cards)[0]
+            self.last_case = self.prioritize_by_urgency(cards, due_cards)[0]
+            return self.last_case
 
         new_cards = self.get_new_cards(cards, probabilities, new_cases_limit)
 
         if new_cards:
-            return self.weighted_choice(new_cards, probabilities)
+            self.last_case = self.weighted_choice(new_cards, probabilities)
+            return self.last_case
 
         available = list(probabilities.keys())
         if new_cases_limit == 0:
             seen = set(cards.keys())
             available = [c for c in available if c in seen] or available
-        return self.weighted_choice(available, probabilities)
+
+        if len(available) > 1 and self.last_case in available:
+            available = [c for c in available if c != self.last_case]
+
+        self.last_case = self.weighted_choice(available, probabilities)
+        return self.last_case
 
     @staticmethod
     def weighted_choice(

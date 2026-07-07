@@ -167,6 +167,59 @@ class TestSelectNextCase(unittest.TestCase):
             self.assertIn(result, self.probs)
 
 
+class TestSelectNextCaseAntiRepeat(unittest.TestCase):
+    """The random fallback never serves the same case twice in a row."""
+
+    def setUp(self) -> None:  # noqa: D102
+        self.scheduler = FSRSScheduler()
+        self.probs = {'A': 0.5, 'B': 0.3, 'C': 0.2}
+
+    def test_fallback_never_repeats_previous_case(self) -> None:
+        """Two consecutive fallback draws never return the same case."""
+        cards = {c: make_card(due_offset_days=1.0) for c in self.probs}
+        previous = None
+        for _ in range(50):
+            result = self.scheduler.select_next_case(cards, self.probs, 5)
+            self.assertNotEqual(result, previous)
+            previous = result
+
+    def test_fallback_excludes_case_served_by_due_path(self) -> None:
+        """A case just served as due is excluded from the next fallback."""
+        self.scheduler.last_case = 'A'
+        cards = {c: make_card(due_offset_days=1.0) for c in self.probs}
+        for _ in range(30):
+            self.scheduler.last_case = 'A'
+            result = self.scheduler.select_next_case(cards, self.probs, 5)
+            self.assertIn(result, {'B', 'C'})
+
+    def test_single_case_pool_can_repeat(self) -> None:
+        """A pool of one case keeps serving it."""
+        probs = {'A': 1.0}
+        cards = {'A': make_card(due_offset_days=1.0)}
+        for _ in range(5):
+            result = self.scheduler.select_next_case(cards, probs, 5)
+            self.assertEqual(result, 'A')
+
+    def test_due_case_can_repeat(self) -> None:
+        """Due cards are exempt: massed repetition is intentional."""
+        cards = {
+            'A': make_card(due_offset_days=-1.0),
+            'B': make_card(due_offset_days=1.0),
+            'C': make_card(due_offset_days=1.0),
+        }
+        for _ in range(3):
+            result = self.scheduler.select_next_case(cards, self.probs, 5)
+            self.assertEqual(result, 'A')
+
+    def test_anti_repeat_pool_all_zero_weights(self) -> None:
+        """Excluding the last case from an all-zero pool still draws."""
+        probs = {'A': 0.0, 'B': 0.0}
+        cards = {c: make_card(due_offset_days=1.0) for c in probs}
+        self.scheduler.last_case = 'A'
+        result = self.scheduler.select_next_case(cards, probs, 5)
+        self.assertEqual(result, 'B')
+
+
 class TestWeightedChoice(unittest.TestCase):
     """weighted_choice() guards random.choices against all-zero weights."""
 
