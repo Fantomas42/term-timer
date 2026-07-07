@@ -720,6 +720,115 @@ class TestSaveTrainingAutoRatingOverride(unittest.IsolatedAsyncioTestCase):
         )
 
 
+class TestFSRSNewCaseBudget(unittest.IsolatedAsyncioTestCase):
+    """fsrs_track_new_case() only consumes budget when a card was created."""
+
+    CASE_CODE = 'T'
+
+    def make_trainer(self) -> Trainer:
+        """
+        Build a no-Bluetooth PLL trainer with one new (card-less) case.
+
+        Returns:
+            A Trainer with fsrs_update on, no BT interface, and a single
+            CaseTraining holding a timing but no FSRS card.
+
+        """
+        empty = Trainings(method='CFOP', step='PLL', cases={})
+        with patch(
+            'term_timer.trainer.load_trainings', return_value=empty,
+        ):
+            timer = Trainer(
+                step='pll',
+                case_codes=[self.CASE_CODE],
+                oldest=0,
+                slowest=0,
+                random=0,
+                new_cases_limit=5,
+                filters=[],
+                free_play=False,
+                show_solution=False,
+                show_cube=False,
+                metronome=0,
+                orientation='DF',
+                rng=Random(),  # noqa: S311
+            )
+        timer.bluetooth_interface = None
+        timer.console = MagicMock()
+        date = int(datetime.now(tz=UTC).timestamp())
+        timer.trainings.add_timing(self.CASE_CODE, 2000, date)
+        return timer
+
+    def selected_case(self, timer: Trainer) -> object:
+        """
+        Return the Case object matching CASE_CODE from the trainer pool.
+
+        Returns:
+            The cubing_algs Case for CASE_CODE.
+
+        """
+        return next(
+            tc.case for tc in timer.cases if tc.case.code == self.CASE_CODE
+        )
+
+    async def run_save_and_track(self, char: str) -> Trainer:
+        """
+        Run save_training with a fixed key then track the new case.
+
+        Returns:
+            The trainer, after fsrs_track_new_case(was_new_case=True).
+
+        """
+        timer = self.make_trainer()
+        case = self.selected_case(timer)
+        solve = Solve(
+            date=datetime.now(tz=UTC).timestamp(),
+            time=2_000_000_000,
+            scramble="R U R' U'",
+            moves=None,
+        )
+
+        async def fake_getch(_mode: str, *_: object) -> str:
+            await asyncio.sleep(0)
+            return char
+
+        with (
+            patch('term_timer.trainer.save_trainings'),
+            patch('term_timer.trainer.SOUND_PLAYER'),
+            patch.object(
+                timer.fsrs_scheduler,
+                'update_card',
+                MagicMock(return_value=Card()),
+            ),
+            patch.object(timer, 'getch', side_effect=fake_getch),
+        ):
+            await timer.save_training(case, solve)  # type: ignore[arg-type]
+
+        timer.fsrs_track_new_case(self.CASE_CODE, was_new_case=True)
+        return timer
+
+    async def test_rated_new_case_consumes_budget(self) -> None:
+        """A rated save on a new case increments the introduced count."""
+        timer = await self.run_save_and_track('3')
+        self.assertEqual(timer.fsrs_new_cases_introduced, 1)
+
+    async def test_skip_fsrs_does_not_consume_budget(self) -> None:
+        """A manual-mode save without rating leaves the budget intact."""
+        timer = await self.run_save_and_track('x')
+        self.assertEqual(timer.fsrs_new_cases_introduced, 0)
+
+    async def test_discard_does_not_consume_budget(self) -> None:
+        """A discarded rep on a new case leaves the budget intact."""
+        timer = await self.run_save_and_track('z')
+        self.assertEqual(timer.fsrs_new_cases_introduced, 0)
+
+    async def test_known_case_never_consumes_budget(self) -> None:
+        """A rated save on an already-known case is not counted."""
+        timer = await self.run_save_and_track('3')
+        timer.fsrs_track_new_case(self.CASE_CODE, was_new_case=False)
+        self.assertEqual(timer.fsrs_new_cases_introduced, 1)
+
+
 class TestSaveTrainingDNF(unittest.IsolatedAsyncioTestCase):
     """save_training(dnf=True) rates Again by default, never saves timing."""
 

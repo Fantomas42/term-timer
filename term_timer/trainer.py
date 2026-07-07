@@ -669,6 +669,26 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         """
         return max(0, self.new_cases_limit - self.fsrs_new_cases_introduced)
 
+    def fsrs_track_new_case(
+            self,
+            case_code: str,
+            *,
+            was_new_case: bool,
+    ) -> None:
+        """
+        Consume session budget once a new case has an FSRS card.
+
+        A new case only counts as introduced when the save actually
+        created its card: a discarded rep or a skipped FSRS update
+        (manual mode, non-rating key) leaves the case new for the
+        scheduler and must not consume the budget.
+        """
+        if not was_new_case:
+            return
+        case_training = self.trainings.cases.get(case_code)
+        if case_training is not None and case_training.fsrs_card is not None:
+            self.fsrs_new_cases_introduced += 1
+
     @property
     def fsrs_manual_rating(self) -> bool:
         """
@@ -1640,7 +1660,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         return char in {'q', 'k', ESCAPE_CHAR}
 
-    async def start(  # noqa: C901, PLR0911, PLR0912, PLR0914, PLR0915
+    async def start(  # noqa: C901, PLR0911, PLR0912, PLR0915
             self,
     ) -> bool:
         """
@@ -1771,13 +1791,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                     dnf=True,
                 )
 
-                case_training = self.trainings.cases.get(selected_case.code)
-                if (
-                        was_new_case
-                        and case_training is not None
-                        and case_training.fsrs_card is not None
-                ):
-                    self.fsrs_new_cases_introduced += 1
+                self.fsrs_track_new_case(
+                    selected_case.code,
+                    was_new_case=was_new_case,
+                )
 
                 if quit_training:
                     return False
@@ -1794,11 +1811,12 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 self.fsrs_preview_line(solve, selected_case)
             self.save_line(manual_rating=self.fsrs_manual_rating)
 
-            session_len_before = len(self.session_data)
             quit_training = await self.save_training(selected_case, solve)
 
-            if was_new_case and len(self.session_data) > session_len_before:
-                self.fsrs_new_cases_introduced += 1
+            self.fsrs_track_new_case(
+                selected_case.code,
+                was_new_case=was_new_case,
+            )
 
             if quit_training:
                 return False
