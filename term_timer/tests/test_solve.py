@@ -1064,49 +1064,49 @@ class TestSolveComputeFluency(unittest.TestCase):  # noqa: PLR0904
         """Test fluency with exactly 3 moves and consistent timing."""
         algorithm = parse_moves("R@0 U@100 R'@200")
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 94)
+        self.assertEqual(fluency, 100)
 
     def test_perfect_fluency_four_moves_consistent(self) -> None:
         """Test fluency with 4 moves and perfectly consistent timing."""
         algorithm = parse_moves("R@100 U@200 R'@300 U'@400")
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 95)
+        self.assertEqual(fluency, 100)
 
     def test_perfect_fluency_five_moves_from_zero(self) -> None:
         """Test fluency with 5 moves starting from timestamp 0."""
         algorithm = parse_moves("R@0 U@100 R'@200 U'@300 F@400")
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 95)
+        self.assertEqual(fluency, 100)
 
     def test_very_small_intervals_consistent(self) -> None:
         """Test fluency with very small but consistent intervals."""
         algorithm = parse_moves("R@0 U@1 R'@2 U'@3 F@4")
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 99)
+        self.assertEqual(fluency, 100)
 
     def test_moderate_variation_in_timing(self) -> None:
         """Test fluency with moderate timing variation."""
         algorithm = parse_moves("R@0 U@100 R'@250 U'@400 F@550")
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 93)
+        self.assertEqual(fluency, 97)
 
     def test_highly_variable_timing(self) -> None:
         """Test fluency with highly variable timing."""
         algorithm = parse_moves("R@0 U@1000 R'@1100 U'@2500 F@2600")
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 52)
+        self.assertEqual(fluency, 53)
 
     def test_extreme_variance_in_timing(self) -> None:
         """Test fluency with extreme timing variance."""
         algorithm = parse_moves("R@0 U@50 R'@5000 U'@5050")
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 9)
+        self.assertEqual(fluency, 7)
 
     def test_pause_in_middle_of_algorithm(self) -> None:
         """Test fluency with a long pause in the middle."""
         algorithm = parse_moves("R@0 U@100 R'@200 U'@2000 F@2100")
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 46)
+        self.assertEqual(fluency, 43)
 
     def test_multiple_pauses_throughout(self) -> None:
         """Test fluency with multiple pauses throughout algorithm."""
@@ -1120,7 +1120,7 @@ class TestSolveComputeFluency(unittest.TestCase):  # noqa: PLR0904
             "R@0 U@100 R'@250 U'@450 F@700 L@1000",
         )
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 89)
+        self.assertEqual(fluency, 92)
 
     def test_alternating_fast_and_slow_intervals(self) -> None:
         """Test fluency with alternating fast and slow intervals."""
@@ -1137,7 +1137,7 @@ class TestSolveComputeFluency(unittest.TestCase):  # noqa: PLR0904
             moves.append(f'{move}@{timestamp}')
         algorithm = parse_moves(' '.join(moves))
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 97)
+        self.assertEqual(fluency, 100)
 
     def test_long_algorithm_inconsistent_timing(self) -> None:
         """Test fluency with long algorithm having inconsistent timing."""
@@ -1148,7 +1148,7 @@ class TestSolveComputeFluency(unittest.TestCase):  # noqa: PLR0904
             moves.append(f'{move}@{ts}')
         algorithm = parse_moves(' '.join(moves))
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 63)
+        self.assertEqual(fluency, 62)
 
     def test_fluency_score_is_integer(self) -> None:
         """Test that fluency score is always an integer."""
@@ -1166,13 +1166,13 @@ class TestSolveComputeFluency(unittest.TestCase):  # noqa: PLR0904
         """Test fluency with larger 500ms intervals."""
         algorithm = parse_moves("R@0 U@500 R'@1000 U'@1500 F@2000")
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 79)
+        self.assertEqual(fluency, 100)
 
     def test_larger_consistent_intervals_1000ms(self) -> None:
         """Test fluency with larger 1000ms intervals."""
         algorithm = parse_moves("R@0 U@1000 R'@2000 U'@3000")
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 61)
+        self.assertEqual(fluency, 100)
 
     def test_complex_move_notation_with_primes(self) -> None:
         """Test fluency with complex move notation including primes."""
@@ -1180,7 +1180,7 @@ class TestSolveComputeFluency(unittest.TestCase):  # noqa: PLR0904
             "R@0 U'@100 R'@200 U@300 F'@400 L@500",
         )
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 95)
+        self.assertEqual(fluency, 100)
 
     def test_zero_variance_perfect_score_100(self) -> None:
         """Test fluency with zero variance achieves perfect score."""
@@ -1192,16 +1192,16 @@ class TestSolveComputeFluency(unittest.TestCase):  # noqa: PLR0904
         """Test fluency when first timestamp is not zero."""
         algorithm = parse_moves("R@1000 U@2000 R'@3000")
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 59)
+        self.assertEqual(fluency, 100)
 
     def test_wide_moves_notation(self) -> None:
         """Test fluency with wide move notation."""
         algorithm = parse_moves("Rw@0 U@100 Rw'@200 U'@300")
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 95)
+        self.assertEqual(fluency, 100)
 
     def test_double_moves_notation(self) -> None:
         """Test fluency with double move notation."""
         algorithm = parse_moves('R2@0 U2@100 R2@200 U2@300')
         fluency = Solve.compute_fluency(algorithm)
-        self.assertEqual(fluency, 95)
+        self.assertEqual(fluency, 100)

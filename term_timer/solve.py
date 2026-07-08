@@ -275,13 +275,10 @@ class Solve:  # noqa: PLR0904
         if len(algorithm) <= 2:
             return 0
 
-        intervals: list[int] = []
-        for i, move in enumerate(algorithm):
-            if i == 0:
-                intervals.append(0)
-            else:
-                interval = move.timed - algorithm[i - 1].timed
-                intervals.append(interval)
+        intervals: list[int] = [
+            algorithm[i].timed - algorithm[i - 1].timed
+            for i in range(1, len(algorithm))
+        ]
 
         mean = sum(intervals) / len(intervals)
         variance = sum((x - mean) ** 2 for x in intervals) / len(intervals)
