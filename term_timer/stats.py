@@ -939,12 +939,18 @@ class SolveStatisticsReporter(Statistics):
         Calculate average score across all advanced solves.
 
         Returns:
-            Mean score value across all solves with method analysis.
+            Mean score value across all solves with method analysis,
+            0.0 when no solve has method analysis.
 
         """
-        return sum(
+        scores = [
             cast('float', s.score) for s in self.stack if s.advanced
-        ) / self.total
+        ]
+
+        if not scores:
+            return 0.0
+
+        return sum(scores) / len(scores)
 
     def resume(self, prefix: str = '', style: str = 'stats', *,
                show_title: bool = False) -> None:
