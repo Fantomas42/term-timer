@@ -3,11 +3,11 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import Mock
 from unittest.mock import patch
 
 from term_timer.fsrs.storage import CaseTraining
 from term_timer.fsrs.storage import Trainings
+from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
 from term_timer.in_out import load_trainings
 from term_timer.in_out import save_trainings
@@ -16,15 +16,129 @@ from term_timer.in_out import save_trainings
 class TestInOut(unittest.TestCase):
     """Tests for solve loading and saving functionality."""
 
-    @patch('term_timer.in_out.SOLVES_DIRECTORY', Path('/mock/path'))
-    @patch('pathlib.Path.exists')
-    def test_load_solves_non_existing_file(self, mock_exists: Mock) -> None:
+    def test_load_solves_non_existing_file(self) -> None:
         """Test loading solves from a non-existing file returns empty list."""
-        mock_exists.return_value = False
-
-        solves = load_solves(3, 'default')
+        with tempfile.TemporaryDirectory() as tmp:
+            solves = load_solves(3, 'default', directory=Path(tmp))
 
         self.assertEqual(solves, [])
+
+
+class TestLoadAllSolves(unittest.TestCase):
+    """Tests for multi-session loading with device and dedup filters."""
+
+    def setUp(self) -> None:
+        """Create a temporary solves directory for fixture files."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.directory = Path(tmp.name)
+
+    def write_session(
+            self,
+            session: str,
+            solves: list[dict[str, object]],
+    ) -> None:
+        """Write a session JSON fixture into the temporary directory."""
+        suffix = f'-{ session }' if session != 'default' else ''
+        path = self.directory / f'3x3x3{ suffix }.json'
+        path.write_text(json.dumps(solves), encoding='utf-8')
+
+    def test_single_session_devices_filter(self) -> None:
+        """A single included session is still filtered by devices."""
+        self.write_session('cstimer', [
+            {'date': 100, 'time': 10, 'scramble': 'R U',
+             'device': 'GAN356 i3'},
+            {'date': 200, 'time': 11, 'scramble': 'R U',
+             'device': 'MoYu AI'},
+        ])
+
+        solves = load_all_solves(
+            3, ['cstimer'], [], ['GAN356 i3'],
+            directory=self.directory,
+        )
+
+        self.assertEqual(len(solves), 1)
+        self.assertEqual(solves[0].device, 'GAN356 i3')
+
+    def test_multi_session_devices_filter(self) -> None:
+        """Multiple included sessions are filtered by devices."""
+        self.write_session('cstimer', [
+            {'date': 100, 'time': 10, 'scramble': 'R U',
+             'device': 'GAN356 i3'},
+        ])
+        self.write_session('cubeast', [
+            {'date': 200, 'time': 11, 'scramble': 'R U',
+             'device': 'MoYu AI'},
+            {'date': 300, 'time': 12, 'scramble': 'R U',
+             'device': 'GAN356 i3'},
+        ])
+
+        solves = load_all_solves(
+            3, ['cstimer', 'cubeast'], [], ['GAN356 i3'],
+            directory=self.directory,
+        )
+
+        self.assertEqual(len(solves), 2)
+        self.assertTrue(
+            all(solve.device == 'GAN356 i3' for solve in solves),
+        )
+
+    def test_deduplication_across_sessions(self) -> None:
+        """Two solves sharing the same date collapse into one."""
+        self.write_session('cstimer', [
+            {'date': 100, 'time': 10, 'scramble': 'R U'},
+        ])
+        self.write_session('cubeast', [
+            {'date': 100, 'time': 10, 'scramble': 'R U'},
+            {'date': 200, 'time': 11, 'scramble': 'R U'},
+        ])
+
+        solves = load_all_solves(
+            3, [], [], [],
+            directory=self.directory,
+        )
+
+        self.assertEqual(len(solves), 2)
+        self.assertEqual([solve.date for solve in solves], [100, 200])
+
+    def test_devices_filter_applied_before_deduplication(self) -> None:
+        """On date collision the solve of the requested device survives."""
+        self.write_session('cstimer', [
+            {'date': 100, 'time': 10, 'scramble': 'R U',
+             'device': 'MoYu AI'},
+        ])
+        self.write_session('cubeast', [
+            {'date': 100, 'time': 12, 'scramble': 'R U',
+             'device': 'GAN356 i3'},
+        ])
+
+        solves = load_all_solves(
+            3, [], [], ['GAN356 i3'],
+            directory=self.directory,
+        )
+
+        self.assertEqual(len(solves), 1)
+        self.assertEqual(solves[0].device, 'GAN356 i3')
+
+    def test_result_sorted_by_date(self) -> None:
+        """The merged result is sorted chronologically."""
+        self.write_session('cstimer', [
+            {'date': 300, 'time': 10, 'scramble': 'R U'},
+            {'date': 100, 'time': 11, 'scramble': 'R U'},
+        ])
+        self.write_session('cubeast', [
+            {'date': 200, 'time': 12, 'scramble': 'R U'},
+        ])
+
+        solves = load_all_solves(
+            3, [], [], [],
+            directory=self.directory,
+        )
+
+        self.assertEqual(
+            [solve.date for solve in solves],
+            [100, 200, 300],
+        )
 
 
 class TestTrainingsSolution(unittest.TestCase):

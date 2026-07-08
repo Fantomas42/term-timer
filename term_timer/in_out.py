@@ -84,6 +84,7 @@ def load_all_solves(
         includes: list[str],
         excludes: list[str],
         devices: list[str],
+        directory: Path = SOLVES_DIRECTORY,
 ) -> list[Solve]:
     """
     Load all solves from multiple sessions with filters.
@@ -93,33 +94,33 @@ def load_all_solves(
 
     """
     if len(includes) == 1:
-        return load_solves(cube, includes[0])
-
-    prefix = f'{ cube }x{ cube }x{ cube }-'
-
-    solves = []
-    sessions = ['default'] + [
-        f.name.split(prefix, 1)[1].replace('.json', '')
-        for f in SOLVES_DIRECTORY.iterdir()
-        if (
-                f.is_file()
-                and f.name.startswith(prefix)
-                and not f.name.endswith('~')
-        )
-    ]
-
-    if includes:
-        for session_name in sessions:
-            if session_name in includes:
-                solves.extend(
-                    load_solves(cube, session_name),
-                )
+        solves = load_solves(cube, includes[0], directory=directory)
     else:
-        for session_name in sessions:
-            if session_name not in excludes:
-                solves.extend(
-                    load_solves(cube, session_name),
-                )
+        prefix = f'{ cube }x{ cube }x{ cube }-'
+
+        solves = []
+        sessions = ['default'] + [
+            f.name.split(prefix, 1)[1].replace('.json', '')
+            for f in directory.iterdir()
+            if (
+                    f.is_file()
+                    and f.name.startswith(prefix)
+                    and not f.name.endswith('~')
+            )
+        ]
+
+        if includes:
+            for session_name in sessions:
+                if session_name in includes:
+                    solves.extend(
+                        load_solves(cube, session_name, directory=directory),
+                    )
+        else:
+            for session_name in sessions:
+                if session_name not in excludes:
+                    solves.extend(
+                        load_solves(cube, session_name, directory=directory),
+                    )
 
     if devices:
         solves = [solve for solve in solves if solve.device in devices]
