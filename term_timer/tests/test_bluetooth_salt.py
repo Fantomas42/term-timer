@@ -89,24 +89,22 @@ class TestGetSalt(unittest.TestCase):  # noqa: PLR0904
         self.assertEqual(list(result), list(reversed(original_order)))
 
     def test_mac_too_few_parts(self) -> None:
-        """Test MAC address with too few parts - function handles gracefully."""
+        """Test MAC address with too few parts is rejected."""
         mac = '01:23:45:67:89'  # Only 5 parts instead of 6
-        result = get_salt(mac)
-
-        # Should return bytearray with 5 elements (reversed)
-        expected = bytearray([0x89, 0x67, 0x45, 0x23, 0x01])
-        self.assertEqual(result, expected)
-        self.assertEqual(len(result), 5)
+        with self.assertRaises(ValueError):
+            get_salt(mac)
 
     def test_mac_too_many_parts(self) -> None:
-        """Test MAC address with too many parts - should handles gracefully."""
+        """Test MAC address with too many parts is rejected."""
         mac = '01:23:45:67:89:AB:CD'  # 7 parts instead of 6
-        result = get_salt(mac)
+        with self.assertRaises(ValueError):
+            get_salt(mac)
 
-        # Should return bytearray with 7 elements (reversed)
-        expected = bytearray([0xCD, 0xAB, 0x89, 0x67, 0x45, 0x23, 0x01])
-        self.assertEqual(result, expected)
-        self.assertEqual(len(result), 7)
+    def test_mac_octet_out_of_range(self) -> None:
+        """Test MAC address with an octet above 0xFF is rejected."""
+        mac = '01:23:45:67:89:1FF'  # 0x1FF is out of byte range
+        with self.assertRaises(ValueError):
+            get_salt(mac)
 
     def test_invalid_mac_non_hex_characters(self) -> None:
         """Test MAC address with non-hex characters."""
