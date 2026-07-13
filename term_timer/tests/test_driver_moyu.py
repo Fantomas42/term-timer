@@ -157,6 +157,37 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
         result = self.driver.send_command_handler(None)  # type: ignore[arg-type]
         self.assertFalse(result)
 
+    def test_send_command_handler_never_emits_rename(self) -> None:
+        """
+        Test that no supported command builds the 0xAD rename opcode.
+
+        The undocumented 0xAD command permanently renames the cube's
+        Bluetooth device name with no guard, bricking discovery. term-timer
+        must never emit it: this pins the invariant so a future command
+        addition cannot silently introduce it.
+        """
+        rename_opcode = 0xAD
+        commands = [
+            'REQUEST_FACELETS',
+            'REQUEST_HARDWARE',
+            'REQUEST_BATTERY',
+            'REQUEST_ENABLE_GYRO',
+            'REQUEST_DISABLE_GYRO',
+            'REQUEST_RESET',
+        ]
+
+        for command in commands:
+            with patch.object(self.driver, 'cypher') as mock_cypher:
+                mock_cypher.encrypt.return_value = b'encrypted_data'
+
+                self.driver.send_command_handler(command)
+
+                plaintext = mock_cypher.encrypt.call_args[0][0]
+                self.assertNotEqual(
+                    plaintext[0], rename_opcode,
+                    f'Command {command} produced a 0xAD opcode',
+                )
+
     @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.moyu.datetime')
     async def test_event_handler_gyroscope_disabled(
