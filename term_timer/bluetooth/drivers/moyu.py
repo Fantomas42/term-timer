@@ -14,6 +14,7 @@ from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from term_timer.bluetooth.annotations import BatteryEventDict
+from term_timer.bluetooth.annotations import DisconnectEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import FaceletsEventDictNoState
 from term_timer.bluetooth.annotations import GyroConfigEventDict
@@ -276,6 +277,16 @@ class MoyuWeilong10Driver(Driver):
                 'level': min(battery_level, 100),
             }
             self.add_event(events, battery_payload)
+
+        elif event == 0xA0:  # Disconnect
+            disconnect_payload: DisconnectEventDict = {
+                'event': 'disconnect',
+                'clock': clock,
+                'timestamp': timestamp,
+            }
+            self.add_event(events, disconnect_payload)
+
+            await self.client.disconnect()
 
         else:
             logger.debug(
