@@ -1,4 +1,5 @@
 """Application-wide constants and type definitions."""
+import os
 from pathlib import Path
 from typing import Final
 from typing import Literal
@@ -33,7 +34,12 @@ GRAPH_CONSOLE_COLORS: Final = {
 }
 GRAPH_CONSOLE_FALLBACK: Final = 213
 
-TT_DIRECTORY: Final = Path.home() / '.term_timer'
+TT_DIRECTORY: Final = Path(
+    os.getenv(
+        'TERM_TIMER_HOME',
+        str(Path.home() / '.term_timer'),
+    ),
+)
 
 SOLVES_DIRECTORY: Final = TT_DIRECTORY / 'solves'
 
