@@ -45,7 +45,6 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
             parse_moves(solve['scramble'])
             for solve in replay['solves']
         ]
-        session_parts.append('replay')
     elif options.scrambles_file:
         scrambles_file = Path(options.scrambles_file)
         scrambles = load_scrambles(scrambles_file)
