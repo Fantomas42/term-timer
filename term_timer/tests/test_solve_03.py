@@ -127,6 +127,34 @@ class TestSolve03(unittest.TestCase):  # noqa: PLR0904
             1,
         )
 
+    def test_step_pause_time(self) -> None:
+        """Test step pause time."""
+        self.assertEqual(
+            self.solve.step_pause_time,
+            417571428.5714286,
+        )
+
+    def test_execution_pause_time(self) -> None:
+        """Test execution pause time."""
+        self.assertEqual(
+            self.solve.execution_pause_time,
+            self.solve.step_pause_time,
+        )
+
+    def test_all_pause_time(self) -> None:
+        """Test all pause time."""
+        self.assertEqual(
+            self.solve.all_pause_time,
+            417571428.5714286,
+        )
+
+    def test_recognition_pause_time(self) -> None:
+        """Test recognition pause time."""
+        self.assertEqual(
+            self.solve.recognition_pause_time,
+            0.0,
+        )
+
     def test_execution_missed_moves(self) -> None:
         """Test execution missed moves."""
         self.assertEqual(

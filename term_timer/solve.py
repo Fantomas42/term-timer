@@ -415,6 +415,49 @@ class Solve:  # noqa: PLR0904
         )
 
     @cached_property
+    def step_pause_time(self) -> float:
+        """
+        Measure time lost in pauses within individual solve steps.
+
+        Returns:
+            Nanoseconds lost beyond the average move speed in pauses
+            detected within step execution
+
+        """
+        if not self.method_applied:
+            return 0.0
+
+        return sum(
+            self.pause_time(step['moves'])
+            for step in self.method_applied.summary
+            if step['type'] != 'virtual'
+        )
+
+    @cached_property
+    def all_pause_time(self) -> float:
+        """
+        Measure total time lost in pauses over the entire solve.
+
+        Returns:
+            Nanoseconds lost beyond the average move speed in all pauses
+            detected in the solution
+
+        """
+        return self.pause_time(self.solution)
+
+    @cached_property
+    def recognition_pause_time(self) -> float:
+        """
+        Measure time lost in pauses between solve steps.
+
+        Returns:
+            Nanoseconds lost in pauses occurring at step transitions
+            (total pauses minus execution pauses)
+
+        """
+        return self.all_pause_time - self.step_pause_time
+
+    @cached_property
     def execution_pauses(self) -> int:
         """
         Count pauses during algorithm execution.
@@ -424,6 +467,18 @@ class Solve:  # noqa: PLR0904
 
         """
         return self.step_pauses
+
+    @cached_property
+    def execution_pause_time(self) -> float:
+        """
+        Measure time lost in pauses during algorithm execution.
+
+        Returns:
+            Nanoseconds lost in step execution pauses (alias for
+            step_pause_time)
+
+        """
+        return self.step_pause_time
 
     @cached_property
     def execution_missed_moves(self) -> int:
@@ -1302,6 +1357,36 @@ class Solve:  # noqa: PLR0904
             previous_time = time
 
         return pauses
+
+    def pause_time(self, algorithm: Algorithm) -> float:
+        """
+        Measure time lost in execution pauses.
+
+        Args:
+            algorithm: Algorithm with timing information
+
+        Returns:
+            Nanoseconds lost beyond the average move speed in gaps
+            exceeding the pause threshold
+
+        """
+        if not algorithm:
+            return 0.0
+
+        lost = 0.0
+        threshold = self.pause_threshold / MS_TO_NS_FACTOR
+        move_speed = self.move_speed / MS_TO_NS_FACTOR
+        previous_time = algorithm[0].timed
+
+        for move in algorithm:
+            time = move.timed
+            gap = time - previous_time
+            if gap > threshold:
+                lost += gap - move_speed
+
+            previous_time = time
+
+        return lost * MS_TO_NS_FACTOR
 
     @cached_property
     def rotations(self) -> int:

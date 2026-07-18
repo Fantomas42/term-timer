@@ -8,6 +8,7 @@ from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 
 from term_timer.constants import DNF
+from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.methods.base import Analyser
@@ -586,6 +587,84 @@ class TestSolvePauses(unittest.TestCase):
         threshold = solve.pause_threshold
         self.assertGreater(threshold, 0)
         self.assertEqual(threshold, solve.move_speed * 2)
+
+    def test_pause_time_empty_algorithm(self) -> None:
+        """Test pause_time with empty algorithm."""
+        solve = Solve(1000000000, 1012345678, "R U R'", moves='R@100')
+        self.assertEqual(solve.pause_time(Algorithm()), 0.0)
+
+    def test_pause_time_no_pauses(self) -> None:
+        """Test pause_time when all gaps stay below the threshold."""
+        solve = Solve(1000000000, 1012345678, "R U R'", moves='R@100')
+        solve.move_speed = 100.0 * MS_TO_NS_FACTOR
+        algo = parse_moves('R@0 U@100 F@200')
+        self.assertEqual(solve.pause_time(algo), 0.0)
+
+    def test_pause_time_gap_at_threshold(self) -> None:
+        """Test pause_time with a gap exactly at the threshold."""
+        solve = Solve(1000000000, 1012345678, "R U R'", moves='R@100')
+        solve.move_speed = 100.0 * MS_TO_NS_FACTOR
+        algo = parse_moves('R@0 U@200')
+        self.assertEqual(solve.pause_time(algo), 0.0)
+
+    def test_pause_time_single_pause(self) -> None:
+        """Test pause_time with one gap above the threshold."""
+        solve = Solve(1000000000, 1012345678, "R U R'", moves='R@100')
+        solve.move_speed = 100.0 * MS_TO_NS_FACTOR
+        algo = parse_moves('R@0 U@600')
+        self.assertEqual(
+            solve.pause_time(algo),
+            500.0 * MS_TO_NS_FACTOR,
+        )
+
+    def test_pause_time_multiple_pauses(self) -> None:
+        """Test pause_time sums the lost time of each pause."""
+        solve = Solve(1000000000, 1012345678, "R U R'", moves='R@100')
+        solve.move_speed = 100.0 * MS_TO_NS_FACTOR
+        algo = parse_moves('R@0 U@600 F@700 B@1300')
+        self.assertEqual(
+            solve.pause_time(algo),
+            1000.0 * MS_TO_NS_FACTOR,
+        )
+
+    def test_step_pause_time_without_method(self) -> None:
+        """Test step_pause_time without method analysis."""
+        solve = Solve(1000000000, 1012345678, "R U R'")
+        self.assertEqual(solve.step_pause_time, 0.0)
+
+    def test_execution_pause_time_alias(self) -> None:
+        """Test execution_pause_time is an alias for step_pause_time."""
+        solve = Solve(
+            1000000000, 1012345678, "R U R'",
+            moves="R@100 U@200 R'@300",
+        )
+        self.assertEqual(
+            solve.execution_pause_time,
+            solve.step_pause_time,
+        )
+
+    def test_all_pause_time_on_solution(self) -> None:
+        """Test all_pause_time measures pauses on the full solution."""
+        solve = Solve(
+            1000000000, 1012345678, "R U R'",
+            moves='R@0 U@600',
+        )
+        solve.move_speed = 100.0 * MS_TO_NS_FACTOR
+        self.assertEqual(
+            solve.all_pause_time,
+            500.0 * MS_TO_NS_FACTOR,
+        )
+
+    def test_recognition_pause_time_calculation(self) -> None:
+        """Test recognition_pause_time is all minus step pause time."""
+        solve = Solve(
+            1000000000, 10000000000, "R U R'",
+            moves='R@100 R@200 R@300 U@400',
+        )
+        recognition = solve.recognition_pause_time
+        expected = solve.all_pause_time - solve.step_pause_time
+        self.assertEqual(recognition, expected)
+        self.assertGreaterEqual(recognition, 0.0)
 
 
 class TestSolveSerialization(unittest.TestCase):

@@ -273,7 +273,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
 
     execution_pauses = solve.execution_pauses
     if execution_pauses > 8:
-        estimated_impact = execution_pauses * solve.move_speed / SECOND
+        estimated_impact = solve.execution_pause_time / SECOND
         issues.append(
             {
                 'severity': DiagnosticSeverity.CRITICAL,
@@ -297,7 +297,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
             },
         )
     elif execution_pauses > 4:
-        estimated_impact = execution_pauses * solve.move_speed / SECOND
+        estimated_impact = solve.execution_pause_time / SECOND
         issues.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
@@ -312,6 +312,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                     'Lookahead needs improvement.'
                 ),
                 'recommendation': (
+                    # TODO: review
                     'Work on F2L lookahead by solving pairs slower while '
                     'tracking the next pair. Practice recognizing cases '
                     'during execution rather than after.'
@@ -504,10 +505,7 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
     rec_percent = solve.recognition_percent
 
     if rec_percent > rec_norm_max * 2:
-        estimated_impact = (
-            solve.recognition_time / SECOND
-            * (1 - rec_norm_max / rec_percent)
-        )
+        estimated_impact = solve.recognition_pause_time / SECOND
         issues.append(
             {
                 'severity': DiagnosticSeverity.CRITICAL,
@@ -532,10 +530,7 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
             },
         )
     elif rec_percent > rec_limit:
-        estimated_impact = (
-            solve.recognition_time / SECOND
-            * (1 - rec_norm_max / rec_percent)
-        )
+        estimated_impact = solve.recognition_pause_time / SECOND
         issues.append(
             {
                 'severity': DiagnosticSeverity.HIGH,

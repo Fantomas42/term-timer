@@ -39,7 +39,7 @@ BANNER_MODES = {
     'reset': 'Reset',
     'edit': 'Edition',
     'delete': 'Delete',
-    'scramble': 'Scrambles'
+    'scramble': 'Scrambles',
 }
 
 
