@@ -8,7 +8,7 @@ from term_timer.arguments import get_arguments
 from term_timer.banner import show_banner
 from term_timer.browse.app import run_browse
 from term_timer.config import DEBUG
-from term_timer.config import DISPLAY_CONFIG
+from term_timer.config import DISPLAY_BANNER
 from term_timer.config_edit.app import run_config_edit
 from term_timer.importers import Importer
 from term_timer.interface.terminal import Terminal
@@ -56,7 +56,7 @@ def main() -> int:  # noqa: C901, PLR0911, PLR0912
 
     if (
             command in BANNER_MODES
-            and DISPLAY_CONFIG.get('banner', True)
+            and DISPLAY_BANNER
             and not os.getenv('BOTTLE_CHILD')
     ):
         show_banner(BANNER_MODES[command])

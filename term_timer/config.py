@@ -124,6 +124,29 @@ def parse_series(
     return series
 
 
+def env_flag(name: str, *, default: bool = False) -> bool:
+    """
+    Read a boolean flag from the environment.
+
+    Accepts the usual truthy and falsy spellings so that an explicit
+    ``0``, ``false`` or ``no`` really disables the flag instead of being
+    read as "the variable is set".
+
+    Args:
+        name: Environment variable name.
+        default: Value returned when the variable is unset or empty.
+
+    Returns:
+        The boolean value carried by the environment variable.
+
+    """
+    value = os.getenv(name)
+    if value is None or not value.strip():
+        return default
+
+    return value.strip().lower() not in {'0', 'false', 'no', 'off'}
+
+
 def load_config() -> dict[str, Any]:
     """
     Load configuration from TOML file or create default.
@@ -187,6 +210,11 @@ TIMER_SOUND: str = TIMER_CONFIG.get('sound', 'audio')
 
 DISPLAY_CONFIG = CONFIG.get('display', {})
 
+DISPLAY_BANNER: bool = (
+    DISPLAY_CONFIG.get('banner', True)
+    and not env_flag('TERM_TIMER_NO_BANNER')
+)
+
 UI_CONFIG = CONFIG.get('ui', {})
 
 BLUETOOTH_CONFIG = CONFIG.get('bluetooth', {})
@@ -235,4 +263,4 @@ TRAINER_XCROSS_DIFFICULTY: str = TRAINER_CONFIG.get(
 
 TRAINER_XCROSS_SLOTS: list[str] = TRAINER_CONFIG.get('xcross-slots', ['FR'])
 
-DEBUG = bool(os.getenv('TERM_TIMER_DEBUG', None))
+DEBUG: bool = env_flag('TERM_TIMER_DEBUG')
