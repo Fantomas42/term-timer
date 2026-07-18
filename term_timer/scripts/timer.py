@@ -35,6 +35,11 @@ BANNER_MODES = {
     'stats': 'Stats',
     'graph': 'Graph',
     'detail': 'Detail',
+    'index': 'Index',
+    'reset': 'Reset',
+    'edit': 'Edition',
+    'delete': 'Delete',
+    'scramble': 'Scrambles'
 }
 
 
