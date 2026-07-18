@@ -49,6 +49,7 @@ class Bluetooth:
     if TYPE_CHECKING:
         # Attributes from State mixin
         state: str
+        state_event: asyncio.Event
         # Attributes from Console mixin
         console: RichConsole
         # Attributes from StopWatch mixin
@@ -116,6 +117,7 @@ class Bluetooth:
                 self.bluetooth_interface = ReplayInterface(
                     self.bluetooth_queue,
                     self.bluetooth_replay,
+                    self,
                 )
                 self.console.print(
                     '[bluetooth]📼Bluetooth:[/bluetooth] '

@@ -17,6 +17,7 @@ from datetime import UTC
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Protocol
 from typing import Self
 from typing import TypedDict
 
@@ -38,17 +39,21 @@ logger = logging.getLogger(__name__)
 
 HUMAN_SCRAMBLE_PACE_MS = 350
 
-# The replay is blind to the timer state, so these pre-move pauses double as
-# the margin the timer needs to reach the right state before moves land:
-# start_delay before the scramble (also lets you read the screen), inspection
-# between the scramble and the solution, save_delay between the end of the
-# solution and the save gesture (the timer renders the whole analysis before
-# reaching the saving state). Used only when the file omits them.
+# Phases are gated on the timer's real state (see wait_for_state), so these
+# pre-move pauses are purely cosmetic pacing now: 0 is safe. Used only when
+# the file omits them. Kept at their v1 values, good for GIF readability.
 DEFAULT_START_DELAY = 1.5
 DEFAULT_INSPECTION = 1.0
 DEFAULT_SAVE_DELAY = 2.0
 
 SOLVED_FACELETS = VCube(size=3).state
+
+
+class TimerStateProvider(Protocol):
+    """State surface the replay schedule gates on."""
+
+    state: str
+    state_event: asyncio.Event
 
 
 class ReplayDeviceDict(TypedDict):
@@ -283,6 +288,7 @@ class ReplayInterface(BluetoothInterface):
             self,
             queue: asyncio.Queue,  # type: ignore[type-arg]
             replay: ReplayFileDict,
+            timer: TimerStateProvider,
     ) -> None:
         """
         Initialize the replay interface with the queue and validated payload.
@@ -290,11 +296,13 @@ class ReplayInterface(BluetoothInterface):
         Args:
             queue: Event queue consumed by the Bluetooth consumer.
             replay: Validated replay payload; solves are played in order.
+            timer: Timer state surface the schedule gates each phase on.
 
         """
         super().__init__(queue)
 
         self.replay = replay
+        self.timer = timer
         self.client = ReplayClient(  # type: ignore[assignment]
             replay['device']['name'],
         )
@@ -351,9 +359,22 @@ class ReplayInterface(BluetoothInterface):
 
         self.schedule_task = asyncio.create_task(self.run_schedule())
 
+    async def wait_for_state(self, *targets: str) -> None:
+        """
+        Block until the timer reaches one of the target states.
+
+        Args:
+            targets: State names that satisfy the wait.
+
+        """
+        while self.timer.state not in targets:
+            self.timer.state_event.clear()
+            await self.timer.state_event.wait()
+
     async def run_schedule(self) -> None:
         """Replay each solve: scramble, inspection, solution, save gesture."""
         for solve in self.replay['solves']:
+            await self.wait_for_state('scrambling')
             await asyncio.sleep(
                 solve.get('start_delay', DEFAULT_START_DELAY),
             )
@@ -364,12 +385,14 @@ class ReplayInterface(BluetoothInterface):
                 solve.get('scramble_moves') or solve['scramble'],
             ))
 
+            await self.wait_for_state('scrambled', 'inspecting')
             await asyncio.sleep(solve.get('inspection', DEFAULT_INSPECTION))
 
             await self.play_moves(parse_timed_moves(solve['solution']))
 
             finish_moves = solve.get('finish_moves')
             if finish_moves:
+                await self.wait_for_state('saving')
                 await asyncio.sleep(
                     solve.get('save_delay', DEFAULT_SAVE_DELAY),
                 )

@@ -277,7 +277,7 @@ def build_replay_timer(replay: ReplayFileDict) -> Timer:
     queue: EventQueue = asyncio.Queue()
     instance.bluetooth_queue = queue
     instance.bluetooth_replay = replay
-    instance.bluetooth_interface = ReplayInterface(queue, replay)
+    instance.bluetooth_interface = ReplayInterface(queue, replay, instance)
     instance.bluetooth_cube = VCube(size=3)
     instance.facelets_received_event.set()
     instance.hardware_received_event.set()
@@ -316,6 +316,20 @@ async def getch_only_save(mode: str, *_: object) -> str:
     return ''
 
 
+class StateStub:
+    """Minimal timer state surface, driven by hand instead of a real Timer."""
+
+    def __init__(self) -> None:
+        """Initialize with an empty state."""
+        self.state = ''
+        self.state_event = asyncio.Event()
+
+    def goto(self, state: str) -> None:
+        """Move to a new state and wake anyone waiting on it."""
+        self.state = state
+        self.state_event.set()
+
+
 class TestReplayScheduleEvents(unittest.IsolatedAsyncioTestCase):
     """The schedule emits the expected event sequence, no timer involved."""
 
@@ -339,14 +353,44 @@ class TestReplayScheduleEvents(unittest.IsolatedAsyncioTestCase):
             names.extend(event['event'] for event in batch)
         return names
 
+    @staticmethod
+    async def advance(
+            stub: StateStub,
+            queue: EventQueue,
+            state: str,
+            expected_qsize: int,
+    ) -> None:
+        """
+        Move the stub to a state and wait for the resulting events to land.
+
+        The schedule always finishes queuing a phase's events before it
+        blocks on the next wait_for_state, so polling the queue size is a
+        deterministic way to know the schedule reached that next wait.
+
+        Args:
+            stub: The state stub driving the schedule.
+            queue: The replay event queue the schedule pushes to.
+            state: The state to move the stub to.
+            expected_qsize: Queue size reached once the schedule, now
+                unblocked, has queued the phase's events and blocked again.
+
+        """
+        stub.goto(state)
+        await wait_until(lambda: queue.qsize() >= expected_qsize)
+
     async def test_schedule_event_sequence(self) -> None:
         """Init events precede the scramble and solution move events."""
         replay = validate_replay(deepcopy(VALID_REPLAY))
 
+        stub = StateStub()
         queue: EventQueue = asyncio.Queue()
-        interface = ReplayInterface(queue, replay)
+        interface = ReplayInterface(queue, replay, stub)
 
         await interface.send_init_commands()
+
+        await self.advance(stub, queue, 'scrambling', 7)
+        await self.advance(stub, queue, 'scrambled', 11)
+
         await asyncio.wait_for(
             cast('asyncio.Task[None]', interface.schedule_task), timeout=5.0,
         )
@@ -361,10 +405,15 @@ class TestReplayScheduleEvents(unittest.IsolatedAsyncioTestCase):
         replay = validate_replay(deepcopy(VALID_REPLAY))
         del replay['solves'][0]['scramble_moves']
 
+        stub = StateStub()
         queue: EventQueue = asyncio.Queue()
-        interface = ReplayInterface(queue, replay)
+        interface = ReplayInterface(queue, replay, stub)
 
         await interface.send_init_commands()
+
+        await self.advance(stub, queue, 'scrambling', 7)
+        await self.advance(stub, queue, 'scrambled', 11)
+
         await asyncio.wait_for(
             cast('asyncio.Task[None]', interface.schedule_task), timeout=5.0,
         )
@@ -382,10 +431,18 @@ class TestReplayScheduleEvents(unittest.IsolatedAsyncioTestCase):
         data['solves'][0]['save_delay'] = 0.0
         replay = validate_replay(data)
 
+        stub = StateStub()
         queue: EventQueue = asyncio.Queue()
-        interface = ReplayInterface(queue, replay)
+        interface = ReplayInterface(queue, replay, stub)
 
         await interface.send_init_commands()
+
+        await self.advance(stub, queue, 'scrambling', 7)
+        await self.advance(stub, queue, 'scrambled', 11)
+        await self.advance(stub, queue, 'saving', 13)
+        await self.advance(stub, queue, 'scrambling', 17)
+        await self.advance(stub, queue, 'scrambled', 21)
+
         await asyncio.wait_for(
             cast('asyncio.Task[None]', interface.schedule_task), timeout=5.0,
         )
@@ -414,15 +471,18 @@ class TestReplayInterfaceFlow(unittest.IsolatedAsyncioTestCase):
     @staticmethod
     async def drive_solve(timer: Timer, solve: ReplaySolveDict) -> bool:
         """
-        Drive one full solve, playing each phase once the state is ready.
+        Drive one full solve end to end through the real replay schedule.
 
-        Waiting for the timer state before injecting each phase keeps the
-        run deterministic, independent of the schedule's wall-clock pacing.
+        The schedule now gates every phase on the timer's own state
+        transitions (see ReplayInterface.wait_for_state), so this only
+        starts the consumer, the timer, and the schedule, and waits for
+        them to finish; no manual phase-by-phase gating is needed.
 
         Args:
             timer: A Timer wired with a ReplayInterface.
-            solve: The replay solve providing scramble_moves, solution
-                and the optional finish_moves save gesture.
+            solve: The replay solve; only used to pick the getch stub,
+                since a solve without finish_moves needs the save prompt
+                answered from the keyboard (no gesture will do it).
 
         Returns:
             The bool returned by Timer.start().
@@ -434,33 +494,14 @@ class TestReplayInterfaceFlow(unittest.IsolatedAsyncioTestCase):
         consumer = asyncio.create_task(timer.bluetooth_consumer())
         timer.bluetooth_consumer_ref = consumer
 
-        timed_scramble = parse_timed_moves(
-            solve.get('scramble_moves') or solve['scramble'],
+        getch_stub = (
+            getch_blocked if solve.get('finish_moves') else getch_only_save
         )
-
-        finish_moves = solve.get('finish_moves')
-        getch_stub = getch_blocked if finish_moves else getch_only_save
 
         try:
             with patch.object(timer, 'getch', side_effect=getch_stub):
                 run_task = asyncio.create_task(timer.start())
-
-                await wait_until(lambda: timer.state == 'scrambling')
-                await interface.play_moves(timed_scramble)
-                await asyncio.wait_for(
-                    timer.scramble_completed_event.wait(), timeout=2.0,
-                )
-
-                await wait_until(lambda: timer.state == 'scrambled')
-                await interface.play_moves(
-                    parse_timed_moves(solve['solution']),
-                )
-
-                if finish_moves:
-                    await wait_until(lambda: timer.state == 'saving')
-                    await interface.play_moves(
-                        parse_timed_moves(finish_moves),
-                    )
+                await interface.send_init_commands()
 
                 return await asyncio.wait_for(run_task, timeout=5.0)
         finally:
@@ -519,6 +560,73 @@ class TestReplayInterfaceFlow(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(timer.stack_done[0].flag, '')
         self.save_solves_mock.assert_called()
 
+    async def test_zero_delay_no_leaked_moves(self) -> None:
+        """
+        Explicit 0.0 delays don't leak moves once phases are state-gated.
 
-if __name__ == '__main__':
-    unittest.main()
+        In v1 this raced: the first scramble or solution move could be
+        consumed before the timer reached the expected state. v2 gates
+        each phase on the real state transition instead, so 0 is safe.
+        """
+        replay = validate_replay(deepcopy(VALID_REPLAY))
+        replay['solves'][0]['finish_moves'] = "U@0 U'@10"
+        replay['solves'][0]['save_delay'] = 0.0
+        timer = build_replay_timer(replay)
+
+        result = await self.drive_solve(timer, replay['solves'][0])
+
+        self.assertTrue(result)
+        self.assertEqual(len(timer.moves), 4)
+        self.assertEqual(len(timer.stack_done), 1)
+        self.assertEqual(timer.stack_done[0].flag, '')
+
+    async def test_multi_solve_end_to_end(self) -> None:
+        """
+        Two solves chained by finish_moves both complete via the schedule.
+
+        Deterministic in v2 only: the schedule waits for the timer to be
+        back in 'scrambling' for the second solve instead of racing it.
+        """
+        data: dict[str, Any] = deepcopy(VALID_REPLAY)
+        data['solves'].append(deepcopy(data['solves'][0]))
+        data['solves'][0]['finish_moves'] = "U@0 U'@250"
+        replay = validate_replay(data)
+        timer = build_replay_timer(replay)
+
+        interface = cast('ReplayInterface', timer.bluetooth_interface)
+        queue = cast('EventQueue', timer.bluetooth_queue)
+
+        consumer = asyncio.create_task(timer.bluetooth_consumer())
+        timer.bluetooth_consumer_ref = consumer
+
+        async def getch_stub(mode: str, *_: object) -> str:
+            # Only the last solve's save prompt has no gesture to answer
+            # it; every other prompt blocks and lets the schedule drive.
+            # 'q' mirrors the D D' gesture used elsewhere: save & quit.
+            if mode == 'save' and timer.scramble_index >= len(
+                    timer.scrambles,
+            ):
+                return 'q'
+            await asyncio.sleep(3600)
+            return ''
+
+        try:
+            with patch.object(timer, 'getch', side_effect=getch_stub):
+                await interface.send_init_commands()
+
+                first_result = await asyncio.wait_for(
+                    timer.start(), timeout=5.0,
+                )
+                second_result = await asyncio.wait_for(
+                    timer.start(), timeout=5.0,
+                )
+        finally:
+            await queue.put(None)
+            await consumer
+
+        self.assertTrue(first_result)
+        self.assertFalse(second_result)
+        self.assertEqual(len(timer.stack_done), 2)
+        self.assertEqual(timer.stack_done[0].flag, '')
+        self.assertEqual(timer.stack_done[1].flag, '')
+        self.save_solves_mock.assert_called()
