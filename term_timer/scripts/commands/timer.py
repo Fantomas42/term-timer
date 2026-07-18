@@ -1,10 +1,14 @@
 """Timer command."""
+import os
 from argparse import Namespace
 from pathlib import Path
 from random import Random
 
 from cubing_algs.exceptions import InvalidMoveError
+from cubing_algs.parsing import parse_moves
 
+from term_timer.bluetooth.replay import load_replay
+from term_timer.exceptions import ReplayError
 from term_timer.in_out import load_scrambles
 from term_timer.in_out import load_solves
 from term_timer.interface.console import console
@@ -22,12 +26,26 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
     """
     cube = options.cube
 
+    replay = None
+    replay_file = options.replay or os.getenv('TERM_TIMER_REPLAY')
+    if replay_file:
+        try:
+            replay = load_replay(replay_file)
+        except ReplayError as error:
+            console.print('😱', str(error), style='warning')
+            return 1
+
     session_parts = []
     if options.session:
         session_parts.append(options.session)
 
     scrambles = []
-    if options.scrambles_file:
+    if replay is not None:
+        scrambles = [
+            parse_moves(solve['scramble'])
+            for solve in replay['solves']
+        ]
+    elif options.scrambles_file:
         scrambles_file = Path(options.scrambles_file)
         scrambles = load_scrambles(scrambles_file)
         if not scrambles:
@@ -82,7 +100,10 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
         rng=rng,
     )
 
-    if options.bluetooth:
+    if replay is not None:
+        instance.bluetooth_replay = replay
+
+    if options.bluetooth or replay is not None:
         await instance.bluetooth_connect(
             use_gyroscope=options.use_gyroscope,
         )

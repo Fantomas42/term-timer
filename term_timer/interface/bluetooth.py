@@ -28,6 +28,8 @@ from term_timer.bluetooth.annotations import MoveInfo
 from term_timer.bluetooth.annotations import RotationEventDict
 from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
+from term_timer.bluetooth.replay import ReplayFileDict
+from term_timer.bluetooth.replay import ReplayInterface
 from term_timer.config import DEVICE_ADDRESS
 from term_timer.config import DEVICE_NAME
 from term_timer.config import USE_GYROSCOPE
@@ -47,6 +49,7 @@ class Bluetooth:
     if TYPE_CHECKING:
         # Attributes from State mixin
         state: str
+        state_event: asyncio.Event
         # Attributes from Console mixin
         console: RichConsole
         # Attributes from StopWatch mixin
@@ -84,6 +87,7 @@ class Bluetooth:
         self.bluetooth_interface: BluetoothInterface | None = None
         self.bluetooth_consumer_ref: asyncio.Task[None] | None = None
         self.bluetooth_hardware: dict[str, str | int] = {}
+        self.bluetooth_replay: ReplayFileDict | None = None
 
         self.facelets_received_event = asyncio.Event()
         self.hardware_received_event = asyncio.Event()
@@ -109,26 +113,38 @@ class Bluetooth:
         self.bluetooth_queue = asyncio.Queue()
 
         try:
-            self.bluetooth_interface = BluetoothInterface(
-                self.bluetooth_queue,
-            )
-            if not address:
+            if self.bluetooth_replay is not None:
+                self.bluetooth_interface = ReplayInterface(
+                    self.bluetooth_queue,
+                    self.bluetooth_replay,
+                    self,
+                )
                 self.console.print(
-                    '[bluetooth]📡Bluetooth:[/bluetooth] '
-                    'Scanning for Bluetooth cube for '
-                    f'{ self.bluetooth_interface.scan_timeout }s...',
+                    '[bluetooth]📼Bluetooth:[/bluetooth] '
+                    'Replaying a recorded solve...',
                     end='',
                 )
-
-                device = await self.bluetooth_interface.scan()
-                if device:
-                    address = device.address
             else:
-                self.console.print(
-                    '[bluetooth]📡Bluetooth:[/bluetooth] '
-                    f'Connecting to [b]{ DEVICE_NAME or address }[/b]...',
-                    end='',
+                self.bluetooth_interface = BluetoothInterface(
+                    self.bluetooth_queue,
                 )
+                if not address:
+                    self.console.print(
+                        '[bluetooth]📡Bluetooth:[/bluetooth] '
+                        'Scanning for Bluetooth cube for '
+                        f'{ self.bluetooth_interface.scan_timeout }s...',
+                        end='',
+                    )
+
+                    device = await self.bluetooth_interface.scan()
+                    if device:
+                        address = device.address
+                else:
+                    self.console.print(
+                        '[bluetooth]📡Bluetooth:[/bluetooth] '
+                        f'Connecting to [b]{ DEVICE_NAME or address }[/b]...',
+                        end='',
+                    )
 
             await self.bluetooth_interface.__aenter__(
                 address, use_gyroscope=use_gyroscope,

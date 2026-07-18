@@ -1,5 +1,6 @@
 """Command-line argument definitions and parsing for the timer application."""
 import sys
+from argparse import SUPPRESS
 from argparse import Namespace
 from argparse import _SubParsersAction
 from typing import TYPE_CHECKING
@@ -439,6 +440,12 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
     )
 
     bluetooth = parser.add_argument_group('Bluetooth')
+    bluetooth.add_argument(
+        '--replay',
+        default='',
+        metavar='FILE',
+        help=SUPPRESS,
+    )
     use_bluetooth = bool(DEVICE_ADDRESS)
     mode = 'disable' if use_bluetooth else 'enable'
     bluetooth.add_argument(
