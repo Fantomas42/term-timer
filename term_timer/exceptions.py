@@ -15,3 +15,7 @@ class InvalidAlgorithmError(Exception):
 
 class InvalidOrientationError(Exception):
     """Raised when an invalid cube orientation is specified."""
+
+
+class ReplayError(Exception):
+    """Raised when a Bluetooth replay file is missing or invalid."""
