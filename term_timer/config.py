@@ -7,6 +7,7 @@ from typing import Final
 import rtoml
 
 from term_timer.constants import CONFIG_FILE
+from term_timer.constants import CONFIG_FILE_FROM_ENV
 
 SERIES_RE: Final = re.compile(r'^(mo|ao|mb|mw)(\d+)$')
 
@@ -130,8 +131,17 @@ def load_config() -> dict[str, Any]:
     Returns:
         Dictionary containing configuration settings.
 
+    Raises:
+        FileNotFoundError: If TERM_TIMER_CONFIG points to a missing file.
+
     """
     if not CONFIG_FILE.exists():
+        if CONFIG_FILE_FROM_ENV:
+            msg = (
+                f'TERM_TIMER_CONFIG points to a missing file: {CONFIG_FILE}'
+            )
+            raise FileNotFoundError(msg)
+
         with CONFIG_FILE.open('w+', encoding='utf-8') as fd:
             fd.write(DEFAULT_CONFIG)
 

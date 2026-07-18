@@ -51,7 +51,17 @@ ROUTINES_DIRECTORY: Final = TT_DIRECTORY / 'routines'
 
 LOGGING_DIRECTORY: Final = TT_DIRECTORY / 'logs'
 
-CONFIG_FILE: Final = TT_DIRECTORY / 'config.toml'
+CONFIG_FILE_ENV: Final = os.getenv('TERM_TIMER_CONFIG')
+
+# A config path given by the environment is never created on the fly:
+# a missing file there means a misconfiguration, not a first run.
+CONFIG_FILE_FROM_ENV: Final = bool(CONFIG_FILE_ENV)
+
+CONFIG_FILE: Final = (
+    Path(CONFIG_FILE_ENV).expanduser()
+    if CONFIG_FILE_ENV
+    else TT_DIRECTORY / 'config.toml'
+)
 
 TEMPLATES_DIRECTORY: Final = Path(__file__).parent / 'server' / 'templates'
 
