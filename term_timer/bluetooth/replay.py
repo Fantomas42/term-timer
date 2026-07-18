@@ -37,12 +37,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-HUMAN_SCRAMBLE_PACE_MS = 350
+HUMAN_SCRAMBLE_PACE_MS = 250
 
 # Phases are gated on the timer's real state (see wait_for_state), so these
 # pre-move pauses are purely cosmetic pacing now: 0 is safe. Used only when
 # the file omits them. Kept at their v1 values, good for GIF readability.
-DEFAULT_START_DELAY = 1.5
+DEFAULT_START_DELAY = 1.0
 DEFAULT_INSPECTION = 1.0
 DEFAULT_SAVE_DELAY = 2.0
 
