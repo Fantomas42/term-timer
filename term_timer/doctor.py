@@ -23,7 +23,6 @@ if TYPE_CHECKING:
 TPS_LOW_THRESHOLD: Final = 1.5
 TPS_MEDIUM_THRESHOLD: Final = 2.3
 TPS_EXPECTED_MIN: Final = 2.5
-TPS_EXPECTED_MAX: Final = 4.5
 
 FLUENCY_LOW_THRESHOLD: Final = 55
 FLUENCY_MEDIUM_THRESHOLD: Final = 60
@@ -234,7 +233,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'location': 'global',
                 'metric_name': 'tps',
                 'actual_value': solve.tps,
-                'expected_value': (TPS_EXPECTED_MIN, TPS_EXPECTED_MAX),
+                'expected_value': TPS_EXPECTED_MIN,
                 'description': (
                     f'Low TPS ({solve.tps:.2f}). Turning speed needs '
                     'improvement for competitive times.'
@@ -261,7 +260,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'location': 'global',
                 'metric_name': 'tps',
                 'actual_value': solve.tps,
-                'expected_value': (TPS_EXPECTED_MIN, TPS_EXPECTED_MAX),
+                'expected_value': TPS_EXPECTED_MIN,
                 'description': (
                     f'Moderate TPS ({solve.tps:.2f}). Room for improvement '
                     'in turning speed.'
