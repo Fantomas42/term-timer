@@ -24,6 +24,10 @@ TPS_LOW_THRESHOLD: Final = 1.5
 TPS_MEDIUM_THRESHOLD: Final = 2.3
 TPS_EXPECTED_MIN: Final = 2.5
 
+PAUSE_PERCENT_TARGET: Final = 10.0
+PAUSE_PERCENT_HIGH_THRESHOLD: Final = 15.0
+PAUSE_PERCENT_CRITICAL_THRESHOLD: Final = 20.0
+
 FLUENCY_LOW_THRESHOLD: Final = 55
 FLUENCY_MEDIUM_THRESHOLD: Final = 60
 FLUENCY_IMPACT_FACTOR: Final = 0.15
@@ -273,8 +277,12 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
             },
         )
 
-    execution_pauses = solve.execution_pauses
-    if execution_pauses > 8:
+    pause_percent = (
+        100 * solve.execution_pause_time / solve.time
+        if solve.time else 0.0
+    )
+    pause_expected = (PAUSE_PERCENT_TARGET, PAUSE_PERCENT_HIGH_THRESHOLD)
+    if pause_percent > PAUSE_PERCENT_CRITICAL_THRESHOLD:
         estimated_impact = solve.execution_pause_time / SECOND
         issues.append(
             {
@@ -282,11 +290,12 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'category': DiagnosticCategory.EXECUTION_PAUSES,
                 'impact_seconds': estimated_impact,
                 'location': 'global',
-                'metric_name': 'execution_pauses',
-                'actual_value': float(execution_pauses),
-                'expected_value': 0.0,
+                'metric_name': 'execution_pause_percent',
+                'actual_value': pause_percent,
+                'expected_value': pause_expected,
                 'description': (
-                    f'Excessive pauses detected ({execution_pauses}). '
+                    f'Pauses eat {pause_percent:.1f}% of solve time '
+                    f'({solve.execution_pauses} pauses). '
                     'Significant disruption to solve flow.'
                 ),
                 'recommendation': (
@@ -298,7 +307,7 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'command': '',
             },
         )
-    elif execution_pauses > 4:
+    elif pause_percent > PAUSE_PERCENT_HIGH_THRESHOLD:
         estimated_impact = solve.execution_pause_time / SECOND
         issues.append(
             {
@@ -306,11 +315,12 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'category': DiagnosticCategory.EXECUTION_PAUSES,
                 'impact_seconds': estimated_impact,
                 'location': 'global',
-                'metric_name': 'execution_pauses',
-                'actual_value': float(execution_pauses),
-                'expected_value': 0.0,
+                'metric_name': 'execution_pause_percent',
+                'actual_value': pause_percent,
+                'expected_value': pause_expected,
                 'description': (
-                    f'Multiple pauses detected ({execution_pauses}). '
+                    f'Pauses eat {pause_percent:.1f}% of solve time '
+                    f'({solve.execution_pauses} pauses). '
                     'Lookahead needs improvement.'
                 ),
                 'recommendation': (
