@@ -142,16 +142,13 @@ def check_global_efficiency(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': float(step_missed_moves),
                 'expected_value': 0.0,
                 'description': (
-                    f'Solve contains {step_missed_moves} missed QTM '
-                    'within steps (wasted moves from do-undo sequences or '
-                    'inefficient execution). This significantly impacts '
-                    'solve time.'
+                    f'{step_missed_moves} QTM wasted within steps on '
+                    'do-undo sequences and corrections.'
                 ),
                 'recommendation': (
-                    'Practice slow solves focusing on move efficiency. '
-                    'Review your algorithms to eliminate do-undo sequences. '
-                    'Record and analyze solves to identify common '
-                    'waste patterns.'
+                    'Practice slow solves with deliberate, clean turning - '
+                    'no correction is acceptable. Drill the algorithms that '
+                    'produce fixes until they run clean at speed.'
                 ),
                 'command': '',
             },
@@ -167,14 +164,12 @@ def check_global_efficiency(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': float(step_missed_moves),
                 'expected_value': 0.0,
                 'description': (
-                    f'Solve contains {step_missed_moves} missed QTM '
-                    'within steps. Some inefficiency detected in move '
-                    'execution.'
+                    f'{step_missed_moves} QTM wasted within steps on '
+                    'do-undo sequences and corrections.'
                 ),
                 'recommendation': (
-                    'Focus on executing algorithms cleanly without '
-                    'unnecessary corrections. Double-check algorithm '
-                    'execution for common cases.'
+                    'Focus on clean algorithm execution without '
+                    'corrections, even at lower speed.'
                 ),
                 'command': '',
             },
@@ -191,13 +186,12 @@ def check_global_efficiency(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': float(transition_missed_moves),
                 'expected_value': 0.0,
                 'description': (
-                    f'{transition_missed_moves} missed moves occurred during '
-                    'transitions between steps. Poor planning between stages.'
+                    f'{transition_missed_moves} QTM wasted in transitions '
+                    'between steps.'
                 ),
                 'recommendation': (
-                    'Practice lookahead drills. Plan the next step while '
-                    'executing the current one. Work on smooth transitions '
-                    'between Cross-F2L, F2L pairs, and F2L-OLL.'
+                    'Fully recognize the next case before turning: a wasted '
+                    'correction costs more than a slightly longer look.'
                 ),
                 'command': '',
             },
@@ -239,14 +233,14 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': solve.tps,
                 'expected_value': TPS_EXPECTED_MIN,
                 'description': (
-                    f'Low TPS ({solve.tps:.2f}). Turning speed needs '
-                    'improvement for competitive times.'
+                    f'Low TPS ({solve.tps:.2f}), measured over the full '
+                    'solve, pauses included.'
                 ),
                 'recommendation': (
-                    'Practice fingertricks for all basic moves. '
-                    'Focus on smooth, continuous turning. '
-                    'Drill algorithms at increasing speeds while maintaining '
-                    'accuracy. Consider ergonomic algorithms for better flow.'
+                    'Drill fingertricks for all basic moves and run '
+                    'algorithms at increasing speed. If pause diagnostics '
+                    'also fired, fix those first - dead time lowers TPS as '
+                    'much as slow turning.'
                 ),
                 'command': '',
             },
@@ -266,12 +260,13 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': solve.tps,
                 'expected_value': TPS_EXPECTED_MIN,
                 'description': (
-                    f'Moderate TPS ({solve.tps:.2f}). Room for improvement '
-                    'in turning speed.'
+                    f'Moderate TPS ({solve.tps:.2f}), measured over the '
+                    'full solve, pauses included.'
                 ),
                 'recommendation': (
-                    'Work on fingertrick efficiency and lookahead to '
-                    'maintain continuous turning without pauses.'
+                    'Work on fingertrick efficiency to keep turning '
+                    'continuous. If pause diagnostics also fired, fix '
+                    'those first.'
                 ),
                 'command': '',
             },
@@ -295,14 +290,12 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'expected_value': pause_expected,
                 'description': (
                     f'Pauses eat {pause_percent:.1f}% of solve time '
-                    f'({solve.execution_pauses} pauses). '
-                    'Significant disruption to solve flow.'
+                    f'({solve.execution_pauses} pauses).'
                 ),
                 'recommendation': (
-                    'Practice slow solves at 50-70% speed while maintaining '
-                    'continuous turning. Focus on seeing the next step before '
-                    'finishing the current one. Gradually increase speed while '
-                    'maintaining zero pauses.'
+                    'Practice slow solves at 50-70% speed, reading the next '
+                    'case while the current one runs - never stop turning. '
+                    'Speed returns on its own once the pauses are gone.'
                 ),
                 'command': '',
             },
@@ -320,14 +313,12 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'expected_value': pause_expected,
                 'description': (
                     f'Pauses eat {pause_percent:.1f}% of solve time '
-                    f'({solve.execution_pauses} pauses). '
-                    'Lookahead needs improvement.'
+                    f'({solve.execution_pauses} pauses).'
                 ),
                 'recommendation': (
-                    # TODO: review
-                    'Work on F2L lookahead by solving pairs slower while '
-                    'tracking the next pair. Practice recognizing cases '
-                    'during execution rather than after.'
+                    'Look ahead in every step: identify the next case '
+                    'before finishing the current one. Slow solves with '
+                    'continuous turning train this best.'
                 ),
                 'command': '',
             },
@@ -350,13 +341,13 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': float(fluency),
                 'expected_value': (float(FLUENCY_LOW_THRESHOLD), 100.0),
                 'description': (
-                    f'Very low fluency ({fluency}/100). Highly inconsistent '
-                    'timing between moves indicates lack of muscle memory.'
+                    f'Very low fluency ({fluency}/100): move timing is '
+                    'highly uneven.'
                 ),
                 'recommendation': (
-                    'Practice algorithms with a metronome to build consistent '
-                    'rhythm. Execute each algorithm 50-100 times daily until '
-                    'it becomes automatic. Focus on smooth, even turning.'
+                    'Drill your algorithms until they run at an even '
+                    'rhythm, without regrips. Favor smooth, consistent '
+                    'turning over burst speed.'
                 ),
                 'command': '',
             },
@@ -377,11 +368,10 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': float(fluency),
                 'expected_value': (float(FLUENCY_MEDIUM_THRESHOLD), 100.0),
                 'description': (
-                    f'Moderate fluency ({fluency}/100). Some inconsistency '
-                    'in turning rhythm.'
+                    f'Moderate fluency ({fluency}/100): some unevenness in '
+                    'turning rhythm.'
                 ),
                 'recommendation': (
-                    'Continue practicing smooth transitions between moves. '
                     'Work on consistent fingertricks and avoid regrips '
                     'during algorithms.'
                 ),
@@ -424,13 +414,11 @@ def check_global_rotation(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': float(rotations),
                 'expected_value': (0.0, 4.0),
                 'description': (
-                    f'Excessive rotations ({rotations}). Too much time spent '
-                    'rotating the cube instead of solving.'
+                    f'{rotations} cube rotations during the solve.'
                 ),
                 'recommendation': (
-                    'Learn rotationless F2L solutions. Practice using back '
-                    'slots (BR, BL) without rotating. Study wide move '
-                    'alternatives (Rw, Lw) to avoid rotations.'
+                    'Learn rotationless alternatives (back-slot insertions, '
+                    'wide moves) for the F2L cases that make you rotate.'
                 ),
                 'command': '',
             },
@@ -447,12 +435,11 @@ def check_global_rotation(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': float(rotations),
                 'expected_value': (0.0, 4.0),
                 'description': (
-                    f'Moderate rotations ({rotations}). Could be reduced '
-                    'for better TPS.'
+                    f'{rotations} cube rotations during the solve.'
                 ),
                 'recommendation': (
-                    'Identify which F2L cases cause you to rotate and learn '
-                    'rotation-free alternatives. Practice back slot insertions.'
+                    'Identify which F2L cases make you rotate and learn '
+                    'rotation-free alternatives.'
                 ),
                 'command': '',
             },
@@ -471,13 +458,11 @@ def check_global_rotation(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': float(aufs),
                 'expected_value': (0.0, 6.0),
                 'description': (
-                    f'Excessive AUFs ({aufs} QTM). Too many U-face adjustments '
-                    'before/after algorithms.'
+                    f'{aufs} QTM spent in AUF adjustments around algorithms.'
                 ),
                 'recommendation': (
-                    'Learn algorithm variations with different pre-AUF and '
-                    'post-AUF. Study which OLL/PLL algorithm variants minimize '
-                    'total AUF count. Practice recognizing optimal angles.'
+                    'Learn OLL/PLL variants that minimize AUF from your '
+                    'usual angles.'
                 ),
                 'command': '',
             },
@@ -528,17 +513,15 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': rec_percent,
                 'expected_value': rec_expected,
                 'description': (
-                    f'Very high recognition time ({rec_percent:.1f}%). '
-                    'Spending too much time identifying cases instead of '
-                    'solving.'
+                    f'Recognition takes {rec_percent:.1f}% of solve time.'
                 ),
                 'recommendation': (
-                    'Drill case recognition separately from execution. '
-                    'Use flashcard apps for OLL/PLL recognition. '
-                    'Practice recognition during inspection for F2L pairs. '
-                    'Time your recognition to track improvement.'
+                    'Drill case recognition with the trainer until '
+                    'identification is instant. Read the next case during '
+                    'the current step - pair during cross, PLL during OLL - '
+                    'to shrink every transition.'
                 ),
-                'command': '',
+                'command': 'term-timer train -s ll',
             },
         )
     elif rec_percent > rec_limit:
@@ -553,15 +536,14 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': rec_percent,
                 'expected_value': rec_expected,
                 'description': (
-                    f'High recognition time ({rec_percent:.1f}%). '
-                    'Case identification is slowing down the solve.'
+                    f'Recognition takes {rec_percent:.1f}% of solve time.'
                 ),
                 'recommendation': (
-                    'Increase frequency of case recognition drills. '
-                    'Focus on pattern recognition for slow-to-identify cases. '
-                    'Practice F2L pair tracking during cross.'
+                    'Drill recognition for the cases that are slow to '
+                    'identify. Reading the next case while executing the '
+                    'current step removes this dead time.'
                 ),
-                'command': '',
+                'command': 'term-timer train -s ll',
             },
         )
 
@@ -626,14 +608,13 @@ def check_step_cross(
                 'actual_value': float(htm),
                 'expected_value': expected_moves,
                 'description': (
-                    f'Very inefficient cross ({htm} HTM). Optimal cross '
-                    f'should be {int(move_norm + 2)} moves or fewer.'
+                    f'{step_name} used {htm} HTM '
+                    f'({int(move_norm + 2)} or fewer expected).'
                 ),
                 'recommendation': (
-                    'Practice cross planning during inspection. '
-                    'Learn efficient cross solutions for different scrambles. '
-                    'Study cross optimization techniques (tracking pieces, '
-                    'planning edge insertion order). Use cross trainers online.'
+                    'Plan the complete cross during inspection and commit '
+                    'to it. Practice finding shorter solutions with the '
+                    'cross trainer.'
                 ),
                 'command': 'term-timer train -s cross',
             },
@@ -650,12 +631,12 @@ def check_step_cross(
                 'actual_value': float(htm),
                 'expected_value': expected_moves,
                 'description': (
-                    f'Inefficient cross ({htm} HTM). Could be optimized '
-                    f'to {int(move_norm + 2)} moves or fewer.'
+                    f'{step_name} used {htm} HTM '
+                    f'({int(move_norm + 2)} or fewer expected).'
                 ),
                 'recommendation': (
-                    'Work on cross planning during inspection. '
-                    'Try to find fewer-move solutions before executing.'
+                    'Use full inspection time to find a shorter cross '
+                    'before executing.'
                 ),
                 'command': 'term-timer train -s cross',
             },
@@ -682,13 +663,12 @@ def check_step_cross(
                 'actual_value': step['total_percent'],
                 'expected_value': (percent_norm, percent_limit),
                 'description': (
-                    f'Cross took {step["total_percent"]:.1f}% of solve time. '
-                    'Too much time spent on cross relative to total solve.'
+                    f'{step_name} took {step["total_percent"]:.1f}% of '
+                    f'solve time (norm {percent_norm:g}%).'
                 ),
                 'recommendation': (
-                    'Practice cross execution speed. Work on planning '
-                    'entire cross during inspection. Consider planning '
-                    'first F2L pair during cross execution.'
+                    'Bring cross execution to full speed, and plan the '
+                    'first F2L pair during cross to erase the transition.'
                 ),
                 'command': 'term-timer train -s cross',
             },
@@ -751,14 +731,13 @@ def check_step_f2l(
                 'actual_value': step['total_percent'],
                 'expected_value': (percent_norm, percent_limit),
                 'description': (
-                    f'{step_name} took {step["total_percent"]:.1f}% '
-                    'of solve time. F2L is taking too long.'
+                    f'{step_name} took {step["total_percent"]:.1f}% of '
+                    f'solve time (norm {percent_norm:g}%).'
                 ),
                 'recommendation': (
-                    'Focus on F2L efficiency and lookahead. '
-                    'Practice slow solves maintaining continuous turning. '
-                    'Work on predicting pair locations during cross. '
-                    'Learn efficient F2L algorithms for common cases.'
+                    'Drill your slowest F2L cases for efficient solutions. '
+                    'If lookahead diagnostics also fired, pair-finding time '
+                    'is the first lever.'
                 ),
                 'command': 'term-timer train -s f2l',
             },
@@ -782,14 +761,13 @@ def check_step_f2l(
                 'expected_value': rec_norm,
                 'description': (
                     f'{step_name} recognition is '
-                    f'{step["step_recognition_percent"]:.1f}% of step time. '
-                    'Poor lookahead - spending too long finding next pair.'
+                    f'{step["step_recognition_percent"]:.1f}% of step time - '
+                    'mostly spent finding the next pair.'
                 ),
                 'recommendation': (
-                    'Practice F2L lookahead drills. Track the next pair '
-                    'while solving current one. Solve at 50% speed while '
-                    'maintaining continuous turning. '
-                    'Practice blind F2L (solve without looking at cube).'
+                    'Track the next pair while inserting the current one, '
+                    'at reduced speed if needed so turning never stops. '
+                    'This single habit builds lookahead.'
                 ),
                 'command': 'term-timer train -s f2l',
             },
@@ -850,15 +828,12 @@ def check_step_oll(
                 'expected_value': rec_norm,
                 'description': (
                     f'OLL recognition is '
-                    f'{step["step_recognition_percent"]:.1f}% '
-                    'of step time. Case identification is too slow.'
+                    f'{step["step_recognition_percent"]:.1f}% of step time.'
                 ),
                 'recommendation': (
-                    'Practice OLL recognition drills with flashcards or apps. '
-                    'Focus on recognizing patterns (dot, line, L-shape, etc.) '
-                    'rather than memorizing all 57 cases visually. '
-                    'Learn 2-look OLL patterns first if not comfortable with '
-                    'full OLL.'
+                    'Drill OLL recognition with the trainer, reading the '
+                    'overall pattern (dot, line, shape) at a glance. Start '
+                    'identifying the case during the last F2L pair.'
                 ),
                 'command': oll_cmd,
             },
@@ -886,13 +861,11 @@ def check_step_oll(
                 'actual_value': step['total_percent'],
                 'expected_value': (percent_norm, percent_limit),
                 'description': (
-                    f'OLL took {step["total_percent"]:.1f}% of solve time. '
-                    'Too much time spent on OLL relative to total solve.'
+                    f'OLL took {step["total_percent"]:.1f}% of solve time '
+                    f'(norm {percent_norm:g}%).'
                 ),
                 'recommendation': (
-                    'Drill OLL algorithms for speed and recognition. '
-                    'Practice recognizing the case during the last '
-                    'F2L pair.'
+                    'Drill this case for execution speed with the trainer.'
                 ),
                 'command': oll_cmd,
             },
@@ -918,15 +891,13 @@ def check_step_oll(
                 'actual_value': float(htm),
                 'expected_value': (optimal_htm, htm_limit),
                 'description': (
-                    f'OLL used {htm} HTM, while the case optimal is '
-                    f'{optimal_htm:.0f} HTM plus AUF. May be using '
-                    'a sub-optimal algorithm or wrong variant.'
+                    f'OLL used {htm} HTM for a case solvable in '
+                    f'{optimal_htm:.0f} plus AUF.'
                 ),
                 'recommendation': (
-                    'Review your OLL algorithm choice for this case. '
-                    'Consider learning faster/shorter algorithms. '
-                    'Check if you used the correct algorithm or made '
-                    'execution errors.'
+                    'Compare your algorithm for this case against shorter '
+                    'ones, and check the reconstruction for execution '
+                    'errors.'
                 ),
                 'command': oll_cmd,
             },
@@ -988,15 +959,12 @@ def check_step_pll(
                 'expected_value': rec_norm,
                 'description': (
                     f'PLL recognition is '
-                    f'{step["step_recognition_percent"]:.1f}% '
-                    'of step time. Case identification is too slow.'
+                    f'{step["step_recognition_percent"]:.1f}% of step time.'
                 ),
                 'recommendation': (
-                    'Practice 2-side PLL recognition (looking at 2 adjacent '
-                    'sides to identify case). Drill PLL recognition with '
-                    'apps/flashcards. Focus on headlights, blocks, and bars '
-                    'as recognition features. Learn to recognize PLL during '
-                    'OLL execution.'
+                    'Practice 2-side recognition (headlights, blocks, bars) '
+                    'with the trainer. Read the PLL during OLL execution to '
+                    'start it without hesitation.'
                 ),
                 'command': pll_cmd,
             },
@@ -1024,13 +992,11 @@ def check_step_pll(
                 'actual_value': step['total_percent'],
                 'expected_value': (percent_norm, percent_limit),
                 'description': (
-                    f'PLL took {step["total_percent"]:.1f}% of solve time. '
-                    'Too much time spent on PLL relative to total solve.'
+                    f'PLL took {step["total_percent"]:.1f}% of solve time '
+                    f'(norm {percent_norm:g}%).'
                 ),
                 'recommendation': (
-                    'Drill PLL algorithms for speed. Practice recognizing '
-                    'the case during OLL execution to start PLL without '
-                    'hesitation.'
+                    'Drill this case for execution speed with the trainer.'
                 ),
                 'command': pll_cmd,
             },
@@ -1056,14 +1022,13 @@ def check_step_pll(
                 'actual_value': float(htm),
                 'expected_value': (optimal_htm, htm_limit),
                 'description': (
-                    f'PLL used {htm} HTM, while the case optimal is '
-                    f'{optimal_htm:.0f} HTM plus AUF. May be using '
-                    'a sub-optimal algorithm or made execution errors.'
+                    f'PLL used {htm} HTM for a case solvable in '
+                    f'{optimal_htm:.0f} plus AUF.'
                 ),
                 'recommendation': (
-                    'Review your PLL algorithm choice. '
-                    'Learn faster PLL algorithms (J-perm, Y-perm variants). '
-                    'Check for execution mistakes that added extra moves.'
+                    'Compare your algorithm for this case against shorter '
+                    'variants, and check the reconstruction for added '
+                    'moves.'
                 ),
                 'command': pll_cmd,
             },
@@ -1084,14 +1049,12 @@ def check_step_pll(
                 'description': (
                     f'PLL used {total_auf} QTM in AUF '
                     f'(pre: {step["aufs"][0] or 0}, '
-                    f'post: {step["aufs"][1] or 0}). '
-                    'Excessive U-face adjustments.'
+                    f'post: {step["aufs"][1] or 0}).'
                 ),
                 'recommendation': (
-                    'Learn PLL algorithm variants with different AUF. '
-                    'Practice recognizing optimal angles to minimize total '
-                    'AUF. Consider starting PLL from different angles to '
-                    'reduce post-AUF.'
+                    'Learn this case from other angles with alternate '
+                    'variants - a good variant choice removes most pre- '
+                    'and post-AUF.'
                 ),
                 'command': pll_cmd,
             },
