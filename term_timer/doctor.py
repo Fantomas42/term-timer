@@ -14,6 +14,10 @@ from typing import TypedDict
 
 from cubing_algs.cases import get_case
 
+from term_timer.constants import FLUENCY_LOW_THRESHOLD
+from term_timer.constants import FLUENCY_MEDIUM_THRESHOLD
+from term_timer.constants import FLUENCY_STEP_LOW_THRESHOLD
+from term_timer.constants import FLUENCY_STEP_MEDIUM_THRESHOLD
 from term_timer.constants import SECOND
 
 if TYPE_CHECKING:
@@ -28,8 +32,6 @@ PAUSE_PERCENT_TARGET: Final = 10.0
 PAUSE_PERCENT_HIGH_THRESHOLD: Final = 15.0
 PAUSE_PERCENT_CRITICAL_THRESHOLD: Final = 20.0
 
-FLUENCY_LOW_THRESHOLD: Final = 55
-FLUENCY_MEDIUM_THRESHOLD: Final = 60
 FLUENCY_IMPACT_FACTOR: Final = 0.15
 
 TIMING_MEDIUM_FACTOR: Final = 1.1
@@ -550,6 +552,72 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
     return issues
 
 
+def check_step_fluency(
+    step_name: str,
+    fluency: int,
+    execution: int,
+    command: str,
+) -> list[Diagnostic]:
+    """
+    Detect uneven turning rhythm within a single step.
+
+    Step fluency is measured on execution only, without the recognition
+    phase that precedes the step, so it is compared to thresholds much
+    higher than the whole-solve ones.
+
+    Args:
+        step_name: Where the issue occurs, used as diagnostic location
+        fluency: Fluency score of the step (0-100)
+        execution: Execution duration of the step in nanoseconds
+        command: Command to practice this step
+
+    Returns:
+        List of detected fluency diagnostics
+
+    """
+    diagnostics: list[Diagnostic] = []
+
+    # A step of two moves or less has no meaningful rhythm.
+    if fluency <= 0 or fluency >= FLUENCY_STEP_MEDIUM_THRESHOLD:
+        return diagnostics
+
+    severity = (
+        DiagnosticSeverity.HIGH
+        if fluency < FLUENCY_STEP_LOW_THRESHOLD
+        else DiagnosticSeverity.MEDIUM
+    )
+
+    diagnostics.append(
+        {
+            'severity': severity,
+            'category': DiagnosticCategory.EXECUTION_FLUENCY,
+            'impact_seconds': (
+                execution / SECOND
+                * (FLUENCY_STEP_MEDIUM_THRESHOLD - fluency)
+                / FLUENCY_STEP_MEDIUM_THRESHOLD
+                * FLUENCY_IMPACT_FACTOR
+            ),
+            'location': step_name,
+            'metric_name': 'fluency',
+            'actual_value': float(fluency),
+            'expected_value': (float(FLUENCY_STEP_MEDIUM_THRESHOLD), 100.0),
+            'description': (
+                f'{step_name} fluency is {fluency}/100 '
+                f'(norm {FLUENCY_STEP_MEDIUM_THRESHOLD}): turning rhythm '
+                'is uneven within the step.'
+            ),
+            'recommendation': (
+                'Drill this step at a steady rhythm until the fingertricks '
+                'chain without regrips. Raise speed only once the timing '
+                'is even.'
+            ),
+            'command': command,
+        },
+    )
+
+    return diagnostics
+
+
 def check_step_cross(
     solve: 'Solve',
     step: 'StepSummary',
@@ -674,6 +742,15 @@ def check_step_cross(
             },
         )
 
+    diagnostics.extend(
+        check_step_fluency(
+            step_name,
+            solve.compute_fluency(step['moves']),
+            step['execution'],
+            'term-timer train -s cross',
+        ),
+    )
+
     return diagnostics
 
 
@@ -773,6 +850,26 @@ def check_step_f2l(
             },
         )
 
+    # The aggregated F2L step spans the transitions between pairs, whose
+    # lookahead pauses would dominate its rhythm: fluency is averaged over
+    # the individual pairs instead. Methods without pair substeps expose
+    # no usable measure and are left alone.
+    pairs = [
+        pair_fluency
+        for pair in solve.method_applied.summary
+        if pair['type'] == 'substep' and 'F2L' in pair['name']
+        if (pair_fluency := solve.compute_fluency(pair['moves'])) > 0
+    ]
+    if pairs:
+        diagnostics.extend(
+            check_step_fluency(
+                step_name,
+                round(sum(pairs) / len(pairs)),
+                step['execution'],
+                'term-timer train -s f2l',
+            ),
+        )
+
     return diagnostics
 
 
@@ -870,6 +967,15 @@ def check_step_oll(
                 'command': oll_cmd,
             },
         )
+
+    diagnostics.extend(
+        check_step_fluency(
+            'OLL',
+            solve.compute_fluency(step['moves']),
+            step['execution'],
+            oll_cmd,
+        ),
+    )
 
     if not case_name:
         return diagnostics
@@ -1001,6 +1107,15 @@ def check_step_pll(
                 'command': pll_cmd,
             },
         )
+
+    diagnostics.extend(
+        check_step_fluency(
+            'PLL',
+            solve.compute_fluency(step['moves']),
+            step['execution'],
+            pll_cmd,
+        ),
+    )
 
     if not case_name:
         return diagnostics

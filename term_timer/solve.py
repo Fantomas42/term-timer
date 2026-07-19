@@ -855,7 +855,9 @@ class Solve:  # noqa: PLR0904
             fluency = self.compute_fluency(step['moves'])
             fluency_line = ''
             if fluency > 0:
-                fluency_line = format_fluency(fluency)
+                fluency_line = format_fluency(
+                    fluency, step=step['type'] != 'virtual',
+                )
 
             line += (
                 f'{ header }'

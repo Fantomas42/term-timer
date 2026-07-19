@@ -13,6 +13,10 @@ from cubing_algs.constants import ROTATIONS
 
 from term_timer.config import SERVER_CONFIG
 from term_timer.constants import DNF
+from term_timer.constants import FLUENCY_LOW_THRESHOLD
+from term_timer.constants import FLUENCY_MEDIUM_THRESHOLD
+from term_timer.constants import FLUENCY_STEP_LOW_THRESHOLD
+from term_timer.constants import FLUENCY_STEP_MEDIUM_THRESHOLD
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
@@ -230,21 +234,29 @@ def format_flag(flag: SolveFlag) -> str:
     return f'[{ flag_klass }]{ flag }[/{ flag_klass }]'
 
 
-def format_fluency(fluency: int) -> str:
+def format_fluency(fluency: int, *, step: bool = False) -> str:
     """
     Format fluency score from his value.
 
     Args:
         fluency: Fluency value to format.
+        step: Whether the value comes from a single step rather than a
+            whole solve, selecting the higher step thresholds.
 
     Returns:
         Fluency value formatted.
 
     """
+    medium = FLUENCY_MEDIUM_THRESHOLD
+    low = FLUENCY_LOW_THRESHOLD
+    if step:
+        medium = FLUENCY_STEP_MEDIUM_THRESHOLD
+        low = FLUENCY_STEP_LOW_THRESHOLD
+
     fluency_klass = 'warning'
-    if fluency >= 65:
+    if fluency >= medium:
         fluency_klass = 'success'
-    elif fluency >= 55:
+    elif fluency >= low:
         fluency_klass = 'caution'
 
     return (
