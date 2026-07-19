@@ -107,6 +107,16 @@ disable_error_code = ["import-untyped"]
 exclude = ["poc"]
 python_version = 3.12
 
+[tool.pyright]
+include = ["term_timer"]
+exclude = [
+  "term_timer/tests",
+  "term_timer/poc",
+]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+reportMissingImports = true
+
 [tool.coverage.run]
 branch = true
 omit = [
