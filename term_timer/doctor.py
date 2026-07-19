@@ -235,8 +235,8 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': solve.tps,
                 'expected_value': TPS_EXPECTED_MIN,
                 'description': (
-                    f'Low TPS ({solve.tps:.2f}), measured over the full '
-                    'solve, pauses included.'
+                    f'Low TPS at {solve.tps:.2f} over the full solve, '
+                    f'pauses included (norm {TPS_EXPECTED_MIN:g}).'
                 ),
                 'recommendation': (
                     'Drill fingertricks for all basic moves and run '
@@ -262,8 +262,8 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': solve.tps,
                 'expected_value': TPS_EXPECTED_MIN,
                 'description': (
-                    f'Moderate TPS ({solve.tps:.2f}), measured over the '
-                    'full solve, pauses included.'
+                    f'Moderate TPS at {solve.tps:.2f} over the full solve, '
+                    f'pauses included (norm {TPS_EXPECTED_MIN:g}).'
                 ),
                 'recommendation': (
                     'Work on fingertrick efficiency to keep turning '
@@ -291,8 +291,9 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': pause_percent,
                 'expected_value': pause_expected,
                 'description': (
-                    f'Pauses eat {pause_percent:.1f}% of solve time '
-                    f'({solve.execution_pauses} pauses).'
+                    f'{solve.execution_pauses} pauses eat '
+                    f'{pause_percent:.1f}% of solve time '
+                    f'(norm {PAUSE_PERCENT_TARGET:g}%).'
                 ),
                 'recommendation': (
                     'Practice slow solves at 50-70% speed, reading the next '
@@ -314,8 +315,9 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': pause_percent,
                 'expected_value': pause_expected,
                 'description': (
-                    f'Pauses eat {pause_percent:.1f}% of solve time '
-                    f'({solve.execution_pauses} pauses).'
+                    f'{solve.execution_pauses} pauses eat '
+                    f'{pause_percent:.1f}% of solve time '
+                    f'(norm {PAUSE_PERCENT_TARGET:g}%).'
                 ),
                 'recommendation': (
                     'Look ahead in every step: identify the next case '
@@ -334,17 +336,17 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'category': DiagnosticCategory.EXECUTION_FLUENCY,
                 'impact_seconds': (
                     solve.execution_time / SECOND
-                    * (FLUENCY_LOW_THRESHOLD - fluency)
-                    / FLUENCY_LOW_THRESHOLD
+                    * (FLUENCY_MEDIUM_THRESHOLD - fluency)
+                    / FLUENCY_MEDIUM_THRESHOLD
                     * FLUENCY_IMPACT_FACTOR
                 ),
                 'location': 'global',
                 'metric_name': 'fluency',
                 'actual_value': float(fluency),
-                'expected_value': (float(FLUENCY_LOW_THRESHOLD), 100.0),
+                'expected_value': (float(FLUENCY_MEDIUM_THRESHOLD), 100.0),
                 'description': (
-                    f'Very low fluency ({fluency}/100): move timing is '
-                    'highly uneven.'
+                    f'Move timing is highly uneven, fluency at {fluency}% '
+                    f'(norm {FLUENCY_MEDIUM_THRESHOLD}%).'
                 ),
                 'recommendation': (
                     'Drill your algorithms until they run at an even '
@@ -370,8 +372,8 @@ def check_global_execution(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': float(fluency),
                 'expected_value': (float(FLUENCY_MEDIUM_THRESHOLD), 100.0),
                 'description': (
-                    f'Moderate fluency ({fluency}/100): some unevenness in '
-                    'turning rhythm.'
+                    f'Some unevenness in turning rhythm, fluency at '
+                    f'{fluency}% (norm {FLUENCY_MEDIUM_THRESHOLD}%).'
                 ),
                 'recommendation': (
                     'Work on consistent fingertricks and avoid regrips '
@@ -515,7 +517,8 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': rec_percent,
                 'expected_value': rec_expected,
                 'description': (
-                    f'Recognition takes {rec_percent:.1f}% of solve time.'
+                    f'Recognition takes {rec_percent:.1f}% of solve time '
+                    f'(norm {rec_norm_max:g}%).'
                 ),
                 'recommendation': (
                     'Drill case recognition with the trainer until '
@@ -538,7 +541,8 @@ def check_global_recognition(solve: 'Solve') -> list[Diagnostic]:
                 'actual_value': rec_percent,
                 'expected_value': rec_expected,
                 'description': (
-                    f'Recognition takes {rec_percent:.1f}% of solve time.'
+                    f'Recognition takes {rec_percent:.1f}% of solve time '
+                    f'(norm {rec_norm_max:g}%).'
                 ),
                 'recommendation': (
                     'Drill recognition for the cases that are slow to '
@@ -602,9 +606,8 @@ def check_step_fluency(
             'actual_value': float(fluency),
             'expected_value': (float(FLUENCY_STEP_MEDIUM_THRESHOLD), 100.0),
             'description': (
-                f'{step_name} fluency is {fluency}/100 '
-                f'(norm {FLUENCY_STEP_MEDIUM_THRESHOLD}): turning rhythm '
-                'is uneven within the step.'
+                f'{step_name} turning rhythm is uneven, fluency at '
+                f'{fluency}% (norm {FLUENCY_STEP_MEDIUM_THRESHOLD}%).'
             ),
             'recommendation': (
                 'Drill this step at a steady rhythm until the fingertricks '
@@ -676,8 +679,7 @@ def check_step_cross(
                 'actual_value': float(htm),
                 'expected_value': expected_moves,
                 'description': (
-                    f'{step_name} used {htm} HTM '
-                    f'({int(move_norm + 2)} or fewer expected).'
+                    f'{step_name} used {htm} HTM (norm {move_norm:g}).'
                 ),
                 'recommendation': (
                     'Plan the complete cross during inspection and commit '
@@ -699,8 +701,7 @@ def check_step_cross(
                 'actual_value': float(htm),
                 'expected_value': expected_moves,
                 'description': (
-                    f'{step_name} used {htm} HTM '
-                    f'({int(move_norm + 2)} or fewer expected).'
+                    f'{step_name} used {htm} HTM (norm {move_norm:g}).'
                 ),
                 'recommendation': (
                     'Use full inspection time to find a shorter cross '
@@ -837,9 +838,10 @@ def check_step_f2l(
                 'actual_value': step['step_recognition_percent'],
                 'expected_value': rec_norm,
                 'description': (
-                    f'{step_name} recognition is '
-                    f'{step["step_recognition_percent"]:.1f}% of step time - '
-                    'mostly spent finding the next pair.'
+                    f'{step_name} recognition, mostly spent finding the '
+                    f'next pair, is '
+                    f'{step["step_recognition_percent"]:.1f}% of step time '
+                    f'(norm {rec_norm.high:g}%).'
                 ),
                 'recommendation': (
                     'Track the next pair while inserting the current one, '
@@ -925,7 +927,8 @@ def check_step_oll(
                 'expected_value': rec_norm,
                 'description': (
                     f'OLL recognition is '
-                    f'{step["step_recognition_percent"]:.1f}% of step time.'
+                    f'{step["step_recognition_percent"]:.1f}% of step time '
+                    f'(norm {rec_norm.high:g}%).'
                 ),
                 'recommendation': (
                     'Drill OLL recognition with the trainer, reading the '
@@ -997,8 +1000,7 @@ def check_step_oll(
                 'actual_value': float(htm),
                 'expected_value': (optimal_htm, htm_limit),
                 'description': (
-                    f'OLL used {htm} HTM for a case solvable in '
-                    f'{optimal_htm:.0f} plus AUF.'
+                    f'OLL used {htm} HTM (norm {optimal_htm:g} plus AUF).'
                 ),
                 'recommendation': (
                     'Compare your algorithm for this case against shorter '
@@ -1065,7 +1067,8 @@ def check_step_pll(
                 'expected_value': rec_norm,
                 'description': (
                     f'PLL recognition is '
-                    f'{step["step_recognition_percent"]:.1f}% of step time.'
+                    f'{step["step_recognition_percent"]:.1f}% of step time '
+                    f'(norm {rec_norm.high:g}%).'
                 ),
                 'recommendation': (
                     'Practice 2-side recognition (headlights, blocks, bars) '
@@ -1137,8 +1140,7 @@ def check_step_pll(
                 'actual_value': float(htm),
                 'expected_value': (optimal_htm, htm_limit),
                 'description': (
-                    f'PLL used {htm} HTM for a case solvable in '
-                    f'{optimal_htm:.0f} plus AUF.'
+                    f'PLL used {htm} HTM (norm {optimal_htm:g} plus AUF).'
                 ),
                 'recommendation': (
                     'Compare your algorithm for this case against shorter '
