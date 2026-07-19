@@ -29,6 +29,9 @@ FLUENCY_LOW_THRESHOLD: Final = 55
 FLUENCY_MEDIUM_THRESHOLD: Final = 60
 FLUENCY_IMPACT_FACTOR: Final = 0.15
 
+TIMING_MEDIUM_FACTOR: Final = 1.1
+TIMING_HIGH_FACTOR: Final = 1.25
+
 
 class DiagnosticSeverity(StrEnum):
     """Severity levels for detected issues."""
@@ -649,13 +652,22 @@ def check_step_cross(
             },
         )
 
-    percent_limit = percent_norm * 1.25
+    percent_limit = percent_norm * TIMING_MEDIUM_FACTOR
     if step['total_percent'] > percent_limit:
+        severity = (
+            DiagnosticSeverity.HIGH
+            if step['total_percent'] > percent_norm * TIMING_HIGH_FACTOR
+            else DiagnosticSeverity.MEDIUM
+        )
+        estimated_impact = (
+            (step['total_percent'] - percent_norm) / 100
+            * solve.time / SECOND
+        )
         diagnostics.append(
             {
-                'severity': DiagnosticSeverity.MEDIUM,
+                'severity': severity,
                 'category': DiagnosticCategory.TIMING_DISTRIBUTION,
-                'impact_seconds': 0.3,
+                'impact_seconds': estimated_impact,
                 'location': step_name,
                 'metric_name': 'total_percent',
                 'actual_value': step['total_percent'],
@@ -709,13 +721,22 @@ def check_step_f2l(
     percent_norm = norms['percent']['F2L']
     rec_norm = recognition.get(step_name) or recognition.get('F2L')
 
-    percent_limit = percent_norm * 1.1
+    percent_limit = percent_norm * TIMING_MEDIUM_FACTOR
     if step['total_percent'] > percent_limit:
+        severity = (
+            DiagnosticSeverity.HIGH
+            if step['total_percent'] > percent_norm * TIMING_HIGH_FACTOR
+            else DiagnosticSeverity.MEDIUM
+        )
+        estimated_impact = (
+            (step['total_percent'] - percent_norm) / 100
+            * solve.time / SECOND
+        )
         diagnostics.append(
             {
-                'severity': DiagnosticSeverity.HIGH,
+                'severity': severity,
                 'category': DiagnosticCategory.TIMING_DISTRIBUTION,
-                'impact_seconds': 1.0,
+                'impact_seconds': estimated_impact,
                 'location': step_name,
                 'metric_name': 'total_percent',
                 'actual_value': step['total_percent'],
@@ -737,7 +758,10 @@ def check_step_f2l(
     if rec_norm is not None and (
             step['step_recognition_percent'] > rec_norm.high
     ):
-        estimated_impact = step['recognition'] / SECOND * 0.2
+        estimated_impact = (
+            (step['step_recognition_percent'] - rec_norm.high) / 100
+            * step['total'] / SECOND
+        )
         diagnostics.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
@@ -802,11 +826,15 @@ def check_step_oll(
     if rec_norm is not None and (
             step['step_recognition_percent'] > rec_norm.high
     ):
+        estimated_impact = (
+            (step['step_recognition_percent'] - rec_norm.high) / 100
+            * step['total'] / SECOND
+        )
         diagnostics.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
                 'category': DiagnosticCategory.RECOGNITION_SLOW,
-                'impact_seconds': step['recognition'] / SECOND * 0.3,
+                'impact_seconds': estimated_impact,
                 'location': 'OLL',
                 'metric_name': 'step_recognition_percent',
                 'actual_value': step['step_recognition_percent'],
@@ -822,6 +850,40 @@ def check_step_oll(
                     'rather than memorizing all 57 cases visually. '
                     'Learn 2-look OLL patterns first if not comfortable with '
                     'full OLL.'
+                ),
+                'command': oll_cmd,
+            },
+        )
+
+    percent_norm = norms['percent']['OLL']
+    percent_limit = percent_norm * TIMING_MEDIUM_FACTOR
+    if step['total_percent'] > percent_limit:
+        severity = (
+            DiagnosticSeverity.HIGH
+            if step['total_percent'] > percent_norm * TIMING_HIGH_FACTOR
+            else DiagnosticSeverity.MEDIUM
+        )
+        estimated_impact = (
+            (step['total_percent'] - percent_norm) / 100
+            * solve.time / SECOND
+        )
+        diagnostics.append(
+            {
+                'severity': severity,
+                'category': DiagnosticCategory.TIMING_DISTRIBUTION,
+                'impact_seconds': estimated_impact,
+                'location': 'OLL',
+                'metric_name': 'total_percent',
+                'actual_value': step['total_percent'],
+                'expected_value': (percent_norm, percent_limit),
+                'description': (
+                    f'OLL took {step["total_percent"]:.1f}% of solve time. '
+                    'Too much time spent on OLL relative to total solve.'
+                ),
+                'recommendation': (
+                    'Drill OLL algorithms for speed and recognition. '
+                    'Practice recognizing the case during the last '
+                    'F2L pair.'
                 ),
                 'command': oll_cmd,
             },
@@ -902,11 +964,15 @@ def check_step_pll(
     if rec_norm is not None and (
             step['step_recognition_percent'] > rec_norm.high
     ):
+        estimated_impact = (
+            (step['step_recognition_percent'] - rec_norm.high) / 100
+            * step['total'] / SECOND
+        )
         diagnostics.append(
             {
                 'severity': DiagnosticSeverity.HIGH,
                 'category': DiagnosticCategory.RECOGNITION_SLOW,
-                'impact_seconds': step['recognition'] / SECOND * 0.4,
+                'impact_seconds': estimated_impact,
                 'location': 'PLL',
                 'metric_name': 'step_recognition_percent',
                 'actual_value': step['step_recognition_percent'],
@@ -922,6 +988,40 @@ def check_step_pll(
                     'apps/flashcards. Focus on headlights, blocks, and bars '
                     'as recognition features. Learn to recognize PLL during '
                     'OLL execution.'
+                ),
+                'command': pll_cmd,
+            },
+        )
+
+    percent_norm = norms['percent']['PLL']
+    percent_limit = percent_norm * TIMING_MEDIUM_FACTOR
+    if step['total_percent'] > percent_limit:
+        severity = (
+            DiagnosticSeverity.HIGH
+            if step['total_percent'] > percent_norm * TIMING_HIGH_FACTOR
+            else DiagnosticSeverity.MEDIUM
+        )
+        estimated_impact = (
+            (step['total_percent'] - percent_norm) / 100
+            * solve.time / SECOND
+        )
+        diagnostics.append(
+            {
+                'severity': severity,
+                'category': DiagnosticCategory.TIMING_DISTRIBUTION,
+                'impact_seconds': estimated_impact,
+                'location': 'PLL',
+                'metric_name': 'total_percent',
+                'actual_value': step['total_percent'],
+                'expected_value': (percent_norm, percent_limit),
+                'description': (
+                    f'PLL took {step["total_percent"]:.1f}% of solve time. '
+                    'Too much time spent on PLL relative to total solve.'
+                ),
+                'recommendation': (
+                    'Drill PLL algorithms for speed. Practice recognizing '
+                    'the case during OLL execution to start PLL without '
+                    'hesitation.'
                 ),
                 'command': pll_cmd,
             },
@@ -962,11 +1062,12 @@ def check_step_pll(
 
     total_auf = (step['aufs'][0] or 0) + (step['aufs'][1] or 0)
     if total_auf > 4:
+        estimated_impact = (total_auf - 4) * solve.move_speed / SECOND
         diagnostics.append(
             {
                 'severity': DiagnosticSeverity.MEDIUM,
                 'category': DiagnosticCategory.AUFS_EXCESSIVE,
-                'impact_seconds': 0.15,
+                'impact_seconds': estimated_impact,
                 'location': 'PLL',
                 'metric_name': 'aufs',
                 'actual_value': float(total_auf),
