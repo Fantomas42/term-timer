@@ -260,7 +260,7 @@ class Bluetooth:
 
             if 'hardware_version' in self.bluetooth_hardware:
                 device_label += (
-                    f'v{ self.bluetooth_hardware["hardware_version"] }'
+                    f' v{ self.bluetooth_hardware["hardware_version"] }'
                 )
 
         battery_level = self.bluetooth_hardware.get('battery_level')
