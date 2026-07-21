@@ -1,5 +1,13 @@
 # Term Timer
 
+<p align="center">
+  <picture>
+    <source type="image/svg+xml" srcset="https://raw.githubusercontent.com/Fantomas42/term-timer/develop/.github/assets/banner.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Fantomas42/term-timer/develop/.github/assets/banner-dark.png">
+    <img src="https://raw.githubusercontent.com/Fantomas42/term-timer/develop/.github/assets/banner-light.png" alt="term-timer" width="636">
+  </picture>
+</p>
+
 Practice your speed cubing skills on your terminal, for a full 80's vibe.
 
 [![image](https://github.com/fantomas42/term-timer/actions/workflows/kwalitee.yml/badge.svg)](https://github.com/fantomas42/term-timer/actions/workflows/kwalitee.yml)

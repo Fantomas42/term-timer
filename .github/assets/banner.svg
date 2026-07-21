@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 636 136" width="636" height="136" role="img" aria-label="term-timer">
+  <title>term-timer</title>
+  <style>
+    .w { fill: #1B2233; } .t { fill: #57606A; }
+    @media (prefers-color-scheme: dark) {
+      .w { fill: #F8FAFC; } .t { fill: #8B949E; }
+    }
+  </style>
+  <svg x="20" y="20" width="96" height="96" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bnr-grad" x1="12" y1="6" x2="52" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#00FFFF"/>
+      <stop offset="0.1429" stop-color="#00D7FF"/>
+      <stop offset="0.2857" stop-color="#00AFFF"/>
+      <stop offset="0.4286" stop-color="#5F87FF"/>
+      <stop offset="0.5714" stop-color="#875FFF"/>
+      <stop offset="0.7143" stop-color="#AF5FFF"/>
+      <stop offset="0.8571" stop-color="#D75FFF"/>
+      <stop offset="1.0000" stop-color="#FF00FF"/>
+    </linearGradient>
+    <linearGradient id="bnr-sky" x1="0" y1="0" x2="0" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1B0B3B"/>
+      <stop offset="1" stop-color="#0D0221"/>
+    </linearGradient>
+    <filter id="bnr-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#FF00FF" flood-opacity="0.75"/>
+    </filter>
+    <pattern id="bnr-scan" width="4" height="3" patternUnits="userSpaceOnUse">
+      <animateTransform attributeName="patternTransform" type="translate" from="0 0" to="0 3" dur="1.0s" calcMode="linear" repeatCount="indefinite"/>
+      <rect width="4" height="1" fill="#000000" fill-opacity="0.30"/>
+    </pattern>
+  </defs>
+  <clipPath id="bnr-tile">
+    <rect width="64" height="64" rx="14"/>
+  </clipPath>
+  <rect width="64" height="64" rx="14" fill="url(#bnr-sky)"/>
+  <g transform="translate(0.00,0.00) scale(1)" filter="url(#bnr-glow)">
+  <polygon points="15,22 32,12 49,22 32,32" fill="url(#bnr-grad)"/>
+  <polygon points="15,22 32,12 49,22 32,32" fill="#FFFFFF" fill-opacity="0.22"/>
+  <polygon points="15,22 32,32 32,52 15,42" fill="url(#bnr-grad)"/>
+  <polygon points="49,22 49,42 32,52 32,32" fill="url(#bnr-grad)"/>
+  <polygon points="49,22 49,42 32,52 32,32" fill="#000000" fill-opacity="0.34"/>
+  <g stroke="#0D0221" stroke-opacity="0.45" stroke-width="1.6" stroke-linecap="round">
+    <line x1="37.67" y1="15.33" x2="20.67" y2="25.33"/>
+    <line x1="20.67" y1="18.67" x2="37.67" y2="28.67"/>
+    <line x1="49.00" y1="28.67" x2="32.00" y2="38.67"/>
+    <line x1="37.67" y1="28.67" x2="37.67" y2="48.67"/>
+    <line x1="15.00" y1="28.67" x2="32.00" y2="38.67"/>
+    <line x1="20.67" y1="25.33" x2="20.67" y2="45.33"/>
+    <line x1="43.33" y1="18.67" x2="26.33" y2="28.67"/>
+    <line x1="26.33" y1="15.33" x2="43.33" y2="25.33"/>
+    <line x1="49.00" y1="35.33" x2="32.00" y2="45.33"/>
+    <line x1="43.33" y1="25.33" x2="43.33" y2="45.33"/>
+    <line x1="15.00" y1="35.33" x2="32.00" y2="45.33"/>
+    <line x1="26.33" y1="28.67" x2="26.33" y2="48.67"/>
+  </g>
+  <polygon points="32,12 49,22 49,42 32,52 15,42 15,22" fill="none" stroke="#0D0221" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round"/>
+  </g>
+  <rect width="64" height="64" rx="14" fill="url(#bnr-scan)"/>
+  </svg>
+  <text x="142" y="66" font-family="ui-monospace,'SF Mono','JetBrains Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="42" font-weight="600" class="w">term-timer</text>
+  <text x="142" y="94" font-family="ui-monospace,'SF Mono','JetBrains Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="15" font-weight="400" class="t">Practice your speed cubing skills on your terminal.</text>
+</svg>
