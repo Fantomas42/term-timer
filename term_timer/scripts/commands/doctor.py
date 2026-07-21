@@ -26,9 +26,9 @@ def doctor(options: Namespace) -> int:
         options.exclude_sessions,
         options.devices,
     )
-    advanced = [solve for solve in stack if solve.advanced]
+    analysable = [solve for solve in stack if solve.analysable]
 
-    if not advanced:
+    if not analysable:
         console.print(
             '🤔 No connected solves to diagnose'
             ' matching requirements.',
@@ -37,7 +37,7 @@ def doctor(options: Namespace) -> int:
         return 1
 
     count = options.count
-    window = advanced[-count:]
+    window = analysable[-count:]
 
     console.print('Diagnosing solves...', end='')
 
@@ -45,7 +45,7 @@ def doctor(options: Namespace) -> int:
 
     previous = None
     if options.trend:
-        previous_window = advanced[-2 * count:-count]
+        previous_window = analysable[-2 * count:-count]
         if previous_window:
             previous = SolvesDoctorAggregator(
                 options.method, previous_window,

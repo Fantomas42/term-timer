@@ -28,8 +28,8 @@ def print_session_doctor(
     """
     Print the aggregated doctor report of the solves just done.
 
-    Displayed when the round has more than two connected solves. Trend
-    markers compare the round against a baseline of the connected solves
+    Displayed when the round has more than two analysable solves. Trend
+    markers compare the round against a baseline of the analysable solves
     preceding it, sized as max(round size, DOCTOR_SESSION_BASELINE_MIN).
     When fewer than DOCTOR_SESSION_BASELINE_MIN prior solves are
     available the baseline is too thin, so no trend is shown.
@@ -40,18 +40,18 @@ def print_session_doctor(
         history: Solves of the session preceding the round.
 
     """
-    advanced_done = [solve for solve in stack_done if solve.advanced]
-    if len(advanced_done) <= 2:
+    analysable_done = [solve for solve in stack_done if solve.analysable]
+    if len(analysable_done) <= 2:
         return
 
-    aggregator = SolvesDoctorAggregator(method_name, advanced_done)
+    aggregator = SolvesDoctorAggregator(method_name, analysable_done)
     if not aggregator.results['total']:
         return
 
     previous = None
-    earlier_advanced = [solve for solve in history if solve.advanced]
-    baseline_size = max(len(advanced_done), DOCTOR_SESSION_BASELINE_MIN)
-    previous_window = earlier_advanced[-baseline_size:]
+    earlier_analysable = [solve for solve in history if solve.analysable]
+    baseline_size = max(len(analysable_done), DOCTOR_SESSION_BASELINE_MIN)
+    previous_window = earlier_analysable[-baseline_size:]
     if len(previous_window) >= DOCTOR_SESSION_BASELINE_MIN:
         previous = SolvesDoctorAggregator(
             method_name, previous_window,

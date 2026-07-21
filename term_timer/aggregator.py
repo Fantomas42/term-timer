@@ -37,7 +37,7 @@ def analyse_solve_worker(solve: Solve, method_name: str) -> SolveAnalysis:
         Dictionary containing steps analysis, score, and optional solve.
 
     """
-    if not solve.advanced:
+    if not solve.analysable:
         return {
             'steps': {},
             'score': 0.0,
@@ -76,7 +76,7 @@ def diagnose_solve_worker(solve: Solve, method_name: str) -> DoctorAnalysis:
         Dictionary flagging diagnosability and listing diagnostics.
 
     """
-    if not solve.advanced:
+    if not solve.analysable:
         return {
             'diagnosed': False,
             'diagnostics': [],

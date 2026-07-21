@@ -24,10 +24,10 @@ if TYPE_CHECKING:
 class TestAnalyseSolveWorker(unittest.TestCase):
     """Tests for analyse_solve_worker function."""
 
-    def test_analyse_solve_worker_not_advanced(self) -> None:
-        """Test that worker returns empty results for non-advanced solve."""
+    def test_analyse_solve_worker_not_analysable(self) -> None:
+        """Test that worker returns empty results for a non-analysable solve."""
         solve = Mock()
-        solve.advanced = False
+        solve.analysable = False
 
         result = analyse_solve_worker(solve, 'method')
 
@@ -36,7 +36,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
     def test_analyse_solve_worker_advanced_full(self) -> None:
         """Test that worker processes advanced solve with full analysis."""
         solve = Mock()
-        solve.advanced = True
+        solve.analysable = True
         solve.method_analyser.aggregate = {'step1': 'A', 'step2': 'B'}
         solve.method_applied.summary = [
             {
@@ -93,7 +93,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
     def test_analyse_solve_worker_advanced_not_full(self) -> None:
         """Test that worker processes advanced solve without full data."""
         solve = Mock()
-        solve.advanced = True
+        solve.analysable = True
         solve.method_analyser.aggregate = {'step1': 'A'}
         solve.method_applied.summary = [{
             'name': 'A',
@@ -310,10 +310,10 @@ class TestSolvesMethodAggregator(unittest.TestCase):
 class TestDiagnoseSolveWorker(unittest.TestCase):
     """Tests for diagnose_solve_worker function."""
 
-    def test_diagnose_solve_worker_not_advanced(self) -> None:
-        """Test that worker flags non-advanced solves as undiagnosed."""
+    def test_diagnose_solve_worker_not_analysable(self) -> None:
+        """Test that worker flags non-analysable solves as undiagnosed."""
         solve = Mock()
-        solve.advanced = False
+        solve.analysable = False
 
         result = diagnose_solve_worker(solve, 'cfop')
 
@@ -322,7 +322,7 @@ class TestDiagnoseSolveWorker(unittest.TestCase):
     def test_diagnose_solve_worker_no_method_applied(self) -> None:
         """Test that worker flags solves without analysis as undiagnosed."""
         solve = Mock()
-        solve.advanced = True
+        solve.analysable = True
         solve.method_applied = None
 
         result = diagnose_solve_worker(solve, 'cfop')
@@ -335,7 +335,7 @@ class TestDiagnoseSolveWorker(unittest.TestCase):
             self, mock_generate: Mock) -> None:
         """Test that worker diagnoses an analysed advanced solve."""
         solve = Mock()
-        solve.advanced = True
+        solve.analysable = True
         diagnostics = [{'location': 'global'}]
         mock_generate.return_value = diagnostics
 

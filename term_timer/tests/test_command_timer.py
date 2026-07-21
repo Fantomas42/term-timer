@@ -8,20 +8,20 @@ from term_timer.scripts.commands.timer import print_session_doctor
 from term_timer.solve import Solve
 
 
-def advanced_solves(count: int, *, advanced: bool = True) -> list[Solve]:
+def analysable_solves(count: int, *, analysable: bool = True) -> list[Solve]:
     """
-    Build a list of solve stand-ins with an advanced flag.
+    Build a list of solve stand-ins with an analysable flag.
 
     Args:
         count: Number of solves to build.
-        advanced: Value of the advanced attribute on each solve.
+        analysable: Value of the analysable attribute on each solve.
 
     Returns:
         A list of mock solves.
 
     """
     return [
-        cast('Solve', mock.Mock(advanced=advanced))
+        cast('Solve', mock.Mock(analysable=analysable))
         for _ in range(count)
     ]
 
@@ -39,8 +39,8 @@ def report_previous(round_size: int, history_size: int) -> object:
         when no report is rendered.
 
     """
-    stack_done = advanced_solves(round_size)
-    history = advanced_solves(history_size)
+    stack_done = analysable_solves(round_size)
+    history = analysable_solves(history_size)
 
     with mock.patch(
             'term_timer.scripts.commands.timer.SolvesDoctorAggregator',
