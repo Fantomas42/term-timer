@@ -14,6 +14,7 @@ from term_timer.importers import Importer
 from term_timer.interface.terminal import Terminal
 from term_timer.logger import configure_logging
 from term_timer.scripts.commands.daily import daily
+from term_timer.scripts.commands.doctor import doctor
 from term_timer.scripts.commands.driller import driller
 from term_timer.scripts.commands.manage import manage
 from term_timer.scripts.commands.reset import reset
@@ -35,6 +36,7 @@ BANNER_MODES = {
     'stats': 'Stats',
     'graph': 'Graph',
     'detail': 'Detail',
+    'doctor': 'Doctor',
     'index': 'Index',
     'reset': 'Reset',
     'edit': 'Edition',
@@ -90,6 +92,8 @@ def main() -> int:  # noqa: C901, PLR0911, PLR0912
         if command == 'serve':
             Server().run_server(options.host, options.port, debug=DEBUG)
             return 0
+        if command == 'doctor':
+            return doctor(options)
         if command in {'edit', 'delete', 'index', 'merge', 'scramble'}:
             return manage(command, options)
         return tools(command, options)

@@ -215,6 +215,23 @@ class Solve:  # noqa: PLR0904
         return bool(self.raw_moves)
 
     @cached_property
+    def analysable(self) -> bool:
+        """
+        Check if solve is usable for reconstruction-based analysis.
+
+        A DNF never reaches the solved state, so its method breakdown
+        (cross, F2L, OLL, PLL) is partial or wrong and would pollute
+        aggregated statistics and diagnostics. A +2 stays analysable:
+        the cube is solved, only penalised.
+
+        Returns:
+            True if the solve has moves and is not a DNF, False
+            otherwise
+
+        """
+        return self.advanced and self.flag != DNF
+
+    @cached_property
     def orientation_faces(self) -> CubeOrientation:
         """
         Determine cube orientation for analysis.

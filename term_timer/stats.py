@@ -936,15 +936,16 @@ class SolveStatisticsReporter(Statistics):
     @cached_property
     def score(self) -> float:
         """
-        Calculate average score across all advanced solves.
+        Calculate average score across all analysable solves.
 
         Returns:
-            Mean score value across all solves with method analysis,
-            0.0 when no solve has method analysis.
+            Mean score value across all analysable solves, 0.0 when none
+            is analysable. DNF solves are excluded: their method score is
+            derived from an unsolved cube and would skew the mean.
 
         """
         scores = [
-            cast('float', s.score) for s in self.stack if s.advanced
+            cast('float', s.score) for s in self.stack if s.analysable
         ]
 
         if not scores:
@@ -1289,7 +1290,7 @@ class SolveStatisticsReporter(Statistics):
                 f'[timer]{ solve.timer }[/timer]',
             )
 
-        if solve.advanced:
+        if solve.analysable:
             solve_score = cast('float', solve.score)
             grade = format_grade(solve_score)
             grade_klass = grade.lower()

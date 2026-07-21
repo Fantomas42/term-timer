@@ -26,6 +26,7 @@ from term_timer.formatter import format_edge
 from term_timer.formatter import format_flag
 from term_timer.formatter import format_float
 from term_timer.formatter import format_grade
+from term_timer.formatter import format_metric
 from term_timer.formatter import format_score
 from term_timer.formatter import format_session_name
 from term_timer.formatter import format_term_timer_session_url
@@ -466,6 +467,51 @@ class TestFormatFlag(unittest.TestCase):
         """Test format flag empty."""
         result = format_flag('')
         self.assertEqual(result, '[result][/result]')
+
+
+class TestFormatMetric(unittest.TestCase):
+    """Tests for format_metric function."""
+
+    def test_format_metric_tps(self) -> None:
+        """Test format metric tps."""
+        result = format_metric('tps', 2.1)
+        self.assertEqual(result, '2.10 TPS')
+
+    def test_format_metric_fluency(self) -> None:
+        """Test format metric fluency."""
+        result = format_metric('fluency', 54.0)
+        self.assertEqual(result, '54%')
+
+    def test_format_metric_percents(self) -> None:
+        """Test format metric percentage metrics."""
+        result = format_metric('execution_pause_percent', 20.25)
+        self.assertEqual(result, '20.2%')
+
+        result = format_metric('step_recognition_percent', 31.0)
+        self.assertEqual(result, '31.0%')
+
+    def test_format_metric_htm(self) -> None:
+        """Test format metric htm."""
+        result = format_metric('htm', 16.0)
+        self.assertEqual(result, '16 HTM')
+
+    def test_format_metric_qtm_counts(self) -> None:
+        """Test format metric wasted moves and aufs."""
+        result = format_metric('step_missed_moves', 6.0)
+        self.assertEqual(result, '6 QTM')
+
+        result = format_metric('aufs', 5.0)
+        self.assertEqual(result, '5 QTM')
+
+    def test_format_metric_rotations(self) -> None:
+        """Test format metric rotations."""
+        result = format_metric('rotations', 6.0)
+        self.assertEqual(result, '6 rotations')
+
+    def test_format_metric_unknown(self) -> None:
+        """Test format metric fallback without unit."""
+        result = format_metric('unknown', 1.5)
+        self.assertEqual(result, '1.5')
 
 
 class TestFormatSessionName(unittest.TestCase):

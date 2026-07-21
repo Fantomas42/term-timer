@@ -31,6 +31,7 @@ COMMAND_ALIASES: Final[dict[str, list[str]]] = {
     'graph': ['gr', 'g'],
     'cfop': ['op', 'c'],
     'detail': ['dt', 'd'],
+    'doctor': ['do', 'o'],
     'import': ['im', 'i'],
     'serve': ['se', 'h'],
     'train': ['tr', 'w'],
@@ -1186,6 +1187,61 @@ def cfop_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     return parser
 
 
+def doctor_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """
+    Create argument parser for doctor command.
+
+    Returns:
+        Configured argument parser for doctor command.
+
+    """
+    parser = subparsers.add_parser(
+        'doctor',
+        help='Display aggregated diagnostics',
+        description=(
+            'Aggregate doctor diagnostics over the last connected '
+            'solves to highlight structural weaknesses.'
+        ),
+        aliases=COMMAND_ALIASES['doctor'],
+    )
+
+    analyze = parser.add_argument_group('Analysis')
+    analyze.add_argument(
+        '-n', '--count',
+        type=int,
+        default=50,
+        metavar='COUNT',
+        help=(
+            'Number of last connected solves to diagnose.\n'
+            'Default: 50.'
+        ),
+    )
+    analyze.add_argument(
+        '-m', '--method',
+        default=CUBE_METHOD,
+        choices={
+            'lbl', 'cfop', 'cf4op', 'raw',
+        },
+        metavar='METHOD',
+        help=(
+            'Set the method of analyse used.\n'
+            f'Default: { CUBE_METHOD }.'
+        ),
+    )
+    analyze.add_argument(
+        '-t', '--trend',
+        action='store_true',
+        help=(
+            'Compare against the previous window of solves.\n'
+            'Default: False.'
+        ),
+    )
+
+    set_session_arguments(parser)
+
+    return parser
+
+
 def import_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     """
     Create argument parser for import command.
@@ -1911,6 +1967,7 @@ def get_parser() -> ArgumentParser:
     statistics_arguments(subparsers)
     graph_arguments(subparsers)
     cfop_arguments(subparsers)
+    doctor_arguments(subparsers)
     serve_arguments(subparsers)
     scramble_arguments(subparsers)
     import_arguments(subparsers)

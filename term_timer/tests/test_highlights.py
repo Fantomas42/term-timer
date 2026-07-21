@@ -1278,6 +1278,8 @@ class TestGenerateSolveHighlights(unittest.TestCase):
         solve.recognition_time = int(1.5 * SECOND)
         solve.aufs = 2
 
+        solve.analysable = has_method
+
         if has_method:
             solve.method_applied = Mock()
             solve.method_applied.summary = []

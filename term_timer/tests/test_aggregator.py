@@ -7,21 +7,27 @@ from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
+from term_timer.aggregator import SolvesDoctorAggregator
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.aggregator import analyse_solve_worker
+from term_timer.aggregator import diagnose_solve_worker
+from term_timer.doctor import DiagnosticCategory
+from term_timer.doctor import DiagnosticSeverity
 
 if TYPE_CHECKING:
+    from term_timer.annotations import DoctorAnalysis
     from term_timer.annotations import StepAnalysis
+    from term_timer.doctor import Diagnostic
     from term_timer.solve import Solve
 
 
 class TestAnalyseSolveWorker(unittest.TestCase):
     """Tests for analyse_solve_worker function."""
 
-    def test_analyse_solve_worker_not_advanced(self) -> None:
-        """Test that worker returns empty results for non-advanced solve."""
+    def test_analyse_solve_worker_not_analysable(self) -> None:
+        """Test that worker returns empty results for a non-analysable solve."""
         solve = Mock()
-        solve.advanced = False
+        solve.analysable = False
 
         result = analyse_solve_worker(solve, 'method')
 
@@ -30,7 +36,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
     def test_analyse_solve_worker_advanced_full(self) -> None:
         """Test that worker processes advanced solve with full analysis."""
         solve = Mock()
-        solve.advanced = True
+        solve.analysable = True
         solve.method_analyser.aggregate = {'step1': 'A', 'step2': 'B'}
         solve.method_applied.summary = [
             {
@@ -87,7 +93,7 @@ class TestAnalyseSolveWorker(unittest.TestCase):
     def test_analyse_solve_worker_advanced_not_full(self) -> None:
         """Test that worker processes advanced solve without full data."""
         solve = Mock()
-        solve.advanced = True
+        solve.analysable = True
         solve.method_analyser.aggregate = {'step1': 'A'}
         solve.method_applied.summary = [{
             'name': 'A',
@@ -299,3 +305,135 @@ class TestSolvesMethodAggregator(unittest.TestCase):
         self.assertEqual(case_data['tps'], 2.1)  # (2.0+2.2)/2
         self.assertEqual(case_data['etps'], 2.6)  # (2.5+2.7)/2
         self.assertTrue(case_data['case'])
+
+
+class TestDiagnoseSolveWorker(unittest.TestCase):
+    """Tests for diagnose_solve_worker function."""
+
+    def test_diagnose_solve_worker_not_analysable(self) -> None:
+        """Test that worker flags non-analysable solves as undiagnosed."""
+        solve = Mock()
+        solve.analysable = False
+
+        result = diagnose_solve_worker(solve, 'cfop')
+
+        self.assertEqual(result, {'diagnosed': False, 'diagnostics': []})
+
+    def test_diagnose_solve_worker_no_method_applied(self) -> None:
+        """Test that worker flags solves without analysis as undiagnosed."""
+        solve = Mock()
+        solve.analysable = True
+        solve.method_applied = None
+
+        result = diagnose_solve_worker(solve, 'cfop')
+
+        self.assertEqual(result, {'diagnosed': False, 'diagnostics': []})
+        self.assertEqual(solve.method_name, 'cfop')
+
+    @patch('term_timer.aggregator.generate_solve_diagnostics')
+    def test_diagnose_solve_worker_advanced(
+            self, mock_generate: Mock) -> None:
+        """Test that worker diagnoses an analysed advanced solve."""
+        solve = Mock()
+        solve.analysable = True
+        diagnostics = [{'location': 'global'}]
+        mock_generate.return_value = diagnostics
+
+        result = diagnose_solve_worker(solve, 'cfop')
+
+        self.assertEqual(
+            result,
+            {'diagnosed': True, 'diagnostics': diagnostics},
+        )
+        self.assertEqual(solve.method_name, 'cfop')
+        mock_generate.assert_called_once_with(solve)
+
+
+class TestSolvesDoctorAggregator(unittest.TestCase):
+    """Tests for SolvesDoctorAggregator class."""
+
+    def setUp(self) -> None:
+        """Set up test fixtures for doctor aggregator tests."""
+        self.stack = cast('list[Solve]', [Mock(), Mock(), Mock()])
+
+    @patch('term_timer.aggregator.SolvesDoctorAggregator.aggregate')
+    def test_init(self, mock_aggregate: Mock) -> None:
+        """Test that aggregator initializes correctly with method and stack."""
+        mock_aggregate.return_value = {'total': 0, 'findings': []}
+
+        aggregator = SolvesDoctorAggregator('cfop', self.stack)
+
+        self.assertEqual(aggregator.stack, self.stack)
+        self.assertEqual(aggregator.method_name, 'cfop')
+        self.assertEqual(
+            aggregator.results, {'total': 0, 'findings': []},
+        )
+        mock_aggregate.assert_called_once()
+
+    @patch('term_timer.aggregator.Pool')
+    @patch('term_timer.aggregator.cpu_count', return_value=4)
+    def test_collect_diagnostics(self, _mock_cpu_count: Mock,
+                                 mock_pool_class: Mock) -> None:
+        """Test that collect_diagnostics maps solves on a process pool."""
+        mock_pool = MagicMock()
+        mock_pool_class.return_value.__enter__.return_value = mock_pool
+        mock_pool.map.return_value = [
+            {'diagnosed': True, 'diagnostics': []},
+        ]
+
+        aggregator = SolvesDoctorAggregator.__new__(SolvesDoctorAggregator)
+        aggregator.stack = self.stack
+        aggregator.method_name = 'cfop'
+
+        result = aggregator.collect_diagnostics()
+
+        self.assertEqual(
+            result, [{'diagnosed': True, 'diagnostics': []}],
+        )
+        mock_pool_class.assert_called_once_with(processes=3)
+        mock_pool.map.assert_called_once()
+
+    def test_aggregate_excludes_undiagnosed_solves(self) -> None:
+        """Undiagnosed solves are excluded from the frequency window."""
+        diagnostic: Diagnostic = {
+            'severity': DiagnosticSeverity.HIGH,
+            'category': DiagnosticCategory.EXECUTION_PAUSES,
+            'impact_seconds': 3.0,
+            'location': 'global',
+            'metric_name': 'execution_pause_percent',
+            'actual_value': 22.0,
+            'expected_value': (10.0, 15.0),
+            'description': 'Description',
+            'recommendation': 'Recommendation',
+            'command': '',
+        }
+        analyses: list[DoctorAnalysis] = [
+            {'diagnosed': True, 'diagnostics': [diagnostic]},
+            {'diagnosed': False, 'diagnostics': []},
+            {'diagnosed': True, 'diagnostics': []},
+        ]
+
+        aggregator = SolvesDoctorAggregator.__new__(SolvesDoctorAggregator)
+        aggregator.stack = self.stack
+
+        with patch.object(aggregator, 'collect_diagnostics',
+                          return_value=analyses):
+            result = aggregator.aggregate()
+
+        self.assertEqual(result['total'], 2)
+        self.assertEqual(len(result['findings']), 1)
+        finding = result['findings'][0]
+        self.assertEqual(finding['count'], 1)
+        self.assertEqual(finding['frequency'], 0.5)
+        self.assertEqual(finding['impact_per_solve'], 1.5)
+
+    def test_aggregate_empty_stack(self) -> None:
+        """Test that aggregate handles empty solve stack correctly."""
+        aggregator = SolvesDoctorAggregator.__new__(SolvesDoctorAggregator)
+        aggregator.stack = []
+
+        with patch.object(aggregator, 'collect_diagnostics',
+                          return_value=[]):
+            result = aggregator.aggregate()
+
+        self.assertEqual(result, {'total': 0, 'findings': []})

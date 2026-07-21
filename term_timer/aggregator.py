@@ -11,9 +11,13 @@ from cubing_algs.cases import get_case
 
 from term_timer.annotations import CaseStats
 from term_timer.annotations import CaseStatsAccumulator
+from term_timer.annotations import DoctorAnalysis
+from term_timer.annotations import DoctorReport
 from term_timer.annotations import MethodAnalysis
 from term_timer.annotations import SolveAnalysis
 from term_timer.annotations import StepAnalysis
+from term_timer.doctor import aggregate_solve_diagnostics
+from term_timer.doctor import generate_solve_diagnostics
 from term_timer.methods import get_method_analyser
 from term_timer.solve import Solve
 from term_timer.stats import StatisticsTools
@@ -33,7 +37,7 @@ def analyse_solve_worker(solve: Solve, method_name: str) -> SolveAnalysis:
         Dictionary containing steps analysis, score, and optional solve.
 
     """
-    if not solve.advanced:
+    if not solve.analysable:
         return {
             'steps': {},
             'score': 0.0,
@@ -61,6 +65,33 @@ def analyse_solve_worker(solve: Solve, method_name: str) -> SolveAnalysis:
         'steps': steps,
         'score': analysis.score,
         'solve': None,
+    }
+
+
+def diagnose_solve_worker(solve: Solve, method_name: str) -> DoctorAnalysis:
+    """
+    Diagnose solve using specified method and return its diagnostics.
+
+    Returns:
+        Dictionary flagging diagnosability and listing diagnostics.
+
+    """
+    if not solve.analysable:
+        return {
+            'diagnosed': False,
+            'diagnostics': [],
+        }
+
+    solve.method_name = method_name
+    if not solve.method_applied:
+        return {
+            'diagnosed': False,
+            'diagnostics': [],
+        }
+
+    return {
+        'diagnosed': True,
+        'diagnostics': generate_solve_diagnostics(solve),
     }
 
 
@@ -181,4 +212,65 @@ class SolvesMethodAggregator:
             'mean': score / total if total else 0,
             'resume': final_resume,
             'stack': stack,
+        }
+
+
+class SolvesDoctorAggregator:
+    """Aggregates doctor diagnostics across solves using multiprocessing."""
+
+    def __init__(self, method_name: str, stack: list[Solve]) -> None:
+        """Initialize aggregator and compute the doctor report."""
+        self.stack = stack
+        self.method_name = method_name
+
+        self.results = self.aggregate()
+
+    def collect_diagnostics(self) -> list[DoctorAnalysis]:
+        """
+        Collect solve diagnostics using multiprocessing.
+
+        Returns:
+            List of diagnostic results for each solve.
+
+        """
+        num_processes = max(1, cpu_count() - 1)
+
+        worker_func = partial(
+            diagnose_solve_worker,
+            method_name=self.method_name,
+        )
+
+        with Pool(processes=num_processes) as pool:
+            return pool.map(worker_func, self.stack)
+
+    def aggregate(self) -> DoctorReport:
+        """
+        Aggregate solve diagnostics into a doctor report.
+
+        Solves that cannot be diagnosed (no reconstruction, no method
+        analysis) are excluded from the window: frequencies and impacts
+        are relative to the diagnosed solves only.
+
+        Returns:
+            Dictionary with diagnosed solve count and sorted findings.
+
+        """
+        start = time.time()
+        analyses = self.collect_diagnostics()
+
+        msg = (
+            f'Diagnosing { len(self.stack) } '
+            f'solves in { (time.time() - start):.3f}s'
+        )
+        logger.info(msg)
+
+        diagnosed = [
+            analysis['diagnostics']
+            for analysis in analyses
+            if analysis['diagnosed']
+        ]
+
+        return {
+            'total': len(diagnosed),
+            'findings': aggregate_solve_diagnostics(diagnosed),
         }

@@ -9,6 +9,7 @@ from term_timer.constants import SECOND
 
 if TYPE_CHECKING:
     from term_timer.methods.annotations import StepSummary
+    from term_timer.methods.base import Analyser
     from term_timer.solve import Solve
 
 
@@ -340,13 +341,15 @@ def generate_solve_highlights(solve: 'Solve') -> list[str]:
         solve: Solve instance with reconstruction data
 
     Returns:
-        List of strings with highlights and motivation
+        List of strings with highlights and motivation. Empty for a DNF:
+        its method breakdown comes from an unsolved cube, so praising its
+        steps would be meaningless.
 
     """
-    if not solve.method_applied:
+    if not solve.analysable:
         return []
 
-    summary = solve.method_applied.summary
+    summary = cast('Analyser', solve.method_applied).summary
 
     highlight_lines = [
         get_cross_highlight(summary),

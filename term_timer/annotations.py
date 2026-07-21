@@ -39,6 +39,8 @@ from typing import TypedDict
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases.case import Case
 
+from term_timer.doctor import Diagnostic
+from term_timer.doctor import DoctorFinding
 from term_timer.solve import Solve
 
 
@@ -97,6 +99,20 @@ class MethodAnalysis(TypedDict):
     mean: float
     resume: dict[str, dict[str, CaseStats]]
     stack: list[Solve | None]
+
+
+class DoctorAnalysis(TypedDict):
+    """Doctor diagnostics collected on a single solve."""
+
+    diagnosed: bool
+    diagnostics: list[Diagnostic]
+
+
+class DoctorReport(TypedDict):
+    """Aggregated doctor findings across multiple solves."""
+
+    total: int
+    findings: list[DoctorFinding]
 
 
 @dataclass

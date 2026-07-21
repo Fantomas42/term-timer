@@ -7,13 +7,58 @@ from random import Random
 from cubing_algs.exceptions import InvalidMoveError
 from cubing_algs.parsing import parse_moves
 
+from term_timer.aggregator import SolvesDoctorAggregator
 from term_timer.bluetooth.replay import load_replay
+from term_timer.constants import DOCTOR_SESSION_BASELINE_MIN
 from term_timer.exceptions import ReplayError
 from term_timer.in_out import load_scrambles
 from term_timer.in_out import load_solves
 from term_timer.interface.console import console
+from term_timer.interface.doctor import DoctorReporter
+from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.timer import Timer
+
+
+def print_session_doctor(
+    method_name: str,
+    stack_done: list[Solve],
+    history: list[Solve],
+) -> None:
+    """
+    Print the aggregated doctor report of the solves just done.
+
+    Displayed when the round has more than two analysable solves. Trend
+    markers compare the round against a baseline of the analysable solves
+    preceding it, sized as max(round size, DOCTOR_SESSION_BASELINE_MIN).
+    When fewer than DOCTOR_SESSION_BASELINE_MIN prior solves are
+    available the baseline is too thin, so no trend is shown.
+
+    Args:
+        method_name: Method used to analyse the solves.
+        stack_done: Solves of the round that just ended.
+        history: Solves of the session preceding the round.
+
+    """
+    analysable_done = [solve for solve in stack_done if solve.analysable]
+    if len(analysable_done) <= 2:
+        return
+
+    aggregator = SolvesDoctorAggregator(method_name, analysable_done)
+    if not aggregator.results['total']:
+        return
+
+    previous = None
+    earlier_analysable = [solve for solve in history if solve.analysable]
+    baseline_size = max(len(analysable_done), DOCTOR_SESSION_BASELINE_MIN)
+    previous_window = earlier_analysable[-baseline_size:]
+    if len(previous_window) >= DOCTOR_SESSION_BASELINE_MIN:
+        previous = SolvesDoctorAggregator(
+            method_name, previous_window,
+        ).results
+
+    reporter = DoctorReporter(aggregator.results)
+    console.print(reporter.report(previous))
 
 
 async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
@@ -131,6 +176,11 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
             round_stats.resume(
                 'Free Play ' if options.free_play else 'Current ',
                 'round',
+            )
+
+        if options.show_doctor:
+            print_session_doctor(
+                options.method, instance.stack_done, stack,
             )
 
     except InvalidMoveError as error:

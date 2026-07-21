@@ -296,6 +296,35 @@ class TestSolveCachedProperties(unittest.TestCase):
         solve = Solve(1000000000, 1012345678, "R U R'", moves='')
         self.assertFalse(solve.advanced)
 
+    def test_analysable_with_moves(self) -> None:
+        """Test analysable property with a clean reconstructed solve."""
+        solve = Solve(
+            1000000000, 1012345678, "R U R'",
+            moves="F R U R' U' F'",
+        )
+        self.assertTrue(solve.analysable)
+
+    def test_analysable_with_plus_two(self) -> None:
+        """Test analysable property keeps a penalised but solved solve."""
+        solve = Solve(
+            1000000000, 1012345678, "R U R'", PLUS_TWO,
+            moves="F R U R' U' F'",
+        )
+        self.assertTrue(solve.analysable)
+
+    def test_analysable_excludes_dnf(self) -> None:
+        """Test analysable property drops an unfinished DNF solve."""
+        solve = Solve(
+            1000000000, 1012345678, "R U R'", DNF,
+            moves="F R U R' U' F'",
+        )
+        self.assertFalse(solve.analysable)
+
+    def test_analysable_without_moves(self) -> None:
+        """Test analysable property without reconstruction data."""
+        solve = Solve(1000000000, 1012345678, "R U R'")
+        self.assertFalse(solve.analysable)
+
     def test_rotations_with_moves(self) -> None:
         """Test rotations counting."""
         solve = Solve(
