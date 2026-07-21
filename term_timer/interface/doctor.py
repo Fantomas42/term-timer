@@ -169,7 +169,7 @@ class DoctorReporter:
         findings = self.results['findings']
         lines = [
             (
-                f'[stats]Diagnostics of { self.results["total"] } '
+                f'[stats]Diagnostics on last { self.results["total"] } '
                 'solves:[/stats]'
             ),
         ]
