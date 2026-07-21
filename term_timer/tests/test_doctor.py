@@ -1,11 +1,17 @@
 """Tests for solve diagnostics grouping."""
 import unittest
+from typing import cast
 
 from term_timer.doctor import Diagnostic
 from term_timer.doctor import DiagnosticCategory
 from term_timer.doctor import DiagnosticSeverity
+from term_timer.doctor import DoctorFinding
+from term_timer.doctor import aggregate_solve_diagnostics
 from term_timer.doctor import generate_solve_diagnostics
+from term_timer.doctor import group_doctor_findings
 from term_timer.doctor import group_solve_diagnostics
+from term_timer.doctor import modal_diagnostic_severity
+from term_timer.doctor import typical_expected_value
 from term_timer.solve import Solve
 
 
@@ -13,20 +19,22 @@ def make_diagnostic(
         location: str,
         impact_seconds: float,
         command: str = '',
+        **overrides: object,
 ) -> Diagnostic:
     """
-    Build a minimal diagnostic for grouping tests.
+    Build a minimal diagnostic for grouping and aggregation tests.
 
     Args:
         location: Where the issue occurs ('global' or step name).
         impact_seconds: Estimated potential time improvement.
         command: Command to practice this issue.
+        overrides: Other diagnostic fields to override.
 
     Returns:
-        A diagnostic with the given location, impact and command.
+        A diagnostic with the given attributes.
 
     """
-    return {
+    diagnostic: dict[str, object] = {
         'severity': DiagnosticSeverity.MEDIUM,
         'category': DiagnosticCategory.EXECUTION_SPEED,
         'impact_seconds': impact_seconds,
@@ -38,6 +46,9 @@ def make_diagnostic(
         'recommendation': 'Recommendation',
         'command': command,
     }
+    diagnostic.update(overrides)
+
+    return cast('Diagnostic', diagnostic)
 
 
 class GroupSolveDiagnosticsTestCase(unittest.TestCase):
@@ -109,6 +120,259 @@ class GroupSolveDiagnosticsTestCase(unittest.TestCase):
             ],
             [0.6, 0.3, 0.1],
         )
+
+
+class ModalDiagnosticSeverityTestCase(unittest.TestCase):
+    """Tests for modal_diagnostic_severity."""
+
+    def test_most_frequent_severity_wins(self) -> None:
+        """The severity firing most often is the modal one."""
+        diagnostics = [
+            make_diagnostic('global', 1.0,
+                            severity=DiagnosticSeverity.MEDIUM),
+            make_diagnostic('global', 1.0,
+                            severity=DiagnosticSeverity.MEDIUM),
+            make_diagnostic('global', 1.0,
+                            severity=DiagnosticSeverity.CRITICAL),
+        ]
+
+        self.assertEqual(
+            modal_diagnostic_severity(diagnostics),
+            DiagnosticSeverity.MEDIUM,
+        )
+
+    def test_ties_resolved_by_most_severe(self) -> None:
+        """On a frequency tie the most severe level wins."""
+        diagnostics = [
+            make_diagnostic('global', 1.0,
+                            severity=DiagnosticSeverity.MEDIUM),
+            make_diagnostic('global', 1.0,
+                            severity=DiagnosticSeverity.HIGH),
+        ]
+
+        self.assertEqual(
+            modal_diagnostic_severity(diagnostics),
+            DiagnosticSeverity.HIGH,
+        )
+
+
+class TypicalExpectedValueTestCase(unittest.TestCase):
+    """Tests for typical_expected_value."""
+
+    def test_scalar_values_median(self) -> None:
+        """Scalar expected values reduce to their median."""
+        self.assertEqual(typical_expected_value([2.5, 2.5, 3.0]), 2.5)
+
+    def test_range_values_median_by_bound(self) -> None:
+        """Range expected values are medianed bound by bound."""
+        self.assertEqual(
+            typical_expected_value([(6.0, 8.0), (10.0, 12.0), (7.0, 9.0)]),
+            (7.0, 9.0),
+        )
+
+
+class AggregateSolveDiagnosticsTestCase(unittest.TestCase):
+    """Tests for aggregate_solve_diagnostics."""
+
+    def test_empty_window(self) -> None:
+        """An empty window produces no findings."""
+        self.assertEqual(aggregate_solve_diagnostics([]), [])
+
+    def test_single_solve_single_finding(self) -> None:
+        """A lone diagnostic maps to one full-frequency finding."""
+        diagnostic = make_diagnostic(
+            'global', 2.0, 'term-timer train -s ll',
+            actual_value=1.2,
+        )
+
+        findings = aggregate_solve_diagnostics([[diagnostic]])
+
+        self.assertEqual(len(findings), 1)
+        finding = findings[0]
+        self.assertEqual(finding['location'], 'global')
+        self.assertEqual(
+            finding['category'], DiagnosticCategory.EXECUTION_SPEED,
+        )
+        self.assertEqual(finding['metric_name'], 'tps')
+        self.assertEqual(finding['severity'], DiagnosticSeverity.MEDIUM)
+        self.assertEqual(finding['count'], 1)
+        self.assertEqual(finding['frequency'], 1.0)
+        self.assertAlmostEqual(finding['impact_per_solve'], 2.0)
+        self.assertEqual(finding['typical_value'], 1.2)
+        self.assertEqual(finding['expected_value'], 2.0)
+        self.assertEqual(finding['recommendation'], 'Recommendation')
+        self.assertEqual(finding['command'], 'term-timer train -s ll')
+
+    def test_frequency_counts_affected_solves(self) -> None:
+        """Solves without the diagnostic dilute frequency and impact."""
+        findings = aggregate_solve_diagnostics([
+            [make_diagnostic('global', 3.0)],
+            [],
+            [],
+        ])
+
+        finding = findings[0]
+        self.assertEqual(finding['count'], 1)
+        self.assertAlmostEqual(finding['frequency'], 1 / 3)
+        self.assertAlmostEqual(finding['impact_per_solve'], 1.0)
+
+    def test_location_and_category_split_findings(self) -> None:
+        """Distinct locations or categories produce distinct findings."""
+        findings = aggregate_solve_diagnostics([
+            [
+                make_diagnostic(
+                    'global', 1.0,
+                    category=DiagnosticCategory.EXECUTION_SPEED,
+                ),
+                make_diagnostic(
+                    'global', 1.0,
+                    category=DiagnosticCategory.EXECUTION_PAUSES,
+                ),
+                make_diagnostic(
+                    'OLL', 1.0,
+                    category=DiagnosticCategory.EXECUTION_FLUENCY,
+                ),
+            ],
+        ])
+
+        self.assertEqual(len(findings), 3)
+        self.assertEqual(
+            {
+                (finding['location'], finding['category'])
+                for finding in findings
+            },
+            {
+                ('global', DiagnosticCategory.EXECUTION_SPEED),
+                ('global', DiagnosticCategory.EXECUTION_PAUSES),
+                ('OLL', DiagnosticCategory.EXECUTION_FLUENCY),
+            },
+        )
+
+    def test_findings_sorted_by_impact_per_solve(self) -> None:
+        """Findings are ranked by expected gain per solve, not frequency."""
+        rare_but_heavy = [
+            [make_diagnostic(
+                'Cross', 4.0,
+                category=DiagnosticCategory.PLANNING_CROSS,
+            )],
+            [make_diagnostic('global', 0.5)],
+            [make_diagnostic('global', 0.5)],
+            [make_diagnostic('global', 0.5)],
+        ]
+
+        findings = aggregate_solve_diagnostics(rare_but_heavy)
+
+        self.assertEqual(
+            [finding['location'] for finding in findings],
+            ['Cross', 'global'],
+        )
+        self.assertAlmostEqual(findings[0]['impact_per_solve'], 1.0)
+        self.assertAlmostEqual(findings[1]['impact_per_solve'], 0.375)
+        self.assertAlmostEqual(findings[1]['frequency'], 0.75)
+
+    def test_typical_value_is_median(self) -> None:
+        """The typical value is the median of measured values."""
+        findings = aggregate_solve_diagnostics([
+            [make_diagnostic('global', 1.0, actual_value=1.0)],
+            [make_diagnostic('global', 1.0, actual_value=1.4)],
+            [make_diagnostic('global', 1.0, actual_value=9.9)],
+        ])
+
+        self.assertEqual(findings[0]['typical_value'], 1.4)
+
+    def test_recommendation_follows_modal_severity(self) -> None:
+        """The recommendation comes from the modal severity tier."""
+        findings = aggregate_solve_diagnostics([
+            [make_diagnostic(
+                'global', 1.0,
+                severity=DiagnosticSeverity.CRITICAL,
+                recommendation='Critical advice',
+            )],
+            [make_diagnostic(
+                'global', 1.0,
+                severity=DiagnosticSeverity.MEDIUM,
+                recommendation='Medium advice',
+            )],
+            [make_diagnostic(
+                'global', 1.0,
+                severity=DiagnosticSeverity.MEDIUM,
+                recommendation='Medium advice',
+            )],
+        ])
+
+        self.assertEqual(findings[0]['severity'], DiagnosticSeverity.MEDIUM)
+        self.assertEqual(findings[0]['recommendation'], 'Medium advice')
+
+    def test_command_is_most_frequent(self) -> None:
+        """A recurring per-case command surfaces at aggregate level."""
+        findings = aggregate_solve_diagnostics([
+            [make_diagnostic('OLL', 1.0, 'term-timer train -s oll -c "35"')],
+            [make_diagnostic('OLL', 1.0, 'term-timer train -s oll -c "35"')],
+            [make_diagnostic('OLL', 1.0, 'term-timer train -s oll -c "27"')],
+        ])
+
+        self.assertEqual(
+            findings[0]['command'],
+            'term-timer train -s oll -c "35"',
+        )
+
+    def test_expected_value_range_median(self) -> None:
+        """Range expected values stay ranges in the finding."""
+        findings = aggregate_solve_diagnostics([
+            [make_diagnostic('OLL', 1.0, expected_value=(6.0, 10.0))],
+            [make_diagnostic('OLL', 1.0, expected_value=(8.0, 12.0))],
+        ])
+
+        self.assertEqual(findings[0]['expected_value'], (7.0, 11.0))
+
+
+def make_findings() -> list[DoctorFinding]:
+    """
+    Build findings on two locations for grouping tests.
+
+    Returns:
+        Findings sorted by impact per solve.
+
+    """
+    return aggregate_solve_diagnostics([
+        [
+            make_diagnostic(
+                'Cross', 2.0, 'term-timer train -s cross',
+                category=DiagnosticCategory.PLANNING_CROSS,
+            ),
+            make_diagnostic(
+                'Cross', 1.0,
+                category=DiagnosticCategory.EXECUTION_FLUENCY,
+            ),
+            make_diagnostic('global', 2.5),
+        ],
+    ])
+
+
+class GroupDoctorFindingsTestCase(unittest.TestCase):
+    """Tests for group_doctor_findings."""
+
+    def test_empty_findings(self) -> None:
+        """An empty finding list produces no groups."""
+        self.assertEqual(group_doctor_findings([]), [])
+
+    def test_groups_by_location_sorted_by_impact(self) -> None:
+        """Findings sharing a location merge, groups rank by impact."""
+        groups = group_doctor_findings(make_findings())
+
+        self.assertEqual(
+            [group['location'] for group in groups],
+            ['Cross', 'global'],
+        )
+        self.assertAlmostEqual(groups[0]['impact_per_solve'], 3.0)
+        self.assertEqual(len(groups[0]['findings']), 2)
+        self.assertAlmostEqual(groups[1]['impact_per_solve'], 2.5)
+
+    def test_group_command_first_non_empty(self) -> None:
+        """The group command is the first non-empty finding command."""
+        groups = group_doctor_findings(make_findings())
+
+        self.assertEqual(groups[0]['command'], 'term-timer train -s cross')
 
 
 class GenerateSolveDiagnosticsMethodsTestCase(unittest.TestCase):

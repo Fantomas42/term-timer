@@ -5,9 +5,15 @@ This module analyzes solve performance at both global and step-specific levels,
 identifying issues across multiple categories with severity ratings and
 estimated impact. Output is formatted to generate personalized improvement
 recommendations.
+
+Per-solve diagnostics can also be aggregated over a window of solves into
+findings, separating structural weaknesses (high frequency) from one-off
+incidents, for the doctor command.
 """
+from collections import Counter
 from enum import StrEnum
 from operator import itemgetter
+from statistics import median
 from typing import TYPE_CHECKING
 from typing import Final
 from typing import TypedDict
@@ -23,19 +29,6 @@ from term_timer.constants import SECOND
 if TYPE_CHECKING:
     from term_timer.methods.annotations import StepSummary
     from term_timer.solve import Solve
-
-TPS_LOW_THRESHOLD: Final = 1.5
-TPS_MEDIUM_THRESHOLD: Final = 2.3
-TPS_EXPECTED_MIN: Final = 2.5
-
-PAUSE_PERCENT_TARGET: Final = 10.0
-PAUSE_PERCENT_HIGH_THRESHOLD: Final = 15.0
-PAUSE_PERCENT_CRITICAL_THRESHOLD: Final = 20.0
-
-FLUENCY_IMPACT_FACTOR: Final = 0.15
-
-TIMING_MEDIUM_FACTOR: Final = 1.1
-TIMING_HIGH_FACTOR: Final = 1.25
 
 
 class DiagnosticSeverity(StrEnum):
@@ -62,6 +55,59 @@ class DiagnosticCategory(StrEnum):
     AUFS_EXCESSIVE = 'aufs_excessive'
     ROTATIONS_EXCESSIVE = 'rotations_excessive'
     TIMING_DISTRIBUTION = 'timing_distribution'
+
+
+TPS_LOW_THRESHOLD: Final = 1.5
+TPS_MEDIUM_THRESHOLD: Final = 2.3
+TPS_EXPECTED_MIN: Final = 2.5
+
+PAUSE_PERCENT_TARGET: Final = 10.0
+PAUSE_PERCENT_HIGH_THRESHOLD: Final = 15.0
+PAUSE_PERCENT_CRITICAL_THRESHOLD: Final = 20.0
+
+FLUENCY_IMPACT_FACTOR: Final = 0.15
+
+TIMING_MEDIUM_FACTOR: Final = 1.1
+TIMING_HIGH_FACTOR: Final = 1.25
+
+SEVERITY_RANK: Final[dict[DiagnosticSeverity, int]] = {
+    DiagnosticSeverity.CRITICAL: 0,
+    DiagnosticSeverity.HIGH: 1,
+    DiagnosticSeverity.MEDIUM: 2,
+    DiagnosticSeverity.LOW: 3,
+}
+
+CATEGORY_LABELS: Final[dict[DiagnosticCategory, str]] = {
+    DiagnosticCategory.EFFICIENCY_MOVECOUNT: 'Wasted moves in steps',
+    DiagnosticCategory.EFFICIENCY_TRANSITIONS: 'Wasted moves in transitions',
+    DiagnosticCategory.EFFICIENCY_ALGORITHMS: 'Algorithm efficiency',
+    DiagnosticCategory.EXECUTION_SPEED: 'Turning speed',
+    DiagnosticCategory.EXECUTION_PAUSES: 'Pauses',
+    DiagnosticCategory.EXECUTION_FLUENCY: 'Turning rhythm',
+    DiagnosticCategory.RECOGNITION_SLOW: 'Recognition',
+    DiagnosticCategory.PLANNING_CROSS: 'Cross planning',
+    DiagnosticCategory.PLANNING_LOOKAHEAD: 'Lookahead',
+    DiagnosticCategory.AUFS_EXCESSIVE: 'AUF adjustments',
+    DiagnosticCategory.ROTATIONS_EXCESSIVE: 'Cube rotations',
+    DiagnosticCategory.TIMING_DISTRIBUTION: 'Time share',
+}
+
+# Categories whose ideal is evidently zero: the measured count reads
+# alone, no norm is displayed next to it.
+ZERO_IDEAL_CATEGORIES: Final = frozenset({
+    DiagnosticCategory.EFFICIENCY_MOVECOUNT,
+    DiagnosticCategory.EFFICIENCY_TRANSITIONS,
+    DiagnosticCategory.AUFS_EXCESSIVE,
+    DiagnosticCategory.ROTATIONS_EXCESSIVE,
+})
+
+# Metrics normed on a range target (e.g. PLL recognition 5-10%): the
+# norm displayed in descriptions is the top of the acceptable range,
+# not the low ideal displayed for threshold-based expected values.
+NORM_HIGH_METRICS: Final = frozenset({
+    'recognition_percent',
+    'step_recognition_percent',
+})
 
 
 class Diagnostic(TypedDict):
@@ -110,6 +156,56 @@ class DiagnosticGroup(TypedDict):
     command: str
     impact_seconds: float
     diagnostics: list[Diagnostic]
+
+
+class DoctorFinding(TypedDict):
+    """
+    Represents a diagnostic aggregated over a window of solves.
+
+    Attributes:
+        location: Where the issue occurs ('global' or step name)
+        category: Diagnostic category (efficiency, execution, etc.)
+        metric_name: Name of the metric involved
+        severity: Most frequent severity across occurrences
+        count: Number of solves where the diagnostic fired
+        frequency: Share of solves affected (0.0-1.0)
+        impact_per_solve: Expected gain averaged over the whole window
+        typical_value: Median of measured values when the check fires
+        expected_value: Typical target/norm value across occurrences
+        recommendation: Training advice of the modal severity tier
+        command: Most frequent command across occurrences
+
+    """
+
+    location: str
+    category: DiagnosticCategory
+    metric_name: str
+    severity: DiagnosticSeverity
+    count: int
+    frequency: float
+    impact_per_solve: float
+    typical_value: float
+    expected_value: float | tuple[float, float]
+    recommendation: str
+    command: str
+
+
+class DoctorFindingGroup(TypedDict):
+    """
+    Represents findings aggregated by location.
+
+    Attributes:
+        location: Where the issues occur ('global' or step name)
+        command: Command to practice the issues of the group
+        impact_per_solve: Sum of expected gains per solve (seconds)
+        findings: Findings detected at this location
+
+    """
+
+    location: str
+    command: str
+    impact_per_solve: float
+    findings: list[DoctorFinding]
 
 
 def check_global_efficiency(solve: 'Solve') -> list[Diagnostic]:
@@ -1251,5 +1347,169 @@ def group_solve_diagnostics(
     return sorted(
         groups.values(),
         key=itemgetter('impact_seconds'),
+        reverse=True,
+    )
+
+
+def modal_diagnostic_severity(
+    diagnostics: list[Diagnostic],
+) -> DiagnosticSeverity:
+    """
+    Find the most frequent severity, most severe first on ties.
+
+    Args:
+        diagnostics: Occurrences of a single finding across solves.
+
+    Returns:
+        The modal severity of the occurrences.
+
+    """
+    counts = Counter(
+        diagnostic['severity'] for diagnostic in diagnostics
+    )
+
+    return min(
+        counts,
+        key=lambda severity: (-counts[severity], SEVERITY_RANK[severity]),
+    )
+
+
+def typical_expected_value(
+    values: list[float | tuple[float, float]],
+) -> float | tuple[float, float]:
+    """
+    Compute the typical expected value across occurrences.
+
+    Norms are constant for most checks, but the checks normed on a
+    case optimal (OLL/PLL algorithms) vary per solve: the median keeps
+    a representative target in both situations.
+
+    Args:
+        values: Expected values of a single finding across solves.
+
+    Returns:
+        The median expected value, bound by bound for ranges.
+
+    """
+    scalars = [value for value in values if isinstance(value, float)]
+    if scalars:
+        return median(scalars)
+
+    pairs = [value for value in values if isinstance(value, tuple)]
+
+    return (
+        median(pair[0] for pair in pairs),
+        median(pair[1] for pair in pairs),
+    )
+
+
+def aggregate_solve_diagnostics(
+    solves_diagnostics: list[list[Diagnostic]],
+) -> list[DoctorFinding]:
+    """
+    Aggregate per-solve diagnostics into findings over a window.
+
+    A finding merges all occurrences of a (location, category) pair
+    across solves: frequency is the share of solves affected, and
+    impact_per_solve the expected gain averaged over every solve of
+    the window, so rare incidents weigh less than structural leaks.
+
+    Args:
+        solves_diagnostics: Diagnostics of each diagnosed solve,
+            empty lists included for solves without findings.
+
+    Returns:
+        Findings sorted by impact per solve.
+
+    """
+    total = len(solves_diagnostics)
+    if not total:
+        return []
+
+    occurrences: dict[
+        tuple[str, DiagnosticCategory], list[Diagnostic],
+    ] = {}
+    affected: Counter[tuple[str, DiagnosticCategory]] = Counter()
+
+    for diagnostics in solves_diagnostics:
+        for diagnostic in diagnostics:
+            key = (diagnostic['location'], diagnostic['category'])
+            occurrences.setdefault(key, []).append(diagnostic)
+        affected.update({
+            (diagnostic['location'], diagnostic['category'])
+            for diagnostic in diagnostics
+        })
+
+    findings: list[DoctorFinding] = []
+    for (location, category), items in occurrences.items():
+        count = affected[location, category]
+        severity = modal_diagnostic_severity(items)
+        recommendation = next(
+            item['recommendation']
+            for item in reversed(items)
+            if item['severity'] == severity
+        )
+        commands = Counter(item['command'] for item in items)
+        impact = sum(item['impact_seconds'] for item in items)
+
+        findings.append(
+            {
+                'location': location,
+                'category': category,
+                'metric_name': items[0]['metric_name'],
+                'severity': severity,
+                'count': count,
+                'frequency': count / total,
+                'impact_per_solve': impact / total,
+                'typical_value': median(
+                    item['actual_value'] for item in items
+                ),
+                'expected_value': typical_expected_value(
+                    [item['expected_value'] for item in items],
+                ),
+                'recommendation': recommendation,
+                'command': commands.most_common(1)[0][0],
+            },
+        )
+
+    findings.sort(key=itemgetter('impact_per_solve'), reverse=True)
+
+    return findings
+
+
+def group_doctor_findings(
+    findings: list[DoctorFinding],
+) -> list[DoctorFindingGroup]:
+    """
+    Aggregate findings by location.
+
+    Args:
+        findings: Findings sorted by impact per solve.
+
+    Returns:
+        List of groups sorted by aggregated impact per solve.
+
+    """
+    groups: dict[str, DoctorFindingGroup] = {}
+
+    for finding in findings:
+        location = finding['location']
+        group = groups.setdefault(
+            location,
+            {
+                'location': location,
+                'command': '',
+                'impact_per_solve': 0.0,
+                'findings': [],
+            },
+        )
+        group['impact_per_solve'] += finding['impact_per_solve']
+        group['findings'].append(finding)
+        if not group['command']:
+            group['command'] = finding['command']
+
+    return sorted(
+        groups.values(),
+        key=itemgetter('impact_per_solve'),
         reverse=True,
     )

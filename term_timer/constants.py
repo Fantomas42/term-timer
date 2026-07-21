@@ -13,6 +13,12 @@ MS_TO_NS_FACTOR: Final = 1_000_000
 
 PAUSE_FACTOR: Final = 2
 
+# Minimum number of prior connected solves required to draw session-end
+# doctor trend markers. The comparison baseline is max(round size, this),
+# so short rounds still contrast against a stable reference; when fewer
+# than this many prior solves exist, no trend is shown at all.
+DOCTOR_SESSION_BASELINE_MIN: Final = 12
+
 # Stability (days) past which a case is considered anchored in long-term
 # muscle memory. Used both as the FSRS mastery threshold (fsrs/scheduler.py)
 # and as the floor protecting clean-but-slow reps from a speed-driven Again.

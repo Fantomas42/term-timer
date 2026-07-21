@@ -266,6 +266,36 @@ def format_fluency(fluency: int, *, step: bool = False) -> str:
     )
 
 
+def format_metric(metric_name: str, value: float) -> str:
+    """
+    Format a doctor metric value with its natural unit.
+
+    Args:
+        metric_name: Name of the metric as used by the doctor checks.
+        value: Metric value to format.
+
+    Returns:
+        Metric value formatted with its unit.
+
+    """
+    if metric_name == 'tps':
+        return f'{ value:.2f} TPS'
+    if metric_name == 'fluency':
+        return f'{ value:g}%'
+    if metric_name.endswith('percent'):
+        return f'{ value:.1f}%'
+
+    suffixes = {
+        'htm': ' HTM',
+        'aufs': ' QTM',
+        'step_missed_moves': ' QTM',
+        'transition_missed_moves': ' QTM',
+        'rotations': ' rotations',
+    }
+
+    return f'{ value:g}{ suffixes.get(metric_name, "") }'
+
+
 def format_session_name(session_name: str) -> str:
     """
     Format session name to a prettier version.

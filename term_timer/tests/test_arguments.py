@@ -9,6 +9,7 @@ from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import cfop_arguments
 from term_timer.arguments import delete_arguments
 from term_timer.arguments import detail_arguments
+from term_timer.arguments import doctor_arguments
 from term_timer.arguments import edit_arguments
 from term_timer.arguments import get_arguments
 from term_timer.arguments import graph_arguments
@@ -29,9 +30,9 @@ class TestCommandAliases(unittest.TestCase):
         """Test that COMMAND_ALIASES contains all expected commands."""
         expected_commands = {
             'daily', 'solve', 'list', 'stats', 'graph', 'cfop', 'detail',
-            'import', 'serve', 'train', 'edit', 'delete', 'index',
-            'scramble', 'browse', 'merge', 'config', 'routine', 'drill',
-            'reset',
+            'doctor', 'import', 'serve', 'train', 'edit', 'delete',
+            'index', 'scramble', 'browse', 'merge', 'config', 'routine',
+            'drill', 'reset',
         }
         self.assertEqual(set(COMMAND_ALIASES.keys()), expected_commands)
 
@@ -259,6 +260,35 @@ class TestCfopArguments(unittest.TestCase):
         args = main_parser.parse_args(['cfop', '--oll', '-o', 'desc'])
         self.assertTrue(args.oll)
         self.assertEqual(args.order, 'desc')
+
+
+class TestDoctorArguments(unittest.TestCase):
+    """Tests for doctor command argument parsing."""
+
+    def test_doctor_default_arguments(self) -> None:
+        """Test doctor default arguments."""
+        main_parser = ArgumentParser()
+        subparsers = main_parser.add_subparsers(dest='command')
+        doctor_arguments(subparsers)
+
+        args = main_parser.parse_args(['doctor'])
+        self.assertEqual(args.command, 'doctor')
+        self.assertEqual(args.count, 50)
+        self.assertFalse(args.trend)
+        self.assertEqual(args.cube, 3)
+
+    def test_doctor_with_flags(self) -> None:
+        """Test doctor with count, method and trend flags."""
+        main_parser = ArgumentParser()
+        subparsers = main_parser.add_subparsers(dest='command')
+        doctor_arguments(subparsers)
+
+        args = main_parser.parse_args(
+            ['doctor', '-n', '20', '-m', 'cfop', '-t'],
+        )
+        self.assertEqual(args.count, 20)
+        self.assertEqual(args.method, 'cfop')
+        self.assertTrue(args.trend)
 
 
 class TestImportArguments(unittest.TestCase):
