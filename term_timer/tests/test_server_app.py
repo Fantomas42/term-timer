@@ -662,6 +662,7 @@ class TestSolveDetailView(unittest.TestCase):
         mock_solve = Mock()
         mock_solve.final_time = 5000000000
         mock_solve.advanced = False
+        mock_solve.analysable = False
         mock_solve.method_applied = None
         mock_solve.method_text_builder.return_value = (
             'Cross // Cross\nF2L // F2L'

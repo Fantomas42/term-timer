@@ -548,39 +548,39 @@ class TestStatisticsComprehensive(unittest.TestCase):
 
 
 class TestSolveStatisticsReporterScore(unittest.TestCase):
-    """Tests for the average score across advanced solves."""
+    """Tests for the average score across analysable solves."""
 
     @staticmethod
-    def make_solve(*, advanced: bool, score: float = 0.0) -> Mock:
+    def make_solve(*, analysable: bool, score: float = 0.0) -> Mock:
         """
         Build a minimal solve mock with a final time and a score.
 
         Returns:
-            Mock solve exposing final_time, advanced and score.
+            Mock solve exposing final_time, analysable and score.
 
         """
         solve = Mock(spec=Solve)
         solve.final_time = 10 * SECOND
-        solve.advanced = advanced
+        solve.analysable = analysable
         solve.score = score
         return solve
 
-    def test_score_averages_only_advanced_solves(self) -> None:
-        """A mixed stack averages the score over advanced solves only."""
+    def test_score_averages_only_analysable_solves(self) -> None:
+        """A mixed stack averages the score over analysable solves only."""
         solves: list[Solve] = [
-            self.make_solve(advanced=True, score=80.0),
-            self.make_solve(advanced=True, score=90.0),
-            self.make_solve(advanced=False),
-            self.make_solve(advanced=False),
+            self.make_solve(analysable=True, score=80.0),
+            self.make_solve(analysable=True, score=90.0),
+            self.make_solve(analysable=False),
+            self.make_solve(analysable=False),
         ]
 
         reporter = SolveStatisticsReporter(3, solves)
 
         self.assertEqual(reporter.score, 85.0)
 
-    def test_score_without_advanced_solves(self) -> None:
-        """A stack without any advanced solve scores 0.0."""
-        solves: list[Solve] = [self.make_solve(advanced=False)]
+    def test_score_without_analysable_solves(self) -> None:
+        """A stack without any analysable solve scores 0.0."""
+        solves: list[Solve] = [self.make_solve(analysable=False)]
 
         reporter = SolveStatisticsReporter(3, solves)
 
