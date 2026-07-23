@@ -13,6 +13,7 @@ from term_timer.config import CUBE_ORIENTATION
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
 from term_timer.formatter import format_duration
+from term_timer.formatter import format_ghost_delta
 from term_timer.formatter import format_time
 from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.methods import get_method_analyser
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
     from rich.console import Console as RichConsole
 
     from term_timer.bluetooth.annotations import MoveInfo
+    from term_timer.solve import Solve
 
 STYLE_THRESHOLDS = (
     (50, 'timer_50'),
@@ -102,6 +104,10 @@ class StopWatch:
         self.first_step: bool = True
         self.previous_style: str = ''
 
+        self.ghost: Solve | None = None
+        self.ghost_splits: dict[str, int] = {}
+        self.ghost_delta: int | None = None
+
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
 
@@ -114,6 +120,7 @@ class StopWatch:
             delta_time: int | None = None,
             htm: int = 0,
             last: bool = False,
+            ghost_split: int | None = None,
     ) -> None:
         """Print a completed step with its time."""
         self.clear_line(full=False)
@@ -128,13 +135,30 @@ class StopWatch:
         if delta_time is not None:
             extras += f' [green]+{ format_duration(delta_time) }[/green]'
 
+        if ghost_split is not None:
+            ghost_delta = elapsed_time - ghost_split
+            if last:
+                verdict = 'WIN' if ghost_delta <= 0 else 'LOSS'
+                style_v = 'record' if ghost_delta <= 0 else 'warning'
+                extras += f'   👻 [{ style_v }]{ verdict }[/{ style_v }]'
+            else:
+                extras += (
+                    f'   👻 [result]{ format_duration(ghost_split) }[/result]'
+                    f' { format_ghost_delta(ghost_delta) }'
+                )
+
         self.console.print(
             f'[{ style }]Go Go Go:[/{ style }]',
             f'[result]{ format_time(elapsed_time) }[/result]',
             f'[step]{ padded_name }[/step]{ extras }',
         )
         if not last:
-            SOUND_PLAYER.solve_step()
+            if ghost_split is None:
+                SOUND_PLAYER.solve_step()
+            elif elapsed_time - ghost_split <= 0:
+                SOUND_PLAYER.solve_step_ahead()
+            else:
+                SOUND_PLAYER.solve_step_behind()
 
     def build_oriented_facelets(self) -> tuple[str, 'CubeOrientation']:
         """
@@ -173,6 +197,8 @@ class StopWatch:
         self.first_step = True
         self.previous_style = ''
         self.step_width = 0
+        self.ghost_splits = {}
+        self.ghost_delta = None
 
         if not self.show_steps:
             return
@@ -191,6 +217,9 @@ class StopWatch:
             ),
             default=0,
         )
+
+        if self.ghost is not None:
+            self.ghost_splits = self.ghost.ghost_splits(self.groups_to_track)
 
     def check_and_print_steps(
             self,
@@ -227,6 +256,13 @@ class StopWatch:
                     [m['move'] for m in self.moves[self.previous_move_index:]],
                 ).transform(optimize_double_moves).metrics.htm
 
+                ghost_split = (
+                    self.ghost_splits.get(step_name)
+                    if self.ghost_splits else None
+                )
+                if ghost_split is not None:
+                    self.ghost_delta = elapsed_time - ghost_split
+
                 show_delta = final or not self.first_step
                 self.print_step(
                     style,
@@ -235,6 +271,7 @@ class StopWatch:
                     delta_time=delta_time if show_delta else None,
                     htm=step_htm,
                     last=final,
+                    ghost_split=ghost_split,
                 )
                 self.first_step = False
                 self.previous_step_time = elapsed_time
@@ -248,6 +285,25 @@ class StopWatch:
 
     def print_timer(self, elapsed_time: int, style: str) -> None:
         """Print or update the running timer display."""
+        if self.ghost_splits:
+            # The held ghost delta has a variable width, so the back(9)
+            # fast path can't be used. The delta only changes at a
+            # checkpoint (which prints its own line and starts a fresh
+            # running line), so a plain redraw never leaves stale chars.
+            ghost_segment = ''
+            if self.ghost_delta is not None:
+                delta = format_ghost_delta(self.ghost_delta)
+                ghost_segment = f'   👻 { delta }'
+            self.clear_line(full=False)
+            self.console.print(
+                f'[{ style }]Go Go Go:[/{ style }]',
+                f'[result]{ format_time(elapsed_time) }[/result]'
+                f'{ ghost_segment }',
+                end='',
+            )
+            self.previous_style = style
+            return
+
         if style != self.previous_style:
             self.previous_style = style
             self.clear_line(full=False)

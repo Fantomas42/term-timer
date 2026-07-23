@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     _SubParsers = _SubParsersAction[ArgumentParser]
 
 COMMAND_ALIASES: Final[dict[str, list[str]]] = {
+    'ghost': ['gh', 'p'],
     'daily': ['da', 'y'],
     'solve': ['sw', 't'],
     'browse': ['br', 'b'],
@@ -108,6 +109,271 @@ def set_session_arguments(
     )
 
     return session
+
+
+def ghost_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR0914
+    """
+    Create argument parser for ghost command.
+
+    Returns:
+        Configured argument parser for ghost command.
+
+    """
+    countdown = TIMER_CONFIG.get('countdown', 0.0)
+    metronome = TIMER_CONFIG.get('metronome', 0.0)
+
+    show_cube = DISPLAY_CONFIG.get('scramble', True)
+    show_tps_graph = DISPLAY_CONFIG.get('tps_graph', True)
+    show_time_graph = DISPLAY_CONFIG.get('time_graph', True)
+    show_fluency_graph = DISPLAY_CONFIG.get('fluency_graph', True)
+    show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
+    show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
+    show_highlights = DISPLAY_CONFIG.get('highlights', True)
+    show_doctor = DISPLAY_CONFIG.get('doctor', True)
+    show_steps = TIMER_CONFIG.get('steps', True)
+
+    parser = subparsers.add_parser(
+        'ghost',
+        help='Race a recorded solve on the same scramble',
+        description=(
+            'Race a live solve against a recorded ghost on the same '
+            'scramble, seeded from an already-recorded reference solve. '
+            'The ghost to beat is the fastest attempt on that scramble.'
+        ),
+        aliases=COMMAND_ALIASES['ghost'],
+    )
+
+    parser.add_argument(
+        'solve_id',
+        nargs='?',
+        type=int,
+        default=0,
+        metavar='SOLVE_ID',
+        help=(
+            'ID of the reference solve whose scramble seeds the race.\n'
+            'Required to race or to review; omit only with --summary.'
+        ),
+    )
+
+    cube = parser.add_argument_group('Cube')
+    mode = 'hide' if show_cube else 'show'
+    cube.add_argument(
+        '-p', f'--{ mode }-cube',
+        action='store_const',
+        const=not show_cube,
+        default=show_cube,
+        dest='show_cube',
+        help=(
+            f'{ mode.title() } the cube in its scrambled state.\n'
+            'Default: False'
+        ),
+    )
+    cube.add_argument(
+        '-o', '--orientation',
+        default='auto',
+        choices=['auto', *ORIENTATIONS_SORTED],
+        metavar='ORIENTATION',
+        help=(
+            'Set the cube orientation used.\n'
+            'Default: auto.'
+        ),
+    )
+
+    bluetooth = parser.add_argument_group('Bluetooth')
+    use_bluetooth = bool(DEVICE_ADDRESS)
+    mode = 'disable' if use_bluetooth else 'enable'
+    bluetooth.add_argument(
+        '-b', f'--{ mode }-bluetooth',
+        action='store_const',
+        const=not use_bluetooth,
+        default=use_bluetooth,
+        dest='bluetooth',
+        help=(
+            f'{ mode.title() } the Bluetooth-connected cube.\n'
+            f'Default: False.'
+        ),
+    )
+    mode = 'disable' if USE_GYROSCOPE else 'enable'
+    bluetooth.add_argument(
+        '-g', f'--{ mode }-gyroscope',
+        action='store_const',
+        const=not USE_GYROSCOPE,
+        default=USE_GYROSCOPE,
+        dest='use_gyroscope',
+        help=(
+            f"{ mode.title() } the cube's gyroscope.\n"
+            'Default: False'
+        ),
+    )
+    bluetooth.add_argument(
+        '-m', '--method',
+        default=CUBE_METHOD,
+        choices={
+            'lbl', 'cfop', 'cf4op', 'raw',
+        },
+        metavar='METHOD',
+        help=(
+            'Set the method of analyse used.\n'
+            f'Default: { CUBE_METHOD }.'
+        ),
+    )
+    mode = 'hide' if show_steps else 'show'
+    bluetooth.add_argument(
+        '-j', f'--{ mode }-steps',
+        action='store_const',
+        const=not show_steps,
+        default=show_steps,
+        dest='show_steps',
+        help=(
+            f'{ mode.title() } completed steps during the solve.\n'
+            f'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_reconstruction else 'show'
+    bluetooth.add_argument(
+        '-s', f'--{ mode }-reconstruction',
+        action='store_const',
+        const=not show_reconstruction,
+        default=show_reconstruction,
+        dest='show_reconstruction',
+        help=(
+            f'{ mode.title() } the reconstruction of the solve.\n'
+            'Default: False'
+        ),
+    )
+    mode = 'hide' if show_highlights else 'show'
+    bluetooth.add_argument(
+        '-a', f'--{ mode }-highlights',
+        action='store_const',
+        const=not show_highlights,
+        default=show_highlights,
+        dest='show_highlights',
+        help=(
+            f'{ mode.title() } highlights after analysis.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_doctor else 'show'
+    bluetooth.add_argument(
+        '-e', f'--{ mode }-doctor',
+        action='store_const',
+        const=not show_doctor,
+        default=show_doctor,
+        dest='show_doctor',
+        help=(
+            f'{ mode.title() } doctor main diagnostic after analysis.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_time_graph else 'show'
+    bluetooth.add_argument(
+        '-t', f'--{ mode }-time-graph',
+        action='store_const',
+        const=not show_time_graph,
+        default=show_time_graph,
+        dest='show_time_graph',
+        help=(
+            f'{ mode.title() } the time scatter graph of the solve.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_tps_graph else 'show'
+    bluetooth.add_argument(
+        '-v', f'--{ mode }-tps-graph',
+        action='store_const',
+        const=not show_tps_graph,
+        default=show_tps_graph,
+        dest='show_tps_graph',
+        help=(
+            f'{ mode.title() } the TPS graph of the solve.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_fluency_graph else 'show'
+    bluetooth.add_argument(
+        '-z', f'--{ mode }-fluency-graph',
+        action='store_const',
+        const=not show_fluency_graph,
+        default=show_fluency_graph,
+        dest='show_fluency_graph',
+        help=(
+            f'{ mode.title() } the fluency graph of the solve.\n'
+            'Default: False.'
+        ),
+    )
+    mode = 'hide' if show_recognition_graph else 'show'
+    bluetooth.add_argument(
+        '-w', f'--{ mode }-recognition-graph',
+        action='store_const',
+        const=not show_recognition_graph,
+        default=show_recognition_graph,
+        dest='show_recognition_graph',
+        help=(
+            f'{ mode.title() } the recognition graph of the solve.\n'
+            'Default: False.'
+        ),
+    )
+
+    session = set_session_arguments(parser)
+    session.add_argument(
+        '-f', '--free-play',
+        action='store_true',
+        help=(
+            'Race the ghost without recording the attempt into the '
+            'scramble file.\n'
+            'Default: False.'
+        ),
+    )
+
+    timer = parser.add_argument_group('Timer')
+    timer.add_argument(
+        '-i', '--countdown',
+        type=int,
+        default=countdown,
+        metavar='SECONDS',
+        help=(
+            'Set the countdown timer for inspection time in seconds.\n'
+            f'Default: { countdown }.'
+        ),
+    )
+    timer.add_argument(
+        '-k', '--metronome',
+        type=float,
+        default=metronome,
+        metavar='TEMPO',
+        help=(
+            'Set a metronome beep at a specified tempo in seconds.\n'
+            f'Default: { metronome }.'
+        ),
+    )
+
+    ghost = parser.add_argument_group('Ghost')
+    ghost.add_argument(
+        '-r', '--review',
+        action='store_true',
+        help=(
+            "Review the stats of the reference solve's scramble file.\n"
+            'Default: False.'
+        ),
+    )
+    ghost.add_argument(
+        '-l', '--summary',
+        action='store_true',
+        help=(
+            'Browse the ghost library across every recorded scramble.\n'
+            'Default: False.'
+        ),
+    )
+    ghost.add_argument(
+        '--ghost-3d',
+        action='store_true',
+        help=(
+            'Reserved: parallel OpenGL replay of the ghost cube.\n'
+            'Not implemented in v1.'
+        ),
+    )
+
+    return parser
 
 
 def daily_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR0914
@@ -1952,6 +2218,7 @@ def get_parser() -> ArgumentParser:
         help='Available commands',
     )
 
+    ghost_arguments(subparsers)
     daily_arguments(subparsers)
     solve_arguments(subparsers)
     train_arguments(subparsers)

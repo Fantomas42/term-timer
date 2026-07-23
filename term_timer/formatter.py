@@ -161,6 +161,27 @@ def format_delta(delta: int) -> str:
     return f'[{ style }]{ sign }{ format_duration(delta) }[/{ style }]'
 
 
+def format_ghost_delta(delta: int) -> str:
+    """
+    Format a ghost-race delta as a directional, color-coded segment.
+
+    Negative means ahead of the ghost (green ▲); positive means behind
+    (red ▼). A tie counts as ahead. The magnitude is shown in seconds
+    with its sign, matching ``format_delta``.
+
+    Args:
+        delta: Signed delta in nanoseconds (live time minus ghost split).
+
+    Returns:
+        Rich-markup string such as ``[green]▲ -0.39[/green]`` or
+        ``[red]▼ +0.39[/red]``.
+
+    """
+    if delta > 0:
+        return f'[red]▼ +{ format_duration(delta) }[/red]'
+    return f'[green]▲ { format_duration(delta) }[/green]'
+
+
 def format_score(score: float) -> str:
     """
     Format solve score with color coding based on quality.

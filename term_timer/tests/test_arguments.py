@@ -29,8 +29,8 @@ class TestCommandAliases(unittest.TestCase):
     def test_command_aliases_structure(self) -> None:
         """Test that COMMAND_ALIASES contains all expected commands."""
         expected_commands = {
-            'daily', 'solve', 'list', 'stats', 'graph', 'cfop', 'detail',
-            'doctor', 'import', 'serve', 'train', 'edit', 'delete',
+            'ghost', 'daily', 'solve', 'list', 'stats', 'graph', 'cfop',
+            'detail', 'doctor', 'import', 'serve', 'train', 'edit', 'delete',
             'index', 'scramble', 'browse', 'merge', 'config', 'routine',
             'drill', 'reset',
         }
@@ -47,6 +47,12 @@ class TestCommandAliases(unittest.TestCase):
         self.assertEqual(COMMAND_ALIASES['solve'], ['sw', 't'])
         self.assertEqual(COMMAND_RESOLUTIONS['sw'], 'solve')
         self.assertEqual(COMMAND_RESOLUTIONS['t'], 'solve')
+
+    def test_ghost_aliases(self) -> None:
+        """Test that ghost command has correct aliases configured."""
+        self.assertEqual(COMMAND_ALIASES['ghost'], ['gh', 'p'])
+        self.assertEqual(COMMAND_RESOLUTIONS['gh'], 'ghost')
+        self.assertEqual(COMMAND_RESOLUTIONS['p'], 'ghost')
 
 
 class TestSessionArguments(unittest.TestCase):

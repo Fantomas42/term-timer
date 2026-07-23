@@ -58,6 +58,12 @@ THUD_PARTIALS = (
     (2.10, 0.40, 12.0),
 )
 
+# Ghost-race checkpoint pitches: a major third above/below the neutral
+# 880 Hz step ting, so ahead reads brighter and behind reads darker.
+STEP_BASE_FUNDAMENTAL = 880.0
+STEP_AHEAD_FUNDAMENTAL = STEP_BASE_FUNDAMENTAL * 2 ** (4 / 12)
+STEP_BEHIND_FUNDAMENTAL = STEP_BASE_FUNDAMENTAL * 2 ** (-4 / 12)
+
 CONNECTED_PAN: PanDirection = 'left_to_right'
 DISCONNECTED_PAN: PanDirection = 'right_to_left'
 NOT_CONNECTED_PAN: PanDirection = 'right_to_left'
@@ -185,19 +191,20 @@ class SoundPlayer:  # noqa: PLR0904
 
     @staticmethod
     @lru_cache
-    def generate_step_wave() -> np.ndarray:
+    def generate_step_wave(fundamental: float = 880.0) -> np.ndarray:
         """
         Generate a triangle-bell ting using additive synthesis.
 
         Three inharmonic partials (x1, x2.76, x5.40) with differential decay
         rates — higher partials fade faster, giving a bright metallic attack
-        followed by a clean fundamental resonance.
+        followed by a clean fundamental resonance. The fundamental is
+        pitch-shiftable so ghost-race checkpoints can signal ahead/behind
+        while staying in the same tonal family.
 
         Returns:
             Float32 array of audio samples.
 
         """
-        fundamental = 880.0
         duration = 0.45
         volume = 0.23
         partials = ((1.00, 1.00, 5.0), (2.76, 0.70, 10.0), (5.40, 0.45, 18.0))
@@ -530,6 +537,14 @@ class SoundPlayer:  # noqa: PLR0904
     def solve_step(self) -> None:
         """Play a higher-pitched beep when a solve step is completed."""
         self.play(self.generate_step_wave)
+
+    def solve_step_ahead(self) -> None:
+        """Play a brighter step ting when ahead of the ghost checkpoint."""
+        self.play(lambda: self.generate_step_wave(STEP_AHEAD_FUNDAMENTAL))
+
+    def solve_step_behind(self) -> None:
+        """Play a darker step ting when behind the ghost checkpoint."""
+        self.play(lambda: self.generate_step_wave(STEP_BEHIND_FUNDAMENTAL))
 
     def solve_success(self) -> None:
         """Play a bright tone on solve, training, or drill completion."""
