@@ -1,8 +1,10 @@
 """Tests for stats."""
 # ruff: noqa: ANN401, ERA001
 import random
+import re
 import unittest
 from datetime import UTC
+from datetime import date
 from datetime import datetime
 from datetime import timedelta
 from typing import TYPE_CHECKING
@@ -17,11 +19,15 @@ from fsrs import State
 from term_timer.annotations import ListingFilters
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
+from term_timer.constants import PUNCHCARD_CELL
 from term_timer.constants import SECOND
+from term_timer.constants import WEEK_DAYS
+from term_timer.constants import SolveFlag
 from term_timer.fsrs.storage import CaseTraining
 from term_timer.solve import Solve
 from term_timer.stats import TARGET_ALWAYS
 from term_timer.stats import TARGET_NEVER
+from term_timer.stats import DailySummaryReporter
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsTools
@@ -2397,3 +2403,458 @@ class TestTrainerStatisticsResume(unittest.TestCase):
             list(table.columns[4].cells),
             ['[no-ao]N/A[/no-ao]', '[no-ao]N/A[/no-ao]'],
         )
+
+
+class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
+    """Tests for DailySummaryReporter class."""
+
+    def setUp(self) -> None:
+        """Set up a daily history with gaps, streaks and retries."""
+        # 2 days, a gap, then a 3 days streak with retries.
+        self.stack = [
+            *self.make_day('2026-05-17', [30]),
+            *self.make_day('2026-05-18', [28]),
+            *self.make_day('2026-05-21', [25, 22, 40]),
+            *self.make_day('2026-05-22', [26]),
+            *self.make_day('2026-05-23', [35]),
+        ]
+        self.today = date(2026, 5, 25)
+        self.reporter = DailySummaryReporter(3, self.stack, self.today)
+
+    @staticmethod
+    def make_day(
+            session: str, seconds: list[float],
+            flag: SolveFlag = '',
+    ) -> list[Solve]:
+        """
+        Build the solves of a single daily session.
+
+        Returns:
+            List of Solve objects sharing the same session date.
+
+        """
+        return [
+            Solve(
+                1000000000 + index,
+                int(second * SECOND),
+                'F R U',
+                flag,
+                session=session,
+            )
+            for index, second in enumerate(seconds)
+        ]
+
+    def test_days_groups_solves_by_session(self) -> None:
+        """Solves are grouped under the date of their session."""
+        self.assertEqual(
+            list(self.reporter.days),
+            [
+                date(2026, 5, 17),
+                date(2026, 5, 18),
+                date(2026, 5, 21),
+                date(2026, 5, 22),
+                date(2026, 5, 23),
+            ],
+        )
+        self.assertEqual(self.reporter.days[date(2026, 5, 21)].total, 3)
+
+    def test_days_keeps_chronological_order(self) -> None:
+        """Days are sorted even when the sessions are loaded unordered."""
+        reporter = DailySummaryReporter(
+            3,
+            self.make_day('2026-05-23', [30]) + self.make_day(
+                '2026-05-17', [30],
+            ),
+            self.today,
+        )
+
+        self.assertEqual(
+            reporter.played_days,
+            [date(2026, 5, 17), date(2026, 5, 23)],
+        )
+
+    def test_days_skips_sessions_not_named_after_a_date(self) -> None:
+        """A session whose name is not a date is left out."""
+        reporter = DailySummaryReporter(
+            3,
+            self.make_day('2026-05-17', [30]) + self.make_day(
+                'default', [30],
+            ),
+            self.today,
+        )
+
+        self.assertEqual(reporter.played_days, [date(2026, 5, 17)])
+
+    def test_span_reaches_today(self) -> None:
+        """The span runs from the first daily up to today, included."""
+        self.assertEqual(self.reporter.span, 9)
+
+    def test_span_without_solves(self) -> None:
+        """An empty history has no span to measure."""
+        reporter = DailySummaryReporter(3, [], self.today)
+
+        self.assertEqual(reporter.span, 0)
+
+    def test_participation_ratio(self) -> None:
+        """Participation is the played days over the whole span."""
+        self.assertAlmostEqual(self.reporter.participation, 5 / 9)
+
+    def test_participation_without_solves(self) -> None:
+        """An empty history participates in nothing."""
+        reporter = DailySummaryReporter(3, [], self.today)
+
+        self.assertEqual(reporter.participation, 0.0)
+
+    def test_solves_per_day_counts_retries(self) -> None:
+        """The cadence counts every solve of a played day."""
+        self.assertAlmostEqual(self.reporter.solves_per_day, 7 / 5)
+
+    def test_streaks_split_on_gaps(self) -> None:
+        """Consecutive days are grouped, a missing day closing a block."""
+        self.assertEqual(
+            [len(streak) for streak in self.reporter.streaks],
+            [2, 3],
+        )
+
+    def test_longest_streak(self) -> None:
+        """The longest block of consecutive days wins."""
+        self.assertEqual(
+            self.reporter.longest_streak,
+            [date(2026, 5, 21), date(2026, 5, 22), date(2026, 5, 23)],
+        )
+
+    def test_longest_streak_tie_keeps_the_most_recent(self) -> None:
+        """On a tie the most recent streak is the one reported."""
+        reporter = DailySummaryReporter(
+            3,
+            [
+                *self.make_day('2026-05-01', [30]),
+                *self.make_day('2026-05-02', [30]),
+                *self.make_day('2026-05-10', [30]),
+                *self.make_day('2026-05-11', [30]),
+            ],
+            self.today,
+        )
+
+        self.assertEqual(
+            reporter.longest_streak,
+            [date(2026, 5, 10), date(2026, 5, 11)],
+        )
+
+    def test_current_streak_alive_when_played_today(self) -> None:
+        """A streak reaching today is the current one."""
+        reporter = DailySummaryReporter(
+            3, self.make_day('2026-05-25', [30]), self.today,
+        )
+
+        self.assertEqual(reporter.current_streak, [date(2026, 5, 25)])
+
+    def test_current_streak_alive_when_played_yesterday(self) -> None:
+        """The one day grace keeps yesterday's streak alive."""
+        reporter = DailySummaryReporter(
+            3, self.make_day('2026-05-24', [30]), self.today,
+        )
+
+        self.assertEqual(reporter.current_streak, [date(2026, 5, 24)])
+
+    def test_current_streak_broken_after_two_days(self) -> None:
+        """A streak older than the grace period is broken."""
+        self.assertEqual(self.reporter.current_streak, [])
+
+    def test_current_streak_without_solves(self) -> None:
+        """An empty history has no current streak."""
+        reporter = DailySummaryReporter(3, [], self.today)
+
+        self.assertEqual(reporter.current_streak, [])
+
+    def test_days_since_last(self) -> None:
+        """The last played day is dated against today."""
+        self.assertEqual(self.reporter.days_since_last, 2)
+
+    def test_days_since_last_played_today(self) -> None:
+        """Playing the daily of the day leaves no delay."""
+        reporter = DailySummaryReporter(
+            3, self.make_day('2026-05-25', [30]), self.today,
+        )
+
+        self.assertEqual(reporter.days_since_last, 0)
+
+    def test_days_excludes_a_full_dnf_day(self) -> None:
+        """A day never solved is dropped, its solves included."""
+        reporter = DailySummaryReporter(
+            3,
+            [
+                *self.make_day('2026-05-17', [30]),
+                *self.make_day('2026-05-18', [28, 26], DNF),
+            ],
+            self.today,
+        )
+
+        self.assertEqual(reporter.played_days, [date(2026, 5, 17)])
+        self.assertEqual(reporter.total_solves, 1)
+
+    def test_days_keeps_a_partly_dnf_day(self) -> None:
+        """One valid time is enough to keep the day and its retries."""
+        reporter = DailySummaryReporter(
+            3,
+            self.make_day('2026-05-17', [30]) + self.make_day(
+                '2026-05-17', [28], DNF,
+            ),
+            self.today,
+        )
+
+        self.assertEqual(reporter.played_days, [date(2026, 5, 17)])
+        self.assertEqual(reporter.total_solves, 2)
+
+    def test_best_day_holds_the_fastest_solve(self) -> None:
+        """The best day is the one of the fastest solve, retries included."""
+        self.assertEqual(
+            self.reporter.best_day,
+            (date(2026, 5, 21), 22 * SECOND),
+        )
+
+    def test_worst_day_holds_the_slowest_best(self) -> None:
+        """The worst day is the one of the slowest daily best time."""
+        self.assertEqual(
+            self.reporter.worst_day,
+            (date(2026, 5, 23), 35 * SECOND),
+        )
+
+    def test_worst_day_ignores_the_slowest_retry(self) -> None:
+        """A day holding the slowest attempt is not the worst day."""
+        self.assertNotEqual(
+            self.reporter.worst_day,
+            (date(2026, 5, 21), 40 * SECOND),
+        )
+
+    def test_best_and_worst_day_without_timed_day(self) -> None:
+        """Without a single timed solve no day can be ranked."""
+        reporter = DailySummaryReporter(
+            3, self.make_day('2026-05-17', [30], DNF), self.today,
+        )
+
+        self.assertIsNone(reporter.best_day)
+        self.assertIsNone(reporter.worst_day)
+
+    def test_punchcard_level_ranks_days_on_their_attempts(self) -> None:
+        """Days are ranked on how many attempts they hold."""
+        reporter = DailySummaryReporter(
+            3,
+            [
+                *self.make_day('2026-05-17', [20]),
+                *self.make_day('2026-05-18', [30] * 3),
+                *self.make_day('2026-05-19', [40] * 5),
+                *self.make_day('2026-05-20', [50] * 8),
+            ],
+            self.today,
+        )
+
+        self.assertEqual(reporter.punchcard_level(date(2026, 5, 17)), 0)
+        self.assertEqual(reporter.punchcard_level(date(2026, 5, 18)), 1)
+        self.assertEqual(reporter.punchcard_level(date(2026, 5, 19)), 2)
+        self.assertEqual(reporter.punchcard_level(date(2026, 5, 20)), 3)
+
+    def test_punchcard_level_ignores_the_other_days(self) -> None:
+        """A level is absolute, not a rank inside the history."""
+        reporter = DailySummaryReporter(
+            3, self.make_day('2026-05-17', [20]), self.today,
+        )
+
+        self.assertEqual(reporter.punchcard_level(date(2026, 5, 17)), 0)
+
+    def test_punchcard_level_counts_dnf_attempts(self) -> None:
+        """A retried DNF still counts as an attempt of the day."""
+        reporter = DailySummaryReporter(
+            3,
+            self.make_day('2026-05-17', [20]) + self.make_day(
+                '2026-05-17', [20] * 5, DNF,
+            ),
+            self.today,
+        )
+
+        self.assertEqual(reporter.punchcard_level(date(2026, 5, 17)), 3)
+
+    def test_punchcard_cell_of_a_played_day(self) -> None:
+        """A played day is a block colored by its attempt level."""
+        cell = self.reporter.punchcard_cell(date(2026, 5, 17))
+
+        self.assertEqual(cell, '[punchcard-1]██[/punchcard-1]')
+
+    def test_punchcard_cell_darkens_with_the_attempts(self) -> None:
+        """A day of retries is brighter than a single attempt day."""
+        self.assertEqual(
+            self.reporter.punchcard_cell(date(2026, 5, 21)),
+            '[punchcard-2]██[/punchcard-2]',
+        )
+
+    def test_punchcard_cell_of_a_missed_day(self) -> None:
+        """A day inside the window without solve is a missed dot."""
+        self.assertEqual(
+            self.reporter.punchcard_cell(date(2026, 5, 19)),
+            '[no-ao]··[/no-ao]',
+        )
+
+    def test_punchcard_cell_of_a_full_dnf_day(self) -> None:
+        """A day played but never solved reads as a missed day."""
+        reporter = DailySummaryReporter(
+            3,
+            [
+                *self.make_day('2026-05-17', [30]),
+                *self.make_day('2026-05-18', [28], DNF),
+            ],
+            self.today,
+        )
+
+        self.assertEqual(
+            reporter.punchcard_cell(date(2026, 5, 18)),
+            '[no-ao]··[/no-ao]',
+        )
+
+    def test_punchcard_cell_outside_of_the_window(self) -> None:
+        """Days before the first daily or after today stay blank."""
+        self.assertEqual(
+            self.reporter.punchcard_cell(date(2026, 5, 16)),
+            '  ',
+        )
+        self.assertEqual(
+            self.reporter.punchcard_cell(date(2026, 5, 26)),
+            '  ',
+        )
+
+    def test_punchcard_header_marks_starting_months(self) -> None:
+        """Only the weeks opening a new month carry their initial."""
+        weeks = [date(2026, 5, 25), date(2026, 6, 1), date(2026, 6, 8)]
+
+        self.assertEqual(self.reporter.punchcard_header(weeks), 'M J   ')
+
+    def test_punchcard_rows_are_aligned(self) -> None:
+        """Every weekday row holds exactly one cell per displayed week."""
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            self.reporter.punchcard()
+
+        # Month header, 7 weekday rows, then the legend.
+        rows = mock_print.call_args_list[1:8]
+        self.assertEqual(len(rows), len(WEEK_DAYS))
+
+        header = mock_print.call_args_list[1][0][1]
+        for row in rows:
+            cells = re.sub(r'\[/?[a-z0-9-]+\]', '', row[0][1])
+            self.assertEqual(
+                len(cells),
+                len(re.sub(r'\[/?[a-z0-9-]+\]', '', header)),
+            )
+
+    def test_punchcard_keeps_the_most_recent_weeks(self) -> None:
+        """The week limit trims the oldest columns of the punchcard."""
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            self.reporter.punchcard(weeks_limit=1)
+
+        cells = re.sub(
+            r'\[/?[a-z0-9-]+\]', '', mock_print.call_args_list[2][0][1],
+        )
+        self.assertEqual(len(cells), len(PUNCHCARD_CELL))
+
+    def test_punchcard_without_solves(self) -> None:
+        """An empty history draws no punchcard."""
+        reporter = DailySummaryReporter(3, [], self.today)
+
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            reporter.punchcard()
+
+        mock_print.assert_not_called()
+
+    def test_resume_reports_attendance(self) -> None:
+        """The resume exposes the days, the streaks and the extremes."""
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            self.reporter.resume()
+
+        output = ' '.join(
+            str(argument)
+            for call in mock_print.call_args_list
+            for argument in call[0]
+        )
+
+        self.assertIn('Days  :', output)
+        self.assertIn('Streak:', output)
+        self.assertIn('2026-05-21', output)
+        self.assertIn('55.56%', output)
+        self.assertIn('00:22.000', output)
+        self.assertIn('00:35.000', output)
+
+    def test_resume_without_solves(self) -> None:
+        """An empty history prints no resume at all."""
+        reporter = DailySummaryReporter(3, [], self.today)
+
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            reporter.resume()
+
+        mock_print.assert_not_called()
+
+    def test_resume_without_timed_day(self) -> None:
+        """A history of DNF only days holds nothing to resume."""
+        reporter = DailySummaryReporter(
+            3, self.make_day('2026-05-17', [30], DNF), self.today,
+        )
+
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            reporter.resume()
+
+        mock_print.assert_not_called()
+
+    def test_days_table_lists_every_played_day(self) -> None:
+        """The table holds one row per played day, oldest first."""
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            self.reporter.days_table()
+
+        table = mock_print.call_args_list[-1][0][0]
+
+        self.assertEqual(
+            list(table.columns[0].cells),
+            [
+                '[localhost]2026-05-17[/localhost]',
+                '[localhost]2026-05-18[/localhost]',
+                '[localhost]2026-05-21[/localhost]',
+                '[localhost]2026-05-22[/localhost]',
+                '[localhost]2026-05-23[/localhost]',
+            ],
+        )
+        self.assertEqual(
+            next(iter(table.columns[1].cells)),
+            '[date]Sun[/date]',
+        )
+        self.assertEqual(
+            list(table.columns[2].cells)[2],
+            '[result]3[/result]',
+        )
+        self.assertEqual(
+            list(table.columns[3].cells)[2],
+            '[stats]00:29.000[/stats]',
+        )
+        self.assertEqual(
+            list(table.columns[4].cells)[2],
+            '[time]00:22.000[/time]',
+        )
+
+    def test_days_table_limits_the_listed_days(self) -> None:
+        """Only the most recent played days are listed."""
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            self.reporter.days_table(limit=2)
+
+        table = mock_print.call_args_list[-1][0][0]
+
+        self.assertEqual(
+            list(table.columns[0].cells),
+            [
+                '[localhost]2026-05-22[/localhost]',
+                '[localhost]2026-05-23[/localhost]',
+            ],
+        )
+
+    def test_days_table_without_solves(self) -> None:
+        """An empty history prints no table."""
+        reporter = DailySummaryReporter(3, [], self.today)
+
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            reporter.days_table()
+
+        mock_print.assert_not_called()

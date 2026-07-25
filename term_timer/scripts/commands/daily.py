@@ -11,6 +11,7 @@ from term_timer.in_out import load_all_daily_solves
 from term_timer.in_out import load_solves
 from term_timer.interface.console import console
 from term_timer.scrambler import scrambler
+from term_timer.stats import DailySummaryReporter
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.timer import Timer
 
@@ -43,15 +44,22 @@ def daily_review(cube: int, date_str: str) -> int:
             style='warning',
         )
         return 1
+
+    console.print(
+        f'[title]Daily summary for { date_str } on '
+        f'{ cube }x{ cube }x{ cube }[/title]',
+    )
+
     round_stats = SolveStatisticsReporter(cube, stack)
-    round_stats.resume(f'Daily { date_str } ', 'round')
-    round_stats.graph()
+    round_stats.resume()
+    round_stats.graph('Tendency')
+
     return 0
 
 
 def daily_summary(cube: int) -> int:
     """
-    Show stats and graph across all daily sessions.
+    Show the participation summary across all daily sessions.
 
     Returns:
         Exit code (0 for success, 1 if no solves found).
@@ -64,9 +72,10 @@ def daily_summary(cube: int) -> int:
             style='warning',
         )
         return 1
-    all_stats = SolveStatisticsReporter(cube, stack)
-    all_stats.resume('Daily - All sessions ', show_title=True)
-    all_stats.graph()
+    summary = DailySummaryReporter(cube, stack)
+    summary.resume()
+    summary.punchcard()
+    summary.days_table()
     return 0
 
 
@@ -144,10 +153,15 @@ async def daily(options: Namespace) -> int:
             if not done:
                 break
 
-        if len(instance.stack_done) > 1:
-            round_stats = SolveStatisticsReporter(cube, instance.stack_done)
-            round_stats.resume(f'Daily { date_str } ', 'round')
-            round_stats.graph()
+        if len(instance.stack) > 1:
+            console.print(
+                f'[title]Daily summary on '
+                f'{ cube }x{ cube }x{ cube }[/title]',
+            )
+
+            round_stats = SolveStatisticsReporter(cube, instance.stack)
+            round_stats.resume()
+            round_stats.graph('Tendency')
 
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')
