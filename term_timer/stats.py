@@ -1622,13 +1622,17 @@ class SolveStatisticsReporter(Statistics):
             f'[title]Grade CFOP :[/title]{ grade_line } ({ mean:.2f})',
         )
 
-    def graph(self) -> None:
+    def graph(self, title: str = '') -> None:
         """
         Display a terminal-based graph of solve times and trends.
 
         Plots individual solve times along with the rolling averages
         configured in ``STATS_GRAPH_SERIES`` (capped to the first two
         entries) to visualize performance trends over the session.
+
+        Args:
+            title: Title of the graph.
+
         """
         series = STATS_GRAPH_SERIES[:GRAPH_CONSOLE_LIMIT]
         series_values: list[list[float | None]] = [[] for _ in series]
@@ -1670,7 +1674,7 @@ class SolveStatisticsReporter(Statistics):
                     ),
                 )
 
-        plt.title(f'Tendencies { self.cube_name }')
+        plt.title(title or f'Tendencies for { self.cube_name }')
         plt.plot_size(height=25)
 
         n = len(times)

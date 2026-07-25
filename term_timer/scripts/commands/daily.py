@@ -52,7 +52,7 @@ def daily_review(cube: int, date_str: str) -> int:
 
     round_stats = SolveStatisticsReporter(cube, stack)
     round_stats.resume()
-    round_stats.graph()
+    round_stats.graph('Tendency')
     return 0
 
 
