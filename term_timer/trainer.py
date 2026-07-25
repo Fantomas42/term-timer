@@ -717,28 +717,24 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
     def fsrs_focus_line(self) -> None:
         """Display FSRS session focus and mastery stats if they changed."""
-        if not self.fsrs_selection:
+        if not self.fsrs_selection or self.fsrs_scheduler is None:
             return
 
         cards = self.fsrs_cards
-        focus = FSRSScheduler.compute_session_focus(
+        focus, detail = self.fsrs_scheduler.compute_session_focus(
             cards, self.fsrs_probabilities, self.fsrs_new_cases_remaining,
         )
         mastered, total = FSRSScheduler.compute_mastery(
             cards, self.fsrs_probabilities,
         )
-        mastery_str = (
-            f'{ mastered }/{ total } mastered' if mastered > 0 else ''
-        )
-        focus_str = f'{ focus } { mastery_str }'.strip()
+        if mastered > 0:
+            detail = f'{ detail } · { mastered }/{ total } mastered'
 
-        if (
-                self.fsrs_last_focus is not None
-                and focus_str[:6] == self.fsrs_last_focus[:6]
-        ):
+        if focus == self.fsrs_last_focus:
             return
 
-        self.fsrs_last_focus = focus_str
+        self.fsrs_last_focus = focus
+        focus_str = f'{ focus } - { detail }'
 
         mc = 10 + len(str(self.counter))
 

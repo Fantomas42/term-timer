@@ -11,6 +11,7 @@ from fsrs import Scheduler
 from fsrs import State
 
 from term_timer.constants import STABILITY_LONG_TERM_DAYS
+from term_timer.formatter import fsrs_state_label
 
 # Minimum FSRS stability (days) for a case to be considered mastered.
 # Stability represents how long the memory holds at 90% retention.
@@ -163,27 +164,56 @@ class FSRSScheduler:
 
         return choices(candidates, weights=weights, k=1)[0]  # noqa: S311
 
-    @staticmethod
+    def focus_case(self, cards: dict[str, Card]) -> str | None:
+        """
+        Tell which case the focus line describes.
+
+        The focus line is displayed after ``select_next_case`` has run,
+        so the case is already picked: reading ``last_case`` back is what
+        makes the label structurally unable to contradict what is served,
+        without replaying the priority order a second time. The fallback
+        only serves callers that describe a session before selecting
+        anything (report scripts).
+
+        Args:
+            cards: FSRS cards keyed by case code
+
+        Returns:
+            Case code the session is about to serve, or None when nothing
+            is selected and nothing is due.
+
+        """
+        if self.last_case is not None:
+            return self.last_case
+
+        due = self.get_due_cards(cards)
+        if due:
+            return self.prioritize_due(cards, due)[0]
+
+        return None
+
     def compute_session_focus(
+        self,
         cards: dict[str, Card],
         probabilities: dict[str, float],
         new_cases_limit: int,
-    ) -> str:
+    ) -> tuple[str, str]:
         """
-        Determine the training session focus from current card states.
+        Describe the training session focus from the case being served.
 
-        Mirrors the select_next_case priority order so the label can
-        never contradict what the session will actually serve next:
+        The label is read from the served case itself rather than from a
+        scan of the pool, so it says what the session does next instead
+        of what it could have done:
 
-        - ``remediation``/``review`` — one or more cards are due now and
-          will be served first (remediation when due lapses are being
-          re-grooved)
-        - ``exploration`` — nothing due and the session still has budget
-          to introduce unseen cases
-        - ``learning`` — cards in Learning/Relearning are mid-acquisition
-          and will come due again within the session
-        - ``maintenance`` — every case is grooved, weighted random
-          practice over the seen pool
+        - the state label of a due case (``Review``, ``Relearning``,
+          ``Learning``) — the same wording ``fsrs_case_line`` prints just
+          below, for the same card
+        - ``Exploration`` — an unseen case is introduced
+        - ``Maintenance`` — nothing due, weighted random over the pool
+
+        The detail carries the counters the label cannot: the size of the
+        due backlog is the actionable number of a training session, and a
+        label taken from a single card would otherwise hide it.
 
         Args:
             cards: FSRS cards keyed by case code (only seen cases)
@@ -191,34 +221,61 @@ class FSRSScheduler:
             new_cases_limit: Remaining session budget for unseen cases
 
         Returns:
-            Focus label string, e.g. ``'Learning (8)'`` or
-            ``'Review (5 due)'``.
+            Tuple of the focus label and its detail, e.g.
+            ``('Review', '50 due (5 relearning)')``.
 
         """
         total = len(probabilities)
-        if not cards:
-            return f'Exploration (0/{ total } seen)'
+        seen = len(cards)
+        selected = self.focus_case(cards)
 
+        if selected is not None and selected in cards:
+            card = cards[selected]
+
+            if card.due <= datetime.now(UTC):
+                return (
+                    fsrs_state_label(card)[0],
+                    self.due_detail(cards, card),
+                )
+
+            return 'Maintenance', f'{ seen }/{ total } seen'
+
+        detail = f'{ seen }/{ total } seen'
+        if new_cases_limit > 0:
+            detail = f'{ new_cases_limit } new left · { detail }'
+
+        return 'Exploration', detail
+
+    @staticmethod
+    def due_detail(cards: dict[str, Card], served: Card) -> str:
+        """
+        Count the due backlog, and the relearning cases it contains.
+
+        The relearning count is dropped when the served card is itself
+        relearning: it is then the headline of the label, and repeating
+        it as a secondary counter says nothing more.
+
+        Args:
+            cards: FSRS cards keyed by case code
+            served: Card the session is about to serve
+
+        Returns:
+            Detail string, e.g. ``'50 due (5 relearning)'``.
+
+        """
         due = FSRSScheduler.get_due_cards(cards)
-        if due:
-            relearning = [
-                c for c in due if cards[c].state == State.Relearning
-            ]
-            if relearning:
-                return f'Remediation ({ len(relearning) } relearning)'
-            return f'Review ({ len(due) } due)'
+        detail = f'{ len(due) } due'
 
-        if FSRSScheduler.get_new_cards(cards, probabilities, new_cases_limit):
-            return f'Exploration ({ len(cards) }/{ total } seen)'
+        if served.state == State.Relearning:
+            return detail
 
-        acquiring = [
-            c for c, card in cards.items()
-            if card.state in {State.Learning, State.Relearning}
-        ]
-        if acquiring:
-            return f'Learning ({ len(acquiring) })'
+        relearning = sum(
+            1 for code in due if cards[code].state == State.Relearning
+        )
+        if relearning:
+            detail = f'{ detail } ({ relearning } relearning)'
 
-        return 'Maintenance'
+        return detail
 
     @staticmethod
     def compute_mastery(
