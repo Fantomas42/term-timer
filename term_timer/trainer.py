@@ -48,8 +48,11 @@ from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_fluency
+from term_timer.formatter import format_fsrs_due
+from term_timer.formatter import format_fsrs_state
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
+from term_timer.formatter import fsrs_state_label
 from term_timer.fsrs.rating import BAND_AGAIN
 from term_timer.fsrs.rating import BAND_EASY
 from term_timer.fsrs.rating import BAND_GOOD
@@ -549,7 +552,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             timing_cells = self.timing_cells(case_training, no_ao)
             row = [head, *timing_cells]
             if show_fsrs:
-                row += self.fsrs_cells(case_training, no_ao)
+                row += self.fsrs_cells(case_training)
             table.add_row(*row)
 
         self.console.print(table)
@@ -634,10 +637,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         ]
 
     @staticmethod
-    def fsrs_cells(
-            case_training: 'CaseTraining | None',
-            no_ao: str,
-    ) -> list[str]:
+    def fsrs_cells(case_training: 'CaseTraining | None') -> list[str]:
         """
         Build the FSRS state and due-date cells for a list_cases table row.
 
@@ -645,20 +645,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             List of [state, due] Rich strings.
 
         """
-        if case_training is None or case_training.fsrs_card is None:
-            return [no_ao, no_ao]
+        card = case_training.fsrs_card if case_training else None
 
-        card = case_training.fsrs_card
-        state_klass = card.state.name.lower()
-        state_str = f'[{ state_klass }]{ card.state.name }[/{ state_klass }]'
-        due = card.due.astimezone()
-        now = datetime.now(UTC).astimezone()
-        due_str = (
-            '[warning]Overdue[/warning]'
-            if due <= now
-            else f'[no-ao]{ due.strftime("%Y-%m-%d") }[/no-ao]'
-        )
-        return [state_str, due_str]
+        return [format_fsrs_state(card), format_fsrs_due(card)]
 
     @property
     def fsrs_new_cases_remaining(self) -> int:
@@ -728,33 +717,29 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
     def fsrs_focus_line(self) -> None:
         """Display FSRS session focus and mastery stats if they changed."""
-        if not self.fsrs_selection:
+        if not self.fsrs_selection or self.fsrs_scheduler is None:
             return
 
         cards = self.fsrs_cards
-        focus = FSRSScheduler.compute_session_focus(
+        focus, detail = self.fsrs_scheduler.compute_session_focus(
             cards, self.fsrs_probabilities, self.fsrs_new_cases_remaining,
         )
         mastered, total = FSRSScheduler.compute_mastery(
             cards, self.fsrs_probabilities,
         )
-        mastery_str = (
-            f'{ mastered }/{ total } mastered' if mastered > 0 else ''
-        )
-        focus_str = f'{ focus } { mastery_str }'.strip()
+        if mastered > 0:
+            detail = f'{ detail } · { mastered }/{ total } mastered'
 
-        if (
-                self.fsrs_last_focus is not None
-                and focus_str[:6] == self.fsrs_last_focus[:6]
-        ):
+        if focus == self.fsrs_last_focus:
             return
 
-        self.fsrs_last_focus = focus_str
+        self.fsrs_last_focus = focus
+        focus_str = f'{ focus } - { detail }'
 
         mc = 10 + len(str(self.counter))
 
         self.console.print(
-            f'[fsrs]{ "Practicing".ljust(mc) }:[/fsrs] '
+            f'[fsrs-focus]{ "Practicing".ljust(mc) }:[/fsrs-focus] '
             f'[context]{ focus_str }[/context]',
         )
 
@@ -769,12 +754,13 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         if case_training is None or case_training.fsrs_card is None:
             self.console.print(
-                f'[fsrs]{ name }:[/fsrs] [new]New case evaluation[/new]',
+                f'[fsrs-case]{ name }:[/fsrs-case] '
+                '[new]New case evaluation[/new]',
             )
             return
 
         card = case_training.fsrs_card
-        state_klass = card.state.name.lower()
+        state_label, state_klass = fsrs_state_label(card)
         inner_scheduler = self.fsrs_scheduler.scheduler
 
         if card.step is not None:
@@ -784,13 +770,13 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 else len(inner_scheduler.learning_steps)
             )
             state_str = (
-                f'[{ state_klass }]{ card.state.name }'
+                f'[{ state_klass }]{ state_label }'
                 f' ({ card.step + 1 }/{ total_steps })'
                 f'[/{ state_klass }]'
             )
         else:
             state_str = (
-                f'[{ state_klass }]{ card.state.name }[/{ state_klass }]'
+                f'[{ state_klass }]{ state_label }[/{ state_klass }]'
             )
 
         metrics_str = ''
@@ -834,7 +820,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             )
 
         self.console.print(
-            f'[fsrs]{ name }:[/fsrs] { state_str }{ due_str }{ metrics_str }',
+            f'[fsrs-case]{ name }:[/fsrs-case] '
+            f'{ state_str }{ due_str }{ metrics_str }',
         )
 
     @staticmethod
@@ -1001,15 +988,16 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             stability/difficulty values with signed deltas.
 
         """
-        current_state = current_card.state if current_card is not None else None
-        if current_state != preview_card.state:
-            old_klass = current_state.name.lower() if current_state else 'new'
-            old_label = current_state.name if current_state else 'New'
-            new_klass = preview_card.state.name.lower()
-            new_name = preview_card.state.name
+        old_label, old_klass = (
+            fsrs_state_label(current_card)
+            if current_card is not None
+            else ('New', 'new')
+        )
+        new_label, new_klass = fsrs_state_label(preview_card)
+        if old_label != new_label:
             state_str = (
                 f' [{ old_klass }]{ old_label }[/{ old_klass }]'
-                f' -> [{ new_klass }]{ new_name }[/{ new_klass }]'
+                f' -> [{ new_klass }]{ new_label }[/{ new_klass }]'
             )
         else:
             state_str = ''
@@ -1086,7 +1074,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         name = selected_case.name.center(mc)
 
         self.console.print(
-            f'[fsrs]{ name }:[/fsrs] '
+            f'[fsrs-result]{ name }:[/fsrs-result] '
             f'[{ rating_klass }]{ rating.name }[/{ rating_klass }],'
             f'{ card_change_str } review { due_str }{ suffix }',
         )
@@ -1271,6 +1259,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
             self.console.print(
                 f'[solution]Solution #{ self.counter }:[/solution]',
+                f'[rotation]{ self.cube_orientation_moves }[/rotation] '
                 f'[moves]{ formatted_algorithm }[/moves]',
             )
 

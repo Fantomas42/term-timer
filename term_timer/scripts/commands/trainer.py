@@ -73,7 +73,10 @@ async def trainer(options: Namespace) -> int:  # noqa: C901
             else:
                 break
         if len(instance.session_data) >= 2:
-            TrainerStatistics(instance.session_data).resume()
+            TrainerStatistics(
+                instance.session_data,
+                instance.trainings.cases,
+            ).resume()
 
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')

@@ -1,6 +1,8 @@
 """Formatting utilities for times, algorithms, scores, and display output."""
 import difflib
 import re
+from datetime import UTC
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
@@ -10,6 +12,7 @@ from cubing_algs.constants import INNER_MOVES
 from cubing_algs.constants import OUTER_WIDE_MOVES
 from cubing_algs.constants import PAUSE_CHAR
 from cubing_algs.constants import ROTATIONS
+from fsrs import State
 
 from term_timer.config import SERVER_CONFIG
 from term_timer.constants import DNF
@@ -26,6 +29,8 @@ from term_timer.triggers import TRIGGERS_REGEX
 from term_timer.triggers import apply_trigger_outside_blocks
 
 if TYPE_CHECKING:
+    from fsrs import Card
+
     from term_timer.solve import Solve
 
 
@@ -253,6 +258,69 @@ def format_flag(flag: SolveFlag) -> str:
         flag_klass = 'plus-two'
 
     return f'[{ flag_klass }]{ flag }[/{ flag_klass }]'
+
+
+def fsrs_state_label(card: 'Card') -> tuple[str, str]:
+    """
+    Resolve the display label and theme class of an FSRS card state.
+
+    A Review card is only labelled Review once its due date has passed,
+    so that Review keeps its call to action meaning. While the review is
+    still scheduled in the future the memory is considered consolidated
+    and the card is labelled Stable instead.
+
+    Args:
+        card: Card to label.
+
+    Returns:
+        Tuple of the label to display and its theme class.
+
+    """
+    if card.state == State.Review and card.due > datetime.now(UTC):
+        return 'Stable', 'stable'
+
+    return card.state.name, card.state.name.lower()
+
+
+def format_fsrs_state(card: 'Card | None') -> str:
+    """
+    Format the learning state of an FSRS card.
+
+    Args:
+        card: Card to format, or None when the case has no card yet.
+
+    Returns:
+        Card state formatted, or N/A when the case has no card.
+
+    """
+    if card is None:
+        return '[no-ao]N/A[/no-ao]'
+
+    label, state_klass = fsrs_state_label(card)
+
+    return f'[{ state_klass }]{ label }[/{ state_klass }]'
+
+
+def format_fsrs_due(card: 'Card | None') -> str:
+    """
+    Format the next review date of an FSRS card.
+
+    Args:
+        card: Card to format, or None when the case has no card yet.
+
+    Returns:
+        Due date formatted in local time, Overdue when the review date
+        has passed, or N/A when the case has no card.
+
+    """
+    if card is None:
+        return '[no-ao]N/A[/no-ao]'
+
+    due = card.due.astimezone()
+    if due <= datetime.now(UTC).astimezone():
+        return '[warning]Overdue[/warning]'
+
+    return f'[no-ao]{ due.strftime("%Y-%m-%d") }[/no-ao]'
 
 
 def format_fluency(fluency: int, *, step: bool = False) -> str:

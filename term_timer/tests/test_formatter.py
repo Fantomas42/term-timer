@@ -1,11 +1,16 @@
 """Tests for formatter."""
 import unittest
+from datetime import UTC
+from datetime import datetime
+from datetime import timedelta
 from typing import TYPE_CHECKING
 from typing import cast
 from unittest.mock import MagicMock
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
+from fsrs import Card
+from fsrs import State
 
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -25,12 +30,15 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_flag
 from term_timer.formatter import format_float
+from term_timer.formatter import format_fsrs_due
+from term_timer.formatter import format_fsrs_state
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_metric
 from term_timer.formatter import format_score
 from term_timer.formatter import format_session_name
 from term_timer.formatter import format_term_timer_session_url
 from term_timer.formatter import format_time
+from term_timer.formatter import fsrs_state_label
 
 if TYPE_CHECKING:
     from term_timer.methods.annotations import StepSummary
@@ -467,6 +475,128 @@ class TestFormatFlag(unittest.TestCase):
         """Test format flag empty."""
         result = format_flag('')
         self.assertEqual(result, '[result][/result]')
+
+
+class TestFormatFsrsState(unittest.TestCase):
+    """Tests for format_fsrs_state function."""
+
+    def test_format_fsrs_state_without_card(self) -> None:
+        """Test format fsrs state of a case never trained."""
+        result = format_fsrs_state(None)
+        self.assertEqual(result, '[no-ao]N/A[/no-ao]')
+
+    def test_format_fsrs_state_learning(self) -> None:
+        """Test format fsrs state of a learning card."""
+        result = format_fsrs_state(Card())
+        self.assertEqual(result, '[learning]Learning[/learning]')
+
+    def test_format_fsrs_state_review(self) -> None:
+        """Test format fsrs state of a review card."""
+        now = datetime.now(tz=UTC)
+        card = Card(
+            state=State.Review,
+            stability=15.0,
+            difficulty=5.0,
+            due=now,
+            last_review=now,
+        )
+        result = format_fsrs_state(card)
+        self.assertEqual(result, '[review]Review[/review]')
+
+    def test_format_fsrs_state_review_overdue(self) -> None:
+        """Test format fsrs state of a review card past its due date."""
+        now = datetime.now(tz=UTC)
+        card = Card(
+            state=State.Review,
+            stability=15.0,
+            difficulty=5.0,
+            due=now - timedelta(days=3),
+            last_review=now - timedelta(days=18),
+        )
+        result = format_fsrs_state(card)
+        self.assertEqual(result, '[review]Review[/review]')
+
+    def test_format_fsrs_state_review_scheduled(self) -> None:
+        """Test format fsrs state of a review card due in the future."""
+        now = datetime.now(tz=UTC)
+        card = Card(
+            state=State.Review,
+            stability=15.0,
+            difficulty=5.0,
+            due=now + timedelta(days=12),
+            last_review=now,
+        )
+        result = format_fsrs_state(card)
+        self.assertEqual(result, '[stable]Stable[/stable]')
+
+
+class TestFsrsStateLabel(unittest.TestCase):
+    """Tests for fsrs_state_label function."""
+
+    def test_fsrs_state_label_learning(self) -> None:
+        """Test label of a learning card, whatever its due date."""
+        card = Card(due=datetime.now(tz=UTC) + timedelta(minutes=10))
+        self.assertEqual(fsrs_state_label(card), ('Learning', 'learning'))
+
+    def test_fsrs_state_label_relearning(self) -> None:
+        """Test label of a relearning card due in the future."""
+        card = Card(
+            state=State.Relearning,
+            stability=2.0,
+            difficulty=8.0,
+            due=datetime.now(tz=UTC) + timedelta(minutes=10),
+            last_review=datetime.now(tz=UTC),
+        )
+        self.assertEqual(fsrs_state_label(card), ('Relearning', 'relearning'))
+
+    def test_fsrs_state_label_review_due(self) -> None:
+        """Test label of a review card that reached its due date."""
+        now = datetime.now(tz=UTC)
+        card = Card(
+            state=State.Review,
+            stability=15.0,
+            difficulty=5.0,
+            due=now - timedelta(seconds=1),
+            last_review=now - timedelta(days=15),
+        )
+        self.assertEqual(fsrs_state_label(card), ('Review', 'review'))
+
+    def test_fsrs_state_label_review_scheduled(self) -> None:
+        """Test label of a review card still scheduled in the future."""
+        now = datetime.now(tz=UTC)
+        card = Card(
+            state=State.Review,
+            stability=15.0,
+            difficulty=5.0,
+            due=now + timedelta(seconds=1),
+            last_review=now,
+        )
+        self.assertEqual(fsrs_state_label(card), ('Stable', 'stable'))
+
+
+class TestFormatFsrsDue(unittest.TestCase):
+    """Tests for format_fsrs_due function."""
+
+    def test_format_fsrs_due_without_card(self) -> None:
+        """Test format fsrs due of a case never trained."""
+        result = format_fsrs_due(None)
+        self.assertEqual(result, '[no-ao]N/A[/no-ao]')
+
+    def test_format_fsrs_due_past(self) -> None:
+        """Test format fsrs due of a card waiting for review."""
+        card = Card(due=datetime.now(tz=UTC) - timedelta(days=1))
+        result = format_fsrs_due(card)
+        self.assertEqual(result, '[warning]Overdue[/warning]')
+
+    def test_format_fsrs_due_future(self) -> None:
+        """Test format fsrs due of a card scheduled later."""
+        due = datetime.now(tz=UTC) + timedelta(days=3)
+        card = Card(due=due)
+        result = format_fsrs_due(card)
+        self.assertEqual(
+            result,
+            f'[no-ao]{ due.astimezone().strftime("%Y-%m-%d") }[/no-ao]',
+        )
 
 
 class TestFormatMetric(unittest.TestCase):

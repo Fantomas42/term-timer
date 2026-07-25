@@ -193,6 +193,7 @@ def show_instance_stats(instance: Timer | Trainer | Driller) -> None:
     elif isinstance(instance, Trainer) and len(instance.session_data) >= 2:
         TrainerStatistics(
             instance.session_data,
+            instance.trainings.cases,
         ).resume()
     elif isinstance(instance, Driller) and len(instance.rep_times) >= 2:
         DrillStatistics(

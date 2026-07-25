@@ -5,6 +5,7 @@ from datetime import datetime
 from datetime import timedelta
 
 from fsrs import Card
+from fsrs import Rating
 from fsrs import State
 
 from term_timer.fsrs.scheduler import MASTERY_STABILITY_DAYS
@@ -15,6 +16,8 @@ def make_card(
     due_offset_days: float = 1.0,
     state: State = State.Learning,
     stability: float | None = None,
+    last_review_offset_days: float | None = None,
+    difficulty: float | None = None,
 ) -> Card:
     """
     Create a Card with controlled due date, state, and stability.
@@ -23,6 +26,10 @@ def make_card(
         due_offset_days: Days from now (negative = overdue).
         state: FSRS card state.
         stability: FSRS stability value in days.
+        last_review_offset_days: Days from now for the last review
+            (negative = past). None leaves the card unreviewed.
+        difficulty: FSRS difficulty value; py-fsrs requires it to review
+            a card in Review state.
 
     Returns:
         A Card with the requested attributes.
@@ -33,6 +40,12 @@ def make_card(
     card.state = state
     if stability is not None:
         card.stability = stability
+    if difficulty is not None:
+        card.difficulty = difficulty
+    if last_review_offset_days is not None:
+        card.last_review = datetime.now(UTC) + timedelta(
+            days=last_review_offset_days,
+        )
     return card
 
 
@@ -117,6 +130,110 @@ class TestPrioritizeByUrgency(unittest.TestCase):
         self.assertEqual(result, ['B', 'A'])
 
 
+class TestMissedThisSession(unittest.TestCase):
+    """missed_this_session() detects cards reviewed since session start."""
+
+    def setUp(self) -> None:  # noqa: D102
+        self.scheduler = FSRSScheduler()
+
+    def test_never_reviewed_card_is_not_a_miss(self) -> None:
+        """A card without last_review belongs to the backlog."""
+        card = make_card(due_offset_days=-1.0)
+        self.assertFalse(self.scheduler.missed_this_session(card))
+
+    def test_card_reviewed_before_session_is_not_a_miss(self) -> None:
+        """A card last reviewed yesterday belongs to the backlog."""
+        card = make_card(
+            due_offset_days=-1.0,
+            last_review_offset_days=-1.0,
+        )
+        self.assertFalse(self.scheduler.missed_this_session(card))
+
+    def test_card_reviewed_in_session_is_a_miss(self) -> None:
+        """A card reviewed after the session started is a miss."""
+        card = make_card(due_offset_days=-0.001)
+        card.last_review = self.scheduler.session_start + timedelta(
+            minutes=2,
+        )
+        self.assertTrue(self.scheduler.missed_this_session(card))
+
+    def test_card_reviewed_at_session_start_is_a_miss(self) -> None:
+        """The session start instant itself counts as in-session."""
+        card = make_card(due_offset_days=-0.001)
+        card.last_review = self.scheduler.session_start
+        self.assertTrue(self.scheduler.missed_this_session(card))
+
+
+class TestPrioritizeDue(unittest.TestCase):
+    """prioritize_due() re-serves in-session misses before the backlog."""
+
+    def setUp(self) -> None:  # noqa: D102
+        self.scheduler = FSRSScheduler()
+
+    def missed_card(self, due_offset_minutes: float = -1.0) -> Card:
+        """
+        Build a card missed during the current session.
+
+        Args:
+            due_offset_minutes: Minutes from now for the due date.
+
+        Returns:
+            A due card whose last review is inside the session.
+
+        """
+        card = make_card(due_offset_days=0.0)
+        card.due = datetime.now(UTC) + timedelta(minutes=due_offset_minutes)
+        card.last_review = self.scheduler.session_start + timedelta(
+            seconds=30,
+        )
+        return card
+
+    def test_in_session_miss_comes_before_older_backlog(self) -> None:
+        """A miss due 1 min ago beats a backlog card due 30 days ago."""
+        cards = {
+            'A': make_card(due_offset_days=-30.0),
+            'B': self.missed_card(),
+        }
+        result = self.scheduler.prioritize_due(cards, ['A', 'B'])
+        self.assertEqual(result, ['B', 'A'])
+
+    def test_backlog_keeps_urgency_order(self) -> None:
+        """Backlog cards stay sorted oldest-due first behind the miss."""
+        cards = {
+            'A': make_card(due_offset_days=-1.0),
+            'B': make_card(due_offset_days=-3.0),
+            'C': self.missed_card(),
+        }
+        result = self.scheduler.prioritize_due(cards, ['A', 'B', 'C'])
+        self.assertEqual(result, ['C', 'B', 'A'])
+
+    def test_several_misses_sorted_by_due(self) -> None:
+        """Multiple in-session misses are ordered oldest-due first."""
+        cards = {
+            'A': self.missed_card(due_offset_minutes=-1.0),
+            'B': self.missed_card(due_offset_minutes=-5.0),
+        }
+        result = self.scheduler.prioritize_due(cards, ['A', 'B'])
+        self.assertEqual(result, ['B', 'A'])
+
+    def test_without_miss_matches_plain_urgency(self) -> None:
+        """With no in-session miss the queue is the urgency order."""
+        cards = {
+            'A': make_card(due_offset_days=-1.0),
+            'B': make_card(due_offset_days=-3.0),
+            'C': make_card(due_offset_days=-0.5),
+        }
+        codes = ['A', 'B', 'C']
+        self.assertEqual(
+            self.scheduler.prioritize_due(cards, codes),
+            FSRSScheduler.prioritize_by_urgency(cards, codes),
+        )
+
+    def test_empty_due_returns_empty(self) -> None:
+        """No due case returns an empty queue."""
+        self.assertEqual(self.scheduler.prioritize_due({}, []), [])
+
+
 class TestSelectNextCase(unittest.TestCase):
     """select_next_case() follows the overdue > new > random priority."""
 
@@ -165,6 +282,83 @@ class TestSelectNextCase(unittest.TestCase):
         for _ in range(20):
             result = self.scheduler.select_next_case(cards, self.probs, 5)
             self.assertIn(result, self.probs)
+
+
+class TestSelectNextCaseSessionReserve(unittest.TestCase):
+    """A case missed in-session is re-served without clearing the backlog."""
+
+    def setUp(self) -> None:  # noqa: D102
+        self.scheduler = FSRSScheduler()
+        self.probs = {'A': 0.4, 'B': 0.3, 'C': 0.3}
+        self.cards = {
+            'A': make_card(
+                due_offset_days=-30.0,
+                state=State.Review,
+                stability=60.0,
+                difficulty=5.0,
+            ),
+            'B': make_card(
+                due_offset_days=-29.0,
+                state=State.Review,
+                stability=60.0,
+                difficulty=5.0,
+            ),
+            'C': make_card(
+                due_offset_days=-28.0,
+                state=State.Review,
+                stability=60.0,
+                difficulty=5.0,
+            ),
+        }
+
+    def test_missed_case_waits_for_its_learning_step(self) -> None:
+        """The miss is not due yet, so the backlog keeps flowing."""
+        self.assertEqual(
+            self.scheduler.select_next_case(self.cards, self.probs, 0),
+            'A',
+        )
+        self.cards['A'] = self.scheduler.update_card(
+            self.cards['A'], Rating.Again,
+        )
+        self.assertEqual(
+            self.scheduler.select_next_case(self.cards, self.probs, 0),
+            'B',
+        )
+
+    def test_missed_case_preempts_backlog_once_step_elapsed(self) -> None:
+        """Once the step elapsed the miss beats a 28-day-old backlog card."""
+        self.cards['A'] = self.scheduler.update_card(
+            self.cards['A'], Rating.Again,
+        )
+        # The 2 min learning step has now passed.
+        self.cards['A'].due = datetime.now(UTC) - timedelta(seconds=1)
+
+        self.assertEqual(
+            self.scheduler.select_next_case(self.cards, self.probs, 0),
+            'A',
+        )
+
+    def test_passed_case_does_not_preempt(self) -> None:
+        """A case rated Good in-session is rescheduled, never re-served."""
+        self.cards['A'] = self.scheduler.update_card(
+            self.cards['A'], Rating.Good,
+        )
+        self.assertNotIn('A', FSRSScheduler.get_due_cards(self.cards))
+        self.assertEqual(
+            self.scheduler.select_next_case(self.cards, self.probs, 0),
+            'B',
+        )
+
+    def test_backlog_order_untouched_without_miss(self) -> None:
+        """With nothing missed the queue is the plain urgency order."""
+        served: list[str] = []
+        for _ in range(3):
+            code = self.scheduler.select_next_case(self.cards, self.probs, 0)
+            served.append(code)
+            self.cards[code] = self.scheduler.update_card(
+                self.cards[code], Rating.Good,
+            )
+        self.assertEqual(served, ['A', 'B', 'C'])
 
 
 class TestSelectNextCaseAntiRepeat(unittest.TestCase):
@@ -261,52 +455,36 @@ class TestWeightedChoice(unittest.TestCase):
 
 
 class TestComputeSessionFocus(unittest.TestCase):
-    """compute_session_focus() mirrors the select_next_case priority."""
+    """compute_session_focus() describes the case being served."""
+
+    def setUp(self) -> None:  # noqa: D102
+        self.scheduler = FSRSScheduler()
 
     def test_exploration_when_no_cards_seen(self) -> None:
         """No cards seen yet → exploration."""
         probs = dict.fromkeys('ABCD', 0.25)
-        focus = FSRSScheduler.compute_session_focus({}, probs, 5)
-        self.assertIn('Exploration', focus)
+        focus, detail = self.scheduler.compute_session_focus({}, probs, 5)
+        self.assertEqual(focus, 'Exploration')
+        self.assertEqual(detail, '5 new left · 0/4 seen')
 
-    def test_exploration_while_budget_remains(self) -> None:
-        """Nothing due, unseen cases and budget left → exploration."""
-        probs = {str(i): 0.1 for i in range(10)}
-        cards = {'0': make_card(state=State.Learning)}
-        focus = FSRSScheduler.compute_session_focus(cards, probs, 5)
-        self.assertIn('Exploration', focus)
-
-    def test_exploration_ends_when_budget_exhausted(self) -> None:
-        """Unseen cases remain but no budget → not exploration."""
-        probs = {str(i): 0.1 for i in range(10)}
-        cards = {'0': make_card(state=State.Learning)}
-        focus = FSRSScheduler.compute_session_focus(cards, probs, 0)
-        self.assertNotIn('Exploration', focus)
-
-    def test_due_takes_priority_over_exploration(self) -> None:
-        """A due card wins over remaining new-case budget."""
-        probs = {str(i): 0.1 for i in range(10)}
-        cards = {'0': make_card(state=State.Review, due_offset_days=-1.0)}
-        focus = FSRSScheduler.compute_session_focus(cards, probs, 5)
-        self.assertIn('Review', focus)
-
-    def test_remediation_when_relearning_due(self) -> None:
-        """A due card in Relearning state → remediation."""
+    def test_exploration_when_unseen_case_selected(self) -> None:
+        """The selected case has no card yet → exploration."""
         probs = dict.fromkeys('ABCD', 0.25)
-        cards = {c: make_card(state=State.Review) for c in 'ABCD'}
-        cards['A'] = make_card(state=State.Relearning, due_offset_days=-0.1)
-        focus = FSRSScheduler.compute_session_focus(cards, probs, 5)
-        self.assertIn('Remediation', focus)
+        cards = {'A': make_card(state=State.Learning)}
+        self.scheduler.last_case = 'B'
+        focus, detail = self.scheduler.compute_session_focus(cards, probs, 4)
+        self.assertEqual(focus, 'Exploration')
+        self.assertEqual(detail, '4 new left · 1/4 seen')
 
-    def test_learning_when_acquisition_in_flight(self) -> None:
-        """Cards in Learning, none due, nothing unseen → learning."""
+    def test_exploration_detail_drops_exhausted_budget(self) -> None:
+        """No new-case budget left → the counter is not displayed."""
         probs = dict.fromkeys('ABCD', 0.25)
-        cards = {c: make_card(state=State.Learning) for c in 'ABCD'}
-        focus = FSRSScheduler.compute_session_focus(cards, probs, 5)
-        self.assertIn('Learning', focus)
+        focus, detail = self.scheduler.compute_session_focus({}, probs, 0)
+        self.assertEqual(focus, 'Exploration')
+        self.assertEqual(detail, '0/4 seen')
 
-    def test_review_when_cards_due(self) -> None:
-        """Some cards due → review with due count."""
+    def test_review_when_due_case_selected(self) -> None:
+        """A due Review case is served → review with the backlog size."""
         probs = dict.fromkeys('ABCD', 0.25)
         cards = {
             'A': make_card(state=State.Review, due_offset_days=-1.0),
@@ -314,16 +492,80 @@ class TestComputeSessionFocus(unittest.TestCase):
             'C': make_card(state=State.Review, due_offset_days=1.0),
             'D': make_card(state=State.Review, due_offset_days=1.0),
         }
-        focus = FSRSScheduler.compute_session_focus(cards, probs, 5)
-        self.assertEqual(focus, 'Review (2 due)')
+        self.scheduler.last_case = 'A'
+        focus, detail = self.scheduler.compute_session_focus(cards, probs, 5)
+        self.assertEqual(focus, 'Review')
+        self.assertEqual(detail, '2 due')
 
-    def test_maintenance_when_review_nothing_due(self) -> None:
-        """All cases seen, in Review and none due → maintenance."""
+    def test_backlog_wins_over_a_minority_of_relearning(self) -> None:
+        """A relearning minority does not take over the review label."""
         probs = dict.fromkeys('ABCD', 0.25)
-        cards = {c: make_card(state=State.Review, due_offset_days=5.0)
-                 for c in 'ABCD'}
-        focus = FSRSScheduler.compute_session_focus(cards, probs, 5)
+        cards = {
+            c: make_card(state=State.Review, due_offset_days=-1.0)
+            for c in 'ABCD'
+        }
+        cards['D'] = make_card(state=State.Relearning, due_offset_days=-0.1)
+        self.scheduler.last_case = 'A'
+        focus, detail = self.scheduler.compute_session_focus(cards, probs, 5)
+        self.assertEqual(focus, 'Review')
+        self.assertEqual(detail, '4 due (1 relearning)')
+
+    def test_relearning_when_relearning_case_selected(self) -> None:
+        """The served card leads the label, whatever the backlog is."""
+        probs = dict.fromkeys('ABCD', 0.25)
+        cards = {
+            c: make_card(state=State.Review, due_offset_days=-1.0)
+            for c in 'ABCD'
+        }
+        cards['D'] = make_card(state=State.Relearning, due_offset_days=-0.1)
+        self.scheduler.last_case = 'D'
+        focus, detail = self.scheduler.compute_session_focus(cards, probs, 5)
+        self.assertEqual(focus, 'Relearning')
+        self.assertEqual(detail, '4 due')
+
+    def test_learning_when_learning_case_selected(self) -> None:
+        """A due card mid-acquisition keeps its own state label."""
+        probs = dict.fromkeys('ABCD', 0.25)
+        cards = {'A': make_card(state=State.Learning, due_offset_days=-0.1)}
+        self.scheduler.last_case = 'A'
+        focus, detail = self.scheduler.compute_session_focus(cards, probs, 0)
+        self.assertEqual(focus, 'Learning')
+        self.assertEqual(detail, '1 due')
+
+    def test_maintenance_when_selected_case_not_due(self) -> None:
+        """Nothing due, the pool is served at random → maintenance."""
+        probs = dict.fromkeys('ABCD', 0.25)
+        cards = {
+            c: make_card(state=State.Review, due_offset_days=5.0)
+            for c in 'ABCD'
+        }
+        self.scheduler.last_case = 'C'
+        focus, detail = self.scheduler.compute_session_focus(cards, probs, 5)
         self.assertEqual(focus, 'Maintenance')
+        self.assertEqual(detail, '4/4 seen')
+
+    def test_focus_follows_the_selection(self) -> None:
+        """select_next_case drives the label, without recomputing it."""
+        probs = dict.fromkeys('ABCD', 0.25)
+        cards = {
+            'A': make_card(state=State.Review, due_offset_days=-1.0),
+            'B': make_card(state=State.Relearning, due_offset_days=-0.1),
+        }
+        selected = self.scheduler.select_next_case(cards, probs, 5)
+        self.assertEqual(selected, 'A')
+        focus, _ = self.scheduler.compute_session_focus(cards, probs, 5)
+        self.assertEqual(focus, 'Review')
+
+    def test_without_selection_the_due_head_is_described(self) -> None:
+        """No case selected yet → the head of the due queue is described."""
+        probs = dict.fromkeys('ABCD', 0.25)
+        cards = {
+            'A': make_card(state=State.Review, due_offset_days=-1.0),
+            'B': make_card(state=State.Relearning, due_offset_days=-2.0),
+        }
+        focus, detail = self.scheduler.compute_session_focus(cards, probs, 5)
+        self.assertEqual(focus, 'Relearning')
+        self.assertEqual(detail, '2 due')
 
 
 class TestComputeMastery(unittest.TestCase):

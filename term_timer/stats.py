@@ -34,6 +34,8 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_edge
 from term_timer.formatter import format_flag
 from term_timer.formatter import format_fluency
+from term_timer.formatter import format_fsrs_due
+from term_timer.formatter import format_fsrs_state
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_score
 from term_timer.formatter import format_term_timer_case_url
@@ -44,6 +46,7 @@ from term_timer.printer import print_cube_scrambled
 from term_timer.solve import Solve
 
 if TYPE_CHECKING:
+    from term_timer.fsrs.storage import CaseTraining
     from term_timer.methods.base import Analyser
 
 
@@ -1802,9 +1805,20 @@ class TrainerStatistics:
     def __init__(
             self,
             session_data: list[tuple[str, Case, int]],
+            cases: 'dict[str, CaseTraining] | None' = None,
     ) -> None:
-        """Initialize trainer statistics from per-training collected data."""
+        """
+        Initialize trainer statistics from per-training collected data.
+
+        Args:
+            session_data: Per-training tuples of case code, case and
+                elapsed time.
+            cases: Training data of every case, holding the FSRS cards
+                as they stand at the end of the session.
+
+        """
         self.session_data = session_data
+        self.cases = cases or {}
 
     def resume(self) -> None:
         """Display training session statistics summary."""
@@ -1850,8 +1864,10 @@ class TrainerStatistics:
         table.add_column('Σ', width=3, justify='right')
         table.add_column('Mean', width=5, justify='right')
         table.add_column('Best', width=5, justify='right')
+        table.add_column('State', width=8, justify='right')
+        table.add_column('Due', width=10, justify='right')
 
-        for _, (case, times) in sorted(case_groups.items()):
+        for code, (case, times) in sorted(case_groups.items()):
             link = format_term_timer_case_url(case)
             if link:
                 head = (
@@ -1861,11 +1877,15 @@ class TrainerStatistics:
             else:
                 head = case.pretty_name
             stats = Statistics(times)
+            case_training = self.cases.get(code)
+            card = case_training.fsrs_card if case_training else None
             table.add_row(
                 head,
                 f'[stats]{ stats.total }[/stats]',
                 f'[result]{ format_duration(stats.mean) }[/result]',
                 f'[green]{ format_duration(stats.best) }[/green]',
+                format_fsrs_state(card),
+                format_fsrs_due(card),
             )
 
         console.print(table)
