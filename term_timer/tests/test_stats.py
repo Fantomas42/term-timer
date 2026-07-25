@@ -2667,13 +2667,6 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
 
         self.assertEqual(reporter.punchcard_level(date(2026, 5, 17)), 3)
 
-    def test_punchcard_legend_describes_each_level(self) -> None:
-        """The legend labels the attempt range opening each level."""
-        self.assertEqual(
-            self.reporter.punchcard_legend(),
-            ['1', '2-3', '4-5', '6+'],
-        )
-
     def test_punchcard_cell_of_a_played_day(self) -> None:
         """A played day is a block colored by its attempt level."""
         cell = self.reporter.punchcard_cell(date(2026, 5, 17))
@@ -2732,8 +2725,8 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
         with patch('term_timer.interface.console.console.print') as mock_print:
             self.reporter.punchcard()
 
-        # Title, month header, 7 weekday rows, then the legend.
-        rows = mock_print.call_args_list[2:9]
+        # Month header, 7 weekday rows, then the legend.
+        rows = mock_print.call_args_list[1:8]
         self.assertEqual(len(rows), len(WEEK_DAYS))
 
         header = mock_print.call_args_list[1][0][1]
@@ -2811,24 +2804,28 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
         self.assertEqual(
             list(table.columns[0].cells),
             [
-                '[date]2026-05-17[/date]',
-                '[date]2026-05-18[/date]',
-                '[date]2026-05-21[/date]',
-                '[date]2026-05-22[/date]',
-                '[date]2026-05-23[/date]',
+                '[localhost]2026-05-17[/localhost]',
+                '[localhost]2026-05-18[/localhost]',
+                '[localhost]2026-05-21[/localhost]',
+                '[localhost]2026-05-22[/localhost]',
+                '[localhost]2026-05-23[/localhost]',
             ],
         )
         self.assertEqual(
             next(iter(table.columns[1].cells)),
-            '[session]Sun[/session]',
+            '[date]Sun[/date]',
         )
         self.assertEqual(
             list(table.columns[2].cells)[2],
-            '[stats]3[/stats]',
+            '[result]3[/result]',
         )
         self.assertEqual(
             list(table.columns[3].cells)[2],
-            '[green]00:22.000[/green]',
+            '[stats]00:29.000[/stats]',
+        )
+        self.assertEqual(
+            list(table.columns[4].cells)[2],
+            '[time]00:22.000[/time]',
         )
 
     def test_days_table_limits_the_listed_days(self) -> None:
@@ -2840,7 +2837,10 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
 
         self.assertEqual(
             list(table.columns[0].cells),
-            ['[date]2026-05-22[/date]', '[date]2026-05-23[/date]'],
+            [
+                '[localhost]2026-05-22[/localhost]',
+                '[localhost]2026-05-23[/localhost]',
+            ],
         )
 
     def test_days_table_without_solves(self) -> None:

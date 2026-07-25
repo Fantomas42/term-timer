@@ -2030,27 +2030,6 @@ class DailySummaryReporter:
         return f'[{ cell_style }]{ PUNCHCARD_CELL }[/{ cell_style }]'
 
     @staticmethod
-    def punchcard_legend() -> list[str]:
-        """
-        Build the attempt range described by each punchcard color level.
-
-        Returns:
-            Labels like '1', '2-3' and '6+', one per level.
-
-        """
-        labels = []
-
-        for index, floor in enumerate(PUNCHCARD_LEVELS):
-            if index + 1 == len(PUNCHCARD_LEVELS):
-                labels.append(f'{ floor }+')
-            elif PUNCHCARD_LEVELS[index + 1] - floor == 1:
-                labels.append(str(floor))
-            else:
-                labels.append(f'{ floor }-{ PUNCHCARD_LEVELS[index + 1] - 1 }')
-
-        return labels
-
-    @staticmethod
     def punchcard_header(weeks: list[date]) -> str:
         """
         Render the month header of the punchcard.
@@ -2096,29 +2075,17 @@ class DailySummaryReporter:
 
         weeks = weeks[-weeks_limit:]
 
-        console.print(f'[title]Punchcard for { self.cube_name }[/title]')
-        console.print('   ', f'[stats]{ self.punchcard_header(weeks) }[/stats]')
+        console.print(
+            '   ',
+            f'[result]{ self.punchcard_header(weeks) }[/result]',
+        )
 
         for index, label in enumerate(WEEK_DAYS):
             cells = ''.join(
                 self.punchcard_cell(week + timedelta(days=index))
                 for week in weeks
             )
-            console.print(f'[stats]{ label }[/stats]', cells)
-
-        console.print(
-            *(
-                f'[{ style }]{ PUNCHCARD_CELL }[/{ style }]'
-                f' [stats]{ label }[/stats]'
-                for style, label in zip(
-                    PUNCHCARD_STYLES,
-                    self.punchcard_legend(),
-                    strict=True,
-                )
-            ),
-            f'[no-ao]{ "·" * len(PUNCHCARD_CELL) }[/no-ao]'
-            ' [stats]missed[/stats]',
-        )
+            console.print(f'[date]{ label }[/date]', cells)
 
     def days_table(self, limit: int = DAILY_DAYS_LISTED) -> None:
         """
@@ -2131,20 +2098,20 @@ class DailySummaryReporter:
         if not self.days:
             return
 
-        table = Table(title='Daily days', box=box.SIMPLE)
+        table = Table(box=box.SIMPLE)
         table.add_column('Date', width=10)
         table.add_column('Day', width=3)
-        table.add_column('Σ', width=3, justify='right')
-        table.add_column('Best', width=9, justify='right')
+        table.add_column('Total', width=5, justify='right')
         table.add_column('Mean', width=9, justify='right')
+        table.add_column('Best', width=9, justify='right')
 
         for day, stats in list(self.days.items())[-limit:]:
             table.add_row(
-                f'[date]{ day }[/date]',
-                f'[session]{ WEEK_DAYS[day.weekday()] }[/session]',
-                f'[stats]{ stats.total }[/stats]',
-                f'[green]{ format_time(stats.best) }[/green]',
-                f'[result]{ format_time(stats.mean) }[/result]',
+                f'[localhost]{ day }[/localhost]',
+                f'[date]{ WEEK_DAYS[day.weekday()] }[/date]',
+                f'[result]{ stats.total }[/result]',
+                f'[stats]{ format_time(stats.mean) }[/stats]',
+                f'[time]{ format_time(stats.best) }[/time]',
             )
 
         console.print(table)
