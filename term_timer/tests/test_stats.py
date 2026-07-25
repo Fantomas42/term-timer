@@ -2613,9 +2613,16 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
             (date(2026, 5, 21), 22 * SECOND),
         )
 
-    def test_worst_day_holds_the_slowest_solve(self) -> None:
-        """The worst day is the one of the slowest solve."""
+    def test_worst_day_holds_the_slowest_best(self) -> None:
+        """The worst day is the one of the slowest daily best time."""
         self.assertEqual(
+            self.reporter.worst_day,
+            (date(2026, 5, 23), 35 * SECOND),
+        )
+
+    def test_worst_day_ignores_the_slowest_retry(self) -> None:
+        """A day holding the slowest attempt is not the worst day."""
+        self.assertNotEqual(
             self.reporter.worst_day,
             (date(2026, 5, 21), 40 * SECOND),
         )
@@ -2772,7 +2779,7 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
         self.assertIn('2026-05-21', output)
         self.assertIn('55.56%', output)
         self.assertIn('00:22.000', output)
-        self.assertIn('00:40.000', output)
+        self.assertIn('00:35.000', output)
 
     def test_resume_without_solves(self) -> None:
         """An empty history prints no resume at all."""

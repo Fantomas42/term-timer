@@ -1910,18 +1910,23 @@ class DailySummaryReporter:
     @cached_property
     def worst_day(self) -> tuple[date, int] | None:
         """
-        Return the day of the slowest daily solve.
+        Return the day holding the slowest of the daily best times.
+
+        A day is represented by its best time, as in best_day: ranking on
+        the slowest attempt would only expose the worst retry ever made,
+        which says nothing of how the day went.
 
         Returns:
-            Date and time of the slowest solve, None without played day.
+            Date and best time of the slowest day, None without played
+            day.
 
         """
         if not self.played_days:
             return None
 
-        day = max(self.played_days, key=lambda d: self.days[d].worst)
+        day = max(self.played_days, key=lambda d: self.days[d].best)
 
-        return (day, self.days[day].worst)
+        return (day, self.days[day].best)
 
     def punchcard_level(self, day: date) -> int:
         """
