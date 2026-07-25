@@ -53,6 +53,7 @@ def daily_review(cube: int, date_str: str) -> int:
     round_stats = SolveStatisticsReporter(cube, stack)
     round_stats.resume()
     round_stats.graph('Tendency')
+
     return 0
 
 
@@ -152,10 +153,15 @@ async def daily(options: Namespace) -> int:
             if not done:
                 break
 
-        if len(instance.stack_done) > 1:
-            round_stats = SolveStatisticsReporter(cube, instance.stack_done)
-            round_stats.resume(f'Daily { date_str } ', 'round')
-            round_stats.graph()
+        if len(instance.stack) > 1:
+            console.print(
+                f'[title]Daily summary on '
+                f'{ cube }x{ cube }x{ cube }[/title]',
+            )
+
+            round_stats = SolveStatisticsReporter(cube, instance.stack)
+            round_stats.resume()
+            round_stats.graph('Tendency')
 
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')
