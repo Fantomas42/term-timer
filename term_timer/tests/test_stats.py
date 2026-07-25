@@ -2354,11 +2354,31 @@ class TestTrainerStatisticsResume(unittest.TestCase):
         # Cases are sorted by code: '21' comes first, then '27'
         states = list(table.columns[4].cells)
         dues = list(table.columns[5].cells)
-        self.assertEqual(states[1], '[review]Review[/review]')
+        self.assertEqual(states[1], '[stable]Stable[/stable]')
         self.assertEqual(
             dues[1],
             f'[no-ao]{ self.due.astimezone().strftime("%Y-%m-%d") }[/no-ao]',
         )
+
+    def test_resume_table_shows_overdue_card_as_review(self) -> None:
+        """A case whose review date has passed is shown as Review."""
+        cases = {
+            '27': CaseTraining(
+                code='27',
+                last_date=100,
+                timings=[2000, 2400],
+                fsrs_card=Card(
+                    state=State.Review,
+                    due=datetime.now(tz=UTC) - timedelta(days=3),
+                ),
+            ),
+        }
+        table = self.table_from_resume(cases)
+
+        states = list(table.columns[4].cells)
+        dues = list(table.columns[5].cells)
+        self.assertEqual(states[1], '[review]Review[/review]')
+        self.assertEqual(dues[1], '[warning]Overdue[/warning]')
 
     def test_resume_table_without_card(self) -> None:
         """A case with no card yet falls back to N/A."""

@@ -52,6 +52,7 @@ from term_timer.formatter import format_fsrs_due
 from term_timer.formatter import format_fsrs_state
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
+from term_timer.formatter import fsrs_state_label
 from term_timer.fsrs.rating import BAND_AGAIN
 from term_timer.fsrs.rating import BAND_EASY
 from term_timer.fsrs.rating import BAND_GOOD
@@ -762,7 +763,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             return
 
         card = case_training.fsrs_card
-        state_klass = card.state.name.lower()
+        state_label, state_klass = fsrs_state_label(card)
         inner_scheduler = self.fsrs_scheduler.scheduler
 
         if card.step is not None:
@@ -772,13 +773,13 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 else len(inner_scheduler.learning_steps)
             )
             state_str = (
-                f'[{ state_klass }]{ card.state.name }'
+                f'[{ state_klass }]{ state_label }'
                 f' ({ card.step + 1 }/{ total_steps })'
                 f'[/{ state_klass }]'
             )
         else:
             state_str = (
-                f'[{ state_klass }]{ card.state.name }[/{ state_klass }]'
+                f'[{ state_klass }]{ state_label }[/{ state_klass }]'
             )
 
         metrics_str = ''
@@ -989,15 +990,16 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             stability/difficulty values with signed deltas.
 
         """
-        current_state = current_card.state if current_card is not None else None
-        if current_state != preview_card.state:
-            old_klass = current_state.name.lower() if current_state else 'new'
-            old_label = current_state.name if current_state else 'New'
-            new_klass = preview_card.state.name.lower()
-            new_name = preview_card.state.name
+        old_label, old_klass = (
+            fsrs_state_label(current_card)
+            if current_card is not None
+            else ('New', 'new')
+        )
+        new_label, new_klass = fsrs_state_label(preview_card)
+        if old_label != new_label:
             state_str = (
                 f' [{ old_klass }]{ old_label }[/{ old_klass }]'
-                f' -> [{ new_klass }]{ new_name }[/{ new_klass }]'
+                f' -> [{ new_klass }]{ new_label }[/{ new_klass }]'
             )
         else:
             state_str = ''

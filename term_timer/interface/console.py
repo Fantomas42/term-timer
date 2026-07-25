@@ -54,6 +54,7 @@ theme: dict[str, str] = {
     'learning': f'bold { YELLOW }',
     'relearning': 'bold #FFCC00',
     'review': 'bold #00FFAF',
+    'stable': 'bold #649CF5',
     'easy': 'bold #00AFFF',
     'good': f'bold { GREEN }',
     'hard': f'bold { ORANGE }',
