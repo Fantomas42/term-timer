@@ -60,6 +60,9 @@ PUNCHCARD_STYLES: Final = (
 
 DAILY_DAYS_LISTED: Final = 14
 
+RESUME_LABEL_WIDTH: Final = 6
+RESUME_VALUE_WIDTH: Final = 13
+
 TT_DIRECTORY: Final = Path(
     os.getenv(
         'TERM_TIMER_HOME',

@@ -46,6 +46,7 @@ from term_timer.formatter import format_fluency
 from term_timer.formatter import format_fsrs_due
 from term_timer.formatter import format_fsrs_state
 from term_timer.formatter import format_grade
+from term_timer.formatter import format_resume_row
 from term_timer.formatter import format_score
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
@@ -1948,6 +1949,9 @@ class DailySummaryReporter:
         """
         Display attendance and streak statistics to the console.
 
+        Values are laid out on two columns of labelled cells, a third
+        column holding the detail qualifying the line.
+
         Args:
             prefix: String to prepend to each line for indentation.
             style: Rich console style name for formatting labels.
@@ -1960,50 +1964,66 @@ class DailySummaryReporter:
             f'[title]Daily summary for { self.cube_name }[/title]',
         )
         console.print(
-            f'[{ style }]{ prefix }Days  :[/{ style }]',
-            f'[result]{ len(self.played_days) }[/result]',
-            f'[{ style }]played[/{ style }]',
-            f'[result]{ self.total_solves }[/result]',
-            f'[{ style }]solves[/{ style }]',
-            f'[result]{ self.solves_per_day:.2f}[/result]',
-            f'[{ style }]per day[/{ style }]',
+            format_resume_row(
+                (
+                    ('Days', str(len(self.played_days)), 'result'),
+                    ('Solves', str(self.total_solves), 'result'),
+                ),
+                f'[detail]{ self.solves_per_day:.2f} per day[/detail]',
+                prefix, style,
+            ),
         )
         console.print(
-            f'[{ style }]{ prefix }Since :[/{ style }]',
-            f'[date]{ self.played_days[0] }[/date]',
-            f'[result]{ self.span }[/result]',
-            f'[{ style }]days[/{ style }]',
-            f'[percent]{ (self.participation * 100):05.2f}%[/percent]',
+            format_resume_row(
+                (
+                    ('Since', str(self.played_days[0]), 'result'),
+                    ('Span', f'{ self.span } days', 'result'),
+                ),
+                f'[detail]{ (self.participation * 100):05.2f}% played[/detail]',
+                prefix, style,
+            ),
         )
         console.print(
-            f'[{ style }]{ prefix }Streak:[/{ style }]',
-            f'[result]{ len(self.current_streak) }[/result]',
-            f'[{ style }]current[/{ style }]',
-            f'[green]{ len(self.longest_streak) }[/green]',
-            f'[{ style }]best[/{ style }]',
-            f'[date]{ self.longest_streak[0] }[/date]',
-            f'[{ style }]→[/{ style }]',
-            f'[date]{ self.longest_streak[-1] }[/date]',
+            format_resume_row(
+                (
+                    ('Streak', str(len(self.current_streak)), 'result'),
+                    ('Record', str(len(self.longest_streak)), 'result'),
+                ),
+                f'[detail]{ self.longest_streak[0] } → '
+                f'{ self.longest_streak[-1] }[/detail]',
+                prefix, style,
+            ),
         )
         console.print(
-            f'[{ style }]{ prefix }Last  :[/{ style }]',
-            f'[date]{ self.played_days[-1] }[/date]',
-            f'[result]{ self.days_since_last }[/result]',
-            f'[{ style }]days ago[/{ style }]',
+            format_resume_row(
+                (
+                    ('Last', str(self.played_days[-1]), 'result'),
+                    ('Ago', f'{ self.days_since_last } days', 'result'),
+                ),
+                prefix=prefix, style=style,
+            ),
         )
 
         if self.best_day and self.worst_day:
             best_day, best_time = self.best_day
             worst_day, worst_time = self.worst_day
             console.print(
-                f'[{ style }]{ prefix }Best  :[/{ style }]',
-                f'[green]{ format_time(best_time) }[/green]',
-                f'[date]{ best_day }[/date]',
+                format_resume_row(
+                    (
+                        ('Best', format_time(best_time), 'green'),
+                        ('Day', str(best_day), 'result'),
+                    ),
+                    prefix=prefix, style=style,
+                ),
             )
             console.print(
-                f'[{ style }]{ prefix }Worst :[/{ style }]',
-                f'[red]{ format_time(worst_time) }[/red]',
-                f'[date]{ worst_day }[/date]',
+                format_resume_row(
+                    (
+                        ('Worst', format_time(worst_time), 'red'),
+                        ('Day', str(worst_day), 'result'),
+                    ),
+                    prefix=prefix, style=style,
+                ),
             )
 
     def punchcard_cell(self, day: date) -> str:
