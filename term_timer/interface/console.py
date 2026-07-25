@@ -136,6 +136,11 @@ theme: dict[str, str] = {
     'average': f'bold { TEXT_LIGHT }',
     'no-ao': 'bold #666666',
 
+    'punchcard-1': '#2A4A6B',
+    'punchcard-2': '#4A8FD0',
+    'punchcard-3': '#6FC0FF',
+    'punchcard-4': '#A8E4FF',
+
     'trend-up': f'bold { GREEN }',
     'trend-flat': 'bold #888888',
     'trend-down': f'bold { RED }',

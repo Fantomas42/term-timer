@@ -40,6 +40,26 @@ GRAPH_CONSOLE_COLORS: Final = {
 }
 GRAPH_CONSOLE_FALLBACK: Final = 213
 
+WEEK_DAYS: Final = ('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')
+
+MONTH_INITIALS: Final = 'JFMAMJJASOND'
+
+# A full block filling its cell, twice per week so the punchcard reads as
+# squares. Weeks are capped to keep the widest grid under 80 characters,
+# the missed and blank cells matching the width of a played one.
+PUNCHCARD_CELL: Final = '██'
+PUNCHCARD_WEEKS: Final = 38
+
+PUNCHCARD_LEVELS: Final = (1, 2, 4, 6)
+PUNCHCARD_STYLES: Final = (
+    'punchcard-1',
+    'punchcard-2',
+    'punchcard-3',
+    'punchcard-4',
+)
+
+DAILY_DAYS_LISTED: Final = 14
+
 TT_DIRECTORY: Final = Path(
     os.getenv(
         'TERM_TIMER_HOME',
