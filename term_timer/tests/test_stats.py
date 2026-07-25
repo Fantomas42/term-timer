@@ -2,23 +2,30 @@
 # ruff: noqa: ANN401, ERA001
 import random
 import unittest
+from datetime import UTC
+from datetime import datetime
+from datetime import timedelta
 from typing import TYPE_CHECKING
 from typing import Any
 from unittest.mock import Mock
 from unittest.mock import patch
 
 from cubing_algs.cases import get_case
+from fsrs import Card
+from fsrs import State
 
 from term_timer.annotations import ListingFilters
 from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
+from term_timer.fsrs.storage import CaseTraining
 from term_timer.solve import Solve
 from term_timer.stats import TARGET_ALWAYS
 from term_timer.stats import TARGET_NEVER
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsTools
+from term_timer.stats import TrainerStatistics
 
 if TYPE_CHECKING:
     from term_timer.annotations import CaseStats
@@ -2292,3 +2299,81 @@ class TestSolveStatisticsReporterGraph(unittest.TestCase):
             for call in mock_plt.plot.call_args_list
         ]
         self.assertEqual(labels, ['Time', 'AO12', 'AO5'])
+
+
+class TestTrainerStatisticsResume(unittest.TestCase):
+    """Tests for TrainerStatistics resume method."""
+
+    def setUp(self) -> None:
+        """Set up a training session over two OLL cases."""
+        self.session_data = [
+            ('27', get_case('OLL', '27'), 2000),
+            ('27', get_case('OLL', '27'), 2400),
+            ('21', get_case('OLL', '21'), 3000),
+        ]
+        self.due = datetime.now(tz=UTC) + timedelta(days=4)
+        self.cases = {
+            '27': CaseTraining(
+                code='27',
+                last_date=100,
+                timings=[2000, 2400],
+                fsrs_card=Card(state=State.Review, due=self.due),
+            ),
+        }
+
+    def table_from_resume(
+            self, cases: dict[str, CaseTraining] | None,
+    ) -> Any:
+        """
+        Run resume and return the case table handed to the console.
+
+        Returns:
+            The Rich table of the per-case summary.
+
+        """
+        stats = TrainerStatistics(self.session_data, cases)
+
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            stats.resume()
+
+        return mock_print.call_args_list[-1][0][0]
+
+    def test_resume_table_has_fsrs_columns(self) -> None:
+        """The case table always exposes the State and Due columns."""
+        table = self.table_from_resume(self.cases)
+
+        headers = [column.header for column in table.columns]
+        self.assertEqual(
+            headers, ['Case', 'Σ', 'Mean', 'Best', 'State', 'Due'],
+        )
+
+    def test_resume_table_shows_card_state_and_due(self) -> None:
+        """A case with a card shows its state and its next review date."""
+        table = self.table_from_resume(self.cases)
+
+        # Cases are sorted by code: '21' comes first, then '27'
+        states = list(table.columns[4].cells)
+        dues = list(table.columns[5].cells)
+        self.assertEqual(states[1], '[review]Review[/review]')
+        self.assertEqual(
+            dues[1],
+            f'[no-ao]{ self.due.astimezone().strftime("%Y-%m-%d") }[/no-ao]',
+        )
+
+    def test_resume_table_without_card(self) -> None:
+        """A case with no card yet falls back to N/A."""
+        table = self.table_from_resume(self.cases)
+
+        states = list(table.columns[4].cells)
+        dues = list(table.columns[5].cells)
+        self.assertEqual(states[0], '[no-ao]N/A[/no-ao]')
+        self.assertEqual(dues[0], '[no-ao]N/A[/no-ao]')
+
+    def test_resume_table_without_trainings(self) -> None:
+        """Omitting the trainings keeps the columns empty of card data."""
+        table = self.table_from_resume(None)
+
+        self.assertEqual(
+            list(table.columns[4].cells),
+            ['[no-ao]N/A[/no-ao]', '[no-ao]N/A[/no-ao]'],
+        )

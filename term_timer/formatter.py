@@ -1,6 +1,8 @@
 """Formatting utilities for times, algorithms, scores, and display output."""
 import difflib
 import re
+from datetime import UTC
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
@@ -26,6 +28,8 @@ from term_timer.triggers import TRIGGERS_REGEX
 from term_timer.triggers import apply_trigger_outside_blocks
 
 if TYPE_CHECKING:
+    from fsrs import Card
+
     from term_timer.solve import Solve
 
 
@@ -232,6 +236,47 @@ def format_flag(flag: SolveFlag) -> str:
         flag_klass = 'plus-two'
 
     return f'[{ flag_klass }]{ flag }[/{ flag_klass }]'
+
+
+def format_fsrs_state(card: 'Card | None') -> str:
+    """
+    Format the learning state of an FSRS card.
+
+    Args:
+        card: Card to format, or None when the case has no card yet.
+
+    Returns:
+        Card state formatted, or N/A when the case has no card.
+
+    """
+    if card is None:
+        return '[no-ao]N/A[/no-ao]'
+
+    state_klass = card.state.name.lower()
+
+    return f'[{ state_klass }]{ card.state.name }[/{ state_klass }]'
+
+
+def format_fsrs_due(card: 'Card | None') -> str:
+    """
+    Format the next review date of an FSRS card.
+
+    Args:
+        card: Card to format, or None when the case has no card yet.
+
+    Returns:
+        Due date formatted in local time, Overdue when the review date
+        has passed, or N/A when the case has no card.
+
+    """
+    if card is None:
+        return '[no-ao]N/A[/no-ao]'
+
+    due = card.due.astimezone()
+    if due <= datetime.now(UTC).astimezone():
+        return '[warning]Overdue[/warning]'
+
+    return f'[no-ao]{ due.strftime("%Y-%m-%d") }[/no-ao]'
 
 
 def format_fluency(fluency: int, *, step: bool = False) -> str:

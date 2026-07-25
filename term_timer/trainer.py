@@ -48,6 +48,8 @@ from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_fluency
+from term_timer.formatter import format_fsrs_due
+from term_timer.formatter import format_fsrs_state
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
 from term_timer.fsrs.rating import BAND_AGAIN
@@ -549,7 +551,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             timing_cells = self.timing_cells(case_training, no_ao)
             row = [head, *timing_cells]
             if show_fsrs:
-                row += self.fsrs_cells(case_training, no_ao)
+                row += self.fsrs_cells(case_training)
             table.add_row(*row)
 
         self.console.print(table)
@@ -634,10 +636,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         ]
 
     @staticmethod
-    def fsrs_cells(
-            case_training: 'CaseTraining | None',
-            no_ao: str,
-    ) -> list[str]:
+    def fsrs_cells(case_training: 'CaseTraining | None') -> list[str]:
         """
         Build the FSRS state and due-date cells for a list_cases table row.
 
@@ -645,20 +644,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             List of [state, due] Rich strings.
 
         """
-        if case_training is None or case_training.fsrs_card is None:
-            return [no_ao, no_ao]
+        card = case_training.fsrs_card if case_training else None
 
-        card = case_training.fsrs_card
-        state_klass = card.state.name.lower()
-        state_str = f'[{ state_klass }]{ card.state.name }[/{ state_klass }]'
-        due = card.due.astimezone()
-        now = datetime.now(UTC).astimezone()
-        due_str = (
-            '[warning]Overdue[/warning]'
-            if due <= now
-            else f'[no-ao]{ due.strftime("%Y-%m-%d") }[/no-ao]'
-        )
-        return [state_str, due_str]
+        return [format_fsrs_state(card), format_fsrs_due(card)]
 
     @property
     def fsrs_new_cases_remaining(self) -> int:
