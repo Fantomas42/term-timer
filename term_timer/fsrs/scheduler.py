@@ -67,6 +67,7 @@ class FSRSScheduler:
             enable_fuzzing=True,
         )
         self.last_case: str | None = None
+        self.session_start = datetime.now(UTC)
 
     def update_card(self, card: Card | None, rating: Rating) -> Card:
         """
@@ -93,7 +94,8 @@ class FSRSScheduler:
         Select next case to practice using FSRS scheduling.
 
         Priority order:
-        1. Overdue cards (past due date), sorted by urgency
+        1. Overdue cards (past due date), missed in-session first, then
+           by urgency
         2. New cards (not yet seen, up to limit), weighted by probability
         3. Weighted-random from all available cases by probability
 
@@ -117,7 +119,7 @@ class FSRSScheduler:
         due_cards = self.get_due_cards(cards)
 
         if due_cards:
-            self.last_case = self.prioritize_by_urgency(cards, due_cards)[0]
+            self.last_case = self.prioritize_due(cards, due_cards)[0]
             return self.last_case
 
         new_cards = self.get_new_cards(cards, probabilities, new_cases_limit)
@@ -290,6 +292,66 @@ class FSRSScheduler:
         if limit == 0:
             return []
         return [c for c in probabilities if c not in cards]
+
+    def missed_this_session(self, card: Card) -> bool:
+        """
+        Tell whether a card was already reviewed during this session.
+
+        A card reviewed in-session and *not* missed is rescheduled days
+        away, so it cannot be due: among due cards this predicate isolates
+        exactly the ones missed a few minutes ago, whose learning step has
+        now elapsed.
+
+        Args:
+            card: FSRS card to test
+
+        Returns:
+            True when the card's last review happened in this session.
+
+        """
+        return (
+            card.last_review is not None
+            and card.last_review >= self.session_start
+        )
+
+    def prioritize_due(
+            self,
+            cards: dict[str, Card],
+            due_cases: list[str],
+        ) -> list[str]:
+        """
+        Sort due cases, re-serving the misses of the current session first.
+
+        Absolute due date alone cannot express "come back in 2 minutes":
+        a card missed in-session is due minutes ago against a backlog due
+        weeks ago, so urgency sorting buries it at the end of the queue and
+        the learning steps never fire (measured: 25 intervening cases on a
+        50-case OLL backlog). Re-serving it first is the massed practice
+        LEARNING_STEPS exist for; the rest of the queue keeps the plain
+        urgency order, so the backlog is still cleared oldest-first.
+
+        Args:
+            cards: FSRS cards keyed by case code
+            due_cases: Case codes that are due
+
+        Returns:
+            In-session misses (oldest due first), then the remaining due
+            cases by urgency.
+
+        """
+        missed: list[str] = []
+        backlog: list[str] = []
+
+        for code in due_cases:
+            if self.missed_this_session(cards[code]):
+                missed.append(code)
+            else:
+                backlog.append(code)
+
+        return (
+            self.prioritize_by_urgency(cards, missed)
+            + self.prioritize_by_urgency(cards, backlog)
+        )
 
     @staticmethod
     def prioritize_by_urgency(
