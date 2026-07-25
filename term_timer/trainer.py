@@ -1259,6 +1259,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
             self.console.print(
                 f'[solution]Solution #{ self.counter }:[/solution]',
+                f'[rotation]{ self.cube_orientation_moves }[/rotation] '
                 f'[moves]{ formatted_algorithm }[/moves]',
             )
 
