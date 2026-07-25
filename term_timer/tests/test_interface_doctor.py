@@ -68,7 +68,7 @@ class TestDoctorReporter(unittest.TestCase):
         """A window without findings reports sane solves."""
         report = make_reporter([]).report()
 
-        self.assertIn('Diagnostics of 10 solves:', report)
+        self.assertIn('Diagnostics on last 10 solves:', report)
         self.assertIn('No issue detected, sane solves !', report)
 
     def test_report_finding_rendering(self) -> None:
