@@ -1,4 +1,6 @@
 """Statistics calculation and display for solve sessions."""
+from datetime import date
+from datetime import timedelta
 from functools import cached_property
 from typing import TYPE_CHECKING
 from typing import cast
@@ -20,14 +22,21 @@ from term_timer.config import STATS_GRAPH_SERIES
 from term_timer.config import STATS_SESSION_SERIES
 from term_timer.config import STATS_SOLVE_METRICS
 from term_timer.config import STATS_TRIM
+from term_timer.constants import DAILY_DAYS_LISTED
 from term_timer.constants import DNF
 from term_timer.constants import GRAPH_CONSOLE_COLORS
 from term_timer.constants import GRAPH_CONSOLE_FALLBACK
 from term_timer.constants import GRAPH_CONSOLE_LIMIT
+from term_timer.constants import MONTH_INITIALS
 from term_timer.constants import PLUS_TWO
+from term_timer.constants import PUNCHCARD_CELL
+from term_timer.constants import PUNCHCARD_LEVELS
+from term_timer.constants import PUNCHCARD_STYLES
+from term_timer.constants import PUNCHCARD_WEEKS
 from term_timer.constants import SECOND
 from term_timer.constants import SECOND_BINS
 from term_timer.constants import STEP_BAR
+from term_timer.constants import WEEK_DAYS
 from term_timer.formatter import compute_padding
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_duration
@@ -37,6 +46,7 @@ from term_timer.formatter import format_fluency
 from term_timer.formatter import format_fsrs_due
 from term_timer.formatter import format_fsrs_state
 from term_timer.formatter import format_grade
+from term_timer.formatter import format_resume_row
 from term_timer.formatter import format_score
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
@@ -1613,13 +1623,17 @@ class SolveStatisticsReporter(Statistics):
             f'[title]Grade CFOP :[/title]{ grade_line } ({ mean:.2f})',
         )
 
-    def graph(self) -> None:
+    def graph(self, title: str = '') -> None:
         """
         Display a terminal-based graph of solve times and trends.
 
         Plots individual solve times along with the rolling averages
         configured in ``STATS_GRAPH_SERIES`` (capped to the first two
         entries) to visualize performance trends over the session.
+
+        Args:
+            title: Title of the graph.
+
         """
         series = STATS_GRAPH_SERIES[:GRAPH_CONSOLE_LIMIT]
         series_values: list[list[float | None]] = [[] for _ in series]
@@ -1661,7 +1675,7 @@ class SolveStatisticsReporter(Statistics):
                     ),
                 )
 
-        plt.title(f'Tendencies { self.cube_name }')
+        plt.title(title or f'Tendencies for { self.cube_name }')
         plt.plot_size(height=25)
 
         n = len(times)
@@ -1677,6 +1691,455 @@ class SolveStatisticsReporter(Statistics):
         plt.ticks_style('bold')
 
         plt.show()
+
+
+class DailySummaryReporter:
+    """
+    Formats and displays the participation summary of daily sessions.
+
+    Daily solves are grouped by the day of their session instead of being
+    pooled together: a daily session replays a single scramble all day
+    long, so solve based averages spanning several days carry no meaning.
+    The reporter exposes attendance, streaks and a per day breakdown.
+    """
+
+    def __init__(self, cube_size: int, stack: list[Solve],
+                 today: date | None = None) -> None:
+        """
+        Initialize the daily summary reporter.
+
+        Args:
+            cube_size: Dimension of the cube (e.g., 3 for 3x3x3).
+            stack: List of Solve objects from every daily session.
+            today: Reference day used for the participation span and the
+                current streak, defaulting to the current date.
+
+        """
+        self.cube_size = cube_size
+        self.cube_name = f'{ cube_size }x{ cube_size }x{ cube_size }'
+
+        self.stack = stack
+        self.today = today or date.today()  # noqa: DTZ011
+
+    @cached_property
+    def days(self) -> dict[date, Statistics]:
+        """
+        Group solve times by the day of their daily session.
+
+        Sessions not named after a date are skipped: a daily session file
+        is always named after the day it belongs to. Days made only of DNF
+        solves are skipped too, the daily never having been solved.
+
+        Returns:
+            Mapping of session date to its Statistics, oldest first.
+
+        """
+        grouped: dict[date, list[int]] = {}
+
+        for solve in self.stack:
+            try:
+                day = date.fromisoformat(solve.session)
+            except ValueError:
+                continue
+
+            grouped.setdefault(day, []).append(solve.final_time)
+
+        days = {
+            day: Statistics(times)
+            for day, times in sorted(grouped.items())
+        }
+
+        return {day: stats for day, stats in days.items() if stats.best}
+
+    @cached_property
+    def played_days(self) -> list[date]:
+        """
+        List the days holding at least one daily solve.
+
+        Returns:
+            Sorted list of played dates, oldest first.
+
+        """
+        return list(self.days)
+
+    @cached_property
+    def span(self) -> int:
+        """
+        Count the days elapsed since the first daily, today included.
+
+        Returns:
+            Number of days in the participation window, 0 without solves.
+
+        """
+        if not self.played_days:
+            return 0
+
+        return (self.today - self.played_days[0]).days + 1
+
+    @cached_property
+    def participation(self) -> float:
+        """
+        Calculate the ratio of played days over the whole span.
+
+        Returns:
+            Proportion of played days (0.0 to 1.0).
+
+        """
+        if not self.span:
+            return 0.0
+
+        return len(self.played_days) / self.span
+
+    @cached_property
+    def total_solves(self) -> int:
+        """
+        Count the solves held by the played days.
+
+        The stack is not measured directly: it also carries the solves of
+        the sessions dropped by days, which no other figure counts.
+
+        Returns:
+            Number of solves, retries and DNF included.
+
+        """
+        return sum(stats.total for stats in self.days.values())
+
+    @cached_property
+    def solves_per_day(self) -> float:
+        """
+        Calculate the mean number of solves on a played day.
+
+        Returns:
+            Mean count of solves per played day.
+
+        """
+        if not self.played_days:
+            return 0.0
+
+        return self.total_solves / len(self.played_days)
+
+    @cached_property
+    def streaks(self) -> list[list[date]]:
+        """
+        Split the played days into blocks of consecutive days.
+
+        Returns:
+            List of streaks, in chronological order.
+
+        """
+        blocks: list[list[date]] = []
+
+        for day in self.played_days:
+            if blocks and (day - blocks[-1][-1]).days == 1:
+                blocks[-1].append(day)
+            else:
+                blocks.append([day])
+
+        return blocks
+
+    @cached_property
+    def longest_streak(self) -> list[date]:
+        """
+        Return the longest block of consecutive played days.
+
+        The most recent block wins a tie, being the more motivating one.
+
+        Returns:
+            Days of the longest streak, empty without solves.
+
+        """
+        longest: list[date] = []
+
+        for streak in self.streaks:
+            if len(streak) >= len(longest):
+                longest = streak
+
+        return longest
+
+    @cached_property
+    def current_streak(self) -> list[date]:
+        """
+        Return the ongoing block of consecutive played days.
+
+        A streak stays alive while its last day is today or yesterday, so
+        that it does not collapse before the daily of the day is played.
+
+        Returns:
+            Days of the current streak, empty when it is broken.
+
+        """
+        if not self.streaks:
+            return []
+
+        last = self.streaks[-1]
+        if (self.today - last[-1]).days <= 1:
+            return last
+
+        return []
+
+    @cached_property
+    def days_since_last(self) -> int:
+        """
+        Count the days elapsed since the last played daily.
+
+        Returns:
+            Number of days, 0 when the daily of the day is played.
+
+        """
+        if not self.played_days:
+            return 0
+
+        return (self.today - self.played_days[-1]).days
+
+    @cached_property
+    def best_day(self) -> tuple[date, int] | None:
+        """
+        Return the day of the fastest daily solve.
+
+        Returns:
+            Date and time of the fastest solve, None without played day.
+
+        """
+        if not self.played_days:
+            return None
+
+        day = min(self.played_days, key=lambda d: self.days[d].best)
+
+        return (day, self.days[day].best)
+
+    @cached_property
+    def worst_day(self) -> tuple[date, int] | None:
+        """
+        Return the day holding the slowest of the daily best times.
+
+        A day is represented by its best time, as in best_day: ranking on
+        the slowest attempt would only expose the worst retry ever made,
+        which says nothing of how the day went.
+
+        Returns:
+            Date and best time of the slowest day, None without played
+            day.
+
+        """
+        if not self.played_days:
+            return None
+
+        day = max(self.played_days, key=lambda d: self.days[d].best)
+
+        return (day, self.days[day].best)
+
+    def punchcard_level(self, day: date) -> int:
+        """
+        Rank a played day on its number of attempts.
+
+        Levels are absolute thresholds, not a distribution of the history:
+        a day keeps its color whatever the other days hold.
+
+        Args:
+            day: Played day to rank.
+
+        Returns:
+            Index in PUNCHCARD_STYLES, 0 being the fewest attempts.
+
+        """
+        total = self.days[day].total
+
+        return max(
+            index
+            for index, floor in enumerate(PUNCHCARD_LEVELS)
+            if total >= floor
+        )
+
+    def resume(self, prefix: str = '', style: str = 'stats') -> None:
+        """
+        Display attendance and streak statistics to the console.
+
+        Values are laid out on two columns of labelled cells, a third
+        column holding the detail qualifying the line.
+
+        Args:
+            prefix: String to prepend to each line for indentation.
+            style: Rich console style name for formatting labels.
+
+        """
+        if not self.played_days:
+            return
+
+        console.print(
+            f'[title]Daily summary for { self.cube_name }[/title]',
+        )
+        console.print(
+            format_resume_row(
+                (
+                    ('Days', str(len(self.played_days)), 'result'),
+                    ('Solves', str(self.total_solves), 'result'),
+                ),
+                f'[detail]{ self.solves_per_day:.2f} per day[/detail]',
+                prefix, style,
+            ),
+        )
+        console.print(
+            format_resume_row(
+                (
+                    ('Since', str(self.played_days[0]), 'result'),
+                    ('Span', f'{ self.span } days', 'result'),
+                ),
+                f'[detail]{ (self.participation * 100):05.2f}% played[/detail]',
+                prefix, style,
+            ),
+        )
+        console.print(
+            format_resume_row(
+                (
+                    ('Streak', str(len(self.current_streak)), 'result'),
+                    ('Record', str(len(self.longest_streak)), 'result'),
+                ),
+                f'[detail]{ self.longest_streak[0] } → '
+                f'{ self.longest_streak[-1] }[/detail]',
+                prefix, style,
+            ),
+        )
+        console.print(
+            format_resume_row(
+                (
+                    ('Last', str(self.played_days[-1]), 'result'),
+                    ('Ago', f'{ self.days_since_last } days', 'result'),
+                ),
+                prefix=prefix, style=style,
+            ),
+        )
+
+        if self.best_day and self.worst_day:
+            best_day, best_time = self.best_day
+            worst_day, worst_time = self.worst_day
+            console.print(
+                format_resume_row(
+                    (
+                        ('Best', format_time(best_time), 'green'),
+                        ('Day', str(best_day), 'result'),
+                    ),
+                    prefix=prefix, style=style,
+                ),
+            )
+            console.print(
+                format_resume_row(
+                    (
+                        ('Worst', format_time(worst_time), 'red'),
+                        ('Day', str(worst_day), 'result'),
+                    ),
+                    prefix=prefix, style=style,
+                ),
+            )
+
+    def punchcard_cell(self, day: date) -> str:
+        """
+        Render a single punchcard cell for a day.
+
+        Args:
+            day: Day to render.
+
+        Returns:
+            Rich markup of the cell, blanks outside of the window.
+
+        """
+        width = len(PUNCHCARD_CELL)
+
+        if not self.played_days[0] <= day <= self.today:
+            return ' ' * width
+
+        if day not in self.days:
+            return f'[no-ao]{ "·" * width }[/no-ao]'
+
+        cell_style = PUNCHCARD_STYLES[self.punchcard_level(day)]
+
+        return f'[{ cell_style }]{ PUNCHCARD_CELL }[/{ cell_style }]'
+
+    @staticmethod
+    def punchcard_header(weeks: list[date]) -> str:
+        """
+        Render the month header of the punchcard.
+
+        Args:
+            weeks: First day of each displayed week.
+
+        Returns:
+            Header string marking the initial of each starting month.
+
+        """
+        header = ''
+        month = 0
+
+        for week in weeks:
+            initial = (
+                week.month != month and MONTH_INITIALS[week.month - 1]
+            ) or ' '
+            header += initial.ljust(len(PUNCHCARD_CELL))
+            month = week.month
+
+        return header
+
+    def punchcard(self, weeks_limit: int = PUNCHCARD_WEEKS) -> None:
+        """
+        Display a participation punchcard, one column per week.
+
+        Args:
+            weeks_limit: Maximum number of weeks displayed, the most
+                recent ones being kept.
+
+        """
+        if not self.played_days:
+            return
+
+        first = self.played_days[0]
+        cursor = first - timedelta(days=first.weekday())
+
+        weeks = []
+        while cursor <= self.today:
+            weeks.append(cursor)
+            cursor += timedelta(days=7)
+
+        weeks = weeks[-weeks_limit:]
+
+        console.print(
+            '   ',
+            f'[result]{ self.punchcard_header(weeks) }[/result]',
+        )
+
+        for index, label in enumerate(WEEK_DAYS):
+            cells = ''.join(
+                self.punchcard_cell(week + timedelta(days=index))
+                for week in weeks
+            )
+            console.print(f'[date]{ label }[/date]', cells)
+
+    def days_table(self, limit: int = DAILY_DAYS_LISTED) -> None:
+        """
+        Display a table of the most recent played days.
+
+        Args:
+            limit: Maximum number of played days displayed.
+
+        """
+        if not self.days:
+            return
+
+        table = Table(box=box.SIMPLE)
+        table.add_column('Date', width=10)
+        table.add_column('Day', width=3)
+        table.add_column('Total', width=5, justify='right')
+        table.add_column('Mean', width=9, justify='right')
+        table.add_column('Best', width=9, justify='right')
+
+        for day, stats in list(self.days.items())[-limit:]:
+            table.add_row(
+                f'[localhost]{ day }[/localhost]',
+                f'[date]{ WEEK_DAYS[day.weekday()] }[/date]',
+                f'[result]{ stats.total }[/result]',
+                f'[stats]{ format_time(stats.mean) }[/stats]',
+                f'[time]{ format_time(stats.best) }[/time]',
+            )
+
+        console.print(table)
 
 
 class DrillStatistics(Statistics):

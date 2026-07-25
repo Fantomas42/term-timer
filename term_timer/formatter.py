@@ -22,6 +22,8 @@ from term_timer.constants import FLUENCY_STEP_LOW_THRESHOLD
 from term_timer.constants import FLUENCY_STEP_MEDIUM_THRESHOLD
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
+from term_timer.constants import RESUME_LABEL_WIDTH
+from term_timer.constants import RESUME_VALUE_WIDTH
 from term_timer.constants import SECOND
 from term_timer.constants import SolveFlag
 from term_timer.methods.annotations import StepSummary
@@ -185,6 +187,39 @@ def format_ghost_delta(delta: int) -> str:
     if delta > 0:
         return f'[red]▼ +{ format_duration(delta) }[/red]'
     return f'[green]▲ { format_duration(delta) }[/green]'
+
+
+def format_resume_row(
+        cells: tuple[tuple[str, str, str], ...],
+        detail: str = '',
+        prefix: str = '',
+        style: str = 'stats',
+) -> str:
+    """
+    Format a line of labelled values as fixed width columns.
+
+    Args:
+        cells: Label, formatted value and value style of each cell of the
+            line, every value being padded so that the next cell always
+            opens on the same column.
+        detail: Rich markup closing the line, qualifying its values.
+        prefix: String to prepend to the line for indentation.
+        style: Rich console style name for formatting labels.
+
+    Returns:
+        Rich markup of the line, trimmed of the padding of its last cell.
+
+    """
+    line = f'[{ style }]{ prefix }[/{ style }]' if prefix else ''
+
+    for label, value, value_style in cells:
+        padding = ' ' * max(RESUME_VALUE_WIDTH - len(value), 0)
+        line += (
+            f'[{ style }]{ label:<{RESUME_LABEL_WIDTH}}:[/{ style }] '
+            f'[{ value_style }]{ value }[/{ value_style }]{ padding }'
+        )
+
+    return f'{ line }{ detail }'.rstrip()
 
 
 def format_score(score: float) -> str:

@@ -739,7 +739,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         mc = 10 + len(str(self.counter))
 
         self.console.print(
-            f'[fsrs-focus]{ "Practicing".ljust(mc) }:[/fsrs-focus] '
+            f'[fsrs-focus]{ "🎯Training".ljust(mc - 1) }:[/fsrs-focus] '
             f'[context]{ focus_str }[/context]',
         )
 
