@@ -48,7 +48,9 @@ theme: dict[str, str] = {
     'scrambled': 'bold #BBAAEE',
     'eo': 'bold #40E0D0',
 
-    'fsrs': f'bold { TEXT_LIGHT } on #CC33CC',
+    'fsrs-case': f'bold { TEXT_LIGHT } on #CC33CC',
+    'fsrs-result': f'bold { TEXT_LIGHT } on #8F248F',
+    'fsrs-focus': f'bold { TEXT_LIGHT } on #33CC33',
     'context': TEXT_LIGHT,
     'new': f'bold { GREEN}',
     'learning': f'bold { YELLOW }',

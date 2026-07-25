@@ -743,7 +743,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         mc = 10 + len(str(self.counter))
 
         self.console.print(
-            f'[fsrs]{ "Practicing".ljust(mc) }:[/fsrs] '
+            f'[fsrs-focus]{ "Practicing".ljust(mc) }:[/fsrs-focus] '
             f'[context]{ focus_str }[/context]',
         )
 
@@ -758,7 +758,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         if case_training is None or case_training.fsrs_card is None:
             self.console.print(
-                f'[fsrs]{ name }:[/fsrs] [new]New case evaluation[/new]',
+                f'[fsrs-case]{ name }:[/fsrs-case] '
+                '[new]New case evaluation[/new]',
             )
             return
 
@@ -823,7 +824,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             )
 
         self.console.print(
-            f'[fsrs]{ name }:[/fsrs] { state_str }{ due_str }{ metrics_str }',
+            f'[fsrs-case]{ name }:[/fsrs-case] '
+            f'{ state_str }{ due_str }{ metrics_str }',
         )
 
     @staticmethod
@@ -1076,7 +1078,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         name = selected_case.name.center(mc)
 
         self.console.print(
-            f'[fsrs]{ name }:[/fsrs] '
+            f'[fsrs-result]{ name }:[/fsrs-result] '
             f'[{ rating_klass }]{ rating.name }[/{ rating_klass }],'
             f'{ card_change_str } review { due_str }{ suffix }',
         )
