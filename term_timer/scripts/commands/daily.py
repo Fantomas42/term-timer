@@ -44,8 +44,14 @@ def daily_review(cube: int, date_str: str) -> int:
             style='warning',
         )
         return 1
+
+    console.print(
+        f'[title]Daily summary for { date_str } on '
+        f'{ cube }x{ cube }x{ cube }[/title]',
+    )
+
     round_stats = SolveStatisticsReporter(cube, stack)
-    round_stats.resume(f'Daily { date_str } ', 'round')
+    round_stats.resume()
     round_stats.graph()
     return 0
 
