@@ -642,7 +642,7 @@ def linear_regression(
     return (slope, intercept)
 
 
-def resume(events: list[EventDict], output: str) -> None:
+def summarize_events(events: list[EventDict], output: str) -> None:
     """
     Analyzes event timing and optionally exports to JSON.
 
@@ -775,7 +775,7 @@ async def run(
             gl_thread.stop()
             gl_thread.join(timeout=2)
 
-    resume(event_collector, options.output)
+    summarize_events(event_collector, options.output)
 
     logger.info('Bye bye')
 

@@ -152,7 +152,7 @@ class SolvesMethodAggregator:
 
         score = 0.0
         total = 0
-        resume: dict[str, dict[str, CaseStatsAccumulator]] = {}
+        cases: dict[str, dict[str, CaseStatsAccumulator]] = {}
         stack: list[Solve | None] = []
 
         for analyse in analyses:
@@ -167,10 +167,10 @@ class SolvesMethodAggregator:
             step: StepAnalysis
             for step_name, step in analyse['steps'].items():
                 step_case = step['case']
-                resume.setdefault(step_name, {})
-                if step_case not in resume[step_name]:
+                cases.setdefault(step_name, {})
+                if step_case not in cases[step_name]:
                     case_info = get_case(step_name, step_case)
-                    resume[step_name][step_case] = {
+                    cases[step_name][step_case] = {
                         'recognitions': [],
                         'executions': [],
                         'times': [],
@@ -180,20 +180,20 @@ class SolvesMethodAggregator:
                         'case': case_info,
                     }
 
-                resume[step_name][step_case]['times'].append(step['time'])
-                resume[step_name][step_case]['executions'].append(step['execution'])
-                resume[step_name][step_case]['recognitions'].append(step['recognition'])
-                resume[step_name][step_case]['qtms'].append(step['qtm'])
-                resume[step_name][step_case]['tpss'].append(step['tps'])
-                resume[step_name][step_case]['etpss'].append(step['etps'])
+                cases[step_name][step_case]['times'].append(step['time'])
+                cases[step_name][step_case]['executions'].append(step['execution'])
+                cases[step_name][step_case]['recognitions'].append(step['recognition'])
+                cases[step_name][step_case]['qtms'].append(step['qtm'])
+                cases[step_name][step_case]['tpss'].append(step['tps'])
+                cases[step_name][step_case]['etpss'].append(step['etps'])
 
-        final_resume: dict[str, dict[str, CaseStats]] = {}
-        for step_name, step_cases in resume.items():
-            final_resume[step_name] = {}
+        final_cases: dict[str, dict[str, CaseStats]] = {}
+        for step_name, step_cases in cases.items():
+            final_cases[step_name] = {}
             accumulator: CaseStatsAccumulator
             for case_name, accumulator in step_cases.items():
                 count = len(accumulator['times'])
-                final_resume[step_name][case_name] = {
+                final_cases[step_name][case_name] = {
                     'count': count,
                     'frequency': count / total,
                     'case': accumulator['case'],
@@ -210,7 +210,7 @@ class SolvesMethodAggregator:
         return {
             'total': total,
             'mean': score / total if total else 0,
-            'resume': final_resume,
+            'cases': final_cases,
             'stack': stack,
         }
 

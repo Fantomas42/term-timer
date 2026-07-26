@@ -1045,7 +1045,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
         analyses: MethodAnalysis = {
             'total': 5,
             'mean': 85.5,
-            'resume': {'oll': {}, 'pll': {}},
+            'cases': {'oll': {}, 'pll': {}},
             'stack': [],
         }
 
@@ -1065,7 +1065,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
         analyses: MethodAnalysis = {
             'total': 5,
             'mean': 85.5,
-            'resume': {'oll': {}, 'pll': {}},
+            'cases': {'oll': {}, 'pll': {}},
             'stack': [],
         }
 

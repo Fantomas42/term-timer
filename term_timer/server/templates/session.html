@@ -676,7 +676,7 @@
 
     <div class="tabs">
       <div class="tab active" data-tab="solves">Solves</div>
-      {% for step in method_aggregation.results.resume.keys() %}
+      {% for step in method_aggregation.results.cases.keys() %}
         <div class="tab" data-tab="{{ step }}">{{ step.upper() }}</div>
       {% endfor %}
     </div>
@@ -759,7 +759,7 @@
       </table>
     </div>
 
-    {% for step, cases in method_aggregation.results.resume.items() %}
+    {% for step, cases in method_aggregation.results.cases.items() %}
       <div class="tab-content table-container" id="{{ step }}-tab">
         <table class="{{ step }}-list">
           <thead>

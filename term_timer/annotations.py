@@ -97,7 +97,7 @@ class MethodAnalysis(TypedDict):
 
     total: int
     mean: float
-    resume: dict[str, dict[str, CaseStats]]
+    cases: dict[str, dict[str, CaseStats]]
     stack: list[Solve | None]
 
 

@@ -1605,11 +1605,11 @@ class SolveStatisticsReporter(Statistics):
         if sorting == 'case':
             sorting = 'label'
 
-        resume = analyses['resume']
-        if not pll_only and 'oll' in resume:
-            self.case_table('OLL', resume['oll'], sorting, ordering)
-        if not oll_only and 'pll' in resume:
-            self.case_table('PLL', resume['pll'], sorting, ordering)
+        cases = analyses['cases']
+        if not pll_only and 'oll' in cases:
+            self.case_table('OLL', cases['oll'], sorting, ordering)
+        if not oll_only and 'pll' in cases:
+            self.case_table('PLL', cases['pll'], sorting, ordering)
 
         mean = analyses['mean']
         grade = format_grade(mean)

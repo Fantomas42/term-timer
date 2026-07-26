@@ -211,10 +211,10 @@ class TestSolvesMethodAggregator(unittest.TestCase):
 
         self.assertEqual(result['total'], 1)
         self.assertEqual(result['mean'], 80.0)
-        self.assertIn('oll', result['resume'])
-        self.assertIn('35', result['resume']['oll'])
+        self.assertIn('oll', result['cases'])
+        self.assertIn('35', result['cases']['oll'])
 
-        case_data = result['resume']['oll']['35']
+        case_data = result['cases']['oll']['35']
         self.assertEqual(case_data['count'], 1)
         self.assertEqual(case_data['frequency'], 1.0)
         self.assertEqual(case_data['time'], 10.0)
@@ -239,7 +239,7 @@ class TestSolvesMethodAggregator(unittest.TestCase):
 
         self.assertEqual(result['total'], 0)
         self.assertEqual(result['mean'], 0)
-        self.assertEqual(result['resume'], {})
+        self.assertEqual(result['cases'], {})
         self.assertEqual(result['stack'], [])
 
     @patch('term_timer.aggregator.get_method_analyser')
@@ -295,7 +295,7 @@ class TestSolvesMethodAggregator(unittest.TestCase):
                           return_value=analyses):
             result = aggregator.aggregate()
 
-        case_data = result['resume']['oll']['35']
+        case_data = result['cases']['oll']['35']
         self.assertEqual(case_data['count'], 2)
         self.assertEqual(case_data['frequency'], 1.0)
         self.assertEqual(case_data['time'], 11.0)  # (10+12)/2
