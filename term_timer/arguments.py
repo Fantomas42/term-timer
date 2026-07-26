@@ -111,7 +111,7 @@ def set_session_arguments(
     return session
 
 
-def ghost_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR0914
+def ghost_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR0914, PLR0915
     """
     Create argument parser for ghost command.
 
@@ -180,6 +180,12 @@ def ghost_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
     )
 
     bluetooth = parser.add_argument_group('Bluetooth')
+    bluetooth.add_argument(
+        '--replay',
+        default='',
+        metavar='FILE',
+        help=SUPPRESS,
+    )
     use_bluetooth = bool(DEVICE_ADDRESS)
     mode = 'disable' if use_bluetooth else 'enable'
     bluetooth.add_argument(

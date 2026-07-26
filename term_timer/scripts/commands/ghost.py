@@ -1,11 +1,14 @@
 """Ghost racing command."""
 import operator
+import os
 from argparse import Namespace
 from random import Random
 
 from cubing_algs.exceptions import InvalidMoveError
 
+from term_timer.bluetooth.replay import load_scramble_replay
 from term_timer.constants import GHOSTS_DIRECTORY
+from term_timer.exceptions import ReplayError
 from term_timer.formatter import format_ghost_delta
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
@@ -206,7 +209,7 @@ def ghost_summary(cube: int) -> int:
     return 0
 
 
-async def ghost(options: Namespace) -> int:  # noqa: C901
+async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
     """
     Race a live solve against a recorded ghost on the same scramble.
 
@@ -243,6 +246,15 @@ async def ghost(options: Namespace) -> int:  # noqa: C901
 
     scramble_str = str(reference.scramble)
     key = scramble_to_key(scramble_str)
+
+    try:
+        replay = load_scramble_replay(
+            options.replay or os.getenv('TERM_TIMER_REPLAY'),
+            scramble_str,
+        )
+    except ReplayError as error:
+        console.print('😱', str(error), style='warning')
+        return 1
 
     history = load_solves(cube, key, directory=GHOSTS_DIRECTORY)
     ghost_solve = select_ghost(reference, history, options)
@@ -287,7 +299,10 @@ async def ghost(options: Namespace) -> int:  # noqa: C901
     instance.save_directory = GHOSTS_DIRECTORY
     instance.ghost = ghost_solve
 
-    if options.bluetooth:
+    if replay is not None:
+        instance.bluetooth_replay = replay
+
+    if options.bluetooth or replay is not None:
         await instance.bluetooth_connect(
             use_gyroscope=options.use_gyroscope,
         )
