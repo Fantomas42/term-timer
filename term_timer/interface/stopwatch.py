@@ -259,6 +259,29 @@ class StopWatch:
 
         return group[index]
 
+    def checkpoint_time(self, elapsed_time: int) -> int:
+        """
+        Give the elapsed time of a checkpoint on the move timeline.
+
+        A step is detected by the display loop, up to one REFRESH after
+        the move that actually completed it, while a ghost split is the
+        clock of that move. Anchoring the checkpoint on the last move
+        received removes that bias, and matches how the final checkpoint
+        is measured (``end_time - start_time``, both move clocks).
+
+        Args:
+            elapsed_time: The time sampled by the display loop, used as
+                a fallback while no move has been received yet.
+
+        Returns:
+            The elapsed time in ns of the last move received.
+
+        """
+        if not self.moves:
+            return elapsed_time
+
+        return self.moves[-1]['time'] - self.start_time
+
     def check_and_print_steps(
             self,
             elapsed_time: int,
@@ -281,6 +304,9 @@ class StopWatch:
 
         facelets, orientation = self.build_oriented_facelets()
         current_group = self.groups_to_track[self.group_progress]
+        step_time = (
+            elapsed_time if final else self.checkpoint_time(elapsed_time)
+        )
 
         for step_name, display_name in current_group:
             if (
@@ -289,7 +315,7 @@ class StopWatch:
                     step_name, facelets, orientation,
                 )
             ):
-                delta_time = elapsed_time - self.previous_step_time
+                delta_time = step_time - self.previous_step_time
                 step_htm = parse_moves(
                     [m['move'] for m in self.moves[self.previous_move_index:]],
                 ).transform(optimize_double_moves).metrics.htm
@@ -301,7 +327,7 @@ class StopWatch:
                 show_delta = final or not self.first_step
                 self.print_step(
                     style,
-                    elapsed_time,
+                    step_time,
                     display_name or step_name,
                     delta_time=delta_time if show_delta else None,
                     htm=step_htm,
@@ -309,7 +335,7 @@ class StopWatch:
                     ghost_split=ghost_split,
                 )
                 self.first_step = False
-                self.previous_step_time = elapsed_time
+                self.previous_step_time = step_time
                 self.previous_move_index = len(self.moves)
                 self.completed_in_group.add(step_name)
                 self.previous_style = ''
