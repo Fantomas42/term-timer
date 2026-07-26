@@ -1,4 +1,5 @@
 """Daily scramble command."""
+import operator
 from argparse import Namespace
 from datetime import date
 from datetime import datetime
@@ -9,10 +10,12 @@ from cubing_algs.exceptions import InvalidMoveError
 from term_timer.bluetooth.replay import load_scramble_replay
 from term_timer.constants import DAILY_DIRECTORY
 from term_timer.exceptions import ReplayError
+from term_timer.formatter import format_time
 from term_timer.in_out import load_all_daily_solves
 from term_timer.in_out import load_solves
 from term_timer.interface.console import console
 from term_timer.scrambler import scrambler
+from term_timer.solve import Solve
 from term_timer.stats import DailySummaryReporter
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.timer import Timer
@@ -29,6 +32,75 @@ def parse_date(raw: str) -> date:
     if raw:
         return datetime.strptime(raw, '%Y-%m-%d').date()  # noqa: DTZ007
     return date.today()  # noqa: DTZ011
+
+
+def select_ghost(
+        history: list[Solve],
+        options: Namespace,
+) -> Solve | None:
+    """
+    Pick the ghost to beat: the day's fastest analysable solve.
+
+    Unlike the ghost command, the first attempt of the day has nothing to
+    race: the day only gets a ghost once one of its solves is analysable.
+    The chosen ghost is analysed with the command's method and
+    orientation to align its splits with the live checkpoints.
+
+    Returns:
+        The fastest analysable Solve of the day, or None when there is
+        none yet.
+
+    """
+    candidates = [solve for solve in history if solve.analysable]
+    if not candidates:
+        return None
+
+    ghost = min(candidates, key=operator.attrgetter('time'))
+    ghost.method_name = options.method
+    ghost.orientation = options.orientation
+
+    return ghost
+
+
+def refresh_ghost(
+        instance: Timer,
+        history: list[Solve],
+        options: Namespace,
+) -> None:
+    """
+    Re-elect the ghost after an attempt.
+
+    The pool is the day's stored solves plus the attempts of the running
+    session, so beating the ghost immediately promotes the fresh solve as
+    the target of the next race. Free play never writes to the daily file
+    but its attempts still count for the session.
+
+    Args:
+        instance: The running timer, holding the current ghost and the
+            attempts done in this session.
+        history: The solves stored for that day at startup.
+        options: Command options carrying the method and orientation.
+
+    """
+    instance.ghost = select_ghost(
+        [*history, *instance.stack_done],
+        options,
+    )
+
+
+def daily_header(date_str: str, ghost_solve: Solve | None) -> str:
+    """
+    Build the session header, carrying the time to beat when raced.
+
+    Returns:
+        The header line to print.
+
+    """
+    header = f'[routine]📅 Daily Scramble - { date_str }[/routine]'
+    if ghost_solve is not None:
+        header += f' [time]{ format_time(ghost_solve.time) }[/time]'
+
+    return header
 
 
 def daily_review(cube: int, date_str: str) -> int:
@@ -113,16 +185,12 @@ async def daily(options: Namespace) -> int:  # noqa: C901
         console.print('😱', str(error), style='warning')
         return 1
 
-    console.print(
-        f'📅 Daily Scramble - { date_str }',
-        style='routine',
-    )
+    history = load_solves(cube, session, directory=DAILY_DIRECTORY)
+    ghost_solve = select_ghost(history, options)
 
-    stack = [] if options.free_play else load_solves(
-        cube,
-        session,
-        directory=DAILY_DIRECTORY,
-    )
+    console.print(daily_header(date_str, ghost_solve))
+
+    stack = [] if options.free_play else history
 
     instance = Timer(
         cube_size=cube,
@@ -151,6 +219,7 @@ async def daily(options: Namespace) -> int:  # noqa: C901
         rng=rng,
     )
     instance.save_directory = DAILY_DIRECTORY
+    instance.ghost = ghost_solve
 
     if replay is not None:
         instance.bluetooth_replay = replay
@@ -163,6 +232,8 @@ async def daily(options: Namespace) -> int:  # noqa: C901
     try:
         while 42:
             done = await instance.start()
+
+            refresh_ghost(instance, history, options)
 
             if not done:
                 break
