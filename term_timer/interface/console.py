@@ -121,6 +121,9 @@ theme: dict[str, str] = {
     'green': f'{ GREEN }',
     'orange': f'{ ORANGE }',
 
+    'win': f'bold { TEXT_DARK } on #66FF66',
+    'loss': f'bold { TEXT_LIGHT } on { RED }',
+
     'dnf': f'bold { TEXT_LIGHT } on { RED }',
     'plus-two': f'bold { TEXT_DARK } on { ORANGE }',
 

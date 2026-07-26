@@ -153,7 +153,7 @@ class StopWatch:
             )
             if last:
                 verdict = 'WIN' if ghost_delta <= 0 else 'LOSS'
-                style_v = 'record' if ghost_delta <= 0 else 'warning'
+                style_v = verdict.lower()
                 extras += f' [{ style_v }]{ verdict }[/{ style_v }]'
 
         self.console.print(
