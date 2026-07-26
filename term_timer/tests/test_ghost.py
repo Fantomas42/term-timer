@@ -340,6 +340,14 @@ class TestGhostLibrary(unittest.TestCase):
 class TestGhostDisplay(unittest.TestCase):
     """Tests for the ghost segments grafted onto stopwatch lines."""
 
+    def setUp(self) -> None:
+        """Patch sound playback for each test."""
+        sound_patcher = patch(
+            'term_timer.interface.sounds.sd', create=True,
+        )
+        sound_patcher.start()
+        self.addCleanup(sound_patcher.stop)
+
     @staticmethod
     def build(*, ghost_active: bool) -> GhostStopWatch:
         """
