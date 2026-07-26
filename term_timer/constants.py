@@ -66,6 +66,7 @@ RESUME_VALUE_WIDTH: Final = 13
 STEP_DELTA_WIDTH: Final = 6
 GHOST_SPLIT_WIDTH: Final = 6
 GHOST_DELTA_WIDTH: Final = 6
+GHOST_EMOJI: Final = '👻'
 
 TT_DIRECTORY: Final = Path(
     os.getenv(

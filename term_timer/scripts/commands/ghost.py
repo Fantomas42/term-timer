@@ -6,6 +6,7 @@ from random import Random
 from cubing_algs.exceptions import InvalidMoveError
 
 from term_timer.bluetooth.replay import load_scramble_replay
+from term_timer.constants import GHOST_EMOJI
 from term_timer.constants import GHOSTS_DIRECTORY
 from term_timer.exceptions import ReplayError
 from term_timer.formatter import format_ghost_delta
@@ -125,7 +126,7 @@ def refresh_ghost(
         return
 
     console.print(
-        '[record]👻 New ghost:[/record]',
+        f'[record]{ GHOST_EMOJI } New ghost:[/record]',
         f'[best]{ format_time(ghost_solve.time) }[/best]',
         format_ghost_delta(ghost_solve.time - current.time),
     )
@@ -257,7 +258,8 @@ async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
     ghost_solve = select_ghost(reference, history, options)
 
     console.print(
-        f'[routine]👻 Ghost Race - Scramble #{ options.solve_id }[/routine] '
+        f'[routine]{ GHOST_EMOJI } Ghost Race - '
+        f'Scramble #{ options.solve_id }[/routine] '
         f'[time]{ format_time(ghost_solve.time) }[/time]',
     )
 

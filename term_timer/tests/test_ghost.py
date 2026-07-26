@@ -420,6 +420,19 @@ class TestGhostDisplay(unittest.TestCase):
             )
         self.assertIn('LOSS', watch.console.export_text())
 
+    def test_step_uses_the_overridden_emoji(self) -> None:
+        """The ghost marker follows the stopwatch emoji."""
+        watch = self.build(ghost_active=True)
+        watch.ghost_emoji = '📅'
+        with patch('sys.stdout', io.StringIO()):
+            watch.print_step(
+                'timer_base', 6_410_000_000, 'Cross',
+                htm=6, ghost_split=6_020_000_000,
+            )
+        output = watch.console.export_text()
+        self.assertIn('📅', output)
+        self.assertNotIn('👻', output)
+
     def test_no_ghost_segment_when_inactive(self) -> None:
         """Without a ghost the step line carries no ghost marker."""
         watch = self.build(ghost_active=False)

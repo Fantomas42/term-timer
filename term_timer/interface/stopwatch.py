@@ -10,6 +10,7 @@ from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.constants import GHOST_EMOJI
 from term_timer.constants import GHOST_SPLIT_WIDTH
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
@@ -108,6 +109,7 @@ class StopWatch:
 
         self.ghost: Solve | None = None
         self.ghost_splits: tuple[tuple[int, ...], ...] = ()
+        self.ghost_emoji: str = GHOST_EMOJI
 
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
@@ -147,7 +149,8 @@ class StopWatch:
             ghost_delta = elapsed_time - ghost_split
             split = format_duration(ghost_split)
             extras += (
-                f'   👻 [result]{ split:>{ GHOST_SPLIT_WIDTH }}[/result]'
+                f'   { self.ghost_emoji }'
+                f' [result]{ split:>{ GHOST_SPLIT_WIDTH }}[/result]'
                 f' { format_ghost_delta(ghost_delta) }'
             )
             if last:
