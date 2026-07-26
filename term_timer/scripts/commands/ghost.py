@@ -153,9 +153,14 @@ def ghost_review(options: Namespace) -> int:
         )
         return 1
 
+    console.print(
+        f'[title]Summary on Ghost #{ options.solve_id }[/title]',
+    )
+
     round_stats = SolveStatisticsReporter(options.cube, stack)
-    round_stats.resume(f'Ghost { reference.scramble !s} ', 'round')
-    round_stats.graph()
+    round_stats.resume()
+    round_stats.graph('Tendency')
+
     return 0
 
 
@@ -304,10 +309,14 @@ async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
             if not done:
                 break
 
-        if len(instance.stack_done) > 1:
-            round_stats = SolveStatisticsReporter(cube, instance.stack_done)
-            round_stats.resume('Ghost Race ', 'round')
-            round_stats.graph()
+        if len(instance.stack) > 1:
+            console.print(
+                f'[title]Summary on Ghost #{ options.solve_id }[/title]',
+            )
+
+            stats = SolveStatisticsReporter(cube, instance.stack)
+            stats.resume()
+            stats.graph('Tendency')
 
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')
