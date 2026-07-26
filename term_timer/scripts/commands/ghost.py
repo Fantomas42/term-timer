@@ -252,11 +252,7 @@ async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
     ghost_solve = select_ghost(reference, history, options)
 
     console.print(
-        f'👻 Ghost Race - Scramble #{ options.solve_id }',
-        style='routine',
-    )
-    console.print(
-        '[stats]Ghost to beat:[/stats] '
+        f'[routine]👻 Ghost Race - Scramble #{ options.solve_id }[/routine] '
         f'[time]{ format_time(ghost_solve.time) }[/time]',
     )
 
