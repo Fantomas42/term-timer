@@ -9,7 +9,6 @@ from term_timer.bluetooth.replay import load_scramble_replay
 from term_timer.constants import GHOST_EMOJI
 from term_timer.constants import GHOSTS_DIRECTORY
 from term_timer.exceptions import ReplayError
-from term_timer.formatter import format_ghost_delta
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
@@ -98,7 +97,7 @@ def refresh_ghost(
         options: Namespace,
 ) -> None:
     """
-    Re-elect the ghost after an attempt and announce a new record.
+    Re-elect the ghost after an attempt.
 
     The pool is the stored history plus the attempts of the running
     session, so beating the ghost immediately promotes the fresh solve as
@@ -113,24 +112,14 @@ def refresh_ghost(
         options: Command options carrying the method and orientation.
 
     """
-    current = instance.ghost
-    if current is None:
+    if instance.ghost is None:
         return
 
-    ghost_solve = select_ghost(
+    instance.ghost = select_ghost(
         reference,
         [*history, *instance.stack_done],
         options,
     )
-    if ghost_solve.date == current.date:
-        return
-
-    console.print(
-        f'[record]{ GHOST_EMOJI } New ghost:[/record]',
-        f'[best]{ format_time(ghost_solve.time) }[/best]',
-        format_ghost_delta(ghost_solve.time - current.time),
-    )
-    instance.ghost = ghost_solve
 
 
 def ghost_review(options: Namespace) -> int:

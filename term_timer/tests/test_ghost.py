@@ -533,26 +533,20 @@ class TestRefreshGhost(unittest.TestCase):
         faster = make_solve(date=2, time=1_000_000_000)
         instance = self.build_instance(reference, [faster])
 
-        recorder = RichConsole(record=True)
-        with patch.object(ghost_mod, 'console', recorder):
-            ghost_mod.refresh_ghost(instance, reference, [], options)  # type: ignore[arg-type]
+        ghost_mod.refresh_ghost(instance, reference, [], options)  # type: ignore[arg-type]
 
         self.assertIs(instance.ghost, faster)
-        self.assertIn('New ghost', recorder.export_text())
 
     def test_slower_attempt_keeps_the_ghost(self) -> None:
-        """A slower attempt leaves the target and the display untouched."""
+        """A slower attempt leaves the target untouched."""
         options = self.parse('1')
         reference = make_solve(date=1, time=2_608_404_439)
         slower = make_solve(date=2, time=9_000_000_000)
         instance = self.build_instance(reference, [slower])
 
-        recorder = RichConsole(record=True)
-        with patch.object(ghost_mod, 'console', recorder):
-            ghost_mod.refresh_ghost(instance, reference, [], options)  # type: ignore[arg-type]
+        ghost_mod.refresh_ghost(instance, reference, [], options)  # type: ignore[arg-type]
 
         self.assertIs(instance.ghost, reference)
-        self.assertEqual(recorder.export_text().strip(), '')
 
     def test_history_stays_in_the_pool(self) -> None:
         """A stored attempt still wins over a slower session solve."""
@@ -562,7 +556,6 @@ class TestRefreshGhost(unittest.TestCase):
         attempt = make_solve(date=3, time=2_000_000_000)
         instance = self.build_instance(reference, [attempt])
 
-        with patch.object(ghost_mod, 'console', RichConsole(record=True)):
-            ghost_mod.refresh_ghost(instance, reference, [stored], options)  # type: ignore[arg-type]
+        ghost_mod.refresh_ghost(instance, reference, [stored], options)  # type: ignore[arg-type]
 
         self.assertIs(instance.ghost, stored)
