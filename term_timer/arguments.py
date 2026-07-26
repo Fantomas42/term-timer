@@ -1,4 +1,5 @@
 """Command-line argument definitions and parsing for the timer application."""
+import os
 import sys
 from argparse import SUPPRESS
 from argparse import Namespace
@@ -18,11 +19,13 @@ from term_timer.config import TIMER_CONFIG
 from term_timer.config import TRAINER_STEP
 from term_timer.config import USE_GYROSCOPE
 from term_timer.constants import CUBE_SIZES
+from term_timer.methods import METHOD_ANALYSERS
 
 if TYPE_CHECKING:
     _SubParsers = _SubParsersAction[ArgumentParser]
 
 COMMAND_ALIASES: Final[dict[str, list[str]]] = {
+    'ghost': ['gh', 'p'],
     'daily': ['da', 'y'],
     'solve': ['sw', 't'],
     'browse': ['br', 'b'],
@@ -53,6 +56,96 @@ for name, aliases in COMMAND_ALIASES.items():
 
 ORIENTATIONS_SORTED: Final[list[str]] = sorted(ORIENTATIONS)
 
+METHOD_CHOICES: Final[tuple[str, ...]] = tuple(METHOD_ANALYSERS)
+
+
+def add_toggle_argument(
+        group: ArgumentParser._ArgumentGroup,
+        short: str,
+        name: str,
+        description: str,
+        *,
+        default: bool,
+) -> None:
+    """
+    Add a display toggle whose flag name reflects the current default.
+
+    The long flag is built from the opposite of the configured default,
+    so a section displayed by default exposes its hiding flag, and the
+    destination is always the matching `show_*` attribute.
+    """
+    mode = 'hide' if default else 'show'
+    group.add_argument(
+        short, f'--{ mode }-{ name }',
+        action='store_const',
+        const=not default,
+        default=default,
+        dest=f'show_{ name.replace("-", "_") }',
+        help=(
+            f'{ mode.title() } { description }.\n'
+            'Default: False.'
+        ),
+    )
+
+
+def add_method_argument(group: ArgumentParser._ArgumentGroup) -> None:
+    """Add the solving method selection argument to group."""
+    group.add_argument(
+        '-m', '--method',
+        default=CUBE_METHOD,
+        choices=METHOD_CHOICES,
+        metavar='METHOD',
+        help=(
+            'Set the method of analyse used.\n'
+            f'Default: { CUBE_METHOD }.'
+        ),
+    )
+
+
+def add_seed_argument(group: ArgumentParser._ArgumentGroup) -> None:
+    """Add the random generation seed argument to group."""
+    group.add_argument(
+        '-r', '--seed',
+        default='',
+        metavar='SEED',
+        help=(
+            'Set a seed for random move generation '
+            'to ensure repeatable scrambles.\n'
+            'Default: None.'
+        ),
+    )
+
+
+def add_free_play_argument(
+        group: ArgumentParser._ArgumentGroup,
+        *,
+        description: str = 'disable recording of solves',
+) -> None:
+    """Add the free play mode argument to group."""
+    group.add_argument(
+        '-f', '--free-play',
+        action='store_true',
+        help=(
+            f'Enable free play mode to { description }.\n'
+            'Default: False.'
+        ),
+    )
+
+
+def add_cube_size_argument(group: ArgumentParser._ArgumentGroup) -> None:
+    """Add the cube size argument to group."""
+    group.add_argument(
+        '-c', '--cube',
+        type=int,
+        choices=CUBE_SIZES,
+        default=3,
+        metavar='CUBE',
+        help=(
+            'Set the size of the cube (from 2 to 7).\n'
+            'Default: 3.'
+        ),
+    )
+
 
 def set_session_arguments(
         parser: ArgumentParser,
@@ -65,17 +158,7 @@ def set_session_arguments(
 
     """
     session = parser.add_argument_group('Session')
-    session.add_argument(
-        '-c', '--cube',
-        type=int,
-        choices=CUBE_SIZES,
-        default=3,
-        metavar='CUBE',
-        help=(
-            'Set the size of the cube (from 2 to 7).\n'
-            'Default: 3.'
-        ),
-    )
+    add_cube_size_argument(session)
     session.add_argument(
         '-u', '--include-sessions',
         nargs='*',
@@ -110,63 +193,85 @@ def set_session_arguments(
     return session
 
 
-def daily_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR0914
+def set_target_session_arguments(
+        parser: ArgumentParser,
+) -> ArgumentParser._ArgumentGroup:
     """
-    Create argument parser for daily command.
+    Add target session command-line arguments to parser.
 
     Returns:
-        Configured argument parser for daily command.
+        Argument group containing target session options.
 
     """
-    countdown = TIMER_CONFIG.get('countdown', 0.0)
-    metronome = TIMER_CONFIG.get('metronome', 0.0)
-
-    show_cube = DISPLAY_CONFIG.get('scramble', True)
-    show_tps_graph = DISPLAY_CONFIG.get('tps_graph', True)
-    show_time_graph = DISPLAY_CONFIG.get('time_graph', True)
-    show_fluency_graph = DISPLAY_CONFIG.get('fluency_graph', True)
-    show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
-    show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
-    show_highlights = DISPLAY_CONFIG.get('highlights', True)
-    show_doctor = DISPLAY_CONFIG.get('doctor', True)
-    show_steps = TIMER_CONFIG.get('steps', True)
-
-    parser = subparsers.add_parser(
-        'daily',
-        help='Practice the scramble of the day',
-        description=(
-            "Run the daily scramble: a fixed scramble based on today's date. "
-            'Repeat it as many times as needed until satisfied.'
+    session = parser.add_argument_group('Session')
+    add_cube_size_argument(session)
+    session.add_argument(
+        '-u', '--session',
+        default='',
+        metavar='SESSION',
+        help=(
+            'Name of the session for solves.\n'
+            'Default: None.'
         ),
-        aliases=COMMAND_ALIASES['daily'],
     )
+
+    return session
+
+
+def set_cube_arguments(
+        parser: ArgumentParser,
+        *,
+        orientation_default: str = 'auto',
+        orientation_auto: bool = True,
+        cube_toggle: bool = True,
+) -> ArgumentParser._ArgumentGroup:
+    """
+    Add cube display and orientation arguments to parser.
+
+    Returns:
+        Argument group containing cube-related options.
+
+    """
+    show_cube = DISPLAY_CONFIG.get('scramble', True)
+
+    orientations = ORIENTATIONS_SORTED
+    if orientation_auto:
+        orientations = ['auto', *ORIENTATIONS_SORTED]
 
     cube = parser.add_argument_group('Cube')
-    mode = 'hide' if show_cube else 'show'
-    cube.add_argument(
-        '-p', f'--{ mode }-cube',
-        action='store_const',
-        const=not show_cube,
-        default=show_cube,
-        dest='show_cube',
-        help=(
-            f'{ mode.title() } the cube in its scrambled state.\n'
-            'Default: False'
-        ),
-    )
+    if cube_toggle:
+        add_toggle_argument(
+            cube, '-p', 'cube',
+            'the cube in its scrambled state',
+            default=show_cube,
+        )
     cube.add_argument(
         '-o', '--orientation',
-        default='auto',
-        choices=['auto', *ORIENTATIONS_SORTED],
+        default=orientation_default,
+        choices=orientations,
         metavar='ORIENTATION',
         help=(
             'Set the cube orientation used.\n'
-            'Default: auto.'
+            f'Default: { orientation_default }.'
         ),
     )
 
-    bluetooth = parser.add_argument_group('Bluetooth')
+    return cube
+
+
+def set_bluetooth_arguments(
+        parser: ArgumentParser,
+) -> ArgumentParser._ArgumentGroup:
+    """
+    Add Bluetooth connection arguments to parser.
+
+    Returns:
+        Argument group containing Bluetooth connection options.
+
+    """
     use_bluetooth = bool(DEVICE_ADDRESS)
+
+    bluetooth = parser.add_argument_group('Bluetooth')
     mode = 'disable' if use_bluetooth else 'enable'
     bluetooth.add_argument(
         '-b', f'--{ mode }-bluetooth',
@@ -176,7 +281,7 @@ def daily_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
         dest='bluetooth',
         help=(
             f'{ mode.title() } the Bluetooth-connected cube.\n'
-            f'Default: False.'
+            'Default: False.'
         ),
     )
     mode = 'disable' if USE_GYROSCOPE else 'enable'
@@ -188,150 +293,143 @@ def daily_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
         dest='use_gyroscope',
         help=(
             f"{ mode.title() } the cube's gyroscope.\n"
-            'Default: False'
-        ),
-    )
-    bluetooth.add_argument(
-        '-m', '--method',
-        default=CUBE_METHOD,
-        choices={
-            'lbl', 'cfop', 'cf4op', 'raw',
-        },
-        metavar='METHOD',
-        help=(
-            'Set the method of analyse used.\n'
-            f'Default: { CUBE_METHOD }.'
-        ),
-    )
-    mode = 'hide' if show_steps else 'show'
-    bluetooth.add_argument(
-        '-j', f'--{ mode }-steps',
-        action='store_const',
-        const=not show_steps,
-        default=show_steps,
-        dest='show_steps',
-        help=(
-            f'{ mode.title() } completed steps during the solve.\n'
-            f'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_reconstruction else 'show'
-    bluetooth.add_argument(
-        '-s', f'--{ mode }-reconstruction',
-        action='store_const',
-        const=not show_reconstruction,
-        default=show_reconstruction,
-        dest='show_reconstruction',
-        help=(
-            f'{ mode.title() } the reconstruction of the solve.\n'
-            'Default: False'
-        ),
-    )
-    mode = 'hide' if show_highlights else 'show'
-    bluetooth.add_argument(
-        '-a', f'--{ mode }-highlights',
-        action='store_const',
-        const=not show_highlights,
-        default=show_highlights,
-        dest='show_highlights',
-        help=(
-            f'{ mode.title() } highlights after analysis.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_doctor else 'show'
-    bluetooth.add_argument(
-        '-e', f'--{ mode }-doctor',
-        action='store_const',
-        const=not show_doctor,
-        default=show_doctor,
-        dest='show_doctor',
-        help=(
-            f'{ mode.title() } doctor main diagnostic after analysis.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_time_graph else 'show'
-    bluetooth.add_argument(
-        '-t', f'--{ mode }-time-graph',
-        action='store_const',
-        const=not show_time_graph,
-        default=show_time_graph,
-        dest='show_time_graph',
-        help=(
-            f'{ mode.title() } the time scatter graph of the solve.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_tps_graph else 'show'
-    bluetooth.add_argument(
-        '-v', f'--{ mode }-tps-graph',
-        action='store_const',
-        const=not show_tps_graph,
-        default=show_tps_graph,
-        dest='show_tps_graph',
-        help=(
-            f'{ mode.title() } the TPS graph of the solve.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_fluency_graph else 'show'
-    bluetooth.add_argument(
-        '-z', f'--{ mode }-fluency-graph',
-        action='store_const',
-        const=not show_fluency_graph,
-        default=show_fluency_graph,
-        dest='show_fluency_graph',
-        help=(
-            f'{ mode.title() } the fluency graph of the solve.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_recognition_graph else 'show'
-    bluetooth.add_argument(
-        '-w', f'--{ mode }-recognition-graph',
-        action='store_const',
-        const=not show_recognition_graph,
-        default=show_recognition_graph,
-        dest='show_recognition_graph',
-        help=(
-            f'{ mode.title() } the recognition graph of the solve.\n'
             'Default: False.'
         ),
     )
 
-    session = parser.add_argument_group('Session')
-    session.add_argument(
-        '-c', '--cube',
-        type=int,
-        choices=CUBE_SIZES,
-        default=3,
-        metavar='CUBE',
-        help=(
-            'Set the size of the cube (from 2 to 7).\n'
-            'Default: 3.'
-        ),
+    return bluetooth
+
+
+def set_replay_arguments(
+        parser: ArgumentParser,
+) -> ArgumentParser._ArgumentGroup:
+    """
+    Add the hidden Bluetooth replay argument to parser.
+
+    Returns:
+        Argument group containing replay options.
+
+    """
+    replay = parser.add_argument_group('Replay')
+    replay.add_argument(
+        '--replay',
+        default=os.getenv('TERM_TIMER_REPLAY', ''),
+        metavar='FILE',
+        help=SUPPRESS,
     )
-    session.add_argument(
-        '-f', '--free-play',
-        action='store_true',
-        help=(
-            'Enable free play mode to disable recording of solves.\n'
-            'Default: False.'
-        ),
+
+    return replay
+
+
+def set_analysis_arguments(
+        parser: ArgumentParser,
+        *,
+        steps: bool = True,
+        rotations: bool = False,
+        doctor_description: str = 'doctor main diagnostic after analysis',
+) -> ArgumentParser._ArgumentGroup:
+    """
+    Add solve analysis and reporting arguments to parser.
+
+    Returns:
+        Argument group containing analysis-related options.
+
+    """
+    show_steps = TIMER_CONFIG.get('steps', True)
+    show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
+    show_highlights = DISPLAY_CONFIG.get('highlights', True)
+    show_doctor = DISPLAY_CONFIG.get('doctor', True)
+    show_time_graph = DISPLAY_CONFIG.get('time_graph', True)
+    show_tps_graph = DISPLAY_CONFIG.get('tps_graph', True)
+    show_fluency_graph = DISPLAY_CONFIG.get('fluency_graph', True)
+    show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
+
+    analysis = parser.add_argument_group('Analysis')
+    add_method_argument(analysis)
+    if rotations:
+        analysis.add_argument(
+            '-g', '--disable-rotations',
+            action='store_true',
+            help=(
+                'Disable rotations if present when analysing.\n'
+                'Default: False'
+            ),
+        )
+    if steps:
+        add_toggle_argument(
+            analysis, '-j', 'steps',
+            'completed steps during the solve',
+            default=show_steps,
+        )
+    add_toggle_argument(
+        analysis, '-s', 'reconstruction',
+        'the reconstruction of the solve',
+        default=show_reconstruction,
     )
+    add_toggle_argument(
+        analysis, '-a', 'highlights',
+        'highlights after analysis',
+        default=show_highlights,
+    )
+    add_toggle_argument(
+        analysis, '-e', 'doctor',
+        doctor_description,
+        default=show_doctor,
+    )
+    add_toggle_argument(
+        analysis, '-t', 'time-graph',
+        'the time scatter graph of the solve',
+        default=show_time_graph,
+    )
+    add_toggle_argument(
+        analysis, '-v', 'tps-graph',
+        'the TPS graph of the solve',
+        default=show_tps_graph,
+    )
+    add_toggle_argument(
+        analysis, '-z', 'fluency-graph',
+        'the fluency graph of the solve',
+        default=show_fluency_graph,
+    )
+    add_toggle_argument(
+        analysis, '-w', 'recognition-graph',
+        'the recognition graph of the solve',
+        default=show_recognition_graph,
+    )
+
+    return analysis
+
+
+def set_timer_arguments(
+        parser: ArgumentParser,
+        *,
+        countdown_description: str = (
+            'Set the countdown timer for inspection time in seconds.'
+        ),
+        countdown_argument: bool = True,
+) -> ArgumentParser._ArgumentGroup:
+    """
+    Add countdown and metronome arguments to parser.
+
+    Returns:
+        Argument group containing timer-related options.
+
+    """
+    countdown = TIMER_CONFIG.get('countdown', 0.0)
+    metronome = TIMER_CONFIG.get('metronome', 0.0)
 
     timer = parser.add_argument_group('Timer')
-    timer.add_argument(
-        '-i', '--countdown',
-        type=int,
-        default=countdown,
-        metavar='SECONDS',
-        help=(
-            'Set the countdown timer for inspection time in seconds.\n'
-            f'Default: { countdown }.'
-        ),
-    )
+    if countdown_argument:
+        timer.add_argument(
+            '-i', '--countdown',
+            type=int,
+            default=countdown,
+            metavar='SECONDS',
+            help=(
+                f'{ countdown_description }\n'
+                f'Default: { countdown }.'
+            ),
+        )
     timer.add_argument(
         '-k', '--metronome',
         type=float,
@@ -342,6 +440,162 @@ def daily_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
             f'Default: { metronome }.'
         ),
     )
+
+    return timer
+
+
+def set_scramble_arguments(
+        parser: ArgumentParser,
+        *,
+        plural: bool = False,
+) -> ArgumentParser._ArgumentGroup:
+    """
+    Add scramble generation arguments to parser.
+
+    Returns:
+        Argument group containing scramble-related options.
+
+    """
+    target = 'scrambles' if plural else 'scramble'
+
+    scramble = parser.add_argument_group('Scramble')
+    scramble.add_argument(
+        '-ec', '--easy-cross',
+        action='store_true',
+        help=(
+            f'Set the { target } with an easy cross.\n'
+            'Default: False.'
+        ),
+    )
+    scramble.add_argument(
+        '-eo', '--edges-oriented',
+        action='store_true',
+        help=(
+            f'Set the { target } with edges oriented.\n'
+            'Default: False.'
+        ),
+    )
+    scramble.add_argument(
+        '-xc', '--x-cross',
+        action='store_true',
+        help=(
+            f'Set the { target } with a x-cross.\n'
+            'Default: False.'
+        ),
+    )
+    scramble.add_argument(
+        '-n', '--iterations',
+        type=int,
+        default=0,
+        metavar='ITERATIONS',
+        help=(
+            'Set the number of random moves.\n'
+            'Default: Auto.'
+        ),
+    )
+    add_seed_argument(scramble)
+
+    return scramble
+
+
+def ghost_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """
+    Create argument parser for ghost command.
+
+    Returns:
+        Configured argument parser for ghost command.
+
+    """
+    parser = subparsers.add_parser(
+        'ghost',
+        help='Race a recorded solve on the same scramble',
+        description=(
+            'Race a live solve against a recorded ghost on the same '
+            'scramble, seeded from an already-recorded reference solve. '
+            'The ghost to beat is the fastest attempt on that scramble.'
+        ),
+        aliases=COMMAND_ALIASES['ghost'],
+    )
+
+    parser.add_argument(
+        'solve_id',
+        nargs='?',
+        type=int,
+        default=0,
+        metavar='SOLVE_ID',
+        help=(
+            'ID of the reference solve whose scramble seeds the race.\n'
+            'Required to race or to review; omit only with --summary.'
+        ),
+    )
+
+    set_cube_arguments(parser)
+
+    set_bluetooth_arguments(parser)
+    set_replay_arguments(parser)
+    set_analysis_arguments(parser)
+
+    session = set_session_arguments(parser)
+    add_free_play_argument(
+        session,
+        description=(
+            'race the ghost without recording the attempt '
+            'into the scramble file'
+        ),
+    )
+
+    set_timer_arguments(parser)
+
+    ghost = parser.add_argument_group('Ghost')
+    ghost.add_argument(
+        '-r', '--review',
+        action='store_true',
+        help=(
+            "Review the stats of the reference solve's scramble file.\n"
+            'Default: False.'
+        ),
+    )
+    ghost.add_argument(
+        '-l', '--summary',
+        action='store_true',
+        help=(
+            'Browse the ghost library across every recorded scramble.\n'
+            'Default: False.'
+        ),
+    )
+
+    return parser
+
+
+def daily_arguments(subparsers: '_SubParsers') -> ArgumentParser:
+    """
+    Create argument parser for daily command.
+
+    Returns:
+        Configured argument parser for daily command.
+
+    """
+    parser = subparsers.add_parser(
+        'daily',
+        help='Practice the scramble of the day',
+        description=(
+            "Run the daily scramble: a fixed scramble based on today's date. "
+            'Repeat it as many times as needed until satisfied.'
+        ),
+        aliases=COMMAND_ALIASES['daily'],
+    )
+
+    set_cube_arguments(parser)
+
+    set_bluetooth_arguments(parser)
+    set_replay_arguments(parser)
+    set_analysis_arguments(parser)
+
+    session = parser.add_argument_group('Session')
+    add_cube_size_argument(session)
+    add_free_play_argument(session)
+
+    set_timer_arguments(parser)
 
     date = parser.add_argument_group('Date')
     date.add_argument(
@@ -373,7 +627,7 @@ def daily_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
     return parser
 
 
-def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR0914, PLR0915
+def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     """
     Create argument parser for solve command.
 
@@ -381,19 +635,6 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
         Configured argument parser for solve command.
 
     """
-    countdown = TIMER_CONFIG.get('countdown', 0.0)
-    metronome = TIMER_CONFIG.get('metronome', 0.0)
-
-    show_cube = DISPLAY_CONFIG.get('scramble', True)
-    show_tps_graph = DISPLAY_CONFIG.get('tps_graph', True)
-    show_time_graph = DISPLAY_CONFIG.get('time_graph', True)
-    show_fluency_graph = DISPLAY_CONFIG.get('fluency_graph', True)
-    show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
-    show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
-    show_highlights = DISPLAY_CONFIG.get('highlights', True)
-    show_doctor = DISPLAY_CONFIG.get('doctor', True)
-    show_steps = TIMER_CONFIG.get('steps', True)
-
     parser = subparsers.add_parser(
         'solve',
         help='Start the timer and record solves',
@@ -416,268 +657,18 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:  # noqa: PLR09
         ),
     )
 
-    cube = parser.add_argument_group('Cube')
-    mode = 'hide' if show_cube else 'show'
-    cube.add_argument(
-        '-p', f'--{ mode }-cube',
-        action='store_const',
-        const=not show_cube,
-        default=show_cube,
-        dest='show_cube',
-        help=(
-            f'{ mode.title() } the cube in its scrambled state.\n'
-            'Default: False'
-        ),
-    )
-    cube.add_argument(
-        '-o', '--orientation',
-        default='auto',
-        choices=['auto', *ORIENTATIONS_SORTED],
-        metavar='ORIENTATION',
-        help=(
-            'Set the cube orientation used.\n'
-            'Default: auto.'
-        ),
-    )
+    set_cube_arguments(parser)
 
-    bluetooth = parser.add_argument_group('Bluetooth')
-    bluetooth.add_argument(
-        '--replay',
-        default='',
-        metavar='FILE',
-        help=SUPPRESS,
-    )
-    use_bluetooth = bool(DEVICE_ADDRESS)
-    mode = 'disable' if use_bluetooth else 'enable'
-    bluetooth.add_argument(
-        '-b', f'--{ mode }-bluetooth',
-        action='store_const',
-        const=not use_bluetooth,
-        default=use_bluetooth,
-        dest='bluetooth',
-        help=(
-            f'{ mode.title() } the Bluetooth-connected cube.\n'
-            f'Default: False.'
-        ),
-    )
-    mode = 'disable' if USE_GYROSCOPE else 'enable'
-    bluetooth.add_argument(
-        '-g', f'--{ mode }-gyroscope',
-        action='store_const',
-        const=not USE_GYROSCOPE,
-        default=USE_GYROSCOPE,
-        dest='use_gyroscope',
-        help=(
-            f"{ mode.title() } the cube's gyroscope.\n"
-            'Default: False'
-        ),
-    )
-    bluetooth.add_argument(
-        '-m', '--method',
-        default=CUBE_METHOD,
-        choices={
-            'lbl', 'cfop', 'cf4op', 'raw',
-        },
-        metavar='METHOD',
-        help=(
-            'Set the method of analyse used.\n'
-            f'Default: { CUBE_METHOD }.'
-        ),
-    )
-    mode = 'hide' if show_steps else 'show'
-    bluetooth.add_argument(
-        '-j', f'--{ mode }-steps',
-        action='store_const',
-        const=not show_steps,
-        default=show_steps,
-        dest='show_steps',
-        help=(
-            f'{ mode.title() } completed steps during the solve.\n'
-            f'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_reconstruction else 'show'
-    bluetooth.add_argument(
-        '-s', f'--{ mode }-reconstruction',
-        action='store_const',
-        const=not show_reconstruction,
-        default=show_reconstruction,
-        dest='show_reconstruction',
-        help=(
-            f'{ mode.title() } the reconstruction of the solve.\n'
-            'Default: False'
-        ),
-    )
-    mode = 'hide' if show_highlights else 'show'
-    bluetooth.add_argument(
-        '-a', f'--{ mode }-highlights',
-        action='store_const',
-        const=not show_highlights,
-        default=show_highlights,
-        dest='show_highlights',
-        help=(
-            f'{ mode.title() } highlights after analysis.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_doctor else 'show'
-    bluetooth.add_argument(
-        '-e', f'--{ mode }-doctor',
-        action='store_const',
-        const=not show_doctor,
-        default=show_doctor,
-        dest='show_doctor',
-        help=(
-            f'{ mode.title() } doctor main diagnostic after analysis.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_time_graph else 'show'
-    bluetooth.add_argument(
-        '-t', f'--{ mode }-time-graph',
-        action='store_const',
-        const=not show_time_graph,
-        default=show_time_graph,
-        dest='show_time_graph',
-        help=(
-            f'{ mode.title() } the time scatter graph of the solve.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_tps_graph else 'show'
-    bluetooth.add_argument(
-        '-v', f'--{ mode }-tps-graph',
-        action='store_const',
-        const=not show_tps_graph,
-        default=show_tps_graph,
-        dest='show_tps_graph',
-        help=(
-            f'{ mode.title() } the TPS graph of the solve.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_fluency_graph else 'show'
-    bluetooth.add_argument(
-        '-z', f'--{ mode }-fluency-graph',
-        action='store_const',
-        const=not show_fluency_graph,
-        default=show_fluency_graph,
-        dest='show_fluency_graph',
-        help=(
-            f'{ mode.title() } the fluency graph of the solve.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_recognition_graph else 'show'
-    bluetooth.add_argument(
-        '-w', f'--{ mode }-recognition-graph',
-        action='store_const',
-        const=not show_recognition_graph,
-        default=show_recognition_graph,
-        dest='show_recognition_graph',
-        help=(
-            f'{ mode.title() } the recognition graph of the solve.\n'
-            'Default: False.'
-        ),
-    )
+    set_bluetooth_arguments(parser)
+    set_replay_arguments(parser)
+    set_analysis_arguments(parser)
 
-    session = parser.add_argument_group('Session')
-    session.add_argument(
-        '-c', '--cube',
-        type=int,
-        choices=CUBE_SIZES,
-        default=3,
-        metavar='CUBE',
-        help=(
-            'Set the size of the cube (from 2 to 7).\n'
-            'Default: 3.'
-        ),
-    )
-    session.add_argument(
-        '-u', '--session',
-        default='',
-        metavar='SESSION',
-        help=(
-            'Name of the session for solves.\n'
-            'Default: None.'
-        ),
-    )
-    session.add_argument(
-        '-f', '--free-play',
-        action='store_true',
-        help=(
-            'Enable free play mode to disable recording of solves.\n'
-            'Default: False.'
-        ),
-    )
+    session = set_target_session_arguments(parser)
+    add_free_play_argument(session)
 
-    timer = parser.add_argument_group('Timer')
-    timer.add_argument(
-        '-i', '--countdown',
-        type=int,
-        default=countdown,
-        metavar='SECONDS',
-        help=(
-            'Set the countdown timer for inspection time in seconds.\n'
-            f'Default: { countdown }.'
-        ),
-    )
-    timer.add_argument(
-        '-k', '--metronome',
-        type=float,
-        default=metronome,
-        metavar='TEMPO',
-        help=(
-            'Set a metronome beep at a specified tempo in seconds.\n'
-            f'Default: { metronome }.'
-        ),
-    )
+    set_timer_arguments(parser)
 
-    scramble = parser.add_argument_group('Scramble')
-    scramble.add_argument(
-        '-ec', '--easy-cross',
-        action='store_true',
-        help=(
-            'Set the scramble with an easy cross.\n'
-            'Default: False.'
-        ),
-    )
-    scramble.add_argument(
-        '-eo', '--edges-oriented',
-        action='store_true',
-        help=(
-            'Set the scramble with edges oriented.\n'
-            'Default: False.'
-        ),
-    )
-    scramble.add_argument(
-        '-xc', '--x-cross',
-        action='store_true',
-        help=(
-            'Set the scramble with a x-cross.\n'
-            'Default: False.'
-        ),
-    )
-    scramble.add_argument(
-        '-n', '--iterations',
-        type=int,
-        default=0,
-        metavar='ITERATIONS',
-        help=(
-            'Set the number of random moves.\n'
-            'Default: Auto.'
-        ),
-    )
-    scramble.add_argument(
-        '-r', '--seed',
-        default='',
-        metavar='SEED',
-        help=(
-            'Set a seed for random move generation '
-            'to ensure repeatable scrambles.\n'
-            'Default: None.'
-        ),
-    )
+    scramble = set_scramble_arguments(parser)
     scramble.add_argument(
         '-x', '--scramble',
         default='',
@@ -709,9 +700,6 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         Configured argument parser for train command.
 
     """
-    show_cube = DISPLAY_CONFIG.get('scramble', True)
-    metronome = TIMER_CONFIG.get('metronome', 0.0)
-
     parser = subparsers.add_parser(
         'train',
         help='Start training your OLL/PLL skills',
@@ -856,90 +844,24 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
 
-    cube = parser.add_argument_group('Cube')
-    mode = 'hide' if show_cube else 'show'
-    cube.add_argument(
-        '-p', f'--{ mode }-cube',
-        action='store_const',
-        const=not show_cube,
-        default=show_cube,
-        dest='show_cube',
-        help=(
-            f'{ mode.title() } the cube in its scrambled state.\n'
-            'Default: False'
-        ),
-    )
-    cube.add_argument(
-        '-o', '--orientation',
-        default=CUBE_ORIENTATION,
-        choices=ORIENTATIONS_SORTED,
-        metavar='ORIENTATION',
-        help=(
-            'Set the cube orientation used.\n'
-            f'Default: { CUBE_ORIENTATION }.'
-        ),
+    set_cube_arguments(
+        parser,
+        orientation_default=CUBE_ORIENTATION,
+        orientation_auto=False,
     )
 
-    bluetooth = parser.add_argument_group('Bluetooth')
-    use_bluetooth = bool(DEVICE_ADDRESS)
-    mode = 'disable' if use_bluetooth else 'enable'
-    bluetooth.add_argument(
-        '-b', f'--{ mode }-bluetooth',
-        action='store_const',
-        const=not use_bluetooth,
-        default=use_bluetooth,
-        dest='bluetooth',
-        help=(
-            f'{ mode.title() } the Bluetooth-connected cube.\n'
-            f'Default: False.'
-        ),
-    )
-    mode = 'disable' if USE_GYROSCOPE else 'enable'
-    bluetooth.add_argument(
-        '-g', f'--{ mode }-gyroscope',
-        action='store_const',
-        const=not USE_GYROSCOPE,
-        default=USE_GYROSCOPE,
-        dest='use_gyroscope',
-        help=(
-            f"{ mode.title() } the cube's gyroscope.\n"
-            'Default: False'
-        ),
-    )
+    set_bluetooth_arguments(parser)
 
     session = parser.add_argument_group('Session')
-    session.add_argument(
-        '-f', '--free-play',
-        action='store_true',
-        help=(
-            'Enable free play mode: disables saving and FSRS scheduling.\n'
-            'Default: False.'
-        ),
+    add_free_play_argument(
+        session,
+        description='disable saving and FSRS scheduling',
     )
 
-    timer = parser.add_argument_group('Timer')
-    timer.add_argument(
-        '-k', '--metronome',
-        type=float,
-        default=metronome,
-        metavar='TEMPO',
-        help=(
-            'Set a metronome beep at a specified tempo in seconds.\n'
-            f'Default: { metronome }.'
-        ),
-    )
+    set_timer_arguments(parser, countdown_argument=False)
 
     scramble = parser.add_argument_group('Scramble')
-    scramble.add_argument(
-        '-r', '--seed',
-        default='',
-        metavar='SEED',
-        help=(
-            'Set a seed for random move generation '
-            'to ensure repeatable scrambles.\n'
-            'Default: None.'
-        ),
-    )
+    add_seed_argument(scramble)
 
     return parser
 
@@ -1205,8 +1127,8 @@ def doctor_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         aliases=COMMAND_ALIASES['doctor'],
     )
 
-    analyze = parser.add_argument_group('Analysis')
-    analyze.add_argument(
+    analysis = parser.add_argument_group('Analysis')
+    analysis.add_argument(
         '-n', '--count',
         type=int,
         default=50,
@@ -1216,19 +1138,8 @@ def doctor_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Default: 50.'
         ),
     )
-    analyze.add_argument(
-        '-m', '--method',
-        default=CUBE_METHOD,
-        choices={
-            'lbl', 'cfop', 'cf4op', 'raw',
-        },
-        metavar='METHOD',
-        help=(
-            'Set the method of analyse used.\n'
-            f'Default: { CUBE_METHOD }.'
-        ),
-    )
-    analyze.add_argument(
+    add_method_argument(analysis)
+    analysis.add_argument(
         '-t', '--trend',
         action='store_true',
         help=(
@@ -1310,15 +1221,6 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         Configured argument parser for detail command.
 
     """
-    show_cube = DISPLAY_CONFIG.get('scramble', True)
-    show_tps_graph = DISPLAY_CONFIG.get('tps_graph', True)
-    show_time_graph = DISPLAY_CONFIG.get('time_graph', True)
-    show_fluency_graph = DISPLAY_CONFIG.get('fluency_graph', True)
-    show_recognition_graph = DISPLAY_CONFIG.get('recognition_graph', True)
-    show_reconstruction = DISPLAY_CONFIG.get('reconstruction', True)
-    show_highlights = DISPLAY_CONFIG.get('highlights', True)
-    show_doctor = DISPLAY_CONFIG.get('doctor', True)
-
     parser = subparsers.add_parser(
         'detail',
         help='Display detailed information about solves',
@@ -1334,134 +1236,13 @@ def detail_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help='ID(s) of the solve(s) to display details for.',
     )
 
-    cube = parser.add_argument_group('Cube')
-    mode = 'hide' if show_cube else 'show'
-    cube.add_argument(
-        '-p', f'--{ mode }-cube',
-        action='store_const',
-        const=not show_cube,
-        default=show_cube,
-        dest='show_cube',
-        help=(
-            f'{ mode.title() } the cube in its scrambled state.\n'
-            'Default: False'
-        ),
-    )
-    cube.add_argument(
-        '-o', '--orientation',
-        default='auto',
-        choices=['auto', *ORIENTATIONS_SORTED],
-        metavar='ORIENTATION',
-        help=(
-            'Set the cube orientation used.\n'
-            'Default: auto.'
-        ),
-    )
+    set_cube_arguments(parser)
 
-    analyze = parser.add_argument_group('Analysis')
-    analyze.add_argument(
-        '-m', '--method',
-        default=CUBE_METHOD,
-        choices={
-            'lbl', 'cfop', 'cf4op', 'raw',
-        },
-        metavar='METHOD',
-        help=(
-            'Set the method of analyse used.\n'
-            f'Default: { CUBE_METHOD }.'
-        ),
-    )
-    analyze.add_argument(
-        '-g', '--disable-rotations',
-        action='store_true',
-        help=(
-            'Disable rotations if present when analysing.\n'
-            'Default: False'
-        ),
-    )
-    mode = 'hide' if show_reconstruction else 'show'
-    analyze.add_argument(
-        '-s', f'--{ mode }-reconstruction',
-        action='store_const',
-        const=not show_reconstruction,
-        default=show_reconstruction,
-        dest='show_reconstruction',
-        help=(
-            f'{ mode.title() } the reconstruction of the solve.\n'
-            'Default: False'
-        ),
-    )
-    mode = 'hide' if show_highlights else 'show'
-    analyze.add_argument(
-        '-a', f'--{ mode }-highlights',
-        action='store_const',
-        const=not show_highlights,
-        default=show_highlights,
-        dest='show_highlights',
-        help=(
-            f'{ mode.title() } highlights after analysis.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_doctor else 'show'
-    analyze.add_argument(
-        '-e', f'--{ mode }-doctor',
-        action='store_const',
-        const=not show_doctor,
-        default=show_doctor,
-        dest='show_doctor',
-        help=(
-            f'{ mode.title() } doctor diagnostics after analysis.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_time_graph else 'show'
-    analyze.add_argument(
-        '-t', f'--{ mode }-time-graph',
-        action='store_const',
-        const=not show_time_graph,
-        default=show_time_graph,
-        dest='show_time_graph',
-        help=(
-            f'{ mode.title() } the time scatter graph of the solve.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_tps_graph else 'show'
-    analyze.add_argument(
-        '-v', f'--{ mode }-tps-graph',
-        action='store_const',
-        const=not show_tps_graph,
-        default=show_tps_graph,
-        dest='show_tps_graph',
-        help=(
-            f'{ mode.title() } the TPS graph of the solve.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_fluency_graph else 'show'
-    analyze.add_argument(
-        '-z', f'--{ mode }-fluency-graph',
-        action='store_const',
-        const=not show_fluency_graph,
-        default=show_fluency_graph,
-        dest='show_fluency_graph',
-        help=(
-            f'{ mode.title() } the fluency graph of the solve.\n'
-            'Default: False.'
-        ),
-    )
-    mode = 'hide' if show_recognition_graph else 'show'
-    analyze.add_argument(
-        '-w', f'--{ mode }-recognition-graph',
-        action='store_const',
-        const=not show_recognition_graph,
-        default=show_recognition_graph,
-        dest='show_recognition_graph',
-        help=(
-            f'{ mode.title() } the recognition graph of the solve.\n'
-            'Default: False.'
-        ),
+    set_analysis_arguments(
+        parser,
+        steps=False,
+        rotations=True,
+        doctor_description='doctor diagnostics after analysis',
     )
 
     set_session_arguments(parser)
@@ -1526,63 +1307,9 @@ def scramble_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
 
     session = parser.add_argument_group('Session')
-    session.add_argument(
-        '-c', '--cube',
-        type=int,
-        choices=CUBE_SIZES,
-        default=3,
-        metavar='CUBE',
-        help=(
-            'Set the size of the cube (from 2 to 7).\n'
-            'Default: 3.'
-        ),
-    )
+    add_cube_size_argument(session)
 
-    scramble = parser.add_argument_group('Scramble')
-    scramble.add_argument(
-        '-ec', '--easy-cross',
-        action='store_true',
-        help=(
-            'Set the scrambles with an easy cross.\n'
-            'Default: False.'
-        ),
-    )
-    scramble.add_argument(
-        '-eo', '--edges-oriented',
-        action='store_true',
-        help=(
-            'Set the scrambles with edges oriented.\n'
-            'Default: False.'
-        ),
-    )
-    scramble.add_argument(
-        '-xc', '--x-cross',
-        action='store_true',
-        help=(
-            'Set the scrambles with a x-cross.\n'
-            'Default: False.'
-        ),
-    )
-    scramble.add_argument(
-        '-n', '--iterations',
-        type=int,
-        default=0,
-        metavar='ITERATIONS',
-        help=(
-            'Set the number of random moves.\n'
-            'Default: Auto.'
-        ),
-    )
-    scramble.add_argument(
-        '-r', '--seed',
-        default='',
-        metavar='SEED',
-        help=(
-            'Set a seed for random move generation '
-            'to ensure repeatable scrambles.\n'
-            'Default: None.'
-        ),
-    )
+    set_scramble_arguments(parser, plural=True)
 
     output = parser.add_argument_group('Output')
     output.add_argument(
@@ -1642,27 +1369,7 @@ def edit_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help='Skip confirmation prompt.',
     )
 
-    session = parser.add_argument_group('Session')
-    session.add_argument(
-        '-c', '--cube',
-        type=int,
-        choices=CUBE_SIZES,
-        default=3,
-        metavar='CUBE',
-        help=(
-            'Set the size of the cube (from 2 to 7).\n'
-            'Default: 3.'
-        ),
-    )
-    session.add_argument(
-        '-u', '--session',
-        default='',
-        metavar='SESSION',
-        help=(
-            'Name of the session for solves.\n'
-            'Default: None.'
-        ),
-    )
+    set_target_session_arguments(parser)
 
     return parser
 
@@ -1689,27 +1396,7 @@ def delete_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help='ID of the solve to delete.',
     )
 
-    session = parser.add_argument_group('Session')
-    session.add_argument(
-        '-c', '--cube',
-        type=int,
-        choices=CUBE_SIZES,
-        default=3,
-        metavar='CUBE',
-        help=(
-            'Set the size of the cube (from 2 to 7).\n'
-            'Default: 3.'
-        ),
-    )
-    session.add_argument(
-        '-u', '--session',
-        default='',
-        metavar='SESSION',
-        help=(
-            'Name of the session for solves.\n'
-            'Default: None.'
-        ),
-    )
+    set_target_session_arguments(parser)
 
     return parser
 
@@ -1750,9 +1437,6 @@ def drill_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         Configured argument parser for drill command.
 
     """
-    countdown = TIMER_CONFIG.get('countdown', 0.0)
-    metronome = TIMER_CONFIG.get('metronome', 0.0)
-
     parser = subparsers.add_parser(
         'drill',
         help='Drill an algorithm repeatedly',
@@ -1794,65 +1478,18 @@ def drill_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
 
-    cube = parser.add_argument_group('Cube')
-    cube.add_argument(
-        '-o', '--orientation',
-        default=CUBE_ORIENTATION,
-        choices=ORIENTATIONS_SORTED,
-        metavar='ORIENTATION',
-        help=(
-            'Set the cube orientation used.\n'
-            f'Default: { CUBE_ORIENTATION }.'
-        ),
+    set_cube_arguments(
+        parser,
+        orientation_default=CUBE_ORIENTATION,
+        orientation_auto=False,
+        cube_toggle=False,
     )
 
-    bluetooth = parser.add_argument_group('Bluetooth')
-    use_bluetooth = bool(DEVICE_ADDRESS)
-    mode = 'disable' if use_bluetooth else 'enable'
-    bluetooth.add_argument(
-        '-b', f'--{ mode }-bluetooth',
-        action='store_const',
-        const=not use_bluetooth,
-        default=use_bluetooth,
-        dest='bluetooth',
-        help=(
-            f'{ mode.title() } the Bluetooth-connected cube.\n'
-            f'Default: False.'
-        ),
-    )
-    mode = 'disable' if USE_GYROSCOPE else 'enable'
-    bluetooth.add_argument(
-        '-g', f'--{ mode }-gyroscope',
-        action='store_const',
-        const=not USE_GYROSCOPE,
-        default=USE_GYROSCOPE,
-        dest='use_gyroscope',
-        help=(
-            f"{ mode.title() } the cube's gyroscope.\n"
-            'Default: False'
-        ),
-    )
+    set_bluetooth_arguments(parser)
 
-    timer = parser.add_argument_group('Timer')
-    timer.add_argument(
-        '-i', '--countdown',
-        type=int,
-        default=countdown,
-        metavar='SECONDS',
-        help=(
-            'Set a countdown before each rep.\n'
-            f'Default: { countdown }.'
-        ),
-    )
-    timer.add_argument(
-        '-k', '--metronome',
-        type=float,
-        default=metronome,
-        metavar='TEMPO',
-        help=(
-            'Set a metronome beep at a specified tempo in seconds.\n'
-            f'Default: { metronome }.'
-        ),
+    set_timer_arguments(
+        parser,
+        countdown_description='Set a countdown before each rep.',
     )
 
     return parser
@@ -1952,6 +1589,7 @@ def get_parser() -> ArgumentParser:
         help='Available commands',
     )
 
+    ghost_arguments(subparsers)
     daily_arguments(subparsers)
     solve_arguments(subparsers)
     train_arguments(subparsers)

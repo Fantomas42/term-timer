@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-HUMAN_SCRAMBLE_PACE_MS = 250
+HUMAN_SCRAMBLE_PACE_MS = 150
 
 # Phases are gated on the timer's real state (see wait_for_state), so these
 # pre-move pauses are purely cosmetic pacing now: 0 is safe. Used only when
@@ -261,6 +261,49 @@ def load_replay(path: str) -> ReplayFileDict:
         raise ReplayError(msg) from error
 
     return validate_replay(raw)
+
+
+def load_scramble_replay(
+        path: str | None,
+        scramble: str,
+) -> ReplayFileDict | None:
+    """
+    Load a replay racing an imposed scramble.
+
+    Commands seeded by an imposed scramble (ghost, daily) cannot let the
+    replay inject its own, so every solve of the file is checked against
+    it: a file landing on another state would leave the timer waiting in
+    its scrambling phase forever, and validate_replay cannot catch it
+    since it only compares the file to itself.
+
+    Args:
+        path: Filesystem path to the replay file, empty when the command
+            runs without a replay.
+        scramble: The scramble the command imposes.
+
+    Returns:
+        The validated replay payload, or None when no path is given.
+
+    Raises:
+        ReplayError: The file is invalid, or one of its solves does not
+            scramble to the imposed state.
+
+    """
+    if not path:
+        return None
+
+    replay = load_replay(path)
+
+    for index, solve in enumerate(replay['solves']):
+        if not scramble_moves_reach_state(solve['scramble'], scramble):
+            msg = (
+                f'Replay solve #{ index + 1 } scrambles to another state '
+                f'than the imposed scramble ({ scramble }); '
+                'the timer would never start.'
+            )
+            raise ReplayError(msg)
+
+    return replay
 
 
 class ReplayClient:

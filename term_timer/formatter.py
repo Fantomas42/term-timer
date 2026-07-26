@@ -20,6 +20,7 @@ from term_timer.constants import FLUENCY_LOW_THRESHOLD
 from term_timer.constants import FLUENCY_MEDIUM_THRESHOLD
 from term_timer.constants import FLUENCY_STEP_LOW_THRESHOLD
 from term_timer.constants import FLUENCY_STEP_MEDIUM_THRESHOLD
+from term_timer.constants import GHOST_DELTA_WIDTH
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import RESUME_LABEL_WIDTH
@@ -166,6 +167,31 @@ def format_delta(delta: int) -> str:
         sign = '+'
 
     return f'[{ style }]{ sign }{ format_duration(delta) }[/{ style }]'
+
+
+def format_ghost_delta(delta: int) -> str:
+    """
+    Format a ghost-race delta as a directional, color-coded segment.
+
+    Negative means ahead of the ghost (green ▲); positive means behind
+    (red ▼). A tie counts as ahead. The magnitude is shown in seconds
+    with its sign, matching ``format_delta``, right-aligned so the deltas
+    of successive checkpoints stack in a single column.
+
+    Args:
+        delta: Signed delta in nanoseconds (live time minus ghost split).
+
+    Returns:
+        Rich-markup string such as ``[green]▲  -0.39[/green]`` or
+        ``[red]▼  +0.39[/red]``.
+
+    """
+    if delta > 0:
+        value = f'+{ format_duration(delta) }'
+        return f'[red]▼ { value:>{ GHOST_DELTA_WIDTH }}[/red]'
+
+    value = format_duration(delta)
+    return f'[green]▲ { value:>{ GHOST_DELTA_WIDTH }}[/green]'
 
 
 def format_resume_row(

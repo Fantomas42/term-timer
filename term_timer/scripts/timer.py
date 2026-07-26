@@ -16,6 +16,7 @@ from term_timer.logger import configure_logging
 from term_timer.scripts.commands.daily import daily
 from term_timer.scripts.commands.doctor import doctor
 from term_timer.scripts.commands.driller import driller
+from term_timer.scripts.commands.ghost import ghost
 from term_timer.scripts.commands.manage import manage
 from term_timer.scripts.commands.reset import reset
 from term_timer.scripts.commands.routine import routine
@@ -25,6 +26,7 @@ from term_timer.scripts.commands.trainer import trainer
 from term_timer.server.app import Server
 
 BANNER_MODES = {
+    'ghost': 'Ghost',
     'daily': 'Daily',
     'drill': 'Drilling',
     'routine': 'Routine',
@@ -69,6 +71,8 @@ def main() -> int:  # noqa: C901, PLR0911, PLR0912
         show_banner(BANNER_MODES[command])
 
     with suppress(KeyboardInterrupt):
+        if command == 'ghost':
+            return asyncio.run(ghost(options), debug=DEBUG)
         if command == 'daily':
             return asyncio.run(daily(options), debug=DEBUG)
         if command == 'solve':

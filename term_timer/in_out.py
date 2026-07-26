@@ -22,6 +22,22 @@ from term_timer.solve import SolveData
 SCRAMBLE_LINE = re.compile(r'Scramble #\d+:\s*(.+?)(?:\s*//.*)?$')
 
 
+def scramble_to_key(scramble: str) -> str:
+    """
+    Turn a scramble string into a filesystem- and URL-safe session key.
+
+    Spaces become ``_`` and quotes become ``-`` so the key stays
+    human-readable and matches its scramble at a glance. No hashing or
+    normalization is applied, so two textually different but equivalent
+    scrambles map to different keys.
+
+    Returns:
+        The transformed session key (e.g. ``"R_U_R-_U-"``).
+
+    """
+    return scramble.replace(' ', '_').replace("'", '-')
+
+
 def fsrs_card_from_data(raw: 'CaseTrainingData') -> Card | None:
     """
     Deserialize an optional FSRS card from raw training data.

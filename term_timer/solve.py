@@ -51,6 +51,7 @@ from term_timer.formatter import format_time
 from term_timer.highlights import generate_solve_highlights
 from term_timer.methods import get_method_analyser
 from term_timer.methods.annotations import StepSummary
+from term_timer.methods.annotations import TrackedStep
 from term_timer.methods.base import Analyser
 from term_timer.methods.base import get_step_config
 from term_timer.orientation import get_orientation_faces
@@ -596,6 +597,61 @@ class Solve:  # noqa: PLR0904
             self.orientation_moves,
             disable_rotations=self.disable_rotations,
         )
+
+    def ghost_splits(
+            self,
+            groups: tuple[tuple[TrackedStep, ...], ...],
+    ) -> tuple[tuple[int, ...], ...]:
+        """
+        List the cumulative checkpoint times in ns of each tracked group.
+
+        The split of a step is the time of its last move which
+        mirrors how the live stopwatch measures ``elapsed_time`` from the
+        solve start rather than summing per-step totals. Splits are
+        returned per group and sorted chronologically, because the steps
+        inside a group are cube slots (``F2L 1`` is the FR pair) whose
+        solving order changes from one solve to the next: the n-th
+        checkpoint of a live group must race the n-th checkpoint of the
+        ghost's group, not the same slot solved at another moment.
+        Groups themselves stay aligned by ordinal, so Cross / OLL / PLL
+        keep facing each other. A skipped step (present in the summary
+        with empty ``times``) inherits the previous checkpoint time, so
+        its group completes "instantly". A tracked step the ghost's
+        summary does not name at all (e.g. an ``XXXXCross`` ghost against
+        a tracked ``Cross``) is omitted, so the extra live checkpoint
+        simply races without a delta rather than against a bogus one.
+
+        Args:
+            groups: The tracked step groups the live stopwatch emits
+                checkpoints for.
+
+        Returns:
+            One ascending tuple of cumulative ns per tracked group, empty
+            when the solve carries no reconstruction.
+
+        """
+        if not self.method_applied:
+            return ()
+
+        summaries = {
+            step['name']: step
+            for step in self.method_applied.summary
+        }
+
+        splits: list[tuple[int, ...]] = []
+        previous = 0
+        for group in groups:
+            group_splits: list[int] = []
+            for tracked in group:
+                step = summaries.get(tracked.name)
+                if step is None:
+                    continue
+                if step['times']:
+                    previous = int(step['times'][-1] * MS_TO_NS_FACTOR)
+                group_splits.append(previous)
+            splits.append(tuple(sorted(group_splits)))
+
+        return tuple(splits)
 
     @cached_property
     def recognition_time(self) -> int:

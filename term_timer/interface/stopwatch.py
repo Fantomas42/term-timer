@@ -10,9 +10,13 @@ from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.constants import GHOST_EMOJI
+from term_timer.constants import GHOST_SPLIT_WIDTH
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
+from term_timer.constants import STEP_DELTA_WIDTH
 from term_timer.formatter import format_duration
+from term_timer.formatter import format_ghost_delta
 from term_timer.formatter import format_time
 from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.methods import get_method_analyser
@@ -24,6 +28,7 @@ if TYPE_CHECKING:
     from rich.console import Console as RichConsole
 
     from term_timer.bluetooth.annotations import MoveInfo
+    from term_timer.solve import Solve
 
 STYLE_THRESHOLDS = (
     (50, 'timer_50'),
@@ -102,6 +107,10 @@ class StopWatch:
         self.first_step: bool = True
         self.previous_style: str = ''
 
+        self.ghost: Solve | None = None
+        self.ghost_splits: tuple[tuple[int, ...], ...] = ()
+        self.ghost_emoji: str = GHOST_EMOJI
+
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
 
@@ -114,6 +123,7 @@ class StopWatch:
             delta_time: int | None = None,
             htm: int = 0,
             last: bool = False,
+            ghost_split: int | None = None,
     ) -> None:
         """Print a completed step with its time."""
         self.clear_line(full=False)
@@ -126,7 +136,27 @@ class StopWatch:
         if htm:
             extras += f' [htm]{ htm:>2} HTM[/htm]'
         if delta_time is not None:
-            extras += f' [green]+{ format_duration(delta_time) }[/green]'
+            delta = f'+{ format_duration(delta_time) }'
+            if ghost_split is not None:
+                delta = f'{ delta:>{ STEP_DELTA_WIDTH }}'
+            extras += f' [green]{ delta }[/green]'
+        elif ghost_split is not None:
+            # The first step has no delta: hold its column so the ghost
+            # segment stays aligned with the following steps.
+            extras += ' ' * (STEP_DELTA_WIDTH + 1)
+
+        if ghost_split is not None:
+            ghost_delta = elapsed_time - ghost_split
+            split = format_duration(ghost_split)
+            extras += (
+                f'   { self.ghost_emoji }'
+                f' [result]{ split:>{ GHOST_SPLIT_WIDTH }}[/result]'
+                f' { format_ghost_delta(ghost_delta) }'
+            )
+            if last:
+                verdict = 'WIN' if ghost_delta <= 0 else 'LOSS'
+                style_v = verdict.lower()
+                extras += f' [{ style_v }]{ verdict }[/{ style_v }]'
 
         self.console.print(
             f'[{ style }]Go Go Go:[/{ style }]',
@@ -134,7 +164,12 @@ class StopWatch:
             f'[step]{ padded_name }[/step]{ extras }',
         )
         if not last:
-            SOUND_PLAYER.solve_step()
+            if ghost_split is None:
+                SOUND_PLAYER.solve_step()
+            elif elapsed_time - ghost_split <= 0:
+                SOUND_PLAYER.solve_step_ahead()
+            else:
+                SOUND_PLAYER.solve_step_behind()
 
     def build_oriented_facelets(self) -> tuple[str, 'CubeOrientation']:
         """
@@ -173,6 +208,7 @@ class StopWatch:
         self.first_step = True
         self.previous_style = ''
         self.step_width = 0
+        self.ghost_splits = ()
 
         if not self.show_steps:
             return
@@ -191,6 +227,60 @@ class StopWatch:
             ),
             default=0,
         )
+
+        if self.ghost is not None:
+            self.ghost_splits = self.ghost.ghost_splits(self.groups_to_track)
+
+    def current_ghost_split(self, index: int) -> int | None:
+        """
+        Give the ghost split racing the index-th checkpoint of the group.
+
+        Checkpoints are aligned by position inside the group, not by step
+        name: the F2L slots are solved in a different order from one
+        solve to the next, so your n-th pair races the ghost's n-th pair
+        rather than the same slot solved at another moment of its solve.
+        Groups keep their own ordinal alignment, so Cross / OLL / PLL
+        always face their counterpart.
+
+        Args:
+            index: Position of the checkpoint inside the current group.
+
+        Returns:
+            The cumulative ghost time in ns, or None when no ghost is
+            active or it has no checkpoint at that position.
+
+        """
+        if self.group_progress >= len(self.ghost_splits):
+            return None
+
+        group = self.ghost_splits[self.group_progress]
+        if index >= len(group):
+            return None
+
+        return group[index]
+
+    def checkpoint_time(self, elapsed_time: int) -> int:
+        """
+        Give the elapsed time of a checkpoint on the move timeline.
+
+        A step is detected by the display loop, up to one REFRESH after
+        the move that actually completed it, while a ghost split is the
+        clock of that move. Anchoring the checkpoint on the last move
+        received removes that bias, and matches how the final checkpoint
+        is measured (``end_time - start_time``, both move clocks).
+
+        Args:
+            elapsed_time: The time sampled by the display loop, used as
+                a fallback while no move has been received yet.
+
+        Returns:
+            The elapsed time in ns of the last move received.
+
+        """
+        if not self.moves:
+            return elapsed_time
+
+        return self.moves[-1]['time'] - self.start_time
 
     def check_and_print_steps(
             self,
@@ -214,6 +304,9 @@ class StopWatch:
 
         facelets, orientation = self.build_oriented_facelets()
         current_group = self.groups_to_track[self.group_progress]
+        step_time = (
+            elapsed_time if final else self.checkpoint_time(elapsed_time)
+        )
 
         for step_name, display_name in current_group:
             if (
@@ -222,22 +315,27 @@ class StopWatch:
                     step_name, facelets, orientation,
                 )
             ):
-                delta_time = elapsed_time - self.previous_step_time
+                delta_time = step_time - self.previous_step_time
                 step_htm = parse_moves(
                     [m['move'] for m in self.moves[self.previous_move_index:]],
                 ).transform(optimize_double_moves).metrics.htm
 
+                ghost_split = self.current_ghost_split(
+                    len(self.completed_in_group),
+                )
+
                 show_delta = final or not self.first_step
                 self.print_step(
                     style,
-                    elapsed_time,
+                    step_time,
                     display_name or step_name,
                     delta_time=delta_time if show_delta else None,
                     htm=step_htm,
                     last=final,
+                    ghost_split=ghost_split,
                 )
                 self.first_step = False
-                self.previous_step_time = elapsed_time
+                self.previous_step_time = step_time
                 self.previous_move_index = len(self.moves)
                 self.completed_in_group.add(step_name)
                 self.previous_style = ''

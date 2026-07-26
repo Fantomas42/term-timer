@@ -63,6 +63,11 @@ DAILY_DAYS_LISTED: Final = 14
 RESUME_LABEL_WIDTH: Final = 6
 RESUME_VALUE_WIDTH: Final = 13
 
+STEP_DELTA_WIDTH: Final = 6
+GHOST_SPLIT_WIDTH: Final = 6
+GHOST_DELTA_WIDTH: Final = 6
+GHOST_EMOJI: Final = '👻'
+
 TT_DIRECTORY: Final = Path(
     os.getenv(
         'TERM_TIMER_HOME',
@@ -73,6 +78,8 @@ TT_DIRECTORY: Final = Path(
 SOLVES_DIRECTORY: Final = TT_DIRECTORY / 'solves'
 
 DAILY_DIRECTORY: Final = SOLVES_DIRECTORY / 'daily'
+
+GHOSTS_DIRECTORY: Final = SOLVES_DIRECTORY / 'ghosts'
 
 TRAININGS_DIRECTORY: Final = TT_DIRECTORY / 'trainings'
 
@@ -163,6 +170,7 @@ LL_CASE = Case(
 for directory in (
         SOLVES_DIRECTORY,
         DAILY_DIRECTORY,
+        GHOSTS_DIRECTORY,
         TRAININGS_DIRECTORY,
         ROUTINES_DIRECTORY,
         LOGGING_DIRECTORY,
