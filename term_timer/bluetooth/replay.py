@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-HUMAN_SCRAMBLE_PACE_MS = 250
+HUMAN_SCRAMBLE_PACE_MS = 150
 
 # Phases are gated on the timer's real state (see wait_for_state), so these
 # pre-move pauses are purely cosmetic pacing now: 0 is safe. Used only when
