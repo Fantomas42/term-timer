@@ -18,6 +18,7 @@ from term_timer.config import TIMER_CONFIG
 from term_timer.config import TRAINER_STEP
 from term_timer.config import USE_GYROSCOPE
 from term_timer.constants import CUBE_SIZES
+from term_timer.methods import METHOD_ANALYSERS
 
 if TYPE_CHECKING:
     _SubParsers = _SubParsersAction[ArgumentParser]
@@ -54,9 +55,7 @@ for name, aliases in COMMAND_ALIASES.items():
 
 ORIENTATIONS_SORTED: Final[list[str]] = sorted(ORIENTATIONS)
 
-METHOD_CHOICES: Final[set[str]] = {
-    'lbl', 'cfop', 'cf4op', 'raw',
-}
+METHOD_CHOICES: Final[tuple[str, ...]] = tuple(METHOD_ANALYSERS)
 
 
 def add_toggle_argument(
