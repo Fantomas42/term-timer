@@ -1,5 +1,4 @@
 """Daily scramble command."""
-import os
 from argparse import Namespace
 from datetime import date
 from datetime import datetime
@@ -107,7 +106,7 @@ async def daily(options: Namespace) -> int:  # noqa: C901
 
     try:
         replay = load_scramble_replay(
-            options.replay or os.getenv('TERM_TIMER_REPLAY'),
+            options.replay,
             scramble_str,
         )
     except ReplayError as error:

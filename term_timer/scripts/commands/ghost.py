@@ -1,6 +1,5 @@
 """Ghost racing command."""
 import operator
-import os
 from argparse import Namespace
 from random import Random
 
@@ -249,7 +248,7 @@ async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
 
     try:
         replay = load_scramble_replay(
-            options.replay or os.getenv('TERM_TIMER_REPLAY'),
+            options.replay,
             scramble_str,
         )
     except ReplayError as error:

@@ -1,5 +1,4 @@
 """Timer command."""
-import os
 from argparse import Namespace
 from pathlib import Path
 from random import Random
@@ -72,10 +71,9 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
     cube = options.cube
 
     replay = None
-    replay_file = options.replay or os.getenv('TERM_TIMER_REPLAY')
-    if replay_file:
+    if options.replay:
         try:
-            replay = load_replay(replay_file)
+            replay = load_replay(options.replay)
         except ReplayError as error:
             console.print('😱', str(error), style='warning')
             return 1

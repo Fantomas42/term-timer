@@ -1,4 +1,5 @@
 """Command-line argument definitions and parsing for the timer application."""
+import os
 import sys
 from argparse import SUPPRESS
 from argparse import Namespace
@@ -111,6 +112,22 @@ def add_seed_argument(group: ArgumentParser._ArgumentGroup) -> None:
             'Set a seed for random move generation '
             'to ensure repeatable scrambles.\n'
             'Default: None.'
+        ),
+    )
+
+
+def add_free_play_argument(
+        group: ArgumentParser._ArgumentGroup,
+        *,
+        description: str = 'disable recording of solves',
+) -> None:
+    """Add the free play mode argument to group."""
+    group.add_argument(
+        '-f', '--free-play',
+        action='store_true',
+        help=(
+            f'Enable free play mode to { description }.\n'
+            'Default: False.'
         ),
     )
 
@@ -271,7 +288,7 @@ def set_replay_arguments(
     replay = parser.add_argument_group('Replay')
     replay.add_argument(
         '--replay',
-        default='',
+        default=os.getenv('TERM_TIMER_REPLAY', ''),
         metavar='FILE',
         help=SUPPRESS,
     )
@@ -494,13 +511,11 @@ def ghost_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     set_analysis_arguments(parser)
 
     session = set_session_arguments(parser)
-    session.add_argument(
-        '-f', '--free-play',
-        action='store_true',
-        help=(
-            'Race the ghost without recording the attempt into the '
-            'scramble file.\n'
-            'Default: False.'
+    add_free_play_argument(
+        session,
+        description=(
+            'race the ghost without recording the attempt '
+            'into the scramble file'
         ),
     )
 
@@ -561,14 +576,7 @@ def daily_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
     session = parser.add_argument_group('Session')
     add_cube_size_argument(session)
-    session.add_argument(
-        '-f', '--free-play',
-        action='store_true',
-        help=(
-            'Enable free play mode to disable recording of solves.\n'
-            'Default: False.'
-        ),
-    )
+    add_free_play_argument(session)
 
     set_timer_arguments(parser)
 
@@ -649,14 +657,7 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Default: None.'
         ),
     )
-    session.add_argument(
-        '-f', '--free-play',
-        action='store_true',
-        help=(
-            'Enable free play mode to disable recording of solves.\n'
-            'Default: False.'
-        ),
-    )
+    add_free_play_argument(session)
 
     set_timer_arguments(parser)
 
@@ -845,13 +846,9 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     set_bluetooth_arguments(parser)
 
     session = parser.add_argument_group('Session')
-    session.add_argument(
-        '-f', '--free-play',
-        action='store_true',
-        help=(
-            'Enable free play mode: disables saving and FSRS scheduling.\n'
-            'Default: False.'
-        ),
+    add_free_play_argument(
+        session,
+        description='disable saving and FSRS scheduling',
     )
 
     set_timer_arguments(parser, countdown_argument=False)
@@ -1123,8 +1120,8 @@ def doctor_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         aliases=COMMAND_ALIASES['doctor'],
     )
 
-    analyze = parser.add_argument_group('Analysis')
-    analyze.add_argument(
+    analysis = parser.add_argument_group('Analysis')
+    analysis.add_argument(
         '-n', '--count',
         type=int,
         default=50,
@@ -1134,8 +1131,8 @@ def doctor_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Default: 50.'
         ),
     )
-    add_method_argument(analyze)
-    analyze.add_argument(
+    add_method_argument(analysis)
+    analysis.add_argument(
         '-t', '--trend',
         action='store_true',
         help=(
