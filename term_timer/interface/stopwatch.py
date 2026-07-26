@@ -108,7 +108,6 @@ class StopWatch:
 
         self.ghost: Solve | None = None
         self.ghost_splits: tuple[tuple[int, ...], ...] = ()
-        self.ghost_delta: int | None = None
 
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
@@ -207,7 +206,6 @@ class StopWatch:
         self.previous_style = ''
         self.step_width = 0
         self.ghost_splits = ()
-        self.ghost_delta = None
 
         if not self.show_steps:
             return
@@ -296,8 +294,6 @@ class StopWatch:
                 ghost_split = self.current_ghost_split(
                     len(self.completed_in_group),
                 )
-                if ghost_split is not None:
-                    self.ghost_delta = elapsed_time - ghost_split
 
                 show_delta = final or not self.first_step
                 self.print_step(
@@ -321,25 +317,6 @@ class StopWatch:
 
     def print_timer(self, elapsed_time: int, style: str) -> None:
         """Print or update the running timer display."""
-        if self.ghost_splits:
-            # The held ghost delta has a variable width, so the back(9)
-            # fast path can't be used. The delta only changes at a
-            # checkpoint (which prints its own line and starts a fresh
-            # running line), so a plain redraw never leaves stale chars.
-            ghost_segment = ''
-            if self.ghost_delta is not None:
-                delta = format_ghost_delta(self.ghost_delta)
-                ghost_segment = f'   👻 { delta }'
-            self.clear_line(full=False)
-            self.console.print(
-                f'[{ style }]Go Go Go:[/{ style }]',
-                f'[result]{ format_time(elapsed_time) }[/result]'
-                f'{ ghost_segment }',
-                end='',
-            )
-            self.previous_style = style
-            return
-
         if style != self.previous_style:
             self.previous_style = style
             self.clear_line(full=False)

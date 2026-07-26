@@ -427,15 +427,14 @@ class TestGhostDisplay(unittest.TestCase):
             watch.print_step('timer_base', 6_410_000_000, 'Cross', htm=6)
         self.assertNotIn('👻', watch.console.export_text())
 
-    def test_running_line_holds_delta(self) -> None:
-        """The running timer grafts the held ghost delta."""
+    def test_running_line_carries_no_ghost_segment(self) -> None:
+        """The running timer stays free of ghost markup."""
         watch = self.build(ghost_active=True)
-        watch.ghost_delta = 390_000_000
         with patch('sys.stdout', io.StringIO()):
             watch.print_timer(6_410_000_000, 'timer_base')
         output = watch.console.export_text()
-        self.assertIn('👻', output)
-        self.assertIn('▼  +0.39', output)
+        self.assertIn('06.41', output)
+        self.assertNotIn('👻', output)
 
 
 class TestCurrentGhostSplit(unittest.TestCase):
