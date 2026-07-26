@@ -70,7 +70,7 @@ async def driller(options: Namespace) -> int:  # noqa: C901, PLR0912
                 instance.rep_tps,
                 instance.rep_fluencies,
                 qtm=instance.algorithm.metrics.qtm,
-            ).resume()
+            ).print_summary()
 
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')

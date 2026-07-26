@@ -34,9 +34,9 @@ from term_timer.formatter import format_fsrs_due
 from term_timer.formatter import format_fsrs_state
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_metric
-from term_timer.formatter import format_resume_row
 from term_timer.formatter import format_score
 from term_timer.formatter import format_session_name
+from term_timer.formatter import format_summary_row
 from term_timer.formatter import format_term_timer_session_url
 from term_timer.formatter import format_time
 from term_timer.formatter import fsrs_state_label
@@ -344,17 +344,17 @@ class TestFormatDelta(unittest.TestCase):
         self.assertEqual(format_delta(delta_ns), expected)
 
 
-class TestFormatResumeRow(unittest.TestCase):
-    """Tests for format_resume_row function."""
+class TestFormatSummaryRow(unittest.TestCase):
+    """Tests for format_summary_row function."""
 
     cells = (
         ('Days', '14', 'result'),
         ('Solves', '50', 'result'),
     )
 
-    def test_format_resume_row_cells(self) -> None:
+    def test_format_summary_row_cells(self) -> None:
         """Each cell holds its label, its value and its style."""
-        result = format_resume_row(self.cells)
+        result = format_summary_row(self.cells)
 
         self.assertEqual(
             result,
@@ -362,10 +362,10 @@ class TestFormatResumeRow(unittest.TestCase):
             '[stats]Solves:[/stats] [result]50[/result]',
         )
 
-    def test_format_resume_row_aligns_the_next_cell(self) -> None:
+    def test_format_summary_row_aligns_the_next_cell(self) -> None:
         """A longer value keeps the next label on the same column."""
-        short = format_resume_row(self.cells)
-        long = format_resume_row(
+        short = format_summary_row(self.cells)
+        long = format_summary_row(
             (
                 ('Days', '2026-05-17', 'result'),
                 ('Solves', '50', 'result'),
@@ -377,31 +377,31 @@ class TestFormatResumeRow(unittest.TestCase):
             long.index('[stats]Solves'),
         )
 
-    def test_format_resume_row_trims_the_last_padding(self) -> None:
+    def test_format_summary_row_trims_the_last_padding(self) -> None:
         """A line without detail ends on its last value."""
-        self.assertFalse(format_resume_row(self.cells).endswith(' '))
+        self.assertFalse(format_summary_row(self.cells).endswith(' '))
 
-    def test_format_resume_row_detail(self) -> None:
+    def test_format_summary_row_detail(self) -> None:
         """The detail closes the line after the last padding."""
-        result = format_resume_row(self.cells, '[detail]3.57 per day[/detail]')
+        result = format_summary_row(self.cells, '[detail]3.57 per day[/detail]')
 
         self.assertTrue(result.endswith('   [detail]3.57 per day[/detail]'))
 
-    def test_format_resume_row_prefix(self) -> None:
+    def test_format_summary_row_prefix(self) -> None:
         """The prefix opens the line, styled as the labels."""
-        result = format_resume_row(self.cells, prefix='Global ')
+        result = format_summary_row(self.cells, prefix='Global ')
 
         self.assertTrue(result.startswith('[stats]Global [/stats][stats]Days'))
 
-    def test_format_resume_row_style(self) -> None:
+    def test_format_summary_row_style(self) -> None:
         """The label style is customizable."""
-        result = format_resume_row(self.cells, style='title')
+        result = format_summary_row(self.cells, style='title')
 
         self.assertIn('[title]Days  :[/title]', result)
 
-    def test_format_resume_row_without_cells(self) -> None:
+    def test_format_summary_row_without_cells(self) -> None:
         """A line without cell holds nothing."""
-        self.assertEqual(format_resume_row(()), '')
+        self.assertEqual(format_summary_row(()), '')
 
 
 class TestFormatScore(unittest.TestCase):

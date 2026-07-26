@@ -189,19 +189,19 @@ def show_instance_stats(instance: Timer | Trainer | Driller) -> None:
             SolveStatisticsReporter(
                 instance.cube_size,
                 instance.stack_done,
-            ).resume('Session ')
+            ).print_summary('Session ')
     elif isinstance(instance, Trainer) and len(instance.session_data) >= 2:
         TrainerStatistics(
             instance.session_data,
             instance.trainings.cases,
-        ).resume()
+        ).print_summary()
     elif isinstance(instance, Driller) and len(instance.rep_times) >= 2:
         DrillStatistics(
             instance.rep_times,
             instance.rep_tps,
             instance.rep_fluencies,
             qtm=instance.algorithm.metrics.qtm,
-        ).resume()
+        ).print_summary()
 
 
 async def run_session(

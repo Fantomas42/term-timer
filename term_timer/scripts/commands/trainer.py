@@ -76,7 +76,7 @@ async def trainer(options: Namespace) -> int:  # noqa: C901
             TrainerStatistics(
                 instance.session_data,
                 instance.trainings.cases,
-            ).resume()
+            ).print_summary()
 
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')

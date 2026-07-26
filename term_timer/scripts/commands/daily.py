@@ -125,7 +125,7 @@ def daily_review(cube: int, date_str: str) -> int:
     )
 
     stats = SolveStatisticsReporter(cube, stack)
-    stats.resume()
+    stats.print_summary()
     stats.graph('Tendency')
 
     return 0
@@ -147,7 +147,7 @@ def daily_summary(cube: int) -> int:
         )
         return 1
     summary = DailySummaryReporter(cube, stack)
-    summary.resume()
+    summary.print_summary()
     summary.punchcard()
     summary.days_table()
     return 0
@@ -245,7 +245,7 @@ async def daily(options: Namespace) -> int:  # noqa: C901
             )
 
             stats = SolveStatisticsReporter(cube, instance.stack)
-            stats.resume()
+            stats.print_summary()
             stats.graph('Tendency')
 
     except InvalidMoveError as error:

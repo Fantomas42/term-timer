@@ -46,8 +46,8 @@ from term_timer.formatter import format_fluency
 from term_timer.formatter import format_fsrs_due
 from term_timer.formatter import format_fsrs_state
 from term_timer.formatter import format_grade
-from term_timer.formatter import format_resume_row
 from term_timer.formatter import format_score
+from term_timer.formatter import format_summary_row
 from term_timer.formatter import format_term_timer_case_url
 from term_timer.formatter import format_time
 from term_timer.interface.console import console
@@ -966,8 +966,8 @@ class SolveStatisticsReporter(Statistics):
 
         return sum(scores) / len(scores)
 
-    def resume(self, prefix: str = '', style: str = 'stats', *,
-               show_title: bool = False) -> None:
+    def print_summary(self, prefix: str = '', style: str = 'stats', *,
+                      show_title: bool = False) -> None:
         """
         Display comprehensive statistics summary to the console.
 
@@ -1950,7 +1950,7 @@ class DailySummaryReporter:
             if total >= floor
         )
 
-    def resume(self, prefix: str = '', style: str = 'stats') -> None:
+    def print_summary(self, prefix: str = '', style: str = 'stats') -> None:
         """
         Display attendance and streak statistics to the console.
 
@@ -1969,7 +1969,7 @@ class DailySummaryReporter:
             f'[title]Daily summary for { self.cube_name }[/title]',
         )
         console.print(
-            format_resume_row(
+            format_summary_row(
                 (
                     ('Days', str(len(self.played_days)), 'result'),
                     ('Solves', str(self.total_solves), 'result'),
@@ -1979,7 +1979,7 @@ class DailySummaryReporter:
             ),
         )
         console.print(
-            format_resume_row(
+            format_summary_row(
                 (
                     ('Since', str(self.played_days[0]), 'result'),
                     ('Span', f'{ self.span } days', 'result'),
@@ -1989,7 +1989,7 @@ class DailySummaryReporter:
             ),
         )
         console.print(
-            format_resume_row(
+            format_summary_row(
                 (
                     ('Streak', str(len(self.current_streak)), 'result'),
                     ('Record', str(len(self.longest_streak)), 'result'),
@@ -2000,7 +2000,7 @@ class DailySummaryReporter:
             ),
         )
         console.print(
-            format_resume_row(
+            format_summary_row(
                 (
                     ('Last', str(self.played_days[-1]), 'result'),
                     ('Ago', f'{ self.days_since_last } days', 'result'),
@@ -2013,7 +2013,7 @@ class DailySummaryReporter:
             best_day, best_time = self.best_day
             worst_day, worst_time = self.worst_day
             console.print(
-                format_resume_row(
+                format_summary_row(
                     (
                         ('Best', format_time(best_time), 'green'),
                         ('Day', str(best_day), 'result'),
@@ -2022,7 +2022,7 @@ class DailySummaryReporter:
                 ),
             )
             console.print(
-                format_resume_row(
+                format_summary_row(
                     (
                         ('Worst', format_time(worst_time), 'red'),
                         ('Day', str(worst_day), 'result'),
@@ -2222,7 +2222,7 @@ class DrillStatistics(Statistics):
         plt.ticks_style('bold')
         plt.show()
 
-    def resume(self) -> None:
+    def print_summary(self) -> None:
         """Display drill session statistics summary."""
         has_fluency = bool(self.mean_fluency)
 
@@ -2283,7 +2283,7 @@ class TrainerStatistics:
         self.session_data = session_data
         self.cases = cases or {}
 
-    def resume(self) -> None:
+    def print_summary(self) -> None:
         """Display training session statistics summary."""
         if not self.session_data:
             return

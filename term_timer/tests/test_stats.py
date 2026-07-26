@@ -332,8 +332,8 @@ class TestStatistics(unittest.TestCase):
         self.assertEqual(stats.total_time, 100 * SECOND)
 
 
-class TestStatisticsResumeReporter(unittest.TestCase):
-    """Tests for SolveStatisticsReporter resume method."""
+class TestStatisticsPrintSummaryReporter(unittest.TestCase):
+    """Tests for SolveStatisticsReporter print_summary method."""
 
     def setUp(self) -> None:
         """Set up test cases with sample solves."""
@@ -346,27 +346,27 @@ class TestStatisticsResumeReporter(unittest.TestCase):
         ]
         self.puzzle = 3
 
-    def test_resume(self) -> None:
-        """Test the resume method which prints statistics summary."""
+    def test_print_summary(self) -> None:
+        """Test the print_summary method which prints statistics."""
         stats = SolveStatisticsReporter(self.puzzle, self.solves)
 
         with patch('term_timer.interface.console.console.print') as mock_print:
-            stats.resume('Test ')
+            stats.print_summary('Test ')
 
             # Verify that console.print was called multiple times
             self.assertTrue(mock_print.call_count > 5)
 
-    def test_resume_total_without_dnf(self) -> None:
+    def test_print_summary_total_without_dnf(self) -> None:
         """Total line shows the plain count when there is no DNF."""
         stats = SolveStatisticsReporter(self.puzzle, self.solves)
 
         with patch('term_timer.interface.console.console.print') as mock_print:
-            stats.resume()
+            stats.print_summary()
 
         total_line = mock_print.call_args_list[0][0]
         self.assertIn('[result]5[/result]', total_line)
 
-    def test_resume_total_with_dnf(self) -> None:
+    def test_print_summary_total_with_dnf(self) -> None:
         """Total line shows completed/total when DNFs are present."""
         solves = [
             *self.solves,
@@ -375,7 +375,7 @@ class TestStatisticsResumeReporter(unittest.TestCase):
         stats = SolveStatisticsReporter(self.puzzle, solves)
 
         with patch('term_timer.interface.console.console.print') as mock_print:
-            stats.resume()
+            stats.print_summary()
 
         total_line = mock_print.call_args_list[0][0]
         self.assertIn('[result]5/6[/result]', total_line)
@@ -395,24 +395,26 @@ class TestSolveStatisticsReporterListing(unittest.TestCase):
         self.listing = SolveStatisticsReporter(3, self.solves)
 
     @patch('term_timer.interface.console.console.print')
-    def test_resume_with_limit(self, mock_console: Mock) -> None:
-        """Test that resume respects the limit parameter."""
+    def test_print_summary_with_limit(self, mock_console: Mock) -> None:
+        """Test that print_summary respects the limit parameter."""
         self.listing.listing(2, '')
 
         # Should print 2 solves + title
         self.assertEqual(mock_console.call_count, 3)
 
     @patch('term_timer.interface.console.console.print')
-    def test_resume_limit_larger_than_stack(self, mock_console: Mock) -> None:
-        """Test that resume handles limits larger than the stack size."""
+    def test_print_summary_limit_larger_than_stack(
+            self, mock_console: Mock,
+    ) -> None:
+        """Test that print_summary handles limits larger than the stack size."""
         self.listing.listing(10, '')
 
         # Should only print 4 solves (the size of our stack) + title
         self.assertEqual(mock_console.call_count, 5)
 
     @patch('term_timer.interface.console.console.print')
-    def test_resume_format(self, mock_console: Mock) -> None:
-        """Test the formatting of the resume output."""
+    def test_print_summary_format(self, mock_console: Mock) -> None:
+        """Test the formatting of the print_summary output."""
         self.listing.listing(1, '')
 
         # Check the format of the most recent solve
@@ -613,8 +615,8 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
             Solve(1600000004, 25 * SECOND, 'R F U', ''),
         ]
 
-    def test_resume_many_solves_shows_ao12_ao100_ao1000(self) -> None:
-        """Test resume with enough solves to show ao12, ao100, ao1000."""
+    def test_print_summary_many_solves_shows_ao12_ao100_ao1000(self) -> None:
+        """Test print_summary with enough solves to show ao12, ao100, ao1000."""
         # Create enough solves to trigger ao12, ao100, ao1000 display
         many_solves = []
         for i in range(1001):  # 1001 solves
@@ -624,7 +626,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
         reporter = SolveStatisticsReporter(3, many_solves)
 
         with patch('term_timer.interface.console.console.print') as mock_print:
-            reporter.resume()
+            reporter.print_summary()
 
             call_args = [str(call) for call in mock_print.call_args_list]
 
@@ -1105,7 +1107,7 @@ class TestSolveStatisticsReporterComprehensive(unittest.TestCase):
             self.assertTrue(mock_plt.plot.call_count >= 3)
 
     @patch('term_timer.interface.console.console.print')
-    def test_resume_reverse_order(self, mock_console: Mock) -> None:
+    def test_print_summary_reverse_order(self, mock_console: Mock) -> None:
         """Test that solves are displayed in reverse order (newest first)."""
         reporter = SolveStatisticsReporter(3, self.solves)
         reporter.listing(4, 'index')
@@ -2307,8 +2309,8 @@ class TestSolveStatisticsReporterGraph(unittest.TestCase):
         self.assertEqual(labels, ['Time', 'AO12', 'AO5'])
 
 
-class TestTrainerStatisticsResume(unittest.TestCase):
-    """Tests for TrainerStatistics resume method."""
+class TestTrainerStatisticsPrintSummary(unittest.TestCase):
+    """Tests for TrainerStatistics print_summary method."""
 
     def setUp(self) -> None:
         """Set up a training session over two OLL cases."""
@@ -2327,11 +2329,11 @@ class TestTrainerStatisticsResume(unittest.TestCase):
             ),
         }
 
-    def table_from_resume(
+    def table_from_summary(
             self, cases: dict[str, CaseTraining] | None,
     ) -> Any:
         """
-        Run resume and return the case table handed to the console.
+        Run print_summary and return the case table handed to the console.
 
         Returns:
             The Rich table of the per-case summary.
@@ -2340,22 +2342,22 @@ class TestTrainerStatisticsResume(unittest.TestCase):
         stats = TrainerStatistics(self.session_data, cases)
 
         with patch('term_timer.interface.console.console.print') as mock_print:
-            stats.resume()
+            stats.print_summary()
 
         return mock_print.call_args_list[-1][0][0]
 
-    def test_resume_table_has_fsrs_columns(self) -> None:
+    def test_print_summary_table_has_fsrs_columns(self) -> None:
         """The case table always exposes the State and Due columns."""
-        table = self.table_from_resume(self.cases)
+        table = self.table_from_summary(self.cases)
 
         headers = [column.header for column in table.columns]
         self.assertEqual(
             headers, ['Case', 'Σ', 'Mean', 'Best', 'State', 'Due'],
         )
 
-    def test_resume_table_shows_card_state_and_due(self) -> None:
+    def test_print_summary_table_shows_card_state_and_due(self) -> None:
         """A case with a card shows its state and its next review date."""
-        table = self.table_from_resume(self.cases)
+        table = self.table_from_summary(self.cases)
 
         # Cases are sorted by code: '21' comes first, then '27'
         states = list(table.columns[4].cells)
@@ -2366,7 +2368,7 @@ class TestTrainerStatisticsResume(unittest.TestCase):
             f'[no-ao]{ self.due.astimezone().strftime("%Y-%m-%d") }[/no-ao]',
         )
 
-    def test_resume_table_shows_overdue_card_as_review(self) -> None:
+    def test_print_summary_table_shows_overdue_card_as_review(self) -> None:
         """A case whose review date has passed is shown as Review."""
         cases = {
             '27': CaseTraining(
@@ -2379,25 +2381,25 @@ class TestTrainerStatisticsResume(unittest.TestCase):
                 ),
             ),
         }
-        table = self.table_from_resume(cases)
+        table = self.table_from_summary(cases)
 
         states = list(table.columns[4].cells)
         dues = list(table.columns[5].cells)
         self.assertEqual(states[1], '[review]Review[/review]')
         self.assertEqual(dues[1], '[warning]Overdue[/warning]')
 
-    def test_resume_table_without_card(self) -> None:
+    def test_print_summary_table_without_card(self) -> None:
         """A case with no card yet falls back to N/A."""
-        table = self.table_from_resume(self.cases)
+        table = self.table_from_summary(self.cases)
 
         states = list(table.columns[4].cells)
         dues = list(table.columns[5].cells)
         self.assertEqual(states[0], '[no-ao]N/A[/no-ao]')
         self.assertEqual(dues[0], '[no-ao]N/A[/no-ao]')
 
-    def test_resume_table_without_trainings(self) -> None:
+    def test_print_summary_table_without_trainings(self) -> None:
         """Omitting the trainings keeps the columns empty of card data."""
-        table = self.table_from_resume(None)
+        table = self.table_from_summary(None)
 
         self.assertEqual(
             list(table.columns[4].cells),
@@ -2763,10 +2765,10 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
 
         mock_print.assert_not_called()
 
-    def test_resume_reports_attendance(self) -> None:
-        """The resume exposes the days, the streaks and the extremes."""
+    def test_print_summary_reports_attendance(self) -> None:
+        """The summary exposes the days, the streaks and the extremes."""
         with patch('term_timer.interface.console.console.print') as mock_print:
-            self.reporter.resume()
+            self.reporter.print_summary()
 
         output = ' '.join(
             str(argument)
@@ -2781,23 +2783,23 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
         self.assertIn('00:22.000', output)
         self.assertIn('00:35.000', output)
 
-    def test_resume_without_solves(self) -> None:
-        """An empty history prints no resume at all."""
+    def test_print_summary_without_solves(self) -> None:
+        """An empty history prints no summary at all."""
         reporter = DailySummaryReporter(3, [], self.today)
 
         with patch('term_timer.interface.console.console.print') as mock_print:
-            reporter.resume()
+            reporter.print_summary()
 
         mock_print.assert_not_called()
 
-    def test_resume_without_timed_day(self) -> None:
-        """A history of DNF only days holds nothing to resume."""
+    def test_print_summary_without_timed_day(self) -> None:
+        """A history of DNF only days holds nothing to summarize."""
         reporter = DailySummaryReporter(
             3, self.make_day('2026-05-17', [30], DNF), self.today,
         )
 
         with patch('term_timer.interface.console.console.print') as mock_print:
-            reporter.resume()
+            reporter.print_summary()
 
         mock_print.assert_not_called()
 

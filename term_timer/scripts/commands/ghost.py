@@ -148,7 +148,7 @@ def ghost_review(options: Namespace) -> int:
     )
 
     round_stats = SolveStatisticsReporter(options.cube, stack)
-    round_stats.resume()
+    round_stats.print_summary()
     round_stats.graph('Tendency')
 
     return 0
@@ -306,7 +306,7 @@ async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
             )
 
             stats = SolveStatisticsReporter(cube, instance.stack)
-            stats.resume()
+            stats.print_summary()
             stats.graph('Tendency')
 
     except InvalidMoveError as error:

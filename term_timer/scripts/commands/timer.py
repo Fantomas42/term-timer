@@ -167,11 +167,11 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
 
         if len(instance.stack) > len(instance.stack_done):
             session_stats = SolveStatisticsReporter(cube, instance.stack)
-            session_stats.resume('Session ')
+            session_stats.print_summary('Session ')
 
         if len(instance.stack_done) > 1:
             round_stats = SolveStatisticsReporter(cube, instance.stack_done)
-            round_stats.resume(
+            round_stats.print_summary(
                 'Free Play ' if options.free_play else 'Current ',
                 'round',
             )

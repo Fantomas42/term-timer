@@ -56,7 +56,7 @@ def tools(command: str, options: Namespace) -> int:
         session_stats.listing(options.count, options.sort, filters)
 
     if command == 'stats':
-        session_stats.resume('Global ', show_title=True)
+        session_stats.print_summary('Global ', show_title=True)
 
     if command == 'graph':
         session_stats.graph()

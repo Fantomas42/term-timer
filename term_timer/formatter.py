@@ -194,7 +194,7 @@ def format_ghost_delta(delta: int) -> str:
     return f'[green]▲ { value:>{ GHOST_DELTA_WIDTH }}[/green]'
 
 
-def format_resume_row(
+def format_summary_row(
         cells: tuple[tuple[str, str, str], ...],
         detail: str = '',
         prefix: str = '',
