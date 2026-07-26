@@ -236,13 +236,6 @@ async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
         )
         return 1
 
-    if options.ghost_3d:
-        console.print(
-            '👻 --ghost-3d is reserved for a future release '
-            'and does nothing in v1.',
-            style='warning',
-        )
-
     scramble_str = str(reference.scramble)
     key = scramble_to_key(scramble_str)
 

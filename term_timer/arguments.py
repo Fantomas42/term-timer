@@ -538,14 +538,6 @@ def ghost_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Default: False.'
         ),
     )
-    ghost.add_argument(
-        '--ghost-3d',
-        action='store_true',
-        help=(
-            'Reserved: parallel OpenGL replay of the ghost cube.\n'
-            'Not implemented in v1.'
-        ),
-    )
 
     return parser
 
