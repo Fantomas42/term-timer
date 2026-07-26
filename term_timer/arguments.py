@@ -193,6 +193,31 @@ def set_session_arguments(
     return session
 
 
+def set_target_session_arguments(
+        parser: ArgumentParser,
+) -> ArgumentParser._ArgumentGroup:
+    """
+    Add target session command-line arguments to parser.
+
+    Returns:
+        Argument group containing target session options.
+
+    """
+    session = parser.add_argument_group('Session')
+    add_cube_size_argument(session)
+    session.add_argument(
+        '-u', '--session',
+        default='',
+        metavar='SESSION',
+        help=(
+            'Name of the session for solves.\n'
+            'Default: None.'
+        ),
+    )
+
+    return session
+
+
 def set_cube_arguments(
         parser: ArgumentParser,
         *,
@@ -638,17 +663,7 @@ def solve_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     set_replay_arguments(parser)
     set_analysis_arguments(parser)
 
-    session = parser.add_argument_group('Session')
-    add_cube_size_argument(session)
-    session.add_argument(
-        '-u', '--session',
-        default='',
-        metavar='SESSION',
-        help=(
-            'Name of the session for solves.\n'
-            'Default: None.'
-        ),
-    )
+    session = set_target_session_arguments(parser)
     add_free_play_argument(session)
 
     set_timer_arguments(parser)
@@ -1354,17 +1369,7 @@ def edit_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help='Skip confirmation prompt.',
     )
 
-    session = parser.add_argument_group('Session')
-    add_cube_size_argument(session)
-    session.add_argument(
-        '-u', '--session',
-        default='',
-        metavar='SESSION',
-        help=(
-            'Name of the session for solves.\n'
-            'Default: None.'
-        ),
-    )
+    set_target_session_arguments(parser)
 
     return parser
 
@@ -1391,17 +1396,7 @@ def delete_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help='ID of the solve to delete.',
     )
 
-    session = parser.add_argument_group('Session')
-    add_cube_size_argument(session)
-    session.add_argument(
-        '-u', '--session',
-        default='',
-        metavar='SESSION',
-        help=(
-            'Name of the session for solves.\n'
-            'Default: None.'
-        ),
-    )
+    set_target_session_arguments(parser)
 
     return parser
 
