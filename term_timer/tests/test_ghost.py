@@ -1,7 +1,5 @@
 """Tests for ghost racing mode."""
 import io
-import json
-import os
 import tempfile
 import unittest
 from argparse import Namespace
@@ -12,7 +10,6 @@ from unittest.mock import patch
 from rich.console import Console as RichConsole
 
 from term_timer.arguments import get_parser
-from term_timer.exceptions import ReplayError
 from term_timer.formatter import format_ghost_delta
 from term_timer.in_out import save_solves
 from term_timer.in_out import scramble_to_key
@@ -482,124 +479,6 @@ class TestCurrentGhostSplit(unittest.TestCase):
         watch = GhostStopWatch()
 
         self.assertIsNone(watch.current_ghost_split(0))
-
-
-class TestLoadRaceReplay(unittest.TestCase):
-    """Tests for the replay driving a ghost race."""
-
-    def setUp(self) -> None:
-        """Write replay files in a temporary folder."""
-        tmp = tempfile.TemporaryDirectory()
-        self.addCleanup(tmp.cleanup)
-        self.directory = Path(tmp.name)
-
-    @staticmethod
-    def parse(*args: str) -> Namespace:
-        """
-        Parse a ghost command line into options.
-
-        Returns:
-            The parsed namespace.
-
-        """
-        return get_parser().parse_args(['ghost', *args])
-
-    def write_replay(self, scramble: str) -> str:
-        """
-        Write a minimal replay file racing the given scramble.
-
-        Returns:
-            Path of the written file.
-
-        """
-        payload = {
-            'device': {
-                'name': 'Replay-Cube',
-                'hardware_version': '1.0.0',
-                'software_version': '1.0.0',
-                'battery': 100,
-            },
-            'solves': [
-                {
-                    'scramble': scramble,
-                    'solution': SHORT_MOVES,
-                },
-            ],
-        }
-        source = self.directory / 'replay.json'
-        source.write_text(json.dumps(payload), encoding='utf-8')
-
-        return str(source)
-
-    def test_no_replay_requested(self) -> None:
-        """Without an option nor an environment variable, no replay."""
-        options = self.parse('1')
-        with patch.dict(os.environ, {}, clear=True):
-            self.assertIsNone(
-                ghost_mod.load_race_replay(options, SHORT_SCRAMBLE),
-            )
-
-    def test_matching_scramble(self) -> None:
-        """A replay racing the same scramble is loaded."""
-        options = self.parse('1', '--replay', self.write_replay(
-            SHORT_SCRAMBLE,
-        ))
-
-        replay = ghost_mod.load_race_replay(options, SHORT_SCRAMBLE)
-
-        self.assertIsNotNone(replay)
-        self.assertEqual(replay['solves'][0]['scramble'], SHORT_SCRAMBLE)  # type: ignore[index]
-
-    def test_equivalent_scramble(self) -> None:
-        """A replay reaching the raced state by other moves is loaded."""
-        options = self.parse('1', '--replay', self.write_replay(
-            f'{ SHORT_SCRAMBLE } U U U U',
-        ))
-
-        self.assertIsNotNone(
-            ghost_mod.load_race_replay(options, SHORT_SCRAMBLE),
-        )
-
-    def test_other_scramble_refused(self) -> None:
-        """A replay scrambling elsewhere would hang the timer."""
-        options = self.parse('1', '--replay', self.write_replay("R U R' U'"))
-
-        with self.assertRaises(ReplayError) as context:
-            ghost_mod.load_race_replay(options, SHORT_SCRAMBLE)
-
-        self.assertIn('never start', str(context.exception))
-
-    def test_environment_variable(self) -> None:
-        """The environment variable drives the race too."""
-        options = self.parse('1')
-        source = self.write_replay(SHORT_SCRAMBLE)
-
-        with patch.dict(os.environ, {'TERM_TIMER_REPLAY': source}):
-            self.assertIsNotNone(
-                ghost_mod.load_race_replay(options, SHORT_SCRAMBLE),
-            )
-
-    def test_option_wins_over_environment(self) -> None:
-        """The option takes precedence over the environment variable."""
-        options = self.parse('1', '--replay', self.write_replay(
-            SHORT_SCRAMBLE,
-        ))
-
-        with patch.dict(os.environ, {'TERM_TIMER_REPLAY': 'missing.json'}):
-            self.assertIsNotNone(
-                ghost_mod.load_race_replay(options, SHORT_SCRAMBLE),
-            )
-
-    def test_other_cube_size_refused(self) -> None:
-        """The replay only emits 3x3x3 states."""
-        options = self.parse(
-            '1', '-c', '4', '--replay', self.write_replay(SHORT_SCRAMBLE),
-        )
-
-        with self.assertRaises(ReplayError) as context:
-            ghost_mod.load_race_replay(options, SHORT_SCRAMBLE)
-
-        self.assertIn('3x3x3', str(context.exception))
 
 
 class TestRefreshGhost(unittest.TestCase):

@@ -26,6 +26,7 @@ from term_timer.bluetooth.replay import ReplayFileDict
 from term_timer.bluetooth.replay import ReplayInterface
 from term_timer.bluetooth.replay import ReplaySolveDict
 from term_timer.bluetooth.replay import load_replay
+from term_timer.bluetooth.replay import load_scramble_replay
 from term_timer.bluetooth.replay import parse_timed_moves
 from term_timer.bluetooth.replay import scramble_moves_reach_state
 from term_timer.bluetooth.replay import validate_replay
@@ -193,6 +194,66 @@ class TestReplayLoader(unittest.TestCase):
         replay = validate_replay(data)
 
         self.assertEqual(len(replay['solves']), 2)
+
+
+class TestScrambleReplayLoader(unittest.TestCase):
+    """Loading a replay for a command whose scramble is imposed."""
+
+    def load(self, scramble: str, imposed: str) -> ReplayFileDict | None:
+        """
+        Load a replay racing a scramble against an imposed one.
+
+        Returns:
+            The validated payload, or None when no path is given.
+
+        """
+        data: dict[str, Any] = deepcopy(VALID_REPLAY)
+        data['solves'][0]['scramble'] = scramble
+        del data['solves'][0]['scramble_moves']
+
+        path = write_replay(data)
+        self.addCleanup(Path(path).unlink)
+
+        return load_scramble_replay(path, imposed)
+
+    def test_no_path(self) -> None:
+        """Without a path, no replay drives the command."""
+        self.assertIsNone(load_scramble_replay('', "R U R' U'"))
+
+    def test_matching_scramble(self) -> None:
+        """A replay on the imposed scramble is loaded."""
+        replay = self.load("R U R' U'", "R U R' U'")
+
+        self.assertIsNotNone(replay)
+
+    def test_equivalent_scramble(self) -> None:
+        """A replay reaching the imposed state otherwise is loaded."""
+        replay = self.load("R U R' U' U U U U", "R U R' U'")
+
+        self.assertIsNotNone(replay)
+
+    def test_other_scramble_refused(self) -> None:
+        """A replay scrambling elsewhere would hang the timer."""
+        with self.assertRaises(ReplayError) as context:
+            self.load("R U R'", "R U R' U'")
+
+        self.assertIn('never start', str(context.exception))
+
+    def test_every_solve_checked(self) -> None:
+        """A diverging solve is refused wherever it sits in the file."""
+        data: dict[str, Any] = deepcopy(VALID_REPLAY)
+        data['solves'][0]['finish_moves'] = "U@0 U'@250"
+        data['solves'].append(deepcopy(data['solves'][0]))
+        data['solves'][1]['scramble'] = "R U R'"
+        del data['solves'][1]['scramble_moves']
+
+        path = write_replay(data)
+        self.addCleanup(Path(path).unlink)
+
+        with self.assertRaises(ReplayError) as context:
+            load_scramble_replay(path, "R U R' U'")
+
+        self.assertIn('#2', str(context.exception))
 
 
 class TestReplayMoveTiming(unittest.TestCase):

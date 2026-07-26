@@ -1,4 +1,5 @@
 """Daily scramble command."""
+import os
 from argparse import Namespace
 from datetime import date
 from datetime import datetime
@@ -6,7 +7,9 @@ from random import Random
 
 from cubing_algs.exceptions import InvalidMoveError
 
+from term_timer.bluetooth.replay import load_scramble_replay
 from term_timer.constants import DAILY_DIRECTORY
+from term_timer.exceptions import ReplayError
 from term_timer.in_out import load_all_daily_solves
 from term_timer.in_out import load_solves
 from term_timer.interface.console import console
@@ -79,7 +82,7 @@ def daily_summary(cube: int) -> int:
     return 0
 
 
-async def daily(options: Namespace) -> int:
+async def daily(options: Namespace) -> int:  # noqa: C901
     """
     Run the daily scramble session.
 
@@ -101,6 +104,15 @@ async def daily(options: Namespace) -> int:
     rng = Random(date_str)  # noqa: S311
     daily_scramble, _ = scrambler(cube, 0, rng=rng)
     scramble_str = str(daily_scramble)
+
+    try:
+        replay = load_scramble_replay(
+            options.replay or os.getenv('TERM_TIMER_REPLAY'),
+            scramble_str,
+        )
+    except ReplayError as error:
+        console.print('😱', str(error), style='warning')
+        return 1
 
     console.print(
         f'📅 Daily Scramble - { date_str }',
@@ -141,7 +153,10 @@ async def daily(options: Namespace) -> int:
     )
     instance.save_directory = DAILY_DIRECTORY
 
-    if options.bluetooth:
+    if replay is not None:
+        instance.bluetooth_replay = replay
+
+    if options.bluetooth or replay is not None:
         await instance.bluetooth_connect(
             use_gyroscope=options.use_gyroscope,
         )
