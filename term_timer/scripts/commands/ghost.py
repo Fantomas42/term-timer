@@ -6,6 +6,7 @@ from random import Random
 from cubing_algs.exceptions import InvalidMoveError
 
 from term_timer.constants import GHOSTS_DIRECTORY
+from term_timer.formatter import format_ghost_delta
 from term_timer.formatter import format_time
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
@@ -85,6 +86,48 @@ def select_ghost(
     ghost.orientation = options.orientation
 
     return ghost
+
+
+def refresh_ghost(
+        instance: Timer,
+        reference: Solve,
+        history: list[Solve],
+        options: Namespace,
+) -> None:
+    """
+    Re-elect the ghost after an attempt and announce a new record.
+
+    The pool is the stored history plus the attempts of the running
+    session, so beating the ghost immediately promotes the fresh solve as
+    the target of the next race. Free play never writes to the scramble
+    file but its attempts still count for the session.
+
+    Args:
+        instance: The running timer, holding the current ghost and the
+            attempts done in this session.
+        reference: The solve whose scramble is being raced.
+        history: The attempts stored for that scramble at startup.
+        options: Command options carrying the method and orientation.
+
+    """
+    current = instance.ghost
+    if current is None:
+        return
+
+    ghost_solve = select_ghost(
+        reference,
+        [*history, *instance.stack_done],
+        options,
+    )
+    if ghost_solve.date == current.date:
+        return
+
+    console.print(
+        '[record]👻 New ghost:[/record]',
+        f'[best]{ format_time(ghost_solve.time) }[/best]',
+        format_ghost_delta(ghost_solve.time - current.time),
+    )
+    instance.ghost = ghost_solve
 
 
 def ghost_review(options: Namespace) -> int:
@@ -252,6 +295,8 @@ async def ghost(options: Namespace) -> int:  # noqa: C901
     try:
         while 42:
             done = await instance.start()
+
+            refresh_ghost(instance, reference, history, options)
 
             if not done:
                 break

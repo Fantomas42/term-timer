@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from argparse import Namespace
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from rich.console import Console as RichConsole
@@ -94,12 +95,12 @@ class TestGhostSplits(unittest.TestCase):
 
         self.assertEqual(
             splits,
-            {
-                'Cross': 1_768_000_000,
-                'F2L': 1_768_000_000,
-                'OLL': 1_768_000_000,
-                'PLL': 2_608_000_000,
-            },
+            (
+                (1_768_000_000,),
+                (1_768_000_000,),
+                (1_768_000_000,),
+                (2_608_000_000,),
+            ),
         )
 
     def test_absent_tracked_step_is_omitted(self) -> None:
@@ -108,18 +109,41 @@ class TestGhostSplits(unittest.TestCase):
         splits = solve.ghost_splits(build_groups('cf4op'))
 
         # This degenerate solve is an XXXXCross, so the tracked Cross and
-        # per-pair F2L steps have no matching summary entry and are omitted.
-        # OLL is a real (skipped) summary step, so it stays, inheriting the
-        # last known checkpoint (0, since Cross could not be aligned).
+        # per-pair F2L steps have no matching summary entry and their
+        # groups stay empty. OLL is a real (skipped) summary step, so it
+        # stays, inheriting the last known checkpoint (0, since Cross
+        # could not be aligned).
         self.assertEqual(
             splits,
-            {'OLL': 0, 'PLL': 2_608_000_000},
+            ((), (), (0,), (2_608_000_000,)),
+        )
+
+    def test_group_splits_are_chronological(self) -> None:
+        """Slots solved out of order are sorted into race positions."""
+        solve = make_solve()
+        groups = (
+            (
+                TrackedStep('F2L 1', 'F2L FR'),
+                TrackedStep('F2L 2', 'F2L FL'),
+            ),
+        )
+        summary = [
+            {'name': 'F2L 1', 'times': [2000.0]},
+            {'name': 'F2L 2', 'times': [1000.0]},
+        ]
+        # cached_property is a non-data descriptor: seeding the instance
+        # dict swaps the analysis without running it.
+        solve.__dict__['method_applied'] = SimpleNamespace(summary=summary)
+
+        self.assertEqual(
+            solve.ghost_splits(groups),
+            ((1_000_000_000, 2_000_000_000),),
         )
 
     def test_no_reconstruction_returns_empty(self) -> None:
         """A solve without moves yields no splits."""
         solve = make_solve(moves=None)
-        self.assertEqual(solve.ghost_splits(build_groups('cfop')), {})
+        self.assertEqual(solve.ghost_splits(build_groups('cfop')), ())
 
 
 class TestFormatGhostDelta(unittest.TestCase):
@@ -129,21 +153,28 @@ class TestFormatGhostDelta(unittest.TestCase):
         """A positive delta renders a red down arrow with a plus sign."""
         self.assertEqual(
             format_ghost_delta(390_000_000),
-            '[red]▼ +0.39[/red]',
+            '[red]▼  +0.39[/red]',
         )
 
     def test_ahead_is_green_up(self) -> None:
         """A negative delta renders a green up arrow with a minus sign."""
         self.assertEqual(
             format_ghost_delta(-390_000_000),
-            '[green]▲ -0.39[/green]',
+            '[green]▲  -0.39[/green]',
         )
 
     def test_tie_counts_as_ahead(self) -> None:
         """A zero delta renders as ahead."""
         self.assertEqual(
             format_ghost_delta(0),
-            '[green]▲ 0.00[/green]',
+            '[green]▲   0.00[/green]',
+        )
+
+    def test_values_share_a_column(self) -> None:
+        """Deltas of different magnitudes render on the same width."""
+        self.assertEqual(
+            len(format_ghost_delta(390_000_000).replace('red', '')),
+            len(format_ghost_delta(-13_180_000_000).replace('green', '')),
         )
 
 
@@ -322,7 +353,7 @@ class TestGhostDisplay(unittest.TestCase):
         watch.console = RichConsole(record=True, width=120)
         watch.step_width = 0
         if ghost_active:
-            watch.ghost_splits = {'Cross': 6_020_000_000}
+            watch.ghost_splits = ((6_020_000_000,),)
         return watch
 
     def test_step_renders_ghost_segment(self) -> None:
@@ -336,17 +367,50 @@ class TestGhostDisplay(unittest.TestCase):
         output = watch.console.export_text()
         self.assertIn('👻', output)
         self.assertIn('6.02', output)
-        self.assertIn('▼ +0.39', output)
+        self.assertIn('▼  +0.39', output)
+
+    def test_first_step_holds_the_delta_column(self) -> None:
+        """A step without delta keeps the ghost segment aligned."""
+        watch = self.build(ghost_active=True)
+        watch.step_width = 6
+        with patch('sys.stdout', io.StringIO()):
+            watch.print_step(
+                'timer_base', 6_410_000_000, 'Cross',
+                htm=6, ghost_split=6_020_000_000,
+            )
+            watch.print_step(
+                'timer_base', 9_410_000_000, 'F2L',
+                delta_time=3_000_000_000, htm=6,
+                ghost_split=8_020_000_000,
+            )
+        first, second = [
+            line for line in watch.console.export_text().splitlines()
+            if '👻' in line
+        ]
+        self.assertEqual(first.index('👻'), second.index('👻'))
 
     def test_final_step_renders_verdict(self) -> None:
-        """The solved checkpoint prints WIN or LOSS instead of a delta."""
+        """The solved checkpoint appends WIN or LOSS to the delta."""
         watch = self.build(ghost_active=True)
         with patch('sys.stdout', io.StringIO()):
             watch.print_step(
                 'timer_base', 5_000_000_000, 'PLL',
                 last=True, ghost_split=6_020_000_000,
             )
-        self.assertIn('WIN', watch.console.export_text())
+        output = watch.console.export_text()
+        self.assertIn('6.02', output)
+        self.assertIn('▲  -1.02', output)
+        self.assertIn('WIN', output)
+
+    def test_final_step_renders_loss(self) -> None:
+        """Finishing behind the ghost prints LOSS."""
+        watch = self.build(ghost_active=True)
+        with patch('sys.stdout', io.StringIO()):
+            watch.print_step(
+                'timer_base', 7_000_000_000, 'PLL',
+                last=True, ghost_split=6_020_000_000,
+            )
+        self.assertIn('LOSS', watch.console.export_text())
 
     def test_no_ghost_segment_when_inactive(self) -> None:
         """Without a ghost the step line carries no ghost marker."""
@@ -363,4 +427,122 @@ class TestGhostDisplay(unittest.TestCase):
             watch.print_timer(6_410_000_000, 'timer_base')
         output = watch.console.export_text()
         self.assertIn('👻', output)
-        self.assertIn('▼ +0.39', output)
+        self.assertIn('▼  +0.39', output)
+
+
+class TestCurrentGhostSplit(unittest.TestCase):
+    """Tests for the positional lookup of a ghost checkpoint."""
+
+    @staticmethod
+    def build() -> GhostStopWatch:
+        """
+        Build a stopwatch racing a two-group ghost.
+
+        Returns:
+            The configured harness.
+
+        """
+        watch = GhostStopWatch()
+        watch.ghost_splits = (
+            (5_490_000_000,),
+            (
+                10_320_000_000, 15_260_000_000,
+                19_230_000_000, 22_550_000_000,
+            ),
+        )
+        return watch
+
+    def test_position_inside_group(self) -> None:
+        """Each checkpoint races the ghost checkpoint at the same rank."""
+        watch = self.build()
+        watch.group_progress = 1
+
+        self.assertEqual(watch.current_ghost_split(0), 10_320_000_000)
+        self.assertEqual(watch.current_ghost_split(3), 22_550_000_000)
+
+    def test_beyond_group_returns_none(self) -> None:
+        """An extra live checkpoint races without a ghost split."""
+        watch = self.build()
+        watch.group_progress = 1
+
+        self.assertIsNone(watch.current_ghost_split(4))
+
+    def test_beyond_groups_returns_none(self) -> None:
+        """A group the ghost never reached yields no split."""
+        watch = self.build()
+        watch.group_progress = 2
+
+        self.assertIsNone(watch.current_ghost_split(0))
+
+    def test_without_ghost_returns_none(self) -> None:
+        """No ghost means no split at all."""
+        watch = GhostStopWatch()
+
+        self.assertIsNone(watch.current_ghost_split(0))
+
+
+class TestRefreshGhost(unittest.TestCase):
+    """Tests for the in-session ghost re-election."""
+
+    @staticmethod
+    def parse(*args: str) -> Namespace:
+        """
+        Parse a ghost command line into options.
+
+        Returns:
+            The parsed namespace.
+
+        """
+        return get_parser().parse_args(['ghost', *args])
+
+    @staticmethod
+    def build_instance(ghost_solve: Solve, done: list[Solve]) -> Namespace:
+        """
+        Build a timer stand-in carrying a ghost and finished solves.
+
+        Returns:
+            The stand-in instance.
+
+        """
+        return Namespace(ghost=ghost_solve, stack_done=done)
+
+    def test_new_best_becomes_the_ghost(self) -> None:
+        """Beating the ghost promotes the fresh attempt for the next race."""
+        options = self.parse('1')
+        reference = make_solve(date=1, time=2_608_404_439)
+        faster = make_solve(date=2, time=1_000_000_000)
+        instance = self.build_instance(reference, [faster])
+
+        recorder = RichConsole(record=True)
+        with patch.object(ghost_mod, 'console', recorder):
+            ghost_mod.refresh_ghost(instance, reference, [], options)  # type: ignore[arg-type]
+
+        self.assertIs(instance.ghost, faster)
+        self.assertIn('New ghost', recorder.export_text())
+
+    def test_slower_attempt_keeps_the_ghost(self) -> None:
+        """A slower attempt leaves the target and the display untouched."""
+        options = self.parse('1')
+        reference = make_solve(date=1, time=2_608_404_439)
+        slower = make_solve(date=2, time=9_000_000_000)
+        instance = self.build_instance(reference, [slower])
+
+        recorder = RichConsole(record=True)
+        with patch.object(ghost_mod, 'console', recorder):
+            ghost_mod.refresh_ghost(instance, reference, [], options)  # type: ignore[arg-type]
+
+        self.assertIs(instance.ghost, reference)
+        self.assertEqual(recorder.export_text().strip(), '')
+
+    def test_history_stays_in_the_pool(self) -> None:
+        """A stored attempt still wins over a slower session solve."""
+        options = self.parse('1')
+        reference = make_solve(date=1, time=2_608_404_439)
+        stored = make_solve(date=2, time=1_000_000_000)
+        attempt = make_solve(date=3, time=2_000_000_000)
+        instance = self.build_instance(reference, [attempt])
+
+        with patch.object(ghost_mod, 'console', RichConsole(record=True)):
+            ghost_mod.refresh_ghost(instance, reference, [stored], options)  # type: ignore[arg-type]
+
+        self.assertIs(instance.ghost, stored)

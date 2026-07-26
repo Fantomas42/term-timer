@@ -10,8 +10,10 @@ from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.vcube import VCube
 
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.constants import GHOST_SPLIT_WIDTH
 from term_timer.constants import REFRESH
 from term_timer.constants import SECOND
+from term_timer.constants import STEP_DELTA_WIDTH
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_ghost_delta
 from term_timer.formatter import format_time
@@ -105,7 +107,7 @@ class StopWatch:
         self.previous_style: str = ''
 
         self.ghost: Solve | None = None
-        self.ghost_splits: dict[str, int] = {}
+        self.ghost_splits: tuple[tuple[int, ...], ...] = ()
         self.ghost_delta: int | None = None
 
         self.solve_started_event = asyncio.Event()
@@ -133,19 +135,26 @@ class StopWatch:
         if htm:
             extras += f' [htm]{ htm:>2} HTM[/htm]'
         if delta_time is not None:
-            extras += f' [green]+{ format_duration(delta_time) }[/green]'
+            delta = f'+{ format_duration(delta_time) }'
+            if ghost_split is not None:
+                delta = f'{ delta:>{ STEP_DELTA_WIDTH }}'
+            extras += f' [green]{ delta }[/green]'
+        elif ghost_split is not None:
+            # The first step has no delta: hold its column so the ghost
+            # segment stays aligned with the following steps.
+            extras += ' ' * (STEP_DELTA_WIDTH + 1)
 
         if ghost_split is not None:
             ghost_delta = elapsed_time - ghost_split
+            split = format_duration(ghost_split)
+            extras += (
+                f'   👻 [result]{ split:>{ GHOST_SPLIT_WIDTH }}[/result]'
+                f' { format_ghost_delta(ghost_delta) }'
+            )
             if last:
                 verdict = 'WIN' if ghost_delta <= 0 else 'LOSS'
                 style_v = 'record' if ghost_delta <= 0 else 'warning'
-                extras += f'   👻 [{ style_v }]{ verdict }[/{ style_v }]'
-            else:
-                extras += (
-                    f'   👻 [result]{ format_duration(ghost_split) }[/result]'
-                    f' { format_ghost_delta(ghost_delta) }'
-                )
+                extras += f' [{ style_v }]{ verdict }[/{ style_v }]'
 
         self.console.print(
             f'[{ style }]Go Go Go:[/{ style }]',
@@ -197,7 +206,7 @@ class StopWatch:
         self.first_step = True
         self.previous_style = ''
         self.step_width = 0
-        self.ghost_splits = {}
+        self.ghost_splits = ()
         self.ghost_delta = None
 
         if not self.show_steps:
@@ -220,6 +229,34 @@ class StopWatch:
 
         if self.ghost is not None:
             self.ghost_splits = self.ghost.ghost_splits(self.groups_to_track)
+
+    def current_ghost_split(self, index: int) -> int | None:
+        """
+        Give the ghost split racing the index-th checkpoint of the group.
+
+        Checkpoints are aligned by position inside the group, not by step
+        name: the F2L slots are solved in a different order from one
+        solve to the next, so your n-th pair races the ghost's n-th pair
+        rather than the same slot solved at another moment of its solve.
+        Groups keep their own ordinal alignment, so Cross / OLL / PLL
+        always face their counterpart.
+
+        Args:
+            index: Position of the checkpoint inside the current group.
+
+        Returns:
+            The cumulative ghost time in ns, or None when no ghost is
+            active or it has no checkpoint at that position.
+
+        """
+        if self.group_progress >= len(self.ghost_splits):
+            return None
+
+        group = self.ghost_splits[self.group_progress]
+        if index >= len(group):
+            return None
+
+        return group[index]
 
     def check_and_print_steps(
             self,
@@ -256,9 +293,8 @@ class StopWatch:
                     [m['move'] for m in self.moves[self.previous_move_index:]],
                 ).transform(optimize_double_moves).metrics.htm
 
-                ghost_split = (
-                    self.ghost_splits.get(step_name)
-                    if self.ghost_splits else None
+                ghost_split = self.current_ghost_split(
+                    len(self.completed_in_group),
                 )
                 if ghost_split is not None:
                     self.ghost_delta = elapsed_time - ghost_split
