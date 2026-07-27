@@ -98,7 +98,10 @@ class FSRSScheduler:
         1. Overdue cards (past due date), missed in-session first, then
            by urgency
         2. New cards (not yet seen, up to limit), weighted by probability
-        3. Weighted-random from all available cases by probability
+        3. Weighted-random by probability over the cases ready for
+           maintenance — cards still walking their learning steps are
+           left to their schedule (see ``in_acquisition``), unless the
+           pool holds nothing else
 
         The random fallback never serves the same case twice in a row
         (when the pool allows it). Due cards are exempt: immediate
@@ -134,11 +137,38 @@ class FSRSScheduler:
             seen = set(cards.keys())
             available = [c for c in available if c in seen] or available
 
+        ready = [c for c in available if not self.in_acquisition(cards.get(c))]
+        available = ready or available
+
         if len(available) > 1 and self.last_case in available:
             available = [c for c in available if c != self.last_case]
 
         self.last_case = self.weighted_choice(available, probabilities)
         return self.last_case
+
+    @staticmethod
+    def in_acquisition(card: Card | None) -> bool:
+        """
+        Tell whether a card is still walking its learning steps.
+
+        Called from the random fallback, which is only reached when
+        nothing is due: a Learning or Relearning card seen there is
+        necessarily scheduled minutes away, waiting for its next step.
+        Serving it early short-circuits the massed practice
+        LEARNING_STEPS exist for — measured on a real F2L session, a
+        card rated Good and scheduled 5 minutes out was drawn back
+        under a minute later and graduated to Review on that rep.
+
+        Args:
+            card: FSRS card of a case, or None when the case is unseen
+
+        Returns:
+            True when the card is in Learning or Relearning.
+
+        """
+        return card is not None and card.state in {
+            State.Learning, State.Relearning,
+        }
 
     @staticmethod
     def weighted_choice(

@@ -414,6 +414,61 @@ class TestSelectNextCaseAntiRepeat(unittest.TestCase):
         self.assertEqual(result, 'B')
 
 
+class TestSelectNextCaseAcquisition(unittest.TestCase):
+    """The random fallback leaves cards in acquisition to their steps."""
+
+    def setUp(self) -> None:  # noqa: D102
+        self.scheduler = FSRSScheduler()
+        self.probs = {'A': 0.5, 'B': 0.5}
+
+    def test_learning_card_not_due_is_never_served_by_fallback(self) -> None:
+        """A Learning card scheduled minutes away is not maintenance."""
+        cards = {
+            'A': make_card(due_offset_days=1.0, state=State.Review),
+            'B': make_card(due_offset_days=0.003, state=State.Learning),
+        }
+        for _ in range(50):
+            result = self.scheduler.select_next_case(cards, self.probs, 0)
+            self.assertEqual(result, 'A')
+
+    def test_relearning_card_not_due_is_never_served_by_fallback(self) -> None:
+        """A lapsed card keeps the breathing room of its relearning step."""
+        cards = {
+            'A': make_card(due_offset_days=1.0, state=State.Review),
+            'B': make_card(due_offset_days=0.001, state=State.Relearning),
+        }
+        for _ in range(50):
+            result = self.scheduler.select_next_case(cards, self.probs, 0)
+            self.assertEqual(result, 'A')
+
+    def test_acquisition_card_is_served_once_due(self) -> None:
+        """The filter only defers the card, the due path still serves it."""
+        cards = {
+            'A': make_card(due_offset_days=1.0, state=State.Review),
+            'B': make_card(due_offset_days=-0.001, state=State.Learning),
+        }
+        result = self.scheduler.select_next_case(cards, self.probs, 0)
+        self.assertEqual(result, 'B')
+
+    def test_pool_of_acquisition_cards_only_still_draws(self) -> None:
+        """A pool left with nothing but acquisition cards keeps serving."""
+        cards = {
+            'A': make_card(due_offset_days=0.003, state=State.Learning),
+            'B': make_card(due_offset_days=0.003, state=State.Relearning),
+        }
+        for _ in range(20):
+            result = self.scheduler.select_next_case(cards, self.probs, 0)
+            self.assertIn(result, self.probs)
+
+    def test_filter_never_unlocks_the_new_case_budget(self) -> None:
+        """An exhausted budget outranks the filter: no unseen case leaks."""
+        probs = {'A': 0.4, 'B': 0.3, 'C': 0.3}
+        cards = {'A': make_card(due_offset_days=0.003, state=State.Learning)}
+        for _ in range(20):
+            result = self.scheduler.select_next_case(cards, probs, 0)
+            self.assertEqual(result, 'A')
+
+
 class TestWeightedChoice(unittest.TestCase):
     """weighted_choice() guards random.choices against all-zero weights."""
 
