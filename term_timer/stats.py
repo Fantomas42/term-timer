@@ -2291,10 +2291,20 @@ class TrainerStatistics:
         all_times = [elapsed for _, _, elapsed in self.session_data]
         global_stats = Statistics(all_times)
 
+        case_groups: dict[str, tuple[Case, list[int]]] = {}
+        for code, case, elapsed in self.session_data:
+            if code not in case_groups:
+                case_groups[code] = (case, [])
+            case_groups[code][1].append(elapsed)
+
         console.print('[title]Training summary[/title]')
         console.print(
             '[stats]Count :[/stats]',
             f'[result]{ global_stats.total }[/result]',
+        )
+        console.print(
+            '[stats]Cases :[/stats]',
+            f'[result]{ len(case_groups) }[/result]',
         )
         console.print(
             '[stats]Time  :[/stats]',
@@ -2312,12 +2322,6 @@ class TrainerStatistics:
             '[stats]Worst :[/stats]',
             f'[red]{ format_time(global_stats.worst) }[/red]',
         )
-
-        case_groups: dict[str, tuple[Case, list[int]]] = {}
-        for code, case, elapsed in self.session_data:
-            if code not in case_groups:
-                case_groups[code] = (case, [])
-            case_groups[code][1].append(elapsed)
 
         if len(case_groups) < 2:
             return
