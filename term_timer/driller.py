@@ -95,7 +95,7 @@ class Driller(SolveInterface):
             f'Drilling: [moves]{ self.algorithm }[/moves]'
             f' ({ self.algorithm.metrics.htm } HTM)'
             f'{ suffix }',
-            style='trainer',
+            style='driller',
         )
 
     def start_line(self) -> None:

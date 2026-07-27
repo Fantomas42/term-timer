@@ -134,7 +134,7 @@ class TestDailyHeader(unittest.TestCase):
 
         self.assertEqual(
             header,
-            '[routine]📅 Daily Scramble - 2026-07-26[/routine]',
+            '[daily]📅 Daily Scramble - 2026-07-26[/daily]',
         )
 
     def test_header_carries_the_time_to_beat(self) -> None:

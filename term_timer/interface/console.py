@@ -40,6 +40,11 @@ theme: dict[str, str] = {
     'low': f'bold { GREEN }',
     'trainer': f'bold { TEXT_LIGHT } on #5555CC',
     'routine': f'bold { TEXT_DARK } on #55CCFF',
+
+    'driller': f'bold { TEXT_DARK } on #FF6666',
+    'daily': f'bold { TEXT_DARK } on #00FFCC',
+    'ghost': f'bold { ORANGE } on #333333',
+
     'key':  f'bold { TEXT_LIGHT }',
     'confirm': TEXT_LIGHT,
     'step': 'bold #00AFFF',

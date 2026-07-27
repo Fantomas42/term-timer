@@ -96,7 +96,7 @@ def daily_header(date_str: str, ghost_solve: Solve | None) -> str:
         The header line to print.
 
     """
-    header = f'[routine]📅 Daily Scramble - { date_str }[/routine]'
+    header = f'[daily]📅 Daily Scramble - { date_str }[/daily]'
     if ghost_solve is not None:
         header += f' [time]{ format_time(ghost_solve.time) }[/time]'
 
