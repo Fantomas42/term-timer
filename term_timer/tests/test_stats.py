@@ -2365,7 +2365,7 @@ class TestTrainerStatisticsPrintSummary(unittest.TestCase):
         self.assertEqual(states[1], '[stable]Stable[/stable]')
         self.assertEqual(
             dues[1],
-            f'[no-ao]{ self.due.astimezone().strftime("%Y-%m-%d") }[/no-ao]',
+            f'[muted]{ self.due.astimezone().strftime("%Y-%m-%d") }[/muted]',
         )
 
     def test_print_summary_table_shows_overdue_card_as_review(self) -> None:
@@ -2394,8 +2394,8 @@ class TestTrainerStatisticsPrintSummary(unittest.TestCase):
 
         states = list(table.columns[4].cells)
         dues = list(table.columns[5].cells)
-        self.assertEqual(states[0], '[no-ao]N/A[/no-ao]')
-        self.assertEqual(dues[0], '[no-ao]N/A[/no-ao]')
+        self.assertEqual(states[0], '[muted]N/A[/muted]')
+        self.assertEqual(dues[0], '[muted]N/A[/muted]')
 
     def test_print_summary_table_without_trainings(self) -> None:
         """Omitting the trainings keeps the columns empty of card data."""
@@ -2403,7 +2403,7 @@ class TestTrainerStatisticsPrintSummary(unittest.TestCase):
 
         self.assertEqual(
             list(table.columns[4].cells),
-            ['[no-ao]N/A[/no-ao]', '[no-ao]N/A[/no-ao]'],
+            ['[muted]N/A[/muted]', '[muted]N/A[/muted]'],
         )
 
 
@@ -2693,7 +2693,7 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
         """A day inside the window without solve is a missed dot."""
         self.assertEqual(
             self.reporter.punchcard_cell(date(2026, 5, 19)),
-            '[no-ao]··[/no-ao]',
+            '[muted]··[/muted]',
         )
 
     def test_punchcard_cell_of_a_full_dnf_day(self) -> None:
@@ -2709,7 +2709,7 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
 
         self.assertEqual(
             reporter.punchcard_cell(date(2026, 5, 18)),
-            '[no-ao]··[/no-ao]',
+            '[muted]··[/muted]',
         )
 
     def test_punchcard_cell_outside_of_the_window(self) -> None:

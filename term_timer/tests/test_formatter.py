@@ -544,7 +544,7 @@ class TestFormatFsrsState(unittest.TestCase):
     def test_format_fsrs_state_without_card(self) -> None:
         """Test format fsrs state of a case never trained."""
         result = format_fsrs_state(None)
-        self.assertEqual(result, '[no-ao]N/A[/no-ao]')
+        self.assertEqual(result, '[muted]N/A[/muted]')
 
     def test_format_fsrs_state_learning(self) -> None:
         """Test format fsrs state of a learning card."""
@@ -641,7 +641,7 @@ class TestFormatFsrsDue(unittest.TestCase):
     def test_format_fsrs_due_without_card(self) -> None:
         """Test format fsrs due of a case never trained."""
         result = format_fsrs_due(None)
-        self.assertEqual(result, '[no-ao]N/A[/no-ao]')
+        self.assertEqual(result, '[muted]N/A[/muted]')
 
     def test_format_fsrs_due_past(self) -> None:
         """Test format fsrs due of a card waiting for review."""
@@ -656,7 +656,7 @@ class TestFormatFsrsDue(unittest.TestCase):
         result = format_fsrs_due(card)
         self.assertEqual(
             result,
-            f'[no-ao]{ due.astimezone().strftime("%Y-%m-%d") }[/no-ao]',
+            f'[muted]{ due.astimezone().strftime("%Y-%m-%d") }[/muted]',
         )
 
 

@@ -334,7 +334,7 @@ def format_fsrs_state(card: 'Card | None') -> str:
 
     """
     if card is None:
-        return '[no-ao]N/A[/no-ao]'
+        return '[muted]N/A[/muted]'
 
     label, state_klass = fsrs_state_label(card)
 
@@ -354,13 +354,13 @@ def format_fsrs_due(card: 'Card | None') -> str:
 
     """
     if card is None:
-        return '[no-ao]N/A[/no-ao]'
+        return '[muted]N/A[/muted]'
 
     due = card.due.astimezone()
     if due <= datetime.now(UTC).astimezone():
         return '[warning]Overdue[/warning]'
 
-    return f'[no-ao]{ due.strftime("%Y-%m-%d") }[/no-ao]'
+    return f'[muted]{ due.strftime("%Y-%m-%d") }[/muted]'
 
 
 def format_fluency(fluency: int, *, step: bool = False) -> str:

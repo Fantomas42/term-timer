@@ -522,7 +522,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             }
 
         show_fsrs = self.step_config.training_case is None
-        no_ao = '[no-ao]N/A[/no-ao]'
+        muted = '[muted]N/A[/muted]'
 
         table = Table(
             title=f'{ self.step_label } stats',
@@ -549,7 +549,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             else:
                 head = case.pretty_name
             case_training = self.trainings.cases.get(code)
-            timing_cells = self.timing_cells(case_training, no_ao)
+            timing_cells = self.timing_cells(case_training, muted)
             row = [head, *timing_cells]
             if show_fsrs:
                 row += self.fsrs_cells(case_training)
@@ -592,7 +592,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
     @staticmethod
     def timing_cells(
             case_training: 'CaseTraining | None',
-            no_ao: str,
+            muted: str,
     ) -> list[str]:
         """
         Build the timing stat cells for a list_cases table row.
@@ -603,7 +603,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         """
         if case_training is None:
-            return ['[stats]0[/stats]', no_ao, no_ao, no_ao, no_ao]
+            return ['[stats]0[/stats]', muted, muted, muted, muted]
 
         count = len(case_training.timings)
         timings = [t * MS_TO_NS_FACTOR for t in case_training.timings]
@@ -614,13 +614,13 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         best_str = (
             f'[duration]{ format_duration(stats.best) }[/duration]'
-            if count else no_ao
+            if count else muted
         )
         trend_str = Trainer.speed_trend(stats)
         if '↘' in trend_str:
             trend_str = '[trend-down]↘[/trend-down]'
         if count < 5:
-            ao5_str = no_ao
+            ao5_str = muted
         elif trend_str:
             ao5_str = (
                 f'[ao5]{ format_duration(stats.ao5) }[/ao5] { trend_str }'
@@ -629,7 +629,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             ao5_str = f'[ao5]{ format_duration(stats.ao5) }[/ao5]'
         ao12_str = (
             f'[ao12]{ format_duration(stats.ao12) }[/ao12]'
-            if count >= 12 else no_ao
+            if count >= 12 else muted
         )
         return [
             f'[stats]{ count }[/stats]', last_date, best_str, ao5_str,
@@ -891,7 +891,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         """
         if value > 0:
             return f'[caution]+{ value:.2f}[/caution]'
-        return f'[no-ao]+{ value:.2f}[/no-ao]'
+        return f'[muted]+{ value:.2f}[/muted]'
 
     @staticmethod
     def format_breakdown_lines(
@@ -942,7 +942,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         if breakdown.forced:
             forcing_impact = '[again]over solution -> Again[/again]'
         else:
-            forcing_impact = '[no-ao]within solution[/no-ao]'
+            forcing_impact = '[muted]within solution[/muted]'
         rows.append(
             (
                 'qtm',
@@ -955,7 +955,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         lines = [
             f'  [consign]{ label:<7}[/consign]'
             f'{ value:<7}'
-            f'[no-ao]{ f"({ ref })":<20}[/no-ao]'
+            f'[muted]{ f"({ ref })":<20}[/muted]'
             f'{ impact }'
             for label, value, ref, impact in rows
         ]

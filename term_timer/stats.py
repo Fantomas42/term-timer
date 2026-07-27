@@ -1551,11 +1551,11 @@ class SolveStatisticsReporter(Statistics):
 
             count = case_stats['count']
 
-            ao5 = '[no-ao]N/A[/no-ao]'
+            ao5 = '[muted]N/A[/muted]'
             if case_stats['ao5'] > 0:
                 ao5 = f'[ao5]{ format_duration(case_stats["ao5"]) }[/ao5]'
 
-            ao12 = '[no-ao]N/A[/no-ao]'
+            ao12 = '[muted]N/A[/muted]'
             if case_stats['ao12'] > 0:
                 ao12 = f'[ao12]{ format_duration(case_stats["ao12"]) }[/ao12]'
 
@@ -2048,7 +2048,7 @@ class DailySummaryReporter:
             return ' ' * width
 
         if day not in self.days:
-            return f'[no-ao]{ "·" * width }[/no-ao]'
+            return f'[muted]{ "·" * width }[/muted]'
 
         cell_style = PUNCHCARD_STYLES[self.punchcard_level(day)]
 

@@ -142,7 +142,7 @@ theme: dict[str, str] = {
     'ao500': 'bold #CC99FF',
     'ao1000': 'bold #CCFF99',
     'average': f'bold { TEXT_LIGHT }',
-    'no-ao': 'bold #666666',
+    'muted': 'bold #666666',
     'detail': '#8A8A8A',
 
     'punchcard-1': '#2A4A6B',

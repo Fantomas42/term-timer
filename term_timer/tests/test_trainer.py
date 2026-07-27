@@ -1559,7 +1559,7 @@ class TestSpeedTrend(unittest.TestCase):
 
     def test_timing_cells_include_trend(self) -> None:
         """timing_cells merges Ao5 and trend into a single cell."""
-        no_ao = '[no-ao]N/A[/no-ao]'
-        cells = Trainer.timing_cells(None, no_ao)
+        muted = '[muted]N/A[/muted]'
+        cells = Trainer.timing_cells(None, muted)
         self.assertEqual(len(cells), 5)
-        self.assertEqual(cells[-1], no_ao)
+        self.assertEqual(cells[-1], muted)
