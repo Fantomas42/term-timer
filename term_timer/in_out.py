@@ -2,6 +2,7 @@
 import json
 import operator
 import re
+from hashlib import blake2s
 from pathlib import Path
 
 from cubing_algs.algorithm import Algorithm
@@ -26,16 +27,17 @@ def scramble_to_key(scramble: str) -> str:
     """
     Turn a scramble string into a filesystem- and URL-safe session key.
 
-    Spaces become ``_`` and quotes become ``-`` so the key stays
-    human-readable and matches its scramble at a glance. No hashing or
-    normalization is applied, so two textually different but equivalent
-    scrambles map to different keys.
+    The scramble is digested so the key stays short whatever the cube
+    size: spelling the moves out overflows the 255 bytes a filename
+    allows from the 6x6x6 up. The digest is taken on the raw text, with
+    no normalization, so two textually different but equivalent
+    scrambles still map to different keys.
 
     Returns:
-        The transformed session key (e.g. ``"R_U_R-_U-"``).
+        The transformed session key (e.g. ``"c3fd54cd2d5f8b4f"``).
 
     """
-    return scramble.replace(' ', '_').replace("'", '-')
+    return blake2s(scramble.encode(), digest_size=8).hexdigest()
 
 
 def fsrs_card_from_data(raw: 'CaseTrainingData') -> Card | None:

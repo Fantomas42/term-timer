@@ -73,18 +73,29 @@ class GhostStopWatch(StopWatch, Terminal):
 class TestScrambleToKey(unittest.TestCase):
     """Tests for the scramble to file-key transform."""
 
-    def test_spaces_and_quotes(self) -> None:
-        """Spaces become underscores and quotes become dashes."""
-        self.assertEqual(scramble_to_key("R U R' U'"), 'R_U_R-_U-')
+    def test_digest_is_stable(self) -> None:
+        """The same scramble always digests to the same key."""
+        self.assertEqual(scramble_to_key("R U R' U'"), 'e6b3c60b3559406a')
 
-    def test_plain_scramble(self) -> None:
-        """A scramble without quotes only swaps spaces."""
-        self.assertEqual(scramble_to_key('R U F2 D'), 'R_U_F2_D')
+    def test_distinct_scrambles(self) -> None:
+        """Two different scrambles map to two different keys."""
+        self.assertNotEqual(
+            scramble_to_key("R U R' U'"),
+            scramble_to_key('R U F2 D'),
+        )
 
     def test_key_is_url_safe(self) -> None:
         """The key only contains safe characters."""
         key = scramble_to_key(SHORT_SCRAMBLE)
-        self.assertEqual(key, 'L2_D-_L-_F-_L-')
+        self.assertEqual(key, 'e80cd213e69009a6')
+
+    def test_key_fits_a_filename(self) -> None:
+        """A big cube scramble still yields a short, bounded key."""
+        scramble = ' '.join(["3Rw'"] * 100)
+        key = scramble_to_key(scramble)
+
+        self.assertEqual(len(key), 16)
+        self.assertLess(len(f'7x7x7-{ key }.json'), 255)
 
 
 class TestGhostSplits(unittest.TestCase):
