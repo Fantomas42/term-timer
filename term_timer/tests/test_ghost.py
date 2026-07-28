@@ -8,11 +8,13 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from rich.console import Console as RichConsole
+from rich.theme import Theme
 
 from term_timer.arguments import get_parser
 from term_timer.formatter import format_ghost_delta
 from term_timer.in_out import save_solves
 from term_timer.in_out import scramble_to_key
+from term_timer.interface.console import theme as console_theme
 from term_timer.interface.sounds import STEP_AHEAD_FUNDAMENTAL
 from term_timer.interface.sounds import STEP_BEHIND_FUNDAMENTAL
 from term_timer.interface.sounds import SoundPlayer
@@ -244,8 +246,53 @@ class TestLoadReference(unittest.TestCase):
         self.assertEqual(reference.method_name, 'cfop')
 
 
+class TestBuildRaceStack(unittest.TestCase):
+    """Tests for seeding the scramble history with the reference."""
+
+    def test_empty_history_seeds_the_reference(self) -> None:
+        """The first race starts on a stack holding the reference."""
+        reference = make_solve()
+        stack = ghost_mod.build_race_stack(reference, [], 'KEY')
+
+        self.assertEqual(stack, [reference])
+        self.assertEqual(reference.session, 'KEY')
+        self.assertEqual(reference.solve_id, 1)
+
+    def test_reference_comes_first(self) -> None:
+        """The reference is the oldest attempt, numbered #1."""
+        reference = make_solve(date=1)
+        attempt = make_solve(date=2)
+        stack = ghost_mod.build_race_stack(reference, [attempt], 'KEY')
+
+        self.assertEqual([solve.date for solve in stack], [1, 2])
+        self.assertEqual([solve.solve_id for solve in stack], [1, 2])
+
+    def test_stored_reference_is_not_duplicated(self) -> None:
+        """A reference already written back stays a single attempt."""
+        reference = make_solve(date=1)
+        stored = make_solve(date=1)
+        attempt = make_solve(date=2)
+        stack = ghost_mod.build_race_stack(
+            reference, [stored, attempt], 'KEY',
+        )
+
+        self.assertEqual(len(stack), 2)
+        self.assertIs(stack[0], stored)
+
+    def test_attempts_are_sorted_by_date(self) -> None:
+        """A history out of order is put back in chronological order."""
+        reference = make_solve(date=1)
+        stack = ghost_mod.build_race_stack(
+            reference,
+            [make_solve(date=3), make_solve(date=2)],
+            'KEY',
+        )
+
+        self.assertEqual([solve.date for solve in stack], [1, 2, 3])
+
+
 class TestSelectGhost(unittest.TestCase):
-    """Tests for ghost selection over the scramble history."""
+    """Tests for ghost selection over the race stack."""
 
     @staticmethod
     def parse(*args: str) -> Namespace:
@@ -258,33 +305,34 @@ class TestSelectGhost(unittest.TestCase):
         """
         return get_parser().parse_args(['ghost', *args])
 
-    def test_empty_history_selects_reference(self) -> None:
-        """With no history the reference itself is the ghost."""
+    def test_seeded_reference_is_the_first_ghost(self) -> None:
+        """With no attempt yet the reference itself is the ghost."""
         options = self.parse('1')
         reference = make_solve()
-        ghost_solve = ghost_mod.select_ghost(reference, [], options)
-        self.assertIs(ghost_solve, reference)
+        stack = ghost_mod.build_race_stack(reference, [], 'KEY')
 
-    def test_pb_selected_including_reference(self) -> None:
+        self.assertIs(ghost_mod.select_ghost(stack, options), reference)
+
+    def test_pb_selected_over_the_stack(self) -> None:
         """The fastest analysable solve wins, reference included."""
         options = self.parse('1')
         reference = make_solve(date=1, time=2_608_404_439)
         faster = make_solve(date=2, time=1_000_000_000)
         slower = make_solve(date=3, time=9_000_000_000)
-
-        ghost_solve = ghost_mod.select_ghost(
-            reference, [slower, faster], options,
+        stack = ghost_mod.build_race_stack(
+            reference, [slower, faster], 'KEY',
         )
-        self.assertIs(ghost_solve, faster)
 
-    def test_dnf_history_ignored(self) -> None:
+        self.assertIs(ghost_mod.select_ghost(stack, options), faster)
+
+    def test_dnf_attempt_ignored(self) -> None:
         """A DNF attempt never becomes the ghost even if faster."""
         options = self.parse('1')
         reference = make_solve(date=1, time=2_608_404_439)
         dnf = make_solve(date=2, time=1, flag='DNF')
+        stack = ghost_mod.build_race_stack(reference, [dnf], 'KEY')
 
-        ghost_solve = ghost_mod.select_ghost(reference, [dnf], options)
-        self.assertIs(ghost_solve, reference)
+        self.assertIs(ghost_mod.select_ghost(stack, options), reference)
 
 
 class TestGhostLibrary(unittest.TestCase):
@@ -312,21 +360,62 @@ class TestGhostLibrary(unittest.TestCase):
         """
         return get_parser().parse_args(['ghost', *args])
 
+    def summarize(self, pool: list[Solve]) -> tuple[int, str]:
+        """
+        Run the summary against a controlled solve pool.
+
+        Returns:
+            The exit code and the rendered output.
+
+        """
+        recorder = RichConsole(
+            record=True, width=120, theme=Theme(console_theme),
+        )
+        with (
+                patch.object(ghost_mod, 'console', recorder),
+                patch.object(
+                    ghost_mod, 'load_all_solves', return_value=pool,
+                ),
+        ):
+            code = ghost_mod.ghost_summary(self.parse())
+
+        return code, recorder.export_text()
+
     def test_summary_empty(self) -> None:
         """An empty library reports nothing recorded."""
-        self.assertEqual(ghost_mod.ghost_summary(3), 1)
+        code, _output = self.summarize([])
+        self.assertEqual(code, 1)
 
     def test_summary_lists_scrambles(self) -> None:
         """The summary lists a row per recorded scramble."""
         key = scramble_to_key(SHORT_SCRAMBLE)
         save_solves(3, key, [make_solve()], directory=self.directory)
 
-        recorder = RichConsole(record=True)
-        with patch.object(ghost_mod, 'console', recorder):
-            code = ghost_mod.ghost_summary(3)
+        code, output = self.summarize([])
 
         self.assertEqual(code, 0)
-        self.assertIn(SHORT_SCRAMBLE, recorder.export_text())
+        self.assertIn(SHORT_SCRAMBLE, output)
+
+    def test_summary_names_the_reference_id(self) -> None:
+        """A ghost is labelled by the id of the solve that seeded it."""
+        key = scramble_to_key(SHORT_SCRAMBLE)
+        save_solves(3, key, [make_solve()], directory=self.directory)
+
+        _code, output = self.summarize(
+            [make_solve(date=1), make_solve(), make_solve(date=3)],
+        )
+
+        self.assertIn('#2', output)
+
+    def test_summary_without_matching_reference(self) -> None:
+        """A ghost whose seed is out of the pool shows no id."""
+        key = scramble_to_key(SHORT_SCRAMBLE)
+        save_solves(3, key, [make_solve()], directory=self.directory)
+
+        _code, output = self.summarize([make_solve(date=1)])
+
+        self.assertIn('—', output)
+        self.assertNotIn('#', output)
 
     def test_review_without_attempts(self) -> None:
         """Reviewing a scramble with no stored attempts warns."""
@@ -516,24 +605,24 @@ class TestRefreshGhost(unittest.TestCase):
         return get_parser().parse_args(['ghost', *args])
 
     @staticmethod
-    def build_instance(ghost_solve: Solve, done: list[Solve]) -> Namespace:
+    def build_instance(ghost_solve: Solve, stack: list[Solve]) -> Namespace:
         """
-        Build a timer stand-in carrying a ghost and finished solves.
+        Build a timer stand-in carrying a ghost and a race stack.
 
         Returns:
             The stand-in instance.
 
         """
-        return Namespace(ghost=ghost_solve, stack_done=done)
+        return Namespace(ghost=ghost_solve, stack=stack)
 
     def test_new_best_becomes_the_ghost(self) -> None:
         """Beating the ghost promotes the fresh attempt for the next race."""
         options = self.parse('1')
         reference = make_solve(date=1, time=2_608_404_439)
         faster = make_solve(date=2, time=1_000_000_000)
-        instance = self.build_instance(reference, [faster])
+        instance = self.build_instance(reference, [reference, faster])
 
-        ghost_mod.refresh_ghost(instance, reference, [], options)  # type: ignore[arg-type]
+        ghost_mod.refresh_ghost(instance, options)  # type: ignore[arg-type]
 
         self.assertIs(instance.ghost, faster)
 
@@ -542,9 +631,9 @@ class TestRefreshGhost(unittest.TestCase):
         options = self.parse('1')
         reference = make_solve(date=1, time=2_608_404_439)
         slower = make_solve(date=2, time=9_000_000_000)
-        instance = self.build_instance(reference, [slower])
+        instance = self.build_instance(reference, [reference, slower])
 
-        ghost_mod.refresh_ghost(instance, reference, [], options)  # type: ignore[arg-type]
+        ghost_mod.refresh_ghost(instance, options)  # type: ignore[arg-type]
 
         self.assertIs(instance.ghost, reference)
 
@@ -554,8 +643,10 @@ class TestRefreshGhost(unittest.TestCase):
         reference = make_solve(date=1, time=2_608_404_439)
         stored = make_solve(date=2, time=1_000_000_000)
         attempt = make_solve(date=3, time=2_000_000_000)
-        instance = self.build_instance(reference, [attempt])
+        instance = self.build_instance(
+            reference, [reference, stored, attempt],
+        )
 
-        ghost_mod.refresh_ghost(instance, reference, [stored], options)  # type: ignore[arg-type]
+        ghost_mod.refresh_ghost(instance, options)  # type: ignore[arg-type]
 
         self.assertIs(instance.ghost, stored)

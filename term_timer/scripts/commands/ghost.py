@@ -61,29 +61,63 @@ def load_reference(options: Namespace) -> Solve | None:
     return reference
 
 
-def select_ghost(
+def build_race_stack(
         reference: Solve,
         history: list[Solve],
+        key: str,
+) -> list[Solve]:
+    """
+    Seed the scramble history with the reference solve.
+
+    The reference is an attempt on that scramble like any other, so it
+    joins the stack as attempt #1: records, live series and projections
+    then have a real baseline from the very first race, and the file
+    written back to ``ghosts/`` becomes self-contained. Deduplication by
+    date keeps it single once a race has stored it, and re-seeds it if
+    the file is ever deleted.
+
+    Args:
+        reference: The solve whose scramble is being raced.
+        history: The attempts stored for that scramble.
+        key: The scramble key naming the ghost file.
+
+    Returns:
+        The attempts on the scramble, oldest first, renumbered.
+
+    """
+    uniques: dict[int, Solve] = {reference.date: reference}
+    for solve in history:
+        uniques[solve.date] = solve
+
+    stack = sorted(uniques.values(), key=operator.attrgetter('date'))
+
+    for index, solve in enumerate(stack):
+        solve.session = key
+        solve.solve_id = index + 1
+
+    return stack
+
+
+def select_ghost(
+        stack: list[Solve],
         options: Namespace,
 ) -> Solve:
     """
     Pick the ghost to beat: the fastest analysable solve on the scramble.
 
-    The pool is the scramble's stored attempts plus the reference solve,
-    deduplicated by date, so the first race (empty history) beats the
-    reference itself. The chosen ghost is analysed with the command's
-    method and orientation to align its splits with the live checkpoints.
+    The pool is the race stack, which already carries the reference solve
+    as its first attempt, so the very first race beats the reference
+    itself and the stack is never without an analysable candidate. The
+    chosen ghost is analysed with the command's method and orientation to
+    align its splits with the live checkpoints.
 
     Returns:
         The fastest analysable Solve on the scramble.
 
     """
-    candidates: dict[int, Solve] = {}
-    for solve in [*history, reference]:
-        if solve.analysable:
-            candidates[solve.date] = solve
+    candidates = [solve for solve in stack if solve.analysable]
 
-    ghost = min(candidates.values(), key=operator.attrgetter('time'))
+    ghost = min(candidates, key=operator.attrgetter('time'))
     ghost.method_name = options.method
     ghost.orientation = options.orientation
 
@@ -92,34 +126,27 @@ def select_ghost(
 
 def refresh_ghost(
         instance: Timer,
-        reference: Solve,
-        history: list[Solve],
         options: Namespace,
 ) -> None:
     """
     Re-elect the ghost after an attempt.
 
-    The pool is the stored history plus the attempts of the running
-    session, so beating the ghost immediately promotes the fresh solve as
-    the target of the next race. Free play never writes to the scramble
-    file but its attempts still count for the session.
+    The pool is the timer stack, which holds the seeded history plus the
+    attempts of the running session, so beating the ghost immediately
+    promotes the fresh solve as the target of the next race. Free play
+    never writes to the scramble file but its attempts still count for
+    the session.
 
     Args:
         instance: The running timer, holding the current ghost and the
-            attempts done in this session.
-        reference: The solve whose scramble is being raced.
-        history: The attempts stored for that scramble at startup.
+            attempts raced so far.
         options: Command options carrying the method and orientation.
 
     """
     if instance.ghost is None:
         return
 
-    instance.ghost = select_ghost(
-        reference,
-        [*history, *instance.stack_done],
-        options,
-    )
+    instance.ghost = select_ghost(instance.stack, options)
 
 
 def ghost_review(options: Namespace) -> int:
@@ -154,17 +181,45 @@ def ghost_review(options: Namespace) -> int:
     return 0
 
 
-def ghost_summary(cube: int) -> int:
+def reference_ids(options: Namespace) -> dict[int, int]:
+    """
+    Index the solve pool by date to name a ghost by its reference id.
+
+    A ghost file opens on the solve that seeded it, so its identity is
+    that solve's id: the same id the race takes as argument. The pool is
+    the one the session options select, exactly as when racing.
+
+    Returns:
+        Solve date mapped to its 1-based id in the selected pool.
+
+    """
+    stack = load_all_solves(
+        options.cube,
+        options.include_sessions,
+        options.exclude_sessions,
+        options.devices,
+    )
+
+    return {solve.date: index + 1 for index, solve in enumerate(stack)}
+
+
+def ghost_summary(options: Namespace) -> int:
     """
     Browse the ghost library: one row per raced scramble.
+
+    Each row is prefixed by the id of the solve that seeded the ghost,
+    ready to be handed back to ``term-timer ghost <id>``. Files seeded
+    before the reference was stored, or whose reference falls outside
+    the selected pool, show no id.
 
     Returns:
         Exit code (0 for success, 1 if no ghost scrambles exist).
 
     """
+    cube = options.cube
     prefix = f'{ cube }x{ cube }x{ cube }-'
 
-    rows: list[tuple[str, int, int]] = []
+    rows: list[tuple[int, str, int, int]] = []
     if GHOSTS_DIRECTORY.exists():
         for source in sorted(GHOSTS_DIRECTORY.iterdir()):
             if (
@@ -184,7 +239,14 @@ def ghost_summary(cube: int) -> int:
                 (solve.time for solve in analysable),
                 default=0,
             )
-            rows.append((str(stack[0].scramble), len(stack), best))
+            rows.append(
+                (
+                    stack[0].date,
+                    str(stack[0].scramble),
+                    len(stack),
+                    best,
+                ),
+            )
 
     if not rows:
         console.print(
@@ -193,9 +255,14 @@ def ghost_summary(cube: int) -> int:
         )
         return 1
 
+    ids = reference_ids(options)
+
     console.print('[title]Ghost Library[/title]')
-    for scramble, attempts, best in rows:
+    for date, scramble, attempts, best in rows:
+        solve_id = ids.get(date, 0)
+        label = f'#{ solve_id }' if solve_id else '—'
         console.print(
+            f'[round]{ label:>5}[/round] '
             f'[time]{ format_time(best) }[/time] '
             f'[stats]{ attempts:>3} attempts[/stats] '
             f'[moves]{ scramble }[/moves]',
@@ -214,7 +281,7 @@ async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
     cube = options.cube
 
     if options.summary:
-        return ghost_summary(cube)
+        return ghost_summary(options)
 
     if options.review:
         return ghost_review(options)
@@ -244,15 +311,14 @@ async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
         return 1
 
     history = load_solves(cube, key, directory=GHOSTS_DIRECTORY)
-    ghost_solve = select_ghost(reference, history, options)
+    stack = build_race_stack(reference, history, key)
+    ghost_solve = select_ghost(stack, options)
 
     console.print(
         f'[ghost]{ GHOST_EMOJI } Ghost Race - '
         f'Scramble #{ options.solve_id }[/ghost] '
         f'[time]{ format_time(ghost_solve.time) }[/time]',
     )
-
-    stack = [] if options.free_play else history
 
     instance = Timer(
         cube_size=cube,
@@ -295,12 +361,12 @@ async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
         while 42:
             done = await instance.start()
 
-            refresh_ghost(instance, reference, history, options)
+            refresh_ghost(instance, options)
 
             if not done:
                 break
 
-        if len(instance.stack) > 1:
+        if instance.stack_done:
             console.print(
                 f'[title]Summary on Ghost #{ options.solve_id }[/title]',
             )

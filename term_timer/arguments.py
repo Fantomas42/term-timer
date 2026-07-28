@@ -559,7 +559,8 @@ def ghost_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         '-l', '--summary',
         action='store_true',
         help=(
-            'Browse the ghost library across every recorded scramble.\n'
+            'Browse the ghost library across every recorded scramble,\n'
+            'each named by the id of the solve that seeded it.\n'
             'Default: False.'
         ),
     )
