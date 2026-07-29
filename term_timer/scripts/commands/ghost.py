@@ -455,16 +455,18 @@ def ghost_summary(options: Namespace) -> int:
         ),
     )
 
-    console.print('[title]Ghost Library[/title]')
+    console.print(
+        f'[title]Ghost Library for { cube }x{ cube }x{ cube}[/title]',
+    )
     for date, key, scramble, attempts, best in rows:
         solve_id = ids.get(date, 0)
-        label = f'#{ solve_id }' if solve_id else '—'
+        label = f'#{ solve_id }' if solve_id else '---'
         console.print(
-            f'[round]{ label:>5}[/round] '
-            f'[consign]{ key[:KEY_SHORT] }[/consign] '
+            f'[localhost]{ label:>5}[/localhost] '
+            f'[comment]{ key[:KEY_SHORT] }[/comment] '
             f'[time]{ format_time(best) }[/time] '
             f'[stats]{ attempts:>3} attempts[/stats] '
-            f'[moves]{ scramble }[/moves]',
+            f'[consign]{ scramble }[/consign]',
         )
     return 0
 
