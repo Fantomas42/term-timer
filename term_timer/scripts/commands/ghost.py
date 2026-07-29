@@ -76,6 +76,12 @@ def build_race_stack(
     date keeps it single once a race has stored it, and re-seeds it if
     the file is ever deleted.
 
+    The stored copy is only a cache: the reference loaded from its own
+    session wins the deduplication, so a flag corrected with
+    ``term-timer edit`` reaches the race — it can move the time to beat,
+    or take the reference out of the pool altogether — and the next save
+    writes the fresh copy back.
+
     Args:
         reference: The solve whose scramble is being raced.
         history: The attempts stored for that scramble.
@@ -85,9 +91,10 @@ def build_race_stack(
         The attempts on the scramble, oldest first, renumbered.
 
     """
-    uniques: dict[int, Solve] = {reference.date: reference}
-    for solve in history:
-        uniques[solve.date] = solve
+    uniques: dict[int, Solve] = {
+        solve.date: solve for solve in history
+    }
+    uniques[reference.date] = reference
 
     stack = sorted(uniques.values(), key=operator.attrgetter('date'))
 

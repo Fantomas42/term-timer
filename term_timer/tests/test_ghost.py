@@ -288,7 +288,16 @@ class TestBuildRaceStack(unittest.TestCase):
         )
 
         self.assertEqual(len(stack), 2)
-        self.assertIs(stack[0], stored)
+        self.assertIs(stack[0], reference)
+
+    def test_stored_copy_never_shadows_the_reference(self) -> None:
+        """A reference edited since it was stored races as edited."""
+        reference = make_solve(date=1, flag='+2')
+        stored = make_solve(date=1)
+        stack = ghost_mod.build_race_stack(reference, [stored], 'KEY')
+
+        self.assertIs(stack[0], reference)
+        self.assertEqual(stack[0].flag, '+2')
 
     def test_attempts_are_sorted_by_date(self) -> None:
         """A history out of order is put back in chronological order."""
