@@ -195,8 +195,6 @@ async def daily(options: Namespace) -> int:  # noqa: C901
 
     console.print(daily_header(date_str, ghost_solve))
 
-    stack = [] if options.free_play else history
-
     instance = Timer(
         cube_size=cube,
         iterations=0,
@@ -220,7 +218,7 @@ async def daily(options: Namespace) -> int:  # noqa: C901
         orientation=options.orientation,
         countdown=options.countdown,
         metronome=options.metronome,
-        stack=stack,
+        stack=history,
         rng=rng,
     )
     instance.save_directory = DAILY_DIRECTORY
