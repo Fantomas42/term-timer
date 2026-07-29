@@ -271,15 +271,17 @@ def build_race_stack(
 def select_ghost(
         stack: list[Solve],
         options: Namespace,
-) -> Solve:
+) -> Solve | None:
     """
     Pick the ghost to beat: the fastest solve on the scramble.
 
     The pool is the race stack, which already carries the reference solve
     as its first attempt, so the very first race beats the reference
-    itself and the stack is never without a candidate. Every attempt is
-    eligible, timed on the cube or on the keyboard, so a race run
-    without a connected cube still moves its target; a keyboard ghost
+    itself and the stack normally has a candidate from the start — the
+    empty pool is guarded all the same, so a stack that would hold only
+    DNFs races without a ghost instead of raising mid-session. Every
+    attempt is eligible, timed on the cube or on the keyboard, so a race
+    run without a connected cube still moves its target; a keyboard ghost
     simply carries no reconstruction, hence no checkpoint splits. Times
     are compared on ``final_time``: a DNF has none, and a +2 races with
     the two seconds it costs. The chosen ghost is analysed with the
@@ -287,10 +289,13 @@ def select_ghost(
     checkpoints.
 
     Returns:
-        The fastest non-DNF Solve on the scramble.
+        The fastest non-DNF Solve on the scramble, or None when every
+        attempt is a DNF.
 
     """
     candidates = [solve for solve in stack if solve.final_time]
+    if not candidates:
+        return None
 
     ghost = min(candidates, key=operator.attrgetter('final_time'))
     ghost.method_name = options.method
@@ -318,10 +323,25 @@ def refresh_ghost(
         options: Command options carrying the method and orientation.
 
     """
-    if instance.ghost is None:
-        return
-
     instance.ghost = select_ghost(instance.stack, options)
+
+
+def ghost_header(label: str, ghost_solve: Solve | None) -> str:
+    """
+    Build the race header, carrying the time to beat when there is one.
+
+    Returns:
+        The header line to print.
+
+    """
+    header = (
+        f'[ghost]{ GHOST_EMOJI } Ghost Race - '
+        f'Scramble { label }[/ghost]'
+    )
+    if ghost_solve is not None:
+        header += f' [time]{ format_time(ghost_solve.final_time) }[/time]'
+
+    return header
 
 
 def ghost_review(options: Namespace) -> int:
@@ -493,11 +513,7 @@ async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
     stack = build_race_stack(reference.solve, history, key)
     ghost_solve = select_ghost(stack, options)
 
-    console.print(
-        f'[ghost]{ GHOST_EMOJI } Ghost Race - '
-        f'Scramble { reference.label }[/ghost] '
-        f'[time]{ format_time(ghost_solve.final_time) }[/time]',
-    )
+    console.print(ghost_header(reference.label, ghost_solve))
 
     instance = Timer(
         cube_size=cube,

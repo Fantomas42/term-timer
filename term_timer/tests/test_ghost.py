@@ -507,6 +507,21 @@ class TestSelectGhost(unittest.TestCase):
 
         self.assertIs(ghost_mod.select_ghost(stack, options), manual)
 
+    def test_all_dnf_stack_has_no_ghost(self) -> None:
+        """A stack without a single official time races ghostless."""
+        options = self.parse('1')
+        reference = make_solve(date=1, time=2_608_404_439, flag='DNF')
+        dnf = make_solve(date=2, time=1_000_000_000, flag='DNF')
+        stack = ghost_mod.build_race_stack(reference, [dnf], 'KEY')
+
+        self.assertIsNone(ghost_mod.select_ghost(stack, options))
+
+    def test_empty_stack_has_no_ghost(self) -> None:
+        """An empty pool returns None instead of raising."""
+        options = self.parse('1')
+
+        self.assertIsNone(ghost_mod.select_ghost([], options))
+
 
 class TestGhostLibrary(unittest.TestCase):
     """Tests for the ghost summary and review handlers."""
@@ -860,7 +875,10 @@ class TestRefreshGhost(unittest.TestCase):
         return get_parser().parse_args(['ghost', *args])
 
     @staticmethod
-    def build_instance(ghost_solve: Solve, stack: list[Solve]) -> Namespace:
+    def build_instance(
+            ghost_solve: Solve | None,
+            stack: list[Solve],
+    ) -> Namespace:
         """
         Build a timer stand-in carrying a ghost and a race stack.
 
@@ -905,3 +923,32 @@ class TestRefreshGhost(unittest.TestCase):
         ghost_mod.refresh_ghost(instance, options)  # type: ignore[arg-type]
 
         self.assertIs(instance.ghost, stored)
+
+    def test_ghostless_race_promotes_its_first_time(self) -> None:
+        """A race started without a ghost gains one on the first time."""
+        options = self.parse('1')
+        dnf = make_solve(date=1, time=2_608_404_439, flag='DNF')
+        attempt = make_solve(date=2, time=9_000_000_000)
+        instance = self.build_instance(None, [dnf, attempt])
+
+        ghost_mod.refresh_ghost(instance, options)  # type: ignore[arg-type]
+
+        self.assertIs(instance.ghost, attempt)
+
+
+class TestGhostHeader(unittest.TestCase):
+    """Tests for the race header line."""
+
+    def test_header_carries_the_time_to_beat(self) -> None:
+        """The elected ghost puts its official time in the header."""
+        header = ghost_mod.ghost_header('#3', make_solve(time=2_608_404_439))
+
+        self.assertIn('Scramble #3', header)
+        self.assertIn('[time]', header)
+
+    def test_header_without_ghost_omits_the_time(self) -> None:
+        """A ghostless race still announces the scramble it runs."""
+        header = ghost_mod.ghost_header('#3', None)
+
+        self.assertIn('Scramble #3', header)
+        self.assertNotIn('[time]', header)
