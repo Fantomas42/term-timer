@@ -1,5 +1,8 @@
-"""Shared plumbing for the commands racing an imposed scramble."""
+"""Shared plumbing of the solving commands."""
 from argparse import Namespace
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from pathlib import Path
 from random import Random
 
@@ -8,10 +11,55 @@ from cubing_algs.exceptions import InvalidMoveError
 from term_timer.bluetooth.replay import load_scramble_replay
 from term_timer.exceptions import ReplayError
 from term_timer.formatter import format_time
+from term_timer.interface import SolveInterface
 from term_timer.interface.console import console
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.timer import Timer
+
+
+@dataclass
+class SessionOutcome:
+    """The exit code the session ends on."""
+
+    code: int = 0
+
+
+@asynccontextmanager
+async def solve_session(
+        instance: SolveInterface,
+        options: Namespace,
+) -> AsyncIterator[SessionOutcome]:
+    """
+    Hold the Bluetooth connection around the loop of a solving command.
+
+    The cube is connected on entry when the command asks for it or
+    replays a solve file, and disconnected on exit whatever happens.
+    An invalid move ends the session on the exit code carried by the
+    yielded outcome, every other exception propagating untouched.
+
+    Commands that never accept --replay leave bluetooth_replay unset,
+    so the connection there falls back on the --bluetooth flag alone.
+
+    Yields:
+        The outcome carrying the exit code the command returns.
+
+    """
+    if options.bluetooth or instance.bluetooth_replay is not None:
+        await instance.bluetooth_connect(
+            use_gyroscope=options.use_gyroscope,
+        )
+
+    outcome = SessionOutcome()
+
+    try:
+        yield outcome
+    except InvalidMoveError as error:
+        console.print('😱', str(error), style='warning')
+        outcome.code = 1
+    finally:
+        if instance.bluetooth_interface:
+            await instance.bluetooth_disconnect()
 
 
 def race_header(title: str, ghost_solve: Solve | None) -> str:
@@ -127,12 +175,7 @@ async def run_seeded_race(
         Exit code (0 for success, 1 on an invalid move).
 
     """
-    if options.bluetooth or instance.bluetooth_replay is not None:
-        await instance.bluetooth_connect(
-            use_gyroscope=options.use_gyroscope,
-        )
-
-    try:
+    async with solve_session(instance, options) as outcome:
         while 42:
             done = await instance.start()
 
@@ -150,11 +193,4 @@ async def run_seeded_race(
             stats.print_summary()
             stats.graph('Tendency')
 
-    except InvalidMoveError as error:
-        console.print('😱', str(error), style='warning')
-        return 1
-    finally:
-        if instance.bluetooth_interface:
-            await instance.bluetooth_disconnect()
-
-    return 0
+    return outcome.code

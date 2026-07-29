@@ -3,7 +3,6 @@ from argparse import Namespace
 from pathlib import Path
 from random import Random
 
-from cubing_algs.exceptions import InvalidMoveError
 from cubing_algs.parsing import parse_moves
 
 from term_timer.aggregator import SolvesDoctorAggregator
@@ -14,6 +13,7 @@ from term_timer.in_out import load_scrambles
 from term_timer.in_out import load_solves
 from term_timer.interface.console import console
 from term_timer.interface.doctor import DoctorReporter
+from term_timer.scripts.commands.session import solve_session
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.timer import Timer
@@ -146,14 +146,9 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
     if replay is not None:
         instance.bluetooth_replay = replay
 
-    if options.bluetooth or replay is not None:
-        await instance.bluetooth_connect(
-            use_gyroscope=options.use_gyroscope,
-        )
-
     solves_done = 0
 
-    try:
+    async with solve_session(instance, options) as outcome:
         while 42:
             done = await instance.start()
 
@@ -181,11 +176,4 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
                 options.method, instance.stack_done, stack,
             )
 
-    except InvalidMoveError as error:
-        console.print('😱', str(error), style='warning')
-        return 1
-    finally:
-        if instance.bluetooth_interface:
-            await instance.bluetooth_disconnect()
-
-    return 0
+    return outcome.code

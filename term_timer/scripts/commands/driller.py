@@ -3,15 +3,14 @@ import asyncio
 import time
 from argparse import Namespace
 
-from cubing_algs.exceptions import InvalidMoveError
-
 from term_timer.driller import Driller
 from term_timer.exceptions import InvalidAlgorithmError
 from term_timer.interface.console import console
+from term_timer.scripts.commands.session import solve_session
 from term_timer.stats import DrillStatistics
 
 
-async def driller(options: Namespace) -> int:  # noqa: C901, PLR0912
+async def driller(options: Namespace) -> int:
     """
     Run algorithm drilling session.
 
@@ -32,15 +31,10 @@ async def driller(options: Namespace) -> int:  # noqa: C901, PLR0912
         console.print('😱', str(error), style='warning')
         return 1
 
-    if options.bluetooth:
-        await instance.bluetooth_connect(
-            use_gyroscope=options.use_gyroscope,
-        )
-
     drills_done = 0
     session_start = time.monotonic()
 
-    try:
+    async with solve_session(instance, options) as outcome:
         while 42:
             if options.duration:
                 elapsed = time.monotonic() - session_start
@@ -72,11 +66,4 @@ async def driller(options: Namespace) -> int:  # noqa: C901, PLR0912
                 qtm=instance.algorithm.metrics.qtm,
             ).print_summary()
 
-    except InvalidMoveError as error:
-        console.print('😱', str(error), style='warning')
-        return 1
-    finally:
-        if instance.bluetooth_interface:
-            await instance.bluetooth_disconnect()
-
-    return 0
+    return outcome.code

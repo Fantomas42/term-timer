@@ -2,15 +2,14 @@
 from argparse import Namespace
 from random import Random
 
-from cubing_algs.exceptions import InvalidMoveError
-
 from term_timer.exceptions import InvalidCaseError
 from term_timer.interface.console import console
+from term_timer.scripts.commands.session import solve_session
 from term_timer.stats import TrainerStatistics
 from term_timer.trainer import Trainer
 
 
-async def trainer(options: Namespace) -> int:  # noqa: C901
+async def trainer(options: Namespace) -> int:
     """
     Generate training case.
 
@@ -54,14 +53,9 @@ async def trainer(options: Namespace) -> int:  # noqa: C901
 
     instance.trainer_line()
 
-    if options.bluetooth:
-        await instance.bluetooth_connect(
-            use_gyroscope=options.use_gyroscope,
-        )
-
     trainings_done = 0
 
-    try:
+    async with solve_session(instance, options) as outcome:
         while 42:
             done = await instance.start()
 
@@ -78,11 +72,4 @@ async def trainer(options: Namespace) -> int:  # noqa: C901
                 instance.trainings.cases,
             ).print_summary()
 
-    except InvalidMoveError as error:
-        console.print('😱', str(error), style='warning')
-        return 1
-    finally:
-        if instance.bluetooth_interface:
-            await instance.bluetooth_disconnect()
-
-    return 0
+    return outcome.code

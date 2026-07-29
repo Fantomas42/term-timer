@@ -5,6 +5,7 @@ from argparse import Namespace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from cubing_algs.exceptions import InvalidMoveError
 from rich import box
 from rich.table import Table
 
@@ -74,7 +75,9 @@ def list_routines() -> int:
     return 0
 
 
-async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
+async def routine(  # noqa: C901, PLR0911, PLR0912, PLR0915
+        options: Namespace,
+) -> int:
     """
     Run a daily practice routine from a JSON config file.
 
@@ -194,6 +197,9 @@ async def routine(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
             f'[time]{ duration }[/time]',
         )
 
+    except InvalidMoveError as error:
+        console.print('😱', str(error), style='warning')
+        return 1
     finally:
         if current and current.bluetooth_interface:
             await current.bluetooth_disconnect()
