@@ -518,13 +518,13 @@ def ghost_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
 
     parser.add_argument(
-        'solve_id',
+        'reference',
         nargs='?',
-        type=int,
-        default=0,
-        metavar='SOLVE_ID',
+        default='',
+        metavar='REFERENCE',
         help=(
-            'ID of the reference solve whose scramble seeds the race.\n'
+            'Reference solve whose scramble seeds the race, named by\n'
+            'its id in the pool or by the key of its scramble.\n'
             'Required to race or to review; omit only with --summary.'
         ),
     )
@@ -560,7 +560,8 @@ def ghost_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         action='store_true',
         help=(
             'Browse the ghost library across every recorded scramble,\n'
-            'each named by the id of the solve that seeded it.\n'
+            'each named by its key and by the id of the solve that\n'
+            'seeded it.\n'
             'Default: False.'
         ),
     )

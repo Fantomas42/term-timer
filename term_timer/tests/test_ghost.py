@@ -234,7 +234,7 @@ class TestLoadReference(unittest.TestCase):
         return get_parser().parse_args(['ghost', *args])
 
     def test_missing_id_errors(self) -> None:
-        """Omitting the solve id is an error."""
+        """Omitting the reference is an error."""
         options = self.parse()
         self.assertIsNone(ghost_mod.load_reference(options))
 
@@ -242,6 +242,14 @@ class TestLoadReference(unittest.TestCase):
         """An id past the pool is an error."""
         options = self.parse('5')
         with patch.object(ghost_mod, 'load_all_solves', return_value=[]):
+            self.assertIsNone(ghost_mod.load_reference(options))
+
+    def test_zero_is_not_an_id(self) -> None:
+        """The pool is indexed from one, never from the end."""
+        options = self.parse('0')
+        with patch.object(
+                ghost_mod, 'load_all_solves', return_value=[make_solve()],
+        ):
             self.assertIsNone(ghost_mod.load_reference(options))
 
     def test_valid_id_resolves(self) -> None:
@@ -253,8 +261,119 @@ class TestLoadReference(unittest.TestCase):
         ):
             resolved = ghost_mod.load_reference(options)
 
-        self.assertIs(resolved, reference)
+        if resolved is None:
+            self.fail('a valid id must resolve')
+
+        self.assertIs(resolved.solve, reference)
+        self.assertEqual(resolved.key, scramble_to_key(SHORT_SCRAMBLE))
+        self.assertEqual(resolved.label, '#1')
         self.assertEqual(reference.method_name, 'cfop')
+
+
+class TestReferenceByKey(unittest.TestCase):
+    """Tests for addressing a scramble by its permanent key."""
+
+    def setUp(self) -> None:
+        """Point the ghost directory at a temporary folder."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.directory = Path(tmp.name)
+        patcher = patch.object(
+            ghost_mod, 'GHOSTS_DIRECTORY', self.directory,
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.key = scramble_to_key(SHORT_SCRAMBLE)
+
+    @staticmethod
+    def resolve(
+            token: str,
+            pool: list[Solve],
+    ) -> ghost_mod.GhostReference | None:
+        """
+        Resolve a reference token against a controlled solve pool.
+
+        Returns:
+            The resolved reference, or None.
+
+        """
+        options = get_parser().parse_args(['ghost', token])
+        with patch.object(ghost_mod, 'load_all_solves', return_value=pool):
+            return ghost_mod.load_reference(options)
+
+    def resolve_ok(
+            self,
+            token: str,
+            pool: list[Solve],
+    ) -> ghost_mod.GhostReference:
+        """
+        Resolve a token expected to name a stored scramble.
+
+        Returns:
+            The resolved reference.
+
+        """
+        resolved = self.resolve(token, pool)
+        if resolved is None:
+            self.fail(f'{ token } resolved to nothing')
+
+        return resolved
+
+    def test_prefix_resolves_the_scramble(self) -> None:
+        """An unambiguous prefix names the stored scramble."""
+        seed = make_solve()
+        save_solves(3, self.key, [seed], directory=self.directory)
+
+        resolved = self.resolve_ok(self.key[:4], [])
+
+        self.assertEqual(resolved.key, self.key)
+        self.assertEqual(resolved.solve.date, seed.date)
+
+    def test_orphan_scramble_stays_raceable(self) -> None:
+        """A scramble whose seed left the pool answers to its key."""
+        save_solves(3, self.key, [make_solve()], directory=self.directory)
+
+        resolved = self.resolve_ok(self.key, [make_solve(date=1)])
+
+        self.assertEqual(resolved.label, self.key[:8])
+
+    def test_pool_copy_wins_over_the_stored_seed(self) -> None:
+        """A seed still in the pool races as edited, and keeps its id."""
+        save_solves(3, self.key, [make_solve()], directory=self.directory)
+        fresh = make_solve(flag='+2')
+
+        resolved = self.resolve_ok(self.key, [make_solve(date=1), fresh])
+
+        self.assertIs(resolved.solve, fresh)
+        self.assertEqual(resolved.label, '#2')
+
+    def test_short_prefix_rejected(self) -> None:
+        """A prefix too short to be discriminating is refused."""
+        save_solves(3, self.key, [make_solve()], directory=self.directory)
+
+        self.assertIsNone(self.resolve(self.key[:3], []))
+
+    def test_unknown_key_rejected(self) -> None:
+        """A key matching no stored scramble is an error."""
+        save_solves(3, self.key, [make_solve()], directory=self.directory)
+
+        self.assertIsNone(self.resolve('ffffffff', []))
+
+    def test_ambiguous_prefix_rejected(self) -> None:
+        """A prefix matching two scrambles resolves to nothing."""
+        for suffix in ('aa', 'bb'):
+            save_solves(
+                3, f'abcd00000000{ suffix }', [make_solve()],
+                directory=self.directory,
+            )
+
+        self.assertIsNone(self.resolve('abcd', []))
+
+    def test_empty_scramble_file_rejected(self) -> None:
+        """A key naming a file without attempts is an error."""
+        save_solves(3, self.key, [], directory=self.directory)
+
+        self.assertIsNone(self.resolve(self.key, []))
 
 
 class TestBuildRaceStack(unittest.TestCase):
@@ -444,6 +563,15 @@ class TestGhostLibrary(unittest.TestCase):
         )
 
         self.assertIn('#2', output)
+
+    def test_summary_shows_the_scramble_key(self) -> None:
+        """Each row carries the permanent key of its scramble."""
+        key = scramble_to_key(SHORT_SCRAMBLE)
+        save_solves(3, key, [make_solve()], directory=self.directory)
+
+        _code, output = self.summarize([])
+
+        self.assertIn(key[:8], output)
 
     def test_summary_without_matching_reference(self) -> None:
         """A ghost whose seed is out of the pool shows no id."""
