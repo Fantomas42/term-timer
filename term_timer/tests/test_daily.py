@@ -27,7 +27,7 @@ class TestSelectGhost(unittest.TestCase):
         self.assertIsNone(daily_mod.select_ghost([], options))
 
     def test_pb_of_the_day_is_selected(self) -> None:
-        """The fastest analysable solve of the day wins."""
+        """The fastest solve of the day wins."""
         options = self.parse()
         faster = make_solve(date=2, time=1_000_000_000)
         slower = make_solve(date=3, time=9_000_000_000)
@@ -56,12 +56,22 @@ class TestSelectGhost(unittest.TestCase):
 
         self.assertIs(ghost_solve, slower)
 
-    def test_unanalysable_history_has_no_ghost(self) -> None:
-        """A day made of solves without reconstruction races nothing."""
+    def test_plus_two_races_with_its_penalty(self) -> None:
+        """A +2 is elected on its official time, penalty included."""
+        options = self.parse()
+        clean = make_solve(date=1, time=2_608_404_439)
+        penalised = make_solve(date=2, time=1_000_000_000, flag='+2')
+
+        ghost_solve = daily_mod.select_ghost([penalised, clean], options)
+
+        self.assertIs(ghost_solve, clean)
+
+    def test_keyboard_attempt_can_become_the_ghost(self) -> None:
+        """A day timed without a cube still gets a target to beat."""
         options = self.parse()
         manual = make_solve(moves=None)
 
-        self.assertIsNone(daily_mod.select_ghost([manual], options))
+        self.assertIs(daily_mod.select_ghost([manual], options), manual)
 
 
 class TestRefreshGhost(unittest.TestCase):

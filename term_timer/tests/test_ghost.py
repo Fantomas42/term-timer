@@ -325,7 +325,7 @@ class TestSelectGhost(unittest.TestCase):
         self.assertIs(ghost_mod.select_ghost(stack, options), reference)
 
     def test_pb_selected_over_the_stack(self) -> None:
-        """The fastest analysable solve wins, reference included."""
+        """The fastest solve wins, reference included."""
         options = self.parse('1')
         reference = make_solve(date=1, time=2_608_404_439)
         faster = make_solve(date=2, time=1_000_000_000)
@@ -344,6 +344,24 @@ class TestSelectGhost(unittest.TestCase):
         stack = ghost_mod.build_race_stack(reference, [dnf], 'KEY')
 
         self.assertIs(ghost_mod.select_ghost(stack, options), reference)
+
+    def test_plus_two_races_with_its_penalty(self) -> None:
+        """A +2 is elected on its official time, penalty included."""
+        options = self.parse('1')
+        reference = make_solve(date=1, time=2_608_404_439)
+        penalised = make_solve(date=2, time=1_000_000_000, flag='+2')
+        stack = ghost_mod.build_race_stack(reference, [penalised], 'KEY')
+
+        self.assertIs(ghost_mod.select_ghost(stack, options), reference)
+
+    def test_keyboard_attempt_can_become_the_ghost(self) -> None:
+        """An attempt timed without a cube still moves the target."""
+        options = self.parse('1')
+        reference = make_solve(date=1, time=2_608_404_439)
+        manual = make_solve(date=2, time=1_000_000_000, moves=None)
+        stack = ghost_mod.build_race_stack(reference, [manual], 'KEY')
+
+        self.assertIs(ghost_mod.select_ghost(stack, options), manual)
 
 
 class TestGhostLibrary(unittest.TestCase):
@@ -427,6 +445,54 @@ class TestGhostLibrary(unittest.TestCase):
 
         self.assertIn('—', output)
         self.assertNotIn('#', output)
+
+    def test_summary_best_counts_keyboard_attempts(self) -> None:
+        """An attempt without reconstruction can hold the best time."""
+        key = scramble_to_key(SHORT_SCRAMBLE)
+        save_solves(
+            3, key,
+            [
+                make_solve(date=1),
+                make_solve(date=2, time=1_000_000_000, moves=None),
+            ],
+            directory=self.directory,
+        )
+
+        _code, output = self.summarize([])
+
+        self.assertIn('00:01.000', output)
+        self.assertNotIn('00:02.608', output)
+
+    def test_summary_best_uses_the_official_time(self) -> None:
+        """A +2 is ranked with the two seconds it costs."""
+        key = scramble_to_key(SHORT_SCRAMBLE)
+        save_solves(
+            3, key,
+            [
+                make_solve(date=1),
+                make_solve(date=2, time=1_000_000_000, flag='+2'),
+            ],
+            directory=self.directory,
+        )
+
+        _code, output = self.summarize([])
+
+        self.assertIn('00:02.608', output)
+        self.assertNotIn('00:01.000', output)
+
+    def test_summary_of_a_scramble_never_solved(self) -> None:
+        """A scramble whose attempts are all DNF has no best time."""
+        key = scramble_to_key(SHORT_SCRAMBLE)
+        save_solves(
+            3, key,
+            [make_solve(flag='DNF')],
+            directory=self.directory,
+        )
+
+        code, output = self.summarize([])
+
+        self.assertEqual(code, 0)
+        self.assertIn('DNF', output)
 
     def test_review_without_attempts(self) -> None:
         """Reviewing a scramble with no stored attempts warns."""

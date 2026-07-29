@@ -39,23 +39,28 @@ def select_ghost(
         options: Namespace,
 ) -> Solve | None:
     """
-    Pick the ghost to beat: the day's fastest analysable solve.
+    Pick the ghost to beat: the day's fastest solve.
 
     Unlike the ghost command, the first attempt of the day has nothing to
-    race: the day only gets a ghost once one of its solves is analysable.
-    The chosen ghost is analysed with the command's method and
-    orientation to align its splits with the live checkpoints.
+    race: the day only gets a ghost once one of its solves has a time.
+    Every attempt is eligible, timed on the cube or on the keyboard, so a
+    day raced without a connected cube still moves its target; a keyboard
+    ghost simply carries no reconstruction, hence no checkpoint splits.
+    Times are compared on ``final_time``: a DNF has none, and a +2 races
+    with the two seconds it costs. The chosen ghost is analysed with the
+    command's method and orientation to align its splits with the live
+    checkpoints.
 
     Returns:
-        The fastest analysable Solve of the day, or None when there is
-        none yet.
+        The fastest non-DNF Solve of the day, or None when there is none
+        yet.
 
     """
-    candidates = [solve for solve in history if solve.analysable]
+    candidates = [solve for solve in history if solve.final_time]
     if not candidates:
         return None
 
-    ghost = min(candidates, key=operator.attrgetter('time'))
+    ghost = min(candidates, key=operator.attrgetter('final_time'))
     ghost.method_name = options.method
     ghost.orientation = options.orientation
 
@@ -98,7 +103,7 @@ def daily_header(date_str: str, ghost_solve: Solve | None) -> str:
     """
     header = f'[daily]📅 Daily Scramble - { date_str }[/daily]'
     if ghost_solve is not None:
-        header += f' [time]{ format_time(ghost_solve.time) }[/time]'
+        header += f' [time]{ format_time(ghost_solve.final_time) }[/time]'
 
     return header
 

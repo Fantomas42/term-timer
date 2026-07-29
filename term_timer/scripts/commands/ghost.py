@@ -103,21 +103,26 @@ def select_ghost(
         options: Namespace,
 ) -> Solve:
     """
-    Pick the ghost to beat: the fastest analysable solve on the scramble.
+    Pick the ghost to beat: the fastest solve on the scramble.
 
     The pool is the race stack, which already carries the reference solve
     as its first attempt, so the very first race beats the reference
-    itself and the stack is never without an analysable candidate. The
-    chosen ghost is analysed with the command's method and orientation to
-    align its splits with the live checkpoints.
+    itself and the stack is never without a candidate. Every attempt is
+    eligible, timed on the cube or on the keyboard, so a race run
+    without a connected cube still moves its target; a keyboard ghost
+    simply carries no reconstruction, hence no checkpoint splits. Times
+    are compared on ``final_time``: a DNF has none, and a +2 races with
+    the two seconds it costs. The chosen ghost is analysed with the
+    command's method and orientation to align its splits with the live
+    checkpoints.
 
     Returns:
-        The fastest analysable Solve on the scramble.
+        The fastest non-DNF Solve on the scramble.
 
     """
-    candidates = [solve for solve in stack if solve.analysable]
+    candidates = [solve for solve in stack if solve.final_time]
 
-    ghost = min(candidates, key=operator.attrgetter('time'))
+    ghost = min(candidates, key=operator.attrgetter('final_time'))
     ghost.method_name = options.method
     ghost.orientation = options.orientation
 
@@ -212,6 +217,11 @@ def ghost_summary(options: Namespace) -> int:
     before the reference was stored, or whose reference falls outside
     the selected pool, show no id.
 
+    The time is the best official time on the scramble, elected exactly
+    as the ghost is, so the row announces the time the race will ask you
+    to beat. A scramble whose attempts are all DNF has no such time and
+    reads DNF.
+
     Returns:
         Exit code (0 for success, 1 if no ghost scrambles exist).
 
@@ -234,9 +244,8 @@ def ghost_summary(options: Namespace) -> int:
             if not stack:
                 continue
 
-            analysable = [solve for solve in stack if solve.analysable]
             best = min(
-                (solve.time for solve in analysable),
+                (solve.final_time for solve in stack if solve.final_time),
                 default=0,
             )
             rows.append(
@@ -317,7 +326,7 @@ async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
     console.print(
         f'[ghost]{ GHOST_EMOJI } Ghost Race - '
         f'Scramble #{ options.solve_id }[/ghost] '
-        f'[time]{ format_time(ghost_solve.time) }[/time]',
+        f'[time]{ format_time(ghost_solve.final_time) }[/time]',
     )
 
     instance = Timer(
