@@ -494,6 +494,31 @@ class TestGhostLibrary(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn('DNF', output)
 
+    def test_summary_orders_by_best_time(self) -> None:
+        """The fastest scramble opens the library, the DNF one closes it."""
+        other = "R U R' U'"
+        never = "F R F' R'"
+        for scramble, solve in (
+                (SHORT_SCRAMBLE, make_solve()),
+                (other, make_solve(
+                    scramble=other, time=1_000_000_000, moves=None,
+                )),
+                (never, make_solve(
+                    scramble=never, moves=None, flag='DNF',
+                )),
+        ):
+            save_solves(
+                3, scramble_to_key(scramble), [solve],
+                directory=self.directory,
+            )
+
+        _code, output = self.summarize([])
+
+        self.assertLess(
+            output.index('00:01.000'), output.index('00:02.608'),
+        )
+        self.assertLess(output.index('00:02.608'), output.index('DNF'))
+
     def test_review_without_attempts(self) -> None:
         """Reviewing a scramble with no stored attempts warns."""
         options = self.parse('1')

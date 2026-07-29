@@ -222,6 +222,9 @@ def ghost_summary(options: Namespace) -> int:
     to beat. A scramble whose attempts are all DNF has no such time and
     reads DNF.
 
+    Rows are ordered by that time, fastest first — the file names being
+    scramble digests, their own order carries no meaning.
+
     Returns:
         Exit code (0 for success, 1 if no ghost scrambles exist).
 
@@ -231,7 +234,7 @@ def ghost_summary(options: Namespace) -> int:
 
     rows: list[tuple[int, str, int, int]] = []
     if GHOSTS_DIRECTORY.exists():
-        for source in sorted(GHOSTS_DIRECTORY.iterdir()):
+        for source in GHOSTS_DIRECTORY.iterdir():
             if (
                     not source.is_file()
                     or not source.name.startswith(prefix)
@@ -263,6 +266,8 @@ def ghost_summary(options: Namespace) -> int:
             style='warning',
         )
         return 1
+
+    rows.sort(key=lambda row: (row[3] == 0, row[3], row[0]))
 
     ids = reference_ids(options)
 
