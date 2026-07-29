@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
+from term_timer.tests.test_ghost import make_solve
 from term_timer.timer import Timer
 
 SECOND = 1_000_000_000
@@ -174,3 +175,111 @@ class TestProjectionLine(unittest.TestCase):
         stats = self.stats([12, 13, 11.5, 14, 12.5])
         with patch('term_timer.timer.STATS_AO_PROJECTIONS', [12]):
             self.assertEqual(self.render(stats), '')
+
+
+class TestElectGhost(unittest.TestCase):
+    """Tests for the ghost election over the timer stack."""
+
+    def test_empty_stack_has_no_ghost(self) -> None:
+        """An empty pool leaves the session ghostless instead of raising."""
+        timer = build_timer([])
+
+        timer.elect_ghost()
+
+        self.assertIsNone(timer.ghost)
+
+    def test_lone_solve_becomes_the_ghost(self) -> None:
+        """A stack holding a single timed solve races it."""
+        solve = make_solve()
+        timer = build_timer([solve])
+
+        timer.elect_ghost()
+
+        self.assertIs(timer.ghost, solve)
+
+    def test_fastest_solve_wins(self) -> None:
+        """The fastest solve of the stack is the target."""
+        faster = make_solve(date=2, time=1_000_000_000)
+        slower = make_solve(date=3, time=9_000_000_000)
+        timer = build_timer([slower, faster])
+
+        timer.elect_ghost()
+
+        self.assertIs(timer.ghost, faster)
+
+    def test_dnf_never_becomes_the_ghost(self) -> None:
+        """A DNF is out of the pool even when faster."""
+        slower = make_solve(date=1, time=2_608_404_439)
+        dnf = make_solve(date=2, time=1, flag='DNF')
+        timer = build_timer([dnf, slower])
+
+        timer.elect_ghost()
+
+        self.assertIs(timer.ghost, slower)
+
+    def test_all_dnf_stack_has_no_ghost(self) -> None:
+        """A stack without a single official time races ghostless."""
+        timer = build_timer(
+            [
+                make_solve(date=1, time=2_608_404_439, flag='DNF'),
+                make_solve(date=2, time=1_000_000_000, flag='DNF'),
+            ],
+        )
+
+        timer.elect_ghost()
+
+        self.assertIsNone(timer.ghost)
+
+    def test_plus_two_races_with_its_penalty(self) -> None:
+        """A +2 is elected on its official time, penalty included."""
+        clean = make_solve(date=1, time=2_608_404_439)
+        penalised = make_solve(date=2, time=1_000_000_000, flag='+2')
+        timer = build_timer([penalised, clean])
+
+        timer.elect_ghost()
+
+        self.assertIs(timer.ghost, clean)
+
+    def test_keyboard_attempt_can_become_the_ghost(self) -> None:
+        """An attempt timed without a cube still moves the target."""
+        reference = make_solve(date=1, time=2_608_404_439)
+        manual = make_solve(date=2, time=1_000_000_000, moves=None)
+        timer = build_timer([reference, manual])
+
+        timer.elect_ghost()
+
+        self.assertIs(timer.ghost, manual)
+
+    def test_ghost_follows_the_session_analysis(self) -> None:
+        """The elected ghost is analysed as the session is."""
+        solve = make_solve(method='cfop')
+        timer = build_timer([solve])
+
+        timer.elect_ghost()
+
+        self.assertEqual(solve.method_name, timer.method)
+        self.assertEqual(solve.orientation, timer.orientation_faces)
+
+    def test_new_best_takes_over_the_ghost(self) -> None:
+        """Beating the ghost promotes the fresh attempt for the next race."""
+        stored = make_solve(date=1, time=2_608_404_439)
+        timer = build_timer([stored])
+        timer.elect_ghost()
+
+        faster = make_solve(date=2, time=1_000_000_000)
+        timer.stack = [*timer.stack, faster]
+        timer.elect_ghost()
+
+        self.assertIs(timer.ghost, faster)
+
+    def test_slower_attempt_keeps_the_ghost(self) -> None:
+        """A slower attempt leaves the target untouched."""
+        stored = make_solve(date=1, time=2_608_404_439)
+        timer = build_timer([stored])
+        timer.elect_ghost()
+
+        slower = make_solve(date=2, time=9_000_000_000)
+        timer.stack = [*timer.stack, slower]
+        timer.elect_ghost()
+
+        self.assertIs(timer.ghost, stored)

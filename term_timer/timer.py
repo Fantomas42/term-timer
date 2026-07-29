@@ -1,5 +1,6 @@
 """Timer interface for recording and analyzing cube solves."""
 import logging
+import operator
 from random import Random
 
 from cubing_algs.algorithm import Algorithm
@@ -104,6 +105,38 @@ class Timer(SolveInterface):
                 'solves will not be recorded !',
                 style='warning',
             )
+
+    def elect_ghost(self) -> None:
+        """
+        Elect the ghost to beat: the fastest solve of the stack.
+
+        The pool is the timer stack, which holds the solves seeding the
+        session plus the attempts raced since it started, so beating the
+        ghost immediately promotes the fresh solve as the target of the
+        next race. Free play never writes to the session file but its
+        attempts still count for the pool.
+
+        Every attempt is eligible, timed on the cube or on the keyboard,
+        so a session raced without a connected cube still moves its
+        target; a keyboard ghost simply carries no reconstruction, hence
+        no checkpoint splits. Times are compared on ``final_time``: a DNF
+        has none, and a +2 races with the two seconds it costs. The
+        elected ghost is analysed with the session method and orientation
+        to align its splits with the live checkpoints.
+
+        A stack without a single timed attempt leaves the session without
+        a ghost, which the stopwatch already handles.
+        """
+        candidates = [solve for solve in self.stack if solve.final_time]
+        if not candidates:
+            self.ghost = None
+            return
+
+        ghost = min(candidates, key=operator.attrgetter('final_time'))
+        ghost.method_name = self.method
+        ghost.orientation = self.orientation_faces
+
+        self.ghost = ghost
 
     def start_line(self, cube: VCube) -> None:
         """Display scramble information and instructions to start solve."""
