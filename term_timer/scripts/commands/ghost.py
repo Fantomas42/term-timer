@@ -563,7 +563,7 @@ async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0911, PLR0912
             if not done:
                 break
 
-        if instance.stack_done:
+        if len(instance.stack) > 1:
             console.print(
                 f'[title]Summary on Ghost { reference.label }[/title]',
             )

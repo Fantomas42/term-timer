@@ -69,28 +69,24 @@ def select_ghost(
 
 def refresh_ghost(
         instance: Timer,
-        history: list[Solve],
         options: Namespace,
 ) -> None:
     """
     Re-elect the ghost after an attempt.
 
-    The pool is the day's stored solves plus the attempts of the running
-    session, so beating the ghost immediately promotes the fresh solve as
-    the target of the next race. Free play never writes to the daily file
-    but its attempts still count for the session.
+    The pool is the timer stack, which holds the day's stored solves plus
+    the attempts of the running session, so beating the ghost immediately
+    promotes the fresh solve as the target of the next race. Free play
+    never writes to the daily file but its attempts still count for the
+    session.
 
     Args:
         instance: The running timer, holding the current ghost and the
             attempts done in this session.
-        history: The solves stored for that day at startup.
         options: Command options carrying the method and orientation.
 
     """
-    instance.ghost = select_ghost(
-        [*history, *instance.stack_done],
-        options,
-    )
+    instance.ghost = select_ghost(instance.stack, options)
 
 
 def daily_header(date_str: str, ghost_solve: Solve | None) -> str:
@@ -236,7 +232,7 @@ async def daily(options: Namespace) -> int:  # noqa: C901
         while 42:
             done = await instance.start()
 
-            refresh_ghost(instance, history, options)
+            refresh_ghost(instance, options)
 
             if not done:
                 break

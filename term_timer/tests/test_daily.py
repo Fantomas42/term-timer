@@ -91,16 +91,16 @@ class TestRefreshGhost(unittest.TestCase):
     @staticmethod
     def build_instance(
             ghost_solve: object,
-            done: list[object],
+            stack: list[object],
     ) -> Namespace:
         """
-        Build a timer stand-in carrying a ghost and finished solves.
+        Build a timer stand-in carrying a ghost and a day stack.
 
         Returns:
             The stand-in instance.
 
         """
-        return Namespace(ghost=ghost_solve, stack_done=done)
+        return Namespace(ghost=ghost_solve, stack=stack)
 
     def test_first_attempt_becomes_the_ghost(self) -> None:
         """A day starting without a ghost gains one after a solve."""
@@ -108,7 +108,7 @@ class TestRefreshGhost(unittest.TestCase):
         attempt = make_solve()
         instance = self.build_instance(None, [attempt])
 
-        daily_mod.refresh_ghost(instance, [], options)  # type: ignore[arg-type]
+        daily_mod.refresh_ghost(instance, options)  # type: ignore[arg-type]
 
         self.assertIs(instance.ghost, attempt)
 
@@ -117,9 +117,9 @@ class TestRefreshGhost(unittest.TestCase):
         options = self.parse()
         stored = make_solve(date=1, time=2_608_404_439)
         faster = make_solve(date=2, time=1_000_000_000)
-        instance = self.build_instance(stored, [faster])
+        instance = self.build_instance(stored, [stored, faster])
 
-        daily_mod.refresh_ghost(instance, [stored], options)  # type: ignore[arg-type]
+        daily_mod.refresh_ghost(instance, options)  # type: ignore[arg-type]
 
         self.assertIs(instance.ghost, faster)
 
@@ -128,9 +128,9 @@ class TestRefreshGhost(unittest.TestCase):
         options = self.parse()
         stored = make_solve(date=1, time=2_608_404_439)
         slower = make_solve(date=2, time=9_000_000_000)
-        instance = self.build_instance(stored, [slower])
+        instance = self.build_instance(stored, [stored, slower])
 
-        daily_mod.refresh_ghost(instance, [stored], options)  # type: ignore[arg-type]
+        daily_mod.refresh_ghost(instance, options)  # type: ignore[arg-type]
 
         self.assertIs(instance.ghost, stored)
 

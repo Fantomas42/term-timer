@@ -611,7 +611,7 @@ class TestGhostLibrary(unittest.TestCase):
 
         _code, output = self.summarize([make_solve(date=1)])
 
-        self.assertIn('—', output)
+        self.assertIn('---', output)
         self.assertNotIn('#', output)
 
     def test_summary_best_counts_keyboard_attempts(self) -> None:
