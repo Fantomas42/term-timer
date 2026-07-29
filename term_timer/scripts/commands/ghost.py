@@ -469,7 +469,7 @@ def ghost_summary(options: Namespace) -> int:
     return 0
 
 
-async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
+async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0911, PLR0912
     """
     Race a live solve against a recorded ghost on the same scramble.
 
@@ -572,6 +572,7 @@ async def ghost(options: Namespace) -> int:  # noqa: C901, PLR0912
 
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')
+        return 1
     finally:
         if instance.bluetooth_interface:
             await instance.bluetooth_disconnect()

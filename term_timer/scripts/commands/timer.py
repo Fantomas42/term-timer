@@ -183,6 +183,7 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
 
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')
+        return 1
     finally:
         if instance.bluetooth_interface:
             await instance.bluetooth_disconnect()
