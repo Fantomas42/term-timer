@@ -8,6 +8,7 @@ from pathlib import Path
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.exceptions import InvalidMoveError
 from cubing_algs.parsing import parse_moves
+from cubing_algs.vcube import VCube
 from fsrs import Card
 from fsrs import State
 
@@ -23,21 +24,35 @@ from term_timer.solve import SolveData
 SCRAMBLE_LINE = re.compile(r'Scramble #\d+:\s*(.+?)(?:\s*//.*)?$')
 
 
-def scramble_to_key(scramble: str) -> str:
+def scramble_to_key(scramble: str, cube_size: int = 3) -> str:
     """
-    Turn a scramble string into a filesystem- and URL-safe session key.
+    Turn a scramble into a filesystem- and URL-safe session key.
 
-    The scramble is digested so the key stays short whatever the cube
-    size: spelling the moves out overflows the 255 bytes a filename
-    allows from the 6x6x6 up. The digest is taken on the raw text, with
-    no normalization, so two textually different but equivalent
-    scrambles still map to different keys.
+    The key names a cube state, not a spelling: the scramble is applied
+    to a solved virtual cube and its facelets are digested. Two ways of
+    writing the same scramble — an extra space, a ``R2'`` for a ``R2``,
+    a solve imported from csTimer and the same one replayed, or two
+    different move sequences reaching the same state — therefore share
+    one ghost file, where a digest of the raw text silently forked them.
+    Whole-cube rotations are not normalized away: they do change the
+    state, but no scramble source emits them.
+
+    Digesting also keeps the key short whatever the cube size: spelling
+    the moves out overflows the 255 bytes a filename allows from the
+    6x6x6 up.
+
+    Args:
+        scramble: The scramble moves, in any equivalent spelling.
+        cube_size: Size of the cube the scramble applies to.
 
     Returns:
         The transformed session key (e.g. ``"c3fd54cd2d5f8b4f"``).
 
     """
-    return blake2s(scramble.encode(), digest_size=8).hexdigest()
+    cube = VCube(size=cube_size)
+    cube.rotate(scramble)
+
+    return blake2s(cube.state.encode(), digest_size=8).hexdigest()
 
 
 def fsrs_card_from_data(raw: 'CaseTrainingData') -> Card | None:

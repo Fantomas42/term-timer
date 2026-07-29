@@ -75,7 +75,7 @@ class TestScrambleToKey(unittest.TestCase):
 
     def test_digest_is_stable(self) -> None:
         """The same scramble always digests to the same key."""
-        self.assertEqual(scramble_to_key("R U R' U'"), 'e6b3c60b3559406a')
+        self.assertEqual(scramble_to_key("R U R' U'"), '2f3fdd2d60b6dcc9')
 
     def test_distinct_scrambles(self) -> None:
         """Two different scrambles map to two different keys."""
@@ -84,18 +84,34 @@ class TestScrambleToKey(unittest.TestCase):
             scramble_to_key('R U F2 D'),
         )
 
+    def test_spelling_does_not_fork_the_key(self) -> None:
+        """Equivalent spellings of one scramble share a single key."""
+        key = scramble_to_key("R U R' U'")
+
+        self.assertEqual(scramble_to_key("R  U   R' U'"), key)
+        self.assertEqual(scramble_to_key("R U F F' R' U'"), key)
+        self.assertEqual(scramble_to_key("R U R' U' " * 7), key)
+        self.assertEqual(scramble_to_key("R2' U"), scramble_to_key('R2 U'))
+
     def test_key_is_url_safe(self) -> None:
         """The key only contains safe characters."""
         key = scramble_to_key(SHORT_SCRAMBLE)
-        self.assertEqual(key, 'e80cd213e69009a6')
+        self.assertEqual(key, '0f7c6017793f3cd3')
 
     def test_key_fits_a_filename(self) -> None:
         """A big cube scramble still yields a short, bounded key."""
         scramble = ' '.join(["3Rw'"] * 100)
-        key = scramble_to_key(scramble)
+        key = scramble_to_key(scramble, 7)
 
         self.assertEqual(len(key), 16)
         self.assertLess(len(f'7x7x7-{ key }.json'), 255)
+
+    def test_cube_size_scopes_the_state(self) -> None:
+        """One scramble read on two cube sizes gives two keys."""
+        self.assertNotEqual(
+            scramble_to_key(SHORT_SCRAMBLE, 2),
+            scramble_to_key(SHORT_SCRAMBLE, 3),
+        )
 
 
 class TestGhostSplits(unittest.TestCase):

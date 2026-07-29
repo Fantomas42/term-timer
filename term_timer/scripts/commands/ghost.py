@@ -133,7 +133,7 @@ def reference_from_id(
 
     return GhostReference(
         reference,
-        scramble_to_key(str(reference.scramble)),
+        scramble_to_key(str(reference.scramble), reference.cube_size),
         f'#{ solve_id }',
     )
 
