@@ -43,6 +43,7 @@ from term_timer.constants import X_CROSS_CASE
 from term_timer.constants import SolveFlag
 from term_timer.exceptions import InvalidCaseError
 from term_timer.formatter import format_alg_aufs
+from term_timer.formatter import format_alg_cubing_url
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_delta
@@ -1371,11 +1372,18 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 DEFAULT_TRIGGERS,
             )
 
+            url = format_alg_cubing_url(
+                f'Solution for { selected_case.name }'.replace(' ', '%20'),
+                str(self.cube_orientation_moves),
+                str(solution),
+            ) + '&type=alg'
+
             self.console.print(
                 f'[solution]Solution #{ self.counter }:[/solution]',
                 '[moves-solution]'
                 f'[rotation]{ self.cube_orientation_moves }[/rotation] '
-                f'{ formatted_algorithm }[/moves-solution]',
+                f'{ formatted_algorithm }[/moves-solution] '
+                f'[algcubing][link={ url }]View[/link][/algcubing]',
             )
 
         self.console.print(
