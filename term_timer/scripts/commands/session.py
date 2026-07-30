@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from random import Random
 
-from cubing_algs.exceptions import InvalidMoveError
+from cubing_algs.exceptions import CubingAlgsError
 
 from term_timer.bluetooth.replay import load_scramble_replay
 from term_timer.exceptions import ReplayError
@@ -61,7 +61,7 @@ async def solve_session(
     try:
         with keep_awake():
             yield outcome
-    except InvalidMoveError as error:
+    except CubingAlgsError as error:
         console.print('😱', str(error), style='warning')
         outcome.code = 1
     finally:
