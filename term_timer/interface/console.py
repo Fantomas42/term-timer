@@ -82,6 +82,7 @@ theme: dict[str, str] = {
     'session': 'bold #00FFCC',
     'title': f'bold { TEXT_LIGHT }',
     'moves': f'bold { TEXT_LIGHT }',
+    'moves-solution': f'bold { TEXT_LIGHT } on #444444',
     'result': f'bold { TEXT_LIGHT }',
     'time': f'bold { TEXT_DARK } on { TEXT_LIGHT }',
     'date': f'bold { GREEN}',
