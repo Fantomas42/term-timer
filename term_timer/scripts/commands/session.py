@@ -16,6 +16,7 @@ from term_timer.interface.console import console
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.timer import Timer
+from term_timer.wakelock import keep_awake
 
 
 @dataclass
@@ -41,6 +42,11 @@ async def solve_session(
     Commands that never accept --replay leave bluetooth_replay unset,
     so the connection there falls back on the --bluetooth flag alone.
 
+    Solving on a smart cube produces no keyboard nor mouse event, so the
+    session also holds a wake lock: without it the screen blanks and the
+    machine suspends in the middle of a session. A system offering no
+    usable inhibitor is not an error, the session simply runs without.
+
     Yields:
         The outcome carrying the exit code the command returns.
 
@@ -53,7 +59,8 @@ async def solve_session(
     outcome = SessionOutcome()
 
     try:
-        yield outcome
+        with keep_awake():
+            yield outcome
     except InvalidMoveError as error:
         console.print('😱', str(error), style='warning')
         outcome.code = 1

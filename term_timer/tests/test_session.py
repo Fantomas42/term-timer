@@ -162,6 +162,22 @@ class TestSolveSession(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(double.connections, 1)
         self.assertEqual(double.disconnections, 1)
 
+    async def test_session_holds_a_wake_lock(self) -> None:
+        """Solving on a cube keeps the screen awake, released at the end."""
+        double = SessionInterfaceDouble()
+
+        with mock.patch(
+                'term_timer.scripts.commands.session.keep_awake',
+        ) as wake_lock:
+            async with solve_session(
+                    cast('SolveInterface', double),
+                    session_options(bluetooth=True),
+            ):
+                await double.start()
+
+        wake_lock.assert_called_once_with()
+        self.assertEqual(wake_lock.return_value.__exit__.call_count, 1)
+
     async def test_gyroscope_option_is_carried(self) -> None:
         """The connection is opened with the orientation the user asked."""
         double = SessionInterfaceDouble()
