@@ -129,6 +129,13 @@ TREND_MIN_TIMINGS: Final[int] = 12
 TREND_AT_PEAK: Final[float] = 1.10
 TREND_DEGRADED: Final[float] = 1.30
 
+# Card states of the recap table, ordered as a learning funnel from
+# never seen to consolidated. Labels come from fsrs_state_label(), which
+# splits the FSRS Review state into Review (due) and Stable (scheduled).
+FSRS_STATE_LABELS: Final[tuple[str, ...]] = (
+    'New', 'Learning', 'Relearning', 'Review', 'Stable',
+)
+
 
 class Trainer(SolveInterface):  # noqa: PLR0904
     """
@@ -524,6 +531,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         show_fsrs = self.step_config.training_case is None
         muted = '[muted]N/A[/muted]'
 
+        if show_fsrs:
+            self.summary_cases(valid_cases)
+
         table = Table(
             title=f'{ self.step_label } stats',
             box=box.SIMPLE,
@@ -556,6 +566,110 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             table.add_row(*row)
 
         self.console.print(table)
+
+    def summary_cases(self, valid_cases: dict[str, Case]) -> None:
+        """
+        Display the card state and best time recap of the cases table.
+
+        One row per populated FSRS card state with how many cases sit
+        there, how many are past their review date and how fast they are
+        at their best, then a total row over all the cases of the step.
+        Best times only cover the practiced cases.
+        """
+        now = datetime.now(UTC)
+        bests: dict[str, list[int]] = {
+            label: [] for label in FSRS_STATE_LABELS
+        }
+        counts: dict[str, int] = dict.fromkeys(FSRS_STATE_LABELS, 0)
+        overdues: dict[str, int] = dict.fromkeys(FSRS_STATE_LABELS, 0)
+
+        for code in valid_cases:
+            case_training = self.trainings.cases.get(code)
+            card = case_training.fsrs_card if case_training else None
+
+            label = fsrs_state_label(card)[0] if card else 'New'
+            counts[label] += 1
+
+            if card is not None and card.due <= now:
+                overdues[label] += 1
+
+            if case_training and case_training.timings:
+                timings = [
+                    t * MS_TO_NS_FACTOR for t in case_training.timings
+                ]
+                bests[label].append(Statistics(timings).best)
+
+        table = Table(
+            title=f'{ self.step_label } summary',
+            box=box.SIMPLE,
+            pad_edge=False,
+        )
+        table.add_column('State', width=12)
+        table.add_column('Σ', width=3, justify='right')
+        table.add_column('Overdue', width=7, justify='right')
+        table.add_column('Best', width=5, justify='right')
+        table.add_column('Avg', width=5, justify='right')
+        table.add_column('Worst', width=5, justify='right')
+
+        for label in FSRS_STATE_LABELS:
+            if not counts[label]:
+                continue
+            klass = label.lower()
+            table.add_row(
+                f'[{ klass }]{ label }[/{ klass }]',
+                f'[stats]{ counts[label] }[/stats]',
+                self.overdue_cell(overdues[label]),
+                *self.best_cells(bests[label]),
+            )
+
+        table.add_section()
+
+        all_bests = [best for state in bests.values() for best in state]
+        table.add_row(
+            'Total',
+            f'[stats]{ len(valid_cases) }[/stats]',
+            self.overdue_cell(sum(overdues.values())),
+            *self.best_cells(all_bests),
+        )
+
+        self.console.print(table)
+
+    @staticmethod
+    def overdue_cell(overdue: int) -> str:
+        """
+        Build the overdue cell of a summary table row.
+
+        Returns:
+            Number of cards past their review date, muted when none is
+            waiting.
+
+        """
+        if not overdue:
+            return '[muted]0[/muted]'
+
+        return f'[warning]{ overdue }[/warning]'
+
+    @staticmethod
+    def best_cells(bests: list[int]) -> list[str]:
+        """
+        Build the best time cells of a summary table row.
+
+        Returns:
+            List of [best, average, worst] Rich strings, all muted N/A
+            when none of the cases has been practiced yet.
+
+        """
+        if not bests:
+            muted = '[muted]N/A[/muted]'
+            return [muted, muted, muted]
+
+        average = round(sum(bests) / len(bests))
+
+        return [
+            f'[duration]{ format_duration(min(bests)) }[/duration]',
+            f'[ao5]{ format_duration(average) }[/ao5]',
+            f'[duration]{ format_duration(max(bests)) }[/duration]',
+        ]
 
     @staticmethod
     def speed_trend(stats: Statistics) -> str:

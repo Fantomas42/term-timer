@@ -17,11 +17,14 @@ from cubing_algs.parsing import parse_moves
 from fsrs import Card
 from fsrs import Rating
 from fsrs import State
+from rich.console import Console as RichConsole
+from rich.theme import Theme
 
 from term_timer.fsrs.rating import RatingBreakdown
 from term_timer.fsrs.scheduler import FSRSScheduler
 from term_timer.fsrs.storage import CaseTraining
 from term_timer.fsrs.storage import Trainings
+from term_timer.interface.console import theme as console_theme
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.trainer import MANUAL_RATING_KEYS
@@ -1563,3 +1566,145 @@ class TestSpeedTrend(unittest.TestCase):
         cells = Trainer.timing_cells(None, muted)
         self.assertEqual(len(cells), 5)
         self.assertEqual(cells[-1], muted)
+
+
+class TestBestCells(unittest.TestCase):
+    """best_cells summarizes the best times of a summary row."""
+
+    def test_no_practiced_case(self) -> None:
+        """A state without any practiced case is fully muted."""
+        cells = Trainer.best_cells([])
+        self.assertEqual(cells, ['[muted]N/A[/muted]'] * 3)
+
+    def test_best_average_worst(self) -> None:
+        """The cells hold the minimum, the mean and the maximum."""
+        cells = Trainer.best_cells(
+            [1_000_000_000, 2_000_000_000, 6_000_000_000],
+        )
+        self.assertIn('1.00', cells[0])
+        self.assertIn('3.00', cells[1])
+        self.assertIn('6.00', cells[2])
+
+
+class TestSummaryCases(unittest.TestCase):
+    """summary_cases recaps card states and best times under the table."""
+
+    # OLL codes covering one case per card state, plus an unseen one.
+    STABLE_CODE = '01'
+    REVIEW_CODE = '02'
+    LEARNING_CODE = '03'
+    NEW_CODE = '04'
+
+    def make_case_trainings(self) -> dict[str, CaseTraining]:
+        """
+        Build one training entry per card state, all but one practiced.
+
+        Returns:
+            CaseTraining entries keyed by OLL case code.
+
+        """
+        now = datetime.now(tz=UTC)
+        recent = int(now.timestamp())
+
+        stable = Card()
+        stable.state = State.Review
+        stable.due = now + timedelta(days=3)
+
+        review = Card()
+        review.state = State.Review
+        review.due = now - timedelta(days=1)
+
+        learning = Card()
+        learning.due = now - timedelta(minutes=5)
+
+        return {
+            self.STABLE_CODE: CaseTraining(
+                code=self.STABLE_CODE, last_date=recent,
+                timings=[1000, 3000], fsrs_card=stable,
+            ),
+            self.REVIEW_CODE: CaseTraining(
+                code=self.REVIEW_CODE, last_date=recent,
+                timings=[4000], fsrs_card=review,
+            ),
+            self.LEARNING_CODE: CaseTraining(
+                code=self.LEARNING_CODE, last_date=recent,
+                timings=[], fsrs_card=learning,
+            ),
+        }
+
+    def summarize(self) -> str:
+        """
+        Render the summary of the four controlled cases.
+
+        Returns:
+            The recorded console output.
+
+        """
+        trainings = Trainings(
+            method='CFOP', step='OLL', cases=self.make_case_trainings(),
+        )
+
+        with patch(
+            'term_timer.trainer.load_trainings', return_value=trainings,
+        ):
+            timer = Trainer(
+                step='oll',
+                case_codes=[],
+                oldest=0,
+                slowest=0,
+                random=0,
+                new_cases_limit=5,
+                filters=[],
+                free_play=False,
+                show_solution=False,
+                show_cube=False,
+                metronome=0,
+                orientation='DF',
+                rng=Random(),  # noqa: S311
+            )
+
+        recorder = RichConsole(
+            record=True, width=120, theme=Theme(console_theme),
+        )
+        timer.console = recorder
+
+        collection = {
+            case.code: case
+            for case in get_collection('CFOP/OLL').cases.values()
+        }
+        valid_cases = {
+            code: collection[code]
+            for code in (
+                self.STABLE_CODE, self.REVIEW_CODE,
+                self.LEARNING_CODE, self.NEW_CODE,
+            )
+        }
+        timer.summary_cases(valid_cases)
+
+        return ' '.join(recorder.export_text().split())
+
+    def test_one_row_per_populated_state(self) -> None:
+        """Each card state holding a case gets its own row."""
+        output = self.summarize()
+
+        self.assertIn('New 1 0', output)
+        self.assertIn('Review 1 1 4.00 4.00 4.00', output)
+        self.assertIn('Stable 1 0 1.00 1.00 1.00', output)
+
+    def test_empty_state_is_skipped(self) -> None:
+        """A card state without any case is left out of the table."""
+        output = self.summarize()
+
+        self.assertNotIn('Relearning', output)
+
+    def test_total_row_covers_every_case(self) -> None:
+        """The total row counts all the cases and their best times."""
+        output = self.summarize()
+
+        self.assertIn('Total 4 2 1.00 2.50 4.00', output)
+
+    def test_state_without_timing_is_muted(self) -> None:
+        """A state whose cases are never practiced shows no best time."""
+        output = self.summarize()
+
+        self.assertIn('Learning 1 1 N/A N/A N/A', output)
