@@ -999,8 +999,8 @@ class TestFSRSNewCaseBudget(unittest.IsolatedAsyncioTestCase):
         timer = await self.run_save_and_track('3')
         self.assertEqual(timer.fsrs_new_cases_introduced, 1)
 
-    async def test_skip_fsrs_does_not_consume_budget(self) -> None:
-        """A manual-mode save without rating leaves the budget intact."""
+    async def test_unrated_save_leaves_the_case_new(self) -> None:
+        """No rating means no card: the case is still new to introduce."""
         timer = await self.run_save_and_track('x')
         self.assertEqual(timer.fsrs_new_cases_introduced, 0)
 
