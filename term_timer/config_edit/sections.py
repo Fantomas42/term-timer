@@ -20,7 +20,6 @@ from textual.widgets import SelectionList
 from textual.widgets import Static
 
 from term_timer.config import CONFIG
-from term_timer.config import LEGACY_CUBE_LABEL
 from term_timer.config import SERIES_AVERAGE_KINDS
 from term_timer.config import SERIES_KINDS
 from term_timer.config import parse_series
@@ -1003,18 +1002,6 @@ class BluetoothSection(ConfigSection):
         cubes.remove_children()
 
         configured: dict[str, Any] = bluetooth_config.get('cubes', {})
-        if not configured and (
-                bluetooth_config.get('address')
-                or bluetooth_config.get('name')
-        ):
-            # A configuration predating multi-cube support: its flat keys
-            # describe one cube, the rest of the table staying global
-            configured = {
-                LEGACY_CUBE_LABEL: {
-                    'name': bluetooth_config.get('name', ''),
-                    'address': bluetooth_config.get('address', ''),
-                },
-            }
 
         for index, (label, data) in enumerate(configured.items()):
             cubes.mount(CubeCard(index, str(label), data))

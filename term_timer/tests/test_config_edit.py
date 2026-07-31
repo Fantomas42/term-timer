@@ -32,15 +32,6 @@ MULTI_CUBE_CONFIG: dict[str, Any] = {
     },
 }
 
-LEGACY_CONFIG: dict[str, Any] = {
-    'bluetooth': {
-        'name': 'GAN 356 i3',
-        'address': 'AA:BB:CC:DD:EE:FF',
-        'use_gyroscope': True,
-        'rotation_threshold': 75.0,
-    },
-}
-
 
 class BluetoothSectionTestCase(unittest.IsolatedAsyncioTestCase):
     """Base driving the editor on a given configuration."""
@@ -135,32 +126,3 @@ class TestBluetoothSectionCubes(BluetoothSectionTestCase):
         await self.pilot.pause(0.3)
 
         self.assertEqual(self.saved['default'], '')
-
-
-class TestBluetoothSectionLegacy(BluetoothSectionTestCase):
-    """Tests for a configuration predating multi-cube support."""
-
-    config = LEGACY_CONFIG
-
-    async def test_flat_keys_load_as_one_cube(self) -> None:
-        """The flat name and address keys are shown as a single cube."""
-        self.assertEqual(
-            [card.label_value for card in self.section.cards],
-            ['default'],
-        )
-
-    async def test_saving_migrates_to_a_cube_table(self) -> None:
-        """Saving writes the cube in its own table, flat keys gone."""
-        saved = self.saved
-
-        self.assertEqual(
-            saved['cubes'],
-            {
-                'default': {
-                    'name': 'GAN 356 i3',
-                    'address': 'AA:BB:CC:DD:EE:FF',
-                },
-            },
-        )
-        self.assertNotIn('address', saved)
-        self.assertNotIn('name', saved)

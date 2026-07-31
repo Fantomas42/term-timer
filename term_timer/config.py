@@ -31,9 +31,6 @@ UUID_ADDRESS_RE: Final = re.compile(
     r'^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$', re.IGNORECASE,
 )
 
-# Legacy label given to the cube described by the flat name/address keys
-LEGACY_CUBE_LABEL: Final = 'default'
-
 # Kinds accepted in any configurable series
 SERIES_KINDS: Final = ('mo', 'ao', 'mb', 'mw')
 
@@ -477,10 +474,7 @@ def load_cubes(config: dict[str, Any]) -> dict[str, CubeDevice]:
     """
     Load the configured Bluetooth cubes, keyed by label.
 
-    Cubes are read from the ``[bluetooth.cubes.<label>]`` tables. A
-    configuration predating multi-cube support, holding flat ``name`` and
-    ``address`` keys, is read as a single cube so that it keeps working
-    untouched.
+    Cubes are read from the ``[bluetooth.cubes.<label>]`` tables.
 
     Args:
         config: Contents of the ``[bluetooth]`` table.
@@ -501,17 +495,7 @@ def load_cubes(config: dict[str, Any]) -> dict[str, CubeDevice]:
             key, cast('dict[str, Any]', data),
         )
 
-    if cubes:
-        return cubes
-
-    if config.get('address') or config.get('name'):
-        return {
-            LEGACY_CUBE_LABEL: CubeDevice.from_config(
-                LEGACY_CUBE_LABEL, config,
-            ),
-        }
-
-    return {}
+    return cubes
 
 
 def load_default_cube(

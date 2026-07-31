@@ -4,7 +4,6 @@ from typing import ClassVar
 from typing import cast
 from unittest.mock import patch
 
-from term_timer.config import LEGACY_CUBE_LABEL
 from term_timer.config import CubeDevice
 from term_timer.config import is_cube_address
 from term_timer.config import load_cubes
@@ -140,26 +139,6 @@ class TestLoadCubes(unittest.TestCase):
         self.assertEqual(cubes['weilong'].rotation_threshold, 60.0)
         self.assertTrue(cubes['gan12'].use_gyroscope)
         self.assertEqual(cubes['gan12'].rotation_threshold, 75.0)
-
-    def test_legacy_flat_keys(self) -> None:
-        """A configuration predating multi-cube support reads as one cube."""
-        cubes = load_cubes({
-            'name': 'GAN 356 i3',
-            'address': 'AA:BB:CC:DD:EE:FF',
-        })
-
-        self.assertEqual(list(cubes), [LEGACY_CUBE_LABEL])
-        self.assertEqual(cubes[LEGACY_CUBE_LABEL].name, 'GAN 356 i3')
-
-    def test_cubes_tables_win_over_legacy_keys(self) -> None:
-        """Flat keys are ignored as soon as a cube table exists."""
-        cubes = load_cubes({
-            'name': 'GAN 356 i3',
-            'address': 'AA:BB:CC:DD:EE:FF',
-            'cubes': {'weilong': {'address': '11:22:33:44:55:77'}},
-        })
-
-        self.assertEqual(list(cubes), ['weilong'])
 
     def test_no_cube(self) -> None:
         """A configuration naming no cube loads none."""
