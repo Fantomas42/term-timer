@@ -1,5 +1,6 @@
 """Tests for the asynchronous logging configuration."""
 import logging
+import queue
 import tempfile
 import unittest
 from pathlib import Path
@@ -8,8 +9,28 @@ from unittest import mock
 from term_timer import logger as logger_module
 from term_timer.logger import LOGGING_CONF
 from term_timer.logger import AsyncioLogHandler
+from term_timer.logger import AsyncioLogListener
 from term_timer.logger import configure_logging
 from term_timer.logger import shutdown_logging
+
+
+class RecordCollector(logging.Handler):
+    """Logging handler keeping the records it is given."""
+
+    def __init__(self) -> None:
+        """Initialize the handler with an empty list of records."""
+        super().__init__()
+        self.records: list[logging.LogRecord] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """
+        Store the record instead of writing it.
+
+        Args:
+            record: The log record to keep.
+
+        """
+        self.records.append(record)
 
 
 class ConfigureLoggingTestCase(unittest.TestCase):
@@ -75,3 +96,65 @@ class ConfigureLoggingTestCase(unittest.TestCase):
 
         self.assertIsNone(logger_module.log_listener)
         self.assertFalse(thread.is_alive())
+
+
+class AsyncioLogListenerTestCase(unittest.TestCase):
+    """Tests for the AsyncioLogListener."""
+
+    def setUp(self) -> None:
+        """Build a listener over a collecting handler."""
+        self.queue: queue.Queue[logging.LogRecord] = queue.Queue()
+        self.handler = RecordCollector()
+        self.listener = AsyncioLogListener(self.queue, self.handler)
+
+    def queue_records(self, count: int) -> None:
+        """
+        Push numbered records in the queue of the listener.
+
+        Args:
+            count: Number of records to push.
+
+        """
+        for index in range(count):
+            self.queue.put(
+                logging.LogRecord(
+                    'term_timer', logging.INFO, __file__, index,
+                    f'record {index}', None, None,
+                ),
+            )
+
+    def collected(self) -> list[str]:
+        """
+        Return the messages handled by the collecting handler.
+
+        Returns:
+            The messages, in the order they were handled.
+
+        """
+        return [record.getMessage() for record in self.handler.records]
+
+    def test_drain_handles_the_queued_records(self) -> None:
+        """Draining hands the queued records to the handler, in order."""
+        self.queue_records(3)
+
+        self.listener.drain()
+
+        self.assertEqual(
+            self.collected(),
+            ['record 0', 'record 1', 'record 2'],
+        )
+        self.assertTrue(self.queue.empty())
+
+    def test_drain_on_an_empty_queue(self) -> None:
+        """Draining an empty queue is a no-op."""
+        self.listener.drain()
+
+        self.assertEqual(self.collected(), [])
+
+    def test_stop_handles_the_records_left_in_the_queue(self) -> None:
+        """Stopping does not leave the last records behind."""
+        self.queue_records(2)
+
+        self.listener.stop()
+
+        self.assertEqual(self.collected(), ['record 0', 'record 1'])

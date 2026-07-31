@@ -101,6 +101,21 @@ class AsyncioLogListener:
         self._stop_event.set()
         if self._thread and self._thread.is_alive():
             self._thread.join()
+        self.drain()
+
+    def drain(self) -> None:
+        """
+        Handle the records left in the queue.
+
+        The thread stops on its event without looking at what remains
+        queued, and those last records are precisely the ones explaining
+        why the application is shutting down.
+        """
+        while True:
+            try:
+                self.handler.handle(self.queue.get_nowait())
+            except queue.Empty:
+                break
 
     def _process_logs(self) -> None:
         while not self._stop_event.is_set():
