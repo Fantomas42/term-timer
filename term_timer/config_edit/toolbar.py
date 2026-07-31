@@ -1,4 +1,6 @@
 """Toolbar for config editor with save/reset/cancel buttons."""
+from typing import Any
+
 import rtoml
 from textual.app import ComposeResult
 from textual.containers import Horizontal
@@ -100,8 +102,29 @@ class ConfigToolbar(Widget):
     def write_config_file(
         config_data: ConfigData,
     ) -> None:
-        """Write configuration data to TOML file."""
-        rtoml.dump(config_data, CONFIG_FILE)
+        """
+        Write configuration data to TOML file.
+
+        The editor only knows about a handful of sections, so the edited
+        ones are merged over the file instead of replacing it, leaving
+        whatever it does not handle untouched, like the [ui] theme.
+
+        Merging stays shallow on purpose: a key the editor owns, such as
+        the cube table, is replaced as a whole so that removing a cube in
+        the interface really removes it from the file.
+        """
+        config: dict[str, Any] = {}
+        if CONFIG_FILE.exists():
+            config = rtoml.load(CONFIG_FILE)
+
+        for section, values in config_data.items():
+            current = config.get(section)
+            if isinstance(current, dict):
+                current.update(values)
+            else:
+                config[section] = values
+
+        rtoml.dump(config, CONFIG_FILE)
 
     def reset_config(self) -> None:
         """Reset all sections to current saved values."""

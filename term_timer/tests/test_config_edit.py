@@ -1,10 +1,13 @@
 """Tests for the Bluetooth section of the configuration editor."""
+import tempfile
 import unittest
 from contextlib import AsyncExitStack
+from pathlib import Path
 from typing import Any
 from typing import ClassVar
 from unittest.mock import patch
 
+import rtoml
 from textual.containers import Vertical
 from textual.widgets import Button
 from textual.widgets import Collapsible
@@ -13,6 +16,7 @@ from textual.widgets import TabbedContent
 
 from term_timer.config_edit.app import ConfigEditApp
 from term_timer.config_edit.sections import BluetoothSection
+from term_timer.config_edit.toolbar import ConfigToolbar
 
 MULTI_CUBE_CONFIG: dict[str, Any] = {
     'bluetooth': {
@@ -231,3 +235,92 @@ class TestBluetoothSectionFolding(BluetoothSectionTestCase):
         await self.pilot.pause(0.3)
 
         self.assertEqual(self.titles[-1], 'aichuan - MoYu AI')
+
+
+class TestWriteConfigFile(unittest.TestCase):
+    """Tests for writing the edited configuration back to the file."""
+
+    def setUp(self) -> None:
+        """Point the toolbar at a throwaway configuration file."""
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+
+        self.config_file = Path(directory.name) / 'config.toml'
+
+        patcher = patch(
+            'term_timer.config_edit.toolbar.CONFIG_FILE',
+            self.config_file,
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def write(self, content: str) -> None:
+        """Install a configuration file to be edited."""
+        self.config_file.write_text(content, encoding='utf-8')
+
+    @property
+    def written(self) -> dict[str, Any]:
+        """Get the configuration as it stands on disk."""
+        return rtoml.load(self.config_file)
+
+    def test_sections_are_written(self) -> None:
+        """The edited sections land in the file."""
+        ConfigToolbar.write_config_file({'timer': {'sound': 'audio'}})
+
+        self.assertEqual(self.written['timer']['sound'], 'audio')
+
+    def test_missing_file_is_created(self) -> None:
+        """Saving without a configuration file writes a new one."""
+        ConfigToolbar.write_config_file({'timer': {'countdown': 3.0}})
+
+        self.assertEqual(self.written, {'timer': {'countdown': 3.0}})
+
+    def test_unknown_sections_survive(self) -> None:
+        """A section the editor ignores, like the theme, is kept."""
+        self.write(
+            '[ui]\n'
+            'timer_base = "bold #FF0000"\n',
+        )
+
+        ConfigToolbar.write_config_file({'timer': {'sound': 'audio'}})
+
+        self.assertEqual(self.written['ui']['timer_base'], 'bold #FF0000')
+
+    def test_unknown_keys_survive(self) -> None:
+        """A key the editor ignores inside an edited section is kept."""
+        self.write(
+            '[timer]\n'
+            'sound = "beep"\n'
+            'experimental = true\n',
+        )
+
+        ConfigToolbar.write_config_file({'timer': {'sound': 'audio'}})
+
+        self.assertEqual(
+            self.written['timer'],
+            {'sound': 'audio', 'experimental': True},
+        )
+
+    def test_removed_cube_is_forgotten(self) -> None:
+        """A table the editor owns is replaced, not merged."""
+        self.write(
+            '[bluetooth]\n'
+            'default = ""\n'
+            '\n'
+            '[bluetooth.cubes.gan12]\n'
+            'name = "GAN 12 ui FreePlay"\n'
+            '\n'
+            '[bluetooth.cubes.weilong]\n'
+            'name = "MoYu WeiLong v10 AI"\n',
+        )
+
+        ConfigToolbar.write_config_file(
+            {
+                'bluetooth': {
+                    'default': '',
+                    'cubes': {'gan12': {'name': 'GAN 12 ui FreePlay'}},
+                },
+            },
+        )
+
+        self.assertEqual(list(self.written['bluetooth']['cubes']), ['gan12'])
