@@ -59,6 +59,28 @@ def resolve_routine_cube(selector: object) -> CubeDevice | None:
     return None
 
 
+def resolve_routine_gyroscope(selector: object) -> bool | None:
+    """
+    Resolve the gyroscope setting a routine file asks for.
+
+    The ``use_gyroscope`` key is optional: left out, the cube being
+    connected keeps its own setting, exactly like the ``-g`` option left
+    out of the command line.
+
+    Args:
+        selector: Raw value of the routine ``use_gyroscope`` key.
+
+    Returns:
+        The setting to force on the driver, or None to leave the choice
+        to the cube.
+
+    """
+    if selector is None:
+        return None
+
+    return bool(selector)
+
+
 def list_routines() -> int:
     """
     List available routine files from the routines directory.
@@ -144,7 +166,7 @@ async def routine(  # noqa: C901, PLR0911, PLR0912, PLR0915
         return 0
 
     cube = resolve_routine_cube(config.get('bluetooth'))
-    use_gyroscope: bool = bool(config.get('use_gyroscope'))
+    use_gyroscope = resolve_routine_gyroscope(config.get('use_gyroscope'))
     current: Timer | Trainer | Driller | None = None
     started_at = time.monotonic_ns()
 
