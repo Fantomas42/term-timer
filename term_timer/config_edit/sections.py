@@ -14,6 +14,7 @@ from textual.containers import Vertical
 from textual.containers import VerticalScroll
 from textual.widgets import Button
 from textual.widgets import Checkbox
+from textual.widgets import Collapsible
 from textual.widgets import Input
 from textual.widgets import Select
 from textual.widgets import SelectionList
@@ -43,8 +44,10 @@ class ConfigSection(VerticalScroll):
     }
 
     ConfigSection Grid {
+        height: auto;
         grid-size: 2;
-        grid-gutter: 0 2;
+        grid-rows: auto;
+        grid-gutter: 1 2;
         padding: 0;
     }
 
@@ -52,13 +55,12 @@ class ConfigSection(VerticalScroll):
         height: auto;
         padding: 0;
         text-style: bold;
-        margin-top: 1;
     }
 
+    /* Rows are spaced by the gutter, a margin here eating their height */
     ConfigSection .field-container {
         height: auto;
         padding: 0;
-        margin-top: 1;
     }
 
     ConfigSection .field-help {
@@ -769,14 +771,23 @@ class CubeCard(Vertical):
     DEFAULT_CSS = """
     CubeCard {
         height: auto;
+    }
+
+    CubeCard Collapsible {
         border: round $primary;
         padding: 0 1;
         margin-bottom: 1;
     }
 
+    CubeCard Contents {
+        padding: 0 0 0 1;
+    }
+
     CubeCard Grid {
+        height: auto;
         grid-size: 2;
-        grid-gutter: 0 2;
+        grid-rows: auto;
+        grid-gutter: 1 2;
     }
 
     CubeCard .cube-remove {
@@ -814,89 +825,129 @@ class CubeCard(Vertical):
         gyroscope = self.data.get('use_gyroscope')
         threshold = self.data.get('rotation_threshold')
 
-        with Grid():
-            yield Static('Label', classes='field-label')
-            with Vertical(classes='field-container'):
-                yield Input(
-                    value=self.label_name,
-                    placeholder='gan12',
-                    classes='cube-label',
-                )
-                yield Static(
-                    'Name selecting the cube: term-timer solve -b gan12',
-                    classes='field-help',
-                )
+        # A cube being added is the one worth editing, so it opens alone
+        with Collapsible(
+            title=self.card_title,
+            collapsed=bool(self.label_name),
+        ):
+            with Grid():
+                yield Static('Short Name', classes='field-label')
+                with Vertical(classes='field-container'):
+                    yield Input(
+                        value=self.label_name,
+                        placeholder='gan12',
+                        classes='cube-label',
+                    )
+                    yield Static(
+                        'Name selecting the cube: term-timer solve -b gan12',
+                        classes='field-help',
+                    )
 
-            yield Static('Device Name', classes='field-label')
-            with Vertical(classes='field-container'):
-                yield Input(
-                    value=str(self.data.get('name', '')),
-                    placeholder='GAN 356 i3',
-                    classes='cube-name',
-                )
-                yield Static(
-                    'Displayed name, also filtering a scan (optional)',
-                    classes='field-help',
-                )
+                yield Static('Display Name', classes='field-label')
+                with Vertical(classes='field-container'):
+                    yield Input(
+                        value=str(self.data.get('name', '')),
+                        placeholder='GAN 356 i3',
+                        classes='cube-name',
+                    )
+                    yield Static(
+                        'Name shown for this cube, yours to '
+                        'choose (optional)',
+                        classes='field-help',
+                    )
 
-            yield Static('Device Address', classes='field-label')
-            with Vertical(classes='field-container'):
-                yield Input(
-                    value=str(self.data.get('address', '')),
-                    placeholder='00:00:00:00:00:00',
-                    classes='cube-address',
-                )
-                yield Static(
-                    'MAC address, or system UUID on macOS. '
-                    'Empty to find the cube by scanning',
-                    classes='field-help',
-                )
+                yield Static('Device Address', classes='field-label')
+                with Vertical(classes='field-container'):
+                    yield Input(
+                        value=str(self.data.get('address', '')),
+                        placeholder='00:00:00:00:00:00',
+                        classes='cube-address',
+                    )
+                    yield Static(
+                        'MAC address, or system UUID on macOS. '
+                        'Empty to find the cube by scanning',
+                        classes='field-help',
+                    )
 
-            yield Static('Use Gyroscope', classes='field-label')
-            with Vertical(classes='field-container'):
-                yield Select(
-                    options=[
-                        ('Inherit', INHERIT),
-                        ('Enabled', 'true'),
-                        ('Disabled', 'false'),
-                    ],
-                    value=(
-                        INHERIT if gyroscope is None
-                        else str(bool(gyroscope)).lower()
-                    ),
-                    allow_blank=False,
-                    classes='cube-gyroscope',
-                )
+                yield Static('Gyroscope', classes='field-label')
+                with Vertical(classes='field-container'):
+                    yield Select(
+                        options=[
+                            ('Inherit', INHERIT),
+                            ('Enabled', 'true'),
+                            ('Disabled', 'false'),
+                        ],
+                        value=(
+                            INHERIT if gyroscope is None
+                            else str(bool(gyroscope)).lower()
+                        ),
+                        allow_blank=False,
+                        classes='cube-gyroscope',
+                    )
+                    yield Static(
+                        'Inherit follows the default gyroscope above',
+                        classes='field-help',
+                    )
 
-            yield Static('Rotation Threshold', classes='field-label')
-            with Vertical(classes='field-container'):
-                yield Input(
-                    value='' if threshold is None else str(threshold),
-                    type='number',
-                    placeholder='inherited',
-                    classes='cube-threshold',
-                )
-                yield Static(
-                    'Detection threshold of this cube, '
-                    'empty to inherit the global one',
-                    classes='field-help',
-                )
+                yield Static('Rotation Threshold', classes='field-label')
+                with Vertical(classes='field-container'):
+                    yield Input(
+                        value='' if threshold is None else str(threshold),
+                        type='number',
+                        placeholder='inherited',
+                        classes='cube-threshold',
+                    )
+                    yield Static(
+                        'Detection threshold of this cube, '
+                        'empty to inherit the default above',
+                        classes='field-help',
+                    )
 
-        yield Button(
-            'Remove this cube',
-            variant='error',
-            classes='cube-remove',
+            yield Button(
+                'Remove this cube',
+                variant='error',
+                classes='cube-remove',
+            )
+
+    def field_value(self, field: str, composing: str = '') -> str:
+        """
+        Read a field of the card, its configured value while composing.
+
+        Args:
+            field: Class naming the input holding the field.
+            composing: Value to read while the input is not composed yet.
+
+        Returns:
+            The value being edited, stripped.
+
+        """
+        inputs = self.query(f'.cube-{ field }').results(Input)
+
+        return next(
+            (entry.value.strip() for entry in inputs),
+            composing,
         )
+
+    @property
+    def card_title(self) -> str:
+        """Get the line naming the folded cube, its fields once typed."""
+        label = self.field_value('label', self.label_name).lower()
+
+        if not label:
+            return 'New cube'
+
+        parts = (
+            label,
+            self.field_value('name', str(self.data.get('name', ''))),
+            self.field_value('address', str(self.data.get('address', ''))),
+        )
+
+        return ' - '.join(part for part in parts if part)
 
     @property
     def label_value(self) -> str:
         """Get the label naming the cube, empty while it has none."""
-        fields = self.query('.cube-label').results(Input)
-
-        return next(
-            (field.value.strip().lower() for field in fields),
-            '',
-        )
+        return self.field_value('label', self.label_name).lower()
 
     def as_config(self) -> dict[str, Any]:
         """
@@ -909,9 +960,11 @@ class CubeCard(Vertical):
         gyroscope = self.query_one('.cube-gyroscope', Select)
         threshold = self.query_one('.cube-threshold', Input).value.strip()
 
+        # A field left empty is an absent key, never an empty value
         cube: dict[str, Any] = {
-            'name': self.query_one('.cube-name', Input).value.strip(),
-            'address': self.query_one('.cube-address', Input).value.strip(),
+            field: value
+            for field in ('name', 'address')
+            if (value := self.field_value(field))
         }
 
         if gyroscope.value != INHERIT:
@@ -922,6 +975,13 @@ class CubeCard(Vertical):
 
         return cube
 
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """Keep the folded title showing the fields being typed."""
+        titling = {'cube-label', 'cube-name', 'cube-address'}
+
+        if event.input.classes & titling:
+            self.query_one(Collapsible).title = self.card_title
+
 
 class BluetoothSection(ConfigSection):
     """Configuration section for Bluetooth settings."""
@@ -929,6 +989,11 @@ class BluetoothSection(ConfigSection):
     section_name = 'bluetooth'
 
     DEFAULT_CSS = """
+    /* The cube list stands outside the grid, so it spaces itself */
+    BluetoothSection > .field-label {
+        margin-top: 1;
+    }
+
     BluetoothSection .cube-list {
         height: auto;
     }
@@ -938,6 +1003,11 @@ class BluetoothSection(ConfigSection):
         width: auto;
     }
     """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
+        """Initialize the Bluetooth section."""
+        super().__init__(*args, **kwargs)
+        self.default_card: CubeCard | None = None
 
     @staticmethod
     def compose() -> ComposeResult:
@@ -958,14 +1028,18 @@ class BluetoothSection(ConfigSection):
                     classes='field-help',
                 )
 
-            yield Static('Use Gyroscope', classes='field-label')
+            yield Static('Default Gyroscope', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Checkbox(
                     'Enable gyroscope-based rotation detection',
                     id='use_gyroscope',
                 )
+                yield Static(
+                    'Applied to every cube leaving it inherited',
+                    classes='field-help',
+                )
 
-            yield Static('Rotation Threshold', classes='field-label')
+            yield Static('Default Threshold', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Input(
                     id='rotation_threshold',
@@ -973,7 +1047,8 @@ class BluetoothSection(ConfigSection):
                     placeholder='75.0',
                 )
                 yield Static(
-                    'Gyroscope rotation detection threshold (degrees)',
+                    'Gyroscope rotation detection threshold (degrees), '
+                    'applied to every cube leaving it inherited',
                     classes='field-help',
                 )
 
@@ -1006,9 +1081,8 @@ class BluetoothSection(ConfigSection):
         for index, (label, data) in enumerate(configured.items()):
             cubes.mount(CubeCard(index, str(label), data))
 
-        # Cards compose on the next refresh, their labels only readable then
-        self.call_after_refresh(
-            self.refresh_defaults,
+        # Cards answer with their configured label until they compose
+        self.refresh_defaults(
             str(bluetooth_config.get('default', '')),
         )
 
@@ -1038,20 +1112,47 @@ class BluetoothSection(ConfigSection):
         """
         Offer the edited cubes as the default one, keeping the choice.
 
+        The choice follows the card rather than the label it carries, so
+        that renaming the designated cube keeps designating it.
+
         Args:
-            chosen: Label to select, the current selection when empty.
+            chosen: Label to select, the current card when empty.
 
         """
         default = self.query_one('#default', Select)
-        selected = chosen or (
-            '' if default.is_blank() else str(default.value)
-        )
+        cards = self.cards
 
-        labels = [card.label_value for card in self.cards if card.label_value]
+        if chosen:
+            self.default_card = next(
+                (card for card in cards if card.label_value == chosen),
+                None,
+            )
+
+        labels = [card.label_value for card in cards if card.label_value]
         default.set_options((label, label) for label in labels)
+
+        selected = next(
+            (card.label_value for card in cards if card is self.default_card),
+            '',
+        )
 
         if selected in labels:
             default.value = selected
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        """Remember which card the default cube is picked from."""
+        super().on_select_changed(event)
+
+        if event.select.id != 'default' or event.value is Select.BLANK:
+            return
+
+        self.default_card = next(
+            (
+                card for card in self.cards
+                if card.label_value == str(event.value)
+            ),
+            None,
+        )
 
     def on_input_changed(self, event: Input.Changed) -> None:
         """Keep the default cube in sync with the labels being typed."""
