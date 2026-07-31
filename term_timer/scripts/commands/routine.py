@@ -5,13 +5,12 @@ from argparse import Namespace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from cubing_algs.exceptions import InvalidMoveError
 from rich import box
 from rich.table import Table
 
 from term_timer.config import CubeDevice
 from term_timer.constants import ROUTINES_DIRECTORY
-from term_timer.exceptions import InvalidCaseError
+from term_timer.exceptions import SESSION_ERRORS
 from term_timer.formatter import format_time
 from term_timer.interface.console import console
 from term_timer.routine import SessionConfig
@@ -19,6 +18,7 @@ from term_timer.routine import build_drill_instance
 from term_timer.routine import build_solve_instance
 from term_timer.routine import build_train_instance
 from term_timer.routine import run_session
+from term_timer.wakelock import keep_awake
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -154,6 +154,14 @@ async def run_routine_sessions(
     The cube is connected once, by the first session, then handed over
     from one session to the next, and released whatever happens.
 
+    An invalid algorithm, case or cube state stops the whole routine on
+    the spot: whether it comes from building a session or from running
+    one, the routine cannot be trusted to carry on.
+
+    A routine chains sessions solved on a smart cube, producing no
+    keyboard nor mouse event for as long as it lasts, so it holds a wake
+    lock from end to end, exactly like a single solving session does.
+
     Args:
         sessions: The sessions the routine chains.
         cube: The cube to connect to, or None to run without one.
@@ -168,54 +176,51 @@ async def run_routine_sessions(
     started_at = time.monotonic_ns()
 
     try:
-        for index, session_config in enumerate(sessions):
-            session_type = session_config.get('type', '')
+        with keep_awake():
+            for index, session_config in enumerate(sessions):
+                session_type = session_config.get('type', '')
 
-            console.print(
-                f'🥋 Routine { index + 1 }/{ len(sessions) }:'
-                f' { session_type.title() }',
-                style='routine',
-            )
-
-            builder = SESSION_BUILDERS.get(session_type)
-
-            if builder is None:
                 console.print(
-                    f'😱 Unknown session type: { session_type }',
-                    style='warning',
+                    f'🥋 Routine { index + 1 }/{ len(sessions) }:'
+                    f' { session_type.title() }',
+                    style='routine',
                 )
-                return 1
 
-            try:
+                builder = SESSION_BUILDERS.get(session_type)
+
+                if builder is None:
+                    console.print(
+                        f'😱 Unknown session type: { session_type }',
+                        style='warning',
+                    )
+                    return 1
+
                 instance = builder(session_config)
-            except InvalidCaseError as error:
-                console.print('😱', str(error), style='warning')
-                return 1
 
-            if index == 0 and cube is not None:
-                await instance.bluetooth_connect(
-                    cube,
-                    use_gyroscope=use_gyroscope,
+                if index == 0 and cube is not None:
+                    await instance.bluetooth_connect(
+                        cube,
+                        use_gyroscope=use_gyroscope,
+                    )
+                elif current is not None and current.bluetooth_interface:
+                    await current.bluetooth_handoff(instance)
+
+                current = instance
+
+                await run_session(
+                    instance,
+                    session_config.get('count', 0),
+                    show_stats=session_config.get('show_stats', False),
                 )
-            elif current is not None and current.bluetooth_interface:
-                await current.bluetooth_handoff(instance)
 
-            current = instance
-
-            await run_session(
-                instance,
-                session_config.get('count', 0),
-                show_stats=session_config.get('show_stats', False),
+            elapsed_ns = time.monotonic_ns() - started_at
+            duration = format_time(elapsed_ns, allow_dnf=False)
+            console.print(
+                f'[routine]🏆 Routine complete ![/routine] '
+                f'[time]{ duration }[/time]',
             )
 
-        elapsed_ns = time.monotonic_ns() - started_at
-        duration = format_time(elapsed_ns, allow_dnf=False)
-        console.print(
-            f'[routine]🏆 Routine complete ![/routine] '
-            f'[time]{ duration }[/time]',
-        )
-
-    except InvalidMoveError as error:
+    except SESSION_ERRORS as error:
         console.print('😱', str(error), style='warning')
         return 1
     finally:
@@ -248,9 +253,17 @@ async def routine(options: Namespace) -> int:
         )
         return 1
 
-    config = json.loads(
-        config_path.read_text(encoding='utf-8'),
-    )
+    try:
+        config = json.loads(
+            config_path.read_text(encoding='utf-8'),
+        )
+    except (json.JSONDecodeError, OSError) as error:
+        console.print(
+            f'😱 Unreadable routine { options.routine_file }: { error }',
+            style='warning',
+        )
+        return 1
+
     sessions: list[SessionConfig] = config.get('sessions', [])
 
     if not sessions:

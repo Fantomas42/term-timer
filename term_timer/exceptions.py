@@ -1,4 +1,7 @@
 """Custom exception classes for the term-timer application."""
+from typing import Final
+
+from cubing_algs.exceptions import CubingAlgsError
 
 
 class CubeNotFoundError(Exception):
@@ -19,3 +22,10 @@ class InvalidOrientationError(Exception):
 
 class ReplayError(Exception):
     """Raised when a Bluetooth replay file is missing or invalid."""
+
+
+SESSION_ERRORS: Final[tuple[type[Exception], ...]] = (
+    CubingAlgsError,
+    InvalidAlgorithmError,
+    InvalidCaseError,
+)

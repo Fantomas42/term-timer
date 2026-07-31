@@ -1,9 +1,12 @@
 """Tests for Driller.validate_drill_move()."""
 import unittest
+from argparse import Namespace
+from unittest import mock
 
 from cubing_algs.move import Move
 
 from term_timer.driller import Driller
+from term_timer.scripts.commands.driller import driller
 
 
 def make_driller(algorithm: str, *, duration: int = 0) -> Driller:
@@ -41,6 +44,48 @@ class TestDrillerInit(unittest.TestCase):
         """Supplied duration is stored on the instance."""
         driller = make_driller('U R', duration=120)
         self.assertEqual(driller.duration, 120)
+
+
+class TestDrillerCommand(unittest.IsolatedAsyncioTestCase):
+    """Tests for the algorithms the drill command refuses."""
+
+    @staticmethod
+    def drill_options(algorithm: str) -> Namespace:
+        """
+        Build the options of a drill run on an algorithm.
+
+        Returns:
+            The options the command parses its run from.
+
+        """
+        return Namespace(
+            algorithm=algorithm,
+            times=1,
+            duration=0,
+            orientation='UF',
+            countdown=0,
+            metronome=0,
+        )
+
+    async def test_invalid_move_reports_a_failure(self) -> None:
+        """An algorithm holding an impossible move is reported."""
+        with mock.patch(
+                'term_timer.scripts.commands.driller.console',
+        ) as printer:
+            code = await driller(self.drill_options('R Q U'))
+
+        self.assertEqual(code, 1)
+        self.assertIn('invalid move', str(printer.print.call_args.args))
+
+    async def test_too_short_algorithm_reports_a_failure(self) -> None:
+        """An algorithm too short to be drilled is reported."""
+        with mock.patch(
+                'term_timer.scripts.commands.driller.console',
+        ) as printer:
+            code = await driller(self.drill_options('R'))
+
+        self.assertEqual(code, 1)
+        self.assertIn('too short', str(printer.print.call_args.args))
 
 
 class TestValidateSingleMoves(unittest.TestCase):

@@ -10,10 +10,12 @@ from typing import Any
 from typing import ClassVar
 from unittest import mock
 
+from cubing_algs.exceptions import InvalidCubeStateError
 from cubing_algs.exceptions import InvalidMoveError
 from rich.console import Console
 
 from term_timer.config import CubeDevice
+from term_timer.exceptions import InvalidAlgorithmError
 from term_timer.exceptions import InvalidCaseError
 from term_timer.routine import SessionConfig
 from term_timer.scripts.commands.routine import list_routines
@@ -130,6 +132,7 @@ class RoutineRun:
         self.instances: list[RoutineInterfaceDouble] = []
         self.sessions = mock.AsyncMock()
         self.console = mock.MagicMock()
+        self.wake_lock = mock.MagicMock()
 
     @property
     def printed(self) -> str:
@@ -150,12 +153,15 @@ class RoutineRun:
 @contextmanager
 def routine_doubles(
         failures: dict[str, Exception] | None = None,
+        session_failure: Exception | None = None,
 ) -> Iterator[RoutineRun]:
     """
     Replace what a routine builds and prints with doubles.
 
     Args:
         failures: The error each session type raises, by type.
+        session_failure: The error running a session raises, None to
+            let every session run to its end.
 
     Yields:
         The outcome the routine fills in.
@@ -163,6 +169,9 @@ def routine_doubles(
     """
     failures = failures or {}
     run = RoutineRun()
+
+    if session_failure is not None:
+        run.sessions.side_effect = session_failure
     builders = {
         session_type: RoutineBuilderDouble(
             run.instances,
@@ -181,6 +190,10 @@ def routine_doubles(
             mock.patch(
                 'term_timer.scripts.commands.routine.run_session',
                 run.sessions,
+            ),
+            mock.patch(
+                'term_timer.scripts.commands.routine.keep_awake',
+                run.wake_lock,
             ),
             mock.patch.dict(
                 'term_timer.scripts.commands.routine.SESSION_BUILDERS',
@@ -308,8 +321,8 @@ class TestListRoutines(unittest.TestCase):
         self.assertNotIn('broken', rendered)
 
 
-class TestRoutine(unittest.IsolatedAsyncioTestCase):
-    """Tests for the sessions a routine file chains."""
+class RoutineTestCase(unittest.IsolatedAsyncioTestCase):
+    """Base of the routine tests, running a routine file on doubles."""
 
     SOLVE_SESSION: ClassVar[dict[str, Any]] = {'type': 'solve', 'count': 1}
 
@@ -318,6 +331,7 @@ class TestRoutine(unittest.IsolatedAsyncioTestCase):
             config: dict[str, Any],
             *,
             failures: dict[str, Exception] | None = None,
+            session_failure: Exception | None = None,
     ) -> RoutineRun:
         """
         Run a routine file written to a temporary directory.
@@ -325,6 +339,7 @@ class TestRoutine(unittest.IsolatedAsyncioTestCase):
         Args:
             config: Contents of the routine file to run.
             failures: The error each session type raises, by type.
+            session_failure: The error running a session raises.
 
         Returns:
             The outcome of the routine, and the doubles it drove.
@@ -334,12 +349,16 @@ class TestRoutine(unittest.IsolatedAsyncioTestCase):
             config_path = Path(directory) / 'testing.json'
             config_path.write_text(json.dumps(config), encoding='utf-8')
 
-            with routine_doubles(failures) as run:
+            with routine_doubles(failures, session_failure) as run:
                 run.code = await routine(
                     Namespace(routine_file=str(config_path)),
                 )
 
         return run
+
+
+class TestRoutine(RoutineTestCase):
+    """Tests for the sessions a routine file chains."""
 
     async def test_missing_file_reports_a_failure(self) -> None:
         """A routine file that is nowhere stops on an error."""
@@ -350,6 +369,21 @@ class TestRoutine(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(code, 1)
         self.assertIn('Routine not found', run.printed)
+
+    async def test_unreadable_file_reports_a_failure(self) -> None:
+        """A routine file no JSON can be read from stops on an error."""
+        with TemporaryDirectory() as directory:
+            config_path = Path(directory) / 'broken.json'
+            config_path.write_text('{ not json', encoding='utf-8')
+
+            with routine_doubles() as run:
+                run.code = await routine(
+                    Namespace(routine_file=str(config_path)),
+                )
+
+        self.assertEqual(run.code, 1)
+        self.assertIn('Unreadable routine', run.printed)
+        self.assertEqual(len(run.instances), 0)
 
     async def test_bare_name_is_looked_up_in_the_directory(self) -> None:
         """A routine named without an extension comes from the directory."""
@@ -389,35 +423,6 @@ class TestRoutine(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(run.code, 0)
         self.assertIn('No sessions defined', run.printed)
 
-    async def test_unknown_session_type_reports_a_failure(self) -> None:
-        """A session type nothing can build stops the routine."""
-        run = await self.run_routine(
-            {'sessions': [{'type': 'meditate', 'count': 1}]},
-        )
-
-        self.assertEqual(run.code, 1)
-        self.assertIn('Unknown session type: meditate', run.printed)
-
-    async def test_invalid_case_reports_a_failure(self) -> None:
-        """A training session naming no known case stops the routine."""
-        run = await self.run_routine(
-            {'sessions': [{'type': 'train', 'step': 'oll', 'count': 1}]},
-            failures={'train': InvalidCaseError('Invalid case: Zz')},
-        )
-
-        self.assertEqual(run.code, 1)
-        self.assertIn('Invalid case: Zz', run.printed)
-
-    async def test_invalid_move_reports_a_failure(self) -> None:
-        """A drill session holding an impossible move stops the routine."""
-        run = await self.run_routine(
-            {'sessions': [{'type': 'drill', 'algorithm': 'Z', 'count': 1}]},
-            failures={'drill': InvalidMoveError('Invalid move: Z')},
-        )
-
-        self.assertEqual(run.code, 1)
-        self.assertIn('Invalid move: Z', run.printed)
-
     async def test_every_session_type_is_built_and_run(self) -> None:
         """Each session of a routine is built and run in order."""
         run = await self.run_routine(
@@ -447,6 +452,14 @@ class TestRoutine(unittest.IsolatedAsyncioTestCase):
             [False, True, False],
         )
         self.assertIn('Routine complete', run.printed)
+
+    async def test_the_routine_holds_a_wake_lock(self) -> None:
+        """The whole routine keeps the screen awake, released at the end."""
+        run = await self.run_routine({'sessions': [self.SOLVE_SESSION]})
+
+        self.assertEqual(run.code, 0)
+        run.wake_lock.assert_called_once_with()
+        self.assertEqual(run.wake_lock.return_value.__exit__.call_count, 1)
 
     async def test_without_bluetooth_nothing_is_connected(self) -> None:
         """A routine refusing Bluetooth builds sessions holding no cube."""
@@ -483,21 +496,6 @@ class TestRoutine(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(first.disconnections, 0)
         self.assertEqual(second.disconnections, 0)
         self.assertEqual(third.disconnections, 1)
-
-    async def test_the_cube_is_released_on_a_failure(self) -> None:
-        """A routine stopping on an error still hangs up the cube."""
-        run = await self.run_routine(
-            {
-                'bluetooth': True,
-                'sessions': [
-                    self.SOLVE_SESSION,
-                    {'type': 'meditate', 'count': 1},
-                ],
-            },
-        )
-
-        self.assertEqual(run.code, 1)
-        self.assertEqual(run.instances[0].disconnections, 1)
 
     async def test_the_routine_pins_the_cube_it_names(self) -> None:
         """A routine naming a cube connects to that one."""
@@ -545,3 +543,120 @@ class TestRoutine(unittest.IsolatedAsyncioTestCase):
 
         self.assertIsNotNone(run.instances[0].gyroscope)
         self.assertFalse(run.instances[0].gyroscope)
+
+
+class TestRoutineFailures(RoutineTestCase):
+    """Tests for what a routine does of the errors it meets."""
+
+    async def test_unknown_session_type_reports_a_failure(self) -> None:
+        """A session type nothing can build stops the routine."""
+        run = await self.run_routine(
+            {'sessions': [{'type': 'meditate', 'count': 1}]},
+        )
+
+        self.assertEqual(run.code, 1)
+        self.assertIn('Unknown session type: meditate', run.printed)
+
+    async def test_invalid_case_reports_a_failure(self) -> None:
+        """A training session naming no known case stops the routine."""
+        run = await self.run_routine(
+            {'sessions': [{'type': 'train', 'step': 'oll', 'count': 1}]},
+            failures={'train': InvalidCaseError('Invalid case: Zz')},
+        )
+
+        self.assertEqual(run.code, 1)
+        self.assertIn('Invalid case: Zz', run.printed)
+
+    async def test_invalid_move_reports_a_failure(self) -> None:
+        """A drill session holding an impossible move stops the routine."""
+        run = await self.run_routine(
+            {'sessions': [{'type': 'drill', 'algorithm': 'Z', 'count': 1}]},
+            failures={'drill': InvalidMoveError('Invalid move: Z')},
+        )
+
+        self.assertEqual(run.code, 1)
+        self.assertIn('Invalid move: Z', run.printed)
+
+    async def test_invalid_algorithm_reports_a_failure(self) -> None:
+        """A drill session holding too short an algorithm stops it."""
+        run = await self.run_routine(
+            {'sessions': [{'type': 'drill', 'algorithm': 'R', 'count': 1}]},
+            failures={
+                'drill': InvalidAlgorithmError('Invalid algorithm: R'),
+            },
+        )
+
+        self.assertEqual(run.code, 1)
+        self.assertIn('Invalid algorithm: R', run.printed)
+
+    async def test_invalid_cube_state_reports_a_failure(self) -> None:
+        """Any error of the algorithm library stops the routine."""
+        run = await self.run_routine(
+            {'sessions': [self.SOLVE_SESSION]},
+            failures={'solve': InvalidCubeStateError('Invalid state')},
+        )
+
+        self.assertEqual(run.code, 1)
+        self.assertIn('Invalid state', run.printed)
+
+    async def test_error_while_running_reports_a_failure(self) -> None:
+        """An error thrown by a running session stops the routine."""
+        run = await self.run_routine(
+            {'sessions': [self.SOLVE_SESSION]},
+            session_failure=InvalidMoveError('Invalid move: Z'),
+        )
+
+        self.assertEqual(run.code, 1)
+        self.assertIn('Invalid move: Z', run.printed)
+        self.assertNotIn('Routine complete', run.printed)
+
+    async def test_error_while_running_skips_the_next_sessions(self) -> None:
+        """A session failing leaves the sessions it precedes unbuilt."""
+        run = await self.run_routine(
+            {
+                'sessions': [
+                    self.SOLVE_SESSION,
+                    {'type': 'train', 'step': 'oll', 'count': 1},
+                ],
+            },
+            session_failure=InvalidMoveError('Invalid move: Z'),
+        )
+
+        self.assertEqual(run.code, 1)
+        self.assertEqual(len(run.instances), 1)
+        self.assertEqual(run.sessions.await_count, 1)
+
+    async def test_the_cube_is_released_on_a_build_failure(self) -> None:
+        """A routine stopping on an error still hangs up the cube."""
+        run = await self.run_routine(
+            {
+                'bluetooth': True,
+                'sessions': [
+                    self.SOLVE_SESSION,
+                    {'type': 'meditate', 'count': 1},
+                ],
+            },
+        )
+
+        self.assertEqual(run.code, 1)
+        self.assertEqual(run.instances[0].disconnections, 1)
+
+    async def test_the_cube_is_released_on_a_running_failure(self) -> None:
+        """A session failing on the cube still hangs it up."""
+        run = await self.run_routine(
+            {'bluetooth': True, 'sessions': [self.SOLVE_SESSION]},
+            session_failure=InvalidMoveError('Invalid move: Z'),
+        )
+
+        self.assertEqual(run.code, 1)
+        self.assertEqual(run.instances[0].disconnections, 1)
+
+    async def test_the_wake_lock_is_released_on_a_failure(self) -> None:
+        """A routine stopping on an error lets the screen sleep again."""
+        run = await self.run_routine(
+            {'sessions': [self.SOLVE_SESSION]},
+            session_failure=InvalidMoveError('Invalid move: Z'),
+        )
+
+        self.assertEqual(run.code, 1)
+        self.assertEqual(run.wake_lock.return_value.__exit__.call_count, 1)
