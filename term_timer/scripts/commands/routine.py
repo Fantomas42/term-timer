@@ -21,9 +21,20 @@ from term_timer.routine import build_train_instance
 from term_timer.routine import run_session
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from term_timer.driller import Driller
     from term_timer.timer import Timer
     from term_timer.trainer import Trainer
+
+    SessionInstance = Timer | Trainer | Driller
+    SessionBuilder = Callable[[SessionConfig], SessionInstance]
+
+SESSION_BUILDERS: 'dict[str, SessionBuilder]' = {
+    'train': build_train_instance,
+    'solve': build_solve_instance,
+    'drill': build_drill_instance,
+}
 
 
 def resolve_routine_cube(selector: object) -> CubeDevice | None:
@@ -131,9 +142,90 @@ def list_routines() -> int:
     return 0
 
 
-async def routine(  # noqa: C901, PLR0911, PLR0912, PLR0915
-        options: Namespace,
+async def run_routine_sessions(
+        sessions: list[SessionConfig],
+        cube: CubeDevice | None,
+        *,
+        use_gyroscope: bool | None,
 ) -> int:
+    """
+    Build and run every session of a routine, in order.
+
+    The cube is connected once, by the first session, then handed over
+    from one session to the next, and released whatever happens.
+
+    Args:
+        sessions: The sessions the routine chains.
+        cube: The cube to connect to, or None to run without one.
+        use_gyroscope: The gyroscope setting to force on the driver, or
+            None to leave the choice to the cube.
+
+    Returns:
+        Exit code (0 for success).
+
+    """
+    current: SessionInstance | None = None
+    started_at = time.monotonic_ns()
+
+    try:
+        for index, session_config in enumerate(sessions):
+            session_type = session_config.get('type', '')
+
+            console.print(
+                f'🥋 Routine { index + 1 }/{ len(sessions) }:'
+                f' { session_type.title() }',
+                style='routine',
+            )
+
+            builder = SESSION_BUILDERS.get(session_type)
+
+            if builder is None:
+                console.print(
+                    f'😱 Unknown session type: { session_type }',
+                    style='warning',
+                )
+                return 1
+
+            try:
+                instance = builder(session_config)
+            except InvalidCaseError as error:
+                console.print('😱', str(error), style='warning')
+                return 1
+
+            if index == 0 and cube is not None:
+                await instance.bluetooth_connect(
+                    cube,
+                    use_gyroscope=use_gyroscope,
+                )
+            elif current is not None and current.bluetooth_interface:
+                await current.bluetooth_handoff(instance)
+
+            current = instance
+
+            await run_session(
+                instance,
+                session_config.get('count', 0),
+                show_stats=session_config.get('show_stats', False),
+            )
+
+        elapsed_ns = time.monotonic_ns() - started_at
+        duration = format_time(elapsed_ns, allow_dnf=False)
+        console.print(
+            f'[routine]🏆 Routine complete ![/routine] '
+            f'[time]{ duration }[/time]',
+        )
+
+    except InvalidMoveError as error:
+        console.print('😱', str(error), style='warning')
+        return 1
+    finally:
+        if current and current.bluetooth_interface:
+            await current.bluetooth_disconnect()
+
+    return 0
+
+
+async def routine(options: Namespace) -> int:
     """
     Run a daily practice routine from a JSON config file.
 
@@ -167,100 +259,9 @@ async def routine(  # noqa: C901, PLR0911, PLR0912, PLR0915
 
     cube = resolve_routine_cube(config.get('bluetooth'))
     use_gyroscope = resolve_routine_gyroscope(config.get('use_gyroscope'))
-    current: Timer | Trainer | Driller | None = None
-    started_at = time.monotonic_ns()
 
-    try:
-        for index, session_config in enumerate(sessions):
-            session_type = session_config.get('type', '')
-            count = session_config.get('count', 0)
-
-            console.print(
-                f'🥋 Routine { index + 1 }/{ len(sessions) }:'
-                f' { session_type.title() }',
-                style='routine',
-            )
-
-            if session_type == 'train':
-                try:
-                    train_instance = build_train_instance(session_config)
-                except InvalidCaseError as error:
-                    console.print('😱', str(error), style='warning')
-                    return 1
-
-                if index == 0 and cube is not None:
-                    await train_instance.bluetooth_connect(
-                        cube,
-                        use_gyroscope=use_gyroscope,
-                    )
-                elif current is not None and current.bluetooth_interface:
-                    await current.bluetooth_handoff(train_instance)
-
-                current = train_instance
-
-                await run_session(
-                    train_instance,
-                    count,
-                    show_stats=session_config.get('show_stats', False),
-                )
-
-            elif session_type == 'solve':
-                solve_instance = build_solve_instance(session_config)
-
-                if index == 0 and cube is not None:
-                    await solve_instance.bluetooth_connect(
-                        cube,
-                        use_gyroscope=use_gyroscope,
-                    )
-                elif current is not None and current.bluetooth_interface:
-                    await current.bluetooth_handoff(solve_instance)
-
-                current = solve_instance
-
-                await run_session(
-                    solve_instance,
-                    count,
-                    show_stats=session_config.get('show_stats', False),
-                )
-
-            elif session_type == 'drill':
-                drill_instance = build_drill_instance(session_config)
-
-                if index == 0 and cube is not None:
-                    await drill_instance.bluetooth_connect(
-                        cube,
-                        use_gyroscope=use_gyroscope,
-                    )
-                elif current is not None and current.bluetooth_interface:
-                    await current.bluetooth_handoff(drill_instance)
-
-                current = drill_instance
-
-                await run_session(
-                    drill_instance,
-                    count,
-                    show_stats=session_config.get('show_stats', False),
-                )
-
-            else:
-                console.print(
-                    f'😱 Unknown session type: { session_type }',
-                    style='warning',
-                )
-                return 1
-
-        elapsed_ns = time.monotonic_ns() - started_at
-        duration = format_time(elapsed_ns, allow_dnf=False)
-        console.print(
-            f'[routine]🏆 Routine complete ![/routine] '
-            f'[time]{ duration }[/time]',
-        )
-
-    except InvalidMoveError as error:
-        console.print('😱', str(error), style='warning')
-        return 1
-    finally:
-        if current and current.bluetooth_interface:
-            await current.bluetooth_disconnect()
-
-    return 0
+    return await run_routine_sessions(
+        sessions,
+        cube,
+        use_gyroscope=use_gyroscope,
+    )
