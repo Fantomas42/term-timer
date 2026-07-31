@@ -69,6 +69,7 @@ class FSRSScheduler:
         )
         self.last_case: str | None = None
         self.session_start = datetime.now(UTC)
+        self.served_reviews: dict[str, datetime | None] = {}
 
     def update_card(self, card: Card | None, rating: Rating) -> Card:
         """
@@ -106,8 +107,11 @@ class FSRSScheduler:
         The random fallback never serves the same case twice in a row
         (when the pool allows it). Due cards are exempt: immediate
         repetition of a due card is the massed practice the learning
-        steps are designed for. New cards cannot repeat by construction
-        (a served case gains a card and leaves the new pool).
+        steps are designed for — as long as the card actually moved,
+        see ``stalled``. A rated new case leaves the new pool by
+        construction (it gains a card); an unrated one is held back by
+        the same session rule, since nothing else would ever take it
+        out of the pool.
 
         Args:
             cards: FSRS cards keyed by case code
@@ -120,17 +124,21 @@ class FSRSScheduler:
             Case code to practice next.
 
         """
-        due_cards = self.get_due_cards(cards)
+        due_cards = [
+            code for code in self.get_due_cards(cards)
+            if not self.stalled(code, cards[code])
+        ]
 
         if due_cards:
-            self.last_case = self.prioritize_due(cards, due_cards)[0]
-            return self.last_case
+            return self.serve(self.prioritize_due(cards, due_cards)[0], cards)
 
-        new_cards = self.get_new_cards(cards, probabilities, new_cases_limit)
+        unseen = self.get_new_cards(cards, probabilities, new_cases_limit)
+        new_cards = [c for c in unseen if c not in self.served_reviews]
 
         if new_cards:
-            self.last_case = self.weighted_choice(new_cards, probabilities)
-            return self.last_case
+            return self.serve(
+                self.weighted_choice(new_cards, probabilities), cards,
+            )
 
         available = list(probabilities.keys())
         if new_cases_limit == 0:
@@ -143,8 +151,59 @@ class FSRSScheduler:
         if len(available) > 1 and self.last_case in available:
             available = [c for c in available if c != self.last_case]
 
-        self.last_case = self.weighted_choice(available, probabilities)
-        return self.last_case
+        return self.serve(self.weighted_choice(available, probabilities), cards)
+
+    def serve(self, code: str, cards: dict[str, Card]) -> str:
+        """
+        Mark a case as served, snapshotting the review it was served with.
+
+        An unseen case has no card yet: its snapshot is None, and the
+        mere presence of the code is what holds it back until it is
+        rated (see ``select_next_case``, new cards branch).
+
+        Args:
+            code: Case code about to be served
+            cards: FSRS cards keyed by case code
+
+        Returns:
+            The case code, so callers can return the call directly.
+
+        """
+        card = cards.get(code)
+        self.served_reviews[code] = card.last_review if card else None
+        self.last_case = code
+        return code
+
+    def stalled(self, code: str, card: Card) -> bool:
+        """
+        Tell whether a case already served came back unreviewed.
+
+        A rep is only rated when the trainer has something to rate: a
+        keyboard session validated with Enter, a discard, a Bluetooth
+        gesture in manual mode all keep the timing and leave the card
+        untouched — deliberately, "no rating, just the time". The card
+        therefore stays due, and since due cards have absolute priority
+        and are exempt from anti-repetition, the session would lock on
+        the most overdue case for good.
+
+        A rating is what moves ``last_review``, so comparing it to the
+        value the case was served with tells the no-op apart from the
+        massed repetition of a card genuinely re-rated in-session,
+        without the trainer having to report anything.
+
+        Args:
+            code: Case code to test
+            card: FSRS card of that case
+
+        Returns:
+            True when the case was served in this session and its card
+            has not been reviewed since.
+
+        """
+        return (
+            code in self.served_reviews
+            and card.last_review == self.served_reviews[code]
+        )
 
     @staticmethod
     def in_acquisition(card: Card | None) -> bool:

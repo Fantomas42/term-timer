@@ -394,8 +394,15 @@ class TestSelectNextCaseAntiRepeat(unittest.TestCase):
             result = self.scheduler.select_next_case(cards, probs, 5)
             self.assertEqual(result, 'A')
 
-    def test_due_case_can_repeat(self) -> None:
-        """Due cards are exempt: massed repetition is intentional."""
+    def test_reviewed_due_case_can_repeat(self) -> None:
+        """
+        Due cards are exempt: massed repetition is intentional.
+
+        Each rep is rated Again and its learning step is then elapsed by
+        hand: the exemption covers the massed practice the steps exist
+        for, not a card left untouched (see
+        TestSelectNextCaseUnratedDeferral).
+        """
         cards = {
             'A': make_card(due_offset_days=-1.0),
             'B': make_card(due_offset_days=1.0),
@@ -404,6 +411,8 @@ class TestSelectNextCaseAntiRepeat(unittest.TestCase):
         for _ in range(3):
             result = self.scheduler.select_next_case(cards, self.probs, 5)
             self.assertEqual(result, 'A')
+            cards['A'] = self.scheduler.update_card(cards['A'], Rating.Again)
+            cards['A'].due = datetime.now(UTC) - timedelta(seconds=1)
 
     def test_anti_repeat_pool_all_zero_weights(self) -> None:
         """Excluding the last case from an all-zero pool still draws."""
@@ -412,6 +421,189 @@ class TestSelectNextCaseAntiRepeat(unittest.TestCase):
         self.scheduler.last_case = 'A'
         result = self.scheduler.select_next_case(cards, probs, 5)
         self.assertEqual(result, 'B')
+
+
+class TestSelectNextCaseUnratedDeferral(unittest.TestCase):
+    """A due case served but left unrated is deferred within the session."""
+
+    def setUp(self) -> None:  # noqa: D102
+        self.scheduler = FSRSScheduler()
+        self.probs = {'A': 0.5, 'B': 0.3, 'C': 0.2}
+
+    @staticmethod
+    def review_card(due_offset_days: float) -> Card:
+        """
+        Build a Review card with a history, as a session loads it.
+
+        A Review card has necessarily been reviewed: its stability, its
+        difficulty and its last review are part of the state, and the
+        7-day interval below is what MAXIMUM_INTERVAL_DAYS produces.
+
+        Returns:
+            A Review card last reviewed a week before it fell due.
+
+        """
+        return make_card(
+            due_offset_days=due_offset_days,
+            state=State.Review,
+            stability=10.0,
+            difficulty=5.0,
+            last_review_offset_days=due_offset_days - 7.0,
+        )
+
+    def test_unrated_due_case_is_not_served_again(self) -> None:
+        """Nothing is rated, so the most overdue case must not loop."""
+        cards = {
+            'A': self.review_card(-10.0),
+            'B': self.review_card(-3.0),
+        }
+        first = self.scheduler.select_next_case(cards, self.probs, 0)
+        second = self.scheduler.select_next_case(cards, self.probs, 0)
+
+        self.assertEqual(first, 'A')
+        self.assertEqual(second, 'B')
+
+    def test_unrated_session_walks_the_whole_backlog(self) -> None:
+        """Three unrated reps serve three distinct cases."""
+        cards = {
+            'A': self.review_card(-10.0),
+            'B': self.review_card(-3.0),
+            'C': self.review_card(-1.0),
+        }
+        served = [
+            self.scheduler.select_next_case(cards, self.probs, 0)
+            for _ in range(3)
+        ]
+
+        self.assertEqual(served, ['A', 'B', 'C'])
+
+    def test_deferred_backlog_falls_through_to_new_cases(self) -> None:
+        """With the whole backlog deferred, an unseen case is introduced."""
+        cards = {
+            'A': self.review_card(-10.0),
+            'B': self.review_card(-3.0),
+        }
+        probs = {'A': 0.5, 'B': 0.3, 'D': 0.2}
+        for _ in range(2):
+            self.scheduler.select_next_case(cards, probs, 5)
+
+        self.assertEqual(
+            self.scheduler.select_next_case(cards, probs, 5),
+            'D',
+        )
+
+    def test_deferred_backlog_falls_through_to_fallback(self) -> None:
+        """No new case left: the weighted fallback keeps the session going."""
+        cards = {
+            'A': self.review_card(-10.0),
+            'B': self.review_card(-3.0),
+            'C': self.review_card(1.0),
+        }
+        # Only C carries weight, so the fallback draw is deterministic.
+        probs = {'A': 0.0, 'B': 0.0, 'C': 1.0}
+        for _ in range(2):
+            self.scheduler.select_next_case(cards, probs, 0)
+
+        self.assertEqual(
+            self.scheduler.select_next_case(cards, probs, 0),
+            'C',
+        )
+
+    def test_unrated_new_cases_are_offered_once_each(self) -> None:
+        """
+        An unseen case served unrated does not come back either.
+
+        Without a rating no card is created, so the case stays unseen
+        and the new-case budget is never consumed: the new bucket would
+        otherwise feed the session for ever, never reaching the pool.
+        """
+        cards = {
+            'C': self.review_card(1.0),
+            'D': self.review_card(1.0),
+        }
+        # A and B carry no weight, so the fallback can only draw C or D.
+        probs = {'A': 0.0, 'B': 0.0, 'C': 0.5, 'D': 0.5}
+        served = [
+            self.scheduler.select_next_case(cards, probs, 5)
+            for _ in range(6)
+        ]
+
+        self.assertEqual(sorted(served[:2]), ['A', 'B'])
+        self.assertEqual(set(served[2:]), {'C', 'D'})
+
+    def test_rated_new_case_is_freed_by_its_own_card(self) -> None:
+        """
+        An unseen case is snapshotted as None; rating it frees it.
+
+        The snapshot of a case served without a card is None, and a
+        rating is what gives it one: the card carries a real last
+        review, which is what must lift the deferral.
+        """
+        cards: dict[str, Card] = {}
+        # B carries no weight, so the unseen draw is deterministic.
+        probs = {'A': 1.0, 'B': 0.0}
+        self.assertEqual(self.scheduler.select_next_case(cards, probs, 5), 'A')
+
+        cards['A'] = self.scheduler.update_card(None, Rating.Good)
+
+        # Rated, so out of the deferral, but scheduled minutes away.
+        self.assertNotIn('A', FSRSScheduler.get_due_cards(cards))
+
+        # The learning step has now passed.
+        cards['A'].due = datetime.now(UTC) - timedelta(seconds=1)
+
+        self.assertEqual(self.scheduler.select_next_case(cards, probs, 5), 'A')
+
+    def test_single_case_pool_is_served_as_last_resort(self) -> None:
+        """One case in the pool: the deferral must not starve the session."""
+        probs = {'A': 1.0}
+        cards = {'A': self.review_card(-10.0)}
+
+        for _ in range(3):
+            self.assertEqual(
+                self.scheduler.select_next_case(cards, probs, 0),
+                'A',
+            )
+
+    def test_rated_case_comes_back_once_its_step_elapsed(self) -> None:
+        """
+        A rep finally rated Again is re-served like any missed card.
+
+        Rating is what takes a case out of the deferral, but it also
+        reschedules it: the card only comes back once its learning step
+        has elapsed, never on the very next draw.
+        """
+        cards = {
+            'A': self.review_card(-10.0),
+            'B': self.review_card(-3.0),
+        }
+        self.scheduler.select_next_case(cards, self.probs, 0)
+        self.scheduler.select_next_case(cards, self.probs, 0)
+        cards['A'] = self.scheduler.update_card(cards['A'], Rating.Again)
+
+        # Rated, so out of the deferral, but scheduled 2 min away.
+        self.assertNotIn('A', FSRSScheduler.get_due_cards(cards))
+
+        # The 2 min learning step has now passed.
+        cards['A'].due = datetime.now(UTC) - timedelta(seconds=1)
+
+        self.assertEqual(
+            self.scheduler.select_next_case(cards, self.probs, 0),
+            'A',
+        )
+
+    def test_deferral_does_not_outlive_the_session(self) -> None:
+        """The next session finds the card due, since it was never rated."""
+        cards = {
+            'A': self.review_card(-10.0),
+            'B': self.review_card(-3.0),
+        }
+        self.scheduler.select_next_case(cards, self.probs, 0)
+
+        self.assertEqual(
+            FSRSScheduler().select_next_case(cards, self.probs, 0),
+            'A',
+        )
 
 
 class TestSelectNextCaseAcquisition(unittest.TestCase):
