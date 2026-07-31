@@ -57,12 +57,19 @@ class ConfigureLoggingTestCase(unittest.TestCase):
 
         self.directory.cleanup()
 
-    def configure(self) -> None:
-        """Run configure_logging in debug mode on a temporary log file."""
+    def configure(self, level: str = 'DEBUG') -> None:
+        """
+        Run configure_logging in debug mode on a temporary log file.
+
+        Args:
+            level: Level given to the file handler.
+
+        """
         file_config = LOGGING_CONF['handlers']['fileHandler']  # type: ignore[index]
 
         with mock.patch.object(logger_module, 'DEBUG', new=True), \
-             mock.patch.dict(file_config, {'filename': self.log_path}):
+             mock.patch.dict(file_config,
+                             {'filename': self.log_path, 'level': level}):
             configure_logging()
 
     def test_configure_logging_stores_the_listener(self) -> None:
@@ -79,6 +86,28 @@ class ConfigureLoggingTestCase(unittest.TestCase):
 
         self.assertEqual(len(handlers), 1)
         self.assertIsInstance(handlers[0], AsyncioLogHandler)
+
+    def test_configure_logging_carries_the_handler_level(self) -> None:
+        """The queue handler is given the level of the file handler."""
+        self.configure(level='WARNING')
+
+        handler = logging.getLogger().handlers[0]
+
+        self.assertEqual(handler.level, logging.WARNING)
+
+    def test_configure_logging_honours_the_handler_level(self) -> None:
+        """A record below the level of the file handler is not written."""
+        self.configure(level='WARNING')
+
+        logger = logging.getLogger('term_timer.tests.logger')
+        logger.info('below the level')
+        logger.warning('above the level')
+
+        shutdown_logging()
+        content = self.log_path.read_text()
+
+        self.assertNotIn('below the level', content)
+        self.assertIn('above the level', content)
 
     def test_shutdown_logging_stops_the_listener(self) -> None:
         """Shutting down joins the listener thread and forgets it."""

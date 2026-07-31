@@ -182,6 +182,10 @@ def configure_logging() -> None:
 
             log_queue: queue.Queue[logging.LogRecord] = queue.Queue()
             queue_handler = AsyncioLogHandler(log_queue)
+            # The level of a handler is honoured by the logger dispatching
+            # to it, not by the handler itself: queueing the records is
+            # what dispatches them now, so the level has to be carried over
+            queue_handler.setLevel(file_handler.level)
             root_logger.addHandler(queue_handler)
 
             log_listener = AsyncioLogListener(log_queue, file_handler)
