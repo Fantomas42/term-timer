@@ -150,6 +150,8 @@ log_listener: AsyncioLogListener | None = None
 
 def configure_logging() -> None:
     """Configure async logging with queue handler."""
+    global log_listener  # noqa: PLW0603
+
     if DEBUG:
         logging.config.dictConfig(LOGGING_CONF)
 
