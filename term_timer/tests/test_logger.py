@@ -1,4 +1,6 @@
 """Tests for the asynchronous logging configuration."""
+import contextlib
+import io
 import logging
 import queue
 import tempfile
@@ -125,6 +127,65 @@ class ConfigureLoggingTestCase(unittest.TestCase):
 
         self.assertIsNone(logger_module.log_listener)
         self.assertFalse(thread.is_alive())
+
+
+class ConfigureLoggingWithoutDebugTestCase(unittest.TestCase):
+    """Tests for configure_logging outside of a debug session."""
+
+    def setUp(self) -> None:
+        """Save the state of the root logger."""
+        root_logger = logging.getLogger()
+        self.root_handlers = root_logger.handlers[:]
+        self.root_level = root_logger.level
+
+    def tearDown(self) -> None:
+        """Enable logging again and restore the root logger."""
+        # logging.disable is global to the process: left as it is, it
+        # would silence every test running after this one
+        logging.disable(logging.NOTSET)
+
+        root_logger = logging.getLogger()
+        root_logger.handlers = self.root_handlers
+        root_logger.setLevel(self.root_level)
+
+    @staticmethod
+    def configure() -> None:
+        """Run configure_logging outside of debug mode."""
+        with mock.patch.object(logger_module, 'DEBUG', new=False):
+            configure_logging()
+
+    def test_configure_logging_silences_every_level(self) -> None:
+        """No level is left enabled, up to and including critical."""
+        self.configure()
+
+        logger = logging.getLogger('term_timer.tests.logger')
+
+        for level in (logging.DEBUG, logging.INFO, logging.WARNING,
+                      logging.ERROR, logging.CRITICAL):
+            with self.subTest(level=logging.getLevelName(level)):
+                self.assertFalse(logger.isEnabledFor(level))
+
+    def test_configure_logging_keeps_stderr_clean(self) -> None:
+        """No record reaches the last resort handler on stderr."""
+        self.configure()
+
+        logger = logging.getLogger('term_timer.tests.logger')
+        stderr = io.StringIO()
+
+        with contextlib.redirect_stderr(stderr):
+            try:
+                int('not a number')
+            except ValueError:
+                logger.exception('Error in getch (Unix)')
+            logger.critical('Cube is on fire')
+
+        self.assertEqual(stderr.getvalue(), '')
+
+    def test_configure_logging_starts_no_listener(self) -> None:
+        """Nothing is set up to write anything anywhere."""
+        self.configure()
+
+        self.assertEqual(logging.getLogger().handlers, self.root_handlers)
 
 
 class AsyncioLogListenerTestCase(unittest.TestCase):

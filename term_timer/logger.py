@@ -194,7 +194,7 @@ def configure_logging() -> None:
             atexit.register(shutdown_logging)
 
     else:
-        logging.disable(logging.INFO)
+        logging.disable(logging.CRITICAL)
 
 
 def shutdown_logging() -> None:
