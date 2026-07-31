@@ -338,6 +338,12 @@ class TestTimerKeyboardStopBluetooth(unittest.IsolatedAsyncioTestCase):
 class TestBluetoothScanFilter(unittest.IsolatedAsyncioTestCase):
     """What narrows the scan looking for a cube to connect to."""
 
+    def setUp(self) -> None:
+        """Patch sound playback so the failed connection stays silent."""
+        sound_patcher = patch('term_timer.interface.sounds.sd', create=True)
+        sound_patcher.start()
+        self.addCleanup(sound_patcher.stop)
+
     @staticmethod
     async def scan_arguments(device: CubeDevice) -> tuple[Any, ...]:
         """
