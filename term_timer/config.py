@@ -1,8 +1,10 @@
 """Configuration loading and management from TOML files."""
 import os
 import re
+from dataclasses import dataclass
 from typing import Any
 from typing import Final
+from typing import cast
 
 import rtoml
 
@@ -10,6 +12,27 @@ from term_timer.constants import CONFIG_FILE
 from term_timer.constants import CONFIG_FILE_FROM_ENV
 
 SERIES_RE: Final = re.compile(r'^(mo|ao|mb|mw)(\d+)$')
+
+# Selector disabling the Bluetooth cube entirely
+CUBE_SELECTOR_OFF: Final = 'off'
+
+# Selector forcing a scan accepting any cube, configured or not
+CUBE_SELECTOR_AUTO: Final = 'auto'
+
+CUBE_SELECTORS: Final = (CUBE_SELECTOR_OFF, CUBE_SELECTOR_AUTO)
+
+# Bleak exposes a MAC address on Linux and Windows, but a system UUID
+# on macOS, so both spellings are accepted wherever an address is read
+MAC_ADDRESS_RE: Final = re.compile(
+    r'^([0-9a-f]{2}:){5}[0-9a-f]{2}$', re.IGNORECASE,
+)
+
+UUID_ADDRESS_RE: Final = re.compile(
+    r'^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$', re.IGNORECASE,
+)
+
+# Legacy label given to the cube described by the flat name/address keys
+LEGACY_CUBE_LABEL: Final = 'default'
 
 # Kinds accepted in any configurable series
 SERIES_KINDS: Final = ('mo', 'ao', 'mb', 'mw')
@@ -53,10 +76,14 @@ fluency_graph = true
 recognition_graph = true
 
 [bluetooth]
-name = ""
-address = ""
+default = ""
 use_gyroscope = true
 rotation_threshold = 75.0
+
+# Declare one table per cube, then select one with -b <label>
+# [bluetooth.cubes.gan12]
+# name = "GAN 12 ui FreePlay"
+# address = "AA:BB:CC:DD:EE:FF"
 
 [statistics]
 trim = "p5"
@@ -239,13 +266,288 @@ CUBE_LINEAR: bool = CUBE_CONFIG.get('linear', False)
 
 CUBE_RIGHT_HANDED: bool = CUBE_CONFIG.get('right-handed', True)
 
-DEVICE_NAME: str = BLUETOOTH_CONFIG.get('name', '')
-
-DEVICE_ADDRESS: str = BLUETOOTH_CONFIG.get('address', '')
-
 USE_GYROSCOPE: bool = BLUETOOTH_CONFIG.get('use_gyroscope', True)
 
 ROTATION_THRESHOLD: float = BLUETOOTH_CONFIG.get('rotation_threshold', 75.0)
+
+
+def is_cube_address(value: str) -> bool:
+    """
+    Tell whether a selector spells a Bluetooth address.
+
+    Args:
+        value: Raw selector given on the command line or in a routine.
+
+    Returns:
+        True for a MAC address or a macOS device UUID.
+
+    """
+    return bool(
+        MAC_ADDRESS_RE.match(value) or UUID_ADDRESS_RE.match(value),
+    )
+
+
+@dataclass(frozen=True)
+class CubeDevice:
+    """
+    A Bluetooth cube the application may connect to.
+
+    A device carries both its identity and the settings that vary from
+    one cube to the next, so that owning several cubes never requires
+    editing the configuration between two sessions.
+
+    An empty ``address`` means the cube is still to be discovered: the
+    connection scans instead of dialing an address directly.
+
+    Attributes:
+        label: Short key naming the cube in the configuration and on the
+            command line.
+        name: Human readable name, also used to filter a scan.
+        address: MAC address, or system UUID on macOS. Empty to scan.
+        use_gyroscope: Whether the driver should use gyroscope data.
+        rotation_threshold: Gyroscope rotation detection threshold.
+        prefer_known: Whether a scan should favour a configured cube over
+            any other cube it discovers.
+
+    """
+
+    label: str = ''
+    name: str = ''
+    address: str = ''
+    use_gyroscope: bool = True
+    rotation_threshold: float = 75.0
+    prefer_known: bool = True
+
+    @classmethod
+    def from_config(cls, label: str, data: dict[str, Any]) -> 'CubeDevice':
+        """
+        Build a cube from its configuration table.
+
+        Settings left out of the cube table fall back on the global
+        Bluetooth settings.
+
+        Args:
+            label: Key naming the cube in the configuration.
+            data: Contents of the cube table.
+
+        Returns:
+            The configured cube.
+
+        """
+        return cls(
+            label=label,
+            name=str(data.get('name', '')),
+            address=str(data.get('address', '')),
+            use_gyroscope=bool(
+                data.get('use_gyroscope', USE_GYROSCOPE),
+            ),
+            rotation_threshold=float(
+                data.get('rotation_threshold', ROTATION_THRESHOLD),
+            ),
+        )
+
+    @classmethod
+    def discovered(cls, label: str = '', *, prefer_known: bool) -> 'CubeDevice':
+        """
+        Build a cube left to be discovered by a scan.
+
+        Args:
+            label: Key naming the cube, empty when scanning.
+            prefer_known: Whether the scan favours a configured cube.
+
+        Returns:
+            An address-less cube carrying the global settings.
+
+        """
+        return cls(
+            label=label,
+            use_gyroscope=USE_GYROSCOPE,
+            rotation_threshold=ROTATION_THRESHOLD,
+            prefer_known=prefer_known,
+        )
+
+    @staticmethod
+    def clean_selector(value: str) -> str:
+        """
+        Normalise a cube selector, rejecting what names no cube.
+
+        Args:
+            value: Raw selector from the command line or a routine file.
+
+        Returns:
+            The selector, lowercased when it names a configured cube or a
+            reserved keyword, empty when it reaches nothing.
+
+        """
+        selector = value.strip()
+
+        if selector.lower() in CUBE_SELECTORS:
+            return selector.lower()
+
+        if selector.lower() in BLUETOOTH_CUBES:
+            return selector.lower()
+
+        if is_cube_address(selector):
+            return selector
+
+        return ''
+
+    @classmethod
+    def resolve(cls, selector: str | None) -> 'CubeDevice | None':
+        """
+        Resolve a cube selector into the cube to connect to.
+
+        The selector comes from the ``-b`` option or from a routine file.
+        ``None`` means nothing was asked for and the configuration
+        decides: the default cube when one is designated, the only
+        configured cube when there is a single one, a scan restricted to
+        the configured cubes when several are listed, and no cube at all
+        when none is configured.
+
+        Args:
+            selector: Cube label, address, ``auto``, ``off``, or None.
+
+        Returns:
+            The cube to connect to, or None when Bluetooth stays off.
+
+        """
+        if selector == CUBE_SELECTOR_OFF:
+            return None
+
+        if selector == CUBE_SELECTOR_AUTO:
+            return cls.discovered(CUBE_SELECTOR_AUTO, prefer_known=False)
+
+        if selector:
+            return BLUETOOTH_CUBES.get(selector.lower()) or cls(
+                label=selector,
+                address=selector,
+                use_gyroscope=USE_GYROSCOPE,
+                rotation_threshold=ROTATION_THRESHOLD,
+            )
+
+        if BLUETOOTH_DEFAULT:
+            return BLUETOOTH_CUBES[BLUETOOTH_DEFAULT]
+
+        if BLUETOOTH_CUBES:
+            return cls.discovered(prefer_known=True)
+
+        return None
+
+    @property
+    def display_name(self) -> str:
+        """Get the most telling name known before the cube answers."""
+        return self.name or self.label or self.address
+
+    @property
+    def scan_addresses(self) -> tuple[str, ...]:
+        """Get the addresses a scan favours, empty to take any cube."""
+        if not self.prefer_known:
+            return ()
+
+        return tuple(
+            cube.address
+            for cube in BLUETOOTH_CUBES.values()
+            if cube.address
+        )
+
+    @staticmethod
+    def adopt(address: str) -> 'CubeDevice | None':
+        """
+        Find the configured cube answering at an address.
+
+        A scan may land on any of the configured cubes, so the settings
+        of the one actually discovered take over those of the placeholder
+        the scan started from.
+
+        Args:
+            address: Address of the discovered device.
+
+        Returns:
+            The configured cube at that address, None when unknown.
+
+        """
+        for cube in BLUETOOTH_CUBES.values():
+            if cube.address and cube.address.lower() == address.lower():
+                return cube
+
+        return None
+
+
+def load_cubes(config: dict[str, Any]) -> dict[str, CubeDevice]:
+    """
+    Load the configured Bluetooth cubes, keyed by label.
+
+    Cubes are read from the ``[bluetooth.cubes.<label>]`` tables. A
+    configuration predating multi-cube support, holding flat ``name`` and
+    ``address`` keys, is read as a single cube so that it keeps working
+    untouched.
+
+    Args:
+        config: Contents of the ``[bluetooth]`` table.
+
+    Returns:
+        The configured cubes, in the order the file lists them.
+
+    """
+    configured: dict[str, Any] = config.get('cubes', {})
+
+    cubes: dict[str, CubeDevice] = {}
+    for label, data in configured.items():
+        if not isinstance(data, dict):
+            continue
+
+        key = str(label).lower()
+        cubes[key] = CubeDevice.from_config(
+            key, cast('dict[str, Any]', data),
+        )
+
+    if cubes:
+        return cubes
+
+    if config.get('address') or config.get('name'):
+        return {
+            LEGACY_CUBE_LABEL: CubeDevice.from_config(
+                LEGACY_CUBE_LABEL, config,
+            ),
+        }
+
+    return {}
+
+
+def load_default_cube(
+        config: dict[str, Any],
+        cubes: dict[str, CubeDevice],
+) -> str:
+    """
+    Resolve the label of the cube to connect to by default.
+
+    A cube designated by the ``default`` key wins. Failing that, a lone
+    configured cube is its own default, which keeps a single-cube setup
+    dialing its address directly instead of scanning. Several cubes with
+    no designated default leave the choice to the scan.
+
+    Args:
+        config: Contents of the ``[bluetooth]`` table.
+        cubes: The configured cubes, keyed by label.
+
+    Returns:
+        The default cube label, empty when there is none.
+
+    """
+    default = str(config.get('default', '')).lower()
+
+    if default in cubes:
+        return default
+
+    if len(cubes) == 1:
+        return next(iter(cubes))
+
+    return ''
+
+
+BLUETOOTH_CUBES: dict[str, CubeDevice] = load_cubes(BLUETOOTH_CONFIG)
+
+BLUETOOTH_DEFAULT: str = load_default_cube(BLUETOOTH_CONFIG, BLUETOOTH_CUBES)
 
 TRAINER_FSRS: bool = TRAINER_CONFIG.get('fsrs', True)
 

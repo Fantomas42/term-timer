@@ -9,6 +9,7 @@ from cubing_algs.exceptions import InvalidMoveError
 from rich import box
 from rich.table import Table
 
+from term_timer.config import CubeDevice
 from term_timer.constants import ROUTINES_DIRECTORY
 from term_timer.exceptions import InvalidCaseError
 from term_timer.formatter import format_time
@@ -23,6 +24,39 @@ if TYPE_CHECKING:
     from term_timer.driller import Driller
     from term_timer.timer import Timer
     from term_timer.trainer import Trainer
+
+
+def resolve_routine_cube(selector: object) -> CubeDevice | None:
+    """
+    Resolve the cube a routine file asks for.
+
+    The ``bluetooth`` key holds either a boolean, asking for the cube the
+    configuration designates, or the label of one of the configured
+    cubes, so that a routine can pin the cube it was tuned for.
+
+    Args:
+        selector: Raw value of the routine ``bluetooth`` key.
+
+    Returns:
+        The cube to connect to, or None to run without one.
+
+    """
+    if isinstance(selector, str):
+        cleaned = CubeDevice.clean_selector(selector)
+
+        if not cleaned:
+            console.print(
+                f'😱 Unknown cube in routine: { selector }',
+                style='warning',
+            )
+            return None
+
+        return CubeDevice.resolve(cleaned)
+
+    if selector:
+        return CubeDevice.resolve(None)
+
+    return None
 
 
 def list_routines() -> int:
@@ -109,7 +143,7 @@ async def routine(  # noqa: C901, PLR0911, PLR0912, PLR0915
         console.print('🤔 No sessions defined.', style='warning')
         return 0
 
-    use_bluetooth: bool = bool(config.get('bluetooth'))
+    cube = resolve_routine_cube(config.get('bluetooth'))
     use_gyroscope: bool = bool(config.get('use_gyroscope'))
     current: Timer | Trainer | Driller | None = None
     started_at = time.monotonic_ns()
@@ -132,8 +166,9 @@ async def routine(  # noqa: C901, PLR0911, PLR0912, PLR0915
                     console.print('😱', str(error), style='warning')
                     return 1
 
-                if index == 0 and use_bluetooth:
+                if index == 0 and cube is not None:
                     await train_instance.bluetooth_connect(
+                        cube,
                         use_gyroscope=use_gyroscope,
                     )
                 elif current is not None and current.bluetooth_interface:
@@ -150,8 +185,9 @@ async def routine(  # noqa: C901, PLR0911, PLR0912, PLR0915
             elif session_type == 'solve':
                 solve_instance = build_solve_instance(session_config)
 
-                if index == 0 and use_bluetooth:
+                if index == 0 and cube is not None:
                     await solve_instance.bluetooth_connect(
+                        cube,
                         use_gyroscope=use_gyroscope,
                     )
                 elif current is not None and current.bluetooth_interface:
@@ -168,8 +204,9 @@ async def routine(  # noqa: C901, PLR0911, PLR0912, PLR0915
             elif session_type == 'drill':
                 drill_instance = build_drill_instance(session_config)
 
-                if index == 0 and use_bluetooth:
+                if index == 0 and cube is not None:
                     await drill_instance.bluetooth_connect(
+                        cube,
                         use_gyroscope=use_gyroscope,
                     )
                 elif current is not None and current.bluetooth_interface:

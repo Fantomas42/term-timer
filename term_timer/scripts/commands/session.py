@@ -53,6 +53,7 @@ async def solve_session(
     """
     if options.bluetooth or instance.bluetooth_replay is not None:
         await instance.bluetooth_connect(
+            options.bluetooth,
             use_gyroscope=options.use_gyroscope,
         )
 

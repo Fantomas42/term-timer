@@ -7,6 +7,7 @@ from textual.widgets import Button
 from textual.widgets import Static
 
 from term_timer.config_edit.sections import BluetoothSection
+from term_timer.config_edit.sections import ConfigData
 from term_timer.config_edit.sections import CubeSection
 from term_timer.config_edit.sections import DisplaySection
 from term_timer.config_edit.sections import ServerSection
@@ -83,9 +84,7 @@ class ConfigToolbar(Widget):
             ServerSection,
         ]
 
-        config_data: dict[
-            str, dict[str, str | int | float | bool | list[str]],
-        ] = {}
+        config_data: ConfigData = {}
         for section_class in sections:
             section = app.query_one(section_class)
             config_data.update(section.get_config_data())
@@ -99,7 +98,7 @@ class ConfigToolbar(Widget):
 
     @staticmethod
     def write_config_file(
-        config_data: dict[str, dict[str, str | int | float | bool | list[str]]],
+        config_data: ConfigData,
     ) -> None:
         """Write configuration data to TOML file."""
         rtoml.dump(config_data, CONFIG_FILE)
