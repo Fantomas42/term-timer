@@ -10,6 +10,7 @@ from term_timer.in_out import load_solves
 from term_timer.interface.console import console
 from term_timer.scrambler import scrambler
 from term_timer.scripts.commands.session import build_race_timer
+from term_timer.scripts.commands.session import print_scramble_doctor
 from term_timer.scripts.commands.session import race_header
 from term_timer.scripts.commands.session import run_seeded_race
 from term_timer.stats import DailySummaryReporter
@@ -29,14 +30,18 @@ def parse_date(raw: str) -> date:
     return date.today()  # noqa: DTZ011
 
 
-def daily_review(cube: int, date_str: str) -> int:
+def daily_review(options: Namespace, date_str: str) -> int:
     """
-    Show stats and graph for a single daily session.
+    Show stats, graph and diagnostics for a single daily session.
+
+    Every attempt of the day shares the daily scramble, so the review
+    closes on the doctor report of that scramble.
 
     Returns:
         Exit code (0 for success, 1 if no solves found).
 
     """
+    cube = options.cube
     stack = load_solves(cube, date_str, directory=DAILY_DIRECTORY)
     if not stack:
         console.print(
@@ -53,6 +58,8 @@ def daily_review(cube: int, date_str: str) -> int:
     stats = SolveStatisticsReporter(cube, stack)
     stats.print_summary()
     stats.graph('Tendency')
+
+    print_scramble_doctor(options, stack)
 
     return 0
 
@@ -95,7 +102,7 @@ async def daily(options: Namespace) -> int:
         return daily_summary(cube)
 
     if options.review:
-        return daily_review(cube, date_str)
+        return daily_review(options, date_str)
 
     rng = Random(date_str)  # noqa: S311
     daily_scramble, _ = scrambler(cube, 0, rng=rng)

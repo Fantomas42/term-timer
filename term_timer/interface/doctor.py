@@ -154,24 +154,30 @@ class DoctorReporter:
 
         return lines
 
-    def report(self, previous: DoctorReport | None = None) -> str:
+    def report(
+            self,
+            previous: DoctorReport | None = None,
+            *,
+            subject: str = '',
+    ) -> str:
         """
         Generate the aggregated diagnostics report.
 
         Args:
             previous: Report of the preceding window of solves, enabling
                 trend markers and the resolved findings line.
+            subject: What the diagnosed window is, named in the header.
+                Defaults to the last solves, what a window of a session
+                of varied scrambles is.
 
         Returns:
             Rich-formatted report string.
 
         """
         findings = self.results['findings']
+        subject = subject or f'last { self.results["total"] } solves'
         lines = [
-            (
-                f'[stats]Diagnostics on last { self.results["total"] } '
-                'solves:[/stats]'
-            ),
+            f'[stats]Diagnostics on { subject }:[/stats]',
         ]
 
         if not findings:

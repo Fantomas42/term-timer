@@ -13,6 +13,7 @@ from term_timer.in_out import load_solves
 from term_timer.in_out import scramble_to_key
 from term_timer.interface.console import console
 from term_timer.scripts.commands.session import build_race_timer
+from term_timer.scripts.commands.session import print_scramble_doctor
 from term_timer.scripts.commands.session import race_header
 from term_timer.scripts.commands.session import run_seeded_race
 from term_timer.solve import Solve
@@ -268,7 +269,10 @@ def build_race_stack(
 
 def ghost_review(options: Namespace) -> int:
     """
-    Show stats and graph for the reference solve's scramble file.
+    Show stats, graph and diagnostics for the scramble's ghost file.
+
+    Every attempt of the file races the same scramble, so the review
+    closes on the doctor report of that scramble.
 
     Returns:
         Exit code (0 for success, 1 if the scramble has no attempts).
@@ -295,6 +299,8 @@ def ghost_review(options: Namespace) -> int:
     round_stats = SolveStatisticsReporter(options.cube, stack)
     round_stats.print_summary()
     round_stats.graph('Tendency')
+
+    print_scramble_doctor(options, stack)
 
     return 0
 

@@ -71,6 +71,15 @@ class TestDoctorReporter(unittest.TestCase):
         self.assertIn('Diagnostics on last 10 solves:', report)
         self.assertIn('No issue detected, sane solves !', report)
 
+    def test_report_subject_names_the_window(self) -> None:
+        """A caller can say what the diagnosed window is."""
+        report = make_reporter([]).report(
+            subject='4 attempts on this scramble',
+        )
+
+        self.assertIn('Diagnostics on 4 attempts on this scramble:', report)
+        self.assertNotIn('last', report)
+
     def test_report_finding_rendering(self) -> None:
         """A finding renders label, typical value, norm and stats."""
         report = make_reporter([make_finding()]).report()

@@ -9,10 +9,15 @@ from typing import cast
 from unittest import mock
 
 from cubing_algs.exceptions import InvalidMoveError
+from rich.console import Console as RichConsole
+from rich.theme import Theme
 
 from term_timer.arguments import get_parser
 from term_timer.config import CubeDevice
+from term_timer.interface.console import theme as console_theme
+from term_timer.scripts.commands import session as session_mod
 from term_timer.scripts.commands.session import build_race_timer
+from term_timer.scripts.commands.session import print_scramble_doctor
 from term_timer.scripts.commands.session import race_header
 from term_timer.scripts.commands.session import solve_session
 from term_timer.solve import Solve
@@ -21,6 +26,7 @@ from term_timer.tests.test_ghost import make_solve
 from term_timer.timer import Timer
 
 if TYPE_CHECKING:
+    from term_timer.annotations import DoctorReport
     from term_timer.interface import SolveInterface
 
 SAVE_DIRECTORY = Path('/nowhere')
@@ -307,3 +313,104 @@ class TestBuildRaceTimer(unittest.TestCase):
         options = self.parse('--replay', '/nowhere/missing.json')
 
         self.assertIsNone(self.build(options, [make_solve()]))
+
+
+class TestPrintScrambleDoctor(unittest.TestCase):
+    """Tests for the diagnostics closing the review of a raced scramble."""
+
+    @staticmethod
+    def parse(*args: str) -> Namespace:
+        """
+        Parse a ghost command line into options.
+
+        Returns:
+            The parsed namespace.
+
+        """
+        return get_parser().parse_args(['ghost', '1', *args])
+
+    @staticmethod
+    def diagnose(
+            options: Namespace,
+            stack: list[Solve],
+    ) -> tuple[str, list[list[Solve]]]:
+        """
+        Run the report against a stubbed aggregator.
+
+        Returns:
+            The rendered output, and the windows the aggregator received.
+
+        """
+        recorder = RichConsole(
+            record=True, width=120, theme=Theme(console_theme),
+        )
+        windows: list[list[Solve]] = []
+
+        class AggregatorDouble:
+            """An aggregator recording the window it diagnoses."""
+
+            def __init__(self, method_name: str, window: list[Solve]) -> None:
+                windows.append(window)
+                self.method_name = method_name
+                self.results: DoctorReport = {
+                    'total': len(window), 'findings': [],
+                }
+
+        with (
+                mock.patch.object(session_mod, 'console', recorder),
+                mock.patch.object(
+                    session_mod, 'SolvesDoctorAggregator', AggregatorDouble,
+                ),
+        ):
+            print_scramble_doctor(options, stack)
+
+        return recorder.export_text(), windows
+
+    def test_report_counts_the_attempts(self) -> None:
+        """The header names the attempts recorded on the scramble."""
+        output, _windows = self.diagnose(
+            self.parse(), [make_solve(date=1), make_solve(date=2)],
+        )
+
+        self.assertIn('Diagnostics on 2 attempts on this scramble', output)
+
+    def test_a_lone_attempt_is_still_diagnosed(self) -> None:
+        """A single attempt is worth a report, in the singular."""
+        output, _windows = self.diagnose(self.parse(), [make_solve()])
+
+        self.assertIn('Diagnostics on 1 attempt on this scramble', output)
+
+    def test_no_trend_markers(self) -> None:
+        """A fixed scramble has no preceding window to compare against."""
+        output, _windows = self.diagnose(self.parse(), [make_solve()])
+
+        self.assertNotIn('Resolved:', output)
+
+    def test_doctor_disabled_prints_nothing(self) -> None:
+        """The analysis toggle silences the review report too."""
+        options = self.parse()
+        options.show_doctor = False
+
+        output, windows = self.diagnose(options, [make_solve()])
+
+        self.assertEqual(output, '')
+        self.assertEqual(windows, [])
+
+    def test_unanalysable_attempts_are_left_out(self) -> None:
+        """Only the attempts the doctor can read reach the aggregator."""
+        analysable = make_solve(date=1)
+        _output, windows = self.diagnose(
+            self.parse(),
+            [analysable, make_solve(date=2, flag='DNF')],
+        )
+
+        self.assertEqual(windows, [[analysable]])
+
+    def test_nothing_analysable_prints_nothing(self) -> None:
+        """A scramble raced without a reconstruction reports nothing."""
+        output, windows = self.diagnose(
+            self.parse(), [make_solve(moves=None)],
+        )
+
+        self.assertEqual(output, '')
+        self.assertEqual(windows, [])

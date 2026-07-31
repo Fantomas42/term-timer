@@ -6,12 +6,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from random import Random
 
+from term_timer.aggregator import SolvesDoctorAggregator
 from term_timer.bluetooth.replay import load_scramble_replay
 from term_timer.exceptions import SESSION_ERRORS
 from term_timer.exceptions import ReplayError
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
 from term_timer.interface.console import console
+from term_timer.interface.doctor import DoctorReporter
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.timer import Timer
@@ -86,6 +88,51 @@ def race_header(title: str, ghost_solve: Solve | None) -> str:
         return title
 
     return f'{ title } [time]{ format_time(ghost_solve.final_time) }[/time]'
+
+
+def print_scramble_doctor(options: Namespace, stack: list[Solve]) -> None:
+    """
+    Print the aggregated doctor report of a raced scramble.
+
+    Every attempt of the stack solves the same scramble, so the very
+    same cross and the very same pairs get diagnosed over and over: a
+    finding recurring at a location names a weakness on that case, where
+    a window of varied scrambles would only average one out. It is
+    printed from the first attempt on, a lone diagnostic staying worth
+    reading.
+
+    Locations remain indexed by step position, not by case, so two
+    attempts solving the pairs in a different order do not line their
+    F2L slots up. The scramble being fixed makes it far more coherent
+    than a regular window, not an identity.
+
+    No trend accompanies it: a fixed scramble has no preceding window of
+    its own to compare against.
+
+    Args:
+        options: The parsed command options.
+        stack: The attempts recorded on the scramble.
+
+    """
+    if not options.show_doctor:
+        return
+
+    analysable = [solve for solve in stack if solve.analysable]
+    if not analysable:
+        return
+
+    aggregator = SolvesDoctorAggregator(options.method, analysable)
+    total = aggregator.results['total']
+    if not total:
+        return
+
+    plural = 's' if total > 1 else ''
+    reporter = DoctorReporter(aggregator.results)
+    console.print(
+        reporter.report(
+            subject=f'{ total } attempt{ plural } on this scramble',
+        ),
+    )
 
 
 def build_race_timer(  # noqa: PLR0913
