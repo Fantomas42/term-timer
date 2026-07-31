@@ -299,7 +299,7 @@ class CubeDevice:
     Attributes:
         label: Short key naming the cube in the configuration and on the
             command line.
-        name: Human readable name, also used to filter a scan.
+        name: Human readable name, only ever displayed.
         address: MAC address, or system UUID on macOS. Empty to scan.
         use_gyroscope: Whether the driver should use gyroscope data.
         rotation_threshold: Gyroscope rotation detection threshold.

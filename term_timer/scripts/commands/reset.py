@@ -32,7 +32,7 @@ async def reset(options: Namespace) -> int:
         prefer_known=True,
     )
     address = cube.address
-    filter_name = options.filter_name or cube.name or None
+    filter_name = options.filter_name or None
 
     try:
         if not address:

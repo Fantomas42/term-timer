@@ -107,7 +107,7 @@ use_gyroscope = true        # global settings, overridable per cube
 rotation_threshold = 75.0
 
 [bluetooth.cubes.gan12]
-name = "GAN 12 ui FreePlay"
+name = "GAN 12 ui FreePlay"  # display name, yours to choose
 address = "AA:BB:CC:DD:EE:FF"
 
 [bluetooth.cubes.weilong]

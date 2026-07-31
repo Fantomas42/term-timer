@@ -143,7 +143,7 @@ class Bluetooth:
                     )
 
                     found = await self.bluetooth_interface.scan(
-                        self.bluetooth_device.name or None,
+                        None,
                         self.bluetooth_device.scan_addresses,
                     )
                     if found:
