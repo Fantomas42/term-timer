@@ -2,7 +2,7 @@
 from argparse import Namespace
 from random import Random
 
-from term_timer.exceptions import InvalidCaseError
+from term_timer.exceptions import SESSION_ERRORS
 from term_timer.interface.console import console
 from term_timer.scripts.commands.session import solve_session
 from term_timer.stats import TrainerStatistics
@@ -43,7 +43,7 @@ async def trainer(options: Namespace) -> int:
             rng=rng,
 
         )
-    except InvalidCaseError as error:
+    except SESSION_ERRORS as error:
         console.print('😱', str(error), style='warning')
         return 1
 

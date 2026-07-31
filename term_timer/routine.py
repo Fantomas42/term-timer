@@ -2,8 +2,6 @@
 from random import Random
 from typing import TypedDict
 
-from cubing_algs.exceptions import InvalidMoveError
-
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import DISPLAY_CONFIG
@@ -11,7 +9,6 @@ from term_timer.config import TIMER_CONFIG
 from term_timer.config import TRAINER_STEP
 from term_timer.driller import Driller
 from term_timer.in_out import load_solves
-from term_timer.interface.console import console
 from term_timer.stats import DrillStatistics
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.stats import TrainerStatistics
@@ -210,20 +207,23 @@ async def run_session(
         *,
         show_stats: bool = False,
 ) -> None:
-    """Run start() in a loop until count is reached or user quits a step."""
-    solves_done = 0
-    try:
-        while 42:
-            done = await instance.start()
+    """
+    Run start() in a loop until count is reached or user quits a step.
 
-            if done:
-                solves_done += 1
-                if count and solves_done >= count:
-                    break
-            else:
+    Errors propagate: the runner holds no policy of its own, the caller
+    chaining the sessions decides what a failing one costs.
+    """
+    solves_done = 0
+
+    while 42:
+        done = await instance.start()
+
+        if done:
+            solves_done += 1
+            if count and solves_done >= count:
                 break
-    except InvalidMoveError as error:
-        console.print('😱', str(error), style='warning')
+        else:
+            break
 
     if show_stats:
         show_instance_stats(instance)

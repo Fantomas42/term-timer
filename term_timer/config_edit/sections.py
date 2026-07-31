@@ -1,6 +1,7 @@
 """Configuration section widgets for different config categories."""
 import re
 from typing import Any
+from typing import Final
 
 from cubing_algs.constants import ORIENTATIONS
 from cubing_algs.display.effects import EFFECTS
@@ -11,7 +12,9 @@ from textual.app import ComposeResult
 from textual.containers import Grid
 from textual.containers import Vertical
 from textual.containers import VerticalScroll
+from textual.widgets import Button
 from textual.widgets import Checkbox
+from textual.widgets import Collapsible
 from textual.widgets import Input
 from textual.widgets import Select
 from textual.widgets import SelectionList
@@ -23,6 +26,14 @@ from term_timer.config import SERIES_KINDS
 from term_timer.config import parse_series
 from term_timer.stats import StatisticsTools
 
+# A section value, a cube table being the only nested one
+ConfigValue = str | int | float | bool | list[str] | dict[str, Any]
+
+ConfigData = dict[str, dict[str, ConfigValue]]
+
+# Value of a per-cube setting left to the global configuration
+INHERIT: Final = 'inherit'
+
 
 class ConfigSection(VerticalScroll):
     """Base class for configuration sections."""
@@ -33,8 +44,10 @@ class ConfigSection(VerticalScroll):
     }
 
     ConfigSection Grid {
+        height: auto;
         grid-size: 2;
-        grid-gutter: 0 2;
+        grid-rows: auto;
+        grid-gutter: 1 2;
         padding: 0;
     }
 
@@ -42,13 +55,12 @@ class ConfigSection(VerticalScroll):
         height: auto;
         padding: 0;
         text-style: bold;
-        margin-top: 1;
     }
 
+    /* Rows are spaced by the gutter, a margin here eating their height */
     ConfigSection .field-container {
         height: auto;
         padding: 0;
-        margin-top: 1;
     }
 
     ConfigSection .field-help {
@@ -106,7 +118,7 @@ class ConfigSection(VerticalScroll):
 
     def get_config_data(  # noqa: PLR6301
             self,
-    ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
+    ) -> ConfigData:
         """
         Get configuration data from widgets. Override in subclasses.
 
@@ -237,7 +249,7 @@ class TimerSection(ConfigSection):
 
     def get_config_data(
         self,
-    ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
+    ) -> ConfigData:
         """
         Get timer configuration data.
 
@@ -410,7 +422,7 @@ class CubeSection(ConfigSection):
 
     def get_config_data(
         self,
-    ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
+    ) -> ConfigData:
         """
         Get cube configuration data.
 
@@ -582,7 +594,7 @@ class TrainerSection(ConfigSection):
 
     def get_config_data(
         self,
-    ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
+    ) -> ConfigData:
         """
         Get trainer configuration data.
 
@@ -720,7 +732,7 @@ class DisplaySection(ConfigSection):
 
     def get_config_data(
         self,
-    ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
+    ) -> ConfigData:
         """
         Get display configuration data.
 
@@ -753,10 +765,249 @@ class DisplaySection(ConfigSection):
         }
 
 
+class CubeCard(Vertical):
+    """Editable card holding one Bluetooth cube of the configuration."""
+
+    DEFAULT_CSS = """
+    CubeCard {
+        height: auto;
+    }
+
+    CubeCard Collapsible {
+        border: round $primary;
+        padding: 0 1;
+        margin-bottom: 1;
+    }
+
+    CubeCard Contents {
+        padding: 0 0 0 1;
+    }
+
+    CubeCard Grid {
+        height: auto;
+        grid-size: 2;
+        grid-rows: auto;
+        grid-gutter: 1 2;
+    }
+
+    CubeCard .cube-remove {
+        margin-top: 1;
+        width: auto;
+    }
+    """
+
+    def __init__(self, index: int, label: str, data: dict[str, Any]) -> None:
+        """
+        Initialize the card of one cube.
+
+        The card edits the raw configuration table rather than a loaded
+        CubeDevice, the only way to tell a setting left inherited from
+        one explicitly set to the value it would have inherited.
+
+        Args:
+            index: Rank of the card, making its identifier unique.
+            label: Label naming the cube, empty for a cube being added.
+            data: Configuration table of the cube.
+
+        """
+        super().__init__(id=f'cube-{ index }', classes='cube-card')
+        self.label_name = label
+        self.data = data
+
+    def compose(self) -> ComposeResult:
+        """
+        Compose the fields of one cube.
+
+        Yields:
+            Textual widgets editing the cube.
+
+        """
+        gyroscope = self.data.get('use_gyroscope')
+        threshold = self.data.get('rotation_threshold')
+
+        # A cube being added is the one worth editing, so it opens alone
+        with Collapsible(
+            title=self.card_title,
+            collapsed=bool(self.label_name),
+        ):
+            with Grid():
+                yield Static('Short Name', classes='field-label')
+                with Vertical(classes='field-container'):
+                    yield Input(
+                        value=self.label_name,
+                        placeholder='gan12',
+                        classes='cube-label',
+                    )
+                    yield Static(
+                        'Name selecting the cube: term-timer solve -b gan12',
+                        classes='field-help',
+                    )
+
+                yield Static('Display Name', classes='field-label')
+                with Vertical(classes='field-container'):
+                    yield Input(
+                        value=str(self.data.get('name', '')),
+                        placeholder='GAN 356 i3',
+                        classes='cube-name',
+                    )
+                    yield Static(
+                        'Name shown for this cube, yours to '
+                        'choose (optional)',
+                        classes='field-help',
+                    )
+
+                yield Static('Device Address', classes='field-label')
+                with Vertical(classes='field-container'):
+                    yield Input(
+                        value=str(self.data.get('address', '')),
+                        placeholder='00:00:00:00:00:00',
+                        classes='cube-address',
+                    )
+                    yield Static(
+                        'MAC address, or system UUID on macOS. '
+                        'Empty to find the cube by scanning',
+                        classes='field-help',
+                    )
+
+                yield Static('Gyroscope', classes='field-label')
+                with Vertical(classes='field-container'):
+                    yield Select(
+                        options=[
+                            ('Inherit', INHERIT),
+                            ('Enabled', 'true'),
+                            ('Disabled', 'false'),
+                        ],
+                        value=(
+                            INHERIT if gyroscope is None
+                            else str(bool(gyroscope)).lower()
+                        ),
+                        allow_blank=False,
+                        classes='cube-gyroscope',
+                    )
+                    yield Static(
+                        'Inherit follows the default gyroscope above',
+                        classes='field-help',
+                    )
+
+                yield Static('Rotation Threshold', classes='field-label')
+                with Vertical(classes='field-container'):
+                    yield Input(
+                        value='' if threshold is None else str(threshold),
+                        type='number',
+                        placeholder='inherited',
+                        classes='cube-threshold',
+                    )
+                    yield Static(
+                        'Detection threshold of this cube, '
+                        'empty to inherit the default above',
+                        classes='field-help',
+                    )
+
+            yield Button(
+                'Remove this cube',
+                variant='error',
+                classes='cube-remove',
+            )
+
+    def field_value(self, field: str, composing: str = '') -> str:
+        """
+        Read a field of the card, its configured value while composing.
+
+        Args:
+            field: Class naming the input holding the field.
+            composing: Value to read while the input is not composed yet.
+
+        Returns:
+            The value being edited, stripped.
+
+        """
+        inputs = self.query(f'.cube-{ field }').results(Input)
+
+        return next(
+            (entry.value.strip() for entry in inputs),
+            composing,
+        )
+
+    @property
+    def card_title(self) -> str:
+        """Get the line naming the folded cube, its fields once typed."""
+        label = self.field_value('label', self.label_name).lower()
+
+        if not label:
+            return 'New cube'
+
+        parts = (
+            label,
+            self.field_value('name', str(self.data.get('name', ''))),
+            self.field_value('address', str(self.data.get('address', ''))),
+        )
+
+        return ' - '.join(part for part in parts if part)
+
+    @property
+    def label_value(self) -> str:
+        """Get the label naming the cube, empty while it has none."""
+        return self.field_value('label', self.label_name).lower()
+
+    def as_config(self) -> dict[str, Any]:
+        """
+        Build the configuration table of the edited cube.
+
+        Returns:
+            The cube table, holding only the settings it overrides.
+
+        """
+        gyroscope = self.query_one('.cube-gyroscope', Select)
+        threshold = self.query_one('.cube-threshold', Input).value.strip()
+
+        # A field left empty is an absent key, never an empty value
+        cube: dict[str, Any] = {
+            field: value
+            for field in ('name', 'address')
+            if (value := self.field_value(field))
+        }
+
+        if gyroscope.value != INHERIT:
+            cube['use_gyroscope'] = gyroscope.value == 'true'
+
+        if threshold:
+            cube['rotation_threshold'] = float(threshold)
+
+        return cube
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """Keep the folded title showing the fields being typed."""
+        titling = {'cube-label', 'cube-name', 'cube-address'}
+
+        if event.input.classes & titling:
+            self.query_one(Collapsible).title = self.card_title
+
+
 class BluetoothSection(ConfigSection):
     """Configuration section for Bluetooth settings."""
 
     section_name = 'bluetooth'
+
+    DEFAULT_CSS = """
+    /* The cube list stands outside the grid, so it spaces itself */
+    BluetoothSection > .field-label {
+        margin-top: 1;
+    }
+
+    BluetoothSection .cube-list {
+        height: auto;
+    }
+
+    BluetoothSection .cube-add {
+        margin-top: 1;
+        width: auto;
+    }
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
+        """Initialize the Bluetooth section."""
+        super().__init__(*args, **kwargs)
+        self.default_card: CubeCard | None = None
 
     @staticmethod
     def compose() -> ComposeResult:
@@ -768,36 +1019,27 @@ class BluetoothSection(ConfigSection):
 
         """
         with Grid():
-            yield Static('Device Address', classes='field-label')
+            yield Static('Default Cube', classes='field-label')
             with Vertical(classes='field-container'):
-                yield Input(
-                    id='address',
-                    placeholder='00:00:00:00:00:00',
-                )
+                yield Select[str](options=[], id='default')
                 yield Static(
-                    'Bluetooth MAC address of smart cube (empty for auto)',
+                    'Cube connected when none is asked for. '
+                    'Blank scans for one of the cubes below',
                     classes='field-help',
                 )
 
-            yield Static('Device Name', classes='field-label')
-            with Vertical(classes='field-container'):
-                yield Input(
-                    id='name',
-                    placeholder='GAN 356 i3',
-                )
-                yield Static(
-                    'Friendly name for the smart cube (optional)',
-                    classes='field-help',
-                )
-
-            yield Static('Use Gyroscope', classes='field-label')
+            yield Static('Default Gyroscope', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Checkbox(
                     'Enable gyroscope-based rotation detection',
                     id='use_gyroscope',
                 )
+                yield Static(
+                    'Applied to every cube leaving it inherited',
+                    classes='field-help',
+                )
 
-            yield Static('Rotation Threshold', classes='field-label')
+            yield Static('Default Threshold', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Input(
                     id='rotation_threshold',
@@ -805,19 +1047,23 @@ class BluetoothSection(ConfigSection):
                     placeholder='75.0',
                 )
                 yield Static(
-                    'Gyroscope rotation detection threshold (degrees)',
+                    'Gyroscope rotation detection threshold (degrees), '
+                    'applied to every cube leaving it inherited',
                     classes='field-help',
                 )
+
+        yield Static('Cubes', classes='field-label')
+        yield Vertical(classes='cube-list', id='cubes')
+        yield Button('Add a cube', variant='primary', classes='cube-add')
+
+    @property
+    def cards(self) -> list[CubeCard]:
+        """Get the cube cards currently edited."""
+        return list(self.query(CubeCard))
 
     def load_config(self) -> None:
         """Load Bluetooth configuration."""
         bluetooth_config = CONFIG.get('bluetooth', {})
-
-        address = self.query_one('#address', Input)
-        address.value = bluetooth_config.get('address', '')
-
-        name = self.query_one('#name', Input)
-        name.value = bluetooth_config.get('name', '')
 
         use_gyroscope = self.query_one('#use_gyroscope', Checkbox)
         use_gyroscope.value = bluetooth_config.get('use_gyroscope', True)
@@ -827,29 +1073,124 @@ class BluetoothSection(ConfigSection):
             bluetooth_config.get('rotation_threshold', 75.0),
         )
 
+        cubes = self.query_one('#cubes', Vertical)
+        cubes.remove_children()
+
+        configured: dict[str, Any] = bluetooth_config.get('cubes', {})
+
+        for index, (label, data) in enumerate(configured.items()):
+            cubes.mount(CubeCard(index, str(label), data))
+
+        # Cards answer with their configured label until they compose
+        self.refresh_defaults(
+            str(bluetooth_config.get('default', '')),
+        )
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Add or remove a cube when a card button is pressed."""
+        cubes = self.query_one('#cubes', Vertical)
+
+        if event.button.has_class('cube-add'):
+            cubes.mount(CubeCard(len(self.cards), '', {}))
+        elif event.button.has_class('cube-remove'):
+            for node in event.button.ancestors_with_self:
+                if isinstance(node, CubeCard):
+                    node.remove()
+                    break
+        else:
+            return
+
+        event.stop()
+        self.refresh_defaults()
+
+        if not self.is_loading:
+            app = self.app
+            if hasattr(app, 'mark_modified'):
+                app.mark_modified()
+
+    def refresh_defaults(self, chosen: str = '') -> None:
+        """
+        Offer the edited cubes as the default one, keeping the choice.
+
+        The choice follows the card rather than the label it carries, so
+        that renaming the designated cube keeps designating it.
+
+        Args:
+            chosen: Label to select, the current card when empty.
+
+        """
+        default = self.query_one('#default', Select)
+        cards = self.cards
+
+        if chosen:
+            self.default_card = next(
+                (card for card in cards if card.label_value == chosen),
+                None,
+            )
+
+        labels = [card.label_value for card in cards if card.label_value]
+        default.set_options((label, label) for label in labels)
+
+        selected = next(
+            (card.label_value for card in cards if card is self.default_card),
+            '',
+        )
+
+        if selected in labels:
+            default.value = selected
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        """Remember which card the default cube is picked from."""
+        super().on_select_changed(event)
+
+        if event.select.id != 'default' or event.value is Select.BLANK:
+            return
+
+        self.default_card = next(
+            (
+                card for card in self.cards
+                if card.label_value == str(event.value)
+            ),
+            None,
+        )
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """Keep the default cube in sync with the labels being typed."""
+        super().on_input_changed(event)
+
+        if event.input.has_class('cube-label'):
+            self.refresh_defaults()
+
     def get_config_data(
         self,
-    ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
+    ) -> ConfigData:
         """
         Get Bluetooth configuration data.
 
         Returns:
-            Bluetooth configuration with device address and gyroscope settings.
+            Bluetooth configuration with the cubes and gyroscope settings.
 
         """
-        address = self.query_one('#address', Input)
-        name = self.query_one('#name', Input)
         use_gyroscope = self.query_one('#use_gyroscope', Checkbox)
         rotation_threshold = self.query_one('#rotation_threshold', Input)
+        default = self.query_one('#default', Select)
+
+        cubes: dict[str, Any] = {
+            card.label_value: card.as_config()
+            for card in self.cards
+            if card.label_value
+        }
+
+        chosen = '' if default.is_blank() else str(default.value)
 
         return {
             'bluetooth': {
-                'address': address.value,
-                'name': name.value,
+                'default': chosen if chosen in cubes else '',
                 'use_gyroscope': use_gyroscope.value,
                 'rotation_threshold': float(
                     rotation_threshold.value or '75.0',
                 ),
+                'cubes': cubes,
             },
         }
 
@@ -1010,7 +1351,7 @@ class StatisticsSection(ConfigSection):
 
     def get_config_data(
         self,
-    ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
+    ) -> ConfigData:
         """
         Get statistics configuration data.
 
@@ -1125,7 +1466,7 @@ class ServerSection(ConfigSection):
 
     def get_config_data(
         self,
-    ) -> dict[str, dict[str, str | int | float | bool | list[str]]]:
+    ) -> ConfigData:
         """
         Get server configuration data.
 

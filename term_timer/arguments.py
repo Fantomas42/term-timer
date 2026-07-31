@@ -2,6 +2,7 @@
 import os
 import sys
 from argparse import SUPPRESS
+from argparse import ArgumentTypeError
 from argparse import Namespace
 from argparse import _SubParsersAction
 from typing import TYPE_CHECKING
@@ -10,14 +11,18 @@ from typing import Final
 from cubing_algs.constants import ORIENTATIONS
 
 from term_timer.argparser import ArgumentParser
+from term_timer.config import BLUETOOTH_CUBES
 from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
-from term_timer.config import DEVICE_ADDRESS
+from term_timer.config import CUBE_SELECTOR_AUTO
+from term_timer.config import CUBE_SELECTOR_OFF
+from term_timer.config import CUBE_SELECTORS
 from term_timer.config import DISPLAY_CONFIG
 from term_timer.config import SERVER_CONFIG
 from term_timer.config import TIMER_CONFIG
 from term_timer.config import TRAINER_STEP
 from term_timer.config import USE_GYROSCOPE
+from term_timer.config import CubeDevice
 from term_timer.constants import CUBE_SIZES
 from term_timer.methods import METHOD_ANALYSERS
 
@@ -259,6 +264,37 @@ def set_cube_arguments(
     return cube
 
 
+def cube_selector(value: str) -> str:
+    """
+    Validate the cube selector carried by the ``-b`` option.
+
+    Rejecting anything but a known label, an address or a reserved
+    keyword keeps a stray positional loud: ``solve -b 10`` fails on an
+    unknown cube instead of silently swallowing the solve count.
+
+    Args:
+        value: Raw value given on the command line.
+
+    Returns:
+        The selector, lowercased when it names a configured cube.
+
+    Raises:
+        ArgumentTypeError: The selector names no reachable cube.
+
+    """
+    selector = CubeDevice.clean_selector(value)
+
+    if selector:
+        return selector
+
+    choices = ', '.join([*BLUETOOTH_CUBES, *CUBE_SELECTORS])
+    msg = (
+        f'unknown cube { value !r} '
+        f'(choose from { choices }, or give an address)'
+    )
+    raise ArgumentTypeError(msg)
+
+
 def set_bluetooth_arguments(
         parser: ArgumentParser,
 ) -> ArgumentParser._ArgumentGroup:
@@ -269,19 +305,26 @@ def set_bluetooth_arguments(
         Argument group containing Bluetooth connection options.
 
     """
-    use_bluetooth = bool(DEVICE_ADDRESS)
-
     bluetooth = parser.add_argument_group('Bluetooth')
-    mode = 'disable' if use_bluetooth else 'enable'
+
+    # A bare -b keeps toggling: it disables a configured cube, and
+    # enables a scan when no cube is configured
+    bare = CUBE_SELECTOR_OFF if BLUETOOTH_CUBES else CUBE_SELECTOR_AUTO
+    known = ', '.join(BLUETOOTH_CUBES) or 'none configured'
     bluetooth.add_argument(
-        '-b', f'--{ mode }-bluetooth',
-        action='store_const',
-        const=not use_bluetooth,
-        default=use_bluetooth,
+        '-b', '--bluetooth',
+        nargs='?',
+        type=cube_selector,
+        const=bare,
+        default=None,
+        metavar='CUBE',
         dest='bluetooth',
         help=(
-            f'{ mode.title() } the Bluetooth-connected cube.\n'
-            'Default: False.'
+            'Select the Bluetooth-connected cube, by label or address.\n'
+            f'Known cubes: { known }.\n'
+            f'"{ CUBE_SELECTOR_AUTO }" scans for any cube, '
+            f'"{ CUBE_SELECTOR_OFF }" solves without one.\n'
+            f'Given alone: { bare }.'
         ),
     )
     mode = 'disable' if USE_GYROSCOPE else 'enable'
@@ -289,10 +332,11 @@ def set_bluetooth_arguments(
         '-g', f'--{ mode }-gyroscope',
         action='store_const',
         const=not USE_GYROSCOPE,
-        default=USE_GYROSCOPE,
+        default=None,
         dest='use_gyroscope',
         help=(
-            f"{ mode.title() } the cube's gyroscope.\n"
+            f"{ mode.title() } the cube's gyroscope, "
+            'whatever the cube configures.\n'
             'Default: False.'
         ),
     )
@@ -1568,6 +1612,17 @@ def reset_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         default='',
         help='Filter device name to connect to.',
     )
+    parser.add_argument(
+        '-b', '--bluetooth',
+        type=cube_selector,
+        default=None,
+        metavar='CUBE',
+        dest='bluetooth',
+        help=(
+            'Select the cube to reset, by label or address.\n'
+            f'Known cubes: { ", ".join(BLUETOOTH_CUBES) or "none configured" }.'
+        ),
+    )
 
     return parser
 
@@ -1631,5 +1686,8 @@ def get_arguments() -> Namespace:
     if args.command is None:
         parser.print_help()
         sys.exit(1)
+
+    if hasattr(args, 'bluetooth'):
+        args.bluetooth = CubeDevice.resolve(args.bluetooth)
 
     return args

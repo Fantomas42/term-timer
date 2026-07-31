@@ -1,5 +1,7 @@
 """Tests for arguments."""
 import unittest
+from collections.abc import Iterator
+from contextlib import contextmanager
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -21,6 +23,43 @@ from term_timer.arguments import set_session_arguments
 from term_timer.arguments import solve_arguments
 from term_timer.arguments import statistics_arguments
 from term_timer.arguments import train_arguments
+from term_timer.config import CubeDevice
+
+
+@contextmanager
+def configured_cubes(
+        cubes: dict[str, CubeDevice],
+) -> Iterator[None]:
+    """
+    Pretend the given cubes are the configured ones.
+
+    The registry is read twice: once by the parser being built, once by
+    the validation of a selector, which reaches the configuration
+    module itself.
+
+    Yields:
+        Nothing, once both readings are patched.
+
+    """
+    with (
+            patch('term_timer.arguments.BLUETOOTH_CUBES', cubes),
+            patch('term_timer.config.BLUETOOTH_CUBES', cubes),
+    ):
+        yield
+
+
+CUBES = {
+    'gan12': CubeDevice(
+        label='gan12',
+        name='GAN 12 ui FreePlay',
+        address='AA:BB:CC:DD:EE:FF',
+    ),
+    'weilong': CubeDevice(
+        label='weilong',
+        name='MoYu WeiLong v10 AI',
+        address='11:22:33:44:55:77',
+    ),
+}
 
 
 class TestCommandAliases(unittest.TestCase):
@@ -86,51 +125,89 @@ class TestSolveArguments(unittest.TestCase):
         self.assertEqual(parser.prog.split()[-1], 'solve')
 
     def test_solve_default_arguments(self) -> None:
-        """Test solve default arguments without a configured device address."""
-        with patch('term_timer.arguments.DEVICE_ADDRESS', ''):
+        """Test solve default arguments without any configured cube."""
+        with configured_cubes({}):
             main_parser = ArgumentParser()
             subparsers = main_parser.add_subparsers(dest='command')
             solve_arguments(subparsers)
 
-        args = main_parser.parse_args(['solve'])
+            args = main_parser.parse_args(['solve'])
+
         self.assertEqual(args.command, 'solve')
         self.assertEqual(args.solves, 0)
         self.assertEqual(args.cube, 3)
-        self.assertFalse(args.bluetooth)
+        self.assertIsNone(args.bluetooth)
         self.assertFalse(args.free_play)
 
-    def test_solve_default_bluetooth_when_address_configured(self) -> None:
-        """Test bluetooth defaults to True when a device address is set."""
-        with patch('term_timer.arguments.DEVICE_ADDRESS', 'AA:BB:CC:DD:EE:FF'):
+    def test_solve_bare_bluetooth_scans_without_configured_cube(self) -> None:
+        """Test a bare -b asks for a scan when no cube is configured."""
+        with configured_cubes({}):
             main_parser = ArgumentParser()
             subparsers = main_parser.add_subparsers(dest='command')
             solve_arguments(subparsers)
 
-        args = main_parser.parse_args(['solve'])
-        self.assertTrue(args.bluetooth)
+            args = main_parser.parse_args(['solve', '-b'])
+
+        self.assertEqual(args.bluetooth, 'auto')
 
     def test_solve_with_arguments(self) -> None:
-        """Test solve enables bluetooth when no address configured."""
-        with patch('term_timer.arguments.DEVICE_ADDRESS', ''):
+        """Test solve reads its options around a bare -b."""
+        with configured_cubes({}):
             main_parser = ArgumentParser()
             subparsers = main_parser.add_subparsers(dest='command')
             solve_arguments(subparsers)
 
-        args = main_parser.parse_args(['solve', '10', '-c', '4', '-b', '-f'])
+            args = main_parser.parse_args(
+                ['solve', '10', '-c', '4', '-b', '-f'],
+            )
+
         self.assertEqual(args.solves, 10)
         self.assertEqual(args.cube, 4)
-        self.assertTrue(args.bluetooth)
+        self.assertEqual(args.bluetooth, 'auto')
         self.assertTrue(args.free_play)
 
-    def test_solve_disable_bluetooth_when_address_configured(self) -> None:
-        """Test -b disables bluetooth when a device address is configured."""
-        with patch('term_timer.arguments.DEVICE_ADDRESS', 'AA:BB:CC:DD:EE:FF'):
+    def test_solve_bare_bluetooth_disables_configured_cube(self) -> None:
+        """Test a bare -b disables the cube when one is configured."""
+        with configured_cubes(CUBES):
             main_parser = ArgumentParser()
             subparsers = main_parser.add_subparsers(dest='command')
             solve_arguments(subparsers)
 
-        args = main_parser.parse_args(['solve', '-b'])
-        self.assertFalse(args.bluetooth)
+            args = main_parser.parse_args(['solve', '-b'])
+
+        self.assertEqual(args.bluetooth, 'off')
+
+    def test_solve_selects_a_configured_cube(self) -> None:
+        """Test -b selects a cube by label, whatever its case."""
+        with configured_cubes(CUBES):
+            main_parser = ArgumentParser()
+            subparsers = main_parser.add_subparsers(dest='command')
+            solve_arguments(subparsers)
+
+            args = main_parser.parse_args(['solve', '-b', 'WeiLong'])
+
+        self.assertEqual(args.bluetooth, 'weilong')
+
+    def test_solve_selects_an_unconfigured_address(self) -> None:
+        """Test -b takes a raw address, for a cube never configured."""
+        with configured_cubes(CUBES):
+            main_parser = ArgumentParser()
+            subparsers = main_parser.add_subparsers(dest='command')
+            solve_arguments(subparsers)
+
+            args = main_parser.parse_args(['solve', '-b', '11:22:33:44:55:66'])
+
+        self.assertEqual(args.bluetooth, '11:22:33:44:55:66')
+
+    def test_solve_rejects_an_unknown_cube(self) -> None:
+        """Test -b refuses a value naming no cube, positional included."""
+        with configured_cubes(CUBES):
+            main_parser = ArgumentParser()
+            subparsers = main_parser.add_subparsers(dest='command')
+            solve_arguments(subparsers)
+
+            with self.assertRaises(SystemExit):
+                main_parser.parse_args(['solve', '-b', '10'])
 
 
 class TestTrainArguments(unittest.TestCase):
@@ -145,46 +222,50 @@ class TestTrainArguments(unittest.TestCase):
         self.assertIsInstance(parser, ArgumentParser)
 
     def test_train_default_arguments(self) -> None:
-        """Test train default arguments without a configured device address."""
-        with patch('term_timer.arguments.DEVICE_ADDRESS', ''):
+        """Test train default arguments without any configured cube."""
+        with configured_cubes({}):
             main_parser = ArgumentParser()
             subparsers = main_parser.add_subparsers(dest='command')
             train_arguments(subparsers)
 
-        args = main_parser.parse_args(['train'])
+            args = main_parser.parse_args(['train'])
+
         self.assertEqual(args.command, 'train')
         self.assertEqual(args.case_codes, [])
-        self.assertFalse(args.bluetooth)
+        self.assertIsNone(args.bluetooth)
 
-    def test_train_enable_bluetooth_without_address(self) -> None:
-        """Test -b enables bluetooth on train when no address is configured."""
-        with patch('term_timer.arguments.DEVICE_ADDRESS', ''):
+    def test_train_bare_bluetooth_scans_without_configured_cube(self) -> None:
+        """Test a bare -b asks for a scan on train with no cube configured."""
+        with configured_cubes({}):
             main_parser = ArgumentParser()
             subparsers = main_parser.add_subparsers(dest='command')
             train_arguments(subparsers)
 
-        args = main_parser.parse_args(['train', '-b'])
-        self.assertTrue(args.bluetooth)
+            args = main_parser.parse_args(['train', '-b'])
 
-    def test_train_default_bluetooth_when_address_configured(self) -> None:
-        """Test bluetooth defaults to True on train when address is set."""
-        with patch('term_timer.arguments.DEVICE_ADDRESS', 'AA:BB:CC:DD:EE:FF'):
+        self.assertEqual(args.bluetooth, 'auto')
+
+    def test_train_bare_bluetooth_disables_configured_cube(self) -> None:
+        """Test a bare -b disables the cube on train when one is configured."""
+        with configured_cubes(CUBES):
             main_parser = ArgumentParser()
             subparsers = main_parser.add_subparsers(dest='command')
             train_arguments(subparsers)
 
-        args = main_parser.parse_args(['train'])
-        self.assertTrue(args.bluetooth)
+            args = main_parser.parse_args(['train', '-b'])
 
-    def test_train_disable_bluetooth_when_address_configured(self) -> None:
-        """Test -b disables bluetooth on train when address is configured."""
-        with patch('term_timer.arguments.DEVICE_ADDRESS', 'AA:BB:CC:DD:EE:FF'):
+        self.assertEqual(args.bluetooth, 'off')
+
+    def test_train_selects_a_configured_cube(self) -> None:
+        """Test -b selects a cube by label on train."""
+        with configured_cubes(CUBES):
             main_parser = ArgumentParser()
             subparsers = main_parser.add_subparsers(dest='command')
             train_arguments(subparsers)
 
-        args = main_parser.parse_args(['train', '-b'])
-        self.assertFalse(args.bluetooth)
+            args = main_parser.parse_args(['train', '-b', 'gan12'])
+
+        self.assertEqual(args.bluetooth, 'gan12')
 
 
 class TestListArguments(unittest.TestCase):

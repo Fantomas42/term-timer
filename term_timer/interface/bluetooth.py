@@ -30,9 +30,7 @@ from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.replay import ReplayFileDict
 from term_timer.bluetooth.replay import ReplayInterface
-from term_timer.config import DEVICE_ADDRESS
-from term_timer.config import DEVICE_NAME
-from term_timer.config import USE_GYROSCOPE
+from term_timer.config import CubeDevice
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.interface.sounds import SOUND_PLAYER
@@ -88,13 +86,15 @@ class Bluetooth:
         self.bluetooth_consumer_ref: asyncio.Task[None] | None = None
         self.bluetooth_hardware: dict[str, str | int] = {}
         self.bluetooth_replay: ReplayFileDict | None = None
+        self.bluetooth_device = CubeDevice.discovered(prefer_known=True)
 
         self.facelets_received_event = asyncio.Event()
         self.hardware_received_event = asyncio.Event()
 
     async def bluetooth_connect(
-            self, *,
-            use_gyroscope: bool = USE_GYROSCOPE) -> bool:
+            self,
+            device: CubeDevice | None = None, *,
+            use_gyroscope: bool | None = None) -> bool:
         """
         Connect to a Bluetooth cube and initialize device communication.
 
@@ -102,13 +102,19 @@ class Bluetooth:
         and waits for hardware and facelet information to be received.
 
         Args:
+            device: The cube to connect to. Defaults to the one the
+                configuration designates.
             use_gyroscope: Whether the driver should use gyroscope data.
+                None leaves the choice to the cube being connected.
 
         Returns:
             True if connection and initialization succeeded, False otherwise.
 
         """
-        address = DEVICE_ADDRESS
+        self.bluetooth_device = device or CubeDevice.resolve(None) or (
+            CubeDevice.discovered(prefer_known=True)
+        )
+        address = self.bluetooth_device.address
 
         self.bluetooth_queue = asyncio.Queue()
 
@@ -136,15 +142,25 @@ class Bluetooth:
                         end='',
                     )
 
-                    device = await self.bluetooth_interface.scan()
-                    if device:
-                        address = device.address
+                    found = await self.bluetooth_interface.scan(
+                        None,
+                        self.bluetooth_device.scan_addresses,
+                    )
+                    if found:
+                        address = found.address
+                        self.bluetooth_device = (
+                            CubeDevice.adopt(address) or self.bluetooth_device
+                        )
                 else:
                     self.console.print(
                         '[bluetooth]📡Bluetooth:[/bluetooth] '
-                        f'Connecting to [b]{ DEVICE_NAME or address }[/b]...',
+                        'Connecting to '
+                        f'[b]{ self.bluetooth_device.display_name }[/b]...',
                         end='',
                     )
+
+            if use_gyroscope is None:
+                use_gyroscope = self.bluetooth_device.use_gyroscope
 
             await self.bluetooth_interface.__aenter__(
                 address, use_gyroscope=use_gyroscope,
@@ -223,6 +239,7 @@ class Bluetooth:
         target.bluetooth_cube = self.bluetooth_cube
         target.bluetooth_cube_orientations = self.bluetooth_cube_orientations
         target.bluetooth_hardware = self.bluetooth_hardware
+        target.bluetooth_device = self.bluetooth_device
         target.facelets_received_event = self.facelets_received_event
         target.hardware_received_event = self.hardware_received_event
 
@@ -254,7 +271,7 @@ class Bluetooth:
         if not self.bluetooth_interface or not self.bluetooth_interface.client:
             return ''
 
-        device_label = DEVICE_NAME
+        device_label = self.bluetooth_device.name
         if not device_label:
             device_label = self.bluetooth_interface.client.name
 
@@ -290,7 +307,9 @@ class Bluetooth:
         if not self.bluetooth_queue:
             return
 
-        rotation_detector = RotationDetector()
+        rotation_detector = RotationDetector(
+            self.bluetooth_device.rotation_threshold,
+        )
 
         while True:
             events = await self.bluetooth_queue.get()

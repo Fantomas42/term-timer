@@ -11,6 +11,7 @@ from unittest import mock
 from cubing_algs.exceptions import InvalidMoveError
 
 from term_timer.arguments import get_parser
+from term_timer.config import CubeDevice
 from term_timer.scripts.commands.session import build_race_timer
 from term_timer.scripts.commands.session import race_header
 from term_timer.scripts.commands.session import solve_session
@@ -47,6 +48,7 @@ class SessionInterfaceDouble:
         self.connections = 0
         self.disconnections = 0
         self.gyroscope: bool | None = None
+        self.cube: CubeDevice | None = None
 
     async def start(self) -> bool:
         """
@@ -61,10 +63,16 @@ class SessionInterfaceDouble:
 
         return True
 
-    async def bluetooth_connect(self, *, use_gyroscope: bool) -> None:
+    async def bluetooth_connect(
+            self,
+            device: CubeDevice | None = None,
+            *,
+            use_gyroscope: bool | None = None,
+    ) -> None:
         """Open a connection, as the real interface would."""
         self.connections += 1
         self.gyroscope = use_gyroscope
+        self.cube = device
         self.bluetooth_interface = object()
 
     async def bluetooth_disconnect(self) -> None:
@@ -83,7 +91,10 @@ def session_options(*, bluetooth: bool = False) -> Namespace:
         The parsed namespace stand-in.
 
     """
-    return Namespace(bluetooth=bluetooth, use_gyroscope=False)
+    return Namespace(
+        bluetooth=CubeDevice(label='gan12') if bluetooth else None,
+        use_gyroscope=False,
+    )
 
 
 class TestSolveSession(unittest.IsolatedAsyncioTestCase):

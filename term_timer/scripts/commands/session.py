@@ -6,9 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from random import Random
 
-from cubing_algs.exceptions import CubingAlgsError
-
 from term_timer.bluetooth.replay import load_scramble_replay
+from term_timer.exceptions import SESSION_ERRORS
 from term_timer.exceptions import ReplayError
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
@@ -36,8 +35,9 @@ async def solve_session(
 
     The cube is connected on entry when the command asks for it or
     replays a solve file, and disconnected on exit whatever happens.
-    An invalid move ends the session on the exit code carried by the
-    yielded outcome, every other exception propagating untouched.
+    An unusable algorithm, case or cube state ends the session on the
+    exit code carried by the yielded outcome, every other exception
+    propagating untouched.
 
     Commands that never accept --replay leave bluetooth_replay unset,
     so the connection there falls back on the --bluetooth flag alone.
@@ -53,6 +53,7 @@ async def solve_session(
     """
     if options.bluetooth or instance.bluetooth_replay is not None:
         await instance.bluetooth_connect(
+            options.bluetooth,
             use_gyroscope=options.use_gyroscope,
         )
 
@@ -61,7 +62,7 @@ async def solve_session(
     try:
         with keep_awake():
             yield outcome
-    except CubingAlgsError as error:
+    except SESSION_ERRORS as error:
         console.print('😱', str(error), style='warning')
         outcome.code = 1
     finally:

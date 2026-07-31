@@ -9,17 +9,20 @@ import asyncio
 import unittest
 from random import Random
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import cast
 from unittest.mock import AsyncMock
 from unittest.mock import patch
 
 from cubing_algs.vcube import VCube
 
+from term_timer.config import CubeDevice
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
 from term_timer.constants import SolveFlag
+from term_timer.exceptions import CubeNotFoundError
 from term_timer.solve import Solve
 from term_timer.tests.test_trainer_bluetooth import FakeBluetoothInterface
 from term_timer.tests.test_trainer_bluetooth import make_move_event
@@ -330,3 +333,54 @@ class TestTimerKeyboardStopBluetooth(unittest.IsolatedAsyncioTestCase):
             'an interrupted attempt with cube moves must be a DNF',
         )
         self.save_solves_mock.assert_called()
+
+
+class TestBluetoothScanFilter(unittest.IsolatedAsyncioTestCase):
+    """What narrows the scan looking for a cube to connect to."""
+
+    def setUp(self) -> None:
+        """Patch sound playback so the failed connection stays silent."""
+        sound_patcher = patch('term_timer.interface.sounds.sd', create=True)
+        sound_patcher.start()
+        self.addCleanup(sound_patcher.stop)
+
+    @staticmethod
+    async def scan_arguments(device: CubeDevice) -> tuple[Any, ...]:
+        """
+        Connect to a cube left to be scanned, reporting the scan call.
+
+        Args:
+            device: Cube to connect to, carrying no address.
+
+        Returns:
+            The positional arguments the scan was called with.
+
+        """
+        timer = build_timer("R U R' U'")
+        interface = FakeBluetoothInterface()
+        interface.scan_timeout = 0  # type: ignore[attr-defined]
+        scan_mock = AsyncMock(return_value=None)
+        interface.scan = scan_mock  # type: ignore[attr-defined]
+        # Finding nothing is enough, the scan call is what is watched
+        interface.__aenter__ = AsyncMock(  # type: ignore[attr-defined]
+            side_effect=CubeNotFoundError,
+        )
+
+        with patch(
+                'term_timer.interface.bluetooth.BluetoothInterface',
+                return_value=interface,
+        ):
+            await timer.bluetooth_connect(device)
+
+        return cast('tuple[Any, ...]', scan_mock.call_args.args)
+
+    async def test_display_name_does_not_filter_the_scan(self) -> None:
+        """A cube named in the configuration is not looked up by name."""
+        device = CubeDevice(
+            label='gan12',
+            name='GAN 12 ui FreePlay',
+        )
+
+        arguments = await self.scan_arguments(device)
+
+        self.assertIsNone(arguments[0])

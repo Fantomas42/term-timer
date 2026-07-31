@@ -92,7 +92,36 @@ captured move by move, in real time:
 - Optional **gyroscope** support (`-g`): when your cube reports orientation,
   Term Timer tracks how you physically hold and rotate it during the solve,
   for an even more faithful reconstruction
+- **Several cubes, one configuration**: declare each of your cubes under its
+  own label and switch with `-b <label>`, each carrying its own gyroscope and
+  rotation settings
 - Built on `bleak`, so it works on Linux, macOS and Windows without a browser
+
+Cubes are declared in the `[bluetooth]` section of your configuration file,
+which `term-timer config` also edits:
+
+```toml
+[bluetooth]
+default = "gan12"           # cube used when none is asked for
+use_gyroscope = true        # global settings, overridable per cube
+rotation_threshold = 75.0
+
+[bluetooth.cubes.gan12]
+name = "GAN 12 ui FreePlay"  # display name, yours to choose
+address = "AA:BB:CC:DD:EE:FF"
+
+[bluetooth.cubes.weilong]
+name = "MoYu WeiLong v10 AI"
+address = "11:22:33:44:55:77"
+use_gyroscope = false       # this cube alone ignores its gyroscope
+rotation_threshold = 60.0
+```
+
+`-b` then selects a cube for one session: `-b weilong` takes that cube,
+`-b auto` scans for any cube even one never declared, `-b AA:BB:...` dials an
+address directly, and a bare `-b` runs without a cube. Leave `default` empty
+and Term Timer scans, favouring the cubes you declared: power on the one you
+want to solve on, it is the one that answers.
 
 ### Solve analysis & diagnostics
 
@@ -174,10 +203,19 @@ term-timer solve
 ```
 
 Start timing a recorded session (a Bluetooth cube is used automatically when
-present; pass `-b` to disable it) :
+one is configured; pass `-b` to disable it) :
 
 ```console
 term-timer solve -u morning
+```
+
+Own several cubes? Declare them once and pick one per session, without ever
+editing the configuration again :
+
+```console
+term-timer solve -b weilong          # a cube declared in the configuration
+term-timer solve -b auto             # scan, take whatever cube answers
+term-timer solve -b AA:BB:CC:DD:EE:FF  # a cube you are trying out
 ```
 
 Start timing 2 solves of 4x4x4 in free-play :
@@ -352,10 +390,13 @@ Cube:
                         Set the cube orientation used. Default: auto.
 
 Bluetooth:
-  -b, --disable-bluetooth
-                        Disable the Bluetooth-connected cube.
+  -b [CUBE], --bluetooth [CUBE]
+                        Select the Bluetooth-connected cube, by label or
+                        address. "auto" scans for any cube, "off" solves
+                        without one.
   -g, --enable-gyroscope
-                        Enable the cube's gyroscope.
+                        Enable the cube's gyroscope, whatever the cube
+                        configures.
   -m METHOD, --method METHOD
                         Set the method of analyse used. Default: cf4op.
   -j, --hide-steps      Hide completed steps during the solve.
@@ -439,10 +480,13 @@ Cube:
                         Set the cube orientation used. Default: DF.
 
 Bluetooth:
-  -b, --disable-bluetooth
-                        Disable the Bluetooth-connected cube.
+  -b [CUBE], --bluetooth [CUBE]
+                        Select the Bluetooth-connected cube, by label or
+                        address. "auto" scans for any cube, "off" solves
+                        without one.
   -g, --enable-gyroscope
-                        Enable the cube's gyroscope.
+                        Enable the cube's gyroscope, whatever the cube
+                        configures.
 
 Session:
   -f, --free-play       Disables saving and FSRS scheduling.

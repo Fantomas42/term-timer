@@ -4,7 +4,7 @@ import time
 from argparse import Namespace
 
 from term_timer.driller import Driller
-from term_timer.exceptions import InvalidAlgorithmError
+from term_timer.exceptions import SESSION_ERRORS
 from term_timer.interface.console import console
 from term_timer.scripts.commands.session import solve_session
 from term_timer.stats import DrillStatistics
@@ -27,7 +27,7 @@ async def driller(options: Namespace) -> int:
             countdown=options.countdown,
             metronome=options.metronome,
         )
-    except InvalidAlgorithmError as error:
+    except SESSION_ERRORS as error:
         console.print('😱', str(error), style='warning')
         return 1
 

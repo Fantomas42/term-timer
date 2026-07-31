@@ -5,8 +5,7 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from term_timer.bluetooth.interface import BluetoothInterface
-from term_timer.config import DEVICE_ADDRESS
-from term_timer.config import DEVICE_NAME
+from term_timer.config import CubeDevice
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.interface.console import console
 from term_timer.interface.sounds import SOUND_PLAYER
@@ -29,7 +28,10 @@ async def reset(options: Namespace) -> int:
     queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
     bluetooth_interface = BluetoothInterface(queue)
 
-    address = DEVICE_ADDRESS
+    cube = CubeDevice.resolve(options.bluetooth) or CubeDevice.discovered(
+        prefer_known=True,
+    )
+    address = cube.address
     filter_name = options.filter_name or None
 
     try:
@@ -40,13 +42,16 @@ async def reset(options: Namespace) -> int:
                 f'{ bluetooth_interface.scan_timeout }s...',
                 end='',
             )
-            device = await bluetooth_interface.scan(filter_name)
+            device = await bluetooth_interface.scan(
+                filter_name,
+                cube.scan_addresses,
+            )
             if device:
                 address = device.address
         else:
             console.print(
                 '[bluetooth]📡Bluetooth:[/bluetooth] '
-                f'Connecting to [b]{ DEVICE_NAME or address }[/b]...',
+                f'Connecting to [b]{ cube.display_name }[/b]...',
                 end='',
             )
 

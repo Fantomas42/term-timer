@@ -239,7 +239,11 @@ class BluetoothInterface:
 
         return True
 
-    async def scan(self, filter_name: str | None = None) -> BLEDevice | None:
+    async def scan(
+            self,
+            filter_name: str | None = None,
+            known_addresses: tuple[str, ...] = (),
+    ) -> BLEDevice | None:
         """
         Scan for available Bluetooth smart cubes in the vicinity.
 
@@ -247,9 +251,15 @@ class BluetoothInterface:
         filtering for known smart cube prefixes and optionally matching a
         specific name pattern.
 
+        Owning several cubes, only one of which is usually powered on,
+        the scan favours a configured cube over any other one it finds,
+        so that its own settings apply to the session.
+
         Args:
             filter_name: Optional name substring to filter discovered devices.
-                Only devices whose name contains this string will be returned.
+                Only devices containing this string will be selected.
+            known_addresses: Addresses of the configured cubes, preferred
+                over any other compatible cube discovered.
 
         Returns:
             The first discovered BLE device matching the cube criteria, or None
@@ -273,6 +283,8 @@ class BluetoothInterface:
             logger.debug(str(error))
             raise CubeNotFoundError from error
 
+        known = {address.lower() for address in known_addresses}
+
         for device in devices:
             name = device.name or 'N/A'
             logger.debug(' * %s %s', device, name)
@@ -283,12 +295,20 @@ class BluetoothInterface:
                         'Found %s cube: %s (%s)',
                         prefix, device.name, device.address,
                     )
-                    selected_device = device
+                    if device.address.lower() in known:
+                        logger.debug('Configured cube, selected')
+                        return device
+
+                    selected_device = selected_device or device
                     break
-            if selected_device:
-                break
 
         if not selected_device:
             return None
+
+        if known:
+            logger.debug(
+                'No configured cube found, falling back on %s',
+                selected_device.address,
+            )
 
         return selected_device
