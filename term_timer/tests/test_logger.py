@@ -12,8 +12,21 @@ from term_timer import logger as logger_module
 from term_timer.logger import LOGGING_CONF
 from term_timer.logger import AsyncioLogHandler
 from term_timer.logger import AsyncioLogListener
+from term_timer.logger import GattValueSignalFilter
 from term_timer.logger import configure_logging
 from term_timer.logger import shutdown_logging
+
+GATT_VALUE_BODY: list[object] = [
+    'org.bluez.GattCharacteristic1',
+    {'Value': b'\x01\x02\x03'},
+    [],
+]
+
+CONNECTED_BODY: list[object] = [
+    'org.bluez.Device1',
+    {'Connected': True},
+    [],
+]
 
 
 class RecordCollector(logging.Handler):
@@ -110,6 +123,37 @@ class ConfigureLoggingTestCase(unittest.TestCase):
 
         self.assertNotIn('below the level', content)
         self.assertIn('above the level', content)
+
+    def test_configure_logging_filters_upstream_of_the_queue(self) -> None:
+        """The signal filter sits on the queue handler, not on the file."""
+        self.configure()
+
+        queue_handler = logging.getLogger().handlers[0]
+        listener = logger_module.log_listener
+        if listener is None:
+            self.fail('The listener has not been stored')
+
+        self.assertEqual(len(queue_handler.filters), 1)
+        self.assertIsInstance(queue_handler.filters[0], GattValueSignalFilter)
+        self.assertEqual(listener.handler.filters, [])
+
+    def test_configure_logging_drops_the_gatt_values_only(self) -> None:
+        """A value notification is dropped, the life cycle is written."""
+        self.configure()
+
+        logger = logging.getLogger('bleak.backends.bluezdbus.manager')
+        for body in (GATT_VALUE_BODY, CONNECTED_BODY):
+            logger.debug(
+                'received D-Bus signal: %s.%s (%s): %s',
+                'org.freedesktop.DBus.Properties', 'PropertiesChanged',
+                '/org/bluez/hci0/dev_F7_32_D0_D2_02_EE', body,
+            )
+
+        shutdown_logging()
+        content = self.log_path.read_text()
+
+        self.assertNotIn('GattCharacteristic1', content)
+        self.assertIn('Connected', content)
 
     def test_shutdown_logging_stops_the_listener(self) -> None:
         """Shutting down joins the listener thread and forgets it."""
@@ -248,3 +292,101 @@ class AsyncioLogListenerTestCase(unittest.TestCase):
         self.listener.stop()
 
         self.assertEqual(self.collected(), ['record 0', 'record 1'])
+
+
+class GattValueSignalFilterTestCase(unittest.TestCase):
+    """Tests for the GattValueSignalFilter."""
+
+    def setUp(self) -> None:
+        """Build the filter under test."""
+        self.filter = GattValueSignalFilter()
+
+    @staticmethod
+    def signal_record(
+            *args: object,
+            func: str = '_parse_msg',
+    ) -> logging.LogRecord:
+        """
+        Build the record bleak emits for a received D-Bus signal.
+
+        Args:
+            args: Arguments of the record, the body coming last.
+            func: Name of the function said to have emitted the record.
+
+        Returns:
+            A record shaped like the ones of the bluezdbus manager.
+
+        """
+        return logging.LogRecord(
+            'bleak.backends.bluezdbus.manager', logging.DEBUG,
+            '/bleak/backends/bluezdbus/manager.py', 926,
+            'received D-Bus signal: %s.%s (%s): %s',
+            args, None, func,
+        )
+
+    def test_drops_a_gatt_value_notification(self) -> None:
+        """The payload of a cube notification is not worth writing."""
+        record = self.signal_record(
+            'org.freedesktop.DBus.Properties', 'PropertiesChanged',
+            '/org/bluez/hci0/dev_F7/service0012/char0015', GATT_VALUE_BODY,
+        )
+
+        self.assertFalse(self.filter.filter(record))
+
+    def test_keeps_the_connection_life_cycle(self) -> None:
+        """The signals explaining a silent cube all go through."""
+        bodies: dict[str, list[object]] = {
+            'Connected': CONNECTED_BODY,
+            'ServicesResolved': [
+                'org.bluez.Device1', {'ServicesResolved': True}, [],
+            ],
+            'Notifying': [
+                'org.bluez.GattCharacteristic1', {'Notifying': False}, [],
+            ],
+            'Discovering': [
+                'org.bluez.Adapter1', {'Discovering': True}, [],
+            ],
+        }
+
+        for name, body in bodies.items():
+            with self.subTest(property=name):
+                record = self.signal_record(
+                    'org.freedesktop.DBus.Properties', 'PropertiesChanged',
+                    '/org/bluez/hci0', body,
+                )
+
+                self.assertTrue(self.filter.filter(record))
+
+    def test_keeps_a_written_characteristic(self) -> None:
+        """What is sent to the cube is kept, it is low volume and useful."""
+        record = logging.LogRecord(
+            'bleak.backends.bluezdbus.client', logging.DEBUG,
+            '/bleak/backends/bluezdbus/client.py', 856,
+            'Write Characteristic %s | %s: %s',
+            ('0000fff5-0000-1000-8000-00805f9b34fb', '/org/bluez', b'\x01'),
+            None, 'write_gatt_char',
+        )
+
+        self.assertTrue(self.filter.filter(record))
+
+    def test_keeps_the_records_of_another_shape(self) -> None:
+        """Anything that is not a D-Bus body is left alone."""
+        records = {
+            'no argument': self.signal_record(),
+            'body too short': self.signal_record(
+                'signal', ['org.bluez.GattCharacteristic1'],
+            ),
+            'body not a list': self.signal_record(
+                'signal', 'org.bluez.GattCharacteristic1',
+            ),
+            # A lone mapping is unwrapped by LogRecord and stored as is,
+            # so record.args is not a tuple at all on this path
+            'mapping arguments': logging.LogRecord(
+                'term_timer', logging.DEBUG, __file__, 1,
+                '%(Value)s', ({'Value': 'a mapping is not a body'},), None,
+            ),
+        }
+
+        for name, record in records.items():
+            with self.subTest(record=name):
+                self.assertTrue(self.filter.filter(record))

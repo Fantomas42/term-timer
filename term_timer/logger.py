@@ -6,6 +6,8 @@ import logging.handlers
 import queue
 import threading
 from typing import Final
+from typing import cast
+from typing import override
 
 from term_timer.config import DEBUG
 from term_timer.constants import LOGGING_DIRECTORY
@@ -15,27 +17,59 @@ LOGGING_FILE: Final = 'term-timer.log'
 LOGGING_PATH: Final = LOGGING_DIRECTORY / LOGGING_FILE
 
 
-class DbusSignalFilter(logging.Filter):
-    """
-    Filters out noisy D-Bus signal log messages.
+GATT_VALUE_INTERFACE: Final = 'org.bluez.GattCharacteristic1'
 
-    Prevents logging of frequently called D-Bus internal functions to reduce
-    log verbosity and improve readability.
+
+class GattValueSignalFilter(logging.Filter):
+    """
+    Drops the D-Bus signals carrying a GATT characteristic value.
+
+    Bleak logs one record per notification received from the cube, each
+    holding the whole D-Bus message body: 84% of the records and 96% of
+    the bytes of a debug session, for data the decoded cube events say
+    better. Every other D-Bus signal is kept, and the connection life
+    cycle above all — Connected, ServicesResolved, Notifying — which is
+    what tells a cube gone silent from a cube left alone.
     """
 
-    @staticmethod
-    def filter(record: logging.LogRecord) -> bool:
+    @override
+    def filter(self, record: logging.LogRecord) -> bool:
         """
         Determine whether a log record should be logged.
+
+        The body of the signal is read from the arguments of the record,
+        not from its message, so nothing has to be formatted to decide.
 
         Args:
             record: The log record to evaluate.
 
         Returns:
-            False if the record is from a filtered function, True otherwise.
+            False for a GATT characteristic value notification, True
+            otherwise.
 
         """
-        return record.funcName not in {'_parse_msg', 'write_gatt_char'}
+        args = record.args
+
+        if not isinstance(args, tuple) or not args:
+            return True
+
+        body = args[-1]
+
+        if not isinstance(body, list):
+            return True
+
+        signal = cast('list[object]', body)
+
+        if len(signal) < 2:
+            return True
+
+        interface, changed = signal[0], signal[1]
+
+        return not (
+            interface == GATT_VALUE_INTERFACE
+            and isinstance(changed, dict)
+            and 'Value' in changed
+        )
 
 
 class AsyncioLogHandler(logging.handlers.QueueHandler):
@@ -129,11 +163,6 @@ class AsyncioLogListener:
 LOGGING_CONF: Final = {
     'version': 1,
     'disable_existing_loggers': False,
-    'filters': {
-        'no_dbus_signal': {
-            '()': DbusSignalFilter,
-        },
-    },
     'formatters': {
         'standard': {
             'class': 'logging.Formatter',
@@ -147,7 +176,6 @@ LOGGING_CONF: Final = {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': LOGGING_PATH,
-            'filters': ['no_dbus_signal'],
         },
     },
     'loggers': {
@@ -186,6 +214,11 @@ def configure_logging() -> None:
             # to it, not by the handler itself: queueing the records is
             # what dispatches them now, so the level has to be carried over
             queue_handler.setLevel(file_handler.level)
+            # Filtering belongs upstream of the queue: QueueHandler clears
+            # record.args when it enqueues, so the body of the signal is
+            # already gone on the other side, and a record dropped there
+            # has paid the queue and the thread wake-up for nothing
+            queue_handler.addFilter(GattValueSignalFilter())
             root_logger.addHandler(queue_handler)
 
             log_listener = AsyncioLogListener(log_queue, file_handler)
