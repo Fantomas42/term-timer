@@ -350,8 +350,8 @@ class BluetoothTeardownTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIn('Notifications not stopped', logs.output[0])
         self.assertEqual(client.disconnect_calls, 1)
 
-    async def test_link_already_down_only_posts_the_sentinel(self) -> None:
-        """A dead link is not talked to, but the consumer is still told."""
+    async def test_link_already_down_is_not_talked_to(self) -> None:
+        """A dead link is left alone, and the queue with it."""
         client = TeardownClient(is_connected=False)
         interface = self.build_interface(client)
 
@@ -359,4 +359,21 @@ class BluetoothTeardownTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(client.stop_notify_calls, [])
         self.assertEqual(client.disconnect_calls, 0)
-        self.assertIsNone(interface.queue.get_nowait())
+        self.assertTrue(interface.queue.empty())
+
+    async def test_teardown_leaves_the_sentinel_to_its_caller(self) -> None:
+        """
+        Leaving the interface posts nothing on the queue.
+
+        The queue belongs to the consumer, so the sentinel belongs to
+        whoever waits for it. Posted from here it doubled the one the
+        caller posts, and it landed in a queue nobody reads whenever the
+        caller runs no consumer at all.
+        """
+        client = TeardownClient()
+        interface = self.build_interface(client)
+
+        await interface.__aexit__(None, None, None)
+
+        self.assertEqual(client.disconnect_calls, 1)
+        self.assertTrue(interface.queue.empty())

@@ -375,13 +375,17 @@ class ReplayInterface(BluetoothInterface):
             exc_value: BaseException | None,
             exc_traceback: object,
     ) -> None:
-        """Cancel any pending playback and signal disconnection."""
+        """
+        Cancel any pending playback.
+
+        The stop sentinel is left to the caller, as on a real interface:
+        a drop-in that stops the consumer on its own would hide from the
+        replay every defect of the exit path.
+        """
         if self.schedule_task and not self.schedule_task.done():
             self.schedule_task.cancel()
             with suppress(asyncio.CancelledError):
                 await self.schedule_task
-
-        await self.queue.put(None)
 
     async def send_command(  # noqa: PLR6301
             self, command: str,  # noqa: ARG002

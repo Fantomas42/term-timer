@@ -234,10 +234,7 @@ class Bluetooth:
             target: The instance that will take over the connection.
 
         """
-        if self.bluetooth_queue:
-            await self.bluetooth_queue.put(None)
-        if self.bluetooth_consumer_ref:
-            await self.bluetooth_consumer_ref
+        await self.stop_bluetooth_consumer()
 
         target.bluetooth_queue = self.bluetooth_queue
         target.bluetooth_interface = self.bluetooth_interface
@@ -276,20 +273,67 @@ class Bluetooth:
             )
             await self.bluetooth_interface.__aexit__(None, None, None)
 
-        if self.bluetooth_queue is not None:
-            await self.bluetooth_queue.put(None)
+        await self.stop_bluetooth_consumer()
 
-        if self.bluetooth_consumer_ref:
+    async def stop_bluetooth_consumer(self) -> None:
+        """
+        Stop the consumer task, the sentinel belonging to its waiter.
+
+        Nothing is posted when there is no living consumer to read it:
+        an orphan sentinel outlives the queue it sits in, and the next
+        consumer started on that queue reads it and stops at once, the
+        cube events piling up behind it.
+
+        """
+        consumer = self.bluetooth_consumer_ref
+        self.bluetooth_consumer_ref = None
+
+        if consumer is None or self.bluetooth_queue is None:
+            return
+
+        if consumer.done():
+            logger.warning('Bluetooth consumer already stopped')
+            return
+
+        await self.bluetooth_queue.put(None)
+
+        try:
+            await asyncio.wait_for(
+                consumer,
+                BLUETOOTH_CONSUMER_STOP_TIMEOUT,
+            )
+        except asyncio.TimeoutError:  # noqa: UP041
+            logger.warning(
+                'Bluetooth consumer did not stop in %ss, cancelled',
+                BLUETOOTH_CONSUMER_STOP_TIMEOUT,
+            )
+            self.discard_stop_sentinels()
+
+    def discard_stop_sentinels(self) -> None:
+        """
+        Take back the sentinels left in the queue by a dead consumer.
+
+        Only the sentinels are dropped, the cube events being put back in
+        order. Nothing is awaited in between, so no notification can slip
+        into the queue while it is being emptied.
+
+        """
+        if self.bluetooth_queue is None:
+            return
+
+        pending: list[list[EventDict]] = []
+
+        while True:
             try:
-                await asyncio.wait_for(
-                    self.bluetooth_consumer_ref,
-                    BLUETOOTH_CONSUMER_STOP_TIMEOUT,
-                )
-            except asyncio.TimeoutError:  # noqa: UP041
-                logger.warning(
-                    'Bluetooth consumer did not stop in %ss, cancelled',
-                    BLUETOOTH_CONSUMER_STOP_TIMEOUT,
-                )
+                events = self.bluetooth_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+
+            if events is not None:
+                pending.append(events)
+
+        for events in pending:
+            self.bluetooth_queue.put_nowait(events)
 
     @property
     def bluetooth_device_label(self) -> str:

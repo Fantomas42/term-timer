@@ -218,10 +218,15 @@ class BluetoothInterface:
     async def __aexit__(self, exc_type: type[BaseException] | None,
                         exc_value: BaseException | None,
                         exc_traceback: object) -> None:
-        """Exit async context manager by disconnecting from cube."""
+        """
+        Exit async context manager by disconnecting from cube.
+
+        The stop sentinel is not posted here: the queue belongs to the
+        consumer, so it belongs to whoever waits for the consumer. Posted
+        from here it lands in a queue nobody reads whenever the caller
+        runs none, and it doubles the one the caller posts itself.
+        """
         logger.debug('Disconnect from client')
-        # Send an "exit command to the consumer"
-        await self.queue.put(None)
 
         if self.client and self.client.is_connected and self.driver:
             await self.stop_notifications()

@@ -18,6 +18,7 @@ from unittest.mock import patch
 
 from cubing_algs.vcube import VCube
 
+from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import DisconnectEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.config import CubeDevice
@@ -477,6 +478,200 @@ class TestBluetoothDisconnect(unittest.IsolatedAsyncioTestCase):
             await asyncio.wait_for(timer.bluetooth_disconnect(), timeout=1.0)
 
         self.assertTrue(deaf.cancelled())
+
+    async def test_disconnect_leaves_no_sentinel_behind(self) -> None:
+        """
+        A normal exit posts one sentinel, and it is the consumer's.
+
+        The interface exit used to post one of its own, so a plain
+        session exit left a second one in the queue.
+        """
+        timer = build_timer("R U R' U'")
+        timer.bluetooth_interface.__aexit__ = AsyncMock()  # type: ignore[method-assign,union-attr]
+        consumer = self.start_consumer(timer)
+        await asyncio.sleep(0)
+
+        await asyncio.wait_for(timer.bluetooth_disconnect(), timeout=1.0)
+
+        self.assertTrue(consumer.done())
+        queue = cast(
+            'asyncio.Queue[list[EventDict] | None]', timer.bluetooth_queue,
+        )
+        self.assertTrue(queue.empty())
+
+
+def make_battery_event(level: int) -> list[EventDict]:
+    """
+    Build a BT queue payload for a battery report.
+
+    A state free event: whatever the timer is doing, consuming it is
+    visible on bluetooth_hardware and nowhere else.
+
+    Args:
+        level: Battery percentage carried by the event.
+
+    Returns:
+        A one-element list ready to put into timer.bluetooth_queue.
+
+    """
+    event: BatteryEventDict = {
+        'event': 'battery',
+        'clock': 0,
+        'timestamp': datetime.now(tz=UTC),
+        'level': level,
+        'charging_state': 0,
+    }
+    result: list[EventDict] = [event]
+    return result
+
+
+class TestBluetoothHandoff(unittest.IsolatedAsyncioTestCase):
+    """Passing a live connection from one session to the next."""
+
+    logger_name = 'term_timer.interface.bluetooth'
+
+    def setUp(self) -> None:
+        """Patch sound playback for each test."""
+        sound_patcher = patch('term_timer.interface.sounds.sd', create=True)
+        sound_patcher.start()
+        self.addCleanup(sound_patcher.stop)
+
+    @staticmethod
+    def start_consumer(timer: Timer) -> asyncio.Task[None]:
+        """
+        Run the Bluetooth consumer of a timer, parked on its queue.
+
+        Args:
+            timer: Timer whose consumer is started.
+
+        Returns:
+            The consumer task, referenced by the timer as in production.
+
+        """
+        consumer = asyncio.create_task(timer.bluetooth_consumer())
+        timer.bluetooth_consumer_ref = consumer
+        return consumer
+
+    async def assert_target_consumes(self, target: Timer) -> None:
+        """
+        Check that the consumer of the target is alive and draining.
+
+        Args:
+            target: The instance the connection was handed off to.
+
+        """
+        consumer = target.bluetooth_consumer_ref
+        self.assertIsNotNone(consumer)
+        self.assertFalse(cast('asyncio.Task[None]', consumer).done())
+
+        queue = cast(
+            'asyncio.Queue[list[EventDict] | None]', target.bluetooth_queue,
+        )
+        await queue.put(make_battery_event(42))
+        await wait_until(lambda: target.bluetooth_hardware.get(
+            'battery_level',
+        ) == 42)
+
+        await asyncio.wait_for(
+            target.stop_bluetooth_consumer(), timeout=1.0,
+        )
+
+    async def test_handoff_stops_the_consumer_and_starts_the_next(
+            self,
+    ) -> None:
+        """The living consumer is stopped, the target one takes over."""
+        source = build_timer("R U R' U'")
+        target = build_timer("R U R' U'")
+        consumer = self.start_consumer(source)
+        await asyncio.sleep(0)
+
+        await asyncio.wait_for(source.bluetooth_handoff(target), timeout=1.0)
+
+        self.assertTrue(consumer.done())
+        self.assertIsNone(source.bluetooth_consumer_ref)
+        await self.assert_target_consumes(target)
+
+    async def test_handoff_posts_nothing_for_a_dead_consumer(self) -> None:
+        """
+        A consumer that died before the handoff gets no sentinel.
+
+        It would never read it: the sentinel stayed in the queue and the
+        consumer started on the target read it at once and stopped, the
+        cube events piling up in a queue nobody drained any more.
+        """
+        source = build_timer("R U R' U'")
+        target = build_timer("R U R' U'")
+        consumer = self.start_consumer(source)
+        queue = cast(
+            'asyncio.Queue[list[EventDict] | None]', source.bluetooth_queue,
+        )
+        await queue.put(None)
+        await consumer
+
+        with self.assertLogs(self.logger_name, level='WARNING') as logs:
+            await asyncio.wait_for(
+                source.bluetooth_handoff(target), timeout=1.0,
+            )
+
+        self.assertIn('already stopped', logs.output[0])
+        self.assertTrue(queue.empty())
+        await self.assert_target_consumes(target)
+
+    async def test_handoff_takes_its_sentinel_back_from_a_deaf_consumer(
+            self,
+    ) -> None:
+        """
+        A consumer cancelled on timeout never read the sentinel.
+
+        Left in the queue it is the very same orphan, one turn later:
+        the consumer of the target would read it and stop.
+        """
+        source = build_timer("R U R' U'")
+        target = build_timer("R U R' U'")
+        deaf: asyncio.Task[None] = asyncio.create_task(asyncio.sleep(3600))
+        source.bluetooth_consumer_ref = deaf
+
+        with patch(
+                'term_timer.interface.bluetooth.'
+                'BLUETOOTH_CONSUMER_STOP_TIMEOUT',
+                0.01,
+        ), self.assertLogs(self.logger_name, level='WARNING') as logs:
+            await asyncio.wait_for(
+                source.bluetooth_handoff(target), timeout=1.0,
+            )
+
+        self.assertTrue(deaf.cancelled())
+        self.assertIn('did not stop', logs.output[0])
+        await self.assert_target_consumes(target)
+
+    async def test_handoff_keeps_the_events_of_a_deaf_consumer(self) -> None:
+        """Taking the sentinel back does not drop the cube events."""
+        source = build_timer("R U R' U'")
+        target = build_timer("R U R' U'")
+        deaf: asyncio.Task[None] = asyncio.create_task(asyncio.sleep(3600))
+        source.bluetooth_consumer_ref = deaf
+        queue = cast(
+            'asyncio.Queue[list[EventDict] | None]', source.bluetooth_queue,
+        )
+        await queue.put(make_battery_event(17))
+
+        with patch(
+                'term_timer.interface.bluetooth.'
+                'BLUETOOTH_CONSUMER_STOP_TIMEOUT',
+                0.01,
+        ):
+            await asyncio.wait_for(
+                source.bluetooth_handoff(target), timeout=1.0,
+            )
+
+        await wait_until(lambda: target.bluetooth_hardware.get(
+            'battery_level',
+        ) == 17)
+        self.assertEqual(target.bluetooth_hardware['battery_level'], 17)
+
+        await asyncio.wait_for(
+            target.stop_bluetooth_consumer(), timeout=1.0,
+        )
 
 
 def make_disconnect_event() -> list[EventDict]:
