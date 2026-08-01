@@ -2,6 +2,7 @@
 import contextlib
 import io
 import logging
+import logging.handlers
 import queue
 import tempfile
 import unittest
@@ -10,7 +11,6 @@ from unittest import mock
 
 from term_timer import logger as logger_module
 from term_timer.logger import LOGGING_CONF
-from term_timer.logger import AsyncioLogHandler
 from term_timer.logger import AsyncioLogListener
 from term_timer.logger import GattValueSignalFilter
 from term_timer.logger import configure_logging
@@ -100,7 +100,7 @@ class ConfigureLoggingTestCase(unittest.TestCase):
         handlers = logging.getLogger().handlers
 
         self.assertEqual(len(handlers), 1)
-        self.assertIsInstance(handlers[0], AsyncioLogHandler)
+        self.assertIsInstance(handlers[0], logging.handlers.QueueHandler)
 
     def test_configure_logging_carries_the_handler_level(self) -> None:
         """The queue handler is given the level of the file handler."""

@@ -16,6 +16,8 @@ LOGGING_FILE: Final = 'term-timer.log'
 
 LOGGING_PATH: Final = LOGGING_DIRECTORY / LOGGING_FILE
 
+FILE_HANDLER_NAME: Final = 'fileHandler'
+
 
 GATT_VALUE_INTERFACE: Final = 'org.bluez.GattCharacteristic1'
 
@@ -70,25 +72,6 @@ class GattValueSignalFilter(logging.Filter):
             and isinstance(changed, dict)
             and 'Value' in changed
         )
-
-
-class AsyncioLogHandler(logging.handlers.QueueHandler):
-    """
-    Queue-based log handler for asynchronous logging.
-
-    Sends log records to a queue for processing by a separate thread,
-    preventing blocking of the main application during log I/O operations.
-    """
-
-    def __init__(self, log_queue: queue.Queue[logging.LogRecord]) -> None:
-        """
-        Initialize the async log handler with a queue.
-
-        Args:
-            log_queue: Queue to receive log records for async processing.
-
-        """
-        super().__init__(log_queue)
 
 
 class AsyncioLogListener:
@@ -171,7 +154,7 @@ LOGGING_CONF: Final = {
         },
     },
     'handlers': {
-        'fileHandler': {
+        FILE_HANDLER_NAME: {
             'formatter': 'standard',
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
@@ -182,7 +165,7 @@ LOGGING_CONF: Final = {
         '': {
             'level': 'DEBUG',
             'handlers': [
-                'fileHandler',
+                FILE_HANDLER_NAME,
             ],
         },
     },
@@ -199,17 +182,13 @@ def configure_logging() -> None:
         logging.config.dictConfig(LOGGING_CONF)
 
         root_logger = logging.getLogger()
-        file_handler: logging.FileHandler | None = None
-        for handler in root_logger.handlers:
-            if isinstance(handler, logging.FileHandler):
-                file_handler = handler
-                break
+        file_handler = logging.getHandlerByName(FILE_HANDLER_NAME)
 
         if file_handler:
             root_logger.removeHandler(file_handler)
 
             log_queue: queue.Queue[logging.LogRecord] = queue.Queue()
-            queue_handler = AsyncioLogHandler(log_queue)
+            queue_handler = logging.handlers.QueueHandler(log_queue)
             # The level of a handler is honoured by the logger dispatching
             # to it, not by the handler itself: queueing the records is
             # what dispatches them now, so the level has to be carried over
