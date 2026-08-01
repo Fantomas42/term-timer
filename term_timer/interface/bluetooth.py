@@ -31,6 +31,7 @@ from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.replay import ReplayFileDict
 from term_timer.bluetooth.replay import ReplayInterface
 from term_timer.config import CubeDevice
+from term_timer.constants import BLUETOOTH_CONSUMER_STOP_TIMEOUT
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.interface.sounds import SOUND_PLAYER
@@ -253,7 +254,14 @@ class Bluetooth:
             )
 
     async def bluetooth_disconnect(self) -> None:
-        """Disconnect from the Bluetooth cube if connected."""
+        """
+        Disconnect from the Bluetooth cube if connected.
+
+        The consumer is stopped whatever the state of the link: the
+        sentinel is posted here and not only by the interface exit,
+        which never runs when the cube is already gone.
+
+        """
         if (
                 self.bluetooth_interface
                 and self.bluetooth_interface.client
@@ -266,8 +274,20 @@ class Bluetooth:
             )
             await self.bluetooth_interface.__aexit__(None, None, None)
 
+        if self.bluetooth_queue is not None:
+            await self.bluetooth_queue.put(None)
+
         if self.bluetooth_consumer_ref:
-            await self.bluetooth_consumer_ref
+            try:
+                await asyncio.wait_for(
+                    self.bluetooth_consumer_ref,
+                    BLUETOOTH_CONSUMER_STOP_TIMEOUT,
+                )
+            except asyncio.TimeoutError:  # noqa: UP041
+                logger.warning(
+                    'Bluetooth consumer did not stop in %ss, cancelled',
+                    BLUETOOTH_CONSUMER_STOP_TIMEOUT,
+                )
 
     @property
     def bluetooth_device_label(self) -> str:
