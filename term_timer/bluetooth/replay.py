@@ -28,6 +28,7 @@ from cubing_algs.vcube import VCube
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import ReplayError
+from term_timer.logger import spawn
 
 if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import BatteryEventDict
@@ -400,7 +401,7 @@ class ReplayInterface(BluetoothInterface):
         await self.emit_battery()
         await self.emit_facelets()
 
-        self.schedule_task = asyncio.create_task(self.run_schedule())
+        self.schedule_task = spawn(self.run_schedule(), 'replay-schedule')
 
     async def wait_for_state(self, *targets: str) -> None:
         """

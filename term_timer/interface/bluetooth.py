@@ -34,6 +34,7 @@ from term_timer.config import CubeDevice
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.interface.sounds import SOUND_PLAYER
+from term_timer.logger import spawn
 
 if TYPE_CHECKING:
     from rich.console import Console as RichConsole
@@ -174,8 +175,9 @@ class Bluetooth:
                 end='',
             )
 
-            self.bluetooth_consumer_ref = asyncio.create_task(
+            self.bluetooth_consumer_ref = spawn(
                 self.bluetooth_consumer(),
+                'bluetooth-consumer',
             )
 
             await self.bluetooth_interface.send_init_commands()
@@ -244,8 +246,9 @@ class Bluetooth:
         target.hardware_received_event = self.hardware_received_event
 
         if target.bluetooth_queue is not None:
-            target.bluetooth_consumer_ref = asyncio.create_task(
+            target.bluetooth_consumer_ref = spawn(
                 target.bluetooth_consumer(),
+                'bluetooth-consumer',
             )
 
     async def bluetooth_disconnect(self) -> None:

@@ -1,4 +1,5 @@
 """Tests for the asynchronous logging configuration."""
+import asyncio
 import contextlib
 import io
 import logging
@@ -20,6 +21,7 @@ from term_timer.logger import BleakInitialPropertiesFilter
 from term_timer.logger import GattValueSignalFilter
 from term_timer.logger import configure_logging
 from term_timer.logger import shutdown_logging
+from term_timer.logger import spawn
 
 GATT_VALUE_BODY: list[object] = [
     'org.bluez.GattCharacteristic1',
@@ -501,3 +503,138 @@ class GattValueSignalFilterTestCase(unittest.TestCase):
         for name, record in records.items():
             with self.subTest(record=name):
                 self.assertTrue(self.filter.filter(record))
+
+
+class SpawnTestCase(unittest.IsolatedAsyncioTestCase):
+    """Tests for spawn and the death report of a task."""
+
+    def setUp(self) -> None:
+        """Collect the records of the logger of the module."""
+        self.collector = RecordCollector()
+
+        self.logger = logging.getLogger(logger_module.__name__)
+        self.logger_level = self.logger.level
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(self.collector)
+
+        # A test case running before this one may have left the process
+        # silenced by configure_logging outside of debug mode
+        self.disable_level = logging.root.manager.disable
+        logging.disable(logging.NOTSET)
+
+    def tearDown(self) -> None:
+        """Restore the logger of the module."""
+        self.logger.removeHandler(self.collector)
+        self.logger.setLevel(self.logger_level)
+
+        logging.disable(self.disable_level)
+
+    @property
+    def deaths(self) -> list[logging.LogRecord]:
+        """Get the death reports collected so far."""
+        return [
+            record
+            for record in self.collector.records
+            if record.levelno == logging.ERROR
+        ]
+
+    async def test_spawn_names_the_task(self) -> None:
+        """The name is what a py-spy dump of a freeze displays."""
+        task = spawn(asyncio.sleep(0), 'bluetooth-consumer')
+
+        self.assertEqual(task.get_name(), 'bluetooth-consumer')
+
+        await task
+
+    async def test_spawn_returns_the_result(self) -> None:
+        """The task stays a task: the call sites read result() on it."""
+        async def answer() -> str:
+            await asyncio.sleep(0)
+            return 'q'
+
+        task = spawn(answer(), 'getch-save')
+
+        await task
+
+        self.assertEqual(task.result(), 'q')
+        self.assertEqual(self.deaths, [])
+
+    async def test_spawn_reports_a_task_nobody_awaits(self) -> None:
+        """
+        The death of a task held for the session is reported at once.
+
+        Asyncio only reports an unretrieved exception when the task is
+        garbage collected, which never happens to the Bluetooth consumer:
+        the reference is kept until the end of the session.
+        """
+        async def consumer() -> None:
+            await asyncio.sleep(0)
+            msg = 'queue is gone'
+            raise RuntimeError(msg)
+
+        task = spawn(consumer(), 'bluetooth-consumer')
+
+        with contextlib.suppress(RuntimeError):
+            await asyncio.wait([task])
+
+        self.assertEqual(len(self.deaths), 1)
+
+        record = self.deaths[0]
+
+        self.assertEqual(
+            record.getMessage(),
+            "Task bluetooth-consumer died: RuntimeError('queue is gone')",
+        )
+        self.assertIsNotNone(record.exc_info)
+
+    async def test_spawn_reports_what_wait_control_swallows(self) -> None:
+        """
+        An exception raised while being cancelled is reported too.
+
+        wait_control cancels the tasks that lost the race and gathers
+        them with return_exceptions, which drops whatever they raise on
+        their way out.
+        """
+        async def dirty_cleanup() -> str:
+            try:
+                await asyncio.sleep(10)
+            except asyncio.CancelledError:
+                msg = 'terminal restore failed'
+                raise RuntimeError(msg) from None
+            return ''
+
+        async def winner() -> str:
+            await asyncio.sleep(0)
+            return 'q'
+
+        tasks: list[asyncio.Task[str]] = [
+            spawn(dirty_cleanup(), 'getch-start'),
+            spawn(winner(), 'event-solve-started'),
+        ]
+
+        _done, pending = await asyncio.wait(
+            tasks, return_when=asyncio.FIRST_COMPLETED,
+        )
+
+        for task in pending:
+            task.cancel()
+
+        await asyncio.gather(*pending, return_exceptions=True)
+
+        self.assertEqual(len(self.deaths), 1)
+        self.assertEqual(
+            self.deaths[0].getMessage(),
+            "Task getch-start died: "
+            "RuntimeError('terminal restore failed')",
+        )
+
+    async def test_spawn_stays_silent_on_a_cancellation(self) -> None:
+        """A task cancelled on purpose is not a death, and says nothing."""
+        task = spawn(asyncio.sleep(10), 'getch-stop')
+
+        task.cancel()
+
+        await asyncio.gather(task, return_exceptions=True)
+
+        self.assertTrue(task.cancelled())
+        self.assertEqual(self.deaths, [])

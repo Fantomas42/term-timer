@@ -1,4 +1,5 @@
 """Asynchronous logging configuration and setup."""
+import asyncio
 import atexit
 import logging
 import logging.config
@@ -6,7 +7,9 @@ import logging.handlers
 import os
 import queue
 import sys
+from collections.abc import Coroutine
 from datetime import datetime
+from typing import Any
 from typing import Final
 from typing import cast
 from typing import override
@@ -221,3 +224,52 @@ def shutdown_logging() -> None:
     if log_listener:
         log_listener.stop()
         log_listener = None
+
+
+def report_task_death(task: asyncio.Task[Any]) -> None:
+    """
+    Report the death of a task at the instant it happens.
+
+    Asyncio only reports an exception nobody retrieved when the task is
+    garbage collected. A task held for the length of a session, as the
+    Bluetooth consumer is, is never collected: it dies, the queue stops
+    being drained, the application waits for a move that will never come,
+    and not one line is written anywhere.
+
+    Args:
+        task: The task that just finished.
+
+    """
+    if task.cancelled():
+        return
+
+    error = task.exception()
+
+    if error is not None:
+        logger.error(
+            'Task %s died: %r',
+            task.get_name(), error,
+            exc_info=error,
+        )
+
+
+def spawn[T](coro: Coroutine[Any, Any, T], name: str) -> asyncio.Task[T]:
+    """
+    Create a task whose death can never go unnoticed.
+
+    The name is the second half of the point: it is what a py-spy dump
+    taken during a freeze displays, and what the slow callback warnings
+    of the asyncio debug mode name.
+
+    Args:
+        coro: The coroutine to run in the background.
+        name: Name of the task, as reported in the logs and the dumps.
+
+    Returns:
+        The created task.
+
+    """
+    task = asyncio.create_task(coro, name=name)
+    task.add_done_callback(report_task_death)
+
+    return task
