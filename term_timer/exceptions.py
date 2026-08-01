@@ -8,6 +8,10 @@ class CubeNotFoundError(Exception):
     """Raised when no Bluetooth cube is found during scanning."""
 
 
+class CubeDisconnectedError(Exception):
+    """Raised when the cube announces its own disconnection."""
+
+
 class InvalidCaseError(Exception):
     """Raised when an invalid training case is selected."""
 
@@ -26,6 +30,7 @@ class ReplayError(Exception):
 
 SESSION_ERRORS: Final[tuple[type[Exception], ...]] = (
     CubingAlgsError,
+    CubeDisconnectedError,
     InvalidAlgorithmError,
     InvalidCaseError,
 )

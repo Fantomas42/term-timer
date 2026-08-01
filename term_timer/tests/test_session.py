@@ -14,6 +14,7 @@ from rich.theme import Theme
 
 from term_timer.arguments import get_parser
 from term_timer.config import CubeDevice
+from term_timer.exceptions import CubeDisconnectedError
 from term_timer.interface.console import theme as console_theme
 from term_timer.scripts.commands import session as session_mod
 from term_timer.scripts.commands.session import build_race_timer
@@ -138,6 +139,25 @@ class TestSolveSession(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(outcome.code, 1)
         self.assertEqual(double.disconnections, 1)
         self.assertIn('Invalid move: Z', printer.print.call_args.args)
+
+    async def test_lost_cube_ends_the_session_on_one(self) -> None:
+        """A cube announcing its disconnection ends the session."""
+        double = SessionInterfaceDouble(
+            failure=CubeDisconnectedError('Cube disconnected'),
+        )
+
+        with mock.patch(
+                'term_timer.scripts.commands.session.console',
+        ) as printer:
+            async with solve_session(
+                    cast('SolveInterface', double),
+                    session_options(bluetooth=True),
+            ) as outcome:
+                await double.start()
+
+        self.assertEqual(outcome.code, 1)
+        self.assertEqual(double.disconnections, 1)
+        self.assertIn('Cube disconnected', printer.print.call_args.args)
 
     async def test_other_exception_still_disconnects(self) -> None:
         """The cube is released whatever ends the session."""

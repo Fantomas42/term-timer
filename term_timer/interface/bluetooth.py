@@ -93,6 +93,7 @@ class Bluetooth:
 
         self.facelets_received_event = asyncio.Event()
         self.hardware_received_event = asyncio.Event()
+        self.bluetooth_lost_event = asyncio.Event()
 
     async def bluetooth_connect(
             self,
@@ -246,6 +247,7 @@ class Bluetooth:
         target.bluetooth_device = self.bluetooth_device
         target.facelets_received_event = self.facelets_received_event
         target.hardware_received_event = self.hardware_received_event
+        target.bluetooth_lost_event = self.bluetooth_lost_event
 
         if target.bluetooth_queue is not None:
             target.bluetooth_consumer_ref = spawn(
@@ -388,22 +390,25 @@ class Bluetooth:
                     self.handle_bluetooth_cube_move(move_event['move'])
                     self.handle_bluetooth_move(move_event)
 
-                elif event_name == 'gyro' and self.bluetooth_cube:
-                    gyro_event = cast('GyroEventDict', event)
+                elif event_name == 'gyro':
+                    if self.bluetooth_cube:
+                        gyro_event = cast('GyroEventDict', event)
 
-                    rotation_result = rotation_detector.process_gyro_event(
-                        gyro_event['quaternion'],
-                    )
-                    if rotation_result:
-                        rotation_event: RotationEventDict = {
-                            'event': 'rotation',
-                            'clock': gyro_event['clock'],
-                            'timestamp': gyro_event['timestamp'],
-                            'move': rotation_result['rotation'],
-                        }
+                        rotation_result = rotation_detector.process_gyro_event(
+                            gyro_event['quaternion'],
+                        )
+                        if rotation_result:
+                            rotation_event: RotationEventDict = {
+                                'event': 'rotation',
+                                'clock': gyro_event['clock'],
+                                'timestamp': gyro_event['timestamp'],
+                                'move': rotation_result['rotation'],
+                            }
 
-                        self.handle_bluetooth_cube_move(rotation_result['rotation'])
-                        self.handle_bluetooth_move(rotation_event)
+                            self.handle_bluetooth_cube_move(
+                                rotation_result['rotation'],
+                            )
+                            self.handle_bluetooth_move(rotation_event)
 
                 elif event_name == 'gyro-config':
                     gyro_config_event = cast('GyroConfigEventDict', event)
@@ -417,6 +422,15 @@ class Bluetooth:
                     self.bluetooth_hardware['gyroscope_supported'] = (
                         gyro_config_event['gyroscope_supported']
                     )
+
+                elif event_name == 'disconnect':
+                    logger.warning('Cube announced its disconnection')
+                    SOUND_PLAYER.cube_disconnected()
+                    self.bluetooth_lost_event.set()
+                    return
+
+                else:
+                    logger.debug('Unhandled event %s', event_name)
 
     def handle_hardware_event(self, event: EventDict) -> None:
         """
