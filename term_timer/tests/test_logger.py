@@ -3,15 +3,21 @@ import contextlib
 import io
 import logging
 import logging.handlers
+import os
 import queue
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
+from term_timer import __version__
 from term_timer import logger as logger_module
 from term_timer.logger import LOGGING_CONF
+from term_timer.logger import LOGGING_FILE
+from term_timer.logger import LOGGING_PATH
 from term_timer.logger import AsyncioLogListener
+from term_timer.logger import BleakInitialPropertiesFilter
 from term_timer.logger import GattValueSignalFilter
 from term_timer.logger import configure_logging
 from term_timer.logger import shutdown_logging
@@ -125,7 +131,7 @@ class ConfigureLoggingTestCase(unittest.TestCase):
         self.assertIn('above the level', content)
 
     def test_configure_logging_filters_upstream_of_the_queue(self) -> None:
-        """The signal filter sits on the queue handler, not on the file."""
+        """The filters sit on the queue handler, not on the file one."""
         self.configure()
 
         queue_handler = logging.getLogger().handlers[0]
@@ -133,9 +139,23 @@ class ConfigureLoggingTestCase(unittest.TestCase):
         if listener is None:
             self.fail('The listener has not been stored')
 
-        self.assertEqual(len(queue_handler.filters), 1)
-        self.assertIsInstance(queue_handler.filters[0], GattValueSignalFilter)
+        self.assertEqual(
+            [type(handler_filter) for handler_filter in queue_handler.filters],
+            [GattValueSignalFilter, BleakInitialPropertiesFilter],
+        )
         self.assertEqual(listener.handler.filters, [])
+
+    def test_configure_logging_drops_the_initial_properties(self) -> None:
+        """The dump of every D-Bus object never reaches the file."""
+        self.configure()
+
+        logging.getLogger('bleak.backends.bluezdbus.manager').debug(
+            'initial properties: %s', {'/org/bluez/hci0': 'a very long dump'},
+        )
+
+        shutdown_logging()
+
+        self.assertNotIn('a very long dump', self.log_path.read_text())
 
     def test_configure_logging_drops_the_gatt_values_only(self) -> None:
         """A value notification is dropped, the life cycle is written."""
@@ -155,6 +175,38 @@ class ConfigureLoggingTestCase(unittest.TestCase):
         self.assertNotIn('GattCharacteristic1', content)
         self.assertIn('Connected', content)
 
+    def test_configure_logging_formats_with_the_context(self) -> None:
+        """A line carries the milliseconds, the thread and the caller."""
+        self.configure()
+
+        listener = logger_module.log_listener
+        if listener is None:
+            self.fail('The listener has not been stored')
+
+        record = logging.LogRecord(
+            'term_timer.bluetooth.interface', logging.DEBUG,
+            '/term_timer/bluetooth/interface.py', 194,
+            'Event %s', ('MOVE clock=1856234',), None,
+            'notification_handler',
+        )
+
+        self.assertRegex(
+            listener.handler.format(record),
+            r'^\d{2}:\d{2}:\d{2}\.\d{3} D '
+            r'term_timer\.bluetooth\.interface\s+'
+            r'notification_handler:194 Event MOVE clock=1856234$',
+        )
+
+    def test_configure_logging_opens_the_session(self) -> None:
+        """The header tells which run the records that follow belong to."""
+        self.configure()
+
+        shutdown_logging()
+        content = self.log_path.read_text()
+
+        self.assertIn(f'Term Timer { __version__ } started on ', content)
+        self.assertIn(f'pid { os.getpid() }', content)
+
     def test_shutdown_logging_stops_the_listener(self) -> None:
         """Shutting down joins the listener thread and forgets it."""
         self.configure()
@@ -171,6 +223,24 @@ class ConfigureLoggingTestCase(unittest.TestCase):
 
         self.assertIsNone(logger_module.log_listener)
         self.assertFalse(thread.is_alive())
+
+
+class LoggingPathTestCase(unittest.TestCase):
+    """Tests for the file the records are written to."""
+
+    def test_logging_file_is_dated(self) -> None:
+        """One file per date bounds a log nothing else ever bounded."""
+        self.assertRegex(LOGGING_FILE, r'^term-timer-\d{4}-\d{2}-\d{2}\.log$')
+        self.assertIn(
+            datetime.now().strftime('%Y-%m-%d'),  # noqa: DTZ005
+            LOGGING_FILE,
+        )
+
+    def test_logging_path_is_the_one_configured(self) -> None:
+        """The dated path is the one the file handler is given."""
+        file_config = LOGGING_CONF['handlers']['fileHandler']  # type: ignore[index]
+
+        self.assertEqual(file_config['filename'], LOGGING_PATH)
 
 
 class ConfigureLoggingWithoutDebugTestCase(unittest.TestCase):
@@ -292,6 +362,52 @@ class AsyncioLogListenerTestCase(unittest.TestCase):
         self.listener.stop()
 
         self.assertEqual(self.collected(), ['record 0', 'record 1'])
+
+
+class BleakInitialPropertiesFilterTestCase(unittest.TestCase):
+    """Tests for the BleakInitialPropertiesFilter."""
+
+    def setUp(self) -> None:
+        """Build the filter under test."""
+        self.filter = BleakInitialPropertiesFilter()
+
+    @staticmethod
+    def manager_record(message: str, *args: object) -> logging.LogRecord:
+        """
+        Build a record emitted by the bluezdbus manager of bleak.
+
+        Args:
+            message: Format string of the record, left unformatted.
+            args: Arguments of the record.
+
+        Returns:
+            A record shaped like the ones of the bluezdbus manager.
+
+        """
+        return logging.LogRecord(
+            'bleak.backends.bluezdbus.manager', logging.DEBUG,
+            '/bleak/backends/bluezdbus/manager.py', 336,
+            message, args, None, 'async_init',
+        )
+
+    def test_drops_the_initial_properties_dump(self) -> None:
+        """Fifteen kilobytes of D-Bus objects, once per launch."""
+        record = self.manager_record(
+            'initial properties: %s',
+            {'/org/bluez/hci0': {'org.bluez.Adapter1': {}}},
+        )
+
+        self.assertFalse(self.filter.filter(record))
+
+    def test_keeps_the_other_records_of_the_manager(self) -> None:
+        """Everything else the manager says is left alone."""
+        record = self.manager_record(
+            'received D-Bus signal: %s.%s (%s): %s',
+            'org.freedesktop.DBus.Properties', 'PropertiesChanged',
+            '/org/bluez/hci0', CONNECTED_BODY,
+        )
+
+        self.assertTrue(self.filter.filter(record))
 
 
 class GattValueSignalFilterTestCase(unittest.TestCase):

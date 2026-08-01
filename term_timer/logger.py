@@ -3,23 +3,66 @@ import atexit
 import logging
 import logging.config
 import logging.handlers
+import os
 import queue
+import sys
 import threading
+from datetime import datetime
 from typing import Final
 from typing import cast
 from typing import override
 
+from term_timer import __version__
 from term_timer.config import DEBUG
 from term_timer.constants import LOGGING_DIRECTORY
 
-LOGGING_FILE: Final = 'term-timer.log'
+# The date is taken once, at import: a run started before midnight keeps
+# writing in the file of the day it was launched, which is what makes a
+# file readable as a sequence of sessions
+LOGGING_FILE: Final = datetime.now().strftime(  # noqa: DTZ005
+    'term-timer-%Y-%m-%d.log',
+)
 
 LOGGING_PATH: Final = LOGGING_DIRECTORY / LOGGING_FILE
 
 FILE_HANDLER_NAME: Final = 'fileHandler'
 
+logger = logging.getLogger(__name__)
+
 
 GATT_VALUE_INTERFACE: Final = 'org.bluez.GattCharacteristic1'
+
+INITIAL_PROPERTIES_MESSAGE: Final = 'initial properties: %s'
+
+
+class BleakInitialPropertiesFilter(logging.Filter):
+    """
+    Drops the dump bleak takes of every D-Bus object it can see.
+
+    A single record of 15 KB, emitted once per launch by the manager:
+    34% of a measured session, and more bytes per day than everything
+    else put together. It lists what BlueZ knows of every adapter and
+    every paired device, none of which says anything about this cube.
+    The connection life cycle is logged elsewhere, signal by signal.
+    """
+
+    @override
+    def filter(self, record: logging.LogRecord) -> bool:
+        """
+        Determine whether a log record should be logged.
+
+        The raw format string of the record is compared, before any
+        formatting: the 15 KB are in the arguments, and they are never
+        touched.
+
+        Args:
+            record: The log record to evaluate.
+
+        Returns:
+            False for the initial properties dump, True otherwise.
+
+        """
+        return record.msg != INITIAL_PROPERTIES_MESSAGE
 
 
 class GattValueSignalFilter(logging.Filter):
@@ -149,7 +192,17 @@ LOGGING_CONF: Final = {
     'formatters': {
         'standard': {
             'class': 'logging.Formatter',
-            'format': '[%(asctime)s] %(levelname)-8s %(name)s: %(message)s',
+            # The second of resolution of the previous format was
+            # unusable: at 41 records per second, forty lines carried the
+            # same stamp. funcName:lineno finally displays what
+            # findCaller collects on every record anyway. No thread name:
+            # a whole session was measured at 171 records out of 171 on
+            # MainThread, dbus_fast running on the asyncio loop and the
+            # listener thread consuming records without ever emitting one
+            'format': (
+                '%(asctime)s.%(msecs)03d %(levelname).1s '
+                '%(name)-32s %(funcName)s:%(lineno)d %(message)s'
+            ),
             'datefmt': '%H:%M:%S',
         },
     },
@@ -172,6 +225,23 @@ LOGGING_CONF: Final = {
 }
 
 log_listener: AsyncioLogListener | None = None
+
+
+def log_session_header() -> None:
+    """
+    Write the line opening a session in the log file.
+
+    A file holds one day of runs appended one after the other, and the
+    time stamps of the records carry no date: without this line nothing
+    tells where a run begins, nor which one of them is being read.
+    """
+    logger.info(
+        'Term Timer %s started on %s, pid %d, command: %s',
+        __version__,
+        datetime.now().isoformat(timespec='seconds'),  # noqa: DTZ005
+        os.getpid(),
+        ' '.join(sys.argv),
+    )
 
 
 def configure_logging() -> None:
@@ -198,12 +268,15 @@ def configure_logging() -> None:
             # already gone on the other side, and a record dropped there
             # has paid the queue and the thread wake-up for nothing
             queue_handler.addFilter(GattValueSignalFilter())
+            queue_handler.addFilter(BleakInitialPropertiesFilter())
             root_logger.addHandler(queue_handler)
 
             log_listener = AsyncioLogListener(log_queue, file_handler)
             log_listener.start()
 
             atexit.register(shutdown_logging)
+
+            log_session_header()
 
     else:
         logging.disable(logging.CRITICAL)

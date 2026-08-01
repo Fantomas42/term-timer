@@ -32,6 +32,64 @@ DRIVERS: Final[list[type[Driver]]] = [
     MoyuWeilong10Driver,
 ]
 
+# What the record already says, or says better: the wall clocks are the
+# time stamp of the record itself, and the cube state is the facelets
+# string logged beside it, in a hundred characters instead of four lists
+EVENT_LOG_SKIPPED_KEYS: Final = frozenset({
+    'event',
+    'timestamp',
+    'local_timestamp',
+    'state',
+})
+
+
+def format_event_value(value: object) -> str:
+    """
+    Render a single value of an event payload.
+
+    Args:
+        value: The value to render, of any type an event may carry.
+
+    Returns:
+        The value as a string, floats rounded and nested payloads such
+        as a quaternion joined by commas.
+
+    """
+    if isinstance(value, float):
+        return f'{value:.3f}'
+
+    if isinstance(value, dict):
+        return ','.join(
+            format_event_value(item)
+            for item in cast('dict[str, object]', value).values()
+        )
+
+    return str(value)
+
+
+def format_event(event: EventDict) -> str:
+    """
+    Render a cube event for the log.
+
+    The payload is walked as it comes, so a new kind of event is logged
+    in full without touching this function, and in the order its driver
+    built it.
+
+    Args:
+        event: The event emitted by the driver.
+
+    Returns:
+        The name of the event followed by its fields, as key=value.
+
+    """
+    details = ' '.join(
+        f'{ key }={ format_event_value(value) }'
+        for key, value in event.items()
+        if key not in EVENT_LOG_SKIPPED_KEYS
+    )
+
+    return f'{ event["event"].upper() } { details }'.rstrip()
+
 
 class BluetoothInterface:
     """
@@ -193,7 +251,7 @@ class BluetoothInterface:
 
         if DEBUG:
             for event in events:
-                logger.debug('Event: %s', event['event'].upper())
+                logger.debug('Event %s', format_event(event))
         await self.queue.put(events)
 
     async def send_init_commands(self) -> None:
