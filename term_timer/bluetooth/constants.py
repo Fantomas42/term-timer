@@ -4,6 +4,12 @@ from typing import Final
 
 DEBOUNCE: Final[float] = 0.5
 
+# Delay after which an unanswered move history request is retried
+MOVE_HISTORY_TIMEOUT: Final[float] = 1.0
+
+# Buffered moves above which the move sequence is considered lost
+MOVE_BUFFER_LIMIT: Final[int] = 16
+
 PREFIX: Final[list[str]] = [
     'GAN',
     'MG',
