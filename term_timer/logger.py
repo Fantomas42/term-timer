@@ -17,6 +17,7 @@ from typing import override
 from term_timer import __version__
 from term_timer.config import DEBUG
 from term_timer.constants import LOGGING_DIRECTORY
+from term_timer.panic import report
 
 # The date is taken once, at import: a run started before midnight keeps
 # writing in the file of the day it was launched, which is what makes a
@@ -236,6 +237,9 @@ def report_task_death(task: asyncio.Task[Any]) -> None:
     being drained, the application waits for a move that will never come,
     and not one line is written anywhere.
 
+    A panic report is written along with it: this is the one freeze that
+    announces itself, so it is the one nobody has to be there to catch.
+
     Args:
         task: The task that just finished.
 
@@ -251,6 +255,7 @@ def report_task_death(task: asyncio.Task[Any]) -> None:
             task.get_name(), error,
             exc_info=error,
         )
+        report('task-death', error)
 
 
 def spawn[T](coro: Coroutine[Any, Any, T], name: str) -> asyncio.Task[T]:

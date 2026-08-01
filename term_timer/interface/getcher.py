@@ -143,10 +143,7 @@ class Getcher:
         ch = ''
 
         try:
-            term[3] &= ~(
-                termios.ICANON | termios.ECHO |
-                termios.IGNBRK | termios.BRKINT
-            )
+            term[3] &= ~(termios.ICANON | termios.ECHO)
             termios.tcsetattr(fd, termios.TCSAFLUSH, term)
 
             loop = asyncio.get_running_loop()

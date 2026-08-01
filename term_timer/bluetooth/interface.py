@@ -21,6 +21,7 @@ from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.drivers.gan_gen4 import GanGen4Driver
 from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
 from term_timer.exceptions import CubeNotFoundError
+from term_timer.panic import beat
 
 logger = logging.getLogger(__name__)
 
@@ -245,6 +246,8 @@ class BluetoothInterface:
 
         """
         self.driver = cast('Driver', self.driver)
+
+        beat('bluetooth-notification')
 
         events = await self.driver.event_handler(sender, data)
 

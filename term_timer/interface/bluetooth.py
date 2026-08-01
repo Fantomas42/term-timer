@@ -35,6 +35,7 @@ from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.logger import spawn
+from term_timer.panic import beat
 
 if TYPE_CHECKING:
     from rich.console import Console as RichConsole
@@ -321,6 +322,7 @@ class Bluetooth:
                 break
 
             for event in events:
+                beat('bluetooth-event')
                 event_name = event['event']
 
                 if event_name == 'hardware':
