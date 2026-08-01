@@ -6,7 +6,6 @@ import logging.handlers
 import os
 import queue
 import sys
-import threading
 from datetime import datetime
 from typing import Final
 from typing import cast
@@ -117,75 +116,6 @@ class GattValueSignalFilter(logging.Filter):
         )
 
 
-class AsyncioLogListener:
-    """
-    Background thread listener that processes log records from a queue.
-
-    Continuously monitors a queue for log records and dispatches them to a
-    handler in a separate daemon thread, enabling non-blocking logging.
-    """
-
-    def __init__(self, log_queue: queue.Queue[logging.LogRecord],
-                 handler: logging.Handler) -> None:
-        """
-        Initialize the log listener with a queue and handler.
-
-        Args:
-            log_queue: Queue from which to read log records.
-            handler: Logging handler to process the records.
-
-        """
-        self.queue: queue.Queue[logging.LogRecord] = log_queue
-        self.handler: logging.Handler = handler
-        self._stop_event: threading.Event = threading.Event()
-        self._thread: threading.Thread | None = None
-
-    def start(self) -> None:
-        """
-        Start the background logging thread.
-
-        Creates and launches a daemon thread that processes log records
-        from the queue until stopped.
-        """
-        self._thread = threading.Thread(target=self._process_logs)
-        self._thread.daemon = True
-        self._thread.start()
-
-    def stop(self) -> None:
-        """
-        Stop the background logging thread gracefully.
-
-        Signals the thread to stop processing and waits for it to complete
-        any remaining work before returning.
-        """
-        self._stop_event.set()
-        if self._thread and self._thread.is_alive():
-            self._thread.join()
-        self.drain()
-
-    def drain(self) -> None:
-        """
-        Handle the records left in the queue.
-
-        The thread stops on its event without looking at what remains
-        queued, and those last records are precisely the ones explaining
-        why the application is shutting down.
-        """
-        while True:
-            try:
-                self.handler.handle(self.queue.get_nowait())
-            except queue.Empty:
-                break
-
-    def _process_logs(self) -> None:
-        while not self._stop_event.is_set():
-            try:
-                record = self.queue.get(block=True, timeout=0.2)
-                self.handler.handle(record)
-            except queue.Empty:
-                continue
-
-
 LOGGING_CONF: Final = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -224,7 +154,7 @@ LOGGING_CONF: Final = {
     },
 }
 
-log_listener: AsyncioLogListener | None = None
+log_listener: logging.handlers.QueueListener | None = None
 
 
 def log_session_header() -> None:
@@ -271,7 +201,9 @@ def configure_logging() -> None:
             queue_handler.addFilter(BleakInitialPropertiesFilter())
             root_logger.addHandler(queue_handler)
 
-            log_listener = AsyncioLogListener(log_queue, file_handler)
+            log_listener = logging.handlers.QueueListener(
+                log_queue, file_handler,
+            )
             log_listener.start()
 
             atexit.register(shutdown_logging)

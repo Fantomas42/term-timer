@@ -16,7 +16,6 @@ from term_timer import logger as logger_module
 from term_timer.logger import LOGGING_CONF
 from term_timer.logger import LOGGING_FILE
 from term_timer.logger import LOGGING_PATH
-from term_timer.logger import AsyncioLogListener
 from term_timer.logger import BleakInitialPropertiesFilter
 from term_timer.logger import GattValueSignalFilter
 from term_timer.logger import configure_logging
@@ -143,7 +142,7 @@ class ConfigureLoggingTestCase(unittest.TestCase):
             [type(handler_filter) for handler_filter in queue_handler.filters],
             [GattValueSignalFilter, BleakInitialPropertiesFilter],
         )
-        self.assertEqual(listener.handler.filters, [])
+        self.assertEqual(listener.handlers[0].filters, [])
 
     def test_configure_logging_drops_the_initial_properties(self) -> None:
         """The dump of every D-Bus object never reaches the file."""
@@ -191,7 +190,7 @@ class ConfigureLoggingTestCase(unittest.TestCase):
         )
 
         self.assertRegex(
-            listener.handler.format(record),
+            listener.handlers[0].format(record),
             r'^\d{2}:\d{2}:\d{2}\.\d{3} D '
             r'term_timer\.bluetooth\.interface\s+'
             r'notification_handler:194 Event MOVE clock=1856234$',
@@ -302,14 +301,16 @@ class ConfigureLoggingWithoutDebugTestCase(unittest.TestCase):
         self.assertEqual(logging.getLogger().handlers, self.root_handlers)
 
 
-class AsyncioLogListenerTestCase(unittest.TestCase):
-    """Tests for the AsyncioLogListener."""
+class LogListenerTestCase(unittest.TestCase):
+    """Tests for the listener consuming the queue."""
 
     def setUp(self) -> None:
         """Build a listener over a collecting handler."""
         self.queue: queue.Queue[logging.LogRecord] = queue.Queue()
         self.handler = RecordCollector()
-        self.listener = AsyncioLogListener(self.queue, self.handler)
+        self.listener = logging.handlers.QueueListener(
+            self.queue, self.handler,
+        )
 
     def queue_records(self, count: int) -> None:
         """
@@ -337,11 +338,12 @@ class AsyncioLogListenerTestCase(unittest.TestCase):
         """
         return [record.getMessage() for record in self.handler.records]
 
-    def test_drain_handles_the_queued_records(self) -> None:
-        """Draining hands the queued records to the handler, in order."""
+    def test_stop_handles_the_records_left_in_the_queue(self) -> None:
+        """Stopping does not leave the last records behind."""
         self.queue_records(3)
 
-        self.listener.drain()
+        self.listener.start()
+        self.listener.stop()
 
         self.assertEqual(
             self.collected(),
@@ -349,19 +351,12 @@ class AsyncioLogListenerTestCase(unittest.TestCase):
         )
         self.assertTrue(self.queue.empty())
 
-    def test_drain_on_an_empty_queue(self) -> None:
-        """Draining an empty queue is a no-op."""
-        self.listener.drain()
-
-        self.assertEqual(self.collected(), [])
-
-    def test_stop_handles_the_records_left_in_the_queue(self) -> None:
-        """Stopping does not leave the last records behind."""
-        self.queue_records(2)
-
+    def test_stop_on_an_empty_queue(self) -> None:
+        """Stopping without a single record handles nothing."""
+        self.listener.start()
         self.listener.stop()
 
-        self.assertEqual(self.collected(), ['record 0', 'record 1'])
+        self.assertEqual(self.collected(), [])
 
 
 class BleakInitialPropertiesFilterTestCase(unittest.TestCase):
