@@ -20,7 +20,6 @@ from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.drivers.gan_gen4 import GanGen4Driver
 from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
-from term_timer.config import DEBUG
 from term_timer.exceptions import CubeNotFoundError
 
 logger = logging.getLogger(__name__)
@@ -249,9 +248,9 @@ class BluetoothInterface:
 
         events = await self.driver.event_handler(sender, data)
 
-        if DEBUG:
-            for event in events:
-                logger.debug('Event %s', format_event(event))
+        for event in events:
+            logger.debug('Event %s', format_event(event))
+
         await self.queue.put(events)
 
     async def send_init_commands(self) -> None:
