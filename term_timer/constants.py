@@ -115,6 +115,11 @@ REFRESH: Final = 0.01
 
 BLUETOOTH_CONSUMER_STOP_TIMEOUT: Final = 2.0
 
+# Guard against a hung D-Bus call while tearing the BLE link down.
+# Kept above the 10s bleak waits internally for the disconnection to
+# be signaled, so a healthy teardown is never truncated
+BLUETOOTH_DISCONNECT_TIMEOUT: Final = 12.0
+
 RESLICE_THRESHOLD: Final = 70
 
 RESLICE_THRESHOLD_GYROSCOPE: Final = 120

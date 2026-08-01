@@ -1,15 +1,18 @@
 """Tests for the bluetooth interface helpers."""
+import asyncio
 import logging
 import unittest
 from asyncio import Queue
 from datetime import datetime
 from typing import TYPE_CHECKING
 from typing import cast
+from unittest.mock import patch
 
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import format_event
 
 if TYPE_CHECKING:
+    from bleak import BleakClient
     from bleak.backends.characteristic import BleakGATTCharacteristic
 
     from term_timer.bluetooth.annotations import BatteryEventDict
@@ -212,3 +215,148 @@ class NotificationHandlerLogTestCase(unittest.IsolatedAsyncioTestCase):
             ],
         )
         self.assertEqual(queue.get_nowait(), [moved, battery])
+
+
+class TeardownDriver:
+    """A driver exposing only the characteristic to unsubscribe from."""
+
+    state_characteristic_uid = 'state-characteristic'
+
+
+class TeardownClient:
+    """A BleakClient stub with a controllable teardown duration."""
+
+    def __init__(self, *,
+                 stop_notify_delay: float = 0.0,
+                 disconnect_delay: float = 0.0,
+                 is_connected: bool = True) -> None:
+        """
+        Hold how long each step of the teardown is to take.
+
+        Args:
+            stop_notify_delay: Seconds `stop_notify` waits before returning.
+            disconnect_delay: Seconds `disconnect` waits before returning.
+            is_connected: Whether the link is still up.
+
+        """
+        self.stop_notify_delay = stop_notify_delay
+        self.disconnect_delay = disconnect_delay
+        self.is_connected = is_connected
+        self.stop_notify_calls: list[str] = []
+        self.disconnect_calls = 0
+
+    async def stop_notify(self, characteristic: str) -> None:
+        """
+        Record the unsubscription, then wait for its configured delay.
+
+        Args:
+            characteristic: The characteristic to stop listening to.
+
+        """
+        self.stop_notify_calls.append(characteristic)
+        await asyncio.sleep(self.stop_notify_delay)
+
+    async def disconnect(self) -> None:
+        """Record the disconnection, then wait for its configured delay."""
+        self.disconnect_calls += 1
+        await asyncio.sleep(self.disconnect_delay)
+
+
+class BluetoothTeardownTestCase(unittest.IsolatedAsyncioTestCase):
+    """Tests for what leaving the interface does, and leaves in the log."""
+
+    logger_name = 'term_timer.bluetooth.interface'
+
+    @staticmethod
+    def build_interface(client: TeardownClient) -> BluetoothInterface:
+        """
+        Build an interface sitting on the given client.
+
+        Args:
+            client: The client stub the teardown is to run against.
+
+        Returns:
+            The interface, its queue empty and its driver connected.
+
+        """
+        interface = BluetoothInterface(Queue())
+        interface.client = cast('BleakClient', client)
+        interface.driver = cast('Driver', TeardownDriver())
+
+        return interface
+
+    async def test_teardown_logs_the_duration_of_both_steps(self) -> None:
+        """
+        A healthy teardown says how long each of its two steps took.
+
+        Both used to be silent on success, and the disconnect logged the
+        very same line whether it had completed or been cut short at
+        0.5s. The duration is what tells the two apart.
+        """
+        client = TeardownClient()
+        interface = self.build_interface(client)
+
+        with self.assertLogs(self.logger_name, level='DEBUG') as logs:
+            await interface.__aexit__(None, None, None)
+
+        self.assertEqual(client.stop_notify_calls, ['state-characteristic'])
+        self.assertEqual(client.disconnect_calls, 1)
+
+        output = '\n'.join(logs.output)
+        self.assertIn('Notifications stopped in', output)
+        self.assertIn('Disconnected in', output)
+        self.assertNotIn('WARNING', output)
+
+    async def test_slow_disconnect_warns_and_gives_the_hand_back(self) -> None:
+        """
+        A disconnect that never completes warns, and exits anyway.
+
+        The timeout is a guard against a hung D-Bus call, so hitting it
+        is an event worth a warning, where the old 0.5s bound was hit on
+        every single exit and logged in debug.
+        """
+        client = TeardownClient(disconnect_delay=5.0)
+        interface = self.build_interface(client)
+
+        with patch(
+                'term_timer.bluetooth.interface.'
+                'BLUETOOTH_DISCONNECT_TIMEOUT', 0.01,
+        ), self.assertLogs(self.logger_name, level='WARNING') as logs:
+            await asyncio.wait_for(
+                interface.__aexit__(None, None, None), 1.0,
+            )
+
+        self.assertIn('Disconnect timed out', logs.output[0])
+
+    async def test_stuck_notifications_still_disconnect(self) -> None:
+        """
+        Notifications that never stop no longer hang the session exit.
+
+        `stop_notify` was awaited unbounded, on the very path a session
+        ends by: a link gone silent kept the application inside its
+        `finally` forever, with nothing written anywhere.
+        """
+        client = TeardownClient(stop_notify_delay=5.0)
+        interface = self.build_interface(client)
+
+        with patch(
+                'term_timer.bluetooth.interface.'
+                'BLUETOOTH_DISCONNECT_TIMEOUT', 0.01,
+        ), self.assertLogs(self.logger_name, level='WARNING') as logs:
+            await asyncio.wait_for(
+                interface.__aexit__(None, None, None), 1.0,
+            )
+
+        self.assertIn('Notifications not stopped', logs.output[0])
+        self.assertEqual(client.disconnect_calls, 1)
+
+    async def test_link_already_down_only_posts_the_sentinel(self) -> None:
+        """A dead link is not talked to, but the consumer is still told."""
+        client = TeardownClient(is_connected=False)
+        interface = self.build_interface(client)
+
+        await interface.__aexit__(None, None, None)
+
+        self.assertEqual(client.stop_notify_calls, [])
+        self.assertEqual(client.disconnect_calls, 0)
+        self.assertIsNone(interface.queue.get_nowait())

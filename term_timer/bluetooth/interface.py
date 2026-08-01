@@ -1,6 +1,7 @@
 """Bluetooth cube interface for scanning, connecting, and communication."""
 import asyncio
 import logging
+import time
 from asyncio import Queue
 from typing import Final
 from typing import Self
@@ -20,6 +21,7 @@ from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.drivers.gan_gen4 import GanGen4Driver
 from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
+from term_timer.constants import BLUETOOTH_DISCONNECT_TIMEOUT
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.panic import beat
 
@@ -222,13 +224,67 @@ class BluetoothInterface:
         await self.queue.put(None)
 
         if self.client and self.client.is_connected and self.driver:
-            await self.client.stop_notify(
-                self.driver.state_characteristic_uid,
+            await self.stop_notifications()
+            await self.disconnect_client()
+
+    async def stop_notifications(self) -> None:
+        """
+        Stop the cube notifications, bounded in time.
+
+        Unbounded, this D-Bus round trip hangs the whole session exit
+        when the link is gone. Both outcomes are logged, the duration
+        being the only way to tell a healthy teardown from a stuck one.
+        """
+        self.client = cast('BleakClient', self.client)
+        self.driver = cast('Driver', self.driver)
+
+        clock = time.monotonic()
+
+        try:
+            await asyncio.wait_for(
+                self.client.stop_notify(
+                    self.driver.state_characteristic_uid,
+                ),
+                timeout=BLUETOOTH_DISCONNECT_TIMEOUT,
             )
-            try:
-                await asyncio.wait_for(self.client.disconnect(), timeout=0.5)
-            except asyncio.TimeoutError:  # noqa: UP041
-                logger.debug('Disconnect timed out, leaving cleanup to OS')
+        except asyncio.TimeoutError:  # noqa: UP041
+            logger.warning(
+                'Notifications not stopped after %ss, disconnecting anyway',
+                BLUETOOTH_DISCONNECT_TIMEOUT,
+            )
+        else:
+            logger.debug(
+                'Notifications stopped in %.3fs',
+                time.monotonic() - clock,
+            )
+
+    async def disconnect_client(self) -> None:
+        """
+        Disconnect from the cube, bounded in time.
+
+        The timeout is a guard against a hung D-Bus call, not a bound on
+        the disconnection itself: bleak already waits 10s for BlueZ to
+        signal it, and cutting that short leaves its cleanup unverified.
+        """
+        self.client = cast('BleakClient', self.client)
+
+        clock = time.monotonic()
+
+        try:
+            await asyncio.wait_for(
+                self.client.disconnect(),
+                timeout=BLUETOOTH_DISCONNECT_TIMEOUT,
+            )
+        except asyncio.TimeoutError:  # noqa: UP041
+            logger.warning(
+                'Disconnect timed out after %ss, leaving cleanup to OS',
+                BLUETOOTH_DISCONNECT_TIMEOUT,
+            )
+        else:
+            logger.debug(
+                'Disconnected in %.3fs',
+                time.monotonic() - clock,
+            )
 
     async def notification_handler(self, sender: BleakGATTCharacteristic,
                                    data: bytearray) -> None:
