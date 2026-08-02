@@ -1,4 +1,5 @@
 """Tests for the Bluetooth section of the configuration editor."""
+import asyncio
 import tempfile
 import unittest
 from contextlib import AsyncExitStack
@@ -8,6 +9,8 @@ from typing import ClassVar
 from unittest.mock import patch
 
 import rtoml
+from textual.app import App
+from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.widgets import Button
 from textual.widgets import Collapsible
@@ -17,6 +20,10 @@ from textual.widgets import TabbedContent
 from term_timer.config_edit.app import ConfigEditApp
 from term_timer.config_edit.sections import BluetoothSection
 from term_timer.config_edit.toolbar import ConfigToolbar
+
+# Ceiling guarding against a section that never finishes loading,
+# not an expected wait: the settle returns as soon as it is loaded.
+SETTLE_TIMEOUT = 5.0
 
 MULTI_CUBE_CONFIG: dict[str, Any] = {
     'bluetooth': {
@@ -39,13 +46,28 @@ MULTI_CUBE_CONFIG: dict[str, Any] = {
 }
 
 
+class BluetoothSectionApp(App[None]):
+    """Editor reduced to the section under test, screen to itself."""
+
+    @staticmethod
+    def compose() -> ComposeResult:
+        """
+        Compose the section alone.
+
+        Yields:
+            The Bluetooth section, filling the screen.
+
+        """
+        yield BluetoothSection()
+
+
 class BluetoothSectionTestCase(unittest.IsolatedAsyncioTestCase):
     """Base driving the editor on a given configuration."""
 
     config: ClassVar[dict[str, Any]] = MULTI_CUBE_CONFIG
 
     async def asyncSetUp(self) -> None:
-        """Open the editor on the Bluetooth tab."""
+        """Open the editor on the Bluetooth section."""
         patcher = patch(
             'term_timer.config_edit.sections.CONFIG',
             self.config,
@@ -53,17 +75,27 @@ class BluetoothSectionTestCase(unittest.IsolatedAsyncioTestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        self.app = ConfigEditApp()
+        self.app = BluetoothSectionApp()
 
         stack = AsyncExitStack()
         self.pilot = await stack.enter_async_context(self.app.run_test())
         self.addAsyncCleanup(stack.aclose)
 
-        await self.pilot.pause(0.4)
-        self.app.query_one(TabbedContent).active = 'bluetooth-tab'
-        await self.pilot.pause(0.3)
-
         self.section = self.app.query_one(BluetoothSection)
+
+        await self.settle()
+
+    async def settle(self) -> None:
+        """
+        Let the editor answer, instead of guessing how long it takes.
+
+        The section loads itself on a timer and only drops its loading
+        flag once the cards are mounted, so waiting on that flag returns
+        as soon as the screen is the one the test is about.
+        """
+        async with asyncio.timeout(SETTLE_TIMEOUT):
+            while self.section.is_loading:
+                await self.pilot.pause()
 
     @property
     def saved(self) -> dict[str, Any]:
@@ -100,12 +132,12 @@ class TestBluetoothSectionCubes(BluetoothSectionTestCase):
     async def test_adding_a_cube(self) -> None:
         """A cube added and named is written out."""
         self.section.query_one('.cube-add', Button).press()
-        await self.pilot.pause(0.3)
+        await self.pilot.pause()
 
         card = self.section.cards[-1]
         card.query_one('.cube-label', Input).value = 'newcube'
         card.query_one('.cube-address', Input).value = '99:88:77:66:55:44'
-        await self.pilot.pause(0.3)
+        await self.pilot.pause()
 
         self.assertEqual(
             self.saved['cubes']['newcube'],
@@ -116,7 +148,7 @@ class TestBluetoothSectionCubes(BluetoothSectionTestCase):
         """A field left empty stays out of the file, never an empty value."""
         card = self.section.cards[0]
         card.query_one('.cube-address', Input).value = ''
-        await self.pilot.pause(0.3)
+        await self.pilot.pause()
 
         self.assertEqual(
             self.saved['cubes']['gan12'],
@@ -127,7 +159,7 @@ class TestBluetoothSectionCubes(BluetoothSectionTestCase):
         """The designated cube stays designated once relabelled."""
         card = self.section.cards[1]
         card.query_one('.cube-label', Input).value = 'moyu'
-        await self.pilot.pause(0.3)
+        await self.pilot.pause()
 
         self.assertEqual(self.saved['default'], 'moyu')
 
@@ -135,28 +167,28 @@ class TestBluetoothSectionCubes(BluetoothSectionTestCase):
         """Relabelling a cube leaves the designated one alone."""
         card = self.section.cards[0]
         card.query_one('.cube-label', Input).value = 'gan'
-        await self.pilot.pause(0.3)
+        await self.pilot.pause()
 
         self.assertEqual(self.saved['default'], 'weilong')
 
     async def test_an_unnamed_cube_is_dropped(self) -> None:
         """A cube left without a label reaches nothing, so it is dropped."""
         self.section.query_one('.cube-add', Button).press()
-        await self.pilot.pause(0.3)
+        await self.pilot.pause()
 
         self.assertEqual(list(self.saved['cubes']), ['gan12', 'weilong'])
 
     async def test_removing_a_cube(self) -> None:
         """A removed cube leaves the configuration."""
         self.section.cards[0].query_one('.cube-remove', Button).press()
-        await self.pilot.pause(0.3)
+        await self.pilot.pause()
 
         self.assertEqual(list(self.saved['cubes']), ['weilong'])
 
     async def test_removing_the_default_cube_clears_it(self) -> None:
         """Removing the designated cube leaves the choice to the scan."""
         self.section.cards[1].query_one('.cube-remove', Button).press()
-        await self.pilot.pause(0.3)
+        await self.pilot.pause()
 
         self.assertEqual(self.saved['default'], '')
 
@@ -202,7 +234,7 @@ class TestBluetoothSectionFolding(BluetoothSectionTestCase):
         """A row is as tall as its widgets, help lines included."""
         card = self.section.cards[0]
         card.query_one(Collapsible).collapsed = False
-        await self.pilot.pause(0.3)
+        await self.pilot.pause()
 
         for container in card.query('.field-container').results(Vertical):
             self.assertGreaterEqual(
@@ -213,7 +245,7 @@ class TestBluetoothSectionFolding(BluetoothSectionTestCase):
     async def test_added_cube_opens_alone(self) -> None:
         """The cube being added is the one worth showing expanded."""
         self.section.query_one('.cube-add', Button).press()
-        await self.pilot.pause(0.3)
+        await self.pilot.pause()
 
         self.assertEqual(
             [
@@ -227,14 +259,30 @@ class TestBluetoothSectionFolding(BluetoothSectionTestCase):
     async def test_title_follows_the_fields(self) -> None:
         """Naming a cube names its card right away."""
         self.section.query_one('.cube-add', Button).press()
-        await self.pilot.pause(0.3)
+        await self.pilot.pause()
 
         card = self.section.cards[-1]
         card.query_one('.cube-label', Input).value = 'aichuan'
         card.query_one('.cube-name', Input).value = 'MoYu AI'
-        await self.pilot.pause(0.3)
+        await self.pilot.pause()
 
         self.assertEqual(self.titles[-1], 'aichuan - MoYu AI')
+
+
+class TestConfigEditApp(unittest.IsolatedAsyncioTestCase):
+    """Tests for the editor hosting the sections it is made of."""
+
+    async def test_bluetooth_tab_shows_its_section(self) -> None:
+        """The section the other tests drive alone is on the Bluetooth tab."""
+        app = ConfigEditApp()
+
+        async with app.run_test() as pilot:
+            app.query_one(TabbedContent).active = 'bluetooth-tab'
+            await pilot.pause()
+
+            section = app.query_one(BluetoothSection)
+
+            self.assertTrue(section.is_on_screen)
 
 
 class TestWriteConfigFile(unittest.TestCase):

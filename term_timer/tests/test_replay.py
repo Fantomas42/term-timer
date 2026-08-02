@@ -518,10 +518,18 @@ class TestReplayInterfaceFlow(unittest.IsolatedAsyncioTestCase):
     """Full Timer.start() run driven deterministically by a ReplayInterface."""
 
     def setUp(self) -> None:
-        """Patch solve persistence and sound playback for each test."""
+        """Patch solve persistence, sound playback and pacing."""
         save_patcher = patch('term_timer.interface.save_solves')
         self.save_solves_mock = save_patcher.start()
         self.addCleanup(save_patcher.stop)
+
+        # The pause before the save gesture is cosmetic pacing, and the
+        # phases are state-gated: waiting for it only costs wall-clock.
+        delay_patcher = patch(
+            'term_timer.bluetooth.replay.DEFAULT_SAVE_DELAY', 0.0,
+        )
+        delay_patcher.start()
+        self.addCleanup(delay_patcher.stop)
 
         sound_patcher = patch(
             'term_timer.interface.sounds.sd', create=True,
