@@ -29,6 +29,7 @@ from term_timer.arguments import ORIENTATIONS_SORTED
 from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import FaceletsEventDict
+from term_timer.bluetooth.annotations import GyroConfigEventDict
 from term_timer.bluetooth.annotations import GyroEventDict
 from term_timer.bluetooth.annotations import HardwareEventDict
 from term_timer.bluetooth.annotations import MoveEventDict
@@ -549,13 +550,14 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                         event['quaternion'],
                     )
 
-            elif event_name == 'move':
+            elif event_name in {'move', 'move_history'}:
                 event = cast('MoveEventDict', event)
                 logger.debug(
-                    'CONSUMER: Face: %s, Direction: %s, Move: %s',
+                    'CONSUMER: Face: %s, Direction: %s, Move: %s%s',
                     event['face'],
                     event['direction'],
                     event['move'],
+                    ' (recovered)' if event_name == 'move_history' else '',
                 )
                 moves.append(f"{ event['move'] }@{ time }")
 
@@ -565,6 +567,29 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                     direction = 3 if "'" in event['move'] else 1
                     face = cast('Face', event['move'][0])
                     gl_thread.add_move(face, direction)
+
+            elif event_name == 'gyro-config':
+                event = cast('GyroConfigEventDict', event)
+                logger.info(
+                    'CONSUMER: Gyroscope configuration: '
+                    'supported %s, enabled %s, ready %s',
+                    event['gyroscope_supported'],
+                    event['gyroscope_enabled'],
+                    event['gyroscope_ready'],
+                )
+
+            elif event_name == 'reset':
+                logger.info('CONSUMER: Cube confirmed its reset')
+                # The cube is solved again and the moves leading to the
+                # previous state no longer describe anything, so the
+                # reconstruction restarts on the next facelets event
+                virtual_cube = None
+                moves = []
+
+            elif event_name == 'disconnect':
+                logger.warning('CONSUMER: Cube announced its disconnection')
+                SOUND_PLAYER.cube_disconnected()
+                return
 
             else:
                 logger.warning(

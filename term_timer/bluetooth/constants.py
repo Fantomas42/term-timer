@@ -17,6 +17,21 @@ PREFIX: Final[list[str]] = [
     'WCU_MY32',
 ]
 
+# Every event name the drivers publish, and therefore the contract any
+# consumer draining the event queue has to cover. A driver growing a new
+# event adds it here, and the consumers are tested against this set.
+BLUETOOTH_EVENTS: Final[frozenset[str]] = frozenset({
+    'hardware',
+    'battery',
+    'facelets',
+    'gyro',
+    'gyro-config',
+    'move',
+    'move_history',
+    'disconnect',
+    'reset',
+})
+
 # GAN Gen2 protocol BLE service
 GAN_GEN2_SERVICE: Final[str] =                '6e400001-b5a3-f393-e0a9-e50e24dc4179'
 GAN_GEN2_STATE_CHARACTERISTIC: Final[str] =   '28be4cb6-cd67-11e9-a32f-2a2ae2dbcce4'

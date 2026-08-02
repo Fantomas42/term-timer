@@ -14,6 +14,7 @@ from unittest.mock import patch
 from cubing_algs.vcube import VCube
 
 from term_timer.bluetooth.annotations import EventDict
+from term_timer.bluetooth.constants import BLUETOOTH_EVENTS
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.orientation import get_orientation_moves
 from term_timer.scripts.bluetooth_info import SessionReport
@@ -41,6 +42,53 @@ def facelets_event(facelets: str) -> EventDict:
         'serial': 1,
         'facelets': facelets,
         'state': {'CP': [], 'CO': [], 'EP': [], 'EO': []},
+    }
+    return cast('EventDict', event)
+
+
+def driver_event(name: str) -> EventDict:
+    """
+    Build an event of the given name, carrying every payload field.
+
+    The fields of all the event types are merged into one dictionary so
+    that a single builder covers the whole contract: a branch reading a
+    field its own event type declares always finds it.
+
+    Args:
+        name: The value of the 'event' key, handled or not.
+
+    Returns:
+        The event as the drivers publish it.
+
+    """
+    event: dict[str, Any] = {
+        'event': name,
+        'clock': 0,
+        'timestamp': datetime.now(),  # noqa: DTZ005
+        'serial': 1,
+        # move, move_history
+        'face': 0,
+        'direction': 0,
+        'move': 'R',
+        'local_timestamp': None,
+        'cube_timestamp': None,
+        # facelets
+        'facelets': VCube().state,
+        'state': {'CP': [], 'CO': [], 'EP': [], 'EO': []},
+        # hardware, gyro-config
+        'hardware_name': 'GAN',
+        'hardware_version': '1.0',
+        'software_version': '1.0',
+        'gyroscope_supported': True,
+        'gyroscope_enabled': True,
+        'gyroscope_ready': True,
+        'restart_no_power': 0,
+        # battery
+        'level': 80,
+        'charging_state': 0,
+        # gyro
+        'quaternion': {'x': 0.0, 'y': 0.0, 'z': 0.0, 'w': 1.0},
+        'velocity': {'x': 0.0, 'y': 0.0, 'z': 0.0},
     }
     return cast('EventDict', event)
 
@@ -305,6 +353,58 @@ class TestConsumerDesynchronisation(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(report.facelets_checked, 2)
         self.assertEqual(report.desynchronisations, 0)
+
+
+class TestConsumerEventCoverage(unittest.IsolatedAsyncioTestCase):
+    """Tests that the consumer covers what the drivers publish."""
+
+    @staticmethod
+    async def consume(event: EventDict) -> list[str]:
+        """
+        Run the consumer over a single event, then disconnect.
+
+        Args:
+            event: The event the cube announces.
+
+        Returns:
+            The names of the events that fell into the unhandled branch.
+
+        """
+        queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
+        queue.put_nowait([event])
+        queue.put_nowait(None)
+
+        with (
+                patch('term_timer.scripts.bluetooth_info.SOUND_PLAYER'),
+                patch('term_timer.scripts.bluetooth_info.logger') as logged,
+        ):
+            await consumer_cb(
+                queue,
+                threading.Event(),
+                None,
+                SessionReport(),
+                show_cube=False,
+                orientation_faces='UF',
+            )
+
+        return [
+            call.args[1]
+            for call in logged.warning.call_args_list
+            if 'UNHANDLED' in str(call.args[0])
+        ]
+
+    async def test_every_driver_event_is_handled(self) -> None:
+        """Test that no event of the contract reaches the repli branch."""
+        for name in sorted(BLUETOOTH_EVENTS):
+            with self.subTest(event=name):
+                self.assertEqual(await self.consume(driver_event(name)), [])
+
+    async def test_unknown_event_is_reported(self) -> None:
+        """Test that an event outside the contract is caught, as a proof."""
+        self.assertEqual(
+            await self.consume(driver_event('nonsense')),
+            ['nonsense'],
+        )
 
 
 class TestRunExitCode(unittest.IsolatedAsyncioTestCase):
