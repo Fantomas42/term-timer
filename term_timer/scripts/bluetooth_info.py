@@ -9,6 +9,7 @@ from argparse import Namespace
 from contextlib import suppress
 from pathlib import Path
 from pprint import pformat
+from time import perf_counter
 from typing import Any
 from typing import Final
 from typing import cast
@@ -62,6 +63,10 @@ LEVEL_COLORS: Final = {
 RESET: Final = '\033[0m'
 BOLD: Final = '\x1b[1m'
 FG_GREY: Final = '\x1b[38;5;244m'
+
+# A render slower than this leaves the display behind the cube, since the
+# consumer draining the event queue is the one paying for it
+SHOW_STATE_SLOW_THRESHOLD: Final = 50.0  # In milliseconds
 
 PATTERN_COLORS: Final[dict[str, str]] = {
     'state': '\x1b[38;5;77m',
@@ -161,7 +166,45 @@ def show_state(
         cube: VCube | None,
 ) -> None:
     """
-    Display the cube state after applying moves with timing and triggers.
+    Display the cube state, measuring how long the rendering takes.
+
+    The whole move list is re-parsed and re-rendered on every call, so the
+    cost grows with the session. The consumer is alone to drain the event
+    queue: a rendering slower than the move rate makes the display drift
+    from the cube without anything saying so. Every render is timed into
+    the log file, and a render above SHOW_STATE_SLOW_THRESHOLD is raised
+    to a warning.
+
+    Args:
+        raw_moves: List of moves in timed notation (e.g., ["R@100", "U@200"]).
+        orientation_moves: Algorithm for orientation transformation.
+        cube: Virtual cube to update, or None to skip cube display.
+
+    """
+    start = perf_counter()
+
+    render_state(raw_moves, orientation_moves, cube)
+
+    elapsed = (perf_counter() - start) * 1000
+    logger.log(
+        (
+            logging.WARNING
+            if elapsed > SHOW_STATE_SLOW_THRESHOLD
+            else logging.DEBUG
+        ),
+        'SHOW STATE: %s moves rendered in %.1fms',
+        len(raw_moves),
+        elapsed,
+    )
+
+
+def render_state(
+        raw_moves: list[str],
+        orientation_moves: Algorithm,
+        cube: VCube | None,
+) -> None:
+    """
+    Render the cube state after applying moves with timing and triggers.
 
     Parses raw moves, translates them based on orientation, and displays
     both the timed move sequence and the reconstructed solution with
@@ -608,8 +651,7 @@ def linear_regression(
     Calculate linear regression parameters for two data series.
 
     Computes the slope and intercept of the best-fit line through the
-    provided data points using the least squares method. Handles None
-    values by skipping them in the calculation.
+    provided data points using the least squares method.
 
     Args:
         x_values: Independent variable data points.
@@ -623,21 +665,13 @@ def linear_regression(
     sum_y = 0.0
     sum_xy = 0.0
     sum_xx = 0.0
-    sum_yy = 0.0
-    n = 0
+    n = len(x_values)
 
-    for i in range(len(x_values)):
-        x = x_values[i]
-        y = y_values[i]
-        if x is None or y is None:
-            continue
-
-        n += 1
+    for x, y in zip(x_values, y_values, strict=True):
         sum_x += x
         sum_y += y
         sum_xy += x * y
         sum_xx += x * x
-        sum_yy += y * y
 
     var_x = n * sum_xx - sum_x * sum_x
     cov_xy = n * sum_xy - sum_x * sum_y
