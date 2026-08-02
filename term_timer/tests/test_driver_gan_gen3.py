@@ -1,5 +1,6 @@
 """Tests for driver gan gen3."""
 import asyncio
+import time
 import unittest
 from datetime import datetime
 from datetime import timezone
@@ -13,6 +14,8 @@ from unittest.mock import patch
 from term_timer.bluetooth.constants import GAN_GEN3_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN3_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN3_STATE_CHARACTERISTIC
+from term_timer.bluetooth.constants import MOVE_BUFFER_LIMIT
+from term_timer.bluetooth.constants import MOVE_HISTORY_TIMEOUT
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 
@@ -20,6 +23,7 @@ if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import BatteryEventDict
     from term_timer.bluetooth.annotations import FaceletsEventDict
     from term_timer.bluetooth.annotations import HardwareEventDict
+    from term_timer.bluetooth.annotations import MoveEventDict
 
 
 class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
@@ -197,7 +201,10 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             {'serial': 102, 'event': 'move', 'move': 'R'},
         ])
 
-        result = await self.driver.evict_move_buffer()
+        result = cast(
+            'list[MoveEventDict]',
+            await self.driver.evict_move_buffer(),
+        )
 
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0]['serial'], 101)
@@ -226,7 +233,10 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             {'serial': 50, 'event': 'move', 'move': 'U'},
         ])
 
-        result = await self.driver.evict_move_buffer()
+        result = cast(
+            'list[MoveEventDict]',
+            await self.driver.evict_move_buffer(),
+        )
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['serial'], 50)
@@ -901,3 +911,155 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertGreaterEqual(mock_request.call_count, 1)
             mock_request.assert_called_with(104, 2)  # Gap of 1, so diff=2
             self.assertEqual(len(result2), 0)  # No eviction due to gap
+
+
+class TestGanGen3DriverHistoryRequestRecovery(
+        unittest.IsolatedAsyncioTestCase,
+):
+    """Tests for the recovery of an unanswered move history request."""
+
+    logger_name = 'term_timer.bluetooth.drivers.gan_gen3'
+
+    def setUp(self) -> None:
+        """Test setup."""
+        self.mock_client = Mock()
+        self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
+        self.mock_client.name = 'GAN356 iCarry2'
+        self.mock_client.write_gatt_char = AsyncMock()
+        self.mock_client.disconnect = AsyncMock()
+
+        with patch(
+            'term_timer.bluetooth.drivers.gan_gen2.get_salt',
+            return_value=b'salt12',
+        ):
+            self.driver = GanGen3Driver(
+                self.mock_client,
+                use_gyroscope=False,
+            )
+
+    def stale_history_request(self) -> None:
+        """Simulate a history request the cube never answered."""
+        self.driver.history_request_pending = True
+        self.driver.history_request_clock = (
+            time.monotonic() - MOVE_HISTORY_TIMEOUT - 0.1
+        )
+
+    def fresh_history_request(self) -> None:
+        """Simulate a history request just sent to the cube."""
+        self.driver.history_request_pending = True
+        self.driver.history_request_clock = time.monotonic()
+
+    async def test_evict_move_buffer_waits_for_fresh_history_request(
+            self,
+    ) -> None:
+        """Test evict move buffer waits for fresh history request."""
+        self.fresh_history_request()
+        self.driver.last_serial = 100
+        self.driver.move_buffer = cast('Any', [
+            {'serial': 103, 'event': 'move', 'move': 'U'},
+        ])
+
+        with patch.object(self.driver, 'request_move_history') as mock_request:
+            result = await self.driver.evict_move_buffer()
+
+            mock_request.assert_not_called()
+            self.assertEqual(result, [])
+
+    async def test_evict_move_buffer_retries_stale_history_request(
+            self,
+    ) -> None:
+        """Test evict move buffer retries stale history request."""
+        self.stale_history_request()
+        self.driver.last_serial = 100
+        self.driver.move_buffer = cast('Any', [
+            {'serial': 103, 'event': 'move', 'move': 'U'},
+        ])
+
+        with patch.object(
+                self.driver, 'request_move_history',
+        ) as mock_request, self.assertLogs(
+            self.logger_name, level='WARNING',
+        ) as logs:
+            result = await self.driver.evict_move_buffer()
+
+            mock_request.assert_called_once_with(103, 3)
+            self.assertEqual(result, [])
+            self.assertIn('unanswered', logs.output[0])
+
+        self.assertTrue(self.driver.history_request_pending)
+        self.assertTrue(self.driver.history_request_blocking)
+
+    async def test_check_if_move_missed_retries_stale_history_request(
+            self,
+    ) -> None:
+        """Test check if move missed retries stale history request."""
+        self.stale_history_request()
+        self.driver.last_serial = 100
+        self.driver.serial = 103
+        self.driver.move_buffer = []
+
+        with patch.object(
+                self.driver, 'request_move_history',
+        ) as mock_request, self.assertLogs(
+            self.logger_name, level='WARNING',
+        ):
+            await self.driver.check_if_move_missed()
+
+            mock_request.assert_called_once_with(104, 4)
+
+    async def test_check_if_move_missed_waits_for_fresh_history_request(
+            self,
+    ) -> None:
+        """Test check if move missed waits for fresh history request."""
+        self.fresh_history_request()
+        self.driver.last_serial = 100
+        self.driver.serial = 103
+        self.driver.move_buffer = []
+
+        with patch.object(self.driver, 'request_move_history') as mock_request:
+            await self.driver.check_if_move_missed()
+
+            mock_request.assert_not_called()
+
+    async def test_history_response_closes_the_request(self) -> None:
+        """Test history response closes the request."""
+        self.fresh_history_request()
+
+        self.driver.close_history_request()
+
+        self.assertFalse(self.driver.history_request_pending)
+        self.assertFalse(self.driver.history_request_blocking)
+
+    async def test_move_buffer_overflow_emits_disconnect(self) -> None:
+        """Test move buffer overflow emits disconnect."""
+        self.fresh_history_request()
+        self.driver.last_serial = 100
+        self.driver.move_buffer = cast('Any', [
+            # Gap at 101, 102, nothing can ever be evicted
+            {'serial': 103 + i, 'event': 'move', 'move': 'U'}
+            for i in range(MOVE_BUFFER_LIMIT + 1)
+        ])
+
+        with self.assertLogs(self.logger_name, level='WARNING') as logs:
+            result = await self.driver.evict_move_buffer()
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['event'], 'disconnect')
+        self.assertIn('clock', result[0])
+        self.assertIn('timestamp', result[0])
+        self.assertIn('overflowed', logs.output[0])
+        self.mock_client.disconnect.assert_awaited_once()
+
+    async def test_move_buffer_under_limit_stays_connected(self) -> None:
+        """Test move buffer under limit stays connected."""
+        self.fresh_history_request()
+        self.driver.last_serial = 100
+        self.driver.move_buffer = cast('Any', [
+            {'serial': 103 + i, 'event': 'move', 'move': 'U'}
+            for i in range(MOVE_BUFFER_LIMIT)
+        ])
+
+        result = await self.driver.evict_move_buffer()
+
+        self.assertEqual(result, [])
+        self.mock_client.disconnect.assert_not_called()

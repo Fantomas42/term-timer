@@ -1,7 +1,10 @@
 """Bluetooth cube interface for scanning, connecting, and communication."""
 import asyncio
 import logging
+import time
 from asyncio import Queue
+from datetime import UTC
+from datetime import datetime
 from typing import Final
 from typing import Self
 from typing import cast
@@ -13,6 +16,7 @@ from bleak.backends.device import BLEDevice
 from bleak.exc import BleakDBusError
 from bleak.exc import BleakError
 
+from term_timer.bluetooth.annotations import DisconnectEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.constants import PREFIX
 from term_timer.bluetooth.drivers.base import Driver
@@ -20,8 +24,9 @@ from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
 from term_timer.bluetooth.drivers.gan_gen4 import GanGen4Driver
 from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
-from term_timer.config import DEBUG
+from term_timer.constants import BLUETOOTH_DISCONNECT_TIMEOUT
 from term_timer.exceptions import CubeNotFoundError
+from term_timer.panic import beat
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +36,64 @@ DRIVERS: Final[list[type[Driver]]] = [
     GanGen4Driver,
     MoyuWeilong10Driver,
 ]
+
+# What the record already says, or says better: the wall clocks are the
+# time stamp of the record itself, and the cube state is the facelets
+# string logged beside it, in a hundred characters instead of four lists
+EVENT_LOG_SKIPPED_KEYS: Final = frozenset({
+    'event',
+    'timestamp',
+    'local_timestamp',
+    'state',
+})
+
+
+def format_event_value(value: object) -> str:
+    """
+    Render a single value of an event payload.
+
+    Args:
+        value: The value to render, of any type an event may carry.
+
+    Returns:
+        The value as a string, floats rounded and nested payloads such
+        as a quaternion joined by commas.
+
+    """
+    if isinstance(value, float):
+        return f'{value:.3f}'
+
+    if isinstance(value, dict):
+        return ','.join(
+            format_event_value(item)
+            for item in cast('dict[str, object]', value).values()
+        )
+
+    return str(value)
+
+
+def format_event(event: EventDict) -> str:
+    """
+    Render a cube event for the log.
+
+    The payload is walked as it comes, so a new kind of event is logged
+    in full without touching this function, and in the order its driver
+    built it.
+
+    Args:
+        event: The event emitted by the driver.
+
+    Returns:
+        The name of the event followed by its fields, as key=value.
+
+    """
+    details = ' '.join(
+        f'{ key }={ format_event_value(value) }'
+        for key, value in event.items()
+        if key not in EVENT_LOG_SKIPPED_KEYS
+    )
+
+    return f'{ event["event"].upper() } { details }'.rstrip()
 
 
 class BluetoothInterface:
@@ -46,6 +109,8 @@ class BluetoothInterface:
             connected.
         driver: The cube-specific driver for handling communication protocol,
             or None if not initialized.
+        disconnecting: Whether the application asked for the disconnection,
+            the link dropping on its own otherwise.
         scan_timeout: Maximum seconds to scan for Bluetooth devices.
         connect_timeout: Maximum seconds to wait for connection establishment.
 
@@ -53,6 +118,7 @@ class BluetoothInterface:
 
     client: BleakClient | None = None
     driver: Driver | None = None
+    disconnecting: bool = False
 
     scan_timeout: int = 5
     connect_timeout: int = 5
@@ -110,7 +176,11 @@ class BluetoothInterface:
                 raise CubeNotFoundError
             address = device.address
 
-        self.client = BleakClient(address, timeout=self.connect_timeout)
+        self.client = BleakClient(
+            address,
+            timeout=self.connect_timeout,
+            disconnected_callback=self.handle_disconnection,
+        )
 
         try:
             await self.client.connect()
@@ -158,19 +228,117 @@ class BluetoothInterface:
     async def __aexit__(self, exc_type: type[BaseException] | None,
                         exc_value: BaseException | None,
                         exc_traceback: object) -> None:
-        """Exit async context manager by disconnecting from cube."""
+        """
+        Exit async context manager by disconnecting from cube.
+
+        The stop sentinel is not posted here: the queue belongs to the
+        consumer, so it belongs to whoever waits for the consumer. Posted
+        from here it lands in a queue nobody reads whenever the caller
+        runs none, and it doubles the one the caller posts itself.
+
+        The teardown is flagged before the first call and not between
+        the two: stopping the notifications of a link already gone runs
+        for the whole timeout, and the drop belongs to that timeout.
+        """
         logger.debug('Disconnect from client')
-        # Send an "exit command to the consumer"
-        await self.queue.put(None)
+
+        self.disconnecting = True
 
         if self.client and self.client.is_connected and self.driver:
-            await self.client.stop_notify(
-                self.driver.state_characteristic_uid,
+            await self.stop_notifications()
+            await self.disconnect_client()
+
+    async def stop_notifications(self) -> None:
+        """
+        Stop the cube notifications, bounded in time.
+
+        Unbounded, this D-Bus round trip hangs the whole session exit
+        when the link is gone. Both outcomes are logged, the duration
+        being the only way to tell a healthy teardown from a stuck one.
+        """
+        self.client = cast('BleakClient', self.client)
+        self.driver = cast('Driver', self.driver)
+
+        clock = time.monotonic()
+
+        try:
+            await asyncio.wait_for(
+                self.client.stop_notify(
+                    self.driver.state_characteristic_uid,
+                ),
+                timeout=BLUETOOTH_DISCONNECT_TIMEOUT,
             )
-            try:
-                await asyncio.wait_for(self.client.disconnect(), timeout=0.5)
-            except asyncio.TimeoutError:  # noqa: UP041
-                logger.debug('Disconnect timed out, leaving cleanup to OS')
+        except asyncio.TimeoutError:  # noqa: UP041
+            logger.warning(
+                'Notifications not stopped after %ss, disconnecting anyway',
+                BLUETOOTH_DISCONNECT_TIMEOUT,
+            )
+        else:
+            logger.debug(
+                'Notifications stopped in %.3fs',
+                time.monotonic() - clock,
+            )
+
+    async def disconnect_client(self) -> None:
+        """
+        Disconnect from the cube, bounded in time.
+
+        The timeout is a guard against a hung D-Bus call, not a bound on
+        the disconnection itself: bleak already waits 10s for BlueZ to
+        signal it, and cutting that short leaves its cleanup unverified.
+        """
+        self.client = cast('BleakClient', self.client)
+
+        clock = time.monotonic()
+
+        try:
+            await asyncio.wait_for(
+                self.client.disconnect(),
+                timeout=BLUETOOTH_DISCONNECT_TIMEOUT,
+            )
+        except asyncio.TimeoutError:  # noqa: UP041
+            logger.warning(
+                'Disconnect timed out after %ss, leaving cleanup to OS',
+                BLUETOOTH_DISCONNECT_TIMEOUT,
+            )
+        else:
+            logger.debug(
+                'Disconnected in %.3fs',
+                time.monotonic() - clock,
+            )
+
+    def handle_disconnection(
+            self, client: BleakClient,  # noqa: ARG002
+    ) -> None:
+        """
+        Handle the loss of the BLE link, signalled by bleak.
+
+        A link dropping for a physical reason — cube out of range, flat
+        battery, adapter reset — sends no packet, so no driver ever
+        emits the disconnection the application waits for. The same
+        event a cube announcing itself would produce is posted here, on
+        the same queue: one path downstream, whatever the cause.
+
+        Called from the event loop, so the queue is fed without waiting;
+        it has no maximum size, hence no full queue to handle.
+
+        Args:
+            client: The client whose link was lost, passed by bleak and
+                unused, this interface holding only one.
+
+        """
+        if self.disconnecting:
+            logger.debug('Link closed by the application')
+            return
+
+        logger.warning('Bluetooth link lost')
+
+        event: DisconnectEventDict = {
+            'event': 'disconnect',
+            'clock': 0,
+            'timestamp': datetime.now(tz=UTC),
+        }
+        self.queue.put_nowait([event])
 
     async def notification_handler(self, sender: BleakGATTCharacteristic,
                                    data: bytearray) -> None:
@@ -189,11 +357,13 @@ class BluetoothInterface:
         """
         self.driver = cast('Driver', self.driver)
 
+        beat('bluetooth-notification')
+
         events = await self.driver.event_handler(sender, data)
 
-        if DEBUG:
-            for event in events:
-                logger.debug('Event: %s', event['event'].upper())
+        for event in events:
+            logger.debug('Event %s', format_event(event))
+
         await self.queue.put(events)
 
     async def send_init_commands(self) -> None:

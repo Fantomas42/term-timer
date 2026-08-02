@@ -12,7 +12,9 @@ from term_timer.config import DISPLAY_BANNER
 from term_timer.config_edit.app import run_config_edit
 from term_timer.importers import Importer
 from term_timer.interface.terminal import Terminal
+from term_timer.logger import LOGGING_PATH
 from term_timer.logger import configure_logging
+from term_timer.panic import install_panic
 from term_timer.scripts.commands.daily import daily
 from term_timer.scripts.commands.doctor import doctor
 from term_timer.scripts.commands.driller import driller
@@ -56,6 +58,7 @@ def main() -> int:  # noqa: C901, PLR0911, PLR0912
 
     """
     configure_logging()
+    install_panic(LOGGING_PATH)
 
     options = get_arguments()
     command = COMMAND_RESOLUTIONS.get(options.command, options.command)

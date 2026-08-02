@@ -1,5 +1,4 @@
 """Interface modules providing mixins for timer and trainer functionality."""
-import asyncio
 import logging
 import time
 from datetime import datetime
@@ -26,6 +25,7 @@ from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.interface.state import State
 from term_timer.interface.stopwatch import StopWatch
 from term_timer.interface.terminal import Terminal
+from term_timer.logger import spawn
 
 if TYPE_CHECKING:
     from term_timer.solve import Solve
@@ -132,10 +132,13 @@ class SolveInterface(
         self.set_state('scrambling')
 
         if self.bluetooth_interface:
-            getch_task = asyncio.create_task(self.getch('scrambled'))
+            getch_task = spawn(self.getch('scrambled'), 'getch-scrambled')
             tasks = [
                 getch_task,
-                asyncio.create_task(self.scramble_completed_event.wait()),
+                spawn(
+                    self.scramble_completed_event.wait(),
+                    'event-scramble-completed',
+                ),
             ]
             await self.wait_control(tasks)
 
@@ -169,15 +172,19 @@ class SolveInterface(
             False otherwise.
 
         """
-        inspection_task = asyncio.create_task(self.inspection())
+        inspection_task = spawn(self.inspection(), 'inspection')
 
         if self.bluetooth_interface:
-            getch_task = asyncio.create_task(
+            getch_task = spawn(
                 self.getch('inspected', self.countdown),
+                'getch-inspected',
             )
             tasks = [
                 getch_task,
-                asyncio.create_task(self.solve_started_event.wait()),
+                spawn(
+                    self.solve_started_event.wait(),
+                    'event-solve-started',
+                ),
             ]
             await self.wait_control(tasks)
 
@@ -218,10 +225,13 @@ class SolveInterface(
 
         """
         if self.bluetooth_interface:
-            getch_task = asyncio.create_task(self.getch('start'))
+            getch_task = spawn(self.getch('start'), 'getch-start')
             tasks = [
                 getch_task,
-                asyncio.create_task(self.solve_started_event.wait()),
+                spawn(
+                    self.solve_started_event.wait(),
+                    'event-solve-started',
+                ),
             ]
             await self.wait_control(tasks)
 
@@ -244,12 +254,15 @@ class SolveInterface(
         if not self.start_time:
             self.start_time = time.perf_counter_ns()
 
-        stopwatch_task = asyncio.create_task(self.stopwatch())
+        stopwatch_task = spawn(self.stopwatch(), 'stopwatch')
 
         if self.bluetooth_interface:
             tasks = [
-                asyncio.create_task(self.getch('stop')),
-                asyncio.create_task(self.solve_completed_event.wait()),
+                spawn(self.getch('stop'), 'getch-stop'),
+                spawn(
+                    self.solve_completed_event.wait(),
+                    'event-solve-completed',
+                ),
             ]
             await self.wait_control(tasks)
 
@@ -283,10 +296,13 @@ class SolveInterface(
         self.set_state('saving')
 
         if self.bluetooth_interface:
-            getch_task = asyncio.create_task(self.getch('save'))
+            getch_task = spawn(self.getch('save'), 'getch-save')
             tasks = [
                 getch_task,
-                asyncio.create_task(self.save_gesture_event.wait()),
+                spawn(
+                    self.save_gesture_event.wait(),
+                    'event-save-gesture',
+                ),
             ]
             await self.wait_control(tasks)
 

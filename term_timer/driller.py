@@ -1,5 +1,4 @@
 """Driller interface for repeating an algorithm to build fluency."""
-import asyncio
 from typing import cast
 
 from cubing_algs.algorithm import Algorithm
@@ -17,6 +16,7 @@ from term_timer.formatter import format_fluency
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
 from term_timer.interface.sounds import SOUND_PLAYER
+from term_timer.logger import spawn
 from term_timer.solve import Solve
 
 
@@ -262,11 +262,14 @@ class Driller(SolveInterface):
             self.set_state('scrambled')
             self.start_line()
 
-            getch_task = asyncio.create_task(self.getch('start'))
+            getch_task = spawn(self.getch('start'), 'getch-start')
             await self.wait_control(
                 [
                     getch_task,
-                    asyncio.create_task(self.solve_started_event.wait()),
+                    spawn(
+                        self.solve_started_event.wait(),
+                        'event-solve-started',
+                    ),
                 ],
             )
 

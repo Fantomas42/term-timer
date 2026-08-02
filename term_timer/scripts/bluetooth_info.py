@@ -490,26 +490,32 @@ async def client_cb(  # noqa: PLR0913
     """
     bluetooth_interface = BluetoothInterface(queue)
 
-    await bluetooth_interface.__aenter__(
-        filter_name=filter_name,
-        use_gyroscope=True,
-    )
-    SOUND_PLAYER.cube_connected()
+    try:
+        await bluetooth_interface.__aenter__(
+            filter_name=filter_name,
+            use_gyroscope=True,
+        )
+        SOUND_PLAYER.cube_connected()
 
-    await bluetooth_interface.send_init_commands()
+        await bluetooth_interface.send_init_commands()
 
-    if gyroscope_disable:
-        await bluetooth_interface.send_command('REQUEST_DISABLE_GYRO')
-    if gyroscope_enable:
-        await bluetooth_interface.send_command('REQUEST_ENABLE_GYRO')
-    if cube_reset:
-        await bluetooth_interface.send_command('REQUEST_RESET')
-    else:
-        logger.warning('Free play for %ss', time)
-        await asyncio.sleep(time)
+        if gyroscope_disable:
+            await bluetooth_interface.send_command('REQUEST_DISABLE_GYRO')
+        if gyroscope_enable:
+            await bluetooth_interface.send_command('REQUEST_ENABLE_GYRO')
+        if cube_reset:
+            await bluetooth_interface.send_command('REQUEST_RESET')
+        else:
+            logger.warning('Free play for %ss', time)
+            await asyncio.sleep(time)
 
-    await bluetooth_interface.__aexit__(None, None, None)
-    logger.warning('Interface disconnected')
+        await bluetooth_interface.__aexit__(None, None, None)
+        logger.warning('Interface disconnected')
+    finally:
+        # The sentinel belongs here and not to the interface exit: no cube
+        # found means no exit, and the consumer would wait for a cube that
+        # never connected until the process ends
+        await queue.put(None)
 
 
 def replay(options: Namespace) -> None:

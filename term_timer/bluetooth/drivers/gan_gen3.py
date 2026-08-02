@@ -26,6 +26,8 @@ from term_timer.bluetooth.constants import DEBOUNCE
 from term_timer.bluetooth.constants import GAN_GEN3_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN3_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN3_STATE_CHARACTERISTIC
+from term_timer.bluetooth.constants import MOVE_BUFFER_LIMIT
+from term_timer.bluetooth.constants import MOVE_HISTORY_TIMEOUT
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.message import GanProtocolMessage
 
@@ -59,6 +61,7 @@ class GanGen3Driver(GanGen2Driver):
         self.last_local_timestamp: datetime | None = None
         self.move_buffer: list[MoveEventDict] = []
         self.history_request_pending: bool = False
+        self.history_request_clock: float = 0.0
 
     def send_command_handler(self, command: str) -> bytes | bool:
         """
@@ -141,35 +144,105 @@ class GanGen3Driver(GanGen2Driver):
             self.cypher.encrypt(msg),
         )
 
-    async def evict_move_buffer(self) -> list[MoveEventDict]:
+    @property
+    def history_request_blocking(self) -> bool:
+        """
+        Check if a move history request is still awaiting its answer.
+
+        A request stops blocking once MOVE_HISTORY_TIMEOUT has elapsed
+        without the cube answering, so that a lost write or a refused
+        history window can be requested again instead of holding the
+        move buffer closed forever.
+
+        Returns:
+            True while a pending request is young enough to wait for.
+
+        """
+        if not self.history_request_pending:
+            return False
+
+        elapsed = time.monotonic() - self.history_request_clock
+
+        return elapsed < MOVE_HISTORY_TIMEOUT
+
+    async def open_history_request(self, serial: int, count: int) -> None:
+        """
+        Send a move history request and mark it as pending.
+
+        Logs a warning when the previous request is being retried, which
+        means the cube never answered it.
+
+        Args:
+            serial: The serial number to start the history request from.
+            count: The number of historical moves to request.
+
+        """
+        if self.history_request_pending:
+            logger.warning(
+                'Move history request unanswered after %ss, '
+                'retrying from serial %s for %s moves',
+                MOVE_HISTORY_TIMEOUT, serial, count,
+            )
+
+        self.history_request_pending = True
+        self.history_request_clock = time.monotonic()
+
+        await self.request_move_history(serial, count)
+
+    def close_history_request(self) -> None:
+        """Mark the pending move history request as answered."""
+        self.history_request_pending = False
+
+    async def evict_move_buffer(self) -> list[EventDict]:
         """
         Process and emit move events from the buffer in sequence order.
 
         Removes move events from the buffer when they can be delivered in the
         correct serial order. If a gap is detected, requests missing history.
-        Disconnects if the buffer grows too large (indicating sync issues).
+        Disconnects if the buffer grows too large (indicating sync issues),
+        emitting a disconnect event so the application is told about it.
 
         Returns:
-            List of move events that were successfully evicted from the
-            buffer and are ready to be emitted.
+            List of events that were successfully evicted from the buffer
+            and are ready to be emitted.
 
         """
-        evicted_events: list[MoveEventDict] = []
+        evicted_events: list[EventDict] = []
 
         while len(self.move_buffer) > 0:
             buffer_head = self.move_buffer[0]
             diff = 1 if self.last_serial == -1 else (
                 buffer_head['serial'] - self.last_serial) & 0xFF
             if diff > 1:
-                if not self.history_request_pending:
-                    self.history_request_pending = True
-                    await self.request_move_history(buffer_head['serial'], diff)
+                if self.history_request_blocking:
+                    logger.debug(
+                        'Eviction on hold, waiting for %s missed moves '
+                        'before serial %s',
+                        diff - 1, buffer_head['serial'],
+                    )
+                else:
+                    await self.open_history_request(
+                        buffer_head['serial'], diff,
+                    )
                 break
 
             evicted_events.append(self.move_buffer.pop(0))
             self.last_serial = buffer_head['serial']
 
-        if len(self.move_buffer) > 16:
+        if len(self.move_buffer) > MOVE_BUFFER_LIMIT:
+            logger.warning(
+                'Move buffer overflowed with %s moves stuck behind '
+                'an unrecovered gap, disconnecting the cube',
+                len(self.move_buffer),
+            )
+
+            overflow_payload: DisconnectEventDict = {
+                'event': 'disconnect',
+                'clock': time.perf_counter_ns(),
+                'timestamp': datetime.now(tz=timezone.utc),  # noqa: UP017
+            }
+            evicted_events.append(overflow_payload)
+
             await self.client.disconnect()
 
         return evicted_events
@@ -250,13 +323,12 @@ class GanGen3Driver(GanGen2Driver):
         """
         diff = (self.serial - self.last_serial) & 0xFF
 
-        if diff > 0 and self.serial != 0 and not self.history_request_pending:
+        if diff > 0 and self.serial != 0 and not self.history_request_blocking:
             buffer_head = self.move_buffer[0] if self.move_buffer else None
             start_serial = buffer_head['serial'] if buffer_head else (
                 self.serial + 1
             ) & 0xFF
-            self.history_request_pending = True
-            await self.request_move_history(start_serial, diff + 1)
+            await self.open_history_request(start_serial, diff + 1)
 
     async def event_handler(  # noqa: C901, PLR0912, PLR0914, PLR0915
             self, sender: BleakGATTCharacteristic,  # noqa: ARG002
@@ -375,7 +447,7 @@ class GanGen3Driver(GanGen2Driver):
             self.add_event(events, facelets_payload)
 
         elif event == 0x06:  # Move history
-            self.history_request_pending = False
+            self.close_history_request()
             start_serial = msg.get_bit_word(24, 8)
             count = (data_size - 1) * 2
 

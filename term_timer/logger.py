@@ -1,179 +1,221 @@
 """Asynchronous logging configuration and setup."""
+import asyncio
 import atexit
 import logging
 import logging.config
 import logging.handlers
+import os
 import queue
-import threading
+import sys
+from collections.abc import Coroutine
+from datetime import datetime
+from typing import Any
 from typing import Final
+from typing import cast
+from typing import override
 
+from term_timer import __version__
 from term_timer.config import DEBUG
 from term_timer.constants import LOGGING_DIRECTORY
+from term_timer.panic import report
 
-LOGGING_FILE: Final = 'term-timer.log'
+# The date is taken once, at import: a run started before midnight keeps
+# writing in the file of the day it was launched, which is what makes a
+# file readable as a sequence of sessions
+LOGGING_FILE: Final = datetime.now().strftime(  # noqa: DTZ005
+    'term-timer-%Y-%m-%d.log',
+)
 
 LOGGING_PATH: Final = LOGGING_DIRECTORY / LOGGING_FILE
 
+FILE_HANDLER_NAME: Final = 'fileHandler'
 
-class DbusSignalFilter(logging.Filter):
+logger = logging.getLogger(__name__)
+
+
+GATT_VALUE_INTERFACE: Final = 'org.bluez.GattCharacteristic1'
+
+INITIAL_PROPERTIES_MESSAGE: Final = 'initial properties: %s'
+
+
+class BleakInitialPropertiesFilter(logging.Filter):
     """
-    Filters out noisy D-Bus signal log messages.
+    Drops the dump bleak takes of every D-Bus object it can see.
 
-    Prevents logging of frequently called D-Bus internal functions to reduce
-    log verbosity and improve readability.
+    A single record of 15 KB, emitted once per launch by the manager:
+    34% of a measured session, and more bytes per day than everything
+    else put together. It lists what BlueZ knows of every adapter and
+    every paired device, none of which says anything about this cube.
+    The connection life cycle is logged elsewhere, signal by signal.
     """
 
-    @staticmethod
-    def filter(record: logging.LogRecord) -> bool:
+    @override
+    def filter(self, record: logging.LogRecord) -> bool:
         """
         Determine whether a log record should be logged.
+
+        The raw format string of the record is compared, before any
+        formatting: the 15 KB are in the arguments, and they are never
+        touched.
 
         Args:
             record: The log record to evaluate.
 
         Returns:
-            False if the record is from a filtered function, True otherwise.
+            False for the initial properties dump, True otherwise.
 
         """
-        return record.funcName not in {'_parse_msg', 'write_gatt_char'}
+        return record.msg != INITIAL_PROPERTIES_MESSAGE
 
 
-class AsyncioLogHandler(logging.handlers.QueueHandler):
+class GattValueSignalFilter(logging.Filter):
     """
-    Queue-based log handler for asynchronous logging.
+    Drops the D-Bus signals carrying a GATT characteristic value.
 
-    Sends log records to a queue for processing by a separate thread,
-    preventing blocking of the main application during log I/O operations.
+    Bleak logs one record per notification received from the cube, each
+    holding the whole D-Bus message body: 84% of the records and 96% of
+    the bytes of a debug session, for data the decoded cube events say
+    better. Every other D-Bus signal is kept, and the connection life
+    cycle above all — Connected, ServicesResolved, Notifying — which is
+    what tells a cube gone silent from a cube left alone.
     """
 
-    def __init__(self, log_queue: queue.Queue[logging.LogRecord]) -> None:
+    @override
+    def filter(self, record: logging.LogRecord) -> bool:
         """
-        Initialize the async log handler with a queue.
+        Determine whether a log record should be logged.
+
+        The body of the signal is read from the arguments of the record,
+        not from its message, so nothing has to be formatted to decide.
 
         Args:
-            log_queue: Queue to receive log records for async processing.
+            record: The log record to evaluate.
+
+        Returns:
+            False for a GATT characteristic value notification, True
+            otherwise.
 
         """
-        super().__init__(log_queue)
+        args = record.args
 
+        if not isinstance(args, tuple) or not args:
+            return True
 
-class AsyncioLogListener:
-    """
-    Background thread listener that processes log records from a queue.
+        body = args[-1]
 
-    Continuously monitors a queue for log records and dispatches them to a
-    handler in a separate daemon thread, enabling non-blocking logging.
-    """
+        if not isinstance(body, list):
+            return True
 
-    def __init__(self, log_queue: queue.Queue[logging.LogRecord],
-                 handler: logging.Handler) -> None:
-        """
-        Initialize the log listener with a queue and handler.
+        signal = cast('list[object]', body)
 
-        Args:
-            log_queue: Queue from which to read log records.
-            handler: Logging handler to process the records.
+        if len(signal) < 2:
+            return True
 
-        """
-        self.queue: queue.Queue[logging.LogRecord] = log_queue
-        self.handler: logging.Handler = handler
-        self._stop_event: threading.Event = threading.Event()
-        self._thread: threading.Thread | None = None
+        interface, changed = signal[0], signal[1]
 
-    def start(self) -> None:
-        """
-        Start the background logging thread.
-
-        Creates and launches a daemon thread that processes log records
-        from the queue until stopped.
-        """
-        self._thread = threading.Thread(target=self._process_logs)
-        self._thread.daemon = True
-        self._thread.start()
-
-    def stop(self) -> None:
-        """
-        Stop the background logging thread gracefully.
-
-        Signals the thread to stop processing and waits for it to complete
-        any remaining work before returning.
-        """
-        self._stop_event.set()
-        if self._thread and self._thread.is_alive():
-            self._thread.join()
-
-    def _process_logs(self) -> None:
-        while not self._stop_event.is_set():
-            try:
-                record = self.queue.get(block=True, timeout=0.2)
-                self.handler.handle(record)
-            except queue.Empty:
-                continue
+        return not (
+            interface == GATT_VALUE_INTERFACE
+            and isinstance(changed, dict)
+            and 'Value' in changed
+        )
 
 
 LOGGING_CONF: Final = {
     'version': 1,
     'disable_existing_loggers': False,
-    'filters': {
-        'no_dbus_signal': {
-            '()': DbusSignalFilter,
-        },
-    },
     'formatters': {
         'standard': {
             'class': 'logging.Formatter',
-            'format': '[%(asctime)s] %(levelname)-8s %(name)s: %(message)s',
+            # The second of resolution of the previous format was
+            # unusable: at 41 records per second, forty lines carried the
+            # same stamp. funcName:lineno finally displays what
+            # findCaller collects on every record anyway. No thread name:
+            # a whole session was measured at 171 records out of 171 on
+            # MainThread, dbus_fast running on the asyncio loop and the
+            # listener thread consuming records without ever emitting one
+            'format': (
+                '%(asctime)s.%(msecs)03d %(levelname).1s '
+                '%(name)-32s %(funcName)s:%(lineno)d %(message)s'
+            ),
             'datefmt': '%H:%M:%S',
         },
     },
     'handlers': {
-        'fileHandler': {
+        FILE_HANDLER_NAME: {
             'formatter': 'standard',
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': LOGGING_PATH,
-            'filters': ['no_dbus_signal'],
         },
     },
     'loggers': {
         '': {
             'level': 'DEBUG',
             'handlers': [
-                'fileHandler',
+                FILE_HANDLER_NAME,
             ],
         },
     },
 }
 
-log_listener: AsyncioLogListener | None = None
+log_listener: logging.handlers.QueueListener | None = None
+
+
+def log_session_header() -> None:
+    """
+    Write the line opening a session in the log file.
+
+    A file holds one day of runs appended one after the other, and the
+    time stamps of the records carry no date: without this line nothing
+    tells where a run begins, nor which one of them is being read.
+    """
+    logger.info(
+        'Term Timer %s started on %s, pid %d, command: %s',
+        __version__,
+        datetime.now().isoformat(timespec='seconds'),  # noqa: DTZ005
+        os.getpid(),
+        ' '.join(sys.argv),
+    )
 
 
 def configure_logging() -> None:
     """Configure async logging with queue handler."""
+    global log_listener  # noqa: PLW0603
+
     if DEBUG:
         logging.config.dictConfig(LOGGING_CONF)
 
         root_logger = logging.getLogger()
-        file_handler: logging.FileHandler | None = None
-        for handler in root_logger.handlers:
-            if isinstance(handler, logging.FileHandler):
-                file_handler = handler
-                break
+        file_handler = logging.getHandlerByName(FILE_HANDLER_NAME)
 
         if file_handler:
             root_logger.removeHandler(file_handler)
 
             log_queue: queue.Queue[logging.LogRecord] = queue.Queue()
-            queue_handler = AsyncioLogHandler(log_queue)
+            queue_handler = logging.handlers.QueueHandler(log_queue)
+            # The level of a handler is honoured by the logger dispatching
+            # to it, not by the handler itself: queueing the records is
+            # what dispatches them now, so the level has to be carried over
+            queue_handler.setLevel(file_handler.level)
+            # Filtering belongs upstream of the queue: QueueHandler clears
+            # record.args when it enqueues, so the body of the signal is
+            # already gone on the other side, and a record dropped there
+            # has paid the queue and the thread wake-up for nothing
+            queue_handler.addFilter(GattValueSignalFilter())
+            queue_handler.addFilter(BleakInitialPropertiesFilter())
             root_logger.addHandler(queue_handler)
 
-            log_listener = AsyncioLogListener(log_queue, file_handler)
+            log_listener = logging.handlers.QueueListener(
+                log_queue, file_handler,
+            )
             log_listener.start()
 
             atexit.register(shutdown_logging)
 
+            log_session_header()
+
     else:
-        logging.disable(logging.INFO)
+        logging.disable(logging.CRITICAL)
 
 
 def shutdown_logging() -> None:
@@ -183,3 +225,56 @@ def shutdown_logging() -> None:
     if log_listener:
         log_listener.stop()
         log_listener = None
+
+
+def report_task_death(task: asyncio.Task[Any]) -> None:
+    """
+    Report the death of a task at the instant it happens.
+
+    Asyncio only reports an exception nobody retrieved when the task is
+    garbage collected. A task held for the length of a session, as the
+    Bluetooth consumer is, is never collected: it dies, the queue stops
+    being drained, the application waits for a move that will never come,
+    and not one line is written anywhere.
+
+    A panic report is written along with it: this is the one freeze that
+    announces itself, so it is the one nobody has to be there to catch.
+
+    Args:
+        task: The task that just finished.
+
+    """
+    if task.cancelled():
+        return
+
+    error = task.exception()
+
+    if error is not None:
+        logger.error(
+            'Task %s died: %r',
+            task.get_name(), error,
+            exc_info=error,
+        )
+        report('task-death', error)
+
+
+def spawn[T](coro: Coroutine[Any, Any, T], name: str) -> asyncio.Task[T]:
+    """
+    Create a task whose death can never go unnoticed.
+
+    The name is the second half of the point: it is what a py-spy dump
+    taken during a freeze displays, and what the slow callback warnings
+    of the asyncio debug mode name.
+
+    Args:
+        coro: The coroutine to run in the background.
+        name: Name of the task, as reported in the logs and the dumps.
+
+    Returns:
+        The created task.
+
+    """
+    task = asyncio.create_task(coro, name=name)
+    task.add_done_callback(report_task_death)
+
+    return task

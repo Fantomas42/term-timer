@@ -28,6 +28,7 @@ from cubing_algs.vcube import VCube
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import ReplayError
+from term_timer.logger import spawn
 
 if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import BatteryEventDict
@@ -374,13 +375,17 @@ class ReplayInterface(BluetoothInterface):
             exc_value: BaseException | None,
             exc_traceback: object,
     ) -> None:
-        """Cancel any pending playback and signal disconnection."""
+        """
+        Cancel any pending playback.
+
+        The stop sentinel is left to the caller, as on a real interface:
+        a drop-in that stops the consumer on its own would hide from the
+        replay every defect of the exit path.
+        """
         if self.schedule_task and not self.schedule_task.done():
             self.schedule_task.cancel()
             with suppress(asyncio.CancelledError):
                 await self.schedule_task
-
-        await self.queue.put(None)
 
     async def send_command(  # noqa: PLR6301
             self, command: str,  # noqa: ARG002
@@ -400,7 +405,7 @@ class ReplayInterface(BluetoothInterface):
         await self.emit_battery()
         await self.emit_facelets()
 
-        self.schedule_task = asyncio.create_task(self.run_schedule())
+        self.schedule_task = spawn(self.run_schedule(), 'replay-schedule')
 
     async def wait_for_state(self, *targets: str) -> None:
         """

@@ -233,7 +233,7 @@ class GanGen4Driver(GanGen3Driver):
             self.add_event(events, facelets_payload)
 
         elif event == 0xD1:  # Move history
-            self.history_request_pending = False
+            self.close_history_request()
             start_serial = msg.get_bit_word(16, 8)
             count = (data_size - 1) * 2
 

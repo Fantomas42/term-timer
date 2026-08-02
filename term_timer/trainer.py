@@ -1,5 +1,4 @@
 """Training interface for practicing specific CFOP cases."""
-import asyncio
 import math
 from datetime import UTC
 from datetime import datetime
@@ -71,6 +70,7 @@ from term_timer.in_out import load_trainings
 from term_timer.in_out import save_trainings
 from term_timer.interface import SolveInterface
 from term_timer.interface.sounds import SOUND_PLAYER
+from term_timer.logger import spawn
 from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import FaceletAnalyser
 from term_timer.printer import print_cube_trainer
@@ -1699,10 +1699,13 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.set_state('saving')
 
         if self.bluetooth_interface:
-            getch_task = asyncio.create_task(self.getch('save'))
+            getch_task = spawn(self.getch('save'), 'getch-save')
             tasks = [
                 getch_task,
-                asyncio.create_task(self.save_gesture_event.wait()),
+                spawn(
+                    self.save_gesture_event.wait(),
+                    'event-save-gesture',
+                ),
             ]
             await self.wait_control(tasks)
 
