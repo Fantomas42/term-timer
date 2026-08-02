@@ -6,7 +6,9 @@ import logging.config
 import sys
 import threading
 from argparse import Namespace
-from contextlib import suppress
+from collections import Counter
+from dataclasses import dataclass
+from dataclasses import field
 from pathlib import Path
 from pprint import pformat
 from time import perf_counter
@@ -141,6 +143,69 @@ LOGGING_CONF: Final = {
         },
     },
 }
+
+
+@dataclass
+class SessionReport:
+    """
+    What a bt-info session collected, logged on the way out.
+
+    The events accumulate for the closing analysis and the JSON export,
+    the counters answer the question the tool is launched for: did the
+    cube and its reconstruction stay in step. A desynchronisation is
+    already logged as a warning when it happens, drowned in the flow;
+    counted here, it becomes a figure that can be read at the end.
+
+    The duration is wall time from the session start, pairing included:
+    a cube that takes ten seconds to answer is part of what is measured.
+    """
+
+    events: list[EventDict] = field(default_factory=list)
+    facelets_checked: int = 0
+    desynchronisations: int = 0
+    started_at: float = field(default_factory=perf_counter)
+
+    @staticmethod
+    def summary_line(label: str, value: str) -> str:
+        """
+        Format a labelled line of the summary block.
+
+        Args:
+            label: The name of the figure.
+            value: The already formatted figure.
+
+        Returns:
+            The line, indented and colorized like the other blocks.
+
+        """
+        return f'  {FG_GREY}{label:<14}{RESET} {value}'
+
+    def log_summary(self) -> None:
+        """Log the figures of the session as a single block."""
+        counts = Counter(event['event'] for event in self.events)
+        events = ', '.join(
+            f'{BOLD}{count}{RESET} {name}'
+            for name, count in counts.most_common()
+        ) or 'none'
+
+        lines = [
+            self.summary_line(
+                'Duration',
+                f'{ perf_counter() - self.started_at:.1f}s',
+            ),
+            self.summary_line('Events', events),
+        ]
+
+        if self.facelets_checked:
+            lines.append(
+                self.summary_line(
+                    'Desynchros',
+                    f'{BOLD}{self.desynchronisations}{RESET} on '
+                    f'{self.facelets_checked} facelets checked',
+                ),
+            )
+
+        logger.info('Session summary:\n%s', '\n'.join(lines))
 
 
 def show_cube(cube: VCube) -> None:
@@ -337,7 +402,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
         queue: asyncio.Queue[list[EventDict] | None],
         cube_ready: threading.Event,
         gl_thread: CubeGLThread | None,
-        event_collector: list[EventDict],
+        report: SessionReport,
         *, show_cube: bool,
         orientation_faces: CubeOrientation,
         rotation_threshold: float = 75.0) -> None:
@@ -353,7 +418,8 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
         queue: Event queue from Bluetooth interface. None signals disconnect.
         cube_ready: Event to signal when cube state is initialized.
         gl_thread: Optional OpenGL visualization thread.
-        event_collector: List to accumulate all received events.
+        report: Report accumulating the events and the counters of the
+            session.
         show_cube: Whether to display cube state in console.
         orientation_faces: Two-character orientation specification (e.g., "UF").
         rotation_threshold: Minimum rotation angle in degrees for detection.
@@ -394,7 +460,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
             break
 
         for event in events:
-            event_collector.append(event)
+            report.events.append(event)
             event_name = event['event']
             time = int(event['clock'] / MS_TO_NS_FACTOR)
 
@@ -442,10 +508,12 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                     cube_ready.set()
 
                 if virtual_cube:
-                    check_state(
-                        moves, event['facelets'],
-                        virtual_cube,
-                    )
+                    report.facelets_checked += 1
+                    if not check_state(
+                            moves, event['facelets'],
+                            virtual_cube,
+                    ):
+                        report.desynchronisations += 1
                 else:
                     virtual_cube = VCube(event['facelets'], size=3)
                     if not virtual_cube.is_solved:
@@ -768,7 +836,7 @@ async def run(
     options: Namespace,
     gl_thread: CubeGLThread | None,
     cube_ready: threading.Event,
-) -> None:
+) -> int:
     """
     Orchestrates the main event loop for Bluetooth monitoring or replay.
 
@@ -776,17 +844,25 @@ async def run(
     visualization. Handles both live Bluetooth sessions and replay mode
     from recorded event files.
 
+    A session that never found a cube is not a session: it says so and
+    reports a failure, so that a script calling bt-info can tell an
+    inspected cube from an absent one. The closing summary and the
+    farewell belong to a session that took place.
+
     Args:
         options: Parsed command-line arguments.
         gl_thread: Optional OpenGL visualization thread.
         cube_ready: Event to synchronize cube state initialization.
 
+    Returns:
+        Exit code (0 for success, 1 when no cube was found).
+
     """
     if options.input:
         replay(options)
-        return
+        return 0
 
-    event_collector: list[EventDict] = []
+    report = SessionReport()
     queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
 
     client = client_cb(
@@ -801,32 +877,44 @@ async def run(
         queue,
         cube_ready,
         gl_thread,
-        event_collector,
+        report,
         show_cube=options.show_cube,
         orientation_faces=options.orientation,
         rotation_threshold=options.rotation_threshold,
     )
 
     try:
-        with suppress(CubeNotFoundError):
-            await asyncio.gather(client, consumer)
+        await asyncio.gather(client, consumer)
+    except CubeNotFoundError:
+        logger.exception(
+            'No Bluetooth cube found. '
+            'Make sure a cube is powered on and in pairing mode.',
+        )
+        return 1
     finally:
         if gl_thread and gl_thread.is_alive():
             gl_thread.stop()
             gl_thread.join(timeout=2)
 
-    summarize_events(event_collector, options.output)
+    report.log_summary()
+    summarize_events(report.events, options.output)
 
     logger.info('Bye bye')
 
+    return 0
 
-def main() -> None:
+
+def main() -> int:
     """
     Entry point for the Bluetooth cube information utility.
 
     Configures logging, parses command-line arguments, initializes the
     optional OpenGL visualization thread, and launches the async event
     processing loop.
+
+    Returns:
+        Exit code (0 for success, 1 when no cube was found).
+
     """
     logging.config.dictConfig(LOGGING_CONF)
 
@@ -954,4 +1042,4 @@ def main() -> None:
         )
         gl_thread.start()
 
-    asyncio.run(run(args, gl_thread, cube_ready), debug=True)
+    return asyncio.run(run(args, gl_thread, cube_ready), debug=True)

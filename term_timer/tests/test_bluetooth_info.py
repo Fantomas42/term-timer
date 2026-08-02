@@ -1,13 +1,70 @@
 """Tests for the bt-info utility script."""
+import asyncio
 import logging
+import threading
 import unittest
+from argparse import Namespace
+from collections.abc import Awaitable
+from collections.abc import Callable
+from datetime import datetime
+from typing import Any
+from typing import cast
 from unittest.mock import patch
 
 from cubing_algs.vcube import VCube
 
+from term_timer.bluetooth.annotations import EventDict
+from term_timer.exceptions import CubeNotFoundError
 from term_timer.orientation import get_orientation_moves
+from term_timer.scripts.bluetooth_info import SessionReport
+from term_timer.scripts.bluetooth_info import consumer_cb
 from term_timer.scripts.bluetooth_info import linear_regression
+from term_timer.scripts.bluetooth_info import run
 from term_timer.scripts.bluetooth_info import show_state
+
+
+def facelets_event(facelets: str) -> EventDict:
+    """
+    Build a facelets event carrying the given cube state.
+
+    Args:
+        facelets: The facelet string the cube announces.
+
+    Returns:
+        The event as the drivers publish it.
+
+    """
+    event: dict[str, Any] = {
+        'event': 'facelets',
+        'clock': 0,
+        'timestamp': datetime.now(),  # noqa: DTZ005
+        'serial': 1,
+        'facelets': facelets,
+        'state': {'CP': [], 'CO': [], 'EP': [], 'EO': []},
+    }
+    return cast('EventDict', event)
+
+
+async def fake_client(*_args: object, **_kwargs: object) -> None:
+    """Stand for a client connecting and leaving without a hitch."""
+    await asyncio.sleep(0)
+
+
+async def missing_cube_client(*_args: object, **_kwargs: object) -> None:
+    """
+    Stand for a client finding no cube to connect to.
+
+    Raises:
+        CubeNotFoundError: Always, that is the point.
+
+    """
+    await asyncio.sleep(0)
+    raise CubeNotFoundError
+
+
+async def fake_consumer(*_args: object, **_kwargs: object) -> None:
+    """Stand for a consumer having nothing to drain."""
+    await asyncio.sleep(0)
 
 
 class TestLinearRegression(unittest.TestCase):
@@ -137,3 +194,196 @@ class TestShowStateTiming(unittest.TestCase):
 
         self.assertEqual(len(records), 1)
         self.assertEqual(records[0].levelno, logging.WARNING)
+
+
+class TestSessionReport(unittest.TestCase):
+    """Tests for the closing summary of a session."""
+
+    def summary(self, report: SessionReport) -> str:
+        """
+        Capture the summary block a report logs.
+
+        Args:
+            report: The report to summarize.
+
+        Returns:
+            The logged message, colors included.
+
+        """
+        with self.assertLogs(
+                'term_timer.scripts.bluetooth_info',
+                level=logging.INFO,
+        ) as logs:
+            report.log_summary()
+
+        return logs.records[0].getMessage()
+
+    def test_events_are_counted_by_type(self) -> None:
+        """Test that the summary counts the events of each type."""
+        report = SessionReport(
+            events=[
+                facelets_event(VCube().state),
+                facelets_event(VCube().state),
+            ],
+        )
+
+        summary = self.summary(report)
+
+        self.assertIn('Duration', summary)
+        self.assertIn('2', summary)
+        self.assertIn('facelets', summary)
+
+    def test_empty_session_is_summarized(self) -> None:
+        """Test that a session without any event still says so."""
+        self.assertIn('none', self.summary(SessionReport()))
+
+    def test_desynchros_are_reported(self) -> None:
+        """Test that the checked facelets are reported when there are."""
+        report = SessionReport(facelets_checked=47, desynchronisations=3)
+
+        summary = self.summary(report)
+
+        self.assertIn('Desynchros', summary)
+        self.assertIn('47 facelets checked', summary)
+
+    def test_desynchros_are_skipped_without_check(self) -> None:
+        """Test that no line is written when nothing was ever checked."""
+        self.assertNotIn('Desynchros', self.summary(SessionReport()))
+
+
+class TestConsumerDesynchronisation(unittest.IsolatedAsyncioTestCase):
+    """Tests for the desynchronisations counted by the consumer."""
+
+    @staticmethod
+    async def consume(states: list[str]) -> SessionReport:
+        """
+        Run the consumer over facelets events, then disconnect.
+
+        Args:
+            states: The successive cube states the cube announces.
+
+        Returns:
+            The report the consumer filled.
+
+        """
+        queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
+        for state in states:
+            queue.put_nowait([facelets_event(state)])
+        queue.put_nowait(None)
+
+        report = SessionReport()
+
+        with patch('term_timer.scripts.bluetooth_info.SOUND_PLAYER'):
+            await consumer_cb(
+                queue,
+                threading.Event(),
+                None,
+                report,
+                show_cube=False,
+                orientation_faces='UF',
+            )
+
+        return report
+
+    async def test_desynchronisation_is_counted(self) -> None:
+        """Test that facelets contradicting the moves are counted."""
+        turned = VCube()
+        turned.rotate('R')
+
+        report = await self.consume(
+            [VCube().state, turned.state],
+        )
+
+        self.assertEqual(report.facelets_checked, 1)
+        self.assertEqual(report.desynchronisations, 1)
+
+    async def test_synchronized_facelets_are_not_counted(self) -> None:
+        """Test that facelets agreeing with the moves count as checked."""
+        report = await self.consume(
+            [VCube().state, VCube().state, VCube().state],
+        )
+
+        self.assertEqual(report.facelets_checked, 2)
+        self.assertEqual(report.desynchronisations, 0)
+
+
+class TestRunExitCode(unittest.IsolatedAsyncioTestCase):
+    """Tests for the exit code a session ends on."""
+
+    def setUp(self) -> None:
+        """Build the options of a plain live session."""
+        self.options = Namespace(
+            input='',
+            output='',
+            time=1,
+            filter_name='',
+            cube_reset=False,
+            gyroscope_enable=False,
+            gyroscope_disable=False,
+            show_cube=False,
+            orientation='UF',
+            rotation_threshold=75.0,
+        )
+
+    async def run_session(
+            self,
+            client: Callable[..., Awaitable[None]],
+    ) -> tuple[int, list[str]]:
+        """
+        Run a session over a faked client and consumer.
+
+        Args:
+            client: The coroutine function standing for the client.
+
+        Returns:
+            The exit code and the messages logged by the session.
+
+        """
+        with (
+                patch(
+                    'term_timer.scripts.bluetooth_info.client_cb',
+                    client,
+                ),
+                patch(
+                    'term_timer.scripts.bluetooth_info.consumer_cb',
+                    fake_consumer,
+                ),
+                self.assertLogs(
+                    'term_timer.scripts.bluetooth_info',
+                    level=logging.INFO,
+                ) as logs,
+        ):
+            code = await run(self.options, None, threading.Event())
+
+        return code, [record.getMessage() for record in logs.records]
+
+    async def test_missing_cube_fails(self) -> None:
+        """Test that a session without any cube reports a failure."""
+        code, messages = await self.run_session(missing_cube_client)
+
+        self.assertEqual(code, 1)
+        self.assertTrue(
+            any('No Bluetooth cube found' in message for message in messages),
+        )
+        self.assertNotIn('Bye bye', messages)
+
+    async def test_session_succeeds(self) -> None:
+        """Test that a session that took place succeeds and summarizes."""
+        code, messages = await self.run_session(fake_client)
+
+        self.assertEqual(code, 0)
+        self.assertIn('Bye bye', messages)
+        self.assertTrue(
+            any(message.startswith('Session summary:')
+                for message in messages),
+        )
+
+    async def test_replay_succeeds(self) -> None:
+        """Test that a replay never reports a connection failure."""
+        self.options.input = 'events.json'
+
+        with patch('term_timer.scripts.bluetooth_info.replay') as replayer:
+            code = await run(self.options, None, threading.Event())
+
+        self.assertEqual(code, 0)
+        replayer.assert_called_once_with(self.options)
