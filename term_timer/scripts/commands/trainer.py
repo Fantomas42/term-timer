@@ -41,7 +41,6 @@ async def trainer(options: Namespace) -> int:
             show_cube=options.show_cube,
             metronome=options.metronome,
             rng=rng,
-
         )
     except SESSION_ERRORS as error:
         console.print('😱', str(error), style='warning')
@@ -53,16 +52,14 @@ async def trainer(options: Namespace) -> int:
 
     instance.trainer_line()
 
-    trainings_done = 0
-
     async with solve_session(instance, options) as outcome:
         while 42:
             done = await instance.start()
 
             if done:
-                trainings_done += 1
+                outcome.attempts += 1
 
-                if options.trainings and trainings_done >= options.trainings:
+                if options.trainings and outcome.attempts >= options.trainings:
                     break
             else:
                 break

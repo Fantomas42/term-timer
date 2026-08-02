@@ -146,16 +146,14 @@ async def timer(options: Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
     if replay is not None:
         instance.bluetooth_replay = replay
 
-    solves_done = 0
-
     async with solve_session(instance, options) as outcome:
         while 42:
             done = await instance.start()
 
             if done:
-                solves_done += 1
+                outcome.attempts += 1
 
-                if options.solves and solves_done >= options.solves:
+                if options.solves and outcome.attempts >= options.solves:
                     break
             else:
                 break

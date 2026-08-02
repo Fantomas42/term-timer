@@ -31,7 +31,6 @@ async def driller(options: Namespace) -> int:
         console.print('😱', str(error), style='warning')
         return 1
 
-    drills_done = 0
     session_start = time.monotonic()
 
     async with solve_session(instance, options) as outcome:
@@ -51,9 +50,9 @@ async def driller(options: Namespace) -> int:
                 done = await instance.start()
 
             if done:
-                drills_done += 1
+                outcome.attempts += 1
 
-                if options.times and drills_done >= options.times:
+                if options.times and outcome.attempts >= options.times:
                     break
             else:
                 break

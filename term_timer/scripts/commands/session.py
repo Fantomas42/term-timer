@@ -1,4 +1,5 @@
 """Shared plumbing of the solving commands."""
+import time
 from argparse import Namespace
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -22,9 +23,10 @@ from term_timer.wakelock import keep_awake
 
 @dataclass
 class SessionOutcome:
-    """The exit code the session ends on."""
+    """The exit code the session ends on, and what it produced."""
 
     code: int = 0
+    attempts: int = 0
 
 
 @asynccontextmanager
@@ -49,8 +51,14 @@ async def solve_session(
     machine suspends in the middle of a session. A system offering no
     usable inhibitor is not an error, the session simply runs without.
 
+    The time spent in the session is measured from the connected cube on,
+    the pairing of a cube being a wait, not practice, and printed on the
+    way out as long as the command counted an attempt: a session left
+    right away has no duration worth reading.
+
     Yields:
-        The outcome carrying the exit code the command returns.
+        The outcome carrying the exit code the command returns and the
+        count of the attempts it recorded.
 
     """
     if options.bluetooth or instance.bluetooth_replay is not None:
@@ -60,6 +68,7 @@ async def solve_session(
         )
 
     outcome = SessionOutcome()
+    started_at = time.monotonic_ns()
 
     try:
         with keep_awake():
@@ -68,6 +77,13 @@ async def solve_session(
         console.print('😱', str(error), style='warning')
         outcome.code = 1
     finally:
+        if outcome.attempts:
+            elapsed_ns = time.monotonic_ns() - started_at
+            console.print(
+                '⏳ [title]Session duration[/title] '
+                f'[time]{ format_time(elapsed_ns, allow_dnf=False) }[/time]',
+            )
+
         if instance.bluetooth_interface:
             await instance.bluetooth_disconnect()
 
@@ -238,6 +254,8 @@ async def run_seeded_race(
 
             if not done:
                 break
+
+            outcome.attempts += 1
 
         if len(instance.stack) > 1:
             console.print(f'[title]{ title }[/title]')
