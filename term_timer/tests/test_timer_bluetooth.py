@@ -11,6 +11,7 @@ import unittest
 from datetime import UTC
 from datetime import datetime
 from random import Random
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 from unittest.mock import AsyncMock
@@ -21,6 +22,7 @@ from cubing_algs.vcube import VCube
 from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import DisconnectEventDict
 from term_timer.bluetooth.annotations import EventDict
+from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.config import CubeDevice
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -36,6 +38,9 @@ from term_timer.tests.test_trainer_bluetooth import FakeBluetoothInterface
 from term_timer.tests.test_trainer_bluetooth import make_move_event
 from term_timer.tests.test_trainer_bluetooth import wait_until
 from term_timer.timer import Timer
+
+if TYPE_CHECKING:
+    from bleak import BleakClient
 
 
 def build_timer(scramble: str) -> Timer:
@@ -728,6 +733,36 @@ class TestBluetoothDisconnectEvent(unittest.IsolatedAsyncioTestCase):
 
         await asyncio.wait_for(consumer, timeout=1.0)
         self.assertTrue(timer.bluetooth_lost_event.is_set())
+
+    async def test_a_lost_link_ends_the_session_too(self) -> None:
+        """
+        A link dropping reaches the session, through the same path.
+
+        The interface posts on the queue the consumer is parked on, so
+        the cube going out of range ends the session exactly as the cube
+        announcing itself does. This is the join between the two, the
+        rest of the chain being the same from here on.
+        """
+        timer = build_timer("R U R' U'")
+        consumer = self.start_consumer(timer)
+        queue = cast(
+            'asyncio.Queue[list[EventDict] | None]', timer.bluetooth_queue,
+        )
+        interface = BluetoothInterface(queue)
+        waiting: asyncio.Task[object] = spawn(
+            asyncio.sleep(3600), 'getch-scrambled',
+        )
+
+        interface.handle_disconnection(cast('BleakClient', None))
+
+        with self.assertRaises(CubeDisconnectedError):
+            await asyncio.wait_for(
+                timer.wait_control([waiting]), timeout=1.0,
+            )
+
+        await asyncio.wait_for(consumer, timeout=1.0)
+        self.assertTrue(timer.bluetooth_lost_event.is_set())
+        self.assertTrue(waiting.cancelled())
 
     async def test_disconnect_event_ends_the_waiting_phase(self) -> None:
         """The phase waiting for a move it will never get gives up."""

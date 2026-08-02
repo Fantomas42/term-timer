@@ -3,6 +3,8 @@ import asyncio
 import logging
 import time
 from asyncio import Queue
+from datetime import UTC
+from datetime import datetime
 from typing import Final
 from typing import Self
 from typing import cast
@@ -14,6 +16,7 @@ from bleak.backends.device import BLEDevice
 from bleak.exc import BleakDBusError
 from bleak.exc import BleakError
 
+from term_timer.bluetooth.annotations import DisconnectEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.constants import PREFIX
 from term_timer.bluetooth.drivers.base import Driver
@@ -106,6 +109,8 @@ class BluetoothInterface:
             connected.
         driver: The cube-specific driver for handling communication protocol,
             or None if not initialized.
+        disconnecting: Whether the application asked for the disconnection,
+            the link dropping on its own otherwise.
         scan_timeout: Maximum seconds to scan for Bluetooth devices.
         connect_timeout: Maximum seconds to wait for connection establishment.
 
@@ -113,6 +118,7 @@ class BluetoothInterface:
 
     client: BleakClient | None = None
     driver: Driver | None = None
+    disconnecting: bool = False
 
     scan_timeout: int = 5
     connect_timeout: int = 5
@@ -170,7 +176,11 @@ class BluetoothInterface:
                 raise CubeNotFoundError
             address = device.address
 
-        self.client = BleakClient(address, timeout=self.connect_timeout)
+        self.client = BleakClient(
+            address,
+            timeout=self.connect_timeout,
+            disconnected_callback=self.handle_disconnection,
+        )
 
         try:
             await self.client.connect()
@@ -225,8 +235,14 @@ class BluetoothInterface:
         consumer, so it belongs to whoever waits for the consumer. Posted
         from here it lands in a queue nobody reads whenever the caller
         runs none, and it doubles the one the caller posts itself.
+
+        The teardown is flagged before the first call and not between
+        the two: stopping the notifications of a link already gone runs
+        for the whole timeout, and the drop belongs to that timeout.
         """
         logger.debug('Disconnect from client')
+
+        self.disconnecting = True
 
         if self.client and self.client.is_connected and self.driver:
             await self.stop_notifications()
@@ -290,6 +306,39 @@ class BluetoothInterface:
                 'Disconnected in %.3fs',
                 time.monotonic() - clock,
             )
+
+    def handle_disconnection(
+            self, client: BleakClient,  # noqa: ARG002
+    ) -> None:
+        """
+        Handle the loss of the BLE link, signalled by bleak.
+
+        A link dropping for a physical reason — cube out of range, flat
+        battery, adapter reset — sends no packet, so no driver ever
+        emits the disconnection the application waits for. The same
+        event a cube announcing itself would produce is posted here, on
+        the same queue: one path downstream, whatever the cause.
+
+        Called from the event loop, so the queue is fed without waiting;
+        it has no maximum size, hence no full queue to handle.
+
+        Args:
+            client: The client whose link was lost, passed by bleak and
+                unused, this interface holding only one.
+
+        """
+        if self.disconnecting:
+            logger.debug('Link closed by the application')
+            return
+
+        logger.warning('Bluetooth link lost')
+
+        event: DisconnectEventDict = {
+            'event': 'disconnect',
+            'clock': 0,
+            'timestamp': datetime.now(tz=UTC),
+        }
+        self.queue.put_nowait([event])
 
     async def notification_handler(self, sender: BleakGATTCharacteristic,
                                    data: bytearray) -> None:

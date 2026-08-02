@@ -3,6 +3,7 @@ import asyncio
 import logging
 import unittest
 from asyncio import Queue
+from datetime import UTC
 from datetime import datetime
 from typing import TYPE_CHECKING
 from typing import cast
@@ -10,6 +11,7 @@ from unittest.mock import patch
 
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.interface import format_event
+from term_timer.exceptions import CubeNotFoundError
 
 if TYPE_CHECKING:
     from bleak import BleakClient
@@ -376,4 +378,121 @@ class BluetoothTeardownTestCase(unittest.IsolatedAsyncioTestCase):
         await interface.__aexit__(None, None, None)
 
         self.assertEqual(client.disconnect_calls, 1)
+        self.assertTrue(interface.queue.empty())
+
+
+class ConnectingClient:
+    """A BleakClient stub connecting to a device carrying no service."""
+
+    def __init__(self) -> None:
+        """Start disconnected, with no service to offer a driver."""
+        self.is_connected = False
+        self.services: list[object] = []
+
+    async def connect(self) -> None:
+        """Mark the link as up, as bleak does on success."""
+        self.is_connected = True
+
+
+class BluetoothLinkLostTestCase(unittest.IsolatedAsyncioTestCase):
+    """Tests for a BLE link dropping on its own, under the application."""
+
+    logger_name = 'term_timer.bluetooth.interface'
+
+    @staticmethod
+    def make_disconnect_event() -> 'DisconnectEventDict':
+        """
+        Build the event a cube announcing its disconnection produces.
+
+        Returns:
+            The payload the drivers emit, to compare the callback with.
+
+        """
+        return {
+            'event': 'disconnect',
+            'clock': 0,
+            'timestamp': datetime.now(tz=UTC),
+        }
+
+    async def test_the_client_is_built_with_the_callback(self) -> None:
+        """
+        Bleak is given someone to call when the link drops.
+
+        Built without it, a cube going out of range or flat sent no
+        packet, so no driver ever emitted the disconnection, and the
+        session stayed parked on a move that could not come.
+        """
+        built: list[dict[str, object]] = []
+
+        def build_client(address: str, **kwargs: object) -> ConnectingClient:
+            """
+            Record how the client was built, and return a stub.
+
+            Args:
+                address: The device address bleak was pointed at.
+                kwargs: Every other argument of the construction.
+
+            Returns:
+                A client stub offering no service, so no driver.
+
+            """
+            built.append({'address': address, **kwargs})
+            return ConnectingClient()
+
+        interface = BluetoothInterface(Queue())
+
+        with patch(
+                'term_timer.bluetooth.interface.BleakClient', build_client,
+        ), self.assertRaises(CubeNotFoundError):
+            await interface.__aenter__('AA:BB:CC:DD:EE:FF', use_gyroscope=False)
+
+        self.assertEqual(len(built), 1)
+        self.assertEqual(
+            built[0]['disconnected_callback'], interface.handle_disconnection,
+        )
+
+    async def test_a_lost_link_posts_the_disconnection(self) -> None:
+        """
+        The link dropping produces the event a cube would have sent.
+
+        The same payload on the same queue is the whole point: the
+        consumer, the lost event and the phases behind it already know
+        what to do with it, whatever made the cube go away.
+        """
+        interface = BluetoothInterface(Queue())
+
+        with self.assertLogs(self.logger_name, level='WARNING') as logs:
+            interface.handle_disconnection(cast('BleakClient', None))
+
+        self.assertIn('Bluetooth link lost', logs.output[0])
+
+        posted = interface.queue.get_nowait()
+        expected = self.make_disconnect_event()
+
+        self.assertIsNotNone(posted)
+        posted = cast('list[EventDict]', posted)
+        self.assertEqual(len(posted), 1)
+        self.assertEqual(posted[0]['event'], expected['event'])
+        self.assertEqual(posted[0]['clock'], expected['clock'])
+
+    async def test_our_own_disconnection_is_not_a_loss(self) -> None:
+        """
+        Leaving the interface posts nothing, though bleak calls back.
+
+        Bleak calls the callback on every disconnection, ours included.
+        Unguarded, every normal session end would announce a cube loss:
+        a second disconnection sound, a consumer returning on its own,
+        and a phase still waiting given a disconnection error.
+        """
+        client = TeardownClient()
+        interface = BluetoothInterface(Queue())
+        interface.client = cast('BleakClient', client)
+        interface.driver = cast('Driver', TeardownDriver())
+
+        await interface.__aexit__(None, None, None)
+
+        with self.assertLogs(self.logger_name, level='DEBUG') as logs:
+            interface.handle_disconnection(cast('BleakClient', client))
+
+        self.assertIn('Link closed by the application', logs.output[0])
         self.assertTrue(interface.queue.empty())
