@@ -24,6 +24,18 @@ DOCTOR_SESSION_BASELINE_MIN: Final = 12
 # and as the floor protecting clean-but-slow reps from a speed-driven Again.
 STABILITY_LONG_TERM_DAYS: Final = 14.0
 
+# Card states of the recap table, ordered as a learning funnel from
+# never seen to consolidated. Labels come from fsrs_state_label(), which
+# splits the FSRS Review state into Review (due) and Stable (scheduled).
+FSRS_STATE_LABELS: Final[tuple[str, ...]] = (
+    'New', 'Learning', 'Relearning', 'Review', 'Stable',
+)
+
+# Same states as accepted on the command line by "train --state".
+FSRS_STATE_CHOICES: Final[tuple[str, ...]] = tuple(
+    label.lower() for label in FSRS_STATE_LABELS
+)
+
 STEP_BAR: Final = 17
 
 # Maximum number of average curves drawn on the console trend graph

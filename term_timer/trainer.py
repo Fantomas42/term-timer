@@ -36,6 +36,7 @@ from term_timer.constants import CROSS_CASE
 from term_timer.constants import DNF
 from term_timer.constants import EASY_CROSS_CASE
 from term_timer.constants import ESCAPE_CHAR
+from term_timer.constants import FSRS_STATE_LABELS
 from term_timer.constants import LL_CASE
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import X_CROSS_CASE
@@ -130,13 +131,6 @@ TREND_MIN_TIMINGS: Final[int] = 12
 TREND_AT_PEAK: Final[float] = 1.10
 TREND_DEGRADED: Final[float] = 1.30
 
-# Card states of the recap table, ordered as a learning funnel from
-# never seen to consolidated. Labels come from fsrs_state_label(), which
-# splits the FSRS Review state into Review (due) and Stable (scheduled).
-FSRS_STATE_LABELS: Final[tuple[str, ...]] = (
-    'New', 'Learning', 'Relearning', 'Review', 'Stable',
-)
-
 
 class Trainer(SolveInterface):  # noqa: PLR0904
     """
@@ -156,6 +150,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             random: int,
             new_cases_limit: int,
             filters: list[str],
+            states: list[str],
             free_play: bool,
             show_solution: bool,
             show_cube: bool,
@@ -181,6 +176,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.oldest = oldest
         self.slowest = slowest
         self.filters = [f.lower() for f in filters]
+        self.states = [s.lower() for s in states]
         self.rng = rng
         self.orientation_faces = orientation
         self.random = random
@@ -313,6 +309,136 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.rng.shuffle(codes)
         return codes[:count]
 
+    def case_state(self, case_code: str) -> str:
+        """
+        Resolve the FSRS card state of a case, as a lowercased label.
+
+        Args:
+            case_code: Code of the case to inspect
+
+        Returns:
+            State label of the case, new when it has no card yet
+
+        """
+        case_training = self.trainings.cases.get(case_code)
+
+        if case_training is None or case_training.fsrs_card is None:
+            return 'new'
+
+        return fsrs_state_label(case_training.fsrs_card)[1]
+
+    def select_state_cases(
+            self,
+            valid_cases: dict[str, Case],
+            case_codes: list[str],
+    ) -> list[str]:
+        """
+        Select cases whose FSRS card sits in one of the wanted states.
+
+        Unknown case codes are kept untouched, so that they are reported
+        as unknown rather than as filtered out by their state.
+
+        Args:
+            valid_cases: Dictionary of valid cases for the step
+            case_codes: Case codes to filter
+
+        Returns:
+            List of case codes matching the wanted states
+
+        Raises:
+            InvalidCaseError: If no case matches the wanted states.
+
+        """
+        selected = [
+            code for code in case_codes
+            if code not in valid_cases
+            or self.case_state(code) in self.states
+        ]
+
+        if not selected:
+            states_label = ' & '.join(self.states)
+            error_string = (
+                f'No case in state "{ states_label }"'
+                f' for { self.step_label }.'
+            )
+            raise InvalidCaseError(error_string)
+
+        return selected
+
+    def filter_valid_cases(
+            self,
+            valid_cases: dict[str, Case],
+    ) -> dict[str, Case]:
+        """
+        Restrict the valid cases to the wanted families and groups.
+
+        Args:
+            valid_cases: Dictionary of valid cases for the step
+
+        Returns:
+            Dictionary of the cases matching the wanted filters
+
+        Raises:
+            InvalidCaseError: If no case matches the wanted filters.
+
+        """
+        if not self.filters:
+            return valid_cases
+
+        filtered = {
+            code: case for code, case in valid_cases.items()
+            if (case.family or '').lower() in self.filters
+            or any(g.lower() in self.filters for g in (case.groups or []))
+        }
+
+        if not filtered:
+            filters_label = ' & '.join(self.filters)
+            error_string = (
+                f'No case matching filter "{ filters_label }"'
+                f' for { self.step_label }.'
+            )
+            raise InvalidCaseError(error_string)
+
+        return filtered
+
+    def select_case_codes(self, valid_cases: dict[str, Case]) -> list[str]:
+        """
+        Resolve the case codes to train from the selection options.
+
+        The card states restrict the pool the oldest, slowest and random
+        selections are drawn from.
+
+        Args:
+            valid_cases: Dictionary of valid cases for the step
+
+        Returns:
+            List of the case codes to train
+
+        """
+        case_codes = self.case_codes or list(valid_cases.keys())
+
+        if self.states:
+            case_codes = self.select_state_cases(valid_cases, case_codes)
+
+        pool = {
+            code: valid_cases[code]
+            for code in case_codes
+            if code in valid_cases
+        }
+        self.filtered_cases = len(pool)
+
+        if self.oldest > 0:
+            return self.select_oldest_cases(pool, self.oldest)
+
+        if self.slowest > 0:
+            return self.select_slowest_cases(pool, self.slowest)
+
+        if self.random != 0:
+            count = len(pool) if self.random == -1 else self.random
+            return self.select_random_cases(pool, count)
+
+        return case_codes
+
     def get_cases(self) -> list[TrainingCase]:
         """
         Build list of trained cases.
@@ -334,31 +460,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         }
         self.total_cases = len(valid_cases)
 
-        if self.filters:
-            valid_cases = {
-                code: case for code, case in valid_cases.items()
-                if (case.family or '').lower() in self.filters
-                or any(g.lower() in self.filters for g in (case.groups or []))
-            }
-        self.filtered_cases = len(valid_cases)
-
-        case_codes = self.case_codes or list(valid_cases.keys())
-
-        if self.oldest > 0:
-            case_codes = self.select_oldest_cases(
-                valid_cases,
-                self.oldest,
-            )
-        elif self.slowest > 0:
-            case_codes = self.select_slowest_cases(
-                valid_cases,
-                self.slowest,
-            )
-        elif self.random != 0:
-            count = (
-                len(valid_cases) if self.random == -1 else self.random
-            )
-            case_codes = self.select_random_cases(valid_cases, count)
+        valid_cases = self.filter_valid_cases(valid_cases)
+        case_codes = self.select_case_codes(valid_cases)
 
         def setup_sorter(algorithm: Algorithm) -> tuple[float, float]:
             ergonomics = algorithm.ergonomics
@@ -453,6 +556,34 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             self.orientation_faces,
         )
 
+    def trainer_suffix(self) -> str:
+        """
+        Build the pool recap of the training summary.
+
+        Returns:
+            The restrictions applied to the pool and the case counts
+
+        """
+        restrictions: list[str] = []
+
+        if self.filters:
+            filter_label = ' & '.join(self.filters)
+            filter_plural = 's' if len(self.filters) > 1 else ''
+            restrictions.append(f'{ filter_label } filter{ filter_plural }')
+
+        if self.states:
+            state_label = ' & '.join(self.states)
+            restrictions.append(f'{ state_label } state')
+
+        if not restrictions:
+            return f' ({ self.total_cases } total)'
+
+        return (
+            f' ({ ", ".join(restrictions) },'
+            f' { self.filtered_cases } matching,'
+            f' { self.total_cases } total)'
+        )
+
     def trainer_line(self) -> None:
         """Display training summary."""
         if self.step_config.training_case is not None:
@@ -465,23 +596,13 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         n = len(self.cases)
         plural = 's' if n > 1 else ''
         label = self.step_label
-        has_filter = bool(self.filters)
-
-        if has_filter:
-            filter_label = ' & '.join(self.filters)
-            filter_plural = 's' if len(self.filters) > 1 else ''
-            suffix = (
-                f' ({ filter_label }'
-                f' filter{ filter_plural },'
-                f' { self.filtered_cases } matching,'
-                f' { self.total_cases } total)'
-            )
-        else:
-            suffix = f' ({ self.total_cases } total)'
+        restricted = bool(self.filters or self.states)
+        suffix = self.trainer_suffix()
 
         if self.case_codes:
             msg = (
                 f'Training on { n } selected case{ plural } on { label }'
+                f'{ suffix if self.states else "" }'
             )
         elif self.oldest > 0:
             msg = (
@@ -496,7 +617,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         elif self.random == -1:
             msg = (
                 f'Training on all { n } case{ plural } on { label }'
-                f' in random order{ suffix if has_filter else "" }'
+                f' in random order{ suffix if restricted else "" }'
             )
         elif self.random > 0:
             msg = (
@@ -506,12 +627,12 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         elif self.fsrs_selection:
             msg = (
                 f'Training on all { n } case{ plural } on { label }'
-                f' with spaced repetition{ suffix if has_filter else "" }'
+                f' with spaced repetition{ suffix if restricted else "" }'
             )
         else:
             msg = (
                 f'Training on all { n } case{ plural } on { label }'
-                f'{ suffix if has_filter else "" }'
+                f'{ suffix if restricted else "" }'
             )
 
         if self.free_play:

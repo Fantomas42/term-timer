@@ -1,5 +1,6 @@
 """Tests for arguments."""
 import unittest
+from argparse import Namespace
 from collections.abc import Iterator
 from contextlib import contextmanager
 from unittest.mock import Mock
@@ -232,7 +233,80 @@ class TestTrainArguments(unittest.TestCase):
 
         self.assertEqual(args.command, 'train')
         self.assertEqual(args.case_codes, [])
+        self.assertEqual(args.filters, [])
+        self.assertEqual(args.states, [])
+        self.assertEqual(args.oldest, 0)
+        self.assertEqual(args.slowest, 0)
+        self.assertEqual(args.random, 0)
+        self.assertEqual(args.new_cases, 5)
         self.assertIsNone(args.bluetooth)
+
+    @staticmethod
+    def train_args(argv: list[str]) -> Namespace:
+        """
+        Parse train arguments without any configured cube.
+
+        Returns:
+            Namespace of the parsed arguments.
+
+        """
+        with configured_cubes({}):
+            main_parser = ArgumentParser()
+            subparsers = main_parser.add_subparsers(dest='command')
+            train_arguments(subparsers)
+
+            return main_parser.parse_args(argv)
+
+    def test_train_selection_counts(self) -> None:
+        """Test --oldest, --slowest and --random values and constants."""
+        self.assertEqual(self.train_args(['train', '-d']).oldest, 5)
+        self.assertEqual(self.train_args(['train', '-d', '3']).oldest, 3)
+        self.assertEqual(self.train_args(['train', '-t']).slowest, 5)
+        self.assertEqual(self.train_args(['train', '-t', '3']).slowest, 3)
+        self.assertEqual(self.train_args(['train', '-n']).random, -1)
+        self.assertEqual(self.train_args(['train', '-n', '3']).random, 3)
+        self.assertEqual(self.train_args(['train', '-m', '2']).new_cases, 2)
+
+    def test_train_selection_modes_are_exclusive(self) -> None:
+        """Test --cases, --oldest, --slowest and --random exclude each other."""
+        for argv in (
+                ['train', '-c', 'Aa', '-d', '3'],
+                ['train', '-d', '3', '-t', '3'],
+                ['train', '-t', '3', '-n'],
+        ):
+            with self.subTest(argv=argv), self.assertRaises(SystemExit):
+                self.train_args(argv)
+
+    def test_train_single_state(self) -> None:
+        """Test --state accepts a single card state."""
+        args = self.train_args(['train', '-e', 'review'])
+
+        self.assertEqual(args.states, ['review'])
+
+    def test_train_multiple_states(self) -> None:
+        """Test --state accepts several card states."""
+        args = self.train_args(['train', '--state', 'learning', 'relearning'])
+
+        self.assertEqual(args.states, ['learning', 'relearning'])
+
+    def test_train_rejects_an_unknown_state(self) -> None:
+        """Test --state refuses a value naming no card state."""
+        with self.assertRaises(SystemExit):
+            self.train_args(['train', '-e', 'mastered'])
+
+    def test_train_state_combines_with_cases_and_filters(self) -> None:
+        """Test --state is compatible with --cases and --filter."""
+        args = self.train_args(
+            ['train', '-c', 'Aa', '-e', 'review'],
+        )
+        self.assertEqual(args.case_codes, ['Aa'])
+        self.assertEqual(args.states, ['review'])
+
+        args = self.train_args(
+            ['train', '-i', 'Dot', '-e', 'stable'],
+        )
+        self.assertEqual(args.filters, ['Dot'])
+        self.assertEqual(args.states, ['stable'])
 
     def test_train_bare_bluetooth_scans_without_configured_cube(self) -> None:
         """Test a bare -b asks for a scan on train with no cube configured."""

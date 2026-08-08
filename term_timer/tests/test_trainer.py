@@ -20,6 +20,7 @@ from fsrs import State
 from rich.console import Console as RichConsole
 from rich.theme import Theme
 
+from term_timer.exceptions import InvalidCaseError
 from term_timer.fsrs.rating import RatingBreakdown
 from term_timer.fsrs.scheduler import FSRSScheduler
 from term_timer.fsrs.storage import CaseTraining
@@ -45,6 +46,7 @@ class TestTrainerModule(unittest.TestCase):
             random=0,
             new_cases_limit=5,
             filters=[],
+            states=[],
             free_play=True,
             show_solution=False,
             show_cube=False,
@@ -98,6 +100,7 @@ class TestTrainerModule(unittest.TestCase):
             random=0,
             new_cases_limit=5,
             filters=['Dot'],
+            states=[],
             free_play=True,
             show_solution=False,
             show_cube=False,
@@ -124,6 +127,7 @@ class TestTrainerModule(unittest.TestCase):
             random=0,
             new_cases_limit=5,
             filters=['OCLL'],
+            states=[],
             free_play=True,
             show_solution=False,
             show_cube=False,
@@ -151,6 +155,7 @@ class TestTrainerModule(unittest.TestCase):
             random=0,
             new_cases_limit=5,
             filters=['dot'],
+            states=[],
             free_play=True,
             show_solution=False,
             show_cube=False,
@@ -166,6 +171,7 @@ class TestTrainerModule(unittest.TestCase):
             random=0,
             new_cases_limit=5,
             filters=['DOT'],
+            states=[],
             free_play=True,
             show_solution=False,
             show_cube=False,
@@ -188,6 +194,7 @@ class TestTrainerModule(unittest.TestCase):
             random=0,
             new_cases_limit=5,
             filters=['Dot', 'Cross'],
+            states=[],
             free_play=True,
             show_solution=False,
             show_cube=False,
@@ -203,6 +210,7 @@ class TestTrainerModule(unittest.TestCase):
             random=0,
             new_cases_limit=5,
             filters=['Dot'],
+            states=[],
             free_play=True,
             show_solution=False,
             show_cube=False,
@@ -218,6 +226,7 @@ class TestTrainerModule(unittest.TestCase):
             random=0,
             new_cases_limit=5,
             filters=['Cross'],
+            states=[],
             free_play=True,
             show_solution=False,
             show_cube=False,
@@ -258,6 +267,7 @@ class TestFSRSWithFilter(unittest.TestCase):
             random=random,
             new_cases_limit=5,
             filters=filters or [],
+            states=[],
             free_play=False,
             show_solution=False,
             show_cube=False,
@@ -339,7 +349,7 @@ class TestFSRSWithFilter(unittest.TestCase):
         """free_play disables fsrs_update and fsrs_selection to avoid loops."""
         timer = Trainer(
             step='oll', case_codes=[], oldest=0, slowest=0, random=0,
-            new_cases_limit=5, filters=[], free_play=True,
+            new_cases_limit=5, filters=[], states=[], free_play=True,
             show_solution=False, show_cube=False, metronome=0,
             orientation='DF', rng=Random(),  # noqa: S311
         )
@@ -351,7 +361,7 @@ class TestFSRSWithFilter(unittest.TestCase):
         """free_play disables FSRS even when a filter is active."""
         timer = Trainer(
             step='oll', case_codes=[], oldest=0, slowest=0, random=0,
-            new_cases_limit=5, filters=['Dot'], free_play=True,
+            new_cases_limit=5, filters=['Dot'], states=[], free_play=True,
             show_solution=False, show_cube=False, metronome=0,
             orientation='DF', rng=Random(),  # noqa: S311
         )
@@ -403,6 +413,7 @@ class TestFSRSCardsPool(unittest.TestCase):
                 random=0,
                 new_cases_limit=5,
                 filters=[],
+                states=[],
                 free_play=False,
                 show_solution=False,
                 show_cube=False,
@@ -461,6 +472,244 @@ class TestFSRSCardsPool(unittest.TestCase):
             self.assertIn(chosen, timer.fsrs_probabilities)
 
 
+class TestStateFilter(unittest.TestCase):
+    """--state restricts the case pool to the wanted FSRS card states."""
+
+    # OLL codes given a card, one per state label. 01 to 04 belong to the
+    # Dot family, 05 to the Square one, so the state filter can be
+    # combined with a family filter. Every other case has no card and is
+    # therefore new.
+    LEARNING_CODE = '01'
+    RELEARNING_CODE = '02'
+    REVIEW_CODE = '03'
+    STABLE_CODE = '04'
+    SQUARE_LEARNING_CODE = '05'
+    CARDLESS_CODE = '06'
+
+    def make_trainings(self) -> Trainings:
+        """
+        Build a trainings store covering every card state.
+
+        Returns:
+            Trainings with one case per state, plus a card-less case.
+
+        """
+        now = datetime.now(tz=UTC)
+        recent = int(now.timestamp())
+        states = {
+            self.LEARNING_CODE: (State.Learning, now - timedelta(minutes=5)),
+            self.RELEARNING_CODE: (
+                State.Relearning, now - timedelta(minutes=5),
+            ),
+            self.REVIEW_CODE: (State.Review, now - timedelta(days=1)),
+            self.STABLE_CODE: (State.Review, now + timedelta(days=3)),
+            self.SQUARE_LEARNING_CODE: (
+                State.Learning, now - timedelta(minutes=5),
+            ),
+        }
+
+        cases = {}
+        for code, (state, due) in states.items():
+            card = Card()
+            card.state = state
+            card.due = due
+            cases[code] = CaseTraining(
+                code=code,
+                last_date=recent,
+                timings=[2000],
+                fsrs_card=card,
+            )
+
+        cases[self.CARDLESS_CODE] = CaseTraining(
+            code=self.CARDLESS_CODE,
+            last_date=recent,
+            timings=[2000],
+        )
+
+        return Trainings(method='CFOP', step='OLL', cases=cases)
+
+    def make_trainer(
+            self,
+            states: list[str],
+            *,
+            case_codes: list[str] | None = None,
+            filters: list[str] | None = None,
+            oldest: int = 0,
+    ) -> Trainer:
+        """
+        Build an OLL trainer over the state fixture.
+
+        Returns:
+            Configured Trainer with a patched trainings store.
+
+        """
+        with patch(
+            'term_timer.trainer.load_trainings',
+            return_value=self.make_trainings(),
+        ):
+            return Trainer(
+                step='oll',
+                case_codes=case_codes or [],
+                oldest=oldest,
+                slowest=0,
+                random=0,
+                new_cases_limit=5,
+                filters=filters or [],
+                states=states,
+                free_play=False,
+                show_solution=False,
+                show_cube=False,
+                metronome=0,
+                orientation='DF',
+                rng=Random(),  # noqa: S311
+            )
+
+    @staticmethod
+    def pool(timer: Trainer) -> set[str]:
+        """
+        Collect the case codes of a trainer pool.
+
+        Returns:
+            Set of the case codes selected for training.
+
+        """
+        return {tc.case.code for tc in timer.cases}
+
+    def test_learning_state(self) -> None:
+        """--state learning keeps only the cards in Learning."""
+        timer = self.make_trainer(['learning'])
+
+        self.assertEqual(
+            self.pool(timer),
+            {self.LEARNING_CODE, self.SQUARE_LEARNING_CODE},
+        )
+
+    def test_relearning_state(self) -> None:
+        """--state relearning keeps only the cards in Relearning."""
+        timer = self.make_trainer(['relearning'])
+
+        self.assertEqual(self.pool(timer), {self.RELEARNING_CODE})
+
+    def test_review_state_is_due_only(self) -> None:
+        """--state review keeps the Review cards whose due date passed."""
+        timer = self.make_trainer(['review'])
+
+        self.assertEqual(self.pool(timer), {self.REVIEW_CODE})
+
+    def test_stable_state_is_scheduled_review(self) -> None:
+        """--state stable keeps the Review cards still scheduled ahead."""
+        timer = self.make_trainer(['stable'])
+
+        self.assertEqual(self.pool(timer), {self.STABLE_CODE})
+
+    def test_new_state_covers_cases_without_card(self) -> None:
+        """--state new keeps the cases with no card, card-less ones too."""
+        timer = self.make_trainer(['new'])
+        pool = self.pool(timer)
+
+        self.assertIn(self.CARDLESS_CODE, pool)
+        self.assertTrue(
+            pool.isdisjoint(
+                {
+                    self.LEARNING_CODE, self.RELEARNING_CODE,
+                    self.REVIEW_CODE, self.STABLE_CODE,
+                    self.SQUARE_LEARNING_CODE,
+                },
+            ),
+        )
+
+    def test_multiple_states_are_combined_with_or(self) -> None:
+        """Several states are combined with OR logic."""
+        timer = self.make_trainer(['relearning', 'review'])
+
+        self.assertEqual(
+            self.pool(timer),
+            {self.RELEARNING_CODE, self.REVIEW_CODE},
+        )
+
+    def test_state_restricts_fsrs_probabilities(self) -> None:
+        """FSRS only reasons on the cases kept by the state filter."""
+        timer = self.make_trainer(['learning'])
+
+        self.assertEqual(
+            set(timer.fsrs_probabilities),
+            {self.LEARNING_CODE, self.SQUARE_LEARNING_CODE},
+        )
+        self.assertTrue(timer.fsrs_selection)
+
+    def test_state_combined_with_filter(self) -> None:
+        """--state and --filter narrow the pool together."""
+        timer = self.make_trainer(['learning'], filters=['Dot'])
+
+        self.assertEqual(self.pool(timer), {self.LEARNING_CODE})
+
+    def test_state_combined_with_cases(self) -> None:
+        """--state narrows the cases named by --cases."""
+        timer = self.make_trainer(
+            ['learning'],
+            case_codes=[self.LEARNING_CODE, self.REVIEW_CODE],
+        )
+        console = MagicMock()
+        timer.console = console
+        timer.trainer_line()
+
+        printed = ' '.join(
+            str(call.args[0]) for call in console.print.call_args_list
+        )
+        self.assertEqual(self.pool(timer), {self.LEARNING_CODE})
+        self.assertIn('learning state', printed)
+
+    def test_state_combined_with_oldest(self) -> None:
+        """--oldest draws inside the pool restricted by --state."""
+        timer = self.make_trainer(['learning'], oldest=1)
+        pool = self.pool(timer)
+
+        self.assertEqual(len(pool), 1)
+        self.assertTrue(
+            pool <= {self.LEARNING_CODE, self.SQUARE_LEARNING_CODE},
+        )
+
+    def test_unknown_case_still_reported_as_unknown(self) -> None:
+        """A --cases code unknown to the step wins over the state filter."""
+        with self.assertRaises(InvalidCaseError) as context:
+            self.make_trainer(['learning'], case_codes=['999'])
+
+        self.assertIn('is unknown', str(context.exception))
+
+    def test_empty_state_pool_raises(self) -> None:
+        """An empty state selection is reported before the session starts."""
+        with self.assertRaises(InvalidCaseError) as context:
+            self.make_trainer(
+                ['stable'],
+                case_codes=[self.LEARNING_CODE],
+            )
+
+        self.assertIn('No case in state "stable"', str(context.exception))
+
+    def test_empty_filter_pool_raises(self) -> None:
+        """An empty family filter is reported before the session starts."""
+        with self.assertRaises(InvalidCaseError) as context:
+            self.make_trainer([], filters=['unknown-family'])
+
+        self.assertIn(
+            'No case matching filter "unknown-family"',
+            str(context.exception),
+        )
+
+    def test_trainer_line_mentions_the_states(self) -> None:
+        """The training summary recalls the state restriction."""
+        timer = self.make_trainer(['review', 'stable'])
+        console = MagicMock()
+        timer.console = console
+        timer.trainer_line()
+
+        printed = ' '.join(
+            str(call.args[0]) for call in console.print.call_args_list
+        )
+        self.assertIn('review & stable state', printed)
+        self.assertIn('2 matching', printed)
+
+
 class TestManualRatingKeys(unittest.TestCase):
     """The 1-4 keyboard keys map to the FSRS ratings."""
 
@@ -502,6 +751,7 @@ class TestSaveTrainingManualRating(unittest.IsolatedAsyncioTestCase):
                 random=0,
                 new_cases_limit=5,
                 filters=[],
+                states=[],
                 free_play=False,
                 show_solution=False,
                 show_cube=False,
@@ -625,6 +875,7 @@ class TestSaveTrainingAutoRatingOverride(unittest.IsolatedAsyncioTestCase):
                 random=0,
                 new_cases_limit=5,
                 filters=[],
+                states=[],
                 free_play=False,
                 show_solution=False,
                 show_cube=False,
@@ -750,6 +1001,7 @@ class TestSaveTrainingPendingCardReuse(unittest.IsolatedAsyncioTestCase):
                 random=0,
                 new_cases_limit=5,
                 filters=[],
+                states=[],
                 free_play=False,
                 show_solution=False,
                 show_cube=False,
@@ -933,6 +1185,7 @@ class TestFSRSNewCaseBudget(unittest.IsolatedAsyncioTestCase):
                 random=0,
                 new_cases_limit=5,
                 filters=[],
+                states=[],
                 free_play=False,
                 show_solution=False,
                 show_cube=False,
@@ -1042,6 +1295,7 @@ class TestSaveTrainingDNF(unittest.IsolatedAsyncioTestCase):
                 random=0,
                 new_cases_limit=5,
                 filters=[],
+                states=[],
                 free_play=False,
                 show_solution=False,
                 show_cube=False,
@@ -1190,6 +1444,7 @@ class TestSolutionDisplayInLearningPhase(unittest.TestCase):
                 random=0,
                 new_cases_limit=5,
                 filters=[],
+                states=[],
                 free_play=free_play,
                 show_solution=False,
                 show_cube=False,
@@ -1400,6 +1655,7 @@ class TestResolveSolution(unittest.TestCase):
                 random=0,
                 new_cases_limit=5,
                 filters=[],
+                states=[],
                 free_play=False,
                 show_solution=False,
                 show_cube=False,
@@ -1519,6 +1775,7 @@ class TestResolveSolution(unittest.TestCase):
                 random=0,
                 new_cases_limit=5,
                 filters=[],
+                states=[],
                 free_play=False,
                 show_solution=False,
                 show_cube=False,
@@ -1655,6 +1912,7 @@ class TestSummaryCases(unittest.TestCase):
                 random=0,
                 new_cases_limit=5,
                 filters=[],
+                states=[],
                 free_play=False,
                 show_solution=False,
                 show_cube=False,

@@ -24,6 +24,7 @@ from term_timer.config import TRAINER_STEP
 from term_timer.config import USE_GYROSCOPE
 from term_timer.config import CubeDevice
 from term_timer.constants import CUBE_SIZES
+from term_timer.constants import FSRS_STATE_CHOICES
 from term_timer.methods import METHOD_ANALYSERS
 
 if TYPE_CHECKING:
@@ -803,8 +804,8 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     cases = parser.add_argument_group(
         'Case Selection',
         'By default, cases are selected by FSRS.\n'
-        '--oldest, --slowest and --filter restrict the pool while keeping '
-        'FSRS active;\n--cases and --random disable FSRS selection '
+        '--oldest, --slowest, --filter and --state restrict the pool while '
+        'keeping\nFSRS active; --cases and --random disable FSRS selection '
         '(cards are still updated).',
     )
     cases.add_argument(
@@ -828,9 +829,24 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Filter cases by family or group (e.g. Dot, Cross, OCLL).\n'
             'Multiple values are combined with OR logic.\n'
-            'Restricts the case pool; compatible with --oldest, --slowest'
-            ' and --random.\n'
+            'Restricts the case pool; compatible with --state, --oldest,\n'
+            '--slowest and --random.\n'
             'Incompatible with --cases.'
+        ),
+    )
+    cases.add_argument(
+        '-e', '--state',
+        nargs='+',
+        default=[],
+        choices=FSRS_STATE_CHOICES,
+        metavar='STATE',
+        dest='states',
+        help=(
+            'Filter cases by FSRS card state: new, learning, relearning,\n'
+            'review (due) or stable (review scheduled in the future).\n'
+            'Multiple values are combined with OR logic.\n'
+            'Restricts the case pool; compatible with --filter, --cases,\n'
+            '--oldest, --slowest and --random.'
         ),
     )
 
@@ -844,6 +860,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Practice specific cases by name.\n'
             'Disables FSRS case selection (cards are still updated).\n'
+            'Compatible with --state.\n'
             'Incompatible with --filter, --oldest, --slowest and --random.'
         ),
     )

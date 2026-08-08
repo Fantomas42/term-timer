@@ -34,6 +34,7 @@ async def trainer(options: Namespace) -> int:
             slowest=options.slowest,
             random=options.random,
             filters=options.filters,
+            states=options.states,
             new_cases_limit=options.new_cases,
             free_play=options.free_play,
             orientation=options.orientation,

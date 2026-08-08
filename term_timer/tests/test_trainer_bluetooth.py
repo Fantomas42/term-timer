@@ -150,6 +150,7 @@ def build_trainer(  # noqa: PLR0913
             random=0,
             new_cases_limit=5,
             filters=[],
+            states=[],
             free_play=free_play,
             show_solution=False,
             show_cube=False,

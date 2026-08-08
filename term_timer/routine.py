@@ -29,6 +29,7 @@ class SessionConfig(TypedDict, total=False):
     random: int
     new_cases_limit: int
     filters: list[str]
+    states: list[str]
     show_solution: bool
     # solve fields
     cube: int
@@ -74,6 +75,7 @@ def build_train_instance(session_config: SessionConfig) -> Trainer:
         slowest=session_config.get('slowest', 0),
         random=int(session_config.get('random', 0)),
         filters=session_config.get('filters', []),
+        states=session_config.get('states', []),
         free_play=session_config.get('free_play', False),
         show_solution=session_config.get('show_solution', False),
         show_cube=session_config.get(
