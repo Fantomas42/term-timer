@@ -131,6 +131,51 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertEqual(args[0][0], 0x09)
             self.assertEqual(result, b'encrypted_data')
 
+    def test_send_command_handler_request_enable_gyro(self) -> None:
+        """Test send command handler request enable gyro."""
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.encrypt.return_value = b'encrypted_data'
+
+            result = self.driver.send_command_handler('REQUEST_ENABLE_GYRO')
+
+            args = mock_cypher.encrypt.call_args[0]
+            self.assertEqual(args[0][0], 0x03)
+            self.assertEqual(args[0][1], 0x03)
+            self.assertEqual(result, b'encrypted_data')
+
+    def test_send_command_handler_request_disable_gyro(self) -> None:
+        """Test send command handler request disable gyro."""
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.encrypt.return_value = b'encrypted_data'
+
+            result = self.driver.send_command_handler('REQUEST_DISABLE_GYRO')
+
+            args = mock_cypher.encrypt.call_args[0]
+            self.assertEqual(args[0][0], 0x03)
+            self.assertEqual(args[0][1], 0x01)
+            self.assertEqual(result, b'encrypted_data')
+
+    def test_send_command_handler_gyro_commands_differ(self) -> None:
+        """
+        Test that enabling and disabling are not the same frame.
+
+        The parameter byte is the whole difference between the two, and
+        an off by one there would silently turn a disable into a second
+        enable: the cube answers both with a hardware event, so nothing
+        downstream would report the mistake.
+        """
+        frames = []
+
+        for command in ('REQUEST_ENABLE_GYRO', 'REQUEST_DISABLE_GYRO'):
+            with patch.object(self.driver, 'cypher') as mock_cypher:
+                mock_cypher.encrypt.return_value = b'encrypted_data'
+
+                self.driver.send_command_handler(command)
+
+                frames.append(bytes(mock_cypher.encrypt.call_args[0][0]))
+
+        self.assertNotEqual(frames[0], frames[1])
+
     def test_send_command_handler_request_reset(self) -> None:
         """Test send command handler request reset."""
         with patch.object(self.driver, 'cypher') as mock_cypher:

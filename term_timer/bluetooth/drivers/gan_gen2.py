@@ -97,6 +97,12 @@ class GanGen2Driver(Driver):
             msg[0] = 0x05
         elif command == 'REQUEST_BATTERY':
             msg[0] = 0x09
+        elif command == 'REQUEST_ENABLE_GYRO':
+            msg[0] = 0x03
+            msg[1] = 0x03
+        elif command == 'REQUEST_DISABLE_GYRO':
+            msg[0] = 0x03
+            msg[1] = 0x01
         elif command == 'REQUEST_RESET':
             reset_sequence = [
                 0x0A, 0x05, 0x39, 0x77, 0x00, 0x00, 0x01, 0x23, 0x45, 0x67,
