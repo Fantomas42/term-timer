@@ -28,7 +28,7 @@ async def reset(options: Namespace) -> int:
     queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
     bluetooth_interface = BluetoothInterface(queue)
 
-    cube = CubeDevice.resolve(options.bluetooth) or CubeDevice.discovered(
+    cube = options.bluetooth or CubeDevice.discovered(
         prefer_known=True,
     )
     address = cube.address
