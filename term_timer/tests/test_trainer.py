@@ -472,8 +472,8 @@ class TestFSRSCardsPool(unittest.TestCase):
             self.assertIn(chosen, timer.fsrs_probabilities)
 
 
-class TestStateFilter(unittest.TestCase):
-    """--state restricts the case pool to the wanted FSRS card states."""
+class StateFixtureMixin:
+    """Trainings fixture holding one OLL case per FSRS card state."""
 
     # OLL codes given a card, one per state label. 01 to 04 belong to the
     # Dot family, 05 to the Square one, so the state filter can be
@@ -574,6 +574,17 @@ class TestStateFilter(unittest.TestCase):
 
         """
         return {tc.case.code for tc in timer.cases}
+
+    @staticmethod
+    def move_card(timer: Trainer, code: str, state: State, due: int) -> None:
+        """Move the card of a case to another state and due date."""
+        card = cast('Card', timer.trainings.cases[code].fsrs_card)
+        card.state = state
+        card.due = datetime.now(tz=UTC) + timedelta(minutes=due)
+
+
+class TestStateFilter(StateFixtureMixin, unittest.TestCase):
+    """--state restricts the case pool to the wanted FSRS card states."""
 
     def test_learning_state(self) -> None:
         """--state learning keeps only the cards in Learning."""
@@ -708,6 +719,101 @@ class TestStateFilter(unittest.TestCase):
         )
         self.assertIn('review & stable state', printed)
         self.assertIn('2 matching', printed)
+
+
+class TestStateFilterDrain(StateFixtureMixin, unittest.TestCase):
+    """A case leaving the wanted states leaves the session pool."""
+
+    def test_lapsed_card_leaves_the_pool(self) -> None:
+        """An Again on a Review card takes it out of the session pool."""
+        timer = self.make_trainer(['review'])
+        self.assertEqual(self.pool(timer), {self.REVIEW_CODE})
+
+        self.move_card(timer, self.REVIEW_CODE, State.Relearning, 2)
+
+        self.assertFalse(timer.refresh_state_pool())
+        self.assertEqual(self.pool(timer), set())
+
+    def test_graduated_card_leaves_the_pool(self) -> None:
+        """A reviewed card scheduled ahead is Stable, not Review anymore."""
+        timer = self.make_trainer(['review'])
+
+        self.move_card(timer, self.REVIEW_CODE, State.Review, 60 * 24 * 3)
+
+        self.assertFalse(timer.refresh_state_pool())
+        self.assertEqual(self.pool(timer), set())
+
+    def test_case_keeping_its_state_stays_in_the_pool(self) -> None:
+        """A card still walking its learning steps stays selectable."""
+        timer = self.make_trainer(['learning'])
+
+        self.move_card(timer, self.LEARNING_CODE, State.Learning, 5)
+
+        self.assertTrue(timer.refresh_state_pool())
+        self.assertEqual(
+            self.pool(timer),
+            {self.LEARNING_CODE, self.SQUARE_LEARNING_CODE},
+        )
+
+    def test_rated_new_case_leaves_the_pool(self) -> None:
+        """A new case gaining a card is not new anymore."""
+        timer = self.make_trainer(['new'])
+        self.assertIn(self.CARDLESS_CODE, self.pool(timer))
+
+        timer.trainings.cases[self.CARDLESS_CODE].fsrs_card = Card()
+        self.move_card(timer, self.CARDLESS_CODE, State.Learning, 5)
+
+        self.assertTrue(timer.refresh_state_pool())
+        self.assertNotIn(self.CARDLESS_CODE, self.pool(timer))
+
+    def test_pool_only_shrinks(self) -> None:
+        """A case that left the pool never comes back in the session."""
+        timer = self.make_trainer(['learning'])
+
+        self.move_card(timer, self.LEARNING_CODE, State.Relearning, 2)
+        timer.refresh_state_pool()
+        self.assertEqual(self.pool(timer), {self.SQUARE_LEARNING_CODE})
+
+        self.move_card(timer, self.LEARNING_CODE, State.Learning, 5)
+        timer.refresh_state_pool()
+
+        self.assertEqual(self.pool(timer), {self.SQUARE_LEARNING_CODE})
+
+    def test_refresh_is_a_noop_without_state_filter(self) -> None:
+        """Without --state the pool is never drained by a state change."""
+        timer = self.make_trainer([])
+        before = self.pool(timer)
+
+        self.move_card(timer, self.REVIEW_CODE, State.Relearning, 2)
+
+        self.assertTrue(timer.refresh_state_pool())
+        self.assertEqual(self.pool(timer), before)
+
+    def test_probabilities_follow_the_pool(self) -> None:
+        """The FSRS pool of a dropped case is dropped with it."""
+        timer = self.make_trainer(['review', 'stable'])
+
+        self.move_card(timer, self.REVIEW_CODE, State.Relearning, 2)
+        timer.refresh_state_pool()
+
+        self.assertNotIn(self.REVIEW_CODE, timer.fsrs_probabilities)
+        self.assertNotIn(self.REVIEW_CODE, timer.fsrs_cards)
+        self.assertIn(self.STABLE_CODE, timer.fsrs_probabilities)
+
+    def test_start_stops_on_a_drained_pool(self) -> None:
+        """A drained pool ends the session instead of serving a case."""
+        timer = self.make_trainer(['review'])
+        timer.console = MagicMock()
+
+        self.move_card(timer, self.REVIEW_CODE, State.Relearning, 2)
+
+        with patch.object(
+                Trainer, 'init_solve',
+                side_effect=AssertionError('drained pool guard bypassed'),
+        ):
+            self.assertFalse(asyncio.run(timer.start()))
+
+        self.assertTrue(timer.console.print.called)
 
 
 class TestManualRatingKeys(unittest.TestCase):

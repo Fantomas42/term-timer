@@ -365,6 +365,34 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         return selected
 
+    def refresh_state_pool(self) -> bool:
+        """
+        Drop from the pool the cases whose card left the wanted states.
+
+        The state labels are time dependent — a Stable card becomes a
+        Review one when its due date passes — so the pool is re-read
+        before serving a case rather than after a rating. The current
+        pool is filtered, never rebuilt from the collection: a case that
+        left never comes back, and the family, oldest and slowest
+        restrictions still hold.
+
+        Returns:
+            True when the pool still holds at least one case.
+
+        """
+        if not self.states:
+            return True
+
+        self.cases = [
+            tc for tc in self.cases
+            if self.case_state(tc.case.code) in self.states
+        ]
+        self.fsrs_probabilities = {
+            tc.case.code: tc.case.probability for tc in self.cases
+        }
+
+        return bool(self.cases)
+
     def filter_valid_cases(
             self,
             valid_cases: dict[str, Case],
@@ -582,6 +610,15 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             f' ({ ", ".join(restrictions) },'
             f' { self.filtered_cases } matching,'
             f' { self.total_cases } total)'
+        )
+
+    def state_pool_drained_line(self) -> None:
+        """Display that every case left the states the session wanted."""
+        states_label = ' & '.join(self.states)
+        self.console.print(
+            f'No case left in state "{ states_label }"'
+            f' for { self.step_label }',
+            style='warning',
         )
 
     def trainer_line(self) -> None:
@@ -1945,6 +1982,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             True to continue training, False to quit.
 
         """
+        if not self.refresh_state_pool():
+            self.state_pool_drained_line()
+            return False
+
         self.init_solve()
 
         fsrs_selected: TrainingCase | None = None
