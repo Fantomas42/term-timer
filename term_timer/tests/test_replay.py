@@ -10,6 +10,10 @@ import json
 import os
 import tempfile
 import unittest
+from collections.abc import AsyncIterator
+from collections.abc import Awaitable
+from collections.abc import Callable
+from contextlib import asynccontextmanager
 from copy import deepcopy
 from pathlib import Path
 from random import Random
@@ -17,6 +21,7 @@ from typing import Any
 from typing import cast
 from unittest.mock import patch
 
+from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 from cubing_algs.vcube import VCube
 
@@ -358,23 +363,40 @@ async def getch_blocked(*_: object) -> str:
     return ''
 
 
-async def getch_only_save(mode: str, *_: object) -> str:
+def make_getch_save(char: str = '') -> Callable[..., Awaitable[str]]:
     """
-    Getch stub that only answers the save prompt.
+    Build a getch stub that only answers the save prompt.
 
     Every other prompt blocks so the replay events drive the transitions.
 
     Args:
-        mode: The prompt mode requested by the timer.
+        char: The key the save prompt answers with.
 
     Returns:
-        An empty string at the save prompt, never returns otherwise.
+        A getch stub returning char at the save prompt, never otherwise.
 
     """
-    if mode == 'save':
+    async def getch(mode: str, *_: object) -> str:
+        if mode == 'save':
+            return char
+        await asyncio.sleep(3600)
         return ''
-    await asyncio.sleep(3600)
-    return ''
+
+    return getch
+
+
+@asynccontextmanager
+async def replay_consumer_running(timer: Timer) -> AsyncIterator[None]:
+    """Run the BT event consumer for the duration of the block."""
+    queue = cast('EventQueue', timer.bluetooth_queue)
+    consumer = asyncio.create_task(timer.bluetooth_consumer())
+    timer.bluetooth_consumer_ref = consumer
+
+    try:
+        yield
+    finally:
+        await queue.put(None)
+        await consumer
 
 
 class StateStub:
@@ -558,24 +580,48 @@ class TestReplayInterfaceFlow(unittest.IsolatedAsyncioTestCase):
 
         """
         interface = cast('ReplayInterface', timer.bluetooth_interface)
-        queue = cast('EventQueue', timer.bluetooth_queue)
-
-        consumer = asyncio.create_task(timer.bluetooth_consumer())
-        timer.bluetooth_consumer_ref = consumer
 
         getch_stub = (
-            getch_blocked if solve.get('finish_moves') else getch_only_save
+            getch_blocked if solve.get('finish_moves') else make_getch_save()
         )
 
-        try:
+        async with replay_consumer_running(timer):
             with patch.object(timer, 'getch', side_effect=getch_stub):
                 run_task = asyncio.create_task(timer.start())
                 await interface.send_init_commands()
 
                 return await asyncio.wait_for(run_task, timeout=5.0)
-        finally:
-            await queue.put(None)
-            await consumer
+
+    @staticmethod
+    async def drive_attempt(
+            timer: Timer, save_char: str,
+    ) -> tuple[bool, Algorithm | None]:
+        """
+        Drive a single run_attempt(), without the retry loop of start().
+
+        A retry asks start() for a second attempt, but the replay schedule
+        only holds the events of one solve, so the loop would wait
+        forever: the retry is observed on run_attempt() instead.
+
+        Args:
+            timer:     A Timer wired with a ReplayInterface.
+            save_char: The key answering the save prompt.
+
+        Returns:
+            The (keep going, scramble to replay) pair run_attempt()
+            returned.
+
+        """
+        interface = cast('ReplayInterface', timer.bluetooth_interface)
+
+        async with replay_consumer_running(timer):
+            with patch.object(
+                    timer, 'getch', side_effect=make_getch_save(save_char),
+            ):
+                run_task = asyncio.create_task(timer.run_attempt())
+                await interface.send_init_commands()
+
+                return await asyncio.wait_for(run_task, timeout=5.0)
 
     async def test_full_replay_records_solve(self) -> None:
         """A replay drives scramble, solve and save without hardware."""
@@ -589,6 +635,37 @@ class TestReplayInterfaceFlow(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(timer.stack_done), 1)
         self.assertEqual(timer.stack_done[0].flag, '')
         self.assertTrue(timer.bluetooth_scramble_is_completed)
+        self.save_solves_mock.assert_called()
+
+    async def test_retry_replays_the_same_scramble(self) -> None:
+        """Pressing 'r' at the save prompt asks to replay the scramble."""
+        replay = validate_replay(deepcopy(VALID_REPLAY))
+        timer = build_replay_timer(replay)
+        counter = timer.counter
+
+        keep_going, pending = await self.drive_attempt(timer, 'r')
+
+        self.assertTrue(keep_going)
+        self.assertIsNotNone(pending)
+        self.assertEqual(str(pending), str(timer.scramble))
+
+        # The attempt is forgotten: nothing recorded, nothing counted
+        self.assertEqual(timer.stack, [])
+        self.assertEqual(timer.stack_done, [])
+        self.assertEqual(timer.counter, counter)
+
+    async def test_save_closes_the_attempt(self) -> None:
+        """Without a retry, run_attempt() asks for no replay at all."""
+        replay = validate_replay(deepcopy(VALID_REPLAY))
+        timer = build_replay_timer(replay)
+        counter = timer.counter
+
+        keep_going, pending = await self.drive_attempt(timer, '')
+
+        self.assertTrue(keep_going)
+        self.assertIsNone(pending)
+        self.assertEqual(len(timer.stack_done), 1)
+        self.assertEqual(timer.counter, counter + 1)
         self.save_solves_mock.assert_called()
 
     async def test_full_replay_synthesized_scramble(self) -> None:

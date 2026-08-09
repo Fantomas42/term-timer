@@ -217,7 +217,6 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.fsrs_pending_rating: RatingBreakdown | None = None
         self.fsrs_pending_card: Card | None = None
         self.pending_previous_date: int | None = None
-        self.retry_requested: bool = False
         self.fsrs_reference_solution: Algorithm = Algorithm()
         self.fsrs_last_focus: str | None = None
         self.fsrs_new_cases_introduced: int = 0

@@ -1,7 +1,12 @@
 """Tests for timer."""
+import asyncio
 import unittest
 from random import Random
+from unittest.mock import MagicMock
 from unittest.mock import patch
+
+from cubing_algs.algorithm import Algorithm
+from cubing_algs.parsing import parse_moves
 
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
@@ -283,3 +288,199 @@ class TestElectGhost(unittest.TestCase):
         timer.elect_ghost()
 
         self.assertIs(timer.ghost, stored)
+
+
+class TestSaveSolveRetry(unittest.IsolatedAsyncioTestCase):
+    """save_solve() treats 'r' as a discard that asks for a replay."""
+
+    async def run_save(self, char: str) -> Timer:
+        """
+        Run save_solve with a fixed key on a timer holding one solve.
+
+        Returns:
+            The timer after save_solve has returned.
+
+        """
+        solve = make_solve()
+        timer = build_timer([solve])
+        timer.stack_done = [solve]
+        timer.console = MagicMock()
+        self.counter_start = timer.counter
+
+        async def fake_getch(_mode: str, *_: object) -> str:
+            await asyncio.sleep(0)
+            return char
+
+        with (
+            patch('term_timer.interface.save_solves'),
+            patch('term_timer.interface.SOUND_PLAYER'),
+            patch.object(timer, 'getch', side_effect=fake_getch),
+        ):
+            self.quit_flag = await timer.save_solve()
+
+        return timer
+
+    async def test_retry_key_pops_the_solve_and_asks_for_replay(self) -> None:
+        """'r' drops the solve like 'z' and flags the replay."""
+        timer = await self.run_save('r')
+
+        self.assertFalse(self.quit_flag)
+        self.assertEqual(timer.stack, [])
+        self.assertEqual(timer.stack_done, [])
+        self.assertTrue(timer.retry_requested)
+
+    async def test_retry_key_is_not_a_save(self) -> None:
+        """'r' is never swallowed as an unrecognised key keeping the solve."""
+        timer = await self.run_save('r')
+
+        self.assertEqual(timer.counter, self.counter_start)
+
+    async def test_discard_key_does_not_ask_for_replay(self) -> None:
+        """'z' discards without flagging any replay."""
+        timer = await self.run_save('z')
+
+        self.assertEqual(timer.stack, [])
+        self.assertFalse(timer.retry_requested)
+        self.assertEqual(timer.counter, self.counter_start)
+
+    async def test_save_key_keeps_the_solve(self) -> None:
+        """Any other key saves, counts the solve and asks for no replay."""
+        timer = await self.run_save('')
+
+        self.assertEqual(len(timer.stack), 1)
+        self.assertFalse(timer.retry_requested)
+        self.assertEqual(timer.counter, self.counter_start + 1)
+
+
+class TestRunAttemptPendingScramble(unittest.IsolatedAsyncioTestCase):
+    """run_attempt() replays the pending scramble instead of drawing one."""
+
+    @staticmethod
+    async def drive_to_scramble(
+            pending: Algorithm | None,
+            scrambles: list[Algorithm],
+    ) -> Timer:
+        """
+        Drive one attempt up to the scramble phase, then quit there.
+
+        Returns:
+            The timer once the attempt has returned on the quit.
+
+        """
+        timer = build_timer()
+        timer.scrambles = scrambles
+        timer.console = MagicMock()
+
+        async def quit_scrambling() -> bool:
+            await asyncio.sleep(0)
+            return False
+
+        with patch.object(
+                timer, 'scramble_solve', side_effect=quit_scrambling,
+        ):
+            await timer.run_attempt(pending)
+
+        return timer
+
+    async def test_pending_scramble_is_replayed(self) -> None:
+        """The pending scramble is used as is, ignoring the pool."""
+        pending = parse_moves("R U R' U'")
+        listed = parse_moves("F R U R' U' F'")
+
+        timer = await self.drive_to_scramble(pending, [listed])
+
+        self.assertEqual(str(timer.scramble), str(pending))
+
+    async def test_pending_scramble_does_not_consume_the_list(self) -> None:
+        """A replay leaves the --scrambles list where it was."""
+        pending = parse_moves("R U R' U'")
+        listed = parse_moves("F R U R' U' F'")
+
+        timer = await self.drive_to_scramble(pending, [listed])
+
+        self.assertEqual(timer.scramble_index, 0)
+
+    async def test_without_pending_the_list_is_consumed(self) -> None:
+        """A fresh attempt draws the next scramble of the list."""
+        listed = parse_moves("F R U R' U' F'")
+
+        timer = await self.drive_to_scramble(None, [listed])
+
+        self.assertEqual(str(timer.scramble), str(listed))
+        self.assertEqual(timer.scramble_index, 1)
+
+
+class TestStartRetryLoop(unittest.IsolatedAsyncioTestCase):
+    """start() replays the scramble for as long as a retry is asked for."""
+
+    @staticmethod
+    async def run_start(
+            outcomes: list[tuple[bool, Algorithm | None]],
+    ) -> tuple[bool, list[Algorithm | None]]:
+        """
+        Run start() over a scripted sequence of run_attempt() outcomes.
+
+        Returns:
+            Tuple of (start() return value, scrambles passed to
+            run_attempt).
+
+        """
+        timer = build_timer()
+        received: list[Algorithm | None] = []
+        remaining = list(outcomes)
+
+        async def fake_run_attempt(
+                pending: Algorithm | None = None,
+        ) -> tuple[bool, Algorithm | None]:
+            await asyncio.sleep(0)
+            received.append(pending)
+            return remaining.pop(0)
+
+        with patch.object(timer, 'run_attempt', side_effect=fake_run_attempt):
+            keep_going = await timer.start()
+
+        return keep_going, received
+
+    async def test_single_attempt_returns_immediately(self) -> None:
+        """Without any retry, start() runs a single attempt."""
+        keep_going, received = await self.run_start([(True, None)])
+
+        self.assertTrue(keep_going)
+        self.assertEqual(received, [None])
+
+    async def test_retry_replays_the_same_scramble(self) -> None:
+        """A retry feeds the pending scramble back into run_attempt()."""
+        scramble = parse_moves("R U R' U'")
+
+        keep_going, received = await self.run_start(
+            [(True, scramble), (True, None)],
+        )
+
+        self.assertTrue(keep_going)
+        self.assertEqual(received, [None, scramble])
+
+    async def test_retries_are_not_limited(self) -> None:
+        """Consecutive retries all replay before start() returns once."""
+        scramble = parse_moves("R U R' U'")
+
+        keep_going, received = await self.run_start(
+            [
+                (True, scramble), (True, scramble),
+                (True, scramble), (True, None),
+            ],
+        )
+
+        self.assertTrue(keep_going)
+        self.assertEqual(len(received), 4)
+        self.assertEqual(received[1:], [scramble, scramble, scramble])
+
+    async def test_quit_after_retry_is_propagated(self) -> None:
+        """Quitting the replayed attempt still quits the session."""
+        scramble = parse_moves("R U R' U'")
+
+        keep_going, received = await self.run_start(
+            [(True, scramble), (False, None)],
+        )
+
+        self.assertFalse(keep_going)
+        self.assertEqual(len(received), 2)

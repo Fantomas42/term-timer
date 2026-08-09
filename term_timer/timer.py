@@ -187,6 +187,7 @@ class Timer(SolveInterface):
         if self.bluetooth_interface:
             self.console.print(
                 'Press any key to save and continue,',
+                '[key](r)[/key] retry,',
                 '[key](z)[/key] discard,',
                 '[key](k)[/key] quit,',
                 '[key](q)[/key] save & quit.',
@@ -198,6 +199,7 @@ class Timer(SolveInterface):
                 'Press any key to save and continue,',
                 '[key](d)[/key] DNF,',
                 '[key](2)[/key] +2,',
+                '[key](r)[/key] retry,',
                 '[key](z)[/key] discard,',
                 '[key](k)[/key] quit,',
                 '[key](q)[/key] save & quit.',
@@ -320,23 +322,55 @@ class Timer(SolveInterface):
                 line += f' [best]PB ≤ { format_time(target).strip() }[/best]'
             self.console.print(line)
 
-    async def start(self) -> bool:  # noqa: C901, PLR0911, PLR0912
+    async def start(self) -> bool:
         """
-        Execute complete solve workflow from scramble to save.
+        Execute the solve workflow, replaying the scramble on each retry.
 
         Returns:
             True to continue with next solve, False to quit.
 
         """
-        self.init_solve()
+        pending: Algorithm | None = None
+        keep_going = False
 
-        if self.scrambles:
+        while 42:
+            keep_going, pending = await self.run_attempt(pending)
+
+            if pending is None:
+                break
+
+        return keep_going
+
+    async def run_attempt(  # noqa: C901, PLR0911, PLR0912, PLR0915
+            self,
+            pending: Algorithm | None = None,
+    ) -> tuple[bool, Algorithm | None]:
+        """
+        Execute complete solve workflow from scramble to save.
+
+        Args:
+            pending: Scramble to replay, instead of drawing a new one.
+
+        Returns:
+            Tuple of (True to continue with next solve or False to quit,
+            the scramble to replay or None when the solve is done with).
+
+        """
+        self.init_solve()
+        self.retry_requested = False
+
+        if pending is not None:
+            self.scramble = pending
+
+            cube = VCube(size=self.cube_size)
+            cube.rotate(self.scramble)
+        elif self.scrambles:
             if self.scramble_index >= len(self.scrambles):
                 self.console.print(
                     'All scrambles completed!',
                     style='success',
                 )
-                return False
+                return False, None
 
             self.scramble = self.scrambles[self.scramble_index]
             self.scramble_index += 1
@@ -370,16 +404,16 @@ class Timer(SolveInterface):
         quit_solving = await self.scramble_solve()
 
         if quit_solving is not None:
-            return quit_solving
+            return quit_solving, None
 
         if self.countdown:
             quit_solving = await self.inspect_solve()
             if quit_solving:
-                return False
+                return False, None
         else:
             quit_solving = await self.wait_solve()
             if quit_solving:
-                return False
+                return False, None
 
         await self.time_solve()
 
@@ -393,7 +427,7 @@ class Timer(SolveInterface):
             # Keyboard start/stop without any move on the connected
             # cube: a misfire, not an attempt, nothing to record.
             self.clear_line(full=True)
-            return True
+            return True, None
 
         flag: SolveFlag = ''
         if self.bluetooth_cube and not self.bluetooth_scramble_is_completed:
@@ -433,9 +467,12 @@ class Timer(SolveInterface):
 
             quit_solving = await self.save_solve()
 
+            if self.retry_requested:
+                return True, self.scramble
+
             if quit_solving:
-                return False
+                return False, None
         else:
             self.counter += 1
 
-        return True
+        return True, None
