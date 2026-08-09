@@ -30,6 +30,7 @@ from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.trainer import MANUAL_RATING_KEYS
 from term_timer.trainer import TREND_MIN_TIMINGS
+from term_timer.trainer import PendingAttempt
 from term_timer.trainer import Trainer
 
 
@@ -954,6 +955,24 @@ class TestSaveTrainingManualRating(unittest.IsolatedAsyncioTestCase):
             len(timer.trainings.cases[self.CASE_CODE].timings), 1,
         )
 
+    async def test_retry_key_pops_timing_and_asks_for_replay(self) -> None:
+        """'r' discards the rep like 'z' and flags the replay."""
+        timer, update_card, quit_flag = await self.run_save('r')
+        update_card.assert_not_called()
+        self.assertFalse(quit_flag)
+        self.assertNotIn(self.CASE_CODE, timer.trainings.cases)
+        self.assertTrue(timer.retry_requested)
+
+    async def test_retry_key_is_not_an_unrated_save(self) -> None:
+        """'r' is never swallowed as an unrecognised key keeping the time."""
+        timer, _, _ = await self.run_save('r')
+        self.assertEqual(timer.session_data, [])
+
+    async def test_discard_key_does_not_ask_for_replay(self) -> None:
+        """'z' discards without flagging any replay."""
+        timer, _, _ = await self.run_save('z')
+        self.assertFalse(timer.retry_requested)
+
 
 class TestSaveTrainingAutoRatingOverride(unittest.IsolatedAsyncioTestCase):
     """In auto rating mode, the 1-4 keys override the pending rating."""
@@ -1078,6 +1097,14 @@ class TestSaveTrainingAutoRatingOverride(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             len(timer.trainings.cases[self.CASE_CODE].timings), 1,
         )
+
+    async def test_retry_key_skips_the_pending_rating(self) -> None:
+        """'r' drops the rep instead of applying the auto rating."""
+        timer, update_card, quit_flag = await self.run_save('r')
+        update_card.assert_not_called()
+        self.assertFalse(quit_flag)
+        self.assertNotIn(self.CASE_CODE, timer.trainings.cases)
+        self.assertTrue(timer.retry_requested)
 
 
 class TestSaveTrainingPendingCardReuse(unittest.IsolatedAsyncioTestCase):
@@ -1523,6 +1550,147 @@ class TestSaveTrainingDNF(unittest.IsolatedAsyncioTestCase):
         update_card.assert_not_called()
         self.assertTrue(quit_flag)
         self.assertNotIn(self.CASE_CODE, timer.trainings.cases)
+
+    async def test_retry_key_skips_the_again_rating(self) -> None:
+        """'r' on a DNF replays the case without rating it Again."""
+        timer, update_card, quit_flag = await self.run_save('r')
+        update_card.assert_not_called()
+        self.assertFalse(quit_flag)
+        self.assertNotIn(self.CASE_CODE, timer.trainings.cases)
+        self.assertTrue(timer.retry_requested)
+
+    async def test_retry_keeps_prior_timings(self) -> None:
+        """'r' on a DNF never pops a timing of a previous rep."""
+        timer, _, _ = await self.run_save('r', with_timing=True)
+        self.assertEqual(
+            len(timer.trainings.cases[self.CASE_CODE].timings), 1,
+        )
+
+
+class TestStartRetryLoop(unittest.IsolatedAsyncioTestCase):
+    """start() replays the attempt for as long as a retry is asked for."""
+
+    CASE_CODE = 'T'
+
+    def make_trainer(self) -> Trainer:
+        """
+        Build a no-Bluetooth PLL trainer for the retry loop.
+
+        Returns:
+            A Trainer with a mocked console and no training data.
+
+        """
+        empty = Trainings(method='CFOP', step='PLL', cases={})
+        with patch(
+            'term_timer.trainer.load_trainings', return_value=empty,
+        ):
+            timer = Trainer(
+                step='pll',
+                case_codes=[self.CASE_CODE],
+                oldest=0,
+                slowest=0,
+                random=0,
+                new_cases_limit=5,
+                filters=[],
+                states=[],
+                free_play=False,
+                show_solution=False,
+                show_cube=False,
+                metronome=0,
+                orientation='DF',
+                rng=Random(),  # noqa: S311
+            )
+        timer.bluetooth_interface = None
+        timer.console = MagicMock()
+        return timer
+
+    def make_pending(self, timer: Trainer) -> PendingAttempt:
+        """
+        Build the attempt a retry would ask start() to replay.
+
+        Returns:
+            A PendingAttempt for CASE_CODE with a fixed scramble.
+
+        """
+        case = next(
+            tc.case for tc in timer.cases if tc.case.code == self.CASE_CODE
+        )
+        return PendingAttempt(
+            case,
+            parse_moves("R U R' U'"),
+            parse_moves("U R U' R'"),
+            was_new_case=True,
+        )
+
+    async def run_start(
+            self, outcomes: list[tuple[bool, PendingAttempt | None]],
+    ) -> tuple[bool, list[PendingAttempt | None]]:
+        """
+        Run start() over a scripted sequence of run_attempt() outcomes.
+
+        Returns:
+            Tuple of (start() return value, attempts passed to run_attempt).
+
+        """
+        timer = self.make_trainer()
+        received: list[PendingAttempt | None] = []
+        remaining = list(outcomes)
+
+        async def fake_run_attempt(
+                pending: PendingAttempt | None = None,
+        ) -> tuple[bool, PendingAttempt | None]:
+            await asyncio.sleep(0)
+            received.append(pending)
+            return remaining.pop(0)
+
+        with patch.object(timer, 'run_attempt', side_effect=fake_run_attempt):
+            keep_going = await timer.start()
+
+        return keep_going, received
+
+    async def test_single_attempt_returns_immediately(self) -> None:
+        """Without any retry, start() runs a single attempt."""
+        keep_going, received = await self.run_start([(True, None)])
+
+        self.assertTrue(keep_going)
+        self.assertEqual(received, [None])
+
+    async def test_retry_replays_the_same_attempt(self) -> None:
+        """A retry feeds the pending attempt back into run_attempt()."""
+        timer = self.make_trainer()
+        pending = self.make_pending(timer)
+
+        keep_going, received = await self.run_start(
+            [(True, pending), (True, None)],
+        )
+
+        self.assertTrue(keep_going)
+        self.assertEqual(received, [None, pending])
+
+    async def test_retries_are_not_limited(self) -> None:
+        """Consecutive retries all replay before start() returns once."""
+        timer = self.make_trainer()
+        pending = self.make_pending(timer)
+
+        keep_going, received = await self.run_start(
+            [(True, pending), (True, pending), (True, pending), (True, None)],
+        )
+
+        self.assertTrue(keep_going)
+        self.assertEqual(len(received), 4)
+        self.assertEqual(received[1:], [pending, pending, pending])
+
+    async def test_quit_after_retry_is_propagated(self) -> None:
+        """Quitting the replayed attempt still quits the session."""
+        timer = self.make_trainer()
+        pending = self.make_pending(timer)
+
+        keep_going, received = await self.run_start(
+            [(True, pending), (False, None)],
+        )
+
+        self.assertFalse(keep_going)
+        self.assertEqual(len(received), 2)
 
 
 class TestSolutionDisplayInLearningPhase(unittest.TestCase):

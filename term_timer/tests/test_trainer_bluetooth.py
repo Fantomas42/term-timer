@@ -16,11 +16,14 @@ Two usage patterns:
 """
 import asyncio
 import unittest
+from collections.abc import AsyncIterator
 from collections.abc import Awaitable
 from collections.abc import Callable
+from contextlib import asynccontextmanager
 from datetime import UTC
 from datetime import datetime
 from random import Random
+from typing import Any
 from typing import ClassVar
 from typing import cast
 from unittest.mock import patch
@@ -37,6 +40,7 @@ from term_timer.constants import SECOND
 from term_timer.fsrs.storage import CaseTraining
 from term_timer.fsrs.storage import Trainings
 from term_timer.orientation import get_orientation_moves
+from term_timer.trainer import PendingAttempt
 from term_timer.trainer import Trainer
 
 WAIT_UNTIL_TIMEOUT = 2.0
@@ -224,19 +228,36 @@ def make_auto_getch(save_char: str = 'q') -> Callable[..., Awaitable[str]]:
     return _getch
 
 
-async def run_full_cycle(
+@asynccontextmanager
+async def bluetooth_consumer_running(
+        trainer: Trainer,
+) -> AsyncIterator[None]:
+    """Run the BT event consumer for the duration of the block."""
+    consumer = asyncio.create_task(trainer.bluetooth_consumer())
+    trainer.bluetooth_consumer_ref = consumer
+
+    try:
+        yield
+    finally:
+        queue = cast(
+            'asyncio.Queue[list[EventDict] | None]', trainer.bluetooth_queue,
+        )
+        await queue.put(None)
+        await consumer
+
+
+async def drive_cycle(
         trainer: Trainer,
         solve_moves: list[str],
-        *,
-        save_char: str = 'q',
+        run_task: asyncio.Task[Any],
         scramble_moves: list[str] | None = None,
-) -> Trainer:
+) -> None:
     """
-    Drive one complete start() cycle on an already-built Trainer.
+    Drive the four phases of an in-flight training attempt.
 
-    Reads t.scramble after start() has set it to derive the scramble-phase
-    injection, then drives all four phases via BT event injection and the
-    getch mock. Returns the Trainer after start() completes.
+    Reads t.scramble after the attempt has set it to derive the
+    scramble-phase injection, then drives all four phases via BT event
+    injection, and waits for run_task to complete.
 
     Phase timing
     ------------
@@ -256,6 +277,79 @@ async def run_full_cycle(
     Args:
         trainer:        Trainer built with build_trainer().
         solve_moves:    Moves that make bluetooth_scramble_is_completed True.
+        run_task:       In-flight start() or run_attempt() task.
+        scramble_moves: Override for scramble-phase injection. Defaults to
+                        the moves in t.scramble.
+
+    """
+    # Let the attempt call trainer() and set scramble / facelets_scrambled
+    await wait_until(lambda: trainer.state == 'scrambling')
+
+    # Phase 1: scramble
+    s_moves = scramble_moves or [str(m) for m in trainer.scramble]
+    await inject_moves(
+        trainer,
+        s_moves,
+        clock_start=0,
+    )
+    await asyncio.wait_for(
+        trainer.scramble_completed_event.wait(),
+        timeout=2.0,
+    )
+    # wait_control() cancels the getch task asynchronously; wait for
+    # scramble_solve() to call set_state('scrambled') before we inject
+    # the first solve move (must land in 'scrambled', not
+    # 'scrambling')
+    await wait_until(lambda: trainer.state == 'scrambled')
+
+    # Phase 2: first solve move (starts the timer)
+    solve_clock = len(s_moves) * (100 * MS_TO_NS_FACTOR) + SECOND
+    await inject_moves(
+        trainer,
+        [solve_moves[0]],
+        clock_start=solve_clock,
+    )
+    await asyncio.wait_for(
+        trainer.solve_started_event.wait(),
+        timeout=1.0,
+    )
+    # Let wait_solve() return and stopwatch() call set_state('solving')
+    # before remaining moves land; only 'solving'-state moves trigger
+    # the bluetooth_scramble_is_completed check
+    await wait_until(lambda: trainer.state == 'solving')
+
+    # Phase 3: remaining solve moves (trigger completion)
+    if len(solve_moves) > 1:
+        await inject_moves(
+            trainer,
+            solve_moves[1:],
+            clock_start=solve_clock + 200 * MS_TO_NS_FACTOR,
+        )
+    await asyncio.wait_for(
+        trainer.solve_completed_event.wait(),
+        timeout=2.0,
+    )
+
+    # Phase 4: save prompt (handled by getch mock)
+    await asyncio.wait_for(
+        run_task,
+        timeout=2.0,
+    )
+
+
+async def run_full_cycle(
+        trainer: Trainer,
+        solve_moves: list[str],
+        *,
+        save_char: str = 'q',
+        scramble_moves: list[str] | None = None,
+) -> Trainer:
+    """
+    Drive one complete start() cycle on an already-built Trainer.
+
+    Args:
+        trainer:        Trainer built with build_trainer().
+        solve_moves:    Moves that make bluetooth_scramble_is_completed True.
         save_char:      '' / printable = save, 'z' = cancel, 'q' = quit.
         scramble_moves: Override for scramble-phase injection. Defaults to
                         the moves in t.scramble.
@@ -264,76 +358,38 @@ async def run_full_cycle(
         The same Trainer instance after start() has returned.
 
     """
-    consumer = asyncio.create_task(trainer.bluetooth_consumer())
-    trainer.bluetooth_consumer_ref = consumer
-
-    try:
+    async with bluetooth_consumer_running(trainer):
         with patch.object(
                 trainer, 'getch', side_effect=make_auto_getch(save_char),
         ):
             run_task = asyncio.create_task(trainer.start())
-
-            # Let start() call trainer() and set scramble / facelets_scrambled
-            await wait_until(lambda: trainer.state == 'scrambling')
-
-            # Phase 1: scramble
-            s_moves = scramble_moves or [str(m) for m in trainer.scramble]
-            await inject_moves(
-                trainer,
-                s_moves,
-                clock_start=0,
-            )
-            await asyncio.wait_for(
-                trainer.scramble_completed_event.wait(),
-                timeout=2.0,
-            )
-            # wait_control() cancels the getch task asynchronously; wait for
-            # scramble_solve() to call set_state('scrambled') before we inject
-            # the first solve move (must land in 'scrambled', not
-            # 'scrambling')
-            await wait_until(lambda: trainer.state == 'scrambled')
-
-            # Phase 2: first solve move (starts the timer)
-            solve_clock = len(s_moves) * (100 * MS_TO_NS_FACTOR) + SECOND
-            await inject_moves(
-                trainer,
-                [solve_moves[0]],
-                clock_start=solve_clock,
-            )
-            await asyncio.wait_for(
-                trainer.solve_started_event.wait(),
-                timeout=1.0,
-            )
-            # Let wait_solve() return and stopwatch() call set_state('solving')
-            # before remaining moves land; only 'solving'-state moves trigger
-            # the bluetooth_scramble_is_completed check
-            await wait_until(lambda: trainer.state == 'solving')
-
-            # Phase 3: remaining solve moves (trigger completion)
-            if len(solve_moves) > 1:
-                await inject_moves(
-                    trainer,
-                    solve_moves[1:],
-                    clock_start=solve_clock + 200 * MS_TO_NS_FACTOR,
-                )
-            await asyncio.wait_for(
-                trainer.solve_completed_event.wait(),
-                timeout=2.0,
-            )
-
-            # Phase 4: save prompt (handled by getch mock)
-            await asyncio.wait_for(
-                run_task,
-                timeout=2.0,
-            )
-    finally:
-        queue = cast(
-            'asyncio.Queue[list[EventDict] | None]', trainer.bluetooth_queue,
-        )
-        await queue.put(None)
-        await consumer
+            await drive_cycle(trainer, solve_moves, run_task, scramble_moves)
 
     return trainer
+
+
+async def run_attempt_cycle(
+        trainer: Trainer,
+        solve_moves: list[str],
+        *,
+        save_char: str = 'r',
+        scramble_moves: list[str] | None = None,
+) -> tuple[bool, PendingAttempt | None]:
+    """
+    Drive a single run_attempt() cycle, without the retry loop of start().
+
+    Returns:
+        The (keep going, attempt to replay) pair run_attempt() returned.
+
+    """
+    async with bluetooth_consumer_running(trainer):
+        with patch.object(
+                trainer, 'getch', side_effect=make_auto_getch(save_char),
+        ):
+            run_task = asyncio.create_task(trainer.run_attempt())
+            await drive_cycle(trainer, solve_moves, run_task, scramble_moves)
+
+            return run_task.result()
 
 
 class SaveTrainingsPatchedTestCase(unittest.IsolatedAsyncioTestCase):
@@ -822,6 +878,51 @@ class TestConcreteScenarios(SaveTrainingsPatchedTestCase):
             expected_scramble="L F' L' F U F2 R' F' R U' F'",
             expected_scramble_oriented="L F' L' F U F2 R' F' R U' F'",
         )
+
+    async def test_oll_01_retry_replays_the_same_attempt(self) -> None:
+        """Pressing 'r' at the save prompt asks to replay the same case."""
+        solution = next(iter(get_case('OLL', '01').algorithms))
+        solve_moves = [str(m) for m in solution]
+
+        t = build_trainer(step='oll', case_codes=['01'], seed=42)
+        keep_going, pending = await run_attempt_cycle(
+            t,
+            solve_moves,
+            save_char='r',
+        )
+
+        self.assertTrue(keep_going)
+        self.assertIsNotNone(pending)
+        replayed = cast('PendingAttempt', pending)
+
+        # The replayed attempt is the very same case and scramble
+        self.assertEqual(replayed.case.code, '01')
+        self.assertEqual(str(replayed.scramble), str(t.scramble))
+
+        # The rep is forgotten: no timing, no card, no session entry
+        self.assertNotIn('01', t.trainings.cases)
+        self.assertEqual(t.session_data, [])
+
+        # Neither the attempt number nor the new case budget moved
+        self.assertEqual(t.counter, 1)
+        self.assertEqual(t.fsrs_new_cases_introduced, 0)
+
+    async def test_oll_01_save_closes_the_attempt(self) -> None:
+        """Without a retry, run_attempt() asks for no replay at all."""
+        solution = next(iter(get_case('OLL', '01').algorithms))
+        solve_moves = [str(m) for m in solution]
+
+        t = build_trainer(step='oll', case_codes=['01'], seed=42)
+        keep_going, pending = await run_attempt_cycle(
+            t,
+            solve_moves,
+            save_char='',
+        )
+
+        self.assertTrue(keep_going)
+        self.assertIsNone(pending)
+        self.assertEqual(t.counter, 2)
+        self.assertEqual(len(t.trainings.cases['01'].timings), 1)
 
     async def test_oll_01_scramble_completed_bt_cube(self) -> None:
         """
