@@ -313,6 +313,12 @@ class TestBuildRaceTimer(unittest.TestCase):
         self.assertEqual(instance.iterations, 0)
         self.assertEqual(instance.scrambles, [])
 
+    def test_imposed_scramble_disables_the_retry(self) -> None:
+        """Every attempt races the same scramble, a discard already replays."""
+        instance = self.built(self.parse(), [])
+
+        self.assertFalse(instance.retry_enabled)
+
     def test_ghost_is_elected_on_build(self) -> None:
         """The time to beat is known before the first attempt starts."""
         slower = make_solve(date=1, time=9_000_000_000)

@@ -16,7 +16,12 @@ from term_timer.timer import Timer
 SECOND = 1_000_000_000
 
 
-def build_timer(stack: list[Solve] | None = None) -> Timer:
+def build_timer(
+        stack: list[Solve] | None = None,
+        *,
+        scramble: str = '',
+        scrambles: list[Algorithm] | None = None,
+) -> Timer:
     """
     Build a Timer instance with minimal configuration for tests.
 
@@ -30,8 +35,8 @@ def build_timer(stack: list[Solve] | None = None) -> Timer:
         easy_cross=False,
         x_cross=False,
         edges_oriented=False,
-        scramble='',
-        scrambles=[],
+        scramble=scramble,
+        scrambles=scrambles or [],
         session='default',
         free_play=True,
         show_cube=False,
@@ -293,7 +298,7 @@ class TestElectGhost(unittest.TestCase):
 class TestSaveSolveRetry(unittest.IsolatedAsyncioTestCase):
     """save_solve() treats 'r' as a discard that asks for a replay."""
 
-    async def run_save(self, char: str) -> Timer:
+    async def run_save(self, char: str, *, scramble: str = '') -> Timer:
         """
         Run save_solve with a fixed key on a timer holding one solve.
 
@@ -302,7 +307,7 @@ class TestSaveSolveRetry(unittest.IsolatedAsyncioTestCase):
 
         """
         solve = make_solve()
-        timer = build_timer([solve])
+        timer = build_timer([solve], scramble=scramble)
         timer.stack_done = [solve]
         timer.console = MagicMock()
         self.counter_start = timer.counter
@@ -350,6 +355,79 @@ class TestSaveSolveRetry(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(timer.stack), 1)
         self.assertFalse(timer.retry_requested)
         self.assertEqual(timer.counter, self.counter_start + 1)
+
+    async def test_retry_key_saves_on_an_imposed_scramble(self) -> None:
+        """Where the retry is disabled, 'r' saves like any other key."""
+        timer = await self.run_save('r', scramble="R U R' U'")
+
+        self.assertEqual(len(timer.stack), 1)
+        self.assertEqual(len(timer.stack_done), 1)
+        self.assertFalse(timer.retry_requested)
+        self.assertEqual(timer.counter, self.counter_start + 1)
+
+
+class TestRetryEnabled(unittest.TestCase):
+    """The retry is offered only when the next scramble would differ."""
+
+    def test_random_scramble_enables_the_retry(self) -> None:
+        """A drawn scramble differs on every attempt, so a retry helps."""
+        timer = build_timer()
+
+        self.assertTrue(timer.retry_enabled)
+
+    def test_imposed_scramble_disables_the_retry(self) -> None:
+        """An imposed scramble is already replayed by the next attempt."""
+        timer = build_timer(scramble="R U R' U'")
+
+        self.assertFalse(timer.retry_enabled)
+
+    def test_scramble_list_enables_the_retry(self) -> None:
+        """A list moves on after a discard, so a retry stays meaningful."""
+        timer = build_timer(
+            scramble="R U R' U'",
+            scrambles=[parse_moves("F R U R' U' F'")],
+        )
+
+        self.assertTrue(timer.retry_enabled)
+
+
+class TestSaveLine(unittest.TestCase):
+    """The save prompt advertises the retry only when it is available."""
+
+    @staticmethod
+    def render(*, scramble: str = '') -> str:
+        """
+        Capture the console output of save_line.
+
+        Returns:
+            The rendered prompt text.
+
+        """
+        timer = build_timer(scramble=scramble)
+        with timer.console.capture() as capture:
+            timer.save_line()
+        return capture.get()
+
+    def test_retry_key_is_offered(self) -> None:
+        """A drawn scramble shows the retry next to the discard."""
+        output = self.render()
+
+        self.assertIn('(r)', output)
+        self.assertIn('(z)', output)
+
+    def test_retry_key_is_hidden_on_an_imposed_scramble(self) -> None:
+        """An imposed scramble drops the retry but keeps the discard."""
+        output = self.render(scramble="R U R' U'")
+
+        self.assertNotIn('(r)', output)
+        self.assertIn('(z)', output)
+
+    def test_manual_flag_keys_are_kept(self) -> None:
+        """Without a Bluetooth cube the DNF and +2 keys stay offered."""
+        output = self.render()
+
+        self.assertIn('(d)', output)
+        self.assertIn('(2)', output)
 
 
 class TestRunAttemptPendingScramble(unittest.IsolatedAsyncioTestCase):

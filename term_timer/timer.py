@@ -77,6 +77,9 @@ class Timer(SolveInterface):
         self.raw_scramble = scramble
         self.scrambles = scrambles
         self.scramble_index = 0
+        # A retry only differs from a discard when the next attempt would
+        # draw another scramble: an imposed one is already replayed.
+        self.retry_enabled = bool(scrambles) or not scramble
         self.show_highlights = show_highlights
         self.show_doctor = show_doctor
         self.show_cube = show_cube
@@ -184,28 +187,28 @@ class Timer(SolveInterface):
 
     def save_line(self) -> None:
         """Display instructions for saving or canceling the solve."""
-        if self.bluetooth_interface:
-            self.console.print(
-                'Press any key to save and continue,',
-                '[key](r)[/key] retry,',
+        keys = ['Press any key to save and continue,']
+
+        if not self.bluetooth_interface:
+            keys.extend(
+                (
+                    '[key](d)[/key] DNF,',
+                    '[key](2)[/key] +2,',
+                ),
+            )
+
+        if self.retry_enabled:
+            keys.append('[key](r)[/key] retry,')
+
+        keys.extend(
+            (
                 '[key](z)[/key] discard,',
                 '[key](k)[/key] quit,',
                 '[key](q)[/key] save & quit.',
-                style='consign',
-                end='',
-            )
-        else:
-            self.console.print(
-                'Press any key to save and continue,',
-                '[key](d)[/key] DNF,',
-                '[key](2)[/key] +2,',
-                '[key](r)[/key] retry,',
-                '[key](z)[/key] discard,',
-                '[key](k)[/key] quit,',
-                '[key](q)[/key] save & quit.',
-                style='consign',
-                end='',
-            )
+            ),
+        )
+
+        self.console.print(*keys, style='consign', end='')
 
     def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912
         """Display solve results, statistics, and record achievements."""
