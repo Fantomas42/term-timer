@@ -160,7 +160,7 @@ class Command(NamedTuple):
 # of the same face undoing each other, see interface/gesture.py.
 COMMANDS: Final[dict[str, Command]] = {
     'save': Command(
-        '', 'Save', 'any key', "U U'  F F'  R R'  B B'  L L'",
+        '', 'Save', 'any key', 'U R F L B',
     ),
     'rate': Command(
         '(1-4)', 'Rate', '(1)-(4)', '',
@@ -169,13 +169,13 @@ COMMANDS: Final[dict[str, Command]] = {
         '(r)', 'Retry', '(r)', '',
     ),
     'discard': Command(
-        '(z)', 'Discard', '(z)', "M M'  S S'",
+        '(z)', 'Discard', '(z)', "M S",
     ),
     'quit': Command(
-        '(k)', 'Quit', '(k)', "E E'",
+        '(k)', 'Quit', '(k)', "E",
     ),
     'save_quit': Command(
-        '(q)', 'Save & quit', '(q)', "D D'",
+        '(q)', 'Save & quit', '(q)', "D",
     ),
     'flags': Command(
         '(d)(2)', 'DNF / +2', '(d) (2)', '',

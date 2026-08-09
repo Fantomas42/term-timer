@@ -505,7 +505,7 @@ class TestCommandsHelp(unittest.TestCase):
         output = self.render(bluetooth=True)
 
         self.assertIn('Cube', output)
-        for gesture in ("U U'", "M M'", "E E'", "D D'"):
+        for gesture in ('U', 'M', 'E', 'D'):
             self.assertIn(gesture, output)
 
     def test_flag_row_follows_the_flag_keys(self) -> None:

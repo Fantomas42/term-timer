@@ -315,7 +315,7 @@ class SolveInterface(
             line += f' [key]{ lead }[/key] ·'
         line += (
             f' [key]{ keys }[/key] ·'
-            f' [key]({ HELP_CHAR })[/key] keys'
+            f' [key]({ HELP_CHAR })[/key]'
         )
 
         self.console.print(line, style='consign', end='')
@@ -359,8 +359,7 @@ class SolveInterface(
 
         if cubed:
             self.console.print(
-                'Cube commands are two moves of the same face'
-                ' that undo each other.',
+                'Cube commands are two moves that undo each other.',
                 style='comment',
             )
 

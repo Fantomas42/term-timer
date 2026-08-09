@@ -1850,7 +1850,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         # Any key other than r/z/k saves; invalid keys in manual mode skip
         # FSRS. A DNF always rates Again. A retry is a discard that replays
         # the same case immediately, so it never reaches skip_fsrs.
-        retry = char == 'r'
+        retry = char == 'r' and self.retry_enabled
         discard = retry or char in {'z', 'k'}
         skip_fsrs = manual and manual_rating is None and not dnf
 
