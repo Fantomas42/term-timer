@@ -888,7 +888,7 @@ class TestTrainerSaveLine(unittest.TestCase):
         """Rating is the point, so no default action is advertised."""
         output = self.render(manual_rating=True)
 
-        self.assertIn('Rate #', output)
+        self.assertIn('Rating', output)
         self.assertIn('(1-4)', output)
         self.assertNotIn('any=', output)
 

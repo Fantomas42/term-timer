@@ -151,6 +151,7 @@ class Command(NamedTuple):
     label: str
     keyboard: str
     cube: str
+    group: str
 
 
 # Commands of the save prompt. `short` builds the one line kept on
@@ -158,30 +159,39 @@ class Command(NamedTuple):
 # `short` means the command is already carried by the prompt lead, an
 # empty `cube` that no gesture triggers it. Cube gestures are two moves
 # of the same face undoing each other, see interface/gesture.py.
+# `group` gathers the commands answering the same question: consecutive
+# commands sharing it are rendered together, the groups apart. It is a
+# property of the command, not of the prompt, so a command keeps its
+# neighbours wherever it is offered.
 COMMANDS: Final[dict[str, Command]] = {
     'save': Command(
-        '', 'Save', 'any key', 'U R F L B',
+        '', 'Save', 'any key', 'U R F L B', 'save',
     ),
     'rate': Command(
-        '(1-4)', 'Rate', '1/2/3/4', '',
+        '(1-4)', 'Rate', '1/2/3/4', '', 'rate',
     ),
     'retry': Command(
-        '(r)', 'Retry', 'r', '',
+        '(r)', 'Retry', 'r', '', 'action',
     ),
     'discard': Command(
-        '(z)', 'Discard', 'z', 'M S',
+        '(z)', 'Discard', 'z', 'M S', 'action',
     ),
     'quit': Command(
-        '(k)', 'Quit', 'k', 'E',
+        '(k)', 'Quit', 'k', 'E', 'exit',
     ),
     'save_quit': Command(
-        '(q)', 'Save & quit', 'q', 'D',
+        '(q)', 'Save & quit', 'q', 'D', 'exit',
     ),
     'dnf': Command(
-        '(d)', 'DNF', 'd', '',
+        '(d)', 'DNF', 'd', '', 'flag',
     ),
     'plus_two': Command(
-        '(2)', '+2', '2', '',
+        '(2)', '+2', '2', '', 'flag',
+    ),
+    # Offered by every prompt, appended by `commands_line` itself, and
+    # left out of the block it unfolds: it is already answered there.
+    'help': Command(
+        f'({ HELP_CHAR })', 'Help', HELP_CHAR, '', 'help',
     ),
 }
 

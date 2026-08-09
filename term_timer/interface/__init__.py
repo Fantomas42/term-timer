@@ -13,6 +13,7 @@ from term_timer.constants import ESCAPE_CHAR
 from term_timer.constants import HELP_CHAR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SOLVES_DIRECTORY
+from term_timer.constants import Command
 from term_timer.in_out import save_solves
 from term_timer.interface.bluetooth import Bluetooth
 from term_timer.interface.console import Console
@@ -284,6 +285,34 @@ class SolveInterface(
 
         await stopwatch_task
 
+    @staticmethod
+    def group_commands(tokens: list[str]) -> list[list[Command]]:
+        """
+        Split the commands offered into the groups they belong to.
+
+        Only consecutive commands are gathered: the order the prompt
+        offers them in is never rearranged, a group interrupted is a
+        group closed.
+
+        Args:
+            tokens: Commands offered, as keys of `COMMANDS`.
+
+        Returns:
+            The commands, one list per group, in the order given.
+
+        """
+        groups: list[list[Command]] = []
+        current = ''
+
+        for token in tokens:
+            command = COMMANDS[token]
+            if command.group != current:
+                groups.append([])
+                current = command.group
+            groups[-1].append(command)
+
+        return groups
+
     def commands_line(
             self,
             title: str,
@@ -299,6 +328,10 @@ class SolveInterface(
         Naming every command is the job of `commands_help`, unfolded on
         demand by the help key.
 
+        Groups are set apart, so the keys read as the few questions
+        they answer instead of one run of parentheses. A group whose
+        commands are all carried by the lead prints nothing.
+
         Args:
             title: Word introducing the prompt, before the counter.
             lead: Default action of the prompt, empty when the keys
@@ -308,17 +341,23 @@ class SolveInterface(
         """
         self.save_commands = (title, lead, tokens)
 
-        keys = ''.join(COMMANDS[token].short for token in tokens)
-
-        line = f'{ title } #{ self.counter }:'
+        parts: list[str] = []
         if lead:
-            line += f' [key]{ lead }[/key] ·'
-        line += (
-            f' [key]{ keys }[/key] ·'
-            f' [key]({ HELP_CHAR })[/key]'
-        )
+            parts.append(lead)
 
-        self.console.print(line, style='consign', end='')
+        for group in self.group_commands([*tokens, 'help']):
+            keys = ''.join(command.short for command in group)
+            if keys:
+                parts.append(keys)
+
+        line = ' · '.join(f'[key]{ part }[/key]' for part in parts)
+
+        self.console.print(
+            f'[actions]{ title.ljust(8) } #{ self.counter }:[/actions] '
+            f'{ line }',
+            style='consign',
+            end='',
+        )
 
     def commands_help(self, tokens: list[str]) -> None:
         """
@@ -338,7 +377,7 @@ class SolveInterface(
         commands = [COMMANDS[token] for token in tokens]
         cubed = self.bluetooth_interface is not None
 
-        title = f'Commands #{ self.counter }'
+        title = f'Commands #{ self.counter }:'
         labels = max(len(title), *(len(c.label) for c in commands)) + 2
         keyboards = max(len('Keyboard'), *(len(c.keyboard) for c in commands))
 

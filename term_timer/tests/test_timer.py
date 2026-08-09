@@ -438,6 +438,15 @@ class TestSaveLine(unittest.TestCase):
         self.assertNotIn('(d)', output)
         self.assertNotIn('(2)', output)
 
+    def test_keys_are_grouped_by_the_question_they_answer(self) -> None:
+        """The keys read as a few groups, not one run of parentheses."""
+        self.assertIn('(d)(2) · (r)(z) · (k)(q) · (?)', self.render())
+
+    def test_a_group_left_empty_is_not_separated(self) -> None:
+        """The save is carried by the lead, its group prints nothing."""
+        self.assertNotIn('· ·', self.render())
+        self.assertIn('any=save · (d)(2)', self.render())
+
     def test_help_key_is_always_offered(self) -> None:
         """The prompt names no command but points at the ones it hides."""
         for output in (
@@ -618,7 +627,7 @@ class TestSaveHelpKey(unittest.IsolatedAsyncioTestCase):
         """The prompt comes back under the block it just unfolded."""
         timer = await self.run_save(['?', ''])
 
-        prompts = [line for line in self.printed(timer) if 'Save #' in line]
+        prompts = [line for line in self.printed(timer) if 'Saving' in line]
         self.assertEqual(len(prompts), 2)
 
 

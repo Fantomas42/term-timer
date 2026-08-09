@@ -1591,16 +1591,16 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         if manual_rating:
             # Rating is the point here, but any other key still saves,
             # skipping FSRS: the lead stays on the rating keys.
-            self.commands_line('Rate', '', ['save', 'rate', *controls])
+            self.commands_line('Rating', '', ['save', 'rate', *controls])
             return
 
         if self.fsrs_update:
             self.commands_line(
-                'Save', 'any=save', ['save', 'rate', *controls],
+                'Saving', 'any=save', ['save', 'rate', *controls],
             )
             return
 
-        self.commands_line('Save', 'any=save', ['save', *controls])
+        self.commands_line('Saving', 'any=save', ['save', *controls])
 
     @staticmethod
     def solve_stats_line(solve: Solve) -> str:
