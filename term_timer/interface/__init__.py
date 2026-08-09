@@ -83,6 +83,8 @@ class SolveInterface(
         self.stack: list[Solve] = []
         self.stack_done: list[Solve] = []
         self.save_directory = SOLVES_DIRECTORY
+        self.retry_enabled: bool = True
+        self.retry_requested: bool = False
 
     def init_solve(self) -> None:
         """
@@ -289,6 +291,12 @@ class SolveInterface(
         cannot be edited. Persists the solve to storage and displays
         confirmation. Handles both keyboard and bluetooth gesture input.
 
+        A retry is a discard that replays the same scramble immediately,
+        so it drops the solve like 'z' does and flags the replay instead
+        of quitting. It is only honored where it differs from a discard:
+        an imposed scramble is already replayed by the next attempt, and
+        'r' saves there like any other unrecognised key.
+
         Returns:
             True if user quit (pressed 'q', 'k' or ESC), False otherwise.
 
@@ -319,6 +327,7 @@ class SolveInterface(
         save_string = ''
         save_style = 'warning'
         manual = self.bluetooth_interface is None
+        retry = char == 'r' and self.retry_enabled
         if manual and char == 'd':
             self.stack[-1].flag = DNF
             self.stack_done[-1].flag = DNF
@@ -329,10 +338,15 @@ class SolveInterface(
             self.stack_done[-1].flag = PLUS_TWO
             save_string = 'Solve marked as +2'
             save_style = 'caution'
-        elif char in {'z', 'k'}:
+        elif retry or char in {'z', 'k'}:
             self.stack.pop()
             self.stack_done.pop()
-            save_string = 'Solve discarded'
+            self.retry_requested = retry
+            save_string = (
+                'Retrying scramble'
+                if retry
+                else 'Solve discarded'
+            )
 
         save_solves(
             self.cube_size,
@@ -347,7 +361,7 @@ class SolveInterface(
                 f'[{ save_style }]{ save_string }[/{ save_style }]',
             )
 
-        if char not in {'z', 'k'}:
+        if not retry and char not in {'z', 'k'}:
             self.counter += 1
             SOUND_PLAYER.save_confirmed()
         else:

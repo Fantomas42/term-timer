@@ -93,6 +93,15 @@ class StepDef(NamedTuple):
     training_case: TrainingCase | None = None
 
 
+class PendingAttempt(NamedTuple):
+    """A discarded attempt to be replayed immediately."""
+
+    case: Case
+    scramble: Algorithm
+    solution: Algorithm
+    was_new_case: bool
+
+
 STEP_CONFIGS: Final[dict[str, StepDef]] = {
     'cross': StepDef(
         'Cross', 'cross', 'Cross',
@@ -1576,6 +1585,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         if dnf:
             self.console.print(
                 'Press any key to rate [again]Again[/again] and continue,',
+                '[key](r)[/key] retry,',
                 '[key](z)[/key] discard,',
                 '[key](k)[/key] quit,',
                 '[key](q)[/key] rate & quit.',
@@ -1591,6 +1601,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 '[key](2)[/key] Hard,',
                 '[key](3)[/key] Good,',
                 '[key](4)[/key] Easy,',
+                '[key](r)[/key] retry,',
                 '[key](z)[/key] discard,',
                 '[key](k)[/key] quit,',
                 '[key](q)[/key] save & quit.',
@@ -1603,6 +1614,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             self.console.print(
                 'Press any key to save and continue,',
                 '[key](1-4)[/key] override rating,',
+                '[key](r)[/key] retry,',
                 '[key](z)[/key] discard,',
                 '[key](k)[/key] quit,',
                 '[key](q)[/key] save & quit.',
@@ -1613,6 +1625,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         self.console.print(
             'Press any key to save and continue,',
+            '[key](r)[/key] retry,',
             '[key](z)[/key] discard,',
             '[key](k)[/key] quit,',
             '[key](q)[/key] save & quit.',
@@ -1884,9 +1897,11 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             else None
         )
 
-        # Any key other than z/k saves; invalid keys in manual mode skip
-        # FSRS. A DNF always rates Again.
-        discard = char in {'z', 'k'}
+        # Any key other than r/z/k saves; invalid keys in manual mode skip
+        # FSRS. A DNF always rates Again. A retry is a discard that replays
+        # the same case immediately, so it never reaches skip_fsrs.
+        retry = char == 'r'
+        discard = retry or char in {'z', 'k'}
         skip_fsrs = manual and manual_rating is None and not dnf
 
         save_string = ''
@@ -1897,7 +1912,12 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                     self.pending_previous_date,
                 )
             SOUND_PLAYER.save_discarded()
-            save_string = 'Training discarded'
+            self.retry_requested = retry
+            save_string = (
+                f'Retrying case { selected_case.pretty_name }'
+                if retry
+                else 'Training discarded'
+            )
         else:
             if (
                 dnf
@@ -1972,11 +1992,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         return char in {'q', 'k', ESCAPE_CHAR}
 
-    async def start(  # noqa: C901, PLR0911, PLR0912, PLR0915
-            self,
-    ) -> bool:
+    async def start(self) -> bool:
         """
-        Execute training workflow for single case.
+        Execute training workflow, replaying the case on each retry.
 
         Returns:
             True to continue training, False to quit.
@@ -1986,30 +2004,63 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             self.state_pool_drained_line()
             return False
 
+        pending: PendingAttempt | None = None
+        keep_going = False
+
+        while 42:
+            keep_going, pending = await self.run_attempt(pending)
+
+            if pending is None:
+                break
+
+        return keep_going
+
+    async def run_attempt(  # noqa: C901, PLR0911, PLR0912, PLR0915
+            self,
+            pending: PendingAttempt | None = None,
+    ) -> tuple[bool, PendingAttempt | None]:
+        """
+        Execute training workflow for single case.
+
+        Args:
+            pending: Attempt to replay, instead of selecting a new case.
+
+        Returns:
+            Tuple of (True to continue training or False to quit, the
+            attempt to replay or None when the case is done with).
+
+        """
         self.init_solve()
+        self.retry_requested = False
 
-        fsrs_selected: TrainingCase | None = None
-        was_new_case = False
-        if self.fsrs_selection and self.fsrs_scheduler is not None:
-            cards = self.fsrs_cards
-            chosen_code = self.fsrs_scheduler.select_next_case(
-                cards,
-                self.fsrs_probabilities,
-                new_cases_limit=self.fsrs_new_cases_remaining,
-            )
-            was_new_case = chosen_code not in cards
-            fsrs_selected = next(
-                (tc for tc in self.cases if tc.case.code == chosen_code),
-                None,
-            )
+        if pending is not None:
+            selected_case = pending.case
+            self.scramble = pending.scramble
+            solution = pending.solution
+            was_new_case = pending.was_new_case
+        else:
+            fsrs_selected: TrainingCase | None = None
+            was_new_case = False
+            if self.fsrs_selection and self.fsrs_scheduler is not None:
+                cards = self.fsrs_cards
+                chosen_code = self.fsrs_scheduler.select_next_case(
+                    cards,
+                    self.fsrs_probabilities,
+                    new_cases_limit=self.fsrs_new_cases_remaining,
+                )
+                was_new_case = chosen_code not in cards
+                fsrs_selected = next(
+                    (tc for tc in self.cases if tc.case.code == chosen_code),
+                    None,
+                )
 
-        selected_case, self.scramble, solution = trainer(
-            self.step,
-            self.cases,
-            self.rng,
-            self.cube_orientation_moves,
-            selected_case=fsrs_selected,
-        )
+            selected_case, self.scramble, solution = trainer(
+                self.step,
+                self.cases,
+                self.rng,
+                self.cube_orientation_moves,
+                selected_case=fsrs_selected,
+            )
 
         bt_scramble_done = (
             self.bluetooth_cube and self.bluetooth_scramble_is_completed
@@ -2042,11 +2093,11 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         quit_training = await self.scramble_solve()
 
         if quit_training is not None:
-            return quit_training
+            return quit_training, None
 
         quit_training = await self.wait_solve()
         if quit_training:
-            return False
+            return False, None
 
         await self.time_solve()
 
@@ -2060,7 +2111,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             # Keyboard start/stop without any move on the connected
             # cube: a misfire, not an attempt, nothing to record.
             self.clear_line(full=True)
-            return True
+            return True, None
 
         flag: SolveFlag = ''
         if self.bluetooth_cube and not self.bluetooth_scramble_is_completed:
@@ -2108,17 +2159,25 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                     dnf=True,
                 )
 
+                if self.retry_requested:
+                    return True, PendingAttempt(
+                        selected_case,
+                        self.scramble,
+                        solution,
+                        was_new_case,
+                    )
+
                 self.fsrs_track_new_case(
                     selected_case.code,
                     was_new_case=was_new_case,
                 )
 
                 if quit_training:
-                    return False
+                    return False, None
 
             self.counter += 1
 
-            return True
+            return True, None
 
         self.fsrs_pending_rating = None
         self.fsrs_pending_card = None
@@ -2131,13 +2190,21 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
             quit_training = await self.save_training(selected_case, solve)
 
+            if self.retry_requested:
+                return True, PendingAttempt(
+                    selected_case,
+                    self.scramble,
+                    solution,
+                    was_new_case,
+                )
+
             self.fsrs_track_new_case(
                 selected_case.code,
                 was_new_case=was_new_case,
             )
 
             if quit_training:
-                return False
+                return False, None
         else:
             self.session_data.append(
                 (
@@ -2149,4 +2216,4 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         self.counter += 1
 
-        return True
+        return True, None
