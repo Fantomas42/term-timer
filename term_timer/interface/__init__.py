@@ -354,7 +354,10 @@ class SolveInterface(
             )
             if cubed:
                 gap = ' ' * (keyboards - len(command.keyboard) + 2)
-                line += f'{ gap }[moves]{ command.cube or "—" }[/moves]'
+                if command.cube:
+                    line += f'{ gap }[moves]{ command.cube }[/moves]'
+                else:
+                    line += f'{ gap }[mute]{ "---" }[/mute]'
             self.console.print(line, style='consign')
 
         if cubed:

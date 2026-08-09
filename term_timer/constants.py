@@ -163,22 +163,25 @@ COMMANDS: Final[dict[str, Command]] = {
         '', 'Save', 'any key', 'U R F L B',
     ),
     'rate': Command(
-        '(1-4)', 'Rate', '(1)-(4)', '',
+        '(1-4)', 'Rate', '1/2/3/4', '',
     ),
     'retry': Command(
-        '(r)', 'Retry', '(r)', '',
+        '(r)', 'Retry', 'r', '',
     ),
     'discard': Command(
-        '(z)', 'Discard', '(z)', "M S",
+        '(z)', 'Discard', 'z', 'M S',
     ),
     'quit': Command(
-        '(k)', 'Quit', '(k)', "E",
+        '(k)', 'Quit', 'k', 'E',
     ),
     'save_quit': Command(
-        '(q)', 'Save & quit', '(q)', "D",
+        '(q)', 'Save & quit', 'q', 'D',
     ),
-    'flags': Command(
-        '(d)(2)', 'DNF / +2', '(d) (2)', '',
+    'dnf': Command(
+        '(d)', 'DNF', 'd', '',
+    ),
+    'plus_two': Command(
+        '(2)', '+2', '2', '',
     ),
 }
 

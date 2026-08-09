@@ -192,7 +192,7 @@ class Timer(SolveInterface):
         if not self.bluetooth_interface:
             # The flag is read from the cube state when there is one,
             # so these keys only exist on a manual solve.
-            tokens.append('flags')
+            tokens.extend(('dnf', 'plus_two'))
 
         if self.retry_enabled:
             tokens.append('retry')

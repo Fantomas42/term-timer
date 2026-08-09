@@ -466,12 +466,12 @@ class TestCommandsHelp(unittest.TestCase):
     """The help block names every command, cube gestures included."""
 
     @staticmethod
-    def render(*, bluetooth: bool = False) -> str:
+    def unfold(*, bluetooth: bool = False) -> tuple[list[str], str]:
         """
         Capture the help block unfolded for the current save prompt.
 
         Returns:
-            The rendered help text.
+            The commands offered by the prompt, and the rendered help.
 
         """
         timer = build_timer()
@@ -481,10 +481,22 @@ class TestCommandsHelp(unittest.TestCase):
         with timer.console.capture():
             timer.save_line()
 
-        with timer.console.capture() as capture:
-            timer.commands_help(timer.save_commands[2])
+        tokens = timer.save_commands[2]
 
-        return capture.get()
+        with timer.console.capture() as capture:
+            timer.commands_help(tokens)
+
+        return tokens, capture.get()
+
+    def render(self, *, bluetooth: bool = False) -> str:
+        """
+        Capture the help block unfolded for the current save prompt.
+
+        Returns:
+            The rendered help text.
+
+        """
+        return self.unfold(bluetooth=bluetooth)[1]
 
     def test_keyboard_commands_are_named(self) -> None:
         """Every key of the prompt gets its meaning spelled out."""
@@ -508,10 +520,15 @@ class TestCommandsHelp(unittest.TestCase):
         for gesture in ('U', 'M', 'E', 'D'):
             self.assertIn(gesture, output)
 
-    def test_flag_row_follows_the_flag_keys(self) -> None:
-        """The DNF row shows up exactly where its keys are offered."""
-        self.assertIn('DNF / +2', self.render())
-        self.assertNotIn('DNF / +2', self.render(bluetooth=True))
+    def test_flag_rows_follow_the_flag_keys(self) -> None:
+        """The DNF and +2 rows show up exactly where their keys are."""
+        output = self.render()
+        self.assertIn('DNF', output)
+        self.assertIn('+2', output)
+
+        cubed = self.render(bluetooth=True)
+        self.assertNotIn('DNF', cubed)
+        self.assertNotIn('+2', cubed)
 
     def test_no_command_prints_nothing(self) -> None:
         """An empty prompt has no table to unfold, not an empty one."""
@@ -524,9 +541,15 @@ class TestCommandsHelp(unittest.TestCase):
 
     def test_every_row_holds_on_a_single_line(self) -> None:
         """The block is a table: a wrapped row would break its columns."""
-        # Header, one row per command, and the gesture note.
-        self.assertEqual(len(self.render().splitlines()), 7)
-        self.assertEqual(len(self.render(bluetooth=True).splitlines()), 7)
+        for bluetooth in (False, True):
+            with self.subTest(bluetooth=bluetooth):
+                tokens, output = self.unfold(bluetooth=bluetooth)
+
+                # Header, one row per command, and the gesture note
+                # the cube column comes with.
+                expected = 1 + len(tokens) + int(bluetooth)
+
+                self.assertEqual(len(output.splitlines()), expected)
 
 
 class TestSaveHelpKey(unittest.IsolatedAsyncioTestCase):
