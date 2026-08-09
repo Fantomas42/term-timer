@@ -7,8 +7,10 @@ from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
 
+from term_timer.constants import COMMANDS
 from term_timer.constants import DNF
 from term_timer.constants import ESCAPE_CHAR
+from term_timer.constants import HELP_CHAR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.in_out import save_solves
@@ -85,6 +87,7 @@ class SolveInterface(
         self.save_directory = SOLVES_DIRECTORY
         self.retry_enabled: bool = True
         self.retry_requested: bool = False
+        self.save_commands: tuple[str, str, list[str]] = ('', '', [])
 
     def init_solve(self) -> None:
         """
@@ -281,6 +284,138 @@ class SolveInterface(
 
         await stopwatch_task
 
+    def commands_line(
+            self,
+            title: str,
+            lead: str,
+            tokens: list[str],
+    ) -> None:
+        """
+        Display the one line prompt of the commands answering a solve.
+
+        The line is deliberately short: it stays on screen until a key
+        or a gesture answers it, and `clear_line` only wipes one
+        physical line, so an enrolled prompt would leave residues.
+        Naming every command is the job of `commands_help`, unfolded on
+        demand by the help key.
+
+        Args:
+            title: Word introducing the prompt, before the counter.
+            lead: Default action of the prompt, empty when the keys
+                carry it themselves.
+            tokens: Commands offered, as keys of `COMMANDS`.
+
+        """
+        self.save_commands = (title, lead, tokens)
+
+        keys = ''.join(COMMANDS[token].short for token in tokens)
+
+        line = f'{ title } #{ self.counter }:'
+        if lead:
+            line += f' [key]{ lead }[/key] ·'
+        line += (
+            f' [key]{ keys }[/key] ·'
+            f' [key]({ HELP_CHAR })[/key] keys'
+        )
+
+        self.console.print(line, style='consign', end='')
+
+    def commands_help(self, tokens: list[str]) -> None:
+        """
+        Display every command answering a solve, keyboard and cube.
+
+        The cube column only shows up once a cube is connected: without
+        one the gestures are unreachable, and the flag keys it replaces
+        are back.
+
+        Args:
+            tokens: Commands offered, as keys of `COMMANDS`.
+
+        """
+        if not tokens:
+            return
+
+        commands = [COMMANDS[token] for token in tokens]
+        cubed = self.bluetooth_interface is not None
+
+        title = f'Commands #{ self.counter }'
+        labels = max(len(title), *(len(c.label) for c in commands)) + 2
+        keyboards = max(len('Keyboard'), *(len(c.keyboard) for c in commands))
+
+        header = f'{ title.ljust(labels) }Keyboard'
+        if cubed:
+            header = f'{ header.ljust(labels + keyboards + 2) }Cube'
+        self.console.print(header, style='title')
+
+        for command in commands:
+            line = (
+                f'{ command.label.ljust(labels) }'
+                f'[key]{ command.keyboard }[/key]'
+            )
+            if cubed:
+                gap = ' ' * (keyboards - len(command.keyboard) + 2)
+                line += f'{ gap }[moves]{ command.cube or "—" }[/moves]'
+            self.console.print(line, style='consign')
+
+        if cubed:
+            self.console.print(
+                'Cube commands are two moves of the same face'
+                ' that undo each other.',
+                style='comment',
+            )
+
+    async def read_save_char(self) -> str:
+        """
+        Wait for the keyboard or the cube to answer the save prompt.
+
+        Returns:
+            The key pressed, or the key the cube gesture stands for.
+
+        """
+        if self.bluetooth_interface:
+            getch_task = spawn(self.getch('save'), 'getch-save')
+            tasks = [
+                getch_task,
+                spawn(
+                    self.save_gesture_event.wait(),
+                    'event-save-gesture',
+                ),
+            ]
+            await self.wait_control(tasks)
+
+            if self.save_gesture_event.is_set():
+                self.clear_line(full=True)
+                return self.save_gesture
+
+            result = getch_task.result()
+            return result if isinstance(result, str) else ''
+
+        return await self.getch('save')
+
+    async def read_save_input(self) -> str:
+        """
+        Answer the save prompt, unfolding the commands on demand.
+
+        The help key is the only one not deciding of the solve: it
+        prints the full command list and asks again, so the solve is
+        still waiting for its answer once the list has been read.
+
+        Returns:
+            The key deciding of the solve, never the help key.
+
+        """
+        while 42:
+            char = await self.read_save_char()
+
+            if char != HELP_CHAR:
+                return char
+
+            title, lead, tokens = self.save_commands
+            self.commands_help(tokens)
+            self.commands_line(title, lead, tokens)
+
+        return ''  # pragma: no cover
+
     async def save_solve(self) -> bool:
         """
         Save the completed solve with optional flag modifications.
@@ -303,26 +438,7 @@ class SolveInterface(
         """
         self.set_state('saving')
 
-        if self.bluetooth_interface:
-            getch_task = spawn(self.getch('save'), 'getch-save')
-            tasks = [
-                getch_task,
-                spawn(
-                    self.save_gesture_event.wait(),
-                    'event-save-gesture',
-                ),
-            ]
-            await self.wait_control(tasks)
-
-            char = ''
-            if not self.save_gesture_event.is_set():
-                result = getch_task.result()
-                char = result if isinstance(result, str) else ''
-            else:
-                self.clear_line(full=True)
-                char = self.save_gesture
-        else:
-            char = await self.getch('save')
+        char = await self.read_save_input()
 
         save_string = ''
         save_style = 'warning'

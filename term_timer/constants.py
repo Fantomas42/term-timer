@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from typing import Final
 from typing import Literal
+from typing import NamedTuple
 
 from cubing_algs.cases.case import Case
 from cubing_algs.cases.case import CaseData
@@ -139,6 +140,47 @@ RESLICE_THRESHOLD_GYROSCOPE: Final = 120
 REWIDE_THRESHOLD_GYROSCOPE: Final = 180
 
 ESCAPE_CHAR: Final = '\x1b'
+
+HELP_CHAR: Final = '?'
+
+
+class Command(NamedTuple):
+    """One command of the save prompt, keyboard side and cube side."""
+
+    short: str
+    label: str
+    keyboard: str
+    cube: str
+
+
+# Commands of the save prompt. `short` builds the one line kept on
+# screen, the other fields the block the help key unfolds. An empty
+# `short` means the command is already carried by the prompt lead, an
+# empty `cube` that no gesture triggers it. Cube gestures are two moves
+# of the same face undoing each other, see interface/gesture.py.
+COMMANDS: Final[dict[str, Command]] = {
+    'save': Command(
+        '', 'Save', 'any key', "U U'  F F'  R R'  B B'  L L'",
+    ),
+    'rate': Command(
+        '(1-4)', 'Rate', '(1)-(4)', '',
+    ),
+    'retry': Command(
+        '(r)', 'Retry', '(r)', '',
+    ),
+    'discard': Command(
+        '(z)', 'Discard', '(z)', "M M'  S S'",
+    ),
+    'quit': Command(
+        '(k)', 'Quit', '(k)', "E E'",
+    ),
+    'save_quit': Command(
+        '(q)', 'Save & quit', '(q)', "D D'",
+    ),
+    'flags': Command(
+        '(d)(2)', 'DNF / +2', '(d) (2)', '',
+    ),
+}
 
 FLUENCY_EXPONENTIAL_DECAY: Final = -0.00111571775657105
 

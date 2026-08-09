@@ -832,6 +832,89 @@ class TestManualRatingKeys(unittest.TestCase):
         self.assertEqual(set(MANUAL_RATING_KEYS), {'1', '2', '3', '4'})
 
 
+class TestTrainerSaveLine(unittest.TestCase):
+    """The training prompt fits one line whatever it has to offer."""
+
+    @staticmethod
+    def make_trainer(*, bluetooth: bool = False) -> Trainer:
+        """
+        Build a minimal OLL trainer for display tests.
+
+        Returns:
+            Configured Trainer instance.
+
+        """
+        timer = Trainer(
+            step='oll',
+            case_codes=[],
+            oldest=0,
+            slowest=0,
+            random=0,
+            new_cases_limit=5,
+            filters=[],
+            states=[],
+            free_play=False,
+            show_solution=False,
+            show_cube=False,
+            metronome=0,
+            orientation='DF',
+            rng=Random(),  # noqa: S311
+        )
+        if bluetooth:
+            timer.bluetooth_interface = MagicMock()
+        return timer
+
+    def render(self, *, bluetooth: bool = False, **kwargs: bool) -> str:
+        """
+        Capture the console output of save_line.
+
+        Returns:
+            The rendered prompt text.
+
+        """
+        timer = self.make_trainer(bluetooth=bluetooth)
+        with timer.console.capture() as capture:
+            timer.save_line(**kwargs)
+        return capture.get()
+
+    def test_dnf_prompt_rates_again(self) -> None:
+        """A DNF always rates Again, no rating key is offered."""
+        output = self.render(dnf=True)
+
+        self.assertIn('any=Again', output)
+        self.assertNotIn('(1-4)', output)
+
+    def test_manual_rating_prompt_leads_on_the_ratings(self) -> None:
+        """Rating is the point, so no default action is advertised."""
+        output = self.render(manual_rating=True)
+
+        self.assertIn('Rate #', output)
+        self.assertIn('(1-4)', output)
+        self.assertNotIn('any=', output)
+
+    def test_auto_rating_prompt_offers_the_override(self) -> None:
+        """An automatic rating still takes a 1-4 override."""
+        output = self.render()
+
+        self.assertIn('any=save', output)
+        self.assertIn('(1-4)', output)
+
+    def test_prompt_holds_on_a_single_line(self) -> None:
+        """
+        No variant wraps, whatever it offers.
+
+        `clear_line` wipes one physical line: an enrolled prompt would
+        leave its first row on screen for the rest of the session.
+        """
+        for output in (
+                self.render(dnf=True),
+                self.render(manual_rating=True),
+                self.render(),
+                self.render(bluetooth=True),
+        ):
+            self.assertNotIn('\n', output)
+
+
 class TestSaveTrainingManualRating(unittest.IsolatedAsyncioTestCase):
     """save_training() collects a manual 1-4 rating when there is no BT."""
 

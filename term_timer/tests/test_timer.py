@@ -395,7 +395,7 @@ class TestSaveLine(unittest.TestCase):
     """The save prompt advertises the retry only when it is available."""
 
     @staticmethod
-    def render(*, scramble: str = '') -> str:
+    def render(*, scramble: str = '', bluetooth: bool = False) -> str:
         """
         Capture the console output of save_line.
 
@@ -404,6 +404,8 @@ class TestSaveLine(unittest.TestCase):
 
         """
         timer = build_timer(scramble=scramble)
+        if bluetooth:
+            timer.bluetooth_interface = MagicMock()
         with timer.console.capture() as capture:
             timer.save_line()
         return capture.get()
@@ -428,6 +430,173 @@ class TestSaveLine(unittest.TestCase):
 
         self.assertIn('(d)', output)
         self.assertIn('(2)', output)
+
+    def test_flag_keys_are_dropped_with_a_cube(self) -> None:
+        """A connected cube reads the flag itself, the keys are inactive."""
+        output = self.render(bluetooth=True)
+
+        self.assertNotIn('(d)', output)
+        self.assertNotIn('(2)', output)
+
+    def test_help_key_is_always_offered(self) -> None:
+        """The prompt names no command but points at the ones it hides."""
+        for output in (
+                self.render(),
+                self.render(bluetooth=True),
+                self.render(scramble="R U R' U'"),
+        ):
+            self.assertIn('(?)', output)
+
+    def test_prompt_holds_on_a_single_line(self) -> None:
+        """
+        The prompt never wraps, whatever it offers.
+
+        `clear_line` wipes one physical line: an enrolled prompt would
+        leave its first row on screen for the rest of the session.
+        """
+        for output in (
+                self.render(),
+                self.render(bluetooth=True),
+                self.render(scramble="R U R' U'"),
+        ):
+            self.assertNotIn('\n', output)
+
+
+class TestCommandsHelp(unittest.TestCase):
+    """The help block names every command, cube gestures included."""
+
+    @staticmethod
+    def render(*, bluetooth: bool = False) -> str:
+        """
+        Capture the help block unfolded for the current save prompt.
+
+        Returns:
+            The rendered help text.
+
+        """
+        timer = build_timer()
+        if bluetooth:
+            timer.bluetooth_interface = MagicMock()
+
+        with timer.console.capture():
+            timer.save_line()
+
+        with timer.console.capture() as capture:
+            timer.commands_help(timer.save_commands[2])
+
+        return capture.get()
+
+    def test_keyboard_commands_are_named(self) -> None:
+        """Every key of the prompt gets its meaning spelled out."""
+        output = self.render()
+
+        for label in ('Save', 'Retry', 'Discard', 'Quit', 'Save & quit'):
+            self.assertIn(label, output)
+
+    def test_cube_column_is_hidden_without_a_cube(self) -> None:
+        """Gestures are unreachable without a cube, so they stay unsaid."""
+        output = self.render()
+
+        self.assertNotIn('Cube', output)
+        self.assertNotIn("U U'", output)
+
+    def test_cube_gestures_are_cancelled_pairs(self) -> None:
+        """A gesture is a face undone, never the same move played twice."""
+        output = self.render(bluetooth=True)
+
+        self.assertIn('Cube', output)
+        for gesture in ("U U'", "M M'", "E E'", "D D'"):
+            self.assertIn(gesture, output)
+
+    def test_flag_row_follows_the_flag_keys(self) -> None:
+        """The DNF row shows up exactly where its keys are offered."""
+        self.assertIn('DNF / +2', self.render())
+        self.assertNotIn('DNF / +2', self.render(bluetooth=True))
+
+    def test_no_command_prints_nothing(self) -> None:
+        """An empty prompt has no table to unfold, not an empty one."""
+        timer = build_timer()
+
+        with timer.console.capture() as capture:
+            timer.commands_help([])
+
+        self.assertEqual(capture.get(), '')
+
+    def test_every_row_holds_on_a_single_line(self) -> None:
+        """The block is a table: a wrapped row would break its columns."""
+        # Header, one row per command, and the gesture note.
+        self.assertEqual(len(self.render().splitlines()), 7)
+        self.assertEqual(len(self.render(bluetooth=True).splitlines()), 7)
+
+
+class TestSaveHelpKey(unittest.IsolatedAsyncioTestCase):
+    """The help key unfolds the commands instead of deciding the solve."""
+
+    async def run_save(self, chars: list[str]) -> Timer:
+        """
+        Run save_solve against a sequence of pressed keys.
+
+        Returns:
+            The timer after save_solve has returned.
+
+        """
+        solve = make_solve()
+        timer = build_timer([solve])
+        timer.stack_done = [solve]
+        timer.console = MagicMock()
+        timer.save_line()
+        self.counter_start = timer.counter
+
+        pressed = iter(chars)
+
+        async def fake_getch(_mode: str, *_: object) -> str:
+            await asyncio.sleep(0)
+            return next(pressed)
+
+        with (
+            patch('term_timer.interface.save_solves'),
+            patch('term_timer.interface.SOUND_PLAYER'),
+            patch.object(timer, 'getch', side_effect=fake_getch),
+        ):
+            await timer.save_solve()
+
+        return timer
+
+    @staticmethod
+    def printed(timer: Timer) -> list[str]:
+        """
+        Collect the strings the timer printed.
+
+        Returns:
+            The first positional argument of every console print.
+
+        """
+        return [
+            call.args[0]
+            for call in timer.console.print.call_args_list  # type: ignore[attr-defined]
+            if call.args and isinstance(call.args[0], str)
+        ]
+
+    async def test_help_key_does_not_save(self) -> None:
+        """The solve is still waiting once the commands have been read."""
+        timer = await self.run_save(['?', 'z'])
+
+        self.assertEqual(timer.stack, [])
+        self.assertEqual(timer.counter, self.counter_start)
+
+    async def test_help_key_unfolds_the_commands(self) -> None:
+        """The block naming every command is printed once."""
+        timer = await self.run_save(['?', ''])
+
+        headers = [line for line in self.printed(timer) if 'Commands #' in line]
+        self.assertEqual(len(headers), 1)
+
+    async def test_help_key_asks_again(self) -> None:
+        """The prompt comes back under the block it just unfolded."""
+        timer = await self.run_save(['?', ''])
+
+        prompts = [line for line in self.printed(timer) if 'Save #' in line]
+        self.assertEqual(len(prompts), 2)
 
 
 class TestRunAttemptPendingScramble(unittest.IsolatedAsyncioTestCase):

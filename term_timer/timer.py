@@ -187,28 +187,19 @@ class Timer(SolveInterface):
 
     def save_line(self) -> None:
         """Display instructions for saving or canceling the solve."""
-        keys = ['Press any key to save and continue,']
+        tokens = ['save']
 
         if not self.bluetooth_interface:
-            keys.extend(
-                (
-                    '[key](d)[/key] DNF,',
-                    '[key](2)[/key] +2,',
-                ),
-            )
+            # The flag is read from the cube state when there is one,
+            # so these keys only exist on a manual solve.
+            tokens.append('flags')
 
         if self.retry_enabled:
-            keys.append('[key](r)[/key] retry,')
+            tokens.append('retry')
 
-        keys.extend(
-            (
-                '[key](z)[/key] discard,',
-                '[key](k)[/key] quit,',
-                '[key](q)[/key] save & quit.',
-            ),
-        )
+        tokens.extend(('discard', 'quit', 'save_quit'))
 
-        self.console.print(*keys, style='consign', end='')
+        self.commands_line('Save', 'any=save', tokens)
 
     def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912
         """Display solve results, statistics, and record achievements."""
