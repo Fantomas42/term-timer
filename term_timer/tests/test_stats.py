@@ -381,6 +381,86 @@ class TestStatisticsPrintSummaryReporter(unittest.TestCase):
         self.assertIn('[result]5/6[/result]', total_line)
 
 
+class TestStatisticsPrintSummaryDispersion(unittest.TestCase):
+    """Mean, median and stdev are dropped below two valid times."""
+
+    LABELS = ('Mean', 'Median', 'Stdev')
+
+    def printed_labels(self, solves: list[Solve]) -> set[str]:
+        """
+        Collect the summary labels printed for a stack of solves.
+
+        Args:
+            solves: The stack to report on.
+
+        Returns:
+            The set of labels found in the printed lines.
+
+        """
+        stats = SolveStatisticsReporter(3, solves)
+
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            stats.print_summary()
+
+        lines = [
+            ' '.join(str(arg) for arg in call[0])
+            for call in mock_print.call_args_list
+        ]
+
+        return {
+            label
+            for label in ('Total', 'Time', *self.LABELS)
+            if any(f'{ label } ' in line or f'{ label }:' in line
+                   for line in lines)
+        }
+
+    def test_single_solve_hides_dispersion(self) -> None:
+        """A lone solve prints neither mean, median nor stdev."""
+        labels = self.printed_labels(
+            [Solve(1000000000000, 10 * SECOND, 'F R U', '')],
+        )
+
+        self.assertEqual(labels, {'Total', 'Time'})
+
+    def test_single_valid_solve_with_dnf_hides_dispersion(self) -> None:
+        """A DNF does not make the dispersion of one time meaningful."""
+        labels = self.printed_labels([
+            Solve(1000000000000, 10 * SECOND, 'F R U', ''),
+            Solve(2000000000000, 12 * SECOND, 'R U F', DNF),
+        ])
+
+        self.assertEqual(labels, {'Total', 'Time'})
+
+    def test_two_valid_solves_show_dispersion(self) -> None:
+        """Two valid times bring mean, median and stdev back."""
+        labels = self.printed_labels([
+            Solve(1000000000000, 10 * SECOND, 'F R U', ''),
+            Solve(2000000000000, 12 * SECOND, 'R U F', ''),
+        ])
+
+        self.assertEqual(labels, {'Total', 'Time', *self.LABELS})
+
+    def test_identical_times_show_zero_stdev(self) -> None:
+        """A real zero dispersion is a time, never a DNF."""
+        solves = [
+            Solve((i + 1) * 1000000000000, 10 * SECOND, 'F R U', '')
+            for i in range(3)
+        ]
+        stats = SolveStatisticsReporter(3, solves)
+
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            stats.print_summary()
+
+        stdev_line = next(
+            ' '.join(str(arg) for arg in call[0])
+            for call in mock_print.call_args_list
+            if 'Stdev' in ' '.join(str(arg) for arg in call[0])
+        )
+
+        self.assertIn('00:00.000', stdev_line)
+        self.assertNotIn(DNF, stdev_line)
+
+
 class TestSolveStatisticsReporterListing(unittest.TestCase):
     """Tests for SolveStatisticsReporter listing method."""
 
@@ -2307,6 +2387,33 @@ class TestSolveStatisticsReporterGraph(unittest.TestCase):
             for call in mock_plt.plot.call_args_list
         ]
         self.assertEqual(labels, ['Time', 'AO12', 'AO5'])
+
+    def test_graph_skipped_on_single_valid_time(self) -> None:
+        """A lone point carries no trend, nothing is drawn."""
+        stats = SolveStatisticsReporter(3, [
+            Solve(1000000000000, 10 * SECOND, 'F R U', ''),
+            Solve(2000000000000, 12 * SECOND, 'R U F', DNF),
+        ])
+
+        with patch('term_timer.stats.plt') as mock_plt:
+            stats.graph()
+
+        self.assertFalse(mock_plt.plot.called)
+        self.assertFalse(mock_plt.show.called)
+
+    def test_graph_drawn_from_two_valid_times(self) -> None:
+        """Two valid times are enough to draw the time curve."""
+        stats = SolveStatisticsReporter(3, self.solves[:2])
+
+        with patch('term_timer.stats.plt') as mock_plt:
+            stats.graph()
+
+        mock_plt.show.assert_called_once()
+        labels = [
+            call.kwargs.get('label')
+            for call in mock_plt.plot.call_args_list
+        ]
+        self.assertEqual(labels, ['Time'])
 
 
 class TestTrainerStatisticsPrintSummary(unittest.TestCase):

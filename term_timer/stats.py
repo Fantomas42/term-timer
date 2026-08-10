@@ -974,6 +974,9 @@ class SolveStatisticsReporter(Statistics):
         Shows total solves, timing statistics, averages, and distribution
         histogram formatted for terminal output.
 
+        Mean, median and standard deviation are dropped below two valid
+        times: they only repeat the total time of a lone solve.
+
         Args:
             prefix: String to prepend to each line for indentation.
             style: Rich console style name for formatting labels.
@@ -999,18 +1002,21 @@ class SolveStatisticsReporter(Statistics):
             f'[{ style }]{ prefix }Time  :[/{ style }]',
             f'[result]{ format_time(self.total_time) }[/result]',
         )
-        console.print(
-            f'[{ style }]{ prefix }Mean  :[/{ style }]',
-            f'[result]{ format_time(self.mean) }[/result]',
-        )
-        console.print(
-            f'[{ style }]{ prefix }Median:[/{ style }]',
-            f'[result]{ format_time(self.median) }[/result]',
-        )
-        console.print(
-            f'[{ style }]{ prefix }Stdev :[/{ style }]',
-            f'[result]{ format_time(self.stdev) }[/result]',
-        )
+        if len(self.stack_time_sorted) >= 2:
+            console.print(
+                f'[{ style }]{ prefix }Mean  :[/{ style }]',
+                f'[result]{ format_time(self.mean) }[/result]',
+            )
+            console.print(
+                f'[{ style }]{ prefix }Median:[/{ style }]',
+                f'[result]{ format_time(self.median) }[/result]',
+            )
+            console.print(
+                f'[{ style }]{ prefix }Stdev :[/{ style }]',
+                f'[result]'
+                f'{ format_time(self.stdev, allow_dnf=False) }'
+                f'[/result]',
+            )
         if self.total >= 2:
             if self.total >= 3:
                 console.print(
@@ -1631,10 +1637,16 @@ class SolveStatisticsReporter(Statistics):
         configured in ``STATS_GRAPH_SERIES`` (capped to the first two
         entries) to visualize performance trends over the session.
 
+        Nothing is drawn below two valid times: a single point carries
+        no trend.
+
         Args:
             title: Title of the graph.
 
         """
+        if len(self.stack_time_sorted) < 2:
+            return
+
         series = STATS_GRAPH_SERIES[:GRAPH_CONSOLE_LIMIT]
         series_values: list[list[float | None]] = [[] for _ in series]
         times: list[int] = []

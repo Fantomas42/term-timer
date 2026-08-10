@@ -496,18 +496,20 @@
         <div class="stat-title">Total Time</div>
         <div class="stat-value">{{ stats.total_time|format_time }}</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-title">Mean</div>
-        <div class="stat-value">{{ stats.mean|format_time }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-title">Median</div>
-        <div class="stat-value">{{ stats.median|format_time }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-title">Standard Deviation</div>
-        <div class="stat-value">{{ stats.stdev|format_time }}</div>
-      </div>
+      {% if stats.stack_time_sorted|length >= 2 %}
+        <div class="stat-card">
+          <div class="stat-title">Mean</div>
+          <div class="stat-value">{{ stats.mean|format_time }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Median</div>
+          <div class="stat-value">{{ stats.median|format_time }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Standard Deviation</div>
+          <div class="stat-value">{{ stats.stdev|format_time(allow_dnf=False) }}</div>
+        </div>
+      {% endif %}
       {% if stats.total >= 2 %}
         <div class="stat-card">
           <div class="stat-title">Best</div>
