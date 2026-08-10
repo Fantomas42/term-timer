@@ -443,9 +443,10 @@ Scramble:
 
 ```console
 Usage: term-timer train [-h] [-s STEP] [-l] [-v] [-m N]
-                        [-i FILTER [FILTER ...]] [-c [CASES ...] | -d [N] | -t
-                        [N] | -n [N]] [-p] [-o ORIENTATION] [-b] [-g] [-f]
-                        [-k TEMPO] [-r SEED]
+                        [-i FILTER [FILTER ...]] [-e STATE [STATE ...]]
+                        [-c [CASES ...] | -d [N] | -t [N] | -n [N]] [-p]
+                        [-o ORIENTATION] [-b [CUBE]] [-g] [-f] [-k TEMPO]
+                        [-r SEED]
                         [TRAININGS]
 
 Start the trainer to improve your skills.
@@ -459,22 +460,38 @@ Options:
   -l, --list            List the selected cases with their statistics. The
                         Case Selection options restrict the listing the same
                         way they restrict a session.
-  -v, --solution        Always show the main solution of the case.
+  -v, --solution        Always show the main solution of the case. Without
+                        this flag, it is still shown when the FSRS card of the
+                        case is in Learning or Relearning state.
 
 Case Selection:
   By default, cases are selected by FSRS.
-  --oldest, --slowest and --filter restrict the pool while keeping FSRS active;
-  --cases and --random disable FSRS selection (cards are still updated).
+  --oldest, --slowest, --filter and --state restrict the pool while keeping
+  FSRS active; --cases and --random disable FSRS selection (cards are still
+  updated).
 
-  -m N, --new-cases N   Maximum new cases to introduce per session. Default: 5.
+  -m N, --new-cases N   Maximum new cases to introduce per session. Only
+                        applies when FSRS is active. Default: 5.
   -i FILTER [FILTER ...], --filter FILTER [FILTER ...]
-                        Filter cases by family or group (e.g. Dot, Cross, OCLL).
+                        Filter cases by family or group (e.g. Dot, Cross,
+                        OCLL). Multiple values are combined with OR logic.
+                        Incompatible with --cases.
+  -e STATE [STATE ...], --state STATE [STATE ...]
+                        Filter cases by FSRS card state: new, learning,
+                        relearning, review (due) or stable (review scheduled
+                        in the future). Multiple values are combined with OR
+                        logic.
   -c [CASES ...], --cases [CASES ...]
-                        Practice specific cases by name.
-  -d [N], --oldest [N]  Select N cases least recently practiced. Default N: 5.
+                        Practice specific cases by name. Disables FSRS case
+                        selection (cards are still updated).
+  -d [N], --oldest [N]  Select N cases least recently practiced. Cases never
+                        practiced are prioritized. Default N: 5.
   -t [N], --slowest [N]
-                        Select N cases with worst average of 12. Default N: 5.
-  -n [N], --random [N]  Select N cases randomly.
+                        Select N cases with worst average of 12. Cases with
+                        fewer than 12 attempts are prioritized. Default N: 5.
+  -n [N], --random [N]  Select N cases randomly. If N is omitted, all valid
+                        cases are used in random order. Disables FSRS case
+                        selection.
 
 Cube:
   -p, --hide-cube       Hide the cube in its scrambled state.

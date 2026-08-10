@@ -814,7 +814,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         metavar='STEP',
         help=(
             'Specify the training mode : '
-            'cross, ecross, xcross, f2l, af2l, oll, ll or ll.\n'
+            'cross, ecross, xcross, f2l, af2l, oll, pll or ll.\n'
             f'Default: { TRAINER_STEP }.'
         ),
     )
