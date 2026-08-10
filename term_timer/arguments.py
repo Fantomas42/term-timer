@@ -823,7 +823,9 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         action='store_true',
         dest='list_cases',
         help=(
-            'List all available cases with their training statistics.\n'
+            'List the selected cases with their training statistics.\n'
+            'The Case Selection options restrict the listing the same\n'
+            'way they restrict a session.\n'
             'Default: False.'
         ),
     )

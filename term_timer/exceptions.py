@@ -16,6 +16,10 @@ class InvalidCaseError(Exception):
     """Raised when an invalid training case is selected."""
 
 
+class EmptyCasePoolError(InvalidCaseError):
+    """Raised when the case selection options leave no case to train."""
+
+
 class InvalidAlgorithmError(Exception):
     """Raised when an invalid algorithm is given."""
 

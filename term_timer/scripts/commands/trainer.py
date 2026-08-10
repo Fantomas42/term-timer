@@ -3,6 +3,7 @@ from argparse import Namespace
 from random import Random
 
 from term_timer.exceptions import SESSION_ERRORS
+from term_timer.exceptions import EmptyCasePoolError
 from term_timer.interface.console import console
 from term_timer.scripts.commands.session import solve_session
 from term_timer.stats import TrainerStatistics
@@ -43,6 +44,12 @@ async def trainer(options: Namespace) -> int:
             metronome=options.metronome,
             rng=rng,
         )
+    except EmptyCasePoolError as error:
+        if options.list_cases:
+            console.print(str(error), style='warning')
+            return 0
+        console.print('😱', str(error), style='warning')
+        return 1
     except SESSION_ERRORS as error:
         console.print('😱', str(error), style='warning')
         return 1

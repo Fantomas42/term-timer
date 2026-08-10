@@ -41,6 +41,7 @@ from term_timer.constants import LL_CASE
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import X_CROSS_CASE
 from term_timer.constants import SolveFlag
+from term_timer.exceptions import EmptyCasePoolError
 from term_timer.exceptions import InvalidCaseError
 from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_cubing_url
@@ -354,7 +355,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             List of case codes matching the wanted states
 
         Raises:
-            InvalidCaseError: If no case matches the wanted states.
+            EmptyCasePoolError: If no case matches the wanted states.
 
         """
         selected = [
@@ -369,7 +370,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 f'No case in state "{ states_label }"'
                 f' for { self.step_label }.'
             )
-            raise InvalidCaseError(error_string)
+            raise EmptyCasePoolError(error_string)
 
         return selected
 
@@ -415,7 +416,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             Dictionary of the cases matching the wanted filters
 
         Raises:
-            InvalidCaseError: If no case matches the wanted filters.
+            EmptyCasePoolError: If no case matches the wanted filters.
 
         """
         if not self.filters:
@@ -433,7 +434,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 f'No case matching filter "{ filters_label }"'
                 f' for { self.step_label }.'
             )
-            raise InvalidCaseError(error_string)
+            raise EmptyCasePoolError(error_string)
 
         return filtered
 
@@ -686,14 +687,14 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.console.print(msg, style='trainer')
 
     def list_cases(self) -> None:
-        """Display a table of all available cases with their training stats."""
-        if self.step_config.training_case is not None:
-            valid_cases = {tc.case.code: tc.case for tc in self.cases}
-        else:
-            collection = get_collection(f'{ self.method }/{ self.step }').cases
-            valid_cases = {
-                v.code: v for v in collection.values() if v.setup_algorithms
-            }
+        """
+        Display a table of the selected cases with their training stats.
+
+        The listing covers the pool the session would train on, so the
+        case selection options restrict it just like they restrict a
+        training session.
+        """
+        valid_cases = {tc.case.code: tc.case for tc in self.cases}
 
         show_fsrs = self.step_config.training_case is None
         muted = '[muted]N/A[/muted]'

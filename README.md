@@ -456,7 +456,9 @@ Positional Arguments:
 Options:
   -s STEP, --step STEP  Training mode: cross, ecross, xcross, f2l, af2l, oll,
                         pll or ll. Default: oll.
-  -l, --list            List all available cases with their statistics.
+  -l, --list            List the selected cases with their statistics. The
+                        Case Selection options restrict the listing the same
+                        way they restrict a session.
   -v, --solution        Always show the main solution of the case.
 
 Case Selection:

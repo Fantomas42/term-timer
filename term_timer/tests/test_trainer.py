@@ -20,12 +20,15 @@ from fsrs import State
 from rich.console import Console as RichConsole
 from rich.theme import Theme
 
+from term_timer.arguments import get_parser
+from term_timer.exceptions import EmptyCasePoolError
 from term_timer.exceptions import InvalidCaseError
 from term_timer.fsrs.rating import RatingBreakdown
 from term_timer.fsrs.scheduler import FSRSScheduler
 from term_timer.fsrs.storage import CaseTraining
 from term_timer.fsrs.storage import Trainings
 from term_timer.interface.console import theme as console_theme
+from term_timer.scripts.commands import trainer as trainer_mod
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.trainer import MANUAL_RATING_KEYS
@@ -536,6 +539,7 @@ class StateFixtureMixin:
             case_codes: list[str] | None = None,
             filters: list[str] | None = None,
             oldest: int = 0,
+            slowest: int = 0,
     ) -> Trainer:
         """
         Build an OLL trainer over the state fixture.
@@ -552,7 +556,7 @@ class StateFixtureMixin:
                 step='oll',
                 case_codes=case_codes or [],
                 oldest=oldest,
-                slowest=0,
+                slowest=slowest,
                 random=0,
                 new_cases_limit=5,
                 filters=filters or [],
@@ -690,7 +694,7 @@ class TestStateFilter(StateFixtureMixin, unittest.TestCase):
 
     def test_empty_state_pool_raises(self) -> None:
         """An empty state selection is reported before the session starts."""
-        with self.assertRaises(InvalidCaseError) as context:
+        with self.assertRaises(EmptyCasePoolError) as context:
             self.make_trainer(
                 ['stable'],
                 case_codes=[self.LEARNING_CODE],
@@ -700,7 +704,7 @@ class TestStateFilter(StateFixtureMixin, unittest.TestCase):
 
     def test_empty_filter_pool_raises(self) -> None:
         """An empty family filter is reported before the session starts."""
-        with self.assertRaises(InvalidCaseError) as context:
+        with self.assertRaises(EmptyCasePoolError) as context:
             self.make_trainer([], filters=['unknown-family'])
 
         self.assertIn(
@@ -815,6 +819,172 @@ class TestStateFilterDrain(StateFixtureMixin, unittest.TestCase):
             self.assertFalse(asyncio.run(timer.start()))
 
         self.assertTrue(timer.console.print.called)
+
+
+class TestListCases(StateFixtureMixin, unittest.TestCase):
+    """--list displays the pool the session would train on."""
+
+    @staticmethod
+    def render(timer: Trainer) -> str:
+        """
+        Capture the tables printed by the cases listing.
+
+        Returns:
+            The rendered listing, whitespace normalized.
+
+        """
+        recorder = RichConsole(
+            record=True, width=120, theme=Theme(console_theme),
+        )
+        timer.console = recorder
+
+        timer.list_cases()
+
+        return ' '.join(recorder.export_text().split())
+
+    def test_listing_covers_the_whole_step_by_default(self) -> None:
+        """Without any restriction every case of the step is listed."""
+        output = self.render(self.make_trainer([]))
+
+        self.assertIn('OLL 01', output)
+        self.assertIn('OLL 03', output)
+        self.assertIn('OLL 57', output)
+
+    def test_listing_restricted_by_state(self) -> None:
+        """--state keeps only the cases sitting in the wanted states."""
+        output = self.render(self.make_trainer(['learning']))
+
+        self.assertIn('OLL 01', output)
+        self.assertIn('OLL 05', output)
+        self.assertNotIn('OLL 03', output)
+        self.assertNotIn('OLL 57', output)
+
+    def test_listing_restricted_by_filter(self) -> None:
+        """--filter keeps only the cases of the wanted families."""
+        output = self.render(self.make_trainer([], filters=['Square']))
+
+        self.assertIn('OLL 05', output)
+        self.assertNotIn('OLL 01', output)
+
+    def test_listing_restricted_by_cases(self) -> None:
+        """--cases lists the named cases only."""
+        output = self.render(
+            self.make_trainer([], case_codes=[self.REVIEW_CODE]),
+        )
+
+        self.assertIn('OLL 03', output)
+        self.assertNotIn('OLL 01', output)
+
+    def test_listing_restricted_by_slowest(self) -> None:
+        """--slowest lists as many cases as it would train."""
+        timer = self.make_trainer([], slowest=3)
+
+        self.assertEqual(len(timer.cases), 3)
+
+        output = self.render(timer)
+        listed = [
+            code for code in (f'OLL { n:02d}' for n in range(1, 58))
+            if code in output
+        ]
+
+        self.assertEqual(len(listed), 3)
+
+    def test_listing_summary_counts_the_listed_cases(self) -> None:
+        """The summary recap covers the listed pool, not the whole step."""
+        output = self.render(self.make_trainer(['learning']))
+
+        self.assertIn('Learning 2', output)
+        self.assertIn('Total 2', output)
+
+    def test_listing_of_a_synthetic_step(self) -> None:
+        """A step without a case collection keeps its card-less listing."""
+        timer = Trainer(
+            step='cross',
+            case_codes=[],
+            oldest=0,
+            slowest=0,
+            random=0,
+            new_cases_limit=5,
+            filters=[],
+            states=[],
+            free_play=False,
+            show_solution=False,
+            show_cube=False,
+            metronome=0,
+            orientation='DF',
+            rng=Random(),  # noqa: S311
+        )
+        output = self.render(timer)
+
+        self.assertIn('Cross', output)
+        self.assertNotIn('Due', output)
+
+
+class TestTrainerCommandListing(StateFixtureMixin, unittest.TestCase):
+    """An empty pool is an error for a session, not for a listing."""
+
+    def run_command(
+            self,
+            *args: str,
+            trainings: Trainings | None = None,
+    ) -> tuple[int, str]:
+        """
+        Run a train command line over the state fixture.
+
+        Returns:
+            The exit code and the rendered output.
+
+        """
+        recorder = RichConsole(
+            record=True, width=120, theme=Theme(console_theme),
+        )
+        options = get_parser().parse_args(['train', '-s', 'oll', *args])
+
+        with (
+                patch(
+                    'term_timer.trainer.load_trainings',
+                    return_value=trainings or self.make_trainings(),
+                ),
+                patch.object(trainer_mod, 'console', recorder),
+        ):
+            code = asyncio.run(trainer_mod.trainer(options))
+
+        return code, ' '.join(recorder.export_text().split())
+
+    def test_empty_state_pool_only_warns_the_listing(self) -> None:
+        """A listing with nothing to show is not a failure."""
+        code, output = self.run_command(
+            '-e', 'stable', '-l',
+            trainings=Trainings(method='CFOP', step='OLL', cases={}),
+        )
+
+        self.assertEqual(code, 0)
+        self.assertIn('No case in state "stable"', output)
+        self.assertNotIn('😱', output)
+
+    def test_empty_state_pool_fails_the_session(self) -> None:
+        """Without --list an empty pool still ends the command."""
+        code, output = self.run_command(
+            '-e', 'stable',
+            trainings=Trainings(method='CFOP', step='OLL', cases={}),
+        )
+
+        self.assertEqual(code, 1)
+        self.assertIn('😱', output)
+
+    def test_empty_filter_pool_only_warns_the_listing(self) -> None:
+        """An empty family filter warns the listing the same way."""
+        code, output = self.run_command('-i', 'unknown-family', '-l')
+
+        self.assertEqual(code, 0)
+        self.assertIn('No case matching filter "unknown-family"', output)
+
+    def test_unknown_case_still_fails_the_listing(self) -> None:
+        """A bogus --cases code remains an error, listing or not."""
+        code, output = self.run_command('-c', '999', '-l')
+
+        self.assertEqual(code, 1)
+        self.assertIn('is unknown', output)
 
 
 class TestManualRatingKeys(unittest.TestCase):
