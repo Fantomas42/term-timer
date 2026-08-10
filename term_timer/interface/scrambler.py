@@ -129,7 +129,7 @@ class Scrambler:
         self.clear_line(full=full_clear)
 
         self.console.print(
-            f'[scramble]Scramble #{ self.counter }:[/scramble]',
+            f'[applied]Scramble #{ self.counter }:[/applied]',
             out,
             end='',
         )

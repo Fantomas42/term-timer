@@ -21,6 +21,7 @@ theme: dict[str, str] = {
     'comment': '#CC9933',
 
     'scramble': f'{ TEXT_DARK } on { GREEN }',
+    'applied': f'{ TEXT_DARK } on #00E7E7',
     'duration': f'{ TEXT_DARK } on { ORANGE }',
     'estimate': f'{ TEXT_DARK } on #00FFD7',
     'record': f'{ TEXT_DARK } on #5FFFAF',
