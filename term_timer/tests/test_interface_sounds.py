@@ -107,6 +107,66 @@ class TestSoundPlayerPlay(unittest.TestCase):
             self.assertEqual(mock_sd.play.call_count, 1)
 
 
+class TestSoundPlayerModes(unittest.TestCase):
+    """play() dispatches on the configured sound mode."""
+
+    @staticmethod
+    def run_mode(mode: str, *, available: bool = True) -> tuple[MagicMock, str]:
+        """
+        Play one tone under the given sound mode.
+
+        Returns:
+            The sounddevice mock and whatever was written to stdout.
+
+        """
+        mock_sd = MagicMock()
+        player = SoundPlayer.__new__(SoundPlayer)
+        player.available = available
+
+        buf = io.StringIO()
+        with _patch_sd(mock_sd), \
+                patch.object(sounds_mod, 'TIMER_SOUND', new=mode), \
+                patch('sys.stdout', buf):
+            player.metronome_tick()
+
+        return mock_sd, buf.getvalue()
+
+    def test_off_stays_silent(self) -> None:
+        """The off mode plays nothing at all, not even a bell."""
+        mock_sd, output = self.run_mode('off')
+
+        mock_sd.play.assert_not_called()
+        self.assertEqual(output, '')
+
+    def test_audio_plays_wave(self) -> None:
+        """The audio mode sends the wave to the device."""
+        mock_sd, output = self.run_mode('audio')
+
+        mock_sd.play.assert_called_once()
+        self.assertEqual(output, '')
+
+    def test_terminal_rings_bell(self) -> None:
+        """The terminal mode rings the bell instead of playing a wave."""
+        mock_sd, output = self.run_mode('terminal')
+
+        mock_sd.play.assert_not_called()
+        self.assertEqual(output, '\a')
+
+    def test_unknown_mode_rings_bell(self) -> None:
+        """An unvalidated mode degrades to the bell rather than failing."""
+        mock_sd, output = self.run_mode('bruit')
+
+        mock_sd.play.assert_not_called()
+        self.assertEqual(output, '\a')
+
+    def test_audio_without_device_rings_bell(self) -> None:
+        """The audio mode falls back to the bell when no device is present."""
+        mock_sd, output = self.run_mode('audio', available=False)
+
+        mock_sd.play.assert_not_called()
+        self.assertEqual(output, '\a')
+
+
 class TestGenerateWave(unittest.TestCase):
     """Wave generation produces correctly shaped float32 arrays."""
 

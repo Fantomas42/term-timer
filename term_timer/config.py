@@ -172,6 +172,25 @@ def env_flag(name: str, *, default: bool = False) -> bool:
     return value.strip().lower() not in {'0', 'false', 'no', 'off'}
 
 
+def env_string(name: str, default: str) -> str:
+    """
+    Read a string setting from the environment.
+
+    An unset or empty variable falls back to the default, so that
+    exporting an empty value never blanks a setting. The value is
+    returned verbatim: its spacing can be meaningful.
+
+    Args:
+        name: Environment variable name.
+        default: Value returned when the variable is unset or empty.
+
+    Returns:
+        The string value carried by the environment variable.
+
+    """
+    return os.getenv(name) or default
+
+
 def load_config() -> dict[str, Any]:
     """
     Load configuration from TOML file or create default.
@@ -231,14 +250,17 @@ STATS_GRAPH_SERIES: list[tuple[str, int]] = parse_series(
 
 TIMER_CONFIG = CONFIG.get('timer', {})
 
-TIMER_SOUND: str = TIMER_CONFIG.get('sound', 'audio')
+TIMER_SOUND: str = env_string(
+    'TERM_TIMER_SOUND',
+    str(TIMER_CONFIG.get('sound', 'audio')),
+)
 
 # The motto carries its own separator, so that a custom one is free to
 # drop the colon or to be an emoji. Its padding is meaningful too and
 # is never stripped: it is what aligns the column.
-TIMER_MOTTO: str = (
-    os.getenv('TERM_TIMER_MOTTO', '')
-    or str(TIMER_CONFIG.get('motto', 'Go Go Go:'))
+TIMER_MOTTO: str = env_string(
+    'TERM_TIMER_MOTTO',
+    str(TIMER_CONFIG.get('motto', 'Go Go Go:')),
 )
 
 DISPLAY_CONFIG = CONFIG.get('display', {})

@@ -1,10 +1,13 @@
 """Tests for config helpers."""
+import os
 import unittest
 from typing import ClassVar
 from typing import cast
 from unittest.mock import patch
 
 from term_timer.config import CubeDevice
+from term_timer.config import env_flag
+from term_timer.config import env_string
 from term_timer.config import is_cube_address
 from term_timer.config import load_cubes
 from term_timer.config import load_default_cube
@@ -303,3 +306,95 @@ class TestCubeDeviceCleanSelector(unittest.TestCase):
         with patch('term_timer.config.BLUETOOTH_CUBES', self.CUBES):
             self.assertEqual(CubeDevice.clean_selector('10'), '')
             self.assertEqual(CubeDevice.clean_selector('weilong'), '')
+
+
+class TestEnvFlag(unittest.TestCase):
+    """Tests for env_flag."""
+
+    VARIABLE = 'TERM_TIMER_TEST_FLAG'
+
+    def assert_flag(self, value: str, *, expected: bool) -> None:
+        """Assert the flag carried by a given environment value."""
+        with patch.dict(os.environ, {self.VARIABLE: value}):
+            self.assertEqual(env_flag(self.VARIABLE), expected)
+
+    def test_unset_variable_uses_default(self) -> None:
+        """An absent variable returns the default, False or True."""
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop(self.VARIABLE, None)
+            self.assertFalse(env_flag(self.VARIABLE))
+            self.assertTrue(env_flag(self.VARIABLE, default=True))
+
+    def test_empty_variable_uses_default(self) -> None:
+        """An empty or blank variable is read as unset, not as enabled."""
+        for value in ('', '   ', '\t'):
+            with self.subTest(value=value), \
+                    patch.dict(os.environ, {self.VARIABLE: value}):
+                self.assertFalse(env_flag(self.VARIABLE))
+                self.assertTrue(env_flag(self.VARIABLE, default=True))
+
+    def test_truthy_spellings(self) -> None:
+        """The documented truthy spellings enable the flag."""
+        for value in ('1', 'true', 'yes', 'on'):
+            with self.subTest(value=value):
+                self.assert_flag(value, expected=True)
+
+    def test_falsy_spellings(self) -> None:
+        """The documented falsy spellings disable the flag."""
+        for value in ('0', 'false', 'no', 'off'):
+            with self.subTest(value=value):
+                self.assert_flag(value, expected=False)
+
+    def test_falsy_spellings_are_case_insensitive(self) -> None:
+        """A falsy spelling really disables whatever its case."""
+        for value in ('FALSE', 'No', 'OfF'):
+            with self.subTest(value=value):
+                self.assert_flag(value, expected=False)
+
+    def test_surrounding_spaces_are_ignored(self) -> None:
+        """Padding never turns a falsy spelling into a truthy value."""
+        self.assert_flag(' 0 ', expected=False)
+        self.assert_flag(' true ', expected=True)
+
+    def test_any_other_value_enables(self) -> None:
+        """Anything not spelled falsy counts as enabled."""
+        for value in ('2', 'oui', 'disabled'):
+            with self.subTest(value=value):
+                self.assert_flag(value, expected=True)
+
+    def test_default_only_applies_when_unset(self) -> None:
+        """An explicit value always wins over the default."""
+        with patch.dict(os.environ, {self.VARIABLE: '0'}):
+            self.assertFalse(env_flag(self.VARIABLE, default=True))
+
+
+class TestEnvString(unittest.TestCase):
+    """Tests for env_string."""
+
+    VARIABLE = 'TERM_TIMER_TEST_STRING'
+
+    def test_unset_variable_falls_back(self) -> None:
+        """An absent variable leaves the default untouched."""
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop(self.VARIABLE, None)
+            self.assertEqual(env_string(self.VARIABLE, 'audio'), 'audio')
+
+    def test_empty_variable_falls_back(self) -> None:
+        """An empty variable never blanks the setting."""
+        with patch.dict(os.environ, {self.VARIABLE: ''}):
+            self.assertEqual(env_string(self.VARIABLE, 'audio'), 'audio')
+
+    def test_value_overrides_default(self) -> None:
+        """A defined variable wins over the default."""
+        with patch.dict(os.environ, {self.VARIABLE: 'off'}):
+            self.assertEqual(env_string(self.VARIABLE, 'audio'), 'off')
+
+    def test_value_is_kept_verbatim(self) -> None:
+        """Spacing and case are preserved: they can be meaningful."""
+        with patch.dict(os.environ, {self.VARIABLE: '  Go  '}):
+            self.assertEqual(env_string(self.VARIABLE, 'Go Go Go:'), '  Go  ')
+
+    def test_unknown_value_is_not_validated(self) -> None:
+        """No value is rejected, the consumer decides what to do with it."""
+        with patch.dict(os.environ, {self.VARIABLE: 'bruit'}):
+            self.assertEqual(env_string(self.VARIABLE, 'audio'), 'bruit')
