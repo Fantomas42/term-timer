@@ -29,6 +29,7 @@ from term_timer.solve import Solve
 from term_timer.stats import TARGET_ALWAYS
 from term_timer.stats import TARGET_NEVER
 from term_timer.stats import DailySummaryReporter
+from term_timer.stats import DrillStatistics
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.stats import Statistics
 from term_timer.stats import StatisticsTools
@@ -554,15 +555,15 @@ class TestSolveStatisticsReporterAttemptsListing(unittest.TestCase):
         self.assertIn('#4', indexes[-1])
 
     @patch('term_timer.interface.console.console.print')
-    def test_columns_are_date_then_time(self, mock_console: Mock) -> None:
-        """A line reads id, date, then time, and carries no scramble."""
+    def test_columns_are_time_then_date(self, mock_console: Mock) -> None:
+        """A line reads id, time, then date, and carries no scramble."""
         self.listing.attempts_listing()
 
         call_args = mock_console.call_args_list[1][0]
 
         self.assertIn('#1', call_args[0])
-        self.assertRegex(call_args[1], r'^\[date\]\d{4}-\d{2}-\d{2} ')
-        self.assertIn('00:02.000', call_args[2])
+        self.assertIn('00:02.000', call_args[1])
+        self.assertRegex(call_args[2], r'^\[mute\]\d{4}-\d{2}-\d{2} ')
         self.assertNotIn('F R U', ' '.join(call_args))
 
     @patch('term_timer.interface.console.console.print')
@@ -570,15 +571,15 @@ class TestSolveStatisticsReporterAttemptsListing(unittest.TestCase):
         """The best time of the round wears the success style."""
         call_args = self.render(mock_console, 2)
 
-        self.assertIn('[success]00:01.000[/success]', call_args[2])
+        self.assertIn('[success]00:01.000[/success]', call_args[1])
 
     @patch('term_timer.interface.console.console.print')
     def test_dnf_attempt_reads_dnf(self, mock_console: Mock) -> None:
         """A DNF reads DNF in its own style, without a flag column."""
         call_args = self.render(mock_console, 3)
 
-        self.assertIn('[dnf]', call_args[2])
-        self.assertIn('DNF', call_args[2])
+        self.assertIn('[dnf]', call_args[1])
+        self.assertIn('DNF', call_args[1])
         self.assertEqual(len(call_args), 3)
 
     @patch('term_timer.interface.console.console.print')
@@ -588,7 +589,7 @@ class TestSolveStatisticsReporterAttemptsListing(unittest.TestCase):
         """A +2 shows the time it costs, in its own style."""
         call_args = self.render(mock_console, 4)
 
-        self.assertIn('[plus-two]00:03.000[/plus-two]', call_args[2])
+        self.assertIn('[plus-two]00:03.000[/plus-two]', call_args[1])
 
     def render(self, mock_console: Mock, position: int) -> tuple[str, ...]:
         """
@@ -2507,6 +2508,151 @@ class TestSolveStatisticsReporterGraph(unittest.TestCase):
             for call in mock_plt.plot.call_args_list
         ]
         self.assertEqual(labels, ['Time'])
+
+
+class TestDrillStatistics(unittest.TestCase):
+    """Tests for DrillStatistics computed values."""
+
+    def setUp(self) -> None:
+        """Set up a drill session of three reps."""
+        self.stats = DrillStatistics(
+            [2 * SECOND, 1 * SECOND, 3 * SECOND],
+            [4.0, 8.0, 2.0],
+            [80, 60, 0],
+            qtm=10,
+        )
+
+    def test_fluencies_drop_the_unmeasured_reps(self) -> None:
+        """A rep without fluency data does not weigh on the fluencies."""
+        self.assertEqual(self.stats.rep_fluencies, [80, 60])
+
+    def test_total_moves(self) -> None:
+        """The moves of the session are the moves of a rep, times reps."""
+        self.assertEqual(self.stats.total_moves, 30)
+
+    def test_total_moves_without_metrics(self) -> None:
+        """Without a move count, the session reports no move at all."""
+        stats = DrillStatistics([2 * SECOND], [4.0], [80])
+
+        self.assertEqual(stats.total_moves, 0)
+
+    def test_tps_bounds_and_mean(self) -> None:
+        """TPS reads best, worst and mean across the reps."""
+        self.assertEqual(self.stats.best_tps, 8.0)
+        self.assertEqual(self.stats.worst_tps, 2.0)
+        self.assertEqual(self.stats.mean_tps, 14.0 / 3)
+
+    def test_fluency_bounds_and_mean(self) -> None:
+        """Fluency reads best, worst and mean across the measured reps."""
+        self.assertEqual(self.stats.best_fluency, 80)
+        self.assertEqual(self.stats.worst_fluency, 60)
+        self.assertEqual(self.stats.mean_fluency, 70)
+
+    def test_empty_session_has_no_tps_nor_fluency(self) -> None:
+        """A session without any rep falls back to zeroes."""
+        stats = DrillStatistics([], [], [])
+
+        self.assertEqual(stats.best_tps, 0.0)
+        self.assertEqual(stats.worst_tps, 0.0)
+        self.assertEqual(stats.mean_tps, 0.0)
+        self.assertEqual(stats.best_fluency, 0)
+        self.assertEqual(stats.worst_fluency, 0)
+        self.assertEqual(stats.mean_fluency, 0)
+
+
+class TestDrillStatisticsPrintSummary(unittest.TestCase):
+    """Tests for DrillStatistics print_summary and graphs."""
+
+    def setUp(self) -> None:
+        """Set up a drill session of three reps."""
+        self.stats = DrillStatistics(
+            [2 * SECOND, 1 * SECOND, 3 * SECOND],
+            [4.0, 8.0, 2.0],
+            [80, 60, 70],
+            qtm=10,
+        )
+
+    @staticmethod
+    def summary(stats: DrillStatistics) -> str:
+        """
+        Run print_summary and return the whole rendered summary.
+
+        Args:
+            stats: The drill statistics to render.
+
+        Returns:
+            Every printed line, joined.
+
+        """
+        with patch('term_timer.stats.plt'), \
+                patch('term_timer.interface.console.console.print') as mock:
+            stats.print_summary()
+
+        return '\n'.join(
+            ' '.join(str(arg) for arg in call[0])
+            for call in mock.call_args_list
+        )
+
+    def test_print_summary_reports_the_session(self) -> None:
+        """The summary reads reps, moves, total time, mean, best, worst."""
+        summary = self.summary(self.stats)
+
+        self.assertIn('[title]Drill summary[/title]', summary)
+        self.assertIn('[stats]Reps  :[/stats] [result]3[/result]', summary)
+        self.assertIn('[stats]Moves :[/stats] [result]30[/result]', summary)
+        self.assertIn('[result]00:06.000[/result]', summary)
+        self.assertIn('[result]00:02.000[/result]', summary)
+        self.assertIn('[green]00:01.000[/green]', summary)
+        self.assertIn('[red]00:03.000[/red]', summary)
+
+    def test_print_summary_shows_tps(self) -> None:
+        """Each aggregate line carries the matching TPS."""
+        summary = self.summary(self.stats)
+
+        self.assertIn('[tps]04.67 TPS[/tps]', summary)
+        self.assertIn('[tps]08.00 TPS[/tps]', summary)
+        self.assertIn('[tps]02.00 TPS[/tps]', summary)
+
+    def test_print_summary_shows_fluency(self) -> None:
+        """Measured fluencies are rendered next to the times."""
+        summary = self.summary(self.stats)
+
+        self.assertIn('[success]70% Fluency[/success]', summary)
+        self.assertIn('[success]80% Fluency[/success]', summary)
+        self.assertIn('[success]60% Fluency[/success]', summary)
+
+    def test_print_summary_without_fluency(self) -> None:
+        """A session without fluency data drops the fluency column."""
+        stats = DrillStatistics(
+            [2 * SECOND, 1 * SECOND],
+            [4.0, 8.0],
+            [0, 0],
+            qtm=10,
+        )
+        summary = self.summary(stats)
+
+        self.assertNotIn('Fluency', summary)
+        self.assertIn('[tps]06.00 TPS[/tps]', summary)
+
+    def test_print_summary_without_moves(self) -> None:
+        """Without a move count, the moves line is not printed."""
+        stats = DrillStatistics([2 * SECOND, 1 * SECOND], [4.0, 8.0], [80, 60])
+        summary = self.summary(stats)
+
+        self.assertNotIn('Moves', summary)
+
+    def test_print_summary_draws_both_graphs(self) -> None:
+        """The summary ends on the time graph and the TPS graph."""
+        with patch('term_timer.stats.plt') as mock_plt, \
+                patch('term_timer.interface.console.console.print'):
+            self.stats.print_summary()
+
+        labels = [
+            call.kwargs.get('label')
+            for call in mock_plt.plot.call_args_list
+        ]
+        self.assertEqual(labels, ['Time', 'TPS'])
+        self.assertEqual(mock_plt.show.call_count, 2)
 
 
 class TestTrainerStatisticsPrintSummary(unittest.TestCase):
