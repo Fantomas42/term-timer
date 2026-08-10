@@ -71,7 +71,6 @@ from term_timer.in_out import load_trainings
 from term_timer.in_out import save_trainings
 from term_timer.interface import SolveInterface
 from term_timer.interface.sounds import SOUND_PLAYER
-from term_timer.logger import spawn
 from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import FaceletAnalyser
 from term_timer.printer import print_cube_trainer
@@ -1582,56 +1581,26 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             dnf: bool = False,
     ) -> None:
         """Display instructions for saving or canceling the solve."""
+        controls = ['retry', 'discard', 'quit', 'save_quit']
+
         if dnf:
-            self.console.print(
-                'Press any key to rate [again]Again[/again] and continue,',
-                '[key](r)[/key] retry,',
-                '[key](z)[/key] discard,',
-                '[key](k)[/key] quit,',
-                '[key](q)[/key] rate & quit.',
-                style='consign',
-                end='',
-            )
+            # A DNF always rates Again, the rating keys are inoperative.
+            self.commands_line('DNF', 'any=Again', ['save', *controls])
             return
 
         if manual_rating:
-            self.console.print(
-                'Rate:',
-                '[key](1)[/key] Again,',
-                '[key](2)[/key] Hard,',
-                '[key](3)[/key] Good,',
-                '[key](4)[/key] Easy,',
-                '[key](r)[/key] retry,',
-                '[key](z)[/key] discard,',
-                '[key](k)[/key] quit,',
-                '[key](q)[/key] save & quit.',
-                style='consign',
-                end='',
-            )
+            # Rating is the point here, but any other key still saves,
+            # skipping FSRS: the lead stays on the rating keys.
+            self.commands_line('Rating', '', ['save', 'rate', *controls])
             return
 
         if self.fsrs_update:
-            self.console.print(
-                'Press any key to save and continue,',
-                '[key](1-4)[/key] override rating,',
-                '[key](r)[/key] retry,',
-                '[key](z)[/key] discard,',
-                '[key](k)[/key] quit,',
-                '[key](q)[/key] save & quit.',
-                style='consign',
-                end='',
+            self.commands_line(
+                'Saving', 'any=save', ['save', 'rate', *controls],
             )
             return
 
-        self.console.print(
-            'Press any key to save and continue,',
-            '[key](r)[/key] retry,',
-            '[key](z)[/key] discard,',
-            '[key](k)[/key] quit,',
-            '[key](q)[/key] save & quit.',
-            style='consign',
-            end='',
-        )
+        self.commands_line('Saving', 'any=save', ['save', *controls])
 
     @staticmethod
     def solve_stats_line(solve: Solve) -> str:
@@ -1846,7 +1815,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             old_card.stability if old_card is not None else None,
         )
 
-    async def save_training(  # noqa: C901, PLR0912
+    async def save_training(
             self,
             selected_case: Case,
             solve: Solve,
@@ -1869,26 +1838,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         """
         self.set_state('saving')
 
-        if self.bluetooth_interface:
-            getch_task = spawn(self.getch('save'), 'getch-save')
-            tasks = [
-                getch_task,
-                spawn(
-                    self.save_gesture_event.wait(),
-                    'event-save-gesture',
-                ),
-            ]
-            await self.wait_control(tasks)
-
-            char = ''
-            if not self.save_gesture_event.is_set():
-                result = getch_task.result()
-                char = result if isinstance(result, str) else ''
-            else:
-                self.clear_line(full=True)
-                char = self.save_gesture
-        else:
-            char = await self.getch('save')
+        char = await self.read_save_input()
 
         manual = self.fsrs_manual_rating
         manual_rating = (
@@ -1900,7 +1850,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         # Any key other than r/z/k saves; invalid keys in manual mode skip
         # FSRS. A DNF always rates Again. A retry is a discard that replays
         # the same case immediately, so it never reaches skip_fsrs.
-        retry = char == 'r'
+        retry = char == 'r' and self.retry_enabled
         discard = retry or char in {'z', 'k'}
         skip_fsrs = manual and manual_rating is None and not dnf
 
