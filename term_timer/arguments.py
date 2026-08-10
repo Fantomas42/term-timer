@@ -372,6 +372,7 @@ def set_analysis_arguments(
         steps: bool = True,
         rotations: bool = False,
         doctor_description: str = 'doctor main diagnostic after analysis',
+        time_graph_description: str = 'the time scatter graph of the solve',
 ) -> ArgumentParser._ArgumentGroup:
     """
     Add solve analysis and reporting arguments to parser.
@@ -423,7 +424,7 @@ def set_analysis_arguments(
     )
     add_toggle_argument(
         analysis, '-t', 'time-graph',
-        'the time scatter graph of the solve',
+        time_graph_description,
         default=show_time_graph,
     )
     add_toggle_argument(
@@ -578,7 +579,13 @@ def ghost_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
     set_bluetooth_arguments(parser)
     set_replay_arguments(parser)
-    set_analysis_arguments(parser)
+    set_analysis_arguments(
+        parser,
+        time_graph_description=(
+            'the time scatter graph of the solve '
+            'and the tendency graph of the attempts'
+        ),
+    )
 
     session = set_session_arguments(parser)
     add_free_play_argument(
@@ -648,7 +655,13 @@ def daily_arguments(subparsers: '_SubParsers') -> ArgumentParser:
 
     set_bluetooth_arguments(parser)
     set_replay_arguments(parser)
-    set_analysis_arguments(parser)
+    set_analysis_arguments(
+        parser,
+        time_graph_description=(
+            'the time scatter graph of the solve '
+            'and the tendency graph of the attempts'
+        ),
+    )
 
     session = parser.add_argument_group('Session')
     add_cube_size_argument(session)

@@ -164,6 +164,10 @@ def print_scramble_review(
     say so, and the graph draws them. Its ids address the attempts in
     ``--detail``.
 
+    The tendency graph follows the time graph toggle, as the doctor
+    follows its own: a command hiding the time graphs of its solves
+    hides the one drawing them across the round too.
+
     Args:
         options: The parsed command options.
         stack: The attempts recorded on the scramble.
@@ -178,7 +182,9 @@ def print_scramble_review(
     stats = SolveStatisticsReporter(options.cube, stack)
     stats.print_summary()
     stats.attempts_listing()
-    stats.graph('Tendency')
+
+    if options.show_time_graph:
+        stats.graph('Tendency')
 
     print_scramble_doctor(options, stack)
 
@@ -319,7 +325,8 @@ async def run_seeded_race(
     The ghost is re-elected after every attempt, so beating it moves the
     target for the next one. The closing summary covers the whole stack,
     seeding solves included, and is skipped while the session holds a
-    single attempt: there is nothing to compare yet.
+    single attempt: there is nothing to compare yet. Its tendency graph
+    follows the time graph toggle, as it does in the review.
 
     Args:
         instance: The timer to run.
@@ -348,6 +355,8 @@ async def run_seeded_race(
                 instance.cube_size, instance.stack,
             )
             stats.print_summary()
-            stats.graph('Tendency')
+
+            if options.show_time_graph:
+                stats.graph('Tendency')
 
     return outcome.code

@@ -468,11 +468,17 @@ class TestGhostLibrary(unittest.TestCase):
         """
         Parse a ghost command line into options.
 
+        The tendency graph of the review follows the time graph toggle,
+        whose default is read from the local display config: it is
+        pinned here so the review tests never depend on it.
+
         Returns:
             The parsed namespace.
 
         """
-        return get_parser().parse_args(['ghost', *args])
+        options = get_parser().parse_args(['ghost', *args])
+        options.show_time_graph = True
+        return options
 
     def summarize(self, pool: list[Solve]) -> tuple[int, str]:
         """

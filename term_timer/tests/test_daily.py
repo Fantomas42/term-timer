@@ -82,11 +82,17 @@ class TestDailyReview(unittest.TestCase):
         """
         Parse a daily command line into options.
 
+        The tendency graph of the review follows the time graph toggle,
+        whose default is read from the local display config: it is
+        pinned here so the review tests never depend on it.
+
         Returns:
             The parsed namespace.
 
         """
-        return get_parser().parse_args(['daily', '-d', DAY, *args])
+        options = get_parser().parse_args(['daily', '-d', DAY, *args])
+        options.show_time_graph = True
+        return options
 
     def run_command(self, *args: str) -> tuple[int, str]:
         """

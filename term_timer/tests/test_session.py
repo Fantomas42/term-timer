@@ -19,9 +19,11 @@ from term_timer.interface.console import theme as console_theme
 from term_timer.scripts.commands import session as session_mod
 from term_timer.scripts.commands.session import build_race_timer
 from term_timer.scripts.commands.session import print_scramble_doctor
+from term_timer.scripts.commands.session import print_scramble_review
 from term_timer.scripts.commands.session import race_header
 from term_timer.scripts.commands.session import solve_session
 from term_timer.solve import Solve
+from term_timer.stats import SolveStatisticsReporter
 from term_timer.tests.test_ghost import SHORT_SCRAMBLE
 from term_timer.tests.test_ghost import make_solve
 from term_timer.timer import Timer
@@ -440,3 +442,72 @@ class TestPrintScrambleDoctor(unittest.TestCase):
 
         self.assertEqual(output, '')
         self.assertEqual(windows, [])
+
+
+class TestPrintScrambleReview(unittest.TestCase):
+    """Tests for the review of the attempts on a raced scramble."""
+
+    @staticmethod
+    def parse(*args: str) -> Namespace:
+        """
+        Parse a ghost command line into options, doctor left out.
+
+        Returns:
+            The parsed namespace.
+
+        """
+        options = get_parser().parse_args(['ghost', '1', *args])
+        options.show_doctor = False
+        return options
+
+    @staticmethod
+    def review(options: Namespace) -> list[str]:
+        """
+        Run the review against a stubbed statistics reporter.
+
+        Returns:
+            The reporter methods it called, in order.
+
+        """
+        recorder = RichConsole(
+            record=True, width=120, theme=Theme(console_theme),
+        )
+        manager = mock.Mock()
+
+        with (
+                mock.patch.object(session_mod, 'console', recorder),
+                mock.patch.object(
+                    SolveStatisticsReporter, 'print_summary',
+                    manager.print_summary,
+                ),
+                mock.patch.object(
+                    SolveStatisticsReporter, 'attempts_listing',
+                    manager.attempts_listing,
+                ),
+                mock.patch.object(
+                    SolveStatisticsReporter, 'graph', manager.graph,
+                ),
+        ):
+            print_scramble_review(options, [make_solve()], 'Round')
+
+        return [name for name, _args, _kwargs in manager.mock_calls]
+
+    def test_tendency_graph_closes_the_review(self) -> None:
+        """The graph draws the attempts the listing names."""
+        options = self.parse()
+        options.show_time_graph = True
+
+        self.assertEqual(
+            self.review(options),
+            ['print_summary', 'attempts_listing', 'graph'],
+        )
+
+    def test_time_graph_disabled_drops_the_tendency(self) -> None:
+        """The time graph toggle silences the tendency graph too."""
+        options = self.parse()
+        options.show_time_graph = False
+
+        self.assertEqual(
+            self.review(options),
+            ['print_summary', 'attempts_listing'],
+        )
