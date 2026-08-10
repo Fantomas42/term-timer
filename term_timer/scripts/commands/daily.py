@@ -10,11 +10,12 @@ from term_timer.in_out import load_solves
 from term_timer.interface.console import console
 from term_timer.scrambler import scrambler
 from term_timer.scripts.commands.session import build_race_timer
-from term_timer.scripts.commands.session import print_scramble_doctor
+from term_timer.scripts.commands.session import print_scramble_details
+from term_timer.scripts.commands.session import print_scramble_review
 from term_timer.scripts.commands.session import race_header
 from term_timer.scripts.commands.session import run_seeded_race
+from term_timer.solve import Solve
 from term_timer.stats import DailySummaryReporter
-from term_timer.stats import SolveStatisticsReporter
 
 
 def parse_date(raw: str) -> date:
@@ -30,9 +31,30 @@ def parse_date(raw: str) -> date:
     return date.today()  # noqa: DTZ011
 
 
+def daily_stack(options: Namespace, date_str: str) -> list[Solve] | None:
+    """
+    Load the attempts recorded on a daily scramble.
+
+    Prints a warning and returns None when the day holds none.
+
+    Returns:
+        The attempts of the day, or None.
+
+    """
+    stack = load_solves(options.cube, date_str, directory=DAILY_DIRECTORY)
+    if not stack:
+        console.print(
+            f'🤔 No solves recorded for daily { date_str }.',
+            style='warning',
+        )
+        return None
+
+    return stack
+
+
 def daily_review(options: Namespace, date_str: str) -> int:
     """
-    Show stats, graph and diagnostics for a single daily session.
+    Show stats, listing, graph and diagnostics for a daily session.
 
     Every attempt of the day shares the daily scramble, so the review
     closes on the doctor report of that scramble.
@@ -41,27 +63,33 @@ def daily_review(options: Namespace, date_str: str) -> int:
         Exit code (0 for success, 1 if no solves found).
 
     """
-    cube = options.cube
-    stack = load_solves(cube, date_str, directory=DAILY_DIRECTORY)
-    if not stack:
-        console.print(
-            f'🤔 No solves recorded for daily { date_str }.',
-            style='warning',
-        )
+    stack = daily_stack(options, date_str)
+    if stack is None:
         return 1
 
-    console.print(
-        f'[title]Daily summary for { date_str } on '
-        f'{ cube }x{ cube }x{ cube }[/title]',
+    cube = options.cube
+
+    return print_scramble_review(
+        options,
+        stack,
+        f'Daily summary for { date_str } on { cube }x{ cube }x{ cube }',
     )
 
-    stats = SolveStatisticsReporter(cube, stack)
-    stats.print_summary()
-    stats.graph('Tendency')
 
-    print_scramble_doctor(options, stack)
+def daily_detail(options: Namespace, date_str: str) -> int:
+    """
+    Show the detail of the daily attempts named by --detail.
 
-    return 0
+    Returns:
+        Exit code (0 for success, 1 if no solves found or an id names
+        no attempt).
+
+    """
+    stack = daily_stack(options, date_str)
+    if stack is None:
+        return 1
+
+    return print_scramble_details(options, stack)
 
 
 def daily_summary(cube: int) -> int:
@@ -86,6 +114,31 @@ def daily_summary(cube: int) -> int:
     return 0
 
 
+def daily_report(options: Namespace, date_str: str) -> int | None:
+    """
+    Answer the reading modes of the command, before any scramble.
+
+    The participation summary comes first, then the detail of an
+    attempt, then the review it is read from: naming an attempt implies
+    the review it belongs to.
+
+    Returns:
+        The exit code of the mode asked for, or None when none is and
+        the command has a scramble to run.
+
+    """
+    if options.summary:
+        return daily_summary(options.cube)
+
+    if options.detail:
+        return daily_detail(options, date_str)
+
+    if options.review:
+        return daily_review(options, date_str)
+
+    return None
+
+
 async def daily(options: Namespace) -> int:
     """
     Run the daily scramble session.
@@ -98,11 +151,9 @@ async def daily(options: Namespace) -> int:
     daily_date = parse_date(options.date)
     date_str = daily_date.strftime('%Y-%m-%d')
 
-    if options.summary:
-        return daily_summary(cube)
-
-    if options.review:
-        return daily_review(options, date_str)
+    report = daily_report(options, date_str)
+    if report is not None:
+        return report
 
     rng = Random(date_str)  # noqa: S311
     daily_scramble, _ = scrambler(cube, 0, rng=rng)

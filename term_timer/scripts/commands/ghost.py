@@ -13,11 +13,11 @@ from term_timer.in_out import load_solves
 from term_timer.in_out import scramble_to_key
 from term_timer.interface.console import console
 from term_timer.scripts.commands.session import build_race_timer
-from term_timer.scripts.commands.session import print_scramble_doctor
+from term_timer.scripts.commands.session import print_scramble_details
+from term_timer.scripts.commands.session import print_scramble_review
 from term_timer.scripts.commands.session import race_header
 from term_timer.scripts.commands.session import run_seeded_race
 from term_timer.solve import Solve
-from term_timer.stats import SolveStatisticsReporter
 
 KEY_MINIMUM: Final[int] = 4
 KEY_SHORT: Final[int] = 8
@@ -267,20 +267,22 @@ def build_race_stack(
     return stack
 
 
-def ghost_review(options: Namespace) -> int:
+def ghost_stack(
+        options: Namespace,
+) -> tuple[GhostReference, list[Solve]] | None:
     """
-    Show stats, graph and diagnostics for the scramble's ghost file.
+    Resolve the raced scramble and load the attempts stored on it.
 
-    Every attempt of the file races the same scramble, so the review
-    closes on the doctor report of that scramble.
+    Prints a warning and returns None when the reference resolves to
+    nothing or when the scramble has never been raced.
 
     Returns:
-        Exit code (0 for success, 1 if the scramble has no attempts).
+        The reference and its attempts, or None.
 
     """
     reference = load_reference(options)
     if reference is None:
-        return 1
+        return None
 
     stack = load_solves(
         options.cube, reference.key, directory=GHOSTS_DIRECTORY,
@@ -290,19 +292,49 @@ def ghost_review(options: Namespace) -> int:
             '🤔 No ghost attempts recorded yet for this scramble.',
             style='warning',
         )
+        return None
+
+    return reference, stack
+
+
+def ghost_review(options: Namespace) -> int:
+    """
+    Show stats, listing, graph and diagnostics for a ghost file.
+
+    Every attempt of the file races the same scramble, so the review
+    closes on the doctor report of that scramble.
+
+    Returns:
+        Exit code (0 for success, 1 if the scramble has no attempts).
+
+    """
+    resolved = ghost_stack(options)
+    if resolved is None:
         return 1
 
-    console.print(
-        f'[title]Summary on Ghost { reference.label }[/title]',
+    reference, stack = resolved
+
+    return print_scramble_review(
+        options,
+        stack,
+        f'Summary on Ghost { reference.label }',
     )
 
-    round_stats = SolveStatisticsReporter(options.cube, stack)
-    round_stats.print_summary()
-    round_stats.graph('Tendency')
 
-    print_scramble_doctor(options, stack)
+def ghost_detail(options: Namespace) -> int:
+    """
+    Show the detail of the ghost attempts named by --detail.
 
-    return 0
+    Returns:
+        Exit code (0 for success, 1 if the scramble has no attempts or
+        an id names no attempt).
+
+    """
+    resolved = ghost_stack(options)
+    if resolved is None:
+        return 1
+
+    return print_scramble_details(options, resolved[1])
 
 
 def reference_ids(pool: list[Solve]) -> dict[int, int]:
@@ -399,6 +431,31 @@ def ghost_summary(options: Namespace) -> int:
     return 0
 
 
+def ghost_report(options: Namespace) -> int | None:
+    """
+    Answer the reading modes of the command, before any race.
+
+    The library comes first, then the detail of an attempt, then the
+    review it is read from: naming an attempt implies the review it
+    belongs to.
+
+    Returns:
+        The exit code of the mode asked for, or None when none is and
+        the command has a race to run.
+
+    """
+    if options.summary:
+        return ghost_summary(options)
+
+    if options.detail:
+        return ghost_detail(options)
+
+    if options.review:
+        return ghost_review(options)
+
+    return None
+
+
 async def ghost(options: Namespace) -> int:
     """
     Race a live solve against a recorded ghost on the same scramble.
@@ -409,11 +466,9 @@ async def ghost(options: Namespace) -> int:
     """
     cube = options.cube
 
-    if options.summary:
-        return ghost_summary(options)
-
-    if options.review:
-        return ghost_review(options)
+    report = ghost_report(options)
+    if report is not None:
+        return report
 
     reference = load_reference(options)
     if reference is None:

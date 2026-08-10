@@ -601,6 +601,18 @@ def ghost_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
     ghost.add_argument(
+        '-n', '--detail',
+        nargs='+',
+        type=int,
+        default=[],
+        metavar='SOLVE_ID',
+        help=(
+            'Show the detail of one or more attempts on the scramble,\n'
+            'named by their id in the review listing. Implies --review.\n'
+            'Default: none.'
+        ),
+    )
+    ghost.add_argument(
         '-l', '--summary',
         action='store_true',
         help=(
@@ -660,6 +672,18 @@ def daily_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         help=(
             'Review the stats of the daily session for the given date.\n'
             'Default: False.'
+        ),
+    )
+    date.add_argument(
+        '-n', '--detail',
+        nargs='+',
+        type=int,
+        default=[],
+        metavar='SOLVE_ID',
+        help=(
+            'Show the detail of one or more attempts of the day, named\n'
+            'by their id in the review listing. Implies --review.\n'
+            'Default: none.'
         ),
     )
     date.add_argument(

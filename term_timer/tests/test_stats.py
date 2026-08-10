@@ -9,6 +9,7 @@ from datetime import datetime
 from datetime import timedelta
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import cast
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -515,6 +516,98 @@ class TestSolveStatisticsReporterListing(unittest.TestCase):
 
         # The flag should be included
         self.assertIn('[plus-two]+2[/plus-two]', call_args[4])
+
+
+class TestSolveStatisticsReporterAttemptsListing(unittest.TestCase):
+    """Tests for SolveStatisticsReporter attempts_listing method."""
+
+    def setUp(self) -> None:
+        """Set up test cases with attempts on a single scramble."""
+        self.solves = [
+            Solve(1000000000, 2 * SECOND, 'F R U', ''),
+            Solve(3000000000, 1 * SECOND, 'F R U', ''),
+            Solve(5000000000, 1 * SECOND, 'F R U', DNF),
+            Solve(7000000000, 1 * SECOND, 'F R U', '+2'),
+        ]
+        self.listing = SolveStatisticsReporter(3, self.solves)
+
+    @patch('term_timer.interface.console.console.print')
+    def test_lists_every_attempt(self, mock_console: Mock) -> None:
+        """Every attempt gets a line, under the Attempts header."""
+        self.listing.attempts_listing()
+
+        self.assertEqual(mock_console.call_count, 5)
+        self.assertIn('Attempts', mock_console.call_args_list[0][0][0])
+
+    @patch('term_timer.interface.console.console.print')
+    def test_numbers_attempts_chronologically(
+            self, mock_console: Mock,
+    ) -> None:
+        """The oldest attempt opens the listing as #1."""
+        self.listing.attempts_listing()
+
+        indexes = [
+            call[0][0] for call in mock_console.call_args_list[1:]
+        ]
+
+        self.assertIn('#1', indexes[0])
+        self.assertIn('#4', indexes[-1])
+
+    @patch('term_timer.interface.console.console.print')
+    def test_columns_are_date_then_time(self, mock_console: Mock) -> None:
+        """A line reads id, date, then time, and carries no scramble."""
+        self.listing.attempts_listing()
+
+        call_args = mock_console.call_args_list[1][0]
+
+        self.assertIn('#1', call_args[0])
+        self.assertRegex(call_args[1], r'^\[date\]\d{4}-\d{2}-\d{2} ')
+        self.assertIn('00:02.000', call_args[2])
+        self.assertNotIn('F R U', ' '.join(call_args))
+
+    @patch('term_timer.interface.console.console.print')
+    def test_best_attempt_is_highlighted(self, mock_console: Mock) -> None:
+        """The best time of the round wears the success style."""
+        call_args = self.render(mock_console, 2)
+
+        self.assertIn('[success]00:01.000[/success]', call_args[2])
+
+    @patch('term_timer.interface.console.console.print')
+    def test_dnf_attempt_reads_dnf(self, mock_console: Mock) -> None:
+        """A DNF reads DNF in its own style, without a flag column."""
+        call_args = self.render(mock_console, 3)
+
+        self.assertIn('[dnf]', call_args[2])
+        self.assertIn('DNF', call_args[2])
+        self.assertEqual(len(call_args), 3)
+
+    @patch('term_timer.interface.console.console.print')
+    def test_plus_two_attempt_shows_penalised_time(
+            self, mock_console: Mock,
+    ) -> None:
+        """A +2 shows the time it costs, in its own style."""
+        call_args = self.render(mock_console, 4)
+
+        self.assertIn('[plus-two]00:03.000[/plus-two]', call_args[2])
+
+    def render(self, mock_console: Mock, position: int) -> tuple[str, ...]:
+        """
+        Render the listing and return the line of an attempt.
+
+        Args:
+            mock_console: The patched console.
+            position: The 1-based position of the attempt.
+
+        Returns:
+            The arguments the line was printed with.
+
+        """
+        self.listing.attempts_listing()
+
+        return cast(
+            'tuple[str, ...]',
+            mock_console.call_args_list[position][0],
+        )
 
 
 class TestStatisticsToolsComprehensive(unittest.TestCase):

@@ -1,4 +1,5 @@
 """Tests for ghost racing mode."""
+import asyncio
 import io
 import tempfile
 import unittest
@@ -10,6 +11,7 @@ from unittest.mock import patch
 from rich.console import Console as RichConsole
 from rich.theme import Theme
 
+from term_timer import stats as stats_mod
 from term_timer.arguments import get_parser
 from term_timer.formatter import format_ghost_delta
 from term_timer.in_out import save_solves
@@ -23,6 +25,7 @@ from term_timer.interface.terminal import Terminal
 from term_timer.methods import get_method_analyser
 from term_timer.methods.annotations import TrackedStep
 from term_timer.scripts.commands import ghost as ghost_mod
+from term_timer.scripts.commands import session as session_mod
 from term_timer.solve import Solve
 
 SHORT_SCRAMBLE = "L2 D' L' F' L'"
@@ -617,6 +620,78 @@ class TestGhostLibrary(unittest.TestCase):
                 ghost_mod, 'load_all_solves', return_value=[make_solve()],
         ):
             self.assertEqual(ghost_mod.ghost_review(options), 1)
+
+    def run_command(self, *args: str) -> tuple[int, str]:
+        """
+        Run a ghost command against a stored scramble.
+
+        The reference seeding the file is the sole solve of the pool, so
+        it answers to the id 1.
+
+        Returns:
+            The exit code and the rendered output.
+
+        """
+        recorder = RichConsole(
+            record=True, width=120, theme=Theme(console_theme),
+        )
+        options = self.parse(*args)
+        with (
+                patch.object(session_mod, 'console', recorder),
+                patch.object(ghost_mod, 'console', recorder),
+                patch.object(stats_mod, 'console', recorder),
+                patch.object(
+                    ghost_mod, 'load_all_solves', return_value=[make_solve()],
+                ),
+        ):
+            code = asyncio.run(ghost_mod.ghost(options))
+
+        return code, recorder.export_text()
+
+    def store_attempts(self) -> None:
+        """Store two attempts on the scramble of the reference solve."""
+        save_solves(
+            3,
+            scramble_to_key(SHORT_SCRAMBLE),
+            [make_solve(), make_solve(date=1766883500, time=1_000_000_000)],
+            directory=self.directory,
+        )
+
+    def test_review_lists_the_attempts(self) -> None:
+        """The review lists the attempts backing its statistics."""
+        self.store_attempts()
+
+        code, output = self.run_command('1', '-r')
+
+        self.assertEqual(code, 0)
+        self.assertIn('Attempts', output)
+        self.assertIn('#2', output)
+
+    def test_detail_shows_a_single_attempt(self) -> None:
+        """--detail prints the detail alone, without the review."""
+        self.store_attempts()
+
+        code, output = self.run_command('1', '-n', '2')
+
+        self.assertEqual(code, 0)
+        self.assertIn('Detail for 3x3x3 #2', output)
+        self.assertNotIn('Attempts', output)
+        self.assertNotIn('Summary on Ghost', output)
+
+    def test_detail_of_an_unknown_attempt(self) -> None:
+        """An id naming no attempt is reported."""
+        self.store_attempts()
+
+        code, output = self.run_command('1', '-n', '9')
+
+        self.assertEqual(code, 1)
+        self.assertIn('Invalid solve #9', output)
+
+    def test_detail_without_attempts(self) -> None:
+        """Detailing a scramble never raced warns."""
+        code, _output = self.run_command('1', '-n', '1')
+
+        self.assertEqual(code, 1)
 
 
 class TestGhostDisplay(unittest.TestCase):

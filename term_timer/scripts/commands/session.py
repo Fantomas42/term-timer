@@ -151,6 +151,90 @@ def print_scramble_doctor(options: Namespace, stack: list[Solve]) -> None:
     )
 
 
+def print_scramble_review(
+        options: Namespace,
+        stack: list[Solve],
+        title: str,
+) -> int:
+    """
+    Print the review of the attempts recorded on a fixed scramble.
+
+    The listing sits between the summary and the tendency graph: the
+    aggregate answers how the round went, the listing which attempts
+    say so, and the graph draws them. Its ids address the attempts in
+    ``--detail``.
+
+    Args:
+        options: The parsed command options.
+        stack: The attempts recorded on the scramble.
+        title: The heading naming the scramble reviewed.
+
+    Returns:
+        Exit code (0 for success).
+
+    """
+    console.print(f'[title]{ title }[/title]')
+
+    stats = SolveStatisticsReporter(options.cube, stack)
+    stats.print_summary()
+    stats.attempts_listing()
+    stats.graph('Tendency')
+
+    print_scramble_doctor(options, stack)
+
+    return 0
+
+
+def print_scramble_details(
+        options: Namespace,
+        stack: list[Solve],
+) -> int:
+    """
+    Print the detail of the attempts named by ``--detail``.
+
+    The ids are the ones the review listing prints, a 1-based position
+    in the scramble file. An id naming no attempt is reported and the
+    remaining ones are still printed, an unusable id in a list being no
+    reason to withhold the details that resolve.
+
+    Args:
+        options: The parsed command options.
+        stack: The attempts recorded on the scramble.
+
+    Returns:
+        Exit code (0 for success, 1 if an id names no attempt).
+
+    """
+    stats = SolveStatisticsReporter(options.cube, stack)
+
+    code = 0
+    for solve_id in options.detail:
+        if solve_id < 1 or solve_id > len(stack):
+            console.print(
+                f'Invalid solve #{ solve_id }',
+                style='warning',
+            )
+            code = 1
+            continue
+
+        stats.detail(
+            solve_id,
+            options.method,
+            options.orientation,
+            disable_rotations=False,
+            show_highlights=options.show_highlights,
+            show_doctor=options.show_doctor,
+            show_cube=options.show_cube,
+            show_reconstruction=options.show_reconstruction,
+            show_tps_graph=options.show_tps_graph,
+            show_time_graph=options.show_time_graph,
+            show_fluency_graph=options.show_fluency_graph,
+            show_recognition_graph=options.show_recognition_graph,
+        )
+
+    return code
+
+
 def build_race_timer(  # noqa: PLR0913
         options: Namespace, *,
         session: str,

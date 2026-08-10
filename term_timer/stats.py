@@ -1140,6 +1140,43 @@ class SolveStatisticsReporter(Statistics):
 
         return True
 
+    def attempts_listing(self) -> None:
+        """
+        List the attempts recorded on a fixed scramble, oldest first.
+
+        Every attempt shares the scramble of the file, so the scramble
+        column of the general listing would repeat itself on each line
+        and is dropped: what is left reads as the log of the round.
+
+        The penalty travels in the time itself — a DNF reads DNF, a +2
+        reads its penalised time — so no flag column trails the lines
+        either. The index is the position of the attempt in the file,
+        the very one ``detail`` takes as argument.
+        """
+        max_count = compute_padding(len(self.stack)) + 1
+
+        console.print('[stats]Attempts :[/stats]')
+
+        for index, solve in enumerate(self.stack, start=1):
+            date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')
+
+            time_klass = 'result'
+            if solve.flag == DNF:
+                time_klass = 'dnf'
+            elif solve.flag == PLUS_TWO:
+                time_klass = 'plus-two'
+            elif solve.final_time == self.best:
+                time_klass = 'success'
+            elif solve.final_time == self.worst:
+                time_klass = 'warning'
+
+            console.print(
+                f'[localhost]{ f"#{ index }":{" "}>{ max_count }}[/localhost]',
+                f'[{ time_klass }]{ format_time(solve.final_time) }'
+                f'[/{ time_klass }]',
+                f'[mute]{ date }[/mute]',
+            )
+
     def listing(  # noqa: C901
             self, limit: int, sorting: str,
             filters: ListingFilters | None = None) -> None:

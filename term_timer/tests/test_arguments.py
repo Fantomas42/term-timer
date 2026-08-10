@@ -15,6 +15,7 @@ from term_timer.arguments import detail_arguments
 from term_timer.arguments import doctor_arguments
 from term_timer.arguments import edit_arguments
 from term_timer.arguments import get_arguments
+from term_timer.arguments import get_parser
 from term_timer.arguments import graph_arguments
 from term_timer.arguments import import_arguments
 from term_timer.arguments import list_arguments
@@ -93,6 +94,48 @@ class TestCommandAliases(unittest.TestCase):
         self.assertEqual(COMMAND_ALIASES['ghost'], ['gh', 'p'])
         self.assertEqual(COMMAND_RESOLUTIONS['gh'], 'ghost')
         self.assertEqual(COMMAND_RESOLUTIONS['p'], 'ghost')
+
+
+class TestReviewDetailArguments(unittest.TestCase):
+    """Tests for the --detail flag of the daily and ghost commands."""
+
+    def test_daily_detail_defaults_to_nothing(self) -> None:
+        """A daily command asks for no detail by default."""
+        options = get_parser().parse_args(['daily'])
+
+        self.assertEqual(options.detail, [])
+
+    def test_ghost_detail_defaults_to_nothing(self) -> None:
+        """A ghost command asks for no detail by default."""
+        options = get_parser().parse_args(['ghost'])
+
+        self.assertEqual(options.detail, [])
+
+    def test_daily_detail_takes_several_ids(self) -> None:
+        """The daily detail flag collects every id given."""
+        options = get_parser().parse_args(['daily', '-n', '1', '3'])
+
+        self.assertEqual(options.detail, [1, 3])
+
+    def test_ghost_detail_keeps_the_reference(self) -> None:
+        """The ghost detail flag leaves the reference untouched."""
+        options = get_parser().parse_args(['ghost', '70a2', '-n', '2'])
+
+        self.assertEqual(options.reference, '70a2')
+        self.assertEqual(options.detail, [2])
+
+    def test_ghost_review_still_takes_the_reference(self) -> None:
+        """--review remains a flag, the id it follows is the reference."""
+        options = get_parser().parse_args(['ghost', '-r', '5'])
+
+        self.assertTrue(options.review)
+        self.assertEqual(options.reference, '5')
+        self.assertEqual(options.detail, [])
+
+    def test_detail_requires_an_id(self) -> None:
+        """A detail flag given alone is refused, never silently ignored."""
+        with self.assertRaises(SystemExit):
+            get_parser().parse_args(['daily', '-n'])
 
 
 class TestSessionArguments(unittest.TestCase):
