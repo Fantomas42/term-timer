@@ -39,6 +39,7 @@ SERIES_KINDS: Final = ('mo', 'ao', 'mb', 'mw')
 SERIES_AVERAGE_KINDS: Final = ('mo', 'ao')
 
 DEFAULT_CONFIG: Final = """[timer]
+motto = "Go Go Go:"
 sound = "audio"
 countdown = 0.0
 metronome = 0.0
@@ -231,6 +232,14 @@ STATS_GRAPH_SERIES: list[tuple[str, int]] = parse_series(
 TIMER_CONFIG = CONFIG.get('timer', {})
 
 TIMER_SOUND: str = TIMER_CONFIG.get('sound', 'audio')
+
+# The motto carries its own separator, so that a custom one is free to
+# drop the colon or to be an emoji. Its padding is meaningful too and
+# is never stripped: it is what aligns the column.
+TIMER_MOTTO: str = (
+    os.getenv('TERM_TIMER_MOTTO', '')
+    or str(TIMER_CONFIG.get('motto', 'Go Go Go:'))
+)
 
 DISPLAY_CONFIG = CONFIG.get('display', {})
 

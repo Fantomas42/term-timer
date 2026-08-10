@@ -8,8 +8,10 @@ from cubing_algs.constants import ORIENTATION_FACE_MOVES
 from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.vcube import VCube
+from rich.markup import escape
 
 from term_timer.config import CUBE_ORIENTATION
+from term_timer.config import TIMER_MOTTO
 from term_timer.constants import GHOST_EMOJI
 from term_timer.constants import GHOST_SPLIT_WIDTH
 from term_timer.constants import REFRESH
@@ -110,9 +112,23 @@ class StopWatch:
         self.ghost: Solve | None = None
         self.ghost_splits: tuple[tuple[int, ...], ...] = ()
         self.ghost_emoji: str = GHOST_EMOJI
+        self.motto: str = TIMER_MOTTO
 
         self.solve_started_event = asyncio.Event()
         self.solve_completed_event = asyncio.Event()
+
+    def format_motto(self, style: str) -> str:
+        """
+        Give the styled motto opening every stopwatch line.
+
+        Args:
+            style: Style of the current time threshold.
+
+        Returns:
+            The motto wrapped in the style markup.
+
+        """
+        return f'[{ style }]{ escape(self.motto) }[/{ style }]'
 
     def print_step(  # noqa: PLR0913
             self,
@@ -159,7 +175,7 @@ class StopWatch:
                 extras += f' [{ style_v }]{ verdict }[/{ style_v }]'
 
         self.console.print(
-            f'[{ style }]Go Go Go:[/{ style }]',
+            self.format_motto(style),
             f'[result]{ format_time(elapsed_time) }[/result]',
             f'[step]{ padded_name }[/step]{ extras }',
         )
@@ -350,7 +366,7 @@ class StopWatch:
             self.previous_style = style
             self.clear_line(full=False)
             self.console.print(
-                f'[{ style }]Go Go Go:[/{ style }]',
+                self.format_motto(style),
                 f'[result]{ format_time(elapsed_time) }[/result]',
                 end='',
             )

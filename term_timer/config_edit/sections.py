@@ -179,6 +179,17 @@ class TimerSection(ConfigSection):
 
         """
         with Grid():
+            yield Static('Motto', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Input(
+                    id='motto',
+                    placeholder='Go Go Go:',
+                )
+                yield Static(
+                    'Motto opening the stopwatch lines, separator included',
+                    classes='field-help',
+                )
+
             yield Static('Sound', classes='field-label')
             with Vertical(classes='field-container'):
                 yield Select(
@@ -235,6 +246,9 @@ class TimerSection(ConfigSection):
         """Load timer configuration."""
         timer_config = CONFIG.get('timer', {})
 
+        motto = self.query_one('#motto', Input)
+        motto.value = timer_config.get('motto', 'Go Go Go:')
+
         sound = self.query_one('#sound', Select)
         sound.value = timer_config.get('sound', 'audio')
 
@@ -254,9 +268,11 @@ class TimerSection(ConfigSection):
         Get timer configuration data.
 
         Returns:
-            Timer configuration dictionary with countdown, metronome and steps.
+            Timer configuration dictionary with motto, countdown,
+            metronome and steps.
 
         """
+        motto = self.query_one('#motto', Input)
         sound = self.query_one('#sound', Select)
         countdown = self.query_one('#countdown', Input)
         metronome = self.query_one('#metronome', Input)
@@ -264,6 +280,7 @@ class TimerSection(ConfigSection):
 
         return {
             'timer': {
+                'motto': motto.value or 'Go Go Go:',
                 'sound': str(sound.value),
                 'countdown': float(countdown.value or '0.0'),
                 'metronome': float(metronome.value or '0.0'),
