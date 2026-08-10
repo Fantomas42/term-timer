@@ -109,6 +109,7 @@ def daily_summary(cube: int) -> int:
         return 1
     summary = DailySummaryReporter(cube, stack)
     summary.print_summary()
+    console.print()
     summary.punchcard()
     summary.days_table()
     return 0

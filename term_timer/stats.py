@@ -966,8 +966,13 @@ class SolveStatisticsReporter(Statistics):
 
         return sum(scores) / len(scores)
 
-    def print_summary(self, prefix: str = '', style: str = 'stats', *,
-                      show_title: bool = False) -> None:
+    def print_summary(
+            self,
+            prefix: str = '',
+            style: str = 'stats',
+            *,
+            show_title: bool = False,
+    ) -> None:
         """
         Display comprehensive statistics summary to the console.
 
@@ -1155,7 +1160,7 @@ class SolveStatisticsReporter(Statistics):
         """
         max_count = compute_padding(len(self.stack)) + 1
 
-        console.print('[stats]Attempts :[/stats]')
+        console.print('[title]Solve Attempts[/title]')
 
         for index, solve in enumerate(self.stack, start=1):
             date = solve.datetime.astimezone().strftime('%Y-%m-%d %H:%M')

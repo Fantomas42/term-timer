@@ -180,7 +180,8 @@ def print_scramble_review(
     console.print(f'[title]{ title }[/title]')
 
     stats = SolveStatisticsReporter(options.cube, stack)
-    stats.print_summary()
+    stats.print_summary('Solves ')
+    console.print()
     stats.attempts_listing()
 
     if options.show_time_graph:
@@ -323,10 +324,11 @@ async def run_seeded_race(
     Run the race loop of a session, then report on the scramble.
 
     The ghost is re-elected after every attempt, so beating it moves the
-    target for the next one. The closing summary covers the whole stack,
-    seeding solves included, and is skipped while the session holds a
-    single attempt: there is nothing to compare yet. Its tendency graph
-    follows the time graph toggle, as it does in the review.
+    target for the next one. The session closes on the review of the
+    scramble it raced — summary, listing, tendency and doctor — covering
+    the whole stack, seeding solves included, so leaving a race prints
+    what re-reading it later would. It is skipped while the session holds
+    a single attempt: there is nothing to compare yet.
 
     Args:
         instance: The timer to run.
@@ -349,14 +351,6 @@ async def run_seeded_race(
             outcome.attempts += 1
 
         if len(instance.stack) > 1:
-            console.print(f'[title]{ title }[/title]')
-
-            stats = SolveStatisticsReporter(
-                instance.cube_size, instance.stack,
-            )
-            stats.print_summary()
-
-            if options.show_time_graph:
-                stats.graph('Tendency')
+            print_scramble_review(options, instance.stack, title)
 
     return outcome.code
