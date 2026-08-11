@@ -26,7 +26,8 @@ theme: dict[str, str] = {
     'estimate': f'{ TEXT_DARK } on #00FFD7',
     'record': f'{ TEXT_DARK } on #5FFFAF',
     'solution': f'{ TEXT_DARK } on #9999FF',
-    'actions': f'bold { TEXT_LIGHT } on #E76666',
+    'actions': f'bold { TEXT_LIGHT } on #E75555',
+    'commands': f'bold { TEXT_LIGHT } on #CA0A0A',
 
     'analysis': f'bold { TEXT_LIGHT } on #4D0092',
     'inspection': f'{ TEXT_LIGHT } on #5F00D7',

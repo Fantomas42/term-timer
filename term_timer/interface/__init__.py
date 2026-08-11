@@ -390,12 +390,18 @@ class SolveInterface(
         cubed = self.bluetooth_interface is not None
 
         title = f'Commands #{ self.counter }:'
-        labels = max(len(title), *(len(c.label) for c in commands)) + 2
-        keyboards = max(len('Keyboard'), *(len(c.keyboard) for c in commands))
+        keyboard = 'Keyboard'
+        labels = max(len(title), *(len(c.label) for c in commands)) + 1
+        keyboards = max(len(keyboard), *(len(c.keyboard) for c in commands)) + 1
 
-        header = f'{ title.ljust(labels) }Keyboard'
+        # The title is padded by hand: its markup would be counted in
+        # by `ljust`, and colored by the badge if it were padded first.
+        header = (
+            f'[commands]{ title }[/commands]'
+            f'{ " " * (labels - len(title)) }{ keyboard }'
+        )
         if cubed:
-            header = f'{ header.ljust(labels + keyboards + 2) }Cube'
+            header += f'{ " " * (keyboards - len(keyboard)) }Cube'
         self.console.print(header, style='title')
 
         for command in commands:
@@ -404,11 +410,12 @@ class SolveInterface(
                 f'[key]{ command.keyboard }[/key]'
             )
             if cubed:
-                gap = ' ' * (keyboards - len(command.keyboard) + 2)
-                if command.cube:
-                    line += f'{ gap }[moves]{ command.cube }[/moves]'
-                else:
-                    line += f'{ gap }[mute]{ "---" }[/mute]'
+                line += ' ' * (keyboards - len(command.keyboard))
+                line += (
+                    f'[moves]{ command.cube }[/moves]'
+                    if command.cube
+                    else '[mute]---[/mute]'
+                )
             self.console.print(line, style='consign')
 
         if cubed:
