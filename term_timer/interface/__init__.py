@@ -356,16 +356,20 @@ class SolveInterface(
         parts: list[str] = []
 
         for group in self.group_commands([*tokens, 'help']):
-            keys = '/'.join(command.short for command in group)
+            keys = '/'.join(
+                f'[key]{ command.short }[/key]'
+                for command in group
+                if command.short
+            )
             if keys:
                 parts.append(keys)
 
-        line = ' - '.join(f'[key]{ part }[/key]' for part in parts)
+        line = ' '.join(f'[{ part }]' for part in parts)
 
         self.console.print(
             f'[actions]{ title.ljust(8) } #{ self.counter }:[/actions] '
-            f'{ lead } - '
-            f'{ line }',
+            f'{ lead } or '
+            f'{ line }.',
             style='consign',
             end='',
         )

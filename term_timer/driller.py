@@ -103,13 +103,13 @@ class Driller(SolveInterface):
         if self.bluetooth_interface:
             self.console.print(
                 'Execute the algorithm on the cube to time the rep,',
-                '[key](q)[/key] to quit.',
+                '[[key]q[/key]] to quit.',
                 end='', style='consign',
             )
         else:
             self.console.print(
                 'Press any key to start/stop the timer,',
-                '[key](q)[/key] to quit.',
+                '[[key]q[/key]] to quit.',
                 end='', style='consign',
             )
 

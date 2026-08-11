@@ -158,29 +158,29 @@ class Timer(SolveInterface):
         if self.bluetooth_interface:
             if self.countdown:
                 self.console.print(
-                    'Apply the scramble on the cube to start the inspection,',
-                    '[key](q)[/key] to quit.',
+                    'Apply the scramble on the cube to start the inspection or',
+                    '[[key]q[/key]] to quit.',
                     style='consign',
                     end='',
                 )
             else:
                 self.console.print(
-                    'Apply the scramble on the cube to init the timer,',
-                    '[key](q)[/key] to quit.',
+                    'Apply the scramble on the cube to init the timer or',
+                    '[[key]q[/key]] to quit.',
                     style='consign',
                     end='',
                 )
         elif self.countdown:
             self.console.print(
-                'Press any key once scrambled to start the inspection,',
-                '[key](q)[/key] to quit.',
+                'Press any key once scrambled to start the inspection or',
+                '[[key]q[/key]] to quit.',
                 style='consign',
                 end='',
             )
         else:
             self.console.print(
-                'Press any key once scrambled to start/stop the timer,',
-                '[key](q)[/key] to quit.',
+                'Press any key once scrambled to start/stop the timer or',
+                '[[key]q[/key]] to quit.',
                 style='consign',
                 end='',
             )

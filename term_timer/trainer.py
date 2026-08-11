@@ -1575,15 +1575,15 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         if self.bluetooth_interface:
             self.console.print(
-                'Apply the scramble on the cube to init the timer,',
-                '[key](q)[/key] to quit.',
+                'Apply the scramble on the cube to init the timer or',
+                '[[key]q[/key]] to quit.',
                 style='consign',
                 end='',
             )
         else:
             self.console.print(
-                'Press any key once scrambled to start/stop the timer,',
-                '[key](q)[/key] to quit.',
+                'Press any key once scrambled to start/stop the timer or',
+                '[[key]q[/key]] to quit.',
                 style='consign',
                 end='',
             )
