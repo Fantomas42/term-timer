@@ -199,7 +199,7 @@ class Timer(SolveInterface):
 
         tokens.extend(('discard', 'quit', 'save_quit', 'save'))
 
-        self.commands_line('Saving', 'any=save', tokens)
+        self.commands_line(' Saving ', 'any=save', tokens)
 
     def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912
         """Display solve results, statistics, and record achievements."""
