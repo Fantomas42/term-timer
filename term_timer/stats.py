@@ -1179,7 +1179,7 @@ class SolveStatisticsReporter(Statistics):
                 f'[localhost]{ f"#{ index }":{" "}>{ max_count }}[/localhost]',
                 f'[{ time_klass }]{ format_time(solve.final_time) }'
                 f'[/{ time_klass }]',
-                f'[mute]{ date }[/mute]',
+                f'[muted]{ date }[/muted]',
             )
 
     def listing(  # noqa: C901

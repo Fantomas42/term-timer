@@ -414,7 +414,7 @@ class SolveInterface(
                 line += (
                     f'[moves]{ command.cube }[/moves]'
                     if command.cube
-                    else '[mute]---[/mute]'
+                    else '[muted]---[/muted]'
                 )
             self.console.print(line, style='consign')
 
