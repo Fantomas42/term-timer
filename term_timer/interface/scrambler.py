@@ -1,5 +1,7 @@
 """Scramble tracking and display functionality."""
 import asyncio
+import re
+import sys
 from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
@@ -15,6 +17,8 @@ from term_timer.transform import humanize_moves
 
 if TYPE_CHECKING:
     from rich.console import Console as RichConsole
+
+MARKUP_TAG_RE = re.compile(r'\[/?[^\]]*\]')
 
 
 class Scrambler:
@@ -42,6 +46,10 @@ class Scrambler:
             """Clear the current terminal line."""
             ...
 
+        def back(self, size: int) -> None:
+            """Move cursor back by specified number of characters."""
+            ...
+
     def __init__(self) -> None:
         """
         Initialize scramble tracking state and event handling.
@@ -62,7 +70,21 @@ class Scrambler:
 
         self.misoriented_signaled = False
 
+        self.printed_tokens: list[str] = []
+        self.printed_width = 0
+
         self.scramble_completed_event = asyncio.Event()
+
+    def reset_scramble_frame(self) -> None:
+        """
+        Forget the scramble line currently on screen.
+
+        The incremental redraw assumes the cursor sits where the previous
+        frame left it. Anything else printing in between invalidates that
+        assumption, and so does starting a new attempt.
+        """
+        self.printed_tokens = []
+        self.printed_width = 0
 
     def handle_scrambled(self, timed_move: Move) -> None:
         """
@@ -108,7 +130,7 @@ class Scrambler:
             SOUND_PLAYER.solve_scrambled()
 
         (
-            out, full_clear,
+            out, _full_clear,
             wrong_move_added, misoriented_move, has_mismatch,
         ) = self.compute_scramble_display(
             scrambled=self.scrambled,
@@ -126,13 +148,76 @@ class Scrambler:
         elif not has_mismatch:
             self.misoriented_signaled = False
 
-        self.clear_line(full=full_clear)
+        self.print_scramble_frame(out, is_complete=is_complete)
 
-        self.console.print(
-            f'[applied]Applying #{ self.counter }:[/applied]',
-            out,
-            end='',
-        )
+    def print_scramble_frame(self, out: str, *, is_complete: bool) -> None:
+        """
+        Redraw the scramble line, rewriting only what changed.
+
+        The line is prefix stable: it grows by one move most of the time, and
+        only the last move changes style. Rewriting it whole makes the cursor
+        sweep the entire line at every move, which reads as flickering. This
+        rewinds to the first token that differs and reprints from there, the
+        way `print_timer` rewinds over the time field.
+
+        The rewind, the blanking of the stale tail and the new tail all land
+        in a single write, because backspaces and spaces do not flush.
+
+        Args:
+            out: The formatted scramble progress, with Rich markup.
+            is_complete: Whether the scramble has been fully completed.
+
+        """
+        prefix = f'[applied]Applying #{ self.counter }:[/applied]'
+
+        if is_complete:
+            # The completion message holds several tags separated by spaces,
+            # so it cannot be split into individually balanced tokens.
+            tokens = [prefix, out.strip()]
+        else:
+            tokens = [prefix, *out.split()]
+
+        if tokens == self.printed_tokens:
+            return
+
+        if not self.printed_tokens:
+            # First frame: the cursor sits wherever the previous display
+            # left it, at the end of the prompt line, which has to go.
+            self.clear_line(full=True)
+
+        widths = [
+            len(MARKUP_TAG_RE.sub('', token))
+            for token in tokens
+        ]
+
+        common = 0
+        for printed, token in zip(self.printed_tokens, tokens, strict=False):
+            if printed != token:
+                break
+            common += 1
+
+        width = sum(widths) + len(tokens) - 1
+
+        # Column where the first differing token starts, just past the
+        # separator preceding it, capped at the end of the line for a new
+        # frame that is a strict prefix of the printed one.
+        head_width = min(sum(widths[:common]) + common, width)
+        stale = self.printed_width - head_width
+
+        if stale > 0:
+            self.back(stale)
+            print(' ' * stale, end='')  # noqa: T201
+            self.back(stale)
+
+        tail = ' '.join(tokens[common:])
+        if tail:
+            self.console.print(tail, end='')
+        else:
+            # The blanking above is the whole frame, nothing flushes it.
+            sys.stdout.flush()
+
+        self.printed_tokens = tokens
+        self.printed_width = width
 
     def compute_scramble_display(
             self,

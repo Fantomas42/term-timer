@@ -115,6 +115,7 @@ class SolveInterface(
         self.scramble_oriented = Algorithm()
         self.facelets_scrambled = ''
         self.scramble_completed_event.clear()
+        self.reset_scramble_frame()
 
         self.solve_started_event.clear()
         self.solve_completed_event.clear()

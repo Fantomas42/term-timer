@@ -1,5 +1,7 @@
 """Tests for interface scrambler."""
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -9,9 +11,13 @@ from cubing_algs.parsing import parse_moves
 from cubing_algs.transform.degrip import degrip_full_moves
 from cubing_algs.transform.invert import invert_moves
 from cubing_algs.vcube import VCube
+from rich.console import Console as RichConsole
+from rich.theme import Theme
 
+from term_timer.interface.console import theme
 from term_timer.interface.cube import Orienter
 from term_timer.interface.scrambler import Scrambler
+from term_timer.interface.terminal import Terminal
 
 
 class MockScrambler(Scrambler):
@@ -43,6 +49,9 @@ class OrienterScrambler(Orienter, Scrambler):
 
     def clear_line(self, *, full: bool) -> None:
         """Fake clear_line."""
+
+    def back(self, size: int) -> None:
+        """Fake back."""
 
     def beep_scramble(self) -> None:
         """Fake beep_scramble."""
@@ -1471,3 +1480,145 @@ class TestScrambleCompletionVerification(unittest.TestCase):
         scramble_oriented = parse_moves("f B' R' U' R d' R U R' U R")
 
         self.check_completion(scrambled, scramble_oriented)
+
+
+class RecordingScrambler(Terminal, Scrambler):
+    """Scrambler using the real Terminal primitives, over a fixed width."""
+
+    def __init__(self) -> None:
+        """Initialize with a console forced to a terminal of known width."""
+        super().__init__()
+
+        self.console = RichConsole(
+            highlighter=None,
+            theme=Theme(theme),
+            force_terminal=True,
+            width=200,
+        )
+
+
+class TestPrintScrambleFrame(unittest.TestCase):
+    """Tests for the incremental redraw of the scramble line."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        self.scrambler = RecordingScrambler()
+        self.scrambler.counter = 1
+
+    def frame(self, out: str, *, is_complete: bool = False) -> str:
+        """
+        Draw a frame and return everything the terminal received.
+
+        Both the Rich console and the builtin prints of the Terminal mixin
+        go through stdout, so redirecting it captures the frame in order,
+        exactly as a terminal would see it.
+
+        Returns:
+            The bytes written for this frame.
+
+        """
+        buffer = StringIO()
+        with redirect_stdout(buffer):
+            self.scrambler.print_scramble_frame(out, is_complete=is_complete)
+
+        return buffer.getvalue()
+
+    def test_first_frame_prints_everything(self) -> None:
+        """Test first frame prints the prefix and the whole move list."""
+        written = self.frame('[move]F[/move] [moves]R[/moves] ')
+
+        self.assertNotIn('\b', written)
+        self.assertIn('Applying #1:', written)
+        self.assertIn('F', written)
+        self.assertIn('R', written)
+        self.assertEqual(self.scrambler.printed_width, len('Applying #1: F R'))
+
+    def test_appended_move_only_rewrites_the_tail(self) -> None:
+        """Test appending a move rewrites the two last tokens only."""
+        self.frame('[move]F[/move] [moves]R[/moves] ')
+
+        written = self.frame(
+            '[move]F[/move] [move]R[/move] [moves]U[/moves] ',
+        )
+
+        # 'R' changed style, 'U' is new: rewind over 'R' and its separator.
+        self.assertEqual(written.count('\b'), len(' R'))
+        self.assertNotIn('F', written)
+        self.assertIn('R', written)
+        self.assertIn('U', written)
+        self.assertEqual(
+            self.scrambler.printed_width, len('Applying #1: F R U'),
+        )
+
+    def test_growing_line_writes_no_blanking(self) -> None:
+        """Test a growing line never blanks anything."""
+        self.frame('[move]F[/move] [moves]R[/moves] ')
+
+        written = self.frame(
+            '[move]F[/move] [move]R[/move] [moves]U[/moves] ',
+        )
+
+        self.assertNotIn('  ', written)
+
+    def test_style_only_change_is_rewritten(self) -> None:
+        """Test a token whose style alone changed is rewritten."""
+        first = self.frame('[moves]F[/moves] ')
+        second = self.frame('[move]F[/move] ')
+
+        self.assertNotEqual(first, second)
+        self.assertEqual(second.count('\b'), 2 * len('F'))
+        self.assertIn('F', second)
+
+    def test_shrinking_line_blanks_the_stale_tail(self) -> None:
+        """Test a cancellation blanks what the shorter line leaves behind."""
+        self.frame('[move]L[/move] [moves]L[/moves] ')
+
+        written = self.frame('[moves]L2[/moves] ')
+
+        # 'L L' (3 columns) becomes 'L2' (2 columns), the extra column
+        # would stay on screen without blanking.
+        self.assertIn(' ' * len('L L'), written)
+        self.assertEqual(written.count('\b'), 2 * len('L L'))
+        self.assertEqual(self.scrambler.printed_width, len('Applying #1: L2'))
+
+    def test_emptied_line_is_blanked_without_tail(self) -> None:
+        """Test a frame reduced to its prefix still blanks the old tail."""
+        self.frame('[moves]R[/moves] ')
+
+        written = self.frame('')
+
+        self.assertEqual(written.count('\b'), 2 * len(' R'))
+        self.assertIn(' ' * len(' R'), written)
+        self.assertEqual(self.scrambler.printed_width, len('Applying #1:'))
+
+    def test_completion_message_is_a_single_token(self) -> None:
+        """Test the completion message is redrawn as one atomic token."""
+        self.frame('[move]F[/move] [moves]R[/moves] ')
+
+        written = self.frame(
+            '[result]Cube scrambled ![/result] [consign]Go.[/consign]',
+            is_complete=True,
+        )
+
+        self.assertIn('Cube scrambled !', written)
+        self.assertIn('Go.', written)
+        self.assertEqual(
+            self.scrambler.printed_width,
+            len('Applying #1: Cube scrambled ! Go.'),
+        )
+
+    def test_identical_frame_writes_nothing(self) -> None:
+        """Test redrawing an unchanged frame emits no output at all."""
+        self.frame('[move]F[/move] [moves]R[/moves] ')
+
+        self.assertEqual(self.frame('[move]F[/move] [moves]R[/moves] '), '')
+
+    def test_reset_forces_a_full_redraw(self) -> None:
+        """Test resetting the frame state reprints the whole line."""
+        self.frame('[move]F[/move] [moves]R[/moves] ')
+
+        self.scrambler.reset_scramble_frame()
+        written = self.frame('[move]F[/move] [moves]R[/moves] ')
+
+        self.assertNotIn('\b', written)
+        self.assertIn('Applying #1:', written)
