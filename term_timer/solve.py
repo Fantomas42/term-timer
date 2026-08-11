@@ -5,6 +5,7 @@ from datetime import datetime
 from datetime import timezone
 from functools import cached_property
 from itertools import pairwise
+from typing import Any
 from typing import TypedDict
 
 import plotext as plt
@@ -136,6 +137,25 @@ class Solve:  # noqa: PLR0904
         self.method_name = CUBE_METHOD
         self.orientation = CUBE_ORIENTATION
         self.disable_rotations = False
+
+    def __getstate__(self) -> dict[str, Any]:
+        """
+        Return the picklable state of the solve, without its caches.
+
+        Cached properties hold unpicklable closures (the translation
+        function) and heavy analysis objects. Dropping them lets a Solve
+        cross a process boundary and lets the worker recompute in
+        parallel, which is the point of the pool.
+
+        Returns:
+            Mapping of the attributes set at initialization.
+
+        """
+        return {
+            key: value
+            for key, value in self.__dict__.items()
+            if not isinstance(getattr(type(self), key, None), cached_property)
+        }
 
     @cached_property
     def solution(self) -> Algorithm:

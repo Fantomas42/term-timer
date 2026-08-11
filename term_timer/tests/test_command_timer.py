@@ -6,6 +6,7 @@ from unittest import mock
 from term_timer.constants import DOCTOR_SESSION_BASELINE_MIN
 from term_timer.scripts.commands.timer import print_session_doctor
 from term_timer.solve import Solve
+from term_timer.tests.test_aggregator import analysed_short_solves
 
 
 def analysable_solves(count: int, *, analysable: bool = True) -> list[Solve]:
@@ -91,3 +92,18 @@ class TestPrintSessionDoctor(unittest.TestCase):
         """A large round with too few prior solves shows no trend."""
         previous = report_previous(20, DOCTOR_SESSION_BASELINE_MIN - 1)
         self.assertIsNone(previous)
+
+
+class TestPrintSessionDoctorOnRealSolves(unittest.TestCase):
+    """End-to-end session report over solves already analysed and shown."""
+
+    def test_print_session_doctor_with_real_aggregator(self) -> None:
+        """A round of analysed solves reports without blowing up."""
+        stack_done = analysed_short_solves()
+
+        with mock.patch(
+                'term_timer.scripts.commands.timer.console',
+        ) as console:
+            print_session_doctor('cfop', stack_done, [])
+
+        self.assertEqual(console.print.call_count, 1)

@@ -11,14 +11,15 @@ from term_timer.aggregator import SolvesDoctorAggregator
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.aggregator import analyse_solve_worker
 from term_timer.aggregator import diagnose_solve_worker
+from term_timer.constants import MULTIPROCESSING_MIN_SOLVES
 from term_timer.doctor import DiagnosticCategory
 from term_timer.doctor import DiagnosticSeverity
+from term_timer.solve import Solve
 
 if TYPE_CHECKING:
     from term_timer.annotations import DoctorAnalysis
     from term_timer.annotations import StepAnalysis
     from term_timer.doctor import Diagnostic
-    from term_timer.solve import Solve
 
 
 class TestAnalyseSolveWorker(unittest.TestCase):
@@ -156,13 +157,19 @@ class TestSolvesMethodAggregator(unittest.TestCase):
                               mock_pool_class: Mock,
                               _mock_get_analyser: Mock) -> None:
         """Test that collect_analyses processes solves using multiprocessing."""
+        stack = self.stack + [
+            Mock()
+            for _ in range(MULTIPROCESSING_MIN_SOLVES - len(self.stack))
+        ]
         mock_pool = MagicMock()
         mock_pool_class.return_value.__enter__.return_value = mock_pool
-        mock_pool.map.return_value = [{'result': 1, 'solve': None},
-                                       {'result': 2, 'solve': None}]
+        mock_pool.map.return_value = [
+            {'result': index, 'solve': None}
+            for index, _ in enumerate(stack)
+        ]
 
         aggregator = SolvesMethodAggregator.__new__(SolvesMethodAggregator)
-        aggregator.stack = cast('list[Solve]', self.stack)
+        aggregator.stack = cast('list[Solve]', stack)
         aggregator.method_name = 'CFOP'
         aggregator.full = True
 
@@ -172,6 +179,43 @@ class TestSolvesMethodAggregator(unittest.TestCase):
         self.assertEqual(result[1]['solve'], self.mock_solve_basic)
         mock_pool_class.assert_called_once_with(processes=3)
         mock_pool.map.assert_called_once()
+
+    @patch('term_timer.aggregator.analyse_solve_worker')
+    @patch('term_timer.aggregator.Pool')
+    def test_collect_analyses_below_threshold_skips_pool(
+            self, mock_pool_class: Mock, mock_worker: Mock) -> None:
+        """Test that a small stack is analysed without forking."""
+        mock_worker.return_value = {'steps': {}, 'score': 0.0, 'solve': None}
+
+        aggregator = SolvesMethodAggregator.__new__(SolvesMethodAggregator)
+        aggregator.stack = cast('list[Solve]', self.stack)
+        aggregator.method_name = 'CFOP'
+        aggregator.full = False
+
+        result = aggregator.collect_analyses()
+
+        mock_pool_class.assert_not_called()
+        self.assertEqual(len(result), len(self.stack))
+
+    @patch('term_timer.aggregator.analyse_solve_worker')
+    @patch('term_timer.aggregator.Pool')
+    def test_collect_analyses_below_threshold_full(
+            self, mock_pool_class: Mock, mock_worker: Mock) -> None:
+        """Test that the inline path still attaches the solves."""
+        mock_worker.side_effect = lambda _solve, **_kwargs: {
+            'steps': {}, 'score': 0.0, 'solve': None,
+        }
+
+        aggregator = SolvesMethodAggregator.__new__(SolvesMethodAggregator)
+        aggregator.stack = cast('list[Solve]', self.stack)
+        aggregator.method_name = 'CFOP'
+        aggregator.full = True
+
+        result = aggregator.collect_analyses()
+
+        mock_pool_class.assert_not_called()
+        self.assertEqual(result[0]['solve'], self.mock_solve_advanced)
+        self.assertEqual(result[1]['solve'], self.mock_solve_basic)
 
     @patch('term_timer.aggregator.StatisticsTools.ao')
     def test_aggregate_with_advanced_solves(self, mock_ao: Mock) -> None:
@@ -382,7 +426,9 @@ class TestSolvesDoctorAggregator(unittest.TestCase):
         ]
 
         aggregator = SolvesDoctorAggregator.__new__(SolvesDoctorAggregator)
-        aggregator.stack = self.stack
+        aggregator.stack = cast('list[Solve]', [
+            Mock() for _ in range(MULTIPROCESSING_MIN_SOLVES)
+        ])
         aggregator.method_name = 'cfop'
 
         result = aggregator.collect_diagnostics()
@@ -392,6 +438,22 @@ class TestSolvesDoctorAggregator(unittest.TestCase):
         )
         mock_pool_class.assert_called_once_with(processes=3)
         mock_pool.map.assert_called_once()
+
+    @patch('term_timer.aggregator.diagnose_solve_worker')
+    @patch('term_timer.aggregator.Pool')
+    def test_collect_diagnostics_below_threshold_skips_pool(
+            self, mock_pool_class: Mock, mock_worker: Mock) -> None:
+        """Test that a small stack is diagnosed without forking."""
+        mock_worker.return_value = {'diagnosed': True, 'diagnostics': []}
+
+        aggregator = SolvesDoctorAggregator.__new__(SolvesDoctorAggregator)
+        aggregator.stack = self.stack
+        aggregator.method_name = 'cfop'
+
+        result = aggregator.collect_diagnostics()
+
+        mock_pool_class.assert_not_called()
+        self.assertEqual(len(result), len(self.stack))
 
     def test_aggregate_excludes_undiagnosed_solves(self) -> None:
         """Undiagnosed solves are excluded from the frequency window."""
@@ -437,3 +499,67 @@ class TestSolvesDoctorAggregator(unittest.TestCase):
             result = aggregator.aggregate()
 
         self.assertEqual(result, {'total': 0, 'findings': []})
+
+
+SHORT_SOLVES = (
+    (
+        "L2 D' L' F' L'",
+        'L@0 F@507 L@1019 D@1768 L@2518 L@2608',
+        2608404439,
+    ),
+    (
+        "z2 B U F2 U' L'",
+        "F@0 R@412 D@899 D@1102 R'@1401 U'@2100",
+        2519000000,
+    ),
+    (
+        "z2 U' F' R2 B2 L'",
+        'B@0 R@501 R@702 F@1203 F@1404 L@1900 U@2490',
+        2491000000,
+    ),
+)
+
+
+def analysed_short_solves() -> list[Solve]:
+    """
+    Build short solves already analysed, as the session display leaves them.
+
+    Returns:
+        List of solves whose caches are populated.
+
+    """
+    solves = []
+    for scramble, moves, time in SHORT_SOLVES:
+        solve = Solve(1766883476, time, scramble, moves=moves)
+        solve.method_name = 'cfop'
+        str(solve.reconstruction)
+        _ = solve.method_applied
+        solves.append(solve)
+
+    return solves
+
+
+class TestSolvesDoctorAggregatorOnAnalysedSolves(unittest.TestCase):
+    """Aggregating solves whose caches are already populated."""
+
+    def setUp(self) -> None:
+        """Build the analysed solves of a session round."""
+        self.stack = analysed_short_solves()
+
+    @patch('term_timer.aggregator.MULTIPROCESSING_MIN_SOLVES', 1)
+    def test_doctor_aggregator_on_analysed_solves(self) -> None:
+        """Test that analysed solves survive the process boundary."""
+        aggregator = SolvesDoctorAggregator('cfop', self.stack)
+
+        self.assertEqual(aggregator.results['total'], len(self.stack))
+
+    def test_inline_and_pool_results_match(self) -> None:
+        """Test that both paths produce the same report."""
+        inline = SolvesDoctorAggregator('cfop', analysed_short_solves()).results
+
+        with patch('term_timer.aggregator.MULTIPROCESSING_MIN_SOLVES', 1):
+            pooled = SolvesDoctorAggregator(
+                'cfop', analysed_short_solves(),
+            ).results
+
+        self.assertEqual(inline, pooled)

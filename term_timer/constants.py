@@ -14,6 +14,11 @@ MS_TO_NS_FACTOR: Final = 1_000_000
 
 PAUSE_FACTOR: Final = 2
 
+# Minimum number of solves to aggregate before spawning a process pool.
+# Below it the fork cost exceeds the analysis itself, and a session round
+# would fork while an asyncio loop and a BLE connection are running.
+MULTIPROCESSING_MIN_SOLVES: Final = 16
+
 # Minimum number of prior connected solves required to draw session-end
 # doctor trend markers. The comparison baseline is max(round size, this),
 # so short rounds still contrast against a stable reference; when fewer

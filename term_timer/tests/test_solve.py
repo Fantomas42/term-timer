@@ -1,5 +1,6 @@
 """Tests for solve."""
 import datetime
+import pickle  # noqa: S403
 import unittest
 from typing import TYPE_CHECKING
 from typing import cast
@@ -1313,3 +1314,79 @@ class TestSolveComputeFluency(unittest.TestCase):  # noqa: PLR0904
         algorithm = parse_moves('R2@0 U2@100 R2@200 U2@300')
         fluency = Solve.compute_fluency(algorithm)
         self.assertEqual(fluency, 100)
+
+
+class TestSolvePickling(unittest.TestCase):
+    """Tests for sending a Solve across a process boundary."""
+
+    def setUp(self) -> None:
+        """Build a short timed solve, as the aggregators receive."""
+        self.solve = Solve(
+            1766883476,
+            2608404439,
+            "L2 D' L' F' L'",
+            moves='L@0 F@507 L@1019 D@1768 L@2518 L@2608',
+        )
+        self.solve.method_name = 'cf4op'
+
+    def test_pickle_fresh_solve(self) -> None:
+        """Test that an untouched solve pickles."""
+        restored = pickle.loads(pickle.dumps(self.solve))  # noqa: S301
+
+        self.assertEqual(restored.time, self.solve.time)
+
+    def test_pickle_solve_with_translation_cached(self) -> None:
+        """Test that a cached translation does not block pickling."""
+        self.assertIsNotNone(self.solve.translation)
+
+        restored = pickle.loads(pickle.dumps(self.solve))  # noqa: S301
+
+        self.assertEqual(restored.time, self.solve.time)
+
+    def test_pickle_analysed_solve(self) -> None:
+        """Test that a fully analysed solve pickles."""
+        self.assertIsNotNone(self.solve.method_applied)
+        self.assertIsNotNone(self.solve.reconstruction)
+
+        restored = pickle.loads(pickle.dumps(self.solve))  # noqa: S301
+
+        self.assertEqual(restored.time, self.solve.time)
+
+    def test_getstate_drops_cached_properties(self) -> None:
+        """Test that the pickled state holds no cache."""
+        self.assertIsNotNone(self.solve.method_applied)
+        self.assertIsNotNone(self.solve.reconstruction)
+
+        state = self.solve.__getstate__()
+
+        self.assertNotIn('translation', state)
+        self.assertNotIn('method_applied', state)
+        self.assertNotIn('solution', state)
+
+        self.assertEqual(state['date'], 1766883476)
+        self.assertEqual(state['time'], 2608404439)
+        self.assertEqual(state['raw_scramble'], "L2 D' L' F' L'")
+        self.assertEqual(
+            state['raw_moves'],
+            'L@0 F@507 L@1019 D@1768 L@2518 L@2608',
+        )
+        self.assertEqual(state['method_name'], 'cf4op')
+        self.assertEqual(state['orientation'], self.solve.orientation)
+        self.assertFalse(state['disable_rotations'])
+
+    def test_getstate_keeps_source_caches(self) -> None:
+        """Test that pickling does not empty the source solve."""
+        self.assertIsNotNone(self.solve.translation)
+
+        pickle.dumps(self.solve)
+
+        self.assertIn('translation', self.solve.__dict__)
+
+    def test_pickle_roundtrip_recomputes(self) -> None:
+        """Test that a restored solve rebuilds the same analysis."""
+        reconstruction = str(self.solve.reconstruction)
+
+        restored = pickle.loads(pickle.dumps(self.solve))  # noqa: S301
+
+        self.assertEqual(str(restored.reconstruction), reconstruction)
+        self.assertEqual(restored.time, self.solve.time)

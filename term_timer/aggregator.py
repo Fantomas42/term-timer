@@ -16,6 +16,7 @@ from term_timer.annotations import DoctorReport
 from term_timer.annotations import MethodAnalysis
 from term_timer.annotations import SolveAnalysis
 from term_timer.annotations import StepAnalysis
+from term_timer.constants import MULTIPROCESSING_MIN_SOLVES
 from term_timer.doctor import aggregate_solve_diagnostics
 from term_timer.doctor import generate_solve_diagnostics
 from term_timer.methods import get_method_analyser
@@ -117,15 +118,17 @@ class SolvesMethodAggregator:
             List of analysis results for each solve.
 
         """
-        num_processes = max(1, cpu_count() - 1)
-
         worker_func = partial(
             analyse_solve_worker,
             method_name=self.method_name,
         )
 
-        with Pool(processes=num_processes) as pool:
-            analyses = pool.map(worker_func, self.stack)
+        if len(self.stack) < MULTIPROCESSING_MIN_SOLVES:
+            analyses = [worker_func(solve) for solve in self.stack]
+        else:
+            num_processes = max(1, cpu_count() - 1)
+            with Pool(processes=num_processes) as pool:
+                analyses = pool.map(worker_func, self.stack)
 
         if self.full:
             for analysis, solve in zip(analyses, self.stack, strict=True):
@@ -233,13 +236,15 @@ class SolvesDoctorAggregator:
             List of diagnostic results for each solve.
 
         """
-        num_processes = max(1, cpu_count() - 1)
-
         worker_func = partial(
             diagnose_solve_worker,
             method_name=self.method_name,
         )
 
+        if len(self.stack) < MULTIPROCESSING_MIN_SOLVES:
+            return [worker_func(solve) for solve in self.stack]
+
+        num_processes = max(1, cpu_count() - 1)
         with Pool(processes=num_processes) as pool:
             return pool.map(worker_func, self.stack)
 
