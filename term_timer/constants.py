@@ -170,7 +170,7 @@ class Command(NamedTuple):
 # neighbours wherever it is offered.
 COMMANDS: Final[dict[str, Command]] = {
     'save': Command(
-        '', 'Save', 'any key', 'U R F L B', 'save',
+        '', 'Save & continue', 'any key', 'U R F L B', 'save',
     ),
     'rate': Command(
         '(1-4)', 'Rate', '1/2/3/4', '', 'rate',
@@ -182,10 +182,10 @@ COMMANDS: Final[dict[str, Command]] = {
         '(z)', 'Discard', 'z', 'M S', 'action',
     ),
     'quit': Command(
-        '(k)', 'Quit', 'k', 'E', 'exit',
+        '(k)', 'Discard & quit', 'k', 'E', 'exit',
     ),
     'save_quit': Command(
-        '(q)', 'Save & quit', 'q', 'D', 'exit',
+        '(q)', 'Save & quit', 'q/Esc', 'D', 'exit',
     ),
     'dnf': Command(
         '(d)', 'DNF', 'd', '', 'flag',

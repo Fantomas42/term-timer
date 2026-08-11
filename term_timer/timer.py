@@ -187,7 +187,7 @@ class Timer(SolveInterface):
 
     def save_line(self) -> None:
         """Display instructions for saving or canceling the solve."""
-        tokens = ['save']
+        tokens = []
 
         if not self.bluetooth_interface:
             # The flag is read from the cube state when there is one,
@@ -197,7 +197,7 @@ class Timer(SolveInterface):
         if self.retry_enabled:
             tokens.append('retry')
 
-        tokens.extend(('discard', 'quit', 'save_quit'))
+        tokens.extend(('discard', 'quit', 'save_quit', 'save'))
 
         self.commands_line('Saving', 'any=save', tokens)
 

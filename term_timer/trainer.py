@@ -1595,26 +1595,26 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             dnf: bool = False,
     ) -> None:
         """Display instructions for saving or canceling the solve."""
-        controls = ['retry', 'discard', 'quit', 'save_quit']
+        controls = ['retry', 'discard', 'quit', 'save_quit', 'save']
 
         if dnf:
             # A DNF always rates Again, the rating keys are inoperative.
-            self.commands_line('DNF', 'any=Again', ['save', *controls])
+            self.commands_line('DNF', 'any=Again', controls)
             return
 
         if manual_rating:
             # Rating is the point here, but any other key still saves,
             # skipping FSRS: the lead stays on the rating keys.
-            self.commands_line('Rating', '', ['save', 'rate', *controls])
+            self.commands_line('Rating', '', ['rate', *controls])
             return
 
         if self.fsrs_update:
             self.commands_line(
-                'Saving', 'any=save', ['save', 'rate', *controls],
+                'Saving', 'any=save', ['rate', *controls],
             )
             return
 
-        self.commands_line('Saving', 'any=save', ['save', *controls])
+        self.commands_line('Saving', 'any=save', controls)
 
     @staticmethod
     def solve_stats_line(solve: Solve) -> str:
