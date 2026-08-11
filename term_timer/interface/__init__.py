@@ -252,6 +252,17 @@ class SolveInterface(
 
         return False
 
+    def stop_solve(self) -> None:
+        """
+        Stop the running solve, the way the keyboard stop does.
+
+        Stamps the end time and releases the stopwatch. Used when the
+        solve ends on something else than the cube reaching its target
+        state: a key press, or a replay closing a DNF attempt.
+        """
+        self.end_time = time.perf_counter_ns()
+        self.solve_completed_event.set()
+
     async def time_solve(self) -> None:
         """
         Record solve duration with live stopwatch display.
@@ -276,14 +287,12 @@ class SolveInterface(
             await self.wait_control(tasks)
 
             if not self.solve_completed_event.is_set():
-                self.end_time = time.perf_counter_ns()
-                self.solve_completed_event.set()
+                self.stop_solve()
                 logger.info('Keyboard Stop: %s', self.end_time)
         else:
             await self.getch('stop')
 
-            self.end_time = time.perf_counter_ns()
-            self.solve_completed_event.set()
+            self.stop_solve()
             logger.info('Keyboard Stop: %s', self.end_time)
 
         await stopwatch_task

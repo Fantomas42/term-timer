@@ -953,6 +953,7 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
     )
 
     set_bluetooth_arguments(parser)
+    set_replay_arguments(parser)
 
     session = parser.add_argument_group('Session')
     add_free_play_argument(

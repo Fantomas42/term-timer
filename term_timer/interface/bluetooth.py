@@ -28,8 +28,8 @@ from term_timer.bluetooth.annotations import MoveInfo
 from term_timer.bluetooth.annotations import RotationEventDict
 from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
-from term_timer.bluetooth.replay import ReplayFileDict
-from term_timer.bluetooth.replay import ReplayInterface
+from term_timer.bluetooth.replay import ReplayPayload
+from term_timer.bluetooth.replay import build_replay_interface
 from term_timer.config import CubeDevice
 from term_timer.constants import BLUETOOTH_CONSUMER_STOP_TIMEOUT
 from term_timer.constants import MS_TO_NS_FACTOR
@@ -53,6 +53,8 @@ class Bluetooth:
         state_event: asyncio.Event
         # Attributes from Console mixin
         console: RichConsole
+        # Attributes from the Timer and Trainer classes
+        free_play: bool
         # Attributes from StopWatch mixin
         start_time: int
         end_time: int
@@ -88,7 +90,7 @@ class Bluetooth:
         self.bluetooth_interface: BluetoothInterface | None = None
         self.bluetooth_consumer_ref: asyncio.Task[None] | None = None
         self.bluetooth_hardware: dict[str, str | int] = {}
-        self.bluetooth_replay: ReplayFileDict | None = None
+        self.bluetooth_replay: ReplayPayload | None = None
         self.bluetooth_device = CubeDevice.discovered(prefer_known=True)
 
         self.facelets_received_event = asyncio.Event()
@@ -124,7 +126,7 @@ class Bluetooth:
 
         try:
             if self.bluetooth_replay is not None:
-                self.bluetooth_interface = ReplayInterface(
+                self.bluetooth_interface = build_replay_interface(
                     self.bluetooth_queue,
                     self.bluetooth_replay,
                     self,

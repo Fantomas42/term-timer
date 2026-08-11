@@ -568,17 +568,19 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         return case.main_algorithm
 
-    @property
-    def bluetooth_scramble_is_completed(self) -> bool:
+    def step_is_completed(self, facelets: str) -> bool:
         """
-        Check if training step is completed.
+        Check whether a cube state completes the training step.
+
+        Args:
+            facelets: The cube state to judge, in the cube frame.
 
         Returns:
-            True if the step is solved, False otherwise.
+            True if the step is solved on that state, False otherwise.
 
         """
         cube = VCube(
-            self.bluetooth_cube_state,
+            facelets,
             size=DEFAULT_CUBE_SIZE,
             check=False,
         )
@@ -592,6 +594,17 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             cube.state,
             self.orientation_faces,
         )
+
+    @property
+    def bluetooth_scramble_is_completed(self) -> bool:
+        """
+        Check if training step is completed.
+
+        Returns:
+            True if the step is solved, False otherwise.
+
+        """
+        return self.step_is_completed(self.bluetooth_cube_state)
 
     def trainer_suffix(self) -> str:
         """
