@@ -28,6 +28,8 @@ theme: dict[str, str] = {
     'solution': f'{ TEXT_DARK } on #9999FF',
     'actions': f'bold { TEXT_LIGHT } on #E75555',
     'commands': f'bold { TEXT_LIGHT } on #CA0A0A',
+    'keycap': f'bold { TEXT_DARK } on { TEXT_LIGHT }',
+    'cubecap': f'bold { TEXT_LIGHT } on #444444',
 
     'analysis': f'bold { TEXT_LIGHT } on #4D0092',
     'inspection': f'{ TEXT_LIGHT } on #5F00D7',

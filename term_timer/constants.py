@@ -169,29 +169,29 @@ class Command(NamedTuple):
 # property of the command, not of the prompt, so a command keeps its
 # neighbours wherever it is offered.
 COMMANDS: Final[dict[str, Command]] = {
-    'save': Command(
-        '', 'Save & continue', 'any key', 'U R F L B', 'save',
-    ),
     'rate': Command(
         '(1-4)', 'Rate', '1/2/3/4', '', 'rate',
-    ),
-    'retry': Command(
-        '(r)', 'Retry', 'r', '', 'action',
-    ),
-    'discard': Command(
-        '(z)', 'Discard', 'z', 'M S', 'action',
-    ),
-    'quit': Command(
-        '(k)', 'Discard & quit', 'k', 'E', 'exit',
-    ),
-    'save_quit': Command(
-        '(q)', 'Save & quit', 'q/Esc', 'D', 'exit',
     ),
     'dnf': Command(
         '(d)', 'DNF', 'd', '', 'flag',
     ),
     'plus_two': Command(
         '(2)', '+2', '2', '', 'flag',
+    ),
+    'retry': Command(
+        '(r)', 'Discard & retry', 'r', '', 'action',
+    ),
+    'quit': Command(
+        '(k)', 'Discard & quit', 'k', 'E', 'exit',
+    ),
+    'discard': Command(
+        '(z)', 'Discard & continue', 'z', 'M S', 'action',
+    ),
+    'save_quit': Command(
+        '(q)', 'Save & quit', 'q/Esc', 'D', 'exit',
+    ),
+    'save': Command(
+        '', 'Save & continue', 'any key', 'U R F L B', 'save',
     ),
     # Offered by every prompt, appended by `commands_line` itself, and
     # left out of the block it unfolds: it is already answered there.

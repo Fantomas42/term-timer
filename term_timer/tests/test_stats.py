@@ -563,7 +563,7 @@ class TestSolveStatisticsReporterAttemptsListing(unittest.TestCase):
 
         self.assertIn('#1', call_args[0])
         self.assertIn('00:02.000', call_args[1])
-        self.assertRegex(call_args[2], r'^\[mute\]\d{4}-\d{2}-\d{2} ')
+        self.assertRegex(call_args[2], r'^\[muted\]\d{4}-\d{2}-\d{2} ')
         self.assertNotIn('F R U', ' '.join(call_args))
 
     @patch('term_timer.interface.console.console.print')

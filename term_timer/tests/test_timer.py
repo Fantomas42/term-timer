@@ -8,6 +8,7 @@ from unittest.mock import patch
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 
+from term_timer.constants import COMMANDS
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.tests.test_ghost import make_solve
@@ -509,10 +510,12 @@ class TestCommandsHelp(unittest.TestCase):
 
     def test_keyboard_commands_are_named(self) -> None:
         """Every key of the prompt gets its meaning spelled out."""
-        output = self.render()
+        tokens, output = self.unfold()
 
-        for label in ('Save', 'Retry', 'Discard', 'Quit', 'Save & quit'):
-            self.assertIn(label, output)
+        for token in tokens:
+            command = COMMANDS[token]
+            self.assertIn(command.label, output)
+            self.assertIn(command.keyboard, output)
 
     def test_cube_column_is_hidden_without_a_cube(self) -> None:
         """Gestures are unreachable without a cube, so they stay unsaid."""

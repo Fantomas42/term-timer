@@ -371,6 +371,20 @@ class SolveInterface(
             end='',
         )
 
+    @staticmethod
+    def command_cap(text: str) -> str:
+        """
+        Pad a key, a gesture or their column header into a cap.
+
+        Args:
+            text: Content of the cap.
+
+        Returns:
+            The content, breathing on both sides.
+
+        """
+        return f' { text } '
+
     def commands_help(self, tokens: list[str]) -> None:
         """
         Display every command answering a solve, keyboard and cube.
@@ -390,9 +404,16 @@ class SolveInterface(
         cubed = self.bluetooth_interface is not None
 
         title = f'Commands #{ self.counter }:'
+        # Keys and gestures are drawn as the caps they are pressed on,
+        # a space wider than their text on each side. The headers sit
+        # on the edge of those caps and not on their text: the filled
+        # block is what the eye reads as the start of the column.
         keyboard = 'Keyboard'
         labels = max(len(title), *(len(c.label) for c in commands)) + 1
-        keyboards = max(len(keyboard), *(len(c.keyboard) for c in commands)) + 1
+        keyboards = max(
+            len(keyboard),
+            *(len(self.command_cap(c.keyboard)) for c in commands),
+        ) + 1
 
         # The title is padded by hand: its markup would be counted in
         # by `ljust`, and colored by the badge if it were padded first.
@@ -405,16 +426,17 @@ class SolveInterface(
         self.console.print(header, style='title')
 
         for command in commands:
+            cap = self.command_cap(command.keyboard)
             line = (
                 f'{ command.label.ljust(labels) }'
-                f'[key]{ command.keyboard }[/key]'
+                f'[keycap]{ cap }[/keycap]'
             )
             if cubed:
-                line += ' ' * (keyboards - len(command.keyboard))
+                line += ' ' * (keyboards - len(cap))
                 line += (
-                    f'[moves]{ command.cube }[/moves]'
+                    f'[cubecap]{ self.command_cap(command.cube) }[/cubecap]'
                     if command.cube
-                    else '[muted]---[/muted]'
+                    else f'[muted]{ self.command_cap("---") }[/muted]'
                 )
             self.console.print(line, style='consign')
 
