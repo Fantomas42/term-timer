@@ -428,7 +428,7 @@ class SolveInterface(
         for command in commands:
             cap = self.command_cap(command.keyboard)
             line = (
-                f'{ command.label.ljust(labels) }'
+                f'[consign]{ command.label.ljust(labels) }[/consign]'
                 f'[keycap]{ cap }[/keycap]'
             )
             if cubed:
@@ -438,7 +438,7 @@ class SolveInterface(
                     if command.cube
                     else f'[muted]{ self.command_cap("---") }[/muted]'
                 )
-            self.console.print(line, style='consign')
+            self.console.print(line)
 
         if cubed:
             self.console.print(
