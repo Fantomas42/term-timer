@@ -187,7 +187,7 @@ class Timer(SolveInterface):
 
     def save_line(self) -> None:
         """Display instructions for saving or canceling the solve."""
-        tokens = []
+        tokens: list[str] = []
 
         if not self.bluetooth_interface:
             # The flag is read from the cube state when there is one,
@@ -199,7 +199,11 @@ class Timer(SolveInterface):
 
         tokens.extend(('discard', 'quit', 'save_quit', 'save'))
 
-        self.commands_line(' Saving ', 'any=save', tokens)
+        self.commands_line(
+            ' Saving ',
+            'Press any key to save and continue',
+            tokens,
+        )
 
     def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912
         """Display solve results, statistics, and record achievements."""

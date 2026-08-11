@@ -170,33 +170,31 @@ class Command(NamedTuple):
 # neighbours wherever it is offered.
 COMMANDS: Final[dict[str, Command]] = {
     'rate': Command(
-        '(1-4)', 'Rate', '1/2/3/4', '', 'rate',
+        '1-4', 'Rate', '1/2/3/4', '', 'rate',
     ),
     'dnf': Command(
-        '(d)', 'DNF', 'd', '', 'flag',
+        'd', 'Set DNF & continue', 'd', '', 'flag',
     ),
     'plus_two': Command(
-        '(2)', '+2', '2', '', 'flag',
+        '2', 'Set +2 & continue', '2', '', 'flag',
     ),
     'retry': Command(
-        '(r)', 'Discard & retry', 'r', '', 'action',
+        'r', 'Discard & retry', 'r', '', 'cancel',
     ),
     'quit': Command(
-        '(k)', 'Discard & quit', 'k', 'E', 'exit',
+        'k', 'Discard & quit', 'k', 'E', 'cancel',
     ),
     'discard': Command(
-        '(z)', 'Discard & continue', 'z', 'M S', 'action',
+        'z', 'Discard & continue', 'z', 'M S', 'cancel',
     ),
     'save_quit': Command(
-        '(q)', 'Save & quit', 'q/Esc', 'D', 'exit',
+        'q', 'Save & quit', 'q/Esc', 'D', 'exit',
     ),
     'save': Command(
         '', 'Save & continue', 'any key', 'U R F L B', 'save',
     ),
-    # Offered by every prompt, appended by `commands_line` itself, and
-    # left out of the block it unfolds: it is already answered there.
     'help': Command(
-        f'({ HELP_CHAR })', 'Help', HELP_CHAR, '', 'help',
+        HELP_CHAR, 'Help', HELP_CHAR, '', 'help',
     ),
 }
 

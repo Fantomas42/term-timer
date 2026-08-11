@@ -1599,22 +1599,34 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         if dnf:
             # A DNF always rates Again, the rating keys are inoperative.
-            self.commands_line('DNF', 'any=Again', controls)
+            self.commands_line(
+                'DNF',
+                'Press any key to save and continue',
+                controls,
+            )
             return
 
         if manual_rating:
-            # Rating is the point here, but any other key still saves,
-            # skipping FSRS: the lead stays on the rating keys.
-            self.commands_line(' Rating ', '', ['rate', *controls])
+            self.commands_line(
+                ' Rating ',
+                'Rate from 1 to 4 to save and continue',
+                ['rate', *controls],
+            )
             return
 
         if self.fsrs_update:
             self.commands_line(
-                ' Saving ', 'any=save', ['rate', *controls],
+                ' Saving ',
+                'Press any key to save and continue',
+                ['rate', *controls],
             )
             return
 
-        self.commands_line(' Saving ', 'any=save', controls)
+        self.commands_line(
+            ' Saving ',
+            'Press any key to save and continue',
+            controls,
+        )
 
     @staticmethod
     def solve_stats_line(solve: Solve) -> str:
