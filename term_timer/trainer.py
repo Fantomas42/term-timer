@@ -27,7 +27,6 @@ from rich import box
 from rich.table import Table
 
 from term_timer.annotations import TrainingCase
-from term_timer.config import DEBUG
 from term_timer.config import STATS_LIVE_SERIES
 from term_timer.config import STATS_SESSION_SERIES
 from term_timer.config import TRAINER_FSRS
@@ -162,6 +161,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             states: list[str],
             free_play: bool,
             show_solution: bool,
+            show_breakdown: bool,
             show_cube: bool,
             orientation: CubeOrientation,
             metronome: float,
@@ -179,6 +179,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
         self.free_play = free_play
         self.show_solution = show_solution
+        self.show_breakdown = show_breakdown
         self.show_cube = show_cube
         self.metronome = metronome
         self.case_codes = case_codes
@@ -1360,7 +1361,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         rating_klass = rating.name.lower()
 
         suffix = ''
-        if DEBUG and breakdown is not None:
+        if self.show_breakdown and breakdown is not None:
             suffix = '\n' + '\n'.join(
                 self.format_breakdown_lines(breakdown, rating_klass),
             )

@@ -415,38 +415,37 @@ class TestSaveLine(unittest.TestCase):
         """A drawn scramble shows the retry next to the discard."""
         output = self.render()
 
-        self.assertIn('(r)', output)
-        self.assertIn('(z)', output)
+        self.assertIn('[r/z/k]', output)
 
     def test_retry_key_is_hidden_on_an_imposed_scramble(self) -> None:
         """An imposed scramble drops the retry but keeps the discard."""
         output = self.render(scramble="R U R' U'")
 
-        self.assertNotIn('(r)', output)
-        self.assertIn('(z)', output)
+        self.assertNotIn('[r/z/k]', output)
+        self.assertIn('[z/k]', output)
 
     def test_manual_flag_keys_are_kept(self) -> None:
         """Without a Bluetooth cube the DNF and +2 keys stay offered."""
         output = self.render()
 
-        self.assertIn('(d)', output)
-        self.assertIn('(2)', output)
+        self.assertIn('[d/2]', output)
 
     def test_flag_keys_are_dropped_with_a_cube(self) -> None:
         """A connected cube reads the flag itself, the keys are inactive."""
         output = self.render(bluetooth=True)
 
-        self.assertNotIn('(d)', output)
-        self.assertNotIn('(2)', output)
+        self.assertNotIn('[d/2]', output)
 
     def test_keys_are_grouped_by_the_question_they_answer(self) -> None:
-        """The keys read as a few groups, not one run of parentheses."""
-        self.assertIn('(d)(2) · (r)(z) · (k)(q) · (?)', self.render())
+        """The keys read as a few groups, not one run of keys."""
+        self.assertIn('[d/2] [r/z/k] [q] [?]', self.render())
 
     def test_a_group_left_empty_is_not_separated(self) -> None:
         """The save is carried by the lead, its group prints nothing."""
-        self.assertNotIn('· ·', self.render())
-        self.assertIn('any=save · (d)(2)', self.render())
+        output = self.render()
+
+        self.assertNotIn('[]', output)
+        self.assertIn('Press any key to save and continue or [d/2]', output)
 
     def test_help_key_is_always_offered(self) -> None:
         """The prompt names no command but points at the ones it hides."""
@@ -455,7 +454,7 @@ class TestSaveLine(unittest.TestCase):
                 self.render(bluetooth=True),
                 self.render(scramble="R U R' U'"),
         ):
-            self.assertIn('(?)', output)
+            self.assertIn('[?]', output)
 
     def test_prompt_holds_on_a_single_line(self) -> None:
         """

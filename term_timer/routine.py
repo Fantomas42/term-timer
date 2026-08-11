@@ -31,6 +31,7 @@ class SessionConfig(TypedDict, total=False):
     filters: list[str]
     states: list[str]
     show_solution: bool
+    show_breakdown: bool
     # solve fields
     cube: int
     session: str
@@ -78,6 +79,7 @@ def build_train_instance(session_config: SessionConfig) -> Trainer:
         states=session_config.get('states', []),
         free_play=session_config.get('free_play', False),
         show_solution=session_config.get('show_solution', False),
+        show_breakdown=session_config.get('show_breakdown', False),
         show_cube=session_config.get(
             'show_cube', DISPLAY_CONFIG.get('scramble', True),
         ),

@@ -53,6 +53,7 @@ class TestTrainerModule(unittest.TestCase):
             states=[],
             free_play=True,
             show_solution=False,
+            show_breakdown=False,
             show_cube=False,
             metronome=0,
             orientation='DF',
@@ -107,6 +108,7 @@ class TestTrainerModule(unittest.TestCase):
             states=[],
             free_play=True,
             show_solution=False,
+            show_breakdown=False,
             show_cube=False,
             metronome=0,
             orientation='DF',
@@ -134,6 +136,7 @@ class TestTrainerModule(unittest.TestCase):
             states=[],
             free_play=True,
             show_solution=False,
+            show_breakdown=False,
             show_cube=False,
             metronome=0,
             orientation='DF',
@@ -162,6 +165,7 @@ class TestTrainerModule(unittest.TestCase):
             states=[],
             free_play=True,
             show_solution=False,
+            show_breakdown=False,
             show_cube=False,
             metronome=0,
             orientation='DF',
@@ -178,6 +182,7 @@ class TestTrainerModule(unittest.TestCase):
             states=[],
             free_play=True,
             show_solution=False,
+            show_breakdown=False,
             show_cube=False,
             metronome=0,
             orientation='DF',
@@ -201,6 +206,7 @@ class TestTrainerModule(unittest.TestCase):
             states=[],
             free_play=True,
             show_solution=False,
+            show_breakdown=False,
             show_cube=False,
             metronome=0,
             orientation='DF',
@@ -217,6 +223,7 @@ class TestTrainerModule(unittest.TestCase):
             states=[],
             free_play=True,
             show_solution=False,
+            show_breakdown=False,
             show_cube=False,
             metronome=0,
             orientation='DF',
@@ -233,6 +240,7 @@ class TestTrainerModule(unittest.TestCase):
             states=[],
             free_play=True,
             show_solution=False,
+            show_breakdown=False,
             show_cube=False,
             metronome=0,
             orientation='DF',
@@ -274,6 +282,7 @@ class TestFSRSWithFilter(unittest.TestCase):
             states=[],
             free_play=False,
             show_solution=False,
+            show_breakdown=False,
             show_cube=False,
             metronome=0,
             orientation='DF',
@@ -354,7 +363,8 @@ class TestFSRSWithFilter(unittest.TestCase):
         timer = Trainer(
             step='oll', case_codes=[], oldest=0, slowest=0, random=0,
             new_cases_limit=5, filters=[], states=[], free_play=True,
-            show_solution=False, show_cube=False, metronome=0,
+            show_solution=False, show_breakdown=False,
+            show_cube=False, metronome=0,
             orientation='DF', rng=Random(),  # noqa: S311
         )
         self.assertFalse(timer.fsrs_update)
@@ -366,7 +376,8 @@ class TestFSRSWithFilter(unittest.TestCase):
         timer = Trainer(
             step='oll', case_codes=[], oldest=0, slowest=0, random=0,
             new_cases_limit=5, filters=['Dot'], states=[], free_play=True,
-            show_solution=False, show_cube=False, metronome=0,
+            show_solution=False, show_breakdown=False,
+            show_cube=False, metronome=0,
             orientation='DF', rng=Random(),  # noqa: S311
         )
         self.assertFalse(timer.fsrs_update)
@@ -420,6 +431,7 @@ class TestFSRSCardsPool(unittest.TestCase):
                 states=[],
                 free_play=False,
                 show_solution=False,
+                show_breakdown=False,
                 show_cube=False,
                 metronome=0,
                 orientation='DF',
@@ -532,7 +544,7 @@ class StateFixtureMixin:
 
         return Trainings(method='CFOP', step='OLL', cases=cases)
 
-    def make_trainer(
+    def make_trainer(  # noqa: PLR0913
             self,
             states: list[str],
             *,
@@ -540,6 +552,7 @@ class StateFixtureMixin:
             filters: list[str] | None = None,
             oldest: int = 0,
             slowest: int = 0,
+            show_breakdown: bool = False,
     ) -> Trainer:
         """
         Build an OLL trainer over the state fixture.
@@ -563,6 +576,7 @@ class StateFixtureMixin:
                 states=states,
                 free_play=False,
                 show_solution=False,
+                show_breakdown=show_breakdown,
                 show_cube=False,
                 metronome=0,
                 orientation='DF',
@@ -909,6 +923,7 @@ class TestListCases(StateFixtureMixin, unittest.TestCase):
             states=[],
             free_play=False,
             show_solution=False,
+            show_breakdown=False,
             show_cube=False,
             metronome=0,
             orientation='DF',
@@ -918,6 +933,69 @@ class TestListCases(StateFixtureMixin, unittest.TestCase):
 
         self.assertIn('Cross', output)
         self.assertNotIn('Due', output)
+
+
+class TestFsrsResultLine(StateFixtureMixin, unittest.TestCase):
+    """--explain gates the rating breakdown, no longer the debug mode."""
+
+    BREAKDOWN = RatingBreakdown(
+        rating=Rating.Good,
+        time_s=2.4,
+        executed_qtm=11,
+        missed_qtm=0,
+        pauses=1,
+        tps=4.5,
+        score=0.3,
+        tps_ref=4.0,
+        time_soft=2.0,
+        tps_pen=-0.1,
+        pause_pen=0.0,
+        missed_pen=0.0,
+        time_pen=0.4,
+        reference_qtm=11,
+    )
+
+    def render(self, *, show_breakdown: bool) -> str:
+        """
+        Capture the result line printed for a rated attempt.
+
+        Returns:
+            The rendered line, whitespace normalized.
+
+        """
+        timer = self.make_trainer([], show_breakdown=show_breakdown)
+        recorder = RichConsole(
+            record=True, width=120, theme=Theme(console_theme),
+        )
+        timer.console = recorder
+
+        timer.fsrs_result_line(
+            timer.cases[0].case,
+            Rating.Good,
+            None,
+            FSRSScheduler().update_card(None, Rating.Good),
+            self.BREAKDOWN,
+        )
+
+        return ' '.join(recorder.export_text().split())
+
+    def test_breakdown_hidden_by_default(self) -> None:
+        """Without --explain the rating stands alone on its line."""
+        output = self.render(show_breakdown=False)
+
+        self.assertIn('Good', output)
+        self.assertNotIn('tps', output)
+        self.assertNotIn('pauses', output)
+        self.assertNotIn('missed', output)
+
+    def test_breakdown_shown_with_explain(self) -> None:
+        """With --explain every criterion of the score is detailed."""
+        output = self.render(show_breakdown=True)
+
+        self.assertIn('Good', output)
+        self.assertIn('tps', output)
+        self.assertIn('pauses', output)
+        self.assertIn('missed', output)
 
 
 class TestTrainerCommandListing(StateFixtureMixin, unittest.TestCase):
@@ -1025,6 +1103,7 @@ class TestTrainerSaveLine(unittest.TestCase):
             states=[],
             free_play=False,
             show_solution=False,
+            show_breakdown=False,
             show_cube=False,
             metronome=0,
             orientation='DF',
@@ -1051,23 +1130,25 @@ class TestTrainerSaveLine(unittest.TestCase):
         """A DNF always rates Again, no rating key is offered."""
         output = self.render(dnf=True)
 
-        self.assertIn('any=Again', output)
-        self.assertNotIn('(1-4)', output)
+        self.assertIn('DNF', output)
+        self.assertIn('Press any key to save and continue', output)
+        self.assertNotIn('[1-4]', output)
 
     def test_manual_rating_prompt_leads_on_the_ratings(self) -> None:
         """Rating is the point, so no default action is advertised."""
         output = self.render(manual_rating=True)
 
         self.assertIn('Rating', output)
-        self.assertIn('(1-4)', output)
-        self.assertNotIn('any=', output)
+        self.assertIn('Rate from 1 to 4 to save and continue', output)
+        self.assertIn('[1-4]', output)
+        self.assertNotIn('Press any key', output)
 
     def test_auto_rating_prompt_offers_the_override(self) -> None:
         """An automatic rating still takes a 1-4 override."""
         output = self.render()
 
-        self.assertIn('any=save', output)
-        self.assertIn('(1-4)', output)
+        self.assertIn('Press any key to save and continue', output)
+        self.assertIn('[1-4]', output)
 
     def test_prompt_holds_on_a_single_line(self) -> None:
         """
@@ -1114,6 +1195,7 @@ class TestSaveTrainingManualRating(unittest.IsolatedAsyncioTestCase):
                 states=[],
                 free_play=False,
                 show_solution=False,
+                show_breakdown=False,
                 show_cube=False,
                 metronome=0,
                 orientation='DF',
@@ -1256,6 +1338,7 @@ class TestSaveTrainingAutoRatingOverride(unittest.IsolatedAsyncioTestCase):
                 states=[],
                 free_play=False,
                 show_solution=False,
+                show_breakdown=False,
                 show_cube=False,
                 metronome=0,
                 orientation='DF',
@@ -1390,6 +1473,7 @@ class TestSaveTrainingPendingCardReuse(unittest.IsolatedAsyncioTestCase):
                 states=[],
                 free_play=False,
                 show_solution=False,
+                show_breakdown=False,
                 show_cube=False,
                 metronome=0,
                 orientation='DF',
@@ -1574,6 +1658,7 @@ class TestFSRSNewCaseBudget(unittest.IsolatedAsyncioTestCase):
                 states=[],
                 free_play=False,
                 show_solution=False,
+                show_breakdown=False,
                 show_cube=False,
                 metronome=0,
                 orientation='DF',
@@ -1684,6 +1769,7 @@ class TestSaveTrainingDNF(unittest.IsolatedAsyncioTestCase):
                 states=[],
                 free_play=False,
                 show_solution=False,
+                show_breakdown=False,
                 show_cube=False,
                 metronome=0,
                 orientation='DF',
@@ -1848,6 +1934,7 @@ class TestStartRetryLoop(unittest.IsolatedAsyncioTestCase):
                 states=[],
                 free_play=False,
                 show_solution=False,
+                show_breakdown=False,
                 show_cube=False,
                 metronome=0,
                 orientation='DF',
@@ -1974,6 +2061,7 @@ class TestSolutionDisplayInLearningPhase(unittest.TestCase):
                 states=[],
                 free_play=free_play,
                 show_solution=False,
+                show_breakdown=False,
                 show_cube=False,
                 metronome=0,
                 orientation='DF',
@@ -2185,6 +2273,7 @@ class TestResolveSolution(unittest.TestCase):
                 states=[],
                 free_play=False,
                 show_solution=False,
+                show_breakdown=False,
                 show_cube=False,
                 metronome=0,
                 orientation='DF',
@@ -2305,6 +2394,7 @@ class TestResolveSolution(unittest.TestCase):
                 states=[],
                 free_play=False,
                 show_solution=False,
+                show_breakdown=False,
                 show_cube=False,
                 metronome=0,
                 orientation='DF',
@@ -2442,6 +2532,7 @@ class TestSummaryCases(unittest.TestCase):
                 states=[],
                 free_play=False,
                 show_solution=False,
+                show_breakdown=False,
                 show_cube=False,
                 metronome=0,
                 orientation='DF',

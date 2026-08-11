@@ -282,6 +282,7 @@ class TestTrainArguments(unittest.TestCase):
         self.assertEqual(args.slowest, 0)
         self.assertEqual(args.random, 0)
         self.assertEqual(args.new_cases, 5)
+        self.assertFalse(args.show_breakdown)
         self.assertIsNone(args.bluetooth)
 
     @staticmethod
@@ -309,6 +310,11 @@ class TestTrainArguments(unittest.TestCase):
         self.assertEqual(self.train_args(['train', '-n']).random, -1)
         self.assertEqual(self.train_args(['train', '-n', '3']).random, 3)
         self.assertEqual(self.train_args(['train', '-m', '2']).new_cases, 2)
+
+    def test_train_explain_flag(self) -> None:
+        """Test --explain arms the FSRS rating breakdown display."""
+        self.assertTrue(self.train_args(['train', '-x']).show_breakdown)
+        self.assertTrue(self.train_args(['train', '--explain']).show_breakdown)
 
     def test_train_selection_modes_are_exclusive(self) -> None:
         """Test --cases, --oldest, --slowest and --random exclude each other."""

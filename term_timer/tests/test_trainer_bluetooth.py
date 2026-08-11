@@ -157,6 +157,7 @@ def build_trainer(  # noqa: PLR0913
             states=[],
             free_play=free_play,
             show_solution=False,
+            show_breakdown=False,
             show_cube=False,
             orientation=orientation,
             metronome=0.0,

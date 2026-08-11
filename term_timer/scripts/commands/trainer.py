@@ -70,6 +70,7 @@ async def trainer(options: Namespace) -> int:  # noqa: PLR0911
             free_play=options.free_play,
             orientation=options.orientation,
             show_solution=options.show_solution,
+            show_breakdown=options.show_breakdown,
             show_cube=options.show_cube,
             metronome=options.metronome,
             rng=rng,

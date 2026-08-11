@@ -840,6 +840,16 @@ def train_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Default: False.'
         ),
     )
+    parser.add_argument(
+        '-x', '--explain',
+        action='store_true',
+        dest='show_breakdown',
+        help=(
+            'Detail how the FSRS rating was computed after each\n'
+            'automatically rated attempt.\n'
+            'Default: False.'
+        ),
+    )
     cases = parser.add_argument_group(
         'Case Selection',
         'By default, cases are selected by FSRS.\n'
