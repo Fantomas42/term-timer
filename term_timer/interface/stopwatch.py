@@ -26,6 +26,9 @@ from term_timer.methods.annotations import TrackedStep
 from term_timer.methods.base import FaceletAnalyser
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from contextlib import contextmanager
+
     from cubing_algs.annotations import CubeOrientation
     from rich.console import Console as RichConsole
 
@@ -85,6 +88,11 @@ class StopWatch:
 
         def back(self, size: int) -> None:
             """Move cursor back by specified number of characters."""
+            ...
+
+        @contextmanager
+        def hidden_cursor(self) -> Iterator[None]:
+            """Hide the terminal cursor for the duration of a redraw."""
             ...
 
     def __init__(self) -> None:
@@ -393,25 +401,26 @@ class StopWatch:
         tempo_elapsed = 0
         style = 'timer_base'
 
-        while not self.solve_completed_event.is_set():
-            elapsed_time = time.perf_counter_ns() - self.start_time
-            elapsed_seconds = elapsed_time / SECOND
-            new_tempo = int(elapsed_time / (SECOND * self.metronome or 1))
+        with self.hidden_cursor():
+            while not self.solve_completed_event.is_set():
+                elapsed_time = time.perf_counter_ns() - self.start_time
+                elapsed_seconds = elapsed_time / SECOND
+                new_tempo = int(elapsed_time / (SECOND * self.metronome or 1))
 
-            style = next(
-                (s for t, s in STYLE_THRESHOLDS if elapsed_seconds > t),
-                'timer_base',
-            )
+                style = next(
+                    (s for t, s in STYLE_THRESHOLDS if elapsed_seconds > t),
+                    'timer_base',
+                )
 
-            if tempo_elapsed != new_tempo:
-                tempo_elapsed = new_tempo
-                if self.metronome:
-                    SOUND_PLAYER.metronome_tick()
+                if tempo_elapsed != new_tempo:
+                    tempo_elapsed = new_tempo
+                    if self.metronome:
+                        SOUND_PLAYER.metronome_tick()
 
-            self.check_and_print_steps(elapsed_time, style)
-            self.print_timer(elapsed_time, style)
+                self.check_and_print_steps(elapsed_time, style)
+                self.print_timer(elapsed_time, style)
 
-            await asyncio.sleep(REFRESH)
+                await asyncio.sleep(REFRESH)
 
         self.check_and_print_steps(
             self.end_time - self.start_time, style, final=True,

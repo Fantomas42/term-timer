@@ -8,6 +8,9 @@ from term_timer.constants import SECOND
 from term_timer.interface.sounds import SOUND_PLAYER
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from contextlib import contextmanager
+
     from rich.console import Console as RichConsole
 
 
@@ -32,6 +35,11 @@ class Inspecter:
 
         def back(self, size: int) -> None:
             """Move the cursor back by the specified number of characters."""
+            ...
+
+        @contextmanager
+        def hidden_cursor(self) -> Iterator[None]:
+            """Hide the terminal cursor for the duration of a redraw."""
             ...
 
     def __init__(self) -> None:
@@ -69,40 +77,41 @@ class Inspecter:
 
         self.set_state('inspecting', inspection_start_time)
 
-        while not self.inspection_completed_event.is_set():
-            elapsed_time = time.perf_counter_ns() - inspection_start_time
-            elapsed_seconds = elapsed_time / SECOND
+        with self.hidden_cursor():
+            while not self.inspection_completed_event.is_set():
+                elapsed_time = time.perf_counter_ns() - inspection_start_time
+                elapsed_seconds = elapsed_time / SECOND
 
-            klass = 'result'
-            remaining_time = self.countdown - elapsed_seconds
-            remaining_time_rounded = int(remaining_time // 1)
+                klass = 'result'
+                remaining_time = self.countdown - elapsed_seconds
+                remaining_time_rounded = int(remaining_time // 1)
 
-            if remaining_time_rounded != state:
-                state = remaining_time_rounded
-                if state in {2, 1, 0}:
-                    SOUND_PLAYER.la_3()
+                if remaining_time_rounded != state:
+                    state = remaining_time_rounded
+                    if state in {2, 1, 0}:
+                        SOUND_PLAYER.la_3()
 
-            if remaining_time < 1:
-                klass = 'warning'
-            elif remaining_time < 3:
-                klass = 'caution'
+                if remaining_time < 1:
+                    klass = 'warning'
+                elif remaining_time < 3:
+                    klass = 'caution'
 
-            formatted = f'{remaining_time:0{display_width}.2f}'
-            if first:
-                first = False
-                self.clear_line(full=False)
-                self.console.print(
-                    '[inspection]Inspection :[/inspection]',
-                    f'[{ klass }]{ formatted }[/{ klass }]',
-                    end='',
-                )
-            else:
-                self.back(display_width)
-                self.console.print(
-                    f'[{ klass }]{ formatted }[/{ klass }]',
-                    end='',
-                )
+                formatted = f'{remaining_time:0{display_width}.2f}'
+                if first:
+                    first = False
+                    self.clear_line(full=False)
+                    self.console.print(
+                        '[inspection]Inspection :[/inspection]',
+                        f'[{ klass }]{ formatted }[/{ klass }]',
+                        end='',
+                    )
+                else:
+                    self.back(display_width)
+                    self.console.print(
+                        f'[{ klass }]{ formatted }[/{ klass }]',
+                        end='',
+                    )
 
-            await asyncio.sleep(REFRESH)
+                await asyncio.sleep(REFRESH)
 
         self.set_state('inspected')

@@ -138,20 +138,22 @@ class SolveInterface(
         self.set_state('scrambling')
 
         if self.bluetooth_interface:
-            getch_task = spawn(self.getch('scrambled'), 'getch-scrambled')
-            tasks = [
-                getch_task,
-                spawn(
-                    self.scramble_completed_event.wait(),
-                    'event-scramble-completed',
-                ),
-            ]
-            await self.wait_control(tasks)
+            # Redraw phase: handle_scrambled repaints the line at every move.
+            with self.hidden_cursor():
+                getch_task = spawn(self.getch('scrambled'), 'getch-scrambled')
+                tasks = [
+                    getch_task,
+                    spawn(
+                        self.scramble_completed_event.wait(),
+                        'event-scramble-completed',
+                    ),
+                ]
+                await self.wait_control(tasks)
 
-            char = ''
-            if not self.scramble_completed_event.is_set():
-                result = getch_task.result()
-                char = result if isinstance(result, str) else ''
+                char = ''
+                if not self.scramble_completed_event.is_set():
+                    result = getch_task.result()
+                    char = result if isinstance(result, str) else ''
         else:
             char = await self.getch('scrambled')
 
