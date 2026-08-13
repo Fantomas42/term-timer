@@ -1,4 +1,5 @@
 """Tests for interface scrambler."""
+import re
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
@@ -18,6 +19,8 @@ from term_timer.interface.console import theme
 from term_timer.interface.cube import Orienter
 from term_timer.interface.scrambler import Scrambler
 from term_timer.interface.terminal import Terminal
+
+ANSI_ESCAPE_RE = re.compile(r'\x1b\[[0-9;]*m')
 
 
 class MockScrambler(Scrambler):
@@ -1504,6 +1507,7 @@ class TestPrintScrambleFrame(unittest.TestCase):
         """Test setup."""
         self.scrambler = RecordingScrambler()
         self.scrambler.counter = 1
+        self.session = ''
 
     def frame(self, out: str, *, is_complete: bool = False) -> str:
         """
@@ -1521,7 +1525,38 @@ class TestPrintScrambleFrame(unittest.TestCase):
         with redirect_stdout(buffer):
             self.scrambler.print_scramble_frame(out, is_complete=is_complete)
 
-        return buffer.getvalue()
+        written = buffer.getvalue()
+        self.session += written
+
+        return written
+
+    def render(self) -> str:
+        """
+        Replay every frame drawn so far and return the visible line.
+
+        The incremental redraw only makes sense as a whole: a frame moves
+        the cursor back over what the previous one wrote. Replaying the
+        stream the way a terminal does is the only way to see the line the
+        user actually has in front of them.
+
+        Returns:
+            The content of the line, trailing blanks stripped.
+
+        """
+        line: list[str] = []
+        column = 0
+
+        for char in ANSI_ESCAPE_RE.sub('', self.session):
+            if char == '\r':
+                column = 0
+            elif char == '\b':
+                column = max(0, column - 1)
+            else:
+                line.extend(' ' * (column + 1 - len(line)))
+                line[column] = char
+                column += 1
+
+        return ''.join(line).rstrip()
 
     def test_first_frame_prints_everything(self) -> None:
         """Test first frame prints the prefix and the whole move list."""
@@ -1622,3 +1657,44 @@ class TestPrintScrambleFrame(unittest.TestCase):
 
         self.assertNotIn('\b', written)
         self.assertIn('Applying #1:', written)
+
+    def test_regrown_line_restores_the_separator(self) -> None:
+        """Test a line regrown from its prefix separates its tail."""
+        self.frame('[moves]R[/moves] ')
+        self.frame('')
+
+        written = self.frame('[moves]R[/moves] ')
+
+        # The cursor sits at the end of the prefix, the separator it
+        # would have overwritten was never written.
+        self.assertIn(' ', written)
+        self.assertEqual(
+            self.scrambler.printed_width, len('Applying #1: R'),
+        )
+
+    def test_orientation_only_frame_then_move(self) -> None:
+        """Test a move following an orientation only frame is separated."""
+        self.frame('z2 ')
+
+        self.frame('z2 [moves]R[/moves] ')
+
+        self.assertEqual(
+            self.render(), 'Applying #1: z2 R',
+        )
+
+    def test_cancelled_then_replayed_moves_keep_the_line_intact(self) -> None:
+        """Test cancelling then replaying the scramble redraws it whole."""
+        frames = [
+            'z2 ',
+            'z2 [moves]R[/moves] ',
+            'z2 [move]R[/move] [moves]U[/moves] ',
+            'z2 [moves]R[/moves] ',
+            'z2 ',
+            'z2 [moves]R[/moves] ',
+            'z2 [move]R[/move] [moves]U[/moves] ',
+        ]
+
+        for out in frames:
+            self.frame(out)
+
+        self.assertEqual(self.render(), 'Applying #1: z2 R U')

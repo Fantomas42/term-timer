@@ -211,6 +211,8 @@ class Scrambler:
 
         tail = ' '.join(tokens[common:])
         if tail:
+            if stale < 0:
+                print(' ' * -stale, end='')  # noqa: T201
             self.console.print(tail, end='')
         else:
             # The blanking above is the whole frame, nothing flushes it.
