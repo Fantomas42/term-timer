@@ -1946,6 +1946,20 @@ class DailySummaryReporter:
         return (self.today - self.played_days[-1]).days
 
     @cached_property
+    def daily_done(self) -> bool:
+        """
+        Tell whether the daily of the day is solved.
+
+        A day played but never solved is not a played day, as in days:
+        it reads as pending, the daily still being open.
+
+        Returns:
+            True when today holds at least one solved attempt.
+
+        """
+        return self.today in self.days
+
+    @cached_property
     def best_day(self) -> tuple[date, int] | None:
         """
         Return the day of the fastest daily solve.
@@ -2053,13 +2067,25 @@ class DailySummaryReporter:
                 prefix, style,
             ),
         )
+        if self.days_since_last:
+            plural = 's' if self.days_since_last > 1 else ''
+            ago = f'{ self.days_since_last } day{ plural }'
+        else:
+            ago = 'today'
+
+        if self.daily_done:
+            badge = '[success]✅ Daily done[/success]'
+        else:
+            badge = '[caution]⏳ Daily pending[/caution]'
+
         console.print(
             format_summary_row(
                 (
                     ('Last', str(self.played_days[-1]), 'result'),
-                    ('Ago', f'{ self.days_since_last } days', 'result'),
+                    ('Ago', ago, 'result'),
                 ),
-                prefix=prefix, style=style,
+                badge,
+                prefix, style,
             ),
         )
 
@@ -2092,6 +2118,9 @@ class DailySummaryReporter:
         Args:
             day: Day to render.
 
+        The day in progress is not a missed day while its daily is still
+        open: it keeps the dot of an unplayed day, in the caution style.
+
         Returns:
             Rich markup of the cell, blanks outside of the window.
 
@@ -2102,7 +2131,8 @@ class DailySummaryReporter:
             return ' ' * width
 
         if day not in self.days:
-            return f'[muted]{ "·" * width }[/muted]'
+            cell_style = 'caution' if day == self.today else 'muted'
+            return f'[{ cell_style }]{ "·" * width }[/{ cell_style }]'
 
         cell_style = PUNCHCARD_STYLES[self.punchcard_level(day)]
 

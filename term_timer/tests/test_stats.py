@@ -2927,6 +2927,31 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
 
         self.assertEqual(reporter.days_since_last, 0)
 
+    def test_daily_done_of_a_day_not_played(self) -> None:
+        """The daily of the day is pending while it holds no solve."""
+        self.assertFalse(self.reporter.daily_done)
+
+    def test_daily_done_of_a_day_played(self) -> None:
+        """A solved attempt of the day closes the daily."""
+        reporter = DailySummaryReporter(
+            3, self.make_day('2026-05-25', [30]), self.today,
+        )
+
+        self.assertTrue(reporter.daily_done)
+
+    def test_daily_done_of_a_full_dnf_day(self) -> None:
+        """A day attempted but never solved stays pending."""
+        reporter = DailySummaryReporter(
+            3,
+            [
+                *self.make_day('2026-05-17', [30]),
+                *self.make_day('2026-05-25', [30], DNF),
+            ],
+            self.today,
+        )
+
+        self.assertFalse(reporter.daily_done)
+
     def test_days_excludes_a_full_dnf_day(self) -> None:
         """A day never solved is dropped, its solves included."""
         reporter = DailySummaryReporter(
@@ -3058,6 +3083,24 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
             '[muted]··[/muted]',
         )
 
+    def test_punchcard_cell_of_the_day_pending(self) -> None:
+        """The day in progress is not painted as a missed day."""
+        self.assertEqual(
+            self.reporter.punchcard_cell(self.today),
+            '[caution]··[/caution]',
+        )
+
+    def test_punchcard_cell_of_the_day_done(self) -> None:
+        """A daily done of the day is a block, as any played day."""
+        reporter = DailySummaryReporter(
+            3, self.make_day('2026-05-25', [30]), self.today,
+        )
+
+        self.assertEqual(
+            reporter.punchcard_cell(self.today),
+            '[punchcard-1]██[/punchcard-1]',
+        )
+
     def test_punchcard_cell_outside_of_the_window(self) -> None:
         """Days before the first daily or after today stay blank."""
         self.assertEqual(
@@ -3128,6 +3171,57 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
         self.assertIn('55.56%', output)
         self.assertIn('00:22.000', output)
         self.assertIn('00:35.000', output)
+
+    def test_print_summary_reports_a_daily_pending(self) -> None:
+        """The delay is counted in days and the daily reads as pending."""
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            self.reporter.print_summary()
+
+        output = ' '.join(
+            str(argument)
+            for call in mock_print.call_args_list
+            for argument in call[0]
+        )
+
+        self.assertIn('2 days', output)
+        self.assertIn('⏳ Daily pending', output)
+
+    def test_print_summary_reports_a_daily_done(self) -> None:
+        """Playing the daily of the day replaces the delay by today."""
+        reporter = DailySummaryReporter(
+            3, self.make_day('2026-05-25', [30]), self.today,
+        )
+
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            reporter.print_summary()
+
+        output = ' '.join(
+            str(argument)
+            for call in mock_print.call_args_list
+            for argument in call[0]
+        )
+
+        self.assertIn('Ago   :', output)
+        self.assertIn('today', output)
+        self.assertIn('✅ Daily done', output)
+
+    def test_print_summary_of_a_single_day_ago(self) -> None:
+        """A one day delay is not pluralized."""
+        reporter = DailySummaryReporter(
+            3, self.make_day('2026-05-24', [30]), self.today,
+        )
+
+        with patch('term_timer.interface.console.console.print') as mock_print:
+            reporter.print_summary()
+
+        output = ' '.join(
+            str(argument)
+            for call in mock_print.call_args_list
+            for argument in call[0]
+        )
+
+        self.assertIn('[result]1 day[/result]', output)
+        self.assertNotIn('1 days', output)
 
     def test_print_summary_without_solves(self) -> None:
         """An empty history prints no summary at all."""
