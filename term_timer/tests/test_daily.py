@@ -5,6 +5,7 @@ import unittest
 from argparse import Namespace
 from datetime import date
 from pathlib import Path
+from unittest.mock import AsyncMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -19,10 +20,12 @@ from term_timer.scripts.commands import daily as daily_mod
 from term_timer.scripts.commands import session as session_mod
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
+from term_timer.timer import Timer
 
 SHORT_SCRAMBLE = "L2 D' L' F' L'"
 SHORT_MOVES = 'L@0 F@507 L@1019 D@1768 L@2518 L@2608'
 DAY = '2026-08-09'
+LOOP_CAP = 20
 
 
 def make_solve(
@@ -212,6 +215,102 @@ class TestDailyReview(unittest.TestCase):
         code, _output = self.run_command('-n', '1')
 
         self.assertEqual(code, 1)
+
+
+class TestDailyRace(unittest.TestCase):
+    """Tests for the attempt count bounding a daily session."""
+
+    def setUp(self) -> None:
+        """Point the daily directory at a temporary folder."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.directory = Path(tmp.name)
+        patcher = patch.object(
+            daily_mod, 'DAILY_DIRECTORY', self.directory,
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    @staticmethod
+    def race(*args: str, quit_on: int = 0) -> tuple[int, str, int]:
+        """
+        Run a daily session whose attempts are stubbed.
+
+        Every attempt reports as completed, until the ``quit_on``-th one
+        which reports the solver leaving, zero never leaving. The loop
+        is capped either way, so a count that never lands fails on the
+        call count instead of hanging.
+
+        Returns:
+            The exit code, the rendered output and the count of the
+            attempts run.
+
+        """
+        calls = 0
+
+        def landed() -> bool:
+            nonlocal calls
+            calls += 1
+            if quit_on and calls >= quit_on:
+                return False
+            return calls < LOOP_CAP
+
+        start = AsyncMock(side_effect=landed)
+
+        recorder = RichConsole(
+            record=True, width=120, theme=Theme(console_theme),
+        )
+        options = get_parser().parse_args(['daily', *args, '-d', DAY])
+        options.show_time_graph = True
+        with (
+                patch.object(Timer, 'start', start),
+                patch.object(session_mod, 'console', recorder),
+                patch.object(daily_mod, 'console', recorder),
+                patch.object(stats_mod, 'console', recorder),
+        ):
+            code = asyncio.run(daily_mod.daily(options))
+
+        return code, recorder.export_text(), calls
+
+    def test_attempts_bound_the_session(self) -> None:
+        """A count stops the session even while attempts keep landing."""
+        code, _output, calls = self.race('3')
+
+        self.assertEqual(code, 0)
+        self.assertEqual(calls, 3)
+
+    def test_no_count_runs_until_the_solver_quits(self) -> None:
+        """The default count races on until an attempt is left."""
+        code, _output, calls = self.race(quit_on=4)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(calls, 4)
+
+    def test_quitting_before_the_count_exits_cleanly(self) -> None:
+        """Leaving a counted session stops it there, on a success."""
+        code, _output, calls = self.race('5', quit_on=2)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(calls, 2)
+
+    def test_lone_attempt_prints_no_review(self) -> None:
+        """A session holding a single attempt has nothing to compare."""
+        _code, output, _calls = self.race('1')
+
+        self.assertNotIn('Daily summary', output)
+
+    def test_review_closes_a_stacked_session(self) -> None:
+        """A session closing on several attempts prints their review."""
+        save_solves(
+            3,
+            DAY,
+            [make_solve(), make_solve(date=1766883500, time=1_000_000_000)],
+            directory=self.directory,
+        )
+
+        _code, output, _calls = self.race('1')
+
+        self.assertIn('Daily summary', output)
 
 
 class TestDailySummary(unittest.TestCase):

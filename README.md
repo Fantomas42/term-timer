@@ -248,6 +248,18 @@ Run today's daily scramble :
 term-timer daily
 ```
 
+Run three attempts on today's daily scramble :
+
+```console
+term-timer daily 3
+```
+
+Race five attempts against a recorded ghost on its scramble :
+
+```console
+term-timer ghost a1b2c3d4 5
+```
+
 Run a ready-made practice routine :
 
 ```console

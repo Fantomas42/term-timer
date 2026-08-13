@@ -315,6 +315,40 @@ def build_race_timer(  # noqa: PLR0913
     return instance
 
 
+async def race_loop(instance: Timer, count: int = 0) -> int:
+    """
+    Run the attempts of a race, re-electing the ghost after each one.
+
+    The ghost is re-elected after every attempt, so beating it moves the
+    target for the next one. The loop ends on the count asked for, or
+    when the solver quits, ``count`` at zero racing until then.
+
+    Args:
+        instance: The timer to run.
+        count: The number of attempts to race, 0 for infinite.
+
+    Returns:
+        The number of attempts raced.
+
+    """
+    attempts = 0
+
+    while 42:
+        done = await instance.start()
+
+        instance.elect_ghost()
+
+        if not done:
+            break
+
+        attempts += 1
+
+        if count and attempts >= count:
+            break
+
+    return attempts
+
+
 async def run_seeded_race(
         instance: Timer,
         options: Namespace,
@@ -323,12 +357,11 @@ async def run_seeded_race(
     """
     Run the race loop of a session, then report on the scramble.
 
-    The ghost is re-elected after every attempt, so beating it moves the
-    target for the next one. The session closes on the review of the
-    scramble it raced — summary, listing, tendency and doctor — covering
-    the whole stack, seeding solves included, so leaving a race prints
-    what re-reading it later would. It is skipped while the session holds
-    a single attempt: there is nothing to compare yet.
+    The session closes on the review of the scramble it raced — summary,
+    listing, tendency and doctor — covering the whole stack, seeding
+    solves included, so leaving a race prints what re-reading it later
+    would. It is skipped while the session holds a single attempt: there
+    is nothing to compare yet.
 
     Args:
         instance: The timer to run.
@@ -340,15 +373,7 @@ async def run_seeded_race(
 
     """
     async with solve_session(instance, options) as outcome:
-        while 42:
-            done = await instance.start()
-
-            instance.elect_ghost()
-
-            if not done:
-                break
-
-            outcome.attempts += 1
+        outcome.attempts = await race_loop(instance, options.attempts)
 
         if len(instance.stack) > 1:
             print_scramble_review(options, instance.stack, title)

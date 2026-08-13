@@ -6,6 +6,7 @@ import unittest
 from argparse import Namespace
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from unittest.mock import patch
 
 from rich.console import Console as RichConsole
@@ -27,9 +28,11 @@ from term_timer.methods.annotations import TrackedStep
 from term_timer.scripts.commands import ghost as ghost_mod
 from term_timer.scripts.commands import session as session_mod
 from term_timer.solve import Solve
+from term_timer.timer import Timer
 
 SHORT_SCRAMBLE = "L2 D' L' F' L'"
 SHORT_MOVES = 'L@0 F@507 L@1019 D@1768 L@2518 L@2608'
+LOOP_CAP = 20
 
 
 def make_solve(  # noqa: PLR0913
@@ -698,6 +701,105 @@ class TestGhostLibrary(unittest.TestCase):
         code, _output = self.run_command('1', '-n', '1')
 
         self.assertEqual(code, 1)
+
+
+class TestGhostRace(unittest.TestCase):
+    """Tests for the attempt count bounding a ghost race."""
+
+    def setUp(self) -> None:
+        """Point the ghost directory at a temporary folder."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.directory = Path(tmp.name)
+        patcher = patch.object(
+            ghost_mod, 'GHOSTS_DIRECTORY', self.directory,
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    @staticmethod
+    def race(*args: str, quit_on: int = 0) -> tuple[int, str, int]:
+        """
+        Run a ghost race whose attempts are stubbed.
+
+        Every attempt reports as completed, until the ``quit_on``-th one
+        which reports the solver leaving, zero never leaving. The loop
+        is capped either way, so a count that never lands fails on the
+        call count instead of hanging.
+
+        Returns:
+            The exit code, the rendered output and the count of the
+            attempts run.
+
+        """
+        calls = 0
+
+        def landed() -> bool:
+            nonlocal calls
+            calls += 1
+            if quit_on and calls >= quit_on:
+                return False
+            return calls < LOOP_CAP
+
+        start = AsyncMock(side_effect=landed)
+
+        recorder = RichConsole(
+            record=True, width=120, theme=Theme(console_theme),
+        )
+        options = get_parser().parse_args(['ghost', *args])
+        options.show_time_graph = True
+        with (
+                patch.object(Timer, 'start', start),
+                patch.object(session_mod, 'console', recorder),
+                patch.object(ghost_mod, 'console', recorder),
+                patch.object(stats_mod, 'console', recorder),
+                patch.object(
+                    ghost_mod, 'load_all_solves', return_value=[make_solve()],
+                ),
+        ):
+            code = asyncio.run(ghost_mod.ghost(options))
+
+        return code, recorder.export_text(), calls
+
+    def test_attempts_bound_the_race(self) -> None:
+        """A count stops the race even while attempts keep landing."""
+        code, _output, calls = self.race('1', '3')
+
+        self.assertEqual(code, 0)
+        self.assertEqual(calls, 3)
+
+    def test_no_count_races_until_the_solver_quits(self) -> None:
+        """The default count races on until an attempt is left."""
+        code, _output, calls = self.race('1', quit_on=4)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(calls, 4)
+
+    def test_quitting_before_the_count_exits_cleanly(self) -> None:
+        """Leaving a counted race stops it there, on a success."""
+        code, _output, calls = self.race('1', '5', quit_on=2)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(calls, 2)
+
+    def test_seeding_reference_alone_prints_no_review(self) -> None:
+        """A stack holding the sole reference has nothing to compare."""
+        _code, output, _calls = self.race('1', '1')
+
+        self.assertNotIn('Summary on Ghost', output)
+
+    def test_review_closes_a_stacked_race(self) -> None:
+        """A race closing on several attempts prints their review."""
+        save_solves(
+            3,
+            scramble_to_key(SHORT_SCRAMBLE),
+            [make_solve(date=1766883500, time=1_000_000_000)],
+            directory=self.directory,
+        )
+
+        _code, output, _calls = self.race('1', '1')
+
+        self.assertIn('Summary on Ghost', output)
 
 
 class TestGhostDisplay(unittest.TestCase):

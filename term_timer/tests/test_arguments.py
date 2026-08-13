@@ -138,6 +138,48 @@ class TestReviewDetailArguments(unittest.TestCase):
             get_parser().parse_args(['daily', '-n'])
 
 
+class TestRaceCountArguments(unittest.TestCase):
+    """Tests for the attempt count of the daily and ghost commands."""
+
+    def test_daily_attempts_default_to_infinite(self) -> None:
+        """A daily command runs until the solver quits by default."""
+        options = get_parser().parse_args(['daily'])
+
+        self.assertEqual(options.attempts, 0)
+
+    def test_daily_attempts_bound_the_session(self) -> None:
+        """The leading positional of daily is its attempt count."""
+        options = get_parser().parse_args(['daily', '3'])
+
+        self.assertEqual(options.attempts, 3)
+
+    def test_ghost_attempts_default_to_infinite(self) -> None:
+        """A ghost command races until the solver quits by default."""
+        options = get_parser().parse_args(['ghost', 'a1b2c3d4'])
+
+        self.assertEqual(options.reference, 'a1b2c3d4')
+        self.assertEqual(options.attempts, 0)
+
+    def test_ghost_takes_the_reference_then_the_count(self) -> None:
+        """The two positionals of ghost fill from left to right."""
+        options = get_parser().parse_args(['ghost', 'a1b2c3d4', '5'])
+
+        self.assertEqual(options.reference, 'a1b2c3d4')
+        self.assertEqual(options.attempts, 5)
+
+    def test_ghost_numeric_reference_stays_a_reference(self) -> None:
+        """A lone number is the reference, position deciding, not content."""
+        options = get_parser().parse_args(['ghost', '42'])
+
+        self.assertEqual(options.reference, '42')
+        self.assertEqual(options.attempts, 0)
+
+    def test_attempts_must_be_a_number(self) -> None:
+        """A count that is not a number is refused."""
+        with self.assertRaises(SystemExit):
+            get_parser().parse_args(['daily', 'soon'])
+
+
 class TestSessionArguments(unittest.TestCase):
     """Tests for session argument parsing."""
 

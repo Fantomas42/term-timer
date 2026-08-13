@@ -575,6 +575,18 @@ def ghost_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
 
+    parser.add_argument(
+        'attempts',
+        nargs='?',
+        type=int,
+        default=0,
+        metavar='ATTEMPTS',
+        help=(
+            'Number of attempts to race on this scramble.\n'
+            'Default: Infinite.'
+        ),
+    )
+
     set_cube_arguments(parser)
 
     set_bluetooth_arguments(parser)
@@ -649,6 +661,18 @@ def daily_arguments(subparsers: '_SubParsers') -> ArgumentParser:
             'Repeat it as many times as needed until satisfied.'
         ),
         aliases=COMMAND_ALIASES['daily'],
+    )
+
+    parser.add_argument(
+        'attempts',
+        nargs='?',
+        type=int,
+        default=0,
+        metavar='ATTEMPTS',
+        help=(
+            'Number of attempts to run on the daily scramble.\n'
+            'Default: Infinite.'
+        ),
     )
 
     set_cube_arguments(parser)
