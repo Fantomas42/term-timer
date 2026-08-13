@@ -850,7 +850,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         return [
             f'[duration]{ format_duration(min(bests)) }[/duration]',
             f'[ao5]{ format_duration(average) }[/ao5]',
-            f'[duration]{ format_duration(max(bests)) }[/duration]',
+            f'[cold]{ format_duration(max(bests)) }[/cold]',
         ]
 
     @staticmethod

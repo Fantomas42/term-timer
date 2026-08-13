@@ -30,6 +30,7 @@ theme: dict[str, str] = {
     'commands': f'bold { TEXT_LIGHT } on #CA0A0A',
     'keycap': f'bold { TEXT_DARK } on { TEXT_LIGHT }',
     'cubecap': f'bold { TEXT_LIGHT } on #444444',
+    'cold': f'{ TEXT_DARK } on #00CCFF',
 
     'analysis': f'bold { TEXT_LIGHT } on #4D0092',
     'inspection': f'{ TEXT_LIGHT } on #5F00D7',
