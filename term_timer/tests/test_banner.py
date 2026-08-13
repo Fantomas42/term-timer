@@ -11,6 +11,7 @@ from term_timer.banner import COMMIT_HASH
 from term_timer.banner import EVENING_RAMP
 from term_timer.banner import MORNING_RAMP
 from term_timer.banner import NIGHT_RAMP
+from term_timer.banner import NOON_RAMP
 from term_timer.banner import RESET
 from term_timer.banner import colorize
 from term_timer.banner import get_banner
@@ -47,15 +48,23 @@ class PaletteForHourTestCase(unittest.TestCase):
 
     def test_morning_hours(self) -> None:
         """Test morning palette from 6h to 12h."""
-        for hour in (6, 9, 11):
+        for hour in (6, 9, 10):
             self.assertEqual(
                 palette_for_hour(hour), MORNING_RAMP,
                 f'hour { hour } should be morning',
             )
 
+    def test_noon_hours(self) -> None:
+        """Test noon palette from 11h to 14h."""
+        for hour in (11, 12, 13):
+            self.assertEqual(
+                palette_for_hour(hour), NOON_RAMP,
+                f'hour { hour } should be noon',
+            )
+
     def test_afternoon_hours(self) -> None:
-        """Test afternoon palette from 12h to 18h."""
-        for hour in (12, 15, 17):
+        """Test afternoon palette from 14h to 18h."""
+        for hour in (14, 15, 17):
             self.assertEqual(
                 palette_for_hour(hour), AFTERNOON_RAMP,
                 f'hour { hour } should be afternoon',

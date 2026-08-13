@@ -39,11 +39,13 @@ LOGO_LINES = [
 # Diagonal 256-color ramps, one per time of day
 NIGHT_RAMP = (27, 63, 99, 135, 171, 207, 201)
 MORNING_RAMP = (199, 205, 211, 217, 195, 123, 51)
+NOON_RAMP = (231, 230, 229, 228, 227, 226, 220, 214)
 AFTERNOON_RAMP = (226, 220, 214, 208, 204, 199, 165, 129)
 EVENING_RAMP = (51, 45, 39, 69, 99, 135, 171, 201)
 
 MORNING_START = 6
-AFTERNOON_START = 12
+NOON_START = 11
+AFTERNOON_START = 14
 EVENING_START = 18
 NIGHT_START = 22
 
@@ -61,8 +63,10 @@ def palette_for_hour(hour: int) -> tuple[int, ...]:
         The 256-color ramp of the corresponding time of day.
 
     """
-    if MORNING_START <= hour < AFTERNOON_START:
+    if MORNING_START <= hour < NOON_START:
         return MORNING_RAMP
+    if NOON_START <= hour < AFTERNOON_START:
+        return NOON_RAMP
     if AFTERNOON_START <= hour < EVENING_START:
         return AFTERNOON_RAMP
     if EVENING_START <= hour < NIGHT_START:
