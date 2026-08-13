@@ -1187,7 +1187,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         """
         if value > 0:
             return f'[caution]+{ value:.2f}[/caution]'
-        return f'[muted]+{ value:.2f}[/muted]'
+        return f'[success]+{ value:.2f}[/success]'
 
     @staticmethod
     def format_breakdown_lines(
@@ -1210,25 +1210,25 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         cell = Trainer.format_penalty_cell
         rows = [
             (
-                'tps',
+                'TPS',
                 f'{ breakdown.tps:.2f}',
                 f'ref { breakdown.tps_ref }, /{ TPS_SCALE }',
                 cell(breakdown.tps_pen),
             ),
             (
-                'pauses',
+                'Pauses',
                 str(breakdown.pauses),
                 f'free { PAUSE_TOLERANCE }, x{ PAUSE_WEIGHT }',
                 cell(breakdown.pause_pen),
             ),
             (
-                'missed',
+                'Missed',
                 str(breakdown.missed_qtm),
                 f'x{ MISSED_WEIGHT }',
                 cell(breakdown.missed_pen),
             ),
             (
-                'time',
+                'Time',
                 f'{ breakdown.time_s:.2f}s',
                 f'soft { breakdown.time_soft }s, /{ TIME_SCALE }',
                 cell(breakdown.time_pen),
@@ -1236,12 +1236,12 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         ]
 
         if breakdown.forced:
-            forcing_impact = '[again]over solution -> Again[/again]'
+            forcing_impact = '[again]Over solution -> Again[/again]'
         else:
-            forcing_impact = '[muted]within solution[/muted]'
+            forcing_impact = '[success]Within solution[/success]'
         rows.append(
             (
-                'qtm',
+                'QTM',
                 str(breakdown.executed_qtm),
                 f'solution { breakdown.reference_qtm }',
                 forcing_impact,
@@ -1251,20 +1251,20 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         lines = [
             f'  [consign]{ label:<7}[/consign]'
             f'{ value:<7}'
-            f'[muted]{ f"({ ref })":<20}[/muted]'
+            f'[dim]{ f"({ ref })":<20}[/dim]'
             f'{ impact }'
             for label, value, ref, impact in rows
         ]
 
         bands = Trainer.format_score_bands(breakdown.score, rating_klass)
         score_line = (
-            f'  [consign]score  [/consign]'
+            f'  [consign]Score  [/consign]'
             f'{ breakdown.score:<7.2f}'
             f'{ bands }'
         )
         if breakdown.floored:
             score_line += (
-                ' [hard]floored Again -> Hard'
+                ' [hard]Floored Again -> Hard'
                 f' (S >= { HIGH_STABILITY_FLOOR_DAYS:.0f}d, clean)[/hard]'
             )
         lines.append(score_line)
