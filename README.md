@@ -172,9 +172,11 @@ about to forget them.
   memory, with reps, duration, countdown and metronome
 - **Daily** — a fixed scramble of the day everyone can compare on, with review
   and summary
+- **Ghost** — race one of your own recorded solves on its own scramble, split
+  by split, the time to beat moving up as soon as you beat it
 - **Routine** — script a full practice session in JSON (warm-up drills,
-  targeted training, timed solves) and run it in one command; ready-made
-  routines ship in `docs/routines/`
+  targeted training, daily and ghost races, timed solves) and run it in one
+  command; ready-made routines ship in `docs/routines/`
 
 ### Statistics & visualization
 

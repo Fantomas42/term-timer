@@ -4,6 +4,8 @@ import time
 from argparse import Namespace
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Final
+from typing import cast
 
 from rich import box
 from rich.table import Table
@@ -12,29 +14,98 @@ from term_timer.config import CubeDevice
 from term_timer.constants import ROUTINES_DIRECTORY
 from term_timer.exceptions import SESSION_ERRORS
 from term_timer.formatter import format_time
+from term_timer.in_out import load_all_solves
 from term_timer.interface.console import console
 from term_timer.routine import SessionConfig
 from term_timer.routine import build_drill_instance
 from term_timer.routine import build_solve_instance
 from term_timer.routine import build_train_instance
+from term_timer.routine import race_options
 from term_timer.routine import run_session
+from term_timer.routine import show_instance_stats
+from term_timer.scripts.commands.daily import build_daily_timer
+from term_timer.scripts.commands.daily import parse_date
+from term_timer.scripts.commands.ghost import build_ghost_timer
+from term_timer.scripts.commands.ghost import reference_from_key
+from term_timer.scripts.commands.session import race_loop
+from term_timer.timer import Timer
 from term_timer.wakelock import keep_awake
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from term_timer.driller import Driller
-    from term_timer.timer import Timer
     from term_timer.trainer import Trainer
 
     SessionInstance = Timer | Trainer | Driller
-    SessionBuilder = Callable[[SessionConfig], SessionInstance]
+    SessionBuilder = Callable[[SessionConfig], SessionInstance | None]
+
+
+def build_daily_instance(session_config: SessionConfig) -> Timer | None:
+    """
+    Build the timer of a daily scramble step of a routine.
+
+    The step races the scramble of the day, or the one of the ``date``
+    it names, so that a daily missed the day before can still be caught
+    up from inside a routine.
+
+    Args:
+        session_config: The session to build a timer for.
+
+    Returns:
+        The ready timer, or None when the step cannot be built, its
+        error being printed.
+
+    """
+    options = race_options(session_config)
+    date_str = parse_date(
+        session_config.get('date', ''),
+    ).strftime('%Y-%m-%d')
+
+    return build_daily_timer(options, date_str)
+
+
+def build_ghost_instance(session_config: SessionConfig) -> Timer | None:
+    """
+    Build the timer of a ghost race step of a routine.
+
+    The raced scramble is named by its key, and by its key only: a
+    routine file is replayed for weeks, where a reference id is a
+    position in a filtered pool that any deletion or import shifts, and
+    the routine would then silently race another scramble. The key is
+    the permanent address; the command keeps both forms.
+
+    Args:
+        session_config: The session to build a timer for.
+
+    Returns:
+        The ready timer, or None when the reference resolves to nothing
+        or carries no reconstruction to race, its error being printed.
+
+    """
+    options = race_options(session_config)
+    cube = options.cube
+
+    reference = reference_from_key(
+        load_all_solves(cube, [], [], []),
+        cube,
+        session_config.get('reference', ''),
+    )
+    if reference is None:
+        return None
+
+    return build_ghost_timer(options, reference)
+
 
 SESSION_BUILDERS: 'dict[str, SessionBuilder]' = {
     'train': build_train_instance,
     'solve': build_solve_instance,
     'drill': build_drill_instance,
+    'daily': build_daily_instance,
+    'ghost': build_ghost_instance,
 }
+
+RACE_SESSIONS: Final = frozenset({'daily', 'ghost'})
 
 
 def resolve_routine_cube(selector: object) -> CubeDevice | None:
@@ -156,7 +227,15 @@ async def run_routine_sessions(
 
     An invalid algorithm, case or cube state stops the whole routine on
     the spot: whether it comes from building a session or from running
-    one, the routine cannot be trusted to carry on.
+    one, the routine cannot be trusted to carry on. A step whose
+    scramble does not resolve — an unknown ghost key, a reference with
+    nothing to race — stops it just the same, having printed its own
+    warning.
+
+    Race steps run their own loop, the one re-electing the ghost after
+    every attempt, and close on the summary the other steps close on:
+    the review of a raced scramble belongs to reading it, not to the
+    middle of a chain.
 
     A routine chains sessions solved on a smart cube, producing no
     keyboard nor mouse event for as long as it lasts, so it holds a wake
@@ -197,6 +276,9 @@ async def run_routine_sessions(
 
                 instance = builder(session_config)
 
+                if instance is None:
+                    return 1
+
                 if index == 0 and cube is not None:
                     await instance.bluetooth_connect(
                         cube,
@@ -207,11 +289,19 @@ async def run_routine_sessions(
 
                 current = instance
 
-                await run_session(
-                    instance,
-                    session_config.get('count', 0),
-                    show_stats=session_config.get('show_stats', False),
-                )
+                if session_type in RACE_SESSIONS:
+                    await race_loop(
+                        cast('Timer', instance),
+                        session_config.get('count', 0),
+                    )
+                    if session_config.get('show_stats', False):
+                        show_instance_stats(cast('Timer', instance))
+                else:
+                    await run_session(
+                        instance,
+                        session_config.get('count', 0),
+                        show_stats=session_config.get('show_stats', False),
+                    )
 
             elapsed_ns = time.monotonic_ns() - started_at
             duration = format_time(elapsed_ns, allow_dnf=False)

@@ -1,5 +1,5 @@
 {
-    "comment": "Balanced daily session: sexy move warm-up, stale OLL cases first, then worst PLL times, then recorded solves with full analysis.",
+    "comment": "Balanced daily session: sexy move warm-up, stale OLL cases first, then worst PLL times, then the daily scramble, then recorded solves with full analysis.",
     "bluetooth": true,
     "sessions": [
         {
@@ -27,6 +27,11 @@
             "slowest": 5,
             "count": 5,
             "show_cube": true
+        },
+        {
+            "type": "daily",
+            "count": 3,
+            "show_stats": true
         },
         {
             "type": "solve",

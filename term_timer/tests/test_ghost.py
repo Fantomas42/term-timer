@@ -275,9 +275,9 @@ class TestLoadReference(unittest.TestCase):
             self.assertIsNone(ghost_mod.load_reference(options))
 
     def test_valid_id_resolves(self) -> None:
-        """A valid id resolves and carries the command method."""
-        options = self.parse('1', '-m', 'cfop')
-        reference = make_solve(method='cf4op')
+        """A valid id resolves to the solve holding that position."""
+        options = self.parse('1')
+        reference = make_solve()
         with patch.object(
                 ghost_mod, 'load_all_solves', return_value=[reference],
         ):
@@ -289,7 +289,86 @@ class TestLoadReference(unittest.TestCase):
         self.assertIs(resolved.solve, reference)
         self.assertEqual(resolved.key, scramble_to_key(SHORT_SCRAMBLE))
         self.assertEqual(resolved.label, '#1')
+
+
+class TestBuildGhostTimer(unittest.TestCase):
+    """Tests for the timer both the command and a routine race from."""
+
+    def setUp(self) -> None:
+        """Point the ghost directory at a temporary folder."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.directory = Path(tmp.name)
+
+        for attribute, value in (
+                ('GHOSTS_DIRECTORY', self.directory),
+                (
+                    'console',
+                    RichConsole(
+                        file=io.StringIO(), theme=Theme(console_theme),
+                    ),
+                ),
+        ):
+            patcher = patch.object(ghost_mod, attribute, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    @staticmethod
+    def build(
+            reference: Solve,
+            *args: str,
+    ) -> tuple[Timer | None, ghost_mod.GhostReference]:
+        """
+        Build the timer racing a reference solve.
+
+        Returns:
+            The built timer, or None, and the reference it was built on.
+
+        """
+        options = get_parser().parse_args(['ghost', '1', *args])
+        resolved = ghost_mod.GhostReference(
+            reference,
+            scramble_to_key(str(reference.scramble)),
+            '#1',
+        )
+
+        return ghost_mod.build_ghost_timer(options, resolved), resolved
+
+    def test_reference_carries_the_session_method(self) -> None:
+        """The reference is read with the analysis options of the race."""
+        reference = make_solve(method='cf4op')
+
+        instance, _resolved = self.build(reference, '-m', 'cfop')
+
+        self.assertIsNotNone(instance)
         self.assertEqual(reference.method_name, 'cfop')
+
+    def test_race_is_saved_in_the_ghost_library(self) -> None:
+        """The attempts of a race stay out of the regular solves."""
+        instance, resolved = self.build(make_solve())
+
+        if instance is None:
+            self.fail('an analysable reference must build a timer')
+
+        self.assertEqual(instance.save_directory, self.directory)
+        self.assertEqual(instance.session, resolved.key)
+        self.assertEqual(instance.raw_scramble, SHORT_SCRAMBLE)
+
+    def test_reference_seeds_the_race_stack(self) -> None:
+        """The reference joins the race as its first attempt."""
+        instance, _resolved = self.build(make_solve())
+
+        if instance is None:
+            self.fail('an analysable reference must build a timer')
+
+        self.assertEqual(len(instance.stack), 1)
+        self.assertIsNotNone(instance.ghost)
+
+    def test_reference_without_reconstruction_is_refused(self) -> None:
+        """A reference carrying nothing to race builds no timer."""
+        instance, _resolved = self.build(make_solve(moves=None))
+
+        self.assertIsNone(instance)
 
 
 class TestReferenceByKey(unittest.TestCase):

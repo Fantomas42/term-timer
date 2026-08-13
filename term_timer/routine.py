@@ -1,4 +1,5 @@
 """Routine session builders and runner."""
+from argparse import Namespace
 from random import Random
 from typing import TypedDict
 
@@ -53,12 +54,99 @@ class SessionConfig(TypedDict, total=False):
     # drill fields
     algorithm: str
     duration: int
+    # daily fields
+    date: str
+    # ghost fields
+    reference: str
     # shared
     free_play: bool
     show_cube: bool
     orientation: str
     metronome: float
     show_stats: bool
+
+
+def display_flag(
+        session_config: SessionConfig,
+        key: str,
+        config_key: str,
+) -> bool:
+    """
+    Resolve a display toggle of a session, falling back on the config.
+
+    A routine step says what it wants to see; what it says nothing about
+    is displayed the way the configuration displays it everywhere else.
+
+    Args:
+        session_config: The session the toggle is read from.
+        key: The session key naming the toggle.
+        config_key: The display configuration key backing it.
+
+    Returns:
+        Whether that display is on for the session.
+
+    """
+    return bool(
+        session_config.get(key, DISPLAY_CONFIG.get(config_key, True)),
+    )
+
+
+def race_options(session_config: SessionConfig) -> Namespace:
+    """
+    Adapt a routine session config to what ``build_race_timer`` reads.
+
+    A Namespace, and not sixteen keyword arguments: ``build_race_timer``
+    is written against the parsed command line, and both its callers
+    pass one. Handing it the same shape keeps a routine step a second
+    caller of the very function the commands use, instead of turning it
+    into a function of sixteen named parameters and rewriting its two
+    existing callers around it.
+
+    Only the keys the function actually reads are set. ``attempts`` is
+    not one of them: a race step gets its count from ``race_loop``.
+    ``replay`` is empty, a routine having no replay file to play.
+
+    Args:
+        session_config: The session to adapt.
+
+    Returns:
+        The namespace the race timer builder reads its options from.
+
+    """
+    return Namespace(
+        cube=session_config.get('cube', 3),
+        replay='',
+        free_play=session_config.get('free_play', False),
+        show_highlights=display_flag(
+            session_config, 'show_highlights', 'highlights',
+        ),
+        show_doctor=display_flag(session_config, 'show_doctor', 'doctor'),
+        show_cube=display_flag(session_config, 'show_cube', 'scramble'),
+        show_reconstruction=display_flag(
+            session_config, 'show_reconstruction', 'reconstruction',
+        ),
+        show_tps_graph=display_flag(
+            session_config, 'show_tps_graph', 'tps_graph',
+        ),
+        show_time_graph=display_flag(
+            session_config, 'show_time_graph', 'time_graph',
+        ),
+        show_fluency_graph=display_flag(
+            session_config, 'show_fluency_graph', 'fluency_graph',
+        ),
+        show_recognition_graph=display_flag(
+            session_config, 'show_recognition_graph', 'recognition_graph',
+        ),
+        show_steps=session_config.get('show_steps', False),
+        method=session_config.get('method', CUBE_METHOD),
+        orientation=session_config.get('orientation', CUBE_ORIENTATION),
+        countdown=session_config.get(
+            'countdown', TIMER_CONFIG.get('countdown', 0),
+        ),
+        metronome=session_config.get(
+            'metronome', TIMER_CONFIG.get('metronome', 0.0),
+        ),
+    )
 
 
 def build_train_instance(session_config: SessionConfig) -> Trainer:
@@ -102,11 +190,6 @@ def build_solve_instance(session_config: SessionConfig) -> Timer:
         Configured Timer instance.
 
     """
-    def display(key: str, config_key: str) -> bool:
-        return bool(
-            session_config.get(key, DISPLAY_CONFIG.get(config_key, True)),
-        )
-
     cube_size = session_config.get('cube', 3)
     free_play = session_config.get('free_play', False)
 
@@ -136,15 +219,25 @@ def build_solve_instance(session_config: SessionConfig) -> Timer:
         scrambles=[],
         session=session_name,
         free_play=free_play,
-        show_highlights=display('show_highlights', 'highlights'),
-        show_doctor=display('show_doctor', 'doctor'),
-        show_cube=display('show_cube', 'scramble'),
-        show_reconstruction=display('show_reconstruction', 'reconstruction'),
-        show_tps_graph=display('show_tps_graph', 'tps_graph'),
-        show_time_graph=display('show_time_graph', 'time_graph'),
-        show_fluency_graph=display('show_fluency_graph', 'fluency_graph'),
-        show_recognition_graph=display(
-            'show_recognition_graph', 'recognition_graph',
+        show_highlights=display_flag(
+            session_config, 'show_highlights', 'highlights',
+        ),
+        show_doctor=display_flag(session_config, 'show_doctor', 'doctor'),
+        show_cube=display_flag(session_config, 'show_cube', 'scramble'),
+        show_reconstruction=display_flag(
+            session_config, 'show_reconstruction', 'reconstruction',
+        ),
+        show_tps_graph=display_flag(
+            session_config, 'show_tps_graph', 'tps_graph',
+        ),
+        show_time_graph=display_flag(
+            session_config, 'show_time_graph', 'time_graph',
+        ),
+        show_fluency_graph=display_flag(
+            session_config, 'show_fluency_graph', 'fluency_graph',
+        ),
+        show_recognition_graph=display_flag(
+            session_config, 'show_recognition_graph', 'recognition_graph',
         ),
         show_steps=session_config.get('show_steps', False),
         method=session_config.get('method', CUBE_METHOD),

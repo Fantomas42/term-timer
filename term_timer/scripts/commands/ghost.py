@@ -18,6 +18,7 @@ from term_timer.scripts.commands.session import print_scramble_review
 from term_timer.scripts.commands.session import race_header
 from term_timer.scripts.commands.session import run_seeded_race
 from term_timer.solve import Solve
+from term_timer.timer import Timer
 
 KEY_MINIMUM: Final[int] = 4
 KEY_SHORT: Final[int] = 8
@@ -210,17 +211,9 @@ def load_reference(options: Namespace) -> GhostReference | None:
     )
 
     if options.reference.isdigit():
-        resolved = reference_from_id(pool, int(options.reference))
-    else:
-        resolved = reference_from_key(pool, options.cube, options.reference)
+        return reference_from_id(pool, int(options.reference))
 
-    if resolved is None:
-        return None
-
-    resolved.solve.method_name = options.method
-    resolved.solve.orientation = options.orientation
-
-    return resolved
+    return reference_from_key(pool, options.cube, options.reference)
 
 
 def build_race_stack(
@@ -456,23 +449,35 @@ def ghost_report(options: Namespace) -> int | None:
     return None
 
 
-async def ghost(options: Namespace) -> int:
+def build_ghost_timer(
+        options: Namespace,
+        reference: GhostReference,
+) -> Timer | None:
     """
-    Race a live solve against a recorded ghost on the same scramble.
+    Build the timer racing a reference scramble, header printed.
+
+    The reference is read with the analysis options of the session
+    before anything else: whether it carries a reconstruction to race,
+    and the one the ghost replays, both depend on them.
+
+    The command and a routine step both race from here, the reference
+    being the only thing they resolve differently — by id or by key on
+    the command line, by key alone in a routine.
+
+    Args:
+        options: The parsed command options.
+        reference: The scramble to race, and how to name it.
 
     Returns:
-        Exit code (0 for success, 1 on resolution errors).
+        The ready timer, or None when the reference carries no
+        reconstruction to race or the timer cannot be built, its error
+        being printed.
 
     """
     cube = options.cube
 
-    report = ghost_report(options)
-    if report is not None:
-        return report
-
-    reference = load_reference(options)
-    if reference is None:
-        return 1
+    reference.solve.method_name = options.method
+    reference.solve.orientation = options.orientation
 
     if not reference.solve.analysable:
         console.print(
@@ -480,7 +485,7 @@ async def ghost(options: Namespace) -> int:
             'race (DNF or not analysable).',
             style='warning',
         )
-        return 1
+        return None
 
     key = reference.key
     history = load_solves(cube, key, directory=GHOSTS_DIRECTORY)
@@ -494,7 +499,7 @@ async def ghost(options: Namespace) -> int:
         save_directory=GHOSTS_DIRECTORY,
     )
     if instance is None:
-        return 1
+        return None
 
     console.print(
         race_header(
@@ -503,6 +508,29 @@ async def ghost(options: Namespace) -> int:
             instance.ghost,
         ),
     )
+
+    return instance
+
+
+async def ghost(options: Namespace) -> int:
+    """
+    Race a live solve against a recorded ghost on the same scramble.
+
+    Returns:
+        Exit code (0 for success, 1 on resolution errors).
+
+    """
+    report = ghost_report(options)
+    if report is not None:
+        return report
+
+    reference = load_reference(options)
+    if reference is None:
+        return 1
+
+    instance = build_ghost_timer(options, reference)
+    if instance is None:
+        return 1
 
     return await run_seeded_race(
         instance,

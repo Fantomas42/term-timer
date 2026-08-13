@@ -16,6 +16,7 @@ from term_timer.scripts.commands.session import race_header
 from term_timer.scripts.commands.session import run_seeded_race
 from term_timer.solve import Solve
 from term_timer.stats import DailySummaryReporter
+from term_timer.timer import Timer
 
 
 def parse_date(raw: str) -> date:
@@ -140,6 +141,50 @@ def daily_report(options: Namespace, date_str: str) -> int | None:
     return None
 
 
+def build_daily_timer(options: Namespace, date_str: str) -> Timer | None:
+    """
+    Build the timer racing the daily scramble of a date, header printed.
+
+    The date seeds the scramble, so the same day always yields the same
+    one, and the attempts already made on it seed the stack. The command
+    and a routine step both race from here, the date being the only
+    thing they resolve differently.
+
+    Args:
+        options: The parsed command options.
+        date_str: The day being raced, as ``YYYY-MM-DD``.
+
+    Returns:
+        The ready timer, or None when it cannot be built, its error
+        being printed.
+
+    """
+    cube = options.cube
+
+    rng = Random(date_str)  # noqa: S311
+    daily_scramble, _ = scrambler(cube, 0, rng=rng)
+
+    instance = build_race_timer(
+        options,
+        session=date_str,
+        scramble=str(daily_scramble),
+        stack=load_solves(cube, date_str, directory=DAILY_DIRECTORY),
+        rng=rng,
+        save_directory=DAILY_DIRECTORY,
+    )
+    if instance is None:
+        return None
+
+    console.print(
+        race_header(
+            f'[daily]📅 Daily Scramble - { date_str }[/daily]',
+            instance.ghost,
+        ),
+    )
+
+    return instance
+
+
 async def daily(options: Namespace) -> int:
     """
     Run the daily scramble session.
@@ -156,26 +201,9 @@ async def daily(options: Namespace) -> int:
     if report is not None:
         return report
 
-    rng = Random(date_str)  # noqa: S311
-    daily_scramble, _ = scrambler(cube, 0, rng=rng)
-
-    instance = build_race_timer(
-        options,
-        session=date_str,
-        scramble=str(daily_scramble),
-        stack=load_solves(cube, date_str, directory=DAILY_DIRECTORY),
-        rng=rng,
-        save_directory=DAILY_DIRECTORY,
-    )
+    instance = build_daily_timer(options, date_str)
     if instance is None:
         return 1
-
-    console.print(
-        race_header(
-            f'[daily]📅 Daily Scramble - { date_str }[/daily]',
-            instance.ghost,
-        ),
-    )
 
     return await run_seeded_race(
         instance,
