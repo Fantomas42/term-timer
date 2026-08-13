@@ -456,9 +456,12 @@ def build_ghost_timer(
     """
     Build the timer racing a reference scramble, header printed.
 
-    The reference is read with the analysis options of the session
-    before anything else: whether it carries a reconstruction to race,
-    and the one the ghost replays, both depend on them.
+    The analysis options of the session are posted on the reference
+    before anything reads its reconstruction. A solve file stores no
+    method nor orientation, so a reference loaded back carries the
+    config defaults, and the reconstruction the ghost replays is
+    analysed once and cached: setting them afterwards would race the
+    live checkpoints against splits read in another convention.
 
     The command and a routine step both race from here, the reference
     being the only thing they resolve differently — by id or by key on
