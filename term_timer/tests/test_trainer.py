@@ -984,18 +984,18 @@ class TestFsrsResultLine(StateFixtureMixin, unittest.TestCase):
         output = self.render(show_breakdown=False)
 
         self.assertIn('Good', output)
-        self.assertNotIn('tps', output)
-        self.assertNotIn('pauses', output)
-        self.assertNotIn('missed', output)
+        self.assertNotIn('TPS', output)
+        self.assertNotIn('Pauses', output)
+        self.assertNotIn('Missed', output)
 
     def test_breakdown_shown_with_explain(self) -> None:
         """With --explain every criterion of the score is detailed."""
         output = self.render(show_breakdown=True)
 
         self.assertIn('Good', output)
-        self.assertIn('tps', output)
-        self.assertIn('pauses', output)
-        self.assertIn('missed', output)
+        self.assertIn('TPS', output)
+        self.assertIn('Pauses', output)
+        self.assertIn('Missed', output)
 
 
 class TestTrainerCommandListing(StateFixtureMixin, unittest.TestCase):
