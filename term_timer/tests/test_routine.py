@@ -22,6 +22,8 @@ from term_timer.exceptions import InvalidCaseError
 from term_timer.in_out import save_solves
 from term_timer.in_out import scramble_to_key
 from term_timer.routine import SessionConfig
+from term_timer.routine import display_flag
+from term_timer.routine import race_options
 from term_timer.scrambler import scrambler
 from term_timer.scripts.commands import daily as daily_mod
 from term_timer.scripts.commands import ghost as ghost_mod
@@ -309,6 +311,46 @@ class TestResolveRoutineGyroscope(unittest.TestCase):
 
         self.assertIsNotNone(resolved)
         self.assertFalse(resolved)
+
+
+class TestDisplayFlag(unittest.TestCase):
+    """Tests for the display toggles a routine step resolves."""
+
+    def test_the_step_wins_over_the_configuration(self) -> None:
+        """A step saying what it wants to see is obeyed."""
+        session: SessionConfig = {'show_doctor': True}
+
+        self.assertTrue(
+            display_flag(session, 'show_doctor', 'doctor', {'doctor': False}),
+        )
+
+    def test_a_silent_step_falls_back_on_the_configuration(self) -> None:
+        """A step saying nothing is displayed the configured way."""
+        self.assertFalse(
+            display_flag({}, 'show_doctor', 'doctor', {'doctor': False}),
+        )
+
+    def test_an_unconfigured_toggle_is_on(self) -> None:
+        """A toggle nothing names anywhere is displayed."""
+        self.assertTrue(display_flag({}, 'show_doctor', 'doctor', {}))
+
+    def test_steps_falls_back_on_the_timer_section(self) -> None:
+        """A step saying nothing about steps follows the timer config."""
+        with mock.patch(
+                'term_timer.routine.TIMER_CONFIG', {'steps': True},
+        ):
+            options = race_options({})
+
+        self.assertTrue(options.show_steps)
+
+    def test_steps_follows_a_timer_section_refusing_them(self) -> None:
+        """A configuration hiding the steps hides them in a routine too."""
+        with mock.patch(
+                'term_timer.routine.TIMER_CONFIG', {'steps': False},
+        ):
+            options = race_options({})
+
+        self.assertFalse(options.show_steps)
 
 
 class TestListRoutines(unittest.TestCase):

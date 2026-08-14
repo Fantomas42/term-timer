@@ -1,6 +1,7 @@
 """Routine session builders and runner."""
 from argparse import Namespace
 from random import Random
+from typing import Any
 from typing import TypedDict
 
 from term_timer.config import CUBE_METHOD
@@ -70,6 +71,7 @@ def display_flag(
         session_config: SessionConfig,
         key: str,
         config_key: str,
+        config: dict[str, Any] | None = None,
 ) -> bool:
     """
     Resolve a display toggle of a session, falling back on the config.
@@ -77,17 +79,25 @@ def display_flag(
     A routine step says what it wants to see; what it says nothing about
     is displayed the way the configuration displays it everywhere else.
 
+    Most of those toggles live in the display section, which is why it
+    backs them when none is named; ``steps`` lives in the timer one, and
+    names its section itself.
+
     Args:
         session_config: The session the toggle is read from.
         key: The session key naming the toggle.
-        config_key: The display configuration key backing it.
+        config_key: The configuration key backing it.
+        config: The configuration section that key is read from,
+            defaulting to the display one.
 
     Returns:
         Whether that display is on for the session.
 
     """
+    section = DISPLAY_CONFIG if config is None else config
+
     return bool(
-        session_config.get(key, DISPLAY_CONFIG.get(config_key, True)),
+        session_config.get(key, section.get(config_key, True)),
     )
 
 
@@ -137,7 +147,9 @@ def race_options(session_config: SessionConfig) -> Namespace:
         show_recognition_graph=display_flag(
             session_config, 'show_recognition_graph', 'recognition_graph',
         ),
-        show_steps=session_config.get('show_steps', False),
+        show_steps=display_flag(
+            session_config, 'show_steps', 'steps', TIMER_CONFIG,
+        ),
         method=session_config.get('method', CUBE_METHOD),
         orientation=session_config.get('orientation', CUBE_ORIENTATION),
         countdown=session_config.get(
@@ -239,7 +251,9 @@ def build_solve_instance(session_config: SessionConfig) -> Timer:
         show_recognition_graph=display_flag(
             session_config, 'show_recognition_graph', 'recognition_graph',
         ),
-        show_steps=session_config.get('show_steps', False),
+        show_steps=display_flag(
+            session_config, 'show_steps', 'steps', TIMER_CONFIG,
+        ),
         method=session_config.get('method', CUBE_METHOD),
         orientation=session_config.get('orientation', CUBE_ORIENTATION),
         countdown=session_config.get(
