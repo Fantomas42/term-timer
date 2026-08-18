@@ -1,6 +1,7 @@
 """Main timer application entry point."""
 import asyncio
 import os
+from argparse import Namespace
 from contextlib import suppress
 
 from term_timer.arguments import COMMAND_RESOLUTIONS
@@ -49,8 +50,17 @@ BANNER_MODES = {
     'scramble': 'Scrambles',
 }
 
+# Commands running a session, hence the only ones publishing anything.
+# The stream is bound for the whole life of the process, as the session
+# identifier of the protocol says it is: it starts before the first
+# state transition and outlives the cube, a session solved without one
+# publishing its states just the same.
+PUBLISHED_COMMANDS = frozenset(
+    {'solve', 'ghost', 'daily', 'train', 'drill', 'routine'},
+)
 
-def main() -> int:  # noqa: C901, PLR0911, PLR0912
+
+def main() -> int:
     """
     Run term-timer CLI application.
 
@@ -68,6 +78,9 @@ def main() -> int:  # noqa: C901, PLR0911, PLR0912
     # reads to know who talks, and only this layer knows it
     PUBLISHER.source = command
 
+    if command in PUBLISHED_COMMANDS:
+        PUBLISHER.start()
+
     if command not in {'merge', 'import'}:
         Terminal.set_title(f'{ command.title() } - Term-Timer')
 
@@ -78,6 +91,26 @@ def main() -> int:  # noqa: C901, PLR0911, PLR0912
     ):
         show_banner(BANNER_MODES[command])
 
+    try:
+        return run_command(command, options)
+    finally:
+        PUBLISHER.stop()
+
+
+def run_command(  # noqa: C901, PLR0911, PLR0912
+        command: str, options: Namespace,
+) -> int:
+    """
+    Run the resolved command.
+
+    Args:
+        command: The resolved command name.
+        options: The parsed command options.
+
+    Returns:
+        Exit code (0 for success).
+
+    """
     with suppress(KeyboardInterrupt):
         if command == 'ghost':
             return asyncio.run(ghost(options), debug=DEBUG)

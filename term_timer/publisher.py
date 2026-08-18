@@ -41,17 +41,28 @@ CUBE_TOPICS: Final[dict[str, str]] = {
     'disconnect': LINK_TOPIC,
 }
 
-# Topics carrying what only term-timer knows. Declared here so that the
-# namespace is settled in one place, and so that the prefix rule below
-# is checked against every topic of the protocol, not only the published
-# ones. They are wired to their emission points later.
+# Topics carrying what only term-timer knows. Named apart, one by one,
+# because each has a single emission point in the application and no
+# mapping to build: a driver event is dispatched, a session event is
+# published where it happens.
+STATE_TOPIC: Final[str] = 'session.state'
+SCRAMBLE_TOPIC: Final[str] = 'session.scramble'
+SOLVE_TOPIC: Final[str] = 'session.solve'
+RECORD_TOPIC: Final[str] = 'session.record'
+TRAIN_TOPIC: Final[str] = 'session.train'
+
+# Declared here so that the namespace is settled in one place, and so
+# that the prefix rule below is checked against every topic of the
+# protocol, not only the published ones. The two reserved ones wait for
+# a live CFOP detection, which does not exist, and for a subscriber
+# asking for the rotations built downstream of the driver events.
 SESSION_TOPICS: Final[tuple[str, ...]] = (
-    'session.state',
-    'session.scramble',
-    'session.solve',
-    'session.record',
+    STATE_TOPIC,
+    SCRAMBLE_TOPIC,
+    SOLVE_TOPIC,
+    RECORD_TOPIC,
+    TRAIN_TOPIC,
     'session.step',
-    'session.train',
     'session.rotation',
 )
 

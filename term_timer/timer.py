@@ -2,6 +2,7 @@
 import logging
 import operator
 from random import Random
+from typing import Any
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeOrientation
@@ -19,6 +20,10 @@ from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
 from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.printer import print_cube_scrambled
+from term_timer.publisher import PUBLISHER
+from term_timer.publisher import RECORD_TOPIC
+from term_timer.publisher import SCRAMBLE_TOPIC
+from term_timer.publisher import SOLVE_TOPIC
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import TARGET_ALWAYS
@@ -141,6 +146,115 @@ class Timer(SolveInterface):
 
         self.ghost = ghost
 
+    def publish_scramble(self) -> None:
+        """
+        Publish the scramble the attempt about to start is solving.
+
+        Emitted once the scramble is drawn and reoriented, so that a
+        subscriber reads the very moves the solver is shown, and the
+        state the cube must reach.
+        """
+        PUBLISHER.publish(
+            SCRAMBLE_TOPIC,
+            {
+                'scramble': str(self.scramble),
+                'oriented': str(self.scramble_oriented),
+                'rotation': str(self.cube_orientation_moves),
+                'facelets': self.facelets_scrambled,
+                'cube_size': self.cube_size,
+                'index': self.counter,
+                'total': len(self.scrambles),
+            },
+        )
+
+    @staticmethod
+    def solve_steps(solve: Solve) -> list[dict[str, Any]]:
+        """
+        Break a solve down into the steps of its method.
+
+        A DNF never reaches the solved state, so its breakdown is partial
+        or wrong: it carries no steps at all rather than misleading ones.
+
+        Args:
+            solve: The solve that just ended.
+
+        Returns:
+            One object per step of the method analysis, empty when the
+            solve carries no usable reconstruction.
+
+        """
+        if not solve.analysable or solve.method_applied is None:
+            return []
+
+        return [
+            {
+                'name': step['name'],
+                'type': step['type'],
+                'moves': str(step['moves_prettified']),
+                'case': step['case'],
+                'qtm': step['qtm'],
+                'total': step['total'],
+                'recognition': step['recognition'],
+                'execution': step['execution'],
+            }
+            for step in solve.method_applied.summary
+        ]
+
+    def publish_solve(self, solve: Solve) -> None:
+        """
+        Publish the solve that just ended, in its storage spelling.
+
+        The payload is the one written to the session file, so a client
+        writing down what it receives records a readable session, plus
+        what only the running session knows: where the attempt sits, the
+        method breakdown, and whether it counts.
+
+        The breakdown is built only when someone listens: analysing a
+        solve nobody displays is work a silent session must not pay for.
+
+        Args:
+            solve: The solve that just ended.
+
+        """
+        if not PUBLISHER.active:
+            return
+
+        data: dict[str, Any] = {**solve.as_save}
+        data['dnf'] = solve.flag == DNF
+        data['counter'] = self.counter
+        data['session'] = self.session
+        data['cube_size'] = self.cube_size
+        data['free_play'] = self.free_play
+        data['steps'] = self.solve_steps(solve)
+
+        PUBLISHER.publish(SOLVE_TOPIC, data)
+
+    def publish_records(self, records: list[tuple[str, int, int]]) -> None:
+        """
+        Publish the records this solve just broke.
+
+        The scope is the session: a record is read against the stack the
+        session runs on, which is what the celebrating lines compare too.
+        A wider scope stays possible without touching a subscriber, the
+        field being there from the first version.
+
+        Args:
+            records: The ``(kind, value, previous)`` triples broken.
+
+        """
+        for kind, value, previous in records:
+            PUBLISHER.publish(
+                RECORD_TOPIC,
+                {
+                    'kind': kind,
+                    'scope': 'session',
+                    'value': value,
+                    'previous': previous,
+                    'delta': value - previous,
+                    'counter': self.counter,
+                },
+            )
+
     def start_line(self, cube: VCube) -> None:
         """Display scramble information and instructions to start solve."""
         if self.show_cube:
@@ -213,6 +327,8 @@ class Timer(SolveInterface):
         self.stack = [*self.stack, solve]
         new_stats = SolveStatisticsReporter(self.cube_size, self.stack)
 
+        self.publish_solve(solve)
+
         if solve.flag == DNF:
             SOUND_PLAYER.solve_failed()
         else:
@@ -261,7 +377,10 @@ class Timer(SolveInterface):
             self.format_series_line(new_stats, STATS_LIVE_SERIES),
         )
 
+        records: list[tuple[str, int, int]] = []
+
         if new_stats.total > 1 and new_stats.best < old_stats.best:
+            records.append(('single', new_stats.best, old_stats.best))
             mc = 9 + len(str(self.counter))
             self.console.print(
                 f'[record]:rocket:{ "New PB !".center(mc) }[/record]',
@@ -269,9 +388,13 @@ class Timer(SolveInterface):
                 format_delta(new_stats.best - old_stats.best),
             )
 
-        self.print_session_records(
-            new_stats, old_stats, STATS_SESSION_SERIES,
+        records.extend(
+            self.print_session_records(
+                new_stats, old_stats, STATS_SESSION_SERIES,
+            ),
         )
+
+        self.publish_records(records)
 
         self.projection_line(new_stats)
 
@@ -396,6 +519,8 @@ class Timer(SolveInterface):
         else:
             self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.state
+
+        self.publish_scramble()
 
         self.start_line(cube)
 

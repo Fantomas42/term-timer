@@ -74,6 +74,8 @@ from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import FaceletAnalyser
 from term_timer.printer import print_cube_trainer
+from term_timer.publisher import PUBLISHER
+from term_timer.publisher import TRAIN_TOPIC
 from term_timer.scrambler import trainer
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -1812,6 +1814,52 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             '[dnf]DNF[/dnf]',
         )
 
+    def publish_training(
+            self,
+            selected_case: Case,
+            solve: Solve,
+            rating: Rating | None,
+            *,
+            dnf: bool,
+    ) -> None:
+        """
+        Publish the training attempt that was just saved.
+
+        Only a saved attempt is published: a discarded one leaves no
+        timing and no card behind, so there is nothing a subscriber
+        could act on. The rating is empty when FSRS was skipped, and
+        the due date is the one written to the training file.
+
+        Args:
+            selected_case: The case that was trained.
+            solve: The attempt that was executed.
+            rating: The FSRS rating applied, None when none was.
+            dnf: Whether the attempt failed.
+
+        """
+        if not PUBLISHER.active:
+            return
+
+        training = self.trainings.cases.get(selected_case.code)
+        card = training.fsrs_card if training is not None else None
+
+        PUBLISHER.publish(
+            TRAIN_TOPIC,
+            {
+                'step': self.step_label,
+                'family': selected_case.family,
+                'case': selected_case.code,
+                'name': selected_case.pretty_name,
+                'algorithm': str(solve.reconstruction),
+                'time': self.elapsed_time,
+                'dnf': dnf,
+                'counter': self.counter,
+                'rating': rating.name if rating is not None else '',
+                'state': card.state.name if card is not None else '',
+                'due': card.due if card is not None else None,
+            },
+        )
+
     def resolve_fsrs_rating(
             self,
             solve: Solve,
@@ -1883,6 +1931,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         skip_fsrs = manual and manual_rating is None and not dnf
 
         save_string = ''
+        applied_rating: Rating | None = None
         if discard:
             if not dnf:
                 self.trainings.pop_timing(
@@ -1920,7 +1969,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             ):
                 case_training = self.trainings.cases[selected_case.code]
                 old_card = case_training.fsrs_card
-                rating = self.resolve_fsrs_rating(
+                applied_rating = rating = self.resolve_fsrs_rating(
                     solve,
                     self.fsrs_rater,
                     old_card,
@@ -1953,6 +2002,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
             save_trainings(self.trainings)
             SOUND_PLAYER.save_confirmed()
+            self.publish_training(
+                selected_case, solve, applied_rating, dnf=dnf,
+            )
             if not dnf:
                 self.session_data.append(
                     (

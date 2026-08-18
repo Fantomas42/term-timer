@@ -125,7 +125,7 @@ class SeriesReporter:
             new_stats: 'Statistics',
             old_stats: 'Statistics',
             series: list[tuple[str, int]],
-    ) -> None:
+    ) -> list[tuple[str, int, int]]:
         """
         Print a record line for each series average beaten by this solve.
 
@@ -133,14 +133,24 @@ class SeriesReporter:
         before the solve and celebrates the ones that improved. The overall
         ``New PB`` line is handled by the caller and stays outside the series.
 
+        The broken records are returned rather than only printed, so that
+        a caller publishing them on the event stream reads the very same
+        comparison the line celebrates, instead of running it twice.
+
         Args:
             new_stats: Statistics including the latest solve.
             old_stats: Statistics before the latest solve.
             series: Series of ``(kind, size)`` pairs to watch.
 
+        Returns:
+            One ``(token, value, previous)`` triple per broken record, in
+            the order they are printed.
+
         """
+        records: list[tuple[str, int, int]] = []
+
         if new_stats.total <= 1:
-            return
+            return records
 
         mc = 9 + len(str(self.counter))
 
@@ -154,6 +164,8 @@ class SeriesReporter:
             if value <= 0 or value >= best:
                 continue
 
+            records.append((f'{ kind }{ size }', value, best))
+
             emoji = SERIES_RECORD_EMOJI.get(
                 (kind, size), SERIES_RECORD_EMOJI_FALLBACK,
             )
@@ -163,3 +175,5 @@ class SeriesReporter:
                 f'[best]{ format_time(value) }[/best]',
                 format_delta(value - best),
             )
+
+        return records
