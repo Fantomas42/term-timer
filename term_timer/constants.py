@@ -117,6 +117,15 @@ CONFIG_FILE: Final = (
     else TT_DIRECTORY / 'config.toml'
 )
 
+# Version of the published event protocol. Bumped only when a topic or
+# a field is renamed or removed: adding either never breaks a client.
+PROTOCOL_VERSION: Final = 1
+
+# Send buffer of the PUB socket, in messages. Set wide on purpose: the
+# stream peaks at a few dozen messages per second, so reaching it means
+# a subscriber stopped reading entirely, which is an incident already.
+PUBLISH_HIGH_WATER_MARK: Final = 10_000
+
 TEMPLATES_DIRECTORY: Final = Path(__file__).parent / 'server' / 'templates'
 
 STATIC_DIRECTORY: Final = Path(__file__).parent / 'server' / 'static'

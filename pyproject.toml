@@ -29,7 +29,8 @@ dependencies = [
     "numpy>=2.4.0",
     "sounddevice>=0.5.3",
     "fsrs>=6.3.1",
-    "wakepy>=0.10.2"
+    "wakepy>=0.10.2",
+    "pyzmq>=27.0"
 ]
 
 [project.urls]

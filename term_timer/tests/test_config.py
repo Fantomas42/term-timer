@@ -1,6 +1,7 @@
 """Tests for config helpers."""
 import os
 import unittest
+from pathlib import Path
 from typing import ClassVar
 from typing import cast
 from unittest.mock import patch
@@ -11,6 +12,7 @@ from term_timer.config import env_string
 from term_timer.config import is_cube_address
 from term_timer.config import load_cubes
 from term_timer.config import load_default_cube
+from term_timer.config import parse_endpoints
 from term_timer.config import parse_series
 
 
@@ -81,6 +83,47 @@ class TestParseSeries(unittest.TestCase):
                 ('mo', 'ao'),
             ),
             [('ao', 12), ('mo', 3)],
+        )
+
+
+class TestParseEndpoints(unittest.TestCase):
+    """Tests for parse_endpoints."""
+
+    def test_endpoints_kept_in_order(self) -> None:
+        """The order the configuration lists is the binding order."""
+        self.assertEqual(
+            parse_endpoints(['tcp://127.0.0.1:5555', 'inproc://cube']),
+            ['tcp://127.0.0.1:5555', 'inproc://cube'],
+        )
+
+    def test_ipc_path_expanded(self) -> None:
+        """A tilde in a socket path is a home, not a directory."""
+        self.assertEqual(
+            parse_endpoints(['ipc://~/.term_timer/cube.ipc']),
+            [f'ipc://{ Path.home() }/.term_timer/cube.ipc'],
+        )
+
+    def test_other_transports_untouched(self) -> None:
+        """Only an ipc address is a path, so only it is expanded."""
+        self.assertEqual(
+            parse_endpoints(['tcp://~host:5555']),
+            ['tcp://~host:5555'],
+        )
+
+    def test_transportless_tokens_ignored(self) -> None:
+        """What names no transport never reaches ZeroMQ."""
+        self.assertEqual(
+            parse_endpoints(['', '  ', 'cube.ipc', 'tcp://', 'ipc://cube']),
+            ['ipc://cube'],
+        )
+
+    def test_duplicates_dropped(self) -> None:
+        """The same endpoint is never bound twice."""
+        self.assertEqual(
+            parse_endpoints(
+                ['tcp://127.0.0.1:5555', ' tcp://127.0.0.1:5555 '],
+            ),
+            ['tcp://127.0.0.1:5555'],
         )
 
 
