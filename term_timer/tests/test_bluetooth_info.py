@@ -1,7 +1,6 @@
 """Tests for the bt-info utility script."""
 import asyncio
 import logging
-import threading
 import unittest
 from argparse import Namespace
 from collections.abc import Awaitable
@@ -324,8 +323,6 @@ class TestConsumerDesynchronisation(unittest.IsolatedAsyncioTestCase):
         with patch('term_timer.scripts.bluetooth_info.SOUND_PLAYER'):
             await consumer_cb(
                 queue,
-                threading.Event(),
-                None,
                 report,
                 show_cube=False,
                 orientation_faces='UF',
@@ -380,8 +377,6 @@ class TestConsumerEventCoverage(unittest.IsolatedAsyncioTestCase):
         ):
             await consumer_cb(
                 queue,
-                threading.Event(),
-                None,
                 SessionReport(),
                 show_cube=False,
                 orientation_faces='UF',
@@ -453,7 +448,7 @@ class TestRunExitCode(unittest.IsolatedAsyncioTestCase):
                     level=logging.INFO,
                 ) as logs,
         ):
-            code = await run(self.options, None, threading.Event())
+            code = await run(self.options)
 
         return code, [record.getMessage() for record in logs.records]
 
@@ -483,7 +478,7 @@ class TestRunExitCode(unittest.IsolatedAsyncioTestCase):
         self.options.input = 'events.json'
 
         with patch('term_timer.scripts.bluetooth_info.replay') as replayer:
-            code = await run(self.options, None, threading.Event())
+            code = await run(self.options)
 
         self.assertEqual(code, 0)
         replayer.assert_called_once_with(self.options)

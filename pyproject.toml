@@ -45,8 +45,6 @@ dev = [
     "pytest-subtests",
 ]
 opengl = [
-    "pyopengl",
-    "pygame",
     "cubing_algs[opengl]",
 ]
 
@@ -127,7 +125,6 @@ omit = [
   "term_timer/tests/*",
   "term_timer/poc/*",
   "term_timer/scripts/*",
-  "term_timer/opengl/*",
 ]
 
 [tool.coverage.report]
