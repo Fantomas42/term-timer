@@ -12,6 +12,7 @@ from term_timer.config import env_string
 from term_timer.config import is_cube_address
 from term_timer.config import load_cubes
 from term_timer.config import load_default_cube
+from term_timer.config import parse_endpoint
 from term_timer.config import parse_endpoints
 from term_timer.config import parse_series
 
@@ -84,6 +85,37 @@ class TestParseSeries(unittest.TestCase):
             ),
             [('ao', 12), ('mo', 3)],
         )
+
+
+class TestParseEndpoint(unittest.TestCase):
+    """Tests for parse_endpoint."""
+
+    def test_ipc_path_expanded(self) -> None:
+        """A tilde in a socket path is a home, not a directory."""
+        self.assertEqual(
+            parse_endpoint('ipc://~/.term_timer/cube.ipc'),
+            f'ipc://{ Path.home() }/.term_timer/cube.ipc',
+        )
+
+    def test_other_transports_untouched(self) -> None:
+        """Only an ipc address is a path, so only it is expanded."""
+        self.assertEqual(
+            parse_endpoint('tcp://~host:5555'),
+            'tcp://~host:5555',
+        )
+
+    def test_surrounding_spaces_ignored(self) -> None:
+        """What is typed by hand may be padded."""
+        self.assertEqual(
+            parse_endpoint(' tcp://127.0.0.1:5555 '),
+            'tcp://127.0.0.1:5555',
+        )
+
+    def test_transportless_token_refused(self) -> None:
+        """What names no transport is no endpoint."""
+        for token in ('', '  ', 'cube.ipc', 'tcp://', '://cube'):
+            with self.subTest(token=token):
+                self.assertEqual(parse_endpoint(token), '')
 
 
 class TestParseEndpoints(unittest.TestCase):

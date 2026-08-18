@@ -47,10 +47,12 @@ dev = [
 opengl = [
     "pyopengl",
     "pygame",
+    "cubing_algs[opengl]",
 ]
 
 [project.scripts]
 bt-info = "term_timer.scripts.bluetooth_info:main"
+cube-view = "term_timer.viewer.main:main"
 term-timer = "term_timer.scripts.timer:main"
 
 [tool.setuptools]

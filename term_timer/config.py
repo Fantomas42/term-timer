@@ -157,14 +157,42 @@ def parse_series(
     return series
 
 
+def parse_endpoint(token: str) -> str:
+    """
+    Parse one endpoint of the event stream.
+
+    An endpoint is a ZeroMQ ``<transport>://<address>``. The address of
+    an ``ipc`` endpoint is a file path, so its leading ``~`` is
+    expanded: an endpoint is typed by hand, in the configuration file
+    as on the command line of a client, and a literal tilde would be
+    taken as a directory name.
+
+    Both sides of the stream read their endpoints here, so that what a
+    publisher binds and what a subscriber connects to are spelled the
+    same way.
+
+    Args:
+        token: The endpoint, as it was written.
+
+    Returns:
+        The endpoint to bind or to connect to, empty when the token
+        names no transport.
+
+    """
+    transport, separator, address = str(token).strip().partition('://')
+
+    if not separator or not transport or not address:
+        return ''
+
+    if transport == 'ipc':
+        address = str(Path(address).expanduser())
+
+    return f'{ transport }://{ address }'
+
+
 def parse_endpoints(tokens: list[str]) -> list[str]:
     """
     Parse the endpoints the event publisher binds.
-
-    Each token is a ZeroMQ endpoint, ``<transport>://<address>``. The
-    address of an ``ipc`` endpoint is a file path, so its leading ``~``
-    is expanded: the configuration file is written by hand and a literal
-    tilde would be taken as a directory name.
 
     Tokens carrying no transport are ignored rather than handed to
     ZeroMQ, and duplicates are dropped: binding the same endpoint twice
@@ -181,15 +209,9 @@ def parse_endpoints(tokens: list[str]) -> list[str]:
     seen: set[str] = set()
 
     for token in tokens:
-        transport, separator, address = str(token).strip().partition('://')
-        if not separator or not address:
-            continue
+        endpoint = parse_endpoint(token)
 
-        if transport == 'ipc':
-            address = str(Path(address).expanduser())
-
-        endpoint = f'{ transport }://{ address }'
-        if endpoint in seen:
+        if not endpoint or endpoint in seen:
             continue
 
         seen.add(endpoint)

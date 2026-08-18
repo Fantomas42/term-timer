@@ -126,6 +126,12 @@ PROTOCOL_VERSION: Final = 1
 # a subscriber stopped reading entirely, which is an incident already.
 PUBLISH_HIGH_WATER_MARK: Final = 10_000
 
+# How long a subscriber waits on the socket before looking at its own
+# state again, in milliseconds. It is what a reader loop costs to stop:
+# short enough to close a window without a pause, long enough to leave
+# an idle stream alone.
+STREAM_POLL_TIMEOUT: Final = 200
+
 TEMPLATES_DIRECTORY: Final = Path(__file__).parent / 'server' / 'templates'
 
 STATIC_DIRECTORY: Final = Path(__file__).parent / 'server' / 'static'
