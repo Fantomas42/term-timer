@@ -784,7 +784,7 @@ class BaseReplayInterface(BluetoothInterface):
             'gyroscope_supported': False,
             'restart_no_power': 0,
         }
-        await self.queue.put([event])
+        await self.emit([event])
 
     async def emit_battery(self) -> None:
         """Emit the battery level event."""
@@ -795,7 +795,7 @@ class BaseReplayInterface(BluetoothInterface):
             'level': self.device['battery'],
             'charging_state': 0,
         }
-        await self.queue.put([event])
+        await self.emit([event])
 
     async def emit_facelets(self) -> None:
         """Emit the initial solved facelets event."""
@@ -806,7 +806,7 @@ class BaseReplayInterface(BluetoothInterface):
             'serial': 0,
             'facelets': SOLVED_FACELETS,
         }
-        await self.queue.put([event])
+        await self.emit([event])
 
     async def emit_move(
             self, move: str, serial: int, clock: int,
@@ -832,7 +832,7 @@ class BaseReplayInterface(BluetoothInterface):
             'direction': 0,
             'move': str(parsed),
         }
-        await self.queue.put([event])
+        await self.emit([event])
 
 
 class ReplayInterface(BaseReplayInterface):

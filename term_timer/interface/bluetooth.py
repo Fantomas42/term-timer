@@ -37,6 +37,7 @@ from term_timer.exceptions import CubeNotFoundError
 from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.logger import spawn
 from term_timer.panic import beat
+from term_timer.publisher import PUBLISHER
 
 if TYPE_CHECKING:
     from rich.console import Console as RichConsole
@@ -121,6 +122,10 @@ class Bluetooth:
             CubeDevice.discovered(prefer_known=True)
         )
         address = self.bluetooth_device.address
+
+        # Opened before the interface, the connection of the cube being
+        # itself an event a subscriber waits for
+        PUBLISHER.start()
 
         self.bluetooth_queue = asyncio.Queue()
 
@@ -276,6 +281,8 @@ class Bluetooth:
             await self.bluetooth_interface.__aexit__(None, None, None)
 
         await self.stop_bluetooth_consumer()
+
+        PUBLISHER.stop()
 
     async def stop_bluetooth_consumer(self) -> None:
         """

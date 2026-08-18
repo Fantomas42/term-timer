@@ -27,6 +27,7 @@ from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
 from term_timer.constants import BLUETOOTH_DISCONNECT_TIMEOUT
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.panic import beat
+from term_timer.publisher import PUBLISHER
 
 logger = logging.getLogger(__name__)
 
@@ -223,6 +224,8 @@ class BluetoothInterface:
             )
             raise CubeNotFoundError from error
 
+        PUBLISHER.publish_link(connected=True, reason='opened')
+
         return self
 
     async def __aexit__(self, exc_type: type[BaseException] | None,
@@ -247,6 +250,10 @@ class BluetoothInterface:
         if self.client and self.client.is_connected and self.driver:
             await self.stop_notifications()
             await self.disconnect_client()
+
+            # A link the application let go, told apart from one that
+            # dropped: a subscriber does not wait for the same thing
+            PUBLISHER.publish_link(connected=False, reason='closed')
 
     async def stop_notifications(self) -> None:
         """
@@ -307,6 +314,54 @@ class BluetoothInterface:
                 time.monotonic() - clock,
             )
 
+    @staticmethod
+    def publish(events: list[EventDict]) -> None:
+        """
+        Publish a batch of events, whatever it costs the publisher.
+
+        The queue is the application; the publication is a side effect
+        that must never keep an event from reaching it. The publisher
+        already swallows its own errors, this guard covers what it
+        cannot: a subscriber layer that would replace it.
+
+        Args:
+            events: Events on their way to the consumer queue.
+
+        """
+        try:
+            PUBLISHER.publish_events(events)
+        except Exception as error:  # noqa: BLE001
+            logger.debug('Cannot publish events: %s', error)
+
+    async def emit(self, events: list[EventDict]) -> None:
+        """
+        Publish events, then hand them to the consumer queue.
+
+        The single way out of the interface, so that a subscriber sees
+        exactly what the application sees, in the same order, be it a
+        cube or a replay talking.
+
+        Args:
+            events: Events produced by the driver.
+
+        """
+        self.publish(events)
+        await self.queue.put(events)
+
+    def emit_nowait(self, events: list[EventDict]) -> None:
+        """
+        Emit events from outside a coroutine.
+
+        The queue has no maximum size, so posting without waiting never
+        fails: it is what lets a bleak callback emit.
+
+        Args:
+            events: Events produced by the driver.
+
+        """
+        self.publish(events)
+        self.queue.put_nowait(events)
+
     def handle_disconnection(
             self, client: BleakClient,  # noqa: ARG002
     ) -> None:
@@ -338,7 +393,7 @@ class BluetoothInterface:
             'clock': 0,
             'timestamp': datetime.now(tz=UTC),
         }
-        self.queue.put_nowait([event])
+        self.emit_nowait([event])
 
     async def notification_handler(self, sender: BleakGATTCharacteristic,
                                    data: bytearray) -> None:
@@ -364,7 +419,7 @@ class BluetoothInterface:
         for event in events:
             logger.debug('Event %s', format_event(event))
 
-        await self.queue.put(events)
+        await self.emit(events)
 
     async def send_init_commands(self) -> None:
         """Send the driver's required initialization command sequence."""

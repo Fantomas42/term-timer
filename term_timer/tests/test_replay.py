@@ -46,6 +46,7 @@ from term_timer.bluetooth.replay import validate_trainer_replay
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import ReplayError
 from term_timer.scrambler import trainer as trainer_scramble
+from term_timer.tests.test_bluetooth_interface import RecordingPublisher
 from term_timer.tests.test_trainer_bluetooth import SaveTrainingsPatchedTestCase
 from term_timer.tests.test_trainer_bluetooth import build_trainer
 from term_timer.tests.test_trainer_bluetooth import wait_until
@@ -578,6 +579,46 @@ class TestReplayScheduleEvents(unittest.IsolatedAsyncioTestCase):
 
         # 2 solves x (4 scramble + 4 solution moves) + 2 gesture moves.
         self.assertEqual(names.count('move'), 18)
+
+
+class TestReplayPublication(unittest.IsolatedAsyncioTestCase):
+    """A replay feeds the stream exactly as a cube does."""
+
+    drain = staticmethod(TestReplayScheduleEvents.drain)
+    advance = staticmethod(TestReplayScheduleEvents.advance)
+
+    async def test_every_replayed_event_is_published(self) -> None:
+        """
+        What the replay queues, it broadcast first, in the same order.
+
+        The replay interface inherits the emission path of the real
+        one, which is what makes a subscriber — a viewer, a recorder —
+        testable without a cube anywhere.
+        """
+        replay = validate_replay(deepcopy(VALID_REPLAY))
+
+        stub = StateStub()
+        queue: EventQueue = asyncio.Queue()
+        interface = ReplayInterface(queue, replay, stub)
+        publisher = RecordingPublisher(queue)
+
+        with patch(
+                'term_timer.bluetooth.interface.PUBLISHER', publisher,
+        ):
+            await interface.send_init_commands()
+
+            await self.advance(stub, queue, 'scrambling', 7)
+            await self.advance(stub, queue, 'scrambled', 11)
+
+            await asyncio.wait_for(
+                cast('asyncio.Task[None]', interface.schedule_task),
+                timeout=5.0,
+            )
+
+        published = [event['event'] for event in publisher.events]
+
+        self.assertEqual(published, self.drain(queue))
+        self.assertEqual(published[:3], ['hardware', 'battery', 'facelets'])
 
 
 class TestReplayInterfaceFlow(unittest.IsolatedAsyncioTestCase):

@@ -21,6 +21,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# State of the link with the cube. Named apart because it is the only
+# topic with no driver event of its own: a cube announces its departure
+# and never its arrival, so the interface publishes the arrival itself.
+LINK_TOPIC: Final[str] = 'cube.link'
+
 # Topic of each event the drivers produce. The mapping is what makes the
 # hardware stream identical in a real cube and in a replay, both feeding
 # the same interface. An event absent from it is simply not published.
@@ -33,7 +38,7 @@ CUBE_TOPICS: Final[dict[str, str]] = {
     'battery': 'cube.battery',
     'gyro-config': 'cube.config',
     'reset': 'cube.reset',
-    'disconnect': 'cube.link',
+    'disconnect': LINK_TOPIC,
 }
 
 # Topics carrying what only term-timer knows. Declared here so that the
@@ -87,7 +92,8 @@ class EventPublisher:
         """Tell whether the publisher is bound and publishing."""
         return self.socket is not None
 
-    def start(self, source: str, endpoints: list[str] | None = None) -> None:
+    def start(self, source: str = '',
+              endpoints: list[str] | None = None) -> None:
         """
         Bind the publication endpoints and open the stream.
 
@@ -98,7 +104,9 @@ class EventPublisher:
 
         Args:
             source: Name of the emitting command, carried by every
-                message so that a subscriber knows who talks.
+                message so that a subscriber knows who talks. Empty
+                keeps the name already given, the command layer naming
+                itself long before a cube opens the stream.
             endpoints: Endpoints to bind, defaulting to the configured
                 ones.
 
@@ -142,7 +150,7 @@ class EventPublisher:
 
         self.socket = socket
         self.endpoints = bound
-        self.source = source
+        self.source = source or self.source
         self.session_id = uuid4().hex[:8]
         self.sequence = 0
 
@@ -262,6 +270,29 @@ class EventPublisher:
             )
         except Exception as error:  # noqa: BLE001
             logger.debug('Cannot publish %s: %s', topic, error)
+
+    def publish_link(self, *, connected: bool, reason: str) -> None:
+        """
+        Publish the state of the link with the cube.
+
+        The topic answers "is the cube there", a question no driver
+        event answers: a cube announces its departure, never its
+        arrival, and says nothing at all when the link simply drops.
+
+        Args:
+            connected: Whether the cube is reachable from now on.
+            reason: What made the link change, ``opened`` on a
+                connection, ``closed`` when the application let go and
+                ``lost`` when the link dropped on its own.
+
+        """
+        self.publish(
+            LINK_TOPIC,
+            {
+                'connected': connected,
+                'reason': reason,
+            },
+        )
 
     def publish_events(self, events: list['EventDict']) -> None:
         """

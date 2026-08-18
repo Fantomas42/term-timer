@@ -50,6 +50,7 @@ from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.interface.terminal import Terminal
 from term_timer.opengl.thread import CubeGLThread
 from term_timer.orientation import get_orientation_moves
+from term_timer.publisher import PUBLISHER
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
@@ -888,6 +889,9 @@ async def run(
         return 0
 
     report = SessionReport()
+
+    PUBLISHER.start('bt-info')
+
     queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
 
     client = client_cb(
@@ -917,6 +921,8 @@ async def run(
         )
         return 1
     finally:
+        PUBLISHER.stop()
+
         if gl_thread and gl_thread.is_alive():
             gl_thread.stop()
             gl_thread.join(timeout=2)

@@ -426,6 +426,56 @@ class PublishEventsTestCase(PublisherTestCase):
         self.assertEqual(self.topics(self.drain(socket)), ['cube.battery'])
 
 
+class PublishLinkTestCase(PublisherTestCase):
+    """The state of the link, which no driver event carries."""
+
+    def test_a_connection_is_published(self) -> None:
+        """A cube arriving is announced, though it never says so."""
+        self.start()
+        socket = self.subscribe()
+
+        self.publisher.publish_link(connected=True, reason='opened')
+
+        topic, envelope = self.receive(socket)
+
+        self.assertEqual(topic, 'cube.link')
+        self.assertTrue(envelope['data']['connected'])
+        self.assertEqual(envelope['data']['reason'], 'opened')
+
+    def test_a_closed_link_is_told_apart_from_a_lost_one(self) -> None:
+        """The reason is what a subscriber decides on, not the topic."""
+        self.start()
+        socket = self.subscribe()
+
+        self.publisher.publish_link(connected=False, reason='closed')
+        self.publisher.publish_events([disconnect_event()])
+
+        reasons = [
+            envelope['data']['reason']
+            for _, envelope in self.drain(socket)
+        ]
+
+        self.assertEqual(reasons, ['closed', 'lost'])
+
+    def test_link_is_published_on_the_same_topic_as_the_event(self) -> None:
+        """
+        Both spellings of the link land on one topic.
+
+        A subscriber filtering on it must see the whole life of the
+        link, whether the news comes from the interface or from a
+        driver event.
+        """
+        self.start()
+        socket = self.subscribe(b'cube.link')
+
+        self.publisher.publish_link(connected=True, reason='opened')
+        self.publisher.publish_events([disconnect_event(), battery_event()])
+
+        self.assertEqual(
+            self.topics(self.drain(socket)), ['cube.link', 'cube.link'],
+        )
+
+
 class SubscriptionTestCase(PublisherTestCase):
     """What subscribers see, alone or together."""
 
@@ -502,6 +552,34 @@ class LifecycleTestCase(PublisherTestCase):
 
         self.assertIs(self.publisher.socket, socket)
         self.assertEqual(self.publisher.source, 'solve')
+
+    def test_start_keeps_the_source_named_beforehand(self) -> None:
+        """
+        A source given early survives a start naming none.
+
+        Only the command layer knows which command runs, and it knows
+        it long before a cube opens the stream: it names the publisher
+        once, and whoever connects the cube starts it without having to
+        carry that name down to the Bluetooth interface.
+        """
+        self.publisher.source = 'ghost'
+
+        self.publisher.start('', [self.endpoint])
+        socket = self.subscribe()
+
+        self.publisher.publish('cube.move', {'move': 'R'})
+
+        _, envelope = self.receive(socket)
+
+        self.assertEqual(envelope['src'], 'ghost')
+
+    def test_start_overrides_the_source_when_given_one(self) -> None:
+        """A start naming itself wins over what was declared before."""
+        self.publisher.source = 'ghost'
+
+        self.publisher.start('bt-info', [self.endpoint])
+
+        self.assertEqual(self.publisher.source, 'bt-info')
 
     def test_start_uses_the_configured_endpoints_by_default(self) -> None:
         """Given no endpoint, the configured ones are bound."""
