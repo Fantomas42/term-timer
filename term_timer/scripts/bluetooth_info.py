@@ -25,6 +25,7 @@ from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
 from term_timer.arguments import ORIENTATIONS_SORTED
+from term_timer.arguments import set_gyroscope_argument
 from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import FaceletsEventDict
@@ -397,10 +398,11 @@ def check_state(
     return True
 
 
-async def consumer_cb(  # noqa: C901, PLR0912, PLR0915
+async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
         queue: asyncio.Queue[list[EventDict] | None],
         report: SessionReport,
         *, show_cube: bool,
+        use_gyroscope: bool,
         orientation_faces: CubeOrientation,
         rotation_threshold: float = 75.0) -> None:
     """
@@ -416,6 +418,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0915
         report: Report accumulating the events and the counters of the
             session.
         show_cube: Whether to display cube state in console.
+        use_gyroscope: Whether the gyroscope events are processed.
         orientation_faces: Two-character orientation specification (e.g., "UF").
         rotation_threshold: Minimum rotation angle in degrees for detection.
             Defaults to 75.0.
@@ -434,7 +437,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0915
         orientation_faces,
         orientation_moves,
     )
-    if USE_GYROSCOPE:
+    if use_gyroscope:
         rotation_detector = RotationDetector(
             rotation_threshold=rotation_threshold,
         )
@@ -581,6 +584,7 @@ async def client_cb(  # noqa: PLR0913
         filter_name: str,
         *,
         cube_reset: bool,
+        use_gyroscope: bool,
         gyroscope_enable: bool,
         gyroscope_disable: bool,
 ) -> None:
@@ -596,6 +600,7 @@ async def client_cb(  # noqa: PLR0913
         time: Duration in seconds to maintain connection.
         filter_name: Device name filter for connection, or empty string.
         cube_reset: Whether to request cube reset.
+        use_gyroscope: Whether the driver reports the gyroscope events.
         gyroscope_enable: Whether to enable gyroscope data streaming.
         gyroscope_disable: Whether to disable gyroscope data streaming.
 
@@ -605,7 +610,7 @@ async def client_cb(  # noqa: PLR0913
     try:
         await bluetooth_interface.__aenter__(
             filter_name=filter_name,
-            use_gyroscope=True,
+            use_gyroscope=use_gyroscope,
         )
         SOUND_PLAYER.cube_connected()
 
@@ -630,7 +635,7 @@ async def client_cb(  # noqa: PLR0913
         await queue.put(None)
 
 
-def replay(options: Namespace) -> None:
+def replay(options: Namespace, *, use_gyroscope: bool) -> None:
     """
     Replays recorded Bluetooth events from a JSON file.
 
@@ -641,6 +646,8 @@ def replay(options: Namespace) -> None:
     Args:
         options: Command-line arguments containing input file path,
             orientation settings, and rotation threshold.
+        use_gyroscope: Whether the recorded gyroscope events are
+            processed.
 
     """
     file_path = Path(options.input).resolve()
@@ -672,6 +679,9 @@ def replay(options: Namespace) -> None:
         time = int(event['clock'] / MS_TO_NS_FACTOR)
 
         if event_name == 'gyro':
+            if not use_gyroscope:
+                continue
+
             event = cast('GyroEventDict', event)
 
             rotation_result = rotation_detector.process_gyro_event(
@@ -853,8 +863,14 @@ async def run(options: Namespace) -> int:
         Exit code (0 for success, 1 when no cube was found).
 
     """
+    use_gyroscope = (
+        USE_GYROSCOPE
+        if options.use_gyroscope is None
+        else options.use_gyroscope
+    )
+
     if options.input:
-        replay(options)
+        replay(options, use_gyroscope=use_gyroscope)
         return 0
 
     report = SessionReport()
@@ -868,6 +884,7 @@ async def run(options: Namespace) -> int:
         options.time,
         options.filter_name,
         cube_reset=options.cube_reset,
+        use_gyroscope=use_gyroscope,
         gyroscope_enable=options.gyroscope_enable,
         gyroscope_disable=options.gyroscope_disable,
     )
@@ -875,6 +892,7 @@ async def run(options: Namespace) -> int:
         queue,
         report,
         show_cube=options.show_cube,
+        use_gyroscope=use_gyroscope,
         orientation_faces=options.orientation,
         rotation_threshold=options.rotation_threshold,
     )
@@ -969,6 +987,7 @@ def main() -> int:
             'Default: False.'
         ),
     )
+    set_gyroscope_argument(parser)
     parser.add_argument(
         '--gyroscope-enable',
         action='store_true',

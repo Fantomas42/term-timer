@@ -328,8 +328,27 @@ def set_bluetooth_arguments(
             f'Given alone: { bare }.'
         ),
     )
+    set_gyroscope_argument(bluetooth)
+
+    return bluetooth
+
+
+def set_gyroscope_argument(
+        parser: ArgumentParser | ArgumentParser._ArgumentGroup,
+) -> None:
+    """
+    Add the gyroscope toggle to parser.
+
+    The option toggles the configured setting: it disables the
+    gyroscope when the configuration enables it, and enables it
+    otherwise.
+
+    Args:
+        parser: Parser or argument group receiving the option.
+
+    """
     mode = 'disable' if USE_GYROSCOPE else 'enable'
-    bluetooth.add_argument(
+    parser.add_argument(
         '-g', f'--{ mode }-gyroscope',
         action='store_const',
         const=not USE_GYROSCOPE,
@@ -341,8 +360,6 @@ def set_bluetooth_arguments(
             'Default: False.'
         ),
     )
-
-    return bluetooth
 
 
 def set_replay_arguments(

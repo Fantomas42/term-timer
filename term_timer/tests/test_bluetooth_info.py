@@ -14,6 +14,7 @@ from cubing_algs.vcube import VCube
 
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.constants import BLUETOOTH_EVENTS
+from term_timer.config import USE_GYROSCOPE
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.orientation import get_orientation_moves
 from term_timer.scripts.bluetooth_info import SessionReport
@@ -325,6 +326,7 @@ class TestConsumerDesynchronisation(unittest.IsolatedAsyncioTestCase):
                 queue,
                 report,
                 show_cube=False,
+                use_gyroscope=True,
                 orientation_faces='UF',
             )
 
@@ -379,6 +381,7 @@ class TestConsumerEventCoverage(unittest.IsolatedAsyncioTestCase):
                 queue,
                 SessionReport(),
                 show_cube=False,
+                use_gyroscope=True,
                 orientation_faces='UF',
             )
 
@@ -402,6 +405,67 @@ class TestConsumerEventCoverage(unittest.IsolatedAsyncioTestCase):
         )
 
 
+class TestConsumerGyroscope(unittest.IsolatedAsyncioTestCase):
+    """Tests for the gyroscope toggle of the consumer."""
+
+    async def consume(self, *, use_gyroscope: bool) -> list[str]:
+        """
+        Drain two gyro events a half turn apart from each other.
+
+        Args:
+            use_gyroscope: The setting handed to the consumer.
+
+        Returns:
+            The messages logged at the INFO level.
+
+        """
+        still = driver_event('gyro')
+        turned = driver_event('gyro')
+        turned['quaternion'] = {  # type: ignore[typeddict-unknown-key]
+            'x': 1.0, 'y': 0.0, 'z': 0.0, 'w': 0.0,
+        }
+
+        queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
+        queue.put_nowait([still, turned])
+        queue.put_nowait(None)
+
+        with (
+                patch('term_timer.scripts.bluetooth_info.SOUND_PLAYER'),
+                self.assertLogs(
+                    'term_timer.scripts.bluetooth_info',
+                    level=logging.INFO,
+                ) as logs,
+        ):
+            await consumer_cb(
+                queue,
+                SessionReport(),
+                show_cube=False,
+                use_gyroscope=use_gyroscope,
+                orientation_faces='UF',
+            )
+
+        return [record.getMessage() for record in logs.records]
+
+    async def test_rotations_are_detected(self) -> None:
+        """Test that a used gyroscope reports the rotations it sees."""
+        messages = await self.consume(use_gyroscope=True)
+
+        self.assertTrue(
+            any('Rotation:' in message for message in messages),
+        )
+
+    async def test_rotations_are_ignored(self) -> None:
+        """Test that an unused gyroscope reports nothing at all."""
+        messages = await self.consume(use_gyroscope=False)
+
+        self.assertFalse(
+            any('Rotation:' in message for message in messages),
+        )
+        self.assertFalse(
+            any('threshold for rotation' in message for message in messages),
+        )
+
+
 class TestRunExitCode(unittest.IsolatedAsyncioTestCase):
     """Tests for the exit code a session ends on."""
 
@@ -413,6 +477,7 @@ class TestRunExitCode(unittest.IsolatedAsyncioTestCase):
             time=1,
             filter_name='',
             cube_reset=False,
+            use_gyroscope=None,
             gyroscope_enable=False,
             gyroscope_disable=False,
             show_cube=False,
@@ -481,4 +546,6 @@ class TestRunExitCode(unittest.IsolatedAsyncioTestCase):
             code = await run(self.options)
 
         self.assertEqual(code, 0)
-        replayer.assert_called_once_with(self.options)
+        replayer.assert_called_once_with(
+            self.options, use_gyroscope=USE_GYROSCOPE,
+        )
