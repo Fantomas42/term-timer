@@ -19,10 +19,12 @@ from textual.widgets import Input
 from textual.widgets import Select
 from textual.widgets import SelectionList
 from textual.widgets import Static
+from textual.widgets import TextArea
 
 from term_timer.config import CONFIG
 from term_timer.config import SERIES_AVERAGE_KINDS
 from term_timer.config import SERIES_KINDS
+from term_timer.config import parse_endpoint
 from term_timer.config import parse_series
 from term_timer.stats import StatisticsTools
 
@@ -91,6 +93,11 @@ class ConfigSection(VerticalScroll):
         max-height: 15;
         border: solid $primary;
     }
+
+    ConfigSection TextArea {
+        width: 100%;
+        height: 8;
+    }
     """
 
     section_name: str = ''
@@ -138,6 +145,14 @@ class ConfigSection(VerticalScroll):
 
     def on_checkbox_changed(self, _event: Checkbox.Changed) -> None:
         """Mark app as modified when checkbox changes."""
+        if self.is_loading:
+            return
+        app = self.app
+        if hasattr(app, 'mark_modified'):
+            app.mark_modified()
+
+    def on_text_area_changed(self, _event: TextArea.Changed) -> None:
+        """Mark app as modified when a text area changes."""
         if self.is_loading:
             return
         app = self.app
@@ -1502,5 +1517,104 @@ class ServerSection(ConfigSection):
             'server': {
                 'domain': domain.value or 'localhost',
                 'port': port_value,
+            },
+        }
+
+
+class PublisherSection(ConfigSection):
+    """Configuration section for event publisher settings."""
+
+    section_name = 'publisher'
+
+    @staticmethod
+    def compose() -> ComposeResult:
+        """
+        Compose the publisher section.
+
+        Yields:
+            Textual widgets for the publisher configuration section.
+
+        """
+        with Grid():
+            yield Static('Active', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield Checkbox(
+                    'Publish cube and session events on the endpoints',
+                    id='active',
+                )
+                yield Static(
+                    'Overridden by the TERM_TIMER_PUBLISH variable',
+                    classes='field-help',
+                )
+
+            yield Static('Endpoints', classes='field-label')
+            with Vertical(classes='field-container'):
+                yield TextArea(
+                    id='endpoints',
+                    classes='endpoints',
+                )
+                yield Static(
+                    'One ZeroMQ endpoint per line, '
+                    'like ipc://~/.term_timer/cube.ipc '
+                    'or tcp://127.0.0.1:5555',
+                    classes='field-help',
+                )
+
+    def load_config(self) -> None:
+        """Load publisher configuration."""
+        publisher_config = CONFIG.get('publisher', {})
+
+        active = self.query_one('#active', Checkbox)
+        active.value = publisher_config.get('active', False)
+
+        endpoints = self.query_one('#endpoints', TextArea)
+        endpoints.text = '\n'.join(publisher_config.get('endpoints', []))
+
+    @property
+    def endpoints(self) -> list[str]:
+        """
+        Get the endpoints typed, one per line.
+
+        Lines naming no transport are dropped, and so are the ones
+        already listed: binding the same endpoint twice is an error.
+        The line is kept as it was typed rather than as
+        ``parse_endpoint()`` reads it, so that a ``~`` written by hand
+        stays a ``~`` in the file.
+
+        Returns:
+            The endpoints to write, in the order they were typed.
+
+        """
+        endpoints: list[str] = []
+        seen: set[str] = set()
+
+        for line in self.query_one('#endpoints', TextArea).text.splitlines():
+            token = line.strip()
+            endpoint = parse_endpoint(token)
+
+            if not endpoint or endpoint in seen:
+                continue
+
+            seen.add(endpoint)
+            endpoints.append(token)
+
+        return endpoints
+
+    def get_config_data(
+        self,
+    ) -> ConfigData:
+        """
+        Get publisher configuration data.
+
+        Returns:
+            Publisher configuration with its switch and its endpoints.
+
+        """
+        active = self.query_one('#active', Checkbox)
+
+        return {
+            'publisher': {
+                'active': active.value,
+                'endpoints': self.endpoints,
             },
         }

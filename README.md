@@ -223,13 +223,13 @@ cannot bind logs a warning and the session goes on, and a stream nobody listens
 to is simply dropped.
 
 Term Timer never starts, watches or knows about a subscriber. Clients live in
-their own repository, [term-timer-clients][clients] — among them **`cube-view`**,
+their own repository, [term-timer-clients][clients] — among them **`cube-cast`**,
 a 3D view of your cube turning in real time, in a window of its own, on any
 command that talks to a cube:
 
 ```bash
 TERM_TIMER_PUBLISH=1 term-timer solve -b       # in one terminal
-cube-view -e ipc://~/.term_timer/cube.ipc      # in another
+cube-cast -e ipc://~/.term_timer/cube.ipc      # in another
 ```
 
 Writing your own is short — a tail of the stream, a recorder, a bridge to a

@@ -12,6 +12,7 @@ from term_timer.config_edit.sections import BluetoothSection
 from term_timer.config_edit.sections import ConfigData
 from term_timer.config_edit.sections import CubeSection
 from term_timer.config_edit.sections import DisplaySection
+from term_timer.config_edit.sections import PublisherSection
 from term_timer.config_edit.sections import ServerSection
 from term_timer.config_edit.sections import StatisticsSection
 from term_timer.config_edit.sections import TimerSection
@@ -84,6 +85,7 @@ class ConfigToolbar(Widget):
             BluetoothSection,
             StatisticsSection,
             ServerSection,
+            PublisherSection,
         ]
 
         config_data: ConfigData = {}
@@ -140,6 +142,7 @@ class ConfigToolbar(Widget):
             BluetoothSection,
             StatisticsSection,
             ServerSection,
+            PublisherSection,
         ]
 
         for section_class in sections:
