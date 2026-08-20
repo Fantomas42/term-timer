@@ -219,8 +219,19 @@ endpoints = [
 ```
 
 Publishing costs a session nothing and can never break one: a socket that
-cannot bind logs a warning and the session goes on, and a stream nobody listens
+cannot bind is reported and the session goes on, and a stream nobody listens
 to is simply dropped.
+
+An endpoint belongs to one session at a time. Start a second publishing
+session while the first is running and the endpoints already taken are refused
+rather than stolen, on screen and in the log — the first session keeps its
+subscribers, the second publishes on whatever endpoints are left, or on none
+at all and says so:
+
+```
+Cannot publish on ipc://~/.term_timer/cube.ipc (already published by another session)
+This session publishes no event at all
+```
 
 Term Timer never starts, watches or knows about a subscriber. Clients live in
 their own repository, [term-timer-clients][clients] — among them **`cube-cast`**,

@@ -707,3 +707,169 @@ class SilenceTestCase(PublisherTestCase):
         self.assertEqual(
             EventPublisher.encode(TIMESTAMP), TIMESTAMP.timestamp(),
         )
+
+
+class ExclusivityTestCase(PublisherTestCase):
+    """
+    What two sessions publishing at once do to each other.
+
+    ZeroMQ hands an ipc endpoint to whoever binds last, silently, so
+    the exclusivity tested here is the one the lock file adds. The
+    locks are held per open file, not per process, so a second
+    publisher of this very process is refused exactly as a second
+    term-timer would be.
+    """
+
+    def setUp(self) -> None:
+        """Add a second publisher, the one arriving late."""
+        super().setUp()
+
+        self.intruder = EventPublisher()
+        self.addCleanup(self.intruder.stop)
+
+    def test_a_second_session_cannot_take_an_ipc_endpoint(self) -> None:
+        """An endpoint already published on is refused, not stolen."""
+        self.start()
+
+        self.intruder.start('ghost', [self.endpoint])
+
+        self.assertFalse(self.intruder.active)
+        self.assertEqual(self.intruder.endpoints, [])
+
+    def test_the_first_session_keeps_its_endpoint(self) -> None:
+        """Being intruded upon changes nothing for the first session."""
+        self.start()
+        socket = self.subscribe()
+
+        self.intruder.start('ghost', [self.endpoint])
+        self.publisher.publish('cube.move', {'move': 'R'})
+
+        topic, envelope = self.receive(socket)
+
+        self.assertTrue(self.publisher.active)
+        self.assertTrue(self.socket_file.exists())
+        self.assertEqual(topic, 'cube.move')
+        self.assertEqual(envelope['src'], 'solve')
+
+    def test_a_second_session_keeps_the_endpoints_left(self) -> None:
+        """One endpoint taken, the other still opens the stream."""
+        self.start()
+        spare = f'ipc://{ self.directory / "spare.ipc" }'
+
+        self.intruder.start('ghost', [self.endpoint, spare])
+
+        self.assertTrue(self.intruder.active)
+        self.assertEqual(self.intruder.endpoints, [spare])
+
+    def test_stopping_hands_the_endpoint_back(self) -> None:
+        """A session gone releases what it had reserved."""
+        self.start()
+        self.publisher.stop()
+
+        self.intruder.start('ghost', [self.endpoint])
+
+        self.assertTrue(self.intruder.active)
+        self.assertEqual(self.intruder.endpoints, [self.endpoint])
+
+    def test_a_refused_endpoint_frees_its_lock(self) -> None:
+        """
+        A publisher binding nothing keeps no reservation.
+
+        Nothing is published, so nothing is reserved: the endpoints it
+        could not use must be left to whoever comes next.
+        """
+        self.start()
+
+        self.intruder.start('ghost', [self.endpoint])
+
+        self.assertEqual(self.intruder.locks, [])
+
+    def test_a_tcp_endpoint_is_not_locked(self) -> None:
+        """Only ipc needs a lock, the system refuses a taken port."""
+        self.publisher.start('solve', ['tcp://127.0.0.1:*'])
+
+        self.assertTrue(self.publisher.active)
+        self.assertEqual(self.publisher.locks, [])
+
+    def test_a_lock_file_is_left_behind_on_purpose(self) -> None:
+        """Deleting a lock file is a race, so it survives the session."""
+        self.start()
+        self.publisher.stop()
+
+        self.assertTrue(
+            Path(f'{ self.socket_file }.lock').exists(),
+        )
+
+    def test_a_stale_socket_file_is_not_an_endpoint_taken(self) -> None:
+        """A session killed outright blocks nothing on its way out."""
+        self.socket_file.touch()
+        Path(f'{ self.socket_file }.lock').touch()
+
+        self.start()
+
+        self.assertTrue(self.publisher.active)
+
+
+class ReportTestCase(PublisherTestCase):
+    """What a session says on screen about its own publication."""
+
+    def setUp(self) -> None:
+        """Watch the console the publisher writes to."""
+        super().setUp()
+
+        self.console = patch(
+            'term_timer.interface.console.console',
+        ).start()
+        self.addCleanup(patch.stopall)
+
+    def messages(self) -> list[str]:
+        """
+        List what has been printed on screen.
+
+        Returns:
+            The messages, in the order they were displayed.
+
+        """
+        return [
+            str(call.args[0])
+            for call in self.console.print.call_args_list
+        ]
+
+    def test_a_working_publication_says_nothing(self) -> None:
+        """Nothing to warn about, nothing on screen."""
+        self.start()
+
+        self.assertEqual(self.messages(), [])
+
+    def test_a_missing_configuration_is_told(self) -> None:
+        """Publication on and no endpoint named is said out loud."""
+        self.publisher.start('solve', [])
+
+        self.assertIn('no endpoint is configured', self.messages()[0])
+
+    def test_a_refused_endpoint_is_told(self) -> None:
+        """An endpoint another session holds is named on screen."""
+        intruder = EventPublisher()
+        self.addCleanup(intruder.stop)
+        intruder.start('ghost', [self.endpoint])
+
+        self.publisher.start('solve', [self.endpoint])
+
+        self.assertIn(
+            'already published by another session', self.messages()[0],
+        )
+        self.assertIn(self.endpoint, self.messages()[0])
+
+    def test_a_session_publishing_nothing_is_told(self) -> None:
+        """The silence of a session is never silent itself."""
+        self.publisher.start('solve', [self.missing])
+
+        self.assertIn('publishes no event at all', self.messages()[-1])
+
+    def test_a_partial_publication_is_told(self) -> None:
+        """One endpoint down out of two is worth saying too."""
+        self.publisher.start('solve', [self.missing, self.endpoint])
+
+        self.assertTrue(self.publisher.active)
+        self.assertEqual(len(self.messages()), 1)
+        self.assertIn(self.missing, self.messages()[0])

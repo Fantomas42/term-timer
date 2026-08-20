@@ -6,8 +6,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import BinaryIO
 from typing import Final
 from uuid import uuid4
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover
+    # Windows has neither flock nor the ipc transport the lock protects
+    fcntl = None  # type: ignore[assignment]
 
 import zmq
 
@@ -20,6 +27,13 @@ if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import EventDict
 
 logger = logging.getLogger(__name__)
+
+# Suffix of the file reserving an ipc endpoint. ZeroMQ answers a
+# socket file already in use by unlinking it and binding its own, so a
+# second session steals the stream of the first instead of being
+# refused: the lock is what gives the ipc transport the refusal the tcp
+# transport gets from the system for free.
+LOCK_SUFFIX: Final[str] = '.lock'
 
 # State of the link with the cube. Named apart because it is the only
 # topic with no driver event of its own: a cube announces its departure
@@ -94,6 +108,7 @@ class EventPublisher:
         """Build an idle publisher, binding nothing until started."""
         self.socket: zmq.Socket[bytes] | None = None
         self.endpoints: list[str] = []
+        self.locks: list[BinaryIO] = []
         self.source = ''
         self.session_id = ''
         self.sequence = 0
@@ -108,10 +123,15 @@ class EventPublisher:
         """
         Bind the publication endpoints and open the stream.
 
-        Each endpoint is bound independently: one that fails is logged
-        and skipped, the others keep the stream alive. When none binds,
-        or when none is configured at all, the publisher stays idle and
-        every later publication is a no-op.
+        Each endpoint is bound independently: one that fails is
+        reported and skipped, the others keep the stream alive. When
+        none binds, or when none is configured at all, the publisher
+        stays idle and every later publication is a no-op.
+
+        An endpoint another session already publishes on is refused
+        rather than taken over, and every refusal is said on screen:
+        a session that does not publish what it is asked to publish is
+        otherwise indistinguishable from one that does.
 
         Args:
             source: Name of the emitting command, carried by every
@@ -131,10 +151,12 @@ class EventPublisher:
 
         targets = PUBLISHER_ENDPOINTS if endpoints is None else endpoints
         if not targets:
-            logger.warning(
+            message = (
                 'Publication is on, but no endpoint is configured: '
-                'name them in the [publisher] section of the config file',
+                'name them in the publisher section of the config file'
             )
+            logger.warning(message)
+            self.notify(message, 'warning')
             return
 
         socket: zmq.Socket[bytes] = zmq.Context.instance().socket(zmq.PUB)
@@ -144,19 +166,44 @@ class EventPublisher:
         socket.setsockopt(zmq.LINGER, 0)
 
         bound: list[str] = []
+        refused: list[str] = []
+
         for endpoint in targets:
+            reason = self.reserve(endpoint)
+
+            if reason:
+                logger.warning(
+                    'Cannot publish on %s: %s', endpoint, reason,
+                )
+                refused.append(f'{ endpoint } ({ reason })')
+                continue
+
             try:
                 socket.bind(endpoint)
             except (zmq.ZMQError, OSError) as error:
                 logger.warning(
                     'Cannot publish on %s: %s', endpoint, error,
                 )
+                refused.append(
+                    f'{ endpoint } ({ error.strerror or error })',
+                )
             else:
                 bound.append(endpoint)
 
+        if refused:
+            self.notify(
+                f'Cannot publish on { ", ".join(refused) }',
+                'caution',
+            )
+
         if not bound:
             logger.warning('No publication endpoint available')
+            self.notify(
+                'This session publishes no event at all',
+                'warning',
+            )
             socket.close()
+            self.release()
             return
 
         self.socket = socket
@@ -179,7 +226,95 @@ class EventPublisher:
             if transport == 'ipc':
                 Path(address).unlink(missing_ok=True)
 
+        # Released last, so that no session can take an endpoint back
+        # while its socket file is still being deleted here
+        self.release()
+
         self.endpoints = []
+
+    @staticmethod
+    def notify(message: str, style: str) -> None:
+        """
+        Say on screen what the publication cannot do.
+
+        A publication that does not happen is invisible by design:
+        nothing raises, nothing blocks, and the log is read long after
+        the session. The screen is the only place where "this session
+        publishes nothing" can be read while it still matters.
+
+        Args:
+            message: What to display.
+            style: Style of the console theme to display it with.
+
+        """
+        # Imported here and not above: the console lives in the
+        # interface package, whose __init__ reaches the Bluetooth
+        # interface, which imports this module
+        from term_timer.interface.console import console  # noqa: PLC0415
+
+        console.print(message, style=style)
+
+    def reserve(self, endpoint: str) -> str:
+        """
+        Reserve an endpoint for this session alone.
+
+        Only an ``ipc`` endpoint needs it: a ``tcp`` port already taken
+        is refused by the system, while ZeroMQ unlinks the socket file
+        of a busy ``ipc`` endpoint and binds its own, handing the
+        stream to whoever binds last. Worse, the session robbed that
+        way deletes the socket file on its way out — the one of the
+        thief — leaving a publisher no client can ever reach again.
+
+        A lock file held next to the socket for the whole session gives
+        the ipc transport the same refusal. The kernel releases it
+        however the process dies, so a session killed outright leaves
+        nothing to clean up by hand.
+
+        Args:
+            endpoint: Endpoint about to be bound.
+
+        Returns:
+            What forbids binding the endpoint, empty when it is free.
+
+        """
+        transport, _, address = endpoint.partition('://')
+
+        if transport != 'ipc' or fcntl is None:
+            return ''
+
+        try:
+            # Kept open for the whole session: closing the file is what
+            # releases the lock, so a context manager would hand the
+            # endpoint back the moment it was taken
+            handle = Path(  # noqa: SIM115
+                f'{ address }{ LOCK_SUFFIX }',
+            ).open('ab')
+        except OSError as error:
+            return str(error.strerror or error)
+
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            handle.close()
+            return 'already published by another session'
+
+        self.locks.append(handle)
+
+        return ''
+
+    def release(self) -> None:
+        """
+        Release the endpoints this session had reserved.
+
+        The lock files are left behind on purpose: deleting one is a
+        race of its own, another session having possibly opened it
+        already and being about to lock a file nobody else can see any
+        more. They are empty, and the next session locks the same ones.
+        """
+        for handle in self.locks:
+            handle.close()
+
+        self.locks = []
 
     @staticmethod
     def encode(value: Any) -> float:  # noqa: ANN401
