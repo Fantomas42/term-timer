@@ -228,8 +228,8 @@ a 3D view of your cube turning in real time, in a window of its own, on any
 command that talks to a cube:
 
 ```bash
-TERM_TIMER_PUBLISH=1 term-timer solve -b       # in one terminal
-cube-cast -e ipc://~/.term_timer/cube.ipc      # in another
+cube-cast                                   # in one terminal
+TERM_TIMER_PUBLISH=1 term-timer solve -b    # in another
 ```
 
 Writing your own is short — a tail of the stream, a recorder, a bridge to a
