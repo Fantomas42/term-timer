@@ -74,7 +74,6 @@ from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import FaceletAnalyser
 from term_timer.printer import print_cube_trainer
 from term_timer.publisher import PUBLISHER
-from term_timer.publisher import RECORD_TOPIC
 from term_timer.publisher import TRAIN_TOPIC
 from term_timer.scrambler import trainer
 from term_timer.solve import Solve
@@ -1801,7 +1800,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         # Celebrating a record on screen and publishing it are the
         # same moment: an attempt jettisoned at the prompt drops the
         # timing they are read against, it does not undo breaking them
-        self.publish_records(records, selected_case)
+        self.publish_records(records, 'case', selected_case.code)
 
     def dnf_line(self) -> None:
         """Display a DNF training attempt; its timing is never recorded."""
@@ -1814,39 +1813,6 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             f'[time]{ format_time(self.elapsed_time) }[/time]',
             '[dnf]DNF[/dnf]',
         )
-
-    def publish_records(
-            self,
-            records: list[tuple[str, int, int]],
-            selected_case: Case,
-    ) -> None:
-        """
-        Publish the records the attempt just broke.
-
-        The scope is the case, not the session: a training record is
-        read against every timing that case ever got, which is what the
-        celebrating lines compare too. Two sessions of the same case
-        therefore keep on breaking the same records, and the case
-        travels along so that a subscriber knows whose record it is.
-
-        Args:
-            records: The ``(kind, value, previous)`` triples broken.
-            selected_case: The case the records belong to.
-
-        """
-        for kind, value, previous in records:
-            PUBLISHER.publish(
-                RECORD_TOPIC,
-                {
-                    'kind': kind,
-                    'scope': 'case',
-                    'case': selected_case.code,
-                    'value': value,
-                    'previous': previous,
-                    'delta': value - previous,
-                    'counter': self.counter,
-                },
-            )
 
     def publish_training(
             self,

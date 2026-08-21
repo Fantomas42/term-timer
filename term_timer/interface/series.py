@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.interface.console import theme
+from term_timer.publisher import PUBLISHER
+from term_timer.publisher import RECORD_TOPIC
 
 if TYPE_CHECKING:
     from rich.console import Console as RichConsole
@@ -213,3 +215,44 @@ class SeriesReporter:
             )
 
         return records
+
+    def publish_records(
+            self,
+            records: list[tuple[str, int, int]],
+            scope: str,
+            case: str = '',
+    ) -> None:
+        """
+        Publish the records the attempt just broke.
+
+        The class finding the records is the one publishing them: the
+        celebrating lines and the messages read one comparison, run
+        once, so a session and a training can never disagree on what
+        was broken.
+
+        The scope says what the value was read against. A ``session``
+        one compares against the stack the session runs on; a ``case``
+        one compares against every timing a trained case ever got, and
+        names that case, so two sessions of the same case keep on
+        breaking the same records.
+
+        Args:
+            records: The ``(kind, value, previous)`` triples broken.
+            scope: What the values were read against.
+            case: The case the records belong to, on a ``case`` scope.
+
+        """
+        for kind, value, previous in records:
+            data = {
+                'kind': kind,
+                'scope': scope,
+                'value': value,
+                'previous': previous,
+                'delta': value - previous,
+                'counter': self.counter,
+            }
+
+            if case:
+                data['case'] = case
+
+            PUBLISHER.publish(RECORD_TOPIC, data)

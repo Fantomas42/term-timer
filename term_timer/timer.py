@@ -20,7 +20,6 @@ from term_timer.interface import SolveInterface
 from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.printer import print_cube_scrambled
 from term_timer.publisher import PUBLISHER
-from term_timer.publisher import RECORD_TOPIC
 from term_timer.publisher import SCRAMBLE_TOPIC
 from term_timer.publisher import SOLVE_TOPIC
 from term_timer.scrambler import scrambler
@@ -259,32 +258,6 @@ class Timer(SolveInterface):
         if self.stack and self.stack[-1] is solve:
             self.publish_solve(solve, counter)
 
-    def publish_records(self, records: list[tuple[str, int, int]]) -> None:
-        """
-        Publish the records this solve just broke.
-
-        The scope is the session: a record is read against the stack the
-        session runs on, which is what the celebrating lines compare too.
-        A wider scope stays possible without touching a subscriber, the
-        field being there from the first version.
-
-        Args:
-            records: The ``(kind, value, previous)`` triples broken.
-
-        """
-        for kind, value, previous in records:
-            PUBLISHER.publish(
-                RECORD_TOPIC,
-                {
-                    'kind': kind,
-                    'scope': 'session',
-                    'value': value,
-                    'previous': previous,
-                    'delta': value - previous,
-                    'counter': self.counter,
-                },
-            )
-
     def start_line(self, cube: VCube) -> None:
         """Display scramble information and instructions to start solve."""
         if self.show_cube:
@@ -413,7 +386,7 @@ class Timer(SolveInterface):
             ),
         )
 
-        self.publish_records(records)
+        self.publish_records(records, 'session')
 
         self.projection_line(new_stats)
 

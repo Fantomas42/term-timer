@@ -1,6 +1,8 @@
 """Configuration loading and management from TOML files."""
 import os
 import re
+from collections.abc import Iterable
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -190,13 +192,40 @@ def parse_endpoint(token: str) -> str:
     return f'{ transport }://{ address }'
 
 
-def parse_endpoints(tokens: list[str]) -> list[str]:
+def iter_endpoints(tokens: Iterable[str]) -> Iterator[tuple[str, str]]:
     """
-    Parse the endpoints the event publisher binds.
+    Yield the endpoints worth keeping, in both their spellings.
 
     Tokens carrying no transport are ignored rather than handed to
     ZeroMQ, and duplicates are dropped: binding the same endpoint twice
-    is an error the publisher has no reason to report.
+    is an error the publisher has no reason to report. Both spellings
+    travel along, a caller writing the file back keeping the one that
+    was typed, so that a ``~`` written by hand stays a ``~``.
+
+    Args:
+        tokens: Raw endpoints, from the configuration or from a field.
+
+    Yields:
+        The ``(token, endpoint)`` pairs to keep, in the order they were
+        listed.
+
+    """
+    seen: set[str] = set()
+
+    for raw in tokens:
+        token = str(raw).strip()
+        endpoint = parse_endpoint(token)
+
+        if not endpoint or endpoint in seen:
+            continue
+
+        seen.add(endpoint)
+        yield token, endpoint
+
+
+def parse_endpoints(tokens: list[str]) -> list[str]:
+    """
+    Parse the endpoints the event publisher binds.
 
     Args:
         tokens: Raw endpoints from the configuration.
@@ -205,19 +234,7 @@ def parse_endpoints(tokens: list[str]) -> list[str]:
         The endpoints to bind, in the order the file lists them.
 
     """
-    endpoints: list[str] = []
-    seen: set[str] = set()
-
-    for token in tokens:
-        endpoint = parse_endpoint(token)
-
-        if not endpoint or endpoint in seen:
-            continue
-
-        seen.add(endpoint)
-        endpoints.append(endpoint)
-
-    return endpoints
+    return [endpoint for _token, endpoint in iter_endpoints(tokens)]
 
 
 def env_flag(name: str, *, default: bool = False) -> bool:

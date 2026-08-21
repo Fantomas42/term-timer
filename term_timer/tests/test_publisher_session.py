@@ -94,19 +94,46 @@ class RecordingPublisher:
         """
         return [data for name, data in self.messages if name == topic]
 
+    @classmethod
+    def patched_into(
+            cls,
+            case: unittest.TestCase,
+            *modules: str,
+    ) -> 'RecordingPublisher':
+        """
+        Stand in for the publisher singleton of every module named.
+
+        The singleton is read where it is imported, and one emission
+        point can now travel through several modules: a record found by
+        the series reporter is published by it, for the timer and the
+        trainer alike.
+
+        Args:
+            case: The test case the patches are undone for.
+            modules: The modules whose ``PUBLISHER`` is stood in for.
+
+        Returns:
+            The recorder every named module now publishes through.
+
+        """
+        publisher = cls()
+
+        for module in modules:
+            patcher = patch(f'{ module }.PUBLISHER', publisher)
+            patcher.start()
+            case.addCleanup(patcher.stop)
+
+        return publisher
+
 
 class StateTestCase(unittest.TestCase):
     """The nine states of a solve, published where they are set."""
 
     def setUp(self) -> None:
         """Patch the singleton the state mixin publishes through."""
-        self.publisher = RecordingPublisher()
-
-        patcher = patch(
-            'term_timer.interface.state.PUBLISHER', self.publisher,
+        self.publisher = RecordingPublisher.patched_into(
+            self, 'term_timer.interface.state',
         )
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
         self.state = State()
 
@@ -171,12 +198,10 @@ class ScrambleTestCase(unittest.TestCase):
     """What the solver is shown is what the stream carries."""
 
     def setUp(self) -> None:
-        """Patch the singleton the timer publishes through."""
-        self.publisher = RecordingPublisher()
-
-        patcher = patch('term_timer.timer.PUBLISHER', self.publisher)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        """Patch the singletons the timer publishes through."""
+        self.publisher = RecordingPublisher.patched_into(
+            self, 'term_timer.timer', 'term_timer.interface.series',
+        )
 
     def test_the_drawn_scramble_is_published(self) -> None:
         """The scramble, its oriented reading and the state to reach."""
@@ -220,12 +245,10 @@ class SolveTestCase(unittest.TestCase):
     """The solve payload, in the spelling the session file uses."""
 
     def setUp(self) -> None:
-        """Patch the singleton the timer publishes through."""
-        self.publisher = RecordingPublisher()
-
-        patcher = patch('term_timer.timer.PUBLISHER', self.publisher)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        """Patch the singletons the timer publishes through."""
+        self.publisher = RecordingPublisher.patched_into(
+            self, 'term_timer.timer', 'term_timer.interface.series',
+        )
 
     def test_the_payload_keeps_the_storage_spelling(self) -> None:
         """
@@ -321,19 +344,17 @@ class RecordTestCase(unittest.TestCase):
     """The records a solve breaks, published where they are found."""
 
     def setUp(self) -> None:
-        """Patch the singleton the timer publishes through."""
-        self.publisher = RecordingPublisher()
-
-        patcher = patch('term_timer.timer.PUBLISHER', self.publisher)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        """Patch the singletons the timer publishes through."""
+        self.publisher = RecordingPublisher.patched_into(
+            self, 'term_timer.timer', 'term_timer.interface.series',
+        )
 
     def test_a_record_carries_its_delta(self) -> None:
         """The value, the one it beat, and what separates them."""
         timer = build_timer()
         timer.counter = 3
 
-        timer.publish_records([('single', 8_000, 10_000)])
+        timer.publish_records([('single', 8_000, 10_000)], 'session')
 
         data = self.publisher.only(RECORD_TOPIC)
 
@@ -349,7 +370,7 @@ class RecordTestCase(unittest.TestCase):
         timer = build_timer()
 
         timer.publish_records(
-            [('single', 8_000, 10_000), ('ao5', 9_000, 11_000)],
+            [('single', 8_000, 10_000), ('ao5', 9_000, 11_000)], 'session',
         )
 
         kinds = [
@@ -416,12 +437,10 @@ class SettledSolveTestCase(unittest.TestCase):
     """A solve reaches the stream once the save prompt settled it."""
 
     def setUp(self) -> None:
-        """Patch the singleton the timer publishes through."""
-        self.publisher = RecordingPublisher()
-
-        patcher = patch('term_timer.timer.PUBLISHER', self.publisher)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        """Patch the singletons the timer publishes through."""
+        self.publisher = RecordingPublisher.patched_into(
+            self, 'term_timer.timer', 'term_timer.interface.series',
+        )
 
     def test_a_kept_solve_is_published(self) -> None:
         """An attempt still on the stack is one that happened."""
@@ -480,12 +499,10 @@ class AttemptCounterTestCase(unittest.IsolatedAsyncioTestCase):
     """One attempt says the same rank on every topic it publishes on."""
 
     def setUp(self) -> None:
-        """Patch the singleton the timer publishes through."""
-        self.publisher = RecordingPublisher()
-
-        patcher = patch('term_timer.timer.PUBLISHER', self.publisher)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        """Patch the singletons the timer publishes through."""
+        self.publisher = RecordingPublisher.patched_into(
+            self, 'term_timer.timer', 'term_timer.interface.series',
+        )
 
     @staticmethod
     async def run_attempt(*, free_play: bool) -> Timer:
@@ -576,12 +593,10 @@ class TrainingTestCase(unittest.TestCase):
     """A saved training attempt, with the card it just moved."""
 
     def setUp(self) -> None:
-        """Patch the singleton the trainer publishes through."""
-        self.publisher = RecordingPublisher()
-
-        patcher = patch('term_timer.trainer.PUBLISHER', self.publisher)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        """Patch the singletons the trainer publishes through."""
+        self.publisher = RecordingPublisher.patched_into(
+            self, 'term_timer.trainer', 'term_timer.interface.series',
+        )
 
         self.trainer = Trainer(
             step='oll',
@@ -708,7 +723,7 @@ class TrainingTestCase(unittest.TestCase):
         self.trainer.counter = 4
 
         self.trainer.publish_records(
-            [('single', 8_000, 10_000)], self.case,
+            [('single', 8_000, 10_000)], 'case', self.case.code,
         )
 
         data = self.publisher.only(RECORD_TOPIC)
@@ -725,7 +740,7 @@ class TrainingTestCase(unittest.TestCase):
         """A case beating a single and an average publishes both."""
         self.trainer.publish_records(
             [('single', 8_000, 10_000), ('ao5', 9_000, 11_000)],
-            self.case,
+            'case', self.case.code,
         )
 
         kinds = [
@@ -763,7 +778,7 @@ class TrainingTestCase(unittest.TestCase):
 
     def test_nothing_broken_publishes_nothing(self) -> None:
         """An attempt beating no record leaves the topic silent."""
-        self.trainer.publish_records([], self.case)
+        self.trainer.publish_records([], 'case', self.case.code)
 
         self.assertEqual(self.publisher.payloads(RECORD_TOPIC), [])
 
@@ -774,12 +789,10 @@ class TrainingRecordInstantTestCase(unittest.IsolatedAsyncioTestCase):
     CASE_CODE = 'T'
 
     def setUp(self) -> None:
-        """Patch the singleton the trainer publishes through."""
-        self.publisher = RecordingPublisher()
-
-        patcher = patch('term_timer.trainer.PUBLISHER', self.publisher)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        """Patch the singletons the trainer publishes through."""
+        self.publisher = RecordingPublisher.patched_into(
+            self, 'term_timer.trainer', 'term_timer.interface.series',
+        )
 
     def make_trainer(self) -> Trainer:
         """

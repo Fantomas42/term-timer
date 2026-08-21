@@ -10,6 +10,7 @@ from term_timer.config import CubeDevice
 from term_timer.config import env_flag
 from term_timer.config import env_string
 from term_timer.config import is_cube_address
+from term_timer.config import iter_endpoints
 from term_timer.config import load_cubes
 from term_timer.config import load_default_cube
 from term_timer.config import parse_endpoint
@@ -116,6 +117,41 @@ class TestParseEndpoint(unittest.TestCase):
         for token in ('', '  ', 'cube.ipc', 'tcp://', '://cube'):
             with self.subTest(token=token):
                 self.assertEqual(parse_endpoint(token), '')
+
+
+class TestIterEndpoints(unittest.TestCase):
+    """Tests for iter_endpoints."""
+
+    def test_both_spellings_travel_along(self) -> None:
+        """The token as typed, and the endpoint as ZeroMQ reads it."""
+        self.assertEqual(
+            list(iter_endpoints(['ipc://~/.term_timer/cube.ipc'])),
+            [
+                (
+                    'ipc://~/.term_timer/cube.ipc',
+                    f'ipc://{ Path.home() }/.term_timer/cube.ipc',
+                ),
+            ],
+        )
+
+    def test_the_token_is_yielded_stripped(self) -> None:
+        """A line written with spaces is not written back with them."""
+        self.assertEqual(
+            list(iter_endpoints([' tcp://127.0.0.1:5555 '])),
+            [('tcp://127.0.0.1:5555', 'tcp://127.0.0.1:5555')],
+        )
+
+    def test_duplicates_are_read_not_written(self) -> None:
+        """Two spellings of one endpoint keep the first one only."""
+        self.assertEqual(
+            [
+                token
+                for token, _endpoint in iter_endpoints(
+                    ['ipc://~/cube.ipc', f'ipc://{ Path.home() }/cube.ipc'],
+                )
+            ],
+            ['ipc://~/cube.ipc'],
+        )
 
 
 class TestParseEndpoints(unittest.TestCase):

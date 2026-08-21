@@ -24,7 +24,7 @@ from textual.widgets import TextArea
 from term_timer.config import CONFIG
 from term_timer.config import SERIES_AVERAGE_KINDS
 from term_timer.config import SERIES_KINDS
-from term_timer.config import parse_endpoint
+from term_timer.config import iter_endpoints
 from term_timer.config import parse_series
 from term_timer.stats import StatisticsTools
 
@@ -1577,28 +1577,20 @@ class PublisherSection(ConfigSection):
 
         Lines naming no transport are dropped, and so are the ones
         already listed: binding the same endpoint twice is an error.
-        The line is kept as it was typed rather than as
-        ``parse_endpoint()`` reads it, so that a ``~`` written by hand
-        stays a ``~`` in the file.
+        Of the two spellings ``iter_endpoints()`` yields, the one that
+        was typed is kept, so that a ``~`` written by hand stays a
+        ``~`` in the file.
 
         Returns:
             The endpoints to write, in the order they were typed.
 
         """
-        endpoints: list[str] = []
-        seen: set[str] = set()
-
-        for line in self.query_one('#endpoints', TextArea).text.splitlines():
-            token = line.strip()
-            endpoint = parse_endpoint(token)
-
-            if not endpoint or endpoint in seen:
-                continue
-
-            seen.add(endpoint)
-            endpoints.append(token)
-
-        return endpoints
+        return [
+            token
+            for token, _endpoint in iter_endpoints(
+                self.query_one('#endpoints', TextArea).text.splitlines(),
+            )
+        ]
 
     def get_config_data(
         self,
