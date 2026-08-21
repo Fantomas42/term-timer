@@ -16,8 +16,6 @@ except ImportError:  # pragma: no cover
     # Windows has neither flock nor the ipc transport the lock protects
     fcntl = None  # type: ignore[assignment]
 
-import zmq
-
 from term_timer.config import PUBLISHER_ACTIVE
 from term_timer.config import PUBLISHER_ENDPOINTS
 from term_timer.constants import PROTOCOL_VERSION
@@ -25,6 +23,8 @@ from term_timer.constants import PUBLISH_HIGH_WATER_MARK
 from term_timer.constants import PUBLISH_LINGER
 
 if TYPE_CHECKING:
+    import zmq
+
     from term_timer.bluetooth.annotations import EventDict
 
 logger = logging.getLogger(__name__)
@@ -117,6 +117,7 @@ class EventPublisher:
         self.source = ''
         self.session_id = ''
         self.sequence = 0
+        self.noblock = 0
 
     @property
     def active(self) -> bool:
@@ -153,6 +154,11 @@ class EventPublisher:
 
         if self.socket is not None:
             return
+
+        # Imported here and not above: this module is reached by the
+        # whole CLI through the session state, and ZeroMQ costs 17 ms of
+        # import to every command that never publishes anything
+        import zmq  # noqa: PLC0415
 
         targets = PUBLISHER_ENDPOINTS if endpoints is None else endpoints
         if not targets:
@@ -216,6 +222,7 @@ class EventPublisher:
             return
 
         self.socket = socket
+        self.noblock = zmq.NOBLOCK
         self.endpoints = bound
         self.source = source or self.source
         self.session_id = uuid4().hex[:8]
@@ -449,7 +456,7 @@ class EventPublisher:
 
             socket.send_multipart(
                 [topic.encode('utf-8'), payload.encode('utf-8')],
-                zmq.NOBLOCK,
+                self.noblock,
             )
         except Exception as error:  # noqa: BLE001
             logger.debug('Cannot publish %s: %s', topic, error)
