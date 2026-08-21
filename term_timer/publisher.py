@@ -65,6 +65,7 @@ SCRAMBLE_TOPIC: Final[str] = 'session.scramble'
 SOLVE_TOPIC: Final[str] = 'session.solve'
 RECORD_TOPIC: Final[str] = 'session.record'
 TRAIN_TOPIC: Final[str] = 'session.train'
+DRILL_TOPIC: Final[str] = 'session.drill'
 END_TOPIC: Final[str] = 'session.end'
 
 # Declared here so that the namespace is settled in one place, and so
@@ -78,6 +79,7 @@ SESSION_TOPICS: Final[tuple[str, ...]] = (
     SOLVE_TOPIC,
     RECORD_TOPIC,
     TRAIN_TOPIC,
+    DRILL_TOPIC,
     END_TOPIC,
     'session.step',
     'session.rotation',

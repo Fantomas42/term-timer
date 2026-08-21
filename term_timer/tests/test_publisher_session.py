@@ -22,9 +22,12 @@ from fsrs import Card
 from fsrs import Rating
 
 from term_timer.constants import DNF
+from term_timer.constants import PLUS_TWO
+from term_timer.driller import Driller
 from term_timer.fsrs.storage import CaseTraining
 from term_timer.fsrs.storage import Trainings
 from term_timer.interface.state import State
+from term_timer.publisher import DRILL_TOPIC
 from term_timer.publisher import RECORD_TOPIC
 from term_timer.publisher import SCRAMBLE_TOPIC
 from term_timer.publisher import SESSION_TOPICS
@@ -280,7 +283,49 @@ class SolveTestCase(unittest.TestCase):
         self.assertEqual(data['session'], 'default')
         self.assertEqual(data['cube_size'], 3)
         self.assertTrue(data['free_play'])
-        self.assertFalse(data['dnf'])
+
+    def test_an_unflagged_solve_carries_an_empty_flag(self) -> None:
+        """The key is always there, so a client never reads an absence."""
+        timer = build_timer()
+
+        timer.publish_solve(make_solve(), timer.counter)
+
+        self.assertEqual(self.publisher.only(SOLVE_TOPIC)['flag'], '')
+
+    def test_a_penalised_solve_carries_its_flag(self) -> None:
+        """
+        The +2 is said, and the time stays the raw one.
+
+        The storage spelling drops an empty flag, which would leave a
+        client deducing the penalty from a missing key while the DNF is
+        handed to it. Nothing is corrected on the way: the flag is what
+        says what to make of the time.
+        """
+        solve = make_solve(flag=PLUS_TWO)
+        timer = build_timer()
+
+        timer.publish_solve(solve, timer.counter)
+
+        data = self.publisher.only(SOLVE_TOPIC)
+
+        self.assertEqual(data['flag'], PLUS_TWO)
+        self.assertEqual(data['time'], solve.time)
+
+    def test_a_dnf_carries_its_flag_and_nothing_else(self) -> None:
+        """
+        Both flags travel the same way, on the one key saying the fate.
+
+        No boolean is derived next to it: a client reads the flag, and
+        the payload holds no second spelling of it to disagree with.
+        """
+        timer = build_timer()
+
+        timer.publish_solve(make_solve(flag=DNF), timer.counter)
+
+        data = self.publisher.only(SOLVE_TOPIC)
+
+        self.assertEqual(data['flag'], DNF)
+        self.assertNotIn('dnf', data)
 
     def test_a_reconstructed_solve_carries_its_steps(self) -> None:
         """The method breakdown travels with the solve producing it."""
@@ -310,7 +355,7 @@ class SolveTestCase(unittest.TestCase):
 
         data = self.publisher.only(SOLVE_TOPIC)
 
-        self.assertTrue(data['dnf'])
+        self.assertEqual(data['flag'], DNF)
         self.assertEqual(data['steps'], [])
 
     def test_a_keyboard_solve_carries_no_breakdown(self) -> None:
@@ -482,7 +527,7 @@ class SettledSolveTestCase(unittest.TestCase):
         solve.flag = DNF
         timer.publish_settled_solve(solve, timer.counter)
 
-        self.assertTrue(self.publisher.only(SOLVE_TOPIC)['dnf'])
+        self.assertEqual(self.publisher.only(SOLVE_TOPIC)['flag'], DNF)
 
     def test_a_dnf_carries_its_solve_all_the_same(self) -> None:
         """A failed attempt is an attempt, and it is published."""
@@ -492,7 +537,7 @@ class SettledSolveTestCase(unittest.TestCase):
 
         timer.publish_settled_solve(solve, timer.counter)
 
-        self.assertTrue(self.publisher.only(SOLVE_TOPIC)['dnf'])
+        self.assertEqual(self.publisher.only(SOLVE_TOPIC)['flag'], DNF)
 
 
 class AttemptCounterTestCase(unittest.IsolatedAsyncioTestCase):
@@ -917,6 +962,63 @@ class TrainingRecordInstantTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(self.publisher.payloads(RECORD_TOPIC)), 1)
 
 
+class DrillTestCase(unittest.TestCase):
+    """The reps of a drill, the only trace a drill leaves."""
+
+    def setUp(self) -> None:
+        """Patch the singleton the driller publishes through."""
+        self.publisher = RecordingPublisher.patched_into(
+            self, 'term_timer.driller',
+        )
+
+    @staticmethod
+    def build_driller() -> Driller:
+        """
+        Build a driller with one rep already timed.
+
+        Returns:
+            The driller, its piles filled as a finished rep leaves them.
+
+        """
+        driller = Driller(
+            algorithm="R U R' U'",
+            times=0,
+            duration=0,
+            orientation='UF',
+            countdown=0,
+            metronome=0,
+        )
+        driller.rep_times.append(1_200_000_000)
+        driller.rep_tps.append(5.0)
+        driller.rep_fluencies.append(80)
+        return driller
+
+    def test_a_rep_is_published(self) -> None:
+        """What the rep line prints is what the stream says."""
+        driller = self.build_driller()
+        driller.counter = 3
+
+        driller.publish_rep()
+
+        data = self.publisher.only(DRILL_TOPIC)
+
+        self.assertEqual(data['algorithm'], "R U R' U'")
+        self.assertEqual(data['htm'], 4)
+        self.assertEqual(data['time'], 1_200_000_000)
+        self.assertEqual(data['tps'], 5.0)
+        self.assertEqual(data['fluency'], 80)
+        self.assertEqual(data['counter'], 3)
+
+    def test_a_silent_session_publishes_nothing(self) -> None:
+        """Nobody listening means a drill running exactly the same."""
+        self.publisher.active = False
+        driller = self.build_driller()
+
+        driller.publish_rep()
+
+        self.assertEqual(self.publisher.messages, [])
+
+
 class SessionTopicsTestCase(unittest.TestCase):
     """The emission points and the declared namespace agree."""
 
@@ -924,7 +1026,7 @@ class SessionTopicsTestCase(unittest.TestCase):
         """A topic published without being declared escapes the rules."""
         wired = {
             STATE_TOPIC, SCRAMBLE_TOPIC, SOLVE_TOPIC,
-            RECORD_TOPIC, TRAIN_TOPIC,
+            RECORD_TOPIC, TRAIN_TOPIC, DRILL_TOPIC,
         }
 
         self.assertTrue(wired.issubset(set(SESSION_TOPICS)))

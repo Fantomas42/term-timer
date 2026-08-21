@@ -219,6 +219,12 @@ class Timer(SolveInterface):
         The breakdown is built only when someone listens: analysing a
         solve nobody displays is work a silent session must not pay for.
 
+        ``flag`` is always there, empty when the solve carries none:
+        the storage spelling drops it when it is empty, which would
+        leave a client reading a flag by its absence. It is the only
+        thing said about the fate of the attempt — no derived boolean
+        next to it — and the time stays the raw one, penalty excluded.
+
         Args:
             solve: The solve that just ended.
             counter: Rank of the attempt in the session, the one it was
@@ -229,7 +235,7 @@ class Timer(SolveInterface):
             return
 
         data: dict[str, Any] = {**solve.as_save}
-        data['dnf'] = solve.flag == DNF
+        data['flag'] = solve.flag
         data['counter'] = counter
         data['session'] = self.session
         data['cube_size'] = self.cube_size
