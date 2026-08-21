@@ -2,7 +2,6 @@
 import asyncio
 import os
 from argparse import Namespace
-from contextlib import suppress
 
 from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
@@ -91,10 +90,21 @@ def main() -> int:
     ):
         show_banner(BANNER_MODES[command])
 
+    # The way out is decided here and nowhere else: the publisher says
+    # goodbye on its way out, and only this layer knows what ends the
+    # session — a command that returns, a Ctrl+C or an error
+    reason = 'closed'
+
     try:
         return run_command(command, options)
+    except KeyboardInterrupt:
+        reason = 'interrupted'
+        return 0
+    except Exception:
+        reason = 'crashed'
+        raise
     finally:
-        PUBLISHER.stop()
+        PUBLISHER.stop(reason)
 
 
 def run_command(  # noqa: C901, PLR0911, PLR0912
@@ -111,36 +121,33 @@ def run_command(  # noqa: C901, PLR0911, PLR0912
         Exit code (0 for success).
 
     """
-    with suppress(KeyboardInterrupt):
-        if command == 'ghost':
-            return asyncio.run(ghost(options), debug=DEBUG)
-        if command == 'daily':
-            return asyncio.run(daily(options), debug=DEBUG)
-        if command == 'solve':
-            return asyncio.run(timer(options), debug=DEBUG)
-        if command == 'train':
-            return asyncio.run(trainer(options), debug=DEBUG)
-        if command == 'drill':
-            return asyncio.run(driller(options), debug=DEBUG)
-        if command == 'routine':
-            return asyncio.run(routine(options), debug=DEBUG)
-        if command == 'reset':
-            return asyncio.run(reset(options), debug=DEBUG)
-        if command == 'browse':
-            asyncio.run(run_browse(), debug=DEBUG)
-            return 0
-        if command == 'config':
-            asyncio.run(run_config_edit(), debug=DEBUG)
-            return 0
-        if command == 'import':
-            return Importer().import_file(options.source)
-        if command == 'serve':
-            Server().run_server(options.host, options.port, debug=DEBUG)
-            return 0
-        if command == 'doctor':
-            return doctor(options)
-        if command in {'edit', 'delete', 'index', 'merge', 'scramble'}:
-            return manage(command, options)
-        return tools(command, options)
-
-    return 0
+    if command == 'ghost':
+        return asyncio.run(ghost(options), debug=DEBUG)
+    if command == 'daily':
+        return asyncio.run(daily(options), debug=DEBUG)
+    if command == 'solve':
+        return asyncio.run(timer(options), debug=DEBUG)
+    if command == 'train':
+        return asyncio.run(trainer(options), debug=DEBUG)
+    if command == 'drill':
+        return asyncio.run(driller(options), debug=DEBUG)
+    if command == 'routine':
+        return asyncio.run(routine(options), debug=DEBUG)
+    if command == 'reset':
+        return asyncio.run(reset(options), debug=DEBUG)
+    if command == 'browse':
+        asyncio.run(run_browse(), debug=DEBUG)
+        return 0
+    if command == 'config':
+        asyncio.run(run_config_edit(), debug=DEBUG)
+        return 0
+    if command == 'import':
+        return Importer().import_file(options.source)
+    if command == 'serve':
+        Server().run_server(options.host, options.port, debug=DEBUG)
+        return 0
+    if command == 'doctor':
+        return doctor(options)
+    if command in {'edit', 'delete', 'index', 'merge', 'scramble'}:
+        return manage(command, options)
+    return tools(command, options)

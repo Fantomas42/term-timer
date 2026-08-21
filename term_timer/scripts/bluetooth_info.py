@@ -862,6 +862,12 @@ async def run(options: Namespace) -> int:
     Returns:
         Exit code (0 for success, 1 when no cube was found).
 
+    Raises:
+        KeyboardInterrupt: When the session is cut short at the
+            keyboard, named here so that the farewell says so.
+        CancelledError: When the event loop takes the session away,
+            which a Ctrl+C looks like from inside a coroutine.
+
     """
     use_gyroscope = (
         USE_GYROSCOPE
@@ -897,6 +903,8 @@ async def run(options: Namespace) -> int:
         rotation_threshold=options.rotation_threshold,
     )
 
+    reason = 'closed'
+
     try:
         await asyncio.gather(client, consumer)
     except CubeNotFoundError:
@@ -905,8 +913,14 @@ async def run(options: Namespace) -> int:
             'Make sure a cube is powered on and in pairing mode.',
         )
         return 1
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        reason = 'interrupted'
+        raise
+    except Exception:
+        reason = 'crashed'
+        raise
     finally:
-        PUBLISHER.stop()
+        PUBLISHER.stop(reason)
 
     report.log_summary()
     summarize_events(report.events, options.output)

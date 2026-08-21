@@ -202,9 +202,16 @@ about to forget them.
 Term Timer can broadcast what happens during a session, as it happens, over
 ZeroMQ: `cube.*` for everything the cube reports — moves, state, gyroscope,
 battery, link — and `session.*` for what only a timer knows — the states of a
-solve, the scramble, the solve itself, the records, the training. There is no
-broker and no server: a `PUB` socket, and anyone who wants to listen connects
-to it.
+solve, the scramble, the solve itself, the records, the training, and the end
+of the session. There is no broker and no server: a `PUB` socket, and anyone
+who wants to listen connects to it.
+
+A session says goodbye on its way out: `session.end` carries why it ended —
+`closed` for a command that is over, `interrupted` for a Ctrl+C, `crashed` for
+an error — and it is the last message of the stream. A client waiting for it
+never has to guess whether a silent publisher is gone or simply idle. A
+session killed outright, by a `SIGTERM` or a `SIGKILL`, publishes nothing at
+all: there, silence is the only news.
 
 Turn it on in the `[publisher]` section of your configuration file, or with
 `TERM_TIMER_PUBLISH=1` for one session:

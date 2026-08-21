@@ -27,6 +27,7 @@ from term_timer.bluetooth.annotations import GyroEventDict
 from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.constants import PROTOCOL_VERSION
 from term_timer.publisher import CUBE_TOPICS
+from term_timer.publisher import END_TOPIC
 from term_timer.publisher import TOPICS
 from term_timer.publisher import EventPublisher
 
@@ -476,6 +477,86 @@ class PublishLinkTestCase(PublisherTestCase):
         )
 
 
+class PublishEndTestCase(PublisherTestCase):
+    """The farewell, the one message a falling silence cannot replace."""
+
+    def test_stopping_says_goodbye(self) -> None:
+        """A stream that ends says so before it closes."""
+        self.start()
+        socket = self.subscribe()
+
+        self.publisher.stop()
+
+        topic, envelope = self.receive(socket)
+
+        self.assertEqual(topic, END_TOPIC)
+        self.assertEqual(envelope['data']['reason'], 'closed')
+
+    def test_the_reason_travels(self) -> None:
+        """A session cut short is not a session over."""
+        self.start()
+        socket = self.subscribe()
+
+        self.publisher.stop('interrupted')
+
+        _, envelope = self.receive(socket)
+
+        self.assertEqual(envelope['data']['reason'], 'interrupted')
+
+    def test_the_farewell_is_the_last_message(self) -> None:
+        """Nothing of the session comes after it."""
+        self.start()
+        socket = self.subscribe()
+
+        self.publisher.publish_events([move_event()])
+        self.publisher.stop()
+
+        self.assertEqual(
+            self.topics(self.drain(socket)), ['cube.move', END_TOPIC],
+        )
+
+    def test_the_farewell_carries_the_session_it_ends(self) -> None:
+        """The envelope is the one of the stream it closes."""
+        self.start('train')
+        socket = self.subscribe()
+
+        session_id = self.publisher.session_id
+        self.publisher.publish_events([move_event()])
+        self.publisher.stop()
+
+        _, envelope = self.drain(socket)[-1]
+
+        self.assertEqual(envelope['src'], 'train')
+        self.assertEqual(envelope['sid'], session_id)
+        self.assertEqual(envelope['seq'], 1)
+
+    def test_an_idle_publisher_says_nothing(self) -> None:
+        """A session that never published has no stream to close."""
+        self.publisher.stop()
+
+        self.assertEqual(self.publisher.sequence, 0)
+
+    def test_a_second_stop_says_nothing_more(self) -> None:
+        """The farewell is said once, whatever the way out."""
+        self.start()
+        socket = self.subscribe()
+
+        self.publisher.stop()
+        self.publisher.stop()
+
+        self.assertEqual(self.topics(self.drain(socket)), [END_TOPIC])
+
+    def test_a_subscriber_filters_the_farewell_on_its_own(self) -> None:
+        """The topic is reachable without subscribing to everything."""
+        self.start()
+        socket = self.subscribe(b'session.end')
+
+        self.publisher.publish_events([move_event()])
+        self.publisher.stop()
+
+        self.assertEqual(self.topics(self.drain(socket)), [END_TOPIC])
+
+
 class SubscriptionTestCase(PublisherTestCase):
     """What subscribers see, alone or together."""
 
@@ -660,7 +741,9 @@ class SilenceTestCase(PublisherTestCase):
 
         self.publisher.publish('cube.move', {'move': 'U'})
 
-        self.assertEqual(self.publisher.sequence, 1)
+        # The move, then the farewell of the stop: what comes after it
+        # is what leaves no trace
+        self.assertEqual(self.publisher.sequence, 2)
 
     def test_publish_without_subscriber_does_not_block(self) -> None:
         """Nobody listening is the normal case, and it is free."""

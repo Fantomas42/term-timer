@@ -22,6 +22,7 @@ from term_timer.config import PUBLISHER_ACTIVE
 from term_timer.config import PUBLISHER_ENDPOINTS
 from term_timer.constants import PROTOCOL_VERSION
 from term_timer.constants import PUBLISH_HIGH_WATER_MARK
+from term_timer.constants import PUBLISH_LINGER
 
 if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import EventDict
@@ -64,6 +65,7 @@ SCRAMBLE_TOPIC: Final[str] = 'session.scramble'
 SOLVE_TOPIC: Final[str] = 'session.solve'
 RECORD_TOPIC: Final[str] = 'session.record'
 TRAIN_TOPIC: Final[str] = 'session.train'
+END_TOPIC: Final[str] = 'session.end'
 
 # Declared here so that the namespace is settled in one place, and so
 # that the prefix rule below is checked against every topic of the
@@ -76,6 +78,7 @@ SESSION_TOPICS: Final[tuple[str, ...]] = (
     SOLVE_TOPIC,
     RECORD_TOPIC,
     TRAIN_TOPIC,
+    END_TOPIC,
     'session.step',
     'session.rotation',
 )
@@ -214,12 +217,30 @@ class EventPublisher:
 
         logger.info('Publishing events on %s', ', '.join(bound))
 
-    def stop(self) -> None:
-        """Close the socket and clean up the sockets files left behind."""
+    def stop(self, reason: str = 'closed') -> None:
+        """
+        Say goodbye, close the socket and clean up the socket files.
+
+        The farewell is published before anything is closed, and the
+        socket is the only one closed with a delay: every other message
+        a subscriber misses is made up for by the next one, while this
+        one has no next one.
+
+        Args:
+            reason: What ends the session, ``closed`` when the command
+                is over, ``interrupted`` on a Ctrl+C and ``crashed``
+                when an error carried the process away.
+
+        """
+        # Said while the socket is still the current one: publishing
+        # is what it is for, and it is about to stop being it
+        if self.socket is not None:
+            self.publish_end(reason)
+
         socket, self.socket = self.socket, None
 
         if socket is not None:
-            socket.close()
+            socket.close(linger=PUBLISH_LINGER)
 
         for endpoint in self.endpoints:
             transport, _, address = endpoint.partition('://')
@@ -436,6 +457,31 @@ class EventPublisher:
             LINK_TOPIC,
             {
                 'connected': connected,
+                'reason': reason,
+            },
+        )
+
+    def publish_end(self, reason: str) -> None:
+        """
+        Publish the end of the session, the last message of the stream.
+
+        Nothing else says that the stream is over: a publisher that
+        stops falls silent, which a subscriber cannot tell from a
+        session where nothing happens. This is the one message a client
+        waits for to let go of the state it built.
+
+        The reason is what a client does something with: a session over
+        is a session to forget, an interrupted or crashed one is a
+        session that may come back.
+
+        Args:
+            reason: What ends the session, ``closed``, ``interrupted``
+                or ``crashed``.
+
+        """
+        self.publish(
+            END_TOPIC,
+            {
                 'reason': reason,
             },
         )
