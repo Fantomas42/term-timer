@@ -2,3 +2,7 @@ twophase*
 REFS
 TIMES
 poc
+bin/
+build/
+include/
+lib/
