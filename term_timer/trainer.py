@@ -46,7 +46,6 @@ from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_cubing_url
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
-from term_timer.formatter import format_delta
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_fluency
 from term_timer.formatter import format_fsrs_due
@@ -74,6 +73,8 @@ from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import FaceletAnalyser
 from term_timer.printer import print_cube_trainer
+from term_timer.publisher import PUBLISHER
+from term_timer.publisher import TRAIN_TOPIC
 from term_timer.scrambler import trainer
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
@@ -1788,17 +1789,18 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             ),
         )
 
-        if new_stats.total > 1 and new_stats.best < old_stats.best:
-            mc = 9 + len(str(self.counter))
-            self.console.print(
-                f'[record]:rocket:{ "New PB !".center(mc) }[/record]',
-                f'[best]{ format_time(new_stats.best) }[/best]',
-                format_delta(new_stats.best - old_stats.best),
-            )
+        records = self.print_best_record(new_stats, old_stats)
 
-        self.print_session_records(
-            new_stats, old_stats, STATS_SESSION_SERIES,
+        records.extend(
+            self.print_session_records(
+                new_stats, old_stats, STATS_SESSION_SERIES,
+            ),
         )
+
+        # Celebrating a record on screen and publishing it are the
+        # same moment: an attempt jettisoned at the prompt drops the
+        # timing they are read against, it does not undo breaking them
+        self.publish_records(records, 'case', selected_case.code)
 
     def dnf_line(self) -> None:
         """Display a DNF training attempt; its timing is never recorded."""
@@ -1810,6 +1812,61 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             f'[duration]Duration #{ self.counter }:[/duration]',
             f'[time]{ format_time(self.elapsed_time) }[/time]',
             '[dnf]DNF[/dnf]',
+        )
+
+    def publish_training(
+            self,
+            selected_case: Case,
+            solve: Solve,
+            rating: Rating | None,
+            *,
+            dnf: bool,
+    ) -> None:
+        """
+        Publish the training attempt that just ended.
+
+        Every attempt that happened is published, saved or not: a free
+        play session writes no training file, and a DNF drilled without
+        FSRS moves no card, but both were executed and a subscriber has
+        every reason to hear about them. ``free_play`` is what tells a
+        client whether the attempt left anything behind.
+
+        Only a discarded attempt stays out: it drops its timing and its
+        card, so there is nothing left to act on.
+
+        The rating is empty when FSRS rated nothing, and the card state
+        is the one the training file holds, unchanged when nothing was
+        saved.
+
+        Args:
+            selected_case: The case that was trained.
+            solve: The attempt that was executed.
+            rating: The FSRS rating applied, None when none was.
+            dnf: Whether the attempt failed.
+
+        """
+        if not PUBLISHER.active:
+            return
+
+        training = self.trainings.cases.get(selected_case.code)
+        card = training.fsrs_card if training is not None else None
+
+        PUBLISHER.publish(
+            TRAIN_TOPIC,
+            {
+                'step': self.step_label,
+                'family': selected_case.family,
+                'case': selected_case.code,
+                'name': selected_case.pretty_name,
+                'algorithm': str(solve.reconstruction),
+                'time': self.elapsed_time,
+                'dnf': dnf,
+                'counter': self.counter,
+                'free_play': self.free_play,
+                'rating': rating.name if rating is not None else '',
+                'state': card.state.name if card is not None else '',
+                'due': card.due if card is not None else None,
+            },
         )
 
     def resolve_fsrs_rating(
@@ -1883,6 +1940,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         skip_fsrs = manual and manual_rating is None and not dnf
 
         save_string = ''
+        applied_rating: Rating | None = None
         if discard:
             if not dnf:
                 self.trainings.pop_timing(
@@ -1920,7 +1978,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             ):
                 case_training = self.trainings.cases[selected_case.code]
                 old_card = case_training.fsrs_card
-                rating = self.resolve_fsrs_rating(
+                applied_rating = rating = self.resolve_fsrs_rating(
                     solve,
                     self.fsrs_rater,
                     old_card,
@@ -1953,6 +2011,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
             save_trainings(self.trainings)
             SOUND_PLAYER.save_confirmed()
+            self.publish_training(
+                selected_case, solve, applied_rating, dnf=dnf,
+            )
             if not dnf:
                 self.session_data.append(
                     (
@@ -2152,6 +2213,12 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
                 if quit_training:
                     return False, None
+            else:
+                # No card to move and no timing to write, but the
+                # attempt was executed: the stream is its only trace
+                self.publish_training(
+                    selected_case, solve, None, dnf=True,
+                )
 
             self.counter += 1
 
@@ -2184,6 +2251,12 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             if quit_training:
                 return False, None
         else:
+            # Free play writes no training file, so the stream is the
+            # only trace an attempt ever leaves
+            self.publish_training(
+                selected_case, solve, None, dnf=False,
+            )
+
             self.session_data.append(
                 (
                     selected_case.code,

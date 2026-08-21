@@ -22,6 +22,7 @@ def build_timer(
         *,
         scramble: str = '',
         scrambles: list[Algorithm] | None = None,
+        free_play: bool = True,
 ) -> Timer:
     """
     Build a Timer instance with minimal configuration for tests.
@@ -39,7 +40,7 @@ def build_timer(
         scramble=scramble,
         scrambles=scrambles or [],
         session='default',
-        free_play=True,
+        free_play=free_play,
         show_cube=False,
         show_highlights=False,
         show_doctor=False,

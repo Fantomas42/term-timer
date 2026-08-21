@@ -131,3 +131,49 @@ class TestPrintSessionRecords(unittest.TestCase):
         old_stats = Statistics([1000])
         output = self.render(new_stats, old_stats, [('ao', 5)])
         self.assertEqual(output, '')
+
+    @staticmethod
+    def collect(
+            new_stats: Statistics,
+            old_stats: Statistics,
+            series: list[tuple[str, int]],
+    ) -> list[tuple[str, int, int]]:
+        """
+        Collect the records the reporter found, ignoring the rendering.
+
+        Returns:
+            The broken records, as the reporter returns them.
+
+        """
+        reporter = SeriesReporter()
+        reporter.console = RichConsole(record=True, width=80)
+        reporter.counter = 6
+        return reporter.print_session_records(new_stats, old_stats, series)
+
+    def test_beaten_record_is_returned(self) -> None:
+        """
+        A celebrated record is also handed back to the caller.
+
+        The event stream publishes what the line says, from the same
+        comparison, instead of running the whole watch a second time.
+        """
+        new_stats = Statistics([3000, 3000, 3000, 1000, 1000, 1000])
+        old_stats = Statistics([3000, 3000, 3000, 1000, 1000])
+        records = self.collect(new_stats, old_stats, [('mo', 3)])
+
+        self.assertEqual(len(records), 1)
+        token, value, previous = records[0]
+        self.assertEqual(token, 'mo3')
+        self.assertLess(value, previous)
+
+    def test_silent_watch_returns_nothing(self) -> None:
+        """No line printed, no record handed back."""
+        new_stats = Statistics([3000, 3000, 3000])
+        old_stats = Statistics([3000, 3000])
+        self.assertEqual(self.collect(new_stats, old_stats, [('mo', 3)]), [])
+
+    def test_first_solve_returns_nothing(self) -> None:
+        """The very first solve of a session breaks nothing."""
+        new_stats = Statistics([1000])
+        old_stats = Statistics([])
+        self.assertEqual(self.collect(new_stats, old_stats, [('mo', 3)]), [])

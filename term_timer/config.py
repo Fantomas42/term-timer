@@ -1,7 +1,10 @@
 """Configuration loading and management from TOML files."""
 import os
 import re
+from collections.abc import Iterable
+from collections.abc import Iterator
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 from typing import Final
 from typing import cast
@@ -96,6 +99,13 @@ graph_series = ["ao5", "ao12", "ao100", "ao1000"]
 domain = "localhost"
 port = 8333
 
+[publisher]
+active = false
+endpoints = [
+  "ipc://~/.term_timer/cube.ipc",
+  "tcp://127.0.0.1:5333",
+]
+
 [ui]
 
 """
@@ -147,6 +157,84 @@ def parse_series(
         series.append((kind, size))
 
     return series
+
+
+def parse_endpoint(token: str) -> str:
+    """
+    Parse one endpoint of the event stream.
+
+    An endpoint is a ZeroMQ ``<transport>://<address>``. The address of
+    an ``ipc`` endpoint is a file path, so its leading ``~`` is
+    expanded: an endpoint is typed by hand, in the configuration file
+    as on the command line of a client, and a literal tilde would be
+    taken as a directory name.
+
+    Both sides of the stream read their endpoints here, so that what a
+    publisher binds and what a subscriber connects to are spelled the
+    same way.
+
+    Args:
+        token: The endpoint, as it was written.
+
+    Returns:
+        The endpoint to bind or to connect to, empty when the token
+        names no transport.
+
+    """
+    transport, separator, address = str(token).strip().partition('://')
+
+    if not separator or not transport or not address:
+        return ''
+
+    if transport == 'ipc':
+        address = str(Path(address).expanduser())
+
+    return f'{ transport }://{ address }'
+
+
+def iter_endpoints(tokens: Iterable[str]) -> Iterator[tuple[str, str]]:
+    """
+    Yield the endpoints worth keeping, in both their spellings.
+
+    Tokens carrying no transport are ignored rather than handed to
+    ZeroMQ, and duplicates are dropped: binding the same endpoint twice
+    is an error the publisher has no reason to report. Both spellings
+    travel along, a caller writing the file back keeping the one that
+    was typed, so that a ``~`` written by hand stays a ``~``.
+
+    Args:
+        tokens: Raw endpoints, from the configuration or from a field.
+
+    Yields:
+        The ``(token, endpoint)`` pairs to keep, in the order they were
+        listed.
+
+    """
+    seen: set[str] = set()
+
+    for raw in tokens:
+        token = str(raw).strip()
+        endpoint = parse_endpoint(token)
+
+        if not endpoint or endpoint in seen:
+            continue
+
+        seen.add(endpoint)
+        yield token, endpoint
+
+
+def parse_endpoints(tokens: list[str]) -> list[str]:
+    """
+    Parse the endpoints the event publisher binds.
+
+    Args:
+        tokens: Raw endpoints from the configuration.
+
+    Returns:
+        The endpoints to bind, in the order the file lists them.
+
+    """
+    return [endpoint for _token, endpoint in iter_endpoints(tokens)]
 
 
 def env_flag(name: str, *, default: bool = False) -> bool:
@@ -279,6 +367,8 @@ CUBE_CONFIG = CONFIG.get('cube', {})
 TRAINER_CONFIG = CONFIG.get('trainer', {})
 
 SERVER_CONFIG = CONFIG.get('server', {})
+
+PUBLISHER_CONFIG = CONFIG.get('publisher', {})
 
 CUBE_ORIENTATION: str = CUBE_CONFIG.get('orientation', '')
 
@@ -579,5 +669,17 @@ TRAINER_XCROSS_DIFFICULTY: str = TRAINER_CONFIG.get(
 )
 
 TRAINER_XCROSS_SLOTS: list[str] = TRAINER_CONFIG.get('xcross-slots', ['FR'])
+
+# Publication stays off unless asked for: a session never depends on it
+PUBLISHER_ACTIVE: bool = env_flag(
+    'TERM_TIMER_PUBLISH',
+    default=bool(PUBLISHER_CONFIG.get('active', False)),
+)
+
+# No endpoint configured means nothing to bind, hence nothing published:
+# the endpoints are named by the configuration file and by it only
+PUBLISHER_ENDPOINTS: list[str] = parse_endpoints(
+    PUBLISHER_CONFIG.get('endpoints', []),
+)
 
 DEBUG: bool = env_flag('TERM_TIMER_DEBUG')

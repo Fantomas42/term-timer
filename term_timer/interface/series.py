@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.interface.console import theme
+from term_timer.publisher import PUBLISHER
+from term_timer.publisher import RECORD_TOPIC
 
 if TYPE_CHECKING:
     from rich.console import Console as RichConsole
@@ -120,27 +122,73 @@ class SeriesReporter:
 
         return line
 
+    def print_best_record(
+            self,
+            new_stats: 'Statistics',
+            old_stats: 'Statistics',
+    ) -> list[tuple[str, int, int]]:
+        """
+        Print the overall record line when this solve is a new best.
+
+        The single stands apart from the series: it is no rolling
+        average, and it is the one record every session watches. It is
+        returned in the same shape as the series ones, so that a caller
+        publishing records reads a single list built by a single
+        comparison.
+
+        Args:
+            new_stats: Statistics including the latest solve.
+            old_stats: Statistics before the latest solve.
+
+        Returns:
+            The ``('single', value, previous)`` triple, empty when the
+            solve broke nothing.
+
+        """
+        if new_stats.total <= 1 or new_stats.best >= old_stats.best:
+            return []
+
+        mc = 9 + len(str(self.counter))
+
+        self.console.print(
+            f'[record]:rocket:{ "New PB !".center(mc) }[/record]',
+            f'[best]{ format_time(new_stats.best) }[/best]',
+            format_delta(new_stats.best - old_stats.best),
+        )
+
+        return [('single', new_stats.best, old_stats.best)]
+
     def print_session_records(
             self,
             new_stats: 'Statistics',
             old_stats: 'Statistics',
             series: list[tuple[str, int]],
-    ) -> None:
+    ) -> list[tuple[str, int, int]]:
         """
         Print a record line for each series average beaten by this solve.
 
         Compares each new rolling average against the session best held
         before the solve and celebrates the ones that improved. The overall
-        ``New PB`` line is handled by the caller and stays outside the series.
+        ``New PB`` line stays outside the series, in ``print_best_record``.
+
+        The broken records are returned rather than only printed, so that
+        a caller publishing them on the event stream reads the very same
+        comparison the line celebrates, instead of running it twice.
 
         Args:
             new_stats: Statistics including the latest solve.
             old_stats: Statistics before the latest solve.
             series: Series of ``(kind, size)`` pairs to watch.
 
+        Returns:
+            One ``(token, value, previous)`` triple per broken record, in
+            the order they are printed.
+
         """
+        records: list[tuple[str, int, int]] = []
+
         if new_stats.total <= 1:
-            return
+            return records
 
         mc = 9 + len(str(self.counter))
 
@@ -154,6 +202,8 @@ class SeriesReporter:
             if value <= 0 or value >= best:
                 continue
 
+            records.append((f'{ kind }{ size }', value, best))
+
             emoji = SERIES_RECORD_EMOJI.get(
                 (kind, size), SERIES_RECORD_EMOJI_FALLBACK,
             )
@@ -163,3 +213,46 @@ class SeriesReporter:
                 f'[best]{ format_time(value) }[/best]',
                 format_delta(value - best),
             )
+
+        return records
+
+    def publish_records(
+            self,
+            records: list[tuple[str, int, int]],
+            scope: str,
+            case: str = '',
+    ) -> None:
+        """
+        Publish the records the attempt just broke.
+
+        The class finding the records is the one publishing them: the
+        celebrating lines and the messages read one comparison, run
+        once, so a session and a training can never disagree on what
+        was broken.
+
+        The scope says what the value was read against. A ``session``
+        one compares against the stack the session runs on; a ``case``
+        one compares against every timing a trained case ever got, and
+        names that case, so two sessions of the same case keep on
+        breaking the same records.
+
+        Args:
+            records: The ``(kind, value, previous)`` triples broken.
+            scope: What the values were read against.
+            case: The case the records belong to, on a ``case`` scope.
+
+        """
+        for kind, value, previous in records:
+            data = {
+                'kind': kind,
+                'scope': scope,
+                'value': value,
+                'previous': previous,
+                'delta': value - previous,
+                'counter': self.counter,
+            }
+
+            if case:
+                data['case'] = case
+
+            PUBLISHER.publish(RECORD_TOPIC, data)

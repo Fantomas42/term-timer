@@ -2,6 +2,7 @@
 import logging
 import operator
 from random import Random
+from typing import Any
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeOrientation
@@ -14,11 +15,13 @@ from term_timer.config import STATS_SESSION_SERIES
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SolveFlag
-from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
 from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.printer import print_cube_scrambled
+from term_timer.publisher import PUBLISHER
+from term_timer.publisher import SCRAMBLE_TOPIC
+from term_timer.publisher import SOLVE_TOPIC
 from term_timer.scrambler import scrambler
 from term_timer.solve import Solve
 from term_timer.stats import TARGET_ALWAYS
@@ -141,6 +144,126 @@ class Timer(SolveInterface):
 
         self.ghost = ghost
 
+    def publish_scramble(self) -> None:
+        """
+        Publish the scramble the attempt about to start is solving.
+
+        Emitted once the scramble is drawn and reoriented, so that a
+        subscriber reads the very moves the solver is shown, and the
+        state the cube must reach.
+        """
+        if not PUBLISHER.active:
+            return
+
+        PUBLISHER.publish(
+            SCRAMBLE_TOPIC,
+            {
+                'scramble': str(self.scramble),
+                'oriented': str(self.scramble_oriented),
+                'rotation': str(self.cube_orientation_moves),
+                'facelets': self.facelets_scrambled,
+                'cube_size': self.cube_size,
+                'index': self.counter,
+                'total': len(self.scrambles),
+            },
+        )
+
+    @staticmethod
+    def solve_steps(solve: Solve) -> list[dict[str, Any]]:
+        """
+        Break a solve down into the steps of its method.
+
+        A DNF never reaches the solved state, so its breakdown is partial
+        or wrong: it carries no steps at all rather than misleading ones.
+
+        Args:
+            solve: The solve that just ended.
+
+        Returns:
+            One object per step of the method analysis, empty when the
+            solve carries no usable reconstruction.
+
+        """
+        if not solve.analysable or solve.method_applied is None:
+            return []
+
+        return [
+            {
+                'name': step['name'],
+                'type': step['type'],
+                'moves': str(step['moves_prettified']),
+                'case': step['case'],
+                'qtm': step['qtm'],
+                'total': step['total'],
+                'recognition': step['recognition'],
+                'execution': step['execution'],
+            }
+            for step in solve.method_applied.summary
+        ]
+
+    def publish_solve(self, solve: Solve, counter: int) -> None:
+        """
+        Publish the solve that just ended, in its storage spelling.
+
+        The payload is the one written to the session file, so a client
+        writing down what it receives records a readable session, plus
+        what only the running session knows: where the attempt sits, the
+        method breakdown, and whether it counts.
+
+        Called once the attempt is settled and kept, never before: the
+        save prompt is where a manual solve is flagged DNF or +2, and
+        where a discarded or retried one leaves the stack. A solve
+        published any earlier would announce a flag it does not end up
+        with, or an attempt that never happened.
+
+        The breakdown is built only when someone listens: analysing a
+        solve nobody displays is work a silent session must not pay for.
+
+        ``flag`` is always there, empty when the solve carries none:
+        the storage spelling drops it when it is empty, which would
+        leave a client reading a flag by its absence. It is the only
+        thing said about the fate of the attempt — no derived boolean
+        next to it — and the time stays the raw one, penalty excluded.
+
+        Args:
+            solve: The solve that just ended.
+            counter: Rank of the attempt in the session, the one it was
+                scrambled and timed under.
+
+        """
+        if not PUBLISHER.active:
+            return
+
+        data: dict[str, Any] = {**solve.as_save}
+        data['flag'] = solve.flag
+        data['counter'] = counter
+        data['session'] = self.session
+        data['cube_size'] = self.cube_size
+        data['free_play'] = self.free_play
+        data['steps'] = self.solve_steps(solve)
+
+        PUBLISHER.publish(SOLVE_TOPIC, data)
+
+    def publish_settled_solve(self, solve: Solve, counter: int) -> None:
+        """
+        Publish the attempt once its fate is settled.
+
+        The save prompt is where a manual solve is flagged DNF or +2,
+        and where a discarded or retried one leaves the stack: an
+        attempt no longer on it never happened, and one still there is
+        published with the flag it ends up with. Free play holds no
+        prompt, so its attempts are settled the moment they are timed.
+
+        Args:
+            solve: The attempt the save prompt just settled.
+            counter: Rank of the attempt in the session, taken before
+                the prompt: a saved attempt moves the counter on, and
+                the one being published is not the next one.
+
+        """
+        if self.stack and self.stack[-1] is solve:
+            self.publish_solve(solve, counter)
+
     def start_line(self, cube: VCube) -> None:
         """Display scramble information and instructions to start solve."""
         if self.show_cube:
@@ -205,7 +328,7 @@ class Timer(SolveInterface):
             tokens,
         )
 
-    def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912
+    def solve_line(self, solve: Solve) -> None:  # noqa: C901
         """Display solve results, statistics, and record achievements."""
         old_stats = SolveStatisticsReporter(self.cube_size, self.stack)
 
@@ -261,17 +384,15 @@ class Timer(SolveInterface):
             self.format_series_line(new_stats, STATS_LIVE_SERIES),
         )
 
-        if new_stats.total > 1 and new_stats.best < old_stats.best:
-            mc = 9 + len(str(self.counter))
-            self.console.print(
-                f'[record]:rocket:{ "New PB !".center(mc) }[/record]',
-                f'[best]{ format_time(new_stats.best) }[/best]',
-                format_delta(new_stats.best - old_stats.best),
-            )
+        records = self.print_best_record(new_stats, old_stats)
 
-        self.print_session_records(
-            new_stats, old_stats, STATS_SESSION_SERIES,
+        records.extend(
+            self.print_session_records(
+                new_stats, old_stats, STATS_SESSION_SERIES,
+            ),
         )
+
+        self.publish_records(records, 'session')
 
         self.projection_line(new_stats)
 
@@ -397,6 +518,8 @@ class Timer(SolveInterface):
             self.scramble_oriented = self.reorient(self.scramble)
         self.facelets_scrambled = cube.state
 
+        self.publish_scramble()
+
         self.start_line(cube)
 
         quit_solving = await self.scramble_solve()
@@ -460,10 +583,17 @@ class Timer(SolveInterface):
 
         self.solve_line(solve)
 
+        # The rank the attempt was scrambled, timed and celebrated
+        # under: saving one moves the counter on, and the scramble,
+        # the records and the solve of one attempt all say the same
+        counter = self.counter
+
         if not self.free_play:
             self.save_line()
 
             quit_solving = await self.save_solve()
+
+            self.publish_settled_solve(solve, counter)
 
             if self.retry_requested:
                 return True, self.scramble
@@ -471,6 +601,9 @@ class Timer(SolveInterface):
             if quit_solving:
                 return False, None
         else:
+            # Free play writes no session file, so the stream is the
+            # only trace an attempt ever leaves
+            self.publish_settled_solve(solve, counter)
             self.counter += 1
 
         return True, None

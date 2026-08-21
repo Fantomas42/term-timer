@@ -425,4 +425,4 @@ class StopWatch:
         self.check_and_print_steps(
             self.end_time - self.start_time, style, final=True,
         )
-        self.set_state('stop')
+        self.set_state('stop', self.end_time)

@@ -31,6 +31,7 @@ plain JSON files you fully own.
 - Detailed statistics, trend graphs and distribution histograms
 - Drill, daily scramble and scriptable practice routines
 - Interactive browse/config TUIs and local HTML reports
+- Live event stream, for a 3D view of your cube and anything else you plug in
 - Fully offline, csTimer and Cubeast import
 
 ## Why a terminal timer?
@@ -195,6 +196,66 @@ about to forget them.
 - **Merge** sessions
 - Interactive **config** editor (Textual TUI)
 - A `bt-info` utility to inspect your Bluetooth cube
+
+### Live event stream
+
+Term Timer can broadcast what happens during a session, as it happens, over
+ZeroMQ: `cube.*` for everything the cube reports — moves, state, gyroscope,
+battery, link — and `session.*` for what only a timer knows — the states of a
+solve, the scramble, the solve itself, the records, the training, and the end
+of the session. There is no broker and no server: a `PUB` socket, and anyone
+who wants to listen connects to it.
+
+A session says goodbye on its way out: `session.end` carries why it ended —
+`closed` for a command that is over, `interrupted` for a Ctrl+C, `crashed` for
+an error — and it is the last message of the stream. A client waiting for it
+never has to guess whether a silent publisher is gone or simply idle. A
+session killed outright, by a `SIGTERM` or a `SIGKILL`, publishes nothing at
+all: there, silence is the only news.
+
+Turn it on in the `[publisher]` section of your configuration file, or with
+`TERM_TIMER_PUBLISH=1` for one session:
+
+```toml
+[publisher]
+active = true
+endpoints = [
+  "ipc://~/.term_timer/cube.ipc",   # fast and local
+  "tcp://127.0.0.1:5333",           # for a client in any language
+]
+```
+
+Publishing costs a session nothing and can never break one: a socket that
+cannot bind is reported and the session goes on, and a stream nobody listens
+to is simply dropped.
+
+An endpoint belongs to one session at a time. Start a second publishing
+session while the first is running and the endpoints already taken are refused
+rather than stolen, on screen and in the log — the first session keeps its
+subscribers, the second publishes on whatever endpoints are left, or on none
+at all and says so:
+
+```
+Cannot publish on ipc://~/.term_timer/cube.ipc (already published by another session)
+This session publishes no event at all
+```
+
+Term Timer never starts, watches or knows about a subscriber. Clients live in
+their own repository, [term-timer-clients][clients] — among them **`cube-cast`**,
+a 3D view of your cube turning in real time, in a window of its own, on any
+command that talks to a cube:
+
+```bash
+cube-cast                                   # in one terminal
+TERM_TIMER_PUBLISH=1 term-timer solve -b    # in another
+```
+
+Writing your own is short — a tail of the stream, a recorder, a bridge to a
+stream overlay, a script that announces a new personal best. Everything they
+need is in [PROTOCOL.md][protocol], version 1.
+
+[clients]: https://github.com/Fantomas42/term-timer-clients
+[protocol]: https://github.com/Fantomas42/term-timer-clients/blob/master/PROTOCOL.md
 
 ## Examples usage
 

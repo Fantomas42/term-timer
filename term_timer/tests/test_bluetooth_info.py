@@ -1,7 +1,6 @@
 """Tests for the bt-info utility script."""
 import asyncio
 import logging
-import threading
 import unittest
 from argparse import Namespace
 from collections.abc import Awaitable
@@ -15,6 +14,7 @@ from cubing_algs.vcube import VCube
 
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.constants import BLUETOOTH_EVENTS
+from term_timer.config import USE_GYROSCOPE
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.orientation import get_orientation_moves
 from term_timer.scripts.bluetooth_info import SessionReport
@@ -324,10 +324,9 @@ class TestConsumerDesynchronisation(unittest.IsolatedAsyncioTestCase):
         with patch('term_timer.scripts.bluetooth_info.SOUND_PLAYER'):
             await consumer_cb(
                 queue,
-                threading.Event(),
-                None,
                 report,
                 show_cube=False,
+                use_gyroscope=True,
                 orientation_faces='UF',
             )
 
@@ -380,10 +379,9 @@ class TestConsumerEventCoverage(unittest.IsolatedAsyncioTestCase):
         ):
             await consumer_cb(
                 queue,
-                threading.Event(),
-                None,
                 SessionReport(),
                 show_cube=False,
+                use_gyroscope=True,
                 orientation_faces='UF',
             )
 
@@ -395,7 +393,9 @@ class TestConsumerEventCoverage(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_driver_event_is_handled(self) -> None:
         """Test that no event of the contract reaches the repli branch."""
-        for name in sorted(BLUETOOTH_EVENTS):
+        # bt-info never sends REQUEST_RESET, so a cube never confirms a
+        # reset to it and the event stays out of the consumer
+        for name in sorted(BLUETOOTH_EVENTS - {'reset'}):
             with self.subTest(event=name):
                 self.assertEqual(await self.consume(driver_event(name)), [])
 
@@ -404,6 +404,67 @@ class TestConsumerEventCoverage(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             await self.consume(driver_event('nonsense')),
             ['nonsense'],
+        )
+
+
+class TestConsumerGyroscope(unittest.IsolatedAsyncioTestCase):
+    """Tests for the gyroscope toggle of the consumer."""
+
+    async def consume(self, *, use_gyroscope: bool) -> list[str]:
+        """
+        Drain two gyro events a half turn apart from each other.
+
+        Args:
+            use_gyroscope: The setting handed to the consumer.
+
+        Returns:
+            The messages logged at the INFO level.
+
+        """
+        still = driver_event('gyro')
+        turned = driver_event('gyro')
+        turned['quaternion'] = {  # type: ignore[typeddict-unknown-key]
+            'x': 1.0, 'y': 0.0, 'z': 0.0, 'w': 0.0,
+        }
+
+        queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
+        queue.put_nowait([still, turned])
+        queue.put_nowait(None)
+
+        with (
+                patch('term_timer.scripts.bluetooth_info.SOUND_PLAYER'),
+                self.assertLogs(
+                    'term_timer.scripts.bluetooth_info',
+                    level=logging.INFO,
+                ) as logs,
+        ):
+            await consumer_cb(
+                queue,
+                SessionReport(),
+                show_cube=False,
+                use_gyroscope=use_gyroscope,
+                orientation_faces='UF',
+            )
+
+        return [record.getMessage() for record in logs.records]
+
+    async def test_rotations_are_detected(self) -> None:
+        """Test that a used gyroscope reports the rotations it sees."""
+        messages = await self.consume(use_gyroscope=True)
+
+        self.assertTrue(
+            any('Rotation:' in message for message in messages),
+        )
+
+    async def test_rotations_are_ignored(self) -> None:
+        """Test that an unused gyroscope reports nothing at all."""
+        messages = await self.consume(use_gyroscope=False)
+
+        self.assertFalse(
+            any('Rotation:' in message for message in messages),
+        )
+        self.assertFalse(
+            any('threshold for rotation' in message for message in messages),
         )
 
 
@@ -417,9 +478,9 @@ class TestRunExitCode(unittest.IsolatedAsyncioTestCase):
             output='',
             time=1,
             filter_name='',
-            cube_reset=False,
-            gyroscope_enable=False,
-            gyroscope_disable=False,
+            use_gyroscope=None,
+            send_gyro_enable=False,
+            send_gyro_disable=False,
             show_cube=False,
             orientation='UF',
             rotation_threshold=75.0,
@@ -453,7 +514,7 @@ class TestRunExitCode(unittest.IsolatedAsyncioTestCase):
                     level=logging.INFO,
                 ) as logs,
         ):
-            code = await run(self.options, None, threading.Event())
+            code = await run(self.options)
 
         return code, [record.getMessage() for record in logs.records]
 
@@ -483,7 +544,9 @@ class TestRunExitCode(unittest.IsolatedAsyncioTestCase):
         self.options.input = 'events.json'
 
         with patch('term_timer.scripts.bluetooth_info.replay') as replayer:
-            code = await run(self.options, None, threading.Event())
+            code = await run(self.options)
 
         self.assertEqual(code, 0)
-        replayer.assert_called_once_with(self.options)
+        replayer.assert_called_once_with(
+            self.options, use_gyroscope=USE_GYROSCOPE,
+        )

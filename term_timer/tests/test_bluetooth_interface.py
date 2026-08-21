@@ -496,3 +496,322 @@ class BluetoothLinkLostTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn('Link closed by the application', logs.output[0])
         self.assertTrue(interface.queue.empty())
+
+
+class RecordingPublisher:
+    """A publisher recording what the interface hands it."""
+
+    def __init__(self, queue: 'Queue[list[EventDict] | None] | None' = None,
+                 *, failing: bool = False) -> None:
+        """
+        Hold what is published, and when.
+
+        Args:
+            queue: The queue of the interface under test, watched to
+                tell whether the publication came before the consumer
+                was served.
+            failing: Whether every publication is to blow up.
+
+        """
+        self.queue = queue
+        self.failing = failing
+        self.events: list[EventDict] = []
+        self.links: list[tuple[bool, str]] = []
+        self.queue_sizes: list[int] = []
+
+    def publish_events(self, events: list['EventDict']) -> None:
+        """
+        Record a batch of hardware events.
+
+        Args:
+            events: The events the interface is emitting.
+
+        Raises:
+            RuntimeError: When built to fail, standing for anything a
+                publication can hit.
+
+        """
+        if self.queue is not None:
+            self.queue_sizes.append(self.queue.qsize())
+
+        if self.failing:
+            msg = 'Publication exploded'
+            raise RuntimeError(msg)
+
+        self.events.extend(events)
+
+    def publish_link(self, *, connected: bool, reason: str) -> None:
+        """
+        Record a change of the link state.
+
+        Args:
+            connected: Whether the cube is reachable from now on.
+            reason: What made the link change.
+
+        """
+        self.links.append((connected, reason))
+
+
+class ServiceStub:
+    """A GATT service offering the one uuid a driver claims."""
+
+    def __init__(self, uuid: str) -> None:
+        """
+        Hold the uuid the driver lookup matches on.
+
+        Args:
+            uuid: The service uuid advertised to the interface.
+
+        """
+        self.uuid = uuid
+
+
+class PublishedDriver:
+    """A driver claiming a service, and doing nothing with the link."""
+
+    service_uid = 'published-service'
+    state_characteristic_uid = 'state-characteristic'
+
+    def __init__(self, client: 'BleakClient', *,
+                 use_gyroscope: bool) -> None:
+        """
+        Hold what the interface builds a driver with.
+
+        Args:
+            client: The connected client the driver talks through.
+            use_gyroscope: Whether the gyroscope data is wanted.
+
+        """
+        self.client = client
+        self.use_gyroscope = use_gyroscope
+
+
+class PublishedClient:
+    """A BleakClient stub whose device offers the driver's service."""
+
+    def __init__(self) -> None:
+        """Start disconnected, with the service a driver claims."""
+        self.is_connected = False
+        self.services: list[object] = [ServiceStub('published-service')]
+        self.notified: list[str] = []
+
+    async def connect(self) -> None:
+        """Mark the link as up, as bleak does on success."""
+        self.is_connected = True
+
+    async def start_notify(self, characteristic: str,
+                           handler: object) -> None:  # noqa: ARG002
+        """
+        Record the subscription the interface asks for.
+
+        Args:
+            characteristic: The characteristic listened to.
+            handler: The callback bleak is to call, unused here.
+
+        """
+        self.notified.append(characteristic)
+
+
+class EventPublicationTestCase(unittest.IsolatedAsyncioTestCase):
+    """Tests for what the interface broadcasts beside its queue."""
+
+    logger_name = 'term_timer.bluetooth.interface'
+
+    @staticmethod
+    def make_events() -> list['EventDict']:
+        """
+        Build the batch a notification is to carry.
+
+        Returns:
+            A move and a battery event, in that order.
+
+        """
+        now = datetime.now(tz=UTC)
+        moved: MoveEventDict = {
+            'event': 'move',
+            'clock': 1856234,
+            'timestamp': now,
+            'serial': 412,
+            'local_timestamp': now,
+            'cube_timestamp': 1856234.0,
+            'face': 0,
+            'direction': 1,
+            'move': "R'",
+        }
+        battery: BatteryEventDict = {
+            'event': 'battery',
+            'clock': 12,
+            'timestamp': now,
+            'level': 87,
+            'charging_state': 0,
+        }
+
+        return [moved, battery]
+
+    async def test_a_notification_is_published_then_queued(self) -> None:
+        """
+        What reaches the consumer was broadcast first, and identical.
+
+        The order is the whole point of a single emission path: a
+        subscriber sees the cube move at the same instant as the
+        application, never after it acted on it.
+        """
+        events = self.make_events()
+        queue: Queue[list[EventDict] | None] = Queue()
+        interface = BluetoothInterface(queue)
+        interface.driver = cast('Driver', EventDriver(events))
+        publisher = RecordingPublisher(queue)
+
+        with patch(f'{ self.logger_name }.PUBLISHER', publisher):
+            await interface.notification_handler(
+                cast('BleakGATTCharacteristic', None), bytearray(b'\x00'),
+            )
+
+        self.assertEqual(publisher.events, events)
+        self.assertEqual(publisher.queue_sizes, [0])
+        self.assertEqual(queue.get_nowait(), events)
+
+    async def test_a_lost_link_is_published_too(self) -> None:
+        """
+        The disconnection bleak signals is broadcast like any event.
+
+        It comes from a callback, outside any coroutine, which is the
+        only reason it takes another path than the notifications.
+        """
+        interface = BluetoothInterface(Queue())
+        publisher = RecordingPublisher(interface.queue)
+
+        with patch(f'{ self.logger_name }.PUBLISHER', publisher), \
+             self.assertLogs(self.logger_name, level='WARNING'):
+            interface.handle_disconnection(cast('BleakClient', None))
+
+        self.assertEqual(len(publisher.events), 1)
+        self.assertEqual(publisher.events[0]['event'], 'disconnect')
+        self.assertEqual(publisher.queue_sizes, [0])
+        self.assertFalse(interface.queue.empty())
+
+    async def test_a_failing_publication_never_reaches_the_consumer(
+            self) -> None:
+        """
+        A publisher blowing up costs a debug line, and nothing else.
+
+        This is the guarantee the whole stream rests on: a subscriber,
+        a socket or a serialisation is never allowed to take a timed
+        session down with it.
+        """
+        events = self.make_events()
+        queue: Queue[list[EventDict] | None] = Queue()
+        interface = BluetoothInterface(queue)
+        interface.driver = cast('Driver', EventDriver(events))
+        publisher = RecordingPublisher(failing=True)
+
+        with patch(f'{ self.logger_name }.PUBLISHER', publisher), \
+             self.assertLogs(self.logger_name, level='DEBUG') as logs:
+            await interface.notification_handler(
+                cast('BleakGATTCharacteristic', None), bytearray(b'\x00'),
+            )
+
+        self.assertEqual(queue.get_nowait(), events)
+        self.assertIn('Cannot publish events', '\n'.join(logs.output))
+
+    def test_a_failing_publication_never_stops_the_callback(self) -> None:
+        """A link lost under a broken publisher still posts its event."""
+        interface = BluetoothInterface(Queue())
+        publisher = RecordingPublisher(failing=True)
+
+        with patch(f'{ self.logger_name }.PUBLISHER', publisher), \
+             self.assertLogs(self.logger_name, level='DEBUG'):
+            interface.handle_disconnection(cast('BleakClient', None))
+
+        self.assertFalse(interface.queue.empty())
+
+    async def test_an_idle_publisher_changes_nothing(self) -> None:
+        """
+        The real singleton, bound to nothing, is a no-op on the path.
+
+        Every existing session runs with publication off, so the queue
+        must behave exactly as it did before there was a publisher.
+        """
+        events = self.make_events()
+        queue: Queue[list[EventDict] | None] = Queue()
+        interface = BluetoothInterface(queue)
+        interface.driver = cast('Driver', EventDriver(events))
+
+        await interface.notification_handler(
+            cast('BleakGATTCharacteristic', None), bytearray(b'\x00'),
+        )
+
+        self.assertEqual(queue.get_nowait(), events)
+
+    async def test_the_connection_is_published(self) -> None:
+        """
+        A cube arriving is announced, which no driver event does.
+
+        A cube says it is leaving and never that it is there, so the
+        interface is the only one who can tell a subscriber that the
+        stream it just joined has a cube behind it.
+        """
+        client = PublishedClient()
+        interface = BluetoothInterface(Queue())
+        publisher = RecordingPublisher()
+
+        with patch(
+                'term_timer.bluetooth.interface.BleakClient',
+                lambda *args, **kwargs: client,  # noqa: ARG005
+        ), patch(
+            'term_timer.bluetooth.interface.DRIVERS', [PublishedDriver],
+        ), patch(f'{ self.logger_name }.PUBLISHER', publisher):
+            await interface.__aenter__(
+                'AA:BB:CC:DD:EE:FF', use_gyroscope=False,
+            )
+
+        self.assertEqual(client.notified, ['state-characteristic'])
+        self.assertEqual(publisher.links, [(True, 'opened')])
+
+    async def test_a_connection_that_fails_is_not_published(self) -> None:
+        """A cube that was never there never announced itself."""
+        interface = BluetoothInterface(Queue())
+        publisher = RecordingPublisher()
+
+        with patch(
+                'term_timer.bluetooth.interface.BleakClient',
+                lambda *args, **kwargs: ConnectingClient(),  # noqa: ARG005
+        ), patch(
+            f'{ self.logger_name }.PUBLISHER', publisher,
+        ), self.assertRaises(CubeNotFoundError):
+            await interface.__aenter__(
+                'AA:BB:CC:DD:EE:FF', use_gyroscope=False,
+            )
+
+        self.assertEqual(publisher.links, [])
+
+    async def test_the_disconnection_we_asked_for_is_published(self) -> None:
+        """
+        Leaving the interface says the link is closed, not lost.
+
+        A subscriber does not wait for the same thing after a session
+        that ended and after a cube that went out of range.
+        """
+        client = TeardownClient()
+        interface = BluetoothInterface(Queue())
+        interface.client = cast('BleakClient', client)
+        interface.driver = cast('Driver', TeardownDriver())
+        publisher = RecordingPublisher()
+
+        with patch(f'{ self.logger_name }.PUBLISHER', publisher):
+            await interface.__aexit__(None, None, None)
+
+        self.assertEqual(publisher.links, [(False, 'closed')])
+
+    async def test_a_link_already_down_announces_nothing(self) -> None:
+        """A link nobody holds any more has no closing to announce."""
+        client = TeardownClient(is_connected=False)
+        interface = BluetoothInterface(Queue())
+        interface.client = cast('BleakClient', client)
+        interface.driver = cast('Driver', TeardownDriver())
+        publisher = RecordingPublisher()
+
+        with patch(f'{ self.logger_name }.PUBLISHER', publisher):
+            await interface.__aexit__(None, None, None)
+
+        self.assertEqual(publisher.links, [])

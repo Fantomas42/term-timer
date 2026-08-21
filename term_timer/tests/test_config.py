@@ -1,6 +1,7 @@
 """Tests for config helpers."""
 import os
 import unittest
+from pathlib import Path
 from typing import ClassVar
 from typing import cast
 from unittest.mock import patch
@@ -9,8 +10,11 @@ from term_timer.config import CubeDevice
 from term_timer.config import env_flag
 from term_timer.config import env_string
 from term_timer.config import is_cube_address
+from term_timer.config import iter_endpoints
 from term_timer.config import load_cubes
 from term_timer.config import load_default_cube
+from term_timer.config import parse_endpoint
+from term_timer.config import parse_endpoints
 from term_timer.config import parse_series
 
 
@@ -81,6 +85,113 @@ class TestParseSeries(unittest.TestCase):
                 ('mo', 'ao'),
             ),
             [('ao', 12), ('mo', 3)],
+        )
+
+
+class TestParseEndpoint(unittest.TestCase):
+    """Tests for parse_endpoint."""
+
+    def test_ipc_path_expanded(self) -> None:
+        """A tilde in a socket path is a home, not a directory."""
+        self.assertEqual(
+            parse_endpoint('ipc://~/.term_timer/cube.ipc'),
+            f'ipc://{ Path.home() }/.term_timer/cube.ipc',
+        )
+
+    def test_other_transports_untouched(self) -> None:
+        """Only an ipc address is a path, so only it is expanded."""
+        self.assertEqual(
+            parse_endpoint('tcp://~host:5555'),
+            'tcp://~host:5555',
+        )
+
+    def test_surrounding_spaces_ignored(self) -> None:
+        """What is typed by hand may be padded."""
+        self.assertEqual(
+            parse_endpoint(' tcp://127.0.0.1:5555 '),
+            'tcp://127.0.0.1:5555',
+        )
+
+    def test_transportless_token_refused(self) -> None:
+        """What names no transport is no endpoint."""
+        for token in ('', '  ', 'cube.ipc', 'tcp://', '://cube'):
+            with self.subTest(token=token):
+                self.assertEqual(parse_endpoint(token), '')
+
+
+class TestIterEndpoints(unittest.TestCase):
+    """Tests for iter_endpoints."""
+
+    def test_both_spellings_travel_along(self) -> None:
+        """The token as typed, and the endpoint as ZeroMQ reads it."""
+        self.assertEqual(
+            list(iter_endpoints(['ipc://~/.term_timer/cube.ipc'])),
+            [
+                (
+                    'ipc://~/.term_timer/cube.ipc',
+                    f'ipc://{ Path.home() }/.term_timer/cube.ipc',
+                ),
+            ],
+        )
+
+    def test_the_token_is_yielded_stripped(self) -> None:
+        """A line written with spaces is not written back with them."""
+        self.assertEqual(
+            list(iter_endpoints([' tcp://127.0.0.1:5555 '])),
+            [('tcp://127.0.0.1:5555', 'tcp://127.0.0.1:5555')],
+        )
+
+    def test_duplicates_are_read_not_written(self) -> None:
+        """Two spellings of one endpoint keep the first one only."""
+        self.assertEqual(
+            [
+                token
+                for token, _endpoint in iter_endpoints(
+                    ['ipc://~/cube.ipc', f'ipc://{ Path.home() }/cube.ipc'],
+                )
+            ],
+            ['ipc://~/cube.ipc'],
+        )
+
+
+class TestParseEndpoints(unittest.TestCase):
+    """Tests for parse_endpoints."""
+
+    def test_endpoints_kept_in_order(self) -> None:
+        """The order the configuration lists is the binding order."""
+        self.assertEqual(
+            parse_endpoints(['tcp://127.0.0.1:5555', 'inproc://cube']),
+            ['tcp://127.0.0.1:5555', 'inproc://cube'],
+        )
+
+    def test_ipc_path_expanded(self) -> None:
+        """A tilde in a socket path is a home, not a directory."""
+        self.assertEqual(
+            parse_endpoints(['ipc://~/.term_timer/cube.ipc']),
+            [f'ipc://{ Path.home() }/.term_timer/cube.ipc'],
+        )
+
+    def test_other_transports_untouched(self) -> None:
+        """Only an ipc address is a path, so only it is expanded."""
+        self.assertEqual(
+            parse_endpoints(['tcp://~host:5555']),
+            ['tcp://~host:5555'],
+        )
+
+    def test_transportless_tokens_ignored(self) -> None:
+        """What names no transport never reaches ZeroMQ."""
+        self.assertEqual(
+            parse_endpoints(['', '  ', 'cube.ipc', 'tcp://', 'ipc://cube']),
+            ['ipc://cube'],
+        )
+
+    def test_duplicates_dropped(self) -> None:
+        """The same endpoint is never bound twice."""
+        self.assertEqual(
+            parse_endpoints(
+                ['tcp://127.0.0.1:5555', ' tcp://127.0.0.1:5555 '],
+            ),
+            ['tcp://127.0.0.1:5555'],
         )
 
 

@@ -79,6 +79,17 @@ def add_toggle_argument(
     The long flag is built from the opposite of the configured default,
     so a section displayed by default exposes its hiding flag, and the
     destination is always the matching `show_*` attribute.
+
+    Args:
+        group: Argument group receiving the option.
+        short: Short flag of the option, dash included.
+        name: Name of the section the option toggles, also giving the
+            long flag and the destination.
+        description: What the option shows or hides, completing the
+            mode word in the help.
+        default: Whether the section is displayed when the option is
+            left out, which the long flag is the opposite of.
+
     """
     mode = 'hide' if default else 'show'
     group.add_argument(
@@ -149,6 +160,34 @@ def add_cube_size_argument(group: ArgumentParser._ArgumentGroup) -> None:
         help=(
             'Set the size of the cube (from 2 to 7).\n'
             'Default: 3.'
+        ),
+    )
+
+
+def add_gyroscope_argument(
+        parser: ArgumentParser | ArgumentParser._ArgumentGroup,
+) -> None:
+    """
+    Add the gyroscope toggle to parser.
+
+    The option toggles the configured setting: it disables the
+    gyroscope when the configuration enables it, and enables it
+    otherwise.
+
+    Args:
+        parser: Parser or argument group receiving the option.
+
+    """
+    mode = 'disable' if USE_GYROSCOPE else 'enable'
+    parser.add_argument(
+        '-g', f'--{ mode }-gyroscope',
+        action='store_const',
+        const=not USE_GYROSCOPE,
+        default=None,
+        dest='use_gyroscope',
+        help=(
+            f"{ mode.title() } the cube's gyroscope.\n"
+            f'Default: { USE_GYROSCOPE }.'
         ),
     )
 
@@ -328,19 +367,7 @@ def set_bluetooth_arguments(
             f'Given alone: { bare }.'
         ),
     )
-    mode = 'disable' if USE_GYROSCOPE else 'enable'
-    bluetooth.add_argument(
-        '-g', f'--{ mode }-gyroscope',
-        action='store_const',
-        const=not USE_GYROSCOPE,
-        default=None,
-        dest='use_gyroscope',
-        help=(
-            f"{ mode.title() } the cube's gyroscope, "
-            'whatever the cube configures.\n'
-            'Default: False.'
-        ),
-    )
+    add_gyroscope_argument(bluetooth)
 
     return bluetooth
 

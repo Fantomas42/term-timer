@@ -1,4 +1,4 @@
-"""Tests for the Bluetooth section of the configuration editor."""
+"""Tests for the sections of the configuration editor."""
 import asyncio
 import tempfile
 import unittest
@@ -13,12 +13,15 @@ from textual.app import App
 from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.widgets import Button
+from textual.widgets import Checkbox
 from textual.widgets import Collapsible
 from textual.widgets import Input
 from textual.widgets import TabbedContent
+from textual.widgets import TextArea
 
 from term_timer.config_edit.app import ConfigEditApp
 from term_timer.config_edit.sections import BluetoothSection
+from term_timer.config_edit.sections import PublisherSection
 from term_timer.config_edit.toolbar import ConfigToolbar
 
 # Ceiling guarding against a section that never finishes loading,
@@ -269,6 +272,145 @@ class TestBluetoothSectionFolding(BluetoothSectionTestCase):
         self.assertEqual(self.titles[-1], 'aichuan - MoYu AI')
 
 
+PUBLISHER_CONFIG: dict[str, Any] = {
+    'publisher': {
+        'active': True,
+        'endpoints': [
+            'ipc://~/.term_timer/cube.ipc',
+            'tcp://127.0.0.1:5555',
+        ],
+    },
+}
+
+
+class PublisherSectionApp(App[None]):
+    """Editor reduced to the publisher section, screen to itself."""
+
+    @staticmethod
+    def compose() -> ComposeResult:
+        """
+        Compose the section alone.
+
+        Yields:
+            The publisher section, filling the screen.
+
+        """
+        yield PublisherSection()
+
+
+class TestPublisherSection(unittest.IsolatedAsyncioTestCase):
+    """Tests for editing the event publisher settings."""
+
+    config: ClassVar[dict[str, Any]] = PUBLISHER_CONFIG
+
+    async def asyncSetUp(self) -> None:
+        """Open the editor on the publisher section."""
+        patcher = patch(
+            'term_timer.config_edit.sections.CONFIG',
+            self.config,
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.app = PublisherSectionApp()
+
+        stack = AsyncExitStack()
+        self.pilot = await stack.enter_async_context(self.app.run_test())
+        self.addAsyncCleanup(stack.aclose)
+
+        self.section = self.app.query_one(PublisherSection)
+
+        await self.settle()
+
+    async def settle(self) -> None:
+        """Let the section finish loading before driving it."""
+        async with asyncio.timeout(SETTLE_TIMEOUT):
+            while self.section.is_loading:
+                await self.pilot.pause()
+
+    @property
+    def saved(self) -> dict[str, Any]:
+        """Get the publisher table the editor would write."""
+        return dict(self.section.get_config_data()['publisher'])
+
+    def type_endpoints(self, text: str) -> None:
+        """Fill the endpoints field with the given lines."""
+        self.section.query_one('#endpoints', TextArea).text = text
+
+    async def test_endpoints_are_loaded_one_per_line(self) -> None:
+        """The field shows the file, an endpoint per line."""
+        self.assertEqual(
+            self.section.query_one('#endpoints', TextArea).text,
+            'ipc://~/.term_timer/cube.ipc\ntcp://127.0.0.1:5555',
+        )
+
+    async def test_saving_round_trips_the_section(self) -> None:
+        """Saving without touching anything gives the configuration back."""
+        self.assertEqual(self.saved, PUBLISHER_CONFIG['publisher'])
+
+    async def test_switch_is_saved(self) -> None:
+        """Turning publication off is written out."""
+        self.section.query_one('#active', Checkbox).value = False
+        await self.pilot.pause()
+
+        self.assertFalse(self.saved['active'])
+
+    async def test_tilde_survives_a_save(self) -> None:
+        """An ipc path typed with a tilde is written back as typed."""
+        self.type_endpoints('ipc://~/somewhere/cube.ipc')
+        await self.pilot.pause()
+
+        self.assertEqual(self.saved['endpoints'], ['ipc://~/somewhere/cube.ipc'])
+
+    async def test_endpoint_order_is_kept(self) -> None:
+        """Endpoints are written in the order they were typed."""
+        self.type_endpoints(
+            'tcp://127.0.0.1:5555\n'
+            'inproc://cube\n'
+            'ipc://~/.term_timer/cube.ipc',
+        )
+        await self.pilot.pause()
+
+        self.assertEqual(
+            self.saved['endpoints'],
+            [
+                'tcp://127.0.0.1:5555',
+                'inproc://cube',
+                'ipc://~/.term_timer/cube.ipc',
+            ],
+        )
+
+    async def test_blank_and_transportless_lines_are_dropped(self) -> None:
+        """A line naming no transport reaches nothing, so it is dropped."""
+        self.type_endpoints(
+            'tcp://127.0.0.1:5555\n'
+            '\n'
+            '   \n'
+            'cube.ipc\n'
+            'tcp://\n',
+        )
+        await self.pilot.pause()
+
+        self.assertEqual(self.saved['endpoints'], ['tcp://127.0.0.1:5555'])
+
+    async def test_duplicate_endpoints_are_dropped(self) -> None:
+        """The same endpoint listed twice is bound once."""
+        self.type_endpoints(
+            'tcp://127.0.0.1:5555\n'
+            ' tcp://127.0.0.1:5555 \n',
+        )
+        await self.pilot.pause()
+
+        self.assertEqual(self.saved['endpoints'], ['tcp://127.0.0.1:5555'])
+
+    async def test_emptying_the_field_publishes_nowhere(self) -> None:
+        """Clearing the endpoints leaves nothing to bind."""
+        self.type_endpoints('')
+        await self.pilot.pause()
+
+        self.assertEqual(self.saved['endpoints'], [])
+
+
 class TestConfigEditApp(unittest.IsolatedAsyncioTestCase):
     """Tests for the editor hosting the sections it is made of."""
 
@@ -281,6 +423,18 @@ class TestConfigEditApp(unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
 
             section = app.query_one(BluetoothSection)
+
+            self.assertTrue(section.is_on_screen)
+
+    async def test_publisher_tab_shows_its_section(self) -> None:
+        """The publisher section is on the Publisher tab."""
+        app = ConfigEditApp()
+
+        async with app.run_test() as pilot:
+            app.query_one(TabbedContent).active = 'publisher-tab'
+            await pilot.pause()
+
+            section = app.query_one(PublisherSection)
 
             self.assertTrue(section.is_on_screen)
 

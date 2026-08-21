@@ -42,6 +42,7 @@ from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.exceptions import ReplayError
 from term_timer.logger import spawn
+from term_timer.publisher import PUBLISHER
 
 if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import BatteryEventDict
@@ -647,10 +648,16 @@ class BaseReplayInterface(BluetoothInterface):
         """
         Enter the context without touching any hardware.
 
+        The link is announced all the same: a replay feeds the very
+        same stream as a real cube, and a subscriber waiting for the
+        cube to show up must not be able to tell the two apart.
+
         Returns:
             The replay interface itself.
 
         """
+        PUBLISHER.publish_link(connected=True, reason='opened')
+
         return self
 
     async def __aexit__(
@@ -665,11 +672,17 @@ class BaseReplayInterface(BluetoothInterface):
         The stop sentinel is left to the caller, as on a real interface:
         a drop-in that stops the consumer on its own would hide from the
         replay every defect of the exit path.
+
+        The link is closed on the stream like a real one, and never
+        lost: a replay running out of events is an application letting
+        go, not a cube going away.
         """
         if self.schedule_task and not self.schedule_task.done():
             self.schedule_task.cancel()
             with suppress(asyncio.CancelledError):
                 await self.schedule_task
+
+        PUBLISHER.publish_link(connected=False, reason='closed')
 
     async def send_command(  # noqa: PLR6301
             self, command: str,  # noqa: ARG002
@@ -784,7 +797,7 @@ class BaseReplayInterface(BluetoothInterface):
             'gyroscope_supported': False,
             'restart_no_power': 0,
         }
-        await self.queue.put([event])
+        await self.emit([event])
 
     async def emit_battery(self) -> None:
         """Emit the battery level event."""
@@ -795,7 +808,7 @@ class BaseReplayInterface(BluetoothInterface):
             'level': self.device['battery'],
             'charging_state': 0,
         }
-        await self.queue.put([event])
+        await self.emit([event])
 
     async def emit_facelets(self) -> None:
         """Emit the initial solved facelets event."""
@@ -806,7 +819,7 @@ class BaseReplayInterface(BluetoothInterface):
             'serial': 0,
             'facelets': SOLVED_FACELETS,
         }
-        await self.queue.put([event])
+        await self.emit([event])
 
     async def emit_move(
             self, move: str, serial: int, clock: int,
@@ -832,7 +845,7 @@ class BaseReplayInterface(BluetoothInterface):
             'direction': 0,
             'move': str(parsed),
         }
-        await self.queue.put([event])
+        await self.emit([event])
 
 
 class ReplayInterface(BaseReplayInterface):

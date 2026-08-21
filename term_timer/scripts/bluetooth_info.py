@@ -4,7 +4,6 @@ import json
 import logging
 import logging.config
 import sys
-import threading
 from argparse import Namespace
 from collections import Counter
 from dataclasses import dataclass
@@ -26,6 +25,7 @@ from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
 from term_timer.arguments import ORIENTATIONS_SORTED
+from term_timer.arguments import add_gyroscope_argument
 from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import FaceletsEventDict
@@ -41,15 +41,14 @@ from term_timer.config import USE_GYROSCOPE
 from term_timer.constants import LOGGING_DIRECTORY
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
-from term_timer.constants import Face
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
 from term_timer.interface.console import console
 from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.interface.terminal import Terminal
-from term_timer.opengl.thread import CubeGLThread
 from term_timer.orientation import get_orientation_moves
+from term_timer.publisher import PUBLISHER
 from term_timer.transform import humanize_moves
 from term_timer.transform import prettify_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
@@ -401,10 +400,9 @@ def check_state(
 
 async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
         queue: asyncio.Queue[list[EventDict] | None],
-        cube_ready: threading.Event,
-        gl_thread: CubeGLThread | None,
         report: SessionReport,
         *, show_cube: bool,
+        use_gyroscope: bool,
         orientation_faces: CubeOrientation,
         rotation_threshold: float = 75.0) -> None:
     """
@@ -412,16 +410,15 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
 
     Processes events from the Bluetooth interface queue including hardware
     information, battery status, facelet updates, gyroscope rotations, and
-    move notifications. Updates the virtual cube state and OpenGL display
-    as events are received.
+    move notifications. Updates the virtual cube state as events are
+    received.
 
     Args:
         queue: Event queue from Bluetooth interface. None signals disconnect.
-        cube_ready: Event to signal when cube state is initialized.
-        gl_thread: Optional OpenGL visualization thread.
         report: Report accumulating the events and the counters of the
             session.
         show_cube: Whether to display cube state in console.
+        use_gyroscope: Whether the gyroscope events are processed.
         orientation_faces: Two-character orientation specification (e.g., "UF").
         rotation_threshold: Minimum rotation angle in degrees for detection.
             Defaults to 75.0.
@@ -440,7 +437,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
         orientation_faces,
         orientation_moves,
     )
-    if USE_GYROSCOPE:
+    if use_gyroscope:
         rotation_detector = RotationDetector(
             rotation_threshold=rotation_threshold,
         )
@@ -483,8 +480,6 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                     f'{ event["software_version"] }'
                 )
                 Terminal.set_title(f'{ hardware } - { battery }')
-                if gl_thread and gl_thread.is_alive():
-                    gl_thread.set_title(f'{ hardware } { battery }')
 
             elif event_name == 'battery':
                 event = cast('BatteryEventDict', event)
@@ -495,18 +490,12 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                 )
                 battery = f'{ event["level"] }%'
                 Terminal.set_title(f'{ hardware } - { battery }')
-                if gl_thread and gl_thread.is_alive():
-                    gl_thread.set_title(f'{ hardware } { battery }')
 
             elif event_name == 'facelets':
                 event = cast('FaceletsEventDict', event)
                 logger.info(
                     'CONSUMER: Facelets received',
                 )
-
-                if gl_thread:
-                    gl_thread.set_state(event['state'])
-                    cube_ready.set()
 
                 if virtual_cube:
                     report.facelets_checked += 1
@@ -545,11 +534,6 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
 
                     show_state(moves, orientation_moves, virtual_cube)
 
-                if gl_thread and gl_thread.is_alive():
-                    gl_thread.add_quaternion(
-                        event['quaternion'],
-                    )
-
             elif event_name in {'move', 'move_history'}:
                 event = cast('MoveEventDict', event)
                 logger.debug(
@@ -563,11 +547,6 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
 
                 show_state(moves, orientation_moves, virtual_cube)
 
-                if gl_thread and gl_thread.is_alive():
-                    direction = 3 if "'" in event['move'] else 1
-                    face = cast('Face', event['move'][0])
-                    gl_thread.add_move(face, direction)
-
             elif event_name == 'gyro-config':
                 event = cast('GyroConfigEventDict', event)
                 logger.info(
@@ -577,14 +556,6 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                     event['gyroscope_enabled'],
                     event['gyroscope_ready'],
                 )
-
-            elif event_name == 'reset':
-                logger.info('CONSUMER: Cube confirmed its reset')
-                # The cube is solved again and the moves leading to the
-                # previous state no longer describe anything, so the
-                # reconstruction restarts on the next facelets event
-                virtual_cube = None
-                moves = []
 
             elif event_name == 'disconnect':
                 logger.warning('CONSUMER: Cube announced its disconnection')
@@ -604,9 +575,9 @@ async def client_cb(  # noqa: PLR0913
         time: int,
         filter_name: str,
         *,
-        cube_reset: bool,
-        gyroscope_enable: bool,
-        gyroscope_disable: bool,
+        use_gyroscope: bool,
+        send_gyro_enable: bool,
+        send_gyro_disable: bool,
 ) -> None:
     """
     Manage Bluetooth connection and send commands to the smart cube.
@@ -619,9 +590,11 @@ async def client_cb(  # noqa: PLR0913
         queue: Event queue for receiving Bluetooth events.
         time: Duration in seconds to maintain connection.
         filter_name: Device name filter for connection, or empty string.
-        cube_reset: Whether to request cube reset.
-        gyroscope_enable: Whether to enable gyroscope data streaming.
-        gyroscope_disable: Whether to disable gyroscope data streaming.
+        use_gyroscope: Whether the driver reports the gyroscope events.
+        send_gyro_enable: Whether to send the cube the command enabling
+            its gyroscope.
+        send_gyro_disable: Whether to send the cube the command
+            disabling its gyroscope.
 
     """
     bluetooth_interface = BluetoothInterface(queue)
@@ -629,21 +602,18 @@ async def client_cb(  # noqa: PLR0913
     try:
         await bluetooth_interface.__aenter__(
             filter_name=filter_name,
-            use_gyroscope=True,
+            use_gyroscope=use_gyroscope,
         )
         SOUND_PLAYER.cube_connected()
 
         await bluetooth_interface.send_init_commands()
 
-        if gyroscope_disable:
+        if send_gyro_disable:
             await bluetooth_interface.send_command('REQUEST_DISABLE_GYRO')
-        if gyroscope_enable:
+        if send_gyro_enable:
             await bluetooth_interface.send_command('REQUEST_ENABLE_GYRO')
-        if cube_reset:
-            await bluetooth_interface.send_command('REQUEST_RESET')
-        else:
-            logger.warning('Free play for %ss', time)
-            await asyncio.sleep(time)
+        logger.warning('Free play for %ss', time)
+        await asyncio.sleep(time)
 
         await bluetooth_interface.__aexit__(None, None, None)
         logger.warning('Interface disconnected')
@@ -654,7 +624,7 @@ async def client_cb(  # noqa: PLR0913
         await queue.put(None)
 
 
-def replay(options: Namespace) -> None:
+def replay(options: Namespace, *, use_gyroscope: bool) -> None:
     """
     Replays recorded Bluetooth events from a JSON file.
 
@@ -665,6 +635,8 @@ def replay(options: Namespace) -> None:
     Args:
         options: Command-line arguments containing input file path,
             orientation settings, and rotation threshold.
+        use_gyroscope: Whether the recorded gyroscope events are
+            processed.
 
     """
     file_path = Path(options.input).resolve()
@@ -696,6 +668,9 @@ def replay(options: Namespace) -> None:
         time = int(event['clock'] / MS_TO_NS_FACTOR)
 
         if event_name == 'gyro':
+            if not use_gyroscope:
+                continue
+
             event = cast('GyroEventDict', event)
 
             rotation_result = rotation_detector.process_gyro_event(
@@ -857,17 +832,13 @@ def summarize_events(events: list[EventDict], output: str) -> None:
             json.dump(replay, f, indent=2)
 
 
-async def run(
-    options: Namespace,
-    gl_thread: CubeGLThread | None,
-    cube_ready: threading.Event,
-) -> int:
+async def run(options: Namespace) -> int:
     """
     Orchestrates the main event loop for Bluetooth monitoring or replay.
 
-    Coordinates the client connection, event consumer, and optional OpenGL
-    visualization. Handles both live Bluetooth sessions and replay mode
-    from recorded event files.
+    Coordinates the client connection and the event consumer. Handles
+    both live Bluetooth sessions and replay mode from recorded event
+    files.
 
     A session that never found a cube is not a session: it says so and
     reports a failure, so that a script calling bt-info can tell an
@@ -876,37 +847,51 @@ async def run(
 
     Args:
         options: Parsed command-line arguments.
-        gl_thread: Optional OpenGL visualization thread.
-        cube_ready: Event to synchronize cube state initialization.
 
     Returns:
         Exit code (0 for success, 1 when no cube was found).
 
+    Raises:
+        KeyboardInterrupt: When the session is cut short at the
+            keyboard, named here so that the farewell says so.
+        CancelledError: When the event loop takes the session away,
+            which a Ctrl+C looks like from inside a coroutine.
+
     """
+    use_gyroscope = (
+        USE_GYROSCOPE
+        if options.use_gyroscope is None
+        else options.use_gyroscope
+    )
+
     if options.input:
-        replay(options)
+        replay(options, use_gyroscope=use_gyroscope)
         return 0
 
     report = SessionReport()
+
+    PUBLISHER.start('bt-info')
+
     queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
 
     client = client_cb(
         queue,
         options.time,
         options.filter_name,
-        cube_reset=options.cube_reset,
-        gyroscope_enable=options.gyroscope_enable,
-        gyroscope_disable=options.gyroscope_disable,
+        use_gyroscope=use_gyroscope,
+        send_gyro_enable=options.send_gyro_enable,
+        send_gyro_disable=options.send_gyro_disable,
     )
     consumer = consumer_cb(
         queue,
-        cube_ready,
-        gl_thread,
         report,
         show_cube=options.show_cube,
+        use_gyroscope=use_gyroscope,
         orientation_faces=options.orientation,
         rotation_threshold=options.rotation_threshold,
     )
+
+    reason = 'closed'
 
     try:
         await asyncio.gather(client, consumer)
@@ -916,10 +901,14 @@ async def run(
             'Make sure a cube is powered on and in pairing mode.',
         )
         return 1
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        reason = 'interrupted'
+        raise
+    except Exception:
+        reason = 'crashed'
+        raise
     finally:
-        if gl_thread and gl_thread.is_alive():
-            gl_thread.stop()
-            gl_thread.join(timeout=2)
+        PUBLISHER.stop(reason)
 
     report.log_summary()
     summarize_events(report.events, options.output)
@@ -933,9 +922,8 @@ def main() -> int:
     """
     Entry point for the Bluetooth cube information utility.
 
-    Configures logging, parses command-line arguments, initializes the
-    optional OpenGL visualization thread, and launches the async event
-    processing loop.
+    Configures logging, parses command-line arguments, and launches the
+    async event processing loop.
 
     Returns:
         Exit code (0 for success, 1 when no cube was found).
@@ -993,38 +981,7 @@ def main() -> int:
             f'Default: { CUBE_ORIENTATION }.'
         ),
     )
-    parser.add_argument(
-        '-g', '--use-opengl',
-        action='store_true',
-        help=(
-            'Enable OpenGL visualization.\n'
-            'Default: False.'
-        ),
-    )
-    parser.add_argument(
-        '--cube-reset',
-        action='store_true',
-        help=(
-            'Request reset of the cube.\n'
-            'Default: False.'
-        ),
-    )
-    parser.add_argument(
-        '--gyroscope-enable',
-        action='store_true',
-        help=(
-            'Enable the gyroscope of the cube.\n'
-            'Default: False.'
-        ),
-    )
-    parser.add_argument(
-        '--gyroscope-disable',
-        action='store_true',
-        help=(
-            'Disable the gyroscope of the cube.\n'
-            'Default: False.'
-        ),
-    )
+    add_gyroscope_argument(parser)
     parser.add_argument(
         '--rotation-threshold',
         type=float,
@@ -1033,6 +990,22 @@ def main() -> int:
         help=(
             'Rotation detection threshold in degrees.\n'
             f'Default: { ROTATION_THRESHOLD }.'
+        ),
+    )
+    parser.add_argument(
+        '--send-gyro-enable',
+        action='store_true',
+        help=(
+            'Send the cube the command enabling its gyroscope.\n'
+            'Default: False.'
+        ),
+    )
+    parser.add_argument(
+        '--send-gyro-disable',
+        action='store_true',
+        help=(
+            'Send the cube the command disabling its gyroscope.\n'
+            'Default: False.'
         ),
     )
     parser.add_argument(
@@ -1054,17 +1027,4 @@ def main() -> int:
         )
         console_handler.setLevel(logging.DEBUG)
 
-    # Create and start GL thread before async loop to avoid blocking warnings
-    gl_thread = None
-    cube_ready = threading.Event()
-    if args.use_opengl:
-        gl_thread = CubeGLThread(
-            cube_ready,
-            args.orientation,
-            800,
-            600,
-            daemon=True,
-        )
-        gl_thread.start()
-
-    return asyncio.run(run(args, gl_thread, cube_ready), debug=True)
+    return asyncio.run(run(args), debug=True)

@@ -17,6 +17,8 @@ from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
 from term_timer.interface.sounds import SOUND_PLAYER
 from term_timer.logger import spawn
+from term_timer.publisher import DRILL_TOPIC
+from term_timer.publisher import PUBLISHER
 from term_timer.solve import Solve
 
 
@@ -145,6 +147,38 @@ class Driller(SolveInterface):
             f' [tps]{ tps:05.2f} TPS[/tps]'
             f'{ fluency_line }'
             f'{ extra }',
+        )
+
+    def publish_rep(self) -> None:
+        """
+        Publish the rep that just ended.
+
+        A drill records nothing, so the stream is the only trace it
+        leaves: without it a `drill` session reserves the endpoints to
+        publish the cube and the states, and never says what was being
+        drilled nor how it went.
+
+        Only a completed rep is published, the one the screen prints:
+        a rep abandoned on a bad move has no timing to announce, and
+        the drill stops right after it.
+
+        The published timings are read from the piles the rep line just
+        filled, so that the stream and the screen say the same thing.
+
+        """
+        if not PUBLISHER.active:
+            return
+
+        PUBLISHER.publish(
+            DRILL_TOPIC,
+            {
+                'algorithm': str(self.algorithm),
+                'htm': self.algorithm.metrics.htm,
+                'time': self.rep_times[-1],
+                'tps': self.rep_tps[-1],
+                'fluency': self.rep_fluencies[-1],
+                'counter': self.counter,
+            },
         )
 
     def reset_drill_state(self) -> None:
@@ -327,6 +361,7 @@ class Driller(SolveInterface):
         SOUND_PLAYER.solve_step()
         self.clear_line(full=True)
         self.rep_line()
+        self.publish_rep()
 
         self.counter += 1
 
