@@ -620,6 +620,32 @@ class TestReplayPublication(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(published, self.drain(queue))
         self.assertEqual(published[:3], ['hardware', 'battery', 'facelets'])
 
+    async def test_the_replayed_link_opens_and_closes(self) -> None:
+        """
+        A replay announces its link like a cube would.
+
+        Nothing here is connected, but a subscriber waiting for the cube
+        to show up must not be able to tell a replay from hardware: it
+        would work against a cube and hang against a recording.
+        """
+        replay = validate_replay(deepcopy(VALID_REPLAY))
+
+        stub = StateStub()
+        queue: EventQueue = asyncio.Queue()
+        interface = ReplayInterface(queue, replay, stub)
+        publisher = RecordingPublisher(queue)
+
+        with patch(
+                'term_timer.bluetooth.replay.PUBLISHER', publisher,
+        ):
+            await interface.__aenter__(use_gyroscope=False)
+            await interface.__aexit__(None, None, None)
+
+        self.assertEqual(
+            publisher.links,
+            [(True, 'opened'), (False, 'closed')],
+        )
+
 
 class TestReplayInterfaceFlow(unittest.IsolatedAsyncioTestCase):
     """Full Timer.start() run driven deterministically by a ReplayInterface."""

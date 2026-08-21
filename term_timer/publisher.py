@@ -111,7 +111,7 @@ class EventPublisher:
         """Build an idle publisher, binding nothing until started."""
         self.socket: zmq.Socket[bytes] | None = None
         self.endpoints: list[str] = []
-        self.locks: list[BinaryIO] = []
+        self.locks: dict[str, BinaryIO] = {}
         self.source = ''
         self.session_id = ''
         self.sequence = 0
@@ -190,6 +190,10 @@ class EventPublisher:
                 refused.append(
                     f'{ endpoint } ({ error.strerror or error })',
                 )
+                # Reserved just above for a bind that did not happen:
+                # holding it would keep the next session out of an
+                # endpoint this one publishes nothing on
+                self.release(endpoint)
             else:
                 bound.append(endpoint)
 
@@ -319,11 +323,11 @@ class EventPublisher:
             handle.close()
             return 'already published by another session'
 
-        self.locks.append(handle)
+        self.locks[endpoint] = handle
 
         return ''
 
-    def release(self) -> None:
+    def release(self, endpoint: str = '') -> None:
         """
         Release the endpoints this session had reserved.
 
@@ -331,11 +335,21 @@ class EventPublisher:
         race of its own, another session having possibly opened it
         already and being about to lock a file nobody else can see any
         more. They are empty, and the next session locks the same ones.
-        """
-        for handle in self.locks:
-            handle.close()
 
-        self.locks = []
+        Args:
+            endpoint: The single endpoint to hand back, all of them
+                when empty.
+
+        """
+        released = (
+            [endpoint] if endpoint else list(self.locks)
+        )
+
+        for name in released:
+            handle = self.locks.pop(name, None)
+
+            if handle is not None:
+                handle.close()
 
     @staticmethod
     def encode(value: Any) -> float:  # noqa: ANN401

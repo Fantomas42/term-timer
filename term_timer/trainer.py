@@ -46,7 +46,6 @@ from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_cubing_url
 from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_triggers
-from term_timer.formatter import format_delta
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_fluency
 from term_timer.formatter import format_fsrs_due
@@ -75,6 +74,7 @@ from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import FaceletAnalyser
 from term_timer.printer import print_cube_trainer
 from term_timer.publisher import PUBLISHER
+from term_timer.publisher import RECORD_TOPIC
 from term_timer.publisher import TRAIN_TOPIC
 from term_timer.scrambler import trainer
 from term_timer.solve import Solve
@@ -220,6 +220,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.fsrs_pending_rating: RatingBreakdown | None = None
         self.fsrs_pending_card: Card | None = None
         self.pending_previous_date: int | None = None
+        self.pending_records: list[tuple[str, int, int]] = []
         self.fsrs_reference_solution: Algorithm = Algorithm()
         self.fsrs_last_focus: str | None = None
         self.fsrs_new_cases_introduced: int = 0
@@ -1790,21 +1791,27 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             ),
         )
 
-        if new_stats.total > 1 and new_stats.best < old_stats.best:
-            mc = 9 + len(str(self.counter))
-            self.console.print(
-                f'[record]:rocket:{ "New PB !".center(mc) }[/record]',
-                f'[best]{ format_time(new_stats.best) }[/best]',
-                format_delta(new_stats.best - old_stats.best),
-            )
+        records = self.print_best_record(new_stats, old_stats)
 
-        self.print_session_records(
-            new_stats, old_stats, STATS_SESSION_SERIES,
+        records.extend(
+            self.print_session_records(
+                new_stats, old_stats, STATS_SESSION_SERIES,
+            ),
         )
+
+        # Held back until the attempt is saved: a discarded one drops
+        # the timing these records are read against, so celebrating one
+        # on screen and publishing it are not the same moment
+        self.pending_records = records
 
     def dnf_line(self) -> None:
         """Display a DNF training attempt; its timing is never recorded."""
         SOUND_PLAYER.solve_failed()
+
+        # No timing recorded, hence no comparison and no record. What a
+        # previous attempt left pending was never published, and a DNF
+        # is not the attempt that gets to publish it.
+        self.pending_records = []
 
         self.clear_line(full=True)
 
@@ -1813,6 +1820,36 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             f'[time]{ format_time(self.elapsed_time) }[/time]',
             '[dnf]DNF[/dnf]',
         )
+
+    def publish_records(self, selected_case: Case) -> None:
+        """
+        Publish the records the saved attempt just broke.
+
+        The scope is the case, not the session: a training record is
+        read against every timing that case ever got, which is what the
+        celebrating lines compare too. Two sessions of the same case
+        therefore keep on breaking the same records, and the case
+        travels along so that a subscriber knows whose record it is.
+
+        Args:
+            selected_case: The case the records belong to.
+
+        """
+        records, self.pending_records = self.pending_records, []
+
+        for kind, value, previous in records:
+            PUBLISHER.publish(
+                RECORD_TOPIC,
+                {
+                    'kind': kind,
+                    'scope': 'case',
+                    'case': selected_case.code,
+                    'value': value,
+                    'previous': previous,
+                    'delta': value - previous,
+                    'counter': self.counter,
+                },
+            )
 
     def publish_training(
             self,
@@ -1823,12 +1860,20 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             dnf: bool,
     ) -> None:
         """
-        Publish the training attempt that was just saved.
+        Publish the training attempt that just ended.
 
-        Only a saved attempt is published: a discarded one leaves no
-        timing and no card behind, so there is nothing a subscriber
-        could act on. The rating is empty when FSRS was skipped, and
-        the due date is the one written to the training file.
+        Every attempt that happened is published, saved or not: a free
+        play session writes no training file, and a DNF drilled without
+        FSRS moves no card, but both were executed and a subscriber has
+        every reason to hear about them. ``free_play`` is what tells a
+        client whether the attempt left anything behind.
+
+        Only a discarded attempt stays out: it drops its timing and its
+        card, so there is nothing left to act on.
+
+        The rating is empty when FSRS rated nothing, and the card state
+        is the one the training file holds, unchanged when nothing was
+        saved.
 
         Args:
             selected_case: The case that was trained.
@@ -1854,6 +1899,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
                 'time': self.elapsed_time,
                 'dnf': dnf,
                 'counter': self.counter,
+                'free_play': self.free_play,
                 'rating': rating.name if rating is not None else '',
                 'state': card.state.name if card is not None else '',
                 'due': card.due if card is not None else None,
@@ -2005,6 +2051,7 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             self.publish_training(
                 selected_case, solve, applied_rating, dnf=dnf,
             )
+            self.publish_records(selected_case)
             if not dnf:
                 self.session_data.append(
                     (
@@ -2204,6 +2251,12 @@ class Trainer(SolveInterface):  # noqa: PLR0904
 
                 if quit_training:
                     return False, None
+            else:
+                # No card to move and no timing to write, but the
+                # attempt was executed: the stream is its only trace
+                self.publish_training(
+                    selected_case, solve, None, dnf=True,
+                )
 
             self.counter += 1
 
@@ -2236,6 +2289,13 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             if quit_training:
                 return False, None
         else:
+            # Free play writes no training file, so the stream is the
+            # only trace an attempt ever leaves
+            self.publish_training(
+                selected_case, solve, None, dnf=False,
+            )
+            self.publish_records(selected_case)
+
             self.session_data.append(
                 (
                     selected_case.code,

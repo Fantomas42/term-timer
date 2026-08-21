@@ -15,7 +15,6 @@ from term_timer.config import STATS_SESSION_SERIES
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SolveFlag
-from term_timer.formatter import format_delta
 from term_timer.formatter import format_time
 from term_timer.interface import SolveInterface
 from term_timer.interface.sounds import SOUND_PLAYER
@@ -154,6 +153,9 @@ class Timer(SolveInterface):
         subscriber reads the very moves the solver is shown, and the
         state the cube must reach.
         """
+        if not PUBLISHER.active:
+            return
+
         PUBLISHER.publish(
             SCRAMBLE_TOPIC,
             {
@@ -209,6 +211,12 @@ class Timer(SolveInterface):
         what only the running session knows: where the attempt sits, the
         method breakdown, and whether it counts.
 
+        Called once the attempt is settled and kept, never before: the
+        save prompt is where a manual solve is flagged DNF or +2, and
+        where a discarded or retried one leaves the stack. A solve
+        published any earlier would announce a flag it does not end up
+        with, or an attempt that never happened.
+
         The breakdown is built only when someone listens: analysing a
         solve nobody displays is work a silent session must not pay for.
 
@@ -228,6 +236,23 @@ class Timer(SolveInterface):
         data['steps'] = self.solve_steps(solve)
 
         PUBLISHER.publish(SOLVE_TOPIC, data)
+
+    def publish_settled_solve(self, solve: Solve) -> None:
+        """
+        Publish the attempt once its fate is settled.
+
+        The save prompt is where a manual solve is flagged DNF or +2,
+        and where a discarded or retried one leaves the stack: an
+        attempt no longer on it never happened, and one still there is
+        published with the flag it ends up with. Free play holds no
+        prompt, so its attempts are settled the moment they are timed.
+
+        Args:
+            solve: The attempt the save prompt just settled.
+
+        """
+        if self.stack and self.stack[-1] is solve:
+            self.publish_solve(solve)
 
     def publish_records(self, records: list[tuple[str, int, int]]) -> None:
         """
@@ -319,15 +344,13 @@ class Timer(SolveInterface):
             tokens,
         )
 
-    def solve_line(self, solve: Solve) -> None:  # noqa: C901, PLR0912
+    def solve_line(self, solve: Solve) -> None:  # noqa: C901
         """Display solve results, statistics, and record achievements."""
         old_stats = SolveStatisticsReporter(self.cube_size, self.stack)
 
         self.stack_done.append(solve)
         self.stack = [*self.stack, solve]
         new_stats = SolveStatisticsReporter(self.cube_size, self.stack)
-
-        self.publish_solve(solve)
 
         if solve.flag == DNF:
             SOUND_PLAYER.solve_failed()
@@ -377,16 +400,7 @@ class Timer(SolveInterface):
             self.format_series_line(new_stats, STATS_LIVE_SERIES),
         )
 
-        records: list[tuple[str, int, int]] = []
-
-        if new_stats.total > 1 and new_stats.best < old_stats.best:
-            records.append(('single', new_stats.best, old_stats.best))
-            mc = 9 + len(str(self.counter))
-            self.console.print(
-                f'[record]:rocket:{ "New PB !".center(mc) }[/record]',
-                f'[best]{ format_time(new_stats.best) }[/best]',
-                format_delta(new_stats.best - old_stats.best),
-            )
+        records = self.print_best_record(new_stats, old_stats)
 
         records.extend(
             self.print_session_records(
@@ -590,12 +604,17 @@ class Timer(SolveInterface):
 
             quit_solving = await self.save_solve()
 
+            self.publish_settled_solve(solve)
+
             if self.retry_requested:
                 return True, self.scramble
 
             if quit_solving:
                 return False, None
         else:
+            # Free play writes no session file, so the stream is the
+            # only trace an attempt ever leaves
+            self.publish_settled_solve(solve)
             self.counter += 1
 
         return True, None

@@ -386,34 +386,86 @@ class RecordTestCase(unittest.TestCase):
 
         self.assertEqual(self.publisher.payloads(RECORD_TOPIC), [])
 
-    def test_the_solve_is_published_before_it_is_read(self) -> None:
+    def test_the_records_are_published_without_the_solve(self) -> None:
         """
-        Every attempt reaches the stream, records or not.
+        The line reading the records is not the one publishing the solve.
 
-        The solve topic answers "what was done", the record topic "what
-        it beat": a session without a single record still publishes all
-        of its solves.
+        The records are found the moment the solve is displayed, while
+        the solve itself waits for the save prompt to settle it: the two
+        topics leave the session at two different instants.
         """
-        timer = build_timer()
+        slower = make_solve(time=20_000_000_000, moves=None)
+        faster = make_solve(time=10_000_000_000, moves=None)
+        timer = build_timer([slower])
         timer.console = MagicMock()
 
         with patch('term_timer.timer.SOUND_PLAYER'):
-            timer.solve_line(make_solve(moves=None))
+            timer.solve_line(faster)
+
+        self.assertEqual(len(self.publisher.payloads(RECORD_TOPIC)), 1)
+        self.assertEqual(self.publisher.payloads(SOLVE_TOPIC), [])
+
+
+class SettledSolveTestCase(unittest.TestCase):
+    """A solve reaches the stream once the save prompt settled it."""
+
+    def setUp(self) -> None:
+        """Patch the singleton the timer publishes through."""
+        self.publisher = RecordingPublisher()
+
+        patcher = patch('term_timer.timer.PUBLISHER', self.publisher)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_a_kept_solve_is_published(self) -> None:
+        """An attempt still on the stack is one that happened."""
+        solve = make_solve(moves=None)
+        timer = build_timer()
+        timer.stack = [*timer.stack, solve]
+
+        timer.publish_settled_solve(solve)
 
         self.assertEqual(len(self.publisher.payloads(SOLVE_TOPIC)), 1)
 
-    def test_a_dnf_is_published_with_its_solve(self) -> None:
+    def test_a_discarded_solve_never_reaches_the_stream(self) -> None:
         """
-        The early exit of the DNF branch happens after the publication.
+        An attempt dropped at the prompt never happened.
 
-        A reconstructed DNF prints its duration and returns before the
-        records are even looked at, which must not cost it its message.
+        A discard and a retry both pop the solve off the stack, so a
+        client writing down what it receives records the session file,
+        not the attempts on the way to it.
         """
+        solve = make_solve(moves=None)
         timer = build_timer()
-        timer.console = MagicMock()
 
-        with patch('term_timer.timer.SOUND_PLAYER'):
-            timer.solve_line(make_solve(method='cfop', flag=DNF))
+        timer.publish_settled_solve(solve)
+
+        self.assertEqual(self.publisher.payloads(SOLVE_TOPIC), [])
+
+    def test_the_flag_set_at_the_prompt_is_the_published_one(self) -> None:
+        """
+        A manual solve is flagged after it is timed, before it is sent.
+
+        The 'd' and '2' keys of the save prompt are the only place a
+        keyboard solve gets its flag: publishing before them announces
+        a solve the session file contradicts.
+        """
+        solve = make_solve(moves=None)
+        timer = build_timer()
+        timer.stack = [*timer.stack, solve]
+
+        solve.flag = DNF
+        timer.publish_settled_solve(solve)
+
+        self.assertTrue(self.publisher.only(SOLVE_TOPIC)['dnf'])
+
+    def test_a_dnf_carries_its_solve_all_the_same(self) -> None:
+        """A failed attempt is an attempt, and it is published."""
+        solve = make_solve(method='cfop', flag=DNF)
+        timer = build_timer()
+        timer.stack = [*timer.stack, solve]
+
+        timer.publish_settled_solve(solve)
 
         self.assertTrue(self.publisher.only(SOLVE_TOPIC)['dnf'])
 
@@ -528,6 +580,101 @@ class TrainingTestCase(unittest.TestCase):
         )
 
         self.assertEqual(self.publisher.messages, [])
+
+    def test_a_dnf_clears_what_a_discard_left_pending(self) -> None:
+        """
+        A DNF records no timing, so it breaks no record.
+
+        The records of a discarded attempt were never published, and a
+        DNF must not be the one publishing them: it never ran the
+        comparison they come from.
+        """
+        self.trainer.pending_records = [('single', 8_000, 10_000)]
+        self.trainer.console = MagicMock()
+
+        with patch('term_timer.trainer.SOUND_PLAYER'):
+            self.trainer.dnf_line()
+
+        self.assertEqual(self.trainer.pending_records, [])
+
+    def test_a_training_record_is_scoped_to_its_case(self) -> None:
+        """
+        A training record beats the history of one case, not a session.
+
+        The pool it is read against is every timing that case ever got,
+        so the case travels along and the scope says so: two sessions of
+        the same case keep on breaking the same records.
+        """
+        self.trainer.counter = 4
+        self.trainer.pending_records = [('single', 8_000, 10_000)]
+
+        self.trainer.publish_records(self.case)
+
+        data = self.publisher.only(RECORD_TOPIC)
+
+        self.assertEqual(data['kind'], 'single')
+        self.assertEqual(data['scope'], 'case')
+        self.assertEqual(data['case'], self.case.code)
+        self.assertEqual(data['value'], 8_000)
+        self.assertEqual(data['previous'], 10_000)
+        self.assertEqual(data['delta'], -2_000)
+        self.assertEqual(data['counter'], 4)
+
+    def test_every_broken_training_record_gets_its_message(self) -> None:
+        """A case beating a single and an average publishes both."""
+        self.trainer.pending_records = [
+            ('single', 8_000, 10_000), ('ao5', 9_000, 11_000),
+        ]
+
+        self.trainer.publish_records(self.case)
+
+        kinds = [
+            data['kind'] for data in self.publisher.payloads(RECORD_TOPIC)
+        ]
+
+        self.assertEqual(kinds, ['single', 'ao5'])
+
+    def test_a_free_play_attempt_says_it_leaves_nothing(self) -> None:
+        """
+        Free play writes no training file, but it happened.
+
+        The flag is what tells a subscriber whether the attempt left
+        anything behind: a client recording a session must not mistake
+        a free play run for a drilled one.
+        """
+        self.trainer.free_play = True
+
+        self.trainer.publish_training(
+            self.case, self.solve, None, dnf=False,
+        )
+
+        data = self.publisher.only(TRAIN_TOPIC)
+
+        self.assertTrue(data['free_play'])
+        self.assertEqual(data['rating'], '')
+
+    def test_a_drilled_attempt_is_not_free_play(self) -> None:
+        """The recorded attempts say so too, from the first version."""
+        self.trainer.publish_training(
+            self.case, self.solve, Rating.Good, dnf=False,
+        )
+
+        self.assertFalse(self.publisher.only(TRAIN_TOPIC)['free_play'])
+
+    def test_records_are_published_once(self) -> None:
+        """
+        A discarded attempt must not republish what it did not keep.
+
+        The records wait on the instance for the save to happen, so
+        they are handed over and dropped, never left for the next one.
+        """
+        self.trainer.pending_records = [('single', 8_000, 10_000)]
+
+        self.trainer.publish_records(self.case)
+        self.trainer.publish_records(self.case)
+
+        self.assertEqual(len(self.publisher.payloads(RECORD_TOPIC)), 1)
+        self.assertEqual(self.trainer.pending_records, [])
 
 
 class SessionTopicsTestCase(unittest.TestCase):

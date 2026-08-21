@@ -75,10 +75,8 @@ def main() -> int:
 
     # Named here and nowhere else: the command is what a subscriber
     # reads to know who talks, and only this layer knows it
-    PUBLISHER.source = command
-
     if command in PUBLISHED_COMMANDS:
-        PUBLISHER.start()
+        PUBLISHER.start(command)
 
     if command not in {'merge', 'import'}:
         Terminal.set_title(f'{ command.title() } - Term-Timer')

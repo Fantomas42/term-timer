@@ -221,7 +221,7 @@ Turn it on in the `[publisher]` section of your configuration file, or with
 active = true
 endpoints = [
   "ipc://~/.term_timer/cube.ipc",   # fast and local
-  "tcp://127.0.0.1:5555",           # for a client in any language
+  "tcp://127.0.0.1:5333",           # for a client in any language
 ]
 ```
 

@@ -865,14 +865,39 @@ class ExclusivityTestCase(PublisherTestCase):
 
         self.intruder.start('ghost', [self.endpoint])
 
-        self.assertEqual(self.intruder.locks, [])
+        self.assertEqual(self.intruder.locks, {})
+
+    def test_a_lock_is_handed_back_when_the_bind_fails(self) -> None:
+        """
+        A reservation is worth nothing without the bind that follows it.
+
+        The endpoint is locked before it is bound, so a bind failing
+        afterwards would leave the session holding an endpoint it
+        publishes nothing on, and the next one out of it for good.
+        """
+        # A directory where the socket file goes: the lock file next to
+        # it opens fine, and only the bind that follows fails. Another
+        # endpoint binds alongside, so the session lives on holding the
+        # reservation of the one it could not use
+        blocked = self.directory / 'taken.ipc'
+        blocked.mkdir()
+        endpoint = f'ipc://{ blocked }'
+
+        self.publisher.start('solve', [endpoint, self.endpoint])
+
+        self.assertTrue(self.publisher.active)
+        self.assertEqual(list(self.publisher.locks), [self.endpoint])
+
+        blocked.rmdir()
+
+        self.assertEqual(self.intruder.reserve(endpoint), '')
 
     def test_a_tcp_endpoint_is_not_locked(self) -> None:
         """Only ipc needs a lock, the system refuses a taken port."""
         self.publisher.start('solve', ['tcp://127.0.0.1:*'])
 
         self.assertTrue(self.publisher.active)
-        self.assertEqual(self.publisher.locks, [])
+        self.assertEqual(self.publisher.locks, {})
 
     def test_a_lock_file_is_left_behind_on_purpose(self) -> None:
         """Deleting a lock file is a race, so it survives the session."""

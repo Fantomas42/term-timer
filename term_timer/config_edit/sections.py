@@ -1556,7 +1556,7 @@ class PublisherSection(ConfigSection):
                 yield Static(
                     'One ZeroMQ endpoint per line, '
                     'like ipc://~/.term_timer/cube.ipc '
-                    'or tcp://127.0.0.1:5555',
+                    'or tcp://127.0.0.1:5333',
                     classes='field-help',
                 )
 

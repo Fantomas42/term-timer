@@ -357,7 +357,7 @@ def set_gyroscope_argument(
         help=(
             f"{ mode.title() } the cube's gyroscope, "
             'whatever the cube configures.\n'
-            'Default: False.'
+            f'Default: { USE_GYROSCOPE }.'
         ),
     )
 
