@@ -16,6 +16,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 from cubing_algs.algorithm import Algorithm
+from cubing_algs.cases.case import Case
 from cubing_algs.parsing import parse_moves
 from fsrs import Card
 from fsrs import Rating
@@ -33,6 +34,7 @@ from term_timer.publisher import TRAIN_TOPIC
 from term_timer.solve import Solve
 from term_timer.tests.test_ghost import make_solve
 from term_timer.tests.test_timer import build_timer
+from term_timer.timer import Timer
 from term_timer.trainer import Trainer
 
 Message = tuple[str, dict[str, Any]]
@@ -235,7 +237,7 @@ class SolveTestCase(unittest.TestCase):
         solve = make_solve()
         timer = build_timer()
 
-        timer.publish_solve(solve)
+        timer.publish_solve(solve, timer.counter)
 
         data = self.publisher.only(SOLVE_TOPIC)
 
@@ -247,7 +249,7 @@ class SolveTestCase(unittest.TestCase):
         timer = build_timer()
         timer.counter = 7
 
-        timer.publish_solve(make_solve())
+        timer.publish_solve(make_solve(), timer.counter)
 
         data = self.publisher.only(SOLVE_TOPIC)
 
@@ -262,7 +264,7 @@ class SolveTestCase(unittest.TestCase):
         solve = make_solve(method='cfop')
         timer = build_timer()
 
-        timer.publish_solve(solve)
+        timer.publish_solve(solve, timer.counter)
 
         steps = self.publisher.only(SOLVE_TOPIC)['steps']
 
@@ -281,7 +283,7 @@ class SolveTestCase(unittest.TestCase):
         solve = make_solve(method='cfop', flag=DNF)
         timer = build_timer()
 
-        timer.publish_solve(solve)
+        timer.publish_solve(solve, timer.counter)
 
         data = self.publisher.only(SOLVE_TOPIC)
 
@@ -293,7 +295,7 @@ class SolveTestCase(unittest.TestCase):
         solve = make_solve(moves=None)
         timer = build_timer()
 
-        timer.publish_solve(solve)
+        timer.publish_solve(solve, timer.counter)
 
         self.assertEqual(self.publisher.only(SOLVE_TOPIC)['steps'], [])
 
@@ -309,7 +311,7 @@ class SolveTestCase(unittest.TestCase):
         solve = make_solve(method='cfop')
         timer = build_timer()
 
-        timer.publish_solve(solve)
+        timer.publish_solve(solve, timer.counter)
 
         self.assertEqual(self.publisher.messages, [])
         self.assertNotIn('method_applied', solve.__dict__)
@@ -427,7 +429,7 @@ class SettledSolveTestCase(unittest.TestCase):
         timer = build_timer()
         timer.stack = [*timer.stack, solve]
 
-        timer.publish_settled_solve(solve)
+        timer.publish_settled_solve(solve, timer.counter)
 
         self.assertEqual(len(self.publisher.payloads(SOLVE_TOPIC)), 1)
 
@@ -442,7 +444,7 @@ class SettledSolveTestCase(unittest.TestCase):
         solve = make_solve(moves=None)
         timer = build_timer()
 
-        timer.publish_settled_solve(solve)
+        timer.publish_settled_solve(solve, timer.counter)
 
         self.assertEqual(self.publisher.payloads(SOLVE_TOPIC), [])
 
@@ -459,7 +461,7 @@ class SettledSolveTestCase(unittest.TestCase):
         timer.stack = [*timer.stack, solve]
 
         solve.flag = DNF
-        timer.publish_settled_solve(solve)
+        timer.publish_settled_solve(solve, timer.counter)
 
         self.assertTrue(self.publisher.only(SOLVE_TOPIC)['dnf'])
 
@@ -469,9 +471,105 @@ class SettledSolveTestCase(unittest.TestCase):
         timer = build_timer()
         timer.stack = [*timer.stack, solve]
 
-        timer.publish_settled_solve(solve)
+        timer.publish_settled_solve(solve, timer.counter)
 
         self.assertTrue(self.publisher.only(SOLVE_TOPIC)['dnf'])
+
+
+class AttemptCounterTestCase(unittest.IsolatedAsyncioTestCase):
+    """One attempt says the same rank on every topic it publishes on."""
+
+    def setUp(self) -> None:
+        """Patch the singleton the timer publishes through."""
+        self.publisher = RecordingPublisher()
+
+        patcher = patch('term_timer.timer.PUBLISHER', self.publisher)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    @staticmethod
+    async def run_attempt(*, free_play: bool) -> Timer:
+        """
+        Run one attempt beating the record of the solve before it.
+
+        The attempt is driven through the real ``run_attempt``, save
+        prompt included: what the counter does between the scramble and
+        the publication is the point of the test.
+
+        Args:
+            free_play: Whether the session records anything.
+
+        Returns:
+            The timer once the attempt has returned.
+
+        """
+        slower = make_solve(time=20_000_000_000, moves=None)
+        timer = build_timer(
+            [slower],
+            scrambles=[parse_moves("R U R' U'")],
+            free_play=free_play,
+        )
+        timer.stack_done = [slower]
+        timer.console = MagicMock()
+
+        async def scramble_applied() -> None:
+            await asyncio.sleep(0)
+
+        async def timed_solve() -> None:
+            await asyncio.sleep(0)
+            timer.start_time = 0
+            timer.end_time = 10_000_000_000
+
+        async def fake_getch(_mode: str, *_: object) -> str:
+            await asyncio.sleep(0)
+            return ' '
+
+        with (
+            patch('term_timer.interface.save_solves'),
+            patch('term_timer.interface.SOUND_PLAYER'),
+            patch('term_timer.timer.SOUND_PLAYER'),
+            patch.object(timer, 'scramble_solve', return_value=None),
+            patch.object(timer, 'wait_solve', return_value=False),
+            patch.object(timer, 'time_solve', side_effect=timed_solve),
+            patch.object(timer, 'getch', side_effect=fake_getch),
+        ):
+            await timer.run_attempt()
+
+        return timer
+
+    def published_ranks(self) -> tuple[int, int, int]:
+        """
+        Read the rank each topic of the attempt announced.
+
+        Returns:
+            The (scramble index, record counter, solve counter) triple.
+
+        """
+        return (
+            self.publisher.only(SCRAMBLE_TOPIC)['index'],
+            self.publisher.only(RECORD_TOPIC)['counter'],
+            self.publisher.only(SOLVE_TOPIC)['counter'],
+        )
+
+    async def test_a_saved_attempt_says_one_rank(self) -> None:
+        """
+        The save prompt moves the counter on, the attempt does not.
+
+        A subscriber ties a solve to its scramble and to the records it
+        broke by that rank alone: the three must agree, or none of them
+        can be read against the others.
+        """
+        timer = await self.run_attempt(free_play=False)
+
+        self.assertEqual(self.published_ranks(), (2, 2, 2))
+        self.assertEqual(timer.counter, 3)
+
+    async def test_free_play_says_the_same_rank(self) -> None:
+        """The mode changes what is written down, not what is published."""
+        timer = await self.run_attempt(free_play=True)
+
+        self.assertEqual(self.published_ranks(), (2, 2, 2))
+        self.assertEqual(timer.counter, 3)
 
 
 class TrainingTestCase(unittest.TestCase):
@@ -585,21 +683,19 @@ class TrainingTestCase(unittest.TestCase):
 
         self.assertEqual(self.publisher.messages, [])
 
-    def test_a_dnf_clears_what_a_discard_left_pending(self) -> None:
+    def test_a_dnf_breaks_no_record(self) -> None:
         """
-        A DNF records no timing, so it breaks no record.
+        A DNF records no timing, so it runs no comparison.
 
-        The records of a discarded attempt were never published, and a
-        DNF must not be the one publishing them: it never ran the
-        comparison they come from.
+        Nothing is compared, nothing is celebrated, and nothing reaches
+        the record topic.
         """
-        self.trainer.pending_records = [('single', 8_000, 10_000)]
         self.trainer.console = MagicMock()
 
         with patch('term_timer.trainer.SOUND_PLAYER'):
             self.trainer.dnf_line()
 
-        self.assertEqual(self.trainer.pending_records, [])
+        self.assertEqual(self.publisher.payloads(RECORD_TOPIC), [])
 
     def test_a_training_record_is_scoped_to_its_case(self) -> None:
         """
@@ -610,9 +706,10 @@ class TrainingTestCase(unittest.TestCase):
         the same case keep on breaking the same records.
         """
         self.trainer.counter = 4
-        self.trainer.pending_records = [('single', 8_000, 10_000)]
 
-        self.trainer.publish_records(self.case)
+        self.trainer.publish_records(
+            [('single', 8_000, 10_000)], self.case,
+        )
 
         data = self.publisher.only(RECORD_TOPIC)
 
@@ -626,11 +723,10 @@ class TrainingTestCase(unittest.TestCase):
 
     def test_every_broken_training_record_gets_its_message(self) -> None:
         """A case beating a single and an average publishes both."""
-        self.trainer.pending_records = [
-            ('single', 8_000, 10_000), ('ao5', 9_000, 11_000),
-        ]
-
-        self.trainer.publish_records(self.case)
+        self.trainer.publish_records(
+            [('single', 8_000, 10_000), ('ao5', 9_000, 11_000)],
+            self.case,
+        )
 
         kinds = [
             data['kind'] for data in self.publisher.payloads(RECORD_TOPIC)
@@ -665,24 +761,15 @@ class TrainingTestCase(unittest.TestCase):
 
         self.assertFalse(self.publisher.only(TRAIN_TOPIC)['free_play'])
 
-    def test_records_are_published_once(self) -> None:
-        """
-        A discarded attempt must not republish what it did not keep.
+    def test_nothing_broken_publishes_nothing(self) -> None:
+        """An attempt beating no record leaves the topic silent."""
+        self.trainer.publish_records([], self.case)
 
-        The records wait on the instance for the save to happen, so
-        they are handed over and dropped, never left for the next one.
-        """
-        self.trainer.pending_records = [('single', 8_000, 10_000)]
-
-        self.trainer.publish_records(self.case)
-        self.trainer.publish_records(self.case)
-
-        self.assertEqual(len(self.publisher.payloads(RECORD_TOPIC)), 1)
-        self.assertEqual(self.trainer.pending_records, [])
+        self.assertEqual(self.publisher.payloads(RECORD_TOPIC), [])
 
 
-class DiscardedTrainingRecordTestCase(unittest.IsolatedAsyncioTestCase):
-    """The records of a thrown away attempt never reach the stream."""
+class TrainingRecordInstantTestCase(unittest.IsolatedAsyncioTestCase):
+    """A training record leaves the session where it is celebrated."""
 
     CASE_CODE = 'T'
 
@@ -696,10 +783,10 @@ class DiscardedTrainingRecordTestCase(unittest.IsolatedAsyncioTestCase):
 
     def make_trainer(self) -> Trainer:
         """
-        Build a no-Bluetooth PLL trainer with one rated case.
+        Build a no-Bluetooth PLL trainer holding one slow timing.
 
         Returns:
-            A Trainer ready to run the save prompt on CASE_CODE.
+            A Trainer whose only recorded timing is there to be beaten.
 
         """
         empty = Trainings(method='CFOP', step='PLL', cases={})
@@ -725,71 +812,96 @@ class DiscardedTrainingRecordTestCase(unittest.IsolatedAsyncioTestCase):
             )
         trainer.bluetooth_interface = None
         trainer.console = MagicMock()
-        date = int(datetime.now(tz=UTC).timestamp())
-        trainer.trainings.add_timing(self.CASE_CODE, 2000, date)
+        trainer.date = datetime.now(tz=UTC).timestamp()
+        trainer.trainings.add_timing(
+            self.CASE_CODE, 10_000, int(trainer.date),
+        )
         return trainer
 
-    async def save(self, trainer: Trainer, char: str) -> None:
+    def selected_case(self, trainer: Trainer) -> Case:
         """
-        Run the save prompt of one attempt, answering with a fixed key.
+        Give the case the trainer was restricted to.
 
-        Args:
-            trainer: The trainer running the attempt.
-            char: The key answering the prompt.
+        Returns:
+            The Case matching CASE_CODE.
 
         """
-        case = next(
+        return next(
             tc.case for tc in trainer.cases if tc.case.code == self.CASE_CODE
         )
+
+    def beat_the_record(self, trainer: Trainer) -> Solve:
+        """
+        Run the attempt beating the timing the case already had.
+
+        Returns:
+            The attempt that was displayed.
+
+        """
+        trainer.elapsed_time = 8_000_000_000
         solve = Solve(
-            date=datetime.now(tz=UTC).timestamp(),
-            time=2_000_000_000,
+            date=trainer.date,
+            time=trainer.elapsed_time,
             scramble="R U R' U'",
             moves=None,
         )
 
+        with patch('term_timer.trainer.SOUND_PLAYER'):
+            trainer.solve_line(solve, self.selected_case(trainer))
+
+        return solve
+
+    async def discard(self, trainer: Trainer, solve: Solve) -> None:
+        """
+        Throw the attempt away at the save prompt.
+
+        Args:
+            trainer: The trainer running the attempt.
+            solve: The attempt being thrown away.
+
+        """
         async def fake_getch(_mode: str, *_: object) -> str:
             await asyncio.sleep(0)
-            return char
+            return 'z'
 
         with (
             patch('term_timer.trainer.save_trainings'),
             patch('term_timer.trainer.SOUND_PLAYER'),
-            patch.object(
-                trainer.fsrs_scheduler, 'update_card',
-                MagicMock(return_value=Card()),
-            ),
             patch.object(trainer, 'getch', side_effect=fake_getch),
         ):
-            await trainer.save_training(case, solve)
+            await trainer.save_training(self.selected_case(trainer), solve)
 
-    async def test_a_discarded_attempt_drops_its_records(self) -> None:
-        """
-        What the thrown away attempt broke goes with it.
-
-        The records are read against a timing the discard pops, so the
-        attempt that never was must not leave them for the next save to
-        publish under its own counter.
-        """
-        trainer = self.make_trainer()
-        trainer.pending_records = [('single', 8_000, 10_000)]
-
-        await self.save(trainer, 'z')
-
-        self.assertEqual(trainer.pending_records, [])
-        self.assertEqual(self.publisher.payloads(RECORD_TOPIC), [])
-
-    async def test_a_dropped_record_never_reaches_the_next_attempt(
+    async def test_the_record_is_published_where_it_is_celebrated(
             self,
     ) -> None:
-        """A saved attempt breaking nothing publishes nothing."""
+        """The line announcing the PB and the message agree, at once."""
         trainer = self.make_trainer()
-        trainer.pending_records = [('single', 8_000, 10_000)]
 
-        await self.save(trainer, 'z')
-        await self.save(trainer, ' ')
+        self.beat_the_record(trainer)
 
-        self.assertEqual(self.publisher.payloads(RECORD_TOPIC), [])
+        data = self.publisher.only(RECORD_TOPIC)
+
+        self.assertEqual(data['kind'], 'single')
+        self.assertEqual(data['case'], self.CASE_CODE)
+        self.assertEqual(data['value'], 8_000_000_000)
+        self.assertEqual(data['previous'], 10_000_000_000)
+
+    async def test_a_discarded_attempt_keeps_the_record_it_broke(
+            self,
+    ) -> None:
+        """
+        A record is a record, saved or not.
+
+        The prompt drops the timing the comparison was read against, it
+        does not undo the comparison: the attempt happened, the record
+        was announced, and the stream said so before the prompt.
+        """
+        trainer = self.make_trainer()
+        solve = self.beat_the_record(trainer)
+
+        await self.discard(trainer, solve)
+
+        self.assertEqual(len(self.publisher.payloads(RECORD_TOPIC)), 1)
 
 
 class SessionTopicsTestCase(unittest.TestCase):

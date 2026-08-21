@@ -202,7 +202,7 @@ class Timer(SolveInterface):
             for step in solve.method_applied.summary
         ]
 
-    def publish_solve(self, solve: Solve) -> None:
+    def publish_solve(self, solve: Solve, counter: int) -> None:
         """
         Publish the solve that just ended, in its storage spelling.
 
@@ -222,6 +222,8 @@ class Timer(SolveInterface):
 
         Args:
             solve: The solve that just ended.
+            counter: Rank of the attempt in the session, the one it was
+                scrambled and timed under.
 
         """
         if not PUBLISHER.active:
@@ -229,7 +231,7 @@ class Timer(SolveInterface):
 
         data: dict[str, Any] = {**solve.as_save}
         data['dnf'] = solve.flag == DNF
-        data['counter'] = self.counter
+        data['counter'] = counter
         data['session'] = self.session
         data['cube_size'] = self.cube_size
         data['free_play'] = self.free_play
@@ -237,7 +239,7 @@ class Timer(SolveInterface):
 
         PUBLISHER.publish(SOLVE_TOPIC, data)
 
-    def publish_settled_solve(self, solve: Solve) -> None:
+    def publish_settled_solve(self, solve: Solve, counter: int) -> None:
         """
         Publish the attempt once its fate is settled.
 
@@ -249,10 +251,13 @@ class Timer(SolveInterface):
 
         Args:
             solve: The attempt the save prompt just settled.
+            counter: Rank of the attempt in the session, taken before
+                the prompt: a saved attempt moves the counter on, and
+                the one being published is not the next one.
 
         """
         if self.stack and self.stack[-1] is solve:
-            self.publish_solve(solve)
+            self.publish_solve(solve, counter)
 
     def publish_records(self, records: list[tuple[str, int, int]]) -> None:
         """
@@ -599,12 +604,17 @@ class Timer(SolveInterface):
 
         self.solve_line(solve)
 
+        # The rank the attempt was scrambled, timed and celebrated
+        # under: saving one moves the counter on, and the scramble,
+        # the records and the solve of one attempt all say the same
+        counter = self.counter
+
         if not self.free_play:
             self.save_line()
 
             quit_solving = await self.save_solve()
 
-            self.publish_settled_solve(solve)
+            self.publish_settled_solve(solve, counter)
 
             if self.retry_requested:
                 return True, self.scramble
@@ -614,7 +624,7 @@ class Timer(SolveInterface):
         else:
             # Free play writes no session file, so the stream is the
             # only trace an attempt ever leaves
-            self.publish_settled_solve(solve)
+            self.publish_settled_solve(solve, counter)
             self.counter += 1
 
         return True, None

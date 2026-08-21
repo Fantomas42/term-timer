@@ -220,7 +220,6 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         self.fsrs_pending_rating: RatingBreakdown | None = None
         self.fsrs_pending_card: Card | None = None
         self.pending_previous_date: int | None = None
-        self.pending_records: list[tuple[str, int, int]] = []
         self.fsrs_reference_solution: Algorithm = Algorithm()
         self.fsrs_last_focus: str | None = None
         self.fsrs_new_cases_introduced: int = 0
@@ -1799,19 +1798,14 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             ),
         )
 
-        # Held back until the attempt is saved: a discarded one drops
-        # the timing these records are read against, so celebrating one
-        # on screen and publishing it are not the same moment
-        self.pending_records = records
+        # Celebrating a record on screen and publishing it are the
+        # same moment: an attempt jettisoned at the prompt drops the
+        # timing they are read against, it does not undo breaking them
+        self.publish_records(records, selected_case)
 
     def dnf_line(self) -> None:
         """Display a DNF training attempt; its timing is never recorded."""
         SOUND_PLAYER.solve_failed()
-
-        # No timing recorded, hence no comparison and no record. What a
-        # previous attempt left pending was never published, and a DNF
-        # is not the attempt that gets to publish it.
-        self.pending_records = []
 
         self.clear_line(full=True)
 
@@ -1821,9 +1815,13 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             '[dnf]DNF[/dnf]',
         )
 
-    def publish_records(self, selected_case: Case) -> None:
+    def publish_records(
+            self,
+            records: list[tuple[str, int, int]],
+            selected_case: Case,
+    ) -> None:
         """
-        Publish the records the saved attempt just broke.
+        Publish the records the attempt just broke.
 
         The scope is the case, not the session: a training record is
         read against every timing that case ever got, which is what the
@@ -1832,11 +1830,10 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         travels along so that a subscriber knows whose record it is.
 
         Args:
+            records: The ``(kind, value, previous)`` triples broken.
             selected_case: The case the records belong to.
 
         """
-        records, self.pending_records = self.pending_records, []
-
         for kind, value, previous in records:
             PUBLISHER.publish(
                 RECORD_TOPIC,
@@ -1979,8 +1976,6 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         save_string = ''
         applied_rating: Rating | None = None
         if discard:
-            self.pending_records = []
-
             if not dnf:
                 self.trainings.pop_timing(
                     selected_case.code,
@@ -2053,7 +2048,6 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             self.publish_training(
                 selected_case, solve, applied_rating, dnf=dnf,
             )
-            self.publish_records(selected_case)
             if not dnf:
                 self.session_data.append(
                     (
@@ -2296,7 +2290,6 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             self.publish_training(
                 selected_case, solve, None, dnf=False,
             )
-            self.publish_records(selected_case)
 
             self.session_data.append(
                 (
