@@ -25,7 +25,7 @@ from cubing_algs.vcube import VCube
 
 from term_timer.argparser import ArgumentParser
 from term_timer.arguments import ORIENTATIONS_SORTED
-from term_timer.arguments import set_gyroscope_argument
+from term_timer.arguments import add_gyroscope_argument
 from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import FaceletsEventDict
@@ -576,8 +576,8 @@ async def client_cb(  # noqa: PLR0913
         filter_name: str,
         *,
         use_gyroscope: bool,
-        gyroscope_enable: bool,
-        gyroscope_disable: bool,
+        send_gyro_enable: bool,
+        send_gyro_disable: bool,
 ) -> None:
     """
     Manage Bluetooth connection and send commands to the smart cube.
@@ -591,8 +591,10 @@ async def client_cb(  # noqa: PLR0913
         time: Duration in seconds to maintain connection.
         filter_name: Device name filter for connection, or empty string.
         use_gyroscope: Whether the driver reports the gyroscope events.
-        gyroscope_enable: Whether to enable gyroscope data streaming.
-        gyroscope_disable: Whether to disable gyroscope data streaming.
+        send_gyro_enable: Whether to send the cube the command enabling
+            its gyroscope.
+        send_gyro_disable: Whether to send the cube the command
+            disabling its gyroscope.
 
     """
     bluetooth_interface = BluetoothInterface(queue)
@@ -606,9 +608,9 @@ async def client_cb(  # noqa: PLR0913
 
         await bluetooth_interface.send_init_commands()
 
-        if gyroscope_disable:
+        if send_gyro_disable:
             await bluetooth_interface.send_command('REQUEST_DISABLE_GYRO')
-        if gyroscope_enable:
+        if send_gyro_enable:
             await bluetooth_interface.send_command('REQUEST_ENABLE_GYRO')
         logger.warning('Free play for %ss', time)
         await asyncio.sleep(time)
@@ -877,8 +879,8 @@ async def run(options: Namespace) -> int:
         options.time,
         options.filter_name,
         use_gyroscope=use_gyroscope,
-        gyroscope_enable=options.gyroscope_enable,
-        gyroscope_disable=options.gyroscope_disable,
+        send_gyro_enable=options.send_gyro_enable,
+        send_gyro_disable=options.send_gyro_disable,
     )
     consumer = consumer_cb(
         queue,
@@ -979,23 +981,7 @@ def main() -> int:
             f'Default: { CUBE_ORIENTATION }.'
         ),
     )
-    set_gyroscope_argument(parser)
-    parser.add_argument(
-        '--gyroscope-enable',
-        action='store_true',
-        help=(
-            'Enable the gyroscope of the cube.\n'
-            'Default: False.'
-        ),
-    )
-    parser.add_argument(
-        '--gyroscope-disable',
-        action='store_true',
-        help=(
-            'Disable the gyroscope of the cube.\n'
-            'Default: False.'
-        ),
-    )
+    add_gyroscope_argument(parser)
     parser.add_argument(
         '--rotation-threshold',
         type=float,
@@ -1004,6 +990,22 @@ def main() -> int:
         help=(
             'Rotation detection threshold in degrees.\n'
             f'Default: { ROTATION_THRESHOLD }.'
+        ),
+    )
+    parser.add_argument(
+        '--send-gyro-enable',
+        action='store_true',
+        help=(
+            'Send the cube the command enabling its gyroscope.\n'
+            'Default: False.'
+        ),
+    )
+    parser.add_argument(
+        '--send-gyro-disable',
+        action='store_true',
+        help=(
+            'Send the cube the command disabling its gyroscope.\n'
+            'Default: False.'
         ),
     )
     parser.add_argument(
