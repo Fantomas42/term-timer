@@ -557,14 +557,6 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                     event['gyroscope_ready'],
                 )
 
-            elif event_name == 'reset':
-                logger.info('CONSUMER: Cube confirmed its reset')
-                # The cube is solved again and the moves leading to the
-                # previous state no longer describe anything, so the
-                # reconstruction restarts on the next facelets event
-                virtual_cube = None
-                moves = []
-
             elif event_name == 'disconnect':
                 logger.warning('CONSUMER: Cube announced its disconnection')
                 SOUND_PLAYER.cube_disconnected()
@@ -583,7 +575,6 @@ async def client_cb(  # noqa: PLR0913
         time: int,
         filter_name: str,
         *,
-        cube_reset: bool,
         use_gyroscope: bool,
         gyroscope_enable: bool,
         gyroscope_disable: bool,
@@ -599,7 +590,6 @@ async def client_cb(  # noqa: PLR0913
         queue: Event queue for receiving Bluetooth events.
         time: Duration in seconds to maintain connection.
         filter_name: Device name filter for connection, or empty string.
-        cube_reset: Whether to request cube reset.
         use_gyroscope: Whether the driver reports the gyroscope events.
         gyroscope_enable: Whether to enable gyroscope data streaming.
         gyroscope_disable: Whether to disable gyroscope data streaming.
@@ -620,11 +610,8 @@ async def client_cb(  # noqa: PLR0913
             await bluetooth_interface.send_command('REQUEST_DISABLE_GYRO')
         if gyroscope_enable:
             await bluetooth_interface.send_command('REQUEST_ENABLE_GYRO')
-        if cube_reset:
-            await bluetooth_interface.send_command('REQUEST_RESET')
-        else:
-            logger.warning('Free play for %ss', time)
-            await asyncio.sleep(time)
+        logger.warning('Free play for %ss', time)
+        await asyncio.sleep(time)
 
         await bluetooth_interface.__aexit__(None, None, None)
         logger.warning('Interface disconnected')
@@ -889,7 +876,6 @@ async def run(options: Namespace) -> int:
         queue,
         options.time,
         options.filter_name,
-        cube_reset=options.cube_reset,
         use_gyroscope=use_gyroscope,
         gyroscope_enable=options.gyroscope_enable,
         gyroscope_disable=options.gyroscope_disable,
@@ -991,14 +977,6 @@ def main() -> int:
         help=(
             'Set the cube orientation used.\n'
             f'Default: { CUBE_ORIENTATION }.'
-        ),
-    )
-    parser.add_argument(
-        '--cube-reset',
-        action='store_true',
-        help=(
-            'Request reset of the cube.\n'
-            'Default: False.'
         ),
     )
     set_gyroscope_argument(parser)

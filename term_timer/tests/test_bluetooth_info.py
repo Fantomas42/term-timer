@@ -393,7 +393,9 @@ class TestConsumerEventCoverage(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_driver_event_is_handled(self) -> None:
         """Test that no event of the contract reaches the repli branch."""
-        for name in sorted(BLUETOOTH_EVENTS):
+        # bt-info never sends REQUEST_RESET, so a cube never confirms a
+        # reset to it and the event stays out of the consumer
+        for name in sorted(BLUETOOTH_EVENTS - {'reset'}):
             with self.subTest(event=name):
                 self.assertEqual(await self.consume(driver_event(name)), [])
 
@@ -476,7 +478,6 @@ class TestRunExitCode(unittest.IsolatedAsyncioTestCase):
             output='',
             time=1,
             filter_name='',
-            cube_reset=False,
             use_gyroscope=None,
             gyroscope_enable=False,
             gyroscope_disable=False,
