@@ -1979,6 +1979,8 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         save_string = ''
         applied_rating: Rating | None = None
         if discard:
+            self.pending_records = []
+
             if not dnf:
                 self.trainings.pop_timing(
                     selected_case.code,

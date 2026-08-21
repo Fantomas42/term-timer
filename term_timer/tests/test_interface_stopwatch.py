@@ -1,4 +1,5 @@
 """Tests for the stopwatch interface rendering."""
+import asyncio
 import io
 import unittest
 from unittest.mock import patch
@@ -86,3 +87,67 @@ class TestStopWatchMotto(unittest.TestCase):
 
         output = watch.console.export_text()
         self.assertEqual(output.count('[GO]:'), 2)
+
+
+class TransitionStopWatch(StopWatch, Terminal):
+    """StopWatch harness writing down the transitions it asks for."""
+
+    def __init__(self) -> None:
+        """Prepare a harness with an empty transition log."""
+        super().__init__()
+        self.transitions: list[tuple[str, int | None]] = []
+
+    def set_state(self, state: str, timestamp: int | None = None) -> None:
+        """
+        Record one state transition instead of publishing it.
+
+        Args:
+            state: The state being entered.
+            timestamp: Instant of the transition, if the caller times it.
+
+        """
+        self.transitions.append((state, timestamp))
+
+
+class TestStopWatchTransitions(unittest.TestCase):
+    """Tests for the instants the stopwatch stamps its transitions with."""
+
+    def setUp(self) -> None:
+        """Patch sound playback for each test."""
+        sound_patcher = patch(
+            'term_timer.interface.sounds.sd', create=True,
+        )
+        sound_patcher.start()
+        self.addCleanup(sound_patcher.stop)
+
+    @staticmethod
+    def run_stopwatch() -> TransitionStopWatch:
+        """
+        Run a stopwatch over an already completed solve.
+
+        Returns:
+            The harness, with its transitions recorded.
+
+        """
+        watch = TransitionStopWatch()
+        watch.console = RichConsole(record=True, width=120)
+        watch.start_time = 1_000_000_000
+        watch.end_time = 9_410_000_000
+        watch.solve_completed_event.set()
+
+        with patch('sys.stdout', io.StringIO()):
+            asyncio.run(watch.stopwatch())
+
+        return watch
+
+    def test_the_solving_transition_carries_the_start(self) -> None:
+        """The solve starts at the instant the solve says it does."""
+        watch = self.run_stopwatch()
+
+        self.assertEqual(watch.transitions[0], ('solving', 1_000_000_000))
+
+    def test_the_stop_transition_carries_the_end(self) -> None:
+        """The stop is stamped with end_time, not with the display's."""
+        watch = self.run_stopwatch()
+
+        self.assertEqual(watch.transitions[-1], ('stop', 9_410_000_000))

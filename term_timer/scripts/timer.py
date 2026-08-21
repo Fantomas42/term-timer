@@ -73,11 +73,6 @@ def main() -> int:
     options = get_arguments()
     command = COMMAND_RESOLUTIONS.get(options.command, options.command)
 
-    # Named here and nowhere else: the command is what a subscriber
-    # reads to know who talks, and only this layer knows it
-    if command in PUBLISHED_COMMANDS:
-        PUBLISHER.start(command)
-
     if command not in {'merge', 'import'}:
         Terminal.set_title(f'{ command.title() } - Term-Timer')
 
@@ -88,11 +83,10 @@ def main() -> int:
     ):
         show_banner(BANNER_MODES[command])
 
-    # The way out is decided here and nowhere else: the publisher says
-    # goodbye on its way out, and only this layer knows what ends the
-    # session — a command that returns, a Ctrl+C or an error
-    reason = 'closed'
+    if command in PUBLISHED_COMMANDS:
+        PUBLISHER.start(command)
 
+    reason = 'closed'
     try:
         return run_command(command, options)
     except KeyboardInterrupt:

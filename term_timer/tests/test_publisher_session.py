@@ -6,7 +6,10 @@ that they publish, on the right topic, with the payload the specification
 names. The publisher itself is tested against real sockets in
 ``test_publisher``.
 """
+import asyncio
 import unittest
+from datetime import UTC
+from datetime import datetime
 from random import Random
 from typing import Any
 from unittest.mock import MagicMock
@@ -19,6 +22,7 @@ from fsrs import Rating
 
 from term_timer.constants import DNF
 from term_timer.fsrs.storage import CaseTraining
+from term_timer.fsrs.storage import Trainings
 from term_timer.interface.state import State
 from term_timer.publisher import RECORD_TOPIC
 from term_timer.publisher import SCRAMBLE_TOPIC
@@ -675,6 +679,117 @@ class TrainingTestCase(unittest.TestCase):
 
         self.assertEqual(len(self.publisher.payloads(RECORD_TOPIC)), 1)
         self.assertEqual(self.trainer.pending_records, [])
+
+
+class DiscardedTrainingRecordTestCase(unittest.IsolatedAsyncioTestCase):
+    """The records of a thrown away attempt never reach the stream."""
+
+    CASE_CODE = 'T'
+
+    def setUp(self) -> None:
+        """Patch the singleton the trainer publishes through."""
+        self.publisher = RecordingPublisher()
+
+        patcher = patch('term_timer.trainer.PUBLISHER', self.publisher)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def make_trainer(self) -> Trainer:
+        """
+        Build a no-Bluetooth PLL trainer with one rated case.
+
+        Returns:
+            A Trainer ready to run the save prompt on CASE_CODE.
+
+        """
+        empty = Trainings(method='CFOP', step='PLL', cases={})
+        with patch(
+            'term_timer.trainer.load_trainings', return_value=empty,
+        ):
+            trainer = Trainer(
+                step='pll',
+                case_codes=[self.CASE_CODE],
+                oldest=0,
+                slowest=0,
+                random=0,
+                new_cases_limit=5,
+                filters=[],
+                states=[],
+                free_play=False,
+                show_solution=False,
+                show_breakdown=False,
+                show_cube=False,
+                metronome=0,
+                orientation='DF',
+                rng=Random(),  # noqa: S311
+            )
+        trainer.bluetooth_interface = None
+        trainer.console = MagicMock()
+        date = int(datetime.now(tz=UTC).timestamp())
+        trainer.trainings.add_timing(self.CASE_CODE, 2000, date)
+        return trainer
+
+    async def save(self, trainer: Trainer, char: str) -> None:
+        """
+        Run the save prompt of one attempt, answering with a fixed key.
+
+        Args:
+            trainer: The trainer running the attempt.
+            char: The key answering the prompt.
+
+        """
+        case = next(
+            tc.case for tc in trainer.cases if tc.case.code == self.CASE_CODE
+        )
+        solve = Solve(
+            date=datetime.now(tz=UTC).timestamp(),
+            time=2_000_000_000,
+            scramble="R U R' U'",
+            moves=None,
+        )
+
+        async def fake_getch(_mode: str, *_: object) -> str:
+            await asyncio.sleep(0)
+            return char
+
+        with (
+            patch('term_timer.trainer.save_trainings'),
+            patch('term_timer.trainer.SOUND_PLAYER'),
+            patch.object(
+                trainer.fsrs_scheduler, 'update_card',
+                MagicMock(return_value=Card()),
+            ),
+            patch.object(trainer, 'getch', side_effect=fake_getch),
+        ):
+            await trainer.save_training(case, solve)
+
+    async def test_a_discarded_attempt_drops_its_records(self) -> None:
+        """
+        What the thrown away attempt broke goes with it.
+
+        The records are read against a timing the discard pops, so the
+        attempt that never was must not leave them for the next save to
+        publish under its own counter.
+        """
+        trainer = self.make_trainer()
+        trainer.pending_records = [('single', 8_000, 10_000)]
+
+        await self.save(trainer, 'z')
+
+        self.assertEqual(trainer.pending_records, [])
+        self.assertEqual(self.publisher.payloads(RECORD_TOPIC), [])
+
+    async def test_a_dropped_record_never_reaches_the_next_attempt(
+            self,
+    ) -> None:
+        """A saved attempt breaking nothing publishes nothing."""
+        trainer = self.make_trainer()
+        trainer.pending_records = [('single', 8_000, 10_000)]
+
+        await self.save(trainer, 'z')
+        await self.save(trainer, ' ')
+
+        self.assertEqual(self.publisher.payloads(RECORD_TOPIC), [])
 
 
 class SessionTopicsTestCase(unittest.TestCase):
