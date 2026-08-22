@@ -31,7 +31,6 @@ from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import FaceletsEventDict
 from term_timer.bluetooth.annotations import GyroConfigEventDict
 from term_timer.bluetooth.annotations import GyroEventDict
-from term_timer.bluetooth.annotations import HardwareEventDict
 from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
@@ -62,6 +61,9 @@ LEVEL_COLORS: Final = {
     'ERROR': '\033[31m',
     'CRITICAL': '\033[35m',
 }
+# Fields carried by every event, not part of the hardware description
+EVENT_METADATA_KEYS: Final = frozenset({'event', 'clock', 'timestamp'})
+
 RESET: Final = '\033[0m'
 BOLD: Final = '\x1b[1m'
 FG_GREY: Final = '\x1b[38;5;244m'
@@ -426,6 +428,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
     """
     virtual_cube: VCube | None = None
     moves: list[str] = []
+    hardware_info: dict[str, Any] = {}
     hardware = ''
     battery = ''
 
@@ -463,21 +466,29 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
             time = int(event['clock'] / MS_TO_NS_FACTOR)
 
             if event_name == 'hardware':
-                event = cast('HardwareEventDict', event)
+                # Gen4 cubes split their hardware info over several
+                # events, each one carrying only a few of the fields
+                details = {
+                    key: value
+                    for key, value in event.items()
+                    if key not in EVENT_METADATA_KEYS
+                }
+                hardware_info.update(details)
                 logger.info(
-                    'CONSUMER: Hardware %s version %s, Software %s, %s',
-                    event['hardware_name'],
-                    event['hardware_version'],
-                    event['software_version'],
-                    (
-                        (event['gyroscope_supported'] and 'with Gyroscope')
-                        or 'w/o Gyroscope'
+                    'CONSUMER: Hardware %s',
+                    ', '.join(
+                        f'{ key }: { value }'
+                        for key, value in details.items()
                     ),
                 )
-                hardware = (
-                    f'{ event["hardware_name"] } '
-                    f'{ event["hardware_version"] } '
-                    f'{ event["software_version"] }'
+                hardware = ' '.join(
+                    str(hardware_info[key])
+                    for key in (
+                        'hardware_name',
+                        'hardware_version',
+                        'software_version',
+                    )
+                    if key in hardware_info
                 )
                 Terminal.set_title(f'{ hardware } - { battery }')
 

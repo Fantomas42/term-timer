@@ -407,6 +407,94 @@ class TestConsumerEventCoverage(unittest.IsolatedAsyncioTestCase):
         )
 
 
+class TestConsumerPartialHardware(unittest.IsolatedAsyncioTestCase):
+    """Tests for the hardware info the Gen4 cubes send in parts."""
+
+    @staticmethod
+    async def consume(events: list[EventDict]) -> list[str]:
+        """
+        Run the consumer over the events, then disconnect.
+
+        Args:
+            events: The events the cube announces, one by notification.
+
+        Returns:
+            The successive titles the consumer set on the terminal.
+
+        """
+        queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
+        for event in events:
+            queue.put_nowait([event])
+        queue.put_nowait(None)
+
+        with (
+                patch('term_timer.scripts.bluetooth_info.SOUND_PLAYER'),
+                patch(
+                    'term_timer.scripts.bluetooth_info.Terminal',
+                ) as terminal,
+        ):
+            await consumer_cb(
+                queue,
+                SessionReport(),
+                show_cube=False,
+                use_gyroscope=True,
+                orientation_faces='UF',
+            )
+
+        return [call.args[0] for call in terminal.set_title.call_args_list]
+
+    @staticmethod
+    def hardware_event(**fields: str | bool) -> EventDict:
+        """
+        Build a hardware event carrying only the given fields.
+
+        Args:
+            fields: The hardware fields this notification carries.
+
+        Returns:
+            The event as a Gen4 driver publishes it.
+
+        """
+        event: dict[str, Any] = {
+            'event': 'hardware',
+            'clock': 0,
+            'timestamp': datetime.now(),  # noqa: DTZ005
+            **fields,
+        }
+        return cast('EventDict', event)
+
+    async def test_partial_hardware_events_are_accumulated(self) -> None:
+        """Test that the fields sent one by one build the whole title."""
+        titles = await self.consume(
+            [
+                self.hardware_event(hardware_version='1.0'),
+                self.hardware_event(software_version='2.3'),
+                self.hardware_event(
+                    hardware_name='GANi4',
+                    gyroscope_supported=False,
+                ),
+            ],
+        )
+
+        self.assertEqual(
+            titles,
+            [
+                '1.0 - ',
+                '1.0 2.3 - ',
+                'GANi4 1.0 2.3 - ',
+            ],
+        )
+
+    async def test_product_date_alone_is_handled(self) -> None:
+        """Test that a hardware event of its own carries no name."""
+        self.assertEqual(
+            await self.consume(
+                [self.hardware_event(product_date='2026-01-31')],
+            ),
+            [' - '],
+        )
+
+
 class TestConsumerGyroscope(unittest.IsolatedAsyncioTestCase):
     """Tests for the gyroscope toggle of the consumer."""
 
