@@ -64,12 +64,24 @@ class TestGanProtocolMessage(unittest.TestCase):  # noqa: PLR0904
         self.assertEqual(qy, 158709922)
         self.assertEqual(qz, 4282037484)
 
-    def test_get_bit_words_invalid_size(self) -> None:
-        """Test that invalid bit lengths raise ValueError."""
+    def test_get_bit_words_odd_size(self) -> None:
+        """Test that a width of no whole byte is read most significant."""
         msg = GanProtocolMessage(self.data)
 
-        with self.assertRaises(ValueError):
-            msg.get_bit_word(0, 21)
+        # 0b101010110100011110001 of the leading 1010101101000111100010...
+        self.assertEqual(msg.get_bit_word(0, 21), 0b101010110100011110001)
+
+    def test_get_bit_words_odd_size_little_endian_refused(self) -> None:
+        """Test that a width of no whole byte has no byte order."""
+        msg = GanProtocolMessage(self.data)
+
+        with self.assertRaises(ValueError) as cm:
+            msg.get_bit_word(0, 21, little_endian=True)
+
+        self.assertEqual(
+            str(cm.exception),
+            'Only 16 and 32 bits words can be read little endian',
+        )
 
     def test_init_with_empty_data(self) -> None:
         """Test initialization with empty byte array."""
@@ -184,15 +196,26 @@ class TestGanProtocolMessage(unittest.TestCase):  # noqa: PLR0904
         result = msg.get_bit_word(152, 8)  # Last 8 bits
         self.assertIsInstance(result, int)
 
-    def test_get_bit_word_invalid_bit_lengths(self) -> None:
-        """Test various invalid bit lengths."""
+    def test_get_bit_word_every_width_is_readable(self) -> None:
+        """Test that every width reads the bits it names, in order."""
         msg = GanProtocolMessage(self.data)
+        bits = str(msg)
 
-        invalid_lengths = [9, 10, 11, 12, 13, 14, 15, 17, 18, 24, 31, 33, 64]
-        for length in invalid_lengths:
-            with self.assertRaises(ValueError) as cm:
-                msg.get_bit_word(0, length)
-            self.assertEqual(str(cm.exception), 'Unsupported bit word length')
+        widths = [9, 10, 11, 12, 13, 14, 15, 17, 18, 24, 31, 33, 64]
+        for length in widths:
+            with self.subTest(length=length):
+                self.assertEqual(
+                    msg.get_bit_word(0, length),
+                    int(bits[:length], 2),
+                )
+
+    def test_get_bit_word_odd_width_signed(self) -> None:
+        """Test that an odd width is signed on its own leading bit."""
+        # 0b1_1111_1011 read on 9 bits is -5 in two's complement
+        msg = GanProtocolMessage(bytearray([0b11111101, 0b10000000]))
+
+        self.assertEqual(msg.get_bit_word(0, 9, signed=True), -5)
+        self.assertEqual(msg.get_bit_word(0, 9), 0b111111011)
 
     def test_get_bit_word_zero_bit_length(self) -> None:
         """Test with zero bit length."""

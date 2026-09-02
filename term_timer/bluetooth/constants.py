@@ -30,6 +30,11 @@ GEN3_HISTORY_FACES: Final[dict[int, int]] = {
     1: 0, 5: 1, 3: 2, 0: 3, 4: 4, 2: 5,
 }
 
+# A V1 face angles message packs as many records of 25 bits as fit
+# after its 10 bits of header, which a 20 bytes notification caps at
+# six. The count field is read on 3 bits and can announce more.
+GEN2_FACE_ANGLES_CAPACITY: Final[int] = 6
+
 PREFIX: Final[list[str]] = [
     'GAN',
     'MG',

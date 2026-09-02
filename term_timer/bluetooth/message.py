@@ -34,19 +34,10 @@ class GanProtocolMessage:
             Integer value decoded from specified bit range.
 
         Raises:
-            ValueError: If bit_length is not 8, 16, or 32 bits.
+            ValueError: If a word that is not 16 or 32 bits wide is
+                asked little endian, having no bytes to swap.
 
         """
-        if bit_length <= 8:
-            # For 8 bits or less, simply parse the binary substring
-            value = int(self.bits[start_bit : start_bit + bit_length], 2)
-            if signed and bit_length > 1:
-                # Convert to signed using two's complement
-                sign_bit = 1 << (bit_length - 1)
-                if value & sign_bit:
-                    value -= (1 << bit_length)
-            return value
-
         if bit_length in {16, 32}:
             # For 16 or 32 bits, create a byte array and use struct
             buf = bytearray(bit_length // 8)
@@ -66,5 +57,20 @@ class GanProtocolMessage:
             result: int = struct.unpack(fmt, buf)[0]
             return result
 
-        msg = 'Unsupported bit word length'
-        raise ValueError(msg)
+        if little_endian:
+            msg = 'Only 16 and 32 bits words can be read little endian'
+            raise ValueError(msg)
+
+        # Every other width is parsed most significant bit first, which
+        # is what big endian means for a field that is not a whole
+        # number of bytes : the 5 bits of a V1 move, the 9 bits of one
+        # of its angles, the 3 bits of the face carrying it.
+        value = int(self.bits[start_bit : start_bit + bit_length], 2)
+
+        if signed and bit_length > 1:
+            # Convert to signed using two's complement
+            sign_bit = 1 << (bit_length - 1)
+            if value & sign_bit:
+                value -= (1 << bit_length)
+
+        return value

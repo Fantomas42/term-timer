@@ -497,6 +497,155 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 self.assertEqual(move_event['move'], 'D')
                 self.assertEqual(move_event['cube_timestamp'], 1000.0)
 
+    @staticmethod
+    def build_frame(bits: str) -> bytearray:
+        """
+        Build the 20 bytes of a notification out of its leading bits.
+
+        Returns:
+            The frame, zero padded up to its full length.
+
+        """
+        padded = bits.ljust(160, '0')
+
+        return bytearray(
+            int(padded[i:i + 8], 2)
+            for i in range(0, 160, 8)
+        )
+
+    @staticmethod
+    def face_angles_record(pos: int, face1: int, angle1: int,
+                           face2: int, angle2: int) -> str:
+        """
+        Build the 25 bits of one face angles record.
+
+        Returns:
+            The bits of the record, most significant first.
+
+        """
+        return (
+            f'{pos:01b}{face1:03b}{angle1:09b}'
+            f'{face2:03b}{angle2:09b}'
+        )
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_face_angles_journaled(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test a face angles message is journaled and emits nothing."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        test_data = self.build_frame(
+            '0011'       # opcode 0x03
+            '101'        # step
+            '010'        # count of 2 records
+            + self.face_angles_record(1, 2, 300, 5, 45)
+            + self.face_angles_record(0, 0, 511, 3, 0),
+        )
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen2',
+                    level='DEBUG',
+            ) as logged:
+                result = await self.driver.event_handler(Mock(), test_data)
+
+        self.assertEqual(result, [])
+        self.assertEqual(len(logged.records), 1)
+        self.assertIn('step:5', logged.output[0])
+        self.assertIn('count:2', logged.output[0])
+        self.assertIn('(1, 2, 300, 5, 45)', logged.output[0])
+        self.assertIn('(0, 0, 511, 3, 0)', logged.output[0])
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_face_angles_count_over_capacity(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test a count wider than the notification reads no further."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        test_data = self.build_frame(
+            '0011'  # opcode 0x03
+            '000'   # step
+            '111'   # count of 7 records, one more than the frame holds
+            + self.face_angles_record(1, 1, 1, 1, 1) * 6,
+        )
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen2',
+                    level='DEBUG',
+            ) as logged:
+                result = await self.driver.event_handler(Mock(), test_data)
+
+        self.assertEqual(result, [])
+        self.assertEqual(logged.output[0].count('(1, 1, 1, 1, 1)'), 6)
+        self.assertIn('only 6 fit', logged.output[1])
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_account_binding_journaled(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test an account binding answer is journaled and emits nothing."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        test_data = self.build_frame(
+            '1110'  # opcode 0x0E
+            f'{0x12345678:032b}',
+        )
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen2',
+                    level='DEBUG',
+            ) as logged:
+                result = await self.driver.event_handler(Mock(), test_data)
+
+        self.assertEqual(result, [])
+        self.assertIn(str(0x12345678), logged.output[0])
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_disconnect_journals_its_payload(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the payload of a disconnect is journaled before cutting."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        self.mock_client.disconnect = AsyncMock()
+
+        test_data = self.build_frame(
+            '1101'  # opcode 0x0D
+            '10100101',
+        )
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen2',
+                    level='WARNING',
+            ) as logged:
+                result = await self.driver.event_handler(Mock(), test_data)
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['event'], 'disconnect')
+        self.assertIn('0xA5', logged.output[0])
+        self.mock_client.disconnect.assert_called_once()
+
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
     @patch('term_timer.bluetooth.drivers.gan_gen2.cubies_to_facelets')

@@ -23,6 +23,7 @@ from term_timer.bluetooth.constants import GAN_ENCRYPTION_KEY
 from term_timer.bluetooth.constants import GAN_GEN2_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN2_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN2_STATE_CHARACTERISTIC
+from term_timer.bluetooth.constants import GEN2_FACE_ANGLES_CAPACITY
 from term_timer.bluetooth.constants import MOYU_AI_ENCRYPTION_KEY
 from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
@@ -52,10 +53,12 @@ class GanGen2Driver(Driver):
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
         0x01: 'handle_gyroscope',
         0x02: 'handle_move',
+        0x03: 'handle_face_angles',
         0x04: 'handle_facelets',
         0x05: 'handle_hardware',
         0x09: 'handle_battery',
         0x0D: 'handle_disconnect',
+        0x0E: 'handle_account_binding',
     }
 
     def __init__(self, client: BleakClient,
@@ -282,6 +285,54 @@ class GanGen2Driver(Driver):
 
         return moves
 
+    async def handle_face_angles(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log the face rotation angles streamed by the cube.
+
+        This is the V1 counterpart of the 0xEE message of the Gen4 : a
+        burst of records telling how far a face is turned, before the
+        turn becomes a move. Nothing consumes them yet, and what pos and
+        angle really count in is what the journal is here to say.
+
+        Returns:
+            Nothing, the angles are journaled only.
+
+        """
+        step = msg.get_bit_word(4, 3)
+        count = msg.get_bit_word(7, 3)
+
+        # The count is read on 3 bits and can announce more records
+        # than a 20 bytes notification carries.
+        kept = min(count, GEN2_FACE_ANGLES_CAPACITY)
+
+        records = []
+        for i in range(kept):
+            offset = 10 + 25 * i
+            records.append((
+                msg.get_bit_word(offset, 1),          # pos
+                msg.get_bit_word(offset + 1, 3),      # face1
+                msg.get_bit_word(offset + 4, 9),      # angle1
+                msg.get_bit_word(offset + 13, 3),     # face2
+                msg.get_bit_word(offset + 16, 9),     # angle2
+            ))
+
+        logger.debug(
+            'Face angles - step:%s, count:%s, '
+            'records (pos, face1, angle1, face2, angle2):%s',
+            step, count, records,
+        )
+
+        if count > GEN2_FACE_ANGLES_CAPACITY:
+            logger.debug(
+                'Face angles message announces %d records, '
+                'only %d fit in the notification',
+                count, GEN2_FACE_ANGLES_CAPACITY,
+            )
+
+        return []
+
     async def handle_facelets(
             self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:
@@ -404,15 +455,26 @@ class GanGen2Driver(Driver):
         return [battery_payload]
 
     async def handle_disconnect(
-            self, msg: GanProtocolMessage,  # noqa: ARG002
+            self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:
         """
         Close the link on request of the cube.
+
+        The opcode is absent from the V1 descriptor, and the two other
+        generations declare something else than a disconnection under
+        theirs. The first byte of the payload is journaled before the
+        link is cut : it is the only thing that will ever tell whether
+        cutting is the right reading.
 
         Returns:
             The disconnect event telling the application about it.
 
         """
+        logger.warning(
+            'Cube requested a disconnection, payload starts with "0x%02X"',
+            msg.get_bit_word(self.payload_offset, 8),
+        )
+
         disconnect_payload: DisconnectEventDict = {
             'event': 'disconnect',
             'clock': clock,
@@ -422,3 +484,24 @@ class GanGen2Driver(Driver):
         await self.client.disconnect()
 
         return [disconnect_payload]
+
+    async def handle_account_binding(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log the answer of the cube to an account binding request.
+
+        The application never sends that request, so this answer is not
+        expected to be seen : the handler exists so that a cube sending
+        one anyway is named in the journal instead of counted as an
+        unknown opcode.
+
+        Returns:
+            Nothing, the result is journaled only.
+
+        """
+        result = msg.get_bit_word(4, 32)
+
+        logger.debug('Account binding result: %s', result)
+
+        return []
