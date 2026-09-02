@@ -15,6 +15,21 @@ MOVE_BUFFER_LIMIT: Final[int] = 16
 CRC16_INIT: Final[int] = 0xFFFF
 CRC16_POLYNOMIAL: Final[int] = 0x1021
 
+# Suffix of a move, indexed by its direction bit.
+DIRECTIONS: Final[str] = " '"
+
+# The firmware of the V2 and V3 protocols orders its faces D, U, B, F,
+# L, R. A live move names one of them by the bit mask of g.java
+# getSurfaceIdBy2, a move of the history by the plain index of
+# getSurfaceIdByBy10. Both tables translate that into the index of the
+# face in URFDLB, and a value absent of them is out of domain.
+GEN3_MOVE_FACES: Final[dict[int, int]] = {
+    2: 0, 32: 1, 8: 2, 1: 3, 16: 4, 4: 5,
+}
+GEN3_HISTORY_FACES: Final[dict[int, int]] = {
+    1: 0, 5: 1, 3: 2, 0: 3, 4: 4, 2: 5,
+}
+
 PREFIX: Final[list[str]] = [
     'GAN',
     'MG',

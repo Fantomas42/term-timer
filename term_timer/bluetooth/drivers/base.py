@@ -10,10 +10,12 @@ from typing import ClassVar
 
 from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
+from cubing_algs.constants import FACES
 
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.constants import CRC16_INIT
 from term_timer.bluetooth.constants import CRC16_POLYNOMIAL
+from term_timer.bluetooth.constants import DIRECTIONS
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
 
@@ -113,6 +115,30 @@ class Driver:
 
         """
         return True
+
+    @staticmethod
+    def format_move(face: int, direction: int) -> str | None:
+        """
+        Build the notation of a move out of its two decoded fields.
+
+        Every field a driver reads is a slice of bits wider than the
+        domain it names, so a face read on 4 or 6 bits and a direction
+        read on 2 both carry values no move answers to. Indexing a
+        string with one of them raises, which is why they are checked
+        here instead of at each of the five call sites.
+
+        Returns:
+            The notation of the move, or None when one of the two
+            fields falls outside of its domain.
+
+        """
+        if not 0 <= face < len(FACES):
+            return None
+
+        if not 0 <= direction < len(DIRECTIONS):
+            return None
+
+        return (FACES[face] + DIRECTIONS[direction]).strip()
 
     @staticmethod
     def compute_crc(payload: bytes) -> int:

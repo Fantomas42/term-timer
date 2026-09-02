@@ -7,6 +7,8 @@ from typing import ClassVar
 from unittest.mock import Mock
 from unittest.mock import patch
 
+from term_timer.bluetooth.constants import GEN3_HISTORY_FACES
+from term_timer.bluetooth.constants import GEN3_MOVE_FACES
 from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
@@ -147,6 +149,90 @@ class HeadedChainedDriver(ChainedDriver):
                 'timestamp': timestamp,
             },
         ]
+
+
+class TestFormatMove(unittest.TestCase):
+    """Tests for the bounded formatting of a move."""
+
+    def test_format_move_clockwise(self) -> None:
+        """Test a direction of 0 gives a bare face."""
+        self.assertEqual(Driver.format_move(0, 0), 'U')
+        self.assertEqual(Driver.format_move(5, 0), 'B')
+
+    def test_format_move_counter_clockwise(self) -> None:
+        """Test a direction of 1 gives a primed face."""
+        self.assertEqual(Driver.format_move(0, 1), "U'")
+        self.assertEqual(Driver.format_move(5, 1), "B'")
+
+    def test_format_move_every_face(self) -> None:
+        """Test the six faces are named in the URFDLB order."""
+        self.assertEqual(
+            [Driver.format_move(face, 0) for face in range(6)],
+            ['U', 'R', 'F', 'D', 'L', 'B'],
+        )
+
+    def test_format_move_face_out_of_domain(self) -> None:
+        """Test a face beyond the sixth is refused."""
+        self.assertIsNone(Driver.format_move(6, 0))
+        self.assertIsNone(Driver.format_move(15, 0))
+
+    def test_format_move_negative_face(self) -> None:
+        """Test a negative face is refused instead of wrapping around."""
+        self.assertIsNone(Driver.format_move(-1, 0))
+
+    def test_format_move_direction_out_of_domain(self) -> None:
+        """Test a direction beyond the second is refused."""
+        self.assertIsNone(Driver.format_move(0, 2))
+        self.assertIsNone(Driver.format_move(0, 3))
+
+    def test_format_move_negative_direction(self) -> None:
+        """Test a negative direction is refused."""
+        self.assertIsNone(Driver.format_move(0, -1))
+
+
+class TestFaceTables(unittest.TestCase):
+    """Tests for the face tables of the V2 and V3 protocols."""
+
+    def test_move_faces_name_every_face_once(self) -> None:
+        """Test the live table is a bijection onto the six faces."""
+        self.assertEqual(
+            sorted(GEN3_MOVE_FACES.values()), list(range(6)),
+        )
+
+    def test_history_faces_name_every_face_once(self) -> None:
+        """Test the history table is a bijection onto the six faces."""
+        self.assertEqual(
+            sorted(GEN3_HISTORY_FACES.values()), list(range(6)),
+        )
+
+    def test_move_faces_are_single_bit_masks(self) -> None:
+        """Test the live table is keyed by the firmware bit masks."""
+        self.assertEqual(
+            sorted(GEN3_MOVE_FACES), [1, 2, 4, 8, 16, 32],
+        )
+
+    def test_history_faces_are_plain_indexes(self) -> None:
+        """Test the history table is keyed by plain firmware indexes."""
+        self.assertEqual(
+            sorted(GEN3_HISTORY_FACES), list(range(6)),
+        )
+
+    def test_face_tables_agree_on_the_firmware_order(self) -> None:
+        """Test both tables describe the same D, U, B, F, L, R order."""
+        by_mask = [
+            GEN3_MOVE_FACES[1 << index]
+            for index in range(6)
+        ]
+        by_index = [
+            GEN3_HISTORY_FACES[index]
+            for index in range(6)
+        ]
+
+        self.assertEqual(by_mask, by_index)
+        self.assertEqual(
+            [Driver.format_move(face, 0) for face in by_mask],
+            ['D', 'U', 'B', 'F', 'L', 'R'],
+        )
 
 
 class TestCrc(unittest.TestCase):
