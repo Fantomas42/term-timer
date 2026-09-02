@@ -590,9 +590,13 @@ class GanGen2Driver(Driver):  # noqa: PLR0904
         """
         serial = msg.get_bit_word(4, 8)
 
-        # V1 only answers a facelets request, it never streams one on
-        # its own : this is where the two counters start, and not a
-        # place where a gap in the move serials could be noticed.
+        # V1 answers a facelets request, and pushes one unsolicited
+        # answer to a reset : the protocol has no reset message of its
+        # own, and the cube acknowledges the command with the state it
+        # was just told to hold. Measured on a GAN12 ui FreePlay the
+        # 2026-09-02, a lone frame 306 ms after the write. Either way
+        # this is where the two counters start, and not a place where
+        # a gap in the move serials could be noticed.
         if self.last_serial == -1:
             self.serial = serial
             self.last_serial = serial

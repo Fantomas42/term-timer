@@ -555,17 +555,20 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """
         Acknowledge that the cube state has been reset.
 
+        `bleProtoId 210` declares its `result` on thirty-two bits where
+        V2 declares eight, so the two generations publish the same key
+        with two domains. Journalising it would have kept it out of the
+        stream, which is where a refused reset has to be seen.
+
         Returns:
             The reset event of the message.
 
         """
-        reset_result = msg.get_bit_word(16, 32, little_endian=True)
-        logger.debug('Reset result: %s', reset_result)
-
         reset_payload: ResetEventDict = {
             'event': 'reset',
             'clock': clock,
             'timestamp': timestamp,
+            'result': msg.get_bit_word(16, 32, little_endian=True),
         }
 
         return [reset_payload]

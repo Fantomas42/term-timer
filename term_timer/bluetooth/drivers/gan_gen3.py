@@ -392,10 +392,17 @@ class GanGen3Driver(GanGen2Driver):
         return [hardware_payload]
 
     async def handle_reset(  # noqa: PLR6301
-            self, msg: GanProtocolMessage,  # noqa: ARG002
+            self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:
         """
         Acknowledge that the cube state has been reset.
+
+        `bleProtoId 8` carries a `result` the driver used to drop, where
+        the reset it acknowledges is the one destructive command of the
+        protocol. The value is published rather than judged here : V2
+        declares it a boolean of eight bits and V3 an integer of
+        thirty-two, and only a subscriber knows what it wants to do with
+        a reset the cube refused.
 
         Returns:
             The reset event of the message.
@@ -405,6 +412,7 @@ class GanGen3Driver(GanGen2Driver):
             'event': 'reset',
             'clock': clock,
             'timestamp': timestamp,
+            'result': msg.get_bit_word(24, 8),
         }
 
         return [reset_payload]

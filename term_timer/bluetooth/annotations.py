@@ -172,6 +172,8 @@ class BatteryEventDict(BaseEventDict):
 class ResetEventDict(BaseEventDict):
     """Reset event payload."""
 
+    result: int
+
 
 class DisconnectEventDict(BaseEventDict):
     """Disconnect event payload."""

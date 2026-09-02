@@ -24,6 +24,7 @@ if TYPE_CHECKING:
         HardwareEventSoftwareVersionOnlyDict,
     )
     from term_timer.bluetooth.annotations import HardwareEventVersionOnlyDict
+    from term_timer.bluetooth.annotations import ResetEventDict
 
 
 class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
@@ -839,6 +840,38 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 event = result[0]
                 battery_event = cast('BatteryEventDict', event)
                 self.assertEqual(battery_event['level'], 100)
+
+    async def test_event_handler_reset_accepted(self) -> None:
+        """Test event handler reset event carrying a success."""
+        # proto D2, dataLength 04, the result on four bytes little
+        # endian, then the two bytes of CRC-16 closing every V3 frame.
+        test_data = bytearray(bytes.fromhex('d20401000000de56'))
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes(test_data)
+
+            result = await self.driver.event_handler(Mock(), test_data)
+
+        self.assertEqual(len(result), 1)
+        reset_event = cast('ResetEventDict', result[0])
+        self.assertEqual(reset_event['event'], 'reset')
+        self.assertEqual(reset_event['result'], 1)
+
+    async def test_event_handler_reset_refused(self) -> None:
+        """Test event handler reset event carrying a refusal."""
+        test_data = bytearray(bytes.fromhex('d20400000000a8e2'))
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes(test_data)
+
+            result = await self.driver.event_handler(Mock(), test_data)
+
+        # V3 declares its result on thirty-two bits where V2 declares
+        # eight : the two domains differ, the published key does not.
+        self.assertEqual(len(result), 1)
+        reset_event = cast('ResetEventDict', result[0])
+        self.assertEqual(reset_event['event'], 'reset')
+        self.assertEqual(reset_event['result'], 0)
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
