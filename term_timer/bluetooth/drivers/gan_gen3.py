@@ -6,16 +6,13 @@ References :
   - https://github.com/Fantomas42/gan-protocols
 """
 import logging
-import time
 from datetime import datetime
-from datetime import timezone
 from typing import ClassVar
 
 from bleak import BleakClient
 from cubing_algs.facelets import cubies_to_facelets
 
 from term_timer.bluetooth.annotations import BatteryEventDict
-from term_timer.bluetooth.annotations import DisconnectEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import FaceletsEventDict
 from term_timer.bluetooth.annotations import HardwareEventDict
@@ -25,8 +22,6 @@ from term_timer.bluetooth.constants import DEBOUNCE
 from term_timer.bluetooth.constants import GAN_GEN3_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN3_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN3_STATE_CHARACTERISTIC
-from term_timer.bluetooth.constants import MOVE_BUFFER_LIMIT
-from term_timer.bluetooth.constants import MOVE_HISTORY_TIMEOUT
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.message import GanProtocolMessage
 
@@ -57,8 +52,8 @@ class GanGen3Driver(GanGen2Driver):
         """
         Initialize the GAN Gen3 driver with move tracking capabilities.
 
-        Sets up serial number tracking, timestamp management, and a FIFO
-        buffer for handling move events and detecting missed moves.
+        The serial tracking and the FIFO buffer of the missed moves come
+        from the Gen2 driver, which owns them for the three generations.
 
         Args:
             client: The BLE client connection to the cube.
@@ -67,12 +62,7 @@ class GanGen3Driver(GanGen2Driver):
         """
         super().__init__(client, use_gyroscope=use_gyroscope)
 
-        self.serial: int = -1
-        self.last_serial: int = -1
         self.last_local_timestamp: datetime | None = None
-        self.move_buffer: list[MoveEventDict] = []
-        self.history_request_pending: bool = False
-        self.history_request_clock: float = 0.0
 
     def send_command_handler(self, command: str) -> bytes | bool:
         """
@@ -154,192 +144,6 @@ class GanGen3Driver(GanGen2Driver):
             self.command_characteristic_uid,
             self.cypher.encrypt(msg),
         )
-
-    @property
-    def history_request_blocking(self) -> bool:
-        """
-        Check if a move history request is still awaiting its answer.
-
-        A request stops blocking once MOVE_HISTORY_TIMEOUT has elapsed
-        without the cube answering, so that a lost write or a refused
-        history window can be requested again instead of holding the
-        move buffer closed forever.
-
-        Returns:
-            True while a pending request is young enough to wait for.
-
-        """
-        if not self.history_request_pending:
-            return False
-
-        elapsed = time.monotonic() - self.history_request_clock
-
-        return elapsed < MOVE_HISTORY_TIMEOUT
-
-    async def open_history_request(self, serial: int, count: int) -> None:
-        """
-        Send a move history request and mark it as pending.
-
-        Logs a warning when the previous request is being retried, which
-        means the cube never answered it.
-
-        Args:
-            serial: The serial number to start the history request from.
-            count: The number of historical moves to request.
-
-        """
-        if self.history_request_pending:
-            logger.warning(
-                'Move history request unanswered after %ss, '
-                'retrying from serial %s for %s moves',
-                MOVE_HISTORY_TIMEOUT, serial, count,
-            )
-
-        self.history_request_pending = True
-        self.history_request_clock = time.monotonic()
-
-        await self.request_move_history(serial, count)
-
-    def close_history_request(self) -> None:
-        """Mark the pending move history request as answered."""
-        self.history_request_pending = False
-
-    async def evict_move_buffer(self) -> list[EventDict]:
-        """
-        Process and emit move events from the buffer in sequence order.
-
-        Removes move events from the buffer when they can be delivered in the
-        correct serial order. If a gap is detected, requests missing history.
-        Disconnects if the buffer grows too large (indicating sync issues),
-        emitting a disconnect event so the application is told about it.
-
-        Returns:
-            List of events that were successfully evicted from the buffer
-            and are ready to be emitted.
-
-        """
-        evicted_events: list[EventDict] = []
-
-        while len(self.move_buffer) > 0:
-            buffer_head = self.move_buffer[0]
-            diff = 1 if self.last_serial == -1 else (
-                buffer_head['serial'] - self.last_serial) & 0xFF
-            if diff > 1:
-                if self.history_request_blocking:
-                    logger.debug(
-                        'Eviction on hold, waiting for %s missed moves '
-                        'before serial %s',
-                        diff - 1, buffer_head['serial'],
-                    )
-                else:
-                    await self.open_history_request(
-                        buffer_head['serial'], diff,
-                    )
-                break
-
-            evicted_events.append(self.move_buffer.pop(0))
-            self.last_serial = buffer_head['serial']
-
-        if len(self.move_buffer) > MOVE_BUFFER_LIMIT:
-            logger.warning(
-                'Move buffer overflowed with %s moves stuck behind '
-                'an unrecovered gap, disconnecting the cube',
-                len(self.move_buffer),
-            )
-
-            overflow_payload: DisconnectEventDict = {
-                'event': 'disconnect',
-                'clock': time.perf_counter_ns(),
-                'timestamp': datetime.now(tz=timezone.utc),  # noqa: UP017
-            }
-            evicted_events.append(overflow_payload)
-
-            await self.client.disconnect()
-
-        return evicted_events
-
-    @staticmethod
-    def is_serial_in_range(start: int, end: int, serial: int, *,
-                           closed_start: bool = False,
-                           closed_end: bool = False) -> bool:
-        """
-        Check if a serial number falls within a range with wraparound.
-
-        Handles modular arithmetic for serial numbers that wrap around at 255,
-        allowing for both open and closed interval boundaries.
-
-        Args:
-            start: The range start serial number.
-            end: The range end serial number.
-            serial: The serial number to check.
-            closed_start: Whether the start boundary is inclusive.
-            closed_end: Whether the end boundary is inclusive.
-
-        Returns:
-            True if the serial number is within the specified range.
-
-        """
-        return (
-            ((end - start) & 0xFF) >= ((serial - start) & 0xFF)
-            and (closed_start or ((start - serial) & 0xFF) > 0)
-            and (closed_end or ((end - serial) & 0xFF) > 0)
-        )
-
-    def inject_missed_move_to_buffer(self, move: MoveEventDict) -> None:
-        """
-        Insert a recovered historical move into the buffer at the correct
-        position.
-
-        Validates that the move belongs in the current sequence and isn't a
-        duplicate before inserting it into the buffer for ordered delivery.
-
-        Args:
-            move: The move event to inject into the buffer.
-
-        """
-        if len(self.move_buffer) > 0:
-            buffer_head = self.move_buffer[0]
-
-            if any(e['event'] in {'move', 'move_history'}
-                   and e['serial'] == move['serial']
-                   for e in self.move_buffer):
-                return
-
-            if not self.is_serial_in_range(
-                    self.last_serial,
-                    buffer_head['serial'],
-                    move['serial'],
-            ):
-                return
-
-            if move['serial'] == ((buffer_head['serial'] - 1) & 0xFF):
-                self.move_buffer.insert(0, move)
-        elif self.is_serial_in_range(
-                self.last_serial,
-                self.serial,
-                move['serial'],
-                closed_start=False,
-                closed_end=True,
-        ):
-            self.move_buffer.insert(0, move)
-
-    async def check_if_move_missed(self) -> None:
-        """
-        Detect gaps in the move sequence and request missing history.
-
-        Compares the current serial with the last processed serial to detect
-        missed moves, then requests the appropriate history window to recover
-        them.
-
-        """
-        diff = (self.serial - self.last_serial) & 0xFF
-
-        if diff > 0 and self.serial != 0 and not self.history_request_blocking:
-            buffer_head = self.move_buffer[0] if self.move_buffer else None
-            start_serial = buffer_head['serial'] if buffer_head else (
-                self.serial + 1
-            ) & 0xFF
-            await self.open_history_request(start_serial, diff + 1)
 
     @staticmethod
     def read_event_code(msg: GanProtocolMessage) -> int:

@@ -35,6 +35,15 @@ GEN3_HISTORY_FACES: Final[dict[int, int]] = {
 # six. The count field is read on 3 bits and can announce more.
 GEN2_FACE_ANGLES_CAPACITY: Final[int] = 6
 
+# A V1 move message carries the last move plus the six previous ones,
+# which is the capacity of the protocol and not a choice of the driver :
+# beyond that, the older moves only come back through a history request.
+GEN2_MOVE_CAPACITY: Final[int] = 7
+
+# maxElementCount of the formulaHistory answering a V1 history request,
+# each move being read on five bits from the bit 17 of the message.
+GEN2_MOVE_HISTORY_CAPACITY: Final[int] = 28
+
 PREFIX: Final[list[str]] = [
     'GAN',
     'MG',

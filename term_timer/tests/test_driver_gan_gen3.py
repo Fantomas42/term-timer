@@ -959,7 +959,9 @@ class TestGanGen3DriverHistoryRequestRecovery(
 ):
     """Tests for the recovery of an unanswered move history request."""
 
-    logger_name = 'term_timer.bluetooth.drivers.gan_gen3'
+    # The machinery of the missed moves lives in the Gen2 driver, which
+    # owns it for the three GAN generations : its records carry its name.
+    logger_name = 'term_timer.bluetooth.drivers.gan_gen2'
 
     def setUp(self) -> None:
         """Test setup."""

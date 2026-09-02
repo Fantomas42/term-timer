@@ -4,7 +4,9 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
+from itertools import starmap
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import cast
 from unittest.mock import AsyncMock
 from unittest.mock import Mock
@@ -13,6 +15,7 @@ from unittest.mock import patch
 from term_timer.bluetooth.constants import GAN_GEN2_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN2_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN2_STATE_CHARACTERISTIC
+from term_timer.bluetooth.constants import GEN2_MOVE_HISTORY_CAPACITY
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 
 if TYPE_CHECKING:
@@ -30,6 +33,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
         self.mock_client.name = 'GAN356 i'
+        self.mock_client.write_gatt_char = AsyncMock()
+        self.mock_client.disconnect = AsyncMock()
 
         with patch(
                 'term_timer.bluetooth.drivers.gan_gen2.get_salt',
@@ -43,9 +48,12 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     def test_init_sets_correct_attributes(self) -> None:
         """Test init sets correct attributes."""
         self.assertEqual(self.driver.client, self.mock_client)
+        self.assertEqual(self.driver.serial, -1)
         self.assertEqual(self.driver.last_serial, -1)
         self.assertEqual(self.driver.cube_timestamp, 0)
         self.assertEqual(self.driver.last_move_timestamp, None)
+        self.assertEqual(self.driver.move_buffer, [])
+        self.assertFalse(self.driver.history_request_pending)
 
     def test_class_constants(self) -> None:
         """Test class constants."""
@@ -288,7 +296,9 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
-        # Set last_serial so moves are not blocked
+        # Set the serials so moves are not blocked : the last one the
+        # cube announced, and the last one delivered
+        self.driver.serial = 100
         self.driver.last_serial = 100
         self.driver.last_move_timestamp = mock_timestamp
 
@@ -335,6 +345,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
+        self.driver.serial = 100
         self.driver.last_serial = 100
         self.driver.last_move_timestamp = mock_timestamp
 
@@ -381,6 +392,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
+        self.driver.serial = 100
         self.driver.last_serial = 100
         self.driver.last_move_timestamp = mock_timestamp - timedelta(
             seconds=2,
@@ -424,6 +436,7 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
+        self.driver.serial = 100
         self.driver.last_serial = 100
         self.driver.last_move_timestamp = mock_timestamp
 
@@ -456,46 +469,45 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
-    async def test_event_handler_move_out_of_domain_face_keeps_the_others(
+    async def test_event_handler_move_out_of_domain_face_leaves_a_gap(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
-        """Test one undecodable move does not discard the whole message."""
+        """Test one undecodable move is treated as a missed one."""
         mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
 
+        self.driver.serial = 100
         self.driver.last_serial = 100
-        self.driver.last_move_timestamp = mock_timestamp
 
-        test_data = bytearray(20)
-        test_data[0] = 0x02
+        # The newest move is decodable, the one before it is not
+        moves = self.move_frame(102, [(3, 0), (15, 0)], [500, 500])
+        history = self.move_history_frame(102, [(3, 0), (0, 1)])
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
+            mock_cypher.decrypt.return_value = moves
+            held = await self.driver.event_handler(Mock(), moves)
 
-            with patch(
-                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg = Mock()
-                mock_msg_class.return_value = mock_msg
-                mock_msg.get_bit_word.side_effect = [
-                    0x02,  # event type
-                    102,   # serial (diff of 2)
-                    15,    # face of the oldest move, out of domain
-                    0,     # direction (normal)
-                    500,   # elapsed time
-                    3,     # face (D) of the newest move
-                    0,     # direction (normal)
-                    500,   # elapsed time
-                ]
+            mock_cypher.decrypt.return_value = history
+            result = await self.driver.event_handler(Mock(), history)
 
-                mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
+        # A move the driver cannot name is a hole in the serials, which
+        # holds the eviction back exactly like a move never received
+        self.assertEqual(held, [])
+        self.mock_client.write_gatt_char.assert_called_once()
 
-                self.assertEqual(len(result), 1)
-                move_event = cast('MoveEventDict', result[0])
-                self.assertEqual(move_event['move'], 'D')
-                self.assertEqual(move_event['cube_timestamp'], 1000.0)
+        # The clock of the cube kept advancing over the two of them
+        self.assertEqual(self.driver.cube_timestamp, 1000.0)
+
+        # And the cube names the missed one in its answer
+        self.assertEqual(len(result), 2)
+        self.assertEqual(
+            [cast('MoveEventDict', event)['move'] for event in result],
+            ["U'", 'D'],
+        )
+        self.assertEqual(
+            [cast('MoveEventDict', event)['serial'] for event in result],
+            [101, 102],
+        )
 
     @staticmethod
     def build_frame(bits: str) -> bytearray:
@@ -988,3 +1000,253 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 with self.assertRaises(ValueError):
                     mock_sender = Mock()
                     await self.driver.event_handler(mock_sender, bytearray())
+
+    @staticmethod
+    def move_record(face: int, direction: int) -> str:
+        """
+        Build the five bits naming one move.
+
+        Returns:
+            The bits of the move, face first, most significant first.
+
+        """
+        return f'{face:04b}{direction:01b}'
+
+    def move_frame(self, serial: int, moves: list[tuple[int, int]],
+                   durations: list[int]) -> bytearray:
+        """
+        Build the 20 bytes of a move notification.
+
+        The newest move comes first, as the protocol packs it: the move
+        of index i is the one of serial `serial - i`, and its duration
+        sits in the block starting at the bit 47.
+
+        Returns:
+            The frame, zero padded up to its full length.
+
+        """
+        records = ''.join(
+            starmap(self.move_record, moves),
+        ).ljust(35, '0')
+        times = ''.join(f'{duration:016b}' for duration in durations)
+
+        return self.build_frame(
+            f'0010{serial:08b}{ records }{ times }',
+        )
+
+    def move_history_frame(self, start_serial: int,
+                           moves: list[tuple[int, int]],
+                           count: int | None = None) -> bytearray:
+        """
+        Build the 20 bytes of a move history answer.
+
+        Returns:
+            The frame, zero padded up to its full length.
+
+        """
+        announced = len(moves) if count is None else count
+        records = ''.join(starmap(self.move_record, moves))
+
+        return self.build_frame(
+            f'0111{start_serial:08b}{announced:05b}{ records }',
+        )
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_move_evicted_without_gap(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the nominal move is delivered without asking anything."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        self.driver.serial = 100
+        self.driver.last_serial = 100
+
+        test_data = self.move_frame(101, [(0, 0)], [1000])
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+
+            result = await self.driver.event_handler(Mock(), test_data)
+
+        self.assertEqual(len(result), 1)
+        move_event = cast('MoveEventDict', result[0])
+        self.assertEqual(move_event['event'], 'move')
+        self.assertEqual(move_event['move'], 'U')
+        self.assertEqual(move_event['serial'], 101)
+        # The buffer is emptied as it is filled, and the cube is left
+        # alone: the latency of a nominal move does not change.
+        self.assertEqual(self.driver.move_buffer, [])
+        self.assertEqual(self.driver.last_serial, 101)
+        self.mock_client.write_gatt_char.assert_not_called()
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_move_gap_requests_history(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test a gap wider than the message asks the cube for the rest."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        self.driver.serial = 100
+        self.driver.last_serial = 100
+
+        # Ten moves announced, seven carried: 101, 102 and 103 are only
+        # recoverable through a history request
+        test_data = self.move_frame(
+            110, [(0, 0)] * 7, [100] * 7,
+        )
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+            mock_cypher.encrypt.return_value = b'encrypted_data'
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen2',
+                    level='WARNING',
+            ) as logged:
+                result = await self.driver.event_handler(Mock(), test_data)
+
+            request = mock_cypher.encrypt.call_args[0][0]
+
+        self.assertIn('announces 10 moves', logged.output[0])
+        self.assertIn('3 of them beyond', logged.output[0])
+
+        # Nothing is delivered while the hole is not filled
+        self.assertEqual(result, [])
+        self.assertEqual(len(self.driver.move_buffer), 7)
+        self.assertTrue(self.driver.history_request_pending)
+
+        self.mock_client.write_gatt_char.assert_called_once()
+        self.assertEqual(request[0], 0x07)
+        self.assertEqual(request[1], 104)  # oldest move carried
+        self.assertEqual(request[2], 4)  # 104 is four moves after 100
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_move_history_recovers_in_order(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the recovered moves come out in the order of the cube."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        self.driver.serial = 100
+        self.driver.last_serial = 100
+
+        moves = self.move_frame(110, [(0, 0)] * 7, [100] * 7)
+        # The window the driver asks for starts on the oldest move it
+        # carries, which the answer repeats before the missed ones
+        history = self.move_history_frame(
+            104, [(0, 0), (1, 0), (2, 1), (3, 0)],
+        )
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = moves
+            await self.driver.event_handler(Mock(), moves)
+
+            mock_cypher.decrypt.return_value = history
+            result = await self.driver.event_handler(Mock(), history)
+
+        self.assertEqual(len(result), 10)
+        self.assertEqual(
+            [cast('MoveEventDict', event)['serial'] for event in result],
+            list(range(101, 111)),
+        )
+        self.assertEqual(
+            [event['event'] for event in result[:3]],
+            ['move_history'] * 3,
+        )
+        self.assertEqual(
+            [cast('MoveEventDict', event)['move'] for event in result[:3]],
+            ['D', "F'", 'R'],
+        )
+        # A recovered move carries no timestamp of any kind
+        recovered = cast('MoveEventDict', result[0])
+        self.assertIsNone(recovered['local_timestamp'])
+        self.assertIsNone(recovered['cube_timestamp'])
+
+        self.assertEqual(self.driver.move_buffer, [])
+        self.assertEqual(self.driver.last_serial, 110)
+        self.assertFalse(self.driver.history_request_pending)
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_move_history_out_of_domain_move(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test an unnamable recovered move is journaled, not injected."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        self.driver.serial = 100
+        self.driver.last_serial = 100
+        self.driver.move_buffer = cast('Any', [
+            {'serial': 103, 'event': 'move', 'move': 'U'},
+        ])
+
+        history = self.move_history_frame(103, [(0, 0), (15, 0)])
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = history
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen2',
+                    level='DEBUG',
+            ) as logged:
+                result = await self.driver.event_handler(Mock(), history)
+
+        self.assertIn('out of domain move at index 1', logged.output[0])
+        self.assertIn('face "15"', logged.output[0])
+        # The hole is still there, so nothing is delivered
+        self.assertEqual(result, [])
+        self.assertEqual(len(self.driver.move_buffer), 1)
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_move_history_count_over_capacity(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test a count wider than the notification reads no further."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        self.driver.serial = 100
+        self.driver.last_serial = 100
+
+        # Thirty one moves announced, twenty height carried at most
+        history = self.move_history_frame(
+            90, [(0, 0)] * GEN2_MOVE_HISTORY_CAPACITY, count=31,
+        )
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = history
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen2',
+                    level='DEBUG',
+            ) as logged:
+                result = await self.driver.event_handler(Mock(), history)
+
+        self.assertEqual(result, [])
+        self.assertIn('announces 31 moves', logged.output[0])
+        self.assertIn(
+            f'only { GEN2_MOVE_HISTORY_CAPACITY } fit', logged.output[0],
+        )
+
+    async def test_request_move_history_caps_the_window(self) -> None:
+        """Test a window wider than the answer is capped, not sent."""
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.encrypt.return_value = b'encrypted_data'
+
+            await self.driver.request_move_history(50, 40)
+
+            request = mock_cypher.encrypt.call_args[0][0]
+
+        self.mock_client.write_gatt_char.assert_called_once()
+        self.assertEqual(len(request), 20)
+        self.assertEqual(request[0], 0x07)
+        self.assertEqual(request[1], 50)
+        self.assertEqual(request[2], GEN2_MOVE_HISTORY_CAPACITY)
