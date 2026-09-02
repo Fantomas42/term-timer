@@ -377,8 +377,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
 
             mock_request.assert_not_called()  # No request when serial is 0
 
-    @patch('term_timer.bluetooth.drivers.gan_gen3.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.gan_gen3.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_move_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -395,7 +395,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                'term_timer.bluetooth.drivers.gan_gen3.GanProtocolMessage',
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -440,8 +440,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                     self.assertEqual(move_in_buffer['serial'], 102)
                     self.assertEqual(move_in_buffer['cube_timestamp'], 12345)
 
-    @patch('term_timer.bluetooth.drivers.gan_gen3.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.gan_gen3.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_move_blocked_before_facelets(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -458,23 +458,31 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                'term_timer.bluetooth.drivers.gan_gen3.GanProtocolMessage',
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
-                mock_msg.get_bit_word.side_effect = [
-                    0x55,  # magic
-                    0x01,  # event type (move)
-                    10,  # data_size
-                ]
+
+                def mock_get_bit_word(
+                        start: int, length: int, *,
+                        little_endian: bool = False) -> int:  # noqa: ARG001
+                    if start == 0 and length == 8:
+                        return 0x55  # magic
+                    if start == 8 and length == 8:
+                        return 0x01  # event type (move)
+                    if start == 16 and length == 8:
+                        return 10  # data_size
+                    return 0
+
+                mock_msg.get_bit_word.side_effect = mock_get_bit_word
 
                 mock_sender = Mock()
                 result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(result, [])
 
-    @patch('term_timer.bluetooth.drivers.gan_gen3.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.gan_gen3.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     @patch('term_timer.bluetooth.drivers.gan_gen3.cubies_to_facelets')
     async def test_event_handler_facelets_event(
             self, mock_cubies_to_facelets: Mock,
@@ -497,7 +505,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                'term_timer.bluetooth.drivers.gan_gen3.GanProtocolMessage',
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -527,8 +535,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 self.assertEqual(self.driver.serial, 50)
                 self.assertEqual(self.driver.last_serial, 1)
 
-    @patch('term_timer.bluetooth.drivers.gan_gen3.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.gan_gen3.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     @patch('term_timer.bluetooth.drivers.gan_gen3.DEBOUNCE', 1.0)
     async def test_event_handler_facelets_with_debounce_check(
             self, mock_datetime: Mock, mock_time: Mock,
@@ -554,7 +562,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                'term_timer.bluetooth.drivers.gan_gen3.GanProtocolMessage',
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -586,8 +594,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                     await self.driver.event_handler(mock_sender, test_data)
                     mock_check.assert_called_once()
 
-    @patch('term_timer.bluetooth.drivers.gan_gen3.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.gan_gen3.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_move_history(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -602,7 +610,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                'term_timer.bluetooth.drivers.gan_gen3.GanProtocolMessage',
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -647,8 +655,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                     # (5-1)*2 = 8 moves
                     self.assertEqual(mock_inject.call_count, 8)
 
-    @patch('term_timer.bluetooth.drivers.gan_gen3.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.gan_gen3.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_hardware_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -663,7 +671,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                'term_timer.bluetooth.drivers.gan_gen3.GanProtocolMessage',
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -701,8 +709,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 # Gen3 doesn't support gyro
                 self.assertFalse(hw_event['gyroscope_supported'])
 
-    @patch('term_timer.bluetooth.drivers.gan_gen3.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.gan_gen3.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_battery_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -717,16 +725,25 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                'term_timer.bluetooth.drivers.gan_gen3.GanProtocolMessage',
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
-                mock_msg.get_bit_word.side_effect = [
-                    0x55,  # magic
-                    0x10,  # event type (battery)
-                    5,  # data_size
-                    80,  # battery level
-                ]
+
+                def mock_get_bit_word(
+                        start: int, length: int, *,
+                        little_endian: bool = False) -> int:  # noqa: ARG001
+                    if start == 0 and length == 8:
+                        return 0x55  # magic
+                    if start == 8 and length == 8:
+                        return 0x10  # event type (battery)
+                    if start == 16 and length == 8:
+                        return 5  # data_size
+                    if start == 24 and length == 8:
+                        return 80  # battery level
+                    return 0
+
+                mock_msg.get_bit_word.side_effect = mock_get_bit_word
 
                 mock_sender = Mock()
                 result = await self.driver.event_handler(mock_sender, test_data)
@@ -737,8 +754,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 battery_event = cast('BatteryEventDict', event)
                 self.assertEqual(battery_event['level'], 80)
 
-    @patch('term_timer.bluetooth.drivers.gan_gen3.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.gan_gen3.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_disconnect_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -753,15 +770,23 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                'term_timer.bluetooth.drivers.gan_gen3.GanProtocolMessage',
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
-                mock_msg.get_bit_word.side_effect = [
-                    0x55,  # magic
-                    0x11,  # event type (disconnect)
-                    1,  # data_size
-                ]
+
+                def mock_get_bit_word(
+                        start: int, length: int, *,
+                        little_endian: bool = False) -> int:  # noqa: ARG001
+                    if start == 0 and length == 8:
+                        return 0x55  # magic
+                    if start == 8 and length == 8:
+                        return 0x11  # event type (disconnect)
+                    if start == 16 and length == 8:
+                        return 1  # data_size
+                    return 0
+
+                mock_msg.get_bit_word.side_effect = mock_get_bit_word
 
                 mock_sender = Mock()
                 result = await self.driver.event_handler(mock_sender, test_data)
@@ -771,8 +796,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 self.assertEqual(event['event'], 'disconnect')
                 self.mock_client.disconnect.assert_called_once()
 
-    @patch('term_timer.bluetooth.drivers.gan_gen3.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.gan_gen3.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_invalid_magic_or_size(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -787,24 +812,32 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                'term_timer.bluetooth.drivers.gan_gen3.GanProtocolMessage',
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
-                mock_msg.get_bit_word.side_effect = [
-                    0x54,  # invalid magic (not 0x55)
-                    0x01,  # event type
-                    0,  # invalid data_size (0)
-                ]
+
+                def mock_get_bit_word(
+                        start: int, length: int, *,
+                        little_endian: bool = False) -> int:  # noqa: ARG001
+                    if start == 0 and length == 8:
+                        return 0x54  # invalid magic (not 0x55)
+                    if start == 8 and length == 8:
+                        return 0x01  # event type
+                    if start == 16 and length == 8:
+                        return 0  # invalid data_size (0)
+                    return 0
+
+                mock_msg.get_bit_word.side_effect = mock_get_bit_word
 
                 mock_sender = Mock()
                 result = await self.driver.event_handler(mock_sender, test_data)
 
                 self.assertEqual(result, [])
 
-    @patch('term_timer.bluetooth.drivers.gan_gen3.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.gan_gen3.datetime')
-    @patch('term_timer.bluetooth.drivers.gan_gen3.logger')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    @patch('term_timer.bluetooth.drivers.base.logger')
     async def test_event_handler_unknown_event(
             self, mock_logger: Mock, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -819,15 +852,23 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                'term_timer.bluetooth.drivers.gan_gen3.GanProtocolMessage',
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
-                mock_msg.get_bit_word.side_effect = [
-                    0x55,  # magic
-                    0xFF,  # unknown event type
-                    5,  # data_size
-                ]
+
+                def mock_get_bit_word(
+                        start: int, length: int, *,
+                        little_endian: bool = False) -> int:  # noqa: ARG001
+                    if start == 0 and length == 8:
+                        return 0x55  # magic
+                    if start == 8 and length == 8:
+                        return 0xFF  # unknown event type
+                    if start == 16 and length == 8:
+                        return 5  # data_size
+                    return 0
+
+                mock_msg.get_bit_word.side_effect = mock_get_bit_word
 
                 mock_sender = Mock()
                 result = await self.driver.event_handler(mock_sender, test_data)

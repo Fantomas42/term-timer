@@ -188,8 +188,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                     f'Command {command} produced a 0xAD opcode',
                 )
 
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_gyroscope_disabled(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -214,8 +214,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
 
             self.assertEqual(result, [])
 
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_gyroscope_enabled(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -234,7 +234,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
+                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -256,8 +256,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                 self.assertEqual(event['timestamp'], mock_timestamp)
                 self.assertIn('quaternion', event)
 
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_moves_blocked_before_facelets(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -277,7 +277,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
+                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -288,8 +288,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
 
                 self.assertEqual(result, [])
 
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_move_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -309,7 +309,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
+                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -330,8 +330,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                 # Skip checking 'move' key as it doesn't exist in type
                 self.assertEqual(result[1]['event'], 'move')
 
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_facelets_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -347,7 +347,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
+                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -374,8 +374,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                 self.assertIn('facelets', facelets_event)
                 self.assertEqual(len(facelets_event['facelets']), 54)
 
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_hardware_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -391,7 +391,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
+                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -432,8 +432,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                 self.assertTrue(hw_event['gyroscope_supported'])
                 self.assertEqual(hw_event['serial'], 123)
 
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_battery_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -449,7 +449,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
+                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -467,8 +467,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                 battery_event = cast('BatteryEventDict', event)
                 self.assertEqual(battery_event['level'], 75)
 
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_battery_level_capped(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -484,7 +484,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
+                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -501,8 +501,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                 battery_event = cast('BatteryEventDict', event)
                 self.assertEqual(battery_event['level'], 100)
 
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_gyro_config_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -518,7 +518,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
+                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -539,9 +539,9 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                 self.assertTrue(gyro_config_event['gyroscope_ready'])
                 self.assertTrue(gyro_config_event['gyroscope_supported'])
 
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
-    @patch('term_timer.bluetooth.drivers.moyu.logger')
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    @patch('term_timer.bluetooth.drivers.base.logger')
     async def test_event_handler_unknown_event(
             self, mock_logger: Mock, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -557,7 +557,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             mock_cypher.decrypt.return_value = test_data
 
             with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
+                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
@@ -581,7 +581,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             mock_cypher.decrypt.return_value = bytearray()
 
             with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
+                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
             ) as mock_msg_class:
                 mock_msg_class.side_effect = ValueError('Invalid data')
 

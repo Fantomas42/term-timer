@@ -3,10 +3,13 @@ import unittest
 from datetime import datetime
 from datetime import timezone
 from typing import TYPE_CHECKING
+from typing import ClassVar
 from unittest.mock import Mock
+from unittest.mock import patch
 
 from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
+from term_timer.bluetooth.message import GanProtocolMessage
 
 if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import EventDict
@@ -31,6 +34,54 @@ class BaseDriver(Driver):
         return GanGen2CubeEncrypter(bytes(16), bytes(16), bytes(6))
 
 
+class DispatchDriver(BaseDriver):
+    """Test driver registering a single handler."""
+
+    MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
+        0x01: 'handle_probe',
+    }
+
+    async def handle_probe(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list['EventDict']:
+        """
+        Build one reset event out of the message.
+
+        Returns:
+            A single event naming the driver that decoded it.
+
+        """
+        return [
+            {
+                'event': f'probe-{ msg.get_bit_word(8, 8) }',
+                'clock': clock,
+                'timestamp': timestamp,
+            },
+        ]
+
+
+class InheritedDispatchDriver(DispatchDriver):
+    """Test driver redefining a handler of its parent."""
+
+    async def handle_probe(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,  # noqa: ARG002
+            clock: int, timestamp: datetime) -> list['EventDict']:
+        """
+        Build one event without reading the message.
+
+        Returns:
+            A single event naming the subclass that decoded it.
+
+        """
+        return [
+            {
+                'event': 'probe-inherited',
+                'clock': clock,
+                'timestamp': timestamp,
+            },
+        ]
+
+
 class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
     """Tests for async Driver methods."""
 
@@ -41,11 +92,52 @@ class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
 
         self.driver = BaseDriver(self.mock_client, use_gyroscope=False)
 
-    async def test_event_handler_raises_not_implemented(self) -> None:
-        """Test event handler raises not implemented."""
+    async def test_event_handler_unknown_event_code(self) -> None:
+        """Test event handler with an opcode absent of the table."""
         mock_sender = Mock()
-        with self.assertRaises(NotImplementedError):
-            await self.driver.event_handler(mock_sender, bytearray(b'data'))
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes([0x99, 0x01, 0x00])
+
+            with patch('term_timer.bluetooth.drivers.base.logger') as logger:
+                result = await self.driver.event_handler(
+                    mock_sender, bytearray(b'data'),
+                )
+
+        self.assertEqual(result, [])
+        self.assertEqual(self.driver.events, [])
+        logger.debug.assert_called_once()
+
+    async def test_event_handler_dispatches_to_handler(self) -> None:
+        """Test event handler dispatches to the registered handler."""
+        driver = DispatchDriver(self.mock_client, use_gyroscope=False)
+        mock_sender = Mock()
+
+        with patch.object(driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes([0x01, 0x2A, 0x00])
+
+            result = await driver.event_handler(
+                mock_sender, bytearray(b'data'),
+            )
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['event'], 'probe-42')
+        self.assertEqual(driver.events, result)
+
+    async def test_event_handler_handler_is_late_bound(self) -> None:
+        """Test event handler calls the handler of the subclass."""
+        driver = InheritedDispatchDriver(self.mock_client, use_gyroscope=False)
+        mock_sender = Mock()
+
+        with patch.object(driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes([0x01, 0x2A, 0x00])
+
+            result = await driver.event_handler(
+                mock_sender, bytearray(b'data'),
+            )
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['event'], 'probe-inherited')
 
 
 class TestDriver(unittest.TestCase):

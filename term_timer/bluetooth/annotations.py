@@ -4,7 +4,20 @@ from typing import TYPE_CHECKING
 from typing import TypedDict
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable
+    from collections.abc import Callable
+
+    from term_timer.bluetooth.message import GanProtocolMessage
+
     MoveEventDictList = list['MoveEventDict']
+
+    # Signature shared by every message handler of every driver.
+    # The handlers are resolved by name through Driver.MESSAGE_HANDLERS,
+    # so nothing but this alias documents what they receive.
+    MessageHandler = Callable[
+        [GanProtocolMessage, int, datetime],
+        Awaitable[list['EventDict']],
+    ]
 
 
 class MoveInfo(TypedDict):

@@ -6,13 +6,10 @@ References :
   - https://github.com/Fantomas42/gan-protocols/
 """
 import logging
-import time
 from datetime import datetime
-from datetime import timezone
 from typing import ClassVar
 
 from bleak import BleakClient
-from bleak.backends.characteristic import BleakGATTCharacteristic
 from cubing_algs.facelets import cubies_to_facelets
 
 from term_timer.bluetooth.annotations import BatteryEventDict
@@ -51,6 +48,15 @@ class GanGen2Driver(Driver):
     state_characteristic_uid: ClassVar[str] = GAN_GEN2_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = GAN_GEN2_COMMAND_CHARACTERISTIC
     encrypter: ClassVar[type[GanGen2CubeEncrypter]] = GanGen2CubeEncrypter
+    payload_offset: ClassVar[int] = 4
+    MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
+        0x01: 'handle_gyroscope',
+        0x02: 'handle_move',
+        0x04: 'handle_facelets',
+        0x05: 'handle_hardware',
+        0x09: 'handle_battery',
+        0x0D: 'handle_disconnect',
+    }
 
     def __init__(self, client: BleakClient,
                  *, use_gyroscope: bool) -> None:
@@ -108,233 +114,295 @@ class GanGen2Driver(Driver):
 
         return self.cypher.encrypt(msg)
 
-    async def event_handler(  # noqa: C901, PLR0912, PLR0914, PLR0915
-            self, sender: BleakGATTCharacteristic,  # noqa: ARG002
-            data: bytearray) -> list[EventDict]:
+    @staticmethod
+    def read_event_code(msg: GanProtocolMessage) -> int:
         """
-        Process notifications from the cube.
+        Read the opcode of a V1 message.
+
+        V1 declares its bleProtoId on the first 4 bits, and no
+        dataLength at all.
 
         Returns:
-            List of event dictionaries parsed from cube notifications.
+            The opcode of the message.
 
         """
-        clock = time.perf_counter_ns()
-        timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+        return msg.get_bit_word(0, 4)
 
-        events: list[EventDict] = []
+    async def handle_gyroscope(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the two orientation samples of a gyroscope message.
 
-        msg = GanProtocolMessage(
-            self.cypher.decrypt(data),
-        )
-        event = msg.get_bit_word(0, 4)
+        V1 is the only protocol version declaring two samples in a
+        single message, each with its own quaternion and velocity.
 
-        if event == 0x01:  # Gyroscope
-            if not self.use_gyroscope:
-                return []
+        Returns:
+            The two gyroscope events, oldest first, or nothing when the
+            gyroscope is not used.
 
-            # Orientation Quaternion
-            qw = msg.get_bit_word(4, 16)
-            qx = msg.get_bit_word(20, 16)
-            qy = msg.get_bit_word(36, 16)
-            qz = msg.get_bit_word(52, 16)
+        """
+        if not self.use_gyroscope:
+            return []
 
-            # Angular Velocity
-            vx = msg.get_bit_word(68, 4)
-            vy = msg.get_bit_word(72, 4)
-            vz = msg.get_bit_word(76, 4)
+        # Orientation Quaternion
+        qw = msg.get_bit_word(4, 16)
+        qx = msg.get_bit_word(20, 16)
+        qy = msg.get_bit_word(36, 16)
+        qz = msg.get_bit_word(52, 16)
 
-            gyro_payload: GyroEventDict = {
-                'event': 'gyro',
+        # Angular Velocity
+        vx = msg.get_bit_word(68, 4)
+        vy = msg.get_bit_word(72, 4)
+        vz = msg.get_bit_word(76, 4)
+
+        gyro_payload: GyroEventDict = {
+            'event': 'gyro',
+            'clock': clock,
+            'timestamp': timestamp,
+            'quaternion': {
+                'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
+                'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
+                'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
+                'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
+            },
+            'velocity': {
+                'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
+                'y': (1 - (vy >> 3) * 2) * (vy & 0x7),
+                'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
+            },
+        }
+
+        # Second Orientation Quaternion
+        qw = msg.get_bit_word(4 + 76, 16)
+        qx = msg.get_bit_word(20 + 76, 16)
+        qy = msg.get_bit_word(36 + 76, 16)
+        qz = msg.get_bit_word(52 + 76, 16)
+
+        # Second Angular Velocity
+        vx = msg.get_bit_word(68 + 76, 4)
+        vy = msg.get_bit_word(72 + 76, 4)
+        vz = msg.get_bit_word(76 + 76, 4)
+
+        second_gyro_payload: GyroEventDict = {
+            'event': 'gyro',
+            'clock': clock,
+            'timestamp': timestamp,
+            'quaternion': {
+                'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
+                'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
+                'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
+                'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
+            },
+            'velocity': {
+                'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
+                'y': (1 - (vy >> 3) * 2) * (vy & 0x7),
+                'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
+            },
+        }
+
+        return [gyro_payload, second_gyro_payload]
+
+    async def handle_move(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the moves carried by a move message.
+
+        A single message carries the last move plus the six previous
+        ones, which is the capacity of the protocol, so at most seven
+        moves are recovered between two notifications.
+
+        Returns:
+            The decoded moves, oldest first, or nothing while the
+            facelets have not been received yet.
+
+        """
+        if self.last_serial == -1:  # Block moves until facelets received
+            return []
+
+        serial = msg.get_bit_word(4, 8)
+        diff = min((serial - self.last_serial) & 0xFF, 7)
+
+        self.last_serial = serial
+
+        if diff <= 0:
+            return []
+
+        moves: list[EventDict] = []
+
+        for i in range(diff - 1, -1, -1):
+            face = msg.get_bit_word(12 + 5 * i, 4)
+            direction = msg.get_bit_word(16 + 5 * i, 1)
+            move = 'URFDLB'[face] + " '"[direction]
+            elapsed_raw = msg.get_bit_word(47 + 16 * i, 16)
+
+            # In case of 16-bit cube timestamp register overflow
+            elapsed: float
+            if elapsed_raw == 0 and self.last_move_timestamp is not None:
+                elapsed = (
+                    timestamp - self.last_move_timestamp
+                ).total_seconds()
+            else:
+                elapsed = float(elapsed_raw)
+
+            self.cube_timestamp += elapsed
+            move_payload: MoveEventDict = {
+                'event': 'move',
                 'clock': clock,
                 'timestamp': timestamp,
-                'quaternion': {
-                    'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
-                    'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
-                    'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
-                    'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
-                },
-                'velocity': {
-                    'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
-                    'y': (1 - (vy >> 3) * 2) * (vy & 0x7),
-                    'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
-                },
+                'serial': (serial - i) & 0xFF,
+                # Missed and recovered events
+                # has no meaningful local timestamps
+                'local_timestamp': timestamp if i == 0 else None,
+                'cube_timestamp': self.cube_timestamp,
+                'face': face,
+                'direction': direction,
+                'move': move.strip(),
             }
-            self.add_event(events, gyro_payload)
+            moves.append(move_payload)
 
-            # Second Orientation Quaternion
-            qw = msg.get_bit_word(4 + 76, 16)
-            qx = msg.get_bit_word(20 + 76, 16)
-            qy = msg.get_bit_word(36 + 76, 16)
-            qz = msg.get_bit_word(52 + 76, 16)
+        self.last_move_timestamp = timestamp
 
-            # Second Angular Velocity
-            vx = msg.get_bit_word(68 + 76, 4)
-            vy = msg.get_bit_word(72 + 76, 4)
-            vz = msg.get_bit_word(76 + 76, 4)
+        return moves
 
-            second_gyro_payload: GyroEventDict = {
-                'event': 'gyro',
-                'clock': clock,
-                'timestamp': timestamp,
-                'quaternion': {
-                    'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
-                    'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
-                    'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
-                    'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
-                },
-                'velocity': {
-                    'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
-                    'y': (1 - (vy >> 3) * 2) * (vy & 0x7),
-                    'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
-                },
-            }
+    async def handle_facelets(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the cube state carried by a facelets message.
 
-            self.add_event(events, second_gyro_payload)
+        Returns:
+            The facelets event of the message.
 
-        elif event == 0x02:  # Moves
-            if self.last_serial == -1:  # Block moves until facelets received
-                return []
+        """
+        serial = msg.get_bit_word(4, 8)
 
-            serial = msg.get_bit_word(4, 8)
-            diff = min((serial - self.last_serial) & 0xFF, 7)
-
+        if self.last_serial == -1:
             self.last_serial = serial
 
-            if diff <= 0:
-                return []
+        # Corner/Edge Permutation/Orientation
+        cp = []
+        co = []
+        ep = []
+        eo = []
+        so = [0, 1, 2, 3, 4, 5]
+        # Corners
+        for i in range(7):
+            cp.append(msg.get_bit_word(12 + i * 3, 3))
+            co.append(msg.get_bit_word(33 + i * 2, 2))
+        cp.append(28 - sum(cp))
+        co.append((3 - (sum(co) % 3)) % 3)
+        # Edges
+        for i in range(11):
+            ep.append(msg.get_bit_word(47 + i * 4, 4))
+            eo.append(msg.get_bit_word(91 + i, 1))
+        ep.append(66 - sum(ep))
+        eo.append((2 - (sum(eo) % 2)) % 2)
 
-            for i in range(diff - 1, -1, -1):
-                face = msg.get_bit_word(12 + 5 * i, 4)
-                direction = msg.get_bit_word(16 + 5 * i, 1)
-                move = 'URFDLB'[face] + " '"[direction]
-                elapsed_raw = msg.get_bit_word(47 + 16 * i, 16)
+        facelets_payload: FaceletsEventDict = {
+            'event': 'facelets',
+            'clock': clock,
+            'timestamp': timestamp,
+            'serial': serial,
+            'facelets': cubies_to_facelets(cp, co, ep, eo, so),
+            'state': {
+                'CP': cp,
+                'CO': co,
+                'EP': ep,
+                'EO': eo,
+            },
+        }
 
-                # In case of 16-bit cube timestamp register overflow
-                elapsed: float
-                if elapsed_raw == 0 and self.last_move_timestamp is not None:
-                    elapsed = (
-                        timestamp - self.last_move_timestamp
-                    ).total_seconds()
-                else:
-                    elapsed = float(elapsed_raw)
+        return [facelets_payload]
 
-                self.cube_timestamp += elapsed
-                move_payload: MoveEventDict = {
-                    'event': 'move',
-                    'clock': clock,
-                    'timestamp': timestamp,
-                    'serial': (serial - i) & 0xFF,
-                    # Missed and recovered events
-                    # has no meaningful local timestamps
-                    'local_timestamp': timestamp if i == 0 else None,
-                    'cube_timestamp': self.cube_timestamp,
-                    'face': face,
-                    'direction': direction,
-                    'move': move.strip(),
-                }
-                self.add_event(events, move_payload)
+    async def handle_hardware(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the hardware identity of the cube.
 
-            self.last_move_timestamp = timestamp
+        V1 is the only GAN protocol carrying two versions and two
+        gyroscope capability bits.
 
-        elif event == 0x04:  # Facelets
-            serial = msg.get_bit_word(4, 8)
+        Returns:
+            The hardware event of the message.
 
-            if self.last_serial == -1:
-                self.last_serial = serial
+        """
+        restart_no_power = msg.get_bit_word(4, 4)
 
-            # Corner/Edge Permutation/Orientation
-            cp = []
-            co = []
-            ep = []
-            eo = []
-            so = [0, 1, 2, 3, 4, 5]
-            # Corners
-            for i in range(7):
-                cp.append(msg.get_bit_word(12 + i * 3, 3))
-                co.append(msg.get_bit_word(33 + i * 2, 2))
-            cp.append(28 - sum(cp))
-            co.append((3 - (sum(co) % 3)) % 3)
-            # Edges
-            for i in range(11):
-                ep.append(msg.get_bit_word(47 + i * 4, 4))
-                eo.append(msg.get_bit_word(91 + i, 1))
-            ep.append(66 - sum(ep))
-            eo.append((2 - (sum(eo) % 2)) % 2)
+        hw_major = msg.get_bit_word(8, 8)
+        hw_minor = msg.get_bit_word(16, 8)
 
-            facelets_payload: FaceletsEventDict = {
-                'event': 'facelets',
-                'clock': clock,
-                'timestamp': timestamp,
-                'serial': serial,
-                'facelets': cubies_to_facelets(cp, co, ep, eo, so),
-                'state': {
-                    'CP': cp,
-                    'CO': co,
-                    'EP': ep,
-                    'EO': eo,
-                },
-            }
-            self.add_event(events, facelets_payload)
+        sw_major = msg.get_bit_word(24, 8)
+        sw_minor = msg.get_bit_word(32, 8)
 
-        elif event == 0x05:  # Hardware
-            restart_no_power = msg.get_bit_word(4, 4)
+        hardware_name = ''
+        for i in range(8):
+            hardware_name += chr(msg.get_bit_word(i * 8 + 40, 8))
 
-            hw_major = msg.get_bit_word(8, 8)
-            hw_minor = msg.get_bit_word(16, 8)
+        gyro_enabled = msg.get_bit_word(104, 1)
+        gyro_ready = msg.get_bit_word(105, 1)
 
-            sw_major = msg.get_bit_word(24, 8)
-            sw_minor = msg.get_bit_word(32, 8)
+        hardware_payload: HardwareEventDict = {
+            'event': 'hardware',
+            'clock': clock,
+            'timestamp': timestamp,
+            'restart_no_power': restart_no_power,
+            'hardware_name': hardware_name,
+            'hardware_version': f'{ hw_major }.{ hw_minor }',
+            'software_version': f'{ sw_major }.{ sw_minor }',
+            'gyroscope_enabled': bool(gyro_enabled),
+            'gyroscope_ready': bool(gyro_ready),
+            'gyroscope_supported': (
+                bool(gyro_enabled)
+                and bool(gyro_ready)
+            ),
+        }
 
-            hardware_name = ''
-            for i in range(8):
-                hardware_name += chr(msg.get_bit_word(i * 8 + 40, 8))
+        return [hardware_payload]
 
-            gyro_enabled = msg.get_bit_word(104, 1)
-            gyro_ready = msg.get_bit_word(105, 1)
+    async def handle_battery(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the battery level and its charging state.
 
-            hardware_payload: HardwareEventDict = {
-                'event': 'hardware',
-                'clock': clock,
-                'timestamp': timestamp,
-                'restart_no_power': restart_no_power,
-                'hardware_name': hardware_name,
-                'hardware_version': f'{ hw_major }.{ hw_minor }',
-                'software_version': f'{ sw_major }.{ sw_minor }',
-                'gyroscope_enabled': bool(gyro_enabled),
-                'gyroscope_ready': bool(gyro_ready),
-                'gyroscope_supported': (
-                    bool(gyro_enabled)
-                    and bool(gyro_ready)
-                ),
-            }
-            self.add_event(events, hardware_payload)
+        V1 is the only GAN protocol declaring a real charging state.
 
-        elif event == 0x09:  # Battery
-            charging_state = msg.get_bit_word(4, 4)
-            battery_level = msg.get_bit_word(8, 8)
+        Returns:
+            The battery event of the message.
 
-            battery_payload: BatteryEventDict = {
-                'event': 'battery',
-                'clock': clock,
-                'timestamp': timestamp,
-                'charging_state': charging_state,
-                'level': min(battery_level, 100),
-            }
-            self.add_event(events, battery_payload)
+        """
+        charging_state = msg.get_bit_word(4, 4)
+        battery_level = msg.get_bit_word(8, 8)
 
-        elif event == 0x0D:  # Disconnect
-            disconnect_payload: DisconnectEventDict = {
-                'event': 'disconnect',
-                'clock': clock,
-                'timestamp': timestamp,
-            }
-            self.add_event(events, disconnect_payload)
+        battery_payload: BatteryEventDict = {
+            'event': 'battery',
+            'clock': clock,
+            'timestamp': timestamp,
+            'charging_state': charging_state,
+            'level': min(battery_level, 100),
+        }
 
-            await self.client.disconnect()
+        return [battery_payload]
 
-        else:
-            logger.debug(
-                'Unknown event type "%s": %s', event, msg,
-            )
+    async def handle_disconnect(
+            self, msg: GanProtocolMessage,  # noqa: ARG002
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Close the link on request of the cube.
 
-        return events
+        Returns:
+            The disconnect event telling the application about it.
+
+        """
+        disconnect_payload: DisconnectEventDict = {
+            'event': 'disconnect',
+            'clock': clock,
+            'timestamp': timestamp,
+        }
+
+        await self.client.disconnect()
+
+        return [disconnect_payload]
