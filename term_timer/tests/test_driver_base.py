@@ -82,6 +82,145 @@ class InheritedDispatchDriver(DispatchDriver):
         ]
 
 
+class ChainedDriver(BaseDriver):
+    """Test driver chaining its messages the way V3 does."""
+
+    payload_offset: ClassVar[int] = 16
+    chained: ClassVar[bool] = True
+    crc_reserve: ClassVar[int] = 2
+    MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
+        0x01: 'handle_probe',
+        0x02: 'handle_probe',
+    }
+
+    async def handle_probe(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list['EventDict']:
+        """
+        Build one event out of the first payload byte of the message.
+
+        Returns:
+            A single event naming the payload it decoded.
+
+        """
+        return [
+            {
+                'event': f'probe-{ msg.get_bit_word(16, 8) }',
+                'clock': clock,
+                'timestamp': timestamp,
+            },
+        ]
+
+
+class HeadedChainedDriver(ChainedDriver):
+    """Test driver chaining its messages the way V2 does."""
+
+    payload_offset: ClassVar[int] = 24
+    head_magic: ClassVar[int | None] = 0x55
+    crc_reserve: ClassVar[int] = 0
+
+    @staticmethod
+    def read_event_code(msg: GanProtocolMessage) -> int:
+        """
+        Read the opcode behind the head byte.
+
+        Returns:
+            The opcode of the message.
+
+        """
+        return msg.get_bit_word(8, 8)
+
+    async def handle_probe(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list['EventDict']:
+        """
+        Build one event out of the first payload byte of the message.
+
+        Returns:
+            A single event naming the payload it decoded.
+
+        """
+        return [
+            {
+                'event': f'probe-{ msg.get_bit_word(24, 8) }',
+                'clock': clock,
+                'timestamp': timestamp,
+            },
+        ]
+
+
+class TestSplitMessages(unittest.TestCase):
+    """Tests for the splitting of chained notifications."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        self.mock_client = Mock()
+        self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
+
+    def test_split_messages_not_chained(self) -> None:
+        """Test a protocol without isCycle yields the frame only once."""
+        driver = DispatchDriver(self.mock_client, use_gyroscope=False)
+        frame = bytes([0x01, 0x02, 0xAA, 0xBB, 0x02, 0x03, 0xCC, 0xDD])
+
+        self.assertEqual(list(driver.split_messages(frame)), [0])
+
+    def test_split_messages_chained(self) -> None:
+        """Test two chained messages are located, in order."""
+        driver = ChainedDriver(self.mock_client, use_gyroscope=False)
+        frame = bytes(
+            [0x01, 0x02, 0xAA, 0xBB]
+            + [0x02, 0x03, 0xCC, 0xDD, 0xEE]
+            + [0x00] * 9
+            + [0x12, 0x34],
+        )
+
+        self.assertEqual(list(driver.split_messages(frame)), [0, 4])
+
+    def test_split_messages_stops_on_null_head(self) -> None:
+        """Test a null byte after a message closes the frame."""
+        driver = ChainedDriver(self.mock_client, use_gyroscope=False)
+        frame = bytes(
+            [0x01, 0x02, 0xAA, 0xBB]
+            + [0x00] * 14
+            + [0x12, 0x34],
+        )
+
+        self.assertEqual(list(driver.split_messages(frame)), [0])
+
+    def test_split_messages_reserves_the_crc_bytes(self) -> None:
+        """Test the trailing CRC is never read as another message."""
+        driver = ChainedDriver(self.mock_client, use_gyroscope=False)
+        frame = bytes([0x01, 0x02, 0xAA, 0xBB, 0x12, 0x34])
+
+        self.assertEqual(list(driver.split_messages(frame)), [0])
+
+    def test_split_messages_chained_with_head_magic(self) -> None:
+        """Test a chained message repeating the head byte is located."""
+        driver = HeadedChainedDriver(self.mock_client, use_gyroscope=False)
+        frame = bytes(
+            [0x55, 0x01, 0x02, 0xAA, 0xBB]
+            + [0x55, 0x02, 0x03, 0xCC, 0xDD, 0xEE]
+            + [0x00] * 9,
+        )
+
+        self.assertEqual(list(driver.split_messages(frame)), [0, 5])
+
+    def test_split_messages_stops_on_wrong_head_magic(self) -> None:
+        """Test a chained message missing the head byte stops the walk."""
+        driver = HeadedChainedDriver(self.mock_client, use_gyroscope=False)
+        frame = bytes(
+            [0x55, 0x01, 0x02, 0xAA, 0xBB]
+            + [0x99, 0x02, 0x03, 0xCC, 0xDD, 0xEE]
+            + [0x00] * 9,
+        )
+
+        with patch('term_timer.bluetooth.drivers.base.logger') as logger:
+            offsets = list(driver.split_messages(frame))
+
+        self.assertEqual(offsets, [0])
+        logger.debug.assert_called_once()
+
+
 class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
     """Tests for async Driver methods."""
 
@@ -123,6 +262,50 @@ class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['event'], 'probe-42')
         self.assertEqual(driver.events, result)
+
+    async def test_event_handler_decodes_chained_messages(self) -> None:
+        """Test event handler decodes every chained message, in order."""
+        driver = ChainedDriver(self.mock_client, use_gyroscope=False)
+        mock_sender = Mock()
+
+        with patch.object(driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes(
+                [0x01, 0x02, 0xAA, 0xBB]
+                + [0x02, 0x03, 0xCC, 0xDD, 0xEE]
+                + [0x00] * 9
+                + [0x12, 0x34],
+            )
+
+            result = await driver.event_handler(
+                mock_sender, bytearray(b'data'),
+            )
+
+        self.assertEqual(
+            [event['event'] for event in result],
+            ['probe-170', 'probe-204'],
+        )
+        self.assertEqual(driver.events, result)
+
+    async def test_event_handler_stops_on_null_head(self) -> None:
+        """Test event handler decodes a single message on a null byte."""
+        driver = ChainedDriver(self.mock_client, use_gyroscope=False)
+        mock_sender = Mock()
+
+        with patch.object(driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes(
+                [0x01, 0x02, 0xAA, 0xBB]
+                + [0x00] * 14
+                + [0x12, 0x34],
+            )
+
+            result = await driver.event_handler(
+                mock_sender, bytearray(b'data'),
+            )
+
+        self.assertEqual(
+            [event['event'] for event in result],
+            ['probe-170'],
+        )
 
     async def test_event_handler_handler_is_late_bound(self) -> None:
         """Test event handler calls the handler of the subclass."""

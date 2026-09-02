@@ -1,6 +1,7 @@
 """Base driver class for Bluetooth cube communication."""
 import logging
 import time
+from collections.abc import Iterator
 from collections.abc import Sequence
 from datetime import datetime
 from datetime import timezone
@@ -44,6 +45,20 @@ class Driver:
     # V3 : bleProtoId(8) + dataLength(8).
     payload_offset: ClassVar[int] = 8
 
+    # Whether a single notification can carry several chained messages.
+    # V2 and V3 both declare isCycle: 1, V1 and Moyu do not.
+    chained: ClassVar[bool] = False
+
+    # Byte every chained message must start with, when the protocol
+    # declares one. V2 prefixes each message with a head of 0x55, V3
+    # starts directly with its bleProtoId.
+    head_magic: ClassVar[int | None] = None
+
+    # Trailing bytes of a notification that belong to the frame, not to
+    # a message. V3 declares isCRC16: 1 and closes its frames with two
+    # bytes of CRC.
+    crc_reserve: ClassVar[int] = 0
+
     # Opcode -> name of the method decoding it. Redefined *entirely* by
     # each generation : the opcode spaces do not overlap from one
     # generation to the next, and 0x02 means "facelets" in V2 but
@@ -85,8 +100,8 @@ class Driver:
         """
         return msg.get_bit_word(0, 8)
 
-    @staticmethod
-    def is_message_valid(msg: GanProtocolMessage) -> bool:  # noqa: ARG004
+    @classmethod
+    def is_message_valid(cls, msg: GanProtocolMessage) -> bool:  # noqa: ARG003
         """
         Tell whether a message is worth decoding.
 
@@ -96,6 +111,53 @@ class Driver:
 
         """
         return True
+
+    def split_messages(self, plain: bytes) -> Iterator[int]:
+        """
+        Yield the offset, in bytes, of each message of a notification.
+
+        A protocol declaring isCycle packs as many messages as fit into
+        one notification, each one being a TLV whose dataLength byte
+        closes its header. The codec walks them until the next byte is
+        null, which is what this reproduces.
+
+        Yields:
+            The offset of each chained message, the first one included.
+
+        """
+        yield 0
+
+        if not self.chained:
+            return
+
+        header = self.payload_offset // 8
+        limit = len(plain) - self.crc_reserve
+        offset = 0
+
+        while offset + header <= limit:
+            # The dataLength byte closes the header of the message.
+            offset += header + plain[offset + header - 1]
+
+            if offset + header > limit or plain[offset] == 0:
+                return
+
+            if self.head_magic is not None and plain[offset] != self.head_magic:
+                logger.debug(
+                    'Chained message at offset %d starts with "0x%02X" '
+                    'instead of the head "0x%02X" of the protocol',
+                    offset, plain[offset], self.head_magic,
+                )
+                return
+
+            # No chained frame has ever been observed on the wire: this
+            # line is the oracle telling whether one exists at all.
+            logger.debug(
+                'Chained message "0x%02X" found at offset %d '
+                'of a %d bytes frame',
+                plain[offset], offset, len(plain),
+            )
+
+            yield offset
 
     async def event_handler(self, sender: BleakGATTCharacteristic,  # noqa: ARG002
                             data: bytearray) -> list[EventDict]:
@@ -113,7 +175,15 @@ class Driver:
 
         plain = self.cypher.decrypt(data)
 
-        await self.handle_message(plain, clock, timestamp, events)
+        for offset in self.split_messages(plain):
+            # The message is given the frame up to its end, and not up
+            # to its declared dataLength : every absolute offset of the
+            # handlers stays valid, and no handler can read into the
+            # void when a dataLength underestimates what it reads, as
+            # the Gen4 gyroscope does.
+            await self.handle_message(
+                plain[offset:], clock, timestamp, events,
+            )
 
         return events
 

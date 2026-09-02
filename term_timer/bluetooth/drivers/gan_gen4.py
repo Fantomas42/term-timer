@@ -45,6 +45,11 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
     state_characteristic_uid: ClassVar[str] = GAN_GEN4_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = GAN_GEN4_COMMAND_CHARACTERISTIC
     payload_offset: ClassVar[int] = 16
+    chained: ClassVar[bool] = True
+    # V3 declares no head byte, its messages start with their
+    # bleProtoId, and closes its frames with two bytes of CRC-16.
+    head_magic: ClassVar[int | None] = None
+    crc_reserve: ClassVar[int] = 2
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
         0x01: 'handle_move',
         0x02: 'handle_time_sync',
@@ -163,8 +168,8 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """
         return msg.get_bit_word(0, 8)
 
-    @staticmethod
-    def is_message_valid(msg: GanProtocolMessage) -> bool:  # noqa: ARG004
+    @classmethod
+    def is_message_valid(cls, msg: GanProtocolMessage) -> bool:  # noqa: ARG003
         """
         Accept every V3 message.
 

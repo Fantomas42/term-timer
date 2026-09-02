@@ -40,6 +40,8 @@ class GanGen3Driver(GanGen2Driver):
     state_characteristic_uid: ClassVar[str] = GAN_GEN3_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = GAN_GEN3_COMMAND_CHARACTERISTIC
     payload_offset: ClassVar[int] = 24
+    chained: ClassVar[bool] = True
+    head_magic: ClassVar[int | None] = 0x55
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
         0x01: 'handle_move',
         0x02: 'handle_facelets',
@@ -353,8 +355,8 @@ class GanGen3Driver(GanGen2Driver):
         """
         return msg.get_bit_word(8, 8)
 
-    @staticmethod
-    def is_message_valid(msg: GanProtocolMessage) -> bool:
+    @classmethod
+    def is_message_valid(cls, msg: GanProtocolMessage) -> bool:
         """
         Check the head byte and the length declared by a V2 message.
 
@@ -364,7 +366,7 @@ class GanGen3Driver(GanGen2Driver):
 
         """
         return (
-            msg.get_bit_word(0, 8) == 0x55
+            msg.get_bit_word(0, 8) == cls.head_magic
             and msg.get_bit_word(16, 8) > 0
         )
 
