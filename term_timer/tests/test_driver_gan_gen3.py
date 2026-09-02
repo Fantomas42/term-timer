@@ -709,6 +709,41 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 # Gen3 doesn't support gyro
                 self.assertFalse(hw_event['gyroscope_supported'])
 
+    async def test_event_handler_hardware_captured_frame(self) -> None:
+        """Test the hardware message a real GAN i carry 2 answered."""
+        # Captured the 2026-09-02 on GANicV2S_8CA9, CRC-16 verified :
+        # head 55, proto 07, dataLength 0e, then 14 bytes of payload
+        # and the two bytes of the checksum.
+        test_data = bytearray(
+            bytes.fromhex('55070e06696356325355f0e7070c110f0ab6c7'),
+        )
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes(test_data)
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen3',
+                    level='DEBUG',
+            ) as logs:
+                result = await self.driver.event_handler(Mock(), test_data)
+
+        self.assertEqual(len(result), 1)
+        hw_event = cast('HardwareEventDict', result[0])
+        self.assertEqual(hw_event['event'], 'hardware')
+        self.assertEqual(hw_event['restart_no_power'], 6)
+        self.assertEqual(hw_event['hardware_name'], 'icV2S')
+        self.assertEqual(hw_event['software_version'], '5.5')
+        self.assertEqual(hw_event['hardware_version'], '15.0')
+
+        # buildTime lies at the offset 88 and carries the five fields
+        # of V3, not the 32 bits the descriptor declares : read as one
+        # word it would yield 286001127, and the descriptor offset 80
+        # would put the year on the byte before it.
+        self.assertIn(
+            'Build time: 2023-12-17 15:10',
+            '\n'.join(logs.output),
+        )
+
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_battery_event(

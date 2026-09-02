@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 class GanGen3Driver(GanGen2Driver):
-    """GAN356 i Carry 2."""
+    """GAN i carry 2."""
 
     service_uid: ClassVar[str] = GAN_GEN3_SERVICE
     state_characteristic_uid: ClassVar[str] = GAN_GEN3_STATE_CHARACTERISTIC
@@ -330,6 +330,12 @@ class GanGen3Driver(GanGen2Driver):
         """
         Decode the hardware identity of the cube.
 
+        The descriptor under-declares this message, and the wire is what
+        settles it : the cube announces 14 bytes of payload where
+        `bleProtoId 7` declares 11, and `buildTime` carries the same
+        five fields as V3 rather than the 32 bits declared. Measured on
+        a GAN i carry 2 the 2026-09-02, its CRC-16 closing the frame.
+
         Returns:
             The hardware event of the message.
 
@@ -345,7 +351,17 @@ class GanGen3Driver(GanGen2Driver):
         hw_major = msg.get_bit_word(80, 4)
         hw_minor = msg.get_bit_word(84, 4)
 
-        _build_time = msg.get_bit_word(88, 32, little_endian=True)
+        year = msg.get_bit_word(88, 16, little_endian=True)
+        month = msg.get_bit_word(104, 8)
+        day = msg.get_bit_word(112, 8)
+        hour = msg.get_bit_word(120, 8)
+        minute = msg.get_bit_word(128, 8)
+        build_time = (
+            f'{year:04d}-{month:02d}-{day:02d} '
+            f'{hour:02d}:{minute:02d}'
+        )
+
+        logger.debug('Build time: %s', build_time)
 
         hardware_payload: HardwareEventDict = {
             'event': 'hardware',
