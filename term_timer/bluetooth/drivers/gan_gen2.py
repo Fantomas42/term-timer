@@ -289,12 +289,7 @@ class GanGen2Driver(Driver):
             self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
         """
-        Log the face rotation angles streamed by the cube.
-
-        This is the V1 counterpart of the 0xEE message of the Gen4 : a
-        burst of records telling how far a face is turned, before the
-        turn becomes a move. Nothing consumes them yet, and what pos and
-        angle really count in is what the journal is here to say.
+        Log the raw face angles streamed by the cube.
 
         Returns:
             Nothing, the angles are journaled only.
