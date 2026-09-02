@@ -237,12 +237,15 @@ class GanGen2Driver(Driver):
             move = 'URFDLB'[face] + " '"[direction]
             elapsed_raw = msg.get_bit_word(47 + 16 * i, 16)
 
-            # In case of 16-bit cube timestamp register overflow
+            # In case of 16-bit cube timestamp register overflow.
+            # The clock of the cube counts in milliseconds, as the 32
+            # bits time and duration fields of V2 and V3 confirm, so the
+            # local elapsed time substituted to it is converted too.
             elapsed: float
             if elapsed_raw == 0 and self.last_move_timestamp is not None:
                 elapsed = (
                     timestamp - self.last_move_timestamp
-                ).total_seconds()
+                ).total_seconds() * 1000
             else:
                 elapsed = float(elapsed_raw)
 

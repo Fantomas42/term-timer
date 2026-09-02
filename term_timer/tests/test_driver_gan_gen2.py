@@ -2,6 +2,7 @@
 import asyncio
 import unittest
 from datetime import datetime
+from datetime import timedelta
 from datetime import timezone
 from typing import TYPE_CHECKING
 from typing import cast
@@ -369,6 +370,49 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 cube_timestamp = cast('int', cube_timestamp)
                 # Should have computed elapsed time from timestamp difference
                 self.assertGreater(cube_timestamp, 0)
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_move_overflow_elapsed_in_milliseconds(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the overflow fallback counts in milliseconds."""
+        mock_time.return_value = 123456789
+        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+        mock_datetime.now.return_value = mock_timestamp
+
+        self.driver.last_serial = 100
+        self.driver.last_move_timestamp = mock_timestamp - timedelta(
+            seconds=2,
+        )
+
+        test_data = bytearray(20)
+        test_data[0] = 0x02
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+
+            with patch(
+                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
+            ) as mock_msg_class:
+                mock_msg = Mock()
+                mock_msg_class.return_value = mock_msg
+                mock_msg.get_bit_word.side_effect = [
+                    0x02,  # event type
+                    101,   # serial (diff of 1)
+                    0,     # face (U)
+                    0,     # direction (normal)
+                    0,     # elapsed time, the register has overflowed
+                ]
+
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
+
+                self.assertEqual(len(result), 1)
+                move_event = cast('MoveEventDict', result[0])
+                # Two seconds of local time are 2000 ms of cube clock,
+                # the unit every other move of the protocol counts in.
+                self.assertEqual(move_event['cube_timestamp'], 2000.0)
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
