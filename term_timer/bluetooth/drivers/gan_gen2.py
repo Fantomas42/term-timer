@@ -234,7 +234,6 @@ class GanGen2Driver(Driver):
         for i in range(diff - 1, -1, -1):
             face = msg.get_bit_word(12 + 5 * i, 4)
             direction = msg.get_bit_word(16 + 5 * i, 1)
-            move = 'URFDLB'[face] + " '"[direction]
             elapsed_raw = msg.get_bit_word(47 + 16 * i, 16)
 
             # In case of 16-bit cube timestamp register overflow.
@@ -249,7 +248,21 @@ class GanGen2Driver(Driver):
             else:
                 elapsed = float(elapsed_raw)
 
+            # The clock is accumulated before the move is named: it
+            # advanced whether or not the field could be decoded, and
+            # dropping it would shift every move coming after.
             self.cube_timestamp += elapsed
+
+            move = self.format_move(face, direction)
+
+            if move is None:
+                logger.debug(
+                    'Move message "0x02" carries an out of domain move '
+                    'at index %d: face "%d", direction "%d"',
+                    i, face, direction,
+                )
+                continue
+
             move_payload: MoveEventDict = {
                 'event': 'move',
                 'clock': clock,
@@ -261,7 +274,7 @@ class GanGen2Driver(Driver):
                 'cube_timestamp': self.cube_timestamp,
                 'face': face,
                 'direction': direction,
-                'move': move.strip(),
+                'move': move,
             }
             moves.append(move_payload)
 
