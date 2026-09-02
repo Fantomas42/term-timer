@@ -1141,3 +1141,110 @@ class TestGanGen3DriverHistoryRequestRecovery(
 
         self.assertEqual(result, [])
         self.mock_client.disconnect.assert_not_called()
+
+
+class TestGanGen3DriverSerialCycle(unittest.IsolatedAsyncioTestCase):
+    """
+    Tests for the byte the V2 serial cycles on.
+
+    `step` is declared and carried on sixteen bits, and the firmware
+    cycles it on its low byte alone : measured on a GAN i carry 2 the
+    2026-09-02, the counter went 253 -> 4. A comparison led in sixteen
+    bits turns that wrap into a gap of 65281 moves, and the driver
+    then asks the cube for a window it can never serve.
+    """
+
+    def setUp(self) -> None:
+        """Test setup."""
+        self.mock_client = Mock()
+        self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
+        self.mock_client.name = 'GAN356 iCarry2'
+        self.mock_client.write_gatt_char = AsyncMock()
+        self.mock_client.disconnect = AsyncMock()
+
+        with patch(
+            'term_timer.bluetooth.drivers.gan_gen2.get_salt',
+            return_value=b'salt12',
+        ):
+            self.driver = GanGen3Driver(
+                self.mock_client,
+                use_gyroscope=False,
+            )
+
+    async def test_missed_moves_across_the_wrap_stay_a_small_window(
+            self,
+    ) -> None:
+        """Test missed moves across the wrap stay a small window."""
+        self.driver.last_serial = 255
+        # The counter cycled and two moves went missing with it : led
+        # in 16 bits the same gap would be 65283 moves long
+        self.driver.serial = 2
+
+        with patch.object(self.driver, 'request_move_history') as mock_request:
+            await self.driver.check_if_move_missed()
+
+            mock_request.assert_called_once_with(3, 4)
+
+    async def test_wrap_to_zero_asks_for_nothing(self) -> None:
+        """Test wrap to zero asks for nothing."""
+        self.driver.last_serial = 255
+        self.driver.serial = 0
+
+        with patch.object(self.driver, 'request_move_history') as mock_request:
+            await self.driver.check_if_move_missed()
+
+            mock_request.assert_not_called()
+
+    async def test_move_across_the_wrap_is_evicted(self) -> None:
+        """Test move across the wrap is evicted."""
+        self.driver.last_serial = 255
+        self.driver.move_buffer = cast('Any', [
+            {'serial': 0, 'event': 'move', 'move': 'U'},
+        ])
+
+        with patch.object(self.driver, 'request_move_history') as mock_request:
+            result = await self.driver.evict_move_buffer()
+
+            mock_request.assert_not_called()
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(self.driver.last_serial, 0)
+
+    def test_missed_move_injected_across_the_wrap(self) -> None:
+        """Test missed move injected across the wrap."""
+        self.driver.last_serial = 253
+        self.driver.move_buffer = cast('Any', [
+            {'serial': 0, 'event': 'move', 'move': 'R'},
+        ])
+
+        move = cast('Any', {'serial': 255, 'event': 'move_history'})
+        self.driver.inject_missed_move_to_buffer(move)
+
+        self.assertEqual(len(self.driver.move_buffer), 2)
+        self.assertEqual(self.driver.move_buffer[0]['serial'], 255)
+
+    async def test_request_move_history_full_cycle(self) -> None:
+        """Test request move history full cycle."""
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.encrypt.return_value = b'encrypted_data'
+
+            # A whole cycle missed caps the count to 256, one more than
+            # the byte the frame used to carry it on
+            await self.driver.request_move_history(255, 256)
+
+            args = mock_cypher.encrypt.call_args[0]
+            self.assertEqual(args[0][2], 255)
+            self.assertEqual(args[0][3], 0)
+            self.assertEqual(args[0][4], 0x00)
+            self.assertEqual(args[0][5], 0x01)
+
+    async def test_request_move_history_writes_both_fields(self) -> None:
+        """Test request move history writes both fields."""
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.encrypt.return_value = b'encrypted_data'
+
+            await self.driver.request_move_history(101, 6)
+
+            args = mock_cypher.encrypt.call_args[0]
+            # `step` and `count` are declared on 16 bits little endian
+            self.assertEqual(list(args[0][2:6]), [101, 0, 6, 0])

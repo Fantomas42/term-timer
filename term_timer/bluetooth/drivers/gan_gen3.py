@@ -110,6 +110,12 @@ class GanGen3Driver(GanGen2Driver):
         around firmware quirks. Ensures serial numbers are odd-aligned and
         move counts are even, and prevents overflow at the 255->0 boundary.
 
+        `appProtoId 9` of `GanSDK_ProtocolWriteV2` declares `step` and
+        `count` on sixteen bits each, little endian, and both are
+        written whole : a count capped at `serial + 1` reaches 256 as
+        soon as a whole cycle is missed, which no longer fits on the
+        single byte the frame used to carry.
+
         Args:
             serial: The serial number to start the history request from.
             count: The number of historical moves to request.
@@ -135,8 +141,10 @@ class GanGen3Driver(GanGen2Driver):
 
         msg[0] = 0x68
         msg[1] = 0x03
-        msg[2] = serial
-        msg[4] = count
+        msg[2] = serial & 0xFF
+        msg[3] = serial >> 8
+        msg[4] = count & 0xFF
+        msg[5] = count >> 8
 
         logger.debug('Sending : REQUEST_MOVE_HISTORY')
 
@@ -229,6 +237,11 @@ class GanGen3Driver(GanGen2Driver):
             The facelets event of the message.
 
         """
+        # `step` is declared and carried on sixteen bits, but the
+        # firmware cycles it on its low byte alone : measured on a GAN
+        # i carry 2 the 2026-09-02, the counter went 253 -> 4, its high
+        # byte never leaving zero. Every serial comparison of the move
+        # buffer therefore wraps on 0xFF, as the Gen2 driver does.
         serial = msg.get_bit_word(24, 16, little_endian=True)
         self.serial = serial
 
