@@ -34,13 +34,13 @@ logger = logging.getLogger(__name__)
 
 class GanGen2Driver(Driver):
     """
-    GAN Mini ui FreePlay.
-    GAN12 ui FreePlay.
     GAN12 ui.
-    GAN356 i Carry S.
-    GAN356 i Carry.
-    GAN356 i 3.
-    Monster Go 3Ai.
+    GAN12 ui FreePlay.
+    GAN mini ui FreePlay.
+    GAN i carry S.
+    GAN356 i, i2, i3.
+    GAN356 i play, i play 2.
+    MG3 AI, XES.
     MoYu AI 2023.
     """
 
