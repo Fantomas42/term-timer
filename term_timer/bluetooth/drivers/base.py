@@ -12,6 +12,8 @@ from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from term_timer.bluetooth.annotations import EventDict
+from term_timer.bluetooth.constants import CRC16_INIT
+from term_timer.bluetooth.constants import CRC16_POLYNOMIAL
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
 
@@ -112,6 +114,56 @@ class Driver:
         """
         return True
 
+    @staticmethod
+    def compute_crc(payload: bytes) -> int:
+        """
+        Compute the CRC-16/CCITT-FALSE of the payload of a frame.
+
+        Bit by bit, most significant first, without reflection nor final
+        XOR, exactly as the codec of the application does.
+
+        Returns:
+            The checksum of the payload, on 16 bits.
+
+        """
+        crc = CRC16_INIT
+
+        for byte in payload:
+            crc ^= byte << 8
+
+            for _ in range(8):
+                if crc & 0x8000:
+                    crc = ((crc << 1) ^ CRC16_POLYNOMIAL) & 0xFFFF
+                else:
+                    crc = (crc << 1) & 0xFFFF
+
+        return crc
+
+    def check_crc(self, plain: bytes) -> None:
+        """
+        Warn when the checksum closing the frame does not match.
+
+        The application computes the CRC and reports it without ever
+        enforcing it, and so do we: a frame is never rejected, the
+        warning only tells a corrupted frame apart from a faulty
+        decryption. The stored field is read little endian, the V3
+        descriptor being globally isBigEndia: 0.
+        """
+        if not self.crc_reserve or len(plain) <= self.crc_reserve:
+            return
+
+        payload = plain[:-self.crc_reserve]
+        declared = int.from_bytes(plain[-self.crc_reserve:], 'little')
+        computed = self.compute_crc(payload)
+
+        if declared != computed:
+            logger.warning(
+                'CRC mismatch on a %d bytes frame: '
+                'it carries "0x%04X" where its %d bytes of payload '
+                'give "0x%04X"',
+                len(plain), declared, len(payload), computed,
+            )
+
     def split_messages(self, plain: bytes) -> Iterator[int]:
         """
         Yield the offset, in bytes, of each message of a notification.
@@ -174,6 +226,8 @@ class Driver:
         events: list[EventDict] = []
 
         plain = self.cypher.decrypt(data)
+
+        self.check_crc(plain)
 
         for offset in self.split_messages(plain):
             # The message is given the frame up to its end, and not up

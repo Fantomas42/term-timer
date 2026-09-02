@@ -10,6 +10,11 @@ MOVE_HISTORY_TIMEOUT: Final[float] = 1.0
 # Buffered moves above which the move sequence is considered lost
 MOVE_BUFFER_LIMIT: Final[int] = 16
 
+# CRC-16/CCITT-FALSE, the checksum closing every V3 frame: init 0xFFFF,
+# polynomial 0x1021, MSB first, no reflection and no final XOR.
+CRC16_INIT: Final[int] = 0xFFFF
+CRC16_POLYNOMIAL: Final[int] = 0x1021
+
 PREFIX: Final[list[str]] = [
     'GAN',
     'MG',

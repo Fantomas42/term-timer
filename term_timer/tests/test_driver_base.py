@@ -149,6 +149,72 @@ class HeadedChainedDriver(ChainedDriver):
         ]
 
 
+class TestCrc(unittest.TestCase):
+    """Tests for the checksum closing a frame."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        self.mock_client = Mock()
+        self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
+
+    def test_compute_crc_check_value(self) -> None:
+        """Test the check value of CRC-16/CCITT-FALSE."""
+        self.assertEqual(Driver.compute_crc(b'123456789'), 0x29B1)
+
+    def test_compute_crc_empty_payload(self) -> None:
+        """Test an empty payload gives the initial value back."""
+        self.assertEqual(Driver.compute_crc(b''), 0xFFFF)
+
+    def test_check_crc_matching_frame_is_silent(self) -> None:
+        """Test a frame carrying its own checksum warns nothing."""
+        driver = ChainedDriver(self.mock_client, use_gyroscope=False)
+        frame = bytes(
+            [0x01, 0x02, 0xAA, 0xBB]
+            + [0x02, 0x03, 0xCC, 0xDD, 0xEE]
+            + [0x00] * 9
+            + [0xD4, 0xB5],
+        )
+
+        with patch('term_timer.bluetooth.drivers.base.logger') as logger:
+            driver.check_crc(frame)
+
+        logger.warning.assert_not_called()
+
+    def test_check_crc_mismatching_frame_warns(self) -> None:
+        """Test a frame carrying a wrong checksum is reported."""
+        driver = ChainedDriver(self.mock_client, use_gyroscope=False)
+        frame = bytes(
+            [0x01, 0x02, 0xAA, 0xBB]
+            + [0x02, 0x03, 0xCC, 0xDD, 0xEE]
+            + [0x00] * 9
+            + [0x12, 0x34],
+        )
+
+        with patch('term_timer.bluetooth.drivers.base.logger') as logger:
+            driver.check_crc(frame)
+
+        logger.warning.assert_called_once()
+
+    def test_check_crc_without_reserve_is_silent(self) -> None:
+        """Test a protocol without isCRC16 checks nothing."""
+        driver = DispatchDriver(self.mock_client, use_gyroscope=False)
+        frame = bytes([0x01, 0x02, 0xAA, 0xBB, 0x12, 0x34])
+
+        with patch('term_timer.bluetooth.drivers.base.logger') as logger:
+            driver.check_crc(frame)
+
+        logger.warning.assert_not_called()
+
+    def test_check_crc_frame_shorter_than_its_reserve(self) -> None:
+        """Test a frame holding nothing but a checksum is left alone."""
+        driver = ChainedDriver(self.mock_client, use_gyroscope=False)
+
+        with patch('term_timer.bluetooth.drivers.base.logger') as logger:
+            driver.check_crc(bytes([0x12, 0x34]))
+
+        logger.warning.assert_not_called()
+
+
 class TestSplitMessages(unittest.TestCase):
     """Tests for the splitting of chained notifications."""
 
@@ -302,6 +368,30 @@ class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
                 mock_sender, bytearray(b'data'),
             )
 
+        self.assertEqual(
+            [event['event'] for event in result],
+            ['probe-170'],
+        )
+
+    async def test_event_handler_decodes_a_frame_with_a_wrong_crc(
+            self) -> None:
+        """Test a frame with a wrong checksum is reported, not rejected."""
+        driver = ChainedDriver(self.mock_client, use_gyroscope=False)
+        mock_sender = Mock()
+
+        with patch.object(driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes(
+                [0x01, 0x02, 0xAA, 0xBB]
+                + [0x00] * 14
+                + [0x12, 0x34],
+            )
+
+            with patch('term_timer.bluetooth.drivers.base.logger') as logger:
+                result = await driver.event_handler(
+                    mock_sender, bytearray(b'data'),
+                )
+
+        logger.warning.assert_called_once()
         self.assertEqual(
             [event['event'] for event in result],
             ['probe-170'],
