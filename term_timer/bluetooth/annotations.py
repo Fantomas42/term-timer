@@ -186,7 +186,7 @@ class DisconnectEventDict(BaseEventDict):
 
 
 class GyroConfigEventDict(BaseEventDict):
-    """Gyro configuration event payload (Moyu)."""
+    """Gyro configuration event payload (Moyu, GAN Gen4)."""
 
     gyroscope_enabled: bool
     gyroscope_ready: bool

@@ -10,6 +10,8 @@ from unittest.mock import Mock
 from unittest.mock import patch
 
 from term_timer.bluetooth.constants import GAN_GEN4_COMMAND_CHARACTERISTIC
+from term_timer.bluetooth.constants import GAN_GEN4_ENGINE_ECO
+from term_timer.bluetooth.constants import GAN_GEN4_ENGINE_PERF
 from term_timer.bluetooth.constants import GAN_GEN4_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN4_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
@@ -18,6 +20,7 @@ from term_timer.bluetooth.drivers.gan_gen4 import GanGen4Driver
 if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import BatteryEventDict
     from term_timer.bluetooth.annotations import FaceletsEventDict
+    from term_timer.bluetooth.annotations import GyroConfigEventDict
     from term_timer.bluetooth.annotations import HardwareEventDict
     from term_timer.bluetooth.annotations import HardwareEventPartialDict
     from term_timer.bluetooth.annotations import (
@@ -191,6 +194,51 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         """Test send command handler invalid command."""
         result = self.driver.send_command_handler('INVALID_COMMAND')
         self.assertFalse(result)
+
+    def test_send_command_handler_gyro_commands_need_a_gan_i4(self) -> None:
+        """Test send command handler gyro commands need a gan i4."""
+        for name in ('GAN12uiM_1234', 'GANi4v2_1234', 'GANic4_1234', None):
+            with self.subTest(name=name):
+                self.mock_client.name = name
+
+                with patch.object(self.driver, 'cypher') as mock_cypher:
+                    for command in (
+                            'REQUEST_ENABLE_GYRO', 'REQUEST_DISABLE_GYRO',
+                    ):
+                        result = self.driver.send_command_handler(command)
+                        self.assertFalse(result)
+
+                    mock_cypher.encrypt.assert_not_called()
+
+    def test_send_command_handler_request_enable_gyro(self) -> None:
+        """Test send command handler request enable gyro."""
+        self.mock_client.name = 'GANi4_1234'
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.encrypt.return_value = b'encrypted_data'
+
+            result = self.driver.send_command_handler('REQUEST_ENABLE_GYRO')
+
+            args = mock_cypher.encrypt.call_args[0]
+            expected_values = [0xD4, 0x01, GAN_GEN4_ENGINE_PERF]
+            for i, expected in enumerate(expected_values):
+                self.assertEqual(args[0][i], expected)
+            self.assertEqual(result, b'encrypted_data')
+
+    def test_send_command_handler_request_disable_gyro(self) -> None:
+        """Test send command handler request disable gyro."""
+        self.mock_client.name = 'gani4_1234'
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.encrypt.return_value = b'encrypted_data'
+
+            result = self.driver.send_command_handler('REQUEST_DISABLE_GYRO')
+
+            args = mock_cypher.encrypt.call_args[0]
+            expected_values = [0xD4, 0x01, GAN_GEN4_ENGINE_ECO]
+            for i, expected in enumerate(expected_values):
+                self.assertEqual(args[0][i], expected)
+            self.assertEqual(result, b'encrypted_data')
 
     async def test_request_move_history_odd_serial(self) -> None:
         """Test request move history odd serial."""
@@ -617,8 +665,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         return 0xFC  # event type (hardware name)
                     if start == 8 and length == 8:
                         return 8  # data_size, index byte included
-                    # Return characters for "GAN14ui"
-                    chars = 'GAN14ui'
+                    # Return characters for "GANicE2"
+                    chars = 'GANicE2'
                     char_index = (start - 24) // 8
                     if 0 <= char_index < len(chars):
                         return ord(chars[char_index])
@@ -633,9 +681,55 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 event = result[0]
                 self.assertEqual(event['event'], 'hardware')
                 hw_event = cast('HardwareEventDict', event)
-                self.assertEqual(hw_event['hardware_name'], 'GAN14ui')
-                # GAN14ui doesn't support gyro
+                self.assertEqual(hw_event['hardware_name'], 'GANicE2')
+                # GANicE2 is one of the two proto 3 rows without a gyro
                 self.assertFalse(hw_event['gyroscope_supported'])
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_hardware_name_gan_i4(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test event handler hardware name gan i4."""
+        mock_time.return_value = 123456789
+        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+        mock_datetime.now.return_value = mock_timestamp
+
+        test_data = bytearray(20)
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+
+            with patch(
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
+            ) as mock_msg_class:
+                mock_msg = Mock()
+                mock_msg_class.return_value = mock_msg
+
+                def mock_get_bit_word(start: int, length: int) -> int:
+                    if start == 0 and length == 8:
+                        return 0xFC  # event type (hardware name)
+                    if start == 8 and length == 8:
+                        return 6  # data_size, index byte included
+                    # Return characters for "GANi4"
+                    chars = 'GANi4'
+                    char_index = (start - 24) // 8
+                    if 0 <= char_index < len(chars):
+                        return ord(chars[char_index])
+                    return 0
+
+                mock_msg.get_bit_word.side_effect = mock_get_bit_word
+
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
+
+                self.assertEqual(len(result), 1)
+                event = result[0]
+                self.assertEqual(event['event'], 'hardware')
+                hw_event = cast('HardwareEventDict', event)
+                self.assertEqual(hw_event['hardware_name'], 'GANi4')
+                # The whitelist of one used to deny the gyro of the i4
+                self.assertTrue(hw_event['gyroscope_supported'])
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
@@ -915,6 +1009,68 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 self.assertEqual(event['timestamp'], mock_timestamp)
                 self.assertIn('quaternion', event)
                 self.assertIn('velocity', event)
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_gyroscope_config(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test event handler gyroscope config."""
+        mock_time.return_value = 123456789
+        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+        mock_datetime.now.return_value = mock_timestamp
+
+        test_data = bytearray(20)
+
+        # The answer is a flag and not the mode the command carries :
+        # 1, 0, 1 read on a GAN i4 for a Perf, Eco, Perf session
+        cases = [
+            (1, True),
+            (0, False),
+        ]
+
+        for flag, expected_enabled in cases:
+            words = {
+                (0, 8): 0xD4,  # event type (engine config)
+                (8, 8): 1,  # dataLength
+                (16, 8): flag,
+            }
+
+            with (
+                self.subTest(flag=flag),
+                patch.object(self.driver, 'cypher') as mock_cypher,
+                patch(
+                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
+                ) as mock_msg_class,
+            ):
+                mock_cypher.decrypt.return_value = test_data
+
+                mock_msg = Mock()
+                mock_msg_class.return_value = mock_msg
+                mock_msg.get_bit_word.side_effect = (
+                    lambda start, length, table=words: table.get(
+                        (start, length), 0,
+                    )
+                )
+
+                mock_sender = Mock()
+                result = await self.driver.event_handler(
+                    mock_sender, test_data,
+                )
+
+                self.assertEqual(len(result), 1)
+                event = result[0]
+                self.assertEqual(event['event'], 'gyro-config')
+                gyro_event = cast('GyroConfigEventDict', event)
+                self.assertEqual(
+                    gyro_event['gyroscope_enabled'],
+                    expected_enabled,
+                )
+                # The cube answered, so it has a gyroscope
+                self.assertTrue(gyro_event['gyroscope_ready'])
+                self.assertTrue(gyro_event['gyroscope_supported'])
+                self.assertEqual(gyro_event['clock'], 123456789)
+                self.assertEqual(gyro_event['timestamp'], mock_timestamp)
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
@@ -1220,17 +1376,21 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
 
     def test_gyroscope_support_detection(self) -> None:
         """Test gyroscope support detection."""
-        # Test gyroscope support detection logic
+        # Every proto 3 row carries a gyroscope but the two GANicE ones
         test_cases = [
             ('GAN12uiM', True),
-            ('GAN12ui', False),
-            ('GAN14ui', False),
-            ('GAN356i', False),
-            ('unknown', False),
+            ('GAN12ui', True),
+            ('GAN14ui', True),
+            ('GANi4', True),
+            ('GANicE', False),
+            ('GANicE2', False),
+            # The case of a GAN name is not authoritative
+            ('GANice2', False),
+            ('ganice', False),
         ]
 
         for hardware_name, expected_gyro_support in test_cases:
-            has_gyro = 'GAN12uiM' in hardware_name
+            has_gyro = not hardware_name.upper().startswith('GANICE')
             self.assertEqual(has_gyro, expected_gyro_support)
 
     def test_quaternion_calculation_gen4(self) -> None:

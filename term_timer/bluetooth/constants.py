@@ -82,6 +82,13 @@ GAN_GEN4_SERVICE: Final[str] =                '00000010-0000-fff7-fff6-fff5fff4f
 GAN_GEN4_STATE_CHARACTERISTIC: Final[str] =   '0000fff6-0000-1000-8000-00805f9b34fb'
 GAN_GEN4_COMMAND_CHARACTERISTIC: Final[str] = '0000fff5-0000-1000-8000-00805f9b34fb'
 
+# GAN Gen4 engine configuration, the single byte the 0xD4 *command*
+# carries : Perf keeps the gyroscope on, Eco cuts it. The answer to
+# that command rides the same opcode and does not answer in this
+# domain — it is a flag, 1 streaming and 0 not, measured at the cube.
+GAN_GEN4_ENGINE_PERF: Final[int] = 0x02
+GAN_GEN4_ENGINE_ECO: Final[int] =  0x03
+
 # Moyu Weilong v10 protocol BLE service
 MOYU_WEILONG_SERVICE: Final[str] =                '0783b03e-7735-b5a0-1760-a305d2795cb0'
 MOYU_WEILONG_STATE_CHARACTERISTIC: Final[str] =   '0783b03e-7735-b5a0-1760-a305d2795cb1'

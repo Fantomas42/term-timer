@@ -11,6 +11,7 @@ from typing import ClassVar
 
 from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import EventDict
+from term_timer.bluetooth.annotations import GyroConfigEventDict
 from term_timer.bluetooth.annotations import GyroEventDict
 from term_timer.bluetooth.annotations import HardwareEventNameOnlyDict
 from term_timer.bluetooth.annotations import HardwareEventPartialDict
@@ -20,6 +21,8 @@ from term_timer.bluetooth.annotations import (
 from term_timer.bluetooth.annotations import HardwareEventVersionOnlyDict
 from term_timer.bluetooth.annotations import ResetEventDict
 from term_timer.bluetooth.constants import GAN_GEN4_COMMAND_CHARACTERISTIC
+from term_timer.bluetooth.constants import GAN_GEN4_ENGINE_ECO
+from term_timer.bluetooth.constants import GAN_GEN4_ENGINE_PERF
 from term_timer.bluetooth.constants import GAN_GEN4_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN4_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
@@ -78,6 +81,25 @@ class GanGen4Driver(GanGen3Driver):
         0xFF: 'handle_mac_address',
     }
 
+    @property
+    def gyroscope_configurable(self) -> bool:
+        """
+        Tell whether the cube accepts the 0xD4 engine configuration.
+
+        SendEngineConfig, the only caller of the command, is guarded in
+        CubeStation by deviceData_Cn[model].lowBattery, and the GAN i4
+        is the single row of the thirty-two carrying that flag. This is
+        a precaution rather than a constraint of the protocol : it goes
+        away the day a log shows another model answering 0xD4.
+
+        Returns:
+            True on a GAN i4, False on every other Gen4 model.
+
+        """
+        name = self.client.name or ''
+
+        return name.upper().startswith('GANI4_')
+
     def send_command_handler(self, command: str) -> bytes | bool:  # noqa: C901, PLR0912
         """
         Build and encrypt command messages for GAN Gen4 cube.
@@ -112,11 +134,15 @@ class GanGen4Driver(GanGen3Driver):
             for i, val in enumerate(values):
                 msg[i] = val
         elif command == 'REQUEST_ENABLE_GYRO':
-            values = [0xD4, 0x01, 0x01]
+            if not self.gyroscope_configurable:
+                return False
+            values = [0xD4, 0x01, GAN_GEN4_ENGINE_PERF]
             for i, val in enumerate(values):
                 msg[i] = val
         elif command == 'REQUEST_DISABLE_GYRO':
-            values = [0xD4, 0x01, 0x00]
+            if not self.gyroscope_configurable:
+                return False
+            values = [0xD4, 0x01, GAN_GEN4_ENGINE_ECO]
             for i, val in enumerate(values):
                 msg[i] = val
         elif command == 'REQUEST_DEBUG_INFO':
@@ -273,7 +299,14 @@ class GanGen4Driver(GanGen3Driver):
             'clock': clock,
             'timestamp': timestamp,
             'hardware_name': hardware_name,
-            'gyroscope_supported': 'GAN12uiM' in hardware_name,
+            # Every proto 3 row of deviceData_Cn declares a gyroscope
+            # but the two GANicE ones, so a blacklist of two replaces
+            # the whitelist of one. Matched case-insensitively : the
+            # case of a GAN name is not authoritative, the application
+            # itself lowercases every one of them before comparing.
+            'gyroscope_supported': not hardware_name.upper().startswith(
+                'GANICE',
+            ),
         }
 
         return [hardware_name_payload]
@@ -444,19 +477,42 @@ class GanGen4Driver(GanGen3Driver):
 
     async def handle_gyroscope_config(  # noqa: PLR6301
             self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+            clock: int, timestamp: datetime) -> list[EventDict]:
         """
-        Log the answer to a gyroscope configuration request.
+        Decode the state of the gyroscope the cube reports.
+
+        The answer does not echo the mode the command carries : it is
+        a flag, 1 for a gyroscope that streams and 0 for one that does
+        not, measured on a GAN i4 the 2026-09-03 against the traffic
+        of the link itself — `1, 0, 1` for a Perf, Eco, Perf session.
+        The two encodings sit on the same opcode and are not the same
+        domain, which is what makes reading the answer as a mode so
+        easy a mistake.
+
+        The cube also chains this message behind its build time at
+        initialization, unasked, so the state is known before any
+        command is sent.
 
         Returns:
-            Nothing, the result is journaled only.
+            The gyro-config event of the message.
 
         """
-        gyro_enabled = msg.get_bit_word(16, 8)
+        result = msg.get_bit_word(16, 8)
 
-        logger.debug('Gyro enabled: %s', bool(gyro_enabled))
+        logger.debug('Engine config: %s', result)
 
-        return []
+        gyro_config_payload: GyroConfigEventDict = {
+            'event': 'gyro-config',
+            'clock': clock,
+            'timestamp': timestamp,
+            'gyroscope_enabled': bool(result),
+            # The cube answered, so it has a gyroscope and it is ready:
+            # an observation, where the model table is only a guess.
+            'gyroscope_ready': True,
+            'gyroscope_supported': True,
+        }
+
+        return [gyro_config_payload]
 
     async def handle_gyroscope_detail(  # noqa: PLR6301
             self, msg: GanProtocolMessage,
