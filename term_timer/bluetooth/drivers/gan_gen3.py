@@ -36,7 +36,7 @@ class GanGen3Driver(GanGen2Driver):
     service_uid: ClassVar[str] = GAN_GEN3_SERVICE
     state_characteristic_uid: ClassVar[str] = GAN_GEN3_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = GAN_GEN3_COMMAND_CHARACTERISTIC
-    payload_offset: ClassVar[int] = 24
+    payload_offset: ClassVar[int] = 16
     chained: ClassVar[bool] = True
     head_magic: ClassVar[int | None] = 0x55
     crc_terminator: ClassVar[int] = 2
@@ -165,28 +165,60 @@ class GanGen3Driver(GanGen2Driver):
         """
         Read the opcode of a V2 message.
 
-        V2 prefixes its bleProtoId with a head byte, and follows it with
-        a dataLength byte.
+        The head of the notification having been stripped, a V2 message
+        opens on its bleProtoId as a V3 one does. The redefinition is
+        kept because the Gen2 driver reads its own opcode on four bits,
+        and this driver inherits from it.
 
         Returns:
             The opcode of the message.
 
         """
-        return msg.get_bit_word(8, 8)
+        return msg.get_bit_word(0, 8)
 
     @classmethod
     def is_message_valid(cls, msg: GanProtocolMessage) -> bool:
         """
-        Check the head byte and the length declared by a V2 message.
+        Check the length a V2 or a V3 message declares.
+
+        The dataLength byte closes the header of both generations, so
+        it sits at `payload_offset - 8` in either : the check is the
+        same one, and the Gen4 driver inherits it.
 
         Returns:
-            True when the message starts with the head magic of V2 and
-            declares a payload.
+            True when the message declares a payload.
 
         """
+        return msg.get_bit_word(cls.payload_offset - 8, 8) > 0
+
+    @staticmethod
+    def format_build_time(msg: GanProtocolMessage, start: int) -> str:
+        """
+        Read the five fields of a build time and format them.
+
+        V2 and V3 lay the same five fields out — a year on sixteen bits
+        little endian, then a month, a day, an hour and a minute of
+        eight — at two different offsets : 80 for the `0x07` of V2,
+        which the descriptor under-declares (§4.2), and 24 for the
+        `0xF5` of V3.
+
+        Args:
+            msg: The message carrying the fields.
+            start: Bit the year of the build time starts at.
+
+        Returns:
+            The build time, as a readable date and time.
+
+        """
+        year = msg.get_bit_word(start, 16, little_endian=True)
+        month = msg.get_bit_word(start + 16, 8)
+        day = msg.get_bit_word(start + 24, 8)
+        hour = msg.get_bit_word(start + 32, 8)
+        minute = msg.get_bit_word(start + 40, 8)
+
         return (
-            msg.get_bit_word(0, 8) == cls.head_magic
-            and msg.get_bit_word(16, 8) > 0
+            f'{year:04d}-{month:02d}-{day:02d} '
+            f'{hour:02d}:{minute:02d}'
         )
 
     async def handle_move(
@@ -207,11 +239,15 @@ class GanGen3Driver(GanGen2Driver):
             return []
 
         self.last_local_timestamp = timestamp
-        serial = msg.get_bit_word(56, 16, little_endian=True)
-        cube_timestamp = msg.get_bit_word(24, 32, little_endian=True)
+        serial = msg.get_bit_word(
+            self.payload_offset + 32, 16, little_endian=True,
+        )
+        cube_timestamp = msg.get_bit_word(
+            self.payload_offset, 32, little_endian=True,
+        )
 
-        direction = msg.get_bit_word(72, 2)
-        face_mask = msg.get_bit_word(74, 6)
+        direction = msg.get_bit_word(self.payload_offset + 48, 2)
+        face_mask = msg.get_bit_word(self.payload_offset + 50, 6)
         face = GEN3_MOVE_FACES.get(face_mask)
         move = None if face is None else self.format_move(face, direction)
 
@@ -260,7 +296,9 @@ class GanGen3Driver(GanGen2Driver):
         # i carry 2 the 2026-09-02, the counter went 253 -> 4, its high
         # byte never leaving zero. Every serial comparison of the move
         # buffer therefore wraps on 0xFF, as the Gen2 driver does.
-        serial = msg.get_bit_word(24, 16, little_endian=True)
+        serial = msg.get_bit_word(
+            self.payload_offset, 16, little_endian=True,
+        )
         self.serial = serial
 
         # Also check and recovery missed moves
@@ -285,14 +323,14 @@ class GanGen3Driver(GanGen2Driver):
         so = [0, 1, 2, 3, 4, 5]
         # Corners
         for i in range(7):
-            cp.append(msg.get_bit_word(40 + i * 3, 3))
-            co.append(msg.get_bit_word(61 + i * 2, 2))
+            cp.append(msg.get_bit_word(self.payload_offset + 16 + i * 3, 3))
+            co.append(msg.get_bit_word(self.payload_offset + 37 + i * 2, 2))
         cp.append(28 - sum(cp))
         co.append((3 - (sum(co) % 3)) % 3)
         # Edges
         for i in range(11):
-            ep.append(msg.get_bit_word(77 + i * 4, 4))
-            eo.append(msg.get_bit_word(121 + i, 1))
+            ep.append(msg.get_bit_word(self.payload_offset + 53 + i * 4, 4))
+            eo.append(msg.get_bit_word(self.payload_offset + 97 + i, 1))
         ep.append(66 - sum(ep))
         eo.append((2 - (sum(eo) % 2)) % 2)
 
@@ -324,13 +362,13 @@ class GanGen3Driver(GanGen2Driver):
 
         """
         self.close_history_request()
-        data_size = msg.get_bit_word(16, 8)
-        start_serial = msg.get_bit_word(24, 8)
+        data_size = msg.get_bit_word(self.payload_offset - 8, 8)
+        start_serial = msg.get_bit_word(self.payload_offset, 8)
         count = (data_size - 1) * 2
 
         for i in range(count):
-            direction = msg.get_bit_word(35 + 4 * i, 1)
-            face_id = msg.get_bit_word(32 + 4 * i, 3)
+            direction = msg.get_bit_word(self.payload_offset + 11 + 4 * i, 1)
+            face_id = msg.get_bit_word(self.payload_offset + 8 + 4 * i, 3)
             face = GEN3_HISTORY_FACES.get(face_id)
 
             move = None if face is None else self.format_move(face, direction)
@@ -363,7 +401,7 @@ class GanGen3Driver(GanGen2Driver):
 
         return await self.evict_move_buffer()
 
-    async def handle_hardware(  # noqa: PLR6301
+    async def handle_hardware(
             self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:
         """
@@ -379,26 +417,18 @@ class GanGen3Driver(GanGen2Driver):
             The hardware event of the message.
 
         """
-        restart_reason = msg.get_bit_word(24, 8)
+        restart_reason = msg.get_bit_word(16, 8)
 
         hardware_name = ''
         for i in range(5):
-            hardware_name += chr(msg.get_bit_word(i * 8 + 32, 8))
+            hardware_name += chr(msg.get_bit_word(i * 8 + 24, 8))
 
-        sw_major = msg.get_bit_word(72, 4)
-        sw_minor = msg.get_bit_word(76, 4)
-        hw_major = msg.get_bit_word(80, 4)
-        hw_minor = msg.get_bit_word(84, 4)
+        sw_major = msg.get_bit_word(64, 4)
+        sw_minor = msg.get_bit_word(68, 4)
+        hw_major = msg.get_bit_word(72, 4)
+        hw_minor = msg.get_bit_word(76, 4)
 
-        year = msg.get_bit_word(88, 16, little_endian=True)
-        month = msg.get_bit_word(104, 8)
-        day = msg.get_bit_word(112, 8)
-        hour = msg.get_bit_word(120, 8)
-        minute = msg.get_bit_word(128, 8)
-        build_time = (
-            f'{year:04d}-{month:02d}-{day:02d} '
-            f'{hour:02d}:{minute:02d}'
-        )
+        build_time = self.format_build_time(msg, 80)
 
         logger.debug('Build time: %s', build_time)
 
@@ -417,7 +447,7 @@ class GanGen3Driver(GanGen2Driver):
 
         return [hardware_payload]
 
-    async def handle_reset(  # noqa: PLR6301
+    async def handle_reset(
             self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:
         """
@@ -438,7 +468,7 @@ class GanGen3Driver(GanGen2Driver):
             'event': 'reset',
             'clock': clock,
             'timestamp': timestamp,
-            'result': msg.get_bit_word(24, 8),
+            'result': msg.get_bit_word(self.payload_offset, 8),
         }
 
         return [reset_payload]
@@ -535,7 +565,7 @@ class GanGen3Driver(GanGen2Driver):
 
         return []
 
-    async def handle_battery(  # noqa: PLR6301
+    async def handle_battery(
             self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:
         """
@@ -545,7 +575,7 @@ class GanGen3Driver(GanGen2Driver):
             The battery event of the message.
 
         """
-        battery_level = msg.get_bit_word(24, 8)
+        battery_level = msg.get_bit_word(self.payload_offset, 8)
 
         battery_payload: BatteryEventDict = {
             'event': 'battery',

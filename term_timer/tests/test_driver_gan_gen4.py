@@ -24,6 +24,7 @@ if TYPE_CHECKING:
         HardwareEventSoftwareVersionOnlyDict,
     )
     from term_timer.bluetooth.annotations import HardwareEventVersionOnlyDict
+    from term_timer.bluetooth.annotations import MoveEventDict
     from term_timer.bluetooth.annotations import ResetEventDict
 
 
@@ -65,6 +66,55 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             GanGen4Driver.command_characteristic_uid,
             GAN_GEN4_COMMAND_CHARACTERISTIC,
         )
+
+    def test_shared_handlers_are_the_ones_of_the_gen3(self) -> None:
+        """Test the three handlers V3 shares with V2 are not copied."""
+        for name in ('handle_move', 'handle_facelets',
+                     'handle_move_history', 'handle_solved'):
+            with self.subTest(handler=name):
+                self.assertIs(
+                    getattr(GanGen4Driver, name),
+                    getattr(GanGen3Driver, name),
+                )
+
+    def test_both_generations_share_their_message_header(self) -> None:
+        """Test the head of V2 is not counted in its payload offset."""
+        self.assertEqual(GanGen4Driver.payload_offset, 16)
+        self.assertEqual(
+            GanGen3Driver.payload_offset,
+            GanGen4Driver.payload_offset,
+        )
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_move_frame_decodes_as_before_the_factorisation(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test a real V3 move frame still decodes the same three fields."""
+        mock_time.return_value = 123456789
+        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+        mock_datetime.now.return_value = mock_timestamp
+
+        self.driver.last_serial = 101
+        self.driver.serial = 101
+
+        # proto 01, dataLength 07, the cube clock on four bytes little
+        # endian, the serial on two, then direction and face packed in
+        # the last byte : 0b01_000010 is the mask of U, turned counter
+        # clockwise. The two bytes of CRC-16 close the frame.
+        body = bytes.fromhex('010739300000660042')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            events = await self.driver.event_handler(Mock(), bytearray(frame))
+
+        self.assertEqual(len(events), 1)
+        move = cast('MoveEventDict', events[0])
+        self.assertEqual(move['serial'], 102)
+        self.assertEqual(move['cube_timestamp'], 12345)
+        self.assertEqual(move['move'], "U'")
 
     def test_send_command_handler_request_facelets(self) -> None:
         """Test send command handler request facelets."""
@@ -281,7 +331,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
-    @patch('term_timer.bluetooth.drivers.gan_gen4.cubies_to_facelets')
+    @patch('term_timer.bluetooth.drivers.gan_gen3.cubies_to_facelets')
     async def test_event_handler_facelets_event(
             self, mock_cubies_to_facelets: Mock,
             mock_datetime: Mock, mock_time: Mock,
@@ -332,7 +382,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
-    @patch('term_timer.bluetooth.drivers.gan_gen4.DEBOUNCE', 1.0)
+    @patch('term_timer.bluetooth.drivers.gan_gen3.DEBOUNCE', 1.0)
     async def test_event_handler_facelets_with_debounce_check(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -380,7 +430,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         'check_if_move_missed',
                     ) as mock_check,
                     patch(
-                        'term_timer.bluetooth.drivers.gan_gen4.cubies_to_facelets',
+                        'term_timer.bluetooth.drivers.gan_gen3.cubies_to_facelets',
                     ),
                 ):
                     mock_sender = Mock()
@@ -473,6 +523,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0xFA  # event type (product date)
+                    if start == 8 and length == 8:
+                        return 4  # data_size
                     if start == 24 and length == 16:
                         return 2023  # year
                     if start == 40 and length == 8:
@@ -610,6 +662,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0xFD  # event type (software version)
+                    if start == 8 and length == 8:
+                        return 4  # data_size
                     if start == 24 and length == 4:
                         return 5  # sw_major
                     if start == 28 and length == 4:
@@ -653,6 +707,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0xFE  # event type (hardware version)
+                    if start == 8 and length == 8:
+                        return 4  # data_size
                     if start == 24 and length == 4:
                         return 2  # hw_major
                     if start == 28 and length == 4:
@@ -722,26 +778,22 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
 
-                def mock_get_bit_word(  # noqa: PLR0911
+                fields: dict[tuple[int, int], int] = {
+                    (0, 8): 0xEC,  # event type (gyroscope)
+                    (8, 8): 4,  # data_size
+                    (16, 16): 0x8000,  # qw (signed bit set)
+                    (32, 16): 0x4000,  # qx
+                    (48, 16): 0x2000,  # qy
+                    (64, 16): 0x1000,  # qz
+                    (80, 4): 0x08,  # vx (signed bit set)
+                    (84, 4): 0x04,  # vy
+                    (88, 4): 0x02,  # vz
+                }
+
+                def mock_get_bit_word(
                         start: int, length: int, *,
                         little_endian: bool = False) -> int:  # noqa: ARG001
-                    if start == 0 and length == 8:
-                        return 0xEC  # event type (gyroscope)
-                    if start == 16 and length == 16:
-                        return 0x8000  # qw (signed bit set)
-                    if start == 32 and length == 16:
-                        return 0x4000  # qx
-                    if start == 48 and length == 16:
-                        return 0x2000  # qy
-                    if start == 64 and length == 16:
-                        return 0x1000  # qz
-                    if start == 80 and length == 4:
-                        return 0x08  # vx (signed bit set)
-                    if start == 84 and length == 4:
-                        return 0x04  # vy
-                    if start == 88 and length == 4:
-                        return 0x02  # vz
-                    return 0
+                    return fields.get((start, length), 0)
 
                 mock_msg.get_bit_word.side_effect = mock_get_bit_word
 
@@ -782,6 +834,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0xEF  # event type (battery)
+                    if start == 8 and length == 8:
+                        return 4  # data_size
                     if start == 16 and length == 8:
                         return 1  # battery index
                     if start == 24 and length == 8:
@@ -825,6 +879,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0xEF  # event type (battery)
+                    if start == 8 and length == 8:
+                        return 4  # data_size
                     if start == 16 and length == 8:
                         return 1  # battery index
                     if start == 24 and length == 8:
@@ -899,6 +955,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0xEA  # event type (disconnect)
+                    if start == 8 and length == 8:
+                        return 4  # data_size
                     return 0
 
                 mock_msg.get_bit_word.side_effect = mock_get_bit_word
@@ -938,6 +996,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
                         return 0x99  # unknown event type
+                    if start == 8 and length == 8:
+                        return 4  # data_size
                     return 0
 
                 mock_msg.get_bit_word.side_effect = mock_get_bit_word

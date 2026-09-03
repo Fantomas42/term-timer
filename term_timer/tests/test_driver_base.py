@@ -115,41 +115,17 @@ class ChainedDriver(BaseDriver):
 
 
 class HeadedChainedDriver(ChainedDriver):
-    """Test driver chaining its messages the way V2 does."""
+    """
+    Test driver chaining its messages the way V2 does.
 
-    payload_offset: ClassVar[int] = 24
+    The head is the only thing separating it from the V3 one : it opens
+    the notification and is stripped before the walk, so both share the
+    same message header of sixteen bits, and the same handler with it.
+    """
+
     head_magic: ClassVar[int | None] = 0x55
     crc_reserve: ClassVar[int] = 0
     crc_terminator: ClassVar[int] = 2
-
-    @staticmethod
-    def read_event_code(msg: GanProtocolMessage) -> int:
-        """
-        Read the opcode behind the head byte.
-
-        Returns:
-            The opcode of the message.
-
-        """
-        return msg.get_bit_word(8, 8)
-
-    async def handle_probe(  # noqa: PLR6301
-            self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list['EventDict']:
-        """
-        Build one event out of the first payload byte of the message.
-
-        Returns:
-            A single event naming the payload it decoded.
-
-        """
-        return [
-            {
-                'event': f'probe-{ msg.get_bit_word(24, 8) }',
-                'clock': clock,
-                'timestamp': timestamp,
-            },
-        ]
 
 
 class TestFormatMove(unittest.TestCase):
@@ -302,6 +278,45 @@ class TestCrc(unittest.TestCase):
         logger.warning.assert_not_called()
 
 
+class TestStripHead(unittest.TestCase):
+    """Tests for the head taken off a notification."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        self.mock_client = Mock()
+        self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
+
+    def test_strip_head_without_head_magic(self) -> None:
+        """Test a protocol declaring no head hands the frame back."""
+        driver = ChainedDriver(self.mock_client, use_gyroscope=False)
+        frame = bytes([0x01, 0x02, 0xAA, 0xBB])
+
+        self.assertEqual(driver.strip_head(frame), frame)
+
+    def test_strip_head_removes_the_declared_byte(self) -> None:
+        """Test the head of the notification is taken off, once."""
+        driver = HeadedChainedDriver(self.mock_client, use_gyroscope=False)
+        frame = bytes([0x55, 0x01, 0x02, 0xAA, 0xBB])
+
+        self.assertEqual(driver.strip_head(frame), frame[1:])
+
+    def test_strip_head_refuses_another_byte(self) -> None:
+        """Test a notification opening on anything else is dropped."""
+        driver = HeadedChainedDriver(self.mock_client, use_gyroscope=False)
+
+        with patch('term_timer.bluetooth.drivers.base.logger') as logger:
+            self.assertIsNone(driver.strip_head(bytes([0x66, 0x01, 0x02])))
+
+        logger.debug.assert_called_once()
+
+    def test_strip_head_refuses_an_empty_frame(self) -> None:
+        """Test an empty notification carries no head to check."""
+        driver = HeadedChainedDriver(self.mock_client, use_gyroscope=False)
+
+        with patch('term_timer.bluetooth.drivers.base.logger'):
+            self.assertIsNone(driver.strip_head(b''))
+
+
 class TestSplitMessages(unittest.TestCase):
     """Tests for the splitting of chained notifications."""
 
@@ -350,26 +365,26 @@ class TestSplitMessages(unittest.TestCase):
 
         self.assertEqual(list(driver.split_messages(frame)), [frame])
 
-    def test_split_messages_chained_carries_no_head(self) -> None:
-        """Test a chained message is given back the head of the frame."""
+    def test_split_messages_chained_behind_a_stripped_head(self) -> None:
+        """Test both messages carry the same header once the head is gone."""
         driver = HeadedChainedDriver(self.mock_client, use_gyroscope=False)
-        # A first message with its head, then a chained one without.
-        body = bytes([0x55, 0x01, 0x02, 0xAA, 0xBB, 0x02, 0x03, 0xCC,
-                      0xDD, 0xEE])
-        frame = body + driver.compute_crc(body[1:]).to_bytes(2, 'little')
+        # The head has been taken off the notification already, so the
+        # first message reads exactly like the one chained behind it.
+        body = bytes([0x01, 0x02, 0xAA, 0xBB, 0x02, 0x03, 0xCC, 0xDD, 0xEE])
+        frame = body + driver.compute_crc(body).to_bytes(2, 'little')
 
         self.assertEqual(
             list(driver.split_messages(frame)),
-            [frame, bytes([0x55]) + frame[5:]],
+            [frame, frame[4:]],
         )
 
     def test_split_messages_stops_on_the_closing_crc(self) -> None:
         """Test the checksum of a lone message closes the notification."""
         driver = HeadedChainedDriver(self.mock_client, use_gyroscope=False)
-        body = bytes([0x55, 0x01, 0x02, 0xAA, 0xBB])
+        body = bytes([0x01, 0x02, 0xAA, 0xBB])
         frame = (
             body
-            + driver.compute_crc(body[1:]).to_bytes(2, 'little')
+            + driver.compute_crc(body).to_bytes(2, 'little')
             + bytes(9)
         )
 
@@ -382,7 +397,7 @@ class TestSplitMessages(unittest.TestCase):
 
         driver = Unwalkable(self.mock_client, use_gyroscope=False)
         frame = bytes(
-            [0x55, 0x01, 0x02, 0xAA, 0xBB]
+            [0x01, 0x02, 0xAA, 0xBB]
             + [0x02, 0x03, 0xCC, 0xDD, 0xEE]
             + [0x00] * 9,
         )

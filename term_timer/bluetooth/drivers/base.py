@@ -45,8 +45,9 @@ class Driver:
 
     # Width of the header, in bits, before the payload of a message.
     # V1 : bleProtoId on 4 bits, no dataLength.
-    # V2 : head(8) + bleProtoId(8) + dataLength(8).
-    # V3 : bleProtoId(8) + dataLength(8).
+    # V2 and V3 : bleProtoId(8) + dataLength(8). The head of V2 is not
+    # counted here : it opens the notification, not the message, and it
+    # is stripped once by strip_head().
     payload_offset: ClassVar[int] = 8
 
     # Whether a single notification can carry several chained messages.
@@ -58,6 +59,9 @@ class Driver:
     # its bleProtoId. The byte belongs to the *notification* and not to
     # each message : a chained V2 message carries its bleProtoId and
     # its dataLength alone, measured on a GAN i carry 2 the 2026-09-03.
+    # It is therefore removed once per notification rather than counted
+    # in payload_offset, which is what lets V2 and V3 share the same
+    # message header of sixteen bits.
     head_magic: ClassVar[int | None] = None
 
     # Bytes of checksum closing the last message of a notification,
@@ -199,16 +203,39 @@ class Driver:
                 len(plain), declared, len(payload), computed,
             )
 
-    @property
-    def head_bytes(self) -> int:
+    def strip_head(self, plain: bytes) -> bytes | None:
         """
-        Give the width of the head opening a notification.
+        Remove the head opening a notification, when there is one.
+
+        The head belongs to the *notification* and not to each of its
+        messages : a chained V2 message carries its bleProtoId and its
+        dataLength alone, measured on a GAN i carry 2 the 2026-09-03.
+        Taking it off once here is what lets V2 and V3 share a message
+        header of sixteen bits, and the handlers reading behind it.
+
+        The byte the protocol declares is checked on the way, since
+        this is the only place it is still visible.
+
+        Args:
+            plain: The decrypted notification.
 
         Returns:
-            One byte when the protocol declares a head, zero otherwise.
+            The notification without its head, or None when it does not
+            open with the head the protocol declares.
 
         """
-        return 0 if self.head_magic is None else 1
+        if self.head_magic is None:
+            return plain
+
+        if not plain or plain[0] != self.head_magic:
+            logger.debug(
+                'Notification opens with "0x%02X" where the protocol '
+                'declares a head of "0x%02X": %s',
+                plain[0] if plain else 0, self.head_magic, plain.hex(),
+            )
+            return None
+
+        return plain[1:]
 
     def chain_closed(self, plain: bytes, offset: int) -> bool:
         """
@@ -222,7 +249,7 @@ class Driver:
         bounded by the frame either way.
 
         Args:
-            plain: The decrypted notification.
+            plain: The notification, head already stripped.
             offset: Where the next message would start.
 
         Returns:
@@ -239,23 +266,25 @@ class Driver:
 
         declared = int.from_bytes(plain[offset:stop], 'little')
 
-        return self.compute_crc(plain[self.head_bytes:offset]) == declared
+        return self.compute_crc(plain[:offset]) == declared
 
     def split_messages(self, plain: bytes) -> Iterator[bytes]:
         """
-        Yield each message of a notification, its head included.
+        Yield each message of a notification whose head is gone.
 
         A protocol declaring isCycle packs as many messages as fit into
         one notification, each one being a TLV whose dataLength byte
-        closes its header. **Only the first one carries the head of the
-        protocol**: the byte opens the notification, not the message,
-        measured on a GAN i carry 2 the 2026-09-03 — a V2 frame chaining
-        a battery, a move and a solved was read whole, checksum
-        included. Every chained message is given the head back here, so
-        that the absolute offsets of the handlers keep holding.
+        closes its header. Every message of the chain has the same
+        header, the head having been taken off the notification by
+        `strip_head` beforehand : measured on a GAN i carry 2 the
+        2026-09-03, a V2 frame chaining a battery, a move and a solved
+        was read whole, checksum included.
+
+        Args:
+            plain: The notification, head already stripped.
 
         Yields:
-            Each message, from its head to the end of the notification.
+            Each message, from its header to the end of the frame.
 
         """
         yield plain
@@ -274,18 +303,13 @@ class Driver:
             )
             return
 
-        head = self.head_bytes
         header = self.payload_offset // 8
         limit = len(plain) - self.crc_reserve
         offset = 0
-        # The first message is the only one read with the head in its
-        # header; every chained one is that much shorter.
-        step = header
 
-        while offset + step <= limit:
+        while offset + header <= limit:
             # The dataLength byte closes the header of the message.
-            offset += step + plain[offset + step - 1]
-            step = header - head
+            offset += header + plain[offset + header - 1]
 
             # The checksum is tested first, and on purpose: it is the
             # terminator of the chain where the null byte is only the
@@ -295,7 +319,7 @@ class Driver:
             if self.chain_closed(plain, offset):
                 return
 
-            if offset + step > limit or plain[offset] == 0:
+            if offset + header > limit or plain[offset] == 0:
                 return
 
             logger.debug(
@@ -304,7 +328,7 @@ class Driver:
                 plain[offset], offset, len(plain),
             )
 
-            yield bytes(plain[:head]) + plain[offset:]
+            yield plain[offset:]
 
     async def event_handler(self, sender: BleakGATTCharacteristic,  # noqa: ARG002
                             data: bytearray) -> list[EventDict]:
@@ -324,7 +348,12 @@ class Driver:
 
         self.check_crc(plain)
 
-        for chunk in self.split_messages(plain):
+        payload = self.strip_head(plain)
+
+        if payload is None:
+            return events
+
+        for chunk in self.split_messages(payload):
             # The message is given the frame up to its end, and not up
             # to its declared dataLength : every absolute offset of the
             # handlers stays valid, and no handler can read into the

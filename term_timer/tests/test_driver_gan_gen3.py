@@ -22,6 +22,7 @@ from term_timer.bluetooth.constants import MOVE_BUFFER_LIMIT
 from term_timer.bluetooth.constants import MOVE_HISTORY_TIMEOUT
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
+from term_timer.bluetooth.message import GanProtocolMessage
 
 if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import BatteryEventDict
@@ -29,6 +30,32 @@ if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import HardwareEventDict
     from term_timer.bluetooth.annotations import MoveEventDict
     from term_timer.bluetooth.annotations import ResetEventDict
+
+
+class TestFormatBuildTime(unittest.TestCase):
+    """Tests for the five fields of a build time."""
+
+    def test_format_build_time(self) -> None:
+        """Test the year is read little endian and the rest byte by byte."""
+        msg = GanProtocolMessage(
+            bytes([0xE7, 0x07, 0x0C, 0x11, 0x0F, 0x0A]),
+        )
+
+        self.assertEqual(
+            GanGen3Driver.format_build_time(msg, 0),
+            '2023-12-17 15:10',
+        )
+
+    def test_format_build_time_at_an_offset(self) -> None:
+        """Test the same fields are read wherever the message puts them."""
+        msg = GanProtocolMessage(
+            bytes([0x07, 0x0E, 0xE7, 0x07, 0x0C, 0x11, 0x0F, 0x0A]),
+        )
+
+        self.assertEqual(
+            GanGen3Driver.format_build_time(msg, 16),
+            '2023-12-17 15:10',
+        )
 
 
 class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
@@ -395,6 +422,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.driver.last_serial = 100
 
         test_data = bytearray(20)
+        # The head opens the notification and is stripped from it
+        # before any message is read.
+        test_data[0] = 0x55
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = test_data
@@ -409,18 +439,16 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         start: int, length: int, *,
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
-                        return 0x55  # magic
-                    if start == 8 and length == 8:
                         return 0x01  # event type (move)
-                    if start == 16 and length == 8:
+                    if start == 8 and length == 8:
                         return 10  # data_size
-                    if start == 24 and length == 32:
+                    if start == 16 and length == 32:
                         return 12345  # cube_timestamp
-                    if start == 56 and length == 16:
+                    if start == 48 and length == 16:
                         return 102  # serial
-                    if start == 72 and length == 2:
+                    if start == 64 and length == 2:
                         return 1  # direction
-                    if start == 74 and length == 6:
+                    if start == 66 and length == 6:
                         return 2  # face value
                     return 0
 
@@ -458,6 +486,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.driver.last_serial = -1  # No facelets received yet
 
         test_data = bytearray(20)
+        # The head opens the notification and is stripped from it
+        # before any message is read.
+        test_data[0] = 0x55
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = test_data
@@ -472,10 +503,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         start: int, length: int, *,
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
-                        return 0x55  # magic
-                    if start == 8 and length == 8:
                         return 0x01  # event type (move)
-                    if start == 16 and length == 8:
+                    if start == 8 and length == 8:
                         return 10  # data_size
                     return 0
 
@@ -499,6 +528,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.driver.last_serial = 101
 
         test_data = bytearray(20)
+        # The head opens the notification and is stripped from it
+        # before any message is read.
+        test_data[0] = 0x55
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = test_data
@@ -513,18 +545,16 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         start: int, length: int, *,
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
-                        return 0x55  # magic
-                    if start == 8 and length == 8:
                         return 0x01  # event type (move)
-                    if start == 16 and length == 8:
+                    if start == 8 and length == 8:
                         return 10  # data_size
-                    if start == 24 and length == 32:
+                    if start == 16 and length == 32:
                         return 12345  # cube_timestamp
-                    if start == 56 and length == 16:
+                    if start == 48 and length == 16:
                         return 102  # serial
-                    if start == 72 and length == 2:
+                    if start == 64 and length == 2:
                         return 1  # direction
-                    if start == 74 and length == 6:
+                    if start == 66 and length == 6:
                         return 63  # face mask, none of the six faces
                     return 0
 
@@ -564,6 +594,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.driver.last_local_timestamp = None
 
         test_data = bytearray(20)
+        # The head opens the notification and is stripped from it
+        # before any message is read.
+        test_data[0] = 0x55
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = test_data
@@ -577,12 +610,10 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 def mock_get_bit_word(start: int, length: int, *,
                                       little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
-                        return 0x55  # magic
-                    if start == 8 and length == 8:
                         return 0x02  # event type (facelets)
-                    if start == 16 and length == 8:
+                    if start == 8 and length == 8:
                         return 10  # data_size
-                    if start == 24 and length == 16:
+                    if start == 16 and length == 16:
                         return 50  # serial
                     return start % 8  # Mock corner/edge data
 
@@ -621,6 +652,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.driver.serial = 105
 
         test_data = bytearray(20)
+        # The head opens the notification and is stripped from it
+        # before any message is read.
+        test_data[0] = 0x55
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = test_data
@@ -634,12 +668,10 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 def mock_get_bit_word(start: int, length: int, *,
                                       little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
-                        return 0x55  # magic
-                    if start == 8 and length == 8:
                         return 0x02  # event type (facelets)
-                    if start == 16 and length == 8:
+                    if start == 8 and length == 8:
                         return 10  # data_size
-                    if start == 24 and length == 16:
+                    if start == 16 and length == 16:
                         return 107  # serial
                     return start % 8  # Mock corner/edge data
 
@@ -669,6 +701,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         mock_datetime.now.return_value = mock_timestamp
 
         test_data = bytearray(20)
+        # The head opens the notification and is stripped from it
+        # before any message is read.
+        test_data[0] = 0x55
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = test_data
@@ -683,20 +718,18 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         start: int, length: int, *,
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
-                        return 0x55  # magic
-                    if start == 8 and length == 8:
                         return 0x06  # event type (move history)
-                    if start == 16 and length == 8:
+                    if start == 8 and length == 8:
                         return 5  # data_size (4 moves)
-                    if start == 24 and length == 8:
+                    if start == 16 and length == 8:
                         return 100  # start_serial
-                    if start == 32 and length == 3:
+                    if start == 24 and length == 3:
                         return 1  # face for move 1
-                    if start == 35 and length == 1:
+                    if start == 27 and length == 1:
                         return 1  # direction for move 1
-                    if start == 36 and length == 3:
+                    if start == 28 and length == 3:
                         return 5  # face for move 2
-                    if start == 39 and length == 1:
+                    if start == 31 and length == 1:
                         return 0  # direction for move 2
                     return 0
 
@@ -729,6 +762,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
 
         test_data = bytearray(20)
+        # The head opens the notification and is stripped from it
+        # before any message is read.
+        test_data[0] = 0x55
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = test_data
@@ -743,20 +779,18 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         start: int, length: int, *,
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
-                        return 0x55  # magic
-                    if start == 8 and length == 8:
                         return 0x06  # event type (move history)
-                    if start == 16 and length == 8:
+                    if start == 8 and length == 8:
                         return 2  # data_size (2 moves)
-                    if start == 24 and length == 8:
+                    if start == 16 and length == 8:
                         return 100  # start_serial
-                    if start == 32 and length == 3:
+                    if start == 24 and length == 3:
                         return 1  # face for move 1
-                    if start == 35 and length == 1:
+                    if start == 27 and length == 1:
                         return 1  # direction for move 1
-                    if start == 36 and length == 3:
+                    if start == 28 and length == 3:
                         return 7  # face for move 2, out of the table
-                    if start == 39 and length == 1:
+                    if start == 31 and length == 1:
                         return 0  # direction for move 2
                     return 0
 
@@ -793,6 +827,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         mock_datetime.now.return_value = mock_timestamp
 
         test_data = bytearray(20)
+        # The head opens the notification and is stripped from it
+        # before any message is read.
+        test_data[0] = 0x55
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = test_data
@@ -807,18 +844,16 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         start: int, length: int, *,
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
-                        return 0x55  # magic
-                    if start == 8 and length == 8:
                         return 0x07  # event type (hardware)
-                    if start == 16 and length == 8:
+                    if start == 8 and length == 8:
                         return 10  # data_size
-                    if start == 72 and length == 4:
+                    if start == 64 and length == 4:
                         return 1  # sw_major
-                    if start == 76 and length == 4:
+                    if start == 68 and length == 4:
                         return 2  # sw_minor
-                    if start == 80 and length == 4:
+                    if start == 72 and length == 4:
                         return 3  # hw_major
-                    if start == 84 and length == 4:
+                    if start == 76 and length == 4:
                         return 4  # hw_minor
                     return ord('G')  # Hardware name characters
 
@@ -882,6 +917,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         mock_datetime.now.return_value = mock_timestamp
 
         test_data = bytearray(20)
+        # The head opens the notification and is stripped from it
+        # before any message is read.
+        test_data[0] = 0x55
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = test_data
@@ -896,12 +934,10 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         start: int, length: int, *,
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
-                        return 0x55  # magic
-                    if start == 8 and length == 8:
                         return 0x10  # event type (battery)
-                    if start == 16 and length == 8:
+                    if start == 8 and length == 8:
                         return 5  # data_size
-                    if start == 24 and length == 8:
+                    if start == 16 and length == 8:
                         return 80  # battery level
                     return 0
 
@@ -1049,6 +1085,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         mock_datetime.now.return_value = mock_timestamp
 
         test_data = bytearray(20)
+        # The head opens the notification and is stripped from it
+        # before any message is read.
+        test_data[0] = 0x55
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = test_data
@@ -1063,10 +1102,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         start: int, length: int, *,
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
-                        return 0x55  # magic
-                    if start == 8 and length == 8:
                         return 0x11  # event type (disconnect)
-                    if start == 16 and length == 8:
+                    if start == 8 and length == 8:
                         return 1  # data_size
                     return 0
 
@@ -1091,6 +1128,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         mock_datetime.now.return_value = mock_timestamp
 
         test_data = bytearray(20)
+        # The head opens the notification and is stripped from it
+        # before any message is read.
+        test_data[0] = 0x55
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = test_data
@@ -1105,10 +1145,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         start: int, length: int, *,
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
-                        return 0x54  # invalid magic (not 0x55)
-                    if start == 8 and length == 8:
                         return 0x01  # event type
-                    if start == 16 and length == 8:
+                    if start == 8 and length == 8:
                         return 0  # invalid data_size (0)
                     return 0
 
@@ -1131,6 +1169,9 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         mock_datetime.now.return_value = mock_timestamp
 
         test_data = bytearray(20)
+        # The head opens the notification and is stripped from it
+        # before any message is read.
+        test_data[0] = 0x55
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = test_data
@@ -1145,10 +1186,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                         start: int, length: int, *,
                         little_endian: bool = False) -> int:  # noqa: ARG001
                     if start == 0 and length == 8:
-                        return 0x55  # magic
-                    if start == 8 and length == 8:
                         return 0xFF  # unknown event type
-                    if start == 16 and length == 8:
+                    if start == 8 and length == 8:
                         return 5  # data_size
                     return 0
 
@@ -1561,7 +1600,10 @@ class TestGanGen3DriverChainedFrames(unittest.IsolatedAsyncioTestCase):
 
         """
         return [
-            chunk[1] for chunk in self.driver.split_messages(frame)
+            chunk[0]
+            for chunk in self.driver.split_messages(
+                self.driver.strip_head(frame) or b'',
+            )
         ]
 
     def test_move_and_solved_are_two_messages(self) -> None:
@@ -1589,12 +1631,16 @@ class TestGanGen3DriverChainedFrames(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(self.opcodes(frame), [0x02])
 
-    def test_chained_message_is_given_the_head_back(self) -> None:
-        """Test a chained message is handed over with its head."""
-        chunks = list(self.driver.split_messages(self.MOVE_AND_SOLVED))
+    def test_chained_message_carries_no_head(self) -> None:
+        """Test a chained message opens on its opcode, as the first does."""
+        chunks = list(
+            self.driver.split_messages(
+                self.driver.strip_head(self.MOVE_AND_SOLVED) or b'',
+            ),
+        )
 
-        self.assertEqual(chunks[1][0], 0x55)
-        self.assertEqual(chunks[1][2], 4)
+        self.assertEqual(chunks[1][0], 0x14)
+        self.assertEqual(chunks[1][1], 4)
 
     async def test_chained_move_is_decoded_and_published(self) -> None:
         """Test the move chained behind a battery reaches the buffer."""

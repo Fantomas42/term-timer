@@ -9,11 +9,8 @@ import logging
 from datetime import datetime
 from typing import ClassVar
 
-from cubing_algs.facelets import cubies_to_facelets
-
 from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import EventDict
-from term_timer.bluetooth.annotations import FaceletsEventDict
 from term_timer.bluetooth.annotations import GyroEventDict
 from term_timer.bluetooth.annotations import HardwareEventNameOnlyDict
 from term_timer.bluetooth.annotations import HardwareEventPartialDict
@@ -21,9 +18,7 @@ from term_timer.bluetooth.annotations import (
     HardwareEventSoftwareVersionOnlyDict,
 )
 from term_timer.bluetooth.annotations import HardwareEventVersionOnlyDict
-from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.bluetooth.annotations import ResetEventDict
-from term_timer.bluetooth.constants import DEBOUNCE
 from term_timer.bluetooth.constants import GAN_GEN4_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN4_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN4_STATE_CHARACTERISTIC
@@ -35,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 # PLR0904 : V3 declares more opcodes than the default limit allows
 # public methods, and the dispatch table gives each one a handler.
-class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
+class GanGen4Driver(GanGen3Driver):
     """
     GAN12 ui Maglev.
     GAN14 ui FreePlay.
@@ -44,6 +39,10 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
     service_uid: ClassVar[str] = GAN_GEN4_SERVICE
     state_characteristic_uid: ClassVar[str] = GAN_GEN4_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = GAN_GEN4_COMMAND_CHARACTERISTIC
+    # The same sixteen bits as V2, and that is the whole point : the
+    # head of V2 opens its notification and not its messages, so both
+    # generations lay their payloads out behind the same header, and
+    # the move, facelets and history handlers are shared, not copied.
     payload_offset: ClassVar[int] = 16
     chained: ClassVar[bool] = True
     # V3 declares no head byte, its messages start with their
@@ -153,177 +152,6 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
             self.command_characteristic_uid,
             self.cypher.encrypt(msg),
         )
-
-    @staticmethod
-    def read_event_code(msg: GanProtocolMessage) -> int:
-        """
-        Read the opcode of a V3 message.
-
-        V3 drops the head byte of V2 and starts with its bleProtoId,
-        followed by a dataLength byte.
-
-        Returns:
-            The opcode of the message.
-
-        """
-        return msg.get_bit_word(0, 8)
-
-    @classmethod
-    def is_message_valid(cls, msg: GanProtocolMessage) -> bool:  # noqa: ARG003
-        """
-        Accept every V3 message.
-
-        V3 declares no head magic, unlike V2 whose check is inherited
-        from GanGen3Driver and would reject every V3 opcode.
-
-        Returns:
-            Always True.
-
-        """
-        return True
-
-    async def handle_move(
-            self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list[EventDict]:
-        """
-        Decode a move message and evict what the buffer can deliver.
-
-        Returns:
-            The moves the buffer could deliver in order, if any.
-
-        """
-        if self.last_serial == -1:  # Block moves until facelets received
-            return []
-
-        self.last_local_timestamp = timestamp
-        serial = msg.get_bit_word(48, 16, little_endian=True)
-        cube_timestamp = msg.get_bit_word(16, 32, little_endian=True)
-
-        direction = msg.get_bit_word(64, 2)
-        face = [2, 32, 8, 1, 16, 4].index(msg.get_bit_word(66, 6))
-        move = 'URFDLB'[face] + " '"[direction]
-
-        # Put move event into FIFO buffer
-        if face >= 0:
-            move_event: MoveEventDict = {
-                'event': 'move',
-                'clock': clock,
-                'timestamp': timestamp,
-                'serial': serial,
-                'local_timestamp': timestamp,
-                'cube_timestamp': cube_timestamp,
-                'face': face,
-                'direction': direction,
-                'move': move.strip(),
-            }
-            self.move_buffer.append(move_event)
-
-        return await self.evict_move_buffer()
-
-    async def handle_facelets(
-            self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list[EventDict]:
-        """
-        Decode the cube state and check for missed moves.
-
-        Returns:
-            The facelets event of the message.
-
-        """
-        serial = msg.get_bit_word(16, 16, little_endian=True)
-        self.serial = serial
-
-        # Also check and recovery missed moves
-        # using periodic facelets event sent by cube
-        if self.last_serial != -1:
-            # Debounce the facelet event if there are active cube moves
-            if (
-                    self.last_local_timestamp is not None
-                    and (
-                        timestamp - self.last_local_timestamp
-                    ).total_seconds() > DEBOUNCE
-            ):
-                await self.check_if_move_missed()
-        else:
-            self.last_serial = serial
-
-        # Corner/Edge Permutation/Orientation
-        cp = []
-        co = []
-        ep = []
-        eo = []
-        so = [0, 1, 2, 3, 4, 5]
-        # Corners
-        for i in range(7):
-            cp.append(msg.get_bit_word(32 + i * 3, 3))
-            co.append(msg.get_bit_word(53 + i * 2, 2))
-        cp.append(28 - sum(cp))
-        co.append((3 - (sum(co) % 3)) % 3)
-        # Edges
-        for i in range(11):
-            ep.append(msg.get_bit_word(69 + i * 4, 4))
-            eo.append(msg.get_bit_word(113 + i, 1))
-        ep.append(66 - sum(ep))
-        eo.append((2 - (sum(eo) % 2)) % 2)
-
-        facelets_payload: FaceletsEventDict = {
-            'event': 'facelets',
-            'clock': clock,
-            'timestamp': timestamp,
-            'serial': serial,
-            'facelets': cubies_to_facelets(cp, co, ep, eo, so),
-            'state': {
-                'CP': cp,
-                'CO': co,
-                'EP': ep,
-                'EO': eo,
-            },
-        }
-
-        return [facelets_payload]
-
-    async def handle_move_history(
-            self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list[EventDict]:
-        """
-        Decode the moves answering a move history request.
-
-        Returns:
-            The moves the buffer could deliver in order once the
-            recovered ones have been injected, if any.
-
-        """
-        self.close_history_request()
-        data_size = msg.get_bit_word(8, 8)
-        start_serial = msg.get_bit_word(16, 8)
-        count = (data_size - 1) * 2
-
-        for i in range(count):
-            direction = msg.get_bit_word(27 + 4 * i, 1)
-            face = [1, 5, 3, 0, 4, 2].index(msg.get_bit_word(24 + 4 * i, 3))
-
-            if face >= 0:
-                move = 'URFDLB'[face] + " '"[direction]
-
-                history_move: MoveEventDict = {
-                    'event': 'move_history',
-                    'clock': clock,
-                    'timestamp': timestamp,
-                    'serial': (start_serial - i) & 0xFF,
-                    # Missed and recovered events
-                    # has no meaningful local timestamps
-                    'local_timestamp': None,
-                    # Cube hardware timestamp for missed move
-                    # you should interpolate using
-                    # cubeTimestampLinearFit
-                    'cube_timestamp': None,
-                    'face': face,
-                    'direction': direction,
-                    'move': move.strip(),
-                }
-                self.inject_missed_move_to_buffer(history_move)
-
-        return await self.evict_move_buffer()
 
     async def handle_mac_address(  # noqa: PLR6301
             self, msg: GanProtocolMessage,
@@ -454,7 +282,7 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
 
         return []
 
-    async def handle_build_time(  # noqa: PLR6301
+    async def handle_build_time(
             self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
         """
@@ -464,17 +292,7 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
             Nothing, the build time is journaled only.
 
         """
-        year = msg.get_bit_word(24, 16, little_endian=True)
-        month = msg.get_bit_word(40, 8)
-        day = msg.get_bit_word(48, 8)
-        hour = msg.get_bit_word(56, 8)
-        minute = msg.get_bit_word(64, 8)
-        build_time = (
-            f'{year:04d}-{month:02d}-{day:02d} '
-            f'{hour:02d}:{minute:02d}'
-        )
-
-        logger.debug('Build time: %s', build_time)
+        logger.debug('Build time: %s', self.format_build_time(msg, 24))
 
         return []
 
