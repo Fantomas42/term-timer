@@ -1,6 +1,7 @@
 """Type definitions for bluetooth event payloads."""
 from datetime import datetime
 from typing import TYPE_CHECKING
+from typing import NotRequired
 from typing import TypedDict
 
 if TYPE_CHECKING:
@@ -123,6 +124,9 @@ class HardwareEventDict(BaseEventDict):
     gyroscope_ready: bool
     gyroscope_supported: bool
     restart_no_power: int
+    # V2 carries a firmware build time in its identity message where V1
+    # carries none, and the two share this payload.
+    build_time: NotRequired[str]
 
 
 class HardwareEventPartialDict(BaseEventDict):
@@ -148,6 +152,24 @@ class HardwareEventSoftwareVersionOnlyDict(BaseEventDict):
     """Software version only event payload (Gen4)."""
 
     software_version: str
+
+
+class HardwareEventMacOnlyDict(BaseEventDict):
+    """MAC address only event payload (Gen4)."""
+
+    mac_address: str
+
+
+class HardwareEventBuildTimeOnlyDict(BaseEventDict):
+    """Firmware build time only event payload (Gen4)."""
+
+    build_time: str
+
+
+class HardwareEventRestartOnlyDict(BaseEventDict):
+    """Restart reason only event payload (Gen4)."""
+
+    restart_no_power: int
 
 
 class HardwareEventMoyuDict(BaseEventDict):
@@ -205,6 +227,9 @@ EventDict = (
     | HardwareEventNameOnlyDict
     | HardwareEventVersionOnlyDict
     | HardwareEventSoftwareVersionOnlyDict
+    | HardwareEventMacOnlyDict
+    | HardwareEventBuildTimeOnlyDict
+    | HardwareEventRestartOnlyDict
     | HardwareEventMoyuDict
     | BatteryEventDict
     | SolvedEventDict

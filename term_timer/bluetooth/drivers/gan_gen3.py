@@ -438,6 +438,7 @@ class GanGen3Driver(GanGen2Driver):
             'clock': clock,
             'timestamp': timestamp,
             'restart_no_power': restart_reason,
+            'build_time': build_time,
             'hardware_name': hardware_name,
             'hardware_version': f'{ hw_major }.{ hw_minor }',
             'software_version': f'{ sw_major }.{ sw_minor }',

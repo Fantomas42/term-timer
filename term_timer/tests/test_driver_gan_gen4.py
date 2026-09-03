@@ -21,8 +21,11 @@ if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import BatteryEventDict
     from term_timer.bluetooth.annotations import FaceletsEventDict
     from term_timer.bluetooth.annotations import GyroConfigEventDict
+    from term_timer.bluetooth.annotations import HardwareEventBuildTimeOnlyDict
     from term_timer.bluetooth.annotations import HardwareEventDict
+    from term_timer.bluetooth.annotations import HardwareEventMacOnlyDict
     from term_timer.bluetooth.annotations import HardwareEventPartialDict
+    from term_timer.bluetooth.annotations import HardwareEventRestartOnlyDict
     from term_timer.bluetooth.annotations import (
         HardwareEventSoftwareVersionOnlyDict,
     )
@@ -954,8 +957,196 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                     Mock(), bytearray(frame),
                 )
 
-        self.assertEqual(events, [])
         self.assertIn('MAC Address: AA:BB:CC:DD:EE:FF:11', logged.output[0])
+        self.assertEqual(len(events), 1)
+        mac_event = cast('HardwareEventMacOnlyDict', events[0])
+        self.assertEqual(mac_event['event'], 'hardware')
+        self.assertEqual(mac_event['mac_address'], 'AA:BB:CC:DD:EE:FF:11')
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_mac_address_published_drops_a_null_seventh_byte(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the padding byte of a GAN i4 stays out of the event."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        # What the GAN i4 really sends, measured the 2026-09-03 : its
+        # six BLE address bytes, then the null the descriptor declares
+        body = bytes.fromhex('FF080022FB9D506C5400')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen4',
+                    level='DEBUG',
+            ) as logged:
+                events = await self.driver.event_handler(
+                    Mock(), bytearray(frame),
+                )
+
+        # The journal keeps the seven bytes, the event renders a MAC
+        self.assertIn('MAC Address: 22:FB:9D:50:6C:54:00', logged.output[0])
+        mac_event = cast('HardwareEventMacOnlyDict', events[0])
+        self.assertEqual(mac_event['mac_address'], '22:FB:9D:50:6C:54')
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_build_time_is_published_not_only_journaled(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the firmware date rides a hardware event."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        # What the GAN i4 really sends, measured the 2026-09-03 : a
+        # year on sixteen bits little endian, then four bytes
+        body = bytes.fromhex('F50700EA0701160A28')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen4',
+                    level='DEBUG',
+            ) as logged:
+                events = await self.driver.event_handler(
+                    Mock(), bytearray(frame),
+                )
+
+        self.assertIn('Build time: 2026-01-22 10:40', logged.output[0])
+        self.assertEqual(len(events), 1)
+        build_event = cast('HardwareEventBuildTimeOnlyDict', events[0])
+        self.assertEqual(build_event['event'], 'hardware')
+        self.assertEqual(build_event['build_time'], '2026-01-22 10:40')
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_restart_reason_is_published_not_only_journaled(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the restart reason takes the key V2 already publishes."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        # proto F6, dataLength 03, index 00, reason on sixteen bits :
+        # the GAN i4 answered 1, measured the 2026-09-03
+        body = bytes.fromhex('F603000100')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen4',
+                    level='DEBUG',
+            ) as logged:
+                events = await self.driver.event_handler(
+                    Mock(), bytearray(frame),
+                )
+
+        self.assertIn('Restart reason: 1', logged.output[0])
+        self.assertEqual(len(events), 1)
+        restart_event = cast('HardwareEventRestartOnlyDict', events[0])
+        self.assertEqual(restart_event['event'], 'hardware')
+        self.assertEqual(restart_event['restart_no_power'], 1)
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_restore_result_stays_journaled(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the answer to a request nobody sends is not published."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        # proto D3, dataLength 01, result 01. REQUEST_RESTORE has no
+        # caller outside the driver : an answer is an incident
+        body = bytes.fromhex('D30101')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen4',
+                    level='DEBUG',
+            ) as logged:
+                events = await self.driver.event_handler(
+                    Mock(), bytearray(frame),
+                )
+
+        self.assertEqual(events, [])
+        self.assertIn('Restore result: 1', logged.output[0])
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_account_binding_is_named_rather_than_unknown(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the 0xDC dispatches to the handler inherited from V2."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        # proto DC, dataLength 04, result of 32 bits little endian
+        body = bytes.fromhex('DC0401000000')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen3',
+                    level='DEBUG',
+            ) as logged:
+                events = await self.driver.event_handler(
+                    Mock(), bytearray(frame),
+                )
+
+        self.assertEqual(events, [])
+        self.assertIn('Account binding result: 1', logged.output[0])
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_an_opcode_absent_from_the_table_is_not_swallowed(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the 0xF7 to 0xFB range no longer disappears in silence."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        # The four opcodes a `0xF5 <= event <= 0xFF` range used to
+        # absorb without a branch. None is declared by the descriptor,
+        # and the dispatch table names none : each must be journaled
+        for opcode in (0xF7, 0xF8, 0xF9, 0xFB):
+            with self.subTest(opcode=opcode):
+                self.assertNotIn(opcode, GanGen4Driver.MESSAGE_HANDLERS)
+
+                body = bytes([opcode, 0x01, 0x00])
+                frame = body + self.driver.compute_crc(
+                    body,
+                ).to_bytes(2, 'little')
+
+                with patch.object(self.driver, 'cypher') as mock_cypher:
+                    mock_cypher.decrypt.return_value = frame
+
+                    with self.assertLogs(
+                            'term_timer.bluetooth.drivers.base',
+                            level='DEBUG',
+                    ) as logged:
+                        events = await self.driver.event_handler(
+                            Mock(), bytearray(frame),
+                        )
+
+                self.assertEqual(events, [])
+                self.assertIn(
+                    f'0x{opcode:02X}',
+                    '\n'.join(logged.output),
+                )
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')

@@ -13,8 +13,11 @@ from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import GyroConfigEventDict
 from term_timer.bluetooth.annotations import GyroEventDict
+from term_timer.bluetooth.annotations import HardwareEventBuildTimeOnlyDict
+from term_timer.bluetooth.annotations import HardwareEventMacOnlyDict
 from term_timer.bluetooth.annotations import HardwareEventNameOnlyDict
 from term_timer.bluetooth.annotations import HardwareEventPartialDict
+from term_timer.bluetooth.annotations import HardwareEventRestartOnlyDict
 from term_timer.bluetooth.annotations import (
     HardwareEventSoftwareVersionOnlyDict,
 )
@@ -66,6 +69,7 @@ class GanGen4Driver(GanGen3Driver):
         0xD2: 'handle_reset',
         0xD3: 'handle_restore',
         0xD4: 'handle_gyroscope_config',
+        0xDC: 'handle_account_binding',
         0xEA: 'handle_disconnect',
         0xEC: 'handle_gyroscope',
         0xED: 'handle_facelets',
@@ -188,26 +192,46 @@ class GanGen4Driver(GanGen3Driver):
 
     async def handle_mac_address(  # noqa: PLR6301
             self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+            clock: int, timestamp: datetime) -> list[EventDict]:
         """
-        Log the MAC address of the cube.
+        Decode the MAC address of the cube.
+
+        Seven bytes are read, not six : `bleProtoId 255` declares
+        `macAddress` with `elementCount: 7`. An oddity of GAN, not a
+        slip of the driver — do not shorten the loop to a MAC length.
+        The seventh is padding on the GAN i4, whose six first bytes are
+        its BLE address to the byte, measured the 2026-09-03.
+
+        The published address stops at the last byte carrying a value,
+        as the `0xFE` does with its own trailing null : a cube filling
+        the seventh says so on screen instead of saying it to a log
+        file, and one that does not renders a plain MAC address.
 
         Returns:
-            Nothing, the address is journaled only.
+            The partial hardware event carrying the address.
 
         """
-        mac_address = ''
-        # Seven bytes, not six : `bleProtoId 255` declares
-        # `macAddress` with `elementCount: 7`. An oddity of GAN, not a
-        # slip of the driver — do not shorten it to a MAC length.
-        for i in range(7):
-            if i > 0:
-                mac_address += ':'
-            mac_address += f'{msg.get_bit_word(24 + i * 8, 8):02X}'
+        octets = [
+            msg.get_bit_word(24 + i * 8, 8)
+            for i in range(7)
+        ]
 
-        logger.debug('MAC Address: %s', mac_address)
+        logger.debug(
+            'MAC Address: %s',
+            ':'.join(f'{octet:02X}' for octet in octets),
+        )
 
-        return []
+        while len(octets) > 6 and not octets[-1]:
+            octets.pop()
+
+        mac_address_payload: HardwareEventMacOnlyDict = {
+            'event': 'hardware',
+            'clock': clock,
+            'timestamp': timestamp,
+            'mac_address': ':'.join(f'{octet:02X}' for octet in octets),
+        }
+
+        return [mac_address_payload]
 
     async def handle_hardware_version(  # noqa: PLR6301
             self, msg: GanProtocolMessage,
@@ -339,33 +363,55 @@ class GanGen4Driver(GanGen3Driver):
 
     async def handle_restart_reason(  # noqa: PLR6301
             self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+            clock: int, timestamp: datetime) -> list[EventDict]:
         """
-        Log why the cube restarted.
+        Decode why the cube restarted.
+
+        The key is the one V2 already publishes from the same field of
+        its own identity message, so the two generations answer the
+        same question with the same name. The width differs — sixteen
+        bits here against eight there — and the value is published raw
+        rather than judged, as the `result` of a reset is.
 
         Returns:
-            Nothing, the reason is journaled only.
+            The partial hardware event carrying the reason.
 
         """
         restart_reason = msg.get_bit_word(24, 16, little_endian=True)
 
         logger.debug('Restart reason: %s', restart_reason)
 
-        return []
+        restart_payload: HardwareEventRestartOnlyDict = {
+            'event': 'hardware',
+            'clock': clock,
+            'timestamp': timestamp,
+            'restart_no_power': restart_reason,
+        }
+
+        return [restart_payload]
 
     async def handle_build_time(
             self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+            clock: int, timestamp: datetime) -> list[EventDict]:
         """
-        Log when the firmware of the cube was built.
+        Decode when the firmware of the cube was built.
 
         Returns:
-            Nothing, the build time is journaled only.
+            The partial hardware event carrying the build time.
 
         """
-        logger.debug('Build time: %s', self.format_build_time(msg, 24))
+        build_time = self.format_build_time(msg, 24)
 
-        return []
+        logger.debug('Build time: %s', build_time)
+
+        build_time_payload: HardwareEventBuildTimeOnlyDict = {
+            'event': 'hardware',
+            'clock': clock,
+            'timestamp': timestamp,
+            'build_time': build_time,
+        }
+
+        return [build_time_payload]
 
     async def handle_gyroscope(
             self, msg: GanProtocolMessage,
@@ -467,6 +513,12 @@ class GanGen4Driver(GanGen3Driver):
             clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
         """
         Log the answer to a cube restore request.
+
+        Journaled and not published, as the account binding answer next
+        door is : `REQUEST_RESTORE` has no caller outside this driver,
+        so a `result` arriving anyway is an incident rather than a
+        datum of the cube. The handler exists so that it is named in
+        the journal instead of counted as an unknown opcode.
 
         Returns:
             Nothing, the result is journaled only.

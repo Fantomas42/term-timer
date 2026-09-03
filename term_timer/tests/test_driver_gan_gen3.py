@@ -906,6 +906,10 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             'Build time: 2023-12-17 15:10',
             '\n'.join(logs.output),
         )
+        # Decoded, therefore published : the journal is not where a
+        # firmware date belongs, and the field rides the hardware event
+        # the handler was already sending
+        self.assertEqual(hw_event['build_time'], '2023-12-17 15:10')
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
