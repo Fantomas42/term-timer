@@ -11,9 +11,13 @@ from unittest.mock import AsyncMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
+from cubing_algs.constants import FACES
+
 from term_timer.bluetooth.constants import GAN_GEN3_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN3_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN3_STATE_CHARACTERISTIC
+from term_timer.bluetooth.constants import GEN3_HISTORY_FACES
+from term_timer.bluetooth.constants import GEN3_MOVE_FACES
 from term_timer.bluetooth.constants import MOVE_BUFFER_LIMIT
 from term_timer.bluetooth.constants import MOVE_HISTORY_TIMEOUT
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
@@ -484,6 +488,65 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_move_out_of_domain_face(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test a face out of domain emits nothing and does not raise."""
+        mock_time.return_value = 123456789
+        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+        mock_datetime.now.return_value = mock_timestamp
+
+        self.driver.last_serial = 101
+
+        test_data = bytearray(20)
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+
+            with patch(
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
+            ) as mock_msg_class:
+                mock_msg = Mock()
+                mock_msg_class.return_value = mock_msg
+
+                def mock_get_bit_word(  # noqa: PLR0911
+                        start: int, length: int, *,
+                        little_endian: bool = False) -> int:  # noqa: ARG001
+                    if start == 0 and length == 8:
+                        return 0x55  # magic
+                    if start == 8 and length == 8:
+                        return 0x01  # event type (move)
+                    if start == 16 and length == 8:
+                        return 10  # data_size
+                    if start == 24 and length == 32:
+                        return 12345  # cube_timestamp
+                    if start == 56 and length == 16:
+                        return 102  # serial
+                    if start == 72 and length == 2:
+                        return 1  # direction
+                    if start == 74 and length == 6:
+                        return 63  # face mask, none of the six faces
+                    return 0
+
+                mock_msg.get_bit_word.side_effect = mock_get_bit_word
+
+                with self.assertLogs(
+                        'term_timer.bluetooth.drivers.gan_gen3',
+                        level='DEBUG',
+                ) as logged:
+                    result = await self.driver.event_handler(
+                        Mock(), test_data,
+                    )
+
+        self.assertIn('out of domain move', logged.output[0])
+        self.assertIn('face mask "0x3F"', logged.output[0])
+        self.assertEqual(result, [])
+        self.assertEqual(self.driver.move_buffer, [])
+        # The move was never named, so it stays a hole in the serials
+        self.assertEqual(self.driver.last_serial, 101)
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     @patch('term_timer.bluetooth.drivers.gan_gen3.cubies_to_facelets')
     async def test_event_handler_facelets_event(
             self, mock_cubies_to_facelets: Mock,
@@ -655,6 +718,69 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                     await self.driver.event_handler(mock_sender, test_data)
                     # (5-1)*2 = 8 moves
                     self.assertEqual(mock_inject.call_count, 8)
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_move_history_out_of_domain_move(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test an unnamable recovered move is journaled, not injected."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        test_data = bytearray(20)
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+
+            with patch(
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
+            ) as mock_msg_class:
+                mock_msg = Mock()
+                mock_msg_class.return_value = mock_msg
+
+                def mock_get_bit_word(  # noqa: PLR0911
+                        start: int, length: int, *,
+                        little_endian: bool = False) -> int:  # noqa: ARG001
+                    if start == 0 and length == 8:
+                        return 0x55  # magic
+                    if start == 8 and length == 8:
+                        return 0x06  # event type (move history)
+                    if start == 16 and length == 8:
+                        return 2  # data_size (2 moves)
+                    if start == 24 and length == 8:
+                        return 100  # start_serial
+                    if start == 32 and length == 3:
+                        return 1  # face for move 1
+                    if start == 35 and length == 1:
+                        return 1  # direction for move 1
+                    if start == 36 and length == 3:
+                        return 7  # face for move 2, out of the table
+                    if start == 39 and length == 1:
+                        return 0  # direction for move 2
+                    return 0
+
+                mock_msg.get_bit_word.side_effect = mock_get_bit_word
+
+                with (
+                    patch.object(
+                        self.driver,
+                        'inject_missed_move_to_buffer',
+                    ) as mock_inject,
+                    self.assertLogs(
+                        'term_timer.bluetooth.drivers.gan_gen3',
+                        level='DEBUG',
+                    ) as logged,
+                ):
+                    result = await self.driver.event_handler(
+                        Mock(), test_data,
+                    )
+
+        self.assertIn('out of domain move at index 1', logged.output[0])
+        self.assertIn('face "7"', logged.output[0])
+        # Only the move the driver could name has been injected
+        self.assertEqual(mock_inject.call_count, 1)
+        self.assertEqual(result, [])
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
@@ -956,28 +1082,23 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         )
 
     def test_face_mapping_gen3(self) -> None:
-        """Test face mapping gen3."""
-        # Test the Gen3 face mapping for move history
-        # [1, 5, 3, 0, 4, 2] maps to URFDLB
-        face_indices = [1, 5, 3, 0, 4, 2]
-        face_names = 'URFDLB'
-        expected_mapping = ['R', 'B', 'D', 'U', 'L', 'F']
-
-        for i, expected_face in enumerate(expected_mapping):
-            self.assertEqual(face_names[face_indices[i]], expected_face)
+        """Test the history face table names the six faces."""
+        # The firmware orders its faces D, U, B, F, L, R and names one
+        # of them by its plain index in a move of the history
+        self.assertEqual(
+            [FACES[GEN3_HISTORY_FACES[i]] for i in range(6)],
+            ['D', 'U', 'B', 'F', 'L', 'R'],
+        )
+        self.assertEqual(sorted(GEN3_HISTORY_FACES.values()), list(range(6)))
 
     def test_move_direction_bits(self) -> None:
-        """Test move direction bits."""
-        # Test move direction bits encoding for Gen3
-        # [2, 32, 8, 1, 16, 4] are the bit patterns for URFDLB
-        bit_patterns = [2, 32, 8, 1, 16, 4]
-        face_names = 'URFDLB'
-
-        for i, pattern in enumerate(bit_patterns):
-            # Find index of this pattern in the list
-            index = bit_patterns.index(pattern)
-            self.assertEqual(index, i)
-            self.assertEqual(face_names[i], face_names[index])
+        """Test the live move face table names the six faces."""
+        # A live move names the same six faces by a bit mask
+        self.assertEqual(
+            [FACES[GEN3_MOVE_FACES[m]] for m in (1, 2, 4, 8, 16, 32)],
+            ['D', 'U', 'B', 'F', 'L', 'R'],
+        )
+        self.assertEqual(sorted(GEN3_MOVE_FACES.values()), list(range(6)))
 
     def test_serial_arithmetic_wraparound(self) -> None:
         """Test serial arithmetic wraparound."""

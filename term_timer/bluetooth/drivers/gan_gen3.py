@@ -22,6 +22,8 @@ from term_timer.bluetooth.constants import DEBOUNCE
 from term_timer.bluetooth.constants import GAN_GEN3_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN3_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN3_STATE_CHARACTERISTIC
+from term_timer.bluetooth.constants import GEN3_HISTORY_FACES
+from term_timer.bluetooth.constants import GEN3_MOVE_FACES
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.message import GanProtocolMessage
 
@@ -204,23 +206,34 @@ class GanGen3Driver(GanGen2Driver):
         cube_timestamp = msg.get_bit_word(24, 32, little_endian=True)
 
         direction = msg.get_bit_word(72, 2)
-        face = [2, 32, 8, 1, 16, 4].index(msg.get_bit_word(74, 6))
-        move = 'URFDLB'[face] + " '"[direction]
+        face_mask = msg.get_bit_word(74, 6)
+        face = GEN3_MOVE_FACES.get(face_mask)
+        move = None if face is None else self.format_move(face, direction)
+
+        # A move that cannot be named is not lost for that : it leaves
+        # a hole in the serial numbers, which the eviction sees and
+        # answers with a move history request.
+        if face is None or move is None:
+            logger.debug(
+                'Move message "0x01" carries an out of domain move: '
+                'face mask "0x%02X", direction "%d"',
+                face_mask, direction,
+            )
+            return await self.evict_move_buffer()
 
         # Put move event into FIFO buffer
-        if face >= 0:
-            move_event: MoveEventDict = {
-                'event': 'move',
-                'clock': clock,
-                'timestamp': timestamp,
-                'serial': serial,
-                'local_timestamp': timestamp,
-                'cube_timestamp': cube_timestamp,
-                'face': face,
-                'direction': direction,
-                'move': move.strip(),
-            }
-            self.move_buffer.append(move_event)
+        move_event: MoveEventDict = {
+            'event': 'move',
+            'clock': clock,
+            'timestamp': timestamp,
+            'serial': serial,
+            'local_timestamp': timestamp,
+            'cube_timestamp': cube_timestamp,
+            'face': face,
+            'direction': direction,
+            'move': move,
+        }
+        self.move_buffer.append(move_event)
 
         return await self.evict_move_buffer()
 
@@ -312,28 +325,36 @@ class GanGen3Driver(GanGen2Driver):
 
         for i in range(count):
             direction = msg.get_bit_word(35 + 4 * i, 1)
-            face = [1, 5, 3, 0, 4, 2].index(msg.get_bit_word(32 + 4 * i, 3))
+            face_id = msg.get_bit_word(32 + 4 * i, 3)
+            face = GEN3_HISTORY_FACES.get(face_id)
 
-            if face >= 0:
-                move = 'URFDLB'[face] + " '"[direction]
+            move = None if face is None else self.format_move(face, direction)
 
-                history_move: MoveEventDict = {
-                    'event': 'move_history',
-                    'clock': clock,
-                    'timestamp': timestamp,
-                    'serial': (start_serial - i) & 0xFF,
-                    # Missed and recovered events
-                    # has no meaningful local timestamps
-                    'local_timestamp': None,
-                    # Cube hardware timestamp for missed move
-                    # you should interpolate using
-                    # cubeTimestampLinearFit
-                    'cube_timestamp': None,
-                    'face': face,
-                    'direction': direction,
-                    'move': move.strip(),
-                }
-                self.inject_missed_move_to_buffer(history_move)
+            if face is None or move is None:
+                logger.debug(
+                    'Move history message "0x06" carries an out of '
+                    'domain move at index %d: face "%d", direction "%d"',
+                    i, face_id, direction,
+                )
+                continue
+
+            history_move: MoveEventDict = {
+                'event': 'move_history',
+                'clock': clock,
+                'timestamp': timestamp,
+                'serial': (start_serial - i) & 0xFF,
+                # Missed and recovered events
+                # has no meaningful local timestamps
+                'local_timestamp': None,
+                # Cube hardware timestamp for missed move
+                # you should interpolate using
+                # cubeTimestampLinearFit
+                'cube_timestamp': None,
+                'face': face,
+                'direction': direction,
+                'move': move,
+            }
+            self.inject_missed_move_to_buffer(history_move)
 
         return await self.evict_move_buffer()
 
