@@ -188,11 +188,16 @@ class GanGen4Driver(GanGen3Driver):
 
         The `0xFE` declares its `deviceVersion` on a single field of
         sixteen bits, where the `0xFD` next door declares two nibbles
-        joined by a dot. This handler reads it like the `0xFD`, so it
-        only ever sees the first byte. Nothing says what the second one
-        holds, and a rendering invented here would be as arbitrary as
-        the one it replaces : the whole field is journaled, and a cube
-        will say what it is worth.
+        joined by a dot. GAN encodes its versions in nibbles — the
+        `0xFD` of the GAN i4 spells `5.3` as `0x53` — so the first byte
+        is read that way here too, and the second one has never been
+        seen carrying anything : `0x00` on the GAN i4, measured the
+        2026-09-03.
+
+        It is appended to the rendering rather than dropped the day it
+        stops being null. A cube that never fills it renders exactly
+        what it rendered before, and a cube that fills it says so on
+        screen instead of saying it to a log file nobody reads.
 
         Returns:
             The partial hardware event carrying the version.
@@ -200,19 +205,25 @@ class GanGen4Driver(GanGen3Driver):
         """
         hw_major = msg.get_bit_word(24, 4)
         hw_minor = msg.get_bit_word(28, 4)
+        hw_extra = msg.get_bit_word(32, 8)
 
         logger.debug(
             'Hardware version field: 0x%04X, bytes 0x%02X 0x%02X',
             msg.get_bit_word(24, 16, little_endian=True),
             msg.get_bit_word(24, 8),
-            msg.get_bit_word(32, 8),
+            hw_extra,
         )
+
+        hardware_version = f'{ hw_major }.{ hw_minor }'
+
+        if hw_extra:
+            hardware_version += f'.{ hw_extra }'
 
         hw_version_payload: HardwareEventVersionOnlyDict = {
             'event': 'hardware',
             'clock': clock,
             'timestamp': timestamp,
-            'hardware_version': f'{ hw_major }.{ hw_minor }',
+            'hardware_version': hardware_version,
         }
 
         return [hw_version_payload]

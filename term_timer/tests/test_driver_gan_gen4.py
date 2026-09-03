@@ -804,11 +804,35 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
 
         self.assertEqual(len(events), 1)
         hw_event = cast('HardwareEventVersionOnlyDict', events[0])
-        self.assertEqual(hw_event['hardware_version'], '2.1')
+        self.assertEqual(hw_event['hardware_version'], '2.1.67')
         self.assertIn(
             'Hardware version field: 0x4321, bytes 0x21 0x43',
             logged.output[0],
         )
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_hardware_version_of_a_null_second_byte(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the rendering a cube filling one byte gets is unchanged."""
+        mock_time.return_value = 123456789
+        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+        mock_datetime.now.return_value = mock_timestamp
+
+        # What the GAN i4 really sends, measured the 2026-09-03 : the
+        # second byte is null, and the rendering keeps its two parts
+        body = bytes.fromhex('FE03001000')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            events = await self.driver.event_handler(Mock(), bytearray(frame))
+
+        self.assertEqual(len(events), 1)
+        hw_event = cast('HardwareEventVersionOnlyDict', events[0])
+        self.assertEqual(hw_event['hardware_version'], '1.0')
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
