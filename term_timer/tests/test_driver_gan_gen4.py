@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import HardwareEventVersionOnlyDict
     from term_timer.bluetooth.annotations import MoveEventDict
     from term_timer.bluetooth.annotations import ResetEventDict
+    from term_timer.bluetooth.annotations import SolvedEventDict
 
 
 class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
@@ -569,7 +570,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                     if start == 0 and length == 8:
                         return 0xFC  # event type (hardware name)
                     if start == 8 and length == 8:
-                        return 8  # data_size
+                        return 9  # data_size, index byte included
                     # Return characters for "GAN12uiM"
                     chars = 'GAN12uiM'
                     char_index = (start - 24) // 8
@@ -615,7 +616,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                     if start == 0 and length == 8:
                         return 0xFC  # event type (hardware name)
                     if start == 8 and length == 8:
-                        return 7  # data_size
+                        return 8  # data_size, index byte included
                     # Return characters for "GAN14ui"
                     chars = 'GAN14ui'
                     char_index = (start - 24) // 8
@@ -635,6 +636,53 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 self.assertEqual(hw_event['hardware_name'], 'GAN14ui')
                 # GAN14ui doesn't support gyro
                 self.assertFalse(hw_event['gyroscope_supported'])
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_hardware_name_full_length(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test event handler hardware name of the longest model."""
+        mock_time.return_value = 123456789
+        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+        mock_datetime.now.return_value = mock_timestamp
+
+        test_data = bytearray(20)
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+
+            with patch(
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
+            ) as mock_msg_class:
+                mock_msg = Mock()
+                mock_msg_class.return_value = mock_msg
+
+                def mock_get_bit_word(start: int, length: int) -> int:
+                    if start == 0 and length == 8:
+                        return 0xFC  # event type (hardware name)
+                    if start == 8 and length == 8:
+                        return 12  # data_size, index byte included
+                    # Return characters for "GAN12uiM2_A", the eleven
+                    # characters the descriptor declares, then a
+                    # twelfth byte no name ever contains
+                    chars = 'GAN12uiM2_A'
+                    char_index = (start - 24) // 8
+                    if 0 <= char_index < len(chars):
+                        return ord(chars[char_index])
+                    return 0xFF
+
+                mock_msg.get_bit_word.side_effect = mock_get_bit_word
+
+                mock_sender = Mock()
+                result = await self.driver.event_handler(mock_sender, test_data)
+
+                self.assertEqual(len(result), 1)
+                event = result[0]
+                self.assertEqual(event['event'], 'hardware')
+                hw_event = cast('HardwareEventDict', event)
+                self.assertEqual(hw_event['hardware_name'], 'GAN12uiM2_A')
+                self.assertNotIn(chr(0xFF), hw_event['hardware_name'])
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
@@ -928,6 +976,60 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         reset_event = cast('ResetEventDict', result[0])
         self.assertEqual(reset_event['event'], 'reset')
         self.assertEqual(reset_event['result'], 0)
+
+    async def test_event_handler_solved(self) -> None:
+        """Test the solve the cube announces on its own is published."""
+        # proto 02, dataLength 04, the cube clock on four bytes little
+        # endian, then the two bytes of CRC-16 closing every V3 frame.
+        body = bytes.fromhex('020439300000')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            events = await self.driver.event_handler(Mock(), bytearray(frame))
+
+        self.assertEqual(len(events), 1)
+        solved = cast('SolvedEventDict', events[0])
+        self.assertEqual(solved['event'], 'solved')
+        self.assertEqual(solved['cube_timestamp'], 12345)
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_chained_solved_carries_the_clock_of_its_move(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the solved message chained behind a move is decoded."""
+        mock_time.return_value = 123456789
+        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+        mock_datetime.now.return_value = mock_timestamp
+
+        self.driver.last_serial = 101
+        self.driver.serial = 101
+
+        # The shape the nine solved messages of the 2026-09-03 session
+        # had, and the one the V2 shows too : the move that closes the
+        # solve, then the announcement chained behind it, both stamped
+        # with the same cube clock.
+        body = bytes.fromhex('010739300000660042') + bytes.fromhex(
+            '020439300000',
+        )
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            events = await self.driver.event_handler(Mock(), bytearray(frame))
+
+        moves = [one for one in events if one['event'] == 'move']
+        solved = [one for one in events if one['event'] == 'solved']
+
+        self.assertEqual(len(moves), 1)
+        self.assertEqual(len(solved), 1)
+        self.assertEqual(
+            cast('SolvedEventDict', solved[0])['cube_timestamp'],
+            cast('MoveEventDict', moves[0])['cube_timestamp'],
+        )
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')

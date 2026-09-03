@@ -62,6 +62,7 @@ BLUETOOTH_EVENTS: Final[frozenset[str]] = frozenset({
     'gyro-config',
     'move',
     'move_history',
+    'solved',
     'disconnect',
     'reset',
 })

@@ -26,6 +26,7 @@ from term_timer.bluetooth.annotations import HardwareEventVersionOnlyDict
 from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.bluetooth.annotations import MoveInfo
 from term_timer.bluetooth.annotations import RotationEventDict
+from term_timer.bluetooth.annotations import SolvedEventDict
 from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.bluetooth.replay import ReplayPayload
@@ -467,6 +468,15 @@ class Bluetooth:
                     )
                     self.bluetooth_hardware['gyroscope_supported'] = (
                         gyro_config_event['gyroscope_supported']
+                    )
+
+                elif event_name == 'solved':
+                    solved_event = cast('SolvedEventDict', event)
+
+                    logger.debug(
+                        'Cube reported itself solved at %s ms '
+                        'of its own clock',
+                        solved_event['cube_timestamp'],
                     )
 
                 elif event_name == 'disconnect':

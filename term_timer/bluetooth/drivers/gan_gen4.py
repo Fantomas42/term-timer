@@ -58,7 +58,7 @@ class GanGen4Driver(GanGen3Driver):
     crc_reserve: ClassVar[int] = 2
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
         0x01: 'handle_move',
-        0x02: 'handle_time_sync',
+        0x02: 'handle_solved',
         0xD1: 'handle_move_history',
         0xD2: 'handle_reset',
         0xD3: 'handle_calibrate',
@@ -236,8 +236,10 @@ class GanGen4Driver(GanGen3Driver):
         """
         data_size = msg.get_bit_word(8, 8)
 
+        # dataLength counts the index byte the name is written after,
+        # so the name itself is one byte shorter than the payload.
         hardware_name = ''
-        for i in range(data_size):
+        for i in range(data_size - 1):
             hardware_name += chr(msg.get_bit_word(i * 8 + 24, 8))
 
         hardware_name_payload: HardwareEventNameOnlyDict = {
@@ -427,22 +429,6 @@ class GanGen4Driver(GanGen3Driver):
         gyro_enabled = msg.get_bit_word(16, 8)
 
         logger.debug('Gyro enabled: %s', bool(gyro_enabled))
-
-        return []
-
-    async def handle_time_sync(  # noqa: PLR6301
-            self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
-        """
-        Log the cube clock carried by the message.
-
-        Returns:
-            Nothing, the time is journaled only.
-
-        """
-        cube_time = msg.get_bit_word(16, 32, little_endian=True)
-
-        logger.debug('Cube time: %s', cube_time)
 
         return []
 

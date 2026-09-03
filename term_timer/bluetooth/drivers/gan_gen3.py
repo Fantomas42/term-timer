@@ -18,6 +18,7 @@ from term_timer.bluetooth.annotations import FaceletsEventDict
 from term_timer.bluetooth.annotations import HardwareEventDict
 from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.bluetooth.annotations import ResetEventDict
+from term_timer.bluetooth.annotations import SolvedEventDict
 from term_timer.bluetooth.constants import DEBOUNCE
 from term_timer.bluetooth.constants import GAN_GEN3_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN3_SERVICE
@@ -544,26 +545,30 @@ class GanGen3Driver(GanGen2Driver):
 
     async def handle_solved(
             self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+            clock: int, timestamp: datetime) -> list[EventDict]:
         """
-        Log the solve the cube announces on its own.
+        Decode the solve the cube announces on its own.
 
-        `bleProtoId 20` is the cube saying it has just been solved, with
-        the reading of its own clock. It is journaled and not published :
-        the event contract grows once, in the Gen4 lot, when the same
-        message is decoded on both generations and the consumers and the
-        topics can be wired for the two at a time.
+        `bleProtoId 20` in V2 and `bleProtoId 2` in V3 are the same
+        message under two codes, declared field for field alike : the
+        cube saying it sees itself solved, timed on its own clock. The
+        clock it carries is the one of the move that closed the solve,
+        the message arriving chained behind it.
 
         Returns:
-            Nothing, the solve is journaled only.
+            The solved event of the message.
 
         """
-        logger.debug(
-            'Cube reported itself solved at %s ms of its own clock',
-            msg.get_bit_word(self.payload_offset, 32, little_endian=True),
-        )
+        solved_payload: SolvedEventDict = {
+            'event': 'solved',
+            'clock': clock,
+            'timestamp': timestamp,
+            'cube_timestamp': msg.get_bit_word(
+                self.payload_offset, 32, little_endian=True,
+            ),
+        }
 
-        return []
+        return [solved_payload]
 
     async def handle_battery(
             self, msg: GanProtocolMessage,

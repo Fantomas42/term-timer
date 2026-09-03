@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import HardwareEventDict
     from term_timer.bluetooth.annotations import MoveEventDict
     from term_timer.bluetooth.annotations import ResetEventDict
+    from term_timer.bluetooth.annotations import SolvedEventDict
 
 
 class TestFormatBuildTime(unittest.TestCase):
@@ -1035,23 +1036,21 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.assertEqual(result, [])
 
     async def test_event_handler_solved(self) -> None:
-        """Test the solve the cube announces is journaled, not published."""
+        """Test the solve the cube announces is published."""
         # head 55, proto 14, dataLength 04, time 32 bits little endian
         test_data = bytearray(bytes.fromhex('551404391C0000'))
 
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = bytes(test_data)
 
-            with self.assertLogs(
-                    'term_timer.bluetooth.drivers.gan_gen3',
-                    level='DEBUG',
-            ) as logged:
-                result = await self.driver.event_handler(Mock(), test_data)
+            result = await self.driver.event_handler(Mock(), test_data)
 
-        self.assertIn('solved at 7225 ms', logged.output[0])
-        # The event contract does not grow here : the Gen4 lot wires the
-        # two generations at once, see the plan
-        self.assertEqual(result, [])
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['event'], 'solved')
+        self.assertEqual(
+            cast('SolvedEventDict', result[0])['cube_timestamp'],
+            7225,
+        )
 
     async def test_disconnect_journals_the_status_of_v2(self) -> None:
         """Test the status V2 declares is journaled before the cut."""
@@ -1662,7 +1661,7 @@ class TestGanGen3DriverChainedFrames(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cast('BatteryEventDict', battery[0])['level'], 90)
         self.assertEqual(cast('MoveEventDict', moves[0])['serial'], 54)
 
-    async def test_chained_solved_is_journaled(self) -> None:
+    async def test_chained_solved_is_published(self) -> None:
         """Test the solved message chained behind a move is decoded."""
         self.driver.last_serial = 5
         self.driver.serial = 5
@@ -1670,20 +1669,23 @@ class TestGanGen3DriverChainedFrames(unittest.IsolatedAsyncioTestCase):
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = self.MOVE_AND_SOLVED
 
-            with patch(
-                'term_timer.bluetooth.drivers.gan_gen3.logger',
-            ) as logger:
-                events = await self.driver.event_handler(
-                    Mock(), bytearray(self.MOVE_AND_SOLVED),
-                )
+            events = await self.driver.event_handler(
+                Mock(), bytearray(self.MOVE_AND_SOLVED),
+            )
 
         moves = [one for one in events if one['event'] == 'move']
+        solved = [one for one in events if one['event'] == 'solved']
 
         self.assertEqual(len(moves), 1)
         self.assertEqual(cast('MoveEventDict', moves[0])['serial'], 6)
         # The cube stamps its solved message with the clock of the move
-        # that finished the solve.
-        logger.debug.assert_any_call(
-            'Cube reported itself solved at %s ms of its own clock',
+        # that finished the solve, and both travel in one notification.
+        self.assertEqual(len(solved), 1)
+        self.assertEqual(
+            cast('SolvedEventDict', solved[0])['cube_timestamp'],
+            cast('MoveEventDict', moves[0])['cube_timestamp'],
+        )
+        self.assertEqual(
+            cast('SolvedEventDict', solved[0])['cube_timestamp'],
             24222,
         )

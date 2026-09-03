@@ -175,6 +175,12 @@ class ResetEventDict(BaseEventDict):
     result: int
 
 
+class SolvedEventDict(BaseEventDict):
+    """Solved event payload."""
+
+    cube_timestamp: int
+
+
 class DisconnectEventDict(BaseEventDict):
     """Disconnect event payload."""
 
@@ -201,6 +207,7 @@ EventDict = (
     | HardwareEventSoftwareVersionOnlyDict
     | HardwareEventMoyuDict
     | BatteryEventDict
+    | SolvedEventDict
     | DisconnectEventDict
     | GyroConfigEventDict
     | ResetEventDict
