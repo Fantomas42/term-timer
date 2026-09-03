@@ -53,10 +53,19 @@ class Driver:
     # V2 and V3 both declare isCycle: 1, V1 and Moyu do not.
     chained: ClassVar[bool] = False
 
-    # Byte every chained message must start with, when the protocol
-    # declares one. V2 prefixes each message with a head of 0x55, V3
-    # starts directly with its bleProtoId.
+    # Byte a notification starts with, when the protocol declares one.
+    # V2 opens its frames with a head of 0x55, V3 starts directly with
+    # its bleProtoId. The byte belongs to the *notification* and not to
+    # each message : a chained V2 message carries its bleProtoId and
+    # its dataLength alone, measured on a GAN i carry 2 the 2026-09-03.
     head_magic: ClassVar[int | None] = None
+
+    # Bytes of checksum closing the last message of a notification,
+    # rather than the frame. A protocol whose chained messages do not
+    # repeat the head has nothing else saying where the chain ends :
+    # the checksum is what terminates it, and a protocol declaring a
+    # head_magic without one would read its own checksum as a message.
+    crc_terminator: ClassVar[int] = 0
 
     # Trailing bytes of a notification that belong to the frame, not to
     # a message. V3 declares isCRC16: 1 and closes its frames with two
@@ -190,52 +199,112 @@ class Driver:
                 len(plain), declared, len(payload), computed,
             )
 
-    def split_messages(self, plain: bytes) -> Iterator[int]:
+    @property
+    def head_bytes(self) -> int:
         """
-        Yield the offset, in bytes, of each message of a notification.
+        Give the width of the head opening a notification.
+
+        Returns:
+            One byte when the protocol declares a head, zero otherwise.
+
+        """
+        return 0 if self.head_magic is None else 1
+
+    def chain_closed(self, plain: bytes, offset: int) -> bool:
+        """
+        Tell whether the checksum of the notification closes here.
+
+        A chained message repeating no head, nothing but the checksum
+        says that the message just read was the last one : the two
+        bytes that follow are either the CRC of everything before them,
+        or the header of one more message. Two bytes matching by
+        chance is a one in sixty-five thousand affair, and the walk is
+        bounded by the frame either way.
+
+        Args:
+            plain: The decrypted notification.
+            offset: Where the next message would start.
+
+        Returns:
+            True when the bytes at that offset are the closing CRC.
+
+        """
+        if not self.crc_terminator:
+            return False
+
+        stop = offset + self.crc_terminator
+
+        if stop > len(plain):
+            return False
+
+        declared = int.from_bytes(plain[offset:stop], 'little')
+
+        return self.compute_crc(plain[self.head_bytes:offset]) == declared
+
+    def split_messages(self, plain: bytes) -> Iterator[bytes]:
+        """
+        Yield each message of a notification, its head included.
 
         A protocol declaring isCycle packs as many messages as fit into
         one notification, each one being a TLV whose dataLength byte
-        closes its header. The codec walks them until the next byte is
-        null, which is what this reproduces.
+        closes its header. **Only the first one carries the head of the
+        protocol**: the byte opens the notification, not the message,
+        measured on a GAN i carry 2 the 2026-09-03 — a V2 frame chaining
+        a battery, a move and a solved was read whole, checksum
+        included. Every chained message is given the head back here, so
+        that the absolute offsets of the handlers keep holding.
 
         Yields:
-            The offset of each chained message, the first one included.
+            Each message, from its head to the end of the notification.
 
         """
-        yield 0
+        yield plain
 
         if not self.chained:
             return
 
+        # A head says where a notification starts; with no terminator,
+        # nothing says where its chain ends, and reading on would
+        # decode the checksum of the frame as one more message.
+        if self.head_magic is not None and not self.crc_terminator:
+            logger.debug(
+                'Protocol declares a head "0x%02X" and no terminator: '
+                'its notifications cannot be walked',
+                self.head_magic,
+            )
+            return
+
+        head = self.head_bytes
         header = self.payload_offset // 8
         limit = len(plain) - self.crc_reserve
         offset = 0
+        # The first message is the only one read with the head in its
+        # header; every chained one is that much shorter.
+        step = header
 
-        while offset + header <= limit:
+        while offset + step <= limit:
             # The dataLength byte closes the header of the message.
-            offset += header + plain[offset + header - 1]
+            offset += step + plain[offset + step - 1]
+            step = header - head
 
-            if offset + header > limit or plain[offset] == 0:
+            # The checksum is tested first, and on purpose: it is the
+            # terminator of the chain where the null byte is only the
+            # heuristic of the Java codec. A CRC whose low byte is null
+            # — 0x4F00, measured on a GAN i carry 2 the 2026-09-03 —
+            # answers both tests, and only one of them is authoritative.
+            if self.chain_closed(plain, offset):
                 return
 
-            if self.head_magic is not None and plain[offset] != self.head_magic:
-                logger.debug(
-                    'Chained message at offset %d starts with "0x%02X" '
-                    'instead of the head "0x%02X" of the protocol',
-                    offset, plain[offset], self.head_magic,
-                )
+            if offset + step > limit or plain[offset] == 0:
                 return
 
-            # No chained frame has ever been observed on the wire: this
-            # line is the oracle telling whether one exists at all.
             logger.debug(
                 'Chained message "0x%02X" found at offset %d '
                 'of a %d bytes frame',
                 plain[offset], offset, len(plain),
             )
 
-            yield offset
+            yield bytes(plain[:head]) + plain[offset:]
 
     async def event_handler(self, sender: BleakGATTCharacteristic,  # noqa: ARG002
                             data: bytearray) -> list[EventDict]:
@@ -255,15 +324,13 @@ class Driver:
 
         self.check_crc(plain)
 
-        for offset in self.split_messages(plain):
+        for chunk in self.split_messages(plain):
             # The message is given the frame up to its end, and not up
             # to its declared dataLength : every absolute offset of the
             # handlers stays valid, and no handler can read into the
             # void when a dataLength underestimates what it reads, as
             # the Gen4 gyroscope does.
-            await self.handle_message(
-                plain[offset:], clock, timestamp, events,
-            )
+            await self.handle_message(chunk, clock, timestamp, events)
 
         return events
 

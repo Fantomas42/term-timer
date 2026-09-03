@@ -120,6 +120,7 @@ class HeadedChainedDriver(ChainedDriver):
     payload_offset: ClassVar[int] = 24
     head_magic: ClassVar[int | None] = 0x55
     crc_reserve: ClassVar[int] = 0
+    crc_terminator: ClassVar[int] = 2
 
     @staticmethod
     def read_event_code(msg: GanProtocolMessage) -> int:
@@ -314,10 +315,10 @@ class TestSplitMessages(unittest.TestCase):
         driver = DispatchDriver(self.mock_client, use_gyroscope=False)
         frame = bytes([0x01, 0x02, 0xAA, 0xBB, 0x02, 0x03, 0xCC, 0xDD])
 
-        self.assertEqual(list(driver.split_messages(frame)), [0])
+        self.assertEqual(list(driver.split_messages(frame)), [frame])
 
     def test_split_messages_chained(self) -> None:
-        """Test two chained messages are located, in order."""
+        """Test two chained messages are yielded, in order."""
         driver = ChainedDriver(self.mock_client, use_gyroscope=False)
         frame = bytes(
             [0x01, 0x02, 0xAA, 0xBB]
@@ -326,7 +327,10 @@ class TestSplitMessages(unittest.TestCase):
             + [0x12, 0x34],
         )
 
-        self.assertEqual(list(driver.split_messages(frame)), [0, 4])
+        self.assertEqual(
+            list(driver.split_messages(frame)),
+            [frame, frame[4:]],
+        )
 
     def test_split_messages_stops_on_null_head(self) -> None:
         """Test a null byte after a message closes the frame."""
@@ -337,39 +341,56 @@ class TestSplitMessages(unittest.TestCase):
             + [0x12, 0x34],
         )
 
-        self.assertEqual(list(driver.split_messages(frame)), [0])
+        self.assertEqual(list(driver.split_messages(frame)), [frame])
 
     def test_split_messages_reserves_the_crc_bytes(self) -> None:
         """Test the trailing CRC is never read as another message."""
         driver = ChainedDriver(self.mock_client, use_gyroscope=False)
         frame = bytes([0x01, 0x02, 0xAA, 0xBB, 0x12, 0x34])
 
-        self.assertEqual(list(driver.split_messages(frame)), [0])
+        self.assertEqual(list(driver.split_messages(frame)), [frame])
 
-    def test_split_messages_chained_with_head_magic(self) -> None:
-        """Test a chained message repeating the head byte is located."""
+    def test_split_messages_chained_carries_no_head(self) -> None:
+        """Test a chained message is given back the head of the frame."""
         driver = HeadedChainedDriver(self.mock_client, use_gyroscope=False)
-        frame = bytes(
-            [0x55, 0x01, 0x02, 0xAA, 0xBB]
-            + [0x55, 0x02, 0x03, 0xCC, 0xDD, 0xEE]
-            + [0x00] * 9,
+        # A first message with its head, then a chained one without.
+        body = bytes([0x55, 0x01, 0x02, 0xAA, 0xBB, 0x02, 0x03, 0xCC,
+                      0xDD, 0xEE])
+        frame = body + driver.compute_crc(body[1:]).to_bytes(2, 'little')
+
+        self.assertEqual(
+            list(driver.split_messages(frame)),
+            [frame, bytes([0x55]) + frame[5:]],
         )
 
-        self.assertEqual(list(driver.split_messages(frame)), [0, 5])
-
-    def test_split_messages_stops_on_wrong_head_magic(self) -> None:
-        """Test a chained message missing the head byte stops the walk."""
+    def test_split_messages_stops_on_the_closing_crc(self) -> None:
+        """Test the checksum of a lone message closes the notification."""
         driver = HeadedChainedDriver(self.mock_client, use_gyroscope=False)
+        body = bytes([0x55, 0x01, 0x02, 0xAA, 0xBB])
+        frame = (
+            body
+            + driver.compute_crc(body[1:]).to_bytes(2, 'little')
+            + bytes(9)
+        )
+
+        self.assertEqual(list(driver.split_messages(frame)), [frame])
+
+    def test_split_messages_refuses_a_head_without_terminator(self) -> None:
+        """Test a head with no terminator stops the walk at once."""
+        class Unwalkable(HeadedChainedDriver):
+            crc_terminator: ClassVar[int] = 0
+
+        driver = Unwalkable(self.mock_client, use_gyroscope=False)
         frame = bytes(
             [0x55, 0x01, 0x02, 0xAA, 0xBB]
-            + [0x99, 0x02, 0x03, 0xCC, 0xDD, 0xEE]
+            + [0x02, 0x03, 0xCC, 0xDD, 0xEE]
             + [0x00] * 9,
         )
 
         with patch('term_timer.bluetooth.drivers.base.logger') as logger:
-            offsets = list(driver.split_messages(frame))
+            chunks = list(driver.split_messages(frame))
 
-        self.assertEqual(offsets, [0])
+        self.assertEqual(chunks, [frame])
         logger.debug.assert_called_once()
 
 

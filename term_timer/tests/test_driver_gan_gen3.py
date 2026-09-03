@@ -1492,3 +1492,152 @@ class TestGanGen3DriverSerialCycle(unittest.IsolatedAsyncioTestCase):
             args = mock_cypher.encrypt.call_args[0]
             # `step` and `count` are declared on 16 bits little endian
             self.assertEqual(list(args[0][2:6]), [101, 0, 6, 0])
+
+
+class TestGanGen3DriverChainedFrames(unittest.IsolatedAsyncioTestCase):
+    """
+    Tests for the frames a GAN i carry 2 really chains.
+
+    A chained V2 message carries its bleProtoId and its dataLength
+    alone : the head of 0x55 opens the notification, not each message.
+    Measured on a GAN i carry 2 the 2026-09-03, when a bench recomputing
+    the CRC-16 of every frame found five moves out of 151 whose checksum
+    closed six bytes further than the header announced. Each of the
+    frames below is a capture of that session, checksum included.
+    """
+
+    # A move followed by the solved message the cube chains behind it,
+    # both stamped with the same cube clock. The `0x14` was dropped
+    # before the walk was corrected.
+    # 55 01 07 | 9e5e0000 0600 42 | 14 04 | 9e5e0000 | 341e
+    #  header      move payload       header  clock      crc
+    MOVE_AND_SOLVED = bytes.fromhex(
+        '5501079e5e000006004214049e5e0000341e',
+    )
+
+    # A battery, a move and a solved in one notification. The move it
+    # carries is the one the session lost, and the history request that
+    # followed was the recovery machinery covering for the walk.
+    # 55 10 01 | 5a | 01 07 | 3478000036 0042 | 14 04 | 34780000 | fc37
+    #  header     lvl  header   move payload      header  clock      crc
+    BATTERY_MOVE_AND_SOLVED = bytes.fromhex(
+        '5510015a010734780000360042140434780000fc37',
+    )
+
+    # A battery alone, its checksum right behind it: the frame the lot 0
+    # read as proof that nothing is ever chained on V2.
+    BATTERY_ALONE = bytes.fromhex('5510015a7147' + '00' * 10)
+
+    # Facelets whose checksum is 0x4F00: its low byte is the very null
+    # byte the Java codec breaks the chain on. The walk has to read it
+    # as the terminator it is, and not as an empty message.
+    FACELETS_NULL_CRC = bytes.fromhex(
+        '55020e0e0005397252018942 2b384d000000 4f'.replace(' ', ''),
+    )
+
+    def setUp(self) -> None:
+        """Test setup."""
+        self.mock_client = Mock()
+        self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
+        self.mock_client.name = 'GANicV2S_8CA9'
+        self.mock_client.write_gatt_char = AsyncMock()
+        self.mock_client.disconnect = AsyncMock()
+
+        with patch(
+            'term_timer.bluetooth.drivers.gan_gen2.get_salt',
+            return_value=b'salt12',
+        ):
+            self.driver = GanGen3Driver(
+                self.mock_client,
+                use_gyroscope=False,
+            )
+
+    def opcodes(self, frame: bytes) -> list[int]:
+        """
+        List the opcodes the walk finds in a frame.
+
+        Returns:
+            One opcode per message the notification carries.
+
+        """
+        return [
+            chunk[1] for chunk in self.driver.split_messages(frame)
+        ]
+
+    def test_move_and_solved_are_two_messages(self) -> None:
+        """Test the solved message chained behind a move is found."""
+        self.assertEqual(self.opcodes(self.MOVE_AND_SOLVED), [0x01, 0x14])
+
+    def test_battery_move_and_solved_are_three_messages(self) -> None:
+        """Test a notification carrying three messages yields three."""
+        self.assertEqual(
+            self.opcodes(self.BATTERY_MOVE_AND_SOLVED),
+            [0x10, 0x01, 0x14],
+        )
+
+    def test_the_closing_crc_is_not_read_as_a_message(self) -> None:
+        """Test a lone message stops the walk on its own checksum."""
+        self.assertEqual(self.opcodes(self.BATTERY_ALONE), [0x10])
+
+    def test_a_null_low_byte_of_crc_closes_the_chain(self) -> None:
+        """Test a checksum ending in a null byte still terminates."""
+        frame = self.FACELETS_NULL_CRC
+
+        self.assertEqual(
+            self.driver.compute_crc(frame[1:17]),
+            int.from_bytes(frame[17:19], 'little'),
+        )
+        self.assertEqual(self.opcodes(frame), [0x02])
+
+    def test_chained_message_is_given_the_head_back(self) -> None:
+        """Test a chained message is handed over with its head."""
+        chunks = list(self.driver.split_messages(self.MOVE_AND_SOLVED))
+
+        self.assertEqual(chunks[1][0], 0x55)
+        self.assertEqual(chunks[1][2], 4)
+
+    async def test_chained_move_is_decoded_and_published(self) -> None:
+        """Test the move chained behind a battery reaches the buffer."""
+        self.driver.last_serial = 53
+        self.driver.serial = 53
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = self.BATTERY_MOVE_AND_SOLVED
+
+            events = await self.driver.event_handler(
+                Mock(), bytearray(self.BATTERY_MOVE_AND_SOLVED),
+            )
+
+        battery = [one for one in events if one['event'] == 'battery']
+        moves = [one for one in events if one['event'] == 'move']
+
+        self.assertEqual(len(battery), 1)
+        self.assertEqual(len(moves), 1)
+        self.assertEqual(cast('BatteryEventDict', battery[0])['level'], 90)
+        self.assertEqual(cast('MoveEventDict', moves[0])['serial'], 54)
+
+    async def test_chained_solved_is_journaled(self) -> None:
+        """Test the solved message chained behind a move is decoded."""
+        self.driver.last_serial = 5
+        self.driver.serial = 5
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = self.MOVE_AND_SOLVED
+
+            with patch(
+                'term_timer.bluetooth.drivers.gan_gen3.logger',
+            ) as logger:
+                events = await self.driver.event_handler(
+                    Mock(), bytearray(self.MOVE_AND_SOLVED),
+                )
+
+        moves = [one for one in events if one['event'] == 'move']
+
+        self.assertEqual(len(moves), 1)
+        self.assertEqual(cast('MoveEventDict', moves[0])['serial'], 6)
+        # The cube stamps its solved message with the clock of the move
+        # that finished the solve.
+        logger.debug.assert_any_call(
+            'Cube reported itself solved at %s ms of its own clock',
+            24222,
+        )

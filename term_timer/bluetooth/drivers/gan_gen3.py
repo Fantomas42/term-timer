@@ -39,6 +39,7 @@ class GanGen3Driver(GanGen2Driver):
     payload_offset: ClassVar[int] = 24
     chained: ClassVar[bool] = True
     head_magic: ClassVar[int | None] = 0x55
+    crc_terminator: ClassVar[int] = 2
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
         0x01: 'handle_move',
         0x02: 'handle_facelets',
