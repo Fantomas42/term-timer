@@ -33,7 +33,14 @@ logger = logging.getLogger(__name__)
 class GanGen4Driver(GanGen3Driver):
     """
     GAN12 ui Maglev.
-    GAN14 ui FreePlay.
+    GAN12 ui FreePlay2.
+    GAN12 ui SP.
+    GAN14 ui.
+    GAN16 ui.
+    GAN i3.
+    GAN i4.
+    GAN i carry 4.
+    GAN i carry E.
     """
 
     service_uid: ClassVar[str] = GAN_GEN4_SERVICE
