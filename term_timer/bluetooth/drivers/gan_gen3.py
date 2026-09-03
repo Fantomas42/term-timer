@@ -45,8 +45,12 @@ class GanGen3Driver(GanGen2Driver):
         0x06: 'handle_move_history',
         0x07: 'handle_hardware',
         0x08: 'handle_reset',
+        0x09: 'handle_account_binding',
+        0x0F: 'handle_flag',
         0x10: 'handle_battery',
         0x11: 'handle_disconnect',
+        0x12: 'handle_result',
+        0x14: 'handle_solved',
     }
 
     def __init__(self, client: BleakClient,
@@ -437,6 +441,98 @@ class GanGen3Driver(GanGen2Driver):
         }
 
         return [reset_payload]
+
+    async def handle_account_binding(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log the answer of the cube to an account binding request.
+
+        The Gen2 handler cannot be inherited : `GanSDK_ProtocolV1.json`
+        declares `isBigEndia: 1` where V2 declares `0`, so the same
+        `result` of 32 bits is read the other way round here.
+
+        The application never sends that request, so this answer is not
+        expected to be seen : the handler exists so that a cube sending
+        one anyway is named in the journal instead of counted as an
+        unknown opcode.
+
+        Returns:
+            Nothing, the result is journaled only.
+
+        """
+        result = msg.get_bit_word(
+            self.payload_offset, 32, little_endian=True,
+        )
+
+        logger.debug('Account binding result: %s', result)
+
+        return []
+
+    async def handle_flag(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log the flag the cube announces under `bleProtoId 15`.
+
+        The descriptor names the field `flag` and gives its width, and
+        says nothing of what it means : it is journaled raw, and what it
+        carries will be read there the day a cube sends one.
+
+        Returns:
+            Nothing, the flag is journaled only.
+
+        """
+        logger.debug(
+            'Flag message "0x0F": flag %s',
+            msg.get_bit_word(self.payload_offset, 8),
+        )
+
+        return []
+
+    async def handle_result(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log the result the cube announces under `bleProtoId 18`.
+
+        The descriptor declares a boolean of eight bits and names no
+        command it answers : as for `handle_flag`, it is journaled raw
+        rather than interpreted.
+
+        Returns:
+            Nothing, the result is journaled only.
+
+        """
+        logger.debug(
+            'Result message "0x12": result %s',
+            msg.get_bit_word(self.payload_offset, 8),
+        )
+
+        return []
+
+    async def handle_solved(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log the solve the cube announces on its own.
+
+        `bleProtoId 20` is the cube saying it has just been solved, with
+        the reading of its own clock. It is journaled and not published :
+        the event contract grows once, in the Gen4 lot, when the same
+        message is decoded on both generations and the consumers and the
+        topics can be wired for the two at a time.
+
+        Returns:
+            Nothing, the solve is journaled only.
+
+        """
+        logger.debug(
+            'Cube reported itself solved at %s ms of its own clock',
+            msg.get_bit_word(self.payload_offset, 32, little_endian=True),
+        )
+
+        return []
 
     async def handle_battery(  # noqa: PLR6301
             self, msg: GanProtocolMessage,

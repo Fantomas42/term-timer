@@ -947,6 +947,97 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.assertEqual(reset_event['event'], 'reset')
         self.assertEqual(reset_event['result'], 0)
 
+    async def test_event_handler_account_binding(self) -> None:
+        """Test the account binding answer is journaled, not published."""
+        # head 55, proto 09, dataLength 04, result 32 bits little endian
+        test_data = bytearray(bytes.fromhex('5509042A000000'))
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes(test_data)
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen3',
+                    level='DEBUG',
+            ) as logged:
+                result = await self.driver.event_handler(Mock(), test_data)
+
+        # V2 declares isBigEndia 0 where V1 declares 1, so the same
+        # field is not read as the Gen2 handler reads it
+        self.assertIn('Account binding result: 42', logged.output[0])
+        self.assertEqual(result, [])
+
+    async def test_event_handler_flag(self) -> None:
+        """Test the flag message is journaled, not published."""
+        test_data = bytearray(bytes.fromhex('550F012A'))
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes(test_data)
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen3',
+                    level='DEBUG',
+            ) as logged:
+                result = await self.driver.event_handler(Mock(), test_data)
+
+        self.assertIn('Flag message "0x0F": flag 42', logged.output[0])
+        self.assertEqual(result, [])
+
+    async def test_event_handler_result(self) -> None:
+        """Test the result message is journaled, not published."""
+        test_data = bytearray(bytes.fromhex('55120101'))
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes(test_data)
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen3',
+                    level='DEBUG',
+            ) as logged:
+                result = await self.driver.event_handler(Mock(), test_data)
+
+        self.assertIn('Result message "0x12": result 1', logged.output[0])
+        self.assertEqual(result, [])
+
+    async def test_event_handler_solved(self) -> None:
+        """Test the solve the cube announces is journaled, not published."""
+        # head 55, proto 14, dataLength 04, time 32 bits little endian
+        test_data = bytearray(bytes.fromhex('551404391C0000'))
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes(test_data)
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen3',
+                    level='DEBUG',
+            ) as logged:
+                result = await self.driver.event_handler(Mock(), test_data)
+
+        self.assertIn('solved at 7225 ms', logged.output[0])
+        # The event contract does not grow here : the Gen4 lot wires the
+        # two generations at once, see the plan
+        self.assertEqual(result, [])
+
+    async def test_disconnect_journals_the_status_of_v2(self) -> None:
+        """Test the status V2 declares is journaled before the cut."""
+        # head 55, proto 11, dataLength 01, status 03
+        test_data = bytearray(bytes.fromhex('55110103'))
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes(test_data)
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen2',
+                    level='WARNING',
+            ) as logged:
+                result = await self.driver.event_handler(Mock(), test_data)
+
+        # The generic handler reads its byte at payload_offset, which is
+        # exactly where V2 declares its status : question 2 is armed
+        self.assertIn('payload starts with "0x03"', logged.output[0])
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['event'], 'disconnect')
+        self.mock_client.disconnect.assert_awaited_once()
+
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_disconnect_event(
