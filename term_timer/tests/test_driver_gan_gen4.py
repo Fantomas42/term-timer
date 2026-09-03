@@ -930,6 +930,35 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_mac_address_reads_the_seven_bytes_declared(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the MAC is read on the seven bytes the descriptor gives."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        # proto FF, dataLength 08, index 00, then *seven* bytes :
+        # `bleProtoId 255` declares `elementCount: 7` for `macAddress`,
+        # and reading six would drop the last one on the floor
+        body = bytes.fromhex('FF0800AABBCCDDEEFF11')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen4',
+                    level='DEBUG',
+            ) as logged:
+                events = await self.driver.event_handler(
+                    Mock(), bytearray(frame),
+                )
+
+        self.assertEqual(events, [])
+        self.assertIn('MAC Address: AA:BB:CC:DD:EE:FF:11', logged.output[0])
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_gyroscope_disabled(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -1071,6 +1100,45 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 self.assertTrue(gyro_event['gyroscope_supported'])
                 self.assertEqual(gyro_event['clock'], 123456789)
                 self.assertEqual(gyro_event['timestamp'], mock_timestamp)
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_face_rotation_is_not_a_gyroscope_message(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the 0xEE reads the seven fields of appProtoId 14."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        # proto EE, dataLength 0A, then tag, faceOld, faceCur, three
+        # angles of sixteen bits little endian, and the parallel flag
+        body = bytes.fromhex('EE0A07020503001A00B40001')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen4',
+                    level='DEBUG',
+            ) as logged:
+                events = await self.driver.event_handler(
+                    Mock(), bytearray(frame),
+                )
+
+        self.assertEqual(events, [])
+        self.assertIn(
+            'Face rotation - tag:7, face:2->5, '
+            'angles:3/26/180, parallel:1',
+            logged.output[0],
+        )
+
+    def test_face_rotation_is_the_handler_of_the_0xee(self) -> None:
+        """Test the dispatch table carries no gyroscope name for 0xEE."""
+        self.assertEqual(
+            GanGen4Driver.MESSAGE_HANDLERS[0xEE],
+            'handle_face_rotation',
+        )
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')

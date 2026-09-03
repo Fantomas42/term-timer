@@ -69,7 +69,7 @@ class GanGen4Driver(GanGen3Driver):
         0xEA: 'handle_disconnect',
         0xEC: 'handle_gyroscope',
         0xED: 'handle_facelets',
-        0xEE: 'handle_gyroscope_detail',
+        0xEE: 'handle_face_rotation',
         0xEF: 'handle_battery',
         0xF0: 'handle_exception_log',
         0xF5: 'handle_build_time',
@@ -197,6 +197,9 @@ class GanGen4Driver(GanGen3Driver):
 
         """
         mac_address = ''
+        # Seven bytes, not six : `bleProtoId 255` declares
+        # `macAddress` with `elementCount: 7`. An oddity of GAN, not a
+        # slip of the driver — do not shorten it to a MAC length.
         for i in range(7):
             if i > 0:
                 mac_address += ':'
@@ -514,11 +517,23 @@ class GanGen4Driver(GanGen3Driver):
 
         return [gyro_config_payload]
 
-    async def handle_gyroscope_detail(  # noqa: PLR6301
+    async def handle_face_rotation(  # noqa: PLR6301
             self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
         """
-        Log the detailed face rotation tracking of the cube.
+        Log the face rotation the cube is tracking.
+
+        `bleProtoId 238` is `appProtoId 14`, which the reference names
+        Rotation Data : the face being turned, the angle it started at,
+        the one it is at now, and whether it sits parallel to a face.
+        Nothing gyroscopic — the orientation of the cube in space is the
+        `0xEC` next door, and the two were told apart by their fields,
+        not by their names.
+
+        No cube has ever been seen sending one : zero occurrence over
+        the twenty-seven logs kept the 2026-09-03, the GAN i4 sessions
+        of the day included. Publishing it is therefore a question
+        without a sample, and it stays journaled until one shows up.
 
         Returns:
             Nothing, the angles are journaled only.
@@ -533,7 +548,7 @@ class GanGen4Driver(GanGen3Driver):
         parallel = msg.get_bit_word(88, 8)
 
         logger.debug(
-            'Gyro movement - tag:%s, face:%s->%s, '
+            'Face rotation - tag:%s, face:%s->%s, '
             'angles:%s/%s/%s, parallel:%s',
             tag, face_old, face_cur,
             angle_init, angle_last, angle_cur,
