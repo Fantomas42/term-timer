@@ -10,6 +10,10 @@ from unittest.mock import patch
 from term_timer.bluetooth.constants import GEN3_HISTORY_FACES
 from term_timer.bluetooth.constants import GEN3_MOVE_FACES
 from term_timer.bluetooth.drivers.base import Driver
+from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
+from term_timer.bluetooth.drivers.gan_gen3 import GanGen3Driver
+from term_timer.bluetooth.drivers.gan_gen4 import GanGen4Driver
+from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
 
@@ -822,3 +826,32 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(len(store), 1)
         self.assertEqual(store[0], complex_event)
         self.assertEqual(self.driver.events[0], complex_event)
+
+
+class TestShippedDispatchTables(unittest.TestCase):
+    """Tests for the dispatch tables of the drivers actually shipped."""
+
+    DRIVERS = (
+        GanGen2Driver,
+        GanGen3Driver,
+        GanGen4Driver,
+        MoyuWeilong10Driver,
+    )
+
+    def test_every_handler_name_resolves(self) -> None:
+        """Test every handler name resolves."""
+        # The dispatch resolves handlers by name at notification time,
+        # so a table entry pointing at a method that no longer exists
+        # is a runtime failure on a real cube and nothing before it.
+        # Renaming a handler without its entry is the way in.
+        for driver in self.DRIVERS:
+            for opcode, name in driver.MESSAGE_HANDLERS.items():
+                with self.subTest(driver=driver.__name__, opcode=opcode):
+                    handler = getattr(driver, name, None)
+
+                    self.assertIsNotNone(
+                        handler,
+                        f'{ driver.__name__ } dispatches 0x{ opcode:02X} to '
+                        f'{ name }, which does not exist',
+                    )
+                    self.assertTrue(callable(handler))

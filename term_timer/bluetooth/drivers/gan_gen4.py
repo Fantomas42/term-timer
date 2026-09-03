@@ -64,14 +64,14 @@ class GanGen4Driver(GanGen3Driver):
         0x02: 'handle_solved',
         0xD1: 'handle_move_history',
         0xD2: 'handle_reset',
-        0xD3: 'handle_calibrate',
+        0xD3: 'handle_restore',
         0xD4: 'handle_gyroscope_config',
         0xEA: 'handle_disconnect',
         0xEC: 'handle_gyroscope',
         0xED: 'handle_facelets',
         0xEE: 'handle_gyroscope_detail',
         0xEF: 'handle_battery',
-        0xF0: 'handle_debug_info',
+        0xF0: 'handle_exception_log',
         0xF5: 'handle_build_time',
         0xF6: 'handle_restart_reason',
         0xFA: 'handle_product_date',
@@ -129,7 +129,7 @@ class GanGen4Driver(GanGen3Driver):
             ]
             for i, val in enumerate(values):
                 msg[i] = val
-        elif command == 'REQUEST_CALIBRATE':
+        elif command == 'REQUEST_RESTORE':
             values = [0xD3, 0x01, 0x01]
             for i, val in enumerate(values):
                 msg[i] = val
@@ -145,7 +145,7 @@ class GanGen4Driver(GanGen3Driver):
             values = [0xD4, 0x01, GAN_GEN4_ENGINE_ECO]
             for i, val in enumerate(values):
                 msg[i] = val
-        elif command == 'REQUEST_DEBUG_INFO':
+        elif command == 'REQUEST_EXCEPTION_LOG':
             values = [0xF0, 0x01, 0x01]
             for i, val in enumerate(values):
                 msg[i] = val
@@ -459,19 +459,19 @@ class GanGen4Driver(GanGen3Driver):
 
         return [reset_payload]
 
-    async def handle_calibrate(  # noqa: PLR6301
+    async def handle_restore(  # noqa: PLR6301
             self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
         """
-        Log the answer to a calibration request.
+        Log the answer to a cube restore request.
 
         Returns:
             Nothing, the result is journaled only.
 
         """
-        calibrate_result = msg.get_bit_word(16, 8)
+        restore_result = msg.get_bit_word(16, 8)
 
-        logger.debug('Calibration result: %s', calibrate_result)
+        logger.debug('Restore result: %s', restore_result)
 
         return []
 
@@ -542,7 +542,7 @@ class GanGen4Driver(GanGen3Driver):
 
         return []
 
-    async def handle_debug_info(  # noqa: PLR6301
+    async def handle_exception_log(  # noqa: PLR6301
             self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
         """
@@ -559,6 +559,6 @@ class GanGen4Driver(GanGen3Driver):
         for i in range(min(data_size - 1, 15)):
             content += chr(msg.get_bit_word(24 + i * 8, 8))
 
-        logger.debug('Debug info [%s]: %s', index, content)
+        logger.debug('Exception log [%s]: %s', index, content)
 
         return []
