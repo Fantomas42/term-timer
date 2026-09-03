@@ -186,12 +186,27 @@ class GanGen4Driver(GanGen3Driver):
         """
         Decode the hardware version of the cube.
 
+        The `0xFE` declares its `deviceVersion` on a single field of
+        sixteen bits, where the `0xFD` next door declares two nibbles
+        joined by a dot. This handler reads it like the `0xFD`, so it
+        only ever sees the first byte. Nothing says what the second one
+        holds, and a rendering invented here would be as arbitrary as
+        the one it replaces : the whole field is journaled, and a cube
+        will say what it is worth.
+
         Returns:
             The partial hardware event carrying the version.
 
         """
         hw_major = msg.get_bit_word(24, 4)
         hw_minor = msg.get_bit_word(28, 4)
+
+        logger.debug(
+            'Hardware version field: 0x%04X, bytes 0x%02X 0x%02X',
+            msg.get_bit_word(24, 16, little_endian=True),
+            msg.get_bit_word(24, 8),
+            msg.get_bit_word(32, 8),
+        )
 
         hw_version_payload: HardwareEventVersionOnlyDict = {
             'event': 'hardware',

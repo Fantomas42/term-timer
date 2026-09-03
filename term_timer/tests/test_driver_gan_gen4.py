@@ -776,6 +776,42 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_hardware_version_journals_its_whole_field(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test the sixteen bits of deviceVersion reach the journal."""
+        mock_time.return_value = 123456789
+        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+        mock_datetime.now.return_value = mock_timestamp
+
+        # proto FE, dataLength 03, index 00, then the two bytes of the
+        # deviceVersion the descriptor declares as one field of sixteen
+        # bits. They differ, so a reading that drops the second one is
+        # visible : the rendering keeps the nibbles of the first.
+        body = bytes.fromhex('FE03002143')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen4',
+                    level='DEBUG',
+            ) as logged:
+                events = await self.driver.event_handler(
+                    Mock(), bytearray(frame),
+                )
+
+        self.assertEqual(len(events), 1)
+        hw_event = cast('HardwareEventVersionOnlyDict', events[0])
+        self.assertEqual(hw_event['hardware_version'], '2.1')
+        self.assertIn(
+            'Hardware version field: 0x4321, bytes 0x21 0x43',
+            logged.output[0],
+        )
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_gyroscope_disabled(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -1070,6 +1106,30 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 event = result[0]
                 self.assertEqual(event['event'], 'disconnect')
                 self.mock_client.disconnect.assert_called_once()
+
+    async def test_disconnect_journals_the_type_of_v3(self) -> None:
+        """Test the type V3 declares is journaled before the cut."""
+        # proto EA, dataLength 01, type 07, then the CRC-16 of the body
+        body = bytes.fromhex('EA0107')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen2',
+                    level='WARNING',
+            ) as logged:
+                events = await self.driver.event_handler(
+                    Mock(), bytearray(frame),
+                )
+
+        # The generic handler reads its byte at payload_offset, which is
+        # exactly where V3 declares its type : question 2 is armed
+        self.assertIn('payload starts with "0x07"', logged.output[0])
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]['event'], 'disconnect')
+        self.mock_client.disconnect.assert_awaited_once()
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
