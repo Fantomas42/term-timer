@@ -328,6 +328,12 @@ class GanGen2Driver(Driver):
 
             if move['serial'] == ((buffer_head['serial'] - 1) & 0xFF):
                 self.move_buffer.insert(0, move)
+            else:
+                logger.debug(
+                    'Recovered move serial %s is not the predecessor '
+                    'of buffer head serial %s, discarding',
+                    move['serial'], buffer_head['serial'],
+                )
         elif self.is_serial_in_range(
                 self.last_serial,
                 self.serial,
