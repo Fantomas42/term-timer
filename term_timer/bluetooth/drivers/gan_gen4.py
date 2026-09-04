@@ -9,7 +9,6 @@ import logging
 from datetime import datetime
 from typing import ClassVar
 
-from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import GyroConfigEventDict
 from term_timer.bluetooth.annotations import GyroEventDict
@@ -63,6 +62,10 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
     # bleProtoId, and closes its frames with two bytes of CRC-16.
     head_magic: ClassVar[int | None] = None
     crc_reserve: ClassVar[int] = 2
+    # V3 prefixes its battery level with an index that neither V1, V2
+    # nor MoYu declare, and declares no charging state of its own.
+    battery_level_offset: ClassVar[int] = 8
+    charging_state_width: ClassVar[int] = 0
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
         0x01: 'handle_move',
         0x02: 'handle_solved',
@@ -468,31 +471,6 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         }
 
         return [gyro_payload]
-
-    async def handle_battery(  # noqa: PLR6301
-            self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list[EventDict]:
-        """
-        Decode the battery level of the cube.
-
-        V3 prefixes the level with an index that V2 does not declare.
-
-        Returns:
-            The battery event of the message.
-
-        """
-        _battery_index = msg.get_bit_word(16, 8)
-        battery_level = msg.get_bit_word(24, 8)
-
-        battery_payload: BatteryEventDict = {
-            'event': 'battery',
-            'clock': clock,
-            'timestamp': timestamp,
-            'charging_state': 0,
-            'level': min(battery_level, 100),
-        }
-
-        return [battery_payload]
 
     async def handle_reset(  # noqa: PLR6301
             self, msg: GanProtocolMessage,

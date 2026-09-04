@@ -1732,7 +1732,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_cypher.decrypt.return_value = frame
 
             with self.assertLogs(
-                    'term_timer.bluetooth.drivers.gan_gen2',
+                    'term_timer.bluetooth.drivers.base',
                     level='WARNING',
             ) as logged:
                 self.mock_client.disconnect.side_effect = (

@@ -14,7 +14,6 @@ from typing import ClassVar
 from bleak import BleakClient
 from cubing_algs.facelets import cubies_to_facelets
 
-from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import DisconnectEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import FaceletsEventDict
@@ -39,9 +38,7 @@ from term_timer.bluetooth.salt import get_salt
 logger = logging.getLogger(__name__)
 
 
-# PLR0904 : the nine opcodes of V1 each get their handler, and the
-# move history machinery the three GAN generations share lives here.
-class GanGen2Driver(Driver):  # noqa: PLR0904
+class GanGen2Driver(Driver):
     """
     GAN12 ui.
     GAN12 ui FreePlay.
@@ -58,6 +55,10 @@ class GanGen2Driver(Driver):  # noqa: PLR0904
     command_characteristic_uid: ClassVar[str] = GAN_GEN2_COMMAND_CHARACTERISTIC
     encrypter: ClassVar[type[GanGen2CubeEncrypter]] = GanGen2CubeEncrypter
     payload_offset: ClassVar[int] = 4
+    # V1 is the only GAN protocol declaring a real charging state, on
+    # the four bits its header leaves before the battery level.
+    battery_level_offset: ClassVar[int] = 4
+    charging_state_width: ClassVar[int] = 4
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
         0x01: 'handle_gyroscope',
         0x02: 'handle_move',
@@ -75,8 +76,11 @@ class GanGen2Driver(Driver):  # noqa: PLR0904
         """
         Initialize GAN Gen2 driver with BLE client connection.
 
-        Sets up serial number tracking, timestamp management, and a FIFO
-        buffer for handling move events and detecting missed moves.
+        The serial the cube last sent and the clock of its moves come
+        from `Driver`, which holds them for the four protocols. What
+        is added here is the serial last *published*, which only a
+        driver buffering its moves needs, and the FIFO buffer telling
+        the two apart.
 
         Args:
             client: The BLE client connection to the cube.
@@ -85,10 +89,7 @@ class GanGen2Driver(Driver):  # noqa: PLR0904
         """
         super().__init__(client, use_gyroscope=use_gyroscope)
 
-        self.serial: int = -1
         self.last_serial: int = -1
-        self.cube_timestamp: float = 0.0
-        self.last_move_timestamp: datetime | None = None
         self.move_buffer: list[MoveEventDict] = []
         self.history_request_pending: bool = False
         self.history_request_clock: float = 0.0
@@ -489,22 +490,9 @@ class GanGen2Driver(Driver):  # noqa: PLR0904
             direction = msg.get_bit_word(16 + 5 * i, 1)
             elapsed_raw = msg.get_bit_word(47 + 16 * i, 16)
 
-            # In case of 16-bit cube timestamp register overflow.
-            # The clock of the cube counts in milliseconds, as the 32
-            # bits time and duration fields of V2 and V3 confirm, so the
-            # local elapsed time substituted to it is converted too.
-            elapsed: float
-            if elapsed_raw == 0 and self.last_move_timestamp is not None:
-                elapsed = (
-                    timestamp - self.last_move_timestamp
-                ).total_seconds() * 1000
-            else:
-                elapsed = float(elapsed_raw)
-
-            # The clock is accumulated before the move is named: it
-            # advanced whether or not the field could be decoded, and
-            # dropping it would shift every move coming after.
-            self.cube_timestamp += elapsed
+            cube_timestamp = self.advance_cube_timestamp(
+                elapsed_raw, timestamp,
+            )
 
             move = self.format_move(face, direction)
 
@@ -524,7 +512,7 @@ class GanGen2Driver(Driver):  # noqa: PLR0904
                 # Missed and recovered events
                 # has no meaningful local timestamps
                 'local_timestamp': timestamp if i == 0 else None,
-                'cube_timestamp': self.cube_timestamp,
+                'cube_timestamp': cube_timestamp,
                 'face': face,
                 'direction': direction,
                 'move': move,
@@ -748,62 +736,6 @@ class GanGen2Driver(Driver):  # noqa: PLR0904
             self.inject_missed_move_to_buffer(history_move)
 
         return await self.evict_move_buffer()
-
-    async def handle_battery(  # noqa: PLR6301
-            self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list[EventDict]:
-        """
-        Decode the battery level and its charging state.
-
-        V1 is the only GAN protocol declaring a real charging state.
-
-        Returns:
-            The battery event of the message.
-
-        """
-        charging_state = msg.get_bit_word(4, 4)
-        battery_level = msg.get_bit_word(8, 8)
-
-        battery_payload: BatteryEventDict = {
-            'event': 'battery',
-            'clock': clock,
-            'timestamp': timestamp,
-            'charging_state': charging_state,
-            'level': min(battery_level, 100),
-        }
-
-        return [battery_payload]
-
-    async def handle_disconnect(
-            self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list[EventDict]:
-        """
-        Close the link on request of the cube.
-
-        The opcode is absent from the V1 descriptor, and the two other
-        generations declare something else than a disconnection under
-        theirs. The first byte of the payload is journaled before the
-        link is cut : it is the only thing that will ever tell whether
-        cutting is the right reading.
-
-        Returns:
-            The disconnect event telling the application about it.
-
-        """
-        logger.warning(
-            'Cube requested a disconnection, payload starts with "0x%02X"',
-            msg.get_bit_word(self.payload_offset, 8),
-        )
-
-        disconnect_payload: DisconnectEventDict = {
-            'event': 'disconnect',
-            'clock': clock,
-            'timestamp': timestamp,
-        }
-
-        await self.client.disconnect()
-
-        return [disconnect_payload]
 
     async def handle_account_binding(  # noqa: PLR6301
             self, msg: GanProtocolMessage,

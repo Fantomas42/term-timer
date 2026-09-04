@@ -12,6 +12,8 @@ from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from cubing_algs.constants import FACES
 
+from term_timer.bluetooth.annotations import BatteryEventDict
+from term_timer.bluetooth.annotations import DisconnectEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.constants import CRC16_INIT
 from term_timer.bluetooth.constants import CRC16_POLYNOMIAL
@@ -76,6 +78,17 @@ class Driver:
     # bytes of CRC.
     crc_reserve: ClassVar[int] = 0
 
+    # Bits between the header of a battery message and the level it
+    # carries. V1 spends them on the charging state it is the only
+    # generation to declare, V3 on an index it is the only generation
+    # to declare, and `charging_state_width` tells the two apart.
+    battery_level_offset: ClassVar[int] = 0
+
+    # Width, in bits, of that charging state. Left at zero, the level
+    # is published with a charging state of 0, which is what the three
+    # protocols not declaring one already did, each in their own copy.
+    charging_state_width: ClassVar[int] = 0
+
     # Opcode -> name of the method decoding it. Redefined *entirely* by
     # each generation : the opcode spaces do not overlap from one
     # generation to the next, and 0x02 means "facelets" in V2 but
@@ -97,6 +110,18 @@ class Driver:
 
         self.events: list[EventDict] = []
         self.cypher: GanGen2CubeEncrypter = self.init_cypher()
+
+        # The last serial the cube sent, the clock it times its moves
+        # on, and the wall clock of the last of them. The four
+        # protocols number their moves on a byte and time them with a
+        # register the driver accumulates, so the three live here
+        # rather than being copied into each driver. What does *not*
+        # live here is the last serial a driver has *published* : only
+        # the GAN generations tell the two apart, and only they buffer
+        # moves long enough for the distinction to mean anything.
+        self.serial: int = -1
+        self.cube_timestamp: float = 0.0
+        self.last_move_timestamp: datetime | None = None
 
     def init_cypher(self) -> GanGen2CubeEncrypter:
         """Initialize encryption handler for cube communication."""
@@ -152,6 +177,39 @@ class Driver:
             return None
 
         return (FACES[face] + DIRECTIONS[direction]).strip()
+
+    def advance_cube_timestamp(self, elapsed: int,
+                               timestamp: datetime) -> float:
+        """
+        Accumulate on the clock of the cube the time a move took.
+
+        The register is read on sixteen bits and counts in
+        milliseconds, as the thirty-two bits time and duration fields
+        of V2 and V3 confirm. A null value is that register having
+        overflowed, and the local clock stands in for it — converted
+        to milliseconds too, which is the whole reason this is not an
+        addition written at each call site.
+
+        The clock is advanced before a move is named, and never after:
+        it moved on whether or not the fields beside it could be
+        decoded, and skipping it would shift every move coming after.
+
+        Args:
+            elapsed: The value of the register of the cube.
+            timestamp: The wall clock of the notification.
+
+        Returns:
+            The clock of the cube, the move now added to it.
+
+        """
+        if elapsed == 0 and self.last_move_timestamp is not None:
+            self.cube_timestamp += (
+                timestamp - self.last_move_timestamp
+            ).total_seconds() * 1000
+        else:
+            self.cube_timestamp += elapsed
+
+        return self.cube_timestamp
 
     @staticmethod
     def compute_crc(payload: bytes) -> int:
@@ -397,6 +455,75 @@ class Driver:
         handler: MessageHandler = getattr(self, handler_name)
 
         self.add_event(events, await handler(msg, clock, timestamp))
+
+    async def handle_battery(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the battery level of the cube.
+
+        The four protocols publish the same event out of the same
+        byte, and only where that byte sits changes : `payload_offset`
+        says where the header ends, `battery_level_offset` what the
+        generation spends before its level, and `charging_state_width`
+        whether those bits are a charging state worth publishing.
+
+        Returns:
+            The battery event of the message.
+
+        """
+        charging_state = 0
+
+        if self.charging_state_width:
+            charging_state = msg.get_bit_word(
+                self.payload_offset, self.charging_state_width,
+            )
+
+        battery_level = msg.get_bit_word(
+            self.payload_offset + self.battery_level_offset, 8,
+        )
+
+        battery_payload: BatteryEventDict = {
+            'event': 'battery',
+            'clock': clock,
+            'timestamp': timestamp,
+            'charging_state': charging_state,
+            'level': min(battery_level, 100),
+        }
+
+        return [battery_payload]
+
+    async def handle_disconnect(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Close the link on request of the cube.
+
+        The opcode is absent from the V1 descriptor, and the two other
+        GAN generations declare something else than a disconnection
+        under theirs. The first byte of the payload is journaled
+        before the link is cut : it is the only thing that will ever
+        tell whether cutting is the right reading, and it is armed on
+        the four protocols so that whichever cube asks first says it.
+
+        Returns:
+            The disconnect event telling the application about it.
+
+        """
+        logger.warning(
+            'Cube requested a disconnection, payload starts with "0x%02X"',
+            msg.get_bit_word(self.payload_offset, 8),
+        )
+
+        disconnect_payload: DisconnectEventDict = {
+            'event': 'disconnect',
+            'clock': clock,
+            'timestamp': timestamp,
+        }
+
+        await self.client.disconnect()
+
+        return [disconnect_payload]
 
     def add_event(self, store: list[EventDict],
                   event: EventDict | Sequence[EventDict]) -> None:

@@ -1065,7 +1065,7 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             mock_cypher.decrypt.return_value = bytes(test_data)
 
             with self.assertLogs(
-                    'term_timer.bluetooth.drivers.gan_gen2',
+                    'term_timer.bluetooth.drivers.base',
                     level='WARNING',
             ) as logged:
                 result = await self.driver.event_handler(Mock(), test_data)

@@ -12,7 +12,6 @@ from typing import ClassVar
 from bleak import BleakClient
 from cubing_algs.facelets import cubies_to_facelets
 
-from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import FaceletsEventDict
 from term_timer.bluetooth.annotations import HardwareEventDict
@@ -41,6 +40,10 @@ class GanGen3Driver(GanGen2Driver):
     chained: ClassVar[bool] = True
     head_magic: ClassVar[int | None] = 0x55
     crc_terminator: ClassVar[int] = 2
+    # V2 reads its battery level straight behind the header, and
+    # declares no charging state : V1 is the only generation to.
+    battery_level_offset: ClassVar[int] = 0
+    charging_state_width: ClassVar[int] = 0
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
         0x01: 'handle_move',
         0x02: 'handle_facelets',
@@ -570,25 +573,3 @@ class GanGen3Driver(GanGen2Driver):
         }
 
         return [solved_payload]
-
-    async def handle_battery(
-            self, msg: GanProtocolMessage,
-            clock: int, timestamp: datetime) -> list[EventDict]:
-        """
-        Decode the battery level of the cube.
-
-        Returns:
-            The battery event of the message.
-
-        """
-        battery_level = msg.get_bit_word(self.payload_offset, 8)
-
-        battery_payload: BatteryEventDict = {
-            'event': 'battery',
-            'clock': clock,
-            'timestamp': timestamp,
-            'charging_state': 0,
-            'level': min(battery_level, 100),
-        }
-
-        return [battery_payload]

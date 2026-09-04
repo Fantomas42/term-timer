@@ -44,6 +44,25 @@ GEN2_MOVE_CAPACITY: Final[int] = 7
 # each move being read on five bits from the bit 17 of the message.
 GEN2_MOVE_HISTORY_CAPACITY: Final[int] = 28
 
+# The firmware of the MoYu orders its faces F, B, U, D, L, R, in the
+# five bits naming a move as in the three bits naming the colour of a
+# facelet. The table translates that order into the index of the face
+# in URFDLB, and a value absent of it is out of domain. It is its own
+# inverse, which is why the same six values read the two directions —
+# a property a test pins rather than trusts.
+MOYU_FACES: Final[dict[int, int]] = {
+    0: 2, 1: 5, 2: 0, 3: 3, 4: 4, 5: 1,
+}
+
+# The letters those six faces are spelled with, in the order of the
+# firmware : a facelet is named by the face whose colour it carries.
+MOYU_FACE_NAMES: Final[str] = 'FBUDLR'
+
+# A MoYu move message carries the last move plus the four previous
+# ones, which is the capacity of the protocol. It has no history
+# command, so a gap wider than that is lost for good.
+MOYU_MOVE_CAPACITY: Final[int] = 5
+
 PREFIX: Final[list[str]] = [
     'GAN',
     'MG',
