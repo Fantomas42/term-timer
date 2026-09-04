@@ -57,6 +57,13 @@ class Driver:
     # V2 and V3 both declare isCycle: 1, V1 and Moyu do not.
     chained: ClassVar[bool] = False
 
+    # Whether REQUEST_RESET's outcome is confirmed by the cube. V2 and V3
+    # answer with a dedicated `reset` event carrying a `result` field; V1
+    # and Moyu only echo the state as an unsolicited facelets frame, with
+    # no bit left for a result — nothing is inferred for them (see the
+    # bluetooth-drivers skill, discoveries.md §4).
+    confirms_reset: ClassVar[bool] = False
+
     # Byte a notification starts with, when the protocol declares one.
     # V2 opens its frames with a head of 0x55, V3 starts directly with
     # its bleProtoId. The byte belongs to the *notification* and not to

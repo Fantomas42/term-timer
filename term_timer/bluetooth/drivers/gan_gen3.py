@@ -38,6 +38,7 @@ class GanGen3Driver(GanGen2Driver):
     command_characteristic_uid: ClassVar[str] = GAN_GEN3_COMMAND_CHARACTERISTIC
     payload_offset: ClassVar[int] = 16
     chained: ClassVar[bool] = True
+    confirms_reset: ClassVar[bool] = True
     head_magic: ClassVar[int | None] = 0x55
     crc_terminator: ClassVar[int] = 2
     # V2 reads its battery level straight behind the header, and
