@@ -40,6 +40,16 @@ GEN2_FACE_ANGLES_CAPACITY: Final[int] = 6
 # beyond that, the older moves only come back through a history request.
 GEN2_MOVE_CAPACITY: Final[int] = 7
 
+# The reading a sixteen bits gap register gives once it has stopped
+# counting, and the second value of that field which is not a
+# duration. Measured on a MoYu Weilong v10 AI the 2026-09-04 : a gap of
+# 0xFFFF slides through the five slots of a move frame like any other
+# reading, so it is the register saturated and not a slot left empty —
+# the cube had simply been still for more than 65,5 seconds. Both
+# protocols carrying their gap on sixteen bits, V1 and MoYu, read it
+# the same way.
+CLOCK_REGISTER_SATURATED: Final[int] = 0xFFFF
+
 # maxElementCount of the formulaHistory answering a V1 history request,
 # each move being read on five bits from the bit 17 of the message.
 GEN2_MOVE_HISTORY_CAPACITY: Final[int] = 28

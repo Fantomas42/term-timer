@@ -15,6 +15,7 @@ from cubing_algs.constants import FACES
 from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import DisconnectEventDict
 from term_timer.bluetooth.annotations import EventDict
+from term_timer.bluetooth.constants import CLOCK_REGISTER_SATURATED
 from term_timer.bluetooth.constants import CRC16_INIT
 from term_timer.bluetooth.constants import CRC16_POLYNOMIAL
 from term_timer.bluetooth.constants import DIRECTIONS
@@ -185,10 +186,20 @@ class Driver:
 
         The register is read on sixteen bits and counts in
         milliseconds, as the thirty-two bits time and duration fields
-        of V2 and V3 confirm. A null value is that register having
-        overflowed, and the local clock stands in for it — converted
-        to milliseconds too, which is the whole reason this is not an
-        addition written at each call site.
+        of V2 and V3 confirm. **Two** of its readings are not
+        durations : a null one is the register having overflowed, and
+        `0xFFFF` is the same register saturated, the cube having been
+        still for more than 65,5 seconds. The local clock stands in
+        for both — converted to milliseconds too, which is the whole
+        reason this is not an addition written at each call site.
+
+        The saturation was measured on a MoYu Weilong v10 AI the
+        2026-09-04, on the frame following a long pause. Added as it
+        comes, it would have pushed the clock of the cube 65,5 seconds
+        forward on the first move of a session — and with no earlier
+        move to date, there is nothing to stand in for it either : the
+        clock then stays where it is, exactly as it does on an
+        overflow read before the first move.
 
         The clock is advanced before a move is named, and never after:
         it moved on whether or not the fields beside it could be
@@ -202,12 +213,12 @@ class Driver:
             The clock of the cube, the move now added to it.
 
         """
-        if elapsed == 0 and self.last_move_timestamp is not None:
+        if elapsed and elapsed != CLOCK_REGISTER_SATURATED:
+            self.cube_timestamp += elapsed
+        elif self.last_move_timestamp is not None:
             self.cube_timestamp += (
                 timestamp - self.last_move_timestamp
             ).total_seconds() * 1000
-        else:
-            self.cube_timestamp += elapsed
 
         return self.cube_timestamp
 

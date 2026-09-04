@@ -506,6 +506,52 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
         move = cast('MoveEventDict', events[0])
         self.assertEqual(move['cube_timestamp'], 1500)
 
+    async def test_move_frame_of_a_saturated_register(self) -> None:
+        """Test a saturated register is replaced by milliseconds."""
+        # 0xFFFF is the same register as the null one, stopped at its
+        # ceiling rather than wrapped : the cube had been still for
+        # more than 65,5 seconds. Added as it comes, it would push the
+        # clock of the cube a minute forward. Measured the 2026-09-04,
+        # once in 366 moves, on the frame following a long pause.
+        self.driver.serial = 100
+        self.driver.last_move_timestamp = self.timestamp - timedelta(
+            seconds=2.0,
+        )
+
+        events = await self.notify(move_frame(101, [(0, 0xFFFF)]))
+
+        move = cast('MoveEventDict', events[0])
+        self.assertEqual(move['cube_timestamp'], 2000)
+
+    async def test_move_frame_of_a_saturated_register_opening_a_session(
+            self) -> None:
+        """Test a saturated register alone leaves the clock in place."""
+        # The very case the cube produced : the first move of a session
+        # carries a gap inherited from before the connection, and there
+        # is no earlier move to date it against. The clock stays where
+        # it is rather than opening on 65,5 seconds.
+        self.driver.serial = 100
+
+        self.assertIsNone(self.driver.last_move_timestamp)
+
+        events = await self.notify(move_frame(101, [(0, 0xFFFF)]))
+
+        move = cast('MoveEventDict', events[0])
+        self.assertEqual(move['cube_timestamp'], 0)
+        self.assertEqual(self.driver.cube_timestamp, 0)
+
+    async def test_move_frame_of_a_null_register_opening_a_session(
+            self) -> None:
+        """Test an overflow alone leaves the clock in place."""
+        self.driver.serial = 100
+
+        self.assertIsNone(self.driver.last_move_timestamp)
+
+        events = await self.notify(move_frame(101, [(0, 0)]))
+
+        move = cast('MoveEventDict', events[0])
+        self.assertEqual(move['cube_timestamp'], 0)
+
     async def test_facelets_frame_of_a_solved_cube(self) -> None:
         """Test a solved state is read in the URFDLB order."""
         events = await self.notify(facelets_frame(50, solved_stickers()))
@@ -514,6 +560,36 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
         facelets = cast('FaceletsEventDictNoState', events[0])
         self.assertEqual(facelets['serial'], 50)
         self.assertEqual(facelets['facelets'], SOLVED)
+
+    async def test_reset_is_answered_by_the_command_read_back(
+            self) -> None:
+        """Test the frame answering a reset is the command itself."""
+        # Measured on a Weilong v10 AI the 2026-09-04 (§6.5) : this
+        # protocol has no reset message, and the cube answers
+        # REQUEST_RESET with the very bytes it was written — 0xA2
+        # turned 0xA3, and its serial in place of the trailing zero.
+        answer = bytes.fromhex(
+            'a3000000249249492492'
+            '6db6db924924b6db6dea',
+        )
+
+        events = await self.notify(answer)
+
+        self.assertEqual(len(events), 1)
+        facelets = cast('FaceletsEventDictNoState', events[0])
+        self.assertEqual(facelets['serial'], 234)
+        self.assertEqual(facelets['facelets'], SOLVED)
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.encrypt.return_value = b'encrypted_data'
+
+            self.driver.send_command_handler('REQUEST_RESET')
+
+            written = mock_cypher.encrypt.call_args[0][0]
+
+        self.assertEqual(written[0], 0xA2)
+        self.assertEqual(bytes(written[1:19]), answer[1:19])
+        self.assertEqual(written[19], 0x00)
 
     async def test_facelets_frame_unblocks_the_moves(self) -> None:
         """Test the counter starts on the state the driver could read."""
