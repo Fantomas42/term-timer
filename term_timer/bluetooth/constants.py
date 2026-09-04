@@ -89,6 +89,20 @@ GAN_GEN4_COMMAND_CHARACTERISTIC: Final[str] = '0000fff5-0000-1000-8000-00805f9b3
 GAN_GEN4_ENGINE_PERF: Final[int] = 0x02
 GAN_GEN4_ENGINE_ECO: Final[int] =  0x03
 
+# The six raw channels a Gen4 colour sensor message carries, in the
+# order the descriptor declares them. They are uncalibrated readings of
+# one optical sensor, not the colours of a facelet : nothing in the
+# protocol says which sticker, which scale, or which reference white
+# they are read against.
+GAN_GEN4_COLOR_CHANNELS: Final[tuple[str, ...]] = (
+    'white',
+    'red',
+    'green',
+    'yellow',
+    'orange',
+    'blue',
+)
+
 # Moyu Weilong v10 protocol BLE service
 MOYU_WEILONG_SERVICE: Final[str] =                '0783b03e-7735-b5a0-1760-a305d2795cb0'
 MOYU_WEILONG_STATE_CHARACTERISTIC: Final[str] =   '0783b03e-7735-b5a0-1760-a305d2795cb1'

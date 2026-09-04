@@ -23,6 +23,7 @@ from term_timer.bluetooth.annotations import (
 )
 from term_timer.bluetooth.annotations import HardwareEventVersionOnlyDict
 from term_timer.bluetooth.annotations import ResetEventDict
+from term_timer.bluetooth.constants import GAN_GEN4_COLOR_CHANNELS
 from term_timer.bluetooth.constants import GAN_GEN4_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN4_ENGINE_ECO
 from term_timer.bluetooth.constants import GAN_GEN4_ENGINE_PERF
@@ -36,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 # PLR0904 : V3 declares more opcodes than the default limit allows
 # public methods, and the dispatch table gives each one a handler.
-class GanGen4Driver(GanGen3Driver):
+class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
     """
     GAN12 ui Maglev.
     GAN12 ui FreePlay2.
@@ -65,6 +66,15 @@ class GanGen4Driver(GanGen3Driver):
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
         0x01: 'handle_move',
         0x02: 'handle_solved',
+        # The six feeds CubeStation 6.6 appended to V3. Read only :
+        # they publish nothing and, above all, the driver never writes
+        # the command 21 that would turn the colour sensor on.
+        0x11: 'handle_color_sensor_config',
+        0x12: 'handle_color_sensor_sample',
+        0x13: 'handle_raw_face_angle',
+        0x14: 'handle_raw_face_angle_pair',
+        0x1A: 'handle_timed_turn',
+        0x1B: 'handle_timed_turn_packed',
         0xD1: 'handle_move_history',
         0xD2: 'handle_reset',
         0xD3: 'handle_restore',
@@ -627,5 +637,201 @@ class GanGen4Driver(GanGen3Driver):
             content += chr(msg.get_bit_word(24 + i * 8, 8))
 
         logger.debug('Exception log [%s]: %s', index, content)
+
+        return []
+
+    @staticmethod
+    def decode_color_channels(msg: GanProtocolMessage,
+                              start_bit: int) -> dict[str, int]:
+        """
+        Read the six raw channels of a colour sensor message.
+
+        The two colour messages differ by their leading byte only — a
+        `configStatus` on the `0x11`, an `index` on the `0x12` — and
+        carry the same six channels behind it.
+
+        Args:
+            msg: The decrypted message holding the channels.
+            start_bit: Bit the first channel starts at.
+
+        Returns:
+            The channels keyed by colour name, in protocol order.
+
+        """
+        return {
+            name: msg.get_bit_word(start_bit + index * 8, 8)
+            for index, name in enumerate(GAN_GEN4_COLOR_CHANNELS)
+        }
+
+    async def handle_color_sensor_config(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log the colour sensor answering the high precision command.
+
+        `bleProtoId 17` echoes the `configStatus` byte the command 21
+        carries, then the six raw channels. The driver never sends that
+        command : `RequestHighPrecision` returns immediately on a `Prod`
+        server and is restricted to names containing `16ui`, so a retail
+        cube should never emit one of these on its own. Decoding it
+        costs a handler and turns an `Unknown event type` line into a
+        readable one the day a cube proves otherwise.
+
+        Journaled and not published, as the five feeds next door are :
+        the layout is read off the descriptor and is certain, its units
+        and its meaning are not, and no cube has been seen sending one.
+
+        Returns:
+            Nothing, the channels are journaled only.
+
+        """
+        config_status = msg.get_bit_word(16, 8)
+
+        logger.debug(
+            'Colour sensor config - status:%s, channels:%s',
+            config_status, self.decode_color_channels(msg, 24),
+        )
+
+        return []
+
+    async def handle_color_sensor_sample(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log one indexed sample of the colour sensor.
+
+        `bleProtoId 18` is the `0x11` with an `index` where the other
+        has its `configStatus` : the sample of a series rather than the
+        answer to a command.
+
+        Returns:
+            Nothing, the channels are journaled only.
+
+        """
+        index = msg.get_bit_word(16, 8)
+
+        logger.debug(
+            'Colour sensor sample - index:%s, channels:%s',
+            index, self.decode_color_channels(msg, 24),
+        )
+
+        return []
+
+    async def handle_raw_face_angle(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log the uncalibrated angle of one face.
+
+        The eight bit counterpart of the sixteen bit angles the `0xEE`
+        carries : the same face being turned, read before the firmware
+        cooks it. Nothing says what the byte is a fraction of, so it is
+        logged as it arrives rather than converted into degrees.
+
+        Returns:
+            Nothing, the angle is journaled only.
+
+        """
+        index = msg.get_bit_word(16, 8)
+        face = msg.get_bit_word(24, 8)
+        angle_raw = msg.get_bit_word(32, 8)
+
+        logger.debug(
+            'Raw face angle - index:%s, face:%s, angle:%s',
+            index, face, angle_raw,
+        )
+
+        return []
+
+    async def handle_raw_face_angle_pair(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log the uncalibrated angles of two faces packed together.
+
+        The two face identifiers share a byte, and the descriptor
+        declares the B one *before* the A one — so the high nibble is
+        the B and the low nibble the A, against the reading order the
+        names suggest. Their two angles then come back in the A, B
+        order.
+
+        Returns:
+            Nothing, the angles are journaled only.
+
+        """
+        index = msg.get_bit_word(16, 8)
+        face_b = msg.get_bit_word(24, 4)
+        face_a = msg.get_bit_word(28, 4)
+        angle_raw_a = msg.get_bit_word(32, 8)
+        angle_raw_b = msg.get_bit_word(40, 8)
+
+        logger.debug(
+            'Raw face angles - index:%s, faces:%s/%s, angles:%s/%s',
+            index, face_a, face_b, angle_raw_a, angle_raw_b,
+        )
+
+        return []
+
+    async def handle_timed_turn(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log a turn timed on the clock of the cube, long form.
+
+        Both timings are declared `isBigEndia: 1`, alone against a
+        descriptor that is little endian everywhere else — the two are
+        therefore read big endian, which is what `get_bit_word` does by
+        default.
+
+        `bleProtoId 26` shares its `appProtoId 25` with the `0x1B` next
+        door, whose layout is incompatible with this one : the two are
+        told apart by their bleProtoId, which is exactly what the
+        dispatch table keys on.
+
+        Returns:
+            Nothing, the timings are journaled only.
+
+        """
+        index = msg.get_bit_word(16, 8)
+        face = msg.get_bit_word(24, 8)
+        start_ms = msg.get_bit_word(32, 32)
+        duration_ms = msg.get_bit_word(64, 32)
+
+        logger.debug(
+            'Timed turn - index:%s, face:%s, start:%sms, duration:%sms',
+            index, face, start_ms, duration_ms,
+        )
+
+        return []
+
+    async def handle_timed_turn_packed(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log a turn timed on the clock of the cube, packed form.
+
+        Seven bytes where the `0x1A` takes ten : a face on three bits, a
+        validity flag on one, a duration on twelve straddling two bytes,
+        the serial of the move and a start time. The `valid` bit is
+        declared `isBigEndia: 1`, a flag that means nothing on a single
+        bit, and the `startMS` is left little endian where the `0x1A`
+        marks its own big — the two forms disagree on the endianness of
+        the same field.
+
+        Returns:
+            Nothing, the timings are journaled only.
+
+        """
+        face = msg.get_bit_word(16, 3)
+        valid = msg.get_bit_word(19, 1)
+        duration_ms = msg.get_bit_word(20, 12)
+        last_step = msg.get_bit_word(32, 8)
+        start_ms = msg.get_bit_word(40, 32, little_endian=True)
+
+        logger.debug(
+            'Timed turn packed - face:%s, valid:%s, serial:%s, '
+            'start:%sms, duration:%sms',
+            face, bool(valid), last_step, start_ms, duration_ms,
+        )
 
         return []

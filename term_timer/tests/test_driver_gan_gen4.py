@@ -1331,6 +1331,110 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             'handle_face_rotation',
         )
 
+    async def test_raw_feeds_are_decoded_and_never_published(self) -> None:
+        """Test the six 6.6 feeds journal their fields and emit nothing."""
+        # Bodies are bleProtoId, dataLength, then the payload the
+        # descriptor declares. The CRC-16 closing the frame is computed.
+        feeds = (
+            (
+                '1107030A141E28323C',
+                (
+                    "Colour sensor config - status:3, channels:"
+                    "{'white': 10, 'red': 20, 'green': 30, "
+                    "'yellow': 40, 'orange': 50, 'blue': 60}"
+                ),
+            ),
+            (
+                '1207050A141E28323C',
+                (
+                    "Colour sensor sample - index:5, channels:"
+                    "{'white': 10, 'red': 20, 'green': 30, "
+                    "'yellow': 40, 'orange': 50, 'blue': 60}"
+                ),
+            ),
+            (
+                '130302047F',
+                'Raw face angle - index:2, face:4, angle:127',
+            ),
+            (
+                # The nibble byte is 0x51 : the B is declared first, so
+                # the high nibble is the B and the low one the A
+                '140409512040',
+                'Raw face angles - index:9, faces:1/5, angles:32/64',
+            ),
+            (
+                # Both timings big endian, alone in the protocol
+                '1A0A0302000003E8000000FA',
+                'Timed turn - index:3, face:2, start:1000ms, duration:250ms',
+            ),
+            (
+                # 0xB1 packs face 5, valid 1 and the high nibble of a
+                # duration of 0x123, whose low byte follows
+                '1B07B1232A88130000',
+                (
+                    'Timed turn packed - face:5, valid:True, serial:42, '
+                    'start:5000ms, duration:291ms'
+                ),
+            ),
+        )
+
+        for body_hex, expected in feeds:
+            with self.subTest(body=body_hex):
+                body = bytes.fromhex(body_hex)
+                frame = body + self.driver.compute_crc(
+                    body,
+                ).to_bytes(2, 'little')
+
+                with patch.object(self.driver, 'cypher') as mock_cypher:
+                    mock_cypher.decrypt.return_value = frame
+
+                    with self.assertLogs(
+                            'term_timer.bluetooth.drivers.gan_gen4',
+                            level='DEBUG',
+                    ) as logged:
+                        events = await self.driver.event_handler(
+                            Mock(), bytearray(frame),
+                        )
+
+                self.assertEqual(events, [])
+                self.assertIn(expected, logged.output[0])
+
+    def test_raw_feeds_are_named_in_the_dispatch_table(self) -> None:
+        """Test the six feeds are dispatched and not counted unknown."""
+        expected = {
+            0x11: 'handle_color_sensor_config',
+            0x12: 'handle_color_sensor_sample',
+            0x13: 'handle_raw_face_angle',
+            0x14: 'handle_raw_face_angle_pair',
+            0x1A: 'handle_timed_turn',
+            0x1B: 'handle_timed_turn_packed',
+        }
+
+        for event, handler in expected.items():
+            with self.subTest(event=event):
+                self.assertEqual(
+                    GanGen4Driver.MESSAGE_HANDLERS[event],
+                    handler,
+                )
+
+        # The 0x1A and the 0x1B share appProtoId 25 with incompatible
+        # layouts : only the bleProtoId tells them apart, which is what
+        # the dispatch table keys on
+        self.assertNotEqual(
+            GanGen4Driver.MESSAGE_HANDLERS[0x1A],
+            GanGen4Driver.MESSAGE_HANDLERS[0x1B],
+        )
+
+    def test_the_color_sensor_is_never_turned_on(self) -> None:
+        """Test no command of the driver writes the command 21."""
+        for command in ('REQUEST_ENABLE_COLOR_SENSOR',
+                        'REQUEST_DISABLE_COLOR_SENSOR',
+                        'REQUEST_HIGH_PRECISION'):
+            with self.subTest(command=command):
+                self.assertFalse(
+                    self.driver.send_command_handler(command),
+                )
+
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_battery_event(
