@@ -394,6 +394,15 @@ class TestSplitMessages(unittest.TestCase):
 
         self.assertEqual(list(driver.split_messages(frame)), [frame])
 
+    def test_split_messages_frame_too_short_to_walk(self) -> None:
+        """Test a frame with no room for a second header is not walked."""
+        driver = ChainedDriver(self.mock_client, use_gyroscope=False)
+        # Two bytes of header and two reserved for the checksum : below
+        # four bytes, the walk cannot even read where it would start.
+        frame = bytes([0x01, 0x00, 0xAA])
+
+        self.assertEqual(list(driver.split_messages(frame)), [frame])
+
     def test_split_messages_refuses_a_head_without_terminator(self) -> None:
         """Test a head with no terminator stops the walk at once."""
         class Unwalkable(HeadedChainedDriver):
@@ -498,6 +507,26 @@ class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
             [event['event'] for event in result],
             ['probe-170'],
         )
+
+    async def test_event_handler_drops_a_headless_notification(
+            self) -> None:
+        """Test a notification opening on another byte decodes nothing."""
+        driver = HeadedChainedDriver(self.mock_client, use_gyroscope=False)
+        mock_sender = Mock()
+
+        with patch.object(driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes(
+                [0x66, 0x01, 0x02, 0xAA, 0xBB],
+            )
+
+            with patch('term_timer.bluetooth.drivers.base.logger') as logger:
+                result = await driver.event_handler(
+                    mock_sender, bytearray(b'data'),
+                )
+
+        self.assertEqual(result, [])
+        self.assertEqual(driver.events, [])
+        logger.debug.assert_called_once()
 
     async def test_event_handler_decodes_a_frame_with_a_wrong_crc(
             self) -> None:

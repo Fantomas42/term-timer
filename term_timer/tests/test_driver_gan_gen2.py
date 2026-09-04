@@ -720,6 +720,40 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
+    @patch('term_timer.bluetooth.drivers.gan_gen2.cubies_to_facelets')
+    async def test_event_handler_facelets_leaves_the_counters_alone(
+        self, mock_cubies_to_facelets: Mock,
+        mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test a facelets answer mid session does not rewind the serials."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+        mock_cubies_to_facelets.return_value = (
+            'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
+        )
+
+        # The counters have started already : only the very first
+        # facelets sets them, and this one carries an older serial
+        self.driver.serial = 100
+        self.driver.last_serial = 100
+
+        serial = 50
+        test_data = self.build_frame(f'0100{serial:08b}')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+
+            result = await self.driver.event_handler(Mock(), test_data)
+
+        self.assertEqual(len(result), 1)
+        facelets_event = cast('FaceletsEventDict', result[0])
+        self.assertEqual(facelets_event['event'], 'facelets')
+        self.assertEqual(facelets_event['serial'], 50)
+        self.assertEqual(self.driver.serial, 100)
+        self.assertEqual(self.driver.last_serial, 100)
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_hardware_event(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -1083,6 +1117,32 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_move_message_repeating_its_serial(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test a message announcing no new move delivers nothing."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        self.driver.serial = 100
+        self.driver.last_serial = 100
+
+        # The serial the driver already holds : the message carries a
+        # move record, but none of it is new
+        test_data = self.move_frame(100, [(0, 0)], [1000])
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+
+            result = await self.driver.event_handler(Mock(), test_data)
+
+        self.assertEqual(result, [])
+        self.assertEqual(self.driver.move_buffer, [])
+        self.assertEqual(self.driver.serial, 100)
+        self.assertEqual(self.driver.last_serial, 100)
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_move_gap_requests_history(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
@@ -1203,6 +1263,35 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         # The hole is still there, so nothing is delivered
         self.assertEqual(result, [])
         self.assertEqual(len(self.driver.move_buffer), 1)
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_move_history_not_the_missing_one(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test a recovered move that does not close the hole is dropped."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        self.driver.serial = 100
+        self.driver.last_serial = 100
+        self.driver.move_buffer = cast('Any', [
+            {'serial': 105, 'event': 'move', 'move': 'U'},
+        ])
+
+        # The move belongs to the window, but the buffer waits for the
+        # 104 : inserting the 103 in front of it would deliver the two
+        # out of order
+        history = self.move_history_frame(103, [(0, 0)])
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = history
+
+            result = await self.driver.event_handler(Mock(), history)
+
+        self.assertEqual(result, [])
+        self.assertEqual(len(self.driver.move_buffer), 1)
+        self.assertEqual(self.driver.move_buffer[0]['serial'], 105)
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
