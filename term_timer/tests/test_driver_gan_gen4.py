@@ -616,6 +616,69 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_event_handler_move_history_out_of_domain_move(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test an unnamable recovered move names the V3 opcode."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        test_data = bytearray(20)
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = test_data
+
+            with patch(
+                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
+            ) as mock_msg_class:
+                mock_msg = Mock()
+                mock_msg_class.return_value = mock_msg
+
+                def mock_get_bit_word(  # noqa: PLR0911
+                        start: int, length: int, *,
+                        little_endian: bool = False) -> int:  # noqa: ARG001
+                    if start == 0 and length == 8:
+                        return 0xD1  # event type (move history)
+                    if start == 8 and length == 8:
+                        return 2  # data_size (2 moves)
+                    if start == 16 and length == 8:
+                        return 100  # start_serial
+                    if start == 24 and length == 3:
+                        return 1  # face for move 1
+                    if start == 27 and length == 1:
+                        return 1  # direction for move 1
+                    if start == 28 and length == 3:
+                        return 7  # face for move 2, out of the table
+                    if start == 31 and length == 1:
+                        return 0  # direction for move 2
+                    return 0
+
+                mock_msg.get_bit_word.side_effect = mock_get_bit_word
+
+                with (
+                    patch.object(
+                        self.driver,
+                        'inject_missed_move_to_buffer',
+                    ) as mock_inject,
+                    self.assertLogs(
+                        'term_timer.bluetooth.drivers.gan_gen3',
+                        level='DEBUG',
+                    ) as logged,
+                ):
+                    result = await self.driver.event_handler(
+                        Mock(), test_data,
+                    )
+
+        self.assertIn('out of domain move at index 1', logged.output[0])
+        self.assertIn('face "7"', logged.output[0])
+        # The handler is shared with the V2, the opcode is not
+        self.assertIn('Move history message "0xD1"', logged.output[0])
+        # Only the move the driver could name has been injected
+        self.assertEqual(mock_inject.call_count, 1)
+        self.assertEqual(result, [])
+
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_hardware_product_date(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:

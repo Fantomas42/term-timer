@@ -379,9 +379,9 @@ class GanGen3Driver(GanGen2Driver):
 
             if face is None or move is None:
                 logger.debug(
-                    'Move history message "0x06" carries an out of '
+                    'Move history message "0x%02X" carries an out of '
                     'domain move at index %d: face "%d", direction "%d"',
-                    i, face_id, direction,
+                    self.read_event_code(msg), i, face_id, direction,
                 )
                 continue
 

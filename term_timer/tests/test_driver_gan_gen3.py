@@ -813,6 +813,8 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
 
         self.assertIn('out of domain move at index 1', logged.output[0])
         self.assertIn('face "7"', logged.output[0])
+        # The shared handler names the opcode of the message it read
+        self.assertIn('Move history message "0x06"', logged.output[0])
         # Only the move the driver could name has been injected
         self.assertEqual(mock_inject.call_count, 1)
         self.assertEqual(result, [])
