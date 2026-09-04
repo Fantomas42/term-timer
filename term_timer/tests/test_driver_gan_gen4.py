@@ -123,6 +123,45 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.assertEqual(move['cube_timestamp'], 12345)
         self.assertEqual(move['move'], "U'")
 
+    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
+    @patch('term_timer.bluetooth.drivers.base.datetime')
+    async def test_move_frame_with_an_out_of_domain_face(
+            self, mock_datetime: Mock, mock_time: Mock,
+    ) -> None:
+        """Test an unnamable face mask empties the move, not the session."""
+        mock_time.return_value = 123456789
+        mock_datetime.now.return_value = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+        self.driver.last_serial = 101
+        self.driver.serial = 101
+
+        # The frame of the test above, its last byte turned from 0x42 to
+        # 0x43 : the same direction, and a face mask of 0b000011 that
+        # GEN3_MOVE_FACES does not declare. Six bits name six faces, so
+        # fifty-eight of the sixty-four values reach this branch.
+        body = bytes.fromhex('010739300000660043')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen3',
+                    level='DEBUG',
+            ) as logged:
+                events = await self.driver.event_handler(
+                    Mock(), bytearray(frame),
+                )
+
+        # The §5.8 had nothing to write : the guard belongs to the Gen3
+        # handler the §5.0 made the Gen4 inherit, and this only says so
+        self.assertEqual(events, [])
+        self.assertIn(
+            'carries an out of domain move: '
+            'face mask "0x03", direction "1"',
+            logged.output[0],
+        )
+
     def test_send_command_handler_request_facelets(self) -> None:
         """Test send command handler request facelets."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
@@ -242,6 +281,32 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             for i, expected in enumerate(expected_values):
                 self.assertEqual(args[0][i], expected)
             self.assertEqual(result, b'encrypted_data')
+
+    def test_send_command_handler_of_the_two_answerless_commands(
+            self,
+    ) -> None:
+        """Test the restore and the exception log build their frame."""
+        # Neither has ever been called outside the driver, which is why
+        # the §5.10 keeps their answers journaled : an incident rather
+        # than a datum. They are still built, and still encrypted.
+        commands = (
+            ('REQUEST_RESTORE', [0xD3, 0x01, 0x01]),
+            ('REQUEST_EXCEPTION_LOG', [0xF0, 0x01, 0x01]),
+        )
+
+        for command, expected_values in commands:
+            with (
+                self.subTest(command=command),
+                patch.object(self.driver, 'cypher') as mock_cypher,
+            ):
+                mock_cypher.encrypt.return_value = b'encrypted_data'
+
+                result = self.driver.send_command_handler(command)
+
+                args = mock_cypher.encrypt.call_args[0]
+                for i, expected in enumerate(expected_values):
+                    self.assertEqual(args[0][i], expected)
+                self.assertEqual(result, b'encrypted_data')
 
     async def test_request_move_history_odd_serial(self) -> None:
         """Test request move history odd serial."""
@@ -1656,6 +1721,13 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         body = bytes.fromhex('EA0107')
         frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
 
+        # The order is the whole point of the handler, and it was the
+        # one thing the test asserted nothing about : a type journaled
+        # after the link is cut is a type nobody reads, and the open
+        # question 2 has no other oracle than that line. The cut notes
+        # what had already been logged when it happened.
+        logged_when_cut: list[int] = []
+
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.decrypt.return_value = frame
 
@@ -1663,6 +1735,10 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                     'term_timer.bluetooth.drivers.gan_gen2',
                     level='WARNING',
             ) as logged:
+                self.mock_client.disconnect.side_effect = (
+                    lambda: logged_when_cut.append(len(logged.output))
+                )
+
                 events = await self.driver.event_handler(
                     Mock(), bytearray(frame),
                 )
@@ -1670,9 +1746,55 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         # The generic handler reads its byte at payload_offset, which is
         # exactly where V3 declares its type : question 2 is armed
         self.assertIn('payload starts with "0x07"', logged.output[0])
+        self.assertEqual(logged_when_cut, [1])
         self.assertEqual(len(events), 1)
         self.assertEqual(events[0]['event'], 'disconnect')
         self.mock_client.disconnect.assert_awaited_once()
+
+    async def test_exception_log_is_journaled_with_its_index(self) -> None:
+        """Test the 0xF0 spells the fault the cube keeps about itself."""
+        # proto F0, dataLength 06, index 01, then five characters : the
+        # dataLength counts the index byte, as the 0xFC does
+        body = bytes.fromhex('F006014552523432')
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen4',
+                    level='DEBUG',
+            ) as logged:
+                events = await self.driver.event_handler(
+                    Mock(), bytearray(frame),
+                )
+
+        self.assertEqual(events, [])
+        self.assertIn('Exception log [1]: ERR42', logged.output[0])
+
+    async def test_exception_log_stops_at_the_declared_fifteen(self) -> None:
+        """Test the content is cut where the descriptor declares it."""
+        # `content[15]` is what bleProtoId 240 declares, and nothing
+        # makes a cube honour it : the dataLength here announces 0x20,
+        # twenty characters follow, and fifteen must come out
+        content = 'ABCDEFGHIJKLMNOPQRST'
+        body = bytes.fromhex('F02001') + content.encode()
+        frame = body + self.driver.compute_crc(body).to_bytes(2, 'little')
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = frame
+
+            with self.assertLogs(
+                    'term_timer.bluetooth.drivers.gan_gen4',
+                    level='DEBUG',
+            ) as logged:
+                events = await self.driver.event_handler(
+                    Mock(), bytearray(frame),
+                )
+
+        self.assertEqual(events, [])
+        self.assertIn('Exception log [1]: ABCDEFGHIJKLMNO', logged.output[0])
+        self.assertNotIn('P', logged.output[0].split(': ')[-1])
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
