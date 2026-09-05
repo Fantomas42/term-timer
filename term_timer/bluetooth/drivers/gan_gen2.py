@@ -57,8 +57,8 @@ class GanGen2Driver(Driver):
     command_characteristic_uid: ClassVar[str] = GAN_GEN2_COMMAND_CHARACTERISTIC
     encrypter: ClassVar[type[GanGen2CubeEncrypter]] = GanGen2CubeEncrypter
     payload_offset: ClassVar[int] = 4
-    # V1 is the only GAN protocol declaring a real charging state, on
-    # the four bits its header leaves before the battery level.
+    # A real charging state sits on the four bits the header leaves
+    # before the battery level.
     battery_level_offset: ClassVar[int] = 4
     charging_state_width: ClassVar[int] = 4
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
@@ -147,9 +147,9 @@ class GanGen2Driver(Driver):
         """
         Request historical move data from the cube's internal buffer.
 
-        V1 packs its history the same five bits per move as a live
-        message, so no window has to be aligned on a byte the way V2 and
-        V3 need: only the capacity of the answer caps the request.
+        History is packed the same five bits per move as a live
+        message, with no need to align a window on a byte: only the
+        capacity of the answer caps the request.
 
         Args:
             serial: The serial number to start the history request from.
@@ -366,10 +366,10 @@ class GanGen2Driver(Driver):
     @staticmethod
     def read_event_code(msg: GanProtocolMessage) -> int:
         """
-        Read the opcode of a V1 message.
+        Read the opcode of a message.
 
-        V1 declares its bleProtoId on the first 4 bits, and no
-        dataLength at all.
+        The opcode sits on the first 4 bits, and there is no length
+        field at all.
 
         Returns:
             The opcode of the message.
@@ -382,10 +382,10 @@ class GanGen2Driver(Driver):
             msg: GanProtocolMessage,
             offset: int) -> tuple[QuaternionDict, VelocityDict]:
         """
-        Decode one orientation sample of a V1 gyroscope message.
+        Decode one orientation sample of a gyroscope message.
 
-        V1 packs two identical samples per message, 76 bits apart : this
-        reads whichever one `offset` points at.
+        Two identical samples are packed per message, 76 bits apart:
+        this reads whichever one `offset` points at.
 
         Args:
             msg: The message carrying the sample.
@@ -424,9 +424,8 @@ class GanGen2Driver(Driver):
         """
         Decode the two orientation samples of a gyroscope message.
 
-        V1 is the only protocol version declaring two samples in a
-        single message, each with its own quaternion and velocity, 76
-        bits apart.
+        Two samples are declared in a single message, each with its
+        own quaternion and velocity, 76 bits apart.
 
         Returns:
             The two gyroscope events, oldest first, or nothing when the
@@ -586,13 +585,12 @@ class GanGen2Driver(Driver):
         """
         serial = msg.get_bit_word(4, 8)
 
-        # V1 answers a facelets request, and pushes one unsolicited
-        # answer to a reset : the protocol has no reset message of its
-        # own, and the cube acknowledges the command with the state it
-        # was just told to hold. Measured on a GAN12 ui FreePlay the
-        # 2026-09-02, a lone frame 306 ms after the write. Either way
-        # this is where the two counters start, and not a place where
-        # a gap in the move serials could be noticed.
+        # A facelets answer is also pushed unsolicited after a reset:
+        # the protocol has no reset message of its own, and the cube
+        # acknowledges the command with the state it was just told to
+        # hold. Either way this is where the two counters start, and
+        # not a place where a gap in the move serials could be
+        # noticed.
         if self.last_serial == -1:
             self.serial = serial
             self.last_serial = serial
@@ -638,8 +636,8 @@ class GanGen2Driver(Driver):
         """
         Decode the hardware identity of the cube.
 
-        V1 is the only GAN protocol carrying two versions and two
-        gyroscope capability bits.
+        Two hardware/software versions and two gyroscope capability
+        bits are carried here.
 
         Returns:
             The hardware event of the message.
@@ -684,11 +682,11 @@ class GanGen2Driver(Driver):
         """
         Decode the moves answering a move history request.
 
-        V1 answers with the same five bits per move as a live message,
-        the newest first, behind the serial the window starts at. The
-        durations are answered by another message, never requested : a
-        recovered move carries no cube timestamp, which is what V2 and
-        V3 already do.
+        The answer packs the same five bits per move as a live
+        message, the newest first, behind the serial the window starts
+        at. The durations are answered by another message, never
+        requested: a recovered move carries no cube timestamp, exactly
+        as other protocols already do.
 
         Returns:
             The moves the buffer could deliver in order once the

@@ -47,31 +47,28 @@ class Driver:
     ]
 
     # Width of the header, in bits, before the payload of a message.
-    # V1 : bleProtoId on 4 bits, no dataLength.
-    # V2 and V3 : bleProtoId(8) + dataLength(8). The head of V2 is not
-    # counted here : it opens the notification, not the message, and it
-    # is stripped once by strip_head().
+    # Some protocols pack only an opcode there, others an opcode and a
+    # length byte. The byte opening a notification is not counted here:
+    # it belongs to the notification, not the message, and is stripped
+    # once by strip_head().
     payload_offset: ClassVar[int] = 8
 
     # Whether a single notification can carry several chained messages.
-    # V2 and V3 both declare isCycle: 1, V1 and Moyu do not.
     chained: ClassVar[bool] = False
 
-    # Whether REQUEST_RESET's outcome is confirmed by the cube. V2 and V3
-    # answer with a dedicated `reset` event carrying a `result` field; V1
-    # and Moyu only echo the state as an unsolicited facelets frame, with
-    # no bit left for a result — nothing is inferred for them (see the
-    # bluetooth-drivers skill, discoveries.md §4).
+    # Whether REQUEST_RESET's outcome is confirmed by the cube. Some
+    # protocols answer with a dedicated `reset` event carrying a
+    # result; others only echo the state as an unsolicited facelets
+    # frame, with no bit left for a result — nothing is inferred for
+    # those.
     confirms_reset: ClassVar[bool] = False
 
     # Byte a notification starts with, when the protocol declares one.
-    # V2 opens its frames with a head of 0x55, V3 starts directly with
-    # its bleProtoId. The byte belongs to the *notification* and not to
-    # each message : a chained V2 message carries its bleProtoId and
-    # its dataLength alone, measured on a GAN i carry 2 the 2026-09-03.
-    # It is therefore removed once per notification rather than counted
-    # in payload_offset, which is what lets V2 and V3 share the same
-    # message header of sixteen bits.
+    # It belongs to the *notification* and not to each message: a
+    # chained message repeats only its own header, not this byte. It is
+    # therefore removed once per notification rather than counted in
+    # payload_offset, which lets protocols sharing a message header
+    # share it regardless of how they open their frames.
     head_magic: ClassVar[int | None] = None
 
     # Bytes of checksum closing the last message of a notification,
@@ -82,25 +79,23 @@ class Driver:
     crc_terminator: ClassVar[int] = 0
 
     # Trailing bytes of a notification that belong to the frame, not to
-    # a message. V3 declares isCRC16: 1 and closes its frames with two
-    # bytes of CRC.
+    # a message — a protocol closing its frames with a checksum.
     crc_reserve: ClassVar[int] = 0
 
     # Bits between the header of a battery message and the level it
-    # carries. V1 spends them on the charging state it is the only
-    # generation to declare, V3 on an index it is the only generation
-    # to declare, and `charging_state_width` tells the two apart.
+    # carries. A protocol may spend them on a charging state or on an
+    # index instead; `charging_state_width` tells the two apart.
     battery_level_offset: ClassVar[int] = 0
 
     # Width, in bits, of that charging state. Left at zero, the level
-    # is published with a charging state of 0, which is what the three
-    # protocols not declaring one already did, each in their own copy.
+    # is published with a charging state of 0, the default for a
+    # protocol that declares none.
     charging_state_width: ClassVar[int] = 0
 
     # Opcode -> name of the method decoding it. Redefined *entirely* by
-    # each generation : the opcode spaces do not overlap from one
-    # generation to the next, and 0x02 means "facelets" in V2 but
-    # "cube solved" in V3. Only the *methods* are inherited.
+    # each protocol: the opcode spaces do not overlap, and the same
+    # opcode can mean different things from one protocol to the next.
+    # Only the *methods* are inherited.
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {}
 
     def __init__(self, client: BleakClient,
@@ -192,21 +187,20 @@ class Driver:
         Accumulate on the clock of the cube the time a move took.
 
         The register is read on sixteen bits and counts in
-        milliseconds, as the thirty-two bits time and duration fields
-        of V2 and V3 confirm. **Two** of its readings are not
-        durations : a null one is the register having overflowed, and
-        `0xFFFF` is the same register saturated, the cube having been
-        still for more than 65,5 seconds. The local clock stands in
-        for both — converted to milliseconds too, which is the whole
-        reason this is not an addition written at each call site.
+        milliseconds, confirmed by the wider time and duration fields
+        other protocols declare for the same purpose. **Two** of its
+        readings are not durations: a null one is the register having
+        overflowed, and `0xFFFF` is the same register saturated, the
+        cube having been still for more than 65,5 seconds. The local
+        clock stands in for both — converted to milliseconds too,
+        which is the whole reason this is not an addition written at
+        each call site.
 
-        The saturation was measured on a MoYu Weilong v10 AI the
-        2026-09-04, on the frame following a long pause. Added as it
-        comes, it would have pushed the clock of the cube 65,5 seconds
-        forward on the first move of a session — and with no earlier
-        move to date, there is nothing to stand in for it either : the
-        clock then stays where it is, exactly as it does on an
-        overflow read before the first move.
+        Added as it comes, a saturated reading would push the clock of
+        the cube 65,5 seconds forward on the first move of a session —
+        and with no earlier move to date, there is nothing to stand in
+        for it either: the clock then stays where it is, exactly as it
+        does on an overflow read before the first move.
 
         The clock is advanced before a move is named, and never after:
         it moved on whether or not the fields beside it could be
@@ -261,8 +255,7 @@ class Driver:
         The application computes the CRC and reports it without ever
         enforcing it, and so do we: a frame is never rejected, the
         warning only tells a corrupted frame apart from a faulty
-        decryption. The stored field is read little endian, the V3
-        descriptor being globally isBigEndia: 0.
+        decryption. The stored field is read little endian.
         """
         if not self.crc_reserve or len(plain) <= self.crc_reserve:
             return
@@ -284,10 +277,10 @@ class Driver:
         Remove the head opening a notification, when there is one.
 
         The head belongs to the *notification* and not to each of its
-        messages : a chained V2 message carries its bleProtoId and its
-        dataLength alone, measured on a GAN i carry 2 the 2026-09-03.
-        Taking it off once here is what lets V2 and V3 share a message
-        header of sixteen bits, and the handlers reading behind it.
+        messages: a chained message repeats only its own header, not
+        this byte. Taking it off once here is what lets protocols
+        sharing a message header also share the handlers reading
+        behind it.
 
         The byte the protocol declares is checked on the way, since
         this is the only place it is still visible.
@@ -348,13 +341,11 @@ class Driver:
         """
         Yield each message of a notification whose head is gone.
 
-        A protocol declaring isCycle packs as many messages as fit into
-        one notification, each one being a TLV whose dataLength byte
-        closes its header. Every message of the chain has the same
-        header, the head having been taken off the notification by
-        `strip_head` beforehand : measured on a GAN i carry 2 the
-        2026-09-03, a V2 frame chaining a battery, a move and a solved
-        was read whole, checksum included.
+        A chaining protocol packs as many messages as fit into one
+        notification, each one being a TLV whose length byte closes
+        its header. Every message of the chain has the same header,
+        the head having been taken off the notification by
+        `strip_head` beforehand.
 
         Args:
             plain: The notification, head already stripped.
@@ -388,10 +379,10 @@ class Driver:
             offset += header + plain[offset + header - 1]
 
             # The checksum is tested first, and on purpose: it is the
-            # terminator of the chain where the null byte is only the
-            # heuristic of the Java codec. A CRC whose low byte is null
-            # — 0x4F00, measured on a GAN i carry 2 the 2026-09-03 —
-            # answers both tests, and only one of them is authoritative.
+            # terminator of the chain, where the null byte is only a
+            # heuristic. A CRC whose low byte happens to be null
+            # answers both tests, and only one of them is
+            # authoritative.
             if self.chain_closed(plain, offset):
                 return
 
@@ -431,10 +422,10 @@ class Driver:
 
         for chunk in self.split_messages(payload):
             # The message is given the frame up to its end, and not up
-            # to its declared dataLength : every absolute offset of the
+            # to its declared length: every absolute offset of the
             # handlers stays valid, and no handler can read into the
-            # void when a dataLength underestimates what it reads, as
-            # the Gen4 gyroscope does.
+            # void when a protocol's declared length underestimates
+            # what it actually reads.
             await self.handle_message(chunk, clock, timestamp, events)
 
         return events
@@ -517,12 +508,12 @@ class Driver:
         """
         Close the link on request of the cube.
 
-        The opcode is absent from the V1 descriptor, and the two other
-        GAN generations declare something else than a disconnection
-        under theirs. The first byte of the payload is journaled
-        before the link is cut : it is the only thing that will ever
+        The opcode is absent from some protocol descriptors, and where
+        it is declared it can mean something other than a
+        disconnection. The first byte of the payload is journaled
+        before the link is cut: it is the only thing that will ever
         tell whether cutting is the right reading, and it is armed on
-        the four protocols so that whichever cube asks first says it.
+        every protocol so that whichever cube asks first says it.
 
         Returns:
             The disconnect event telling the application about it.

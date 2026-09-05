@@ -34,8 +34,9 @@ from term_timer.bluetooth.message import GanProtocolMessage
 logger = logging.getLogger(__name__)
 
 
-# PLR0904 : V3 declares more opcodes than the default limit allows
-# public methods, and the dispatch table gives each one a handler.
+# PLR0904 : this protocol declares more opcodes than the default limit
+# allows public methods, and the dispatch table gives each one a
+# handler.
 class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
     """
     GAN12 ui Maglev.
@@ -52,26 +53,28 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
     service_uid: ClassVar[str] = GAN_GEN4_SERVICE
     state_characteristic_uid: ClassVar[str] = GAN_GEN4_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = GAN_GEN4_COMMAND_CHARACTERISTIC
-    # The same sixteen bits as V2, and that is the whole point : the
-    # head of V2 opens its notification and not its messages, so both
-    # generations lay their payloads out behind the same header, and
-    # the move, facelets and history handlers are shared, not copied.
+    # The same sixteen bits as the parent driver, and that is the
+    # whole point: its head byte opens the notification and not its
+    # messages, so both drivers lay their payloads out behind the
+    # same header, and the move, facelets and history handlers are
+    # shared, not copied.
     payload_offset: ClassVar[int] = 16
     chained: ClassVar[bool] = True
-    # V3 declares no head byte, its messages start with their
-    # bleProtoId, and closes its frames with two bytes of CRC-16.
+    # This protocol declares no head byte, its messages start
+    # directly with their opcode, and it closes its frames with two
+    # bytes of CRC-16.
     head_magic: ClassVar[int | None] = None
     crc_reserve: ClassVar[int] = 2
-    # V3 prefixes its battery level with an index that neither V1, V2
-    # nor MoYu declare, and declares no charging state of its own.
+    # This protocol prefixes its battery level with an index the
+    # others don't declare, and declares no charging state of its own.
     battery_level_offset: ClassVar[int] = 8
     charging_state_width: ClassVar[int] = 0
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
         0x01: 'handle_move',
         0x02: 'handle_solved',
-        # The six feeds CubeStation 6.6 appended to V3. Read only :
-        # they publish nothing and, above all, the driver never writes
-        # the command 21 that would turn the colour sensor on.
+        # These six feeds are read only: they publish nothing and,
+        # above all, the driver never writes the command that would
+        # turn the colour sensor on.
         0x11: 'handle_color_sensor_config',
         0x12: 'handle_color_sensor_sample',
         0x13: 'handle_raw_face_angle',
@@ -103,11 +106,10 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """
         Tell whether the cube accepts the 0xD4 engine configuration.
 
-        SendEngineConfig, the only caller of the command, is guarded in
-        CubeStation by deviceData_Cn[model].lowBattery, and the GAN i4
-        is the single row of the thirty-two carrying that flag. This is
-        a precaution rather than a constraint of the protocol : it goes
-        away the day a log shows another model answering 0xD4.
+        Guarded by the reference application behind a check only the
+        GAN i4 passes. This is a precaution rather than a constraint
+        of the protocol: it goes away the day a log shows another
+        model answering it.
 
         Returns:
             True on a GAN i4, False on every other Gen4 model.
@@ -178,11 +180,11 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """
         Decode the MAC address of the cube.
 
-        Seven bytes are read, not six : `bleProtoId 255` declares
-        `macAddress` with `elementCount: 7`. An oddity of GAN, not a
-        slip of the driver — do not shorten the loop to a MAC length.
-        The seventh is padding on the GAN i4, whose six first bytes are
-        its BLE address to the byte, measured the 2026-09-03.
+        Seven bytes are read, not six: the descriptor declares the
+        address on seven elements. An oddity of GAN, not a slip of the
+        driver — do not shorten the loop to a MAC length. The seventh
+        is padding on some models, whose first six bytes are their BLE
+        address to the byte.
 
         The published address stops at the last byte carrying a value,
         as the `0xFE` does with its own trailing null : a cube filling
@@ -226,8 +228,7 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         joined by a dot. GAN encodes its versions in nibbles — the
         `0xFD` of the GAN i4 spells `5.3` as `0x53` — so the first byte
         is read that way here too, and the second one has never been
-        seen carrying anything : `0x00` on the GAN i4, measured the
-        2026-09-03.
+        seen carrying anything.
 
         It is appended to the rendering rather than dropped the day it
         stops being null. A cube that never fills it renders exactly
@@ -308,11 +309,11 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
             'clock': clock,
             'timestamp': timestamp,
             'hardware_name': hardware_name,
-            # Every proto 3 row of deviceData_Cn declares a gyroscope
-            # but the two GANicE ones, so a blacklist of two replaces
-            # the whitelist of one. Matched case-insensitively : the
-            # case of a GAN name is not authoritative, the application
-            # itself lowercases every one of them before comparing.
+            # Every model declares a gyroscope but the two GANicE
+            # ones, so a blacklist of two replaces the whitelist of
+            # one. Matched case-insensitively: the case of a GAN name
+            # is not authoritative, the application itself lowercases
+            # every one of them before comparing.
             'gyroscope_supported': not hardware_name.upper().startswith(
                 'GANICE',
             ),
@@ -349,11 +350,12 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """
         Decode why the cube restarted.
 
-        The key is the one V2 already publishes from the same field of
-        its own identity message, so the two generations answer the
-        same question with the same name. The width differs — sixteen
-        bits here against eight there — and the value is published raw
-        rather than judged, as the `result` of a reset is.
+        The key is the one the parent driver already publishes from
+        the same field of its own identity message, so both answer
+        the same question with the same name. The width differs —
+        sixteen bits here against eight there — and the value is
+        published raw rather than judged, as the `result` of a reset
+        is.
 
         Returns:
             The partial hardware event carrying the reason.
@@ -401,7 +403,8 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """
         Decode the orientation sample of a gyroscope message.
 
-        V3 declares a single sample per message, where V1 declares two.
+        A single sample is declared per message, where another
+        protocol declares two.
 
         Returns:
             The gyroscope event, or nothing when the gyroscope is not
@@ -447,10 +450,11 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """
         Acknowledge that the cube state has been reset.
 
-        `bleProtoId 210` declares its `result` on thirty-two bits where
-        V2 declares eight, so the two generations publish the same key
-        with two domains. Journalising it would have kept it out of the
-        stream, which is where a refused reset has to be seen.
+        This message declares its `result` on thirty-two bits where
+        the parent driver declares eight, so both publish the same key
+        with two different domains. Journalising it would have kept it
+        out of the stream, which is where a refused reset has to be
+        seen.
 
         Returns:
             The reset event of the message.
@@ -493,13 +497,11 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """
         Decode the state of the gyroscope the cube reports.
 
-        The answer does not echo the mode the command carries : it is
+        The answer does not echo the mode the command carries: it is
         a flag, 1 for a gyroscope that streams and 0 for one that does
-        not, measured on a GAN i4 the 2026-09-03 against the traffic
-        of the link itself — `1, 0, 1` for a Perf, Eco, Perf session.
-        The two encodings sit on the same opcode and are not the same
-        domain, which is what makes reading the answer as a mode so
-        easy a mistake.
+        not. The two encodings sit on the same opcode and are not the
+        same domain, which is what makes reading the answer as a mode
+        so easy a mistake.
 
         The cube also chains this message behind its build time at
         initialization, unasked, so the state is known before any
@@ -532,17 +534,16 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """
         Log the face rotation the cube is tracking.
 
-        `bleProtoId 238` is `appProtoId 14`, which the reference names
-        Rotation Data : the face being turned, the angle it started at,
-        the one it is at now, and whether it sits parallel to a face.
-        Nothing gyroscopic — the orientation of the cube in space is the
-        `0xEC` next door, and the two were told apart by their fields,
-        not by their names.
+        The reference names this message Rotation Data: the face
+        being turned, the angle it started at, the one it is at now,
+        and whether it sits parallel to a face. Nothing gyroscopic —
+        the orientation of the cube in space is the `0xEC` next door,
+        and the two were told apart by their fields, not by their
+        names.
 
-        No cube has ever been seen sending one : zero occurrence over
-        the twenty-seven logs kept the 2026-09-03, the GAN i4 sessions
-        of the day included. Publishing it is therefore a question
-        without a sample, and it stays journaled until one shows up.
+        No cube has ever been seen sending one. Publishing it is
+        therefore a question without a sample, and it stays journaled
+        until one shows up.
 
         Returns:
             Nothing, the angles are journaled only.
@@ -616,13 +617,13 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """
         Log the colour sensor answering the high precision command.
 
-        `bleProtoId 17` echoes the `configStatus` byte the command 21
-        carries, then the six raw channels. The driver never sends that
-        command : `RequestHighPrecision` returns immediately on a `Prod`
-        server and is restricted to names containing `16ui`, so a retail
-        cube should never emit one of these on its own. Decoding it
-        costs a handler and turns an `Unknown event type` line into a
-        readable one the day a cube proves otherwise.
+        This message echoes the `configStatus` byte the triggering
+        command carries, then the six raw channels. The driver never
+        sends that command, and the reference application restricts it
+        to a narrow set of models, so a retail cube should never emit
+        one of these on its own. Decoding it costs a handler and turns
+        an `Unknown event type` line into a readable one the day a
+        cube proves otherwise.
 
         Journaled and not published, as the five feeds next door are :
         the layout is read off the descriptor and is certain, its units
@@ -647,9 +648,9 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """
         Log one indexed sample of the colour sensor.
 
-        `bleProtoId 18` is the `0x11` with an `index` where the other
-        has its `configStatus` : the sample of a series rather than the
-        answer to a command.
+        This message is the sibling of `handle_color_sensor_config`
+        with an `index` where the other has its `configStatus`: the
+        sample of a series rather than the answer to a command.
 
         Returns:
             Nothing, the channels are journaled only.
@@ -725,15 +726,14 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """
         Log a turn timed on the clock of the cube, long form.
 
-        Both timings are declared `isBigEndia: 1`, alone against a
-        descriptor that is little endian everywhere else — the two are
-        therefore read big endian, which is what `get_bit_word` does by
-        default.
+        Both timings are declared big endian, alone against a
+        descriptor that is little endian everywhere else — read as is,
+        which is what `get_bit_word` does by default.
 
-        `bleProtoId 26` shares its `appProtoId 25` with the `0x1B` next
-        door, whose layout is incompatible with this one : the two are
-        told apart by their bleProtoId, which is exactly what the
-        dispatch table keys on.
+        This message shares its layout family with the `0x1B` next
+        door, but the two are incompatible: they are told apart by
+        their opcode, which is exactly what the dispatch table keys
+        on.
 
         Returns:
             Nothing, the timings are journaled only.
@@ -757,13 +757,13 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """
         Log a turn timed on the clock of the cube, packed form.
 
-        Seven bytes where the `0x1A` takes ten : a face on three bits, a
-        validity flag on one, a duration on twelve straddling two bytes,
-        the serial of the move and a start time. The `valid` bit is
-        declared `isBigEndia: 1`, a flag that means nothing on a single
-        bit, and the `startMS` is left little endian where the `0x1A`
-        marks its own big — the two forms disagree on the endianness of
-        the same field.
+        Seven bytes where the `0x1A` takes ten: a face on three bits, a
+        validity flag on one, a duration on twelve straddling two
+        bytes, the serial of the move and a start time. The validity
+        bit is declared big endian, meaningless on a single bit, and
+        the start time is left little endian where the `0x1A` marks
+        its own big — the two forms disagree on the endianness of the
+        same field.
 
         Returns:
             Nothing, the timings are journaled only.

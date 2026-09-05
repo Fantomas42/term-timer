@@ -146,18 +146,16 @@ class MoyuWeilong10Driver(Driver):
 
         A single message carries the last move plus the four previous
         ones, which is the capacity of the protocol. The five slots
-        are a sliding window, ranged from the most recent backwards —
-        measured the 2026-09-04 on three consecutive frames, each one
-        the previous shifted by one slot. A gap of 0xFFFF is that
-        sixteen bits register saturated, and not an empty slot : it
-        slides with the others until it falls off the window.
+        are a sliding window, ranged from the most recent backwards,
+        each one the previous shifted by one slot. A gap of 0xFFFF is
+        that sixteen bits register saturated, and not an empty slot:
+        it slides with the others until it falls off the window.
 
-        The byte 15 carries one more thing, and nobody reads it : the
+        The byte 15 carries one more thing, and nobody reads it: the
         face of the last move again, one-hot, in the native FBUDLR
         order of the protocol — the bit 121 for F up to the bit 126
-        for R. Measured on 366 moves, where the six counts matched the
-        six faces exactly. It says nothing the five bits mask does not
-        already say, which is why it stays unread.
+        for R. It says nothing the five bits mask does not already
+        say, which is why it stays unread.
 
         Returns:
             The decoded moves, oldest first, or nothing while the
@@ -265,14 +263,12 @@ class MoyuWeilong10Driver(Driver):
                     state.append(MOYU_FACE_NAMES[native])
 
         # The MoYu answers a facelets request, and pushes one
-        # unsolicited answer to a reset : the protocol has no reset
+        # unsolicited answer to a reset: the protocol has no reset
         # message of its own, and the cube echoes the command back
         # under its reading opcode — the twenty bytes written, 0xA2
         # turned 0xA3 and the serial in place of the trailing zero.
-        # Measured on a Weilong v10 AI the 2026-09-04, a lone frame
-        # 64 ms after the write.
         # The counter starts on a state the driver was able to read,
-        # and never on one it had to throw away : it is what unblocks
+        # and never on one it had to throw away: it is what unblocks
         # the moves.
         if self.serial == -1:
             self.serial = serial

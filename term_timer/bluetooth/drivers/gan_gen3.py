@@ -41,8 +41,8 @@ class GanGen3Driver(GanGen2Driver):
     confirms_reset: ClassVar[bool] = True
     head_magic: ClassVar[int | None] = 0x55
     crc_terminator: ClassVar[int] = 2
-    # V2 reads its battery level straight behind the header, and
-    # declares no charging state : V1 is the only generation to.
+    # Battery level sits straight behind the header, and no charging
+    # state is declared here — unlike the parent driver.
     battery_level_offset: ClassVar[int] = 0
     charging_state_width: ClassVar[int] = 0
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
@@ -120,13 +120,13 @@ class GanGen3Driver(GanGen2Driver):
         """
         Align a move history request and write it into the frame.
 
-        `appProtoId 9` of `GanSDK_ProtocolWriteV2` declares `step` and
-        `count` on sixteen bits each, little endian, and both are
-        written whole : a count capped at `serial + 1` reaches 256 as
-        soon as a whole cycle is missed, which no longer fits on the
-        single byte the frame used to carry it on. V3 shares the same
-        window at the same offset behind its own opcode, which is why
-        this lives here rather than being written twice.
+        `step` and `count` are declared on sixteen bits each, little
+        endian, and both are written whole: a count capped at
+        `serial + 1` reaches 256 as soon as a whole cycle is missed,
+        which no longer fits on the single byte the frame used to
+        carry it on. The window sits at the same offset behind the
+        opcode of every protocol that reuses it, which is why this
+        lives here rather than being written twice.
 
         Move history response data is byte-aligned, and moves always
         start on the near-ceil odd serial number regardless of what is
@@ -182,12 +182,12 @@ class GanGen3Driver(GanGen2Driver):
     @staticmethod
     def read_event_code(msg: GanProtocolMessage) -> int:
         """
-        Read the opcode of a V2 message.
+        Read the opcode of a message.
 
-        The head of the notification having been stripped, a V2 message
-        opens on its bleProtoId as a V3 one does. The redefinition is
-        kept because the Gen2 driver reads its own opcode on four bits,
-        and this driver inherits from it.
+        The head of the notification having been stripped, the message
+        opens directly on its opcode. The redefinition is kept because
+        the parent driver reads its own opcode on four bits, and this
+        driver inherits from it.
 
         Returns:
             The opcode of the message.
@@ -198,11 +198,12 @@ class GanGen3Driver(GanGen2Driver):
     @classmethod
     def is_message_valid(cls, msg: GanProtocolMessage) -> bool:
         """
-        Check the length a V2 or a V3 message declares.
+        Check the length a message declares.
 
-        The dataLength byte closes the header of both generations, so
-        it sits at `payload_offset - 8` in either : the check is the
-        same one, and the Gen4 driver inherits it.
+        The length byte closes the header, and sits at
+        `payload_offset - 8`: the check is generic enough that a
+        driver inheriting a different `payload_offset` reuses it as
+        is.
 
         Returns:
             True when the message declares a payload.
@@ -215,11 +216,10 @@ class GanGen3Driver(GanGen2Driver):
         """
         Read the five fields of a build time and format them.
 
-        V2 and V3 lay the same five fields out — a year on sixteen bits
+        The same five fields are laid out — a year on sixteen bits
         little endian, then a month, a day, an hour and a minute of
-        eight — at two different offsets : 80 for the `0x07` of V2,
-        which the descriptor under-declares (§4.2), and 24 for the
-        `0xF5` of V3.
+        eight — at a different offset for each protocol calling this
+        method, `start` pointing at wherever that offset is.
 
         Args:
             msg: The message carrying the fields.
@@ -311,10 +311,9 @@ class GanGen3Driver(GanGen2Driver):
 
         """
         # `step` is declared and carried on sixteen bits, but the
-        # firmware cycles it on its low byte alone : measured on a GAN
-        # i carry 2 the 2026-09-02, the counter went 253 -> 4, its high
-        # byte never leaving zero. Every serial comparison of the move
-        # buffer therefore wraps on 0xFF, as the Gen2 driver does.
+        # firmware cycles it on its low byte alone, the high byte
+        # never leaving zero. Every serial comparison of the move
+        # buffer therefore wraps on 0xFF, as the parent driver does.
         serial = msg.get_bit_word(
             self.payload_offset, 16, little_endian=True,
         )
@@ -426,11 +425,10 @@ class GanGen3Driver(GanGen2Driver):
         """
         Decode the hardware identity of the cube.
 
-        The descriptor under-declares this message, and the wire is what
-        settles it : the cube announces 14 bytes of payload where
-        `bleProtoId 7` declares 11, and `buildTime` carries the same
-        five fields as V3 rather than the 32 bits declared. Measured on
-        a GAN i carry 2 the 2026-09-02, its CRC-16 closing the frame.
+        The descriptor under-declares this message, and the wire is
+        what settles it: the cube announces more payload bytes than
+        declared, and `buildTime` carries the same five fields as
+        elsewhere rather than the width declared for it.
 
         Returns:
             The hardware event of the message.
@@ -473,12 +471,12 @@ class GanGen3Driver(GanGen2Driver):
         """
         Acknowledge that the cube state has been reset.
 
-        `bleProtoId 8` carries a `result` the driver used to drop, where
-        the reset it acknowledges is the one destructive command of the
-        protocol. The value is published rather than judged here : V2
-        declares it a boolean of eight bits and V3 an integer of
-        thirty-two, and only a subscriber knows what it wants to do with
-        a reset the cube refused.
+        This message carries a `result` the driver used to drop, where
+        the reset it acknowledges is the one destructive command of
+        the protocol. The value is published rather than judged here:
+        its width and meaning vary from one protocol to the next, and
+        only a subscriber knows what it wants to do with a reset the
+        cube refused.
 
         Returns:
             The reset event of the message.
@@ -499,9 +497,9 @@ class GanGen3Driver(GanGen2Driver):
         """
         Log the answer of the cube to an account binding request.
 
-        The Gen2 handler cannot be inherited : `GanSDK_ProtocolV1.json`
-        declares `isBigEndia: 1` where V2 declares `0`, so the same
-        `result` of 32 bits is read the other way round here.
+        The parent handler cannot be inherited: this protocol reads
+        its 32 bit `result` little endian, where the parent driver
+        reads it big endian.
 
         The application never sends that request, so this answer is not
         expected to be seen : the handler exists so that a cube sending
@@ -524,7 +522,7 @@ class GanGen3Driver(GanGen2Driver):
             self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
         """
-        Log the flag the cube announces under `bleProtoId 15`.
+        Log the flag the cube announces.
 
         The descriptor names the field `flag` and gives its width, and
         says nothing of what it means : it is journaled raw, and what it
@@ -545,7 +543,7 @@ class GanGen3Driver(GanGen2Driver):
             self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
         """
-        Log the result the cube announces under `bleProtoId 18`.
+        Log the result the cube announces.
 
         The descriptor declares a boolean of eight bits and names no
         command it answers : as for `handle_flag`, it is journaled raw
@@ -568,11 +566,11 @@ class GanGen3Driver(GanGen2Driver):
         """
         Decode the solve the cube announces on its own.
 
-        `bleProtoId 20` in V2 and `bleProtoId 2` in V3 are the same
-        message under two codes, declared field for field alike : the
-        cube saying it sees itself solved, timed on its own clock. The
-        clock it carries is the one of the move that closed the solve,
-        the message arriving chained behind it.
+        The same message is declared field for field alike under two
+        different opcodes depending on the protocol: the cube saying
+        it sees itself solved, timed on its own clock. The clock it
+        carries is the one of the move that closed the solve, the
+        message arriving chained behind it.
 
         Returns:
             The solved event of the message.
