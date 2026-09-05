@@ -834,33 +834,41 @@ class TestBluetoothDisconnectEvent(unittest.IsolatedAsyncioTestCase):
 
 
 class FakeGyroscopeDriver:
-    """Driver stub carrying only the gyroscope preference."""
+    """Driver stub carrying only what the reconciliation reads."""
 
-    def __init__(self, *, use_gyroscope: bool) -> None:
+    def __init__(self, *, use_gyroscope: bool,
+                 gyroscope_controllable: bool = True) -> None:
         """
-        Store the preference the reconciliation reads.
+        Store the preference and the capability of the driver.
 
         Args:
             use_gyroscope: Whether the gyroscope data is wanted.
+            gyroscope_controllable: Whether the cube takes a
+                gyroscope command at all.
 
         """
         self.use_gyroscope = use_gyroscope
+        self.gyroscope_controllable = gyroscope_controllable
 
 
 class RecordingBluetoothInterface(FakeBluetoothInterface):
     """Bluetooth interface stub recording the commands it is sent."""
 
-    def __init__(self, *, use_gyroscope: bool) -> None:
+    def __init__(self, *, use_gyroscope: bool,
+                 gyroscope_controllable: bool = True) -> None:
         """
         Build an interface exposing a driver and an empty command log.
 
         Args:
             use_gyroscope: Preference carried by the fake driver.
+            gyroscope_controllable: Capability carried by the fake
+                driver.
 
         """
         self.client = FakeBluetoothClient()
         self.driver = FakeGyroscopeDriver(  # type: ignore[assignment]
             use_gyroscope=use_gyroscope,
+            gyroscope_controllable=gyroscope_controllable,
         )
         self.commands: list[str] = []
 
@@ -879,9 +887,8 @@ def make_gen4_hardware_event() -> list[EventDict]:
     """
     Build the hardware event of a Gen4 cube.
 
-    It carries the name and the gyroscope support, and nothing about
-    the state of the gyroscope: that one comes later, in its own
-    message.
+    It carries the name and nothing about the state of the gyroscope:
+    that one comes later, in its own message.
 
     Returns:
         A one-element list ready to put into the queue.
@@ -892,7 +899,6 @@ def make_gen4_hardware_event() -> list[EventDict]:
         'clock': 0,
         'timestamp': datetime.now(tz=UTC),
         'hardware_name': 'GANi4',
-        'gyroscope_supported': True,
     }
     result: list[EventDict] = [event]
     return result
@@ -915,7 +921,6 @@ def make_gyro_config_event(*, enabled: bool) -> list[EventDict]:
         'timestamp': datetime.now(tz=UTC),
         'gyroscope_enabled': enabled,
         'gyroscope_ready': True,
-        'gyroscope_supported': True,
     }
     result: list[EventDict] = [event]
     return result
@@ -930,22 +935,28 @@ class TestGyroscopeReconciliation(unittest.IsolatedAsyncioTestCase):
         sound_patcher.start()
         self.addCleanup(sound_patcher.stop)
 
-    def build(self, *, use_gyroscope: bool) -> tuple[
-            Timer, RecordingBluetoothInterface,
-            'asyncio.Queue[list[EventDict] | None]',
+    def build(self, *, use_gyroscope: bool,
+              gyroscope_controllable: bool = True) -> tuple[
+                  Timer, RecordingBluetoothInterface,
+                  'asyncio.Queue[list[EventDict] | None]',
     ]:
         """
         Build a timer whose consumer runs against a recording interface.
 
         Args:
             use_gyroscope: Preference carried by the fake driver.
+            gyroscope_controllable: Capability carried by the fake
+                driver.
 
         Returns:
             The timer, its interface and its queue.
 
         """
         timer = build_timer("R U R' U'")
-        interface = RecordingBluetoothInterface(use_gyroscope=use_gyroscope)
+        interface = RecordingBluetoothInterface(
+            use_gyroscope=use_gyroscope,
+            gyroscope_controllable=gyroscope_controllable,
+        )
         timer.bluetooth_interface = interface  # type: ignore[assignment]
 
         consumer = asyncio.create_task(timer.bluetooth_consumer())
@@ -995,6 +1006,20 @@ class TestGyroscopeReconciliation(unittest.IsolatedAsyncioTestCase):
         await wait_until(queue.empty)
 
         self.assertEqual(interface.commands, ['REQUEST_DISABLE_GYRO'])
+
+    async def test_a_cube_taking_no_command_is_left_alone(self) -> None:
+        """A V1 announcing a live gyroscope is not asked to cut it."""
+        # The state disagrees with the preference, so the only thing
+        # keeping the command from being written is the capability.
+        _timer, interface, queue = self.build(
+            use_gyroscope=False,
+            gyroscope_controllable=False,
+        )
+
+        await queue.put(make_gyro_config_event(enabled=True))
+        await wait_until(queue.empty)
+
+        self.assertEqual(interface.commands, [])
 
     async def test_the_gyroscope_state_is_kept_on_the_timer(self) -> None:
         """The event feeds the hardware panel as much as the command."""

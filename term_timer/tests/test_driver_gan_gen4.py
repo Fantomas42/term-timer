@@ -755,184 +755,56 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
     async def test_event_handler_hardware_name(
             self, mock_datetime: Mock, mock_time: Mock,
     ) -> None:
-        """Test event handler hardware name."""
+        """Test the name is read on the length the message declares."""
         mock_time.return_value = 123456789
         mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
         mock_datetime.now.return_value = mock_timestamp
 
         test_data = bytearray(20)
 
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
+        # dataLength counts the index byte the name is written after,
+        # so a name of n characters is announced as n + 1. The four
+        # lengths go from the shortest name a cube answers to the
+        # eleven characters the descriptor declares, and every byte
+        # past the name reads 0xFF, which no name carries : an off by
+        # one on that length shows up in the decoded name.
+        for name in ('GANi4', 'GANicE2', 'GAN12uiM', 'GAN12uiM2_A'):
+            words = {
+                (0, 8): 0xFC,  # event type (hardware name)
+                (8, 8): len(name) + 1,  # dataLength
+            }
+            words.update({
+                (index * 8 + 24, 8): ord(char)
+                for index, char in enumerate(name)
+            })
 
-            with patch(
-                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
-            ) as mock_msg_class:
+            with (
+                self.subTest(name=name),
+                patch.object(self.driver, 'cypher') as mock_cypher,
+                patch(
+                    'term_timer.bluetooth.drivers.base.GanProtocolMessage',
+                ) as mock_msg_class,
+            ):
+                mock_cypher.decrypt.return_value = test_data
+
                 mock_msg = Mock()
                 mock_msg_class.return_value = mock_msg
-
-                def mock_get_bit_word(start: int, length: int) -> int:
-                    if start == 0 and length == 8:
-                        return 0xFC  # event type (hardware name)
-                    if start == 8 and length == 8:
-                        return 9  # data_size, index byte included
-                    # Return characters for "GAN12uiM"
-                    chars = 'GAN12uiM'
-                    char_index = (start - 24) // 8
-                    if 0 <= char_index < len(chars):
-                        return ord(chars[char_index])
-                    return 0
-
-                mock_msg.get_bit_word.side_effect = mock_get_bit_word
+                mock_msg.get_bit_word.side_effect = (
+                    lambda start, length, table=words: table.get(
+                        (start, length), 0xFF,
+                    )
+                )
 
                 mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
+                result = await self.driver.event_handler(
+                    mock_sender, test_data,
+                )
 
                 self.assertEqual(len(result), 1)
                 event = result[0]
                 self.assertEqual(event['event'], 'hardware')
                 hw_event = cast('HardwareEventDict', event)
-                self.assertEqual(hw_event['hardware_name'], 'GAN12uiM')
-                # GAN12uiM supports gyro
-                self.assertTrue(hw_event['gyroscope_supported'])
-
-    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.base.datetime')
-    async def test_event_handler_hardware_name_without_gyro(
-            self, mock_datetime: Mock, mock_time: Mock,
-    ) -> None:
-        """Test event handler hardware name without gyro."""
-        mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
-
-        test_data = bytearray(20)
-
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
-
-            with patch(
-                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg = Mock()
-                mock_msg_class.return_value = mock_msg
-
-                def mock_get_bit_word(start: int, length: int) -> int:
-                    if start == 0 and length == 8:
-                        return 0xFC  # event type (hardware name)
-                    if start == 8 and length == 8:
-                        return 8  # data_size, index byte included
-                    # Return characters for "GANicE2"
-                    chars = 'GANicE2'
-                    char_index = (start - 24) // 8
-                    if 0 <= char_index < len(chars):
-                        return ord(chars[char_index])
-                    return 0
-
-                mock_msg.get_bit_word.side_effect = mock_get_bit_word
-
-                mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
-
-                self.assertEqual(len(result), 1)
-                event = result[0]
-                self.assertEqual(event['event'], 'hardware')
-                hw_event = cast('HardwareEventDict', event)
-                self.assertEqual(hw_event['hardware_name'], 'GANicE2')
-                # GANicE2 is one of the two proto 3 rows without a gyro
-                self.assertFalse(hw_event['gyroscope_supported'])
-
-    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.base.datetime')
-    async def test_event_handler_hardware_name_gan_i4(
-            self, mock_datetime: Mock, mock_time: Mock,
-    ) -> None:
-        """Test event handler hardware name gan i4."""
-        mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
-
-        test_data = bytearray(20)
-
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
-
-            with patch(
-                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg = Mock()
-                mock_msg_class.return_value = mock_msg
-
-                def mock_get_bit_word(start: int, length: int) -> int:
-                    if start == 0 and length == 8:
-                        return 0xFC  # event type (hardware name)
-                    if start == 8 and length == 8:
-                        return 6  # data_size, index byte included
-                    # Return characters for "GANi4"
-                    chars = 'GANi4'
-                    char_index = (start - 24) // 8
-                    if 0 <= char_index < len(chars):
-                        return ord(chars[char_index])
-                    return 0
-
-                mock_msg.get_bit_word.side_effect = mock_get_bit_word
-
-                mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
-
-                self.assertEqual(len(result), 1)
-                event = result[0]
-                self.assertEqual(event['event'], 'hardware')
-                hw_event = cast('HardwareEventDict', event)
-                self.assertEqual(hw_event['hardware_name'], 'GANi4')
-                # The whitelist of one used to deny the gyro of the i4
-                self.assertTrue(hw_event['gyroscope_supported'])
-
-    @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.base.datetime')
-    async def test_event_handler_hardware_name_full_length(
-            self, mock_datetime: Mock, mock_time: Mock,
-    ) -> None:
-        """Test event handler hardware name of the longest model."""
-        mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
-
-        test_data = bytearray(20)
-
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
-
-            with patch(
-                'term_timer.bluetooth.drivers.base.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg = Mock()
-                mock_msg_class.return_value = mock_msg
-
-                def mock_get_bit_word(start: int, length: int) -> int:
-                    if start == 0 and length == 8:
-                        return 0xFC  # event type (hardware name)
-                    if start == 8 and length == 8:
-                        return 12  # data_size, index byte included
-                    # Return characters for "GAN12uiM2_A", the eleven
-                    # characters the descriptor declares, then a
-                    # twelfth byte no name ever contains
-                    chars = 'GAN12uiM2_A'
-                    char_index = (start - 24) // 8
-                    if 0 <= char_index < len(chars):
-                        return ord(chars[char_index])
-                    return 0xFF
-
-                mock_msg.get_bit_word.side_effect = mock_get_bit_word
-
-                mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
-
-                self.assertEqual(len(result), 1)
-                event = result[0]
-                self.assertEqual(event['event'], 'hardware')
-                hw_event = cast('HardwareEventDict', event)
-                self.assertEqual(hw_event['hardware_name'], 'GAN12uiM2_A')
+                self.assertEqual(hw_event['hardware_name'], name)
                 self.assertNotIn(chr(0xFF), hw_event['hardware_name'])
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
@@ -1440,9 +1312,8 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                     gyro_event['gyroscope_enabled'],
                     expected_enabled,
                 )
-                # The cube answered, so it has a gyroscope
+                # The cube answered, so its gyroscope is ready
                 self.assertTrue(gyro_event['gyroscope_ready'])
-                self.assertTrue(gyro_event['gyroscope_supported'])
                 self.assertEqual(gyro_event['clock'], 123456789)
                 self.assertEqual(gyro_event['timestamp'], mock_timestamp)
 

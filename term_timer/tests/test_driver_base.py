@@ -583,6 +583,12 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(self.driver.client, self.mock_client)
         self.assertFalse(self.driver.use_gyroscope)
 
+    def test_a_driver_controls_no_gyroscope_by_default(self) -> None:
+        """Test the capability is denied unless a protocol claims it."""
+        # The V1 and the V2 answer nothing to a gyroscope command, and
+        # inherit their refusal from here rather than declaring it.
+        self.assertFalse(self.driver.gyroscope_controllable)
+
     def test_init_initializes_empty_events_list(self) -> None:
         """Test init initializes empty events list."""
         self.assertEqual(self.driver.events, [])

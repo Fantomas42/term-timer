@@ -79,7 +79,6 @@ def driver_event(name: str) -> EventDict:
         'hardware_name': 'GAN',
         'hardware_version': '1.0',
         'software_version': '1.0',
-        'gyroscope_supported': True,
         'gyroscope_enabled': True,
         'gyroscope_ready': True,
         'restart_no_power': 0,
@@ -469,10 +468,7 @@ class TestConsumerPartialHardware(unittest.IsolatedAsyncioTestCase):
             [
                 self.hardware_event(hardware_version='1.0'),
                 self.hardware_event(software_version='2.3'),
-                self.hardware_event(
-                    hardware_name='GANi4',
-                    gyroscope_supported=False,
-                ),
+                self.hardware_event(hardware_name='GANi4'),
             ],
         )
 

@@ -54,6 +54,18 @@ class MoyuWeilong10Driver(Driver):
         0xAC: 'handle_gyroscope_config',
     }
 
+    @property
+    def gyroscope_controllable(self) -> bool:
+        """
+        Tell whether the cube accepts a gyroscope enable/disable command.
+
+        Returns:
+            True, the 0xAC command being carried by the protocol
+            itself and honoured by the only model it serves.
+
+        """
+        return True
+
     def init_cypher(self) -> GanGen2CubeEncrypter:
         """
         Initialize encryption handler for cube communication.
@@ -314,12 +326,6 @@ class MoyuWeilong10Driver(Driver):
             'software_version': f'{ sw_major }.{ sw_minor }',
             'gyroscope_enabled': bool(gyro_enabled),
             'gyroscope_ready': bool(gyro_ready),
-            # Whether the cube carries the sensor, and not whether it
-            # has it switched on : the two were the same expression,
-            # and the cube in hand — enabled False, ready True — was
-            # published as not supporting a gyroscope it had simply
-            # turned off. The ready bit is what the firmware says.
-            'gyroscope_supported': bool(gyro_ready),
             'serial': serial,
         }
 
@@ -344,9 +350,6 @@ class MoyuWeilong10Driver(Driver):
             'timestamp': timestamp,
             'gyroscope_enabled': bool(gyro_enabled),
             'gyroscope_ready': bool(gyro_ready),
-            # Same reading as the hardware message : a cube announcing
-            # its gyroscope off still carries one.
-            'gyroscope_supported': bool(gyro_ready),
         }
 
         return [gyro_config_payload]

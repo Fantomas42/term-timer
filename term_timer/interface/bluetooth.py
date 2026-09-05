@@ -548,17 +548,6 @@ class Bluetooth:
                 gyro_ready_event['gyroscope_ready']
             )
 
-        if 'gyroscope_supported' in event:
-            gyro_supported_event = cast(
-                'HardwareEventDict | '
-                'HardwareEventNameOnlyDict | '
-                'HardwareEventMoyuDict',
-                event,
-            )
-            self.bluetooth_hardware['gyroscope_supported'] = (
-                gyro_supported_event['gyroscope_supported']
-            )
-
         self.hardware_received_event.set()
 
     async def handle_gyroscope_config_event(self, event: EventDict) -> None:
@@ -582,9 +571,6 @@ class Bluetooth:
         self.bluetooth_hardware['gyroscope_ready'] = (
             gyro_config_event['gyroscope_ready']
         )
-        self.bluetooth_hardware['gyroscope_supported'] = (
-            gyro_config_event['gyroscope_supported']
-        )
 
         await self.reconcile_gyroscope_state()
 
@@ -597,12 +583,24 @@ class Bluetooth:
         - Enables gyroscope if wanted but disabled (and hardware supports it)
         - Disables gyroscope if not wanted but currently enabled
 
+        A driver declaring no control over its gyroscope is left alone:
+        the V1 and the V2 carry no such command, and reconciling them
+        only ever produced an unknown command on every hardware event.
+
         """
         if not self.bluetooth_interface or not self.bluetooth_interface.driver:
             logger.debug('Gyroscope not reconciled: no driver on the link')
             return
 
-        use_gyroscope = self.bluetooth_interface.driver.use_gyroscope
+        driver = self.bluetooth_interface.driver
+
+        if not driver.gyroscope_controllable:
+            logger.debug(
+                'Gyroscope not reconciled: cube takes no gyroscope command',
+            )
+            return
+
+        use_gyroscope = driver.use_gyroscope
         gyro_enabled = self.bluetooth_hardware.get('gyroscope_enabled', False)
         gyro_ready = self.bluetooth_hardware.get('gyroscope_ready', False)
 

@@ -786,7 +786,9 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                     if start == 32 and length == 8:
                         return 4  # sw_minor
                     if start == 104 and length == 1:
-                        return 1  # gyro_supported
+                        return 1  # gyro_enabled
+                    if start == 105 and length == 1:
+                        return 1  # gyro_ready
                     # Hardware name characters
                     return ord('A')
 
@@ -801,7 +803,8 @@ class TestGanGen2Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 hw_event = cast('HardwareEventDict', event)
                 self.assertEqual(hw_event['hardware_version'], '1.2')
                 self.assertEqual(hw_event['software_version'], '3.4')
-                self.assertTrue(hw_event['gyroscope_supported'])
+                self.assertTrue(hw_event['gyroscope_enabled'])
+                self.assertTrue(hw_event['gyroscope_ready'])
 
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')

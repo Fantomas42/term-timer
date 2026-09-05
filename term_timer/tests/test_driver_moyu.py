@@ -293,6 +293,12 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
 
             self.assertEqual(mock_cypher.encrypt.call_args[0][0][0], 0xA4)
 
+    def test_the_cube_controls_its_gyroscope(self) -> None:
+        """Test the capability the reconciliation reads is claimed."""
+        # The 0xAC command is carried by the protocol itself, with no
+        # model check standing between it and the cube.
+        self.assertTrue(self.driver.gyroscope_controllable)
+
     def test_send_command_handler_request_enable_gyro(self) -> None:
         """Test send command handler request enable gyro."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
@@ -659,15 +665,15 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
         self.assertEqual(hardware['serial'], 123)
         self.assertTrue(hardware['gyroscope_enabled'])
         self.assertTrue(hardware['gyroscope_ready'])
-        self.assertTrue(hardware['gyroscope_supported'])
 
-    async def test_hardware_frame_supports_what_it_has_turned_off(
+    async def test_hardware_frame_reads_the_two_bits_apart(
             self,
     ) -> None:
-        """Test gyroscope_supported no longer depends on enabled."""
-        # The cube in hand announces enabled False, ready True, and
-        # was published as not supporting a gyroscope it had simply
-        # switched off. Measured on a WCU_MY32_A6A7 the 2026-09-02.
+        """Test a ready gyroscope is published even when switched off."""
+        # The cube in hand announces enabled False, ready True. The
+        # two used to be folded into a single inference, which read a
+        # gyroscope simply switched off as an absent one. Measured on
+        # a WCU_MY32_A6A7 the 2026-09-02.
         events = await self.notify(
             hardware_frame(
                 'MY32AI01', (1, 2, 3, 4), 7,
@@ -678,10 +684,9 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
         hardware = cast('HardwareEventMoyuDict', events[0])
         self.assertFalse(hardware['gyroscope_enabled'])
         self.assertTrue(hardware['gyroscope_ready'])
-        self.assertTrue(hardware['gyroscope_supported'])
 
     async def test_hardware_frame_of_a_cube_without_a_sensor(self) -> None:
-        """Test a cube saying it is not ready is not said to support."""
+        """Test a cube saying it is not ready is published as such."""
         events = await self.notify(
             hardware_frame(
                 'MY32AI01', (1, 2, 3, 4), 7,
@@ -690,7 +695,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
         )
 
         hardware = cast('HardwareEventMoyuDict', events[0])
-        self.assertFalse(hardware['gyroscope_supported'])
+        self.assertFalse(hardware['gyroscope_enabled'])
+        self.assertFalse(hardware['gyroscope_ready'])
 
     async def test_gyro_config_frame_follows_what_the_cube_announces(
             self,
@@ -715,7 +721,6 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                     config['gyroscope_enabled'], bool(enabled),
                 )
                 self.assertTrue(config['gyroscope_ready'])
-                self.assertTrue(config['gyroscope_supported'])
 
     async def test_gyroscope_frame_is_silent_when_disarmed(self) -> None:
         """Test event handler gyroscope disabled."""

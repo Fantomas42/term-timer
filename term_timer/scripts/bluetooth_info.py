@@ -563,8 +563,7 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                 event = cast('GyroConfigEventDict', event)
                 logger.info(
                     'CONSUMER: Gyroscope configuration: '
-                    'supported %s, enabled %s, ready %s',
-                    event['gyroscope_supported'],
+                    'enabled %s, ready %s',
                     event['gyroscope_enabled'],
                     event['gyroscope_ready'],
                 )

@@ -794,7 +794,6 @@ class BaseReplayInterface(BluetoothInterface):
             'software_version': self.device['software_version'],
             'gyroscope_enabled': False,
             'gyroscope_ready': False,
-            'gyroscope_supported': False,
             'restart_no_power': 0,
         }
         await self.emit([event])

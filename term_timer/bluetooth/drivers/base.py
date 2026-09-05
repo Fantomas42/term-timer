@@ -126,6 +126,23 @@ class Driver:
         self.cube_timestamp: float = 0.0
         self.last_move_timestamp: datetime | None = None
 
+    @property
+    def gyroscope_controllable(self) -> bool:
+        """
+        Tell whether the cube accepts a gyroscope enable/disable command.
+
+        A property rather than a class attribute because the answer is
+        not always a property of the protocol : the Gen4 carries the
+        command but only one of its models is known to honour it, and
+        the name it answers is the only thing telling them apart.
+
+        Returns:
+            False, a protocol carrying no such command being the
+            default.
+
+        """
+        return False
+
     def init_cypher(self) -> GanGen2CubeEncrypter:
         """Initialize encryption handler for cube communication."""
         raise NotImplementedError

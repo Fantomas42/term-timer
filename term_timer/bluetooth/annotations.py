@@ -122,7 +122,6 @@ class HardwareEventDict(BaseEventDict):
     software_version: str
     gyroscope_enabled: bool
     gyroscope_ready: bool
-    gyroscope_supported: bool
     restart_no_power: int
     # V2 carries a firmware build time in its identity message where V1
     # carries none, and the two share this payload.
@@ -139,7 +138,6 @@ class HardwareEventNameOnlyDict(BaseEventDict):
     """Hardware name only event payload (Gen4)."""
 
     hardware_name: str
-    gyroscope_supported: bool
 
 
 class HardwareEventVersionOnlyDict(BaseEventDict):
@@ -180,7 +178,6 @@ class HardwareEventMoyuDict(BaseEventDict):
     software_version: str
     gyroscope_enabled: bool
     gyroscope_ready: bool
-    gyroscope_supported: bool
     serial: int
 
 
@@ -212,7 +209,6 @@ class GyroConfigEventDict(BaseEventDict):
 
     gyroscope_enabled: bool
     gyroscope_ready: bool
-    gyroscope_supported: bool
 
 
 # Union type for all possible event payloads

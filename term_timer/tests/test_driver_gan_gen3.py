@@ -871,8 +871,10 @@ class TestGanGen3Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
                 hw_event = cast('HardwareEventDict', event)
                 self.assertEqual(hw_event['hardware_version'], '3.4')
                 self.assertEqual(hw_event['software_version'], '1.2')
-                # Gen3 doesn't support gyro
-                self.assertFalse(hw_event['gyroscope_supported'])
+                # Gen3 carries no gyroscope: the two bits are the
+                # constants the driver publishes, not a reading.
+                self.assertFalse(hw_event['gyroscope_enabled'])
+                self.assertFalse(hw_event['gyroscope_ready'])
 
     async def test_event_handler_hardware_captured_frame(self) -> None:
         """Test the hardware message a real GAN i carry 2 answered."""

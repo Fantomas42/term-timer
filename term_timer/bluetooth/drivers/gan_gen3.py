@@ -460,7 +460,6 @@ class GanGen3Driver(GanGen2Driver):
             'software_version': f'{ sw_major }.{ sw_minor }',
             'gyroscope_enabled': False,
             'gyroscope_ready': False,
-            'gyroscope_supported': False,
         }
 
         return [hardware_payload]

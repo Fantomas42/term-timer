@@ -102,7 +102,7 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
     }
 
     @property
-    def gyroscope_configurable(self) -> bool:
+    def gyroscope_controllable(self) -> bool:
         """
         Tell whether the cube accepts the 0xD4 engine configuration.
 
@@ -143,11 +143,11 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         elif command == 'REQUEST_RESTORE':
             values = [0xD3, 0x01, 0x01]
         elif command == 'REQUEST_ENABLE_GYRO':
-            if not self.gyroscope_configurable:
+            if not self.gyroscope_controllable:
                 return False
             values = [0xD4, 0x01, GAN_GEN4_ENGINE_PERF]
         elif command == 'REQUEST_DISABLE_GYRO':
-            if not self.gyroscope_configurable:
+            if not self.gyroscope_controllable:
                 return False
             values = [0xD4, 0x01, GAN_GEN4_ENGINE_ECO]
         elif command == 'REQUEST_EXCEPTION_LOG':
@@ -309,14 +309,6 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
             'clock': clock,
             'timestamp': timestamp,
             'hardware_name': hardware_name,
-            # Every model declares a gyroscope but the two GANicE
-            # ones, so a blacklist of two replaces the whitelist of
-            # one. Matched case-insensitively: the case of a GAN name
-            # is not authoritative, the application itself lowercases
-            # every one of them before comparing.
-            'gyroscope_supported': not hardware_name.upper().startswith(
-                'GANICE',
-            ),
         }
 
         return [hardware_name_payload]
@@ -520,10 +512,9 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
             'clock': clock,
             'timestamp': timestamp,
             'gyroscope_enabled': bool(result),
-            # The cube answered, so it has a gyroscope and it is ready:
-            # an observation, where the model table is only a guess.
+            # The cube answered, so its gyroscope is ready: an
+            # observation, where the model table is only a guess.
             'gyroscope_ready': True,
-            'gyroscope_supported': True,
         }
 
         return [gyro_config_payload]
