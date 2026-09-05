@@ -20,6 +20,8 @@ from term_timer.bluetooth.annotations import FaceletsEventDict
 from term_timer.bluetooth.annotations import GyroEventDict
 from term_timer.bluetooth.annotations import HardwareEventDict
 from term_timer.bluetooth.annotations import MoveEventDict
+from term_timer.bluetooth.annotations import QuaternionDict
+from term_timer.bluetooth.annotations import VelocityDict
 from term_timer.bluetooth.constants import GAN_ENCRYPTION_KEY
 from term_timer.bluetooth.constants import GAN_GEN2_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN2_SERVICE
@@ -375,6 +377,47 @@ class GanGen2Driver(Driver):
         """
         return msg.get_bit_word(0, 4)
 
+    @staticmethod
+    def decode_gyro_sample(
+            msg: GanProtocolMessage,
+            offset: int) -> tuple[QuaternionDict, VelocityDict]:
+        """
+        Decode one orientation sample of a V1 gyroscope message.
+
+        V1 packs two identical samples per message, 76 bits apart : this
+        reads whichever one `offset` points at.
+
+        Args:
+            msg: The message carrying the sample.
+            offset: Bit the sample's quaternion starts at.
+
+        Returns:
+            The quaternion and the angular velocity of the sample.
+
+        """
+        qw = msg.get_bit_word(offset, 16)
+        qx = msg.get_bit_word(offset + 16, 16)
+        qy = msg.get_bit_word(offset + 32, 16)
+        qz = msg.get_bit_word(offset + 48, 16)
+
+        vx = msg.get_bit_word(offset + 64, 4)
+        vy = msg.get_bit_word(offset + 68, 4)
+        vz = msg.get_bit_word(offset + 72, 4)
+
+        quaternion: QuaternionDict = {
+            'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
+            'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
+            'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
+            'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
+        }
+        velocity: VelocityDict = {
+            'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
+            'y': (1 - (vy >> 3) * 2) * (vy & 0x7),
+            'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
+        }
+
+        return quaternion, velocity
+
     async def handle_gyroscope(
             self, msg: GanProtocolMessage,
             clock: int, timestamp: datetime) -> list[EventDict]:
@@ -382,7 +425,8 @@ class GanGen2Driver(Driver):
         Decode the two orientation samples of a gyroscope message.
 
         V1 is the only protocol version declaring two samples in a
-        single message, each with its own quaternion and velocity.
+        single message, each with its own quaternion and velocity, 76
+        bits apart.
 
         Returns:
             The two gyroscope events, oldest first, or nothing when the
@@ -392,63 +436,21 @@ class GanGen2Driver(Driver):
         if not self.use_gyroscope:
             return []
 
-        # Orientation Quaternion
-        qw = msg.get_bit_word(4, 16)
-        qx = msg.get_bit_word(20, 16)
-        qy = msg.get_bit_word(36, 16)
-        qz = msg.get_bit_word(52, 16)
+        events: list[EventDict] = []
 
-        # Angular Velocity
-        vx = msg.get_bit_word(68, 4)
-        vy = msg.get_bit_word(72, 4)
-        vz = msg.get_bit_word(76, 4)
+        for offset in (4, 4 + 76):
+            quaternion, velocity = self.decode_gyro_sample(msg, offset)
 
-        gyro_payload: GyroEventDict = {
-            'event': 'gyro',
-            'clock': clock,
-            'timestamp': timestamp,
-            'quaternion': {
-                'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
-                'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
-                'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
-                'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
-            },
-            'velocity': {
-                'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
-                'y': (1 - (vy >> 3) * 2) * (vy & 0x7),
-                'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
-            },
-        }
+            gyro_payload: GyroEventDict = {
+                'event': 'gyro',
+                'clock': clock,
+                'timestamp': timestamp,
+                'quaternion': quaternion,
+                'velocity': velocity,
+            }
+            events.append(gyro_payload)
 
-        # Second Orientation Quaternion
-        qw = msg.get_bit_word(4 + 76, 16)
-        qx = msg.get_bit_word(20 + 76, 16)
-        qy = msg.get_bit_word(36 + 76, 16)
-        qz = msg.get_bit_word(52 + 76, 16)
-
-        # Second Angular Velocity
-        vx = msg.get_bit_word(68 + 76, 4)
-        vy = msg.get_bit_word(72 + 76, 4)
-        vz = msg.get_bit_word(76 + 76, 4)
-
-        second_gyro_payload: GyroEventDict = {
-            'event': 'gyro',
-            'clock': clock,
-            'timestamp': timestamp,
-            'quaternion': {
-                'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
-                'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
-                'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
-                'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
-            },
-            'velocity': {
-                'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
-                'y': (1 - (vy >> 3) * 2) * (vy & 0x7),
-                'z': (1 - (vz >> 3) * 2) * (vz & 0x7),
-            },
-        }
-
-        return [gyro_payload, second_gyro_payload]
+        return events
 
     async def handle_move(
             self, msg: GanProtocolMessage,

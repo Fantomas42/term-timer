@@ -114,19 +114,52 @@ class GanGen3Driver(GanGen2Driver):
 
         return self.cypher.encrypt(msg)
 
-    async def request_move_history(self, serial: int, count: int) -> None:
+    @staticmethod
+    def write_move_history_window(msg: bytearray, offset: int,
+                                  serial: int, count: int) -> None:
         """
-        Request historical move data from the cube's internal buffer.
-
-        Constructs a move history request with alignment adjustments to work
-        around firmware quirks. Ensures serial numbers are odd-aligned and
-        move counts are even, and prevents overflow at the 255->0 boundary.
+        Align a move history request and write it into the frame.
 
         `appProtoId 9` of `GanSDK_ProtocolWriteV2` declares `step` and
         `count` on sixteen bits each, little endian, and both are
         written whole : a count capped at `serial + 1` reaches 256 as
         soon as a whole cycle is missed, which no longer fits on the
-        single byte the frame used to carry.
+        single byte the frame used to carry it on. V3 shares the same
+        window at the same offset behind its own opcode, which is why
+        this lives here rather than being written twice.
+
+        Move history response data is byte-aligned, and moves always
+        start on the near-ceil odd serial number regardless of what is
+        requested : the serial and the count are adjusted to get an odd
+        serial aligned window with an even number of moves inside.
+
+        Never overflow requested history window beyond the serial
+        number cycle edge 255 -> 0. Because due to a firmware bug the
+        moves beyond the edge will be spoofed with 'D' (just zero
+        bytes).
+
+        Args:
+            msg: The frame to write the window into.
+            offset: Byte the serial field starts at.
+            serial: The serial number to start the history request from.
+            count: The number of historical moves to request.
+
+        """
+        if serial % 2 == 0:
+            serial = (serial - 1) & 0xFF
+        if count % 2 == 1:
+            count += 1
+
+        count = min(count, serial + 1)
+
+        msg[offset] = serial & 0xFF
+        msg[offset + 1] = serial >> 8
+        msg[offset + 2] = count & 0xFF
+        msg[offset + 3] = count >> 8
+
+    async def request_move_history(self, serial: int, count: int) -> None:
+        """
+        Request historical move data from the cube's internal buffer.
 
         Args:
             serial: The serial number to start the history request from.
@@ -135,28 +168,9 @@ class GanGen3Driver(GanGen2Driver):
         """
         msg = bytearray(16)
 
-        # Move history response data is byte-aligned,
-        # and moves always starting with near-ceil odd serial number,
-        # regardless of requested.
-        # Adjust serial and count to get odd serial aligned history window
-        # with even number of moves inside.
-        if serial % 2 == 0:
-            serial = (serial - 1) & 0xFF
-        if count % 2 == 1:
-            count += 1
-
-        # Never overflow requested history window beyond
-        # the serial number cycle edge 255 -> 0.
-        # Because due to iCarry2 firmware bug the moves beyond the edge
-        # will be spoofed with 'D' (just zero bytes).
-        count = min(count, serial + 1)
-
         msg[0] = 0x68
         msg[1] = 0x03
-        msg[2] = serial & 0xFF
-        msg[3] = serial >> 8
-        msg[4] = count & 0xFF
-        msg[5] = count >> 8
+        self.write_move_history_window(msg, 2, serial, count)
 
         logger.debug('Sending : REQUEST_MOVE_HISTORY')
 

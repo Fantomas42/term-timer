@@ -347,6 +347,32 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
             self.assertEqual(args[0][2], 249)  # adjusted to odd
             self.assertEqual(args[0][4], 250)  # count capped to serial + 1
 
+    async def test_request_move_history_full_cycle(self) -> None:
+        """Test request move history full cycle."""
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.encrypt.return_value = b'encrypted_data'
+
+            # A whole cycle missed caps the count to 256, one more than
+            # the byte the frame used to carry it on
+            await self.driver.request_move_history(255, 256)
+
+            args = mock_cypher.encrypt.call_args[0]
+            self.assertEqual(args[0][2], 255)
+            self.assertEqual(args[0][3], 0)
+            self.assertEqual(args[0][4], 0x00)
+            self.assertEqual(args[0][5], 0x01)
+
+    async def test_request_move_history_writes_both_fields(self) -> None:
+        """Test request move history writes both fields."""
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.encrypt.return_value = b'encrypted_data'
+
+            await self.driver.request_move_history(101, 6)
+
+            args = mock_cypher.encrypt.call_args[0]
+            # `step` and `count` are declared on 16 bits little endian
+            self.assertEqual(list(args[0][2:6]), [101, 0, 6, 0])
+
     @patch('term_timer.bluetooth.drivers.base.time.perf_counter_ns')
     @patch('term_timer.bluetooth.drivers.base.datetime')
     async def test_event_handler_move_event(

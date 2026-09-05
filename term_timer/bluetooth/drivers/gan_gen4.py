@@ -117,7 +117,7 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
 
         return name.upper().startswith('GANI4_')
 
-    def send_command_handler(self, command: str) -> bytes | bool:  # noqa: C901, PLR0912
+    def send_command_handler(self, command: str) -> bytes | bool:  # noqa: C901
         """
         Build and encrypt command messages for GAN Gen4 cube.
 
@@ -129,45 +129,31 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
 
         if command == 'REQUEST_FACELETS':
             values = [0xDD, 0x04, 0x00, 0xED, 0x00, 0x00]
-            for i, val in enumerate(values):
-                msg[i] = val
         elif command == 'REQUEST_HARDWARE':
             values = [0xDF, 0x03, 0x00, 0x00, 0x00]
-            for i, val in enumerate(values):
-                msg[i] = val
         elif command == 'REQUEST_BATTERY':
             values = [0xDD, 0x04, 0x00, 0xEF, 0x00, 0x00]
-            for i, val in enumerate(values):
-                msg[i] = val
         elif command == 'REQUEST_RESET':
             values = [
                 0xD2, 0x0D, 0x05, 0x39, 0x77, 0x00, 0x00, 0x01,
                 0x23, 0x45, 0x67, 0x89, 0xAB, 0x00, 0x00, 0x00,
             ]
-            for i, val in enumerate(values):
-                msg[i] = val
         elif command == 'REQUEST_RESTORE':
             values = [0xD3, 0x01, 0x01]
-            for i, val in enumerate(values):
-                msg[i] = val
         elif command == 'REQUEST_ENABLE_GYRO':
             if not self.gyroscope_configurable:
                 return False
             values = [0xD4, 0x01, GAN_GEN4_ENGINE_PERF]
-            for i, val in enumerate(values):
-                msg[i] = val
         elif command == 'REQUEST_DISABLE_GYRO':
             if not self.gyroscope_configurable:
                 return False
             values = [0xD4, 0x01, GAN_GEN4_ENGINE_ECO]
-            for i, val in enumerate(values):
-                msg[i] = val
         elif command == 'REQUEST_EXCEPTION_LOG':
             values = [0xF0, 0x01, 0x01]
-            for i, val in enumerate(values):
-                msg[i] = val
         else:
             return False
+
+        msg[:len(values)] = values
 
         return self.cypher.encrypt(msg)
 
@@ -175,26 +161,9 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
         """Request move history from cube starting at serial number."""
         msg = bytearray(20)
 
-        # Move history response data is byte-aligned,
-        # and moves always starting with near-ceil odd serial number,
-        # regardless of requested.
-        # Adjust serial and count to get odd serial aligned history window
-        # with even number of moves inside.
-        if serial % 2 == 0:
-            serial = (serial - 1) & 0xFF
-        if count % 2 == 1:
-            count += 1
-
-        # Never overflow requested history window beyond
-        # the serial number cycle edge 255 -> 0.
-        # Because due to firmware bug the moves beyond the edge
-        # will be spoofed with 'D' (just zero bytes).
-        count = min(count, serial + 1)
-
         msg[0] = 0xD1
         msg[1] = 0x04
-        msg[2] = serial
-        msg[4] = count
+        self.write_move_history_window(msg, 2, serial, count)
 
         logger.debug('Sending : REQUEST_HISTORY')
 
