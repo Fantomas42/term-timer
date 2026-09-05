@@ -180,10 +180,17 @@ class TestShowStateTiming(unittest.TestCase):
 
     def test_render_is_timed(self) -> None:
         """Test that a rendering reports its duration in the log."""
-        with self.assertLogs(
-                'term_timer.scripts.bluetooth_info',
-                level=logging.DEBUG,
-        ) as logs:
+        with (
+                patch(
+                    'term_timer.scripts.bluetooth_info.'
+                    'SHOW_STATE_SLOW_THRESHOLD',
+                    float('inf'),
+                ),
+                self.assertLogs(
+                    'term_timer.scripts.bluetooth_info',
+                    level=logging.DEBUG,
+                ) as logs,
+        ):
             show_state(
                 ['R@100', 'U@200'],
                 self.orientation_moves,
