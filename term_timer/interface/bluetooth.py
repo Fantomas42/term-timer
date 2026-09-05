@@ -458,17 +458,7 @@ class Bluetooth:
                             self.handle_bluetooth_move(rotation_event)
 
                 elif event_name == 'gyro-config':
-                    gyro_config_event = cast('GyroConfigEventDict', event)
-
-                    self.bluetooth_hardware['gyroscope_enabled'] = (
-                        gyro_config_event['gyroscope_enabled']
-                    )
-                    self.bluetooth_hardware['gyroscope_ready'] = (
-                        gyro_config_event['gyroscope_ready']
-                    )
-                    self.bluetooth_hardware['gyroscope_supported'] = (
-                        gyro_config_event['gyroscope_supported']
-                    )
+                    await self.handle_gyroscope_config_event(event)
 
                 elif event_name == 'solved':
                     solved_event = cast('SolvedEventDict', event)
@@ -571,6 +561,33 @@ class Bluetooth:
 
         self.hardware_received_event.set()
 
+    async def handle_gyroscope_config_event(self, event: EventDict) -> None:
+        """
+        Store the gyroscope state a cube reports, and act on it.
+
+        The Gen4 announces its gyroscope in a message of its own,
+        chained behind its build time, so the hardware event is always
+        too early to reconcile on: this one is the first moment the
+        state is known.
+
+        Args:
+            event: Gyroscope configuration event of the cube.
+
+        """
+        gyro_config_event = cast('GyroConfigEventDict', event)
+
+        self.bluetooth_hardware['gyroscope_enabled'] = (
+            gyro_config_event['gyroscope_enabled']
+        )
+        self.bluetooth_hardware['gyroscope_ready'] = (
+            gyro_config_event['gyroscope_ready']
+        )
+        self.bluetooth_hardware['gyroscope_supported'] = (
+            gyro_config_event['gyroscope_supported']
+        )
+
+        await self.reconcile_gyroscope_state()
+
     async def reconcile_gyroscope_state(self) -> None:
         """
         Send enable/disable gyroscope commands based on hardware state.
@@ -582,11 +599,20 @@ class Bluetooth:
 
         """
         if not self.bluetooth_interface or not self.bluetooth_interface.driver:
+            logger.debug('Gyroscope not reconciled: no driver on the link')
             return
 
         use_gyroscope = self.bluetooth_interface.driver.use_gyroscope
         gyro_enabled = self.bluetooth_hardware.get('gyroscope_enabled', False)
         gyro_ready = self.bluetooth_hardware.get('gyroscope_ready', False)
+
+        # Traced whatever the outcome: the silence of a reconciliation
+        # that decides to do nothing is indistinguable from one that was
+        # never called, and both look alike in a log.
+        logger.debug(
+            'Gyroscope reconciliation: wanted=%s enabled=%s ready=%s',
+            use_gyroscope, gyro_enabled, gyro_ready,
+        )
 
         # Enable gyroscope if wanted but not enabled (and hardware supports it)
         if use_gyroscope and gyro_ready and not gyro_enabled:
