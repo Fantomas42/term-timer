@@ -10,6 +10,69 @@ MOVE_HISTORY_TIMEOUT: Final[float] = 1.0
 # Buffered moves above which the move sequence is considered lost
 MOVE_BUFFER_LIMIT: Final[int] = 16
 
+# CRC-16/CCITT-FALSE, the checksum closing every V3 frame: init 0xFFFF,
+# polynomial 0x1021, MSB first, no reflection and no final XOR.
+CRC16_INIT: Final[int] = 0xFFFF
+CRC16_POLYNOMIAL: Final[int] = 0x1021
+
+# Suffix of a move, indexed by its direction bit.
+DIRECTIONS: Final[str] = " '"
+
+# The firmware of the V2 and V3 protocols orders its faces D, U, B, F,
+# L, R. A live move names one of them by the bit mask of g.java
+# getSurfaceIdBy2, a move of the history by the plain index of
+# getSurfaceIdByBy10. Both tables translate that into the index of the
+# face in URFDLB, and a value absent of them is out of domain.
+GEN3_MOVE_FACES: Final[dict[int, int]] = {
+    2: 0, 32: 1, 8: 2, 1: 3, 16: 4, 4: 5,
+}
+GEN3_HISTORY_FACES: Final[dict[int, int]] = {
+    1: 0, 5: 1, 3: 2, 0: 3, 4: 4, 2: 5,
+}
+
+# A V1 face angles message packs as many records of 25 bits as fit
+# after its 10 bits of header, which a 20 bytes notification caps at
+# six. The count field is read on 3 bits and can announce more.
+GEN2_FACE_ANGLES_CAPACITY: Final[int] = 6
+
+# A V1 move message carries the last move plus the six previous ones,
+# which is the capacity of the protocol and not a choice of the driver :
+# beyond that, the older moves only come back through a history request.
+GEN2_MOVE_CAPACITY: Final[int] = 7
+
+# The reading a sixteen bits gap register gives once it has stopped
+# counting, and the second value of that field which is not a
+# duration. Measured on a MoYu Weilong v10 AI the 2026-09-04 : a gap of
+# 0xFFFF slides through the five slots of a move frame like any other
+# reading, so it is the register saturated and not a slot left empty —
+# the cube had simply been still for more than 65,5 seconds. Both
+# protocols carrying their gap on sixteen bits, V1 and MoYu, read it
+# the same way.
+CLOCK_REGISTER_SATURATED: Final[int] = 0xFFFF
+
+# maxElementCount of the formulaHistory answering a V1 history request,
+# each move being read on five bits from the bit 17 of the message.
+GEN2_MOVE_HISTORY_CAPACITY: Final[int] = 28
+
+# The firmware of the MoYu orders its faces F, B, U, D, L, R, in the
+# five bits naming a move as in the three bits naming the colour of a
+# facelet. The table translates that order into the index of the face
+# in URFDLB, and a value absent of it is out of domain. It is its own
+# inverse, which is why the same six values read the two directions —
+# a property a test pins rather than trusts.
+MOYU_FACES: Final[dict[int, int]] = {
+    0: 2, 1: 5, 2: 0, 3: 3, 4: 4, 5: 1,
+}
+
+# The letters those six faces are spelled with, in the order of the
+# firmware : a facelet is named by the face whose colour it carries.
+MOYU_FACE_NAMES: Final[str] = 'FBUDLR'
+
+# A MoYu move message carries the last move plus the four previous
+# ones, which is the capacity of the protocol. It has no history
+# command, so a gap wider than that is lost for good.
+MOYU_MOVE_CAPACITY: Final[int] = 5
+
 PREFIX: Final[list[str]] = [
     'GAN',
     'MG',
@@ -28,6 +91,7 @@ BLUETOOTH_EVENTS: Final[frozenset[str]] = frozenset({
     'gyro-config',
     'move',
     'move_history',
+    'solved',
     'disconnect',
     'reset',
 })
@@ -46,6 +110,27 @@ GAN_GEN3_COMMAND_CHARACTERISTIC: Final[str] = '8653000c-43e6-47b7-9cb0-5fc21d4ae
 GAN_GEN4_SERVICE: Final[str] =                '00000010-0000-fff7-fff6-fff5fff4fff0'
 GAN_GEN4_STATE_CHARACTERISTIC: Final[str] =   '0000fff6-0000-1000-8000-00805f9b34fb'
 GAN_GEN4_COMMAND_CHARACTERISTIC: Final[str] = '0000fff5-0000-1000-8000-00805f9b34fb'
+
+# GAN Gen4 engine configuration, the single byte the 0xD4 *command*
+# carries : Perf keeps the gyroscope on, Eco cuts it. The answer to
+# that command rides the same opcode and does not answer in this
+# domain — it is a flag, 1 streaming and 0 not, measured at the cube.
+GAN_GEN4_ENGINE_PERF: Final[int] = 0x02
+GAN_GEN4_ENGINE_ECO: Final[int] =  0x03
+
+# The six raw channels a Gen4 colour sensor message carries, in the
+# order the descriptor declares them. They are uncalibrated readings of
+# one optical sensor, not the colours of a facelet : nothing in the
+# protocol says which sticker, which scale, or which reference white
+# they are read against.
+GAN_GEN4_COLOR_CHANNELS: Final[tuple[str, ...]] = (
+    'white',
+    'red',
+    'green',
+    'yellow',
+    'orange',
+    'blue',
+)
 
 # Moyu Weilong v10 protocol BLE service
 MOYU_WEILONG_SERVICE: Final[str] =                '0783b03e-7735-b5a0-1760-a305d2795cb0'

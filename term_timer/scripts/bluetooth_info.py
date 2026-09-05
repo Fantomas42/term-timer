@@ -32,6 +32,7 @@ from term_timer.bluetooth.annotations import FaceletsEventDict
 from term_timer.bluetooth.annotations import GyroConfigEventDict
 from term_timer.bluetooth.annotations import GyroEventDict
 from term_timer.bluetooth.annotations import MoveEventDict
+from term_timer.bluetooth.annotations import SolvedEventDict
 from term_timer.bluetooth.gyroscope import RotationDetector
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.config import CUBE_ORIENTATION
@@ -566,6 +567,14 @@ async def consumer_cb(  # noqa: C901, PLR0912, PLR0913, PLR0915
                     event['gyroscope_supported'],
                     event['gyroscope_enabled'],
                     event['gyroscope_ready'],
+                )
+
+            elif event_name == 'solved':
+                event = cast('SolvedEventDict', event)
+                logger.info(
+                    'CONSUMER: Cube reported itself solved at %s ms '
+                    'of its own clock',
+                    event['cube_timestamp'],
                 )
 
             elif event_name == 'disconnect':

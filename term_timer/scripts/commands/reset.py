@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from typing import TYPE_CHECKING
+from typing import cast
 
 from term_timer.bluetooth.interface import BluetoothInterface
 from term_timer.config import CubeDevice
+from term_timer.constants import BLUETOOTH_RESET_CONFIRMATION_TIMEOUT
 from term_timer.exceptions import CubeNotFoundError
 from term_timer.interface.console import console
 from term_timer.interface.sounds import SOUND_PLAYER
@@ -15,6 +18,42 @@ if TYPE_CHECKING:
     from argparse import Namespace
 
     from term_timer.bluetooth.annotations import EventDict
+    from term_timer.bluetooth.annotations import ResetEventDict
+    from term_timer.bluetooth.drivers.base import Driver
+
+
+async def wait_for_reset_result(
+        queue: asyncio.Queue[list[EventDict] | None],
+) -> int | None:
+    """
+    Wait for the cube's reset confirmation event.
+
+    Returns:
+        The `result` field of the `reset` event, or None if the link
+        closed or no confirmation arrived before the timeout.
+
+    """
+    clock = time.monotonic()
+
+    while True:
+        remaining = (
+            BLUETOOTH_RESET_CONFIRMATION_TIMEOUT
+            - (time.monotonic() - clock)
+        )
+        if remaining <= 0:
+            return None
+
+        try:
+            events = await asyncio.wait_for(queue.get(), timeout=remaining)
+        except asyncio.TimeoutError:  # noqa: UP041
+            return None
+
+        if events is None:
+            return None
+
+        for event in events:
+            if event['event'] == 'reset':
+                return cast('ResetEventDict', event)['result']
 
 
 async def reset(options: Namespace) -> int:
@@ -22,7 +61,9 @@ async def reset(options: Namespace) -> int:
     Reset the state of the Bluetooth cube.
 
     Returns:
-        Exit code (0 for success, 1 if cube not found).
+        Exit code (0 for success, 1 if the cube could not be found, or
+        for a driver confirming the reset, if it was refused or timed
+        out).
 
     """
     queue: asyncio.Queue[list[EventDict] | None] = asyncio.Queue()
@@ -73,6 +114,24 @@ async def reset(options: Namespace) -> int:
     )
 
     await bluetooth_interface.send_command('REQUEST_RESET')
+
+    driver = cast('Driver', bluetooth_interface.driver)
+
+    if driver.confirms_reset:
+        result = await wait_for_reset_result(queue)
+
+        if not result:
+            await bluetooth_interface.__aexit__(None, None, None)
+            SOUND_PLAYER.solve_failed()
+            console.print(
+                '[bluetooth]😥Bluetooth:[/bluetooth] '
+                '[warning]Cube did not confirm the reset.[/warning]'
+                if result is None else
+                '[bluetooth]😥Bluetooth:[/bluetooth] '
+                '[warning]Cube refused the reset.[/warning]',
+            )
+            return 1
+
     SOUND_PLAYER.solve_success()
 
     await bluetooth_interface.__aexit__(None, None, None)

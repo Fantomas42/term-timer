@@ -148,6 +148,10 @@ REFRESH: Final = 0.01
 
 BLUETOOTH_CONSUMER_STOP_TIMEOUT: Final = 2.0
 
+# Bound on waiting for the cube's reset confirmation event, generous
+# against the ~60ms measured on real GAN Gen3/Gen4 cubes.
+BLUETOOTH_RESET_CONFIRMATION_TIMEOUT: Final = 2.0
+
 # Guard against a hung D-Bus call while tearing the BLE link down.
 # Kept above the 10s bleak waits internally for the disconnection to
 # be signaled, so a healthy teardown is never truncated

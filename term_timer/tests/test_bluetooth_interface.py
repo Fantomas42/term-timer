@@ -153,6 +153,29 @@ class EventDriver:
         return self.events
 
 
+class RaisingDriver:
+    """A driver whose decoding always fails."""
+
+    async def event_handler(  # noqa: PLR6301
+            self,
+            sender: 'BleakGATTCharacteristic',  # noqa: ARG002
+            data: bytearray,  # noqa: ARG002
+    ) -> list['EventDict']:
+        """
+        Fail the way an unguarded field indexation would.
+
+        Args:
+            sender: The characteristic the notification came from.
+            data: The raw bytes of the notification.
+
+        Raises:
+            ValueError: Always, as `list.index` does out of domain.
+
+        """
+        msg = '6 is not in list'
+        raise ValueError(msg)
+
+
 class NotificationHandlerLogTestCase(unittest.IsolatedAsyncioTestCase):
     """Tests for what a notification leaves in the log."""
 
@@ -217,6 +240,61 @@ class NotificationHandlerLogTestCase(unittest.IsolatedAsyncioTestCase):
             ],
         )
         self.assertEqual(queue.get_nowait(), [moved, battery])
+
+    async def test_notification_handler_survives_a_decoding_failure(
+            self) -> None:
+        """
+        A driver raising never breaks the notification chain.
+
+        bleak drops a callback that raises, so a single decoding bug
+        would silence the cube for the rest of the session, with a link
+        still up. The notification is lost, the chain is not.
+        """
+        queue: Queue[list[EventDict] | None] = Queue()
+        interface = BluetoothInterface(queue)
+        interface.driver = cast('Driver', RaisingDriver())
+
+        with self.assertLogs(
+                'term_timer.bluetooth.interface', logging.ERROR,
+        ) as captured:
+            await interface.notification_handler(
+                cast('BleakGATTCharacteristic', None), bytearray(b'\x00\x01'),
+            )
+
+        self.assertIn(
+            'Decoding of a 2 bytes notification failed',
+            captured.output[0],
+        )
+        self.assertIn('ValueError: 6 is not in list', captured.output[0])
+        self.assertTrue(queue.empty())
+
+    async def test_notification_handler_keeps_decoding_after_a_failure(
+            self) -> None:
+        """A notification failing does not stop the ones after it."""
+        battery: BatteryEventDict = {
+            'event': 'battery',
+            'clock': 12,
+            'timestamp': self.now,
+            'level': 87,
+            'charging_state': 0,
+        }
+
+        queue: Queue[list[EventDict] | None] = Queue()
+        interface = BluetoothInterface(queue)
+        interface.driver = cast('Driver', RaisingDriver())
+
+        with self.assertLogs('term_timer.bluetooth.interface', logging.ERROR):
+            await interface.notification_handler(
+                cast('BleakGATTCharacteristic', None), bytearray(b'\x00'),
+            )
+
+        interface.driver = cast('Driver', EventDriver([battery]))
+
+        await interface.notification_handler(
+            cast('BleakGATTCharacteristic', None), bytearray(b'\x00'),
+        )
+
+        self.assertEqual(queue.get_nowait(), [battery])
 
 
 class TeardownDriver:

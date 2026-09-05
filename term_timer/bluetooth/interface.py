@@ -404,6 +404,10 @@ class BluetoothInterface:
         the appropriate driver for parsing, then queues the resulting events
         for consumption by the application.
 
+        A notification the driver cannot decode is logged with its
+        traceback and dropped, never raised: this callback is the only
+        thing standing between a decoding bug and a session gone deaf.
+
         Args:
             sender: The GATT characteristic that sent the notification.
             data: Raw byte data received from the cube containing state changes,
@@ -414,7 +418,18 @@ class BluetoothInterface:
 
         beat('bluetooth-notification')
 
-        events = await self.driver.event_handler(sender, data)
+        try:
+            events = await self.driver.event_handler(sender, data)
+        except Exception:
+            # bleak drops a callback that raises, so a single decoding
+            # bug would silence the cube for the rest of the session,
+            # with a link still up and a heartbeat still beating. The
+            # notification is lost, the chain is not.
+            logger.exception(
+                'Decoding of a %s bytes notification failed',
+                len(data),
+            )
+            return
 
         for event in events:
             logger.debug('Event %s', format_event(event))

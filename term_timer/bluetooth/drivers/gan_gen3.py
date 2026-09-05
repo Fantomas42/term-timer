@@ -6,28 +6,24 @@ References :
   - https://github.com/Fantomas42/gan-protocols
 """
 import logging
-import time
 from datetime import datetime
-from datetime import timezone
 from typing import ClassVar
 
 from bleak import BleakClient
-from bleak.backends.characteristic import BleakGATTCharacteristic
 from cubing_algs.facelets import cubies_to_facelets
 
-from term_timer.bluetooth.annotations import BatteryEventDict
-from term_timer.bluetooth.annotations import DisconnectEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import FaceletsEventDict
 from term_timer.bluetooth.annotations import HardwareEventDict
 from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.bluetooth.annotations import ResetEventDict
+from term_timer.bluetooth.annotations import SolvedEventDict
 from term_timer.bluetooth.constants import DEBOUNCE
 from term_timer.bluetooth.constants import GAN_GEN3_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import GAN_GEN3_SERVICE
 from term_timer.bluetooth.constants import GAN_GEN3_STATE_CHARACTERISTIC
-from term_timer.bluetooth.constants import MOVE_BUFFER_LIMIT
-from term_timer.bluetooth.constants import MOVE_HISTORY_TIMEOUT
+from term_timer.bluetooth.constants import GEN3_HISTORY_FACES
+from term_timer.bluetooth.constants import GEN3_MOVE_FACES
 from term_timer.bluetooth.drivers.gan_gen2 import GanGen2Driver
 from term_timer.bluetooth.message import GanProtocolMessage
 
@@ -35,19 +31,41 @@ logger = logging.getLogger(__name__)
 
 
 class GanGen3Driver(GanGen2Driver):
-    """GAN356 i Carry 2."""
+    """GAN i carry 2."""
 
     service_uid: ClassVar[str] = GAN_GEN3_SERVICE
     state_characteristic_uid: ClassVar[str] = GAN_GEN3_STATE_CHARACTERISTIC
     command_characteristic_uid: ClassVar[str] = GAN_GEN3_COMMAND_CHARACTERISTIC
+    payload_offset: ClassVar[int] = 16
+    chained: ClassVar[bool] = True
+    confirms_reset: ClassVar[bool] = True
+    head_magic: ClassVar[int | None] = 0x55
+    crc_terminator: ClassVar[int] = 2
+    # Battery level sits straight behind the header, and no charging
+    # state is declared here — unlike the parent driver.
+    battery_level_offset: ClassVar[int] = 0
+    charging_state_width: ClassVar[int] = 0
+    MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
+        0x01: 'handle_move',
+        0x02: 'handle_facelets',
+        0x06: 'handle_move_history',
+        0x07: 'handle_hardware',
+        0x08: 'handle_reset',
+        0x09: 'handle_account_binding',
+        0x0F: 'handle_flag',
+        0x10: 'handle_battery',
+        0x11: 'handle_disconnect',
+        0x12: 'handle_result',
+        0x14: 'handle_solved',
+    }
 
     def __init__(self, client: BleakClient,
                  *, use_gyroscope: bool) -> None:
         """
         Initialize the GAN Gen3 driver with move tracking capabilities.
 
-        Sets up serial number tracking, timestamp management, and a FIFO
-        buffer for handling move events and detecting missed moves.
+        The serial tracking and the FIFO buffer of the missed moves come
+        from the Gen2 driver, which owns them for the three generations.
 
         Args:
             client: The BLE client connection to the cube.
@@ -56,12 +74,7 @@ class GanGen3Driver(GanGen2Driver):
         """
         super().__init__(client, use_gyroscope=use_gyroscope)
 
-        self.serial: int = -1
-        self.last_serial: int = -1
         self.last_local_timestamp: datetime | None = None
-        self.move_buffer: list[MoveEventDict] = []
-        self.history_request_pending: bool = False
-        self.history_request_clock: float = 0.0
 
     def send_command_handler(self, command: str) -> bytes | bool:
         """
@@ -101,13 +114,52 @@ class GanGen3Driver(GanGen2Driver):
 
         return self.cypher.encrypt(msg)
 
+    @staticmethod
+    def write_move_history_window(msg: bytearray, offset: int,
+                                  serial: int, count: int) -> None:
+        """
+        Align a move history request and write it into the frame.
+
+        `step` and `count` are declared on sixteen bits each, little
+        endian, and both are written whole: a count capped at
+        `serial + 1` reaches 256 as soon as a whole cycle is missed,
+        which no longer fits on the single byte the frame used to
+        carry it on. The window sits at the same offset behind the
+        opcode of every protocol that reuses it, which is why this
+        lives here rather than being written twice.
+
+        Move history response data is byte-aligned, and moves always
+        start on the near-ceil odd serial number regardless of what is
+        requested : the serial and the count are adjusted to get an odd
+        serial aligned window with an even number of moves inside.
+
+        Never overflow requested history window beyond the serial
+        number cycle edge 255 -> 0. Because due to a firmware bug the
+        moves beyond the edge will be spoofed with 'D' (just zero
+        bytes).
+
+        Args:
+            msg: The frame to write the window into.
+            offset: Byte the serial field starts at.
+            serial: The serial number to start the history request from.
+            count: The number of historical moves to request.
+
+        """
+        if serial % 2 == 0:
+            serial = (serial - 1) & 0xFF
+        if count % 2 == 1:
+            count += 1
+
+        count = min(count, serial + 1)
+
+        msg[offset] = serial & 0xFF
+        msg[offset + 1] = serial >> 8
+        msg[offset + 2] = count & 0xFF
+        msg[offset + 3] = count >> 8
+
     async def request_move_history(self, serial: int, count: int) -> None:
         """
         Request historical move data from the cube's internal buffer.
-
-        Constructs a move history request with alignment adjustments to work
-        around firmware quirks. Ensures serial numbers are odd-aligned and
-        move counts are even, and prevents overflow at the 255->0 boundary.
 
         Args:
             serial: The serial number to start the history request from.
@@ -116,26 +168,9 @@ class GanGen3Driver(GanGen2Driver):
         """
         msg = bytearray(16)
 
-        # Move history response data is byte-aligned,
-        # and moves always starting with near-ceil odd serial number,
-        # regardless of requested.
-        # Adjust serial and count to get odd serial aligned history window
-        # with even number of moves inside.
-        if serial % 2 == 0:
-            serial = (serial - 1) & 0xFF
-        if count % 2 == 1:
-            count += 1
-
-        # Never overflow requested history window beyond
-        # the serial number cycle edge 255 -> 0.
-        # Because due to iCarry2 firmware bug the moves beyond the edge
-        # will be spoofed with 'D' (just zero bytes).
-        count = min(count, serial + 1)
-
         msg[0] = 0x68
         msg[1] = 0x03
-        msg[2] = serial
-        msg[4] = count
+        self.write_move_history_window(msg, 2, serial, count)
 
         logger.debug('Sending : REQUEST_MOVE_HISTORY')
 
@@ -144,403 +179,410 @@ class GanGen3Driver(GanGen2Driver):
             self.cypher.encrypt(msg),
         )
 
-    @property
-    def history_request_blocking(self) -> bool:
+    @staticmethod
+    def read_event_code(msg: GanProtocolMessage) -> int:
         """
-        Check if a move history request is still awaiting its answer.
+        Read the opcode of a message.
 
-        A request stops blocking once MOVE_HISTORY_TIMEOUT has elapsed
-        without the cube answering, so that a lost write or a refused
-        history window can be requested again instead of holding the
-        move buffer closed forever.
+        The head of the notification having been stripped, the message
+        opens directly on its opcode. The redefinition is kept because
+        the parent driver reads its own opcode on four bits, and this
+        driver inherits from it.
 
         Returns:
-            True while a pending request is young enough to wait for.
+            The opcode of the message.
 
         """
-        if not self.history_request_pending:
-            return False
+        return msg.get_bit_word(0, 8)
 
-        elapsed = time.monotonic() - self.history_request_clock
-
-        return elapsed < MOVE_HISTORY_TIMEOUT
-
-    async def open_history_request(self, serial: int, count: int) -> None:
+    @classmethod
+    def is_message_valid(cls, msg: GanProtocolMessage) -> bool:
         """
-        Send a move history request and mark it as pending.
+        Check the length a message declares.
 
-        Logs a warning when the previous request is being retried, which
-        means the cube never answered it.
-
-        Args:
-            serial: The serial number to start the history request from.
-            count: The number of historical moves to request.
-
-        """
-        if self.history_request_pending:
-            logger.warning(
-                'Move history request unanswered after %ss, '
-                'retrying from serial %s for %s moves',
-                MOVE_HISTORY_TIMEOUT, serial, count,
-            )
-
-        self.history_request_pending = True
-        self.history_request_clock = time.monotonic()
-
-        await self.request_move_history(serial, count)
-
-    def close_history_request(self) -> None:
-        """Mark the pending move history request as answered."""
-        self.history_request_pending = False
-
-    async def evict_move_buffer(self) -> list[EventDict]:
-        """
-        Process and emit move events from the buffer in sequence order.
-
-        Removes move events from the buffer when they can be delivered in the
-        correct serial order. If a gap is detected, requests missing history.
-        Disconnects if the buffer grows too large (indicating sync issues),
-        emitting a disconnect event so the application is told about it.
+        The length byte closes the header, and sits at
+        `payload_offset - 8`: the check is generic enough that a
+        driver inheriting a different `payload_offset` reuses it as
+        is.
 
         Returns:
-            List of events that were successfully evicted from the buffer
-            and are ready to be emitted.
+            True when the message declares a payload.
 
         """
-        evicted_events: list[EventDict] = []
-
-        while len(self.move_buffer) > 0:
-            buffer_head = self.move_buffer[0]
-            diff = 1 if self.last_serial == -1 else (
-                buffer_head['serial'] - self.last_serial) & 0xFF
-            if diff > 1:
-                if self.history_request_blocking:
-                    logger.debug(
-                        'Eviction on hold, waiting for %s missed moves '
-                        'before serial %s',
-                        diff - 1, buffer_head['serial'],
-                    )
-                else:
-                    await self.open_history_request(
-                        buffer_head['serial'], diff,
-                    )
-                break
-
-            evicted_events.append(self.move_buffer.pop(0))
-            self.last_serial = buffer_head['serial']
-
-        if len(self.move_buffer) > MOVE_BUFFER_LIMIT:
-            logger.warning(
-                'Move buffer overflowed with %s moves stuck behind '
-                'an unrecovered gap, disconnecting the cube',
-                len(self.move_buffer),
-            )
-
-            overflow_payload: DisconnectEventDict = {
-                'event': 'disconnect',
-                'clock': time.perf_counter_ns(),
-                'timestamp': datetime.now(tz=timezone.utc),  # noqa: UP017
-            }
-            evicted_events.append(overflow_payload)
-
-            await self.client.disconnect()
-
-        return evicted_events
+        return msg.get_bit_word(cls.payload_offset - 8, 8) > 0
 
     @staticmethod
-    def is_serial_in_range(start: int, end: int, serial: int, *,
-                           closed_start: bool = False,
-                           closed_end: bool = False) -> bool:
+    def format_build_time(msg: GanProtocolMessage, start: int) -> str:
         """
-        Check if a serial number falls within a range with wraparound.
+        Read the five fields of a build time and format them.
 
-        Handles modular arithmetic for serial numbers that wrap around at 255,
-        allowing for both open and closed interval boundaries.
+        The same five fields are laid out — a year on sixteen bits
+        little endian, then a month, a day, an hour and a minute of
+        eight — at a different offset for each protocol calling this
+        method, `start` pointing at wherever that offset is.
 
         Args:
-            start: The range start serial number.
-            end: The range end serial number.
-            serial: The serial number to check.
-            closed_start: Whether the start boundary is inclusive.
-            closed_end: Whether the end boundary is inclusive.
+            msg: The message carrying the fields.
+            start: Bit the year of the build time starts at.
 
         Returns:
-            True if the serial number is within the specified range.
+            The build time, as a readable date and time.
 
         """
+        year = msg.get_bit_word(start, 16, little_endian=True)
+        month = msg.get_bit_word(start + 16, 8)
+        day = msg.get_bit_word(start + 24, 8)
+        hour = msg.get_bit_word(start + 32, 8)
+        minute = msg.get_bit_word(start + 40, 8)
+
         return (
-            ((end - start) & 0xFF) >= ((serial - start) & 0xFF)
-            and (closed_start or ((start - serial) & 0xFF) > 0)
-            and (closed_end or ((end - serial) & 0xFF) > 0)
+            f'{year:04d}-{month:02d}-{day:02d} '
+            f'{hour:02d}:{minute:02d}'
         )
 
-    def inject_missed_move_to_buffer(self, move: MoveEventDict) -> None:
+    async def handle_move(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
         """
-        Insert a recovered historical move into the buffer at the correct
-        position.
+        Decode a move message and evict what the buffer can deliver.
 
-        Validates that the move belongs in the current sequence and isn't a
-        duplicate before inserting it into the buffer for ordered delivery.
-
-        Args:
-            move: The move event to inject into the buffer.
-
-        """
-        if len(self.move_buffer) > 0:
-            buffer_head = self.move_buffer[0]
-
-            if any(e['event'] in {'move', 'move_history'}
-                   and e['serial'] == move['serial']
-                   for e in self.move_buffer):
-                return
-
-            if not self.is_serial_in_range(
-                    self.last_serial,
-                    buffer_head['serial'],
-                    move['serial'],
-            ):
-                return
-
-            if move['serial'] == ((buffer_head['serial'] - 1) & 0xFF):
-                self.move_buffer.insert(0, move)
-        elif self.is_serial_in_range(
-                self.last_serial,
-                self.serial,
-                move['serial'],
-                closed_start=False,
-                closed_end=True,
-        ):
-            self.move_buffer.insert(0, move)
-
-    async def check_if_move_missed(self) -> None:
-        """
-        Detect gaps in the move sequence and request missing history.
-
-        Compares the current serial with the last processed serial to detect
-        missed moves, then requests the appropriate history window to recover
-        them.
-
-        """
-        diff = (self.serial - self.last_serial) & 0xFF
-
-        if diff > 0 and self.serial != 0 and not self.history_request_blocking:
-            buffer_head = self.move_buffer[0] if self.move_buffer else None
-            start_serial = buffer_head['serial'] if buffer_head else (
-                self.serial + 1
-            ) & 0xFF
-            await self.open_history_request(start_serial, diff + 1)
-
-    async def event_handler(  # noqa: C901, PLR0912, PLR0914, PLR0915
-            self, sender: BleakGATTCharacteristic,  # noqa: ARG002
-            data: bytearray) -> list[EventDict]:
-        """
-        Process notifications from the cube and decode event messages.
-
-        Decrypts and parses incoming data to handle various event types
-        including moves, facelets, move history, hardware info, battery
-        status, and disconnection events. Manages move buffering and
-        recovery of missed moves.
-
-        Args:
-            sender: The GATT characteristic that sent the notification.
-            data: The encrypted message data from the cube.
+        The move is pushed into the FIFO buffer rather than emitted, so
+        that a gap in the serial numbers can still be filled by a move
+        history request before the moves are delivered in order.
 
         Returns:
-            List of decoded events ready to be emitted to listeners.
+            The moves the buffer could deliver in order, if any.
 
         """
-        clock = time.perf_counter_ns()
-        timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+        if self.last_serial == -1:  # Block moves until facelets received
+            return []
 
-        events: list[EventDict] = []
-
-        msg = GanProtocolMessage(
-            self.cypher.decrypt(data),
+        self.last_local_timestamp = timestamp
+        serial = msg.get_bit_word(
+            self.payload_offset + 32, 16, little_endian=True,
         )
-        magic = msg.get_bit_word(0, 8)
-        event = msg.get_bit_word(8, 8)
-        data_size = msg.get_bit_word(16, 8)
+        cube_timestamp = msg.get_bit_word(
+            self.payload_offset, 32, little_endian=True,
+        )
 
-        if magic != 0x55 or data_size <= 0:
-            return events
+        direction = msg.get_bit_word(self.payload_offset + 48, 2)
+        face_mask = msg.get_bit_word(self.payload_offset + 50, 6)
+        face = GEN3_MOVE_FACES.get(face_mask)
+        move = None if face is None else self.format_move(face, direction)
 
-        if event == 0x01:  # Move
-            if self.last_serial == -1:  # Block moves until facelets received
-                return []
-
-            self.last_local_timestamp = timestamp
-            serial = msg.get_bit_word(56, 16, little_endian=True)
-            cube_timestamp = msg.get_bit_word(24, 32, little_endian=True)
-
-            direction = msg.get_bit_word(72, 2)
-            face = [2, 32, 8, 1, 16, 4].index(msg.get_bit_word(74, 6))
-            move = 'URFDLB'[face] + " '"[direction]
-
-            # Put move event into FIFO buffer
-            if face >= 0:
-                move_event: MoveEventDict = {
-                    'event': 'move',
-                    'clock': clock,
-                    'timestamp': timestamp,
-                    'serial': serial,
-                    'local_timestamp': timestamp,
-                    'cube_timestamp': cube_timestamp,
-                    'face': face,
-                    'direction': direction,
-                    'move': move.strip(),
-                }
-                self.move_buffer.append(move_event)
-            evicted = await self.evict_move_buffer()
-            if evicted:
-                self.add_event(events, evicted)
-
-        elif event == 0x02:  # Facelets
-            serial = msg.get_bit_word(24, 16, little_endian=True)
-            self.serial = serial
-
-            # Also check and recovery missed moves
-            # using periodic facelets event sent by cube
-            if self.last_serial != -1:
-                # Debounce the facelet event if there are active cube moves
-                if (
-                        self.last_local_timestamp is not None
-                        and (
-                            timestamp - self.last_local_timestamp
-                        ).total_seconds() > DEBOUNCE
-                ):
-                    await self.check_if_move_missed()
-            else:
-                self.last_serial = serial
-
-            # Corner/Edge Permutation/Orientation
-            cp = []
-            co = []
-            ep = []
-            eo = []
-            so = [0, 1, 2, 3, 4, 5]
-            # Corners
-            for i in range(7):
-                cp.append(msg.get_bit_word(40 + i * 3, 3))
-                co.append(msg.get_bit_word(61 + i * 2, 2))
-            cp.append(28 - sum(cp))
-            co.append((3 - (sum(co) % 3)) % 3)
-            # Edges
-            for i in range(11):
-                ep.append(msg.get_bit_word(77 + i * 4, 4))
-                eo.append(msg.get_bit_word(121 + i, 1))
-            ep.append(66 - sum(ep))
-            eo.append((2 - (sum(eo) % 2)) % 2)
-
-            facelets_payload: FaceletsEventDict = {
-                'event': 'facelets',
-                'clock': clock,
-                'timestamp': timestamp,
-                'serial': serial,
-                'facelets': cubies_to_facelets(cp, co, ep, eo, so),
-                'state': {
-                    'CP': cp,
-                    'CO': co,
-                    'EP': ep,
-                    'EO': eo,
-                },
-            }
-            self.add_event(events, facelets_payload)
-
-        elif event == 0x06:  # Move history
-            self.close_history_request()
-            start_serial = msg.get_bit_word(24, 8)
-            count = (data_size - 1) * 2
-
-            for i in range(count):
-                direction = msg.get_bit_word(35 + 4 * i, 1)
-                face = [1, 5, 3, 0, 4, 2].index(msg.get_bit_word(32 + 4 * i, 3))
-
-                if face >= 0:
-                    move = 'URFDLB'[face] + " '"[direction]
-
-                    history_move: MoveEventDict = {
-                        'event': 'move_history',
-                        'clock': clock,
-                        'timestamp': timestamp,
-                        'serial': (start_serial - i) & 0xFF,
-                        # Missed and recovered events
-                        # has no meaningful local timestamps
-                        'local_timestamp': None,
-                        # Cube hardware timestamp for missed move
-                        # you should interpolate using
-                        # cubeTimestampLinearFit
-                        'cube_timestamp': None,
-                        'face': face,
-                        'direction': direction,
-                        'move': move.strip(),
-                    }
-                    self.inject_missed_move_to_buffer(history_move)
-
-            evicted = await self.evict_move_buffer()
-            if evicted:
-                self.add_event(events, evicted)
-
-        elif event == 0x07:  # Hardware
-            restart_reason = msg.get_bit_word(24, 8)
-
-            hardware_name = ''
-            for i in range(5):
-                hardware_name += chr(msg.get_bit_word(i * 8 + 32, 8))
-
-            sw_major = msg.get_bit_word(72, 4)
-            sw_minor = msg.get_bit_word(76, 4)
-            hw_major = msg.get_bit_word(80, 4)
-            hw_minor = msg.get_bit_word(84, 4)
-
-            _build_time = msg.get_bit_word(88, 32, little_endian=True)
-
-            hardware_payload: HardwareEventDict = {
-                'event': 'hardware',
-                'clock': clock,
-                'timestamp': timestamp,
-                'restart_no_power': restart_reason,
-                'hardware_name': hardware_name,
-                'hardware_version': f'{ hw_major }.{ hw_minor }',
-                'software_version': f'{ sw_major }.{ sw_minor }',
-                'gyroscope_enabled': False,
-                'gyroscope_ready': False,
-                'gyroscope_supported': False,
-            }
-            self.add_event(events, hardware_payload)
-
-        elif event == 0x08:  # Resetted
-            reset_payload: ResetEventDict = {
-                'event': 'reset',
-                'clock': clock,
-                'timestamp': timestamp,
-            }
-            self.add_event(events, reset_payload)
-
-        elif event == 0x10:  # Battery
-            battery_level = msg.get_bit_word(24, 8)
-
-            battery_payload: BatteryEventDict = {
-                'event': 'battery',
-                'clock': clock,
-                'timestamp': timestamp,
-                'charging_state': 0,
-                'level': min(battery_level, 100),
-            }
-            self.add_event(events, battery_payload)
-
-        elif event == 0x11:  # Disconnect
-            disconnect_payload: DisconnectEventDict = {
-                'event': 'disconnect',
-                'clock': clock,
-                'timestamp': timestamp,
-            }
-            self.add_event(events, disconnect_payload)
-
-            await self.client.disconnect()
-
-        else:
+        # A move that cannot be named is not lost for that : it leaves
+        # a hole in the serial numbers, which the eviction sees and
+        # answers with a move history request.
+        if face is None or move is None:
             logger.debug(
-                'Unknown event type "%s": %s', event, msg,
+                'Move message "0x01" carries an out of domain move: '
+                'face mask "0x%02X", direction "%d"',
+                face_mask, direction,
             )
+            return await self.evict_move_buffer()
 
-        return events
+        # Put move event into FIFO buffer
+        move_event: MoveEventDict = {
+            'event': 'move',
+            'clock': clock,
+            'timestamp': timestamp,
+            'serial': serial,
+            'local_timestamp': timestamp,
+            'cube_timestamp': cube_timestamp,
+            'face': face,
+            'direction': direction,
+            'move': move,
+        }
+        self.move_buffer.append(move_event)
+
+        return await self.evict_move_buffer()
+
+    async def handle_facelets(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the cube state and check for missed moves.
+
+        The facelets message is sent periodically by the cube, which
+        makes it the place where a gap in the move serials is noticed.
+
+        Returns:
+            The facelets event of the message.
+
+        """
+        # `step` is declared and carried on sixteen bits, but the
+        # firmware cycles it on its low byte alone, the high byte
+        # never leaving zero. Every serial comparison of the move
+        # buffer therefore wraps on 0xFF, as the parent driver does.
+        serial = msg.get_bit_word(
+            self.payload_offset, 16, little_endian=True,
+        )
+        self.serial = serial
+
+        # Also check and recovery missed moves
+        # using periodic facelets event sent by cube
+        if self.last_serial != -1:
+            # Debounce the facelet event if there are active cube moves
+            if (
+                    self.last_local_timestamp is not None
+                    and (
+                        timestamp - self.last_local_timestamp
+                    ).total_seconds() > DEBOUNCE
+            ):
+                await self.check_if_move_missed()
+        else:
+            self.last_serial = serial
+
+        # Corner/Edge Permutation/Orientation
+        cp = []
+        co = []
+        ep = []
+        eo = []
+        so = [0, 1, 2, 3, 4, 5]
+        # Corners
+        for i in range(7):
+            cp.append(msg.get_bit_word(self.payload_offset + 16 + i * 3, 3))
+            co.append(msg.get_bit_word(self.payload_offset + 37 + i * 2, 2))
+        cp.append(28 - sum(cp))
+        co.append((3 - (sum(co) % 3)) % 3)
+        # Edges
+        for i in range(11):
+            ep.append(msg.get_bit_word(self.payload_offset + 53 + i * 4, 4))
+            eo.append(msg.get_bit_word(self.payload_offset + 97 + i, 1))
+        ep.append(66 - sum(ep))
+        eo.append((2 - (sum(eo) % 2)) % 2)
+
+        facelets_payload: FaceletsEventDict = {
+            'event': 'facelets',
+            'clock': clock,
+            'timestamp': timestamp,
+            'serial': serial,
+            'facelets': cubies_to_facelets(cp, co, ep, eo, so),
+            'state': {
+                'CP': cp,
+                'CO': co,
+                'EP': ep,
+                'EO': eo,
+            },
+        }
+
+        return [facelets_payload]
+
+    async def handle_move_history(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the moves answering a move history request.
+
+        Returns:
+            The moves the buffer could deliver in order once the
+            recovered ones have been injected, if any.
+
+        """
+        self.close_history_request()
+        data_size = msg.get_bit_word(self.payload_offset - 8, 8)
+        start_serial = msg.get_bit_word(self.payload_offset, 8)
+        count = (data_size - 1) * 2
+
+        for i in range(count):
+            direction = msg.get_bit_word(self.payload_offset + 11 + 4 * i, 1)
+            face_id = msg.get_bit_word(self.payload_offset + 8 + 4 * i, 3)
+            face = GEN3_HISTORY_FACES.get(face_id)
+
+            move = None if face is None else self.format_move(face, direction)
+
+            if face is None or move is None:
+                logger.debug(
+                    'Move history message "0x%02X" carries an out of '
+                    'domain move at index %d: face "%d", direction "%d"',
+                    self.read_event_code(msg), i, face_id, direction,
+                )
+                continue
+
+            history_move: MoveEventDict = {
+                'event': 'move_history',
+                'clock': clock,
+                'timestamp': timestamp,
+                'serial': (start_serial - i) & 0xFF,
+                # Missed and recovered events
+                # has no meaningful local timestamps
+                'local_timestamp': None,
+                # Cube hardware timestamp for missed move
+                # you should interpolate using
+                # cubeTimestampLinearFit
+                'cube_timestamp': None,
+                'face': face,
+                'direction': direction,
+                'move': move,
+            }
+            self.inject_missed_move_to_buffer(history_move)
+
+        return await self.evict_move_buffer()
+
+    async def handle_hardware(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the hardware identity of the cube.
+
+        The descriptor under-declares this message, and the wire is
+        what settles it: the cube announces more payload bytes than
+        declared, and `buildTime` carries the same five fields as
+        elsewhere rather than the width declared for it.
+
+        Returns:
+            The hardware event of the message.
+
+        """
+        restart_reason = msg.get_bit_word(16, 8)
+
+        hardware_name = ''
+        for i in range(5):
+            hardware_name += chr(msg.get_bit_word(i * 8 + 24, 8))
+
+        sw_major = msg.get_bit_word(64, 4)
+        sw_minor = msg.get_bit_word(68, 4)
+        hw_major = msg.get_bit_word(72, 4)
+        hw_minor = msg.get_bit_word(76, 4)
+
+        build_time = self.format_build_time(msg, 80)
+
+        logger.debug('Build time: %s', build_time)
+
+        hardware_payload: HardwareEventDict = {
+            'event': 'hardware',
+            'clock': clock,
+            'timestamp': timestamp,
+            'restart_no_power': restart_reason,
+            'build_time': build_time,
+            'hardware_name': hardware_name,
+            'hardware_version': f'{ hw_major }.{ hw_minor }',
+            'software_version': f'{ sw_major }.{ sw_minor }',
+            'gyroscope_enabled': False,
+            'gyroscope_ready': False,
+            'gyroscope_supported': False,
+        }
+
+        return [hardware_payload]
+
+    async def handle_reset(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Acknowledge that the cube state has been reset.
+
+        This message carries a `result` the driver used to drop, where
+        the reset it acknowledges is the one destructive command of
+        the protocol. The value is published rather than judged here:
+        its width and meaning vary from one protocol to the next, and
+        only a subscriber knows what it wants to do with a reset the
+        cube refused.
+
+        Returns:
+            The reset event of the message.
+
+        """
+        reset_payload: ResetEventDict = {
+            'event': 'reset',
+            'clock': clock,
+            'timestamp': timestamp,
+            'result': msg.get_bit_word(self.payload_offset, 8),
+        }
+
+        return [reset_payload]
+
+    async def handle_account_binding(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log the answer of the cube to an account binding request.
+
+        The parent handler cannot be inherited: this protocol reads
+        its 32 bit `result` little endian, where the parent driver
+        reads it big endian.
+
+        The application never sends that request, so this answer is not
+        expected to be seen : the handler exists so that a cube sending
+        one anyway is named in the journal instead of counted as an
+        unknown opcode.
+
+        Returns:
+            Nothing, the result is journaled only.
+
+        """
+        result = msg.get_bit_word(
+            self.payload_offset, 32, little_endian=True,
+        )
+
+        logger.debug('Account binding result: %s', result)
+
+        return []
+
+    async def handle_flag(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log the flag the cube announces.
+
+        The descriptor names the field `flag` and gives its width, and
+        says nothing of what it means : it is journaled raw, and what it
+        carries will be read there the day a cube sends one.
+
+        Returns:
+            Nothing, the flag is journaled only.
+
+        """
+        logger.debug(
+            'Flag message "0x0F": flag %s',
+            msg.get_bit_word(self.payload_offset, 8),
+        )
+
+        return []
+
+    async def handle_result(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:  # noqa: ARG002
+        """
+        Log the result the cube announces.
+
+        The descriptor declares a boolean of eight bits and names no
+        command it answers : as for `handle_flag`, it is journaled raw
+        rather than interpreted.
+
+        Returns:
+            Nothing, the result is journaled only.
+
+        """
+        logger.debug(
+            'Result message "0x12": result %s',
+            msg.get_bit_word(self.payload_offset, 8),
+        )
+
+        return []
+
+    async def handle_solved(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the solve the cube announces on its own.
+
+        The same message is declared field for field alike under two
+        different opcodes depending on the protocol: the cube saying
+        it sees itself solved, timed on its own clock. The clock it
+        carries is the one of the move that closed the solve, the
+        message arriving chained behind it.
+
+        Returns:
+            The solved event of the message.
+
+        """
+        solved_payload: SolvedEventDict = {
+            'event': 'solved',
+            'clock': clock,
+            'timestamp': timestamp,
+            'cube_timestamp': msg.get_bit_word(
+                self.payload_offset, 32, little_endian=True,
+            ),
+        }
+
+        return [solved_payload]

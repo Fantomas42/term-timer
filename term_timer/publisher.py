@@ -48,6 +48,7 @@ CUBE_TOPICS: Final[dict[str, str]] = {
     'facelets': 'cube.facelets',
     'move': 'cube.move',
     'move_history': 'cube.history',
+    'solved': 'cube.solved',
     'gyro': 'cube.gyro',
     'hardware': 'cube.hardware',
     'battery': 'cube.battery',

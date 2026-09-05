@@ -5,22 +5,18 @@ References :
   - https://github.com/lukeburong/weilong-v10-ai-protocol
 """
 import logging
-import time
 from datetime import datetime
-from datetime import timezone
 from typing import ClassVar
 
-from bleak import BleakClient
-from bleak.backends.characteristic import BleakGATTCharacteristic
-
-from term_timer.bluetooth.annotations import BatteryEventDict
-from term_timer.bluetooth.annotations import DisconnectEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import FaceletsEventDictNoState
 from term_timer.bluetooth.annotations import GyroConfigEventDict
 from term_timer.bluetooth.annotations import GyroEventDictNoVelocity
 from term_timer.bluetooth.annotations import HardwareEventMoyuDict
 from term_timer.bluetooth.annotations import MoveEventDict
+from term_timer.bluetooth.constants import MOYU_FACE_NAMES
+from term_timer.bluetooth.constants import MOYU_FACES
+from term_timer.bluetooth.constants import MOYU_MOVE_CAPACITY
 from term_timer.bluetooth.constants import MOYU_WEILONG_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import MOYU_WEILONG_ENCRYPTION_KEY
 from term_timer.bluetooth.constants import MOYU_WEILONG_SERVICE
@@ -34,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class MoyuWeilong10Driver(Driver):
-    """Weilong v10."""
+    """MoYu Weilong v10 AI."""
 
     service_uid: ClassVar[str] = MOYU_WEILONG_SERVICE
     state_characteristic_uid: ClassVar[str] = MOYU_WEILONG_STATE_CHARACTERISTIC
@@ -48,15 +44,15 @@ class MoyuWeilong10Driver(Driver):
         'REQUEST_FACELETS',
         'REQUEST_BATTERY',
     ]
-
-    def __init__(self, client: BleakClient,
-                 *, use_gyroscope: bool) -> None:
-        """Initialize MoYu Weilong driver with BLE client connection."""
-        super().__init__(client, use_gyroscope=use_gyroscope)
-
-        self.last_serial: int = -1
-        self.cube_timestamp: float = 0.0
-        self.last_move_timestamp: datetime | None = None
+    MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
+        0xA0: 'handle_disconnect',
+        0xA1: 'handle_hardware',
+        0xA3: 'handle_facelets',
+        0xA4: 'handle_battery',
+        0xA5: 'handle_move',
+        0xAB: 'handle_gyroscope',
+        0xAC: 'handle_gyroscope_config',
+    }
 
     def init_cypher(self) -> GanGen2CubeEncrypter:
         """
@@ -106,191 +102,251 @@ class MoyuWeilong10Driver(Driver):
 
         return self.cypher.encrypt(msg)
 
-    async def event_handler(  # noqa: C901, PLR0912, PLR0914, PLR0915
-            self, sender: BleakGATTCharacteristic,  # noqa: ARG002
-            data: bytearray) -> list[EventDict]:
+    async def handle_gyroscope(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
         """
-        Process notifications from the cube.
+        Decode the orientation sample of a gyroscope message.
+
+        MoYu declares no angular velocity, only a quaternion.
 
         Returns:
-            List of event dictionaries parsed from cube notifications.
+            The gyroscope event, or nothing when the gyroscope is not
+            used.
 
         """
-        clock = time.perf_counter_ns()
-        timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+        if not self.use_gyroscope:
+            return []
 
-        events: list[EventDict] = []
+        # Orientation Quaternion
+        qw = msg.get_bit_word(8, 32, little_endian=True, signed=True)
+        qx = msg.get_bit_word(40, 32, little_endian=True, signed=True)
+        qy = msg.get_bit_word(72, 32, little_endian=True, signed=True)
+        qz = msg.get_bit_word(104, 32, little_endian=True, signed=True)
 
-        msg = GanProtocolMessage(
-            self.cypher.decrypt(data),
-        )
-        event = msg.get_bit_word(0, 8)
+        gyro_payload: GyroEventDictNoVelocity = {
+            'event': 'gyro',
+            'clock': clock,
+            'timestamp': timestamp,
+            'quaternion': {
+                'x': qx / self.factor,
+                'y': qy / self.factor,
+                'z': qz / self.factor,
+                'w': qw / self.factor,
+            },
+        }
 
-        if event == 0xAB:  # Gyroscope
-            if not self.use_gyroscope:
-                return []
+        return [gyro_payload]
 
-            # Orientation Quaternion
-            qw = msg.get_bit_word(8, 32, little_endian=True, signed=True)
-            qx = msg.get_bit_word(40, 32, little_endian=True, signed=True)
-            qy = msg.get_bit_word(72, 32, little_endian=True, signed=True)
-            qz = msg.get_bit_word(104, 32, little_endian=True, signed=True)
+    async def handle_move(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the moves carried by a move message.
 
-            gyro_payload: GyroEventDictNoVelocity = {
-                'event': 'gyro',
-                'clock': clock,
-                'timestamp': timestamp,
-                'quaternion': {
-                    'x': qx / self.factor,
-                    'y': qy / self.factor,
-                    'z': qz / self.factor,
-                    'w': qw / self.factor,
-                },
-            }
+        A single message carries the last move plus the four previous
+        ones, which is the capacity of the protocol. The five slots
+        are a sliding window, ranged from the most recent backwards,
+        each one the previous shifted by one slot. A gap of 0xFFFF is
+        that sixteen bits register saturated, and not an empty slot:
+        it slides with the others until it falls off the window.
 
-            self.add_event(events, gyro_payload)
+        The byte 15 carries one more thing, and nobody reads it: the
+        face of the last move again, one-hot, in the native FBUDLR
+        order of the protocol — the bit 121 for F up to the bit 126
+        for R. It says nothing the five bits mask does not already
+        say, which is why it stays unread.
 
-        elif event == 0xA5:  # Moves
-            if self.last_serial == -1:  # Block moves until facelets received
-                return []
+        Returns:
+            The decoded moves, oldest first, or nothing while the
+            facelets have not been received yet.
 
-            serial = msg.get_bit_word(88, 8)
-            diff = min((serial - self.last_serial) & 0xFF, 5)
+        """
+        if self.serial == -1:  # Block moves until facelets received
+            return []
 
-            self.last_serial = serial
+        serial = msg.get_bit_word(88, 8)
+        diff = min((serial - self.serial) & 0xFF, MOYU_MOVE_CAPACITY)
 
-            if diff <= 0:
-                return []
+        self.serial = serial
 
-            for i in range(diff - 1, -1, -1):
-                move_value = msg.get_bit_word(96 + i * 5, 5)
-                move = 'FBUDLR'[move_value >> 1] + " '"[move_value & 1]
-                elapsed_raw = msg.get_bit_word(8 + i * 16, 16)
+        if diff <= 0:
+            return []
 
-                # In case of 16-bit cube timestamp register overflow
-                elapsed: float
-                if elapsed_raw == 0 and self.last_move_timestamp is not None:
-                    elapsed = (
-                        timestamp - self.last_move_timestamp
-                    ).total_seconds()
-                else:
-                    elapsed = float(elapsed_raw)
+        moves: list[EventDict] = []
 
-                self.cube_timestamp += elapsed
-                move_payload: MoveEventDict = {
-                    'event': 'move',
-                    'clock': clock,
-                    'timestamp': timestamp,
-                    'serial': (serial - i) & 0xFF,
-                    # Missed and recovered events
-                    # has no meaningful local timestamps
-                    'local_timestamp': timestamp if i == 0 else None,
-                    'cube_timestamp': self.cube_timestamp,
-                    'face': move_value,
-                    'direction': move_value,
-                    'move': move.strip(),
-                }
-                self.add_event(events, move_payload)
+        for i in range(diff - 1, -1, -1):
+            move_value = msg.get_bit_word(96 + i * 5, 5)
+            elapsed_raw = msg.get_bit_word(8 + i * 16, 16)
 
-            self.last_move_timestamp = timestamp
-
-        elif event == 0xA3:  # Facelets
-            serial = msg.get_bit_word(152, 8)
-
-            if self.last_serial == -1:
-                self.last_serial = serial
-
-            state = []
-            # Parse in order URFDLB instead of FBUDLR
-            faces = [2, 5, 0, 3, 4, 1]
-            for i in range(6):
-                for j in range(8):
-                    value = msg.get_bit_word(8 + (faces[i] * 24) + (j * 3), 3)
-                    state.append('FBUDLR'[value])
-                    if j == 3:
-                        state.append('FBUDLR'[faces[i]])
-
-            facelets_payload: FaceletsEventDictNoState = {
-                'event': 'facelets',
-                'clock': clock,
-                'timestamp': timestamp,
-                'serial': serial,
-                'facelets': ''.join(state),
-            }
-            self.add_event(events, facelets_payload)
-
-        elif event == 0xA1:  # Hardware
-            hw_major = msg.get_bit_word(72, 8)
-            hw_minor = msg.get_bit_word(80, 8)
-            sw_major = msg.get_bit_word(88, 8)
-            sw_minor = msg.get_bit_word(96, 8)
-            gyro_enabled = msg.get_bit_word(105, 1)
-            gyro_ready = msg.get_bit_word(106, 1)
-            serial = msg.get_bit_word(109, 8)
-
-            hardware_name = ''
-            for i in range(8):
-                hardware_name += chr(msg.get_bit_word(i * 8 + 8, 8))
-
-            hardware_payload: HardwareEventMoyuDict = {
-                'event': 'hardware',
-                'clock': clock,
-                'timestamp': timestamp,
-                'hardware_name': hardware_name,
-                'hardware_version': f'{ hw_major }.{ hw_minor }',
-                'software_version': f'{ sw_major }.{ sw_minor }',
-                'gyroscope_enabled': bool(gyro_enabled),
-                'gyroscope_ready': bool(gyro_ready),
-                'gyroscope_supported': (
-                    bool(gyro_enabled)
-                    and bool(gyro_ready)
-                ),
-                'serial': serial,
-            }
-            self.add_event(events, hardware_payload)
-
-        elif event == 0xAC:  # Gyro config
-            gyro_enabled = msg.get_bit_word(16, 8)
-            gyro_ready = msg.get_bit_word(8, 8)
-
-            gyro_config_payload: GyroConfigEventDict = {
-                'event': 'gyro-config',
-                'clock': clock,
-                'timestamp': timestamp,
-                'gyroscope_enabled': bool(gyro_enabled),
-                'gyroscope_ready': bool(gyro_ready),
-                'gyroscope_supported': (
-                    bool(gyro_enabled)
-                    and bool(gyro_ready)
-                ),
-            }
-            self.add_event(events, gyro_config_payload)
-
-        elif event == 0xA4:  # Battery
-            battery_level = msg.get_bit_word(8, 8)
-
-            battery_payload: BatteryEventDict = {
-                'event': 'battery',
-                'clock': clock,
-                'charging_state': 0,
-                'timestamp': timestamp,
-                'level': min(battery_level, 100),
-            }
-            self.add_event(events, battery_payload)
-
-        elif event == 0xA0:  # Disconnect
-            disconnect_payload: DisconnectEventDict = {
-                'event': 'disconnect',
-                'clock': clock,
-                'timestamp': timestamp,
-            }
-            self.add_event(events, disconnect_payload)
-
-            await self.client.disconnect()
-
-        else:
-            logger.debug(
-                'Unknown event type "%s": %s', event, msg,
+            cube_timestamp = self.advance_cube_timestamp(
+                elapsed_raw, timestamp,
             )
 
-        return events
+            # The five bits name sixteen faces where the cube turns
+            # six : the mask is remapped onto URFDLB when the table
+            # declares it, and left as it is when it does not, so that
+            # format_move refuses it as it refuses any other field out
+            # of its domain.
+            mask = move_value >> 1
+            face = MOYU_FACES.get(mask, mask)
+            direction = move_value & 1
+
+            move = self.format_move(face, direction)
+
+            if move is None:
+                logger.debug(
+                    'Move message "0xA5" carries an out of domain move '
+                    'at index %d: mask "%d", direction "%d"',
+                    i, mask, direction,
+                )
+                continue
+
+            move_payload: MoveEventDict = {
+                'event': 'move',
+                'clock': clock,
+                'timestamp': timestamp,
+                'serial': (serial - i) & 0xFF,
+                # Missed and recovered events
+                # has no meaningful local timestamps
+                'local_timestamp': timestamp if i == 0 else None,
+                'cube_timestamp': cube_timestamp,
+                'face': face,
+                'direction': direction,
+                'move': move,
+            }
+            moves.append(move_payload)
+
+        self.last_move_timestamp = timestamp
+
+        return moves
+
+    async def handle_facelets(
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the cube state carried by a facelets message.
+
+        A sticker is read on three bits, which name eight colours for
+        six faces. One out of domain takes the whole frame with it :
+        skipping it would cost the string a character and slide every
+        sticker after it, and a false state is worse than no state at
+        all — the driver already holds its moves until one arrives.
+
+        Returns:
+            The facelets event of the message, or nothing when a
+            sticker falls outside of the six faces.
+
+        """
+        serial = msg.get_bit_word(152, 8)
+
+        state = []
+        # Parse in order URFDLB instead of FBUDLR
+        for i in range(6):
+            native = MOYU_FACES[i]
+
+            for j in range(8):
+                value = msg.get_bit_word(8 + (native * 24) + (j * 3), 3)
+
+                if value >= len(MOYU_FACE_NAMES):
+                    logger.debug(
+                        'Facelets message "0xA3" carries an out of '
+                        'domain colour "%d" on the face "%s", sticker '
+                        '%d: the frame is dropped whole',
+                        value, MOYU_FACE_NAMES[native], j,
+                    )
+                    return []
+
+                state.append(MOYU_FACE_NAMES[value])
+
+                if j == 3:
+                    state.append(MOYU_FACE_NAMES[native])
+
+        # The MoYu answers a facelets request, and pushes one
+        # unsolicited answer to a reset: the protocol has no reset
+        # message of its own, and the cube echoes the command back
+        # under its reading opcode — the twenty bytes written, 0xA2
+        # turned 0xA3 and the serial in place of the trailing zero.
+        # The counter starts on a state the driver was able to read,
+        # and never on one it had to throw away: it is what unblocks
+        # the moves.
+        if self.serial == -1:
+            self.serial = serial
+
+        facelets_payload: FaceletsEventDictNoState = {
+            'event': 'facelets',
+            'clock': clock,
+            'timestamp': timestamp,
+            'serial': serial,
+            'facelets': ''.join(state),
+        }
+
+        return [facelets_payload]
+
+    async def handle_hardware(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the hardware identity of the cube.
+
+        Returns:
+            The hardware event of the message.
+
+        """
+        hw_major = msg.get_bit_word(72, 8)
+        hw_minor = msg.get_bit_word(80, 8)
+        sw_major = msg.get_bit_word(88, 8)
+        sw_minor = msg.get_bit_word(96, 8)
+        gyro_enabled = msg.get_bit_word(105, 1)
+        gyro_ready = msg.get_bit_word(106, 1)
+        serial = msg.get_bit_word(109, 8)
+
+        hardware_name = ''
+        for i in range(8):
+            hardware_name += chr(msg.get_bit_word(i * 8 + 8, 8))
+
+        hardware_payload: HardwareEventMoyuDict = {
+            'event': 'hardware',
+            'clock': clock,
+            'timestamp': timestamp,
+            'hardware_name': hardware_name,
+            'hardware_version': f'{ hw_major }.{ hw_minor }',
+            'software_version': f'{ sw_major }.{ sw_minor }',
+            'gyroscope_enabled': bool(gyro_enabled),
+            'gyroscope_ready': bool(gyro_ready),
+            # Whether the cube carries the sensor, and not whether it
+            # has it switched on : the two were the same expression,
+            # and the cube in hand — enabled False, ready True — was
+            # published as not supporting a gyroscope it had simply
+            # turned off. The ready bit is what the firmware says.
+            'gyroscope_supported': bool(gyro_ready),
+            'serial': serial,
+        }
+
+        return [hardware_payload]
+
+    async def handle_gyroscope_config(  # noqa: PLR6301
+            self, msg: GanProtocolMessage,
+            clock: int, timestamp: datetime) -> list[EventDict]:
+        """
+        Decode the answer to a gyroscope configuration request.
+
+        Returns:
+            The gyro-config event of the message.
+
+        """
+        gyro_enabled = msg.get_bit_word(16, 8)
+        gyro_ready = msg.get_bit_word(8, 8)
+
+        gyro_config_payload: GyroConfigEventDict = {
+            'event': 'gyro-config',
+            'clock': clock,
+            'timestamp': timestamp,
+            'gyroscope_enabled': bool(gyro_enabled),
+            'gyroscope_ready': bool(gyro_ready),
+            # Same reading as the hardware message : a cube announcing
+            # its gyroscope off still carries one.
+            'gyroscope_supported': bool(gyro_ready),
+        }
+
+        return [gyro_config_payload]

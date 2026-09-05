@@ -1,10 +1,24 @@
 """Type definitions for bluetooth event payloads."""
 from datetime import datetime
 from typing import TYPE_CHECKING
+from typing import NotRequired
 from typing import TypedDict
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable
+    from collections.abc import Callable
+
+    from term_timer.bluetooth.message import GanProtocolMessage
+
     MoveEventDictList = list['MoveEventDict']
+
+    # Signature shared by every message handler of every driver.
+    # The handlers are resolved by name through Driver.MESSAGE_HANDLERS,
+    # so nothing but this alias documents what they receive.
+    MessageHandler = Callable[
+        [GanProtocolMessage, int, datetime],
+        Awaitable[list['EventDict']],
+    ]
 
 
 class MoveInfo(TypedDict):
@@ -110,6 +124,9 @@ class HardwareEventDict(BaseEventDict):
     gyroscope_ready: bool
     gyroscope_supported: bool
     restart_no_power: int
+    # V2 carries a firmware build time in its identity message where V1
+    # carries none, and the two share this payload.
+    build_time: NotRequired[str]
 
 
 class HardwareEventPartialDict(BaseEventDict):
@@ -137,6 +154,24 @@ class HardwareEventSoftwareVersionOnlyDict(BaseEventDict):
     software_version: str
 
 
+class HardwareEventMacOnlyDict(BaseEventDict):
+    """MAC address only event payload (Gen4)."""
+
+    mac_address: str
+
+
+class HardwareEventBuildTimeOnlyDict(BaseEventDict):
+    """Firmware build time only event payload (Gen4)."""
+
+    build_time: str
+
+
+class HardwareEventRestartOnlyDict(BaseEventDict):
+    """Restart reason only event payload (Gen4)."""
+
+    restart_no_power: int
+
+
 class HardwareEventMoyuDict(BaseEventDict):
     """Hardware info event payload for Moyu."""
 
@@ -159,13 +194,21 @@ class BatteryEventDict(BaseEventDict):
 class ResetEventDict(BaseEventDict):
     """Reset event payload."""
 
+    result: int
+
+
+class SolvedEventDict(BaseEventDict):
+    """Solved event payload."""
+
+    cube_timestamp: int
+
 
 class DisconnectEventDict(BaseEventDict):
     """Disconnect event payload."""
 
 
 class GyroConfigEventDict(BaseEventDict):
-    """Gyro configuration event payload (Moyu)."""
+    """Gyro configuration event payload (Moyu, GAN Gen4)."""
 
     gyroscope_enabled: bool
     gyroscope_ready: bool
@@ -184,8 +227,12 @@ EventDict = (
     | HardwareEventNameOnlyDict
     | HardwareEventVersionOnlyDict
     | HardwareEventSoftwareVersionOnlyDict
+    | HardwareEventMacOnlyDict
+    | HardwareEventBuildTimeOnlyDict
+    | HardwareEventRestartOnlyDict
     | HardwareEventMoyuDict
     | BatteryEventDict
+    | SolvedEventDict
     | DisconnectEventDict
     | GyroConfigEventDict
     | ResetEventDict

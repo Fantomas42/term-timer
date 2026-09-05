@@ -1,23 +1,179 @@
 """Tests for driver moyu."""
 import asyncio
 import unittest
+from collections.abc import Sequence
 from datetime import datetime
+from datetime import timedelta
 from datetime import timezone
 from typing import TYPE_CHECKING
 from typing import cast
+from unittest.mock import AsyncMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
+from term_timer.bluetooth.constants import MOYU_FACE_NAMES
+from term_timer.bluetooth.constants import MOYU_FACES
+from term_timer.bluetooth.constants import MOYU_MOVE_CAPACITY
 from term_timer.bluetooth.constants import MOYU_WEILONG_COMMAND_CHARACTERISTIC
 from term_timer.bluetooth.constants import MOYU_WEILONG_SERVICE
 from term_timer.bluetooth.constants import MOYU_WEILONG_STATE_CHARACTERISTIC
+from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.drivers.moyu import MoyuWeilong10Driver
 
 if TYPE_CHECKING:
     from term_timer.bluetooth.annotations import BatteryEventDict
+    from term_timer.bluetooth.annotations import EventDict
     from term_timer.bluetooth.annotations import FaceletsEventDictNoState
     from term_timer.bluetooth.annotations import GyroConfigEventDict
+    from term_timer.bluetooth.annotations import GyroEventDictNoVelocity
     from term_timer.bluetooth.annotations import HardwareEventMoyuDict
+    from term_timer.bluetooth.annotations import MoveEventDict
+
+# The eight stickers of a face, in the order the firmware reads them,
+# and the six faces of a solved cube in its own FBUDLR order.
+STICKERS_PER_FACE = 8
+
+# A move message carries its moves five bits at a time from the bit 96,
+# which is the last full word of the notification.
+MOVES_OFFSET = 12
+
+SOLVED = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
+
+
+def move_frame(serial: int,
+               moves: Sequence[tuple[int, int]]) -> bytes:
+    """
+    Build a `0xA5` notification carrying up to five moves.
+
+    Args:
+        serial: The counter of the cube, naming the newest move.
+        moves: The five bits mask and the elapsed register of each
+            move, newest first, as the protocol packs them.
+
+    Returns:
+        The twenty bytes of the decrypted notification.
+
+    """
+    frame = bytearray(20)
+    frame[0] = 0xA5
+    frame[11] = serial
+
+    packed = ['00000'] * MOYU_MOVE_CAPACITY
+
+    for index, (mask, elapsed) in enumerate(moves):
+        frame[1 + index * 2] = elapsed >> 8
+        frame[2 + index * 2] = elapsed & 0xFF
+        packed[index] = format(mask, '05b')
+
+    # Twenty five bits of moves, padded to the four bytes they live in.
+    word = int(''.join(packed) + '0000000', 2)
+    frame[MOVES_OFFSET:MOVES_OFFSET + 4] = word.to_bytes(4, 'big')
+
+    return bytes(frame)
+
+
+def facelets_frame(serial: int, stickers: Sequence[int]) -> bytes:
+    """
+    Build a `0xA3` notification carrying a whole cube state.
+
+    Args:
+        serial: The counter of the cube.
+        stickers: The forty eight stickers, three bits each, indexed
+            by `native * 8 + sticker` in the FBUDLR order of the
+            firmware.
+
+    Returns:
+        The twenty bytes of the decrypted notification.
+
+    """
+    frame = bytearray(20)
+    frame[0] = 0xA3
+    frame[19] = serial
+
+    bits = ''.join(format(value, '03b') for value in stickers)
+    frame[1:19] = int(bits, 2).to_bytes(18, 'big')
+
+    return bytes(frame)
+
+
+def solved_stickers() -> list[int]:
+    """
+    Give the forty eight stickers of a solved cube.
+
+    Returns:
+        Each face carrying its own colour, in the native order.
+
+    """
+    return [
+        native
+        for native in range(6)
+        for _ in range(STICKERS_PER_FACE)
+    ]
+
+
+def hardware_frame(name: str, versions: tuple[int, int, int, int],
+                   serial: int, *,
+                   enabled: bool, ready: bool) -> bytes:
+    """
+    Build a `0xA1` notification carrying the identity of the cube.
+
+    Args:
+        name: The eight characters of the hardware name.
+        versions: The major and minor of the hardware version, then
+            those of the software one.
+        serial: The counter of the cube, read on eight bits astride
+            two bytes from the bit 109.
+        enabled: The bit 105, saying the gyroscope streams.
+        ready: The bit 106, saying the cube carries one.
+
+    Returns:
+        The twenty bytes of the decrypted notification.
+
+    """
+    frame = bytearray(20)
+    frame[0] = 0xA1
+    frame[1:9] = name.encode()
+    frame[9], frame[10], frame[11], frame[12] = versions
+
+    # The bits 104 to 119, where the two flags and the serial overlap.
+    word = (serial & 0xFF) << 3
+
+    if enabled:
+        word |= 1 << 14
+    if ready:
+        word |= 1 << 13
+
+    frame[13] = word >> 8
+    frame[14] = word & 0xFF
+
+    return bytes(frame)
+
+
+class TestMoyuFaceTable(unittest.TestCase):
+    """Tests for the face table the moves and the facelets share."""
+
+    def test_face_table_names_every_face_once(self) -> None:
+        """Test the six native faces map onto the six of URFDLB."""
+        self.assertEqual(sorted(MOYU_FACES), list(range(6)))
+        self.assertEqual(sorted(MOYU_FACES.values()), list(range(6)))
+
+    def test_face_table_is_its_own_inverse(self) -> None:
+        """Test the same table reads the two directions."""
+        # The plan reads the moves and the facelets with the same six
+        # values, which is only correct because the permutation is an
+        # involution. Pinned rather than believed.
+        for native, index in MOYU_FACES.items():
+            with self.subTest(face=native):
+                self.assertEqual(MOYU_FACES[index], native)
+
+    def test_face_table_keeps_the_letter_of_the_face(self) -> None:
+        """Test a native face and its URFDLB index name one letter."""
+        for native, index in MOYU_FACES.items():
+            with self.subTest(face=native):
+                self.assertEqual(
+                    MOYU_FACE_NAMES[native],
+                    'URFDLB'[index],
+                )
 
 
 class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
@@ -27,7 +183,8 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
         """Test setup."""
         self.mock_client = Mock()
         self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
-        self.mock_client.name = 'WeiLong v10'
+        self.mock_client.name = 'WCU_MY32_A6A7'
+        self.mock_client.disconnect = AsyncMock()
 
         with patch(
                 'term_timer.bluetooth.drivers.moyu.get_salt',
@@ -38,12 +195,38 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                 use_gyroscope=False,
             )
 
+        self.timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
+
+    async def notify(self, frame: bytes) -> list['EventDict']:
+        """
+        Hand a decrypted notification to the driver.
+
+        Args:
+            frame: The bytes the cube would have sent, in the clear.
+
+        Returns:
+            The events the driver decoded out of it.
+
+        """
+        with patch(
+                'term_timer.bluetooth.drivers.base.time.perf_counter_ns',
+                return_value=123456789,
+        ), patch(
+            'term_timer.bluetooth.drivers.base.datetime',
+        ) as mock_datetime, patch.object(
+            self.driver, 'cypher',
+        ) as mock_cypher:
+            mock_datetime.now.return_value = self.timestamp
+            mock_cypher.decrypt.return_value = frame
+
+            return await self.driver.event_handler(Mock(), bytearray(frame))
+
     def test_init_sets_correct_attributes(self) -> None:
         """Test init sets correct attributes."""
         self.assertEqual(self.driver.client, self.mock_client)
-        self.assertEqual(self.driver.last_serial, -1)
+        self.assertEqual(self.driver.serial, -1)
         self.assertEqual(self.driver.cube_timestamp, 0)
-        self.assertEqual(self.driver.last_move_timestamp, None)
+        self.assertIsNone(self.driver.last_move_timestamp)
 
     def test_class_constants(self) -> None:
         """Test class constants."""
@@ -59,13 +242,28 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
             MoyuWeilong10Driver.command_characteristic_uid,
             MOYU_WEILONG_COMMAND_CHARACTERISTIC,
         )
-        self.assertEqual(MoyuWeilong10Driver.factor, pow(2, 30))
+        self.assertEqual(MoyuWeilong10Driver.payload_offset, 8)
+        self.assertFalse(MoyuWeilong10Driver.chained)
+        self.assertIsNone(MoyuWeilong10Driver.head_magic)
+        self.assertEqual(MoyuWeilong10Driver.crc_reserve, 0)
+
+    def test_shared_handlers_are_the_ones_of_the_socle(self) -> None:
+        """Test the two handlers MoYu shares with GAN are not copied."""
+        # The point of the lot : a driver carries the bytes of its own
+        # protocol and nothing else. Counting events would not notice a
+        # handler quietly coming back, the identity of the functions
+        # does.
+        for name in ('handle_battery', 'handle_disconnect'):
+            with self.subTest(handler=name):
+                self.assertIs(
+                    getattr(MoyuWeilong10Driver, name),
+                    getattr(Driver, name),
+                )
 
     def test_init_cypher(self) -> None:
         """Test init cypher."""
-        result = self.driver.init_cypher()
-        self.assertIsNotNone(result)
-        self.assertIsNotNone(self.driver.cypher)
+        cypher = self.driver.init_cypher()
+        self.assertIsNotNone(cypher)
 
     def test_send_command_handler_request_facelets(self) -> None:
         """Test send command handler request facelets."""
@@ -74,88 +272,64 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
 
             result = self.driver.send_command_handler('REQUEST_FACELETS')
 
-            mock_cypher.encrypt.assert_called_once()
-            args = mock_cypher.encrypt.call_args[0]
-            self.assertEqual(args[0][0], 0xA3)
             self.assertEqual(result, b'encrypted_data')
+            self.assertEqual(mock_cypher.encrypt.call_args[0][0][0], 0xA3)
 
     def test_send_command_handler_request_hardware(self) -> None:
         """Test send command handler request hardware."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
-            result = self.driver.send_command_handler('REQUEST_HARDWARE')
+            self.driver.send_command_handler('REQUEST_HARDWARE')
 
-            args = mock_cypher.encrypt.call_args[0]
-            self.assertEqual(args[0][0], 0xA1)
-            self.assertEqual(result, b'encrypted_data')
+            self.assertEqual(mock_cypher.encrypt.call_args[0][0][0], 0xA1)
 
     def test_send_command_handler_request_battery(self) -> None:
         """Test send command handler request battery."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
-            result = self.driver.send_command_handler('REQUEST_BATTERY')
+            self.driver.send_command_handler('REQUEST_BATTERY')
 
-            args = mock_cypher.encrypt.call_args[0]
-            self.assertEqual(args[0][0], 0xA4)
-            self.assertEqual(result, b'encrypted_data')
+            self.assertEqual(mock_cypher.encrypt.call_args[0][0][0], 0xA4)
 
     def test_send_command_handler_request_enable_gyro(self) -> None:
         """Test send command handler request enable gyro."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
-            result = self.driver.send_command_handler('REQUEST_ENABLE_GYRO')
+            self.driver.send_command_handler('REQUEST_ENABLE_GYRO')
 
-            args = mock_cypher.encrypt.call_args[0]
-            self.assertEqual(args[0][0], 0xAC)
-            self.assertEqual(args[0][2], 0x01)
-            self.assertEqual(result, b'encrypted_data')
+            plaintext = mock_cypher.encrypt.call_args[0][0]
+            self.assertEqual(plaintext[0], 0xAC)
+            self.assertEqual(plaintext[2], 0x01)
 
     def test_send_command_handler_request_disable_gyro(self) -> None:
         """Test send command handler request disable gyro."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
-            result = self.driver.send_command_handler('REQUEST_DISABLE_GYRO')
+            self.driver.send_command_handler('REQUEST_DISABLE_GYRO')
 
-            args = mock_cypher.encrypt.call_args[0]
-            self.assertEqual(args[0][0], 0xAC)
-            self.assertEqual(args[0][2], 0x00)
-            self.assertEqual(result, b'encrypted_data')
+            plaintext = mock_cypher.encrypt.call_args[0][0]
+            self.assertEqual(plaintext[0], 0xAC)
+            self.assertEqual(plaintext[2], 0x00)
 
     def test_send_command_handler_request_reset(self) -> None:
         """Test send command handler request reset."""
         with patch.object(self.driver, 'cypher') as mock_cypher:
             mock_cypher.encrypt.return_value = b'encrypted_data'
 
-            result = self.driver.send_command_handler('REQUEST_RESET')
+            self.driver.send_command_handler('REQUEST_RESET')
 
-            args = mock_cypher.encrypt.call_args[0]
-            expected_sequence = [
-                0xA2, 0x00, 0x00, 0x00, 0x24,
-                0x92, 0x49, 0x49, 0x24, 0x92,
-                0x6D, 0xB6, 0xDB, 0x92, 0x49,
-                0x24, 0xB6, 0xDB, 0x6D, 0x00,
-            ]
-            self.assertEqual(list(args[0]), expected_sequence)
-            self.assertEqual(result, b'encrypted_data')
+            plaintext = mock_cypher.encrypt.call_args[0][0]
+            self.assertEqual(plaintext[0], 0xA2)
+            self.assertEqual(len(plaintext), 20)
 
     def test_send_command_handler_invalid_command(self) -> None:
         """Test send command handler invalid command."""
-        result = self.driver.send_command_handler('INVALID_COMMAND')
-        self.assertFalse(result)
-
-    def test_send_command_handler_empty_command(self) -> None:
-        """Test send command handler empty command."""
-        result = self.driver.send_command_handler('')
-        self.assertFalse(result)
-
-    def test_send_command_handler_none_command(self) -> None:
-        """Test send command handler none command."""
-        result = self.driver.send_command_handler(None)  # type: ignore[arg-type]
-        self.assertFalse(result)
+        self.assertFalse(self.driver.send_command_handler('NOPE'))
+        self.assertFalse(self.driver.send_command_handler(''))
 
     def test_send_command_handler_never_emits_rename(self) -> None:
         """
@@ -188,440 +362,452 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
                     f'Command {command} produced a 0xAD opcode',
                 )
 
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
-    async def test_event_handler_gyroscope_disabled(
-            self, mock_datetime: Mock, mock_time: Mock,
-    ) -> None:
-        """Test event handler gyroscope disabled."""
-        mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
+    async def test_move_frame_names_its_face_and_its_direction(self) -> None:
+        """Test a move frame publishes an URFDLB index and a bit."""
+        # The two fields carried the raw five bits mask, measured on
+        # the wire the 2026-09-02 as `face=9 direction=9 move=L'`.
+        self.driver.serial = 100
 
+        events = await self.notify(move_frame(101, [(9, 1234)]))
+
+        self.assertEqual(len(events), 1)
+        move = cast('MoveEventDict', events[0])
+        self.assertEqual(move['move'], "L'")
+        self.assertEqual(move['face'], 'URFDLB'.index('L'))
+        self.assertEqual(move['direction'], 1)
+        self.assertEqual(move['serial'], 101)
+        self.assertEqual(move['cube_timestamp'], 1234)
+
+    async def test_move_frame_names_the_six_faces(self) -> None:
+        """Test the six masks of the cube name the six faces."""
+        for mask, expected in enumerate(
+                ['F', "F'", 'B', "B'", 'U', "U'",
+                 'D', "D'", 'L', "L'", 'R', "R'"],
+        ):
+            with self.subTest(mask=mask):
+                self.driver.serial = 0
+                self.driver.cube_timestamp = 0.0
+
+                events = await self.notify(move_frame(1, [(mask, 100)]))
+
+                move = cast('MoveEventDict', events[0])
+                self.assertEqual(move['move'], expected)
+                self.assertEqual(
+                    move['face'], 'URFDLB'.index(expected[0]),
+                )
+                self.assertEqual(move['direction'], mask & 1)
+
+    async def test_move_frame_out_of_domain_keeps_the_clock_running(
+            self,
+    ) -> None:
+        """Test an unnamable mask costs the move, never the clock."""
+        # Five bits name sixteen faces for six : masks 6 to 15, so
+        # move values from 12 up, have no move to answer to. The clock
+        # of the cube advanced all the same, and dropping it would
+        # shift every move coming after.
+        self.driver.serial = 100
+
+        with self.assertLogs(
+                'term_timer.bluetooth.drivers.moyu', level='DEBUG',
+        ) as logged:
+            events = await self.notify(move_frame(101, [(12, 1234)]))
+
+        self.assertEqual(events, [])
+        self.assertEqual(self.driver.cube_timestamp, 1234)
+        self.assertEqual(self.driver.serial, 101)
+        self.assertIn('out of domain move', logged.output[0])
+        self.assertIn('mask "6"', logged.output[0])
+
+    async def test_move_frame_carries_five_moves_oldest_first(self) -> None:
+        """Test a full move frame delivers its five moves in order."""
+        self.driver.serial = 100
+
+        events = await self.notify(
+            move_frame(105, [
+                (10, 500),   # serial 105, R
+                (8, 400),    # serial 104, L
+                (6, 300),    # serial 103, D
+                (4, 200),    # serial 102, U
+                (2, 100),    # serial 101, B
+            ]),
+        )
+
+        self.assertEqual(len(events), MOYU_MOVE_CAPACITY)
+        moves = [cast('MoveEventDict', event) for event in events]
+
+        self.assertEqual(
+            [move['serial'] for move in moves],
+            [101, 102, 103, 104, 105],
+        )
+        self.assertEqual(
+            [move['move'] for move in moves],
+            ['B', 'U', 'D', 'L', 'R'],
+        )
+        # Oldest first, so the clock of the cube only ever grows
+        self.assertEqual(
+            [move['cube_timestamp'] for move in moves],
+            [100, 300, 600, 1000, 1500],
+        )
+        # Only the newest move of a frame has a local timestamp
+        self.assertEqual(
+            [move['local_timestamp'] is None for move in moves],
+            [True, True, True, True, False],
+        )
+
+    async def test_move_frame_serials_wrap_on_their_byte(self) -> None:
+        """Test the counter of the cube is compared on a byte."""
+        self.driver.serial = 254
+
+        events = await self.notify(
+            move_frame(1, [(0, 100), (2, 100), (4, 100)]),
+        )
+
+        self.assertEqual(
+            [cast('MoveEventDict', event)['serial'] for event in events],
+            [255, 0, 1],
+        )
+
+    async def test_move_frame_is_capped_at_the_capacity(self) -> None:
+        """Test a gap wider than the frame yields what it carries."""
+        self.driver.serial = 100
+
+        events = await self.notify(
+            move_frame(120, [(0, 100)] * MOYU_MOVE_CAPACITY),
+        )
+
+        self.assertEqual(len(events), MOYU_MOVE_CAPACITY)
+        self.assertEqual(self.driver.serial, 120)
+
+    async def test_move_frame_of_a_serial_that_did_not_move(self) -> None:
+        """Test a repeated counter publishes nothing."""
+        self.driver.serial = 100
+
+        self.assertEqual(await self.notify(move_frame(100, [(0, 100)])), [])
+
+    async def test_moves_are_blocked_before_the_facelets(self) -> None:
+        """Test event handler moves blocked before facelets."""
+        self.assertEqual(self.driver.serial, -1)
+
+        self.assertEqual(await self.notify(move_frame(101, [(0, 100)])), [])
+
+    async def test_move_frame_falls_back_on_the_local_clock(self) -> None:
+        """Test a null register is replaced by milliseconds."""
+        # The register of the cube counts in milliseconds, and the
+        # local elapsed time standing in for an overflow is converted
+        # to them. It was added in seconds, which is the defect the
+        # Gen2 carried at the same place before the socle took it.
+        self.driver.serial = 100
+        self.driver.last_move_timestamp = self.timestamp - timedelta(
+            seconds=1.5,
+        )
+
+        events = await self.notify(move_frame(101, [(0, 0)]))
+
+        move = cast('MoveEventDict', events[0])
+        self.assertEqual(move['cube_timestamp'], 1500)
+
+    async def test_move_frame_of_a_saturated_register(self) -> None:
+        """Test a saturated register is replaced by milliseconds."""
+        # 0xFFFF is the same register as the null one, stopped at its
+        # ceiling rather than wrapped : the cube had been still for
+        # more than 65,5 seconds. Added as it comes, it would push the
+        # clock of the cube a minute forward. Measured the 2026-09-04,
+        # once in 366 moves, on the frame following a long pause.
+        self.driver.serial = 100
+        self.driver.last_move_timestamp = self.timestamp - timedelta(
+            seconds=2.0,
+        )
+
+        events = await self.notify(move_frame(101, [(0, 0xFFFF)]))
+
+        move = cast('MoveEventDict', events[0])
+        self.assertEqual(move['cube_timestamp'], 2000)
+
+    async def test_move_frame_of_a_saturated_register_opening_a_session(
+            self) -> None:
+        """Test a saturated register alone leaves the clock in place."""
+        # The very case the cube produced : the first move of a session
+        # carries a gap inherited from before the connection, and there
+        # is no earlier move to date it against. The clock stays where
+        # it is rather than opening on 65,5 seconds.
+        self.driver.serial = 100
+
+        self.assertIsNone(self.driver.last_move_timestamp)
+
+        events = await self.notify(move_frame(101, [(0, 0xFFFF)]))
+
+        move = cast('MoveEventDict', events[0])
+        self.assertEqual(move['cube_timestamp'], 0)
+        self.assertEqual(self.driver.cube_timestamp, 0)
+
+    async def test_move_frame_of_a_null_register_opening_a_session(
+            self) -> None:
+        """Test an overflow alone leaves the clock in place."""
+        self.driver.serial = 100
+
+        self.assertIsNone(self.driver.last_move_timestamp)
+
+        events = await self.notify(move_frame(101, [(0, 0)]))
+
+        move = cast('MoveEventDict', events[0])
+        self.assertEqual(move['cube_timestamp'], 0)
+
+    async def test_facelets_frame_of_a_solved_cube(self) -> None:
+        """Test a solved state is read in the URFDLB order."""
+        events = await self.notify(facelets_frame(50, solved_stickers()))
+
+        self.assertEqual(len(events), 1)
+        facelets = cast('FaceletsEventDictNoState', events[0])
+        self.assertEqual(facelets['serial'], 50)
+        self.assertEqual(facelets['facelets'], SOLVED)
+
+    async def test_reset_is_answered_by_the_command_read_back(
+            self) -> None:
+        """Test the frame answering a reset is the command itself."""
+        # Measured on a Weilong v10 AI the 2026-09-04 (§6.5) : this
+        # protocol has no reset message, and the cube answers
+        # REQUEST_RESET with the very bytes it was written — 0xA2
+        # turned 0xA3, and its serial in place of the trailing zero.
+        answer = bytes.fromhex(
+            'a3000000249249492492'
+            '6db6db924924b6db6dea',
+        )
+
+        events = await self.notify(answer)
+
+        self.assertEqual(len(events), 1)
+        facelets = cast('FaceletsEventDictNoState', events[0])
+        self.assertEqual(facelets['serial'], 234)
+        self.assertEqual(facelets['facelets'], SOLVED)
+
+        with patch.object(self.driver, 'cypher') as mock_cypher:
+            mock_cypher.encrypt.return_value = b'encrypted_data'
+
+            self.driver.send_command_handler('REQUEST_RESET')
+
+            written = mock_cypher.encrypt.call_args[0][0]
+
+        self.assertEqual(written[0], 0xA2)
+        self.assertEqual(bytes(written[1:19]), answer[1:19])
+        self.assertEqual(written[19], 0x00)
+
+    async def test_facelets_frame_unblocks_the_moves(self) -> None:
+        """Test the counter starts on the state the driver could read."""
+        await self.notify(facelets_frame(50, solved_stickers()))
+
+        self.assertEqual(self.driver.serial, 50)
+
+    async def test_facelets_frame_does_not_restart_the_counter(self) -> None:
+        """Test only the first state read starts the counter."""
+        # The counter is the one of the cube and not of the session :
+        # a facelets frame arriving mid solve says where the cube is,
+        # never where the moves resume from.
+        await self.notify(facelets_frame(50, solved_stickers()))
+        await self.notify(facelets_frame(80, solved_stickers()))
+
+        self.assertEqual(self.driver.serial, 50)
+
+    async def test_facelets_frame_places_a_turned_sticker(self) -> None:
+        """Test a sticker of another colour lands where it belongs."""
+        # The first sticker of the native face U — the face MOYU_FACES
+        # sends to the head of the string — carries the colour of R.
+        stickers = solved_stickers()
+        stickers[MOYU_FACE_NAMES.index('U') * STICKERS_PER_FACE] = (
+            MOYU_FACE_NAMES.index('R')
+        )
+
+        events = await self.notify(facelets_frame(50, stickers))
+
+        facelets = cast('FaceletsEventDictNoState', events[0])
+        self.assertEqual(facelets['facelets'], 'R' + SOLVED[1:])
+
+    async def test_facelets_frame_out_of_domain_is_dropped_whole(
+            self,
+    ) -> None:
+        """Test a colour of 6 or 7 costs the frame, not a sticker."""
+        # Skipping the sticker would shorten the string and slide
+        # every one coming after it : a false state is worse than no
+        # state, the driver already holding its moves until one comes.
+        for colour in (6, 7):
+            with self.subTest(colour=colour):
+                stickers = solved_stickers()
+                stickers[9] = colour
+
+                with self.assertLogs(
+                        'term_timer.bluetooth.drivers.moyu', level='DEBUG',
+                ) as logged:
+                    events = await self.notify(facelets_frame(50, stickers))
+
+                self.assertEqual(events, [])
+                self.assertEqual(self.driver.serial, -1)
+                self.assertIn('out of domain colour', logged.output[0])
+
+    async def test_hardware_frame_reads_its_identity(self) -> None:
+        """Test event handler hardware event."""
+        events = await self.notify(
+            hardware_frame(
+                'MY32AI01', (1, 2, 3, 4), 123,
+                enabled=True, ready=True,
+            ),
+        )
+
+        self.assertEqual(len(events), 1)
+        hardware = cast('HardwareEventMoyuDict', events[0])
+        self.assertEqual(hardware['hardware_name'], 'MY32AI01')
+        self.assertEqual(hardware['hardware_version'], '1.2')
+        self.assertEqual(hardware['software_version'], '3.4')
+        self.assertEqual(hardware['serial'], 123)
+        self.assertTrue(hardware['gyroscope_enabled'])
+        self.assertTrue(hardware['gyroscope_ready'])
+        self.assertTrue(hardware['gyroscope_supported'])
+
+    async def test_hardware_frame_supports_what_it_has_turned_off(
+            self,
+    ) -> None:
+        """Test gyroscope_supported no longer depends on enabled."""
+        # The cube in hand announces enabled False, ready True, and
+        # was published as not supporting a gyroscope it had simply
+        # switched off. Measured on a WCU_MY32_A6A7 the 2026-09-02.
+        events = await self.notify(
+            hardware_frame(
+                'MY32AI01', (1, 2, 3, 4), 7,
+                enabled=False, ready=True,
+            ),
+        )
+
+        hardware = cast('HardwareEventMoyuDict', events[0])
+        self.assertFalse(hardware['gyroscope_enabled'])
+        self.assertTrue(hardware['gyroscope_ready'])
+        self.assertTrue(hardware['gyroscope_supported'])
+
+    async def test_hardware_frame_of_a_cube_without_a_sensor(self) -> None:
+        """Test a cube saying it is not ready is not said to support."""
+        events = await self.notify(
+            hardware_frame(
+                'MY32AI01', (1, 2, 3, 4), 7,
+                enabled=False, ready=False,
+            ),
+        )
+
+        hardware = cast('HardwareEventMoyuDict', events[0])
+        self.assertFalse(hardware['gyroscope_supported'])
+
+    async def test_gyro_config_frame_follows_what_the_cube_announces(
+            self,
+    ) -> None:
+        """Test the answer to a gyroscope command is read, not assumed."""
+        # The command writes its flag in the byte 2 and the handler
+        # reads its own in the byte 2 : coherent, and not a proof. The
+        # V3 fell exactly there (§5.6.bis), and what the two answers
+        # of the MoYu really carry is what the bench of §6.8 raises.
+        for enabled in (0x01, 0x00):
+            with self.subTest(enabled=enabled):
+                frame = bytearray(20)
+                frame[0] = 0xAC
+                frame[1] = 0x01
+                frame[2] = enabled
+
+                events = await self.notify(bytes(frame))
+
+                self.assertEqual(len(events), 1)
+                config = cast('GyroConfigEventDict', events[0])
+                self.assertEqual(
+                    config['gyroscope_enabled'], bool(enabled),
+                )
+                self.assertTrue(config['gyroscope_ready'])
+                self.assertTrue(config['gyroscope_supported'])
+
+    async def test_gyroscope_frame_is_silent_when_disarmed(self) -> None:
+        """Test event handler gyroscope disabled."""
         self.driver.use_gyroscope = False
 
-        # Create mock data that represents a gyro event (0xAB)
-        encrypted_data = bytearray(20)
-        decrypted_data = bytearray([0xAB] + [0] * 19)
+        frame = bytearray(20)
+        frame[0] = 0xAB
 
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = decrypted_data
+        self.assertEqual(await self.notify(bytes(frame)), [])
 
-            mock_sender = Mock()
-            result = await self.driver.event_handler(
-                mock_sender, encrypted_data,
-            )
-
-            self.assertEqual(result, [])
-
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
-    async def test_event_handler_gyroscope_enabled(
-            self, mock_datetime: Mock, mock_time: Mock,
-    ) -> None:
+    async def test_gyroscope_frame_reads_its_quaternion(self) -> None:
         """Test event handler gyroscope enabled."""
-        mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
-
         self.driver.use_gyroscope = True
 
-        # Create test data for gyro event
-        test_data = bytearray(20)
-        test_data[0] = 0xAB  # Gyro event
+        frame = bytearray(20)
+        frame[0] = 0xAB
+        # Four words of thirty two bits, little endian and signed
+        frame[1:5] = (self.driver.factor).to_bytes(4, 'little')
+        frame[5:9] = (-self.driver.factor).to_bytes(
+            4, 'little', signed=True,
+        )
+        frame[9:13] = (0).to_bytes(4, 'little')
+        frame[13:17] = (self.driver.factor // 2).to_bytes(4, 'little')
 
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
+        events = await self.notify(bytes(frame))
 
-            with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg = Mock()
-                mock_msg_class.return_value = mock_msg
-                mock_msg.get_bit_word.side_effect = [
-                    0xAB,  # event type
-                    1000,  # qw
-                    2000,  # qx
-                    3000,  # qy
-                    4000,  # qz
-                ]
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]['event'], 'gyro')
+        gyro = cast('GyroEventDictNoVelocity', events[0])
+        self.assertEqual(
+            gyro['quaternion'],
+            {'w': 1.0, 'x': -1.0, 'y': 0.0, 'z': 0.5},
+        )
 
-                mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
-
-                self.assertEqual(len(result), 1)
-                event = result[0]
-                self.assertEqual(event['event'], 'gyro')
-                self.assertEqual(event['clock'], 123456789)
-                self.assertEqual(event['timestamp'], mock_timestamp)
-                self.assertIn('quaternion', event)
-
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
-    async def test_event_handler_moves_blocked_before_facelets(
-            self, mock_datetime: Mock, mock_time: Mock,
-    ) -> None:
-        """Test event handler moves blocked before facelets."""
-        mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
-
-        # Ensure last_serial is -1 (no facelets received yet)
-        self.driver.last_serial = -1
-
-        # Create test data for move event
-        test_data = bytearray(20)
-        test_data[0] = 0xA5  # Move event
-
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
-
-            with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg = Mock()
-                mock_msg_class.return_value = mock_msg
-                mock_msg.get_bit_word.return_value = 0xA5
-
-                mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
-
-                self.assertEqual(result, [])
-
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
-    async def test_event_handler_move_event(
-            self, mock_datetime: Mock, mock_time: Mock,
-    ) -> None:
-        """Test event handler move event."""
-        mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
-
-        # Set last_serial so moves are not blocked
-        self.driver.last_serial = 100
-        self.driver.last_move_timestamp = mock_timestamp
-
-        test_data = bytearray(20)
-        test_data[0] = 0xA5  # Move event
-
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
-
-            with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg = Mock()
-                mock_msg_class.return_value = mock_msg
-                mock_msg.get_bit_word.side_effect = [
-                    0xA5,  # event type
-                    102,   # serial (diff of 2)
-                    10,    # move_value (face 5, direction 0 -> "R")
-                    1000,  # elapsed time
-                    8,     # another move_value
-                    500,   # another elapsed time
-                ]
-
-                mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
-
-                self.assertEqual(len(result), 2)
-                self.assertEqual(result[0]['event'], 'move')
-                # Skip checking 'move' key as it doesn't exist in type
-                self.assertEqual(result[1]['event'], 'move')
-
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
-    async def test_event_handler_facelets_event(
-            self, mock_datetime: Mock, mock_time: Mock,
-    ) -> None:
-        """Test event handler facelets event."""
-        mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
-
-        test_data = bytearray(20)
-        test_data[0] = 0xA3  # Facelets event
-
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
-
-            with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg = Mock()
-                mock_msg_class.return_value = mock_msg
-
-                # Mock the bit extraction for facelets
-                def mock_get_bit_word(start: int, length: int) -> int:
-                    if start == 0 and length == 8:
-                        return 0xA3  # event type
-                    if start == 152 and length == 8:
-                        return 50  # serial
-                    # Return facelet color values (0-5 for FBUDLR)
-                    return start % 6
-
-                mock_msg.get_bit_word.side_effect = mock_get_bit_word
-
-                mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
-
-                self.assertEqual(len(result), 1)
-                event = result[0]
-                self.assertEqual(event['event'], 'facelets')
-                facelets_event = cast('FaceletsEventDictNoState', event)
-                self.assertEqual(facelets_event['serial'], 50)
-                self.assertIn('facelets', facelets_event)
-                self.assertEqual(len(facelets_event['facelets']), 54)
-
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
-    async def test_event_handler_hardware_event(
-            self, mock_datetime: Mock, mock_time: Mock,
-    ) -> None:
-        """Test event handler hardware event."""
-        mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
-
-        test_data = bytearray(20)
-        test_data[0] = 0xA1  # Hardware event
-
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
-
-            with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg = Mock()
-                mock_msg_class.return_value = mock_msg
-
-                def mock_get_bit_word(start: int, length: int) -> int:  # noqa: PLR0911
-                    if start == 0 and length == 8:
-                        return 0xA1  # event type
-                    if start == 72 and length == 8:
-                        return 1  # hw_major
-                    if start == 80 and length == 8:
-                        return 2  # hw_minor
-                    if start == 88 and length == 8:
-                        return 3  # sw_major
-                    if start == 96 and length == 8:
-                        return 4  # sw_minor
-                    if start == 105 and length == 1:
-                        return 1  # gyro_enabled
-                    if start == 106 and length == 1:
-                        return 1  # gyro_supported
-                    if start == 109 and length == 8:
-                        return 123  # serial
-                    # Hardware name characters
-                    return ord('A')
-
-                mock_msg.get_bit_word.side_effect = mock_get_bit_word
-
-                mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
-
-                self.assertEqual(len(result), 1)
-                event = result[0]
-                self.assertEqual(event['event'], 'hardware')
-                hw_event = cast('HardwareEventMoyuDict', event)
-                self.assertEqual(hw_event['hardware_version'], '1.2')
-                self.assertEqual(hw_event['software_version'], '3.4')
-                self.assertTrue(hw_event['gyroscope_enabled'])
-                self.assertTrue(hw_event['gyroscope_ready'])
-                self.assertTrue(hw_event['gyroscope_supported'])
-                self.assertEqual(hw_event['serial'], 123)
-
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
-    async def test_event_handler_battery_event(
-            self, mock_datetime: Mock, mock_time: Mock,
-    ) -> None:
+    async def test_battery_frame_is_the_one_of_the_socle(self) -> None:
         """Test event handler battery event."""
-        mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
+        frame = bytearray(20)
+        frame[0] = 0xA4
+        frame[1] = 75
 
-        test_data = bytearray(20)
-        test_data[0] = 0xA4  # Battery event
+        events = await self.notify(bytes(frame))
 
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
+        self.assertEqual(len(events), 1)
+        battery = cast('BatteryEventDict', events[0])
+        self.assertEqual(battery['level'], 75)
+        # MoYu declares no charging state, and the socle publishes none
+        self.assertEqual(battery['charging_state'], 0)
 
-            with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg = Mock()
-                mock_msg_class.return_value = mock_msg
-                mock_msg.get_bit_word.side_effect = [
-                    0xA4,  # event type
-                    75,    # battery level
-                ]
-
-                mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
-
-                self.assertEqual(len(result), 1)
-                event = result[0]
-                self.assertEqual(event['event'], 'battery')
-                battery_event = cast('BatteryEventDict', event)
-                self.assertEqual(battery_event['level'], 75)
-
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
-    async def test_event_handler_battery_level_capped(
-            self, mock_datetime: Mock, mock_time: Mock,
-    ) -> None:
+    async def test_battery_frame_level_is_capped(self) -> None:
         """Test event handler battery level capped."""
-        mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
+        frame = bytearray(20)
+        frame[0] = 0xA4
+        frame[1] = 150
 
-        test_data = bytearray(20)
-        test_data[0] = 0xA4
+        events = await self.notify(bytes(frame))
 
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
+        self.assertEqual(cast('BatteryEventDict', events[0])['level'], 100)
 
-            with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg = Mock()
-                mock_msg_class.return_value = mock_msg
-                mock_msg.get_bit_word.side_effect = [
-                    0xA4,  # event type
-                    150,   # battery level > 100
-                ]
+    async def test_disconnect_frame_journals_its_payload(self) -> None:
+        """Test the payload of a disconnect is journaled before cutting."""
+        # The oracle of the open question 2, armed on the fourth and
+        # last protocol : the byte is read at the payload_offset of the
+        # protocol, and no cube of any generation has ever sent one.
+        frame = bytearray(20)
+        frame[0] = 0xA0
+        frame[1] = 0x03
 
-                mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
+        with self.assertLogs(
+                'term_timer.bluetooth.drivers.base', level='WARNING',
+        ) as logged:
+            events = await self.notify(bytes(frame))
 
-                self.assertEqual(len(result), 1)
-                event = result[0]
-                battery_event = cast('BatteryEventDict', event)
-                self.assertEqual(battery_event['level'], 100)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]['event'], 'disconnect')
+        self.assertIn('payload starts with "0x03"', logged.output[0])
+        self.mock_client.disconnect.assert_awaited_once()
 
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
-    async def test_event_handler_gyro_config_event(
-            self, mock_datetime: Mock, mock_time: Mock,
-    ) -> None:
-        """Test event handler gyro config event."""
-        mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
-
-        test_data = bytearray(20)
-        test_data[0] = 0xAC  # Gyro config event
-
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
-
-            with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg = Mock()
-                mock_msg_class.return_value = mock_msg
-                mock_msg.get_bit_word.side_effect = [
-                    0xAC,  # event type
-                    1,     # gyro_enabled
-                    1,     # gyro_ready
-                ]
-
-                mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
-
-                self.assertEqual(len(result), 1)
-                event = result[0]
-                self.assertEqual(event['event'], 'gyro-config')
-                gyro_config_event = cast('GyroConfigEventDict', event)
-                self.assertTrue(gyro_config_event['gyroscope_enabled'])
-                self.assertTrue(gyro_config_event['gyroscope_ready'])
-                self.assertTrue(gyro_config_event['gyroscope_supported'])
-
-    @patch('term_timer.bluetooth.drivers.moyu.time.perf_counter_ns')
-    @patch('term_timer.bluetooth.drivers.moyu.datetime')
-    @patch('term_timer.bluetooth.drivers.moyu.logger')
-    async def test_event_handler_unknown_event(
-            self, mock_logger: Mock, mock_datetime: Mock, mock_time: Mock,
-    ) -> None:
+    async def test_unknown_opcode_is_journaled(self) -> None:
         """Test event handler unknown event."""
-        mock_time.return_value = 123456789
-        mock_timestamp = datetime.now(tz=timezone.utc)  # noqa: UP017
-        mock_datetime.now.return_value = mock_timestamp
+        frame = bytearray(20)
+        frame[0] = 0xA2
 
-        test_data = bytearray(20)
-        test_data[0] = 0xFF  # Unknown event
+        with self.assertLogs(
+                'term_timer.bluetooth.drivers.base', level='DEBUG',
+        ) as logged:
+            events = await self.notify(bytes(frame))
 
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = test_data
-
-            with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg = Mock()
-                mock_msg_class.return_value = mock_msg
-                mock_msg.get_bit_word.return_value = 0xFF
-
-                mock_sender = Mock()
-                result = await self.driver.event_handler(mock_sender, test_data)
-
-                self.assertEqual(result, [])
-                mock_logger.debug.assert_called_once()
+        self.assertEqual(events, [])
+        self.assertIn('Unknown event type "0xA2"', logged.output[0])
 
     def test_event_handler_is_async(self) -> None:
         """Test event handler is async."""
-        # Verify that event_handler is an async function
-        self.assertTrue(asyncio.iscoroutinefunction(self.driver.event_handler))
-
-    async def test_event_handler_with_invalid_data(self) -> None:
-        """Test event handler with invalid data."""
-        # Test with empty data
-        with patch.object(self.driver, 'cypher') as mock_cypher:
-            mock_cypher.decrypt.return_value = bytearray()
-
-            with patch(
-                    'term_timer.bluetooth.drivers.moyu.GanProtocolMessage',
-            ) as mock_msg_class:
-                mock_msg_class.side_effect = ValueError('Invalid data')
-
-                with self.assertRaises(ValueError):
-                    mock_sender = Mock()
-                    await self.driver.event_handler(mock_sender, bytearray())
-
-    def test_move_value_to_face_mapping(self) -> None:
-        """Test move value to face mapping."""
-        # Test the move value to face/direction mapping
-        # move_value >> 1 gives face index (0-5 for FBUDLR)
-        # move_value & 1 gives direction (0 for normal, 1 for prime)
-
-        test_cases = [
-            (0, 'F'),    # 0 >> 1 = 0 (F), 0 & 1 = 0 (normal)
-            (1, "F'"),   # 1 >> 1 = 0 (F), 1 & 1 = 1 (prime)
-            (2, 'B'),    # 2 >> 1 = 1 (B), 2 & 1 = 0 (normal)
-            (3, "B'"),   # 3 >> 1 = 1 (B), 3 & 1 = 1 (prime)
-            (10, 'R'),   # 10 >> 1 = 5 (R), 10 & 1 = 0 (normal)
-            (11, "R'"),  # 11 >> 1 = 5 (R), 11 & 1 = 1 (prime)
-        ]
-
-        face_map = 'FBUDLR'
-        direction_map = " '"
-
-        for move_value, expected in test_cases:
-            face_idx = move_value >> 1
-            direction_idx = move_value & 1
-            actual = face_map[face_idx] + direction_map[direction_idx]
-            self.assertEqual(actual.strip(), expected)
-
-    def test_facelets_face_order(self) -> None:
-        """Test facelets face order."""
-        # Test that the face order mapping is correct
-        # The code uses faces = [2, 5, 0, 3, 4, 1] to parse in URFDLB order
-        expected_order = [2, 5, 0, 3, 4, 1]  # Maps URFDLB to FBUDLR indices
-        face_names = ['F', 'B', 'U', 'D', 'L', 'R']  # FBUDLR order
-
-        # Verify the mapping gives us URFDLB when applied to FBUDLR
-        result_order = [face_names[i] for i in expected_order]
-        expected_result = ['U', 'R', 'F', 'D', 'L', 'B']
-
-        self.assertEqual(result_order, expected_result)
+        self.assertTrue(
+            asyncio.iscoroutinefunction(self.driver.event_handler),
+        )
