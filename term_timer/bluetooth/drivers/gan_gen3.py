@@ -9,7 +9,6 @@ import logging
 from datetime import datetime
 from typing import ClassVar
 
-from bleak import BleakClient
 from cubing_algs.facelets import cubies_to_facelets
 
 from term_timer.bluetooth.annotations import EventDict
@@ -59,20 +58,14 @@ class GanGen3Driver(GanGen2Driver):
         0x14: 'handle_solved',
     }
 
-    def __init__(self, client: BleakClient,
-                 *, use_gyroscope: bool) -> None:
+    def post_init(self) -> None:
         """
-        Initialize the GAN Gen3 driver with move tracking capabilities.
+        Set up the timestamp tracked by the debounce of a facelets check.
 
         The serial tracking and the FIFO buffer of the missed moves come
         from the Gen2 driver, which owns them for the three generations.
-
-        Args:
-            client: The BLE client connection to the cube.
-            use_gyroscope: Whether the driver should use gyroscope data.
-
         """
-        super().__init__(client, use_gyroscope=use_gyroscope)
+        super().post_init()
 
         self.last_local_timestamp: datetime | None = None
 

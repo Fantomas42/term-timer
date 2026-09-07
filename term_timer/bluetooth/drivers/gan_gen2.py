@@ -11,7 +11,6 @@ from datetime import datetime
 from datetime import timezone
 from typing import ClassVar
 
-from bleak import BleakClient
 from cubing_algs.facelets import cubies_to_facelets
 
 from term_timer.bluetooth.annotations import DisconnectEventDict
@@ -35,7 +34,6 @@ from term_timer.bluetooth.constants import MOYU_AI_ENCRYPTION_KEY
 from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
-from term_timer.bluetooth.salt import get_salt
 
 logger = logging.getLogger(__name__)
 
@@ -73,23 +71,17 @@ class GanGen2Driver(Driver):
         0x0E: 'handle_account_binding',
     }
 
-    def __init__(self, client: BleakClient,
-                 *, use_gyroscope: bool) -> None:
+    def post_init(self) -> None:
         """
-        Initialize GAN Gen2 driver with BLE client connection.
+        Set up move buffering and history-request state.
 
         The serial the cube last sent and the clock of its moves come
         from `Driver`, which holds them for the four protocols. What
         is added here is the serial last *published*, which only a
         driver buffering its moves needs, and the FIFO buffer telling
         the two apart.
-
-        Args:
-            client: The BLE client connection to the cube.
-            use_gyroscope: Whether the driver should use gyroscope data.
-
         """
-        super().__init__(client, use_gyroscope=use_gyroscope)
+        super().post_init()
 
         self.last_serial: int = -1
         self.move_buffer: list[MoveEventDict] = []
@@ -108,12 +100,12 @@ class GanGen2Driver(Driver):
             return self.encrypter(
                 MOYU_AI_ENCRYPTION_KEY['key'],
                 MOYU_AI_ENCRYPTION_KEY['iv'],
-                get_salt(self.client.address),
+                self.resolve_salt(),
             )
         return self.encrypter(
             GAN_ENCRYPTION_KEY['key'],
             GAN_ENCRYPTION_KEY['iv'],
-            get_salt(self.client.address),
+            self.resolve_salt(),
         )
 
     def send_command_handler(self, command: str) -> bytes | bool:

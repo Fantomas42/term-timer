@@ -13,9 +13,12 @@ from bleak import BleakClient
 from bleak import BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.backends.device import BLEDevice
+from bleak.backends.scanner import AdvertisementData
 from bleak.exc import BleakDBusError
 from bleak.exc import BleakError
 
+from term_timer.bluetooth.advertisement import decode_advertised_battery
+from term_timer.bluetooth.advertisement import decode_advertised_mac
 from term_timer.bluetooth.annotations import DisconnectEventDict
 from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.constants import PREFIX
@@ -112,6 +115,10 @@ class BluetoothInterface:
             or None if not initialized.
         disconnecting: Whether the application asked for the disconnection,
             the link dropping on its own otherwise.
+        last_advertisement: The advertisement of the cube selected by the
+            last scan, or None when no scan ran (a configured cube dialed
+            directly by address). Handed to the driver, whose MAC is
+            preferred for the salt, see `Driver.resolve_salt()`.
         scan_timeout: Maximum seconds to scan for Bluetooth devices.
         connect_timeout: Maximum seconds to wait for connection establishment.
 
@@ -120,6 +127,7 @@ class BluetoothInterface:
     client: BleakClient | None = None
     driver: Driver | None = None
     disconnecting: bool = False
+    last_advertisement: AdvertisementData | None = None
 
     scan_timeout: int = 5
     connect_timeout: int = 5
@@ -202,6 +210,7 @@ class BluetoothInterface:
                     self.driver = driver(
                         self.client,
                         use_gyroscope=use_gyroscope,
+                        advertisement=self.last_advertisement,
                     )
                     break
             if self.driver:
@@ -515,9 +524,11 @@ class BluetoothInterface:
             self.scan_timeout,
         )
         selected_device = None
+        selected_advertisement = None
         try:
-            devices = await BleakScanner.discover(
+            devices_and_adv = await BleakScanner.discover(
                 timeout=self.scan_timeout,
+                return_adv=True,
             )
         except (BleakError, OSError) as error:
             logger.debug(str(error))
@@ -525,7 +536,7 @@ class BluetoothInterface:
 
         known = {address.lower() for address in known_addresses}
 
-        for device in devices:
+        for device, advertisement_data in devices_and_adv.values():
             name = device.name or 'N/A'
             logger.debug(' * %s %s', device, name)
 
@@ -535,11 +546,29 @@ class BluetoothInterface:
                         'Found %s cube: %s (%s)',
                         prefix, device.name, device.address,
                     )
+                    logger.debug(
+                        ' * manufacturer_data=%s mac=%s battery=%s',
+                        {
+                            company_id: payload.hex()
+                            for company_id, payload in
+                            advertisement_data.manufacturer_data.items()
+                        },
+                        decode_advertised_mac(
+                            advertisement_data.manufacturer_data,
+                        ),
+                        decode_advertised_battery(
+                            advertisement_data.manufacturer_data,
+                        ),
+                    )
+
                     if device.address.lower() in known:
                         logger.debug('Configured cube, selected')
+                        self.last_advertisement = advertisement_data
                         return device
 
-                    selected_device = selected_device or device
+                    if selected_device is None:
+                        selected_device = device
+                        selected_advertisement = advertisement_data
                     break
 
         if not selected_device:
@@ -551,4 +580,5 @@ class BluetoothInterface:
                 selected_device.address,
             )
 
+        self.last_advertisement = selected_advertisement
         return selected_device

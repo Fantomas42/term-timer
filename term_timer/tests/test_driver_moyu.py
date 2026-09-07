@@ -187,7 +187,7 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
         self.mock_client.disconnect = AsyncMock()
 
         with patch(
-                'term_timer.bluetooth.drivers.moyu.get_salt',
+                'term_timer.bluetooth.drivers.base.get_salt',
                 return_value=b'salt12',
         ):
             self.driver = MoyuWeilong10Driver(

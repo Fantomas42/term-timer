@@ -18,6 +18,8 @@ from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
 
 if TYPE_CHECKING:
+    from bleak.backends.scanner import AdvertisementData
+
     from term_timer.bluetooth.annotations import EventDict
     from term_timer.bluetooth.annotations import GyroEventDict
     from term_timer.bluetooth.annotations import MoveEventDict
@@ -861,6 +863,139 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(len(store), 1)
         self.assertEqual(store[0], complex_event)
         self.assertEqual(self.driver.events[0], complex_event)
+
+
+class TestPostInit(unittest.TestCase):
+    """Tests for the post_init() hook run at the end of __init__."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        self.mock_client = Mock()
+        self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
+
+    def test_default_post_init_is_a_no_op(self) -> None:
+        """Test a driver declaring none runs the base no-op silently."""
+        # BaseDriver declares no post_init of its own: reaching this far
+        # without raising is the whole test.
+        BaseDriver(self.mock_client, use_gyroscope=False)
+
+    def test_post_init_runs_after_the_cypher_is_built(self) -> None:
+        """Test the hook fires once __init__ is otherwise complete."""
+        calls: list[str] = []
+
+        def recording_init_cypher() -> GanGen2CubeEncrypter:
+            calls.append('init_cypher')
+            return GanGen2CubeEncrypter(bytes(16), bytes(16), bytes(6))
+
+        class OrderedDriver(BaseDriver):
+            def post_init(self) -> None:
+                super().post_init()
+                calls.append('post_init')
+
+        with patch.object(
+                BaseDriver, 'init_cypher',
+                side_effect=recording_init_cypher,
+        ):
+            OrderedDriver(self.mock_client, use_gyroscope=False)
+
+        self.assertEqual(calls, ['init_cypher', 'post_init'])
+
+
+class TestResolveSalt(unittest.TestCase):
+    """Tests for the salt resolved by the advertised MAC, or its fallback."""
+
+    def setUp(self) -> None:
+        """Test setup."""
+        self.mock_client = Mock()
+        self.mock_client.address = 'AA:BB:CC:DD:EE:FF'
+        self.driver = BaseDriver(self.mock_client, use_gyroscope=False)
+
+    @staticmethod
+    def build_advertisement(manufacturer_data: dict[int, bytes]) -> (
+            'AdvertisementData'):
+        """
+        Build a bare advertisement carrying only manufacturer data.
+
+        Args:
+            manufacturer_data: The company id keyed payloads to expose.
+
+        Returns:
+            A stand-in exposing just what `resolve_salt` reads.
+
+        """
+        advertisement = Mock()
+        advertisement.manufacturer_data = manufacturer_data
+        return advertisement
+
+    def test_prefers_the_advertised_mac_over_a_valid_client_address(
+            self) -> None:
+        """Test the advertised MAC wins even when the client's own is fine."""
+        # A different address than self.mock_client's, so a result
+        # matching it proves the advertised one was actually preferred,
+        # not just used because the client's own happened to fail.
+        mac_payload = bytes(
+            [0x00, 0x00, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66],
+        )
+        self.driver.advertisement = self.build_advertisement(
+            {0x0001: mac_payload},
+        )
+
+        with patch(
+                'term_timer.bluetooth.drivers.base.get_salt',
+        ) as mock_get_salt:
+            mock_get_salt.return_value = bytearray(b'\x01' * 6)
+
+            result = self.driver.resolve_salt()
+
+        mock_get_salt.assert_called_once_with('66:55:44:33:22:11')
+        self.assertEqual(result, bytearray(b'\x01' * 6))
+
+    def test_falls_back_on_the_clients_address_without_an_advertisement(
+            self) -> None:
+        """Test a connection that skipped the scan uses the client's own."""
+        self.driver.advertisement = None
+
+        with patch(
+                'term_timer.bluetooth.drivers.base.get_salt',
+        ) as mock_get_salt:
+            mock_get_salt.return_value = bytearray(b'\x01' * 6)
+
+            result = self.driver.resolve_salt()
+
+        mock_get_salt.assert_called_once_with('AA:BB:CC:DD:EE:FF')
+        self.assertEqual(result, bytearray(b'\x01' * 6))
+
+    def test_falls_back_on_the_clients_address_when_the_mac_is_undecodable(
+            self) -> None:
+        """Test an advertisement present but MAC-less still falls back."""
+        self.driver.advertisement = self.build_advertisement({})
+
+        with patch(
+                'term_timer.bluetooth.drivers.base.get_salt',
+        ) as mock_get_salt:
+            mock_get_salt.return_value = bytearray(b'\x01' * 6)
+
+            result = self.driver.resolve_salt()
+
+        mock_get_salt.assert_called_once_with('AA:BB:CC:DD:EE:FF')
+        self.assertEqual(result, bytearray(b'\x01' * 6))
+
+    def test_raises_when_neither_source_is_usable(self) -> None:
+        """Test no advertisement and an unusable client address both fail."""
+        self.mock_client.address = 'not-a-mac-uuid'
+        self.driver.advertisement = None
+
+        with self.assertRaises(ValueError):
+            self.driver.resolve_salt()
+
+    def test_raises_when_the_advertisement_carries_no_mac_either(
+            self) -> None:
+        """Test an undecodable advertisement still falls through to raise."""
+        self.mock_client.address = 'not-a-mac-uuid'
+        self.driver.advertisement = self.build_advertisement({})
+
+        with self.assertRaises(ValueError):
+            self.driver.resolve_salt()
 
 
 class TestShippedDispatchTables(unittest.TestCase):

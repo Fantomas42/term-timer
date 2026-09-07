@@ -24,7 +24,6 @@ from term_timer.bluetooth.constants import MOYU_WEILONG_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
-from term_timer.bluetooth.salt import get_salt
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +76,7 @@ class MoyuWeilong10Driver(Driver):
         return self.encrypter(
             MOYU_WEILONG_ENCRYPTION_KEY['key'],
             MOYU_WEILONG_ENCRYPTION_KEY['iv'],
-            get_salt(self.client.address),
+            self.resolve_salt(),
         )
 
     def send_command_handler(self, command: str) -> bytes | bool:

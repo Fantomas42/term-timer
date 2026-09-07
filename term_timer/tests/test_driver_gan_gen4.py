@@ -47,7 +47,7 @@ class TestGanGen4Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR0904
         self.mock_client.disconnect = AsyncMock()
 
         with patch(
-            'term_timer.bluetooth.drivers.gan_gen2.get_salt',
+            'term_timer.bluetooth.drivers.base.get_salt',
             return_value=b'salt12',
         ):
             self.driver = GanGen4Driver(

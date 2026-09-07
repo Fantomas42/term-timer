@@ -7,6 +7,7 @@ from datetime import UTC
 from datetime import datetime
 from typing import TYPE_CHECKING
 from typing import cast
+from unittest.mock import AsyncMock
 from unittest.mock import patch
 
 from term_timer.bluetooth.interface import BluetoothInterface
@@ -686,17 +687,21 @@ class PublishedDriver:
     state_characteristic_uid = 'state-characteristic'
 
     def __init__(self, client: 'BleakClient', *,
-                 use_gyroscope: bool) -> None:
+                 use_gyroscope: bool,
+                 advertisement: object | None = None) -> None:
         """
         Hold what the interface builds a driver with.
 
         Args:
             client: The connected client the driver talks through.
             use_gyroscope: Whether the gyroscope data is wanted.
+            advertisement: The advertisement the interface found, unused
+                by this stub.
 
         """
         self.client = client
         self.use_gyroscope = use_gyroscope
+        self.advertisement = advertisement
 
 
 class PublishedClient:
@@ -928,3 +933,109 @@ class EventPublicationTestCase(unittest.IsolatedAsyncioTestCase):
             await interface.__aexit__(None, None, None)
 
         self.assertEqual(publisher.links, [])
+
+
+class ScanDevice:
+    """A BLE device stub carrying only what scan() reads."""
+
+    def __init__(self, name: str, address: str) -> None:
+        """
+        Hold the name and address a scan would report.
+
+        Args:
+            name: The advertised device name, matched against PREFIX.
+            address: The device address, a MAC on every platform but
+                macOS.
+
+        """
+        self.name = name
+        self.address = address
+
+
+class ScanAdvertisement:
+    """An advertisement stub carrying only its manufacturer data."""
+
+    def __init__(self, manufacturer_data: dict[int, bytes]) -> None:
+        """
+        Hold the company id keyed payloads a scan would report.
+
+        Args:
+            manufacturer_data: The payloads, by company id.
+
+        """
+        self.manufacturer_data = manufacturer_data
+
+
+class ScanTestCase(unittest.IsolatedAsyncioTestCase):
+    """Tests for the advertisement data a scan captures alongside a cube."""
+
+    logger_name = 'term_timer.bluetooth.interface'
+
+    discover_target = 'term_timer.bluetooth.interface.BleakScanner.discover'
+
+    async def test_scan_records_the_advertisement_of_the_selected_device(
+            self) -> None:
+        """Test last_advertisement is set to the winning candidate's."""
+        device = ScanDevice('GAN12 ui', 'AA:BB:CC:DD:EE:FF')
+        advertisement = ScanAdvertisement({0x0001: bytes(range(9))})
+        interface = BluetoothInterface(Queue())
+        devices = {device.address: (device, advertisement)}
+
+        with patch(self.discover_target, AsyncMock(return_value=devices)):
+            result = await interface.scan()
+
+        self.assertIs(result, device)
+        self.assertIs(interface.last_advertisement, advertisement)
+
+    async def test_scan_ignores_a_device_without_a_known_prefix(
+            self) -> None:
+        """Test a name matching no PREFIX leaves the advertisement unset."""
+        device = ScanDevice('Unknown Device', 'AA:BB:CC:DD:EE:FF')
+        advertisement = ScanAdvertisement({})
+        interface = BluetoothInterface(Queue())
+        devices = {device.address: (device, advertisement)}
+
+        with patch(self.discover_target, AsyncMock(return_value=devices)):
+            result = await interface.scan()
+
+        self.assertIsNone(result)
+        self.assertIsNone(interface.last_advertisement)
+
+    async def test_a_configured_cube_takes_its_advertisement_with_it(
+            self) -> None:
+        """Test the early return on a known cube sets its own advertisement."""
+        known = ScanDevice('GAN12 ui', 'AA:BB:CC:DD:EE:FF')
+        other = ScanDevice('GAN12 ui', '11:22:33:44:55:66')
+        known_advertisement = ScanAdvertisement({0x0001: bytes(range(9))})
+        other_advertisement = ScanAdvertisement({})
+        interface = BluetoothInterface(Queue())
+        devices = {
+            other.address: (other, other_advertisement),
+            known.address: (known, known_advertisement),
+        }
+
+        with patch(self.discover_target, AsyncMock(return_value=devices)):
+            result = await interface.scan(known_addresses=(known.address,))
+
+        self.assertIs(result, known)
+        self.assertIs(interface.last_advertisement, known_advertisement)
+
+    async def test_scan_logs_the_manufacturer_data_and_its_decoding(
+            self) -> None:
+        """Test the raw payload and both decode attempts reach the log."""
+        device = ScanDevice('GAN12 ui', 'AA:BB:CC:DD:EE:FF')
+        mac_payload = bytes(
+            [0x00, 0x00, 0x00, 0x22, 0xFB, 0x9D, 0x50, 0x6C, 0x54],
+        )
+        advertisement = ScanAdvertisement({0x0001: mac_payload})
+        interface = BluetoothInterface(Queue())
+        devices = {device.address: (device, advertisement)}
+
+        with patch(
+                self.discover_target, AsyncMock(return_value=devices),
+        ), self.assertLogs(self.logger_name, level='DEBUG') as logs:
+            await interface.scan()
+
+        output = '\n'.join(logs.output)
+        self.assertIn('manufacturer_data=', output)
+        self.assertIn('54:6C:50:9D:FB:22', output)

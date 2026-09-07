@@ -12,6 +12,7 @@ from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from cubing_algs.constants import FACES
 
+from term_timer.bluetooth.advertisement import decode_advertised_mac
 from term_timer.bluetooth.annotations import BatteryEventDict
 from term_timer.bluetooth.annotations import DisconnectEventDict
 from term_timer.bluetooth.annotations import EventDict
@@ -21,8 +22,11 @@ from term_timer.bluetooth.constants import CRC16_POLYNOMIAL
 from term_timer.bluetooth.constants import DIRECTIONS
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
 from term_timer.bluetooth.message import GanProtocolMessage
+from term_timer.bluetooth.salt import get_salt
 
 if TYPE_CHECKING:
+    from bleak.backends.scanner import AdvertisementData
+
     from term_timer.bluetooth.annotations import MessageHandler
 
 logger = logging.getLogger(__name__)
@@ -98,21 +102,30 @@ class Driver:
     # Only the *methods* are inherited.
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {}
 
-    def __init__(self, client: BleakClient,
-                 *, use_gyroscope: bool) -> None:
+    def __init__(
+            self,
+            client: BleakClient,
+            *,
+            use_gyroscope: bool,
+            advertisement: 'AdvertisementData | None' = None,
+    ) -> None:
         """
         Initialize driver with BleakClient and encryption.
 
         Args:
             client: The BLE client connection to the cube.
             use_gyroscope: Whether the driver should use gyroscope data.
+            advertisement: The advertisement the scan found before
+                connecting, or None when the connection skipped it (a
+                configured cube dialed directly by address). Its MAC
+                is preferred for the salt, see `resolve_salt()`.
 
         """
         self.client: BleakClient = client
         self.use_gyroscope = use_gyroscope
+        self.advertisement = advertisement
 
         self.events: list[EventDict] = []
-        self.cypher: GanGen2CubeEncrypter = self.init_cypher()
 
         # The last serial the cube sent, the clock it times its moves
         # on, and the wall clock of the last of them. The four
@@ -125,6 +138,39 @@ class Driver:
         self.serial: int = -1
         self.cube_timestamp: float = 0.0
         self.last_move_timestamp: datetime | None = None
+
+        self.cypher: GanGen2CubeEncrypter = self.init_cypher()
+        self.post_init()
+
+    def post_init(self) -> None:
+        """Set up a driver's own state, run once at the end of __init__."""
+
+    def resolve_salt(self) -> bytearray:
+        """
+        Resolve the salt encrypting commands sent to the cube.
+
+        The MAC the cube itself advertised is preferred: it does not
+        depend on however a given platform's Bluetooth backend renders
+        a device address, unlike `client.address` — a real MAC on
+        every backend confirmed so far, but a CoreBluetooth UUID on
+        macOS, never usable as a salt. `client.address` is the
+        fallback, used when the connection skipped the scan entirely
+        (a cube dialed directly by a configured address). `get_salt()`
+        raises `ValueError` when neither is usable, left to propagate.
+
+        Returns:
+            The salt bytes for the cube's session encryption key.
+
+        """
+        mac_address = (
+            decode_advertised_mac(self.advertisement.manufacturer_data)
+            if self.advertisement is not None else None
+        )
+
+        if mac_address is not None:
+            return get_salt(mac_address)
+
+        return get_salt(self.client.address)
 
     @property
     def gyroscope_controllable(self) -> bool:
