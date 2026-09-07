@@ -6,18 +6,18 @@ from term_timer.bluetooth.advertisement import AdvertisedBattery
 from term_timer.bluetooth.advertisement import decode_advertised_battery
 from term_timer.bluetooth.advertisement import decode_advertised_mac
 
-# GAN i4, 2026-09-06: 0x0001 -> 00 00 00 22 fb 9d 50 6c 54, real address
-# 54:6C:50:9D:FB:22 (ADVERTISEMENT_DATA.md §3.1, "Premier passage").
+# GAN i4: 0x0001 -> 00 00 00 22 fb 9d 50 6c 54, measured against its real
+# address, 54:6C:50:9D:FB:22.
 GAN_MAC_PAYLOAD = bytes([0x00, 0x00, 0x00, 0x22, 0xFB, 0x9D, 0x50, 0x6C, 0x54])
 GAN_MAC = '54:6C:50:9D:FB:22'
 
-# MoYu WL v10, 2026-09-06: 0x0000 -> 00 00 30 a7 a6 00 16 30 cf, real
-# address CF:30:16:00:A6:A7 (§3.1, "Deuxième passage").
+# MoYu WL v10: 0x0000 -> 00 00 30 a7 a6 00 16 30 cf, its own real address,
+# CF:30:16:00:A6:A7 — a different company id, the same shape.
 MOYU_MAC_PAYLOAD = bytes([0x00, 0x00, 0x30, 0xA7, 0xA6, 0x00, 0x16, 0x30, 0xCF])
 MOYU_MAC = 'CF:30:16:00:A6:A7'
 
-# GAN i4, 2026-09-07: 0x6162 -> 74 3a 00 ff ff ff 64, "in charge" reading
-# reproduced identically across five reads (§3.1, "Troisième passage").
+# GAN i4: 0x6162 -> 74 3a 00 ff ff ff 64, an "in charge" reading reproduced
+# identically across five reads, including one confirmed by eye.
 BATTERY_PAYLOAD = bytes([0x74, 0x3A, 0x00, 0xFF, 0xFF, 0xFF, 0x64])
 
 
