@@ -9,6 +9,7 @@ Trainer itself (no hardware anywhere).
 import asyncio
 import json
 import os
+import sys
 import tempfile
 import unittest
 from collections.abc import AsyncIterator
@@ -54,6 +55,11 @@ from term_timer.timer import Timer
 from term_timer.trainer import Trainer
 
 EventQueue = asyncio.Queue[list[EventDict] | None]
+
+# CI runners on Windows are consistently slower to schedule asyncio
+# tasks than Linux/macOS ones; a bound tight enough to catch a real
+# hang on Unix leaves no margin there and times out on healthy runs
+TASK_TIMEOUT = 15.0 if sys.platform == 'win32' else 5.0
 
 VALID_REPLAY: dict[str, Any] = {
     'device': {
@@ -490,7 +496,8 @@ class TestReplayScheduleEvents(unittest.IsolatedAsyncioTestCase):
         await self.advance(stub, queue, 'scrambled', 11)
 
         await asyncio.wait_for(
-            cast('asyncio.Task[None]', interface.schedule_task), timeout=5.0,
+            cast('asyncio.Task[None]', interface.schedule_task),
+            timeout=TASK_TIMEOUT,
         )
 
         names = self.drain(queue)
@@ -513,7 +520,8 @@ class TestReplayScheduleEvents(unittest.IsolatedAsyncioTestCase):
         await self.advance(stub, queue, 'scrambled', 11)
 
         await asyncio.wait_for(
-            cast('asyncio.Task[None]', interface.schedule_task), timeout=5.0,
+            cast('asyncio.Task[None]', interface.schedule_task),
+            timeout=TASK_TIMEOUT,
         )
 
         names = self.drain(queue)
@@ -543,7 +551,8 @@ class TestReplayScheduleEvents(unittest.IsolatedAsyncioTestCase):
         await self.advance(stub, queue, 'scrambled', 19)
 
         await asyncio.wait_for(
-            cast('asyncio.Task[None]', interface.schedule_task), timeout=5.0,
+            cast('asyncio.Task[None]', interface.schedule_task),
+            timeout=TASK_TIMEOUT,
         )
 
         names = self.drain(queue)
@@ -572,7 +581,8 @@ class TestReplayScheduleEvents(unittest.IsolatedAsyncioTestCase):
         await self.advance(stub, queue, 'scrambled', 21)
 
         await asyncio.wait_for(
-            cast('asyncio.Task[None]', interface.schedule_task), timeout=5.0,
+            cast('asyncio.Task[None]', interface.schedule_task),
+            timeout=TASK_TIMEOUT,
         )
 
         names = self.drain(queue)
@@ -612,7 +622,7 @@ class TestReplayPublication(unittest.IsolatedAsyncioTestCase):
 
             await asyncio.wait_for(
                 cast('asyncio.Task[None]', interface.schedule_task),
-                timeout=5.0,
+                timeout=TASK_TIMEOUT,
             )
 
         published = [event['event'] for event in publisher.events]
@@ -701,7 +711,7 @@ class TestReplayInterfaceFlow(unittest.IsolatedAsyncioTestCase):
                 run_task = asyncio.create_task(timer.start())
                 await interface.send_init_commands()
 
-                return await asyncio.wait_for(run_task, timeout=5.0)
+                return await asyncio.wait_for(run_task, timeout=TASK_TIMEOUT)
 
     @staticmethod
     async def drive_attempt(
@@ -732,7 +742,7 @@ class TestReplayInterfaceFlow(unittest.IsolatedAsyncioTestCase):
                 run_task = asyncio.create_task(timer.run_attempt())
                 await interface.send_init_commands()
 
-                return await asyncio.wait_for(run_task, timeout=5.0)
+                return await asyncio.wait_for(run_task, timeout=TASK_TIMEOUT)
 
     async def test_full_replay_records_solve(self) -> None:
         """A replay drives scramble, solve and save without hardware."""
@@ -872,10 +882,10 @@ class TestReplayInterfaceFlow(unittest.IsolatedAsyncioTestCase):
                 await interface.send_init_commands()
 
                 first_result = await asyncio.wait_for(
-                    timer.start(), timeout=5.0,
+                    timer.start(), timeout=TASK_TIMEOUT,
                 )
                 second_result = await asyncio.wait_for(
-                    timer.start(), timeout=5.0,
+                    timer.start(), timeout=TASK_TIMEOUT,
                 )
         finally:
             await queue.put(None)

@@ -999,9 +999,14 @@ class ReportTestCase(PublisherTestCase):
 
         self.publisher.start('solve', [self.endpoint])
 
-        self.assertIn(
-            'already published by another session', self.messages()[0],
+        # tcp has no reserve() lock file (fcntl-only): the refusal comes
+        # from the OS-level bind() failing on an already-used port, not
+        # from EventPublisher.reserve()'s own message
+        expected = (
+            'Address in use' if WINDOWS
+            else 'already published by another session'
         )
+        self.assertIn(expected, self.messages()[0])
         self.assertIn(self.endpoint, self.messages()[0])
 
     def test_a_session_publishing_nothing_is_told(self) -> None:
