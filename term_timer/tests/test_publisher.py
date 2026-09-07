@@ -1,12 +1,15 @@
 """
 Tests for the ZeroMQ event publisher.
 
-Everything runs on an "ipc" endpoint of a temporary directory, with real
-sockets and no cube anywhere: what is checked is the envelope, the topic
+Everything runs on an "ipc" endpoint of a temporary directory (a free
+"tcp" port on Windows, which has no ipc transport), with real sockets
+and no cube anywhere: what is checked is the envelope, the topic
 mapping, the prefix filtering, and above all that nothing a publication
 can hit ever reaches the caller.
 """
 import json
+import socket
+import sys
 import tempfile
 import time
 import unittest
@@ -44,6 +47,29 @@ DRAIN_TIMEOUT = 100
 TIMESTAMP = datetime(2026, 8, 18, 12, 0, 0, tzinfo=UTC)
 
 Message = tuple[str, dict[str, Any]]
+
+# ipc is a Unix domain socket under the hood: libzmq never implemented
+# it for Windows, so PublisherTestCase binds tcp there instead. The
+# handful of tests asserting the ipc-only lock file or socket file
+# skip themselves out on that platform (see WINDOWS below).
+WINDOWS = sys.platform == 'win32'
+
+
+def free_tcp_port() -> int:
+    """
+    Reserve and immediately release a TCP port.
+
+    Only "bind" can use ZeroMQ's ``tcp://127.0.0.1:*`` wildcard: a
+    subscriber's "connect" needs a concrete port upfront.
+
+    Returns:
+        A port free at the instant it is read.
+
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.bind(('127.0.0.1', 0))
+        address: tuple[str, int] = probe.getsockname()
+        return address[1]
 
 
 def move_event(move: str = 'R', serial: int = 42) -> MoveEventDict:
@@ -147,7 +173,10 @@ class PublisherTestCase(unittest.TestCase):
 
         self.directory = Path(directory.name)
         self.socket_file = self.directory / 'cube.ipc'
-        self.endpoint = f'ipc://{ self.socket_file }'
+        self.endpoint = (
+            f'tcp://127.0.0.1:{ free_tcp_port() }' if WINDOWS
+            else f'ipc://{ self.socket_file }'
+        )
         self.missing = f'ipc://{ self.directory / "missing" / "cube.ipc" }'
 
         activation = patch(
@@ -601,6 +630,7 @@ class LifecycleTestCase(PublisherTestCase):
         """A publisher binds nothing until it is started."""
         self.assertFalse(self.publisher.active)
 
+    @unittest.skipIf(WINDOWS, 'ipc sockets do not exist on Windows')
     def test_start_binds_and_activates(self) -> None:
         """Starting binds the endpoint it is given."""
         self.start()
@@ -690,6 +720,7 @@ class LifecycleTestCase(PublisherTestCase):
         self.assertFalse(self.publisher.active)
         self.assertEqual(self.publisher.endpoints, [])
 
+    @unittest.skipIf(WINDOWS, 'ipc sockets do not exist on Windows')
     def test_stop_closes_and_removes_the_socket_file(self) -> None:
         """Stopping leaves nothing behind on the filesystem."""
         # A tcp endpoint alongside the socket file: only the second one
@@ -792,6 +823,11 @@ class SilenceTestCase(PublisherTestCase):
         )
 
 
+@unittest.skipIf(
+    WINDOWS,
+    'the ipc lock file this whole class exercises does not exist on '
+    'Windows',
+)
 class ExclusivityTestCase(PublisherTestCase):
     """
     What two sessions publishing at once do to each other.
