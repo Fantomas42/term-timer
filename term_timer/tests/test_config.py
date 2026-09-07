@@ -95,7 +95,7 @@ class TestParseEndpoint(unittest.TestCase):
         """A tilde in a socket path is a home, not a directory."""
         self.assertEqual(
             parse_endpoint('ipc://~/.term_timer/cube.ipc'),
-            f'ipc://{ Path.home() }/.term_timer/cube.ipc',
+            f'ipc://{ Path.home() / ".term_timer" / "cube.ipc" }',
         )
 
     def test_other_transports_untouched(self) -> None:
@@ -129,7 +129,7 @@ class TestIterEndpoints(unittest.TestCase):
             [
                 (
                     'ipc://~/.term_timer/cube.ipc',
-                    f'ipc://{ Path.home() }/.term_timer/cube.ipc',
+                    f'ipc://{ Path.home() / ".term_timer" / "cube.ipc" }',
                 ),
             ],
         )
@@ -168,7 +168,7 @@ class TestParseEndpoints(unittest.TestCase):
         """A tilde in a socket path is a home, not a directory."""
         self.assertEqual(
             parse_endpoints(['ipc://~/.term_timer/cube.ipc']),
-            [f'ipc://{ Path.home() }/.term_timer/cube.ipc'],
+            [f'ipc://{ Path.home() / ".term_timer" / "cube.ipc" }'],
         )
 
     def test_other_transports_untouched(self) -> None:

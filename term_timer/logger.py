@@ -224,6 +224,10 @@ def shutdown_logging() -> None:
 
     if log_listener:
         log_listener.stop()
+
+        for handler in log_listener.handlers:
+            handler.close()
+
         log_listener = None
 
 
