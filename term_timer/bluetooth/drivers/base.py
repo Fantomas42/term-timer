@@ -21,6 +21,7 @@ from term_timer.bluetooth.constants import CRC16_INIT
 from term_timer.bluetooth.constants import CRC16_POLYNOMIAL
 from term_timer.bluetooth.constants import DIRECTIONS
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
+from term_timer.bluetooth.gyroscope import Quaternion
 from term_timer.bluetooth.message import GanProtocolMessage
 from term_timer.bluetooth.salt import get_salt
 
@@ -28,11 +29,16 @@ if TYPE_CHECKING:
     from bleak.backends.scanner import AdvertisementData
 
     from term_timer.bluetooth.annotations import MessageHandler
+    from term_timer.bluetooth.annotations import QuaternionDict
 
 logger = logging.getLogger(__name__)
 
 
-class Driver:
+# PLR0904 : shared decoding helpers accumulate here so that every
+# protocol calls the same one instead of duplicating it (format_move,
+# canonicalize_gyroscope_quaternion, ...) — the count grows with what
+# gets factored out, not with what one protocol alone needs.
+class Driver:  # noqa: PLR0904
     """
     Base class for Bluetooth smart cube communication drivers.
 
@@ -101,6 +107,13 @@ class Driver:
     # opcode can mean different things from one protocol to the next.
     # Only the *methods* are inherited.
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {}
+
+    # Sensor-to-canonical rotation applied to every gyroscope quaternion
+    # at decode time, so the stream never carries a raw sensor frame.
+    # The canonical frame is the renderer's: right-handed, +X=R, +Y=U,
+    # +Z=F. Identity here, the default for a protocol that has not
+    # measured its own sensor frame yet.
+    GYROSCOPE_BASIS: ClassVar[Quaternion] = Quaternion(1.0, 0.0, 0.0, 0.0)
 
     def __init__(
             self,
@@ -243,6 +256,27 @@ class Driver:
             return None
 
         return (FACES[face] + DIRECTIONS[direction]).strip()
+
+    @classmethod
+    def canonicalize_gyroscope_quaternion(
+            cls, quaternion: 'QuaternionDict') -> 'QuaternionDict':
+        """
+        Conjugate a raw gyroscope quaternion into the canonical frame.
+
+        Every driver calls this at decode time, right where it builds
+        the quaternion dict of a gyroscope sample, so the published
+        stream never carries a sensor-specific frame — the correction
+        lives once, at the source, instead of being redone by every
+        consumer of the stream.
+
+        Returns:
+            The quaternion, expressed in the canonical frame.
+
+        """
+        basis = cls.GYROSCOPE_BASIS
+        raw = Quaternion.from_dict_raw(quaternion)
+
+        return basis.multiply(raw).multiply(basis.conjugate()).to_dict()
 
     def advance_cube_timestamp(self, elapsed: int,
                                timestamp: datetime) -> float:

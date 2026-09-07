@@ -40,10 +40,7 @@ class Quaternion:
     @classmethod
     def from_dict_raw(cls, q: QuaternionDict) -> 'Quaternion':
         """
-        Create a quaternion from a dictionary in raw sensor frame.
-
-        Used for normalization calculations before applying coordinate
-        transform.
+        Create a quaternion from a dictionary.
 
         Args:
             q: Dictionary containing quaternion components with keys 'w',
@@ -54,6 +51,39 @@ class Quaternion:
 
         """
         return cls(w=q['w'], x=q['x'], y=q['y'], z=q['z'])
+
+    @classmethod
+    def from_axis_angle(
+            cls,
+            axis: tuple[float, float, float],
+            angle: float) -> 'Quaternion':
+        """
+        Build a unit quaternion rotating by `angle` radians around `axis`.
+
+        Args:
+            axis: Unit vector the rotation turns around.
+            angle: Rotation angle, in radians.
+
+        Returns:
+            Quaternion instance representing that rotation.
+
+        """
+        half = angle / 2
+        s = math.sin(half)
+        ax, ay, az = axis
+
+        return cls(w=math.cos(half), x=ax * s, y=ay * s, z=az * s)
+
+    def to_dict(self) -> QuaternionDict:
+        """
+        Export this quaternion as a dictionary.
+
+        Returns:
+            Dictionary containing the quaternion components, keyed 'w',
+            'x', 'y', 'z'.
+
+        """
+        return {'w': self.w, 'x': self.x, 'y': self.y, 'z': self.z}
 
     def conjugate(self) -> 'Quaternion':
         """
@@ -232,9 +262,7 @@ class RotationDetector:
         if abs(angle_deg) < self.rotation_threshold:
             return None
 
-        # Transform axis if requested (Y↔Z swap for display coordinates)
         ax, ay, az = axis
-        ay, az = az, -ay  # Y→Z, Z→-Y
 
         abs_x, abs_y, abs_z = abs(ax), abs(ay), abs(az)
 
@@ -279,9 +307,10 @@ class RotationDetector:
         and works well in real-time without needing time windows.
 
         The first quaternion received defines the neutral/identity
-        orientation. All rotations are computed in the raw sensor frame,
-        then the rotation axis is transformed to match the display
-        coordinate system.
+        orientation. The quaternion is expected to already be in the
+        canonical cube frame (+X=R, +Y=U, +Z=F) — the driver applies
+        its `GYROSCOPE_BASIS` at decode time, so nothing here corrects
+        for the sensor's own coordinate system.
 
         Args:
             quaternion_dict: Dictionary containing quaternion components
@@ -293,7 +322,6 @@ class RotationDetector:
             None while initializing the reference orientation.
 
         """
-        # Work entirely in raw sensor frame
         absolute_raw = Quaternion(
             quaternion_dict['w'],
             quaternion_dict['x'],

@@ -1,8 +1,17 @@
 """Bluetooth protocol constants and encryption keys for smart cubes."""
 # ruff: noqa: E222 E501
+import math
 from typing import Final
 
+from term_timer.bluetooth.gyroscope import Quaternion
+
 DEBOUNCE: Final[float] = 0.5
+
+# The gyroscope's raw quaternion sits 90° short around X of the
+# canonical cube frame (+X=R, +Y=U, +Z=F).
+GYROSCOPE_SENSOR_BASIS: Final[Quaternion] = Quaternion.from_axis_angle(
+    (1.0, 0.0, 0.0), -math.pi / 2,
+)
 
 # Delay after which an unanswered move history request is retried
 MOVE_HISTORY_TIMEOUT: Final[float] = 1.0

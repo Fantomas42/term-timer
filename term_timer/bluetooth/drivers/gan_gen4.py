@@ -421,12 +421,12 @@ class GanGen4Driver(GanGen3Driver):  # noqa: PLR0904
             'event': 'gyro',
             'clock': clock,
             'timestamp': timestamp,
-            'quaternion': {
+            'quaternion': self.canonicalize_gyroscope_quaternion({
                 'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
                 'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
                 'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
                 'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
-            },
+            }),
             'velocity': {
                 'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
                 'y': (1 - (vy >> 3) * 2) * (vy & 0x7),

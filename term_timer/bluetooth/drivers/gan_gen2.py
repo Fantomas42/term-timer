@@ -28,11 +28,13 @@ from term_timer.bluetooth.constants import GAN_GEN2_STATE_CHARACTERISTIC
 from term_timer.bluetooth.constants import GEN2_FACE_ANGLES_CAPACITY
 from term_timer.bluetooth.constants import GEN2_MOVE_CAPACITY
 from term_timer.bluetooth.constants import GEN2_MOVE_HISTORY_CAPACITY
+from term_timer.bluetooth.constants import GYROSCOPE_SENSOR_BASIS
 from term_timer.bluetooth.constants import MOVE_BUFFER_LIMIT
 from term_timer.bluetooth.constants import MOVE_HISTORY_TIMEOUT
 from term_timer.bluetooth.constants import MOYU_AI_ENCRYPTION_KEY
 from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
+from term_timer.bluetooth.gyroscope import Quaternion
 from term_timer.bluetooth.message import GanProtocolMessage
 
 logger = logging.getLogger(__name__)
@@ -59,6 +61,7 @@ class GanGen2Driver(Driver):
     # before the battery level.
     battery_level_offset: ClassVar[int] = 4
     charging_state_width: ClassVar[int] = 4
+    GYROSCOPE_BASIS: ClassVar[Quaternion] = GYROSCOPE_SENSOR_BASIS
     MESSAGE_HANDLERS: ClassVar[dict[int, str]] = {
         0x01: 'handle_gyroscope',
         0x02: 'handle_move',
@@ -369,8 +372,9 @@ class GanGen2Driver(Driver):
         """
         return msg.get_bit_word(0, 4)
 
-    @staticmethod
+    @classmethod
     def decode_gyro_sample(
+            cls,
             msg: GanProtocolMessage,
             offset: int) -> tuple[QuaternionDict, VelocityDict]:
         """
@@ -384,7 +388,8 @@ class GanGen2Driver(Driver):
             offset: Bit the sample's quaternion starts at.
 
         Returns:
-            The quaternion and the angular velocity of the sample.
+            The quaternion, already in the canonical frame, and the
+            angular velocity of the sample.
 
         """
         qw = msg.get_bit_word(offset, 16)
@@ -396,12 +401,12 @@ class GanGen2Driver(Driver):
         vy = msg.get_bit_word(offset + 68, 4)
         vz = msg.get_bit_word(offset + 72, 4)
 
-        quaternion: QuaternionDict = {
+        quaternion = cls.canonicalize_gyroscope_quaternion({
             'x': (1 - (qx >> 15) * 2) * (qx & 0x7FFF) / 0x7FFF,
             'y': (1 - (qy >> 15) * 2) * (qy & 0x7FFF) / 0x7FFF,
             'z': (1 - (qz >> 15) * 2) * (qz & 0x7FFF) / 0x7FFF,
             'w': (1 - (qw >> 15) * 2) * (qw & 0x7FFF) / 0x7FFF,
-        }
+        })
         velocity: VelocityDict = {
             'x': (1 - (vx >> 3) * 2) * (vx & 0x7),
             'y': (1 - (vy >> 3) * 2) * (vy & 0x7),

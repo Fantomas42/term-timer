@@ -14,6 +14,7 @@ from term_timer.bluetooth.annotations import GyroConfigEventDict
 from term_timer.bluetooth.annotations import GyroEventDictNoVelocity
 from term_timer.bluetooth.annotations import HardwareEventMoyuDict
 from term_timer.bluetooth.annotations import MoveEventDict
+from term_timer.bluetooth.constants import GYROSCOPE_SENSOR_BASIS
 from term_timer.bluetooth.constants import MOYU_FACE_NAMES
 from term_timer.bluetooth.constants import MOYU_FACES
 from term_timer.bluetooth.constants import MOYU_MOVE_CAPACITY
@@ -23,6 +24,7 @@ from term_timer.bluetooth.constants import MOYU_WEILONG_SERVICE
 from term_timer.bluetooth.constants import MOYU_WEILONG_STATE_CHARACTERISTIC
 from term_timer.bluetooth.drivers.base import Driver
 from term_timer.bluetooth.encrypter import GanGen2CubeEncrypter
+from term_timer.bluetooth.gyroscope import Quaternion
 from term_timer.bluetooth.message import GanProtocolMessage
 
 logger = logging.getLogger(__name__)
@@ -36,6 +38,7 @@ class MoyuWeilong10Driver(Driver):
     command_characteristic_uid: ClassVar[str] = MOYU_WEILONG_COMMAND_CHARACTERISTIC  # noqa: E501
     encrypter: ClassVar[type[GanGen2CubeEncrypter]] = GanGen2CubeEncrypter
     factor: ClassVar[int] = pow(2, 30)
+    GYROSCOPE_BASIS: ClassVar[Quaternion] = GYROSCOPE_SENSOR_BASIS
     # HARDWARE must precede FACELETS: the cube ignores facelets requests
     # until it has processed a hardware request first.
     init_commands: ClassVar[list[str]] = [
@@ -139,12 +142,12 @@ class MoyuWeilong10Driver(Driver):
             'event': 'gyro',
             'clock': clock,
             'timestamp': timestamp,
-            'quaternion': {
+            'quaternion': self.canonicalize_gyroscope_quaternion({
                 'x': qx / self.factor,
                 'y': qy / self.factor,
                 'z': qz / self.factor,
                 'w': qw / self.factor,
-            },
+            }),
         }
 
         return [gyro_payload]

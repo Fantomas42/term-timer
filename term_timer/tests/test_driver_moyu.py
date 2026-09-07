@@ -750,10 +750,13 @@ class TestMoyuWeilong10Driver(unittest.IsolatedAsyncioTestCase):  # noqa: PLR090
         self.assertEqual(len(events), 1)
         self.assertEqual(events[0]['event'], 'gyro')
         gyro = cast('GyroEventDictNoVelocity', events[0])
-        self.assertEqual(
-            gyro['quaternion'],
-            {'w': 1.0, 'x': -1.0, 'y': 0.0, 'z': 0.5},
-        )
+        # Published in the canonical frame (GYROSCOPE_BASIS), not the
+        # raw sensor frame the wire carries : y and z trade places.
+        quaternion = gyro['quaternion']
+        self.assertAlmostEqual(quaternion['w'], 1.0)
+        self.assertAlmostEqual(quaternion['x'], -1.0)
+        self.assertAlmostEqual(quaternion['y'], 0.5)
+        self.assertAlmostEqual(quaternion['z'], 0.0)
 
     async def test_battery_frame_is_the_one_of_the_socle(self) -> None:
         """Test event handler battery event."""
