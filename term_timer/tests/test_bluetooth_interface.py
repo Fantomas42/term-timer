@@ -472,6 +472,24 @@ class ConnectingClient:
         self.is_connected = True
 
 
+class TimingOutClient:
+    """A BleakClient stub whose connection attempt times out."""
+
+    def __init__(self) -> None:
+        """Start disconnected, like any client about to fail."""
+        self.is_connected = False
+
+    async def connect(self) -> None:  # noqa: PLR6301
+        """
+        Raise the plain TimeoutError bleak surfaces on a stuck link.
+
+        Raises:
+            TimeoutError: Always, as bleak does past its own timeout.
+
+        """
+        raise TimeoutError
+
+
 class BluetoothLinkLostTestCase(unittest.IsolatedAsyncioTestCase):
     """Tests for a BLE link dropping on its own, under the application."""
 
@@ -528,6 +546,23 @@ class BluetoothLinkLostTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             built[0]['disconnected_callback'], interface.handle_disconnection,
         )
+
+    async def test_a_connection_timeout_is_a_cube_not_found(self) -> None:
+        """
+        A connection that never completes is treated like one refused.
+
+        Bleak raises a plain TimeoutError here, not a BleakError, so it
+        needs its own arm alongside it to land on the same outcome.
+        """
+        interface = BluetoothInterface(Queue())
+
+        with patch(
+                'term_timer.bluetooth.interface.BleakClient',
+                lambda *args, **kwargs: TimingOutClient(),  # noqa: ARG005
+        ), self.assertRaises(CubeNotFoundError):
+            await interface.__aenter__(
+                'AA:BB:CC:DD:EE:FF', use_gyroscope=False,
+            )
 
     async def test_a_lost_link_posts_the_disconnection(self) -> None:
         """

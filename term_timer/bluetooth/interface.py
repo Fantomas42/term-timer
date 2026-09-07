@@ -185,7 +185,7 @@ class BluetoothInterface:
 
         try:
             await self.client.connect()
-        except BleakError as error:
+        except (BleakError, TimeoutError) as error:
             msg = (
                 f'No Bluetooth cube found at { address }.\n'
                 'Make sure the cube is powered on and in pairing mode.'
