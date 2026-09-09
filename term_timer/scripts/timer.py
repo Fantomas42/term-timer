@@ -84,7 +84,7 @@ def main() -> int:
         show_banner(BANNER_MODES[command])
 
     if command in PUBLISHED_COMMANDS:
-        PUBLISHER.start(command)
+        PUBLISHER.start(f'term-timer { command }')
 
     reason = 'closed'
     try:
