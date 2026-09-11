@@ -730,6 +730,42 @@ class PublishedClient:
         self.notified.append(characteristic)
 
 
+class OrderedClient(TeardownClient):
+    """A teardown client noting what was published at each of its steps."""
+
+    def __init__(self, publisher: 'RecordingPublisher') -> None:
+        """
+        Hold the publisher whose links are read at every step.
+
+        Args:
+            publisher: The recorder the interface publishes through.
+
+        """
+        super().__init__()
+
+        self.publisher = publisher
+        self.links_at_stop_notify: list[tuple[bool, str]] = []
+        self.links_at_disconnect: list[tuple[bool, str]] = []
+
+    async def stop_notify(self, characteristic: str) -> None:
+        """
+        Note what was published, then unsubscribe as any client does.
+
+        Args:
+            characteristic: The characteristic to stop listening to.
+
+        """
+        self.links_at_stop_notify = list(self.publisher.links)
+
+        await super().stop_notify(characteristic)
+
+    async def disconnect(self) -> None:
+        """Note what was published, then cut the link as any client does."""
+        self.links_at_disconnect = list(self.publisher.links)
+
+        await super().disconnect()
+
+
 class EventPublicationTestCase(unittest.IsolatedAsyncioTestCase):
     """Tests for what the interface broadcasts beside its queue."""
 
@@ -920,6 +956,28 @@ class EventPublicationTestCase(unittest.IsolatedAsyncioTestCase):
             await interface.__aexit__(None, None, None)
 
         self.assertEqual(publisher.links, [(False, 'closed')])
+
+    async def test_the_closing_is_said_before_the_radio_is_cut(self) -> None:
+        """
+        The link is closed where the application lets the cube go.
+
+        BlueZ takes two to three seconds to acknowledge a disconnection,
+        and the word used to wait them out: a subscriber showed a cube
+        nobody was turning any more for the whole of them. It waits for
+        the notifications all the same, they being what makes it the
+        last word of the link.
+        """
+        publisher = RecordingPublisher()
+        client = OrderedClient(publisher)
+        interface = BluetoothInterface(Queue())
+        interface.client = cast('BleakClient', client)
+        interface.driver = cast('Driver', TeardownDriver())
+
+        with patch(f'{ self.logger_name }.PUBLISHER', publisher):
+            await interface.__aexit__(None, None, None)
+
+        self.assertEqual(client.links_at_stop_notify, [])
+        self.assertEqual(client.links_at_disconnect, [(False, 'closed')])
 
     async def test_a_link_already_down_announces_nothing(self) -> None:
         """A link nobody holds any more has no closing to announce."""

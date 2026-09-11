@@ -258,11 +258,12 @@ class BluetoothInterface:
 
         if self.client and self.client.is_connected and self.driver:
             await self.stop_notifications()
-            await self.disconnect_client()
 
             # A link the application let go, told apart from one that
             # dropped: a subscriber does not wait for the same thing
             PUBLISHER.publish_link(connected=False, reason='closed')
+
+            await self.disconnect_client()
 
     async def stop_notifications(self) -> None:
         """
