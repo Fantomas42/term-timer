@@ -31,8 +31,6 @@ from term_timer.scripts.commands import routine as routine_mod
 from term_timer.scripts.commands.routine import build_daily_instance
 from term_timer.scripts.commands.routine import build_ghost_instance
 from term_timer.scripts.commands.routine import list_routines
-from term_timer.scripts.commands.routine import resolve_routine_cube
-from term_timer.scripts.commands.routine import resolve_routine_gyroscope
 from term_timer.scripts.commands.routine import routine
 from term_timer.scripts.commands.routine import run_routine_sessions
 from term_timer.solve import Solve
@@ -247,72 +245,6 @@ def routine_doubles(
         yield run
 
 
-class TestResolveRoutineCube(unittest.TestCase):
-    """Tests for the cube a routine file asks for."""
-
-    def test_missing_key_runs_without_a_cube(self) -> None:
-        """A routine saying nothing about Bluetooth connects to nothing."""
-        self.assertIsNone(resolve_routine_cube(None))
-
-    def test_false_runs_without_a_cube(self) -> None:
-        """A routine refusing Bluetooth connects to nothing."""
-        self.assertIsNone(resolve_routine_cube(selector=False))
-
-    def test_true_takes_the_configured_cube(self) -> None:
-        """A routine asking for Bluetooth takes the designated cube."""
-        with (
-                mock.patch('term_timer.config.BLUETOOTH_CUBES', CUBES),
-                mock.patch('term_timer.config.BLUETOOTH_DEFAULT', 'weilong'),
-        ):
-            cube = resolve_routine_cube(selector=True)
-
-        self.assertIsNotNone(cube)
-        self.assertEqual(cube.label, 'weilong')  # type: ignore[union-attr]
-
-    def test_label_pins_the_cube_the_routine_names(self) -> None:
-        """A routine naming a cube connects to that one, not the default."""
-        with (
-                mock.patch('term_timer.config.BLUETOOTH_CUBES', CUBES),
-                mock.patch('term_timer.config.BLUETOOTH_DEFAULT', 'weilong'),
-        ):
-            cube = resolve_routine_cube('gan12')
-
-        self.assertIsNotNone(cube)
-        self.assertEqual(cube.label, 'gan12')  # type: ignore[union-attr]
-
-    def test_unknown_label_warns_and_runs_without_a_cube(self) -> None:
-        """A routine naming no known cube is reported, and runs on."""
-        with (
-                mock.patch('term_timer.config.BLUETOOTH_CUBES', CUBES),
-                mock.patch(
-                    'term_timer.scripts.commands.routine.console',
-                ) as printer,
-        ):
-            cube = resolve_routine_cube('unknown')
-
-        self.assertIsNone(cube)
-        self.assertIn('unknown', printer.print.call_args.args[0])
-
-
-class TestResolveRoutineGyroscope(unittest.TestCase):
-    """Tests for the gyroscope setting a routine file asks for."""
-
-    def test_missing_key_leaves_the_choice_to_the_cube(self) -> None:
-        """A routine saying nothing lets the cube keep its own setting."""
-        self.assertIsNone(resolve_routine_gyroscope(None))
-
-    def test_true_forces_the_gyroscope_on(self) -> None:
-        """A routine asking for the gyroscope overrides the cube."""
-        self.assertTrue(resolve_routine_gyroscope(selector=True))
-
-    def test_false_forces_the_gyroscope_off(self) -> None:
-        """A routine refusing the gyroscope overrides the cube."""
-        resolved = resolve_routine_gyroscope(selector=False)
-
-        self.assertIsNotNone(resolved)
-        self.assertFalse(resolved)
-
-
 class TestDisplayFlag(unittest.TestCase):
     """Tests for the display toggles a routine step resolves."""
 
@@ -378,7 +310,6 @@ class TestListRoutines(unittest.TestCase):
                 json.dumps(
                     {
                         'comment': 'Warm up',
-                        'bluetooth': True,
                         'sessions': [{'type': 'solve', 'count': 2}],
                     },
                 ),
@@ -405,6 +336,33 @@ class TestListRoutines(unittest.TestCase):
         self.assertNotIn('broken', rendered)
 
 
+def routine_options(
+        cube: CubeDevice | None = None,
+        *,
+        use_gyroscope: bool | None = None,
+        routine_file: str = '',
+) -> Namespace:
+    """
+    Build the options a routine command is given.
+
+    Args:
+        cube: The cube the command line designates, None to run
+            without one.
+        use_gyroscope: The gyroscope setting the command line forces,
+            None to leave the choice to the cube.
+        routine_file: The routine to run, empty to list them.
+
+    Returns:
+        The options namespace the command reads.
+
+    """
+    return Namespace(
+        routine_file=routine_file,
+        bluetooth=cube,
+        use_gyroscope=use_gyroscope,
+    )
+
+
 class RoutineTestCase(unittest.IsolatedAsyncioTestCase):
     """Base of the routine tests, running a routine file on doubles."""
 
@@ -413,6 +371,7 @@ class RoutineTestCase(unittest.IsolatedAsyncioTestCase):
     @staticmethod
     async def run_routine(
             config: dict[str, Any],
+            options: Namespace | None = None,
             *,
             failures: dict[str, Exception] | None = None,
             session_failure: Exception | None = None,
@@ -423,6 +382,9 @@ class RoutineTestCase(unittest.IsolatedAsyncioTestCase):
 
         Args:
             config: Contents of the routine file to run.
+            options: The options the command is given, the routine file
+                being the one written here; None to run the routine on
+                the default options.
             failures: The error each session type raises, by type.
             session_failure: The error running a session raises.
             refusals: The session types whose builder returns None.
@@ -431,14 +393,15 @@ class RoutineTestCase(unittest.IsolatedAsyncioTestCase):
             The outcome of the routine, and the doubles it drove.
 
         """
+        options = options or routine_options()
+
         with TemporaryDirectory() as directory:
             config_path = Path(directory) / 'testing.json'
             config_path.write_text(json.dumps(config), encoding='utf-8')
+            options.routine_file = str(config_path)
 
             with routine_doubles(failures, session_failure, refusals) as run:
-                run.code = await routine(
-                    Namespace(routine_file=str(config_path)),
-                )
+                run.code = await routine(options)
 
         return run
 
@@ -450,7 +413,7 @@ class TestRoutine(RoutineTestCase):
         """A routine file that is nowhere stops on an error."""
         with routine_doubles() as run:
             code = await routine(
-                Namespace(routine_file='/nowhere/missing.json'),
+                routine_options(routine_file='/nowhere/missing.json'),
             )
 
         self.assertEqual(code, 1)
@@ -464,7 +427,7 @@ class TestRoutine(RoutineTestCase):
 
             with routine_doubles() as run:
                 run.code = await routine(
-                    Namespace(routine_file=str(config_path)),
+                    routine_options(routine_file=str(config_path)),
                 )
 
         self.assertEqual(run.code, 1)
@@ -484,7 +447,9 @@ class TestRoutine(RoutineTestCase):
                     'term_timer.scripts.commands.routine.ROUTINES_DIRECTORY',
                     path,
             ):
-                run.code = await routine(Namespace(routine_file='daily'))
+                run.code = await routine(
+                    routine_options(routine_file='daily'),
+                )
 
         self.assertEqual(run.code, 0)
         self.assertEqual(len(run.instances), 1)
@@ -497,7 +462,9 @@ class TestRoutine(RoutineTestCase):
                 Path(directory),
             )
         ):
-            run.code = await routine(Namespace(routine_file=''))
+            run.code = await routine(
+                routine_options(),
+            )
 
         self.assertEqual(run.code, 0)
         self.assertIn('No routines found', run.printed)
@@ -578,12 +545,12 @@ class TestRoutine(RoutineTestCase):
         """One connection is opened, and passed from a race to the next."""
         run = await self.run_routine(
             {
-                'bluetooth': True,
                 'sessions': [
                     {'type': 'daily', 'count': 1},
                     {'type': 'ghost', 'reference': 'abcd', 'count': 1},
                 ],
             },
+            routine_options(CUBES['weilong']),
         )
 
         first, second = run.instances
@@ -603,7 +570,7 @@ class TestRoutine(RoutineTestCase):
         self.assertEqual(run.wake_lock.return_value.__exit__.call_count, 1)
 
     async def test_without_bluetooth_nothing_is_connected(self) -> None:
-        """A routine refusing Bluetooth builds sessions holding no cube."""
+        """A routine run without a cube builds sessions holding none."""
         run = await self.run_routine({'sessions': [self.SOLVE_SESSION]})
 
         self.assertEqual(run.code, 0)
@@ -615,13 +582,13 @@ class TestRoutine(RoutineTestCase):
         """One connection is opened, passed along, and closed at the end."""
         run = await self.run_routine(
             {
-                'bluetooth': True,
                 'sessions': [
                     self.SOLVE_SESSION,
                     {'type': 'train', 'step': 'oll', 'count': 1},
                     {'type': 'drill', 'algorithm': "R U R'", 'count': 1},
                 ],
             },
+            routine_options(CUBES['weilong']),
         )
 
         first, second, third = run.instances
@@ -638,13 +605,11 @@ class TestRoutine(RoutineTestCase):
         self.assertEqual(second.disconnections, 0)
         self.assertEqual(third.disconnections, 1)
 
-    async def test_the_routine_pins_the_cube_it_names(self) -> None:
-        """A routine naming a cube connects to that one."""
+    async def test_the_command_line_pins_the_cube_it_names(self) -> None:
+        """The cube the options carry is the one the routine connects to."""
         run = await self.run_routine(
-            {
-                'bluetooth': 'gan12',
-                'sessions': [self.SOLVE_SESSION],
-            },
+            {'sessions': [self.SOLVE_SESSION]},
+            routine_options(CUBES['gan12']),
         )
 
         self.assertEqual(run.code, 0)
@@ -653,33 +618,28 @@ class TestRoutine(RoutineTestCase):
     async def test_missing_gyroscope_leaves_the_choice_to_the_cube(
             self,
     ) -> None:
-        """A routine saying nothing connects on the cube's own setting."""
+        """Options saying nothing connect on the cube's own setting."""
         run = await self.run_routine(
-            {'bluetooth': True, 'sessions': [self.SOLVE_SESSION]},
+            {'sessions': [self.SOLVE_SESSION]},
+            routine_options(CUBES['weilong']),
         )
 
         self.assertIsNone(run.instances[0].gyroscope)
 
     async def test_gyroscope_true_forces_it_on(self) -> None:
-        """A routine asking for the gyroscope connects with it enabled."""
+        """Options asking for the gyroscope connect with it enabled."""
         run = await self.run_routine(
-            {
-                'bluetooth': True,
-                'use_gyroscope': True,
-                'sessions': [self.SOLVE_SESSION],
-            },
+            {'sessions': [self.SOLVE_SESSION]},
+            routine_options(CUBES['weilong'], use_gyroscope=True),
         )
 
         self.assertTrue(run.instances[0].gyroscope)
 
     async def test_gyroscope_false_forces_it_off(self) -> None:
-        """A routine refusing the gyroscope connects with it disabled."""
+        """Options refusing the gyroscope connect with it disabled."""
         run = await self.run_routine(
-            {
-                'bluetooth': True,
-                'use_gyroscope': False,
-                'sessions': [self.SOLVE_SESSION],
-            },
+            {'sessions': [self.SOLVE_SESSION]},
+            routine_options(CUBES['weilong'], use_gyroscope=False),
         )
 
         self.assertIsNotNone(run.instances[0].gyroscope)
@@ -789,12 +749,12 @@ class TestRoutineFailures(RoutineTestCase):
         """A routine stopping on an unbuildable step hangs up the cube."""
         run = await self.run_routine(
             {
-                'bluetooth': True,
                 'sessions': [
                     self.SOLVE_SESSION,
                     {'type': 'ghost', 'reference': 'dead', 'count': 1},
                 ],
             },
+            routine_options(CUBES['weilong']),
             refusals={'ghost'},
         )
 
@@ -805,12 +765,12 @@ class TestRoutineFailures(RoutineTestCase):
         """A routine stopping on an error still hangs up the cube."""
         run = await self.run_routine(
             {
-                'bluetooth': True,
                 'sessions': [
                     self.SOLVE_SESSION,
                     {'type': 'meditate', 'count': 1},
                 ],
             },
+            routine_options(CUBES['weilong']),
         )
 
         self.assertEqual(run.code, 1)
@@ -819,7 +779,8 @@ class TestRoutineFailures(RoutineTestCase):
     async def test_the_cube_is_released_on_a_running_failure(self) -> None:
         """A session failing on the cube still hangs it up."""
         run = await self.run_routine(
-            {'bluetooth': True, 'sessions': [self.SOLVE_SESSION]},
+            {'sessions': [self.SOLVE_SESSION]},
+            routine_options(CUBES['weilong']),
             session_failure=InvalidMoveError('Invalid move: Z'),
         )
 

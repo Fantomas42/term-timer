@@ -20,6 +20,7 @@ from term_timer.arguments import graph_arguments
 from term_timer.arguments import import_arguments
 from term_timer.arguments import list_arguments
 from term_timer.arguments import merge_arguments
+from term_timer.arguments import routine_arguments
 from term_timer.arguments import serve_arguments
 from term_timer.arguments import set_session_arguments
 from term_timer.arguments import solve_arguments
@@ -431,6 +432,56 @@ class TestTrainArguments(unittest.TestCase):
             args = main_parser.parse_args(['train', '-b', 'gan12'])
 
         self.assertEqual(args.bluetooth, 'gan12')
+
+
+class TestRoutineArguments(unittest.TestCase):
+    """Tests for routine command argument parsing."""
+
+    @staticmethod
+    def parse(arguments: list[str]) -> Namespace:
+        """
+        Parse a routine command line.
+
+        Args:
+            arguments: The command line to parse, routine included.
+
+        Returns:
+            The parsed namespace.
+
+        """
+        main_parser = ArgumentParser()
+        subparsers = main_parser.add_subparsers(dest='command')
+        routine_arguments(subparsers)
+
+        return main_parser.parse_args(arguments)
+
+    def test_routine_selects_a_configured_cube(self) -> None:
+        """Test -b names the cube the routine runs on."""
+        with configured_cubes(CUBES):
+            args = self.parse(['routine', 'daily', '-b', 'gan12'])
+
+        self.assertEqual(args.routine_file, 'daily')
+        self.assertEqual(args.bluetooth, 'gan12')
+
+    def test_routine_default_arguments(self) -> None:
+        """Test a routine named alone says nothing about the hardware."""
+        with configured_cubes(CUBES):
+            args = self.parse(['routine', 'daily'])
+
+        self.assertIsNone(args.bluetooth)
+        self.assertIsNone(args.use_gyroscope)
+
+    def test_routine_bare_bluetooth_disables_configured_cube(self) -> None:
+        """Test a bare -b disables the cube when one is configured."""
+        with configured_cubes(CUBES):
+            args = self.parse(['routine', 'daily', '-b'])
+
+        self.assertEqual(args.bluetooth, 'off')
+
+    def test_routine_rejects_an_unknown_cube(self) -> None:
+        """Test -b refuses a value naming no cube."""
+        with configured_cubes(CUBES), self.assertRaises(SystemExit):
+            self.parse(['routine', 'daily', '-b', 'nimportequoi'])
 
 
 class TestListArguments(unittest.TestCase):

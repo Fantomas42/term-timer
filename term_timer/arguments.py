@@ -1705,6 +1705,8 @@ def routine_arguments(subparsers: '_SubParsers') -> ArgumentParser:
         ),
     )
 
+    set_bluetooth_arguments(parser)
+
     return parser
 
 

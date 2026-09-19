@@ -108,61 +108,6 @@ SESSION_BUILDERS: 'dict[str, SessionBuilder]' = {
 RACE_SESSIONS: Final = frozenset({'daily', 'ghost'})
 
 
-def resolve_routine_cube(selector: object) -> CubeDevice | None:
-    """
-    Resolve the cube a routine file asks for.
-
-    The ``bluetooth`` key holds either a boolean, asking for the cube the
-    configuration designates, or the label of one of the configured
-    cubes, so that a routine can pin the cube it was tuned for.
-
-    Args:
-        selector: Raw value of the routine ``bluetooth`` key.
-
-    Returns:
-        The cube to connect to, or None to run without one.
-
-    """
-    if isinstance(selector, str):
-        cleaned = CubeDevice.clean_selector(selector)
-
-        if not cleaned:
-            console.print(
-                f'😱 Unknown cube in routine: { selector }',
-                style='warning',
-            )
-            return None
-
-        return CubeDevice.resolve(cleaned)
-
-    if selector:
-        return CubeDevice.resolve(None)
-
-    return None
-
-
-def resolve_routine_gyroscope(selector: object) -> bool | None:
-    """
-    Resolve the gyroscope setting a routine file asks for.
-
-    The ``use_gyroscope`` key is optional: left out, the cube being
-    connected keeps its own setting, exactly like the ``-g`` option left
-    out of the command line.
-
-    Args:
-        selector: Raw value of the routine ``use_gyroscope`` key.
-
-    Returns:
-        The setting to force on the driver, or None to leave the choice
-        to the cube.
-
-    """
-    if selector is None:
-        return None
-
-    return bool(selector)
-
-
 def list_routines() -> int:
     """
     List available routine files from the routines directory.
@@ -183,7 +128,6 @@ def list_routines() -> int:
     )
     table.add_column('Name')
     table.add_column('Steps', width=8, justify='right')
-    table.add_column('Bluetooth', width=9, justify='center')
     table.add_column('Comment')
 
     for path in routine_files:
@@ -193,19 +137,13 @@ def list_routines() -> int:
             continue
 
         sessions = config.get('sessions', [])
-        bluetooth = config.get('bluetooth', False)
         comment = config.get('comment', '')
 
         session_count = f'[stats]{ len(sessions) }[/stats]'
-        bt_str = (
-            '[success]Yes[/success]'
-            if bluetooth else '[warning]No[/warning]'
-        )
 
         table.add_row(
             f'[localhost]{ path.name.replace(".json", "") }[/localhost]',
             session_count,
-            bt_str,
             f'[comment]{ comment }[/comment]' if comment else '',
         )
 
@@ -360,11 +298,8 @@ async def routine(options: Namespace) -> int:
         console.print('🤔 No sessions defined.', style='warning')
         return 0
 
-    cube = resolve_routine_cube(config.get('bluetooth'))
-    use_gyroscope = resolve_routine_gyroscope(config.get('use_gyroscope'))
-
     return await run_routine_sessions(
         sessions,
-        cube,
-        use_gyroscope=use_gyroscope,
+        options.bluetooth,
+        use_gyroscope=options.use_gyroscope,
     )
