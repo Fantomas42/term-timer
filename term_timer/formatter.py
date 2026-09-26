@@ -3,6 +3,7 @@ import difflib
 import re
 from datetime import UTC
 from datetime import datetime
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
 from cubing_algs.algorithm import Algorithm
@@ -361,6 +362,34 @@ def format_fsrs_due(card: 'Card | None') -> str:
         return '[warning]Overdue[/warning]'
 
     return f'[muted]{ due.strftime("%Y-%m-%d") }[/muted]'
+
+
+def format_relative_delay(delay: timedelta) -> str:
+    """
+    Word the delay separating now from a date, in its largest unit.
+
+    Args:
+        delay: Date minus now; negative once the date has passed.
+
+    Returns:
+        Plain text delay such as "in 3 d" or "overdue by 5 h", or "now"
+        within a minute of the date.
+
+    """
+    seconds = abs(delay.total_seconds())
+
+    if seconds < 60:
+        return 'now'
+    if seconds < 3600:
+        amount = f'{ int(seconds // 60) } min'
+    elif seconds < 86400:
+        amount = f'{ int(seconds // 3600) } h'
+    else:
+        amount = f'{ int(seconds // 86400) } d'
+
+    if delay.total_seconds() < 0:
+        return f'overdue by { amount }'
+    return f'in { amount }'
 
 
 def format_fluency(fluency: int, *, step: bool = False) -> str:

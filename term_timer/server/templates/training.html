@@ -1,0 +1,108 @@
+{% extends "skeleton.html" %}
+{% from 'macros/training.html' import mastery_gauge %}
+
+{% block description %}Training status and review forecast{% endblock %}
+
+{% block title %}Training{% endblock %}
+
+{% block subtitle %}Training{% endblock %}
+
+{% block script %}
+  {% if forecast.series %}
+    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+    <script src="/static/js/training.js"></script>
+    <script>
+     document.addEventListener('DOMContentLoaded', function() {
+       trainingForecastChart(
+         document.getElementById('forecastChart'),
+         {{ forecast.labels|tojson }},
+         {{ forecast.series|tojson }},
+       );
+     });
+    </script>
+  {% endif %}
+{% endblock %}
+
+{% block body %}
+  {% if not banner %}
+    <div class="card">
+      <p>No training yet: run <code>term-timer train</code> to start one.</p>
+    </div>
+  {% else %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-dumbbell"></i>
+          <a href="#status" id="status">Status</a>
+        </h2>
+      </div>
+      <div class="stats-grid">
+        {% for status in banner.steps %}
+          <div class="stat-card">
+            <div class="stat-title">
+              {% if status.academy %}
+                <a class="training-step-link" href="/academy/CFOP/{{ status.step }}/">{{ status.step }}</a>
+              {% else %}
+                {{ status.step }}
+              {% endif %}
+            </div>
+            <div class="stat-value {% if status.due %}training-overdue{% endif %}">
+              {{ status.due }} due
+            </div>
+            <div class="stat-meta">{{ status.new }} new · {{ status.mastered }} / {{ status.total }} mastered</div>
+            {{ mastery_gauge(status) }}
+            {% if status.academy and status.due %}
+              <a class="btn btn-small flashcard-link" href="/training/CFOP/{{ status.step }}/review/">
+                <i class="fas fa-clone"></i> Flashcards
+              </a>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      {% if banner.unavailable %}
+        <p class="case-description">
+          Unavailable right now, being written or damaged: {{ banner.unavailable|join(', ') }}.
+        </p>
+      {% endif %}
+    </div>
+
+    {% if forecast.series %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-calendar-alt"></i>
+          <a href="#forecast" id="forecast">Review forecast</a>
+        </h2>
+      </div>
+      <div class="chart-container">
+        <canvas id="forecastChart"
+                aria-label="Reviews due over the next {{ forecast.labels|length - 1 }} days, by step"></canvas>
+      </div>
+      <p class="training-chart-note">
+        Reviews scheduled by FSRS, on your local days; overdue ones first.
+        {% if forecast.later %}{{ forecast.later }} more beyond this window.{% endif %}
+        Mastered: in Review with a stability of 14 days or more.
+      </p>
+      <table class="training-table training-forecast-table">
+        <thead>
+          <tr>
+            <th>Day</th>
+            {% for series in forecast.series %}<th>{{ series.label }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for label in forecast.labels %}
+            {% set index = loop.index0 %}
+            <tr>
+              <td>{{ label }}</td>
+              {% for series in forecast.series %}
+                <td {% if not series.data[index] %}class="muted"{% endif %}>{{ series.data[index] }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  {% endif %}
+{% endblock %}

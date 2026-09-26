@@ -22,6 +22,7 @@ from term_timer.server.annotations import TrendSeries
 from term_timer.server.views.base import View
 from term_timer.server.views.daily import DailyListView
 from term_timer.server.views.scramble import DEFAULT_CUBE_SIZE
+from term_timer.server.views.training import TrainingForecastView
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.stats import Statistics
 
@@ -85,6 +86,7 @@ class SessionListView(View):
         return {
             'sessions': sessions,
             'daily': DailyListView.banner(DEFAULT_CUBE_SIZE),
+            'training': TrainingForecastView.banner(),
         }
 
 

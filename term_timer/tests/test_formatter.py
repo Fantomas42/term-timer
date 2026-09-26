@@ -34,6 +34,7 @@ from term_timer.formatter import format_fsrs_due
 from term_timer.formatter import format_fsrs_state
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_metric
+from term_timer.formatter import format_relative_delay
 from term_timer.formatter import format_score
 from term_timer.formatter import format_session_name
 from term_timer.formatter import format_summary_row
@@ -1122,3 +1123,34 @@ class TestFormatAlgMoves(unittest.TestCase):
         self.assertIn('R2', result)
         self.assertIn("[wide]r'[/wide]", result)
         self.assertIn('[wide]r2[/wide]', result)
+
+
+class TestFormatRelativeDelay(unittest.TestCase):
+    """format_relative_delay words a delay before or past a date."""
+
+    def test_future_days(self) -> None:
+        """A delay of several days is counted in days."""
+        self.assertEqual(
+            format_relative_delay(timedelta(days=3, hours=5)), 'in 3 d',
+        )
+
+    def test_future_hours(self) -> None:
+        """A delay under a day is counted in hours."""
+        self.assertEqual(format_relative_delay(timedelta(hours=5)), 'in 5 h')
+
+    def test_future_minutes(self) -> None:
+        """A delay under an hour is counted in minutes."""
+        self.assertEqual(
+            format_relative_delay(timedelta(minutes=12)), 'in 12 min',
+        )
+
+    def test_past(self) -> None:
+        """A negative delay is an overdue."""
+        self.assertEqual(
+            format_relative_delay(timedelta(days=-2, hours=-1)),
+            'overdue by 2 d',
+        )
+
+    def test_now(self) -> None:
+        """Under a minute either way is now."""
+        self.assertEqual(format_relative_delay(timedelta(seconds=-20)), 'now')

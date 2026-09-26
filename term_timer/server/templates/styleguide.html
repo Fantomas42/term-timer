@@ -282,6 +282,31 @@
         <button type="button" class="btn"><i class="fas fa-copy"></i> Copy</button>
       </div>
 
+      <h4 class="sg-label">Training card states</h4>
+      <code class="sg-ref">.fsrs-state.state-new|learning|relearning|review|stable · .due-badge · .trend-up|flat|down · .fsrs-fill (svg)</code>
+      <div class="sg-row">
+        {% for label in ['New', 'Learning', 'Relearning', 'Review', 'Stable'] %}
+          <span class="fsrs-state state-{{ label|lower }}">{{ label }}</span>
+        {% endfor %}
+        <span class="due-badge">Due</span>
+        <span class="trend-up">↗</span>
+        <span class="trend-flat">→</span>
+        <span class="trend-down">↘ +34%</span>
+      </div>
+
+      <h4 class="sg-label">Training tints</h4>
+      <code class="sg-ref">.tint-swatch.speed-fast-2…slow-2 · .tint-swatch.memory-0…4 · grid: .step-cases[data-tint] .case-card.trained</code>
+      <div class="sg-row">
+        {% for band in ['fast-2', 'fast-1', 'mid', 'slow-1', 'slow-2'] %}
+          <span class="tint-swatch speed-{{ band }}">{{ band }}</span>
+        {% endfor %}
+      </div>
+      <div class="sg-row">
+        {% for level in [0, 1, 2, 3, 4] %}
+          <span class="tint-swatch memory-{{ level }}">memory {{ level }}</span>
+        {% endfor %}
+      </div>
+
       <h4 class="sg-label">Move triggers</h4>
       <div class="recons-moves sg-row">
         <span class="trigger sexy-move">sexy</span>

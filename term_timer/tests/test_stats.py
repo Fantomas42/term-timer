@@ -22,6 +22,7 @@ from term_timer.constants import DNF
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import PUNCHCARD_CELL
 from term_timer.constants import SECOND
+from term_timer.constants import TREND_MIN_TIMINGS
 from term_timer.constants import WEEK_DAYS
 from term_timer.constants import SolveFlag
 from term_timer.fsrs.storage import CaseTraining
@@ -3419,3 +3420,65 @@ class TestDailySummaryPerDay(unittest.TestCase):
             self.reporter.share_card(date(2026, 5, 19)),
             'Term Timer Daily · 2026-05-19 · DNF\n⬛',
         )
+
+
+class TestStatisticsSpeedTrend(unittest.TestCase):
+    """The speed trend compares the current Ao5 to the best Ao12 ever."""
+
+    def test_not_enough_history(self) -> None:
+        """Fewer than TREND_MIN_TIMINGS timings has no ratio nor trend."""
+        stats = Statistics([1000] * (TREND_MIN_TIMINGS - 1))
+
+        self.assertIsNone(stats.peak_ratio)
+        self.assertEqual(stats.speed_trend, '')
+
+    def test_at_peak(self) -> None:
+        """A current Ao5 at the peak level is an upward trend."""
+        stats = Statistics([1000] * TREND_MIN_TIMINGS)
+
+        self.assertEqual(stats.peak_ratio, 1.0)
+        self.assertEqual(stats.speed_trend, 'up')
+
+    def test_near_peak_within_tolerance(self) -> None:
+        """A current Ao5 within 10% of the peak is still upward."""
+        stats = Statistics([1000] * TREND_MIN_TIMINGS + [1080] * 5)
+
+        self.assertEqual(stats.speed_trend, 'up')
+
+    def test_plateau(self) -> None:
+        """A current Ao5 between 10% and 30% above peak is flat."""
+        stats = Statistics([1000] * TREND_MIN_TIMINGS + [1200] * 5)
+
+        self.assertEqual(stats.speed_trend, 'flat')
+
+    def test_degraded(self) -> None:
+        """A current Ao5 over 30% above peak is a downward trend."""
+        stats = Statistics([1000] * TREND_MIN_TIMINGS + [1400] * 5)
+
+        self.assertAlmostEqual(stats.peak_ratio or 0.0, 1.4)
+        self.assertEqual(stats.speed_trend, 'down')
+
+    def test_dnf_averages(self) -> None:
+        """Averages ruined by DNFs have no ratio nor trend."""
+        stats = Statistics([0] * TREND_MIN_TIMINGS)
+
+        self.assertIsNone(stats.peak_ratio)
+        self.assertEqual(stats.speed_trend, '')
+
+
+class TestStatisticsFromMilliseconds(unittest.TestCase):
+    """from_milliseconds reads training timings stored in milliseconds."""
+
+    def test_converts_to_nanoseconds(self) -> None:
+        """Millisecond timings become the nanoseconds of the stack."""
+        stats = Statistics.from_milliseconds([1500, 2000])
+
+        self.assertEqual(stats.stack_time, [SECOND * 3 // 2, SECOND * 2])
+        self.assertEqual(stats.best, SECOND * 3 // 2)
+
+    def test_empty(self) -> None:
+        """No timing gives an empty statistics object."""
+        stats = Statistics.from_milliseconds([])
+
+        self.assertEqual(stats.stack_time, [])
+        self.assertEqual(stats.best, 0)

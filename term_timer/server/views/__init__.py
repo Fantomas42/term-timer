@@ -23,6 +23,8 @@ from term_timer.server.views.solves import SolveDetailView
 from term_timer.server.views.solves import SolveUpdateCommentView
 from term_timer.server.views.solves import SolveUpdateFlagView
 from term_timer.server.views.styleguide import StyleguideView
+from term_timer.server.views.training import TrainingForecastView
+from term_timer.server.views.training import TrainingReviewView
 
 __all__ = [
     'AcademyCaseAlgorithmsDebugView',
@@ -49,4 +51,6 @@ __all__ = [
     'SolveUpdateCommentView',
     'SolveUpdateFlagView',
     'StyleguideView',
+    'TrainingForecastView',
+    'TrainingReviewView',
 ]

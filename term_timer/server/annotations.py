@@ -127,6 +127,7 @@ class SessionListContext(TypedDict):
 
     sessions: dict[int, dict[str, SessionInfo]]
     daily: 'DailyBannerInfo'
+    training: 'TrainingBannerInfo | None'
 
 
 class SessionSeriesEntry(TypedDict):
@@ -206,6 +207,41 @@ class AcademyOverviewContext(TypedDict):
     available_palettes: list[str]
 
 
+class CaseTrainingTile(TypedDict):
+    """Training of a case, tinting its tile on the academy step page."""
+
+    state_label: str
+    state_class: str
+    overdue: bool
+    attempts: int
+    ao5: int
+    trend: str
+    speed: str
+    memory: str
+    retention: float | None
+
+
+class TrainingStateRow(TypedDict):
+    """Cases of a step sitting in one card state, or all of them."""
+
+    label: str
+    klass: str
+    count: int
+    overdue: int
+    share: float
+    offset: float
+    best: int
+    average: int
+    worst: int
+
+
+class StepTrainingSummary(TypedDict):
+    """Recap of the training of a step by card state."""
+
+    rows: list[TrainingStateRow]
+    total: TrainingStateRow
+
+
 class AcademyStepContext(TypedDict):
     """Template context for academy step view."""
 
@@ -224,6 +260,9 @@ class AcademyStepContext(TypedDict):
     available_cube_sizes: list[int]
     palette: str
     available_palettes: list[str]
+    training: dict[str, CaseTrainingTile]
+    training_summary: StepTrainingSummary | None
+    training_unavailable: bool
 
 
 class CubeRenderContext(TypedDict):
@@ -239,6 +278,56 @@ class CubeRenderContext(TypedDict):
     available_cube_sizes: list[int]
     palette: str
     available_palettes: list[str]
+
+
+class CurvePoint(TypedDict):
+    """A point of a chart drawn on a numeric horizontal axis."""
+
+    x: float
+    y: float
+
+
+class AttemptsCurve(TypedDict):
+    """Timings of a trained case in attempt order, with rolling averages."""
+
+    labels: list[str]
+    times: list[float]
+    ao5: list[float | None]
+    ao12: list[float | None]
+    best: float
+    peak: float | None
+
+
+class ForgettingCurve(TypedDict):
+    """Recall probability of a case from its last review onward."""
+
+    points: list[CurvePoint]
+    today: float
+    due: float
+    retention: float
+
+
+class CaseTrainingPanel(TypedDict):
+    """Personal training data of a case, shown on its academy page."""
+
+    attempts: int
+    best: int
+    ao5: int
+    ao12: int
+    best_ao12: int
+    trend: str
+    trend_percent: int
+    last_date: str
+    state_label: str
+    state_class: str
+    stability: float | None
+    difficulty: float | None
+    last_review: str
+    due: str
+    due_relative: str
+    overdue: bool
+    curve: AttemptsCurve | None
+    forgetting: ForgettingCurve | None
 
 
 class AcademyCaseContext(TypedDict):
@@ -257,6 +346,8 @@ class AcademyCaseContext(TypedDict):
     available_cube_sizes: list[int]
     palette: str
     available_palettes: list[str]
+    training: CaseTrainingPanel | None
+    training_unavailable: bool
 
 
 class AlgorithmImpactGroup(TypedDict):
@@ -436,3 +527,71 @@ class DailyDayContext(TypedDict):
     doctor: list[DailyDoctorGroup]
     share: str
     zone_edges: tuple[int, ...]
+
+
+class TrainingStepStatus(TypedDict):
+    """Where the training of one step stands today."""
+
+    step: str
+    due: int
+    new: int
+    mastered: int
+    total: int
+    mastery: float
+    academy: bool
+
+
+class TrainingBannerInfo(TypedDict):
+    """Training teaser of the dashboard, one status per trained step."""
+
+    steps: list[TrainingStepStatus]
+    due: int
+    unavailable: list[str]
+
+
+class ForecastSeries(TypedDict):
+    """Reviews of one step over the forecast days."""
+
+    label: str
+    token: str
+    data: list[int]
+
+
+class TrainingForecast(TypedDict):
+    """Reviews to come, overdue first then day by day, by step."""
+
+    labels: list[str]
+    series: list[ForecastSeries]
+    later: int
+
+
+class TrainingForecastContext(TypedDict):
+    """Template context for the training forecast view."""
+
+    banner: TrainingBannerInfo | None
+    forecast: TrainingForecast
+
+
+class ReviewCard(TypedDict):
+    """A due case shown as a flashcard, its algorithm hidden."""
+
+    code: str
+    name: str
+    main_algorithm: str
+    arrows: str
+    algorithm: str
+    overdue: str
+    state_label: str
+    state_class: str
+
+
+class TrainingReviewContext(TypedDict):
+    """Template context for the flashcard review view."""
+
+    method: str
+    step: str
+    cards: list[ReviewCard]
+    orientation_faces: CubeOrientation
+    mode: str
+    cube_size: int
+    palette: str

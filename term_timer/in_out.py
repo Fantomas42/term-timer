@@ -222,6 +222,56 @@ def save_solves(
     return True
 
 
+def trainings_from_data(
+        method: str,
+        step: str,
+        raw_data: dict[str, CaseTrainingData],
+) -> Trainings:
+    """
+    Build trainings from the raw content of a training file.
+
+    Returns:
+        Trainings object holding one CaseTraining per case of the file.
+
+    """
+    cases = {
+        case_code: CaseTraining(
+            code=case_code,
+            last_date=data['last_date'],
+            timings=data['timings'],
+            fsrs_card=fsrs_card_from_data(data),
+            solution=data.get('solution', ''),
+        )
+        for case_code, data in raw_data.items()
+    }
+
+    return Trainings(method=method, step=step, cases=cases)
+
+
+def trainings_path(method: str, step: str) -> Path:
+    """
+    Locate the training file of a method step.
+
+    Returns:
+        Path of the JSON file, whether it exists or not.
+
+    """
+    return TRAININGS_DIRECTORY / method / f'{ step }.json'
+
+
+def list_training_steps(method: str) -> list[str]:
+    """
+    List the steps of a method having a training file.
+
+    Returns:
+        Step names sorted alphabetically, empty without any file.
+
+    """
+    return sorted(
+        path.stem for path in (TRAININGS_DIRECTORY / method).glob('*.json')
+    )
+
+
 def load_trainings(method: str, step: str) -> Trainings:
     """
     Load trainings from file for given method and step.
@@ -231,29 +281,39 @@ def load_trainings(method: str, step: str) -> Trainings:
         with methods to add new timings and serialize back to JSON.
 
     """
-    source_directory = TRAININGS_DIRECTORY / method
-    source_directory.mkdir(parents=True, exist_ok=True)
+    source = trainings_path(method, step)
+    source.parent.mkdir(parents=True, exist_ok=True)
 
-    source = source_directory / f'{ step }.json'
+    if not source.exists():
+        return Trainings(method=method, step=step, cases={})
 
-    cases: dict[str, CaseTraining] = {}
+    with source.open('r', encoding='utf-8') as fd:
+        raw_data: dict[str, CaseTrainingData] = json.load(fd)
 
-    if source.exists():
+    return trainings_from_data(method, step, raw_data)
+
+
+def read_trainings(method: str, step: str) -> Trainings | None:
+    """
+    Read trainings for display, without side effect nor failure.
+
+    Unlike load_trainings, nothing is created on disk, and a file that
+    cannot be read — missing, or truncated by a training session
+    writing it at the same time — is reported as None instead of
+    raising.
+
+    Returns:
+        Trainings of the method/step, or None when unavailable.
+
+    """
+    source = trainings_path(method, step)
+
+    try:
         with source.open('r', encoding='utf-8') as fd:
             raw_data: dict[str, CaseTrainingData] = json.load(fd)
-
-        cases = {
-            case_code: CaseTraining(
-                code=case_code,
-                last_date=data['last_date'],
-                timings=data['timings'],
-                fsrs_card=fsrs_card_from_data(data),
-                solution=data.get('solution', ''),
-            )
-            for case_code, data in raw_data.items()
-        }
-
-    return Trainings(method=method, step=step, cases=cases)
+        return trainings_from_data(method, step, raw_data)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return None
 
 
 def save_trainings(trainings: Trainings) -> bool:

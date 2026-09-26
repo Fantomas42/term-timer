@@ -30,6 +30,13 @@ DOCTOR_SESSION_BASELINE_MIN: Final = 12
 # and as the floor protecting clean-but-slow reps from a speed-driven Again.
 STABILITY_LONG_TERM_DAYS: Final = 14.0
 
+# Speed trend of a case: current Ao5 compared to the best Ao12 ever
+# achieved (peak sustained performance). Display only, never feeds the
+# FSRS rating or scheduling.
+TREND_MIN_TIMINGS: Final[int] = 12
+TREND_AT_PEAK: Final[float] = 1.10
+TREND_DEGRADED: Final[float] = 1.30
+
 # Card states of the recap table, ordered as a learning funnel from
 # never seen to consolidated. Labels come from fsrs_state_label(), which
 # splits the FSRS Review state into Review (due) and Stable (scheduled).

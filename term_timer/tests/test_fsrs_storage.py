@@ -3,6 +3,7 @@ import json
 import unittest
 from datetime import UTC
 from datetime import datetime
+from datetime import timedelta
 
 from fsrs import Card
 from fsrs import State
@@ -195,3 +196,87 @@ class TestTrainingsPopTiming(unittest.TestCase):
         trainings = make_trainings()
         trainings.pop_timing('Aa', None)
         self.assertEqual(trainings.cases, {})
+
+
+class TestCaseTrainingBest(unittest.TestCase):
+    """best is the fastest timing of a case, DNFs aside."""
+
+    def test_best(self) -> None:
+        """The smallest positive timing wins."""
+        case = CaseTraining(code='Aa', last_date=0, timings=[0, 1500, 1200])
+
+        self.assertEqual(case.best, 1200)
+
+    def test_no_timing(self) -> None:
+        """A case without timing has no best."""
+        case = CaseTraining(code='Aa', last_date=0, timings=[])
+
+        self.assertEqual(case.best, 0)
+
+
+class TestSummarizeStates(unittest.TestCase):
+    """summarize_states recaps the cases of a step by card state."""
+
+    def setUp(self) -> None:
+        """Build cases spread over the card states."""
+        self.now = datetime.now(UTC)
+
+        def card(state: State, due_days: float) -> Card:
+            built = Card(state=state, step=None if state == State.Review else 0)
+            built.due = self.now + timedelta(days=due_days)
+            return built
+
+        self.trainings = Trainings(method='CFOP', step='PLL', cases={
+            'Aa': CaseTraining(
+                code='Aa', last_date=0, timings=[1500, 1200],
+                fsrs_card=card(State.Review, -1),
+            ),
+            'Ab': CaseTraining(
+                code='Ab', last_date=0, timings=[2000],
+                fsrs_card=card(State.Review, 5),
+            ),
+            'E': CaseTraining(
+                code='E', last_date=0, timings=[3000],
+                fsrs_card=card(State.Learning, -0.1),
+            ),
+            'F': CaseTraining(code='F', last_date=0, timings=[2500]),
+            'Ga': CaseTraining(
+                code='Ga', last_date=0, timings=[1000],
+                fsrs_card=card(State.Review, -3),
+            ),
+        })
+
+    def test_counts_by_state(self) -> None:
+        """Each asked case lands in its state, unseen ones in New."""
+        summary = self.trainings.summarize_states(
+            ['Aa', 'Ab', 'E', 'F', 'H'], self.now,
+        )
+
+        self.assertEqual(list(summary), [
+            'New', 'Learning', 'Relearning', 'Review', 'Stable',
+        ])
+        self.assertEqual(
+            {label: row.count for label, row in summary.items()},
+            {
+                'New': 2, 'Learning': 1, 'Relearning': 0,
+                'Review': 1, 'Stable': 1,
+            },
+        )
+
+    def test_overdue_and_bests(self) -> None:
+        """Overdues count past due cards, bests only practiced cases."""
+        summary = self.trainings.summarize_states(
+            ['Aa', 'Ab', 'E', 'F', 'H'], self.now,
+        )
+
+        self.assertEqual(summary['Review'].overdue, 1)
+        self.assertEqual(summary['Learning'].overdue, 1)
+        self.assertEqual(summary['Stable'].overdue, 0)
+        self.assertEqual(summary['Review'].bests, [1200])
+        self.assertEqual(summary['New'].bests, [2500])
+
+    def test_only_asked_cases(self) -> None:
+        """Cases of the file outside the asked codes are ignored."""
+        summary = self.trainings.summarize_states(['Aa'], self.now)
+
+        self.assertEqual(sum(row.count for row in summary.values()), 1)

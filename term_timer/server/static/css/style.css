@@ -130,6 +130,24 @@
     --chart-series-4: #C98500;
     --chart-grid: rgba(148, 163, 184, 0.1);
 
+    /* ── Entraînement : états FSRS ───────────────────── */
+    /* Ordre de l'entonnoir New → Stable ; les quatre      */
+    /* teintes passent le validateur dataviz en paires     */
+    /* adjacentes sur --card-bg. New reste neutre : jamais */
+    /* vu. Toujours accompagnées du libellé de l'état.     */
+    --fsrs-new: var(--secondary);
+    --fsrs-learning: #C98500;
+    --fsrs-relearning: #9085E9;
+    --fsrs-review: #D95926;
+    --fsrs-stable: #3987E5;
+
+    /* ── Entraînement : teintes de la grille des cas ── */
+    /* Vitesse : divergente froid (rapide) / chaud (lent), */
+    /* milieu neutre. Mémoire : séquentielle froide.       */
+    --tint-cool: var(--chart-series-1);
+    --tint-warm: var(--chart-series-2);
+    --tint-neutral: var(--secondary);
+
     /* ── Dimensions ───────────────────────────────────── */
     --square-size: 1.5rem;
 
@@ -2115,6 +2133,343 @@ twisty-alg-viewer {
     color: var(--info);
 }
 
+/* Academy step training: tinted case grid and summary */
+.training-summary {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.training-summary-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.training-summary-head h3 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+@media (max-width: 480px) {
+    .training-summary {
+        padding: 1rem;
+        overflow-x: auto;
+    }
+
+    .training-table th,
+    .training-table td {
+        padding: 0.3rem 0.25rem;
+        font-size: 0.8rem;
+    }
+}
+
+.training-bar {
+    display: block;
+    width: 100%;
+    height: 1rem;
+    margin-bottom: 1rem;
+}
+
+.training-bar rect {
+    stroke: var(--card-bg);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+}
+
+.fsrs-fill.state-new { fill: var(--fsrs-new); }
+.fsrs-fill.state-learning { fill: var(--fsrs-learning); }
+.fsrs-fill.state-relearning { fill: var(--fsrs-relearning); }
+.fsrs-fill.state-review { fill: var(--fsrs-review); }
+.fsrs-fill.state-stable { fill: var(--fsrs-stable); }
+
+.training-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.training-table th,
+.training-table td {
+    padding: 0.35rem 0.5rem;
+    text-align: right;
+    color: var(--text-primary);
+}
+
+.training-table th {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.training-table th:first-child,
+.training-table td:first-child {
+    text-align: left;
+}
+
+.training-table tr.training-total td {
+    border-top: 1px solid var(--border-color);
+    font-weight: 600;
+}
+
+.training-table .muted {
+    color: var(--text-secondary);
+}
+
+.tint-choices {
+    display: inline-flex;
+    gap: 0.25rem;
+}
+
+.tint-choices .btn[aria-pressed="true"] {
+    background: var(--primary-strong);
+    box-shadow: inset 0 0 0 1px var(--text-primary);
+}
+
+.tint-legend {
+    display: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.step-cases[data-tint="state"] .tint-legend[data-for="state"],
+.step-cases[data-tint="speed"] .tint-legend[data-for="speed"],
+.step-cases[data-tint="memory"] .tint-legend[data-for="memory"] {
+    display: flex;
+}
+
+.tint-swatch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.tint-swatch::before {
+    content: '';
+    width: 1rem;
+    height: 1rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.case-card.trained {
+    border-left: 4px solid var(--fsrs-new);
+}
+
+.case-card.trained.state-learning { border-left-color: var(--fsrs-learning); }
+.case-card.trained.state-relearning {
+    border-left-color: var(--fsrs-relearning);
+}
+.case-card.trained.state-review { border-left-color: var(--fsrs-review); }
+.case-card.trained.state-stable { border-left-color: var(--fsrs-stable); }
+
+.step-cases[data-tint="state"] .case-card.state-new {
+    background: color-mix(in srgb, var(--fsrs-new) 18%, var(--card-bg));
+}
+.step-cases[data-tint="state"] .case-card.state-learning {
+    background: color-mix(in srgb, var(--fsrs-learning) 18%, var(--card-bg));
+}
+.step-cases[data-tint="state"] .case-card.state-relearning {
+    background: color-mix(in srgb, var(--fsrs-relearning) 18%, var(--card-bg));
+}
+.step-cases[data-tint="state"] .case-card.state-review {
+    background: color-mix(in srgb, var(--fsrs-review) 18%, var(--card-bg));
+}
+.step-cases[data-tint="state"] .case-card.state-stable {
+    background: color-mix(in srgb, var(--fsrs-stable) 18%, var(--card-bg));
+}
+
+.step-cases[data-tint="speed"] .case-card.speed-fast-2,
+.tint-swatch.speed-fast-2::before {
+    background: color-mix(in srgb, var(--tint-cool) 40%, var(--card-bg));
+}
+.step-cases[data-tint="speed"] .case-card.speed-fast-1,
+.tint-swatch.speed-fast-1::before {
+    background: color-mix(in srgb, var(--tint-cool) 20%, var(--card-bg));
+}
+.step-cases[data-tint="speed"] .case-card.speed-mid,
+.tint-swatch.speed-mid::before {
+    background: color-mix(in srgb, var(--tint-neutral) 15%, var(--card-bg));
+}
+.step-cases[data-tint="speed"] .case-card.speed-slow-1,
+.tint-swatch.speed-slow-1::before {
+    background: color-mix(in srgb, var(--tint-warm) 20%, var(--card-bg));
+}
+.step-cases[data-tint="speed"] .case-card.speed-slow-2,
+.tint-swatch.speed-slow-2::before {
+    background: color-mix(in srgb, var(--tint-warm) 40%, var(--card-bg));
+}
+
+.step-cases[data-tint="memory"] .case-card.memory-0,
+.tint-swatch.memory-0::before {
+    background: color-mix(in srgb, var(--tint-cool) 6%, var(--card-bg));
+}
+.step-cases[data-tint="memory"] .case-card.memory-1,
+.tint-swatch.memory-1::before {
+    background: color-mix(in srgb, var(--tint-cool) 14%, var(--card-bg));
+}
+.step-cases[data-tint="memory"] .case-card.memory-2,
+.tint-swatch.memory-2::before {
+    background: color-mix(in srgb, var(--tint-cool) 22%, var(--card-bg));
+}
+.step-cases[data-tint="memory"] .case-card.memory-3,
+.tint-swatch.memory-3::before {
+    background: color-mix(in srgb, var(--tint-cool) 32%, var(--card-bg));
+}
+.step-cases[data-tint="memory"] .case-card.memory-4,
+.tint-swatch.memory-4::before {
+    background: color-mix(in srgb, var(--tint-cool) 44%, var(--card-bg));
+}
+
+/* Training banner (dashboard): the night gradient of the daily banner,
+   so that the due warning and the step lines keep their contrast */
+.training-banner {
+    background: linear-gradient(135deg, var(--gradient-night-3) 0%, var(--gradient-navy-2) 100%);
+}
+
+.training-banner-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.training-banner-step {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    background: var(--chip-bg);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.training-banner-step:hover {
+    color: var(--text-primary);
+}
+
+.training-step-link {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.training-step-link:hover {
+    color: var(--link);
+}
+
+.training-banner-name {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.flashcard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+}
+
+.flashcard[hidden],
+.flashcard-answer[hidden] {
+    display: none;
+}
+
+.flashcard-image img {
+    display: block;
+    width: 220px;
+    max-width: 100%;
+}
+
+.flashcard-meta {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.flashcard-answer {
+    text-align: center;
+}
+
+.flashcard-answer h3 {
+    margin: 0 0 0.5rem;
+}
+
+.flashcard-algorithm {
+    font-size: 1.2rem;
+    color: var(--text-primary);
+}
+
+.flashcard-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    padding-bottom: 1rem;
+}
+
+.flashcard-controls kbd {
+    font-size: 0.75rem;
+    padding: 0 0.3rem;
+    border: 1px solid var(--text-primary);
+    border-radius: 3px;
+}
+
+.flashcard-link {
+    align-self: flex-start;
+    margin-top: 0.75rem;
+}
+
+.mastery-gauge {
+    display: block;
+    width: 100%;
+    height: 0.5rem;
+    margin-top: 0.75rem;
+    border-radius: 4px;
+}
+
+.mastery-track { fill: var(--border-color); }
+.mastery-fill { fill: var(--fsrs-stable); }
+
+.training-forecast-table {
+    margin-top: 1.5rem;
+}
+
+.case-training {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.case-training .muted {
+    color: var(--text-secondary);
+}
+
+.due-badge {
+    padding: 0.1rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid var(--warning);
+    color: var(--warning);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
 /* Academy Case Detail Page */
 .case-badge {
     background: var(--primary);
@@ -2123,6 +2478,69 @@ twisty-alg-viewer {
     border-radius: 6px;
     font-weight: bold;
     font-size: 1.1rem;
+}
+
+/* Training panel: personal training of a case (academy case page) */
+.fsrs-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fsrs-state::before {
+    content: '';
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background-color: var(--fsrs-new);
+}
+
+.fsrs-state.state-learning::before { background-color: var(--fsrs-learning); }
+.fsrs-state.state-relearning::before {
+    background-color: var(--fsrs-relearning);
+}
+.fsrs-state.state-review::before { background-color: var(--fsrs-review); }
+.fsrs-state.state-stable::before { background-color: var(--fsrs-stable); }
+
+.training-overdue {
+    color: var(--warning);
+}
+
+.trend-up {
+    color: var(--success);
+}
+
+.trend-flat {
+    color: var(--text-secondary);
+}
+
+.trend-down {
+    color: var(--danger);
+}
+
+.training-charts {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.training-chart-title {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.training-chart-note {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+@media (min-width: 1024px) {
+    .training-charts {
+        grid-template-columns: 3fr 2fr;
+    }
 }
 
 /* Move formatting styles for academy */

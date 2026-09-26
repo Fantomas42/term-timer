@@ -7,9 +7,11 @@ from unittest.mock import patch
 
 from term_timer.fsrs.storage import CaseTraining
 from term_timer.fsrs.storage import Trainings
+from term_timer.in_out import list_training_steps
 from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
 from term_timer.in_out import load_trainings
+from term_timer.in_out import read_trainings
 from term_timer.in_out import save_trainings
 
 
@@ -217,3 +219,83 @@ class TestTrainingsSolution(unittest.TestCase):
                 reloaded.cases['Sune'].solution,
                 "R U R' U R U2 R'",
             )
+
+
+class TestReadTrainings(unittest.TestCase):
+    """read_trainings is the side-effect free, fault tolerant reader."""
+
+    def setUp(self) -> None:
+        """Point the trainings directory at a temporary folder."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.directory = Path(tmp.name) / 'trainings'
+
+        patcher = patch(
+            'term_timer.in_out.TRAININGS_DIRECTORY', self.directory,
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def write(self, content: str) -> None:
+        """Write the raw content of the CFOP/OLL training file."""
+        (self.directory / 'CFOP').mkdir(parents=True, exist_ok=True)
+        (self.directory / 'CFOP' / 'OLL.json').write_text(
+            content, encoding='utf-8',
+        )
+
+    def test_missing_file(self) -> None:
+        """A missing file is None, and no directory gets created."""
+        self.assertIsNone(read_trainings('CFOP', 'OLL'))
+        self.assertFalse(self.directory.exists())
+
+    def test_truncated_file(self) -> None:
+        """A file cut in the middle of a write is None, not an error."""
+        self.write('{"27": {"last_date": 17000')
+
+        self.assertIsNone(read_trainings('CFOP', 'OLL'))
+
+    def test_malformed_entry(self) -> None:
+        """Valid JSON missing a mandatory key is None, not an error."""
+        self.write(json.dumps({'27': {'timings': [1234]}}))
+
+        self.assertIsNone(read_trainings('CFOP', 'OLL'))
+
+    def test_valid_file_matches_load_trainings(self) -> None:
+        """A valid file reads exactly as load_trainings loads it."""
+        self.write(json.dumps({
+            '27': {
+                'last_date': 1700000000,
+                'timings': [1234, 2345],
+                'solution': "R U R' U R U2 R'",
+            },
+        }))
+
+        self.assertEqual(
+            read_trainings('CFOP', 'OLL'),
+            load_trainings('CFOP', 'OLL'),
+        )
+
+
+class TestListTrainingSteps(unittest.TestCase):
+    """list_training_steps finds the trained steps of a method."""
+
+    def test_missing_directory(self) -> None:
+        """No trainings directory means no step, and nothing created."""
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp) / 'trainings'
+            with patch('term_timer.in_out.TRAININGS_DIRECTORY', directory):
+                self.assertEqual(list_training_steps('CFOP'), [])
+            self.assertFalse(directory.exists())
+
+    def test_steps_sorted(self) -> None:
+        """Every JSON file is a step, listed by name."""
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            (directory / 'CFOP').mkdir()
+            for name in ('PLL.json', 'F2L.json', 'OLL.json', 'notes.txt'):
+                (directory / 'CFOP' / name).write_text('{}', encoding='utf-8')
+
+            with patch('term_timer.in_out.TRAININGS_DIRECTORY', directory):
+                self.assertEqual(
+                    list_training_steps('CFOP'), ['F2L', 'OLL', 'PLL'],
+                )

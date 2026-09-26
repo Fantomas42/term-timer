@@ -1,4 +1,5 @@
 {% extends "skeleton.html" %}
+{% from 'macros/training.html' import mastery_gauge %}
 
 {% block description %}Dashboard{% endblock %}
 
@@ -83,6 +84,45 @@
       </div>
     </div>
   </div>
+
+  {% if training %}
+  <div class="academy-banner training-banner">
+    <div class="academy-content">
+      <div class="academy-icon">
+        <i class="fas fa-dumbbell"></i>
+      </div>
+      <div class="academy-info">
+        <h2>Training</h2>
+        <p>
+          {% if training.due %}
+            <span class="training-overdue">{{ training.due }} review{{ 's' if training.due > 1 }} due</span>
+          {% else %}
+            Nothing due, every review is ahead
+          {% endif %}
+        </p>
+        <div class="training-banner-steps">
+          {% for status in training.steps %}
+            <a class="training-banner-step"
+               href="{% if status.academy %}/academy/CFOP/{{ status.step }}/{% else %}/training/{% endif %}">
+              <span class="training-banner-name">{{ status.step }}</span>
+              <span>{{ status.due }} due · {{ status.new }} new · {{ status.mastered }}/{{ status.total }} mastered</span>
+              {{ mastery_gauge(status) }}
+            </a>
+          {% endfor %}
+        </div>
+        {% if training.unavailable %}
+          <p class="training-chart-note">Unavailable right now: {{ training.unavailable|join(', ') }}.</p>
+        {% endif %}
+      </div>
+      <div class="academy-action">
+        <a href="/training/" class="academy-btn">
+          <span class="btn-text">Review forecast</span>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <div class="academy-banner">
     <div class="academy-content">

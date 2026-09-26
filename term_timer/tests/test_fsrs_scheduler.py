@@ -860,3 +860,45 @@ class TestComputeMastery(unittest.TestCase):
         cards = {'A': make_card(state=State.Review, stability=20.0)}
         _, total = FSRSScheduler.compute_mastery(cards, self.probs)
         self.assertEqual(total, len(self.probs))
+
+
+class TestRetrievability(unittest.TestCase):
+    """retrievability reads the recall probability of a card."""
+
+    def setUp(self) -> None:
+        """Build a reviewed card with a known stability."""
+        self.scheduler = FSRSScheduler()
+        self.card = make_card(
+            due_offset_days=5.0,
+            state=State.Review,
+            stability=5.0,
+            difficulty=5.0,
+        )
+        self.last_review = datetime.now(UTC) - timedelta(days=1)
+        self.card.last_review = self.last_review
+
+    def test_full_at_last_review(self) -> None:
+        """Recall is certain at the time of the last review."""
+        self.assertAlmostEqual(
+            self.scheduler.retrievability(self.card, self.last_review),
+            1.0,
+        )
+
+    def test_decreases_over_time(self) -> None:
+        """Recall probability decays as time passes."""
+        values = [
+            self.scheduler.retrievability(
+                self.card, self.last_review + timedelta(days=days),
+            )
+            for days in (1, 5, 20)
+        ]
+
+        self.assertEqual(values, sorted(values, reverse=True))
+        self.assertLess(values[-1], values[0])
+
+    def test_never_reviewed(self) -> None:
+        """A card never reviewed has no memory to recall."""
+        self.assertEqual(
+            self.scheduler.retrievability(Card(), datetime.now(UTC)),
+            0.0,
+        )

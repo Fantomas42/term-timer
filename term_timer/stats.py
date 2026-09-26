@@ -32,6 +32,7 @@ from term_timer.constants import GRAPH_CONSOLE_COLORS
 from term_timer.constants import GRAPH_CONSOLE_FALLBACK
 from term_timer.constants import GRAPH_CONSOLE_LIMIT
 from term_timer.constants import MONTH_INITIALS
+from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import PUNCHCARD_CELL
 from term_timer.constants import PUNCHCARD_LEVELS
@@ -40,6 +41,9 @@ from term_timer.constants import PUNCHCARD_WEEKS
 from term_timer.constants import SECOND
 from term_timer.constants import SECOND_BINS
 from term_timer.constants import STEP_BAR
+from term_timer.constants import TREND_AT_PEAK
+from term_timer.constants import TREND_DEGRADED
+from term_timer.constants import TREND_MIN_TIMINGS
 from term_timer.constants import WEEK_DAYS
 from term_timer.formatter import compute_padding
 from term_timer.formatter import format_delta
@@ -476,6 +480,64 @@ class Statistics(StatisticsTools):  # noqa: PLR0904
     Extends StatisticsTools with cached properties for commonly used
     statistics like best/worst times, averages, and distribution analysis.
     """
+
+    @classmethod
+    def from_milliseconds(cls, timings: list[int]) -> 'Statistics':
+        """
+        Build statistics from training timings stored in milliseconds.
+
+        Args:
+            timings: Timings in milliseconds, as training files keep them.
+
+        Returns:
+            Statistics over the timings converted to nanoseconds.
+
+        """
+        return cls([timing * MS_TO_NS_FACTOR for timing in timings])
+
+    @cached_property
+    def peak_ratio(self) -> float | None:
+        """
+        Compare the current Ao5 to the best Ao12 ever achieved.
+
+        Returns:
+            Ratio of the current Ao5 over the best Ao12, or None when
+            fewer than TREND_MIN_TIMINGS timings are available or either
+            average is ruined.
+
+        """
+        if len(self.stack_time) < TREND_MIN_TIMINGS:
+            return None
+
+        ao5 = self.ao5
+        peak = self.best_ao12
+        if ao5 <= 0 or peak <= 0:
+            return None
+
+        return ao5 / peak
+
+    @cached_property
+    def speed_trend(self) -> str:
+        """
+        Classify the speed trend against the peak performance.
+
+        At or near the peak the times are progressing or holding their
+        best level, well above it the muscle memory is degrading.
+        Display only, never feeds the FSRS rating or scheduling.
+
+        Returns:
+            ``'up'``, ``'flat'`` or ``'down'``, or an empty string when
+            no ratio is available.
+
+        """
+        ratio = self.peak_ratio
+        if ratio is None:
+            return ''
+        if ratio <= TREND_AT_PEAK:
+            return 'up'
+        if ratio >= TREND_DEGRADED:
+            return 'down'
+        return 'flat'
 
     @cached_property
     def mb3(self) -> int:

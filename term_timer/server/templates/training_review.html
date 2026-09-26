@@ -1,0 +1,73 @@
+{% extends "skeleton.html" %}
+
+{% block description %}Recognition review of the due {{ method }} {{ step }} cases{% endblock %}
+
+{% block title %}{{ step }} review{% endblock %}
+
+{% block subtitle %}
+  <a class="academy-header" href="/training/">Training</a>
+  <a class="academy-header" href="/academy/{{ method }}/{{ step }}/">{{ method }} / {{ step }}</a>
+  <a class="academy-header">Review</a>
+{% endblock %}
+
+{% block script %}
+  {% if cards %}
+    <script src="/static/js/training.js"></script>
+    <script>
+     document.addEventListener('DOMContentLoaded', function() {
+       trainingFlashcards(document.querySelector('.flashcards'));
+     });
+    </script>
+  {% endif %}
+{% endblock %}
+
+{% block body %}
+  {% if not cards %}
+    <div class="card">
+      <p>Nothing to review on {{ step }}: no case is due right now.</p>
+    </div>
+  {% else %}
+    <div class="card flashcards">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-clone"></i>
+          {{ step }} recognition
+          <span class="title-secondary flashcard-progress">1 / {{ cards|length }}</span>
+        </h2>
+      </div>
+      <p class="case-description">
+        Name the case and its algorithm, then reveal. Nothing is rated here:
+        the review stays on the cube, with <code>term-timer train</code>.
+      </p>
+      {% for card in cards %}
+        <div class="flashcard" {% if not loop.first %}hidden{% endif %}>
+          <div class="flashcard-image cube-frame">
+            <img alt="Case to recognize"
+                 src="/cube/?case={{ card.main_algorithm|urlencode }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&arrows={{ card.arrows }}">
+          </div>
+          <div class="flashcard-meta">
+            <span class="fsrs-state state-{{ card.state_class }}">{{ card.state_label }}</span>
+            <span class="training-overdue">{{ card.overdue }}</span>
+          </div>
+          <div class="flashcard-answer" hidden>
+            <h3>
+              <a class="training-step-link" href="/academy/{{ method }}/{{ step }}/{{ card.code }}/">{{ card.name }}</a>
+            </h3>
+            <code class="flashcard-algorithm">{{ card.algorithm }}</code>
+          </div>
+        </div>
+      {% endfor %}
+      <div class="flashcard-controls">
+        <button type="button" class="btn btn-secondary" data-flashcard="previous">
+          <i class="fas fa-arrow-left"></i> Previous
+        </button>
+        <button type="button" class="btn" data-flashcard="reveal">
+          <i class="fas fa-eye"></i> Reveal <kbd>Space</kbd>
+        </button>
+        <button type="button" class="btn btn-secondary" data-flashcard="next">
+          Next <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

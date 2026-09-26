@@ -21,6 +21,7 @@ from rich.console import Console as RichConsole
 from rich.theme import Theme
 
 from term_timer.arguments import get_parser
+from term_timer.constants import TREND_MIN_TIMINGS
 from term_timer.exceptions import EmptyCasePoolError
 from term_timer.exceptions import InvalidCaseError
 from term_timer.fsrs.rating import RatingBreakdown
@@ -32,7 +33,6 @@ from term_timer.scripts.commands import trainer as trainer_mod
 from term_timer.solve import Solve
 from term_timer.stats import Statistics
 from term_timer.trainer import MANUAL_RATING_KEYS
-from term_timer.trainer import TREND_MIN_TIMINGS
 from term_timer.trainer import PendingAttempt
 from term_timer.trainer import Trainer
 

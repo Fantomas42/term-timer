@@ -25,6 +25,27 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
 
 {% block script %}
   <script src="https://cdn.cubing.net/v0/js/cubing/twisty" type="module"></script>
+  {% if training and (training.curve or training.forgetting) %}
+    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+    <script src="/static/js/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
+    <script src="/static/js/training.js"></script>
+    <script>
+     document.addEventListener('DOMContentLoaded', function() {
+       {% if training.curve %}
+       trainingAttemptsChart(
+         document.getElementById('attemptsChart'),
+         {{ training.curve|tojson }},
+       );
+       {% endif %}
+       {% if training.forgetting %}
+       trainingForgettingChart(
+         document.getElementById('forgettingChart'),
+         {{ training.forgetting|tojson }},
+       );
+       {% endif %}
+     });
+    </script>
+  {% endif %}
   <script>
    document.addEventListener('DOMContentLoaded', function() {
      const orientationSelect = document.getElementById('orientation-select');
@@ -135,6 +156,109 @@ Detailed view of {{ method }} {{ case.name }} case with algorithms, recognition 
           <p>{{ case.description }}</p>
         </div>
       </div>
+    </div>
+  {% endif %}
+
+  {% if training %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-dumbbell"></i>
+          <a href="#training" id="training">My Training</a>
+        </h2>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-title">State</div>
+          <div class="stat-value">
+            <span class="fsrs-state state-{{ training.state_class }}">{{ training.state_label }}</span>
+          </div>
+          {% if training.due %}
+          <div class="stat-meta {% if training.overdue %}training-overdue{% endif %}">
+            Next review {{ training.due_relative }}
+          </div>
+          {% endif %}
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Attempts</div>
+          <div class="stat-value">{{ training.attempts }}</div>
+          <div class="stat-meta">Last on {{ training.last_date }}</div>
+        </div>
+        {% if training.attempts %}
+        <div class="stat-card">
+          <div class="stat-title">Best</div>
+          <div class="stat-value stat-best">{{ training.best|format_duration }}</div>
+        </div>
+        {% endif %}
+        {% if training.ao5 > 0 %}
+        <div class="stat-card">
+          <div class="stat-title">Ao5</div>
+          <div class="stat-value">
+            {{ training.ao5|format_duration }}
+            {% if training.trend == 'up' %}
+              <span class="trend-up" title="At or near the best Ao12">↗</span>
+            {% elif training.trend == 'flat' %}
+              <span class="trend-flat" title="Plateau above the best Ao12">→</span>
+            {% elif training.trend == 'down' %}
+              <span class="trend-down" title="Well above the best Ao12">↘ +{{ training.trend_percent }}%</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+        {% if training.ao12 > 0 %}
+        <div class="stat-card">
+          <div class="stat-title">Ao12</div>
+          <div class="stat-value">{{ training.ao12|format_duration }}</div>
+          <div class="stat-meta">Best Ao12 {{ training.best_ao12|format_duration }}</div>
+        </div>
+        {% endif %}
+        {% if training.stability is not none %}
+        <div class="stat-card">
+          <div class="stat-title">Stability</div>
+          <div class="stat-value">{{ "%0.1f"|format(training.stability) }} d</div>
+          <div class="stat-meta">Difficulty {{ "%0.1f"|format(training.difficulty or 0) }} / 10</div>
+        </div>
+        {% endif %}
+        {% if training.forgetting %}
+        <div class="stat-card">
+          <div class="stat-title">Recall now</div>
+          <div class="stat-value">{{ "%0.0f"|format(training.forgetting.retention) }}%</div>
+          <div class="stat-meta">Reviewed {{ training.last_review }}</div>
+        </div>
+        {% endif %}
+      </div>
+      {% if training.curve or training.forgetting %}
+      <div class="training-charts">
+        {% if training.curve %}
+        <div>
+          <div class="training-chart-title">Times, in attempt order</div>
+          <div class="chart-container">
+            <canvas id="attemptsChart"></canvas>
+          </div>
+          <div class="training-chart-note">Training times are not dated: the axis counts attempts, not days.</div>
+        </div>
+        {% endif %}
+        {% if training.forgetting %}
+        <div>
+          <div class="training-chart-title">Forgetting curve</div>
+          <div class="chart-container">
+            <canvas id="forgettingChart"></canvas>
+          </div>
+          <div class="training-chart-note">Estimated by FSRS at page load; the dot is now.</div>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  {% elif training_unavailable %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-dumbbell"></i>
+          <a href="#training" id="training">My Training</a>
+        </h2>
+      </div>
+      <p class="case-description">Training data unavailable: the file is being written or is damaged. Reload in a moment.</p>
     </div>
   {% endif %}
 

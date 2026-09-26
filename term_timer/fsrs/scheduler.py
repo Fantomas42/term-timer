@@ -71,6 +71,23 @@ class FSRSScheduler:
         self.session_start = datetime.now(UTC)
         self.served_reviews: dict[str, datetime | None] = {}
 
+    def retrievability(self, card: Card, at: datetime) -> float:
+        """
+        Compute the probability of recalling a card at a given time.
+
+        Args:
+            card: Card to evaluate.
+            at: Moment of the evaluation.
+
+        Returns:
+            Recall probability between 0 and 1, 0 for a card never
+            reviewed.
+
+        """
+        return float(
+            self.scheduler.get_card_retrievability(card, current_datetime=at),
+        )
+
     def update_card(self, card: Card | None, rating: Rating) -> Card:
         """
         Review a card with the given rating and return the updated card.

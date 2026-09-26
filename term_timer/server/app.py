@@ -39,6 +39,8 @@ from term_timer.server.views import SolveDetailView
 from term_timer.server.views import SolveUpdateCommentView
 from term_timer.server.views import SolveUpdateFlagView
 from term_timer.server.views import StyleguideView
+from term_timer.server.views import TrainingForecastView
+from term_timer.server.views import TrainingReviewView
 
 
 class RichHandler(WSGIRequestHandler):
@@ -186,55 +188,15 @@ class Server:
             return DailyDayView(cube, day).as_view(debug)
 
     @staticmethod
-    def create_app(*, debug: bool) -> Bottle:  # noqa: C901
+    def add_academy_routes(app: Bottle, *, debug: bool) -> None:
         """
-        Create and configure Bottle application with all routes.
+        Register the routes of the academy pages.
 
         Args:
-            debug: Enable debug mode for detailed error pages.
-
-        Returns:
-            Configured Bottle application instance with all routes,
-            hooks, and error handlers registered.
+            app: Bottle application to register the routes on.
+            debug: Enable debug mode for template rendering.
 
         """
-        app = Bottle()
-
-        @app.hook('before_request')  # type: ignore[untyped-decorator]
-        def add_trailing_slash() -> None:
-            """Redirect URLs without trailing slash to version with slash."""
-            path = request.environ.get('PATH_INFO', '')
-
-            if (
-                    path != '/'
-                    and not path.endswith('/')
-                    and '.' not in path.split('/')[-1]
-            ):
-                new_url = request.url + '/'
-                redirect(new_url, code=301)
-
-        @app.route('/')  # type: ignore[untyped-decorator]
-        def session_list() -> str:
-            """
-            Render session list overview page.
-
-            Returns:
-                Rendered HTML template.
-
-            """
-            return SessionListView().as_view(debug)
-
-        @app.route('/styleguide/')  # type: ignore[untyped-decorator]
-        def styleguide() -> str:
-            """
-            Render the design-token and component styleguide.
-
-            Returns:
-                Rendered HTML template.
-
-            """
-            return StyleguideView().as_view(debug)
-
         @app.route('/academy/')  # type: ignore[untyped-decorator]
         def academy_overview() -> str:
             """
@@ -305,6 +267,88 @@ class Server:
                 cube_size=request.GET.c,
                 palette=request.GET.p,
             ).as_view(debug)
+
+    @staticmethod
+    def add_training_routes(app: Bottle, *, debug: bool) -> None:
+        """
+        Register the routes of the training pages.
+
+        Args:
+            app: Bottle application to register the routes on.
+            debug: Enable debug mode for template rendering.
+
+        """
+        @app.route('/training/')  # type: ignore[untyped-decorator]
+        def training_forecast() -> str:
+            """
+            Render the training status and review forecast page.
+
+            Returns:
+                Rendered HTML template.
+
+            """
+            return TrainingForecastView().as_view(debug)
+
+        @app.route('/training/<method>/<step>/review/')  # type: ignore[untyped-decorator]
+        def training_review(method: str, step: str) -> str:
+            """
+            Render the flashcards of the due cases of a step.
+
+            Returns:
+                Rendered HTML template.
+
+            """
+            return TrainingReviewView(method, step).as_view(debug)
+
+    @staticmethod
+    def create_app(*, debug: bool) -> Bottle:  # noqa: C901
+        """
+        Create and configure Bottle application with all routes.
+
+        Args:
+            debug: Enable debug mode for detailed error pages.
+
+        Returns:
+            Configured Bottle application instance with all routes,
+            hooks, and error handlers registered.
+
+        """
+        app = Bottle()
+
+        @app.hook('before_request')  # type: ignore[untyped-decorator]
+        def add_trailing_slash() -> None:
+            """Redirect URLs without trailing slash to version with slash."""
+            path = request.environ.get('PATH_INFO', '')
+
+            if (
+                    path != '/'
+                    and not path.endswith('/')
+                    and '.' not in path.split('/')[-1]
+            ):
+                new_url = request.url + '/'
+                redirect(new_url, code=301)
+
+        @app.route('/')  # type: ignore[untyped-decorator]
+        def session_list() -> str:
+            """
+            Render session list overview page.
+
+            Returns:
+                Rendered HTML template.
+
+            """
+            return SessionListView().as_view(debug)
+
+        @app.route('/styleguide/')  # type: ignore[untyped-decorator]
+        def styleguide() -> str:
+            """
+            Render the design-token and component styleguide.
+
+            Returns:
+                Rendered HTML template.
+
+            """
+            return StyleguideView().as_view(debug)
 
         @app.route('/algorithm/<algorithm>/')  # type: ignore[untyped-decorator]
         def algorithm_detail(algorithm: str) -> str:
@@ -386,7 +430,9 @@ class Server:
                 request.GET.arrows,
             ).as_view(debug)
 
+        Server.add_academy_routes(app, debug=debug)
         Server.add_daily_routes(app, debug=debug)
+        Server.add_training_routes(app, debug=debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/flag/',
                    method='POST')  # type: ignore[untyped-decorator]

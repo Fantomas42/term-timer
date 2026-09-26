@@ -26,6 +26,8 @@ from term_timer.server.annotations import SessionDetailContext
 from term_timer.server.annotations import SessionListContext
 from term_timer.server.annotations import SolveDetailContext
 from term_timer.server.annotations import StyleguideContext
+from term_timer.server.annotations import TrainingForecastContext
+from term_timer.server.annotations import TrainingReviewContext
 from term_timer.server.filters import case_number
 from term_timer.server.filters import first_case
 from term_timer.server.filters import format_algorithm
@@ -68,6 +70,8 @@ class View:
         | ScrambleDetailContext
         | DailyListContext
         | DailyDayContext
+        | TrainingForecastContext
+        | TrainingReviewContext
     ):
         """
         Build template context dictionary.

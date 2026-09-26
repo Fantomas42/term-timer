@@ -35,7 +35,6 @@ from term_timer.constants import CROSS_CASE
 from term_timer.constants import DNF
 from term_timer.constants import EASY_CROSS_CASE
 from term_timer.constants import ESCAPE_CHAR
-from term_timer.constants import FSRS_STATE_LABELS
 from term_timer.constants import LL_CASE
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import X_CROSS_CASE
@@ -132,13 +131,6 @@ MANUAL_RATING_KEYS: Final[dict[str, Rating]] = {
     '3': Rating.Good,
     '4': Rating.Easy,
 }
-
-# Speed trend of a case: current Ao5 compared to the best Ao12 ever
-# achieved (peak sustained performance). Display only, never feeds the
-# FSRS rating or scheduling.
-TREND_MIN_TIMINGS: Final[int] = 12
-TREND_AT_PEAK: Final[float] = 1.10
-TREND_DEGRADED: Final[float] = 1.30
 
 
 class Trainer(SolveInterface):  # noqa: PLR0904
@@ -759,28 +751,9 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         at their best, then a total row over all the cases of the step.
         Best times only cover the practiced cases.
         """
-        now = datetime.now(UTC)
-        bests: dict[str, list[int]] = {
-            label: [] for label in FSRS_STATE_LABELS
-        }
-        counts: dict[str, int] = dict.fromkeys(FSRS_STATE_LABELS, 0)
-        overdues: dict[str, int] = dict.fromkeys(FSRS_STATE_LABELS, 0)
-
-        for code in valid_cases:
-            case_training = self.trainings.cases.get(code)
-            card = case_training.fsrs_card if case_training else None
-
-            label = fsrs_state_label(card)[0] if card else 'New'
-            counts[label] += 1
-
-            if card is not None and card.due <= now:
-                overdues[label] += 1
-
-            if case_training and case_training.timings:
-                timings = [
-                    t * MS_TO_NS_FACTOR for t in case_training.timings
-                ]
-                bests[label].append(Statistics(timings).best)
+        summary = self.trainings.summarize_states(
+            valid_cases, datetime.now(UTC),
+        )
 
         table = Table(
             title=f'{ self.step_label } summary',
@@ -794,24 +767,30 @@ class Trainer(SolveInterface):  # noqa: PLR0904
         table.add_column('Avg', width=5, justify='right')
         table.add_column('Worst', width=5, justify='right')
 
-        for label in FSRS_STATE_LABELS:
-            if not counts[label]:
+        for label, row in summary.items():
+            if not row.count:
                 continue
             klass = label.lower()
             table.add_row(
                 f'[{ klass }]{ label }[/{ klass }]',
-                f'[stats]{ counts[label] }[/stats]',
-                self.overdue_cell(overdues[label]),
-                *self.best_cells(bests[label]),
+                f'[stats]{ row.count }[/stats]',
+                self.overdue_cell(row.overdue),
+                *self.best_cells(
+                    [best * MS_TO_NS_FACTOR for best in row.bests],
+                ),
             )
 
         table.add_section()
 
-        all_bests = [best for state in bests.values() for best in state]
+        all_bests = [
+            best * MS_TO_NS_FACTOR
+            for row in summary.values()
+            for best in row.bests
+        ]
         table.add_row(
             'Total',
             f'[stats]{ len(valid_cases) }[/stats]',
-            self.overdue_cell(sum(overdues.values())),
+            self.overdue_cell(sum(row.overdue for row in summary.values())),
             *self.best_cells(all_bests),
         )
 
@@ -869,22 +848,17 @@ class Trainer(SolveInterface):  # noqa: PLR0904
             than TREND_MIN_TIMINGS timings are available.
 
         """
-        if len(stats.stack_time) < TREND_MIN_TIMINGS:
-            return ''
-
-        ao5 = stats.ao5
-        peak = stats.best_ao12
-        if ao5 <= 0 or peak <= 0:
-            return ''
-
-        ratio = ao5 / peak
-        if ratio <= TREND_AT_PEAK:
+        trend = stats.speed_trend
+        if trend == 'up':
             return '[trend-up]↗[/trend-up]'
-        if ratio >= TREND_DEGRADED:
+        if trend == 'down':
+            ratio = stats.peak_ratio or 1.0
             return (
                 f'[trend-down]↘ +{ (ratio - 1) * 100:.0f}%[/trend-down]'
             )
-        return '[trend-flat]→[/trend-flat]'
+        if trend == 'flat':
+            return '[trend-flat]→[/trend-flat]'
+        return ''
 
     @staticmethod
     def timing_cells(
