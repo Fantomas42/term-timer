@@ -3300,3 +3300,122 @@ class TestDailySummaryReporter(unittest.TestCase):  # noqa: PLR0904
             reporter.days_table()
 
         mock_print.assert_not_called()
+
+
+class TestDailySummaryPerDay(unittest.TestCase):
+    """Tests for the values the daily summary measures on each day."""
+
+    def setUp(self) -> None:
+        """Set up days opened cold, retried, and one never solved."""
+        self.stack = [
+            *TestDailySummaryReporter.make_day('2026-05-17', [31, 27]),
+            *TestDailySummaryReporter.make_day('2026-05-18', [24]),
+            *TestDailySummaryReporter.make_day('2026-05-19', [40], DNF),
+            *TestDailySummaryReporter.make_day('2026-05-20', [26, 19.5]),
+            *TestDailySummaryReporter.make_day('2026-05-21', [22]),
+        ]
+        # A DNF opening a day: no cold time for its warm-up gain.
+        self.stack[-1:-1] = TestDailySummaryReporter.make_day(
+            '2026-05-21', [30], DNF,
+        )
+        self.reporter = DailySummaryReporter(
+            3, self.stack, date(2026, 5, 22),
+        )
+
+    def test_sessions_keep_dnf_only_days(self) -> None:
+        """Sessions hold every day, in attempt order, DNF days included."""
+        sessions = self.reporter.sessions
+
+        self.assertEqual(
+            list(sessions),
+            [
+                date(2026, 5, 17), date(2026, 5, 18), date(2026, 5, 19),
+                date(2026, 5, 20), date(2026, 5, 21),
+            ],
+        )
+        self.assertEqual(sessions[date(2026, 5, 19)], [0])
+        self.assertEqual(
+            sessions[date(2026, 5, 17)], [31 * SECOND, 27 * SECOND],
+        )
+        self.assertNotIn(date(2026, 5, 19), self.reporter.days)
+
+    def test_first_attempts(self) -> None:
+        """The first attempt of each played day, a DNF read as 0."""
+        self.assertEqual(
+            self.reporter.first_attempts,
+            {
+                date(2026, 5, 17): 31 * SECOND,
+                date(2026, 5, 18): 24 * SECOND,
+                date(2026, 5, 20): 26 * SECOND,
+                date(2026, 5, 21): 0,
+            },
+        )
+
+    def test_warmup_gains(self) -> None:
+        """First attempt minus best, days opened by a DNF skipped."""
+        self.assertEqual(
+            self.reporter.warmup_gains,
+            {
+                date(2026, 5, 17): 4 * SECOND,
+                date(2026, 5, 18): 0,
+                date(2026, 5, 20): int(6.5 * SECOND),
+            },
+        )
+
+    def test_records(self) -> None:
+        """Only the days beating every earlier best form the staircase."""
+        self.assertEqual(
+            self.reporter.records,
+            [
+                (date(2026, 5, 17), 27 * SECOND),
+                (date(2026, 5, 18), 24 * SECOND),
+                (date(2026, 5, 20), int(19.5 * SECOND)),
+            ],
+        )
+
+    def test_records_without_solves(self) -> None:
+        """No played day, no record."""
+        self.assertEqual(DailySummaryReporter(3, []).records, [])
+
+    def test_day_number(self) -> None:
+        """Days are numbered among the played ones only."""
+        self.assertEqual(self.reporter.day_number(date(2026, 5, 17)), 1)
+        self.assertEqual(self.reporter.day_number(date(2026, 5, 20)), 3)
+        self.assertIsNone(self.reporter.day_number(date(2026, 5, 19)))
+
+    def test_zone_index(self) -> None:
+        """Zone edges belong to the slower zone, a DNF to none."""
+        cases = [
+            (int(19.99 * SECOND), 0),
+            (20 * SECOND, 1),
+            (int(24.99 * SECOND), 1),
+            (25 * SECOND, 2),
+            (30 * SECOND, 3),
+            (95 * SECOND, 3),
+            (0, None),
+        ]
+        for time, expected in cases:
+            with self.subTest(time=time):
+                self.assertEqual(
+                    DailySummaryReporter.zone_index(time), expected,
+                )
+
+    def test_squares(self) -> None:
+        """One square per attempt, in attempt order."""
+        self.assertEqual(self.reporter.squares(date(2026, 5, 17)), '🟥🟧')
+        self.assertEqual(self.reporter.squares(date(2026, 5, 21)), '⬛🟨')
+        self.assertEqual(self.reporter.squares(date(2026, 1, 1)), '')
+
+    def test_share_card(self) -> None:
+        """The card carries number, day, best and squares."""
+        self.assertEqual(
+            self.reporter.share_card(date(2026, 5, 20)),
+            'Term Timer Daily #3 · 2026-05-20 · 19.50\n🟧🟩',
+        )
+
+    def test_share_card_never_solved(self) -> None:
+        """A day made only of DNF has no number and no time."""
+        self.assertEqual(
+            self.reporter.share_card(date(2026, 5, 19)),
+            'Term Timer Daily · 2026-05-19 · DNF\n⬛',
+        )

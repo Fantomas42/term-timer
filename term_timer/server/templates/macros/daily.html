@@ -1,0 +1,22 @@
+{% macro daily_squares(zones, times) %}
+  <span class="daily-squares">
+    {% for zone in zones %}
+      <span class="daily-square {% if zone is none %}zone-dnf{% else %}zone-{{ zone }}{% endif %}"
+            title="{{ times[loop.index0]|format_time|trim }}"></span>
+    {% endfor %}
+  </span>
+{% endmacro %}
+
+{% macro daily_zone_legend(edges) %}
+  <div class="daily-legend">
+    <span><span class="daily-square zone-0"></span>under {{ edges[0] }}s</span>
+    {% for index in range(edges|length - 1) %}
+      <span>
+        <span class="daily-square zone-{{ index + 1 }}"></span>
+        {{ edges[index] }}–{{ edges[index + 1] }}s
+      </span>
+    {% endfor %}
+    <span><span class="daily-square zone-{{ edges|length }}"></span>{{ edges[-1] }}s and over</span>
+    <span><span class="daily-square zone-dnf"></span>DNF</span>
+  </div>
+{% endmacro %}

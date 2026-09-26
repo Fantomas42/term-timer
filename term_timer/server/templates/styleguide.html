@@ -1,5 +1,8 @@
 {% extends "skeleton.html" %}
 
+{% from 'macros/daily.html' import daily_squares %}
+{% from 'macros/daily.html' import daily_zone_legend %}
+
 {% block description %}Design tokens and component styleguide{% endblock %}
 
 {% block title %}Styleguide{% endblock %}
@@ -262,6 +265,21 @@
         {% for level in [0, 1, 2, 3, 4] %}
           <span class="day-square level-{{ level }}"></span>
         {% endfor %}
+      </div>
+
+      <h4 class="sg-label">Daily zones</h4>
+      <code class="sg-ref">.daily-legend · .daily-squares &gt; .daily-square.zone-0…3/.zone-dnf · macro: daily_zone_legend, daily_squares</code>
+      {{ daily_zone_legend([20, 25, 30]) }}
+      <div class="sg-row">
+        {{ daily_squares([3, 2, None, 1, 0], [31500000000, 27200000000, 0, 23800000000, 19600000000]) }}
+      </div>
+
+      <h4 class="sg-label">Daily share card</h4>
+      <code class="sg-ref">.daily-share &gt; pre + .btn (dailyCopyShare, static/js/daily.js)</code>
+      <div class="daily-share">
+        <pre>Term Timer Daily #72 · 2026-09-25 · 21.60
+🟥🟧⬛🟨🟩</pre>
+        <button type="button" class="btn"><i class="fas fa-copy"></i> Copy</button>
       </div>
 
       <h4 class="sg-label">Move triggers</h4>

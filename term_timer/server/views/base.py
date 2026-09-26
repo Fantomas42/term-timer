@@ -16,6 +16,8 @@ from term_timer.server.annotations import AcademyOverviewContext
 from term_timer.server.annotations import AcademyStepContext
 from term_timer.server.annotations import AlgorithmDetailContext
 from term_timer.server.annotations import CubeRenderContext
+from term_timer.server.annotations import DailyDayContext
+from term_timer.server.annotations import DailyListContext
 from term_timer.server.annotations import Error404Context
 from term_timer.server.annotations import Error500Context
 from term_timer.server.annotations import ScrambleDetailContext
@@ -64,6 +66,8 @@ class View:
         | StyleguideContext
         | ScrambleHomeContext
         | ScrambleDetailContext
+        | DailyListContext
+        | DailyDayContext
     ):
         """
         Build template context dictionary.

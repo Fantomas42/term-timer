@@ -1,4 +1,5 @@
 """Statistics calculation and display for solve sessions."""
+from bisect import bisect_right
 from datetime import date
 from datetime import timedelta
 from functools import cached_property
@@ -23,6 +24,9 @@ from term_timer.config import STATS_SESSION_SERIES
 from term_timer.config import STATS_SOLVE_METRICS
 from term_timer.config import STATS_TRIM
 from term_timer.constants import DAILY_DAYS_LISTED
+from term_timer.constants import DAILY_DNF_SQUARE
+from term_timer.constants import DAILY_ZONE_EDGES
+from term_timer.constants import DAILY_ZONE_SQUARES
 from term_timer.constants import DNF
 from term_timer.constants import GRAPH_CONSOLE_COLORS
 from term_timer.constants import GRAPH_CONSOLE_FALLBACK
@@ -1747,20 +1751,21 @@ class SolveStatisticsReporter(Statistics):
         plt.show()
 
 
-class DailySummaryReporter:
+class DailySummary:
     """
-    Formats and displays the participation summary of daily sessions.
+    Computes the participation summary of daily sessions.
 
     Daily solves are grouped by the day of their session instead of being
     pooled together: a daily session replays a single scramble all day
     long, so solve based averages spanning several days carry no meaning.
-    The reporter exposes attendance, streaks and a per day breakdown.
+    The summary exposes attendance, streaks and values measured per day,
+    followed over time, never pooled across days.
     """
 
     def __init__(self, cube_size: int, stack: list[Solve],
                  today: date | None = None) -> None:
         """
-        Initialize the daily summary reporter.
+        Initialize the daily summary.
 
         Args:
             cube_size: Dimension of the cube (e.g., 3 for 3x3x3).
@@ -1776,16 +1781,18 @@ class DailySummaryReporter:
         self.today = today or date.today()  # noqa: DTZ011
 
     @cached_property
-    def days(self) -> dict[date, Statistics]:
+    def sessions(self) -> dict[date, list[int]]:
         """
-        Group solve times by the day of their daily session.
+        Group the final times by the day of their daily session.
 
         Sessions not named after a date are skipped: a daily session file
-        is always named after the day it belongs to. Days made only of DNF
-        solves are skipped too, the daily never having been solved.
+        is always named after the day it belongs to. Unlike days, a day
+        made only of DNF solves is kept, its session existing all the
+        same.
 
         Returns:
-            Mapping of session date to its Statistics, oldest first.
+            Mapping of session date to its final times in attempt order,
+            oldest day first.
 
         """
         grouped: dict[date, list[int]] = {}
@@ -1798,9 +1805,23 @@ class DailySummaryReporter:
 
             grouped.setdefault(day, []).append(solve.final_time)
 
+        return dict(sorted(grouped.items()))
+
+    @cached_property
+    def days(self) -> dict[date, Statistics]:
+        """
+        Compute the statistics of every played day.
+
+        Days made only of DNF solves are skipped, the daily never having
+        been solved.
+
+        Returns:
+            Mapping of session date to its Statistics, oldest first.
+
+        """
         days = {
             day: Statistics(times)
-            for day, times in sorted(grouped.items())
+            for day, times in self.sessions.items()
         }
 
         return {day: stats for day, stats in days.items() if stats.best}
@@ -1996,6 +2017,73 @@ class DailySummaryReporter:
 
         return (day, self.days[day].best)
 
+    @cached_property
+    def first_attempts(self) -> dict[date, int]:
+        """
+        Collect the first attempt of every played day.
+
+        The first attempt is the cold one, made before the scramble is
+        known: the closest a daily gets to a competition solve.
+
+        Returns:
+            Mapping of played day to its first final time, 0 for a DNF.
+
+        """
+        return {
+            day: stats.stack_time[0]
+            for day, stats in self.days.items()
+        }
+
+    @cached_property
+    def warmup_gains(self) -> dict[date, int]:
+        """
+        Measure what the retries of each day gained over its first try.
+
+        The gain is the first attempt minus the best of the day: how
+        much learning the scramble was worth. Days opened by a DNF have
+        no cold time to start from and are skipped.
+
+        Returns:
+            Mapping of played day to its gain, 0 when the first attempt
+            stayed the best.
+
+        """
+        return {
+            day: first - self.days[day].best
+            for day, first in self.first_attempts.items()
+            if first
+        }
+
+    @cached_property
+    def records(self) -> list[tuple[date, int]]:
+        """
+        List the days that beat the best time of every day before them.
+
+        Returns:
+            Staircase of the daily personal best, oldest record first.
+
+        """
+        records: list[tuple[date, int]] = []
+
+        for day, stats in self.days.items():
+            if not records or stats.best < records[-1][1]:
+                records.append((day, stats.best))
+
+        return records
+
+    def day_number(self, day: date) -> int | None:
+        """
+        Give the rank of a day among the played days.
+
+        Returns:
+            One-based rank of the day, None when it was never solved.
+
+        """
+        if day not in self.days:
+            return None
+
+        return self.played_days.index(day) + 1
+
     def punchcard_level(self, day: date) -> int:
         """
         Rank a played day on its number of attempts.
@@ -2017,6 +2105,75 @@ class DailySummaryReporter:
             for index, floor in enumerate(PUNCHCARD_LEVELS)
             if total >= floor
         )
+
+
+class DailySummaryReporter(DailySummary):
+    """
+    Formats and displays the participation summary of daily sessions.
+
+    Renders the summary to the console and a day to its share card.
+    """
+
+    @staticmethod
+    def zone_index(time: int) -> int | None:
+        """
+        Place a time in the fixed zones of the daily.
+
+        Returns:
+            Index in DAILY_ZONE_SQUARES, 0 being the fastest zone, None
+            for a DNF.
+
+        """
+        if not time:
+            return None
+
+        return bisect_right(DAILY_ZONE_EDGES, time / SECOND)
+
+    def square(self, time: int) -> str:
+        """
+        Draw the square of an attempt on the share card.
+
+        Returns:
+            The square of the zone of the time, a dark one for a DNF.
+
+        """
+        index = self.zone_index(time)
+        if index is None:
+            return DAILY_DNF_SQUARE
+
+        return DAILY_ZONE_SQUARES[index]
+
+    def squares(self, day: date) -> str:
+        """
+        Draw one square per attempt of a day, in attempt order.
+
+        Returns:
+            The squares of the day, empty without session.
+
+        """
+        return ''.join(
+            self.square(time)
+            for time in self.sessions.get(day, [])
+        )
+
+    def share_card(self, day: date) -> str:
+        """
+        Write the share card of a day, the way a Wordle result is shared.
+
+        Returns:
+            A title line with the number, the day and its best time, and
+            a line of squares, one per attempt.
+
+        """
+        number = self.day_number(day)
+        title = 'Term Timer Daily'
+        if number:
+            title += f' #{ number }'
+
+        best = self.days[day].best if day in self.days else 0
+        time = f'{ best / SECOND:.2f}' if best else DNF
+
+        return f'{ title } · { day } · { time }\n{ self.squares(day) }'
 
     def print_summary(self, prefix: str = '', style: str = 'stats') -> None:
         """

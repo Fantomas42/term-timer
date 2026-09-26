@@ -22,6 +22,12 @@ from term_timer.server.views import AcademyView
 from term_timer.server.views import AlgorithmDetailView
 from term_timer.server.views import CubeImageView
 from term_timer.server.views import CubeRenderView
+from term_timer.server.views import DailyDayView
+from term_timer.server.views import DailyListView
+from term_timer.server.views import DailySolveDeleteView
+from term_timer.server.views import DailySolveDetailView
+from term_timer.server.views import DailySolveUpdateCommentView
+from term_timer.server.views import DailySolveUpdateFlagView
 from term_timer.server.views import Error404View
 from term_timer.server.views import Error500View
 from term_timer.server.views import ScrambleDetailView
@@ -102,6 +108,82 @@ class Server:
             server='wsgiref',
             handler_class=RichHandler,
         )
+
+    @staticmethod
+    def add_daily_routes(app: Bottle, *, debug: bool) -> None:
+        """
+        Register the routes of the daily sessions.
+
+        A daily session is addressed by its day, which rules out 'all':
+        the days of the daily directory are never pooled together.
+
+        Args:
+            app: Bottle application to register the routes on.
+            debug: Enable debug mode for detailed error pages.
+
+        """
+        day_url = r'/daily/<cube:int>/<day:re:\d{4}-\d{2}-\d{2}>/'
+        solve_url = f'{ day_url }<solve:int>/'
+
+        @app.route('/daily/<cube:int>/')  # type: ignore[untyped-decorator]
+        def daily_list(cube: int) -> str:
+            """
+            Render the daily hub listing every daily session.
+
+            Returns:
+                Rendered HTML template.
+
+            """
+            return DailyListView(cube).as_view(debug)
+
+        @app.route(f'{ solve_url }flag/', method='POST')  # type: ignore[untyped-decorator]
+        def daily_solve_update_flag(cube: int, day: str, solve: int) -> None:
+            """Handle daily solve update flag POST request."""
+            DailySolveUpdateFlagView(
+                cube, day, solve,
+                request.POST.flag,
+            )
+
+        @app.route(f'{ solve_url }comment/', method='POST')  # type: ignore[untyped-decorator]
+        def daily_solve_update_comment(
+                cube: int, day: str, solve: int,
+        ) -> None:
+            """Handle daily solve update comment POST request."""
+            DailySolveUpdateCommentView(
+                cube, day, solve,
+                request.POST.comment,
+            )
+
+        @app.route(f'{ solve_url }delete/', method='POST')  # type: ignore[untyped-decorator]
+        def daily_solve_delete(cube: int, day: str, solve: int) -> None:
+            """Handle daily solve delete POST request."""
+            DailySolveDeleteView(cube, day, solve)
+
+        @app.route(solve_url)  # type: ignore[untyped-decorator]
+        def daily_solve_detail(cube: int, day: str, solve: int) -> str:
+            """
+            Render a daily attempt detail page with analysis.
+
+            Returns:
+                Rendered HTML template.
+
+            """
+            return DailySolveDetailView(
+                cube, day, solve,
+                request.GET.m,
+                request.GET.o or 'auto',
+            ).as_view(debug)
+
+        @app.route(day_url)  # type: ignore[untyped-decorator]
+        def daily_day(cube: int, day: str) -> str:
+            """
+            Render the attempts of one daily session.
+
+            Returns:
+                Rendered HTML template.
+
+            """
+            return DailyDayView(cube, day).as_view(debug)
 
     @staticmethod
     def create_app(*, debug: bool) -> Bottle:  # noqa: C901
@@ -303,6 +385,8 @@ class Server:
                 request.GET.distance,
                 request.GET.arrows,
             ).as_view(debug)
+
+        Server.add_daily_routes(app, debug=debug)
 
         @app.route('/<cube:int>/<session:path>/<solve:int>/flag/',
                    method='POST')  # type: ignore[untyped-decorator]

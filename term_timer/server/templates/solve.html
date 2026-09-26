@@ -60,7 +60,7 @@
    function handleOK() {
      if (confirm('Mark this solve as OK ?')) {
        update(
-         "/{{ cube }}/{{ session }}/{{ solve_id }}/flag/",
+         "{{ session_url }}{{ solve_id }}/flag/",
          {flag: ''},
        )
      }
@@ -69,7 +69,7 @@
    function handleDNF() {
      if (confirm('Mark this solve as DNF ?')) {
        update(
-         "/{{ cube }}/{{ session }}/{{ solve_id }}/flag/",
+         "{{ session_url }}{{ solve_id }}/flag/",
          {flag: 'DNF'},
        )
      }
@@ -78,7 +78,7 @@
    function handlePlus2() {
      if (confirm('Mark this solve with a +2s penality ?')) {
        update(
-         "/{{ cube }}/{{ session }}/{{ solve_id }}/flag/",
+         "{{ session_url }}{{ solve_id }}/flag/",
          {flag: '+2'},
        )
      }
@@ -87,7 +87,7 @@
    function handleDelete() {
      if (confirm('Are you sure you want to permanently delete this solve ?')) {
        update(
-         "/{{ cube }}/{{ session }}/{{ solve_id }}/delete/", '',
+         "{{ session_url }}{{ solve_id }}/delete/", '',
        )
      }
    }
@@ -120,7 +120,7 @@
    function saveComment() {
      const commentText = document.getElementById('comment-text');
      update(
-       "/{{ cube }}/{{ session }}/{{ solve_id }}/comment/",
+       "{{ session_url }}{{ solve_id }}/comment/",
        {comment: commentText.value},
      );
    }
@@ -662,7 +662,7 @@
       <div class="stat-card">
         <div class="stat-title">Session</div>
         <div class="stat-value">
-          <a href="/{{ cube }}/{{ session|default('default', true) }}/" class="link">
+          <a href="{{ session_url }}" class="link">
             {{ session|default('default', true)|format_session_name }}
           </a>
           {{ cube }}x{{ cube }}x{{ cube }}
@@ -1470,7 +1470,7 @@
       <div class="footer-section">
         <h3 class="footer-title">Session</h3>
         <div class="sessions-grid">
-          <a class="session-badge" href="/{{ cube }}/{{ session|default('default', true) }}/">
+          <a class="session-badge" href="{{ session_url }}">
             Session {{ session|default('default', true) }}
             <span class="session-count">{{ solves|length }}</span>
           </a>

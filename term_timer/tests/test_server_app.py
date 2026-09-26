@@ -12,6 +12,7 @@ from bottle import HTTPError
 from cubing_algs.algorithm import Algorithm
 
 from term_timer.constants import SECOND
+from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.server.app import RichHandler
 from term_timer.server.app import Server
 from term_timer.server.filters import BLOCK_REGEX
@@ -382,10 +383,12 @@ class TestError500View(unittest.TestCase):
 class TestSessionListView(unittest.TestCase):
     """Tests for SessionListView class."""
 
+    @patch('term_timer.server.views.sessions.DailyListView.banner')
     @patch('term_timer.server.views.sessions.load_all_solves')
     @patch('term_timer.server.views.sessions.Statistics')
     def test_session_list_view_get_context(
             self, mock_statistics: Mock, mock_load_solves: Mock,
+            mock_banner: Mock,
     ) -> None:
         """Test session list view get context."""
         # Mock solves data
@@ -412,6 +415,8 @@ class TestSessionListView(unittest.TestCase):
 
         self.assertIn('sessions', context)
         sessions = context['sessions']
+        self.assertEqual(context['daily'], mock_banner.return_value)
+        mock_banner.assert_called_once_with(3)
 
         # Check that sessions are organized by cube size
         self.assertIn(2, sessions)
@@ -422,10 +427,12 @@ class TestSessionListView(unittest.TestCase):
         self.assertEqual(len(cube3_sessions['session1']['solves']), 2)
         self.assertEqual(len(cube3_sessions['session2']['solves']), 1)
 
+    @patch('term_timer.server.views.sessions.DailyListView.banner')
     @patch('term_timer.server.views.sessions.load_all_solves')
     @patch('term_timer.server.views.sessions.Statistics')
     def test_session_list_view_all_sessions(
             self, mock_statistics: Mock, mock_load_solves: Mock,
+            _mock_banner: Mock,
     ) -> None:
         """Test session list view all sessions."""
         # Test that 'all' session is created when multiple sessions exist
@@ -764,7 +771,9 @@ class TestSolveUpdateFlagView(unittest.TestCase):
             SolveUpdateFlagView(3, 'session', 1, 'DNF')
 
         self.assertEqual(mock_solve.flag, 'DNF')
-        mock_save_solves.assert_called_once_with(3, 'session', [mock_solve])
+        mock_save_solves.assert_called_once_with(
+            3, 'session', [mock_solve], SOLVES_DIRECTORY,
+        )
 
     @patch('term_timer.server.views.solves.redirect')
     @patch('term_timer.server.views.solves.save_solves')
@@ -815,7 +824,9 @@ class TestSolveDeleteView(unittest.TestCase):
 
         # Should remove the solve from the list
         self.assertEqual(len(mock_solves), 1)
-        mock_save_solves.assert_called_once_with(3, 'session', [mock_solve1])
+        mock_save_solves.assert_called_once_with(
+            3, 'session', [mock_solve1], SOLVES_DIRECTORY,
+        )
 
 
 class TestServer(unittest.TestCase):

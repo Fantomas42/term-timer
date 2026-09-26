@@ -6,6 +6,12 @@ from term_timer.server.views.academy import AcademyView
 from term_timer.server.views.algorithm import AlgorithmDetailView
 from term_timer.server.views.cube import CubeImageView
 from term_timer.server.views.cube import CubeRenderView
+from term_timer.server.views.daily import DailyDayView
+from term_timer.server.views.daily import DailyListView
+from term_timer.server.views.daily import DailySolveDeleteView
+from term_timer.server.views.daily import DailySolveDetailView
+from term_timer.server.views.daily import DailySolveUpdateCommentView
+from term_timer.server.views.daily import DailySolveUpdateFlagView
 from term_timer.server.views.errors import Error404View
 from term_timer.server.views.errors import Error500View
 from term_timer.server.views.scramble import ScrambleDetailView
@@ -26,6 +32,12 @@ __all__ = [
     'AlgorithmDetailView',
     'CubeImageView',
     'CubeRenderView',
+    'DailyDayView',
+    'DailyListView',
+    'DailySolveDeleteView',
+    'DailySolveDetailView',
+    'DailySolveUpdateCommentView',
+    'DailySolveUpdateFlagView',
     'Error404View',
     'Error500View',
     'ScrambleDetailView',

@@ -10,6 +10,7 @@ from cubing_algs.move import Move
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.doctor import Diagnostic
 from term_timer.solve import Solve
+from term_timer.stats import DailySummaryReporter
 from term_timer.stats import SolveStatisticsReporter
 from term_timer.stats import Statistics
 
@@ -125,6 +126,7 @@ class SessionListContext(TypedDict):
     """Template context for session list view."""
 
     sessions: dict[int, dict[str, SessionInfo]]
+    daily: 'DailyBannerInfo'
 
 
 class SessionSeriesEntry(TypedDict):
@@ -158,6 +160,7 @@ class SolveDetailContext(TypedDict):
 
     cube: int
     session: str
+    session_url: str
     solve: Solve
     solve_id: int
     solves: list[Solve]
@@ -309,3 +312,127 @@ class ScrambleDetailContext(TypedDict):
     max_index: int
     scramble: Algorithm
     htm: int
+
+
+class DailySeries(TypedDict):
+    """Values drawn per day on a daily graph, one label per point."""
+
+    labels: list[str]
+    best: list[float | None]
+    first: list[float | None]
+    attempts: list[int]
+
+
+class DailyBannerInfo(TypedDict):
+    """The daily of the day, as teased on the dashboard."""
+
+    cube: int
+    day: str
+    number: int | None
+    done: bool
+    streak: int
+    record: int
+    best: int
+    attempts: int
+    scramble: Algorithm
+    url: str
+    series: DailySeries
+    zone_edges: tuple[int, ...]
+
+
+class DailyCalendarCell(TypedDict):
+    """A day of the calendar, colored on its number of attempts."""
+
+    day: str
+    level: int
+    attempts: int
+    url: str
+
+
+class DailyCalendarYear(TypedDict):
+    """A year of the calendar, one column per week."""
+
+    year: int
+    months: list[str]
+    cells: list[DailyCalendarCell]
+
+
+class DailyDayRow(TypedDict):
+    """A daily session summed up on a single row of the hub."""
+
+    day: str
+    weekday: str
+    number: int | None
+    attempts: int
+    first: int
+    best: int
+    gain: int | None
+    times: list[int]
+    zones: list[int | None]
+
+
+class DailyRecord(TypedDict):
+    """A step of the staircase of the daily personal best."""
+
+    day: str
+    best: int
+    gain: int
+
+
+class DailyListContext(TypedDict):
+    """Template context for the daily hub, the logbook of every day."""
+
+    cube: int
+    summary: DailySummaryReporter
+    rows: list[DailyDayRow]
+    calendar: list[DailyCalendarYear]
+    series: DailySeries
+    records: list[DailyRecord]
+    zone_edges: tuple[int, ...]
+
+
+class DailyStepSeries(TypedDict):
+    """Time spent on one step, attempt by attempt."""
+
+    label: str
+    data: list[float | None]
+
+
+class DailyDoctorFinding(TypedDict):
+    """A doctor finding of the scramble, worded for display."""
+
+    title: str
+    severity: str
+    impact: float
+    frequency: float
+    recommendation: str
+
+
+class DailyDoctorGroup(TypedDict):
+    """Doctor findings of the scramble gathered by location."""
+
+    location: str
+    command: str
+    impact: float
+    findings: list[DailyDoctorFinding]
+
+
+class DailyDayContext(TypedDict):
+    """Template context for the card of one daily session."""
+
+    cube: int
+    day: str
+    number: int | None
+    previous_day: str | None
+    next_day: str | None
+    scramble: Algorithm
+    session_url: str
+    solves: list[Solve]
+    stats: Statistics
+    zones: list[int | None]
+    times: list[float | None]
+    steps: list[DailyStepSeries]
+    doctor_total: int
+    doctor: list[DailyDoctorGroup]
+    share: str
+    zone_edges: tuple[int, ...]

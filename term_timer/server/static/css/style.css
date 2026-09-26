@@ -111,6 +111,25 @@
     --gradient-navy-1: #1A1A2E;
     --gradient-navy-2: #1F4068;
 
+    /* ── Daily : zones de temps (palette statut) ─────── */
+    /* Index = DailySummaryReporter.zone_index : < 20 s,  */
+    /* 20–25 s, 25–30 s, ≥ 30 s ; mêmes teintes que les    */
+    /* carrés de la carte partageable.                     */
+    --daily-zone-0: #0CA30C;
+    --daily-zone-1: #FAB219;
+    --daily-zone-2: #EC835A;
+    --daily-zone-3: #D03B3B;
+    --daily-zone-dnf: var(--surface-raised);
+    --daily-band-0: rgba(250, 178, 25, 0.12);   /* bande 20–25 s */
+    --daily-band-1: rgba(236, 131, 90, 0.12);   /* bande 25–30 s */
+
+    /* ── Séries de graphes (ordre fixe, validé CVD) ───── */
+    --chart-series-1: #3987E5;
+    --chart-series-2: #D95926;
+    --chart-series-3: #199E70;
+    --chart-series-4: #C98500;
+    --chart-grid: rgba(148, 163, 184, 0.1);
+
     /* ── Dimensions ───────────────────────────────────── */
     --square-size: 1.5rem;
 
@@ -1338,6 +1357,12 @@ twisty-alg-viewer {
         gap: 0.5rem;
     }
 
+    .header-nav {
+        flex-shrink: 1;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
     .header-selectors {
         justify-content: flex-start;
     }
@@ -1649,6 +1674,207 @@ twisty-alg-viewer {
 
 .academy-btn:hover i {
     transform: translateX(4px);
+}
+
+/* Daily banner (dashboard) */
+.daily-banner {
+    background: linear-gradient(135deg, var(--gradient-night-1) 0%, var(--gradient-navy-2) 100%);
+}
+
+.daily-banner .academy-content {
+    grid-template-columns: auto minmax(0, 1fr) minmax(200px, 300px) auto;
+    grid-template-areas: "cube info spark action";
+}
+
+.daily-banner-cube { grid-area: cube; }
+.daily-banner .academy-info { grid-area: info; }
+.daily-banner .daily-sparkline { grid-area: spark; }
+.daily-banner .academy-action { grid-area: action; }
+
+.daily-banner-cube img {
+    display: block;
+    width: 110px;
+    height: 110px;
+}
+
+.daily-banner-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    color: var(--text-secondary);
+}
+
+.daily-banner-meta strong {
+    color: var(--text-primary);
+}
+
+.daily-sparkline {
+    height: 90px;
+    position: relative;
+}
+
+.daily-state-done {
+    border-color: var(--success);
+}
+
+.daily-state-pending {
+    border-color: var(--warning);
+}
+
+/* Daily zones: one square per attempt, colored by time zone */
+.daily-squares {
+    display: inline-flex;
+    gap: 3px;
+    vertical-align: middle;
+}
+
+.daily-square {
+    display: inline-block;
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 3px;
+}
+
+.daily-square.zone-0 { background-color: var(--daily-zone-0); }
+.daily-square.zone-1 { background-color: var(--daily-zone-1); }
+.daily-square.zone-2 { background-color: var(--daily-zone-2); }
+.daily-square.zone-3 { background-color: var(--daily-zone-3); }
+.daily-square.zone-dnf { background-color: var(--daily-zone-dnf); }
+
+.daily-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.daily-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Daily day card */
+.daily-day-header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.daily-day-header img {
+    width: 160px;
+    height: 160px;
+}
+
+.daily-day-header + .moves-card {
+    margin-top: 1.5rem;
+}
+
+.daily-day-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.daily-share {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.daily-share pre {
+    margin: 0;
+    padding: 1rem 1.25rem;
+    background-color: var(--main-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+/* Daily calendar: the punchcard heatmap, laid out by the server */
+.daily-calendar {
+    margin-top: 1rem;
+}
+
+.daily-calendar .months,
+.daily-calendar .days-grid {
+    grid-template-columns: none;
+    grid-auto-columns: var(--square-size);
+    grid-auto-flow: column;
+}
+
+.daily-calendar .months {
+    grid-template-rows: auto;
+    margin-left: 40px;
+}
+
+.daily-calendar .month-label {
+    grid-column: auto;
+    text-align: left;
+    white-space: nowrap;
+    font-size: 0.8rem;
+}
+
+.daily-calendar a.day-square {
+    display: block;
+}
+
+.daily-calendar-year {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin: 1rem 0 0.5rem;
+}
+
+/* Daily records wall */
+.daily-records {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+}
+
+.daily-records a {
+    text-decoration: none;
+}
+
+.daily-record-gain {
+    color: var(--success);
+}
+
+@media (max-width: 1024px) {
+    .daily-banner .academy-content {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            "cube info action"
+            "spark spark spark";
+    }
+}
+
+@media (max-width: 768px) {
+    .daily-banner .academy-content {
+        grid-template-columns: 1fr;
+        grid-template-areas: "cube" "info" "spark" "action";
+    }
+
+    .daily-banner-cube img {
+        margin: 0 auto;
+    }
+
+    .daily-banner-meta {
+        justify-content: center;
+    }
+
+    .daily-day-header {
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
 }
 
 /* Academy Overview Page */

@@ -6,6 +6,23 @@
 
 {% block subtitle %}Dashboard{% endblock %}
 
+{% block script %}
+  <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+  <script src="/static/js/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
+  <script src="/static/js/daily.js"></script>
+  <script>
+   document.addEventListener('DOMContentLoaded', function() {
+     dailyTimesChart(
+       document.getElementById('dailySparkline'),
+       {{ daily.series.labels|tojson }},
+       [{label: 'Best', data: {{ daily.series.best|tojson }}}],
+       {{ daily.zone_edges|list|tojson }},
+       {compact: true},
+     );
+   });
+  </script>
+{% endblock %}
+
 {% block nav_actions %}
   <a href="/scramble/" class="btn">
     <i class="fas fa-random"></i>
@@ -14,6 +31,59 @@
 {% endblock %}
 
 {% block body %}
+  <div class="academy-banner daily-banner">
+    <div class="academy-content">
+      <a class="daily-banner-cube"
+         href="/scramble/{{ daily.cube }}/{{ daily.day }}/1/"
+         title="Scramble of the day">
+        <img alt="Daily scramble of {{ daily.day }}"
+             src="/cube/?c={{ daily.cube }}&algo={{ daily.scramble|string|urlencode }}&o=UF&l=mirror&s=220">
+      </a>
+      <div class="academy-info">
+        <h2>Daily{% if daily.number %} #{{ daily.number }}{% endif %}</h2>
+        <p class="daily-banner-meta">
+          <span>{{ daily.day }}</span>
+          <span>🔥 Streak <strong>{{ daily.streak }}</strong></span>
+          <span>Record <strong>{{ daily.record }}</strong></span>
+        </p>
+        <div class="academy-features">
+          {% if daily.done %}
+            <span class="feature-tag daily-state-done">✅ Done</span>
+          {% else %}
+            <span class="feature-tag daily-state-pending">⏳ Pending</span>
+          {% endif %}
+          <span class="feature-tag">
+            <i class="fas fa-stopwatch"></i>
+            {% if daily.best %}
+              Best {{ daily.best|format_time|trim }}
+              · {{ daily.attempts }} attempt{{ 's' if daily.attempts > 1 }}
+            {% else %}
+              Not played yet
+            {% endif %}
+          </span>
+          <a class="feature-tag"
+             href="/scramble/{{ daily.cube }}/{{ daily.day }}/1/">
+            <i class="fas fa-random"></i>
+            {{ daily.scramble }}
+          </a>
+        </div>
+      </div>
+      <div class="daily-sparkline"
+           title="Best of the day, last {{ daily.series.labels|length }} days">
+        <canvas id="dailySparkline"
+                aria-label="Best time of each of the last {{ daily.series.labels|length }} days"></canvas>
+      </div>
+      <div class="academy-action">
+        <a href="{{ daily.url }}" class="academy-btn">
+          <span class="btn-text">
+            {% if daily.attempts %}Today's card{% else %}Daily logbook{% endif %}
+          </span>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
   <div class="academy-banner">
     <div class="academy-content">
       <div class="academy-icon">

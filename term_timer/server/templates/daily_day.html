@@ -1,0 +1,244 @@
+{% extends "skeleton.html" %}
+{% from 'macros/actions.html' import algorithm_button_copy %}
+{% from 'macros/actions.html' import algorithm_button_detail %}
+{% from 'macros/algorithm.html' import algorithm_display_simple %}
+{% from 'macros/daily.html' import daily_squares %}
+{% from 'macros/daily.html' import daily_zone_legend %}
+
+{% block description %}Daily {{ day }} on {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
+
+{% block title %}Daily {{ day }}{% endblock %}
+
+{% block subtitle %}
+  <a href="/daily/{{ cube }}/">Daily</a>{% if number %} #{{ number }}{% endif %}
+  {{ cube }}x{{ cube }}x{{ cube }} : {{ day }}
+{% endblock %}
+
+{% block script %}
+  <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+  <script src="/static/js/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
+  <script src="/static/js/daily.js"></script>
+  <script>
+   document.addEventListener('DOMContentLoaded', function() {
+     dailyAttemptsChart(
+       document.getElementById('attemptsChart'),
+       {{ times|tojson }},
+       {{ zones|tojson }},
+       {{ zone_edges|list|tojson }},
+     );
+     {% if steps %}
+       dailyStepsChart(
+         document.getElementById('stepsChart'),
+         {{ steps|tojson }},
+       );
+     {% endif %}
+   });
+  </script>
+{% endblock %}
+
+{% block body %}
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-calendar-day"></i>
+        <a href="#card" id="card">
+          Daily{% if number %} #{{ number }}{% endif %} · {{ day }}
+        </a>
+      </h2>
+    </div>
+    <div class="daily-day-header">
+      <a href="/scramble/{{ cube }}/{{ day }}/1/" title="Scramble of the day">
+        <img alt="Daily scramble of {{ day }}"
+             src="/cube/?c={{ cube }}&algo={{ scramble|string|urlencode }}&o=UF&l=mirror&s=320">
+      </a>
+      <div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-title">Attempts</div>
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-meta">{{ daily_squares(zones, solves|map(attribute='final_time')|list) }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Best</div>
+            <div class="stat-value stat-best">{{ stats.best|format_time }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">First attempt</div>
+            <div class="stat-value">{{ solves[0].final_time|format_time }}</div>
+            {% if solves[0].final_time and stats.best %}
+              <div class="stat-meta">
+                Warm-up gain {{ (solves[0].final_time - stats.best)|format_duration }}s
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="scramble-card moves-card">
+      <div class="moves-content">
+        {{ algorithm_display_simple(scramble) }}
+      </div>
+      <div class="moves-footer">
+        {{ algorithm_button_detail(scramble) }}
+        {{ algorithm_button_copy(scramble) }}
+        <span class="spec-label htm">
+          HTM: {{ scramble.metrics.htm }}
+        </span>
+      </div>
+    </div>
+    <nav class="daily-day-nav">
+      {% if previous_day %}
+        <a class="btn btn-secondary" href="/daily/{{ cube }}/{{ previous_day }}/">
+          <i class="fas fa-chevron-left"></i>
+          {{ previous_day }}
+        </a>
+      {% else %}
+        <span></span>
+      {% endif %}
+      {% if next_day %}
+        <a class="btn" href="/daily/{{ cube }}/{{ next_day }}/">
+          {{ next_day }}
+          <i class="fas fa-chevron-right"></i>
+        </a>
+      {% endif %}
+    </nav>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-share-alt"></i>
+        <a href="#share" id="share">Share</a>
+      </h2>
+    </div>
+    <div class="daily-share">
+      <pre id="daily-share-text">{{ share }}</pre>
+      <button type="button" class="btn" data-target="daily-share-text"
+              onclick="dailyCopyShare(this)">
+        <i class="fas fa-copy"></i> Copy
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-chart-bar"></i>
+        <a href="#attempts-chart" id="attempts-chart">Attempts</a>
+      </h2>
+    </div>
+    {{ daily_zone_legend(zone_edges) }}
+    <div class="chart-container">
+      <canvas id="attemptsChart"
+              aria-label="Time of each attempt of the day, in order"></canvas>
+    </div>
+  </div>
+
+  {% if steps %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-layer-group"></i>
+          <a href="#steps" id="steps">Where the time went</a>
+        </h2>
+      </div>
+      <div class="chart-container">
+        <canvas id="stepsChart"
+                aria-label="Time of each step, attempt by attempt"></canvas>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if doctor_total %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-stethoscope"></i>
+          <a href="#diagnostics" id="diagnostics">
+            Diagnostics on {{ doctor_total }} attempt{{ 's' if doctor_total > 1 }}
+          </a>
+        </h2>
+      </div>
+      <div class="diagnostics-card">
+        {% for group in doctor %}
+          {% for finding in group.findings %}
+            <div class="diagnostic-item diagnostic-{{ finding.severity }}">
+              <div class="diagnostic-header">
+                <span class="diagnostic-severity diagnostic-severity-{{ finding.severity }}">
+                  {{ finding.severity|upper }}
+                </span>
+                <span class="diagnostic-location">{{ group.location }}</span>
+                <span class="diagnostic-impact">
+                  ~{{ "%.2f"|format(finding.impact) }}s/solve
+                  on {{ "%.0f"|format(finding.frequency * 100) }}% of attempts
+                </span>
+              </div>
+              <p class="diagnostic-description">{{ finding.title }}</p>
+              <p class="diagnostic-recommendation">
+                <i class="fas fa-lightbulb"></i> {{ finding.recommendation }}
+              </p>
+              {% if loop.last and group.command %}
+                <code class="diagnostic-command">{{ group.command }}</code>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>No issue detected, sane solves !</p>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-list"></i>
+        <a href="#attempts" id="attempts">Reconstructions</a>
+      </h2>
+    </div>
+    <div class="table-container">
+      <table class="solve-list">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Time</th>
+            <th>Zone</th>
+            <th>Date</th>
+            <th>Flag</th>
+            <th>Grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for solve in solves %}
+            <tr>
+              <td class="solve-id">
+                <a href="{{ session_url }}{{ solve.solve_id }}/" class="link">
+                  #{{ solve.solve_id }}
+                </a>
+              </td>
+              <td class="solve-time {% if stats.best and solve.final_time == stats.best %}time-best{% endif %}">
+                {{ solve.final_time|format_time }}
+              </td>
+              <td>{{ daily_squares([zones[loop.index0]], [solve.final_time]) }}</td>
+              <td class="solve-date">
+                {{ solve.datetime.strftime('%Y-%m-%d %H:%M') }}
+              </td>
+              <td class="solve-flag">
+                {{ solve.flag|default('---', true) }}
+              </td>
+              <td class="solve-grade">
+                {% if solve.score %}
+                  <span class="grade-{{ solve.score|format_grade|lower|replace('+', 'plus') }}">
+                    {{ solve.score|format_grade }}
+                  </span>
+                {% else %}
+                  ---
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

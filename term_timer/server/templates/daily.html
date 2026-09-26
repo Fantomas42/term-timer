@@ -1,0 +1,261 @@
+{% extends "skeleton.html" %}
+{% from 'macros/daily.html' import daily_squares %}
+{% from 'macros/daily.html' import daily_zone_legend %}
+
+{% block description %}Daily sessions on {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
+
+{% block title %}Daily{% endblock %}
+
+{% block subtitle %}Daily {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
+
+{% block script %}
+  {% if summary.played_days %}
+    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+    <script src="/static/js/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
+    <script src="/static/js/daily.js"></script>
+    <script>
+     document.addEventListener('DOMContentLoaded', function() {
+       const labels = {{ series.labels|tojson }};
+       dailyTimesChart(
+         document.getElementById('bestsChart'),
+         labels,
+         [
+           {label: 'Best of the day', data: {{ series.best|tojson }}},
+           {label: 'First attempt', data: {{ series.first|tojson }}},
+         ],
+         {{ zone_edges|list|tojson }},
+       );
+       dailyCountChart(
+         document.getElementById('countChart'),
+         labels,
+         {{ series.attempts|tojson }},
+       );
+     });
+    </script>
+  {% endif %}
+{% endblock %}
+
+{% block body %}
+  {% if not summary.played_days and not rows %}
+    <div class="card">
+      <p>No daily played yet on {{ cube }}x{{ cube }}x{{ cube }}.</p>
+    </div>
+  {% endif %}
+
+  {% if summary.played_days %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-calendar-check"></i>
+          <a href="#participation" id="participation">Participation</a>
+        </h2>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-title">Days</div>
+          <div class="stat-value">{{ summary.played_days|length }}</div>
+          <div class="stat-meta">
+            {{ summary.total_solves }} solves ·
+            {{ "%.2f"|format(summary.solves_per_day) }} per day
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Participation</div>
+          <div class="stat-value">{{ "%.1f"|format(summary.participation * 100) }}%</div>
+          <div class="stat-meta">
+            {{ summary.span }} days since {{ summary.played_days[0] }}
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">🔥 Streak</div>
+          <div class="stat-value">{{ summary.current_streak|length }}</div>
+          <div class="stat-meta">
+            Record {{ summary.longest_streak|length }} :
+            {{ summary.longest_streak[0] }} → {{ summary.longest_streak[-1] }}
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Last daily</div>
+          <div class="stat-value">
+            {% if summary.days_since_last %}
+              {{ summary.days_since_last }} day{{ 's' if summary.days_since_last > 1 }} ago
+            {% else %}
+              Today
+            {% endif %}
+          </div>
+          <div class="stat-meta">
+            {% if summary.daily_done %}✅ Daily done{% else %}⏳ Daily pending{% endif %}
+          </div>
+        </div>
+        {% if summary.best_day %}
+          <a href="/daily/{{ cube }}/{{ summary.best_day[0] }}/">
+            <div class="stat-card">
+              <div class="stat-title">Best day</div>
+              <div class="stat-value stat-best">{{ summary.best_day[1]|format_time }}</div>
+              <div class="stat-meta">{{ summary.best_day[0] }}</div>
+            </div>
+          </a>
+          <a href="/daily/{{ cube }}/{{ summary.worst_day[0] }}/">
+            <div class="stat-card">
+              <div class="stat-title">Worst day</div>
+              <div class="stat-value stat-worst">{{ summary.worst_day[1]|format_time }}</div>
+              <div class="stat-meta">{{ summary.worst_day[0] }}</div>
+            </div>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-calendar-alt"></i>
+          <a href="#calendar" id="calendar">Calendar</a>
+        </h2>
+      </div>
+      <div class="punchcard-header">
+        <span>Colored by number of attempts, never by speed</span>
+        <div class="legend">
+          <span>Fewer</span>
+          <div class="legend-item level-1"></div>
+          <div class="legend-item level-2"></div>
+          <div class="legend-item level-3"></div>
+          <div class="legend-item level-4"></div>
+          <span>More</span>
+        </div>
+      </div>
+      {% for year in calendar %}
+        <div class="punchcard-container daily-calendar">
+          <div class="daily-calendar-year">{{ year.year }}</div>
+          <div class="punchcard">
+            <div class="months">
+              {% for month in year.months %}
+                <div class="month-label">{{ month }}</div>
+              {% endfor %}
+            </div>
+            <div class="days-container">
+              <div class="days-labels">
+                {% for label in ['Mon', '', 'Wed', '', 'Fri', '', 'Sun'] %}
+                  <div class="day-label">{{ label }}</div>
+                {% endfor %}
+              </div>
+              <div class="days-grid">
+                {% for cell in year.cells %}
+                  {% set level = 'disabled' if cell.level < 0 else cell.level %}
+                  {% if cell.url %}
+                    <a class="day-square level-{{ level }}" href="{{ cell.url }}"
+                       title="{{ cell.day }} · {{ cell.attempts }} attempt{{ 's' if cell.attempts > 1 }}"></a>
+                  {% else %}
+                    <div class="day-square level-{{ level }}" title="{{ cell.day }}"></div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-chart-line"></i>
+          <a href="#bests" id="bests">Best and first attempt of each day</a>
+        </h2>
+      </div>
+      {{ daily_zone_legend(zone_edges) }}
+      <div class="chart-container">
+        <canvas id="bestsChart"
+                aria-label="Best time and first attempt of each played day"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-redo"></i>
+          <a href="#count" id="count">Attempts per day</a>
+        </h2>
+      </div>
+      <div class="chart-container">
+        <canvas id="countChart"
+                aria-label="Number of attempts of each played day"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-trophy"></i>
+          <a href="#records" id="records">Records</a>
+        </h2>
+      </div>
+      <div class="daily-records">
+        {% for record in records %}
+          <a href="/daily/{{ cube }}/{{ record.day }}/">
+            <div class="stat-card">
+              <div class="stat-title">{{ record.day }}</div>
+              <div class="stat-value">{{ record.best|format_time }}</div>
+              <div class="stat-meta">
+                {% if record.gain %}
+                  <span class="daily-record-gain">-{{ record.gain|format_duration }}s</span>
+                {% else %}
+                  First record
+                {% endif %}
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if rows %}
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-list"></i>
+          <a href="#days" id="days">Days</a>
+        </h2>
+      </div>
+      <div class="table-container">
+        <table class="solve-list">
+          <thead>
+            <tr>
+              <th>Daily</th>
+              <th>Date</th>
+              <th>Day</th>
+              <th>Σ</th>
+              <th>First</th>
+              <th>Best</th>
+              <th>Warm-up gain</th>
+              <th>Attempts</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                <td class="solve-id">
+                  <a href="/daily/{{ cube }}/{{ row.day }}/" class="link">
+                    {% if row.number %}#{{ row.number }}{% else %}---{% endif %}
+                  </a>
+                </td>
+                <td class="solve-date">
+                  <a href="/daily/{{ cube }}/{{ row.day }}/" class="link">{{ row.day }}</a>
+                </td>
+                <td>{{ row.weekday }}</td>
+                <td>{{ row.attempts }}</td>
+                <td class="solve-time">{{ row.first|format_time }}</td>
+                <td class="solve-time">{{ row.best|format_time }}</td>
+                <td>
+                  {% if row.gain is not none %}{{ row.gain|format_duration }}s{% else %}---{% endif %}
+                </td>
+                <td>{{ daily_squares(row.zones, row.times) }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -1,4 +1,5 @@
 """Solve detail, update, and delete views."""
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -8,6 +9,7 @@ from cubing_algs.annotations import CubeOrientation
 from cubing_algs.constants import ORIENTATION_FACE_MOVES
 
 from term_timer.constants import SECOND
+from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.constants import SolveFlag
 from term_timer.constants import SolveFlagInput
 from term_timer.doctor import generate_solve_diagnostics
@@ -28,7 +30,25 @@ from term_timer.server.views.base import View
 from term_timer.solve import Solve
 
 
-class SolveDetailView(View):
+class SolveLocation:
+    """Where the solves of a session are stored and served."""
+
+    directory: Path = SOLVES_DIRECTORY
+    url_prefix = ''
+
+    @classmethod
+    def session_url(cls, cube: int, session: str) -> str:
+        """
+        Build the URL of a session.
+
+        Returns:
+            Absolute path of the session page.
+
+        """
+        return f'{ cls.url_prefix }/{ cube }/{ session }/'
+
+
+class SolveDetailView(SolveLocation, View):
     """View for displaying detailed analysis of a single solve."""
 
     template_name = 'solve.html'
@@ -53,6 +73,7 @@ class SolveDetailView(View):
             cube,
             [] if session == 'all' else [session],
             [], [],
+            directory=self.directory,
         )
 
         self.solve_id = solve_id
@@ -153,6 +174,7 @@ class SolveDetailView(View):
         return {
             'cube': self.cube,
             'session': self.session,
+            'session_url': self.session_url(self.cube, self.session),
             'solve': self.solve,
             'solve_id': self.solve_id,
             'solves': self.solves,
@@ -172,7 +194,7 @@ class SolveDetailView(View):
         }
 
 
-class SolveUpdateFlagView:
+class SolveUpdateFlagView(SolveLocation):
     """View for updating solve flag."""
 
     def __init__(self, cube: int, session: str, solve_id: int,
@@ -196,6 +218,7 @@ class SolveUpdateFlagView:
             cube,
             [] if session == 'all' else [session],
             [], [],
+            directory=self.directory,
         )
 
         self.solve_index = solve_id - 1
@@ -209,12 +232,12 @@ class SolveUpdateFlagView:
 
         normalized_flag: SolveFlag = '' if flag == 'OK' else flag
         self.solves[self.solve_index].flag = normalized_flag
-        save_solves(cube, session, self.solves)
+        save_solves(cube, session, self.solves, self.directory)
 
-        redirect(f'/{ cube }/{ session }/{ solve_id }/')
+        redirect(f'{ self.session_url(cube, session) }{ solve_id }/')
 
 
-class SolveUpdateCommentView:
+class SolveUpdateCommentView(SolveLocation):
     """View for updating solve comment."""
 
     def __init__(self, cube: int, session: str, solve_id: int,
@@ -238,6 +261,7 @@ class SolveUpdateCommentView:
             cube,
             [] if session == 'all' else [session],
             [], [],
+            directory=self.directory,
         )
 
         self.solve_index = solve_id - 1
@@ -247,12 +271,12 @@ class SolveUpdateCommentView:
             abort(404, 'Invalid solve ID')
 
         self.solves[self.solve_index].comment = comment.strip()
-        save_solves(cube, session, self.solves)
+        save_solves(cube, session, self.solves, self.directory)
 
-        redirect(f'/{ cube }/{ session }/{ solve_id }/')
+        redirect(f'{ self.session_url(cube, session) }{ solve_id }/')
 
 
-class SolveDeleteView:
+class SolveDeleteView(SolveLocation):
     """View for deleting a solve from the database."""
 
     def __init__(self, cube: int, session: str, solve_id: int) -> None:
@@ -273,6 +297,7 @@ class SolveDeleteView:
             cube,
             [] if session == 'all' else [session],
             [], [],
+            directory=self.directory,
         )
 
         self.solve_index = solve_id - 1
@@ -282,6 +307,6 @@ class SolveDeleteView:
             abort(404, 'Invalid solve ID')
 
         self.solves.pop(self.solve_index)
-        save_solves(cube, session, self.solves)
+        save_solves(cube, session, self.solves, self.directory)
 
-        redirect(f'/{ cube }/{ session }/')
+        redirect(self.session_url(cube, session))

@@ -78,6 +78,13 @@ PUNCHCARD_STYLES: Final = (
 
 DAILY_DAYS_LISTED: Final = 14
 
+# Fixed landmarks of the daily times, in seconds, fastest first: no target,
+# only visual zones. They split the times in as many zones as squares,
+# the share card of a day drawing one square per attempt.
+DAILY_ZONE_EDGES: Final = (20, 25, 30)
+DAILY_ZONE_SQUARES: Final = ('🟩', '🟨', '🟧', '🟥')
+DAILY_DNF_SQUARE: Final = '⬛'
+
 RESUME_LABEL_WIDTH: Final = 6
 RESUME_VALUE_WIDTH: Final = 13
 
