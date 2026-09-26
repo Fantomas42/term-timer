@@ -24,6 +24,8 @@ from term_timer.server.views import CubeImageView
 from term_timer.server.views import CubeRenderView
 from term_timer.server.views import Error404View
 from term_timer.server.views import Error500View
+from term_timer.server.views import ScrambleDetailView
+from term_timer.server.views import ScrambleHomeView
 from term_timer.server.views import SessionDetailView
 from term_timer.server.views import SessionListView
 from term_timer.server.views import SolveDeleteView
@@ -235,6 +237,31 @@ class Server:
                 algorithm,
                 request.GET.o,
             ).as_view(debug)
+
+        @app.route('/scramble/')  # type: ignore[untyped-decorator]
+        def scramble_home() -> str:
+            """
+            Render the scramble series form, or redirect to its first one.
+
+            Returns:
+                Rendered HTML template.
+
+            """
+            return ScrambleHomeView(
+                request.GET.c,
+                request.GET.seed,
+            ).as_view(debug)
+
+        @app.route('/scramble/<cube:int>/<seed>/<index:int>/')  # type: ignore[untyped-decorator]
+        def scramble_detail(cube: int, seed: str, index: int) -> str:
+            """
+            Render one scramble of a seeded series.
+
+            Returns:
+                Rendered HTML template.
+
+            """
+            return ScrambleDetailView(cube, seed, index).as_view(debug)
 
         @app.route('/cube/render/')  # type: ignore[untyped-decorator]
         def cube_debug() -> str:

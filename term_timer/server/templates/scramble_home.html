@@ -1,0 +1,48 @@
+{% extends "skeleton.html" %}
+
+{% block description %}Seeded scramble series{% endblock %}
+
+{% block title %}Scrambles{% endblock %}
+
+{% block subtitle %}Scrambles{% endblock %}
+
+{% block actions %}{% endblock %}
+
+{% block body %}
+  <form class="scramble-home" method="get" action="/scramble/">
+    <fieldset class="scramble-field">
+      <legend class="scramble-label">Cube</legend>
+      <div class="scramble-sizes">
+        {% for size in available_cube_sizes %}
+          <label class="scramble-size">
+            <input type="radio" name="c" value="{{ size }}"
+                   {% if size == cube_size %}checked{% endif %}>
+            <span>{{ size }}x{{ size }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <label class="scramble-field">
+      <span class="scramble-label">Seed</span>
+      <input type="text" name="seed" value="{{ seed }}"
+             class="scramble-seed-input"
+             maxlength="32" pattern="[A-Za-z0-9\-]{1,32}" required
+             autocomplete="off" autocorrect="off"
+             autocapitalize="characters" spellcheck="false">
+    </label>
+    <p class="scramble-hint">
+      Share this seed: the same seed gives the same scrambles,
+      as with <code>term-timer scramble -r {{ seed }}</code>.
+    </p>
+
+    {% if error %}
+      <p class="scramble-error">{{ error }}</p>
+    {% endif %}
+
+    <button type="submit" class="btn scramble-start">
+      Start
+      <i class="fas fa-arrow-right"></i>
+    </button>
+  </form>
+{% endblock %}

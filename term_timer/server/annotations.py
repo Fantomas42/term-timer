@@ -289,3 +289,23 @@ class StyleguideContext(TypedDict):
     """Template context for the styleguide view."""
 
     token_groups: list[StyleguideGroup]
+
+
+class ScrambleHomeContext(TypedDict):
+    """Template context for the scramble series home view."""
+
+    cube_size: int
+    seed: str
+    available_cube_sizes: list[int]
+    error: str
+
+
+class ScrambleDetailContext(TypedDict):
+    """Template context for a single scramble of a seeded series."""
+
+    cube_size: int
+    seed: str
+    index: int
+    max_index: int
+    scramble: Algorithm
+    htm: int

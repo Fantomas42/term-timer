@@ -18,6 +18,8 @@ from term_timer.server.annotations import AlgorithmDetailContext
 from term_timer.server.annotations import CubeRenderContext
 from term_timer.server.annotations import Error404Context
 from term_timer.server.annotations import Error500Context
+from term_timer.server.annotations import ScrambleDetailContext
+from term_timer.server.annotations import ScrambleHomeContext
 from term_timer.server.annotations import SessionDetailContext
 from term_timer.server.annotations import SessionListContext
 from term_timer.server.annotations import SolveDetailContext
@@ -60,6 +62,8 @@ class View:
         | AcademyCaseAlgorithmsDebugContext
         | CubeRenderContext
         | StyleguideContext
+        | ScrambleHomeContext
+        | ScrambleDetailContext
     ):
         """
         Build template context dictionary.

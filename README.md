@@ -80,6 +80,11 @@ serious training rig — no tab, no login, no telemetry.
 - Reproducible scrambles via seed control, or supply your own scramble
 - Load a batch of scrambles from a file
 - A colorful — or linear, or plain — cube display right in the terminal
+- Seeded scramble series on your phone for a duel away from the computer:
+  `term-timer serve --host 0.0.0.0`, then open
+  `http://<computer-ip>:8333/scramble/` — the same seed gives the same
+  series as `term-timer scramble -r SEED`. This exposes the whole viewer,
+  solve editing included, to your local network
 
 ### Smart cube integration (the good stuff)
 

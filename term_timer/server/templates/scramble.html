@@ -1,0 +1,48 @@
+{% extends "skeleton.html" %}
+
+{% block description %}Scramble #{{ index }} of seed {{ seed }}{% endblock %}
+
+{% block title %}Scramble #{{ index }} · {{ seed }}{% endblock %}
+
+{% block subtitle %}Scrambles{% endblock %}
+
+{% block actions %}{% endblock %}
+
+{% block body %}
+  <div class="scramble-page">
+    <div class="scramble-banner">
+      <span class="scramble-cube">{{ cube_size }}x{{ cube_size }}</span>
+      <span class="scramble-seed">{{ seed }}</span>
+    </div>
+
+    <div class="scramble-index">#{{ index }}</div>
+
+    <p class="scramble-moves">
+      {{ scramble }}
+      <span class="scramble-htm">// {{ htm }} HTM</span>
+    </p>
+
+    <img class="scramble-image"
+         alt="Scrambled {{ cube_size }}x{{ cube_size }}"
+         src="/cube/?c={{ cube_size }}&algo={{ scramble|string|urlencode }}&o=UF&l=mirror&s=400">
+
+    <nav class="scramble-nav">
+      {% if index > 1 %}
+        <a class="btn btn-secondary scramble-nav-btn"
+           href="/scramble/{{ cube_size }}/{{ seed }}/{{ index - 1 }}/">
+          <i class="fas fa-chevron-left"></i>
+          #{{ index - 1 }}
+        </a>
+      {% endif %}
+      {% if index < max_index %}
+        <a class="btn scramble-nav-btn scramble-next"
+           href="/scramble/{{ cube_size }}/{{ seed }}/{{ index + 1 }}/">
+          #{{ index + 1 }}
+          <i class="fas fa-chevron-right"></i>
+        </a>
+      {% endif %}
+    </nav>
+
+    <a class="scramble-new" href="/scramble/">New series</a>
+  </div>
+{% endblock %}

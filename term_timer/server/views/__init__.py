@@ -8,6 +8,8 @@ from term_timer.server.views.cube import CubeImageView
 from term_timer.server.views.cube import CubeRenderView
 from term_timer.server.views.errors import Error404View
 from term_timer.server.views.errors import Error500View
+from term_timer.server.views.scramble import ScrambleDetailView
+from term_timer.server.views.scramble import ScrambleHomeView
 from term_timer.server.views.sessions import SessionDetailView
 from term_timer.server.views.sessions import SessionListView
 from term_timer.server.views.solves import SolveDeleteView
@@ -26,6 +28,8 @@ __all__ = [
     'CubeRenderView',
     'Error404View',
     'Error500View',
+    'ScrambleDetailView',
+    'ScrambleHomeView',
     'SessionDetailView',
     'SessionListView',
     'SolveDeleteView',
