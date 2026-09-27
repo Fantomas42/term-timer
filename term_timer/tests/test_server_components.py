@@ -301,7 +301,7 @@ class ComponentCatalogueTestCase(unittest.TestCase):
         """Every component has its numbered section."""
         for number, slug in enumerate(
                 ('alg', 'stat', 'badge', 'tabs', 'table', 'cube', 'chart',
-                 'header', 'dialog'),
+                 'header', 'dialog', 'punchcard', 'spark'),
                 start=1):
             with self.subTest(slug=slug):
                 self.assertIn(f'id="component-{ slug }"', self.body)
@@ -313,7 +313,8 @@ class ComponentCatalogueTestCase(unittest.TestCase):
     def test_chart_kinds(self) -> None:
         """Every kind of the charts.js registry is shown."""
         for kind in ('moves-timing', 'steps-tps', 'steps-recognition',
-                     'steps-fluency'):
+                     'steps-fluency', 'form', 'trend', 'distribution',
+                     'career'):
             with self.subTest(kind=kind):
                 self.assertIn(f'data-chart="{ kind }"', self.body)
 
@@ -366,6 +367,40 @@ class ComponentCatalogueTestCase(unittest.TestCase):
         )
         self.assertIn('/static/v2/js/charts.js', self.body)
         self.assertIn('/static/v2/js/ui.js', self.body)
+
+    def test_new_chart_data(self) -> None:
+        """The charts of the dashboard carry their JSON data and options."""
+        for chart in ('form', 'trend', 'distribution', 'career'):
+            with self.subTest(chart=chart):
+                self.assertIn(
+                    '<script type="application/json"'
+                    f' id="styleguide-{ chart }-data">',
+                    self.body,
+                )
+        self.assertIn('data-ratio="panorama"', self.body)
+        self.assertIn('class="chart-key" data-series="dot"', self.body)
+        self.assertIn('class="chart-key" data-series="4"', self.body)
+
+    def test_punchcard(self) -> None:
+        """Both punchcards: a year of weeks, capped, then filling."""
+        self.assertEqual(self.body.count('<figure class="punchcard"'), 2)
+        self.assertEqual(self.body.count('class="punchcard" data-fill'), 1)
+        self.assertIn('style="--weeks: 53; --recent: 27"', self.body)
+        self.assertEqual(
+            self.body.count('<span class="punchcard-cell" data-level='),
+            2 * (53 * 7 + 5),
+        )
+
+    def test_spark_command_lookup(self) -> None:
+        """The sparklines, the command to copy and the lookup on /."""
+        self.assertEqual(self.body.count('<svg class="spark"'), 2)
+        self.assertIn('<svg class="spark" viewBox="0 0 100 24"'
+                      ' preserveAspectRatio="none" role="img"'
+                      ' aria-label="Last 30 seeded times" data-tone="warn">',
+                      self.body)
+        self.assertIn('data-copy="term-timer train -s oll"', self.body)
+        self.assertIn('data-lookup', self.body)
+        self.assertIn('for="lookup-input" data-key="/"', self.body)
 
     def test_tabs_and_table(self) -> None:
         """Tabs are ARIA tabs; the table is sortable."""
