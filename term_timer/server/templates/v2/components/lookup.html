@@ -1,0 +1,10 @@
+{#- The algorithm lookup: / focuses its field from anywhere (its label
+    carries the key), Enter opens the algorithm page (ui.js). -#}
+
+{% macro lookup() -%}
+  <form class="lookup" data-lookup role="search">
+    <label class="lookup-label" for="lookup-input" data-key="/">Algorithm</label>
+    <input class="lookup-input" id="lookup-input" type="text" placeholder="R U R' U'" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <kbd class="lookup-key">/</kbd>
+  </form>
+{%- endmacro %}

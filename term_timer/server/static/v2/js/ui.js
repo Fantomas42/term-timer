@@ -1,5 +1,6 @@
 // Behaviour of the V2 components: copy with feedback, keyboard
-// shortcuts, ARIA tabs, sortable tables and confirmed forms. Loaded as a
+// shortcuts, ARIA tabs, sortable tables, confirmed forms, selects applied
+// as they change and the algorithm lookup. Loaded as a
 // module by v2/skeleton.html.
 
 const COPIED_DELAY = 1400;
@@ -214,4 +215,26 @@ document.addEventListener('submit', (event) => {
     if (dialog.returnValue === 'confirm') form.submit();
   }, { once: true });
   dialog.showModal();
+});
+
+// Forms applied as they change ----------------------------------------
+
+// A select carrying data-autosubmit sends its form as soon as it
+// changes; the submit button of the form stays for a page without JS.
+document.querySelectorAll('select[data-autosubmit]').forEach((select) => {
+  select.addEventListener('change', () => select.form.requestSubmit());
+});
+
+// Algorithm lookup ----------------------------------------------------
+
+// / focuses the field, its label carrying the key; Enter opens the page
+// of the algorithm typed.
+document.querySelectorAll('[data-lookup]').forEach((form) => {
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const algorithm = form.querySelector('input').value.trim();
+    if (algorithm) {
+      window.location.href = `/algorithm/${encodeURIComponent(algorithm)}/`;
+    }
+  });
 });

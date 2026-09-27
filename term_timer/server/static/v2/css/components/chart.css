@@ -58,4 +58,30 @@
     min-height: 6rem;
     aspect-ratio: 5 / 1;
   }
+
+  .chart-key[data-series="3"]::before {
+    background: var(--chart-3);
+  }
+
+  .chart-key[data-series="4"]::before {
+    background: var(--chart-4);
+  }
+
+  .chart-key[data-series="5"]::before {
+    background: var(--chart-5);
+  }
+
+  /* The dot of a single solve, drawn as a point, not as a line. */
+  .chart-key[data-series="dot"]::before {
+    width: 0.45em;
+    height: 0.45em;
+    border-radius: 50%;
+    vertical-align: 0.05em;
+    background: var(--chart-dot);
+  }
+
+  .chart[data-ratio="panorama"] .chart-canvas {
+    max-height: 32rem;
+    aspect-ratio: 16 / 5;
+  }
 }

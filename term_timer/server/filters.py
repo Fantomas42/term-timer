@@ -1,6 +1,8 @@
 """Template filter functions for server views."""
 import re
 from dataclasses import dataclass
+from datetime import date
+from datetime import datetime
 from typing import ClassVar
 from typing import Final
 
@@ -34,6 +36,17 @@ from term_timer.solve import Solve
 from term_timer.transform import humanize_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
 from term_timer.triggers import SLUG_PATTERN
+
+# Box of a sparkline, in SVG user units: the line keeps a margin of
+# SPARK_MARGIN at the top and the bottom.
+SPARK_WIDTH: Final = 100
+SPARK_HEIGHT: Final = 24
+SPARK_MARGIN: Final = 2
+
+MINUTES_IN_HOUR: Final = 60
+NS_IN_MINUTE: Final = 60_000_000_000
+DAYS_AS_DAYS: Final = 14
+DAYS_AS_WEEKS: Final = 60
 
 SPAN_REGEX: Final = re.compile(r'(<span[^>]*>.*?</span>)')
 BLOCK_REGEX: Final = re.compile(r'\[([\w-]+)\](.*?)\[/([\w-]+)\]')
@@ -389,6 +402,136 @@ def split_time(elapsed_ns: int) -> tuple[str, str]:
     parts[0] = str(int(parts[0]))
 
     return ':'.join(parts), f'.{ millis }'
+
+
+def short_time(elapsed_ns: int) -> str:
+    """
+    Format a time without its leading zeros: 28.841, 1:02.345, DNF.
+
+    Returns:
+        The time as split_time gives it, in one piece.
+
+    """
+    head, millis = split_time(elapsed_ns)
+    return f'{ head }{ millis }'
+
+
+def hours(elapsed_ns: int) -> str:
+    """
+    Format a long duration in hours and minutes: 1 h 40, or 25 min.
+
+    Returns:
+        The hours and the minutes, or the minutes alone.
+
+    """
+    minutes = elapsed_ns // NS_IN_MINUTE
+    if minutes < MINUTES_IN_HOUR:
+        return f'{ minutes } min'
+    return f'{ minutes // MINUTES_IN_HOUR } h { minutes % MINUTES_IN_HOUR:02d}'
+
+
+def day_of(value: date | datetime | str) -> date:
+    """
+    Give the local day of a date, of a moment or of an ISO day.
+
+    Returns:
+        The date itself, the day of the moment in the local timezone, or
+        the day parsed.
+
+    """
+    if isinstance(value, datetime):
+        return value.astimezone().date()
+    if isinstance(value, str):
+        return date.fromisoformat(value[:10])
+    return value
+
+
+def days_ago(value: date | datetime | str,
+             today: date | datetime | str) -> str:
+    """
+    Say how long ago a day is, in words.
+
+    Returns:
+        today, yesterday, or a count of days, weeks or months.
+
+    """
+    days = (day_of(today) - day_of(value)).days
+    if days <= 0:
+        return 'today'
+    if days == 1:
+        return 'yesterday'
+    if days < DAYS_AS_DAYS:
+        return f'{ days } days ago'
+    if days < DAYS_AS_WEEKS:
+        return f'{ days // 7 } weeks ago'
+    return f'{ days // 30 } months ago'
+
+
+def short_date(value: date | datetime | str) -> str:
+    """
+    Format a day as it is read in a list: 26 Sep 2026.
+
+    Returns:
+        The day, the abbreviated month and the year.
+
+    """
+    day = day_of(value)
+    return f'{ day.day } { day:%b %Y}'
+
+
+def weekday(value: date | datetime | str) -> str:
+    """
+    Give the initial of the day of the week: M, T, W, T, F, S or S.
+
+    Returns:
+        The first letter of the English name of the day.
+
+    """
+    return f'{ day_of(value):%a}'[0]
+
+
+@dataclass(frozen=True)
+class SparkLine:
+    """A sparkline drawn in its SVG box: the path and its last point."""
+
+    path: str
+    x: float
+    y: float
+
+
+def sparkline(points: list[float | None]) -> SparkLine | None:
+    """
+    Draw times in the sparkline box, the fastest at the bottom.
+
+    A missing point (a DNF) is skipped, the line joining its neighbours.
+
+    Returns:
+        The line, or None without any point.
+
+    """
+    values = [point for point in points if point is not None]
+    if not values:
+        return None
+
+    low, high = min(values), max(values)
+    span = (high - low) or 1
+    step = SPARK_WIDTH / max(1, len(points) - 1)
+    drawable = SPARK_HEIGHT - 2 * SPARK_MARGIN
+    coordinates = [
+        (
+            round(index * step, 1),
+            round(SPARK_HEIGHT - SPARK_MARGIN
+                  - drawable * (point - low) / span, 1),
+        )
+        for index, point in enumerate(points)
+        if point is not None
+    ]
+    path = ' '.join(
+        f'{ "M" if index == 0 else "L" }{ x } { y }'
+        for index, (x, y) in enumerate(coordinates)
+    )
+    x, y = coordinates[-1]
+    return SparkLine(path, x, y)
 
 
 def grade_tone(grade: str) -> str:

@@ -1,0 +1,231 @@
+{% extends "v2/skeleton.html" %}
+{% from 'v2/components/badge.html' import badge %}
+{% from 'v2/components/button.html' import button %}
+{% from 'v2/components/chart.html' import chart %}
+{% from 'v2/components/cube.html' import cube as cube_image %}
+{% from 'v2/components/lookup.html' import lookup %}
+{% from 'v2/components/page_header.html' import page_header %}
+{% from 'v2/components/punchcard.html' import punchcard %}
+{% from 'v2/components/section.html' import section %}
+{% from 'v2/components/stat.html' import stat, stat_grid %}
+{% from 'v2/components/table.html' import table %}
+{% from 'v2/components/tabs.html' import tabs %}
+
+{% set SOLVE_COLUMNS = [
+  {'label': '#', 'numeric': true},
+  {'label': 'Time', 'numeric': true},
+  {'label': 'Date'},
+  {'label': 'Scramble'},
+  {'label': 'Grade'},
+  {'label': 'Fluency', 'numeric': true},
+  {'label': 'Notes'},
+] %}
+
+{% set CASE_COLUMNS = [
+  {'label': 'Case'},
+  {'label': 'Count', 'numeric': true},
+  {'label': 'Seen vs expected'},
+  {'label': 'Recognition · execution'},
+  {'label': 'Time', 'numeric': true},
+  {'label': 'QTM', 'numeric': true},
+  {'label': 'TPS', 'numeric': true},
+  {'label': 'eTPS', 'numeric': true},
+] %}
+
+{% set cube_name = cube ~ 'x' ~ cube ~ 'x' ~ cube %}
+{% set session_url = '/' ~ cube ~ '/' ~ session ~ '/' %}
+{% set first_solve = stats.stack|first %}
+{% set last_solve = stats.stack|last %}
+{% set grade = stats.score|format_grade %}
+{% set method_grade = method_aggregation.results.mean|format_grade %}
+
+{% block description %}Statistics of the session {{ label }} on {{ cube_name }}{% endblock %}
+
+{% block title %}{{ label }} {{ cube_name }}{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="/static/v2/css/pages/session.css">
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+  <script type="module" src="/static/v2/js/charts.js"></script>
+{% endblock %}
+
+{% block body %}
+  {% call page_header(label, accent=cube_name, crumbs=breadcrumb) %}
+    {{ lookup() }}
+  {% endcall %}
+
+  <div class="session-bar">
+    <p class="session-facts">
+      <b>{{ stats.total }}</b> solve{{ 's' if stats.total != 1 }} ·
+      {{ first_solve.datetime|short_date }} → {{ last_solve.datetime|short_date }} ·
+      <b>{{ stats.total_time|hours }}</b> of solving ·
+      last solve {{ last_solve.datetime|days_ago(today) }}
+    </p>
+    <nav class="session-switch" aria-label="Sessions of the {{ cube_name }}">
+      {% for item in switch %}
+        <a class="session-switch-item" href="{{ item.url }}"{% if item.current %} aria-current="page"{% endif %}>
+          {{ item.label }} <span>{{ item.count }}</span>
+        </a>
+      {% endfor %}
+      <form class="session-method" method="get">
+        <label class="session-method-label" for="session-method">Method</label>
+        <select class="session-method-select" id="session-method" name="m" data-autosubmit>
+          {% for method in available_methods %}
+            <option value="{{ method }}"{% if method == method_name %} selected{% endif %}>{{ method|upper }}</option>
+          {% endfor %}
+        </select>
+        <noscript>{{ button('Apply', type='submit') }}</noscript>
+      </form>
+    </nav>
+    <div class="session-activity">
+      {{ punchcard(activity, 'Solves per day of the session') }}
+    </div>
+  </div>
+
+  {% if step and case_uid %}
+    <p class="session-filter">
+      {{ badge('Filtered', 'info') }}
+      Solves meeting the {{ step|upper }} case {{ case_uid|upper }}
+      <a href="{{ session_url }}">Show every solve</a>
+    </p>
+  {% endif %}
+
+  <div class="session">
+
+    {# 01 · The current single and averages against the best ones. #}
+    <div class="session-zone" data-zone="board">
+      {% call section('averages', 'Averages', 1, aside='current · best') %}
+        <table class="session-board">
+          <thead>
+            <tr>
+              <th scope="col"><span class="session-board-hidden">Average</span></th>
+              <th scope="col">Current</th>
+              <th scope="col">Best</th>
+              <th scope="col">Gap</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in board %}
+              {% set gap = row.value - row.best %}
+              <tr class="session-board-row"{% if row.value and gap <= 0 %} data-record{% endif %}>
+                <th scope="row">{{ row.label }}</th>
+                <td class="session-board-current">{{ row.value|short_time }}</td>
+                <td class="session-board-best">{{ row.best|short_time }}</td>
+                <td class="session-board-gap">
+                  {% if not row.value %}
+                    —
+                  {% elif gap <= 0 %}
+                    {{ badge('PB', 'good') }}
+                  {% else %}
+                    {{ gap|format_delta }}
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endcall %}
+    </div>
+
+    {# 02 · Figures of the session and its distribution. #}
+    <div class="session-zone" data-zone="figures">
+      {% call section('figures', 'Figures', 2) %}
+        {% call stat_grid() %}
+          {% if stats.stack_time_sorted|length >= 2 %}
+            {{ stat('Mean', stats.mean|short_time) }}
+            {{ stat('Median', stats.median|short_time) }}
+            {{ stat('σ', stats.stdev|short_time) }}
+          {% endif %}
+          {% if stats.total >= 2 %}
+            {{ stat('Worst', stats.worst|short_time, meta='MW3 ' ~ stats.mw3|short_time if stats.total >= 3 else '', tone='bad') }}
+          {% endif %}
+          {{ stat('Grade', grade, meta='score ' ~ '%.2f'|format(stats.score), tone=grade|grade_tone) }}
+          {{ stat(method_aggregation.analyser.name|upper, method_grade, meta='score ' ~ '%.2f'|format(method_aggregation.results.mean), tone=method_grade|grade_tone) }}
+          {{ stat('Bluetooth', (stats.advanced_solves * 100)|round|int, unit='%') }}
+          {{ stat('Commented', (stats.commented_solves * 100)|round|int, unit='%') }}
+          {{ stat('DNF', (stats.unfinished_solves * 100)|round(1), unit='%', tone='warn' if stats.unfinished_solves else '') }}
+          {{ stat('+2', (stats.penalized_solves * 100)|round(1), unit='%') }}
+        {% endcall %}
+        {% if distribution_chart.counts %}
+          <div class="session-distribution">
+            {{ chart('distribution-chart', 'distribution', distribution_chart, title='Distribution · mode ' ~ distribution_chart.mode, ratio='strip') }}
+          </div>
+        {% endif %}
+      {% endcall %}
+    </div>
+
+    {# 03 · Progress: every time and its rolling averages. #}
+    <div class="session-zone" data-zone="progress">
+      {% call section('progress', 'Progress', 3, aside=stats.total ~ ' solves') %}
+        {{ chart('trend-chart', 'trend', trend_chart, legend=trend_chart.legend, ratio='wide') }}
+      {% endcall %}
+    </div>
+
+    {# 04 · The last solves, then the cases of each step. #}
+    <div class="session-zone" data-zone="solves">
+      {% call section('solves', 'Solves', 4) %}
+        {% call(slug) tabs('solves-tabs', solve_tabs, label='Solves and cases') %}
+          {% if slug == 'solves' %}
+            {% call table(SOLVE_COLUMNS) %}
+              {% for solve in solve_rows %}
+                {% set solve_grade = solve.score|format_grade if solve.score else '' %}
+                <tr class="session-solve"{% if solve.final_time and solve.final_time == stats.best %} data-tone="good"{% elif solve.final_time and solve.final_time == stats.worst %} data-tone="bad"{% endif %}>
+                  <td data-numeric data-sort="{{ solve.datetime.timestamp()|int }}">
+                    <a href="/{{ cube }}/{{ solve.session or 'default' }}/{{ solve.solve_id }}/">#{{ solve.solve_id }}</a>
+                  </td>
+                  <td class="session-solve-time" data-numeric data-sort="{{ solve.final_time or 999999999999 }}"{% if solve.device %} title="{{ solve.device }}"{% endif %}>{{ solve.final_time|short_time }}</td>
+                  <td data-sort="{{ solve.datetime.timestamp()|int }}">
+                    {{ solve.datetime|short_date }} <span class="session-solve-hour">{{ solve.datetime.astimezone().strftime('%H:%M') }}</span>
+                    {% if session == 'all' %}<span class="session-solve-hour">· {{ (solve.session or 'default')|format_session_name }}</span>{% endif %}
+                  </td>
+                  <td class="session-solve-scramble" title="{{ solve.scramble }}">{{ solve.scramble }}</td>
+                  <td class="session-solve-grade" data-sort="{{ solve.score or 0 }}"{% if solve_grade %} data-tone="{{ solve_grade|grade_tone }}"{% endif %}>{{ solve_grade or '—' }}</td>
+                  <td class="session-solve-fluency" data-numeric data-sort="{{ solve.fluency or 0 }}"{% if solve.fluency %} data-tone="{{ solve.fluency|fluency_tone }}"{% endif %}>{{ solve.fluency ~ '%' if solve.fluency else '—' }}</td>
+                  <td class="session-solve-notes">
+                    {% if solve.flag %}{{ badge(solve.flag, 'bad' if solve.flag == 'DNF' else 'warn') }}{% endif %}
+                    {% if solve.comment %}<span class="session-solve-comment" title="{{ solve.comment }}">“{{ solve.comment|truncate(24) }}”</span>{% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            {% endcall %}
+            {% if stats.total > solve_rows|length %}
+              <div class="session-more">
+                <span>Last {{ solve_rows|length }} of {{ stats.total }}</span>
+                {{ button('Show all ' ~ stats.total, href='?solves=all') }}
+              </div>
+            {% endif %}
+          {% else %}
+            {% set case_table = case_tables|selectattr('step', 'equalto', slug)|first %}
+            {% call table(CASE_COLUMNS) %}
+              {% for row in case_table.rows %}
+                <tr class="session-case">
+                  <td data-sort="{{ row.case.code }}">
+                    <a class="session-case-name" href="{{ row.case|case_link }}">
+                      {% if row.setup %}{{ cube_image(case=row.setup, mode=slug, size='s', label=row.name) }}{% endif %}
+                      <span>{{ row.name }}</span>
+                    </a>
+                  </td>
+                  <td data-numeric><a href="{{ row.filter_url }}" title="Solves meeting this case">{{ row.count }}</a></td>
+                  <td data-sort="{{ row.frequency - row.probability }}">
+                    <span class="session-case-frequency" style="--seen: {{ row.seen }}%; --expected: {{ row.expected }}%"{% if row.overrepresented %} data-tone="warn"{% endif %} title="{{ '%.1f'|format(row.frequency * 100) }}% seen, {{ '%.1f'|format(row.probability * 100) }}% expected"></span>
+                  </td>
+                  <td data-sort="{{ row.time }}">
+                    <span class="session-case-split" style="--recognition: {{ row.recognition_share }}%" title="{{ '%.2f'|format(row.recognition / 1e9) }} s recognition, {{ '%.2f'|format(row.execution / 1e9) }} s execution"></span>
+                  </td>
+                  <td data-numeric data-sort="{{ row.time }}">{{ '%.2f'|format(row.time / 1e9) }}</td>
+                  <td data-numeric>{{ '%.1f'|format(row.qtm) }}</td>
+                  <td data-numeric>{{ '%.2f'|format(row.tps) }}</td>
+                  <td data-numeric>{{ '%.2f'|format(row.etps) }}</td>
+                </tr>
+              {% endfor %}
+            {% endcall %}
+          {% endif %}
+        {% endcall %}
+      {% endcall %}
+    </div>
+
+  </div>
+{% endblock %}

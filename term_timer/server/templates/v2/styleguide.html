@@ -3,10 +3,14 @@
 {% from 'v2/components/badge.html' import badge %}
 {% from 'v2/components/button.html' import button, copy_button %}
 {% from 'v2/components/chart.html' import chart %}
+{% from 'v2/components/command.html' import command %}
 {% from 'v2/components/cube.html' import cube %}
 {% from 'v2/components/dialog.html' import help_dialog, confirm_dialog %}
+{% from 'v2/components/lookup.html' import lookup %}
 {% from 'v2/components/page_header.html' import page_header %}
+{% from 'v2/components/punchcard.html' import punchcard %}
 {% from 'v2/components/section.html' import section %}
+{% from 'v2/components/spark.html' import spark %}
 {% from 'v2/components/stat.html' import stat, stat_grid %}
 {% from 'v2/components/table.html' import table %}
 {% from 'v2/components/tabs.html' import tabs %}
@@ -212,7 +216,11 @@
           {{ chart('styleguide-strip', 'moves-timing', moves_timing, title='Strip ratio', ratio='strip') }}
           {{ chart('styleguide-recognition', 'steps-recognition', {'steps': steps_recognition}, title='Recognition and execution per step', legend=[(2, 'Recognition'), (1, 'Execution')]) }}
           {{ chart('styleguide-fluency', 'steps-fluency', {'steps': steps_fluency}, title='Fluency per step') }}
+          {{ chart('styleguide-form', 'form', form_chart, title='Form · last solves, Ao12, best Ao12') }}
+          {{ chart('styleguide-distribution', 'distribution', distribution_chart, title='Distribution · mode ' ~ distribution_chart.mode) }}
         </div>
+        {{ chart('styleguide-trend', 'trend', trend_chart, title='Trend · times and rolling averages', legend=trend_chart.legend) }}
+        {{ chart('styleguide-career', 'career', career_chart, title='Career · panorama ratio', ratio='panorama') }}
       {% endcall %}
 
       {% call section('component-header', 'page_header · breadcrumb', 8) %}
@@ -227,6 +235,22 @@
         <form class="styleguide-demo-row" method="get" action="#component-dialog" data-confirm="Delete this demo solve? Nothing is deleted.">
           {{ button('Delete with confirmation', type='submit', tone='bad') }}
         </form>
+      {% endcall %}
+
+      {% call section('component-punchcard', 'punchcard', 10, aside='cells capped · fill') %}
+        {{ punchcard(activity, 'Seeded solves per day') }}
+        {{ punchcard(activity, 'Seeded solves per day, filling its box', fill=true) }}
+      {% endcall %}
+
+      {% call section('component-spark', 'spark · command · lookup', 11, aside='press / for the lookup') %}
+        <div class="styleguide-demo-columns">
+          {{ spark(times, label='Seeded times') }}
+          {{ spark(times[-30:], label='Last 30 seeded times', tone='warn') }}
+        </div>
+        <div class="styleguide-demo-columns">
+          {{ command('term-timer train -s oll') }}
+          {{ lookup() }}
+        </div>
       {% endcall %}
     </section>
   </div>

@@ -622,6 +622,10 @@ class TestTrainingBanner(TrainingServerTestCase):
                 'term_timer.server.views.sessions.DailyListView.banner',
                 return_value={},
             ),
+            patch(
+                'term_timer.server.views.sessions.load_all_daily_solves',
+                return_value=[],
+            ),
         ):
             context = SessionListView.get_context()
 

@@ -339,7 +339,7 @@ class ComponentCatalogueTestCase(unittest.TestCase):
 
     def test_copy_buttons_only_where_asked(self) -> None:
         """The reconstruction fixture has no copy button."""
-        self.assertEqual(self.body.count('data-copy-label='), 4)
+        self.assertEqual(self.body.count('data-copy-label='), 5)
         self.assertIn('data-copy-key="s"', self.body)
 
     def test_values_are_escaped(self) -> None:

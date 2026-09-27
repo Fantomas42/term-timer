@@ -1,0 +1,31 @@
+{#- A calendar of weeks, Monday first, from ActivityCalendar.layout. The
+    weeks older than the recent ones fold away in a narrow container. Its
+    cells stop growing at 1.1rem, unless fill spreads it over its whole
+    container. -#}
+
+{% macro punchcard(card, label, unit='solve', fill=false) -%}
+  {%- set old = card.weeks|length - card.recent -%}
+  <figure class="punchcard"{% if fill %} data-fill{% endif %} style="--weeks: {{ card.weeks|length }}; --recent: {{ card.recent }}">
+    <div class="punchcard-months" aria-hidden="true">
+      {%- for month in card.months %}
+        <span class="punchcard-month" style="--week: {{ month.week }}"{% if month.week <= old %} data-old{% endif %}>{{ month.label }}</span>
+      {%- endfor %}
+    </div>
+    <div class="punchcard-grid" role="img" aria-label="{{ label }}">
+      {%- for week in card.weeks %}
+        {%- set is_old = loop.index <= old %}
+        {%- for cell in week %}
+          <span class="punchcard-cell" data-level="{{ cell.level }}"{% if is_old %} data-old{% endif %} title="{{ cell.day|short_date }} · {{ cell.count }} {{ unit }}{{ 's' if cell.count != 1 }}"></span>
+        {%- endfor %}
+      {%- endfor %}
+    </div>
+    <figcaption class="punchcard-legend">
+      <span><b>{{ card.total }}</b> {{ unit }}{{ 's' if card.total != 1 }} · <b>{{ card.active }}</b> active day{{ 's' if card.active != 1 }}</span>
+      <span class="punchcard-scale" aria-hidden="true">
+        less
+        {%- for level in range(5) %}<span class="punchcard-cell" data-level="{{ level }}"></span>{% endfor -%}
+        more
+      </span>
+    </figcaption>
+  </figure>
+{%- endmacro %}

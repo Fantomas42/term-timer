@@ -26,6 +26,9 @@
     --red: #ff5a4e;
     --cyan: #5ad1ff;
     --violet: #b99bff;
+    --acid-22: #3c4515;
+    --acid-48: #6f8318;
+    --acid-74: #a1c11b;
 
     /* Roles */
     --bg: var(--ink-0);
@@ -55,9 +58,19 @@
     --trigger-4: var(--amber);
     --chart-1: var(--acid);
     --chart-2: var(--ink-4);
+    --chart-3: var(--cyan);
+    --chart-4: var(--violet);
+    --chart-5: var(--amber);
+    --chart-6: var(--mint);
+    --chart-dot: var(--ink-4);
     --chart-axis: var(--paper-dim);
     --chart-grid: var(--ink-grid);
     --chart-marker: var(--paper-faint);
+    --heat-0: var(--ink-2);
+    --heat-1: var(--acid-22);
+    --heat-2: var(--acid-48);
+    --heat-3: var(--acid-74);
+    --heat-4: var(--acid);
     --tooltip-bg: var(--paper);
     --tooltip-text: var(--ink-0);
 

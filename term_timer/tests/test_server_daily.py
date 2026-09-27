@@ -423,6 +423,18 @@ class TestDailyBanner(DailyServerTestCase):
             status, _headers, body = self.client.get('/')
 
         self.assertEqual(status, HTTPStatus.OK)
+        self.assertIn('data-zone="daily"', body)
+        self.assertIn('term-timer daily', body)
+
+    def test_banner_on_dashboard_v1(self) -> None:
+        """The V1 dashboard, kept behind ?v1, still teases the daily."""
+        with patch(
+                'term_timer.server.views.sessions.load_all_solves',
+                return_value=[],
+        ):
+            status, _headers, body = self.client.get('/?v1')
+
+        self.assertEqual(status, HTTPStatus.OK)
         self.assertIn('daily-banner', body)
         self.assertIn('dailySparkline', body)
 

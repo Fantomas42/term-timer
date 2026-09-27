@@ -1,0 +1,389 @@
+/* Home, the dashboard. Seven zones: form, daily, training, last solves,
+   sessions, activity and every solve. One column on a phone; from 60rem
+   the form and the last solves run beside today's two cards; from 140rem
+   the three open side by side, the last solves beside the sessions and
+   their activity, every solve on the whole width. */
+
+@layer pages {
+  .home {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 var(--space-7);
+  }
+
+  .home-zone {
+    min-width: 0;
+    container: zone / inline-size;
+  }
+
+  @container page (min-width: 60rem) {
+    .home {
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+      grid-template-areas:
+        "form daily"
+        "recent training"
+        "sessions sessions"
+        "activity activity"
+        "career career";
+    }
+
+    .home-zone[data-zone="form"] { grid-area: form; }
+    .home-zone[data-zone="daily"] { grid-area: daily; }
+    .home-zone[data-zone="training"] { grid-area: training; }
+    .home-zone[data-zone="career"] { grid-area: career; }
+    .home-zone[data-zone="sessions"] { grid-area: sessions; }
+    .home-zone[data-zone="activity"] { grid-area: activity; }
+    .home-zone[data-zone="recent"] { grid-area: recent; }
+  }
+
+  @container page (min-width: 140rem) {
+    .home {
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas:
+        "form daily training"
+        "sessions sessions recent"
+        "activity activity recent"
+        "career career career";
+    }
+  }
+
+  /* Form: the hero and the last solves side by side, stacked in a
+     narrow zone. The hero is its own container, its time fitting its
+     column. */
+
+  .home-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 var(--space-5);
+    align-items: end;
+  }
+
+  @container zone (min-width: 40rem) {
+    .home-form {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    }
+  }
+
+  .home-hero {
+    padding-bottom: var(--space-5);
+    container: hero / inline-size;
+  }
+
+  .home-hero-label,
+  .home-big-label {
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .home-hero-time {
+    --hero-fit: calc(180cqi / var(--chars, 6));
+    margin: var(--space-3) 0 var(--space-4) -0.05em;
+    font-size: min(var(--step-hero), var(--hero-fit));
+    font-weight: 800;
+    line-height: 0.82;
+    letter-spacing: -0.065em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .home-hero-millis {
+    color: var(--text-faint);
+    font-weight: 400;
+    letter-spacing: -0.04em;
+  }
+
+  .home-hero-meta {
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+  }
+
+  .home-hero-meta b {
+    color: var(--tone);
+  }
+
+  .home-empty {
+    margin-bottom: var(--space-4);
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+
+  /* Big counters of the daily and training cards ------------------- */
+
+  .home-big {
+    color: var(--tone, var(--text));
+    font-size: var(--step-3);
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .home-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+  }
+
+  /* The command, first action, takes the room left by the buttons. */
+  .home-actions > :first-child {
+    flex: 1 1 14rem;
+  }
+
+  /* Daily ---------------------------------------------------------- */
+
+  .home-daily {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-5);
+    margin-bottom: var(--space-4);
+  }
+
+  .home-daily-cube > img {
+    width: 7rem;
+  }
+
+  .home-daily-cube:hover > img {
+    outline: var(--hairline) solid var(--accent);
+    outline-offset: var(--space-1);
+  }
+
+  .home-daily-state {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+
+  .home-days {
+    display: grid;
+    grid-template-columns: repeat(14, minmax(0, 1fr));
+    gap: 3px;
+    margin: 0 0 var(--space-4);
+    padding: 0;
+    list-style: none;
+  }
+
+  .home-day {
+    display: grid;
+    place-items: end center;
+    aspect-ratio: 1;
+    padding-bottom: 0.15rem;
+    background: var(--surface-raised);
+  }
+
+  .home-day[data-played="true"] {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .home-day[data-today] {
+    outline: var(--hairline) dashed var(--accent);
+    outline-offset: -1px;
+    background: none;
+    color: var(--accent);
+  }
+
+  .home-day-letter {
+    font: 700 var(--step--2) / 1 var(--font-mono);
+    opacity: 0.8;
+  }
+
+  /* Training ------------------------------------------------------- */
+
+  .home-due {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: end;
+    gap: var(--space-5);
+    margin-bottom: var(--space-4);
+  }
+
+  .home-forecast {
+    display: grid;
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    align-items: end;
+    gap: 3px;
+    height: 4.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .home-forecast-day {
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    gap: var(--space-1);
+    height: 100%;
+  }
+
+  .home-forecast-bar {
+    display: block;
+    height: calc(var(--reviews) / var(--peak) * (100% - 1rem));
+    min-height: 1px;
+    background: var(--chart-2);
+  }
+
+  .home-forecast-day[data-overdue] .home-forecast-bar {
+    background: var(--warn);
+  }
+
+  .home-forecast-label {
+    color: var(--text-faint);
+    font: 500 var(--step--2) / 1 var(--font-mono);
+    text-align: center;
+  }
+
+  .home-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: var(--hairline) solid var(--line);
+  }
+
+  .home-step {
+    display: grid;
+    grid-template-columns: 3.5rem 4.5rem minmax(0, 1fr) 3.5rem;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: var(--hairline) solid var(--line);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+  }
+
+  .home-step-name {
+    font-family: var(--font-sans);
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .home-step-due[data-tone] {
+    color: var(--tone);
+  }
+
+  .home-step-gauge {
+    height: 0.5rem;
+    background:
+      linear-gradient(var(--accent), var(--accent)) 0 0 / var(--mastery) 100% no-repeat,
+      var(--surface-raised);
+  }
+
+  .home-step-mastered {
+    color: var(--text-muted);
+    text-align: right;
+  }
+
+  /* Career --------------------------------------------------------- */
+
+  .home-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
+    margin: 0 0 var(--space-3);
+    padding: 0;
+    list-style: none;
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .home-key::before {
+    content: "";
+    display: inline-block;
+    width: 0.7em;
+    height: 0.7em;
+    margin-right: var(--space-2);
+    border-radius: 50%;
+    background: var(--swatch);
+  }
+
+  /* Sessions ------------------------------------------------------- */
+
+  .home-session-name {
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .home-session td[data-tone] {
+    color: var(--tone);
+  }
+
+  .home-session[data-total] td {
+    border-top: var(--hairline) solid var(--line-strong);
+    color: var(--text-muted);
+  }
+
+  .home-session-spark {
+    width: 9rem;
+    min-width: 6rem;
+  }
+
+  /* Last solves ---------------------------------------------------- */
+
+  .home-recent {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .home-recent-row {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr) 1.5rem 3rem 7rem;
+    align-items: baseline;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: var(--hairline) solid var(--line);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    text-decoration: none;
+  }
+
+  .home-recent-row:hover {
+    background: var(--surface);
+  }
+
+  .home-recent-time {
+    font-size: var(--step-0);
+    font-weight: 700;
+  }
+
+  .home-recent-where {
+    overflow: hidden;
+    font-family: var(--font-sans);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .home-recent-id,
+  .home-recent-when {
+    color: var(--text-faint);
+  }
+
+  .home-recent-when {
+    text-align: right;
+  }
+
+  .home-recent-grade[data-tone],
+  .home-recent-fluency[data-tone] {
+    color: var(--tone);
+    font-weight: 700;
+  }
+
+  @container zone (max-width: 26rem) {
+    .home-recent-row {
+      grid-template-columns: 4.5rem minmax(0, 1fr) 1.5rem 3rem;
+    }
+
+    .home-recent-when {
+      display: none;
+    }
+  }
+}

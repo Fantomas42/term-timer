@@ -1,4 +1,6 @@
 """Type definitions for web server views and templates."""
+from datetime import date
+from datetime import datetime
 from typing import TypedDict
 
 from bottle import HTTPError
@@ -123,7 +125,155 @@ class Error500Context(TypedDict):
     traceback: str | None
 
 
-class SessionListContext(TypedDict):
+class ActivityCell(TypedDict):
+    """A day of the activity calendar, heated by its number of solves."""
+
+    day: date
+    count: int
+    level: int
+
+
+class ActivityMonth(TypedDict):
+    """A month label of the activity calendar, on its first week."""
+
+    week: int
+    label: str
+
+
+class ActivityCalendarData(TypedDict):
+    """Weeks of the activity calendar and the totals of the shown days."""
+
+    weeks: list[list[ActivityCell]]
+    months: list[ActivityMonth]
+    total: int
+    active: int
+    recent: int
+
+
+class FormChart(TypedDict):
+    """The last solves and their Ao12, in seconds, and the best Ao12."""
+
+    points: list[float | None]
+    ao12: list[float | None]
+    best: float
+
+
+class DashboardForm(TypedDict):
+    """Current and best averages over every session and the daily."""
+
+    ao5: int
+    ao12: int
+    ao100: int
+    best_ao5: int
+    best_ao12: int
+    best_ao100: int
+    best: int
+    total: int
+    month: int
+    chart: FormChart
+
+
+class SessionRow(TypedDict):
+    """A session in the table of the dashboard."""
+
+    label: str
+    url: str
+    count: int
+    best: int
+    ao12: int
+    best_ao12: int
+    last: datetime
+    spark: list[float | None]
+    total: bool
+
+
+class SessionTable(TypedDict):
+    """The sessions of a puzzle, the whole of them last."""
+
+    cube: int
+    name: str
+    count: int
+    rows: list[SessionRow]
+
+
+class RecentSolve(TypedDict):
+    """One of the last solves, linked to its page."""
+
+    label: str
+    detail: str
+    url: str
+    time: int
+    moment: datetime
+    grade: str
+    fluency: int
+
+
+class CareerKind(TypedDict):
+    """A series of the career chart and the colour role drawing it."""
+
+    key: str
+    label: str
+    role: str
+
+
+class CareerPoint(TypedDict):
+    """A solve of the career chart: its day, its time, its series."""
+
+    x: int
+    y: float
+    k: str
+
+
+class CareerLinePoint(TypedDict):
+    """A point of the rolling average of the career chart."""
+
+    x: int
+    y: float
+
+
+class CareerChart(TypedDict):
+    """Every solve on the calendar, with the rolling Ao100."""
+
+    start: str
+    days: int
+    points: list[CareerPoint]
+    line: list[CareerLinePoint]
+    floor: int
+    ceiling: float
+    kinds: list[CareerKind]
+    labels: dict[str, str]
+
+
+class ForecastDay(TypedDict):
+    """The reviews of every step on one day of the forecast."""
+
+    label: str
+    short: str
+    total: int
+
+
+class ForecastSummary(TypedDict):
+    """The forecast of the dashboard, overdue first, and its peak."""
+
+    days: list[ForecastDay]
+    peak: int
+
+
+class DashboardContext(TypedDict):
+    """What the dashboard shows beyond the sessions and the banners."""
+
+    today: date
+    form: DashboardForm | None
+    session_tables: list[SessionTable]
+    recent: list[RecentSolve]
+    career: CareerChart | None
+    activity: ActivityCalendarData
+    forecast: ForecastSummary | None
+    daily_command: str
+    training_command: str
+
+
+class SessionListContext(DashboardContext):
     """Template context for session list view."""
 
     sessions: dict[int, dict[str, SessionInfo]]
@@ -155,6 +305,20 @@ class SessionDetailContext(TypedDict):
     step: str
     case_uid: str
     method_aggregation: SolvesMethodAggregator
+    today: date
+    label: str
+    breadcrumb: list['BreadcrumbItem']
+    board: list['BoardRow']
+    switch: list['SessionSwitchItem']
+    activity: ActivityCalendarData
+    trend_chart: 'TrendChart'
+    distribution_chart: 'DistributionChart'
+    solve_rows: list[Solve]
+    all_solves: bool
+    case_tables: list['CaseTable']
+    solve_tabs: list[tuple[str, str]]
+    available_methods: list[str]
+    method_name: str
 
 
 class BreadcrumbItem(TypedDict):
@@ -162,6 +326,77 @@ class BreadcrumbItem(TypedDict):
 
     label: str
     href: str
+
+
+class BoardRow(TypedDict):
+    """A line of the averages board: current value against the best."""
+
+    label: str
+    value: int
+    best: int
+
+
+class SessionSwitchItem(TypedDict):
+    """A session of the same puzzle, reachable from the session page."""
+
+    label: str
+    url: str
+    count: int
+    current: bool
+
+
+class TrendLine(TypedDict):
+    """A rolling average of the progress chart, in seconds."""
+
+    label: str
+    data: list[float | None]
+
+
+class TrendChart(TypedDict):
+    """The progress chart: every time, its averages, its scale."""
+
+    indices: list[str]
+    times: list[float | None]
+    series: list[TrendLine]
+    ceiling: float
+    legend: list[tuple[str, str]]
+
+
+class DistributionChart(TypedDict):
+    """Solves per time bucket, the most frequent bucket named."""
+
+    labels: list[str]
+    counts: list[int]
+    mode: str
+
+
+class CaseRow(TypedDict):
+    """A case met in the session, with its timings and its frequency."""
+
+    case: Case
+    name: str
+    setup: str
+    count: int
+    frequency: float
+    probability: float
+    seen: float
+    expected: float
+    overrepresented: bool
+    recognition: float
+    execution: float
+    time: float
+    recognition_share: float
+    qtm: float
+    tps: float
+    etps: float
+    filter_url: str
+
+
+class CaseTable(TypedDict):
+    """The cases of a step, the most met first."""
+
+    step: str
+    rows: list[CaseRow]
 
 
 class StepMetric(TypedDict):
@@ -527,6 +762,12 @@ class DesignStyleguideContext(TypedDict):
     steps_fluency: list[FluencyData]
     breadcrumb: list[BreadcrumbItem]
     solves: list[StyleguideSolveRow]
+    activity: ActivityCalendarData
+    times: list[float | None]
+    form_chart: FormChart
+    trend_chart: 'TrendChart'
+    distribution_chart: 'DistributionChart'
+    career_chart: CareerChart
 
 
 class NavigationItem(TypedDict):

@@ -338,7 +338,9 @@ class Server:
                 Rendered HTML template.
 
             """
-            return SessionListView().as_view(debug)
+            return SessionListView().legacy(
+                v1='v1' in request.GET,
+            ).as_view(debug)
 
         @app.route('/styleguide/')  # type: ignore[untyped-decorator]
         def styleguide() -> str:
@@ -501,6 +503,10 @@ class Server:
                 request.GET.m,
                 request.GET.step,
                 request.GET.case_uid,
+            ).legacy(
+                v1='v1' in request.GET,
+            ).listing(
+                all_solves=request.GET.solves == 'all',
             ).as_view(debug)
 
         @app.route('/static/<filepath:path>')  # type: ignore[untyped-decorator]

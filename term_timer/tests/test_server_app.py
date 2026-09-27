@@ -32,6 +32,7 @@ from term_timer.server.views import SolveDeleteView
 from term_timer.server.views import SolveDetailView
 from term_timer.server.views import SolveUpdateFlagView
 from term_timer.server.views.base import View
+from term_timer.server.views.solves import SolveLocation
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
 
@@ -383,12 +384,16 @@ class TestError500View(unittest.TestCase):
 class TestSessionListView(unittest.TestCase):
     """Tests for SessionListView class."""
 
+    @patch(
+        'term_timer.server.views.sessions.SessionListView.dashboard',
+        return_value={},
+    )
     @patch('term_timer.server.views.sessions.DailyListView.banner')
     @patch('term_timer.server.views.sessions.load_all_solves')
     @patch('term_timer.server.views.sessions.Statistics')
     def test_session_list_view_get_context(
             self, mock_statistics: Mock, mock_load_solves: Mock,
-            mock_banner: Mock,
+            mock_banner: Mock, _mock_dashboard: Mock,
     ) -> None:
         """Test session list view get context."""
         # Mock solves data
@@ -400,7 +405,9 @@ class TestSessionListView(unittest.TestCase):
         mock_solve3.session = 'session2'
 
         # Configure load_all_solves to return different data for each cube
-        def load_solves_side_effect(cube: int, *_args: Any) -> list[Mock]:  # noqa: ANN401
+        def load_solves_side_effect(
+                cube: int, *_args: Any, **_kwargs: Any,  # noqa: ANN401
+        ) -> list[Mock]:
             if cube == 2:
                 return [mock_solve1]
             if cube == 3:
@@ -427,12 +434,16 @@ class TestSessionListView(unittest.TestCase):
         self.assertEqual(len(cube3_sessions['session1']['solves']), 2)
         self.assertEqual(len(cube3_sessions['session2']['solves']), 1)
 
+    @patch(
+        'term_timer.server.views.sessions.SessionListView.dashboard',
+        return_value={},
+    )
     @patch('term_timer.server.views.sessions.DailyListView.banner')
     @patch('term_timer.server.views.sessions.load_all_solves')
     @patch('term_timer.server.views.sessions.Statistics')
     def test_session_list_view_all_sessions(
             self, mock_statistics: Mock, mock_load_solves: Mock,
-            _mock_banner: Mock,
+            _mock_banner: Mock, _mock_dashboard: Mock,
     ) -> None:
         """Test session list view all sessions."""
         # Test that 'all' session is created when multiple sessions exist
@@ -472,7 +483,9 @@ class TestSessionDetailView(unittest.TestCase):
         self.assertEqual(view.cube, 3)
         self.assertEqual(view.session, 'test-session')
         self.assertEqual(view.method_name, 'cfop')
-        mock_load_solves.assert_called_once_with(3, ['test-session'], [], [])
+        mock_load_solves.assert_called_once_with(
+            3, ['test-session'], [], [], directory=SolveLocation.directory,
+        )
 
     @staticmethod
     @patch('term_timer.server.views.sessions.SolvesMethodAggregator')
@@ -492,7 +505,9 @@ class TestSessionDetailView(unittest.TestCase):
         SessionDetailView(3, 'all', '', '', '')
 
         # Should load all sessions when session is 'all'
-        mock_load_solves.assert_called_once_with(3, [], [], [])
+        mock_load_solves.assert_called_once_with(
+            3, [], [], [], directory=SolveLocation.directory,
+        )
 
     @staticmethod
     @patch('term_timer.server.views.sessions.abort')

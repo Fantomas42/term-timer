@@ -1,13 +1,21 @@
 """Styleguide view rendering the live design-token catalogue."""
 import re
+from datetime import date
+from datetime import timedelta
 from random import Random
 
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.scrambler import scrambler
+from term_timer.server.activity import ActivityCalendar
+from term_timer.server.annotations import ActivityCalendarData
 from term_timer.server.annotations import BreadcrumbItem
+from term_timer.server.annotations import CareerChart
+from term_timer.server.annotations import CareerPoint
 from term_timer.server.annotations import ChartPoint
 from term_timer.server.annotations import DesignStyleguideContext
+from term_timer.server.annotations import DistributionChart
 from term_timer.server.annotations import FluencyData
+from term_timer.server.annotations import FormChart
 from term_timer.server.annotations import MovesTimingChart
 from term_timer.server.annotations import RecognitionData
 from term_timer.server.annotations import StepsTpsChart
@@ -16,6 +24,7 @@ from term_timer.server.annotations import StyleguideContext
 from term_timer.server.annotations import StyleguideGroup
 from term_timer.server.annotations import StyleguideSolveRow
 from term_timer.server.annotations import StyleguideToken
+from term_timer.server.annotations import TrendChart
 from term_timer.server.design import DesignTheme
 from term_timer.server.filters import alg_tokens
 from term_timer.server.filters import algorithm_tokens
@@ -44,6 +53,12 @@ FIXTURE_STEPS = (
     ('OLL', 12, 0.2, 0.9),
     ('PLL', 14, 0.18, 1.3),
 )
+
+# Last day of the dated fixtures, and their number of solves.
+FIXTURE_DAY = date(2026, 9, 27)
+FIXTURE_TIMES = 120
+# Solves of a day of the punchcard demo, walked with a stride.
+FIXTURE_COUNTS = (0, 0, 0, 1, 2, 0, 3, 5, 0, 9, 17, 1, 0)
 
 FIXTURE_BREADCRUMB: list[BreadcrumbItem] = [
     {'label': 'Home', 'href': '/'},
@@ -200,6 +215,158 @@ class DesignStyleguideView(View):
             'steps_fluency': DesignStyleguideView.steps_fluency(),
             'breadcrumb': FIXTURE_BREADCRUMB,
             'solves': list(FIXTURE_SOLVES),
+            'activity': DesignStyleguideView.activity(),
+            'times': DesignStyleguideView.times(),
+            'form_chart': DesignStyleguideView.form_chart(),
+            'trend_chart': DesignStyleguideView.trend_chart(),
+            'distribution_chart': DesignStyleguideView.distribution_chart(),
+            'career_chart': DesignStyleguideView.career_chart(),
+        }
+
+    @staticmethod
+    def activity() -> ActivityCalendarData:
+        """
+        Lay a year of activity, idle days and busy ones mixed.
+
+        Returns:
+            The calendar of the punchcard demo.
+
+        """
+        counts = {
+            FIXTURE_DAY - timedelta(days=offset): FIXTURE_COUNTS[
+                offset * 7 % len(FIXTURE_COUNTS)
+            ]
+            for offset in range(365)
+        }
+        return ActivityCalendar(counts).layout(FIXTURE_DAY)
+
+    @staticmethod
+    def times() -> list[float | None]:
+        """
+        Give times slowly getting faster, one DNF among them.
+
+        Returns:
+            The times in seconds, None for the DNF.
+
+        """
+        times: list[float | None] = [
+            round(32 - 6 * index / FIXTURE_TIMES
+                  + (index * 37 % 17 - 8) / 2.5, 3)
+            for index in range(FIXTURE_TIMES)
+        ]
+        times[FIXTURE_TIMES // 3] = None
+        return times
+
+    @staticmethod
+    def averages(size: int) -> list[float | None]:
+        """
+        Compute the plain mean of the last fixture times at every solve.
+
+        Returns:
+            One value per time, None before enough times.
+
+        """
+        times = [time or 0.0 for time in DesignStyleguideView.times()]
+        return [
+            round(sum(times[index + 1 - size:index + 1]) / size, 3)
+            if index + 1 >= size else None
+            for index in range(len(times))
+        ]
+
+    @staticmethod
+    def form_chart() -> FormChart:
+        """
+        Give the last fixture times, their Ao12 and the best of it.
+
+        Returns:
+            The data of the form chart.
+
+        """
+        ao12 = DesignStyleguideView.averages(12)
+        return {
+            'points': DesignStyleguideView.times()[-60:],
+            'ao12': ao12[-60:],
+            'best': min(value for value in ao12 if value),
+        }
+
+    @staticmethod
+    def trend_chart() -> TrendChart:
+        """
+        Give the fixture times with three rolling averages.
+
+        Returns:
+            The data of the trend chart and its legend.
+
+        """
+        times = DesignStyleguideView.times()
+        return {
+            'indices': [str(index + 1) for index in range(len(times))],
+            'times': times,
+            'series': [
+                {'label': f'Ao{ size }',
+                 'data': DesignStyleguideView.averages(size)}
+                for size in (5, 12, 50)
+            ],
+            'ceiling': 40,
+            'legend': [
+                ('dot', 'Solve'), ('3', 'Ao5'), ('1', 'Ao12'), ('4', 'Ao50'),
+            ],
+        }
+
+    @staticmethod
+    def distribution_chart() -> DistributionChart:
+        """
+        Count the fixture times per bucket of five seconds.
+
+        Returns:
+            The data of the distribution chart and its mode.
+
+        """
+        buckets: dict[int, int] = {}
+        for time in DesignStyleguideView.times():
+            if time:
+                bucket = int(time // 5 * 5)
+                buckets[bucket] = buckets.get(bucket, 0) + 1
+        edges = sorted(buckets)
+        mode = max(edges, key=buckets.__getitem__)
+        return {
+            'labels': [f'{ edge }s' for edge in edges],
+            'counts': [buckets[edge] for edge in edges],
+            'mode': f'{ mode }s',
+        }
+
+    @staticmethod
+    def career_chart() -> CareerChart:
+        """
+        Spread the fixture times over two series and a year.
+
+        Returns:
+            The data of the career chart.
+
+        """
+        times = DesignStyleguideView.times()
+        step = 365 // len(times)
+        points: list[CareerPoint] = [
+            {'x': index * step, 'y': time,
+             'k': 'default' if index < len(times) // 2 else 'daily'}
+            for index, time in enumerate(times) if time
+        ]
+        average = DesignStyleguideView.averages(12)
+        return {
+            'start': (FIXTURE_DAY - timedelta(days=365)).isoformat(),
+            'days': 365,
+            'points': points,
+            'line': [
+                {'x': index * step, 'y': value}
+                for index, value in enumerate(average) if value
+            ],
+            'floor': 15,
+            'ceiling': 45,
+            'kinds': [
+                {'key': 'daily', 'label': 'Daily', 'role': 'chart-1'},
+                {'key': 'default', 'label': 'Default', 'role': 'chart-3'},
+            ],
+            'labels': {'daily': 'Daily', 'default': 'Default'},
         }
 
     @staticmethod

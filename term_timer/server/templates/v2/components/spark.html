@@ -1,0 +1,12 @@
+{#- A sparkline of times in seconds, the fastest at the bottom, its last
+    point marked in the tone (acid by default). A DNF is None. -#}
+
+{% macro spark(points, label='', tone='') -%}
+  {%- set line = points|sparkline -%}
+  {%- if line -%}
+    <svg class="spark" viewBox="0 0 100 24" preserveAspectRatio="none" role="img" aria-label="{{ label }}"{% if tone %} data-tone="{{ tone }}"{% endif %}>
+      <path class="spark-line" d="{{ line.path }}"/>
+      <path class="spark-last" d="M{{ line.x }} {{ line.y }}h0"/>
+    </svg>
+  {%- endif -%}
+{%- endmacro %}
