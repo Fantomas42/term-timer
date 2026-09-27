@@ -105,6 +105,7 @@ def load_solves(
                 session=session,
                 cube_size=cube,
                 solve_id=i + 1,
+                directory=directory,
             )
             for i, data in enumerate(datas)
         ]

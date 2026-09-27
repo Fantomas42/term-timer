@@ -8,6 +8,7 @@ from typing import cast
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.parsing import parse_moves
 
+from term_timer.constants import DAILY_DIRECTORY
 from term_timer.constants import DNF
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PLUS_TWO
@@ -858,6 +859,16 @@ class TestSolveURLGeneration(unittest.TestCase):
         link = solve.link_term_timer
 
         self.assertIn('/4/test/10/', link)
+
+    def test_link_term_timer_daily(self) -> None:
+        """A daily solve links to the daily route of the server."""
+        solve = Solve(
+            1000000000, 1012345678, "R U R'",
+            session='2026-09-24', solve_id=2, cube_size=3,
+            directory=DAILY_DIRECTORY,
+        )
+
+        self.assertIn('/daily/3/2026-09-24/2/', solve.link_term_timer)
 
 
 class TestSolveReportLines(unittest.TestCase):
