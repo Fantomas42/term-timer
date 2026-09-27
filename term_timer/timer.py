@@ -576,6 +576,7 @@ class Timer(SolveInterface):
             solve_id=len(self.stack) + 1,
             cube_size=self.cube_size,
             moves=' '.join(moves),
+            directory=self.save_directory,
         )
 
         solve.method_name = self.method

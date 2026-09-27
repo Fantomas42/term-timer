@@ -5,6 +5,7 @@ from datetime import datetime
 from datetime import timezone
 from functools import cached_property
 from itertools import pairwise
+from pathlib import Path
 from typing import Any
 from typing import TypedDict
 
@@ -28,12 +29,14 @@ from term_timer.config import CUBE_METHOD
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import SERVER_CONFIG
 from term_timer.config import STATS_SOLVE_METRICS
+from term_timer.constants import DAILY_DIRECTORY
 from term_timer.constants import DNF
 from term_timer.constants import FLUENCY_EXPONENTIAL_DECAY
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PAUSE_FACTOR
 from term_timer.constants import PLUS_TWO
 from term_timer.constants import SECOND
+from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.constants import SolveFlag
 from term_timer.doctor import generate_solve_diagnostics
 from term_timer.doctor import group_solve_diagnostics
@@ -103,6 +106,7 @@ class Solve:  # noqa: PLR0904
         cube_size: Size of the cube (2-7, default 3 for 3x3x3)
         moves: Optional solution reconstruction as a string
         comment: Optional comment about the solve
+        directory: Directory the solve is stored in
 
     """
 
@@ -118,6 +122,7 @@ class Solve:  # noqa: PLR0904
             solve_id: int = 0,
             cube_size: int = 3,
             moves: str | None = None,
+            directory: Path = SOLVES_DIRECTORY,
     ) -> None:
         """Initialize a new Solve instance with the provided data."""
         self.date = int(date)
@@ -130,6 +135,7 @@ class Solve:  # noqa: PLR0904
         self.session = session or 'default'
         self.solve_id = solve_id
         self.cube_size = cube_size
+        self.directory = directory
 
         self.raw_moves = moves
         self.raw_scramble = scramble
@@ -1568,9 +1574,10 @@ class Solve:  # noqa: PLR0904
         """
         domain = SERVER_CONFIG.get('domain', 'localhost')
         port = SERVER_CONFIG.get('port', 8333)
+        prefix = '/daily' if self.directory == DAILY_DIRECTORY else ''
 
         return (
-            f'http://{ domain }:{ port }'
+            f'http://{ domain }:{ port }{ prefix }'
             f'/{ self.cube_size }/{ self.session }/{ self.solve_id }/'
         )
 

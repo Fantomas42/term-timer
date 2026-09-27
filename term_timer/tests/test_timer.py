@@ -1,6 +1,7 @@
 """Tests for timer."""
 import asyncio
 import unittest
+from pathlib import Path
 from random import Random
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -766,3 +767,40 @@ class TestStartRetryLoop(unittest.IsolatedAsyncioTestCase):
 
         self.assertFalse(keep_going)
         self.assertEqual(len(received), 2)
+
+
+class TestSolveDirectory(unittest.IsolatedAsyncioTestCase):
+    """The solve of an attempt knows the directory it is saved in."""
+
+    async def test_solve_inherits_save_directory(self) -> None:
+        """The timed solve carries the save directory of the timer."""
+        timer = build_timer(
+            scrambles=[parse_moves("R U R' U'")],
+            free_play=False,
+        )
+        timer.save_directory = Path('/daily')
+        timer.console = MagicMock()
+
+        async def timed_solve() -> None:
+            await asyncio.sleep(0)
+            timer.start_time = 0
+            timer.end_time = 10 * SECOND
+
+        async def fake_getch(_mode: str, *_: object) -> str:
+            await asyncio.sleep(0)
+            return ' '
+
+        with (
+            patch('term_timer.interface.save_solves'),
+            patch('term_timer.interface.SOUND_PLAYER'),
+            patch('term_timer.timer.SOUND_PLAYER'),
+            patch.object(timer, 'scramble_solve', return_value=None),
+            patch.object(timer, 'wait_solve', return_value=False),
+            patch.object(timer, 'time_solve', side_effect=timed_solve),
+            patch.object(timer, 'getch', side_effect=fake_getch),
+            patch.object(timer, 'solve_line') as solve_line,
+        ):
+            await timer.run_attempt()
+
+        solve = solve_line.call_args.args[0]
+        self.assertEqual(solve.directory, Path('/daily'))

@@ -25,6 +25,19 @@ class TestInOut(unittest.TestCase):
 
         self.assertEqual(solves, [])
 
+    def test_load_solves_remembers_directory(self) -> None:
+        """Each loaded solve knows the directory it was read from."""
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            (directory / '3x3x3-2026-09-24.json').write_text(
+                json.dumps([{'date': 100, 'time': 10, 'scramble': 'R U'}]),
+                encoding='utf-8',
+            )
+            solves = load_solves(3, '2026-09-24', directory=directory)
+
+        self.assertEqual(len(solves), 1)
+        self.assertEqual(solves[0].directory, directory)
+
 
 class TestLoadAllSolves(unittest.TestCase):
     """Tests for multi-session loading with device and dedup filters."""
