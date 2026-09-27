@@ -273,7 +273,7 @@ class DesignLintTestCase(unittest.TestCase):
     def test_style_attributes_only_set_custom_properties(self) -> None:
         """A style attribute may pass values, never style directly."""
         self.write(
-            self.templates / 'skeleton_v2.html',
+            self.templates / 'v2' / 'skeleton.html',
             '<div style="--share: 12%; --reco: 3%"></div>\n'
             '<div style="width: 12%"></div>\n',
         )

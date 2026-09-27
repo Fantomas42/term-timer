@@ -1,0 +1,41 @@
+/* Tabs: a scrollable strip of uppercase tabs, the selected one
+   underlined in acid. */
+
+@layer components {
+  .tabs-list {
+    display: flex;
+    overflow-x: auto;
+    border-bottom: var(--hairline) solid var(--line);
+    scrollbar-width: none;
+  }
+
+  .tabs-tab {
+    padding: var(--space-3) var(--space-4);
+    border: 0;
+    border-bottom: var(--rule) solid transparent;
+    background: none;
+    color: var(--text-faint);
+    font: 600 var(--step--1) / 1 var(--font-sans);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .tabs-tab:hover {
+    color: var(--text);
+  }
+
+  .tabs-tab[aria-selected="true"] {
+    border-bottom-color: var(--accent);
+    color: var(--text);
+  }
+
+  .tabs-panel {
+    padding-top: var(--space-4);
+  }
+
+  .tabs-panel:focus-visible {
+    outline-offset: -2px;
+  }
+}

@@ -1,0 +1,33 @@
+/* The toast the copy buttons report to, above the mobile bar. */
+
+@layer components {
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: var(--space-5);
+    z-index: 20;
+    padding: var(--space-3) var(--space-4);
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    font-weight: 700;
+    opacity: 0;
+    transform: translate(-50%, 1rem);
+    pointer-events: none;
+    transition:
+      opacity var(--slow) var(--ease),
+      transform var(--slow) var(--ease);
+  }
+
+  .toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  @media (max-width: 40rem) {
+    .toast {
+      bottom: 5rem;
+    }
+  }
+}

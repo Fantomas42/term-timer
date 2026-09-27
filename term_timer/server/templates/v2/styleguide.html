@@ -1,4 +1,13 @@
-{% extends "skeleton_v2.html" %}
+{% extends "v2/skeleton.html" %}
+{% from 'v2/components/alg.html' import alg %}
+{% from 'v2/components/badge.html' import badge %}
+{% from 'v2/components/button.html' import button, copy_button %}
+{% from 'v2/components/chart.html' import chart %}
+{% from 'v2/components/cube.html' import cube %}
+{% from 'v2/components/section.html' import section %}
+{% from 'v2/components/stat.html' import stat, stat_grid %}
+{% from 'v2/components/table.html' import table %}
+{% from 'v2/components/tabs.html' import tabs %}
 
 {% block description %}Term Timer V2 design system: theme values and contrasts{% endblock %}
 
@@ -6,6 +15,11 @@
 
 {% block stylesheets %}
   <link rel="stylesheet" href="/static/v2/css/pages/styleguide.css">
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+  <script type="module" src="/static/v2/js/charts.js"></script>
 {% endblock %}
 
 {% macro swatches(group) %}
@@ -79,6 +93,123 @@
           </div>
         {% endfor %}
       </div>
+    </section>
+
+    <section id="fonts">
+      <h2 class="styleguide-section-title">Fonts</h2>
+      <p class="styleguide-lead">
+        Each vendored font with its fallback overlaid in acid: the calibrated
+        <code>size-adjust</code> keeps both on the same width and baseline.
+      </p>
+      {% for family, fallback, sample in [
+        ('sans', 'Arial · Liberation Sans', 'Time 25.108 · Recognition 31% · Exec. pauses 3'),
+        ('mono', 'DejaVu Sans Mono · Menlo', "R U R' U' F2 Rw · 7.80s · #1181"),
+        ('mono-narrow', 'Consolas', "R U R' U' F2 Rw · 7.80s · #1181"),
+      ] %}
+        <p class="styleguide-demo-title">{{ family }} · fallback {{ fallback }}</p>
+        <div class="styleguide-font" data-family="{{ family }}">
+          <span class="styleguide-font-real">{{ sample }}</span>
+          <span class="styleguide-font-fallback" aria-hidden="true">{{ sample }}</span>
+        </div>
+      {% endfor %}
+    </section>
+
+    <section id="components">
+      <h2 class="styleguide-section-title">
+        Components
+        <span class="styleguide-count">templates/v2/components/</span>
+      </h2>
+
+      {% call section('component-alg', 'alg', 1, aside='tokens · size · copy · htm') %}
+        <div class="styleguide-demo">
+          {% for algorithm in algorithms %}
+            <div class="styleguide-demo-item">
+              <p class="styleguide-demo-title">{{ algorithm.title }}</p>
+              {{ alg(algorithm.tokens, size=algorithm.size, copy=algorithm.copy_label, key=algorithm.key, htm=algorithm.htm) }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endcall %}
+
+      {% call section('component-stat', 'stat', 2, aside='~6.6s recoverable', tone='warn') %}
+        <div class="styleguide-demo">
+          {% call stat_grid() %}
+            {{ stat('Grade', 'B+', '14.62', 'B+'|grade_tone, size='l') }}
+            {{ stat('Grade CF4OP', 'S', '20.40', 'S'|grade_tone, size='l') }}
+          {% endcall %}
+          {% call stat_grid() %}
+            {{ stat('TPS', '3.11') }}
+            {{ stat('Fluency', '82', tone='good', unit='%') }}
+            {{ stat('Recognition', '31', '7.80s', unit='%') }}
+            {{ stat('Move speed', '0.231', unit='s') }}
+            {{ stat('Exec. pauses', '3', tone='warn') }}
+            {{ stat('AUFs', '7', tone='bad') }}
+            {{ stat('Session', 'All', 'linked tile', href='#component-stat') }}
+            {{ stat('Comment', '<b>escaped</b>', 'autoescape on') }}
+          {% endcall %}
+        </div>
+      {% endcall %}
+
+      {% call section('component-badge', 'badge · button', 3) %}
+        <div class="styleguide-demo-row">
+          {% for tone in ('good', 'warn', 'bad', 'info', 'muted', 'grade-s') %}
+            {{ badge(tone, tone) }}
+          {% endfor %}
+        </div>
+        <div class="styleguide-demo-row">
+          {{ button('Prev', href='#component-badge', key='[') }}
+          {{ button('Next', href='#component-badge', key=']') }}
+          {{ button('Delete', tone='bad') }}
+          {{ copy_button("R U R' U'", 'sexy move') }}
+        </div>
+      {% endcall %}
+
+      {% call section('component-tabs', 'tabs', 4) %}
+        {% call(slug) tabs('styleguide-tabs', [('time', 'Time'), ('percent', 'Percent'), ('overheads', 'Overheads')], label='Reconstruction view') %}
+          {% if slug == 'time' %}
+            {{ alg(algorithms[1].tokens, size='s') }}
+          {% elif slug == 'percent' %}
+            {{ alg(algorithms[0].tokens, size='s') }}
+          {% else %}
+            {{ alg(algorithms[2].tokens, size='s') }}
+          {% endif %}
+        {% endcall %}
+      {% endcall %}
+
+      {% call section('component-table', 'table', 5, aside='click a header to sort') %}
+        {% call table([
+          {'label': 'Solve', 'numeric': true},
+          {'label': 'Time', 'numeric': true},
+          {'label': 'TPS', 'numeric': true},
+          {'label': 'Grade', 'numeric': false},
+        ], caption='Last solves') %}
+          {% for solve in solves %}
+            <tr>
+              <td data-numeric>#{{ solve.number }}</td>
+              <td data-numeric data-sort="{{ solve.seconds }}">{{ solve.time }}</td>
+              <td data-numeric>{{ '%.2f'|format(solve.tps) }}</td>
+              <td data-sort="{{ solve.grade }}">{{ badge(solve.grade, solve.grade|grade_tone) }}</td>
+            </tr>
+          {% endfor %}
+        {% endcall %}
+      {% endcall %}
+
+      {% call section('component-cube', 'cube', 6) %}
+        <div class="styleguide-demo-row">
+          {{ cube(case="R U R' U R U2 R'", size='s', mode='oll', label='Sune case') }}
+          {{ cube(algo=algorithms[0].tokens|alg_text, size='m', label='Scrambled cube') }}
+          {{ cube(algo=algorithms[0].tokens|alg_text, size='l', layout='mirror', label='Scrambled cube, mirrored') }}
+        </div>
+      {% endcall %}
+
+      {% call section('component-chart', 'chart', 7) %}
+        <div class="styleguide-demo-columns">
+          {{ chart('styleguide-timing', 'moves-timing', moves_timing, title='Cumulative time per move') }}
+          {{ chart('styleguide-tps', 'steps-tps', steps_tps, title='TPS and eTPS per step', legend=[(2, 'TPS'), (1, 'eTPS')]) }}
+          {{ chart('styleguide-square', 'steps-tps', steps_tps, title='Square ratio', ratio='square') }}
+          {{ chart('styleguide-strip', 'moves-timing', moves_timing, title='Strip ratio', ratio='strip') }}
+        </div>
+      {% endcall %}
     </section>
   </div>
 {% endblock %}

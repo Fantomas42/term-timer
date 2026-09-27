@@ -136,7 +136,28 @@
       height: var(--rule);
     }
 
+    /* Icons only, whatever the number of entries: the labels stay for
+       screen readers, the active entry keeps its label visible. */
     .nav-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .nav-item[aria-current="page"] {
+      flex: 1 0 auto;
+      padding-inline: var(--space-2);
+    }
+
+    .nav-item[aria-current="page"] .nav-label {
+      position: static;
+      width: auto;
+      height: auto;
+      overflow: visible;
+      clip-path: none;
       letter-spacing: 0.02em;
     }
   }

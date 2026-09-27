@@ -48,6 +48,7 @@
     --grade-c: var(--amber);
     --grade-d: var(--red);
     --grade-e: var(--red);
+    --grade-f: var(--red);
     --trigger-1: var(--acid);
     --trigger-2: var(--cyan);
     --trigger-3: var(--violet);
@@ -62,7 +63,7 @@
 
     /* Type */
     --font-sans: "Inter Tight", "Inter Tight Fallback", system-ui, sans-serif;
-    --font-mono: "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace, monospace;
+    --font-mono: "JetBrains Mono", "JetBrains Mono Fallback", "JetBrains Mono Fallback Narrow", ui-monospace, monospace;
     --step--2: 0.6875rem;
     --step--1: 0.8125rem;
     --step-0: 1rem;

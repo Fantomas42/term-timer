@@ -112,7 +112,7 @@ class DesignStyleguideServerTestCase(unittest.TestCase):
     def test_template_outside_a_request_defaults_to_home(self) -> None:
         """Rendered outside a request, the path is the home page."""
         body = jinja2_template(
-            'skeleton_v2.html',
+            'v2/skeleton.html',
             navigation=Navigation.items('/', debug=False),
             now=datetime(2026, 9, 27, tzinfo=UTC),
         )

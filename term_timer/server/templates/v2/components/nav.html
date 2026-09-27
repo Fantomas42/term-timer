@@ -15,7 +15,7 @@
     <div class="nav-items">
       {% for item in items %}
         <a class="nav-item" href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>
-          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">{{ NAV_ICONS[item.icon] }}</svg>
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">{{ NAV_ICONS[item.icon]|safe }}</svg>
           <span class="nav-label">{{ item.label }}</span>
         </a>
       {% endfor %}

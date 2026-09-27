@@ -1,15 +1,59 @@
 """Styleguide view rendering the live design-token catalogue."""
 import re
+from random import Random
 
 from term_timer.constants import STATIC_DIRECTORY
+from term_timer.scrambler import scrambler
+from term_timer.server.annotations import ChartPoint
 from term_timer.server.annotations import DesignStyleguideContext
+from term_timer.server.annotations import MovesTimingChart
+from term_timer.server.annotations import StepsTpsChart
+from term_timer.server.annotations import StyleguideAlgorithm
 from term_timer.server.annotations import StyleguideContext
 from term_timer.server.annotations import StyleguideGroup
+from term_timer.server.annotations import StyleguideSolveRow
 from term_timer.server.annotations import StyleguideToken
 from term_timer.server.design import DesignTheme
+from term_timer.server.filters import alg_tokens
+from term_timer.server.filters import algorithm_tokens
 from term_timer.server.views.base import View
 
 STYLESHEET = STATIC_DIRECTORY / 'css' / 'style.css'
+
+FIXTURE_SEED = 'styleguide'
+
+FIXTURE_SOLUTION = "y R U R' U' R' F R2 U' R' U' R U R' F' U2"
+
+# Block markup as the reconstruction filters produce it: AUFs, triggers,
+# a slice, a rotation, overheads and both kinds of pause.
+FIXTURE_RECONSTRUCTION = (
+    "[pre-auf]U'[/pre-auf] [sexy-move]R U R' U'[/sexy-move] [pause].[/pause]"
+    " [slice]M'[/slice] [rotation_y]y[/rotation_y] [deletion]U[/deletion]"
+    " [addition]U2[/addition] [slot-insert]R U' R'[/slot-insert]"
+    " [sune]R U R' U R U2 R'[/sune] F [post-auf]U2[/post-auf]"
+    " [reco-pause].[/reco-pause]"
+)
+
+# Step name, moves, seconds per move and recognition seconds.
+FIXTURE_STEPS = (
+    ('Cross', 8, 0.28, 0.0),
+    ('F2L', 28, 0.3, 1.1),
+    ('OLL', 12, 0.2, 0.9),
+    ('PLL', 14, 0.18, 1.3),
+)
+
+FIXTURE_SOLVES: tuple[StyleguideSolveRow, ...] = (
+    {'number': 1181, 'time': '25.108', 'seconds': 25.108,
+     'tps': 3.11, 'grade': 'B+'},
+    {'number': 1180, 'time': '21.604', 'seconds': 21.604,
+     'tps': 3.61, 'grade': 'A'},
+    {'number': 1179, 'time': '1:02.310', 'seconds': 62.31,
+     'tps': 1.44, 'grade': 'F'},
+    {'number': 1178, 'time': '19.870', 'seconds': 19.87,
+     'tps': 3.92, 'grade': 'S'},
+    {'number': 1177, 'time': '27.442', 'seconds': 27.442,
+     'tps': 2.87, 'grade': 'C'},
+)
 
 BANNER_RE = re.compile(r'/\*\s*(.+?)\s*\*/')
 TOKEN_RE = re.compile(
@@ -139,5 +183,99 @@ class DesignStyleguideView(View):
                     'passed': check.passed,
                 }
                 for check in theme.contrast_checks()
+            ],
+            'algorithms': DesignStyleguideView.algorithms(),
+            'moves_timing': DesignStyleguideView.moves_timing(),
+            'steps_tps': DesignStyleguideView.steps_tps(),
+            'solves': list(FIXTURE_SOLVES),
+        }
+
+    @staticmethod
+    def algorithms() -> list[StyleguideAlgorithm]:
+        """
+        Algorithm fixtures, seeded: every chip variant and a long one.
+
+        Returns:
+            The algorithms to render with the alg macro.
+
+        """
+        rng = Random(FIXTURE_SEED)  # noqa: S311
+        scramble, _cube = scrambler(3, 0, rng=rng)
+        long_scramble, _cube = scrambler(7, 0, rng=rng)
+
+        return [
+            {
+                'title': 'Scramble · size l, AUFs off',
+                'tokens': algorithm_tokens(scramble, aufs=False),
+                'size': 'l',
+                'copy_label': 'scramble',
+                'key': 's',
+                'htm': scramble.metrics.htm,
+            },
+            {
+                'title': 'Solution · triggers, rotation and AUF',
+                'tokens': algorithm_tokens(FIXTURE_SOLUTION),
+                'size': 'm',
+                'copy_label': 'solution',
+                'key': 'c',
+                'htm': None,
+            },
+            {
+                'title': 'Reconstruction · pauses, slice and overheads',
+                'tokens': alg_tokens(FIXTURE_RECONSTRUCTION),
+                'size': 'm',
+                'copy_label': '',
+                'key': '',
+                'htm': None,
+            },
+            {
+                'title': f'7x7x7 scramble · { len(long_scramble) } moves,'
+                         ' size s',
+                'tokens': algorithm_tokens(long_scramble, aufs=False),
+                'size': 's',
+                'copy_label': 'scramble',
+                'key': '',
+                'htm': long_scramble.metrics.htm,
+            },
+        ]
+
+    @staticmethod
+    def moves_timing() -> MovesTimingChart:
+        """
+        Cumulative time of each move of a synthetic CFOP solve.
+
+        Returns:
+            The data of the moves-timing chart.
+
+        """
+        points: list[ChartPoint] = []
+        chart: MovesTimingChart = {'points': points, 'steps': []}
+        elapsed = 0.0
+        for name, moves, pace, recognition in FIXTURE_STEPS:
+            chart['steps'].append({'x': len(points), 'label': name})
+            elapsed += recognition
+            for _move in range(moves):
+                elapsed += pace
+                points.append({'x': len(points) + 1, 'y': round(elapsed, 3)})
+
+        return chart
+
+    @staticmethod
+    def steps_tps() -> StepsTpsChart:
+        """
+        TPS and eTPS of each step of the synthetic solve.
+
+        Returns:
+            The data of the steps-tps chart.
+
+        """
+        return {
+            'steps': [
+                {
+                    'label': name,
+                    'tps': round(moves / (moves * pace + recognition), 2),
+                    'etps': round(1 / pace, 2),
+                }
+                for name, moves, pace, recognition in FIXTURE_STEPS
             ],
         }

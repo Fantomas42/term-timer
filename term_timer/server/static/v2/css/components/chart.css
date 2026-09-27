@@ -1,0 +1,61 @@
+/* Charts: the canvas box is sized by the CSS, never by Chart.js, which
+   runs with maintainAspectRatio false. The explicit width keeps the
+   min-height from widening the box on phones. */
+
+@layer components {
+  .chart {
+    margin: 0 0 var(--space-5);
+  }
+
+  .chart-title,
+  .chart-legend {
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .chart-title {
+    margin-bottom: var(--space-2);
+  }
+
+  .chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-bottom: var(--space-3);
+  }
+
+  .chart-key::before {
+    content: "";
+    display: inline-block;
+    width: 0.8em;
+    height: 0.8em;
+    margin-right: var(--space-2);
+    vertical-align: -0.1em;
+    background: var(--chart-1);
+  }
+
+  .chart-key[data-series="2"]::before {
+    background: var(--chart-2);
+  }
+
+  .chart-canvas {
+    position: relative;
+    width: 100%;
+    min-height: 12rem;
+    max-height: 26rem;
+    aspect-ratio: 16 / 7;
+    border-top: var(--hairline) solid var(--line);
+  }
+
+  .chart[data-ratio="square"] .chart-canvas {
+    aspect-ratio: 1;
+  }
+
+  .chart[data-ratio="strip"] .chart-canvas {
+    min-height: 6rem;
+    aspect-ratio: 5 / 1;
+  }
+}

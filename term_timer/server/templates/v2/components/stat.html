@@ -1,0 +1,17 @@
+{#- Stat tiles. The tone is one of good, warn, bad, info, muted or
+    grade-x (see the grade_tone filter); the tile is a link with href. -#}
+
+{% macro stat(label, value, meta='', tone='', unit='', href='', size='m') -%}
+  {%- set tag = 'a' if href else 'div' -%}
+  <{{ tag }} class="stat" data-size="{{ size }}"{% if href %} href="{{ href }}"{% endif %}{% if tone %} data-tone="{{ tone }}"{% endif %}>
+    <span class="stat-label">{{ label }}</span>
+    <span class="stat-value">{{ value }}{% if unit %}<span class="stat-unit">{{ unit }}</span>{% endif %}</span>
+    {%- if meta %}
+      <span class="stat-meta">{{ meta }}</span>
+    {%- endif %}
+  </{{ tag }}>
+{%- endmacro %}
+
+{% macro stat_grid() -%}
+  <div class="stat-grid">{{ caller() }}</div>
+{%- endmacro %}

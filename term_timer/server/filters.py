@@ -1,16 +1,20 @@
 """Template filter functions for server views."""
 import re
+from dataclasses import dataclass
+from typing import ClassVar
 from typing import Final
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases import get_case
 from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
+from cubing_algs.constants import PAUSE_CHAR
 from cubing_algs.transform.auf import remove_auf_moves
 from cubing_algs.transform.optimize import optimize_double_moves
 from cubing_algs.transform.pause import pause_moves
 from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.timing import untime_moves
+from cubing_algs.triggers import TRIGGER_PATTERNS
 
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PAUSE_FACTOR
@@ -26,6 +30,7 @@ from term_timer.methods.base import get_step_config
 from term_timer.solve import Solve
 from term_timer.transform import humanize_moves
 from term_timer.triggers import DEFAULT_TRIGGERS
+from term_timer.triggers import SLUG_PATTERN
 
 SPAN_REGEX: Final = re.compile(r'(<span[^>]*>.*?</span>)')
 BLOCK_REGEX: Final = re.compile(r'\[([\w-]+)\](.*?)\[/([\w-]+)\]')
@@ -43,6 +48,83 @@ LEGENDS: Final = {
     'post-auf': 'Post-AUF',
     'reco-pause': 'Recognition pause',
 }
+
+MOVE_VARIANTS: Final = {
+    'pre-auf': 'pre-auf',
+    'post-auf': 'post-auf',
+    'wide': 'wide',
+    'slice': 'slice',
+    'rotation_x': 'rotation',
+    'rotation_y': 'rotation',
+    'rotation_z': 'rotation',
+    'addition': 'addition',
+    'deletion': 'deletion',
+}
+
+PAUSE_KINDS: Final = {
+    'pause': 'execution',
+    'reco-pause': 'recognition',
+}
+
+TRIGGER_NAMES: Final = {
+    SLUG_PATTERN.sub('-', pattern.name.lower()).strip('-'): pattern.name
+    for pattern in TRIGGER_PATTERNS
+}
+
+# Colour slot of each trigger family, 1 to 4 (the theme trigger-N roles).
+TRIGGER_SLOTS: Final = {
+    'sexy-move': 1,
+    'double-sexy': 1,
+    'triple-sexy': 1,
+    'wide-sexy': 1,
+    'sexy-sledge': 1,
+    'slot-insert': 2,
+    'slot-extract': 2,
+    'slot-extended': 2,
+    'sune': 3,
+    'anti-sune': 3,
+    'sune-trigger': 3,
+    'sane-trigger': 3,
+    'niklas': 3,
+    'sledgehammer': 4,
+    'hedgeslammer': 4,
+    't-perm-trigger': 4,
+}
+DEFAULT_TRIGGER_SLOT: Final = 4
+
+
+@dataclass(frozen=True)
+class AlgMove:
+    """One move chip, with the variant it is highlighted as."""
+
+    kind: ClassVar[str] = 'move'
+
+    move: str
+    variant: str = ''
+
+
+@dataclass(frozen=True)
+class AlgPause:
+    """A pause between two moves, of execution or of recognition."""
+
+    kind: ClassVar[str] = 'pause'
+
+    pause: str = 'execution'
+
+
+@dataclass(frozen=True)
+class AlgTrigger:
+    """A named trigger grouping its moves."""
+
+    kind: ClassVar[str] = 'trigger'
+
+    slug: str
+    name: str
+    slot: int
+    moves: tuple[AlgMove, ...]
+
+
+AlgToken = AlgMove | AlgPause | AlgTrigger
 
 
 def format_delta(delta: int) -> str:
@@ -169,6 +251,124 @@ def format_algorithm(algorithm: Algorithm) -> str:
     )
 
     return format_line(algorithm_string)
+
+
+def plain_tokens(text: str, variant: str = '') -> list[AlgToken]:
+    """
+    Tokens of a run of moves carrying no trigger.
+
+    Args:
+        text: Moves separated by spaces, pauses included.
+        variant: Variant given to every move of the run.
+
+    Returns:
+        One token per move or pause.
+
+    """
+    return [
+        AlgPause() if move == PAUSE_CHAR else AlgMove(move, variant)
+        for move in text.split()
+    ]
+
+
+def alg_tokens(value: str) -> list[AlgToken]:
+    """
+    Parse the block markup of an algorithm into tokens.
+
+    Reads the markup produced by the format_alg_* functions, the one
+    format_line turns into V1 HTML, and returns it as a structure the
+    V2 alg macro renders. Blocks never nest: triggers are only marked
+    outside the other blocks.
+
+    Args:
+        value: Algorithm string with block markup like
+            [sexy-move]R U R' U'[/sexy-move].
+
+    Returns:
+        The moves, pauses and triggers in order.
+
+    """
+    tokens: list[AlgToken] = []
+    position = 0
+    for match in BLOCK_REGEX.finditer(value):
+        tokens.extend(plain_tokens(value[position:match.start()]))
+        position = match.end()
+
+        markup, moves = match.group(1), match.group(2)
+        if markup in PAUSE_KINDS:
+            tokens.append(AlgPause(PAUSE_KINDS[markup]))
+        elif markup in TRIGGER_NAMES:
+            tokens.append(AlgTrigger(
+                markup,
+                TRIGGER_NAMES[markup],
+                TRIGGER_SLOTS.get(markup, DEFAULT_TRIGGER_SLOT),
+                tuple(AlgMove(move) for move in moves.split()),
+            ))
+        else:
+            tokens.extend(plain_tokens(moves, MOVE_VARIANTS.get(markup, '')))
+    tokens.extend(plain_tokens(value[position:]))
+
+    return tokens
+
+
+def algorithm_tokens(algorithm: Algorithm | str, *,
+                     aufs: bool = True) -> list[AlgToken]:
+    """
+    Tokens of an algorithm, its moves and default triggers marked.
+
+    The structured counterpart of format_algorithm.
+
+    Args:
+        algorithm: Algorithm to tokenize.
+        aufs: Whether a leading and a trailing U are marked as AUFs;
+            False for a scramble, where they mean nothing.
+
+    Returns:
+        The moves, pauses and triggers in order.
+
+    """
+    algorithm_string = str(algorithm)
+    if aufs:
+        algorithm_string = format_alg_aufs(algorithm_string, 1, 1)
+
+    return alg_tokens(
+        format_alg_triggers(
+            format_alg_moves(algorithm_string),
+            DEFAULT_TRIGGERS,
+        ),
+    )
+
+
+def alg_text(tokens: list[AlgToken]) -> str:
+    """
+    Plain notation of tokens, pauses dropped, as copied to the clipboard.
+
+    Returns:
+        The moves separated by spaces.
+
+    """
+    moves: list[str] = []
+    for token in tokens:
+        if isinstance(token, AlgMove):
+            moves.append(token.move)
+        elif isinstance(token, AlgTrigger):
+            moves.extend(move.move for move in token.moves)
+
+    return ' '.join(moves)
+
+
+def grade_tone(grade: str) -> str:
+    """
+    Tone of a letter grade, 'A+' and 'A' alike.
+
+    Returns:
+        The grade-x tone, or an empty string without a grade.
+
+    """
+    if not grade:
+        return ''
+
+    return f'grade-{ grade[0].lower() }'
 
 
 def get_step_case(step_name: str, code_case: str) -> Case:

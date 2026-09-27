@@ -1,0 +1,5 @@
+{#- A short uppercase label on a tone background. -#}
+
+{% macro badge(label, tone='muted') -%}
+  <span class="badge" data-tone="{{ tone }}">{{ label }}</span>
+{%- endmacro %}

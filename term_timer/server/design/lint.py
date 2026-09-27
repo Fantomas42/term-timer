@@ -9,7 +9,7 @@ Stylesheets, except the generated theme.css:
   root class, named after the file;
 - no selector reaches into another component's classes.
 
-Templates of templates/v2/ and skeleton_v2.html:
+Templates of templates/v2/:
 - no inline script, only external ones and JSON data blocks;
 - a style attribute only sets custom properties.
 """
@@ -122,11 +122,7 @@ class DesignLint:
             The sorted list of paths.
 
         """
-        paths = sorted((self.templates_directory / 'v2').rglob('*.html'))
-        skeleton = self.templates_directory / 'skeleton_v2.html'
-        if skeleton.exists():
-            paths.insert(0, skeleton)
-        return paths
+        return sorted((self.templates_directory / 'v2').rglob('*.html'))
 
     def run(self) -> list[LintViolation]:
         """

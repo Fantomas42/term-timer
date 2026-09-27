@@ -1,0 +1,17 @@
+{#- ARIA tabs. items is a list of (slug, label) pairs; the caller renders
+    the panel of the slug it receives. Switching lives in ui.js. -#}
+
+{% macro tabs(id, items, label='') -%}
+  <div class="tabs" data-tabs>
+    <div class="tabs-list" role="tablist"{% if label %} aria-label="{{ label }}"{% endif %}>
+      {%- for slug, title in items %}
+        <button class="tabs-tab" type="button" role="tab" id="{{ id }}-tab-{{ slug }}" aria-controls="{{ id }}-panel-{{ slug }}" aria-selected="{{ 'true' if loop.first else 'false' }}"{% if not loop.first %} tabindex="-1"{% endif %}>{{ title }}</button>
+      {%- endfor %}
+    </div>
+    {%- for slug, title in items %}
+      <div class="tabs-panel" role="tabpanel" id="{{ id }}-panel-{{ slug }}" aria-labelledby="{{ id }}-tab-{{ slug }}" tabindex="0"{% if not loop.first %} hidden{% endif %}>
+        {{ caller(slug) }}
+      </div>
+    {%- endfor %}
+  </div>
+{%- endmacro %}

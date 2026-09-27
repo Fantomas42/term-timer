@@ -17,17 +17,40 @@
 }
 
 /* Fallbacks sized to the vendored fonts, so a missing woff2 keeps the
-   tabular alignments. Values to calibrate once the fonts are in place. */
+   widths and the line boxes. Measured in Chrome (canvas measureText at
+   100px, digits and latin text, the styleguide Fonts section overlays
+   them): Inter Tight is 96.4% as wide as Arial (Liberation Sans has the
+   same metrics), JetBrains Mono 99.7% of DejaVu Sans Mono (Menlo shares
+   its widths). The overrides give the vendored ascent and descent (Inter
+   Tight 0.96/0.25 em, JetBrains Mono 1.02/0.30 em), divided by the
+   size-adjust, which scales them too. */
 @font-face {
   font-family: "Inter Tight Fallback";
   src: local("Arial"), local("Liberation Sans"), local("Helvetica");
-  size-adjust: 94%;
+  size-adjust: 96.4%;
+  ascent-override: 99.6%;
+  descent-override: 25.9%;
+  line-gap-override: 0%;
 }
 
 @font-face {
   font-family: "JetBrains Mono Fallback";
-  src: local("DejaVu Sans Mono"), local("Menlo"), local("Consolas");
-  size-adjust: 100%;
+  src: local("DejaVu Sans Mono"), local("Menlo");
+  size-adjust: 99.7%;
+  ascent-override: 102.3%;
+  descent-override: 30.1%;
+  line-gap-override: 0%;
+}
+
+/* Consolas is narrower (1126/2048 em against 0.6 em), hence its own
+   face; computed from its published advance, not installed here. */
+@font-face {
+  font-family: "JetBrains Mono Fallback Narrow";
+  src: local("Consolas");
+  size-adjust: 109.1%;
+  ascent-override: 93.5%;
+  descent-override: 27.5%;
+  line-gap-override: 0%;
 }
 
 @layer base {
@@ -103,6 +126,56 @@
     color: var(--text-muted);
     font-size: 0.75em;
     line-height: 1;
+  }
+
+  /* Tones, a closed set shared by every component: data-tone sets --tone,
+     the component decides where it shows. */
+  [data-tone="good"] {
+    --tone: var(--good);
+  }
+
+  [data-tone="warn"] {
+    --tone: var(--warn);
+  }
+
+  [data-tone="bad"] {
+    --tone: var(--bad);
+  }
+
+  [data-tone="info"] {
+    --tone: var(--info);
+  }
+
+  [data-tone="muted"] {
+    --tone: var(--text-muted);
+  }
+
+  [data-tone="grade-s"] {
+    --tone: var(--grade-s);
+  }
+
+  [data-tone="grade-a"] {
+    --tone: var(--grade-a);
+  }
+
+  [data-tone="grade-b"] {
+    --tone: var(--grade-b);
+  }
+
+  [data-tone="grade-c"] {
+    --tone: var(--grade-c);
+  }
+
+  [data-tone="grade-d"] {
+    --tone: var(--grade-d);
+  }
+
+  [data-tone="grade-e"] {
+    --tone: var(--grade-e);
+  }
+
+  [data-tone="grade-f"] {
+    --tone: var(--grade-f);
   }
 
   .skip-link {

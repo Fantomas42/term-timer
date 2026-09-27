@@ -9,6 +9,7 @@ from cubing_algs.move import Move
 
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.doctor import Diagnostic
+from term_timer.server.filters import AlgToken
 from term_timer.solve import Solve
 from term_timer.stats import DailySummaryReporter
 from term_timer.stats import SolveStatisticsReporter
@@ -396,11 +397,71 @@ class ContrastCheckData(TypedDict):
     passed: bool
 
 
+class ChartPoint(TypedDict):
+    """One point of a chart series."""
+
+    x: int
+    y: float
+
+
+class ChartMarker(TypedDict):
+    """A labelled vertical marker on a chart."""
+
+    x: int
+    label: str
+
+
+class MovesTimingChart(TypedDict):
+    """Data of the moves-timing chart: cumulative time per move."""
+
+    points: list[ChartPoint]
+    steps: list[ChartMarker]
+
+
+class StepTps(TypedDict):
+    """TPS and eTPS of one step."""
+
+    label: str
+    tps: float
+    etps: float
+
+
+class StepsTpsChart(TypedDict):
+    """Data of the steps-tps chart."""
+
+    steps: list[StepTps]
+
+
+class StyleguideAlgorithm(TypedDict):
+    """An algorithm fixture of the V2 component catalogue."""
+
+    title: str
+    tokens: list[AlgToken]
+    size: str
+    copy_label: str
+    key: str
+    htm: int | None
+
+
+class StyleguideSolveRow(TypedDict):
+    """A row of the table fixture of the V2 component catalogue."""
+
+    number: int
+    time: str
+    seconds: float
+    tps: float
+    grade: str
+
+
 class DesignStyleguideContext(TypedDict):
     """Template context for the V2 design system styleguide."""
 
     token_groups: list[StyleguideGroup]
     contrast_checks: list[ContrastCheckData]
+    algorithms: list[StyleguideAlgorithm]
+    moves_timing: MovesTimingChart
+    steps_tps: StepsTpsChart
+    solves: list[StyleguideSolveRow]
 
 
 class NavigationItem(TypedDict):

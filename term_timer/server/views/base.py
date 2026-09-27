@@ -30,6 +30,9 @@ from term_timer.server.annotations import SolveDetailContext
 from term_timer.server.annotations import StyleguideContext
 from term_timer.server.annotations import TrainingForecastContext
 from term_timer.server.annotations import TrainingReviewContext
+from term_timer.server.filters import alg_text
+from term_timer.server.filters import alg_tokens
+from term_timer.server.filters import algorithm_tokens
 from term_timer.server.filters import case_number
 from term_timer.server.filters import first_case
 from term_timer.server.filters import format_algorithm
@@ -38,6 +41,7 @@ from term_timer.server.filters import format_line
 from term_timer.server.filters import format_score
 from term_timer.server.filters import get_ohtm_delta
 from term_timer.server.filters import get_step_case
+from term_timer.server.filters import grade_tone
 from term_timer.server.filters import normalize_percent
 from term_timer.server.filters import normalize_value
 from term_timer.server.filters import optimized_step
@@ -113,6 +117,24 @@ class View:
         return content
 
     @staticmethod
+    def autoescape(template_name: str | None) -> bool:
+        """
+        Whether a template escapes its values by default.
+
+        The V2 templates, all under v2/, escape everything; a trusted
+        HTML fragment is marked with the safe filter. The V1 templates
+        render their values raw until they are removed.
+
+        Args:
+            template_name: Name of the template, None for a string one.
+
+        Returns:
+            True for the V2 templates.
+
+        """
+        return template_name is not None and template_name.startswith('v2/')
+
+    @staticmethod
     def template(
         template_name: str,
         **context: bool | str | float | datetime | object,
@@ -134,6 +156,7 @@ class View:
             jinja2_template(
                 template_name,
                 template_settings={
+                    'autoescape': View.autoescape,
                     'filters': {
                         'format_delta': format_delta,
                         'format_duration': format_duration,
@@ -156,6 +179,10 @@ class View:
                         'sort_algorithms': sort_algorithms,
                         'first_case': first_case,
                         'case_number': case_number,
+                        'alg_tokens': alg_tokens,
+                        'algorithm_tokens': algorithm_tokens,
+                        'alg_text': alg_text,
+                        'grade_tone': grade_tone,
                     },
                 },
                 **context,
