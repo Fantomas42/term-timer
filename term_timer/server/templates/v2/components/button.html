@@ -1,13 +1,15 @@
-{#- Buttons and links styled as buttons. A copy button copies its text
-    to the clipboard and reports it in the toast (static/v2/js/ui.js). -#}
+{#- Buttons and links styled as buttons. A key is shown as a hint and
+    bound as a shortcut: pressing it clicks the button (ui.js). A copy
+    button copies its text to the clipboard and reports it in the toast
+    (static/v2/js/ui.js). -#}
 
-{% macro button(label, href='', tone='', key='', type='button') -%}
+{% macro button(label, href='', tone='', key='', type='button', value='') -%}
   {%- if href -%}
-    <a class="button" href="{{ href }}"{% if tone %} data-tone="{{ tone }}"{% endif %}>
+    <a class="button" href="{{ href }}"{% if tone %} data-tone="{{ tone }}"{% endif %}{% if key %} data-key="{{ key }}"{% endif %}>
       <span class="button-label">{{ label }}</span>{% if key %}<kbd>{{ key }}</kbd>{% endif %}
     </a>
   {%- else -%}
-    <button class="button" type="{{ type }}"{% if tone %} data-tone="{{ tone }}"{% endif %}>
+    <button class="button" type="{{ type }}"{% if value %} value="{{ value }}"{% endif %}{% if tone %} data-tone="{{ tone }}"{% endif %}{% if key %} data-key="{{ key }}"{% endif %}>
       <span class="button-label">{{ label }}</span>{% if key %}<kbd>{{ key }}</kbd>{% endif %}
     </button>
   {%- endif -%}

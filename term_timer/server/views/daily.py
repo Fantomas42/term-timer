@@ -18,6 +18,7 @@ from term_timer.doctor import group_doctor_findings
 from term_timer.in_out import load_all_daily_solves
 from term_timer.in_out import load_solves
 from term_timer.interface.doctor import DoctorReporter
+from term_timer.server.annotations import BreadcrumbItem
 from term_timer.server.annotations import DailyBannerInfo
 from term_timer.server.annotations import DailyCalendarCell
 from term_timer.server.annotations import DailyCalendarYear
@@ -58,6 +59,26 @@ class DailyLocation(SolveLocation):
 
         """
         return cls.session_url(cube, day.isoformat())
+
+    @classmethod
+    def breadcrumb(cls, cube: int, session: str,
+                   solve_id: int) -> list[BreadcrumbItem]:
+        """
+        Build the breadcrumb of a daily attempt, its session being a day.
+
+        Returns:
+            Home, the daily hub, the day, then the attempt itself.
+
+        """
+        return [
+            {'label': 'Home', 'href': '/'},
+            {
+                'label': f'Daily { cube }x{ cube }x{ cube }',
+                'href': f'{ cls.url_prefix }/{ cube }/',
+            },
+            {'label': session, 'href': cls.session_url(cube, session)},
+            {'label': f'#{ solve_id }', 'href': ''},
+        ]
 
 
 class DailyListView(DailyLocation, View):

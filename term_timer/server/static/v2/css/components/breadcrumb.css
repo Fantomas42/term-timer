@@ -1,0 +1,37 @@
+/* Breadcrumb: mono path separated by slashes, the current page bright. */
+
+@layer components {
+  .breadcrumb {
+    margin-bottom: var(--space-3);
+  }
+
+  .breadcrumb-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 0;
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    list-style: none;
+  }
+
+  .breadcrumb-item + .breadcrumb-item::before {
+    content: "/";
+    margin-right: var(--space-2);
+    color: var(--line-strong);
+  }
+
+  .breadcrumb-item a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .breadcrumb-item a:hover {
+    color: var(--text);
+  }
+
+  .breadcrumb-item[aria-current] {
+    color: var(--text);
+  }
+}

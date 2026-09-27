@@ -125,6 +125,68 @@ register('steps-tps', (data) => ({
   },
 }));
 
+// Recognition then execution of each step, stacked into its total.
+// data: {steps: [{label, recognition, execution}]}, in seconds
+register('steps-recognition', (data) => ({
+  type: 'bar',
+  data: {
+    labels: data.steps.map((step) => step.label),
+    datasets: [
+      { label: 'Recognition', data: data.steps.map((step) => step.recognition),
+        backgroundColor: token('chart-2') },
+      { label: 'Execution', data: data.steps.map((step) => step.execution),
+        backgroundColor: token('chart-1') },
+    ],
+  },
+  options: {
+    datasets: {
+      bar: { borderRadius: 0, categoryPercentage: 0.7, barPercentage: 0.9 },
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (item) =>
+            `${item.dataset.label} ${item.parsed.y.toFixed(2)} s`,
+        },
+      },
+    },
+    scales: {
+      x: { stacked: true, grid: { display: false } },
+      y: { stacked: true, beginAtZero: true,
+           title: { display: true, text: 'seconds' } },
+    },
+  },
+}));
+
+// Fluency of each step, from 0 to 100.
+// data: {steps: [{label, fluency}]}
+register('steps-fluency', (data) => ({
+  type: 'line',
+  data: {
+    labels: data.steps.map((step) => step.label),
+    datasets: [{
+      label: 'Fluency',
+      data: data.steps.map((step) => step.fluency),
+      borderColor: token('chart-1'),
+      backgroundColor: token('chart-1'),
+      borderWidth: 2,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+    }],
+  },
+  options: {
+    plugins: {
+      tooltip: {
+        callbacks: { label: (item) => `Fluency ${item.parsed.y}%` },
+      },
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { min: 0, max: 100, title: { display: true, text: '%' } },
+    },
+  },
+}));
+
 export function draw(canvas) {
   const build = builders[canvas.dataset.chart];
   if (!build) {

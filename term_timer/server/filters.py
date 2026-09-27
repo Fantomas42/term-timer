@@ -16,6 +16,8 @@ from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.timing import untime_moves
 from cubing_algs.triggers import TRIGGER_PATTERNS
 
+from term_timer.constants import FLUENCY_DISPLAY_CAUTION
+from term_timer.constants import FLUENCY_DISPLAY_GOOD
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PAUSE_FACTOR
 from term_timer.formatter import format_alg_aufs
@@ -24,6 +26,7 @@ from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_pauses
 from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_duration
+from term_timer.formatter import format_time
 from term_timer.methods.annotations import StepSummary
 from term_timer.methods.base import Analyser
 from term_timer.methods.base import get_step_config
@@ -91,6 +94,13 @@ TRIGGER_SLOTS: Final = {
     't-perm-trigger': 4,
 }
 DEFAULT_TRIGGER_SLOT: Final = 4
+
+# Tone of each status of Analyser.normalize_value.
+METRIC_TONES: Final = {
+    'success': 'good',
+    'caution': 'warn',
+    'warning': 'bad',
+}
 
 
 @dataclass(frozen=True)
@@ -357,6 +367,30 @@ def alg_text(tokens: list[AlgToken]) -> str:
     return ' '.join(moves)
 
 
+def split_time(elapsed_ns: int) -> tuple[str, str]:
+    """
+    Split a time into its head and its milliseconds, for a big display.
+
+    Leading zero units are dropped: 00:25.108 gives 25 and .108, and
+    01:02.345 gives 1:02 and .345.
+
+    Returns:
+        The head and the milliseconds with their dot, empty for a DNF.
+
+    """
+    text = format_time(elapsed_ns).strip()
+    if '.' not in text:
+        return text, ''
+
+    head, _dot, millis = text.rpartition('.')
+    parts = head.split(':')
+    while len(parts) > 1 and parts[0] == '00':
+        parts.pop(0)
+    parts[0] = str(int(parts[0]))
+
+    return ':'.join(parts), f'.{ millis }'
+
+
 def grade_tone(grade: str) -> str:
     """
     Tone of a letter grade, 'A+' and 'A' alike.
@@ -369,6 +403,52 @@ def grade_tone(grade: str) -> str:
         return ''
 
     return f'grade-{ grade[0].lower() }'
+
+
+def metric_tone(value: float, method_applied: Analyser,
+                metric: str, name: str) -> str:
+    """
+    Tone of a metric against the norms of the method.
+
+    The structured counterpart of normalize_value and normalize_percent.
+
+    Returns:
+        good, warn or bad, or an empty string without a norm.
+
+    """
+    return METRIC_TONES.get(
+        method_applied.normalize_value(metric, name, value, ''), '',
+    )
+
+
+def fluency_tone(fluency: float) -> str:
+    """
+    Tone of a fluency, in percent.
+
+    Returns:
+        good from the good level, warn from the caution level, else bad.
+
+    """
+    if fluency >= FLUENCY_DISPLAY_GOOD:
+        return 'good'
+    if fluency >= FLUENCY_DISPLAY_CAUTION:
+        return 'warn'
+    return 'bad'
+
+
+def count_tone(value: int, bad: int) -> str:
+    """
+    Tone of a count of faults, like pauses or AUFs.
+
+    Returns:
+        good for none, bad above the bad count, else warn.
+
+    """
+    if not value:
+        return 'good'
+    if value > bad:
+        return 'bad'
+    return 'warn'
 
 
 def get_step_case(step_name: str, code_case: str) -> Case:
@@ -450,6 +530,33 @@ def normalize_percent(value: float, method_applied: Analyser,
     return f'<span class="metric-{ klass }">{ value:.2f}%</span>'
 
 
+def reconstruction_markup(step: StepSummary) -> str:
+    """
+    Block markup of a solve step, its AUFs, moves and triggers marked.
+
+    Args:
+        step: Step summary containing move sequences and AUF information.
+
+    Returns:
+        Algorithm string with block markup, read by format_line (V1) or
+        alg_tokens (V2).
+
+    """
+    algorithm = str(step['moves_prettified'])
+
+    pre_auf, post_auf = step['aufs']
+    return format_alg_triggers(
+        format_alg_moves(
+            format_alg_aufs(
+                algorithm,
+                pre_auf or 0,
+                post_auf or 0,
+            ),
+        ),
+        get_step_config(step['name'], 'triggers', []),
+    )
+
+
 def reconstruction_step(step: StepSummary) -> str:
     """
     Format solve step into styled HTML reconstruction display.
@@ -461,26 +568,12 @@ def reconstruction_step(step: StepSummary) -> str:
         HTML-formatted algorithm string with styled move annotations.
 
     """
-    algorithm = str(step['moves_prettified'])
-
-    pre_auf, post_auf = step['aufs']
-    algorithm = format_alg_triggers(
-        format_alg_moves(
-            format_alg_aufs(
-                algorithm,
-                pre_auf or 0,
-                post_auf or 0,
-            ),
-        ),
-        get_step_config(step['name'], 'triggers', []),
-    )
-
-    return format_line(algorithm)
+    return format_line(reconstruction_markup(step))
 
 
-def reconstruction_overheads(step: StepSummary, solve: Solve) -> str:
+def overheads_markup(step: StepSummary, solve: Solve) -> str:
     """
-    Format step reconstruction showing efficiency overheads.
+    Block markup of a solve step, its missed and extra moves marked.
 
     Compares executed moves with optimal solution to highlight unnecessary
     moves and inefficiencies in the solve.
@@ -490,7 +583,7 @@ def reconstruction_overheads(step: StepSummary, solve: Solve) -> str:
         solve: Solve instance for calculating move optimizations.
 
     Returns:
-        HTML-formatted algorithm with highlighted overhead moves.
+        Algorithm string with block markup.
 
     """
     source, compressed = solve.missed_moves_pair(
@@ -506,7 +599,7 @@ def reconstruction_overheads(step: StepSummary, solve: Solve) -> str:
     )
 
     pre_auf, post_auf = step['aufs']
-    algo = format_alg_triggers(
+    return format_alg_triggers(
         format_alg_moves(
             format_alg_aufs(
                 format_alg_diff(
@@ -520,12 +613,25 @@ def reconstruction_overheads(step: StepSummary, solve: Solve) -> str:
         get_step_config(step['name'], 'triggers', []),
     )
 
-    return format_line(algo)
 
-
-def reconstruction_pauses(step: StepSummary, solve: Solve) -> str:
+def reconstruction_overheads(step: StepSummary, solve: Solve) -> str:
     """
-    Format step reconstruction with pause markers for timing analysis.
+    Format step reconstruction showing efficiency overheads.
+
+    Args:
+        step: Step summary containing move sequences and AUF information.
+        solve: Solve instance for calculating move optimizations.
+
+    Returns:
+        HTML-formatted algorithm with highlighted overhead moves.
+
+    """
+    return format_line(overheads_markup(step, solve))
+
+
+def pauses_markup(step: StepSummary, solve: Solve) -> str:
+    """
+    Block markup of a solve step, its pauses marked.
 
     Annotates algorithm with pause indicators based on move execution timing
     to identify hesitations and recognition delays.
@@ -535,7 +641,7 @@ def reconstruction_pauses(step: StepSummary, solve: Solve) -> str:
         solve: Solve instance providing timing data for pause detection.
 
     Returns:
-        HTML-formatted algorithm with pause annotations highlighted.
+        Algorithm string with block markup.
 
     """
     source_paused = step['moves_humanized'].transform(
@@ -549,7 +655,7 @@ def reconstruction_pauses(step: StepSummary, solve: Solve) -> str:
     )
 
     pre_auf, post_auf = step['aufs']
-    source_paused_str = format_alg_pauses(
+    return format_alg_pauses(
         format_alg_triggers(
             format_alg_moves(
                 format_alg_aufs(
@@ -563,12 +669,25 @@ def reconstruction_pauses(step: StepSummary, solve: Solve) -> str:
         solve, step, multiple=True,
     )
 
-    return format_line(source_paused_str)
 
-
-def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
+def reconstruction_pauses(step: StepSummary, solve: Solve) -> str:
     """
-    Generate optimized version of solve step algorithm.
+    Format step reconstruction with pause markers for timing analysis.
+
+    Args:
+        step: Step summary containing move sequences and AUF information.
+        solve: Solve instance providing timing data for pause detection.
+
+    Returns:
+        HTML-formatted algorithm with pause annotations highlighted.
+
+    """
+    return format_line(pauses_markup(step, solve))
+
+
+def optimized_markup(step: StepSummary) -> tuple[str, Algorithm]:
+    """
+    Block markup of the optimized version of a solve step.
 
     Applies step-specific optimizations to produce a more efficient
     algorithm sequence for the given case.
@@ -577,8 +696,7 @@ def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
         step: Step summary containing move sequences and case information.
 
     Returns:
-        Tuple of (formatted_html_string, algorithm_object) where the HTML
-        string includes styled move annotations and the algorithm is the
+        Tuple of (markup, algorithm_object) where the algorithm is the
         optimized move sequence.
 
     """
@@ -595,7 +713,7 @@ def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
     )
 
     pre_auf, post_auf = step['aufs']
-    algorithm_string = format_alg_triggers(
+    markup = format_alg_triggers(
         format_alg_moves(
             format_alg_aufs(
                 str(algorithm),
@@ -606,7 +724,25 @@ def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
         get_step_config(step['name'], 'triggers', []),
     )
 
-    return format_line(algorithm_string), algorithm
+    return markup, algorithm
+
+
+def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
+    """
+    Generate optimized version of solve step algorithm.
+
+    Args:
+        step: Step summary containing move sequences and case information.
+
+    Returns:
+        Tuple of (formatted_html_string, algorithm_object) where the HTML
+        string includes styled move annotations and the algorithm is the
+        optimized move sequence.
+
+    """
+    markup, algorithm = optimized_markup(step)
+
+    return format_line(markup), algorithm
 
 
 def sort_algorithms(algorithms: list[Algorithm]) -> list[Algorithm]:

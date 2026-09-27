@@ -1,6 +1,7 @@
 {#- An algorithm as move chips, triggers grouped and named, from the
     tokens of the alg_tokens or algorithm_tokens filters. The footer holds
-    the HTM, the detail link and the copy button, each when given. -#}
+    the HTM, the detail link and the copy button, each when given. A bare
+    frame drops the box, for chips laid in a row of their own. -#}
 {% from 'v2/components/button.html' import button, copy_button %}
 
 {% set ALG_VARIANT_TITLES = {
@@ -22,8 +23,8 @@
   <span class="alg-move"{% if token.variant %} data-variant="{{ token.variant }}" title="{{ ALG_VARIANT_TITLES[token.variant] }}"{% endif %}>{{ token.move }}</span>
 {%- endmacro %}
 
-{% macro alg(tokens, size='m', copy='', key='', htm=none, href='') -%}
-  <div class="alg" data-size="{{ size }}">
+{% macro alg(tokens, size='m', copy='', key='', htm=none, href='', frame='box') -%}
+  <div class="alg" data-size="{{ size }}" data-frame="{{ frame }}">
     <div class="alg-moves">
       {%- for token in tokens -%}
         {%- if token.kind == 'trigger' -%}

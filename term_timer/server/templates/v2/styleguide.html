@@ -4,6 +4,8 @@
 {% from 'v2/components/button.html' import button, copy_button %}
 {% from 'v2/components/chart.html' import chart %}
 {% from 'v2/components/cube.html' import cube %}
+{% from 'v2/components/dialog.html' import help_dialog, confirm_dialog %}
+{% from 'v2/components/page_header.html' import page_header %}
 {% from 'v2/components/section.html' import section %}
 {% from 'v2/components/stat.html' import stat, stat_grid %}
 {% from 'v2/components/table.html' import table %}
@@ -208,8 +210,26 @@
           {{ chart('styleguide-tps', 'steps-tps', steps_tps, title='TPS and eTPS per step', legend=[(2, 'TPS'), (1, 'eTPS')]) }}
           {{ chart('styleguide-square', 'steps-tps', steps_tps, title='Square ratio', ratio='square') }}
           {{ chart('styleguide-strip', 'moves-timing', moves_timing, title='Strip ratio', ratio='strip') }}
+          {{ chart('styleguide-recognition', 'steps-recognition', {'steps': steps_recognition}, title='Recognition and execution per step', legend=[(2, 'Recognition'), (1, 'Execution')]) }}
+          {{ chart('styleguide-fluency', 'steps-fluency', {'steps': steps_fluency}, title='Fluency per step') }}
         </div>
+      {% endcall %}
+
+      {% call section('component-header', 'page_header · breadcrumb', 8) %}
+        {% call page_header('Solve', '#1181', breadcrumb) %}
+          {{ button('Prev', href='#component-header') }}
+          {{ button('Next', href='#component-header') }}
+          {{ button('Delete', tone='bad') }}
+        {% endcall %}
+      {% endcall %}
+
+      {% call section('component-dialog', 'dialog', 9, aside='press ? for the help') %}
+        <form class="styleguide-demo-row" method="get" action="#component-dialog" data-confirm="Delete this demo solve? Nothing is deleted.">
+          {{ button('Delete with confirmation', type='submit', tone='bad') }}
+        </form>
       {% endcall %}
     </section>
   </div>
+  {{ help_dialog([('?', 'This help'), ('j', 'Next section'), ('k', 'Previous section'), ('s', 'Copy the scramble')]) }}
+  {{ confirm_dialog() }}
 {% endblock %}

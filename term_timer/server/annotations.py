@@ -157,6 +157,62 @@ class SessionDetailContext(TypedDict):
     method_aggregation: SolvesMethodAggregator
 
 
+class BreadcrumbItem(TypedDict):
+    """One level of the breadcrumb, the current page without a link."""
+
+    label: str
+    href: str
+
+
+class StepMetric(TypedDict):
+    """One metric of a reconstruction step, toned against its norm."""
+
+    label: str
+    value: str
+    tone: str
+    strong: bool
+
+
+class StepPanel(TypedDict):
+    """What a reconstruction tab shows of a step: moves and metrics."""
+
+    tokens: list[AlgToken]
+    metrics: list[StepMetric]
+
+
+class StepCase(TypedDict):
+    """The case recognised at a step, rendered as a thumbnail."""
+
+    code: str
+    label: str
+    href: str
+    algorithm: str
+    mode: str
+    arrows: str
+
+
+class SolveStepRow(TypedDict):
+    """One step of the reconstruction, with a panel per tab."""
+
+    name: str
+    slug: str
+    type: str
+    share: float
+    case: StepCase | None
+    skip: bool
+    panels: dict[str, StepPanel]
+
+
+class ReplayData(TypedDict):
+    """What the replay module needs to play the solve with its timings."""
+
+    alg: str
+    scramble: str
+    puzzle: str
+    timing: list[tuple[int, int]]
+    index: dict[str, int]
+
+
 class SolveDetailContext(TypedDict):
     """Template context for solve detail view."""
 
@@ -176,9 +232,15 @@ class SolveDetailContext(TypedDict):
     reconstruction_text: str
     reconstruction_timing: list[tuple[int, int, Move]]
     reconstruction_index: dict[str, int]
-    rank: int
+    rank: int | None
+    ranked: int
     available_orientations: dict[str, str]
     available_methods: list[str]
+    breadcrumb: list[BreadcrumbItem]
+    previous_url: str
+    next_url: str
+    step_rows: list[SolveStepRow]
+    replay: ReplayData
 
 
 class AlgorithmDetailContext(TypedDict):
@@ -461,6 +523,9 @@ class DesignStyleguideContext(TypedDict):
     algorithms: list[StyleguideAlgorithm]
     moves_timing: MovesTimingChart
     steps_tps: StepsTpsChart
+    steps_recognition: list[RecognitionData]
+    steps_fluency: list[FluencyData]
+    breadcrumb: list[BreadcrumbItem]
     solves: list[StyleguideSolveRow]
 
 

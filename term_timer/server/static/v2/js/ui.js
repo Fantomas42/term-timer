@@ -1,5 +1,6 @@
-// Behaviour of the V2 components: copy with feedback, ARIA tabs and
-// sortable tables. Loaded as a module by v2/skeleton.html.
+// Behaviour of the V2 components: copy with feedback, keyboard
+// shortcuts, ARIA tabs, sortable tables and confirmed forms. Loaded as a
+// module by v2/skeleton.html.
 
 const COPIED_DELAY = 1400;
 const TOAST_DELAY = 1600;
@@ -44,18 +45,63 @@ document.addEventListener('click', (event) => {
   if (button) copy(button);
 });
 
-// A copy button with a key hint copies on that key.
+// Keyboard -------------------------------------------------------------
+
+// Flash an element reached by a shortcut or an anchor.
+export function flash(element) {
+  element.classList.remove('is-flashed');
+  void element.offsetWidth;
+  element.classList.add('is-flashed');
+}
+
+// Scroll to the next or previous numbered section.
+function jump(offset) {
+  const sections = Array.from(document.querySelectorAll('[data-section]'));
+  if (!sections.length) return;
+  const current = sections.findIndex(
+    (section) => section.getBoundingClientRect().top > 8,
+  );
+  const base = current === -1 ? sections.length : current;
+  const index = base + offset - (offset > 0 ? 0 : 1);
+  const target = sections[Math.max(0, Math.min(sections.length - 1, index))];
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  flash(target);
+}
+
+function toggleHelp() {
+  const help = document.querySelector('[data-help]');
+  if (!help) return false;
+  if (help.open) help.close();
+  else help.showModal();
+  return true;
+}
+
+// A copy button copies on its key; any other element carrying data-key
+// is clicked on it; ? opens the help, j and k walk the sections.
 document.addEventListener('keydown', (event) => {
   if (event.target.closest?.('input, textarea, select, [contenteditable]')) {
     return;
   }
   if (event.metaKey || event.ctrlKey || event.altKey) return;
-  const button = Array.from(document.querySelectorAll('[data-copy-key]'))
+  if (document.querySelector('dialog[open]') && event.key !== '?') return;
+
+  const copier = Array.from(document.querySelectorAll('[data-copy-key]'))
     .find((candidate) => candidate.dataset.copyKey === event.key);
-  if (button) {
-    event.preventDefault();
-    copy(button);
-  }
+  const target = Array.from(document.querySelectorAll('[data-key]'))
+    .find((candidate) => candidate.dataset.key === event.key);
+  const actions = {
+    '?': toggleHelp,
+    j: () => jump(1),
+    k: () => jump(-1),
+  };
+
+  let handled = true;
+  if (copier) copy(copier);
+  else if (target) target.click();
+  else if (event.key in actions) handled = actions[event.key]() !== false;
+  else handled = false;
+
+  if (handled) event.preventDefault();
 });
 
 // Tabs -----------------------------------------------------------------
@@ -70,6 +116,27 @@ function selectTab(tab) {
       .hidden = !selected;
   });
 }
+
+// An anchor pointing into a hidden panel selects that panel first.
+function reveal() {
+  if (!location.hash) return;
+  let target = null;
+  try {
+    target = document.querySelector(decodeURIComponent(location.hash));
+  } catch (error) {
+    return;
+  }
+  if (!target) return;
+  const panel = target.closest('[role="tabpanel"][hidden]');
+  if (panel) {
+    selectTab(document.getElementById(panel.getAttribute('aria-labelledby')));
+    target.scrollIntoView({ block: 'start' });
+  }
+  flash(target);
+}
+
+window.addEventListener('hashchange', reveal);
+reveal();
 
 document.querySelectorAll('[data-tabs] [role="tablist"]').forEach((list) => {
   const tabs = Array.from(list.querySelectorAll('[role="tab"]'));
@@ -129,4 +196,22 @@ document.querySelectorAll('table[data-sortable]').forEach((table) => {
     const button = event.target.closest('.table-sort');
     if (button) sortTable(table, button.closest('th'));
   });
+});
+
+// Confirmed forms -----------------------------------------------------
+
+// A form carrying data-confirm asks its question in the confirmation
+// dialog before it is sent; without the dialog it is sent as is.
+document.addEventListener('submit', (event) => {
+  const form = event.target.closest('form[data-confirm]');
+  const dialog = document.querySelector('[data-confirm-dialog]');
+  if (!form || !dialog) return;
+  event.preventDefault();
+  dialog.querySelector('[data-confirm-message]').textContent =
+    form.dataset.confirm;
+  dialog.returnValue = '';
+  dialog.addEventListener('close', () => {
+    if (dialog.returnValue === 'confirm') form.submit();
+  }, { once: true });
+  dialog.showModal();
 });

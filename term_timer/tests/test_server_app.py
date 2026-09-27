@@ -674,6 +674,9 @@ class TestSolveDetailView(unittest.TestCase):
         mock_solve.method_text_builder.return_value = (
             'Cross // Cross\nF2L // F2L'
         )
+        mock_solve.reconstruction_steps_timing = [
+            (0, 1000, 'R'), (1000, 2000, 'U'),
+        ]
 
         mock_load_solves.return_value = [mock_solve]
 
@@ -687,12 +690,16 @@ class TestSolveDetailView(unittest.TestCase):
         self.assertEqual(context['rank'], 1)
         self.assertEqual(len(context['scatter']), 0)  # No advanced data
 
+    # The step rows read full step summaries: covered on a real solve
+    # by test_server_solve.
+    @patch.object(SolveDetailView, 'step_rows', return_value=[])
     @patch('term_timer.server.views.solves.generate_solve_diagnostics')
     @patch('term_timer.server.views.solves.load_all_solves')
     def test_solve_detail_view_get_context_advanced(
         self,
         mock_load_solves: Mock,
         _mock_diagnostics: Mock,
+        _mock_step_rows: Mock,
     ) -> None:
         """Test solve detail view get context advanced."""
         mock_solve = Mock()
@@ -722,6 +729,9 @@ class TestSolveDetailView(unittest.TestCase):
         mock_solve.method_text_builder.return_value = (
             'Cross // Cross\nF2L // F2L'
         )
+        mock_solve.reconstruction_steps_timing = [
+            (0, 1000, 'R'), (1000, 2000, 'U'),
+        ]
 
         mock_load_solves.return_value = [mock_solve]
 
@@ -739,6 +749,9 @@ class TestSolveDetailView(unittest.TestCase):
 
         # Should have TPS data
         self.assertEqual(len(context['tps']), 1)
+
+        # Should have the replay timings, without their moves
+        self.assertEqual(context['replay']['timing'], [(0, 1000), (1000, 2000)])
 
 
 class TestSolveUpdateFlagView(unittest.TestCase):

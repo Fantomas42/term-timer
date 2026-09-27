@@ -1,0 +1,48 @@
+/* Modal dialogs: an acid frame on the page black, the page blurred. */
+
+@layer components {
+  .dialog {
+    width: min(28rem, calc(100vw - 2rem));
+    margin: auto;
+    padding: var(--space-5);
+    border: var(--hairline) solid var(--accent);
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .dialog::backdrop {
+    background: color-mix(in oklab, var(--bg) 75%, transparent);
+    backdrop-filter: blur(2px);
+  }
+
+  .dialog-title {
+    margin-bottom: var(--space-4);
+    font-size: var(--step-1);
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .dialog-message {
+    margin-bottom: var(--space-4);
+  }
+
+  .dialog-key {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-2) 0;
+    border-bottom: var(--hairline) solid var(--line);
+  }
+
+  .dialog-key dd {
+    color: var(--text-muted);
+    text-align: right;
+  }
+
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+  }
+}

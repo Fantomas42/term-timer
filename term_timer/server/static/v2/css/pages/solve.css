@@ -1,0 +1,638 @@
+/* The solve page: summary, moves, diagnostics and charts zones, the
+   charts zone opening on the solve highlights. One column on a phone;
+   from 60rem the summary runs beside the three others; from 140rem the
+   diagnostics go under the moves and the highlights and charts take the
+   third column. The replay sticks to the top once there
+   are columns. The last row absorbs the height of the zones spanning
+   every row, so no gap opens under the moves. */
+
+@layer pages {
+  .solve {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 var(--space-7);
+  }
+
+  .solve-zone {
+    min-width: 0;
+  }
+
+  .solve-zone[data-zone="summary"] {
+    container: summary / inline-size;
+  }
+
+  .solve-sticky {
+    background: var(--bg);
+  }
+
+  @container page (min-width: 60rem) {
+    .solve {
+      grid-template-columns: minmax(19rem, 0.8fr) minmax(0, 2fr);
+      grid-template-rows: auto auto 1fr;
+      grid-template-areas:
+        "summary moves"
+        "summary diagnostics"
+        "summary charts";
+    }
+
+    .solve[data-advanced="false"] {
+      grid-template-rows: auto;
+      grid-template-areas: "summary moves";
+    }
+
+    .solve-zone[data-zone="summary"] {
+      grid-area: summary;
+    }
+
+    .solve-zone[data-zone="moves"] {
+      grid-area: moves;
+    }
+
+    .solve-zone[data-zone="diagnostics"] {
+      grid-area: diagnostics;
+    }
+
+    .solve-zone[data-zone="charts"] {
+      grid-area: charts;
+    }
+
+    .solve-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+  }
+
+  @container page (min-width: 140rem) {
+    .solve {
+      grid-template-columns:
+        minmax(20rem, 0.75fr) minmax(0, 2fr) minmax(0, 1.15fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        "summary moves charts"
+        "summary diagnostics charts";
+    }
+
+    .solve-zone[data-zone="diagnostics"] {
+      align-self: start;
+    }
+  }
+
+  .solve-dim {
+    color: var(--text-faint);
+  }
+
+  .solve-action {
+    display: contents;
+  }
+
+  /* Hero ---------------------------------------------------------- */
+
+  .solve-hero {
+    padding: var(--space-6) 0 var(--space-5);
+    border-bottom: var(--hairline) solid var(--line);
+  }
+
+  .solve-hero-label,
+  .solve-fact dt,
+  .solve-step-metric dt,
+  .solve-legend,
+  .solve-control,
+  .solve-comment-label {
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .solve-hero-time {
+    margin: var(--space-3) 0 var(--space-4) -0.05em;
+    /* A digit is about half an em wide: a time longer than the six
+       characters of 25.108 shrinks to fit its column. --chars is set on
+       the element, so the fit cannot live in the theme. */
+    --hero-fit: calc(190cqi / var(--chars, 6));
+    font-size: min(var(--step-hero), var(--hero-fit));
+    white-space: nowrap;
+    font-weight: 800;
+    line-height: 0.82;
+    letter-spacing: -0.065em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .solve-hero-millis {
+    color: var(--text-faint);
+    font-weight: 400;
+    letter-spacing: -0.04em;
+  }
+
+  .solve-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+  }
+
+  .solve-hero-meta b {
+    color: var(--accent);
+  }
+
+  .solve-grades {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Informations and comment ------------------------------------- */
+
+  .solve-facts {
+    display: grid;
+  }
+
+  .solve-fact {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: var(--hairline) solid var(--line);
+  }
+
+  .solve-fact dt {
+    padding-top: 0.2em;
+  }
+
+  .solve-fact dd {
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .solve-comment {
+    margin-top: var(--space-4);
+  }
+
+  .solve-comment-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-3);
+    border: var(--hairline) dashed var(--line-strong);
+    background: none;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: text;
+  }
+
+  .solve-comment-display[hidden] {
+    display: none;
+  }
+
+  .solve-comment-display:hover,
+  .solve-comment-display:focus-visible {
+    border-color: var(--accent);
+  }
+
+  .solve-comment-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .solve-comment-placeholder {
+    color: var(--text-faint);
+  }
+
+  .solve-comment-form {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .solve-comment-form[hidden] {
+    display: none;
+  }
+
+  .solve-comment-input {
+    width: 100%;
+    padding: var(--space-3);
+    border: var(--hairline) solid var(--accent);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    resize: vertical;
+  }
+
+  .solve-comment-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+  }
+
+  /* Replay -------------------------------------------------------- */
+
+  /* A bounded column: the player and the viewer would otherwise keep
+     their min-content width and widen the page on a phone. */
+  .solve-replay {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    border: var(--hairline) solid var(--line);
+    background: var(--surface);
+  }
+
+  .solve-replay twisty-player {
+    width: 100%;
+    height: auto;
+    max-height: 28rem;
+    aspect-ratio: 1;
+  }
+
+  .solve-replay-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    border-top: var(--hairline) solid var(--line);
+  }
+
+  .solve-replay-controls[hidden] {
+    display: none;
+  }
+
+  .solve-replay-button {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 var(--space-2);
+    border: var(--hairline) solid var(--line-strong);
+    background: none;
+    color: var(--text);
+    font: 600 var(--step--1) / 1 var(--font-mono);
+    cursor: pointer;
+  }
+
+  .solve-replay-button:hover {
+    border-color: var(--text);
+  }
+
+  .solve-replay-button[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .solve-replay-scrub {
+    flex: 1;
+    min-width: 0;
+    accent-color: var(--accent);
+  }
+
+  .solve-replay-time {
+    min-width: 3.5em;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .solve-replay twisty-alg-viewer {
+    max-height: 7.5rem;
+    overflow-y: auto;
+    padding: var(--space-2) var(--space-3);
+    border-top: var(--hairline) solid var(--line);
+  }
+
+  .solve-replay-hint {
+    order: 3;
+    padding: var(--space-2) var(--space-3);
+    border-top: var(--hairline) solid var(--line);
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+
+  /* Reconstruction ------------------------------------------------ */
+
+  .solve-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  .solve-control-select {
+    margin-left: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    border: var(--hairline) solid var(--line-strong);
+    background: var(--surface);
+    color: var(--text);
+    font: 500 var(--step--1) / 1.4 var(--font-sans);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .solve-timeline {
+    display: flex;
+    gap: 2px;
+  }
+
+  .solve-timeline-step {
+    flex: var(--grow) 1 0;
+    min-width: 0;
+    display: grid;
+    gap: var(--space-1);
+    text-decoration: none;
+  }
+
+  .solve-timeline-bar {
+    height: 1.6rem;
+    background:
+      repeating-linear-gradient(
+        135deg, var(--line-strong) 0 2px, transparent 2px 5px
+      ) left / var(--reco) 100% no-repeat,
+      var(--text);
+    transition: background-color var(--fast) var(--ease);
+  }
+
+  .solve-timeline-step:hover .solve-timeline-bar {
+    background-color: var(--accent);
+  }
+
+  .solve-timeline-label,
+  .solve-timeline-time {
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+
+  .solve-timeline-label {
+    color: var(--text-muted);
+  }
+
+  .solve-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin: var(--space-3) 0 var(--space-5);
+  }
+
+  .solve-legend-key::before {
+    content: "";
+    display: inline-block;
+    width: 0.8em;
+    height: 0.8em;
+    margin-right: var(--space-2);
+    vertical-align: -0.1em;
+  }
+
+  .solve-legend-key[data-key="reco"]::before {
+    background: repeating-linear-gradient(
+      135deg, var(--line-strong) 0 2px, var(--text-faint) 2px 5px
+    );
+  }
+
+  .solve-legend-key[data-key="exe"]::before {
+    background: var(--text);
+  }
+
+  .solve-legend-key[data-key="pause"]::before {
+    width: 0.3em;
+    background: var(--warn);
+  }
+
+  .solve-steps {
+    container: steps / inline-size;
+  }
+
+  .solve-step {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+    padding: var(--space-4) 0;
+    border-bottom: var(--hairline) solid var(--line);
+    scroll-margin-top: var(--space-4);
+  }
+
+  .solve-step.is-flashed {
+    animation: solve-flash 900ms var(--ease);
+  }
+
+  @keyframes solve-flash {
+    0% {
+      background: color-mix(in oklab, var(--accent) 18%, transparent);
+    }
+
+    100% {
+      background: transparent;
+    }
+  }
+
+  .solve-step[data-type="substep"] .solve-step-name {
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .solve-step[data-type="substep"] .solve-step-name::before {
+    content: "└ ";
+    color: var(--line-strong);
+  }
+
+  .solve-step[data-type="virtual"] {
+    border-bottom-style: dashed;
+  }
+
+  .solve-step[data-type="virtual"] .solve-step-moves {
+    display: none;
+  }
+
+  .solve-step-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .solve-step-name {
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .solve-step-case {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--step--1);
+    text-decoration: none;
+  }
+
+  .solve-step-case-name b {
+    color: var(--accent);
+    font-family: var(--font-mono);
+  }
+
+  .solve-step-share {
+    position: relative;
+    margin-left: auto;
+    padding-left: calc(3rem + var(--space-2));
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+  }
+
+  .solve-step-share::before,
+  .solve-step-share::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 3rem;
+    height: 3px;
+    background: var(--line);
+  }
+
+  .solve-step-share::after {
+    width: calc(3rem * var(--share) / 50%);
+    max-width: 3rem;
+    background: var(--text);
+  }
+
+  .solve-step-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(3rem, 1fr));
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .solve-step-metric {
+    min-width: 0;
+  }
+
+  .solve-step-metric dd {
+    font-size: var(--step--1);
+  }
+
+  .solve-step-metric[data-strong] dd {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .solve-step-metric[data-tone] dd {
+    color: var(--tone);
+  }
+
+  @container steps (min-width: 52rem) {
+    .solve-step {
+      grid-template-columns: 11rem minmax(0, 1fr) 26rem;
+      align-items: start;
+      gap: var(--space-5);
+    }
+
+    .solve-step-head {
+      flex-direction: column;
+      align-items: start;
+      gap: var(--space-1);
+    }
+
+    .solve-step-share {
+      margin-left: 0;
+    }
+
+    /* One row, whatever the number of metrics of the tab. */
+    .solve-step-metrics {
+      grid-auto-columns: minmax(0, 1fr);
+      grid-auto-flow: column;
+      grid-template-columns: none;
+    }
+
+    .solve-step[data-type="virtual"] .solve-step-moves {
+      display: block;
+    }
+  }
+
+  /* Diagnostics and summary --------------------------------------- */
+
+  .solve-diags {
+    padding: 0;
+    list-style: none;
+  }
+
+  .solve-diag {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4) 0 var(--space-4) var(--space-4);
+    border-bottom: var(--hairline) solid var(--line);
+    border-left: var(--rule) solid var(--tone);
+  }
+
+  .solve-diag-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .solve-diag-location {
+    font-weight: 700;
+  }
+
+  .solve-diag-impact {
+    margin-left: auto;
+    color: var(--tone);
+    font-family: var(--font-mono);
+    font-size: var(--step-1);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .solve-diag-description {
+    font-weight: 600;
+  }
+
+  .solve-diag-advice {
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+
+  .solve-diag-command {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .solve-diag-code {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    padding: var(--space-2) var(--space-3);
+    background: var(--surface);
+    color: var(--accent);
+    font-size: var(--step--1);
+    white-space: nowrap;
+  }
+
+  .solve-highlights {
+    padding: 0;
+    list-style: none;
+  }
+
+  .solve-highlight {
+    padding: var(--space-2) 0;
+    border-bottom: var(--hairline) solid var(--line);
+    font-weight: 500;
+  }
+
+  .solve-highlight::before {
+    content: "+";
+    margin-right: var(--space-3);
+    color: var(--good);
+    font-family: var(--font-mono);
+    font-weight: 700;
+  }
+}

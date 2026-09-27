@@ -175,7 +175,7 @@ class Server:
                 cube, day, solve,
                 request.GET.m,
                 request.GET.o or 'auto',
-            ).as_view(debug)
+            ).legacy(v1='v1' in request.GET).as_view(debug)
 
         @app.route(day_url)  # type: ignore[untyped-decorator]
         def daily_day(cube: int, day: str) -> str:
@@ -485,7 +485,7 @@ class Server:
                 cube, session, solve,
                 request.GET.m,
                 request.GET.o or 'auto',
-            ).as_view(debug)
+            ).legacy(v1='v1' in request.GET).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/')  # type: ignore[untyped-decorator]
         def session_detail(cube: int, session: str) -> str:

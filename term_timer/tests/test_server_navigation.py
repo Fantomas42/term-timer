@@ -95,7 +95,7 @@ class DesignStyleguideServerTestCase(unittest.TestCase):
         _status, _headers, body = self.client.get('/styleguide/v2/')
         self.assertIn('<nav class="nav"', body)
         self.assertIn('href="/daily/3/"', body)
-        self.assertNotIn('aria-current="page"', body)
+        self.assertNotRegex(body, r'class="nav-item"[^>]*aria-current')
 
         _status, _headers, body = self.debug_client.get('/styleguide/v2/')
         self.assertIn(

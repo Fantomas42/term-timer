@@ -1,0 +1,31 @@
+{#- The page header: breadcrumb, title with its accented part, and the
+    actions the caller renders. Breadcrumb items are dicts of label and
+    href, the current page last and without href. -#}
+
+{% macro breadcrumb(items) -%}
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol class="breadcrumb-list">
+      {%- for item in items %}
+        {%- if item.href %}
+          <li class="breadcrumb-item"><a href="{{ item.href }}">{{ item.label }}</a></li>
+        {%- else %}
+          <li class="breadcrumb-item" aria-current="page">{{ item.label }}</li>
+        {%- endif %}
+      {%- endfor %}
+    </ol>
+  </nav>
+{%- endmacro %}
+
+{% macro page_header(title, accent='', crumbs=()) -%}
+  <header class="page-header">
+    {%- if crumbs %}
+      {{ breadcrumb(crumbs) }}
+    {%- endif %}
+    <div class="page-header-row">
+      <h1 class="page-header-title">{{ title }}{% if accent %} <span class="page-header-accent">{{ accent }}</span>{% endif %}</h1>
+      {%- if caller is defined %}
+        <div class="page-header-actions">{{ caller() }}</div>
+      {%- endif %}
+    </div>
+  </header>
+{%- endmacro %}

@@ -49,9 +49,10 @@ class WSGIClient:
 
         """
         body = urlencode(form or {}).encode('utf-8')
+        path, _mark, query = path.partition('?')
         environ: dict[str, Any] = {
             'PATH_INFO': path,
-            'QUERY_STRING': '',
+            'QUERY_STRING': query,
             'REQUEST_METHOD': method,
             'SERVER_PROTOCOL': 'HTTP/1.1',
             'CONTENT_TYPE': 'application/x-www-form-urlencoded',
@@ -322,17 +323,18 @@ class TestDailyAttempt(DailyServerTestCase):
         status, _headers, body = self.client.get(f'/daily/3/{ DAY }/2/')
 
         self.assertEqual(status, HTTPStatus.OK)
-        self.assertIn(f'"/daily/3/{ DAY }/2/flag/"', body)
-        self.assertIn(f'"/daily/3/{ DAY }/2/comment/"', body)
-        self.assertIn(f'"/daily/3/{ DAY }/2/delete/"', body)
+        self.assertNotIn(f'"/daily/3/{ DAY }/2/flag/"', body)
+        self.assertIn(f'action="/daily/3/{ DAY }/2/comment/"', body)
+        self.assertIn(f'action="/daily/3/{ DAY }/2/delete/"', body)
         self.assertIn(f'href="/daily/3/{ DAY }/"', body)
         self.assertNotIn(f'"/3/{ DAY }/', body)
 
     def test_attempt_detail_without_moves(self) -> None:
-        """An attempt timed without a smart cube still renders."""
-        status, _headers, _body = self.client.get(f'/daily/3/{ DAY }/1/')
+        """An attempt timed without a smart cube renders, its flag editable."""
+        status, _headers, body = self.client.get(f'/daily/3/{ DAY }/1/')
 
         self.assertEqual(status, HTTPStatus.OK)
+        self.assertIn(f'action="/daily/3/{ DAY }/1/flag/"', body)
 
     def test_attempt_not_found(self) -> None:
         """An attempt beyond the session answers 404."""

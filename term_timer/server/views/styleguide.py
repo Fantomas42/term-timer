@@ -4,9 +4,12 @@ from random import Random
 
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.scrambler import scrambler
+from term_timer.server.annotations import BreadcrumbItem
 from term_timer.server.annotations import ChartPoint
 from term_timer.server.annotations import DesignStyleguideContext
+from term_timer.server.annotations import FluencyData
 from term_timer.server.annotations import MovesTimingChart
+from term_timer.server.annotations import RecognitionData
 from term_timer.server.annotations import StepsTpsChart
 from term_timer.server.annotations import StyleguideAlgorithm
 from term_timer.server.annotations import StyleguideContext
@@ -41,6 +44,12 @@ FIXTURE_STEPS = (
     ('OLL', 12, 0.2, 0.9),
     ('PLL', 14, 0.18, 1.3),
 )
+
+FIXTURE_BREADCRUMB: list[BreadcrumbItem] = [
+    {'label': 'Home', 'href': '/'},
+    {'label': 'All sessions 3x3x3', 'href': '#component-header'},
+    {'label': '#1181', 'href': ''},
+]
 
 FIXTURE_SOLVES: tuple[StyleguideSolveRow, ...] = (
     {'number': 1181, 'time': '25.108', 'seconds': 25.108,
@@ -187,6 +196,9 @@ class DesignStyleguideView(View):
             'algorithms': DesignStyleguideView.algorithms(),
             'moves_timing': DesignStyleguideView.moves_timing(),
             'steps_tps': DesignStyleguideView.steps_tps(),
+            'steps_recognition': DesignStyleguideView.steps_recognition(),
+            'steps_fluency': DesignStyleguideView.steps_fluency(),
+            'breadcrumb': FIXTURE_BREADCRUMB,
             'solves': list(FIXTURE_SOLVES),
         }
 
@@ -279,3 +291,35 @@ class DesignStyleguideView(View):
                 for name, moves, pace, recognition in FIXTURE_STEPS
             ],
         }
+
+    @staticmethod
+    def steps_recognition() -> list[RecognitionData]:
+        """
+        Recognition and execution of each step of the synthetic solve.
+
+        Returns:
+            The steps of the steps-recognition chart.
+
+        """
+        return [
+            {
+                'label': name,
+                'recognition': recognition,
+                'execution': round(moves * pace, 2),
+            }
+            for name, moves, pace, recognition in FIXTURE_STEPS
+        ]
+
+    @staticmethod
+    def steps_fluency() -> list[FluencyData]:
+        """
+        Fluency of each step of the synthetic solve, slower is less fluent.
+
+        Returns:
+            The steps of the steps-fluency chart.
+
+        """
+        return [
+            {'label': name, 'fluency': round(100 - 100 * pace)}
+            for name, _moves, pace, _recognition in FIXTURE_STEPS
+        ]

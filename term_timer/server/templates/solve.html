@@ -617,10 +617,12 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-title">Time</div>
-        <div class="stat-value {% if rank == 1 %}stat-best{% elif rank == solves|length %}stat-worst{% endif %}">{{ solve.final_time|format_time }}</div>
-        <div class="stat-meta">
-          #{{ rank }}
-        </div>
+        <div class="stat-value {% if rank == 1 %}stat-best{% elif rank and rank == ranked %}stat-worst{% endif %}">{{ solve.final_time|format_time }}</div>
+        {% if rank %}
+          <div class="stat-meta">
+            #{{ rank }}
+          </div>
+        {% endif %}
       </div>
       {% if solve.flag %}
         <div class="stat-card">

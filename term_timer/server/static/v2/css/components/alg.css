@@ -9,6 +9,11 @@
     background: var(--surface);
   }
 
+  .alg[data-frame="bare"] {
+    border: 0;
+    background: none;
+  }
+
   .alg[data-size="s"] {
     --chip-size: var(--step--1);
   }
@@ -31,6 +36,10 @@
     font-size: var(--chip-size);
     font-weight: 500;
     line-height: 1;
+  }
+
+  .alg[data-frame="bare"] .alg-moves {
+    padding: 0;
   }
 
   .alg-move {

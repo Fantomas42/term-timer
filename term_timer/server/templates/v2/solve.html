@@ -1,0 +1,375 @@
+{% extends "v2/skeleton.html" %}
+{% from 'v2/components/alg.html' import alg %}
+{% from 'v2/components/badge.html' import badge %}
+{% from 'v2/components/button.html' import button, copy_button %}
+{% from 'v2/components/chart.html' import chart %}
+{% from 'v2/components/cube.html' import cube as cube_image %}
+{% from 'v2/components/dialog.html' import help_dialog, confirm_dialog %}
+{% from 'v2/components/page_header.html' import page_header %}
+{% from 'v2/components/section.html' import section %}
+{% from 'v2/components/stat.html' import stat, stat_grid %}
+{% from 'v2/components/tabs.html' import tabs %}
+
+{% set SEVERITY_TONES = {
+  'critical': 'bad',
+  'high': 'warn',
+  'medium': 'info',
+  'low': 'muted',
+} %}
+
+{% set RECONSTRUCTION_TABS = [
+  ('time', 'Time'),
+  ('percent', 'Percent'),
+  ('overheads', 'Overheads'),
+  ('optimized', 'Optimized'),
+] + ([('raw', 'Raw'), ('issues', 'Issues')] if DEBUG else []) %}
+
+{% set SHORTCUTS = [
+  ('j', 'Next section'),
+  ('k', 'Previous section'),
+  ('s', 'Copy the scramble'),
+  ('c', 'Copy the solution'),
+  ('n', 'Edit the comment'),
+  ('[', 'Previous solve'),
+  (']', 'Next solve'),
+  ('?', 'This help'),
+] %}
+
+{% set solve_url = session_url ~ solve_id ~ '/' %}
+{% set advanced = solve.advanced %}
+{% set counter = namespace(section=0) %}
+
+{% block description %}Solve #{{ solve_id }} from session {{ session|format_session_name }} on {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
+
+{% block title %}Solve #{{ solve_id }}{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="/static/v2/css/pages/solve.css">
+{% endblock %}
+
+{% block scripts %}
+  <script type="module" src="/static/v2/js/solve.js"></script>
+  {% if advanced %}
+    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+    <script type="module" src="/static/v2/js/charts.js"></script>
+    <script type="module" src="/static/v2/js/replay.js"></script>
+  {% endif %}
+{% endblock %}
+
+{#- A section numbered in document order, across the zones. -#}
+{% macro numbered(slug, title, aside='', tone='') -%}
+  {%- set counter.section = counter.section + 1 -%}
+  {%- set body = caller() -%}
+  {% call section(slug, title, counter.section, aside, tone) %}{{ body }}{% endcall %}
+{%- endmacro %}
+
+{% macro action_form(action, label, question, flag=none, tone='') -%}
+  <form class="solve-action" method="post" action="{{ action }}" data-confirm="{{ question }}">
+    {%- if flag is not none %}
+      <input type="hidden" name="flag" value="{{ flag }}">
+    {%- endif %}
+    {{ button(label, type='submit', tone=tone) }}
+  </form>
+{%- endmacro %}
+
+{% macro step_row(row, panel, anchored) -%}
+  <article class="solve-step" data-type="{{ row.type }}"{% if anchored %} id="step-{{ row.slug }}"{% endif %}>
+    <div class="solve-step-head">
+      <a class="solve-step-name" href="#step-{{ row.slug }}" data-step="{{ row.name }}">{{ row.name }}</a>
+      {%- if row.case %}
+        <a class="solve-step-case" href="{{ row.case.href }}" target="_blank">
+          {{ cube_image(case=row.case.algorithm, size='s', mode=row.case.mode, arrows=row.case.arrows, label=row.case.code ~ ' case') }}
+          <span class="solve-step-case-name"><b>{{ row.case.code }}</b> {{ row.case.label }}</span>
+        </a>
+      {%- elif row.skip %}
+        <span class="solve-step-case"><span class="solve-step-case-name"><b>SKIP</b></span></span>
+      {%- endif %}
+      <span class="solve-step-share" style="--share: {{ row.share }}%">{{ row.share }}%</span>
+    </div>
+    <div class="solve-step-moves">
+      {%- if panel.tokens %}
+        {{ alg(panel.tokens, frame='bare') }}
+      {%- endif %}
+    </div>
+    <dl class="solve-step-metrics">
+      {%- for metric in panel.metrics %}
+        <div class="solve-step-metric"{% if metric.tone %} data-tone="{{ metric.tone }}"{% endif %}{% if metric.strong %} data-strong{% endif %}>
+          <dt>{{ metric.label }}</dt><dd>{{ metric.value }}</dd>
+        </div>
+      {%- endfor %}
+    </dl>
+  </article>
+{%- endmacro %}
+
+{% block body %}
+  {% call page_header('Solve', '#' ~ solve_id, breadcrumb) %}
+    {{ button('Prev', href=previous_url, key='[') if previous_url }}
+    {{ button('Next', href=next_url, key=']') if next_url }}
+    {% if not advanced %}
+      {% if solve.flag %}
+        {{ action_form(solve_url ~ 'flag/', 'OK', 'Mark this solve as OK?', '', 'good') }}
+      {% endif %}
+      {% if solve.flag != 'DNF' %}
+        {{ action_form(solve_url ~ 'flag/', 'DNF', 'Mark this solve as DNF?', 'DNF', 'bad') }}
+      {% endif %}
+      {% if solve.flag != '+2' %}
+        {{ action_form(solve_url ~ 'flag/', '+2', 'Mark this solve with a +2s penalty?', '+2', 'warn') }}
+      {% endif %}
+    {% endif %}
+    {{ action_form(solve_url ~ 'delete/', 'Delete', 'Permanently delete this solve?', tone='bad') }}
+  {% endcall %}
+
+  <div class="solve" data-advanced="{{ 'true' if advanced else 'false' }}">
+    <div class="solve-zone" data-zone="summary">
+      {% set head, millis = solve.final_time|split_time %}
+      <div class="solve-hero">
+        <div class="solve-hero-label">Time</div>
+        <div class="solve-hero-time" style="--chars: {{ (head ~ millis)|length }}">
+          {{- head }}<span class="solve-hero-millis">{{ millis }}</span>
+        </div>
+        <div class="solve-hero-meta">
+          {%- if rank %}
+            <b>#{{ rank }}</b> of {{ ranked }} · top {{ (100 * rank / ranked)|round|int }}%
+          {%- else %}
+            Not ranked · {{ ranked }} valid of {{ solves|length }}
+          {%- endif %}
+          {% if solve.flag == '+2' %}{{ badge('+2', 'warn') }}{% endif %}
+        </div>
+      </div>
+
+      {% if advanced %}
+        {% set grade = solve.score|format_grade %}
+        {% set method_grade = solve.method_applied.score|format_grade %}
+        <div class="solve-grades">
+          {{ stat('Grade', grade, '%.2f'|format(solve.score), grade|grade_tone, size='l') }}
+          {{ stat('Grade ' ~ solve.method_name|upper, method_grade, '%.2f'|format(solve.method_applied.score), method_grade|grade_tone, size='l') }}
+        </div>
+
+        {% call numbered('statistics', 'Key statistics') %}
+          {% set metrics = solve.reconstruction.metrics %}
+          {% call stat_grid() %}
+            {{ stat('TPS', '%.2f'|format(solve.tps)) }}
+            {{ stat('Fluency', solve.fluency, tone=solve.fluency|fluency_tone, unit='%') }}
+            {{ stat('Recognition', '%.2f'|format(solve.recognition_percent), (solve.recognition_time|format_duration) ~ 's', solve.recognition_percent|metric_tone(solve.method_applied, 'solve', 'recognition'), '%') }}
+            {{ stat('Execution', '%.2f'|format(solve.execution_percent), (solve.execution_time|format_duration) ~ 's', solve.execution_percent|metric_tone(solve.method_applied, 'solve', 'execution'), '%') }}
+            {{ stat('Move speed', solve.move_speed|format_duration, unit='s') }}
+            {{ stat('HTM', metrics.htm, ('QTM %d' % metrics.qtm) if metrics.qtm != metrics.htm else '') }}
+            {% if metrics.qstm != metrics.qtm %}
+              {{ stat('QSTM', metrics.qstm) }}
+            {% endif %}
+            {{ stat('Exec. overhead', solve.execution_missed_moves, tone=solve.execution_missed_moves|count_tone(3) if solve.execution_missed_moves else '') }}
+            {{ stat('Trans. overhead', solve.transition_missed_moves, tone=solve.transition_missed_moves|count_tone(3) if solve.transition_missed_moves else '') }}
+            {{ stat('Exec. pauses', solve.execution_pauses, tone=solve.execution_pauses|count_tone(4) if solve.execution_pauses else '') }}
+            {{ stat('Rotations', solve.rotations, tone=solve.rotations|count_tone(3) if solve.rotations else '') }}
+            {{ stat('AUFs', solve.aufs, tone=solve.aufs|count_tone(5) if solve.aufs else '') }}
+          {% endcall %}
+        {% endcall %}
+      {% endif %}
+
+      {% call numbered('informations', 'Informations') %}
+        <dl class="solve-facts">
+          <div class="solve-fact">
+            <dt>Date</dt>
+            <dd>{{ solve.datetime.strftime('%Y-%m-%d') }} <span class="solve-dim">{{ solve.datetime.strftime('%H:%M') }}</span></dd>
+          </div>
+          {% if solve.device %}
+            <div class="solve-fact"><dt>Cube</dt><dd>{{ solve.device }}</dd></div>
+          {% endif %}
+          <div class="solve-fact">
+            <dt>Timer</dt>
+            <dd>
+              {%- if solve.timer == 'Cubeast' -%}
+                <a href="https://app.cubeast.com/" target="_blank">{{ solve.timer }}</a>
+              {%- elif solve.timer == 'csTimer' -%}
+                <a href="https://cstimer.net/" target="_blank">{{ solve.timer }}</a>
+              {%- else -%}
+                {{ solve.timer }}
+              {%- endif -%}
+            </dd>
+          </div>
+          <div class="solve-fact">
+            <dt>Session</dt>
+            <dd><a href="{{ session_url }}">{{ session|default('default', true)|format_session_name }}</a> <span class="solve-dim">{{ cube }}x{{ cube }}x{{ cube }}</span></dd>
+          </div>
+          {% if advanced %}
+            <div class="solve-fact">
+              <dt>Orientation</dt>
+              <dd>
+                {%- if solve.orientation == 'auto' -%}
+                  Auto
+                  {%- for orientation, moves in available_orientations.items() if moves == solve.orientation_moves %} {{ orientation }}{% endfor %}
+                {%- else -%}
+                  {{ solve.orientation }}
+                {%- endif %}
+                {% if solve.orientation_moves %}<span class="solve-dim">{{ solve.orientation_moves }}</span>{% endif %}
+              </dd>
+            </div>
+            <div class="solve-fact">
+              <dt>Open in</dt>
+              <dd><a href="{{ solve.link_alg_cubing }}" target="_blank">alg.cubing</a> · <a href="{{ solve.link_cube_db }}" target="_blank">CubeDB</a></dd>
+            </div>
+          {% endif %}
+        </dl>
+
+        <div class="solve-comment" data-comment>
+          <button class="solve-comment-display" type="button" data-key="n" data-comment-edit>
+            {%- if solve.comment %}
+              <span class="solve-comment-text">{{ solve.comment }}</span>
+            {%- else %}
+              <span class="solve-comment-placeholder">Add a comment…</span>
+            {%- endif %}
+            <kbd>n</kbd>
+          </button>
+          <form class="solve-comment-form" method="post" action="{{ solve_url }}comment/" hidden>
+            <label class="solve-comment-label" for="solve-comment-input">Comment</label>
+            <textarea class="solve-comment-input" id="solve-comment-input" name="comment" rows="4">{{ solve.comment }}</textarea>
+            <div class="solve-comment-actions">
+              {{ button('Cancel', type='reset') }}
+              {{ button('Save', type='submit', tone='good') }}
+            </div>
+          </form>
+        </div>
+      {% endcall %}
+
+      {% if advanced %}
+        <div class="solve-sticky">
+        {% call numbered('replay', 'Replay') %}
+          <div class="solve-replay" id="replayer">
+            <div class="solve-replay-controls" data-replay-controls hidden>
+              <button class="solve-replay-button" type="button" data-replay="start" aria-label="Back to the start">|◀</button>
+              <button class="solve-replay-button" type="button" data-replay="previous" aria-label="Previous move">◀</button>
+              <button class="solve-replay-button" type="button" data-replay="play" aria-label="Play">▶</button>
+              <button class="solve-replay-button" type="button" data-replay="next" aria-label="Next move">▶|</button>
+              <input class="solve-replay-scrub" type="range" min="0" max="0" step="1" value="0" aria-label="Replay position" data-replay="scrub">
+              <output class="solve-replay-time" data-replay="time">0.00</output>
+            </div>
+            <p class="solve-replay-hint">Click a step name to jump there.</p>
+          </div>
+          <script type="application/json" id="replay-data">{{ replay|tojson }}</script>
+        {% endcall %}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="solve-zone" data-zone="moves">
+      {% call numbered('scramble', 'Scramble') %}
+        {% set scramble_tokens = solve.scramble|algorithm_tokens(aufs=False) %}
+        {{ alg(scramble_tokens, size='l', copy='scramble', key='s', htm=solve.scramble.metrics.htm, href='/algorithm/' ~ scramble_tokens|alg_text ~ '/') }}
+      {% endcall %}
+
+      {% if advanced %}
+        {% call numbered('solution', 'Solution') %}
+          {% set solution = solve.solution|prettify %}
+          {% set solution_tokens = solution|algorithm_tokens %}
+          {{ alg(solution_tokens, copy='solution', key='c', htm=solution.metrics.htm, href='/algorithm/' ~ solution_tokens|alg_text ~ '/') }}
+        {% endcall %}
+
+        {% call numbered('reconstruction', 'Reconstruction', solve.method_analyser.name) %}
+          <form class="solve-controls" method="get">
+            <label class="solve-control">Method
+              <select class="solve-control-select" name="m">
+                {%- for method in available_methods %}
+                  <option value="{{ method }}"{% if method == solve.method_name %} selected{% endif %}>{{ method|upper }}</option>
+                {%- endfor %}
+              </select>
+            </label>
+            <label class="solve-control">Orientation
+              <select class="solve-control-select" name="o">
+                <option value="auto">Auto</option>
+                {%- for orientation, moves in available_orientations.items() %}
+                  <option value="{{ orientation }}"{% if orientation == solve.orientation %} selected{% endif %}>{{ orientation }}{% if moves %} ({{ moves }}){% endif %}</option>
+                {%- endfor %}
+              </select>
+            </label>
+            <noscript>{{ button('Apply', type='submit') }}</noscript>
+          </form>
+
+          <div class="solve-timeline" aria-label="Time per step">
+            {%- for item in recognitions %}
+              {%- set duration = item.recognition + item.execution %}
+              <a class="solve-timeline-step" href="#step-{{ item.label|lower|replace(' ', '-') }}" style="--grow: {{ '%.3f'|format(duration) }}; --reco: {{ '%.1f'|format(100 * item.recognition / duration if duration else 0) }}%">
+                <span class="solve-timeline-bar"></span>
+                <span class="solve-timeline-label">{{ item.label }}</span>
+                <span class="solve-timeline-time">{{ '%.2f'|format(duration) }}</span>
+              </a>
+            {%- endfor %}
+          </div>
+          <div class="solve-legend">
+            <span class="solve-legend-key" data-key="reco">Recognition</span>
+            <span class="solve-legend-key" data-key="exe">Execution</span>
+            <span class="solve-legend-key" data-key="pause">Pause</span>
+          </div>
+
+          {% call(slug) tabs('reconstruction', RECONSTRUCTION_TABS, 'Reconstruction views') %}
+            <div class="solve-steps">
+              {%- for row in step_rows %}
+                {{ step_row(row, row.panels[slug], slug == 'time') }}
+              {%- endfor %}
+            </div>
+          {% endcall %}
+        {% endcall %}
+      {% endif %}
+    </div>
+
+    {% if advanced and diagnostics %}
+      <div class="solve-zone" data-zone="diagnostics">
+        {% set impact = diagnostics|sum(attribute='impact_seconds') %}
+        {% call numbered('diagnostics', 'Diagnostics', '~%.1fs recoverable'|format(impact) if impact > 0 else '') %}
+          <ol class="solve-diags">
+            {%- for diagnostic in diagnostics %}
+              <li class="solve-diag" data-tone="{{ SEVERITY_TONES[diagnostic.severity] }}">
+                <div class="solve-diag-head">
+                  {{ badge(diagnostic.severity, SEVERITY_TONES[diagnostic.severity]) }}
+                  <span class="solve-diag-location">{{ diagnostic.location }}</span>
+                  {%- if diagnostic.impact_seconds > 0 %}
+                    <span class="solve-diag-impact">&minus;{{ '%.2f'|format(diagnostic.impact_seconds) }}<span class="solve-dim">s</span></span>
+                  {%- endif %}
+                </div>
+                <p class="solve-diag-description">{{ diagnostic.description }}</p>
+                <p class="solve-diag-advice">{{ diagnostic.recommendation }}</p>
+                {%- if diagnostic.command %}
+                  <div class="solve-diag-command">
+                    <code class="solve-diag-code">{{ diagnostic.command }}</code>
+                    {{ copy_button(diagnostic.command, 'command') }}
+                  </div>
+                {%- endif %}
+              </li>
+            {%- endfor %}
+          </ol>
+        {% endcall %}
+      </div>
+    {% endif %}
+
+    {% if advanced %}
+      <div class="solve-zone" data-zone="charts">
+        {#- First in the third column: read at a glance on a wide screen. #}
+        {% if highlights %}
+          {% call numbered('summary', 'Summary') %}
+            <ul class="solve-highlights">
+              {%- for highlight in highlights %}
+                <li class="solve-highlight">{{ highlight }}</li>
+              {%- endfor %}
+            </ul>
+          {% endcall %}
+        {% endif %}
+
+        {% call numbered('charts', 'Charts', 'solve %.2f TPS'|format(solve.tps)) %}
+          {{ chart('chart-timing', 'moves-timing', {'points': scatter, 'steps': steps}, title='Cumulative time per move') }}
+          {{ chart('chart-tps', 'steps-tps', {'steps': tps}, title='TPS and eTPS per step', legend=[(2, 'TPS'), (1, 'eTPS')]) }}
+          {{ chart('chart-recognition', 'steps-recognition', {'steps': recognitions}, title='Recognition and execution per step', legend=[(2, 'Recognition'), (1, 'Execution')]) }}
+          {{ chart('chart-fluency', 'steps-fluency', {'steps': fluencies}, title='Fluency per step') }}
+        {% endcall %}
+
+        {% if DEBUG %}
+          {% call numbered('raw-moves', 'Raw moves') %}
+            {% set raw_tokens = solve.solution|string|alg_tokens %}
+            {{ alg(raw_tokens, size='s', copy='raw moves', htm=solve.solution.metrics.htm) }}
+          {% endcall %}
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  {{ help_dialog(SHORTCUTS) }}
+  {{ confirm_dialog() }}
+{% endblock %}

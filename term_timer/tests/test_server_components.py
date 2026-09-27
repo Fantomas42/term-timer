@@ -300,7 +300,8 @@ class ComponentCatalogueTestCase(unittest.TestCase):
     def test_component_sections(self) -> None:
         """Every component has its numbered section."""
         for number, slug in enumerate(
-                ('alg', 'stat', 'badge', 'tabs', 'table', 'cube', 'chart'),
+                ('alg', 'stat', 'badge', 'tabs', 'table', 'cube', 'chart',
+                 'header', 'dialog'),
                 start=1):
             with self.subTest(slug=slug):
                 self.assertIn(f'id="component-{ slug }"', self.body)
@@ -308,6 +309,23 @@ class ComponentCatalogueTestCase(unittest.TestCase):
                     f'<span class="section-number">{ number:02d}</span>',
                     self.body,
                 )
+
+    def test_chart_kinds(self) -> None:
+        """Every kind of the charts.js registry is shown."""
+        for kind in ('moves-timing', 'steps-tps', 'steps-recognition',
+                     'steps-fluency'):
+            with self.subTest(kind=kind):
+                self.assertIn(f'data-chart="{ kind }"', self.body)
+
+    def test_page_header(self) -> None:
+        """The header shows its breadcrumb, the current page unlinked."""
+        self.assertIn('<h1 class="page-header-title">Solve', self.body)
+        self.assertIn('aria-current="page">#1181</li>', self.body)
+
+    def test_dialogs(self) -> None:
+        """The help and the confirmation dialogs are rendered."""
+        self.assertIn('data-help', self.body)
+        self.assertIn('data-confirm-dialog', self.body)
 
     def test_alg_chips(self) -> None:
         """Triggers, variants and pauses reach the markup."""
