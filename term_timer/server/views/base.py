@@ -4,6 +4,7 @@ from datetime import datetime
 from datetime import timezone
 
 from bottle import jinja2_template
+from bottle import request
 
 from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
@@ -18,6 +19,7 @@ from term_timer.server.annotations import AlgorithmDetailContext
 from term_timer.server.annotations import CubeRenderContext
 from term_timer.server.annotations import DailyDayContext
 from term_timer.server.annotations import DailyListContext
+from term_timer.server.annotations import DesignStyleguideContext
 from term_timer.server.annotations import Error404Context
 from term_timer.server.annotations import Error500Context
 from term_timer.server.annotations import ScrambleDetailContext
@@ -43,6 +45,7 @@ from term_timer.server.filters import reconstruction_overheads
 from term_timer.server.filters import reconstruction_pauses
 from term_timer.server.filters import reconstruction_step
 from term_timer.server.filters import sort_algorithms
+from term_timer.server.views.navigation import Navigation
 from term_timer.transform import prettify_moves
 
 
@@ -66,6 +69,7 @@ class View:
         | AcademyCaseAlgorithmsDebugContext
         | CubeRenderContext
         | StyleguideContext
+        | DesignStyleguideContext
         | ScrambleHomeContext
         | ScrambleDetailContext
         | DailyListContext
@@ -101,6 +105,7 @@ class View:
         content = self.template(
             self.template_name,
             DEBUG=debug,
+            navigation=Navigation.items(request.path, debug=debug),
             **context,
         )
         gc.collect()

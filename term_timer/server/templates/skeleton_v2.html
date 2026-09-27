@@ -1,0 +1,33 @@
+{% from 'v2/components/nav.html' import nav %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block description %}{% endblock %}">
+    <meta name="generator" content="Term Timer">
+    <meta name="pubdate" content="{{ now.strftime('%Y-%m-%d') }}">
+    <title>{% block title %}{% endblock %} · Term Timer</title>
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
+    <link rel="manifest" href="/static/img/site.webmanifest">
+    <link rel="preload" href="/static/v2/fonts/inter-tight-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/static/v2/fonts/jetbrains-mono-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/static/v2/css/theme.css">
+    <link rel="stylesheet" href="/static/v2/css/base.css">
+    <link rel="stylesheet" href="/static/v2/css/layout.css">
+    <link rel="stylesheet" href="/static/v2/css/components/nav.css">
+    {% block stylesheets %}{% endblock %}
+    {% block scripts %}{% endblock %}
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    {{ nav(navigation) }}
+    <main class="page" id="main">
+      {% block body %}{% endblock %}
+    </main>
+  </body>
+</html>

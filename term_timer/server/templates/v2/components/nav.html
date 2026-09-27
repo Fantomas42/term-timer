@@ -1,0 +1,24 @@
+{% set NAV_ICONS = {
+  'sessions': '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+  'daily': '<rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  'training': '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',
+  'academy': '<path d="M2 9 12 4l10 5-10 5zM6 11v5c3 3 9 3 12 0v-5"/>',
+  'scramble': '<path d="M3 7h4l10 10h4M3 17h4l10-10h4"/>',
+  'styleguide': '<circle cx="7" cy="7" r="4"/><rect x="13" y="3" width="8" height="8"/><path d="M3 21l4-7 4 7zM13 13h8v8h-8z"/>',
+} %}
+
+{% macro nav(items) %}
+  <nav class="nav" aria-label="Main">
+    <a class="nav-brand" href="/" aria-label="Term Timer">
+      <span class="nav-logo">tt<i></i></span>
+    </a>
+    <div class="nav-items">
+      {% for item in items %}
+        <a class="nav-item" href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">{{ NAV_ICONS[item.icon] }}</svg>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </nav>
+{% endmacro %}

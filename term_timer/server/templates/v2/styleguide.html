@@ -1,0 +1,84 @@
+{% extends "skeleton_v2.html" %}
+
+{% block description %}Term Timer V2 design system: theme values and contrasts{% endblock %}
+
+{% block title %}Design system{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="/static/v2/css/pages/styleguide.css">
+{% endblock %}
+
+{% macro swatches(group) %}
+  <div class="styleguide-swatches">
+    {% for token in group.tokens %}
+      <div class="styleguide-swatch" style="--swatch: var({{ token.name }})">
+        <span>{{ token.name }}</span>
+        <span class="styleguide-swatch-note">{{ token.note or token.value }}</span>
+      </div>
+    {% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro rows(group) %}
+  <div class="styleguide-rows">
+    {% for token in group.tokens %}
+      <div class="styleguide-row">
+        <span class="styleguide-row-name">{{ token.name }}</span>
+        <span class="styleguide-row-value">
+          {% if group.title == 'Type' and token.name.startswith('--step') %}
+            <span class="styleguide-sample" style="--sample: var({{ token.name }})">25.108</span>
+            <code>{{ token.value }}</code>
+          {% elif group.title == 'Space' %}
+            <span class="styleguide-bar" style="--bar: var({{ token.name }})"></span>
+            <code>{{ token.value }}</code>
+          {% else %}
+            <code>{{ token.value }}</code>
+          {% endif %}
+        </span>
+      </div>
+    {% endfor %}
+  </div>
+{% endmacro %}
+
+{% block body %}
+  <div class="styleguide">
+    <header class="styleguide-header">
+      <h1 class="styleguide-title">Design <span>system</span></h1>
+      <p class="styleguide-lead">
+        Every value below comes from <code>term_timer/server/design/theme.toml</code>,
+        rendered into <code>theme.css</code> by <code>python -m term_timer.server.design</code>.
+      </p>
+    </header>
+
+    {% for group in token_groups %}
+      <section id="{{ group.title|lower }}">
+        <h2 class="styleguide-section-title">
+          {{ group.title }}
+          <span class="styleguide-count">{{ group.tokens|length }}</span>
+        </h2>
+        {% if group.title in ('Palette', 'Roles') %}
+          {{ swatches(group) }}
+        {% else %}
+          {{ rows(group) }}
+        {% endif %}
+      </section>
+    {% endfor %}
+
+    <section id="contrast">
+      <h2 class="styleguide-section-title">
+        Contrast
+        <span class="styleguide-count">{{ contrast_checks|length }}</span>
+      </h2>
+      <div class="styleguide-contrast">
+        {% for check in contrast_checks %}
+          <div class="styleguide-pair" data-passed="{{ check.passed|lower }}"
+               style="--pair-text: var(--{{ check.text }}); --pair-background: var(--{{ check.background }})">
+            <span class="styleguide-pair-sample">{{ '%.2f'|format(check.ratio) }}</span>
+            <span class="styleguide-pair-meta">{{ check.text }} on {{ check.background }}</span>
+            <span class="styleguide-pair-meta">{{ check.level }} ≥ {{ check.minimum }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+{% endblock %}

@@ -28,6 +28,7 @@ from term_timer.server.views import DailySolveDeleteView
 from term_timer.server.views import DailySolveDetailView
 from term_timer.server.views import DailySolveUpdateCommentView
 from term_timer.server.views import DailySolveUpdateFlagView
+from term_timer.server.views import DesignStyleguideView
 from term_timer.server.views import Error404View
 from term_timer.server.views import Error500View
 from term_timer.server.views import ScrambleDetailView
@@ -349,6 +350,17 @@ class Server:
 
             """
             return StyleguideView().as_view(debug)
+
+        @app.route('/styleguide/v2/')  # type: ignore[untyped-decorator]
+        def design_styleguide() -> str:
+            """
+            Render the V2 design system: theme values and contrasts.
+
+            Returns:
+                Rendered HTML template.
+
+            """
+            return DesignStyleguideView().as_view(debug)
 
         @app.route('/algorithm/<algorithm>/')  # type: ignore[untyped-decorator]
         def algorithm_detail(algorithm: str) -> str:

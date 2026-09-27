@@ -385,6 +385,33 @@ class StyleguideContext(TypedDict):
     token_groups: list[StyleguideGroup]
 
 
+class ContrastCheckData(TypedDict):
+    """A measured contrast pair of the V2 theme."""
+
+    text: str
+    background: str
+    level: str
+    ratio: float
+    minimum: float
+    passed: bool
+
+
+class DesignStyleguideContext(TypedDict):
+    """Template context for the V2 design system styleguide."""
+
+    token_groups: list[StyleguideGroup]
+    contrast_checks: list[ContrastCheckData]
+
+
+class NavigationItem(TypedDict):
+    """One entry of the main navigation, as rendered."""
+
+    label: str
+    icon: str
+    url: str
+    active: bool
+
+
 class ScrambleHomeContext(TypedDict):
     """Template context for the scramble series home view."""
 

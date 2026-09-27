@@ -2,9 +2,11 @@
 import re
 
 from term_timer.constants import STATIC_DIRECTORY
+from term_timer.server.annotations import DesignStyleguideContext
 from term_timer.server.annotations import StyleguideContext
 from term_timer.server.annotations import StyleguideGroup
 from term_timer.server.annotations import StyleguideToken
+from term_timer.server.design import DesignTheme
 from term_timer.server.views.base import View
 
 STYLESHEET = STATIC_DIRECTORY / 'css' / 'style.css'
@@ -93,4 +95,49 @@ class StyleguideView(View):
 
         return {
             'token_groups': parse_root_groups(css_text),
+        }
+
+
+class DesignStyleguideView(View):
+    """View rendering the V2 design system: theme values and contrasts."""
+
+    template_name = 'v2/styleguide.html'
+
+    @staticmethod
+    def get_context() -> DesignStyleguideContext:
+        """
+        Build context for the V2 styleguide template.
+
+        Returns:
+            Dictionary with the theme groups and the measured contrasts.
+
+        """
+        theme = DesignTheme.load()
+
+        return {
+            'token_groups': [
+                {
+                    'title': group.title,
+                    'tokens': [
+                        {
+                            'name': f'--{ token.name }',
+                            'value': token.value,
+                            'note': token.note,
+                        }
+                        for token in group.tokens
+                    ],
+                }
+                for group in theme.groups()
+            ],
+            'contrast_checks': [
+                {
+                    'text': check.text,
+                    'background': check.background,
+                    'level': check.level,
+                    'ratio': round(check.ratio, 2),
+                    'minimum': check.minimum,
+                    'passed': check.passed,
+                }
+                for check in theme.contrast_checks()
+            ],
         }
