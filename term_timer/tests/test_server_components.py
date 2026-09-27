@@ -1,0 +1,358 @@
+"""Tests for the V2 components: algorithm tokens, escaping and catalogue."""
+import re
+import tempfile
+import unittest
+from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import cast
+from unittest.mock import Mock
+
+from bottle import TEMPLATE_PATH
+from bottle import TEMPLATES
+
+from term_timer.constants import STATIC_DIRECTORY
+from term_timer.constants import TEMPLATES_DIRECTORY
+from term_timer.formatter import format_alg_aufs
+from term_timer.formatter import format_alg_moves
+from term_timer.formatter import format_alg_pauses
+from term_timer.formatter import format_alg_triggers
+from term_timer.formatter import format_grade
+from term_timer.server.app import Server
+from term_timer.server.filters import DEFAULT_TRIGGER_SLOT
+from term_timer.server.filters import TRIGGER_NAMES
+from term_timer.server.filters import TRIGGER_SLOTS
+from term_timer.server.filters import AlgMove
+from term_timer.server.filters import AlgPause
+from term_timer.server.filters import AlgToken
+from term_timer.server.filters import AlgTrigger
+from term_timer.server.filters import alg_text
+from term_timer.server.filters import alg_tokens
+from term_timer.server.filters import algorithm_tokens
+from term_timer.server.filters import format_line
+from term_timer.server.filters import grade_tone
+from term_timer.server.views.base import View
+from term_timer.server.views.styleguide import FIXTURE_RECONSTRUCTION
+from term_timer.tests.test_server_daily import WSGIClient
+from term_timer.triggers import DEFAULT_TRIGGERS
+from term_timer.triggers import TRIGGERS
+
+if TYPE_CHECKING:
+    from term_timer.methods.annotations import StepSummary
+
+V1_TEXT_RE = re.compile(r'>([^<]+)</span>')
+
+CORPUS = (
+    "R U R' U'",
+    "F R U R' U' F'",
+    "R U R' U R U2 R'",
+    "U R U' R' U' F' U F",
+    "R' F R F' R U R' U' R U R' U'",
+    "y R U R' U' R' F R2 U' R' U' R U R' F' U2",
+    "r U R' U' r' F R F' M' x",
+    "U2 R U2 R' U' R U' R' U",
+)
+
+
+def move_texts(tokens: list[AlgToken]) -> list[str]:
+    """
+    Every move of the tokens, triggers expanded, pauses as a dot.
+
+    Returns:
+        The move texts in order.
+
+    """
+    texts: list[str] = []
+    for token in tokens:
+        if isinstance(token, AlgTrigger):
+            texts.extend(move.move for move in token.moves)
+        elif isinstance(token, AlgPause):
+            texts.append('.')
+        else:
+            texts.append(token.move)
+    return texts
+
+
+class AlgTokensTestCase(unittest.TestCase):
+    """The block markup of the formatters parsed into tokens."""
+
+    def test_empty_value(self) -> None:
+        """An empty algorithm has no token."""
+        self.assertEqual(alg_tokens(''), [])
+
+    def test_plain_moves(self) -> None:
+        """Moves outside any block carry no variant."""
+        self.assertEqual(
+            alg_tokens("R U R'"),
+            [AlgMove('R'), AlgMove('U'), AlgMove("R'")],
+        )
+
+    def test_move_variants(self) -> None:
+        """Every move block maps to its variant, rotations merged."""
+        self.assertEqual(
+            alg_tokens(
+                '[pre-auf]U[/pre-auf] [slice]M[/slice] [wide]r[/wide]'
+                ' [rotation_y]y[/rotation_y] [deletion]D[/deletion]'
+                ' [addition]D2[/addition] [post-auf]U2[/post-auf]',
+            ),
+            [
+                AlgMove('U', 'pre-auf'),
+                AlgMove('M', 'slice'),
+                AlgMove('r', 'wide'),
+                AlgMove('y', 'rotation'),
+                AlgMove('D', 'deletion'),
+                AlgMove('D2', 'addition'),
+                AlgMove('U2', 'post-auf'),
+            ],
+        )
+
+    def test_multiple_moves_in_a_block(self) -> None:
+        """Each move of a non-trigger block gets the block variant."""
+        self.assertEqual(
+            alg_tokens('[pre-auf]R U[/pre-auf]'),
+            [AlgMove('R', 'pre-auf'), AlgMove('U', 'pre-auf')],
+        )
+
+    def test_unknown_markup_is_a_plain_move(self) -> None:
+        """A block that is neither a variant nor a trigger is dropped."""
+        self.assertEqual(
+            alg_tokens('[unknown-markup]R U[/unknown-markup]'),
+            [AlgMove('R'), AlgMove('U')],
+        )
+
+    def test_trigger(self) -> None:
+        """A trigger keeps its slug, display name, slot and moves."""
+        self.assertEqual(
+            alg_tokens("F [sexy-move]R U R' U'[/sexy-move] F'"),
+            [
+                AlgMove('F'),
+                AlgTrigger(
+                    'sexy-move', 'Sexy Move', 1,
+                    (AlgMove('R'), AlgMove('U'), AlgMove("R'"),
+                     AlgMove("U'")),
+                ),
+                AlgMove("F'"),
+            ],
+        )
+
+    def test_pauses(self) -> None:
+        """Execution, recognition and bare pauses are pause tokens."""
+        self.assertEqual(
+            alg_tokens(
+                'R . [pause].[/pause] U [reco-pause].[/reco-pause]',
+            ),
+            [
+                AlgMove('R'),
+                AlgPause('execution'),
+                AlgPause('execution'),
+                AlgMove('U'),
+                AlgPause('recognition'),
+            ],
+        )
+
+    def test_same_moves_as_format_line(self) -> None:
+        """Tokens and the V1 HTML list the same moves in the same order."""
+        markups = [
+            format_alg_triggers(
+                format_alg_moves(format_alg_aufs(algorithm, 1, 1)),
+                DEFAULT_TRIGGERS,
+            )
+            for algorithm in CORPUS
+        ]
+        markups.append(FIXTURE_RECONSTRUCTION)
+        for markup in markups:
+            with self.subTest(markup=markup):
+                v1_moves = ' '.join(
+                    V1_TEXT_RE.findall(format_line(markup)),
+                ).split()
+                self.assertEqual(
+                    move_texts(alg_tokens(markup)), v1_moves,
+                )
+
+    def test_pause_markup_of_the_formatter(self) -> None:
+        """The pause markup format_alg_pauses writes is understood."""
+        markup = format_alg_pauses(
+            "R U . R'",
+            Mock(pause_threshold=1),
+            cast('StepSummary', {'post_pause': 2}),
+            multiple=True,
+        )
+        self.assertEqual(
+            [token.kind for token in alg_tokens(markup)],
+            ['move', 'move', 'pause', 'move', 'pause', 'pause'],
+        )
+
+
+class AlgorithmTokensTestCase(unittest.TestCase):
+    """Tokens of a whole algorithm, the default triggers marked."""
+
+    def test_aufs_are_marked(self) -> None:
+        """A leading and a trailing U are AUFs by default."""
+        tokens = algorithm_tokens("U F R U R' U' F' U2")
+        self.assertEqual(tokens[0], AlgMove('U', 'pre-auf'))
+        self.assertEqual(tokens[-1], AlgMove('U2', 'post-auf'))
+        self.assertEqual(tokens[2].kind, 'trigger')
+
+    def test_aufs_off_for_a_scramble(self) -> None:
+        """A scramble has no AUF."""
+        tokens = algorithm_tokens("U F R U R' U' F' U2", aufs=False)
+        self.assertEqual(tokens[0], AlgMove('U'))
+        self.assertEqual(tokens[-1], AlgMove('U2'))
+
+    def test_text_drops_pauses(self) -> None:
+        """The copied text is the moves only, triggers expanded."""
+        self.assertEqual(
+            alg_text(alg_tokens(FIXTURE_RECONSTRUCTION)),
+            "U' R U R' U' M' y U U2 R U' R' R U R' U R U2 R' F U2",
+        )
+
+
+class TriggerTableTestCase(unittest.TestCase):
+    """Every known trigger has a name and a colour slot."""
+
+    def test_every_trigger_has_a_name(self) -> None:
+        """The names come from the same patterns as the triggers."""
+        self.assertEqual(set(TRIGGER_NAMES), set(TRIGGERS))
+
+    def test_every_trigger_has_a_slot(self) -> None:
+        """No trigger falls back silently to the default slot."""
+        self.assertEqual(set(TRIGGER_SLOTS), set(TRIGGERS))
+        self.assertTrue(
+            set(TRIGGER_SLOTS.values()) <= {1, 2, 3, DEFAULT_TRIGGER_SLOT},
+        )
+
+
+class GradeToneTestCase(unittest.TestCase):
+    """Letter grades mapped to the grade tones."""
+
+    def test_plus_grades_share_the_tone(self) -> None:
+        """A+ and A are the same tone."""
+        self.assertEqual(grade_tone('A+'), 'grade-a')
+        self.assertEqual(grade_tone('A'), 'grade-a')
+        self.assertEqual(grade_tone('S'), 'grade-s')
+
+    def test_no_grade(self) -> None:
+        """Without a grade there is no tone."""
+        self.assertEqual(grade_tone(''), '')
+
+    def test_every_grade_has_a_styled_tone(self) -> None:
+        """Each grade format_grade can return has its tone in base.css."""
+        base = (STATIC_DIRECTORY / 'v2' / 'css' / 'base.css').read_text(
+            encoding='utf-8',
+        )
+        for score in range(25):
+            tone = grade_tone(format_grade(score))
+            with self.subTest(tone=tone):
+                self.assertIn(f'[data-tone="{ tone }"]', base)
+
+
+class AutoescapeTestCase(unittest.TestCase):
+    """Only the V2 templates escape their values by default."""
+
+    def test_rule(self) -> None:
+        """The rule is the v2/ prefix of the template name."""
+        self.assertTrue(View.autoescape('v2/skeleton.html'))
+        self.assertTrue(View.autoescape('v2/components/alg.html'))
+        self.assertFalse(View.autoescape('solve.html'))
+        self.assertFalse(View.autoescape('skeleton.html'))
+        self.assertFalse(View.autoescape(None))
+
+    def test_rendering(self) -> None:
+        """A V2 template escapes a value a V1 template renders raw."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name)
+        (root / 'v2').mkdir()
+        for name in ('probe_escape.html', 'v2/probe_escape.html'):
+            (root / name).write_text('{{ value }}', encoding='utf-8')
+        TEMPLATE_PATH.insert(0, str(root))
+        self.addCleanup(TEMPLATE_PATH.remove, str(root))
+        self.addCleanup(TEMPLATES.clear)
+
+        value = '<script>alert(1)</script>'
+        self.assertEqual(
+            View.template('probe_escape.html', value=value), value,
+        )
+        self.assertEqual(
+            View.template('v2/probe_escape.html', value=value),
+            '&lt;script&gt;alert(1)&lt;/script&gt;',
+        )
+
+
+class ComponentCatalogueTestCase(unittest.TestCase):
+    """The component catalogue of /styleguide/v2/, rendered by the app."""
+
+    status: int
+    body: str
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """Render the catalogue once."""
+        if str(TEMPLATES_DIRECTORY) not in map(str, TEMPLATE_PATH):
+            TEMPLATE_PATH.insert(0, TEMPLATES_DIRECTORY)
+        cls.status, _headers, cls.body = WSGIClient(
+            Server.create_app(debug=False),
+        ).get('/styleguide/v2/')
+
+    def test_page_renders(self) -> None:
+        """The catalogue page answers."""
+        self.assertEqual(self.status, 200)
+
+    def test_component_sections(self) -> None:
+        """Every component has its numbered section."""
+        for number, slug in enumerate(
+                ('alg', 'stat', 'badge', 'tabs', 'table', 'cube', 'chart'),
+                start=1):
+            with self.subTest(slug=slug):
+                self.assertIn(f'id="component-{ slug }"', self.body)
+                self.assertIn(
+                    f'<span class="section-number">{ number:02d}</span>',
+                    self.body,
+                )
+
+    def test_alg_chips(self) -> None:
+        """Triggers, variants and pauses reach the markup."""
+        self.assertIn(
+            '<span class="alg-trigger" data-slot="1"'
+            ' data-name="Sexy Move">',
+            self.body,
+        )
+        self.assertIn('data-variant="pre-auf" title="Pre-AUF"', self.body)
+        self.assertIn('data-kind="recognition"', self.body)
+
+    def test_copy_buttons_only_where_asked(self) -> None:
+        """The reconstruction fixture has no copy button."""
+        self.assertEqual(self.body.count('data-copy-label='), 4)
+        self.assertIn('data-copy-key="s"', self.body)
+
+    def test_values_are_escaped(self) -> None:
+        """A value is escaped, a trusted icon is not."""
+        self.assertIn('&lt;b&gt;escaped&lt;/b&gt;', self.body)
+        self.assertNotIn('<b>escaped</b>', self.body)
+        self.assertIn('<svg class="nav-icon" viewBox="0 0 24 24"'
+                      ' aria-hidden="true"><rect', self.body)
+
+    def test_cube_url(self) -> None:
+        """The cube macro builds an encoded, ordered query string."""
+        self.assertIn(
+            'src="/cube/?c=3&amp;case=R+U+R%27+U+R+U2+R%27&amp;m=oll'
+            '&amp;s=96"',
+            self.body,
+        )
+
+    def test_charts_and_scripts(self) -> None:
+        """Charts carry their kind and JSON data, no inline code."""
+        self.assertIn('data-chart="moves-timing"', self.body)
+        self.assertIn(
+            '<script type="application/json" id="styleguide-tps-data">',
+            self.body,
+        )
+        self.assertIn('/static/v2/js/charts.js', self.body)
+        self.assertIn('/static/v2/js/ui.js', self.body)
+
+    def test_tabs_and_table(self) -> None:
+        """Tabs are ARIA tabs; the table is sortable."""
+        self.assertIn('role="tablist" aria-label="Reconstruction view"',
+                      self.body)
+        self.assertEqual(self.body.count('role="tabpanel"'), 3)
+        self.assertIn('<table class="table-grid" data-sortable>', self.body)
+        self.assertIn('<div class="toast" role="status"', self.body)
