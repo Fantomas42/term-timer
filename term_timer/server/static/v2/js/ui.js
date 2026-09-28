@@ -1,7 +1,7 @@
 // Behaviour of the V2 components: copy with feedback, keyboard
-// shortcuts, ARIA tabs, sortable tables, confirmed forms, selects applied
-// as they change and the algorithm lookup. Loaded as a
-// module by v2/skeleton.html.
+// shortcuts, ARIA tabs, sortable tables and their folded rows, segmented
+// switches, confirmed forms, selects applied as they change and the
+// algorithm lookup. Loaded as a module by v2/skeleton.html.
 
 const COPIED_DELAY = 1400;
 const TOAST_DELAY = 1600;
@@ -88,6 +88,8 @@ document.addEventListener('keydown', (event) => {
 
   const copier = Array.from(document.querySelectorAll('[data-copy-key]'))
     .find((candidate) => candidate.dataset.copyKey === event.key);
+  const switcher = Array.from(document.querySelectorAll('[data-segmented-key]'))
+    .find((candidate) => candidate.dataset.segmentedKey === event.key);
   const target = Array.from(document.querySelectorAll('[data-key]'))
     .find((candidate) => candidate.dataset.key === event.key);
   const actions = {
@@ -98,6 +100,7 @@ document.addEventListener('keydown', (event) => {
 
   let handled = true;
   if (copier) copy(copier);
+  else if (switcher) cycleSegmented(switcher);
   else if (target) target.click();
   else if (event.key in actions) handled = actions[event.key]() !== false;
   else handled = false;
@@ -181,6 +184,10 @@ function sortTable(table, header) {
 
   const body = table.tBodies[0];
   const rows = Array.from(body.rows);
+  // Sorting ranks every row: the folded ones are shown first.
+  if (body.querySelector('tr[data-revealable][hidden]')) {
+    revealRows(table.closest('[id]').id);
+  }
   rows.sort((a, b) => {
     const left = sortKey(a.cells[column], numeric);
     const right = sortKey(b.cells[column], numeric);
@@ -196,6 +203,76 @@ document.querySelectorAll('table[data-sortable]').forEach((table) => {
   table.tHead.addEventListener('click', (event) => {
     const button = event.target.closest('.table-sort');
     if (button) sortTable(table, button.closest('th'));
+  });
+});
+
+// Folded rows ----------------------------------------------------------
+
+// A button carrying data-reveal shows the rows folded away in the
+// element of that id, then goes away.
+function revealRows(id) {
+  const holder = document.getElementById(id);
+  if (!holder) return;
+  holder.querySelectorAll('[data-revealable][hidden]').forEach((row) => {
+    row.hidden = false;
+  });
+  document.querySelectorAll(`[data-reveal="${id}"]`).forEach((button) => {
+    button.remove();
+  });
+}
+
+document.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-reveal]');
+  if (button) revealRows(button.dataset.reveal);
+});
+
+// Segmented switches ---------------------------------------------------
+
+// A segmented switch writes its value in a data attribute of its target,
+// named after the switch; the choice is remembered in this browser only,
+// a convenience that may be lost.
+function remember(name, value) {
+  try {
+    localStorage.setItem(`segmented:${name}`, value);
+  } catch (error) {
+    console.debug('Choice not remembered', error);
+  }
+}
+
+function recall(name) {
+  try {
+    return localStorage.getItem(`segmented:${name}`);
+  } catch (error) {
+    return null;
+  }
+}
+
+function applySegmented(group, option, save = true) {
+  const name = group.dataset.segmented;
+  group.querySelectorAll('[aria-pressed]').forEach((other) => {
+    other.setAttribute('aria-pressed', String(other === option));
+  });
+  const target = document.querySelector(group.dataset.target);
+  if (target) target.dataset[name] = option.value;
+  if (save) remember(name, option.value);
+}
+
+function cycleSegmented(group) {
+  const options = Array.from(group.querySelectorAll('[aria-pressed]'));
+  const index = options.findIndex(
+    (option) => option.getAttribute('aria-pressed') === 'true',
+  );
+  applySegmented(group, options[(index + 1) % options.length]);
+}
+
+document.querySelectorAll('[data-segmented]').forEach((group) => {
+  const stored = recall(group.dataset.segmented);
+  const option = Array.from(group.querySelectorAll('[aria-pressed]'))
+    .find((candidate) => candidate.value === stored);
+  if (option) applySegmented(group, option, false);
+  group.addEventListener('click', (event) => {
+    const chosen = event.target.closest('[aria-pressed]');
+    if (chosen) applySegmented(group, chosen);
   });
 });
 

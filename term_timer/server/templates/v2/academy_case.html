@@ -1,0 +1,253 @@
+{% extends "v2/skeleton.html" %}
+{% from 'v2/components/alg.html' import alg %}
+{% from 'v2/components/badge.html' import badge %}
+{% from 'v2/components/button.html' import button, copy_button %}
+{% from 'v2/components/chart.html' import chart %}
+{% from 'v2/components/command.html' import command as command_line %}
+{% from 'v2/components/cube.html' import cube as cube_image %}
+{% from 'v2/components/dialog.html' import help_dialog %}
+{% from 'v2/components/page_header.html' import page_header %}
+{% from 'v2/components/player.html' import player as player_box %}
+{% from 'v2/components/section.html' import section %}
+{% from 'v2/components/stat.html' import stat, stat_grid %}
+{% from 'v2/components/table.html' import table %}
+{% from 'v2/components/tabs.html' import tabs %}
+
+{% set ALGORITHM_COLUMNS = [
+  {'label': '#', 'numeric': true},
+  {'label': 'Cube'},
+  {'label': 'Algorithm'},
+  {'label': 'HTM', 'numeric': true},
+  {'label': 'Ergo', 'numeric': true},
+  {'label': 'Memo', 'numeric': true},
+  {'label': ''},
+] %}
+
+{#- Rows shown before the rest of a table folds away. -#}
+{% set FOLDED_AFTER = 10 %}
+
+{% set SHORTCUTS = [
+  ('c', 'Copy the algorithm'),
+  ('[', 'Previous case'),
+  (']', 'Next case'),
+  ('j', 'Next section'),
+  ('k', 'Previous section'),
+  ('?', 'This help'),
+] %}
+
+{% set TRENDS = {'up': '↗ at its best', 'flat': '→ plateau', 'down': '↘ slowing down'} %}
+
+{% set counter = namespace(section=0) %}
+
+{% block description %}{{ method }} {{ step }} {{ case.code }}: recognition, algorithms and your training{% endblock %}
+
+{% block title %}{{ step }} {{ case.code }}{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="/static/v2/css/pages/academy-case.css">
+{% endblock %}
+
+{% block scripts %}
+  <script type="module" src="/static/v2/js/player.js"></script>
+  {% if training and (training.curve or training.forgetting) %}
+    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+    <script type="module" src="/static/v2/js/charts.js"></script>
+  {% endif %}
+{% endblock %}
+
+{#- A section numbered in document order, across the zones. -#}
+{% macro numbered(slug, title, aside='', tone='') -%}
+  {%- set counter.section = counter.section + 1 -%}
+  {%- set body = caller() -%}
+  {% call section(slug, title, counter.section, aside, tone) %}{{ body }}{% endcall %}
+{%- endmacro %}
+
+{% macro algorithm_table(source) -%}
+  <div class="academy-case-source" id="source-{{ source.slug }}">
+    {%- if source.note %}
+      <p class="academy-case-note">{{ source.note }}</p>
+    {%- endif %}
+    {% call table(ALGORITHM_COLUMNS) %}
+      {%- for row in source.rows %}
+        <tr{% if loop.index > FOLDED_AFTER %} data-revealable hidden{% endif %}>
+          <td>{{ row.rank }}</td>
+          <td>
+            {%- if source.image == 'algo' %}
+              {{ cube_image(algo=row.text, size='s', cube_size=cube_size, mode=mode, orientation=orientation_faces, palette=palette, arrows=case.arrows, label='Setup ' ~ row.rank) }}
+            {%- else %}
+              {{ cube_image(case=row.text, size='s', cube_size=cube_size, mode=mode, orientation=orientation_faces, palette=palette, arrows=case.arrows, label='Algorithm ' ~ row.rank) }}
+            {%- endif %}
+          </td>
+          <td data-sort="{{ row.text }}"><a class="academy-case-alg" href="{{ row.href }}">{{ alg(row.tokens, size='s', frame='bare') }}</a></td>
+          <td>{{ row.htm }}</td>
+          <td data-sort="{{ row.ergonomics }}">{{ '%.1f'|format(row.ergonomics) }}</td>
+          <td data-sort="{{ row.memory }}">{{ '%.1f'|format(row.memory) }}</td>
+          <td>{{ copy_button(row.text, 'algorithm') }}</td>
+        </tr>
+      {%- endfor %}
+    {% endcall %}
+    {%- if source.rows|length > FOLDED_AFTER %}
+      <div class="academy-case-more">
+        <button class="button" type="button" data-reveal="source-{{ source.slug }}"><span class="button-label">Show all {{ source.rows|length }}</span></button>
+      </div>
+    {%- endif %}
+  </div>
+{%- endmacro %}
+
+{% block body %}
+  {% call page_header(step, case.code, breadcrumb, verbatim=true) %}
+    {{ button('Prev', href=previous_url, key='[') if previous_url }}
+    {{ button('Next', href=next_url, key=']') if next_url }}
+  {% endcall %}
+
+  <div class="academy-case">
+    <div class="academy-case-zone" data-zone="summary">
+      <div class="academy-case-hero">
+        {{ cube_image(case=case.main_algorithm, size='l', cube_size=cube_size, mode=mode, orientation=orientation_faces, palette=palette, arrows=case.arrows, fit=true, label=case.code ~ ' case') }}
+        {% if case.aliases %}
+          <p class="academy-case-aliases">{{ case.aliases|join(' · ') }}</p>
+        {% endif %}
+      </div>
+
+      <dl class="academy-case-facts">
+        {% if case.family %}
+          <div class="academy-case-fact"><dt>Family</dt><dd><a href="{{ step_url }}?family={{ case.family|urlencode }}">{{ case.family }}</a></dd></div>
+        {% endif %}
+        {% if case.groups %}
+          <div class="academy-case-fact"><dt>Groups</dt><dd>
+            {%- for group in case.groups %}<a href="{{ step_url }}?group={{ group|urlencode }}">{{ group }}</a>{{ ' · ' if not loop.last }}{% endfor -%}
+          </dd></div>
+        {% endif %}
+        {% if case.probability_label %}
+          <div class="academy-case-fact"><dt>Probability</dt><dd>{{ case.probability_label }} <span class="academy-case-dim">{{ '%.4f'|format(case.probability) }}</span></dd></div>
+        {% endif %}
+        <div class="academy-case-fact"><dt>Optimal</dt><dd>{{ case.optimal_htm }} HTM <span class="academy-case-dim">· {{ case.optimal_stm }} STM</span></dd></div>
+        {% if case.optimal_cycles %}
+          <div class="academy-case-fact"><dt>Cycles</dt><dd>{{ case.optimal_cycles }}</dd></div>
+        {% endif %}
+        {% if case.symmetry %}
+          <div class="academy-case-fact"><dt>Symmetry</dt><dd>{{ case.symmetry|title }}</dd></div>
+        {% endif %}
+        {% if DEBUG and case.status %}
+          <div class="academy-case-fact"><dt>Status</dt><dd>{{ badge(case.status, 'good' if case.status == 'OK' else 'bad') }}</dd></div>
+        {% endif %}
+      </dl>
+
+      {% if description %}
+        <div class="academy-case-notes">
+          {% for paragraph in description %}<p>{{ paragraph }}</p>{% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="academy-case-sticky">
+        {% call numbered('player', 'Player', 'your solution' if focus.custom else 'main algorithm') %}
+          {{ player_box('case-player', player) }}
+          <form class="academy-case-orientation" method="get">
+            <label class="academy-case-control">Orientation
+              <select class="academy-case-select" name="o" data-autosubmit>
+                {%- for orientation, moves in available_orientations.items() %}
+                  <option value="{{ orientation }}"{% if orientation == orientation_faces %} selected{% endif %}>{{ orientation }}{% if moves %} ({{ moves }}){% endif %}</option>
+                {%- endfor %}
+              </select>
+            </label>
+            <noscript>{{ button('Apply', type='submit') }}</noscript>
+          </form>
+        {% endcall %}
+      </div>
+    </div>
+
+    <div class="academy-case-zone" data-zone="focus">
+      {% call numbered('algorithm', 'Your solution' if focus.custom else 'Algorithm', 'saved in your training file' if focus.custom else 'main algorithm of the case') %}
+        {{ alg(focus.tokens, size='xl', copy='algorithm', key='c', htm=focus.htm, href=focus.href) }}
+        {% call stat_grid() %}
+          {{ stat('HTM', focus.htm, 'optimal %d'|format(case.optimal_htm) if case.optimal_htm else '', 'good' if case.optimal_htm and focus.htm <= case.optimal_htm else '') }}
+          {{ stat('STM', focus.stm) }}
+          {{ stat('Ergonomics', '%.1f'|format(focus.ergonomics), 'hand comfort') }}
+          {{ stat('Memory', '%.1f'|format(focus.memory), 'ease to learn') }}
+        {% endcall %}
+        {% if command %}
+          <div class="academy-case-command">{{ command_line(command) }}</div>
+        {% endif %}
+      {% endcall %}
+    </div>
+
+    <div class="academy-case-zone" data-zone="side">
+      {% if recognition %}
+        {% call numbered('recognition', 'Recognition', recognition|length ~ ' angles') %}
+          <ol class="academy-case-angles">
+            {% for angle in recognition %}
+              <li class="academy-case-angle">
+                <div class="academy-case-angle-image">
+                  {{ cube_image(case=recognition_setup, size='m', cube_size=cube_size, mode='pll', layout='cube', orientation=orientation_faces, palette=palette, arrows=case.arrows, rotation=angle.rotation, fit=true, label=angle.feature) }}
+                </div>
+                <div class="academy-case-angle-text">
+                  <h3 class="academy-case-angle-title">{{ angle.feature }}</h3>
+                  {% for paragraph in angle.description %}<p>{{ paragraph }}</p>{% endfor %}
+                  {% if angle.observation %}<p class="academy-case-angle-key"><b>Look for</b> {{ angle.observation }}</p>{% endif %}
+                  {% if angle.notes %}<p class="academy-case-angle-key"><b>Tell apart</b> {{ angle.notes }}</p>{% endif %}
+                  {% if angle.feature_notes %}
+                    <details class="academy-case-angle-more">
+                      <summary>About this pattern</summary>
+                      {% for paragraph in angle.feature_notes %}<p>{{ paragraph }}</p>{% endfor %}
+                    </details>
+                  {% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ol>
+        {% endcall %}
+      {% endif %}
+
+      {% if training %}
+        {% call numbered('training', 'Your training', training.state_label ~ (' · ' ~ (training.due_relative if training.overdue else 'next review ' ~ training.due_relative) if training.due else ''), 'warn' if training.overdue else '') %}
+          {% call stat_grid() %}
+            {{ stat('State', training.state_label, (training.due_relative if training.overdue else 'next ' ~ training.due_relative) if training.due else 'no card yet', 'state-' ~ training.state_class) }}
+            {{ stat('Attempts', training.attempts, 'last on ' ~ training.last_date) }}
+            {% if training.attempts %}
+              {{ stat('Best', training.best|format_duration, tone='good') }}
+            {% endif %}
+            {% if training.ao5 > 0 %}
+              {{ stat('Ao5', training.ao5|format_duration, TRENDS.get(training.trend, '') ~ (' +%d%%'|format(training.trend_percent) if training.trend == 'down' else ''), 'bad' if training.trend == 'down' else '') }}
+            {% endif %}
+            {% if training.ao12 > 0 %}
+              {{ stat('Ao12', training.ao12|format_duration, 'best ' ~ training.best_ao12|format_duration) }}
+            {% endif %}
+            {% if training.forgetting %}
+              {{ stat('Recall', '%.0f'|format(training.forgetting.retention), 'reviewed ' ~ training.last_review, unit='%') }}
+            {% endif %}
+            {% if training.stability is not none %}
+              {{ stat('Stability', '%.1f'|format(training.stability), 'difficulty %.1f / 10'|format(training.difficulty or 0), unit='d') }}
+            {% endif %}
+          {% endcall %}
+          {% if training.curve %}
+            {{ chart('chart-attempts', 'training-attempts', training.curve, title='Times, in attempt order', legend=[('dot', 'Attempt'), (1, 'Ao5'), (3, 'Ao12')]) }}
+            <p class="academy-case-note">Training times are not dated: the axis counts attempts, not days.</p>
+          {% endif %}
+          {% if training.forgetting %}
+            {{ chart('chart-forgetting', 'training-forgetting', training.forgetting, title='Forgetting curve') }}
+            <p class="academy-case-note">Recall probability estimated by FSRS since the last review; the dot is now, the dashed line the next review.</p>
+          {% endif %}
+        {% endcall %}
+      {% elif training_unavailable %}
+        {% call numbered('training', 'Your training') %}
+          <p class="academy-case-note">Training data unavailable: the file is being written or is damaged. Reload in a moment.</p>
+        {% endcall %}
+      {% endif %}
+    </div>
+
+    {% if sources %}
+      <div class="academy-case-zone" data-zone="table">
+        {% call numbered('algorithms', 'Algorithms', sources[0].rows|length ~ ' in the database' if sources[0].slug == 'database' else '') %}
+          {% call(slug) tabs('sources', source_tabs, 'Sources of algorithms') %}
+            {{ algorithm_table(sources|selectattr('slug', 'equalto', slug)|first) }}
+          {% endcall %}
+          {% if DEBUG %}
+            <p class="academy-case-note"><a href="{{ step_url }}{{ case.code|urlencode }}/debug/">Algorithms grouped by impact</a></p>
+          {% endif %}
+        {% endcall %}
+      </div>
+    {% endif %}
+  </div>
+
+  {{ help_dialog(SHORTCUTS) }}
+{% endblock %}

@@ -178,6 +178,26 @@
     --tone: var(--grade-f);
   }
 
+  [data-tone="state-new"] {
+    --tone: var(--state-new);
+  }
+
+  [data-tone="state-learning"] {
+    --tone: var(--state-learning);
+  }
+
+  [data-tone="state-relearning"] {
+    --tone: var(--state-relearning);
+  }
+
+  [data-tone="state-review"] {
+    --tone: var(--state-review);
+  }
+
+  [data-tone="state-stable"] {
+    --tone: var(--state-stable);
+  }
+
   .skip-link {
     position: absolute;
     left: -999px;

@@ -444,11 +444,19 @@ class SolveStepRow(TypedDict):
     panels: dict[str, StepPanel]
 
 
-class ReplayData(TypedDict):
-    """What the replay module needs to play the solve with its timings."""
+class PlayerData(TypedDict):
+    """
+    What the player module plays: the moves and their setup.
+
+    The setup is applied before the moves, or after them with the end
+    anchor, for moves ending on a solved cube. Timings, when measured,
+    give the start and end of every move; index, the move starting each
+    step.
+    """
 
     alg: str
-    scramble: str
+    setup: str
+    anchor: str
     puzzle: str
     timing: list[tuple[int, int]]
     index: dict[str, int]
@@ -481,7 +489,7 @@ class SolveDetailContext(TypedDict):
     previous_url: str
     next_url: str
     step_rows: list[SolveStepRow]
-    replay: ReplayData
+    replay: PlayerData
 
 
 class AlgorithmDetailContext(TypedDict):
@@ -496,10 +504,47 @@ class AlgorithmDetailContext(TypedDict):
     available_orientations: dict[str, str]
 
 
+class StepCounts(TypedDict):
+    """How far the training of a set of cases went."""
+
+    cases: int
+    trained: int
+    mastered: int
+    due: int
+
+
+class AcademyStepCard(TypedDict):
+    """A step of a method on the academy overview, with its training."""
+
+    step: str
+    title: str
+    description: str
+    href: str
+    mode: str
+    cases: int
+    image: str
+    arrows: str
+    counts: 'StepCounts | None'
+    states: list['TrainingStateRow']
+    review_url: str
+
+
+class AcademyMethodCard(TypedDict):
+    """A method of the academy overview and its steps."""
+
+    name: str
+    slug: str
+    cube_size: int
+    title: str
+    description: str
+    steps: list[AcademyStepCard]
+
+
 class AcademyOverviewContext(TypedDict):
     """Template context for academy overview."""
 
     methods: dict[str, MethodInfo]
+    method_cards: list[AcademyMethodCard]
     orientation_faces: CubeOrientation
     orientation_moves: Algorithm
     available_orientations: dict[str, str]
@@ -523,6 +568,40 @@ class CaseTrainingTile(TypedDict):
     speed: str
     memory: str
     retention: float | None
+
+
+class CaseTile(TypedDict):
+    """
+    A case of a grid: its image, the algorithm to execute, its training.
+
+    The algorithm is the solution saved in the training file when there
+    is one (custom), the main algorithm of the case otherwise.
+    """
+
+    code: str
+    label: str
+    href: str
+    family: str
+    image: str
+    arrows: str
+    mode: str
+    cube_size: int
+    tokens: list[AlgToken]
+    custom: bool
+    probability: str
+    algorithms: int
+    note: str
+    training: CaseTrainingTile | None
+
+
+class CaseFamily(TypedDict):
+    """The cases of one family of a step, as a filter and a grid."""
+
+    name: str
+    slug: str
+    href: str
+    active: bool
+    tiles: list[CaseTile]
 
 
 class TrainingStateRow(TypedDict):
@@ -567,6 +646,12 @@ class AcademyStepContext(TypedDict):
     training: dict[str, CaseTrainingTile]
     training_summary: StepTrainingSummary | None
     training_unavailable: bool
+    breadcrumb: list[BreadcrumbItem]
+    families: list[CaseFamily]
+    counts: StepCounts | None
+    all_url: str
+    review_url: str
+    command: str
 
 
 class CubeRenderContext(TypedDict):
@@ -634,6 +719,52 @@ class CaseTrainingPanel(TypedDict):
     forgetting: ForgettingCurve | None
 
 
+class AlgorithmRow(TypedDict):
+    """An algorithm of a case, with its scores, in a sortable table."""
+
+    rank: int
+    text: str
+    tokens: list[AlgToken]
+    htm: int
+    ergonomics: float
+    memory: float
+    href: str
+
+
+class AlgorithmSource(TypedDict):
+    """The algorithms of a case from one source of the database."""
+
+    slug: str
+    label: str
+    note: str
+    image: str
+    rows: list[AlgorithmRow]
+
+
+class RecognitionAngle(TypedDict):
+    """One angle to recognise a case from, with its explanation."""
+
+    feature: str
+    feature_notes: list[str]
+    description: list[str]
+    observation: str
+    notes: str
+    rotation: str
+
+
+class CaseAlgorithmFocus(TypedDict):
+    """The algorithm to learn for a case and its scores."""
+
+    text: str
+    tokens: list[AlgToken]
+    custom: bool
+    htm: int
+    stm: int
+    ergonomics: float
+    memory: float
+    href: str
+
+
 class AcademyCaseContext(TypedDict):
     """Template context for academy case view."""
 
@@ -652,6 +783,18 @@ class AcademyCaseContext(TypedDict):
     available_palettes: list[str]
     training: CaseTrainingPanel | None
     training_unavailable: bool
+    breadcrumb: list[BreadcrumbItem]
+    previous_url: str
+    next_url: str
+    focus: CaseAlgorithmFocus
+    sources: list[AlgorithmSource]
+    source_tabs: list[tuple[str, str]]
+    step_url: str
+    recognition: list[RecognitionAngle]
+    recognition_setup: str
+    description: list[str]
+    player: 'PlayerData'
+    command: str
 
 
 class AlgorithmImpactGroup(TypedDict):
@@ -774,6 +917,12 @@ class DesignStyleguideContext(TypedDict):
     trend_chart: 'TrendChart'
     distribution_chart: 'DistributionChart'
     career_chart: CareerChart
+    case_tiles: list[CaseTile]
+    state_rows: list[TrainingStateRow]
+    player_data: PlayerData
+    attempts_chart: AttemptsCurve | None
+    forgetting_chart: ForgettingCurve
+    forecast_chart: 'ForecastChart'
 
 
 class NavigationItem(TypedDict):
@@ -1017,11 +1166,42 @@ class TrainingForecast(TypedDict):
     later: int
 
 
+class TrainingStepRow(TypedDict):
+    """A trained step on the training page: its status and its states."""
+
+    status: TrainingStepStatus
+    states: list[TrainingStateRow]
+    command: str
+    academy_url: str
+    review_url: str
+
+
+class ForecastChartSeries(TypedDict):
+    """Reviews of one step, with the colour role of its chart series."""
+
+    label: str
+    role: str
+    data: list[int]
+
+
+class ForecastChart(TypedDict):
+    """Data of the training-forecast chart."""
+
+    labels: list[str]
+    series: list[ForecastChartSeries]
+
+
 class TrainingForecastContext(TypedDict):
     """Template context for the training forecast view."""
 
     banner: TrainingBannerInfo | None
     forecast: TrainingForecast
+    forecast_chart: ForecastChart
+    forecast_legend: list[tuple[int, str]]
+    steps: list[TrainingStepRow]
+    weak: list[CaseTile]
+    orientation_faces: CubeOrientation
+    palette: str
 
 
 class ReviewCard(TypedDict):
@@ -1037,8 +1217,18 @@ class ReviewCard(TypedDict):
     state_class: str
 
 
+class ReviewPool(TypedDict):
+    """A choice of cases for the review sheet."""
+
+    slug: str
+    label: str
+    href: str
+    count: int
+    active: bool
+
+
 class TrainingReviewContext(TypedDict):
-    """Template context for the flashcard review view."""
+    """Template context for the review sheet view."""
 
     method: str
     step: str
@@ -1047,3 +1237,11 @@ class TrainingReviewContext(TypedDict):
     mode: str
     cube_size: int
     palette: str
+    breadcrumb: list[BreadcrumbItem]
+    pool: str
+    pools: list[ReviewPool]
+    family: str
+    families: list[CaseFamily]
+    families_url: str
+    tiles: list[CaseTile]
+    command: str

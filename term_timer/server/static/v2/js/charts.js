@@ -526,6 +526,145 @@ register('daily-steps', (data) => ({
   },
 }));
 
+// Dashed horizontal levels, labelled at their right end.
+function levels(items) {
+  return {
+    id: 'levels',
+    afterDatasetsDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      ctx.save();
+      ctx.strokeStyle = token('chart-marker');
+      ctx.fillStyle = token('chart-marker');
+      ctx.setLineDash([4, 4]);
+      ctx.textAlign = 'right';
+      ctx.font = `600 ${window.Chart.defaults.font.size}px ${fontFamily()}`;
+      // The labels alternate above and under their line: close levels
+      // would otherwise print over each other.
+      const size = window.Chart.defaults.font.size;
+      items.filter((item) => item.value).forEach((item, index) => {
+        const y = scales.y.getPixelForValue(item.value);
+        ctx.beginPath();
+        ctx.moveTo(chartArea.left, y);
+        ctx.lineTo(chartArea.right, y);
+        ctx.stroke();
+        ctx.fillText(item.label, chartArea.right, index % 2
+          ? y + size + 3 : y - 5);
+      });
+      ctx.restore();
+    },
+  };
+}
+
+// The attempts of a trained case in order, their rolling Ao5 and Ao12,
+// the best single and the best Ao12 as levels. Undated: x counts
+// attempts.
+// data: {labels, times: [s], ao5: [s|null], ao12: [s|null], best, peak}
+register('training-attempts', (data) => ({
+  type: 'line',
+  data: {
+    labels: data.labels,
+    datasets: [
+      { label: 'Ao5', data: data.ao5, borderColor: token('chart-1'),
+        borderWidth: 2, pointRadius: 0, tension: 0.25 },
+      { label: 'Ao12', data: data.ao12, borderColor: token('chart-3'),
+        borderWidth: 2, pointRadius: 0, tension: 0.25 },
+      { label: 'Attempt', data: data.times, showLine: false,
+        pointRadius: 2.5, pointBackgroundColor: token('chart-dot'),
+        pointBorderWidth: 0 },
+    ],
+  },
+  options: {
+    interaction: { mode: 'index', intersect: false },
+    layout: { padding: { top: 18 } },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxTicksLimit: 8 },
+           title: { display: true, text: 'attempt' } },
+      y: { beginAtZero: true, ticks: { maxTicksLimit: 5, callback: seconds } },
+    },
+    plugins: {
+      tooltip: {
+        filter: (item) => item.parsed.y != null,
+        callbacks: {
+          title: (items) => `Attempt #${items[0].label}`,
+          label: (item) => `${item.dataset.label} ${seconds(item.parsed.y)}`,
+        },
+      },
+    },
+  },
+  plugins: [levels([
+    { value: data.best, label: `BEST ${seconds(data.best)}` },
+    { value: data.peak, label: `BEST AO12 ${seconds(data.peak)}` },
+  ])],
+}));
+
+// The recall probability of a case since its last review: FSRS counts
+// whole days, hence the steps. The dot is now, the marker the due date.
+// data: {points: [{x, y}], today, due, retention}
+register('training-forgetting', (data) => ({
+  type: 'line',
+  data: {
+    datasets: [
+      { label: 'Recall', data: data.points, borderColor: token('chart-1'),
+        borderWidth: 2, pointRadius: 0, pointHitRadius: 8, stepped: 'after' },
+      { label: 'Now', data: [{ x: data.today, y: data.retention }],
+        showLine: false, pointRadius: 5, pointHoverRadius: 7,
+        pointBackgroundColor: token('text'), pointBorderWidth: 0 },
+    ],
+  },
+  options: {
+    interaction: { mode: 'nearest', intersect: false },
+    scales: {
+      x: { type: 'linear', min: 0, grid: { display: false },
+           title: { display: true, text: 'days since the last review' } },
+      y: { min: 0, max: 100, ticks: { callback: (value) => `${value}%` } },
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          title: (items) => `Day ${items[0].parsed.x.toFixed(1)}`,
+          label: (item) =>
+            `${item.dataset.label} ${item.parsed.y.toFixed(0)}%`,
+        },
+      },
+    },
+  },
+  plugins: [markerLines([{ x: data.due, label: 'DUE' }])],
+}));
+
+// The reviews to come day by day, one stacked series per step, the
+// overdue ones first. Each step keeps the colour role the view gave it,
+// whatever the others do.
+// data: {labels, series: [{label, role, data}]}
+register('training-forecast', (data) => ({
+  type: 'bar',
+  data: {
+    labels: data.labels,
+    datasets: data.series.map((series) => ({
+      label: series.label,
+      data: series.data,
+      backgroundColor: token(series.role),
+    })),
+  },
+  options: {
+    interaction: { mode: 'index', intersect: false },
+    datasets: {
+      bar: { borderRadius: 0, categoryPercentage: 0.7, barPercentage: 0.9 },
+    },
+    scales: {
+      x: { stacked: true, grid: { display: false } },
+      y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
+    },
+    plugins: {
+      tooltip: {
+        filter: (item) => item.parsed.y > 0,
+        callbacks: {
+          label: (item) => `${item.dataset.label} ${item.parsed.y}`,
+        },
+      },
+    },
+  },
+}));
+
 export function draw(canvas) {
   const build = builders[canvas.dataset.chart];
   if (!build) {

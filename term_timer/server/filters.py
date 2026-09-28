@@ -380,6 +380,27 @@ def alg_text(tokens: list[AlgToken]) -> str:
     return ' '.join(moves)
 
 
+BREAK_RE: Final = re.compile(r'(?:\s*<br\s*/?>\s*)+', re.IGNORECASE)
+
+
+def paragraphs(text: str) -> list[str]:
+    """
+    Split a text of the case database on its line breaks.
+
+    The database breaks its texts with <br> tags, which an escaping
+    template would print as they are.
+
+    Returns:
+        The non-empty paragraphs of the text, stripped.
+
+    """
+    return [
+        paragraph.strip()
+        for paragraph in BREAK_RE.split(text or '')
+        if paragraph.strip()
+    ]
+
+
 def split_time(elapsed_ns: int) -> tuple[str, str]:
     """
     Split a time into its head and its milliseconds, for a big display.

@@ -50,6 +50,7 @@ from term_timer.server.filters import metric_tone
 from term_timer.server.filters import normalize_percent
 from term_timer.server.filters import normalize_value
 from term_timer.server.filters import optimized_step
+from term_timer.server.filters import paragraphs
 from term_timer.server.filters import reconstruction_overheads
 from term_timer.server.filters import reconstruction_pauses
 from term_timer.server.filters import reconstruction_step
@@ -202,6 +203,7 @@ class View:
                         'days_ago': days_ago,
                         'hours': hours,
                         'weekday': weekday,
+                        'paragraphs': paragraphs,
                         'sparkline': sparkline,
                     },
                 },

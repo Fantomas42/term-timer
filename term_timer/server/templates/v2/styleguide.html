@@ -17,6 +17,10 @@
 {% from 'v2/components/table.html' import table %}
 {% from 'v2/components/tabs.html' import tabs %}
 {% from 'v2/components/zones.html' import zones, zones_legend %}
+{% from 'v2/components/case_grid.html' import case_scope, case_grid, case_tile, case_grid_legend %}
+{% from 'v2/components/player.html' import player as player_box %}
+{% from 'v2/components/segmented.html' import segmented %}
+{% from 'v2/components/state_bar.html' import state_bar %}
 
 {% block description %}Term Timer V2 design system: theme values and contrasts{% endblock %}
 
@@ -29,6 +33,7 @@
 {% block scripts %}
   <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
   <script type="module" src="/static/v2/js/charts.js"></script>
+  <script type="module" src="/static/v2/js/player.js"></script>
 {% endblock %}
 
 {% macro swatches(group) %}
@@ -293,6 +298,43 @@
           {% endcall %}
           {{ hero_time(0, 'DNF') }}
         </div>
+      {% endcall %}
+
+      {% call section('component-state-bar', 'state_bar · segmented', 15, aside='press t or h') %}
+        {{ state_bar(state_rows, 'Seeded cases by card state') }}
+        {{ state_bar(state_rows, 'Seeded cases by card state, thin', thin=true) }}
+        <div class="styleguide-demo-row">
+          {{ segmented('tint', [('state', 'State'), ('speed', 'Speed'), ('memory', 'Memory'), ('none', 'None')], 'state', 'Tint', '#styleguide-cases', key='t') }}
+          {{ segmented('quiz', [('off', 'Show'), ('on', 'Quiz')], 'off', 'Algorithms', '#styleguide-cases', key='h') }}
+        </div>
+      {% endcall %}
+
+      {% call section('component-case-grid', 'case_grid', 16, aside='due · own solution, slowing down · untrained') %}
+        {% call case_scope('styleguide-cases', tint='state') %}
+          {{ case_grid_legend() }}
+          {% call case_grid() %}
+            {% for tile in case_tiles %}{{ case_tile(tile) }}{% endfor %}
+          {% endcall %}
+          {% call case_grid(size='l') %}
+            {% for tile in case_tiles %}{{ case_tile(tile, alg_size='m') }}{% endfor %}
+          {% endcall %}
+        {% endcall %}
+      {% endcall %}
+
+      {% call section('component-player', 'player', 17, aside='moves paced evenly') %}
+        <div class="styleguide-demo-columns">
+          {{ player_box('styleguide-player', player_data, hint='Sune, ending solved.') }}
+        </div>
+      {% endcall %}
+
+      {% call section('component-training-charts', 'training charts', 18) %}
+        <div class="styleguide-demo-columns">
+          {% if attempts_chart %}
+            {{ chart('styleguide-attempts', 'training-attempts', attempts_chart, title='Attempts · Ao5, Ao12, best', legend=[('dot', 'Attempt'), (1, 'Ao5'), (3, 'Ao12')]) }}
+          {% endif %}
+          {{ chart('styleguide-forgetting', 'training-forgetting', forgetting_chart, title='Forgetting curve') }}
+        </div>
+        {{ chart('styleguide-forecast', 'training-forecast', forecast_chart, title='Forecast · reviews per day', legend=[(1, 'F2L'), (3, 'OLL'), (4, 'PLL')]) }}
       {% endcall %}
     </section>
   </div>

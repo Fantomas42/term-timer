@@ -1,0 +1,22 @@
+{#- A 3D player of an algorithm with our own controls, drawn by
+    static/v2/js/player.js from its JSON data block (PlayerData): the
+    moves, the setup applied before them, or after them to end solved
+    with the end anchor, and their timings when they were measured. The
+    hint is shown under the moves. -#}
+
+{% macro player(id, data, hint='') -%}
+  <div class="player" id="{{ id }}" data-player="{{ id }}-data">
+    <div class="player-controls" data-player-controls hidden>
+      <button class="player-button" type="button" data-player-action="start" aria-label="Back to the start">|◀</button>
+      <button class="player-button" type="button" data-player-action="previous" aria-label="Previous move">◀</button>
+      <button class="player-button" type="button" data-player-action="play" aria-label="Play">▶</button>
+      <button class="player-button" type="button" data-player-action="next" aria-label="Next move">▶|</button>
+      <input class="player-scrub" type="range" min="0" max="0" step="1" value="0" aria-label="Player position" data-player-action="scrub">
+      <output class="player-time" data-player-action="time">0.00</output>
+    </div>
+    {%- if hint %}
+      <p class="player-hint">{{ hint }}</p>
+    {%- endif %}
+  </div>
+  <script type="application/json" id="{{ id }}-data">{{ data|tojson }}</script>
+{%- endmacro %}

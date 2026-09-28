@@ -4,19 +4,27 @@ from datetime import date
 from datetime import timedelta
 from random import Random
 
+from cubing_algs.cases import get_case
+
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.scrambler import scrambler
 from term_timer.server.activity import ActivityCalendar
 from term_timer.server.annotations import ActivityCalendarData
+from term_timer.server.annotations import AttemptsCurve
 from term_timer.server.annotations import BreadcrumbItem
 from term_timer.server.annotations import CareerChart
 from term_timer.server.annotations import CareerPoint
+from term_timer.server.annotations import CaseTile
+from term_timer.server.annotations import CaseTrainingTile
 from term_timer.server.annotations import ChartPoint
 from term_timer.server.annotations import DesignStyleguideContext
 from term_timer.server.annotations import DistributionChart
 from term_timer.server.annotations import FluencyData
+from term_timer.server.annotations import ForecastChart
+from term_timer.server.annotations import ForgettingCurve
 from term_timer.server.annotations import FormChart
 from term_timer.server.annotations import MovesTimingChart
+from term_timer.server.annotations import PlayerData
 from term_timer.server.annotations import RecognitionData
 from term_timer.server.annotations import StepsTpsChart
 from term_timer.server.annotations import StyleguideAlgorithm
@@ -24,11 +32,15 @@ from term_timer.server.annotations import StyleguideContext
 from term_timer.server.annotations import StyleguideGroup
 from term_timer.server.annotations import StyleguideSolveRow
 from term_timer.server.annotations import StyleguideToken
+from term_timer.server.annotations import TrainingStateRow
 from term_timer.server.annotations import TrendChart
 from term_timer.server.design import DesignTheme
 from term_timer.server.filters import alg_tokens
 from term_timer.server.filters import algorithm_tokens
+from term_timer.server.views.academy import AcademyCaseView
+from term_timer.server.views.academy import AcademyView
 from term_timer.server.views.base import View
+from term_timer.stats import Statistics
 
 STYLESHEET = STATIC_DIRECTORY / 'css' / 'style.css'
 
@@ -78,6 +90,54 @@ FIXTURE_SOLVES: tuple[StyleguideSolveRow, ...] = (
     {'number': 1177, 'time': '27.442', 'seconds': 27.442,
      'tps': 2.87, 'grade': 'C'},
 )
+
+# Training of the case tiles demo: due and slipping, then slowing down.
+FIXTURE_TILES: tuple[CaseTrainingTile, ...] = (
+    {'state_label': 'Review', 'state_class': 'review', 'overdue': True,
+     'attempts': 18, 'ao5': 2_140_000_000, 'trend': 'flat',
+     'speed': 'mid', 'memory': '1', 'retention': 72.4},
+    {'state_label': 'Stable', 'state_class': 'stable', 'overdue': False,
+     'attempts': 42, 'ao5': 1_380_000_000, 'trend': 'down',
+     'speed': 'slow-1', 'memory': '4', 'retention': 97.1},
+)
+
+
+def fixture_state(label: str, count: int, overdue: int) -> TrainingStateRow:
+    """
+    Build a row of the cards by state demo, over 57 cases.
+
+    Returns:
+        The state row.
+
+    """
+    return {
+        'label': label, 'klass': label.lower(), 'count': count,
+        'overdue': overdue, 'share': count * 100 / 57, 'offset': 0.0,
+        'best': 0, 'average': 0, 'worst': 0,
+    }
+
+
+FIXTURE_STATES: tuple[TrainingStateRow, ...] = (
+    fixture_state('New', 12, 0),
+    fixture_state('Learning', 6, 2),
+    fixture_state('Relearning', 3, 3),
+    fixture_state('Review', 9, 9),
+    fixture_state('Stable', 27, 0),
+)
+
+FIXTURE_PLAYER: PlayerData = {
+    'alg': "R U R' U R U2 R'",
+    'setup': '',
+    'anchor': 'end',
+    'puzzle': '3x3x3',
+    'timing': [],
+    'index': {},
+}
+
+# Power law of the FSRS forgetting curve: recall 90% after the
+# stability.
+FSRS_DECAY = -0.5
+FSRS_FACTOR = 19 / 81
 
 BANNER_RE = re.compile(r'/\*\s*(.+?)\s*\*/')
 TOKEN_RE = re.compile(
@@ -221,6 +281,12 @@ class DesignStyleguideView(View):
             'trend_chart': DesignStyleguideView.trend_chart(),
             'distribution_chart': DesignStyleguideView.distribution_chart(),
             'career_chart': DesignStyleguideView.career_chart(),
+            'case_tiles': DesignStyleguideView.case_tiles(),
+            'state_rows': list(FIXTURE_STATES),
+            'player_data': FIXTURE_PLAYER,
+            'attempts_chart': DesignStyleguideView.attempts_chart(),
+            'forgetting_chart': DesignStyleguideView.forgetting_chart(),
+            'forecast_chart': DesignStyleguideView.forecast_chart(),
         }
 
     @staticmethod
@@ -367,6 +433,89 @@ class DesignStyleguideView(View):
                 {'key': 'default', 'label': 'Default', 'role': 'chart-3'},
             ],
             'labels': {'daily': 'Daily', 'default': 'Default'},
+        }
+
+    @staticmethod
+    def case_tiles() -> list[CaseTile]:
+        """
+        Case tiles of every kind: trained and due, trained with a
+        solution of its own and slowing down, never trained.
+
+        Returns:
+            The tiles of the case grid demo.
+
+        """
+        academy = AcademyView()
+        return [
+            academy.build_tile(
+                get_case('CFOP/PLL', 'Aa'), FIXTURE_TILES[0],
+                note='overdue by 2 d',
+            ),
+            academy.build_tile(
+                get_case('CFOP/OLL', '27'), FIXTURE_TILES[1],
+                "R U R' U R U2 R'",
+            ),
+            academy.build_tile(get_case('CFOP/F2L', '02'), None),
+        ]
+
+    @staticmethod
+    def attempts_chart() -> AttemptsCurve | None:
+        """
+        Twenty attempts of a case getting faster.
+
+        Returns:
+            The data of the training-attempts chart.
+
+        """
+        return AcademyCaseView.build_attempts_curve(
+            Statistics.from_milliseconds([
+                2600 - index * 45 + (index * 37 % 11 - 5) * 40
+                for index in range(20)
+            ]),
+        )
+
+    @staticmethod
+    def forgetting_chart() -> ForgettingCurve:
+        """
+        Sample the recall of a case of five days of stability with the
+        power law of FSRS, reviewed eight days ago and due after six.
+
+        Returns:
+            The data of the training-forgetting chart.
+
+        """
+        def recall(days: float) -> float:
+            return float(100 * (1 + FSRS_FACTOR * days / 5) ** FSRS_DECAY)
+
+        return {
+            'points': [
+                {'x': days, 'y': recall(days)} for days in range(13)
+            ],
+            'today': 8.0,
+            'due': 6.0,
+            'retention': recall(8),
+        }
+
+    @staticmethod
+    def forecast_chart() -> ForecastChart:
+        """
+        Reviews of three steps over a week, overdue first.
+
+        Returns:
+            The data of the training-forecast chart.
+
+        """
+        return {
+            'labels': ['Overdue', 'Today', 'Tomorrow', 'Wed 30', 'Thu 01',
+                       'Fri 02', 'Sat 03'],
+            'series': [
+                {'label': 'F2L', 'role': 'chart-1',
+                 'data': [3, 1, 0, 2, 0, 1, 0]},
+                {'label': 'OLL', 'role': 'chart-3',
+                 'data': [5, 2, 4, 0, 1, 3, 0]},
+                {'label': 'PLL', 'role': 'chart-4',
+                 'data': [1, 0, 1, 0, 0, 2, 1]},
+            ],
         }
 
     @staticmethod

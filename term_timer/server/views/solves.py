@@ -26,8 +26,8 @@ from term_timer.server.annotations import FluencyData
 if TYPE_CHECKING:
     from term_timer.methods.annotations import StepSummary
     from term_timer.methods.base import Analyser
+from term_timer.server.annotations import PlayerData
 from term_timer.server.annotations import RecognitionData
-from term_timer.server.annotations import ReplayData
 from term_timer.server.annotations import ScatterPoint
 from term_timer.server.annotations import SolveDetailContext
 from term_timer.server.annotations import SolveStepRow
@@ -277,7 +277,7 @@ class SolveDetailView(SolveLocation, View):
         return f'{ self.session_url(self.cube, self.session) }{ solve_id }/'
 
     def replay_data(self, reconstruction_text: str,
-                    step_index: dict[str, int]) -> ReplayData:
+                    step_index: dict[str, int]) -> PlayerData:
         """
         Build what the replay module plays: moves, timings, step starts.
 
@@ -296,7 +296,8 @@ class SolveDetailView(SolveLocation, View):
             ]
         return {
             'alg': reconstruction_text,
-            'scramble': str(self.solve.scramble),
+            'setup': str(self.solve.scramble),
+            'anchor': 'start',
             'puzzle': f'{ self.cube }x{ self.cube }x{ self.cube }',
             'timing': timing,
             'index': step_index,

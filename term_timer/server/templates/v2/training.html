@@ -1,0 +1,112 @@
+{% extends "v2/skeleton.html" %}
+{% from 'v2/components/button.html' import button, copy_button %}
+{% from 'v2/components/case_grid.html' import case_scope, case_grid, case_tile, case_grid_legend %}
+{% from 'v2/components/chart.html' import chart %}
+{% from 'v2/components/command.html' import command as command_line %}
+{% from 'v2/components/page_header.html' import page_header %}
+{% from 'v2/components/section.html' import section %}
+{% from 'v2/components/stat.html' import stat, stat_grid %}
+{% from 'v2/components/state_bar.html' import state_bar %}
+{% from 'v2/components/table.html' import table %}
+
+{% set STEP_COLUMNS = [
+  {'label': 'Step'},
+  {'label': 'Due', 'numeric': true},
+  {'label': 'New', 'numeric': true},
+  {'label': 'Mastered', 'numeric': true},
+  {'label': 'Cards by state'},
+  {'label': ''},
+] %}
+
+{% block description %}Training: the reviews due, the forecast and the cases to rework{% endblock %}
+
+{% block title %}Training{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="/static/v2/css/pages/training.css">
+{% endblock %}
+
+{% block scripts %}
+  {% if forecast.series %}
+    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+    <script type="module" src="/static/v2/js/charts.js"></script>
+  {% endif %}
+{% endblock %}
+
+{% block body %}
+  {{ page_header('Training', 'CFOP') }}
+
+  {% if not banner %}
+    <div class="training-empty">
+      <p>No case trained yet: the trainer drills the cases of a step on the cube, and schedules their reviews.</p>
+      {{ command_line('term-timer train') }}
+    </div>
+  {% else %}
+    <div class="training">
+      <div class="training-zone" data-zone="today">
+        {% call section('today', 'Today', 1, aside='FSRS') %}
+          {% call stat_grid() %}
+            {{ stat('Due', banner.due, 'review' ~ ('s' if banner.due != 1 else '') ~ ' now', 'warn' if banner.due else 'good', size='l') }}
+            {{ stat('Mastered', steps|sum(attribute='status.mastered'), 'of %d cases'|format(steps|sum(attribute='status.total')), size='l') }}
+            {{ stat('New', steps|sum(attribute='status.new'), 'never trained', size='l') }}
+          {% endcall %}
+
+          {% call table(STEP_COLUMNS, sortable=false) %}
+            {% for row in steps %}
+              {% set status = row.status %}
+              <tr>
+                <td>
+                  {%- if row.academy_url -%}
+                    <a class="training-step" href="{{ row.academy_url }}">{{ status.step }}</a>
+                  {%- else -%}
+                    <span class="training-step">{{ status.step }}</span>
+                  {%- endif -%}
+                </td>
+                <td{% if status.due %} data-tone="warn"{% endif %}><span class="training-figure">{{ status.due }}</span></td>
+                <td>{{ status.new }}</td>
+                <td>{{ status.mastered }}/{{ status.total }}</td>
+                <td class="training-states">{{ state_bar(row.states, status.step ~ ' cases by card state', thin=true) }}</td>
+                <td>
+                  <span class="training-actions">
+                    {{- button('Review sheet', href=row.review_url) if row.review_url }}
+                    {{- copy_button(row.command, 'command') if row.command }}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          {% endcall %}
+          <p class="training-note">Mastered: in review with a stability of 14 days or more. Copy puts the command training the step on the clipboard.</p>
+          {% if banner.unavailable %}
+            <p class="training-note">Unavailable right now, being written or damaged: {{ banner.unavailable|join(', ') }}.</p>
+          {% endif %}
+        {% endcall %}
+      </div>
+
+      <div class="training-zone" data-zone="forecast">
+        {% call section('forecast', 'Forecast', 2, aside='%d days'|format(forecast.labels|length - 1)) %}
+          {% if forecast.series %}
+            {{ chart('chart-forecast', 'training-forecast', forecast_chart,title='Reviews per day, overdue first', legend=forecast_legend) }}
+            <p class="training-note">Reviews scheduled by FSRS, on your local days.{% if forecast.later %} {{ forecast.later }} more beyond this window.{% endif %}</p>
+          {% else %}
+            <p class="training-note">No review scheduled yet.</p>
+          {% endif %}
+        {% endcall %}
+      </div>
+
+      <div class="training-zone" data-zone="weak">
+        {% call section('weak', 'To rework', 3, aside='recall under 90% or slowing down') %}
+          {% if weak %}
+            {% call case_scope('weak-cases', tint='memory') %}
+              {{ case_grid_legend() }}
+              {% call case_grid() %}
+                {% for tile in weak %}{{ case_tile(tile, orientation_faces, palette) }}{% endfor %}
+              {% endcall %}
+            {% endcall %}
+          {% else %}
+            <p class="training-note">Nothing to rework: every reviewed case is well remembered and holding its pace.</p>
+          {% endif %}
+        {% endcall %}
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

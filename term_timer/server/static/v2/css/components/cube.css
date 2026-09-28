@@ -15,4 +15,8 @@
   .cube[data-size="l"] {
     width: 20rem;
   }
+
+  .cube[data-fit] {
+    width: 100%;
+  }
 }

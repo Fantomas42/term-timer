@@ -216,7 +216,7 @@ class Server:
                 mode=request.GET.m,
                 cube_size=request.GET.c,
                 palette=request.GET.p,
-            ).as_view(debug)
+            ).legacy(v1='v1' in request.GET).as_view(debug)
 
         @app.route('/academy/<method>/<step>/')  # type: ignore[untyped-decorator]
         def academy_step(method: str, step: str) -> str:
@@ -235,7 +235,7 @@ class Server:
                 mode=request.GET.m,
                 cube_size=request.GET.c,
                 palette=request.GET.p,
-            ).as_view(debug)
+            ).legacy(v1='v1' in request.GET).as_view(debug)
 
         @app.route('/academy/<method>/<step>/<case_id>/')  # type: ignore[untyped-decorator]
         def academy_case(method: str, step: str, case_id: str) -> str:
@@ -252,7 +252,7 @@ class Server:
                 mode=request.GET.m,
                 cube_size=request.GET.c,
                 palette=request.GET.p,
-            ).as_view(debug)
+            ).legacy(v1='v1' in request.GET).as_view(debug)
 
         @app.route('/academy/<method>/<step>/<case_id>/debug/')  # type: ignore[untyped-decorator]
         def academy_case_algorithms_debug(
@@ -271,7 +271,7 @@ class Server:
                 mode=request.GET.m,
                 cube_size=request.GET.c,
                 palette=request.GET.p,
-            ).as_view(debug)
+            ).legacy(v1='v1' in request.GET).as_view(debug)
 
     @staticmethod
     def add_training_routes(app: Bottle, *, debug: bool) -> None:
@@ -292,18 +292,24 @@ class Server:
                 Rendered HTML template.
 
             """
-            return TrainingForecastView().as_view(debug)
+            return TrainingForecastView().legacy(
+                v1='v1' in request.GET,
+            ).as_view(debug)
 
         @app.route('/training/<method>/<step>/review/')  # type: ignore[untyped-decorator]
         def training_review(method: str, step: str) -> str:
             """
-            Render the flashcards of the due cases of a step.
+            Render the review sheet of a step.
 
             Returns:
                 Rendered HTML template.
 
             """
-            return TrainingReviewView(method, step).as_view(debug)
+            return TrainingReviewView(
+                method, step,
+                pool=request.GET.pool,
+                family=request.GET.family,
+            ).legacy(v1='v1' in request.GET).as_view(debug)
 
     @staticmethod
     def create_app(*, debug: bool) -> Bottle:  # noqa: C901

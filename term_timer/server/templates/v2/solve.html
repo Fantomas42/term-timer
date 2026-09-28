@@ -8,6 +8,7 @@
 {% from 'v2/components/hero_time.html' import hero_time %}
 {% from 'v2/components/dialog.html' import help_dialog, confirm_dialog %}
 {% from 'v2/components/page_header.html' import page_header %}
+{% from 'v2/components/player.html' import player %}
 {% from 'v2/components/section.html' import section %}
 {% from 'v2/components/stat.html' import stat, stat_grid %}
 {% from 'v2/components/tabs.html' import tabs %}
@@ -47,7 +48,7 @@
   {% if advanced %}
     <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
     <script type="module" src="/static/v2/js/charts.js"></script>
-    <script type="module" src="/static/v2/js/replay.js"></script>
+    <script type="module" src="/static/v2/js/player.js"></script>
   {% endif %}
 {% endblock %}
 
@@ -222,18 +223,7 @@
       {% if advanced %}
         <div class="solve-sticky">
         {% call numbered('replay', 'Replay') %}
-          <div class="solve-replay" id="replayer">
-            <div class="solve-replay-controls" data-replay-controls hidden>
-              <button class="solve-replay-button" type="button" data-replay="start" aria-label="Back to the start">|◀</button>
-              <button class="solve-replay-button" type="button" data-replay="previous" aria-label="Previous move">◀</button>
-              <button class="solve-replay-button" type="button" data-replay="play" aria-label="Play">▶</button>
-              <button class="solve-replay-button" type="button" data-replay="next" aria-label="Next move">▶|</button>
-              <input class="solve-replay-scrub" type="range" min="0" max="0" step="1" value="0" aria-label="Replay position" data-replay="scrub">
-              <output class="solve-replay-time" data-replay="time">0.00</output>
-            </div>
-            <p class="solve-replay-hint">Click a step name to jump there.</p>
-          </div>
-          <script type="application/json" id="replay-data">{{ replay|tojson }}</script>
+          {{ player('replay-player', replay, hint='Click a step name to jump there.') }}
         {% endcall %}
         </div>
       {% endif %}

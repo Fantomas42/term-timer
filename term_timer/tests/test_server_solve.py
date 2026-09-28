@@ -272,14 +272,15 @@ class TestAdvancedSolvePage(SolveServerTestCase):
     def test_replay_data(self) -> None:
         """The replay reads its moves, timings and step starts as JSON."""
         match = re.search(
-            r'<script type="application/json" id="replay-data">'
+            r'<script type="application/json" id="replay-player-data">'
             r'(.*?)</script>',
             self.body, re.DOTALL,
         )
         self.assertIsNotNone(match)
         data = json.loads(cast('re.Match[str]', match).group(1))
         self.assertEqual(data['puzzle'], '3x3x3')
-        self.assertEqual(data['scramble'], SCRAMBLE)
+        self.assertEqual(data['setup'], SCRAMBLE)
+        self.assertEqual(data['anchor'], 'start')
         self.assertIn('Cross', data['index'])
         self.assertTrue(data['timing'])
         self.assertTrue(all(len(item) == 2 for item in data['timing']))
@@ -307,7 +308,7 @@ class TestSolvePageVariants(SolveServerTestCase):
         self.assertIn('name="flag" value="DNF"', body)
         self.assertNotIn('data-zone="diagnostics"', body)
         self.assertNotIn('data-zone="charts"', body)
-        self.assertNotIn('replay-data', body)
+        self.assertNotIn('replay-player-data', body)
         self.assertNotIn(f'href="/3/{ SESSION }/0/"', body)
 
     def test_comment_escaped(self) -> None:

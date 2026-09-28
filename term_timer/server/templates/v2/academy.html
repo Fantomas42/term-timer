@@ -1,0 +1,53 @@
+{% extends "v2/skeleton.html" %}
+{% from 'v2/components/button.html' import button %}
+{% from 'v2/components/cube.html' import cube as cube_image %}
+{% from 'v2/components/page_header.html' import page_header %}
+{% from 'v2/components/section.html' import section %}
+{% from 'v2/components/state_bar.html' import state_bar %}
+
+{% block description %}Academy: every case of every step, its algorithms and your training{% endblock %}
+
+{% block title %}Academy{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="/static/v2/css/pages/academy.css">
+{% endblock %}
+
+{% block body %}
+  {{ page_header('Academy', method_cards|length ~ ' methods') }}
+
+  <p class="academy-lead">Every case of every step: how to recognise it, the algorithms to solve it, and where your training of it stands.</p>
+
+  {% for method in method_cards %}
+    {% call section(method.slug, method.cube_size ~ 'x' ~ method.cube_size ~ 'x' ~ method.cube_size ~ ' ' ~ method.name, loop.index, aside=method.title) %}
+      <p class="academy-text">{{ method.description }}</p>
+      <ul class="academy-cards">
+        {% for step in method.steps %}
+          <li class="academy-card">
+            <a class="academy-card-link" href="{{ step.href }}">
+              <span class="academy-card-name">{{ step.step }}</span>
+              <span class="academy-card-title">{{ step.title }}</span>
+              {% if step.image %}
+                <span class="academy-card-image">
+                  {{ cube_image(case=step.image, cube_size=method.cube_size, mode=step.mode, orientation=orientation_faces, palette=palette, arrows=step.arrows, fit=true, label=step.step ~ ' case') }}
+                </span>
+              {% endif %}
+              <span class="academy-card-count"><b>{{ step.cases }}</b> case{{ 's' if step.cases != 1 }}</span>
+            </a>
+            <p class="academy-card-text">{{ step.description }}</p>
+            {% if step.counts %}
+              <div class="academy-card-training">
+                {{ state_bar(step.states, step.step ~ ' cases by card state', thin=true) }}
+                <p class="academy-card-figures">
+                  <span{% if step.counts.due %} data-tone="warn"{% endif %}><b>{{ step.counts.due }}</b> due</span>
+                  <span><b>{{ step.counts.mastered }}</b>/{{ step.counts.cases }} mastered</span>
+                </p>
+                <div class="academy-card-actions">{{ button('Review sheet', href=step.review_url) }}</div>
+              </div>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endcall %}
+  {% endfor %}
+{% endblock %}

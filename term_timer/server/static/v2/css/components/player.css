@@ -1,0 +1,85 @@
+/* The 3D player: the cube, our controls, the moves with the current one
+   in acid, then the hint. A bounded column: the player and the viewer
+   would otherwise keep their min-content width and widen the page on a
+   phone. */
+
+@layer components {
+  .player {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    border: var(--hairline) solid var(--line);
+    background: var(--surface);
+  }
+
+  .player twisty-player {
+    width: 100%;
+    height: auto;
+    max-height: 28rem;
+    aspect-ratio: 1;
+  }
+
+  .player-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    border-top: var(--hairline) solid var(--line);
+  }
+
+  .player-controls[hidden] {
+    display: none;
+  }
+
+  .player-button {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 var(--space-2);
+    border: var(--hairline) solid var(--line-strong);
+    background: none;
+    color: var(--text);
+    font: 600 var(--step--1) / 1 var(--font-mono);
+    cursor: pointer;
+  }
+
+  .player-button:hover {
+    border-color: var(--text);
+  }
+
+  .player-button[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .player-scrub {
+    flex: 1;
+    min-width: 0;
+    accent-color: var(--accent);
+  }
+
+  .player-time {
+    min-width: 3.5em;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .player twisty-alg-viewer {
+    max-height: 7.5rem;
+    overflow-y: auto;
+    padding: var(--space-2) var(--space-3);
+    border-top: var(--hairline) solid var(--line);
+  }
+
+  .player-hint {
+    order: 3;
+    padding: var(--space-2) var(--space-3);
+    border-top: var(--hairline) solid var(--line);
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+}

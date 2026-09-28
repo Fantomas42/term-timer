@@ -1,0 +1,20 @@
+{#- The cases of a step by FSRS card state, laid end to end on one bar,
+    with a legend counting each state. rows are the TrainingStateRow of
+    the populated states; a thin bar drops its legend. -#}
+
+{% macro state_bar(rows, label, thin=false) -%}
+  <figure class="state-bar"{% if thin %} data-thin{% endif %}>
+    <div class="state-bar-track" role="img" aria-label="{{ label }}">
+      {%- for row in rows %}
+        <span class="state-bar-part" data-tone="state-{{ row.klass }}" style="--share: {{ '%.2f'|format(row.share) }}%" title="{{ row.label }} · {{ row.count }}"></span>
+      {%- endfor %}
+    </div>
+    {%- if not thin %}
+      <figcaption class="state-bar-legend">
+        {%- for row in rows %}
+          <span class="state-bar-key" data-tone="state-{{ row.klass }}"><b>{{ row.count }}</b> {{ row.label }}{% if row.overdue %} <span class="state-bar-due">· {{ row.overdue }} due</span>{% endif %}</span>
+        {%- endfor %}
+      </figcaption>
+    {%- endif %}
+  </figure>
+{%- endmacro %}

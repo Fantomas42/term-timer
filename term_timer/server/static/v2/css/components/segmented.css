@@ -1,0 +1,50 @@
+/* A segmented switch: a label, then options glued in one row, the
+   pressed one in acid. */
+
+@layer components {
+  .segmented {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .segmented-label {
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .segmented-option {
+    min-height: 2rem;
+    margin-left: calc(-1 * var(--space-2) - var(--hairline));
+    padding: 0 var(--space-3);
+    border: var(--hairline) solid var(--line-strong);
+    background: none;
+    color: var(--text-muted);
+    font: 600 var(--step--1) / 1 var(--font-sans);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      background var(--fast) var(--ease),
+      color var(--fast) var(--ease);
+  }
+
+  .segmented-label + .segmented-option {
+    margin-left: 0;
+  }
+
+  .segmented-option:hover {
+    color: var(--text);
+  }
+
+  .segmented-option[aria-pressed="true"] {
+    position: relative;
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+}

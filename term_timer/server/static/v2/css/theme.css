@@ -76,6 +76,21 @@
     --zone-2: var(--amber);
     --zone-3: var(--red);
     --zone-dnf: var(--ink-4);
+    --state-new: var(--paper-dim);
+    --state-learning: var(--cyan);
+    --state-relearning: var(--violet);
+    --state-review: var(--amber);
+    --state-stable: var(--mint);
+    --speed-fast-2: var(--mint);
+    --speed-fast-1: var(--acid);
+    --speed-mid: var(--paper-faint);
+    --speed-slow-1: var(--amber);
+    --speed-slow-2: var(--red);
+    --memory-0: var(--red);
+    --memory-1: var(--amber);
+    --memory-2: var(--acid-48);
+    --memory-3: var(--acid-74);
+    --memory-4: var(--acid);
     --tooltip-bg: var(--paper);
     --tooltip-text: var(--ink-0);
 

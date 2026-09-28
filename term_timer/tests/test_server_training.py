@@ -277,7 +277,7 @@ class TestAcademyCaseTraining(TrainingServerTestCase):
         self.assertEqual(panel['attempts'], 0)
 
     def test_page_renders_panel(self) -> None:
-        """The case page renders the training panel."""
+        """The V1 case page renders the training panel."""
         self.write_step('OLL', {
             '27': {
                 'last_date': 1790000000,
@@ -288,16 +288,20 @@ class TestAcademyCaseTraining(TrainingServerTestCase):
             },
         })
 
-        html = AcademyCaseView('CFOP', 'OLL', '27', '').as_view(debug=False)
+        html = AcademyCaseView('CFOP', 'OLL', '27', '').legacy(
+            v1=True,
+        ).as_view(debug=False)
 
         self.assertIn('id="training"', html)
         self.assertIn('forgettingChart', html)
 
     def test_page_renders_unavailable(self) -> None:
-        """A truncated file renders a notice instead of failing."""
+        """A truncated file renders a V1 notice instead of failing."""
         self.write_step('OLL', '{')
 
-        html = AcademyCaseView('CFOP', 'OLL', '27', '').as_view(debug=False)
+        html = AcademyCaseView('CFOP', 'OLL', '27', '').legacy(
+            v1=True,
+        ).as_view(debug=False)
 
         self.assertIn('Training data unavailable', html)
 
@@ -468,12 +472,12 @@ class TestAcademyStepTraining(TrainingServerTestCase):
         self.assertEqual(summary['total']['count'], len(context['cases']))
 
     def test_page_renders_tints(self) -> None:
-        """The step page renders the tint selector and the summary."""
+        """The V1 step page renders the tint selector and the summary."""
         self.write_step('PLL', {'Aa': trained([2000])})
 
         html = AcademyStepView(
             'CFOP', 'PLL', '', '', '',
-        ).as_view(debug=False)
+        ).legacy(v1=True).as_view(debug=False)
 
         self.assertIn('data-tint="state"', html)
         self.assertIn('training-summary', html)
@@ -538,8 +542,8 @@ class TestTrainingForecast(TrainingServerTestCase):
         )
 
     def test_page_renders(self) -> None:
-        """The forecast page renders, even without any training."""
-        html = TrainingForecastView().as_view(debug=False)
+        """The V1 forecast page renders, even without any training."""
+        html = TrainingForecastView().legacy(v1=True).as_view(debug=False)
 
         self.assertIn('No training yet', html)
 
@@ -661,10 +665,12 @@ class TestTrainingReview(TrainingServerTestCase):
         self.assertEqual(cards[0]['algorithm'], "R U R' U'")
 
     def test_nothing_due(self) -> None:
-        """Without due case the page says so."""
+        """Without due case the V1 page says so."""
         self.write_step('PLL', {'Aa': trained([2000])})
 
-        html = TrainingReviewView('CFOP', 'PLL').as_view(debug=False)
+        html = TrainingReviewView('CFOP', 'PLL').legacy(
+            v1=True,
+        ).as_view(debug=False)
 
         self.assertIn('Nothing to review', html)
 
@@ -676,12 +682,14 @@ class TestTrainingReview(TrainingServerTestCase):
         self.assertEqual(caught.exception.status_code, 404)
 
     def test_page_renders_cards(self) -> None:
-        """The review page renders the hidden algorithm of each card."""
+        """The V1 review page renders the hidden algorithm of each card."""
         self.write_step('PLL', {
             'Aa': due_card(datetime.now(UTC) - timedelta(hours=1)),
         })
 
-        html = TrainingReviewView('CFOP', 'PLL').as_view(debug=False)
+        html = TrainingReviewView('CFOP', 'PLL').legacy(
+            v1=True,
+        ).as_view(debug=False)
 
         self.assertIn('flashcard', html)
         self.assertIn('hidden', html)

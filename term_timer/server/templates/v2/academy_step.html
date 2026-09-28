@@ -1,0 +1,116 @@
+{% extends "v2/skeleton.html" %}
+{% from 'v2/components/badge.html' import badge %}
+{% from 'v2/components/button.html' import button %}
+{% from 'v2/components/case_grid.html' import case_scope, case_grid, case_tile, case_grid_legend %}
+{% from 'v2/components/command.html' import command as command_line %}
+{% from 'v2/components/dialog.html' import help_dialog %}
+{% from 'v2/components/page_header.html' import page_header %}
+{% from 'v2/components/section.html' import section %}
+{% from 'v2/components/segmented.html' import segmented %}
+{% from 'v2/components/stat.html' import stat, stat_grid %}
+{% from 'v2/components/state_bar.html' import state_bar %}
+{% from 'v2/components/table.html' import table %}
+
+{% set STATE_COLUMNS = [
+  {'label': 'State'},
+  {'label': 'Σ', 'numeric': true},
+  {'label': 'Due', 'numeric': true},
+  {'label': 'Best', 'numeric': true},
+  {'label': 'Avg', 'numeric': true},
+  {'label': 'Worst', 'numeric': true},
+] %}
+
+{% set SHORTCUTS = [
+  ('t', 'Tint the cases by state, speed or memory'),
+  ('h', 'Hide the algorithms, to quiz yourself'),
+  ('r', 'Open the review sheet'),
+  ('j', 'Next section'),
+  ('k', 'Previous section'),
+  ('?', 'This help'),
+] %}
+
+{% set trained = training_summary is not none %}
+{% set shown = families|selectattr('tiles')|list %}
+
+{% block description %}Every {{ method }} {{ step }} case, its algorithm and your training{% endblock %}
+
+{% block title %}{{ method }} {{ step }}{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="/static/v2/css/pages/academy-step.css">
+{% endblock %}
+
+{% block body %}
+  {% call page_header(step, cases|length ~ ' case' ~ ('s' if cases|length != 1 else ''), breadcrumb) %}
+    {{ button('Review sheet', href=review_url, key='r') if review_url }}
+  {% endcall %}
+
+  <p class="academy-step-lead">{{ step_info.description }}</p>
+
+  {% if counts %}
+    <div class="academy-step-summary">
+      {% call stat_grid() %}
+        {{ stat('Cases', counts.cases) }}
+        {{ stat('Trained', counts.trained, '%d%%'|format(100 * counts.trained / counts.cases) if counts.cases else '') }}
+        {{ stat('Mastered', counts.mastered, 'stable 14 d or more', 'good' if counts.mastered else '') }}
+        {{ stat('Due', counts.due, 'reviews now', 'warn' if counts.due else '') }}
+      {% endcall %}
+      <div class="academy-step-states">
+        {{ state_bar(training_summary.rows, step ~ ' cases by card state') }}
+        {{ command_line(command) if command }}
+      </div>
+    </div>
+  {% elif training_unavailable %}
+    <p class="academy-step-notice">Training data unavailable: the file is being written or is damaged. Reload in a moment.</p>
+  {% endif %}
+
+  <div class="academy-step-toolbar">
+    <nav class="academy-step-families" aria-label="Families">
+      <a class="academy-step-family" href="{{ all_url }}"{% if not family and not group %} aria-current="page"{% endif %}>All</a>
+      {%- for item in families %}
+        <a class="academy-step-family" href="{{ item.href }}"{% if item.active %} aria-current="page"{% endif %}>{{ item.name or 'Other' }}</a>
+      {%- endfor %}
+      {%- if group %}
+        <a class="academy-step-family" href="{{ all_url }}" aria-current="page" title="Clear the group">Group {{ group }} ×</a>
+      {%- endif %}
+    </nav>
+    <div class="academy-step-switches">
+      {% if trained %}
+        {{ segmented('tint', [('state', 'State'), ('speed', 'Speed'), ('memory', 'Memory'), ('none', 'None')], 'state', 'Tint', '#cases', key='t') }}
+      {% endif %}
+      {{ segmented('quiz', [('off', 'Show'), ('on', 'Quiz')], 'off', 'Algorithms', '#cases', key='h') }}
+    </div>
+  </div>
+
+  {% call case_scope('cases', tint='state' if trained else 'none') %}
+    {% if trained %}{{ case_grid_legend() }}{% endif %}
+    {% for item in shown %}
+      {% call section('family-' ~ item.slug, item.name or 'Other', loop.index, aside=item.tiles|length ~ ' case' ~ ('s' if item.tiles|length != 1 else '')) %}
+        {% call case_grid() %}
+          {% for tile in item.tiles %}{{ case_tile(tile, orientation_faces, palette) }}{% endfor %}
+        {% endcall %}
+      {% endcall %}
+    {% else %}
+      <p class="academy-step-notice">No case in this selection.</p>
+    {% endfor %}
+  {% endcall %}
+
+  {% if trained %}
+    {% call section('states', 'By state', shown|length + 1, aside='best timing of each case') %}
+      {% call table(STATE_COLUMNS, sortable=false) %}
+        {% for row in training_summary.rows + [training_summary.total] %}
+          <tr>
+            <td>{% if loop.last %}<b>{{ row.label }}</b>{% else %}{{ badge(row.label, 'state-' ~ row.klass) }}{% endif %}</td>
+            <td>{{ row.count }}</td>
+            <td>{{ row.overdue or '·' }}</td>
+            <td>{{ row.best|format_duration if row.best else '·' }}</td>
+            <td>{{ row.average|format_duration if row.best else '·' }}</td>
+            <td>{{ row.worst|format_duration if row.best else '·' }}</td>
+          </tr>
+        {% endfor %}
+      {% endcall %}
+    {% endcall %}
+  {% endif %}
+
+  {{ help_dialog(SHORTCUTS if review_url else SHORTCUTS|rejectattr('0', 'equalto', 'r')|list) }}
+{% endblock %}

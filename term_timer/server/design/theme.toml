@@ -73,6 +73,25 @@ zone-1 = 'acid'
 zone-2 = 'amber'
 zone-3 = 'red'
 zone-dnf = 'ink-4'
+# FSRS card states: Review is due (a call to action), Stable is
+# scheduled ahead.
+state-new = 'paper-dim'
+state-learning = 'cyan'
+state-relearning = 'violet'
+state-review = 'amber'
+state-stable = 'mint'
+# Speed of a case: its Ao5 against the median Ao5 of its step.
+speed-fast-2 = 'mint'
+speed-fast-1 = 'acid'
+speed-mid = 'paper-faint'
+speed-slow-1 = 'amber'
+speed-slow-2 = 'red'
+# Memory of a case: its recall probability, from the weakest up.
+memory-0 = 'red'
+memory-1 = 'amber'
+memory-2 = 'acid-48'
+memory-3 = 'acid-74'
+memory-4 = 'acid'
 tooltip-bg = 'paper'
 tooltip-text = 'ink-0'
 
@@ -186,4 +205,29 @@ level = 'text'
 [[contrast]]
 text = 'tooltip-text'
 background = 'tooltip-bg'
+level = 'text'
+
+[[contrast]]
+text = 'accent-ink'
+background = 'state-new'
+level = 'text'
+
+[[contrast]]
+text = 'accent-ink'
+background = 'state-learning'
+level = 'text'
+
+[[contrast]]
+text = 'accent-ink'
+background = 'state-relearning'
+level = 'text'
+
+[[contrast]]
+text = 'accent-ink'
+background = 'state-review'
+level = 'text'
+
+[[contrast]]
+text = 'accent-ink'
+background = 'state-stable'
 level = 'text'

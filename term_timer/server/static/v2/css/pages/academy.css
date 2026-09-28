@@ -1,0 +1,108 @@
+/* Academy overview: one section per method, its steps as cards on a
+   hairline grid, each with its case count and, once trained, its cards
+   by state, the reviews due and the link to the review sheet. */
+
+@layer pages {
+  .academy-lead {
+    max-width: 48rem;
+    padding-top: var(--space-5);
+    color: var(--text-muted);
+    font-size: var(--step-1);
+    line-height: 1.35;
+  }
+
+  .academy-text {
+    margin-bottom: var(--space-4);
+    color: var(--text-muted);
+  }
+
+  .academy-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    border-top: var(--hairline) solid var(--line);
+    border-left: var(--hairline) solid var(--line);
+    list-style: none;
+  }
+
+  .academy-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-right: var(--hairline) solid var(--line);
+    border-bottom: var(--hairline) solid var(--line);
+  }
+
+  .academy-card-link {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    gap: var(--space-1) var(--space-3);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .academy-card-name {
+    font-size: var(--step-3);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+  }
+
+  .academy-card-link:hover .academy-card-name {
+    color: var(--accent);
+  }
+
+  .academy-card-title {
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+
+  .academy-card-image {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: min(100%, 10rem);
+    padding: var(--space-3) 0;
+  }
+
+  .academy-card-count {
+    grid-column: 1 / -1;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+  }
+
+  .academy-card-count b {
+    color: var(--text);
+  }
+
+  .academy-card-text {
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+
+  .academy-card-training {
+    display: grid;
+    gap: var(--space-2);
+    margin-top: auto;
+    padding-top: var(--space-3);
+    border-top: var(--hairline) solid var(--line);
+  }
+
+  .academy-card-figures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+  }
+
+  .academy-card-actions {
+    display: flex;
+  }
+
+  .academy-card-figures b {
+    color: var(--tone, var(--text));
+  }
+}

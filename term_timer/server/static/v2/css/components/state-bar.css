@@ -1,0 +1,55 @@
+/* A stacked bar of the FSRS card states, each part in its state colour,
+   and its legend of squares. */
+
+@layer components {
+  .state-bar {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .state-bar-track {
+    display: flex;
+    height: 0.75rem;
+    gap: var(--hairline);
+    background: var(--surface-raised);
+  }
+
+  .state-bar[data-thin] .state-bar-track {
+    height: 0.35rem;
+  }
+
+  .state-bar-part {
+    flex: 0 1 var(--share);
+    background: var(--tone);
+  }
+
+  .state-bar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-4);
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+
+  .state-bar-key {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .state-bar-key::before {
+    content: "";
+    width: 0.7em;
+    height: 0.7em;
+    background: var(--tone);
+  }
+
+  .state-bar-key b {
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .state-bar-due {
+    color: var(--warn);
+  }
+}
