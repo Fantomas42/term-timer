@@ -340,7 +340,7 @@ class ComponentCatalogueTestCase(unittest.TestCase):
 
     def test_copy_buttons_only_where_asked(self) -> None:
         """The reconstruction fixture has no copy button."""
-        self.assertEqual(self.body.count('data-copy-label='), 5)
+        self.assertEqual(self.body.count('data-copy-label='), 6)
         self.assertIn('data-copy-key="s"', self.body)
 
     def test_values_are_escaped(self) -> None:
@@ -401,6 +401,28 @@ class ComponentCatalogueTestCase(unittest.TestCase):
         self.assertIn('data-copy="term-timer train -s oll"', self.body)
         self.assertIn('data-lookup', self.body)
         self.assertIn('for="lookup-input" data-key="/"', self.body)
+
+    def test_zones(self) -> None:
+        """Squares of every zone and a DNF, the large ones linked."""
+        self.assertEqual(self.body.count('<span class="zones" data-size='), 3)
+        self.assertEqual(self.body.count('data-zone="dnf"'), 4)
+        self.assertEqual(
+            self.body.count('<a class="zones-item" href="#component-zones"'),
+            5,
+        )
+        self.assertIn('<span class="zones-time">19.590</span>', self.body)
+        self.assertIn('class="zones-legend"', self.body)
+
+    def test_diagnostic(self) -> None:
+        """Findings toned by severity, command and frequency when given."""
+        diagnostics = self.body.split('id="component-diagnostic"', 1)[1]
+
+        for tone in ('bad', 'warn', 'info', 'muted'):
+            self.assertIn(f'<li class="diagnostic" data-tone="{ tone }">',
+                          diagnostics)
+        self.assertEqual(diagnostics.count('% of attempts'), 2)
+        self.assertEqual(diagnostics.count('class="diagnostic-impact"'), 3)
+        self.assertIn('data-copy="term-timer train -s cross"', diagnostics)
 
     def test_tabs_and_table(self) -> None:
         """Tabs are ARIA tabs; the table is sortable."""

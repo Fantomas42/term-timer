@@ -1,0 +1,41 @@
+{#- Doctor findings: severity, location, time recoverable a solve, what
+    was found, the advice and the command to train it. frequency, the
+    share of solves meeting the finding, is given for a group of solves.
+    The caller renders each diagnostic inside diagnostic_list. -#}
+{% from 'v2/components/badge.html' import badge %}
+{% from 'v2/components/button.html' import copy_button %}
+
+{% set DIAGNOSTIC_TONES = {
+  'critical': 'bad',
+  'high': 'warn',
+  'medium': 'info',
+  'low': 'muted',
+} %}
+
+{% macro diagnostic_list() -%}
+  <ol class="diagnostic-list">{{ caller() }}</ol>
+{%- endmacro %}
+
+{% macro diagnostic(severity, location, description, advice, impact=0, command='', frequency=none) -%}
+  {%- set tone = DIAGNOSTIC_TONES[severity] -%}
+  <li class="diagnostic" data-tone="{{ tone }}">
+    <div class="diagnostic-head">
+      {{ badge(severity, tone) }}
+      <span class="diagnostic-location">{{ location }}</span>
+      {%- if impact > 0 %}
+        <span class="diagnostic-impact">&minus;{{ '%.2f'|format(impact) }}<span class="diagnostic-unit">s</span></span>
+      {%- endif %}
+    </div>
+    <p class="diagnostic-description">{{ description }}</p>
+    {%- if frequency is not none %}
+      <p class="diagnostic-frequency">{{ (frequency * 100)|round|int }}% of attempts</p>
+    {%- endif %}
+    <p class="diagnostic-advice">{{ advice }}</p>
+    {%- if command %}
+      <div class="diagnostic-command">
+        <code class="diagnostic-code">{{ command }}</code>
+        {{ copy_button(command, 'command') }}
+      </div>
+    {%- endif %}
+  </li>
+{%- endmacro %}

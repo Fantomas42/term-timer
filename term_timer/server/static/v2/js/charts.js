@@ -366,6 +366,166 @@ register('distribution', (data) => ({
   },
 }));
 
+// Daily charts: the fixed zones of the daily (DAILY_ZONE_EDGES) drawn as
+// faint bands behind the times, without chartjs-plugin-annotation.
+const ZONE_ROLES = ['zone-0', 'zone-1', 'zone-2', 'zone-3'];
+
+// The zones of the daily as horizontal bands, faint, clipped to the
+// chart area; each edge a thin line of the colour of the zone above it.
+// edges: [20, 25, 30] in seconds, four zones.
+function zoneBands(edges) {
+  return {
+    id: 'zoneBands',
+    beforeDatasetsDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      const bounds = [-Infinity, ...edges, Infinity];
+      const clamp = (value) => Math.min(
+        chartArea.bottom, Math.max(chartArea.top, value),
+      );
+      ctx.save();
+      ZONE_ROLES.forEach((role, index) => {
+        const low = Math.max(bounds[index], scales.y.min);
+        const high = Math.min(bounds[index + 1], scales.y.max);
+        if (low >= high) return;
+        const top = clamp(scales.y.getPixelForValue(high));
+        const bottom = clamp(scales.y.getPixelForValue(low));
+        ctx.fillStyle = token(role);
+        ctx.globalAlpha = 0.07;
+        ctx.fillRect(chartArea.left, top, chartArea.right - chartArea.left,
+                     bottom - top);
+        if (index && bounds[index] > scales.y.min) {
+          ctx.globalAlpha = 0.45;
+          ctx.fillRect(chartArea.left, bottom, chartArea.right - chartArea.left,
+                       1);
+        }
+      });
+      ctx.restore();
+    },
+  };
+}
+
+// An axis tick: whole seconds, minutes past a minute.
+const tick = (value) => (value < 60 ? `${value}` : seconds(value));
+
+const day = (label) => new Date(`${label}T00:00:00`).toLocaleDateString(
+  'en-GB', { day: 'numeric', month: 'short', year: 'numeric' },
+);
+
+// The best and the first attempt of every played day, on the zones.
+// data: {labels: [iso day], best: [s], first: [s], edges, floor, ceiling,
+//        clipped: points above the ceiling}
+register('daily-times', (data) => ({
+  type: 'line',
+  data: {
+    labels: data.labels,
+    datasets: [
+      { label: 'Best', data: data.best, borderColor: token('chart-1'),
+        backgroundColor: token('chart-1'), borderWidth: 2, pointRadius: 2,
+        pointHoverRadius: 5, tension: 0.2, order: 0 },
+      { label: 'First attempt', data: data.first, showLine: false,
+        pointRadius: 3, pointHoverRadius: 5, pointBorderWidth: 0,
+        pointBackgroundColor: token('chart-3'), order: 1 },
+    ],
+  },
+  options: {
+    interaction: { mode: 'index', intersect: false },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: {
+          maxTicksLimit: 8, maxRotation: 0,
+          callback(value) {
+            return new Date(`${this.getLabelForValue(value)}T00:00:00`)
+              .toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+          },
+        },
+      },
+      y: { min: data.floor, max: data.ceiling,
+           ticks: { stepSize: 5, callback: tick } },
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          title: (items) => day(items[0].label),
+          label: (item) => `${item.dataset.label} ${seconds(item.parsed.y)}`,
+        },
+      },
+    },
+  },
+  plugins: [zoneBands(data.edges)],
+}));
+
+// The attempts of a day in order, each bar of its zone, the best one
+// outlined.
+// data: {labels, times: [s], zones: [0-3 | null], best, edges, ceiling}
+register('daily-attempts', (data) => ({
+  type: 'bar',
+  data: {
+    labels: data.labels,
+    datasets: [{
+      data: data.times,
+      backgroundColor: data.zones.map((zone) => token(
+        zone === null ? 'zone-dnf' : ZONE_ROLES[zone],
+      )),
+      borderColor: token('text'),
+      borderWidth: data.times.map((_, index) => (index === data.best ? 2 : 0)),
+    }],
+  },
+  options: {
+    datasets: {
+      bar: { borderRadius: 0, categoryPercentage: 0.8, barPercentage: 0.8 },
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { min: 0, max: data.ceiling,
+           ticks: { stepSize: 10, callback: tick } },
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          title: (items) => `Attempt ${items[0].label}`,
+          label: (item) => seconds(item.parsed.y),
+        },
+      },
+    },
+  },
+  plugins: [zoneBands(data.edges)],
+}));
+
+// The time of each step, attempt by attempt, stacked into the solve.
+// data: {labels, steps: [{label, data: [s | null]}]}
+const STEP_ROLES = ['chart-3', 'chart-4', 'chart-5', 'chart-1'];
+register('daily-steps', (data) => ({
+  type: 'bar',
+  data: {
+    labels: data.labels,
+    datasets: data.steps.map((step, index) => ({
+      label: step.label,
+      data: step.data,
+      backgroundColor: token(STEP_ROLES[index % STEP_ROLES.length]),
+    })),
+  },
+  options: {
+    interaction: { mode: 'index', intersect: false },
+    datasets: {
+      bar: { borderRadius: 0, categoryPercentage: 0.7, barPercentage: 0.9 },
+    },
+    scales: {
+      x: { stacked: true, grid: { display: false } },
+      y: { stacked: true, beginAtZero: true, ticks: { callback: tick } },
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          title: (items) => `Attempt ${items[0].label}`,
+          label: (item) =>
+            `${item.dataset.label} ${item.parsed.y.toFixed(2)} s`,
+        },
+      },
+    },
+  },
+}));
+
 export function draw(canvas) {
   const build = builders[canvas.dataset.chart];
   if (!build) {

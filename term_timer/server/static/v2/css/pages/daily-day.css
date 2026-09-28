@@ -1,0 +1,167 @@
+/* A daily session, laid out as the solve page: the summary of the day
+   (best time, its squares, share card, cube), the main zone (scramble,
+   attempts, steps) and the diagnostics. One column on a phone; from
+   60rem the summary runs beside the others; from 140rem the diagnostics
+   take a third column. */
+
+@layer pages {
+  .daily-day {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 var(--space-7);
+  }
+
+  .daily-day-zone {
+    min-width: 0;
+  }
+
+  .daily-day-zone[data-zone="summary"] {
+    container: day-summary / inline-size;
+  }
+
+  @container page (min-width: 60rem) {
+    .daily-day {
+      grid-template-columns: minmax(19rem, 0.8fr) minmax(0, 2fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        "summary main"
+        "summary diagnostics";
+    }
+
+    .daily-day-zone[data-zone="summary"] { grid-area: summary; }
+    .daily-day-zone[data-zone="main"] { grid-area: main; }
+    .daily-day-zone[data-zone="diagnostics"] { grid-area: diagnostics; }
+  }
+
+  @container page (min-width: 140rem) {
+    .daily-day {
+      grid-template-columns:
+        minmax(20rem, 0.75fr) minmax(0, 2fr) minmax(0, 1.15fr);
+      grid-template-rows: auto;
+      grid-template-areas: "summary main diagnostics";
+      align-items: start;
+    }
+  }
+
+  /* Hero: the best of the day ------------------------------------- */
+
+  .daily-day-hero {
+    padding: var(--space-6) 0 var(--space-5);
+  }
+
+  .daily-day-label {
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .daily-day-time {
+    /* As the solve hero: a time longer than six characters shrinks to
+       fit its column. */
+    --hero-fit: calc(190cqi / var(--chars, 6));
+    margin: var(--space-3) 0 var(--space-4) -0.05em;
+    font-size: min(var(--step-hero), var(--hero-fit));
+    font-weight: 800;
+    line-height: 0.82;
+    letter-spacing: -0.065em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .daily-day-millis {
+    color: var(--text-faint);
+    font-weight: 400;
+    letter-spacing: -0.04em;
+  }
+
+  .daily-day-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+  }
+
+  .daily-day-meta b {
+    color: var(--good);
+  }
+
+  /* Squares, share card and cube ----------------------------------- */
+
+  .daily-day-squares {
+    padding: var(--space-5) 0;
+    border-top: var(--hairline) solid var(--line);
+  }
+
+  .daily-day-share {
+    display: flex;
+    align-items: stretch;
+    border: var(--hairline) solid var(--line-strong);
+  }
+
+  .daily-day-card {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: var(--space-3);
+    color: var(--text);
+    /* Wrapped on screen only: the copy button carries the card as is. */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font: var(--step--1) / 1.5 var(--font-mono);
+  }
+
+  .daily-day-share > :last-child {
+    border-width: 0 0 0 var(--hairline);
+  }
+
+  .daily-day-cube {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-5) 0;
+  }
+
+  .daily-day-cube > img {
+    width: min(100%, 16rem);
+    height: auto;
+  }
+
+  .daily-day-cube:hover > img {
+    outline: var(--hairline) solid var(--accent);
+    outline-offset: var(--space-1);
+  }
+
+  /* Attempts ------------------------------------------------------- */
+
+  .daily-day-attempt-time {
+    font-weight: 600;
+  }
+
+  .daily-day-attempt[data-tone] .daily-day-attempt-time {
+    color: var(--tone);
+    font-weight: 800;
+  }
+
+  .daily-day-attempt-grade,
+  .daily-day-attempt-fluency {
+    color: var(--tone, var(--text));
+    font-weight: 700;
+  }
+
+  .daily-day-comment {
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+
+  /* Diagnostics: the note on the attempts of the day. */
+
+  .daily-day-note {
+    margin-bottom: var(--space-4);
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+}

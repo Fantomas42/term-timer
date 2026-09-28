@@ -6,6 +6,7 @@ from datetime import datetime
 from datetime import timedelta
 from typing import Final
 
+from term_timer.constants import PUNCHCARD_LEVELS
 from term_timer.server.annotations import ActivityCalendarData
 from term_timer.server.annotations import ActivityCell
 from term_timer.server.annotations import ActivityMonth
@@ -118,3 +119,58 @@ class ActivityCalendar:
             'active': active,
             'recent': weeks - weeks // 2,
         }
+
+
+class DailyActivityCalendar(ActivityCalendar):
+    """
+    The days of the daily, each counted on the attempts of its session.
+
+    A day is the day of its session, never the date of its solves: an
+    attempt made after midnight belongs to the daily of the day before.
+    Levels are the absolute ones of the terminal punchcard, and each
+    played day links to its page.
+    """
+
+    def __init__(self, counts: dict[date, int], first: date,
+                 url_prefix: str) -> None:
+        """
+        Keep the attempts of each session day.
+
+        Args:
+            counts: Attempts per session day.
+            first: First day of the daily, the cells before it hidden.
+            url_prefix: URL of the logbook, the day pages below it.
+
+        """
+        super().__init__(counts)
+        self.first = first
+        self.url_prefix = url_prefix
+
+    @staticmethod
+    def level(count: int) -> int:
+        """
+        Heat level of a day, on the floors of the terminal punchcard.
+
+        Returns:
+            0 without attempt, up to 4 from the last floor.
+
+        """
+        return sum(count >= floor for floor in PUNCHCARD_LEVELS)
+
+    def layout(self, end: date,
+               weeks: int = YEAR_WEEKS) -> ActivityCalendarData:
+        """
+        Lay the days as ActivityCalendar does, linking the played ones.
+
+        Returns:
+            The calendar, the days before the first daily out of range.
+
+        """
+        card = super().layout(end, weeks)
+        for week in card['weeks']:
+            for cell in week:
+                if cell['day'] < self.first:
+                    cell['level'] = -1
+                elif cell['count']:
+                    cell['url'] = f'{ self.url_prefix }{ cell["day"] }/'
+        return card

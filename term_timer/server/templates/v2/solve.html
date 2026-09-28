@@ -4,18 +4,12 @@
 {% from 'v2/components/button.html' import button, copy_button %}
 {% from 'v2/components/chart.html' import chart %}
 {% from 'v2/components/cube.html' import cube as cube_image %}
+{% from 'v2/components/diagnostic.html' import diagnostic, diagnostic_list %}
 {% from 'v2/components/dialog.html' import help_dialog, confirm_dialog %}
 {% from 'v2/components/page_header.html' import page_header %}
 {% from 'v2/components/section.html' import section %}
 {% from 'v2/components/stat.html' import stat, stat_grid %}
 {% from 'v2/components/tabs.html' import tabs %}
-
-{% set SEVERITY_TONES = {
-  'critical': 'bad',
-  'high': 'warn',
-  'medium': 'info',
-  'low': 'muted',
-} %}
 
 {% set RECONSTRUCTION_TABS = [
   ('time', 'Time'),
@@ -315,27 +309,11 @@
       <div class="solve-zone" data-zone="diagnostics">
         {% set impact = diagnostics|sum(attribute='impact_seconds') %}
         {% call numbered('diagnostics', 'Diagnostics', '~%.1fs recoverable'|format(impact) if impact > 0 else '') %}
-          <ol class="solve-diags">
-            {%- for diagnostic in diagnostics %}
-              <li class="solve-diag" data-tone="{{ SEVERITY_TONES[diagnostic.severity] }}">
-                <div class="solve-diag-head">
-                  {{ badge(diagnostic.severity, SEVERITY_TONES[diagnostic.severity]) }}
-                  <span class="solve-diag-location">{{ diagnostic.location }}</span>
-                  {%- if diagnostic.impact_seconds > 0 %}
-                    <span class="solve-diag-impact">&minus;{{ '%.2f'|format(diagnostic.impact_seconds) }}<span class="solve-dim">s</span></span>
-                  {%- endif %}
-                </div>
-                <p class="solve-diag-description">{{ diagnostic.description }}</p>
-                <p class="solve-diag-advice">{{ diagnostic.recommendation }}</p>
-                {%- if diagnostic.command %}
-                  <div class="solve-diag-command">
-                    <code class="solve-diag-code">{{ diagnostic.command }}</code>
-                    {{ copy_button(diagnostic.command, 'command') }}
-                  </div>
-                {%- endif %}
-              </li>
+          {% call diagnostic_list() %}
+            {%- for item in diagnostics %}
+              {{ diagnostic(item.severity, item.location, item.description, item.recommendation, item.impact_seconds, item.command) }}
             {%- endfor %}
-          </ol>
+          {% endcall %}
         {% endcall %}
       </div>
     {% endif %}

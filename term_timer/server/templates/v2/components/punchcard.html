@@ -1,7 +1,7 @@
 {#- A calendar of weeks, Monday first, from ActivityCalendar.layout. The
     weeks older than the recent ones fold away in a narrow container. Its
     cells stop growing at 1.1rem, unless fill spreads it over its whole
-    container. -#}
+    container. A cell with a url is a link (the days of the daily). -#}
 
 {% macro punchcard(card, label, unit='solve', fill=false) -%}
   {%- set old = card.weeks|length - card.recent -%}
@@ -15,7 +15,8 @@
       {%- for week in card.weeks %}
         {%- set is_old = loop.index <= old %}
         {%- for cell in week %}
-          <span class="punchcard-cell" data-level="{{ cell.level }}"{% if is_old %} data-old{% endif %} title="{{ cell.day|short_date }} · {{ cell.count }} {{ unit }}{{ 's' if cell.count != 1 }}"></span>
+          {%- set tag = 'a' if cell.url else 'span' %}
+          <{{ tag }} class="punchcard-cell" data-level="{{ cell.level }}"{% if cell.url %} href="{{ cell.url }}"{% endif %}{% if is_old %} data-old{% endif %} title="{{ cell.day|short_date }} · {{ cell.count }} {{ unit }}{{ 's' if cell.count != 1 }}"></{{ tag }}>
         {%- endfor %}
       {%- endfor %}
     </div>

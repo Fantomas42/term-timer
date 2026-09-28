@@ -1,0 +1,168 @@
+{% extends "v2/skeleton.html" %}
+{% from 'v2/components/alg.html' import alg %}
+{% from 'v2/components/badge.html' import badge %}
+{% from 'v2/components/button.html' import button, copy_button %}
+{% from 'v2/components/chart.html' import chart %}
+{% from 'v2/components/cube.html' import cube as cube_image %}
+{% from 'v2/components/dialog.html' import help_dialog %}
+{% from 'v2/components/diagnostic.html' import diagnostic, diagnostic_list %}
+{% from 'v2/components/page_header.html' import page_header %}
+{% from 'v2/components/section.html' import section %}
+{% from 'v2/components/table.html' import table %}
+{% from 'v2/components/zones.html' import zones as zone_squares, zones_legend %}
+
+{% set ATTEMPT_COLUMNS = [
+  {'label': '#', 'numeric': true},
+  {'label': 'Time', 'numeric': true},
+  {'label': 'Zone'},
+  {'label': 'Hour'},
+  {'label': 'Grade'},
+  {'label': 'Fluency', 'numeric': true},
+  {'label': 'Notes'},
+] %}
+
+{% set SHORTCUTS = [
+  ('j', 'Next section'),
+  ('k', 'Previous section'),
+  ('s', 'Copy the scramble'),
+  ('y', 'Copy the share card'),
+  ('[', 'Previous day'),
+  (']', 'Next day'),
+  ('?', 'This help'),
+] %}
+
+{% set cube_name = cube ~ 'x' ~ cube ~ 'x' ~ cube %}
+{% set several = solves|length > 1 %}
+{% set first = solves|first %}
+{% set times = solves|map(attribute='final_time')|list %}
+{% set counter = namespace(section=0) %}
+
+{% block description %}Daily {{ day }} on {{ cube_name }}{% endblock %}
+
+{% block title %}Daily {{ day }}{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="/static/v2/css/pages/daily-day.css">
+{% endblock %}
+
+{% block scripts %}
+  {% if several %}
+    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+    <script type="module" src="/static/v2/js/charts.js"></script>
+  {% endif %}
+{% endblock %}
+
+{#- A section numbered in document order, across the zones. -#}
+{% macro numbered(slug, title, aside='') -%}
+  {%- set counter.section = counter.section + 1 -%}
+  {%- set body = caller() -%}
+  {% call section(slug, title, counter.section, aside) %}{{ body }}{% endcall %}
+{%- endmacro %}
+
+{% block body %}
+  {% call page_header('Daily', ('#' ~ number) if number else day, breadcrumb) %}
+    {{ button(previous_day|short_date, href=previous_url, key='[') if previous_url }}
+    {{ button(next_day|short_date, href=next_url, key=']') if next_url }}
+  {% endcall %}
+
+  <div class="daily-day">
+    <div class="daily-day-zone" data-zone="summary">
+      {% set head, millis = stats.best|split_time %}
+      <div class="daily-day-hero">
+        <div class="daily-day-label">
+          {{ 'Best of the day' if several else 'Time' }} · {{ day|short_date }}
+        </div>
+        <div class="daily-day-time" style="--chars: {{ (head ~ millis)|length }}">
+          {{- head }}<span class="daily-day-millis">{{ millis }}</span>
+        </div>
+        <div class="daily-day-meta">
+          <span><b>{{ solves|length }}</b> attempt{{ 's' if several }}</span>
+          {% if several %}
+            <span>first {{ first.final_time|short_time }}</span>
+            {% if first.final_time and stats.best and first.final_time > stats.best %}
+              <span>warm-up <b>&minus;{{ (first.final_time - stats.best)|format_duration }}</b></span>
+            {% endif %}
+          {% endif %}
+          {% if record %}{{ badge('Record', 'good') }}{% endif %}
+        </div>
+      </div>
+
+      <div class="daily-day-squares">
+        {{ zone_squares(zones, times, attempt_urls, size='l', labelled=true) }}
+      </div>
+
+      <div class="daily-day-share">
+        <pre class="daily-day-card">{{ share }}</pre>
+        {{ copy_button(share, 'share card', 'y') }}
+      </div>
+
+      <a class="daily-day-cube" href="/scramble/{{ cube }}/{{ day }}/1/" aria-label="Scramble of the day">
+        {{ cube_image(algo=scramble, size='l', cube_size=cube, label='Cube after the scramble of the day') }}
+      </a>
+    </div>
+
+    <div class="daily-day-zone" data-zone="main">
+      {% call numbered('scramble', 'Scramble') %}
+        {% set scramble_tokens = scramble|algorithm_tokens(aufs=False) %}
+        {{ alg(scramble_tokens, size='l', copy='scramble', key='s', htm=scramble.metrics.htm, href='/algorithm/' ~ scramble_tokens|alg_text ~ '/') }}
+      {% endcall %}
+
+      {% call numbered('attempts', 'Attempts', ('mean ' ~ stats.mean|short_time) if several and stats.mean else '') %}
+        {% if several %}
+          {{ chart('attempts-chart', 'daily-attempts', attempts_chart, title='Time of each attempt, in order', ratio='strip') }}
+          {{ zones_legend(zone_edges) }}
+        {% endif %}
+        {% call table(ATTEMPT_COLUMNS, sortable=several) %}
+          {% for solve in solves %}
+            {% set grade = solve.score|format_grade if solve.advanced and solve.score else '' %}
+            <tr class="daily-day-attempt"{% if several and stats.best and solve.final_time == stats.best %} data-tone="good"{% endif %}>
+              <td data-numeric data-sort="{{ solve.solve_id }}"><a href="{{ attempt_urls[loop.index0] }}">#{{ solve.solve_id }}</a></td>
+              <td class="daily-day-attempt-time" data-numeric data-sort="{{ solve.final_time or 999999999999 }}">{{ solve.final_time|short_time }}</td>
+              <td data-sort="{{ zones[loop.index0] if zones[loop.index0] is not none else 9 }}">{{ zone_squares([zones[loop.index0]], [solve.final_time], size='m') }}</td>
+              <td>{{ solve.datetime.astimezone().strftime('%H:%M') }}</td>
+              <td class="daily-day-attempt-grade" data-sort="{{ solve.score if grade else 0 }}"{% if grade %} data-tone="{{ grade|grade_tone }}"{% endif %}>{{ grade or '—' }}</td>
+              <td class="daily-day-attempt-fluency" data-numeric data-sort="{{ solve.fluency if solve.advanced else 0 }}"{% if solve.advanced and solve.fluency %} data-tone="{{ solve.fluency|fluency_tone }}"{% endif %}>{{ solve.fluency ~ '%' if solve.advanced and solve.fluency else '—' }}</td>
+              <td>
+                {% if solve.flag %}{{ badge(solve.flag, 'bad' if solve.flag == 'DNF' else 'warn') }}{% endif %}
+                {% if solve.comment %}<span class="daily-day-comment" title="{{ solve.comment }}">“{{ solve.comment|truncate(24) }}”</span>{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        {% endcall %}
+      {% endcall %}
+
+      {% if several and steps %}
+        {% call numbered('steps', 'Where the time went', 'seconds per step') %}
+          {{ chart('steps-chart', 'daily-steps', steps_chart, title='Time of each step, attempt by attempt', legend=steps_legend, ratio='wide') }}
+        {% endcall %}
+      {% endif %}
+    </div>
+
+    {% if doctor_total %}
+      {% set impact = doctor|sum(attribute='impact') %}
+      <div class="daily-day-zone" data-zone="diagnostics">
+        {% call numbered('diagnostics', 'Diagnostics', '~%.1fs recoverable'|format(impact) if impact > 0 else '') %}
+          {% if doctor_total > 1 %}
+            <p class="daily-day-note">
+              {{ doctor_total }} attempts of the same scramble:
+              a finding that recurs names a weakness on this very case.
+            </p>
+          {% endif %}
+          {% if doctor %}
+            {% call diagnostic_list() %}
+              {%- for group in doctor %}
+                {%- for finding in group.findings %}
+                  {{ diagnostic(finding.severity, group.location, finding.title, finding.recommendation, finding.impact, group.command if loop.last else '', finding.frequency if doctor_total > 1 else none) }}
+                {%- endfor %}
+              {%- endfor %}
+            {% endcall %}
+          {% else %}
+            <p class="daily-day-note">No issue detected, sane solves!</p>
+          {% endif %}
+        {% endcall %}
+      </div>
+    {% endif %}
+  </div>
+
+  {{ help_dialog(SHORTCUTS) }}
+{% endblock %}

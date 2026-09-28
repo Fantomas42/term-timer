@@ -1,6 +1,7 @@
 """Type definitions for web server views and templates."""
 from datetime import date
 from datetime import datetime
+from typing import NotRequired
 from typing import TypedDict
 
 from bottle import HTTPError
@@ -126,11 +127,16 @@ class Error500Context(TypedDict):
 
 
 class ActivityCell(TypedDict):
-    """A day of the activity calendar, heated by its number of solves."""
+    """
+    A day of the activity calendar, heated by its number of solves.
+
+    A day of the daily links to its session.
+    """
 
     day: date
     count: int
     level: int
+    url: NotRequired[str]
 
 
 class ActivityMonth(TypedDict):
@@ -864,6 +870,27 @@ class DailyRecord(TypedDict):
     gain: int
 
 
+class DailyToday(TypedDict):
+    """The daily of the day on the logbook: to play, or played."""
+
+    day: date
+    number: int
+    scramble: Algorithm
+    url: str
+
+
+class DailyTimesChart(TypedDict):
+    """Best and first attempt of each played day, in seconds."""
+
+    labels: list[str]
+    best: list[float | None]
+    first: list[float | None]
+    edges: tuple[int, ...]
+    floor: int
+    ceiling: int
+    clipped: int
+
+
 class DailyListContext(TypedDict):
     """Template context for the daily hub, the logbook of every day."""
 
@@ -874,6 +901,11 @@ class DailyListContext(TypedDict):
     series: DailySeries
     records: list[DailyRecord]
     zone_edges: tuple[int, ...]
+    breadcrumb: list[BreadcrumbItem]
+    today: DailyToday
+    activity: ActivityCalendarData | None
+    times_chart: DailyTimesChart | None
+    record_days: list[str]
 
 
 class DailyStepSeries(TypedDict):
@@ -902,6 +934,24 @@ class DailyDoctorGroup(TypedDict):
     findings: list[DailyDoctorFinding]
 
 
+class DailyAttemptsChart(TypedDict):
+    """The attempts of a day in order, in seconds, with their zones."""
+
+    labels: list[str]
+    times: list[float | None]
+    zones: list[int | None]
+    best: int | None
+    edges: tuple[int, ...]
+    ceiling: int
+
+
+class DailyStepsChart(TypedDict):
+    """The time of each step, attempt by attempt."""
+
+    labels: list[str]
+    steps: list[DailyStepSeries]
+
+
 class DailyDayContext(TypedDict):
     """Template context for the card of one daily session."""
 
@@ -921,6 +971,14 @@ class DailyDayContext(TypedDict):
     doctor: list[DailyDoctorGroup]
     share: str
     zone_edges: tuple[int, ...]
+    breadcrumb: list[BreadcrumbItem]
+    previous_url: str
+    next_url: str
+    record: bool
+    attempt_urls: list[str]
+    attempts_chart: DailyAttemptsChart
+    steps_chart: DailyStepsChart
+    steps_legend: list[tuple[str, str]]
 
 
 class TrainingStepStatus(TypedDict):

@@ -5,6 +5,7 @@
 {% from 'v2/components/chart.html' import chart %}
 {% from 'v2/components/command.html' import command %}
 {% from 'v2/components/cube.html' import cube %}
+{% from 'v2/components/diagnostic.html' import diagnostic, diagnostic_list %}
 {% from 'v2/components/dialog.html' import help_dialog, confirm_dialog %}
 {% from 'v2/components/lookup.html' import lookup %}
 {% from 'v2/components/page_header.html' import page_header %}
@@ -14,6 +15,7 @@
 {% from 'v2/components/stat.html' import stat, stat_grid %}
 {% from 'v2/components/table.html' import table %}
 {% from 'v2/components/tabs.html' import tabs %}
+{% from 'v2/components/zones.html' import zones, zones_legend %}
 
 {% block description %}Term Timer V2 design system: theme values and contrasts{% endblock %}
 
@@ -251,6 +253,28 @@
           {{ command('term-timer train -s oll') }}
           {{ lookup() }}
         </div>
+      {% endcall %}
+
+      {% call section('component-zones', 'zones', 12, aside='daily attempts · sizes s m l') %}
+        {% set zone_times = [19590000000, 22379000000, 26222000000, 31004000000, 0] %}
+        {% set zone_indexes = [0, 1, 2, 3, none] %}
+        <div class="styleguide-demo-row">
+          {{ zones(zone_indexes, zone_times) }}
+          {{ zones(zone_indexes, zone_times, size='m') }}
+        </div>
+        <div class="styleguide-demo-row">
+          {{ zones(zone_indexes, zone_times, ['#component-zones'] * 5, size='l', labelled=true) }}
+        </div>
+        {{ zones_legend([20, 25, 30]) }}
+      {% endcall %}
+
+      {% call section('component-diagnostic', 'diagnostic', 13, aside='~4.5s recoverable') %}
+        {% call diagnostic_list() %}
+          {{ diagnostic('critical', 'Global', 'Pauses, typically 20.1% (norm 10%)', 'Practice slow solves, reading the next case while the current one runs.', 2.52, frequency=0.5) }}
+          {{ diagnostic('high', 'Cross', 'Time share, typically 17.5% (norm 12%)', 'Plan the first F2L pair during the cross.', 1.58, 'term-timer train -s cross', 1.0) }}
+          {{ diagnostic('medium', 'F2L', 'Turning rhythm, typically 57% (norm 60%)', 'Work on consistent fingertricks and avoid regrips.', 0.35) }}
+          {{ diagnostic('low', 'PLL', 'Recognition, typically 12% (norm 10%)', 'Read the PLL during the OLL execution.') }}
+        {% endcall %}
       {% endcall %}
     </section>
   </div>

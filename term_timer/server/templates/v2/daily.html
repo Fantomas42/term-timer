@@ -1,0 +1,189 @@
+{% extends "v2/skeleton.html" %}
+{% from 'v2/components/alg.html' import alg %}
+{% from 'v2/components/badge.html' import badge %}
+{% from 'v2/components/button.html' import button %}
+{% from 'v2/components/chart.html' import chart %}
+{% from 'v2/components/command.html' import command %}
+{% from 'v2/components/cube.html' import cube as cube_image %}
+{% from 'v2/components/page_header.html' import page_header %}
+{% from 'v2/components/punchcard.html' import punchcard %}
+{% from 'v2/components/section.html' import section %}
+{% from 'v2/components/stat.html' import stat, stat_grid %}
+{% from 'v2/components/table.html' import table %}
+{% from 'v2/components/zones.html' import zones, zones_legend %}
+
+{% set DAY_COLUMNS = [
+  {'label': 'Daily', 'numeric': true},
+  {'label': 'Date'},
+  {'label': 'Σ', 'numeric': true},
+  {'label': 'First', 'numeric': true},
+  {'label': 'Best', 'numeric': true},
+  {'label': 'Warm-up', 'numeric': true},
+  {'label': 'Attempts'},
+] %}
+
+{% set cube_name = cube ~ 'x' ~ cube ~ 'x' ~ cube %}
+{% set logbook_url = '/daily/' ~ cube ~ '/' %}
+{% set played = summary.played_days %}
+{% set counter = namespace(section=0) %}
+
+{% block description %}Daily logbook on {{ cube_name }}{% endblock %}
+
+{% block title %}Daily {{ cube_name }}{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="/static/v2/css/pages/daily.css">
+{% endblock %}
+
+{% block scripts %}
+  {% if times_chart %}
+    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
+    <script type="module" src="/static/v2/js/charts.js"></script>
+  {% endif %}
+{% endblock %}
+
+{#- A section numbered in document order, across the zones. -#}
+{% macro numbered(slug, title, aside='') -%}
+  {%- set counter.section = counter.section + 1 -%}
+  {%- set body = caller() -%}
+  {% call section(slug, title, counter.section, aside) %}{{ body }}{% endcall %}
+{%- endmacro %}
+
+{% block body %}
+  {{ page_header('Daily', accent=cube_name, crumbs=breadcrumb) }}
+
+  {% if activity %}
+    <div class="daily-bar">
+      <p class="daily-facts">
+        {% if played %}
+          <b>{{ played|length }}</b> dail{{ 'ies' if played|length > 1 else 'y' }} ·
+          <b>{{ summary.total_solves }}</b> attempt{{ 's' if summary.total_solves != 1 }} ·
+          {{ '%.2f'|format(summary.solves_per_day) }} per day ·
+          since {{ played[0]|short_date }} ·
+        {% endif %}
+        last daily {{ rows[0].day|days_ago(today.day) }}
+      </p>
+      <div class="daily-activity">
+        {{ punchcard(activity, 'Attempts per daily', unit='attempt') }}
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="daily">
+
+    {# The daily of the day, to play or played. #}
+    <div class="daily-zone" data-zone="today">
+      {% call numbered('today', 'Today', '#' ~ today.number ~ ' · ' ~ today.day|short_date) %}
+        <div class="daily-today">
+          {{ cube_image(algo=today.scramble, size='m', cube_size=cube, label='Cube after the scramble of the day') }}
+          <div class="daily-today-state">
+            {% if summary.daily_done %}
+              {{ badge('Done', 'good') }}
+            {% else %}
+              {{ badge('Pending', 'warn') }}
+              {% if summary.current_streak %}
+                <p class="daily-today-text">
+                  Play it to carry the streak to
+                  <b>{{ summary.current_streak|length + 1 }}</b> days.
+                </p>
+              {% endif %}
+            {% endif %}
+            {% if today.url %}
+              {{ button('Open the day', href=today.url) }}
+            {% endif %}
+          </div>
+        </div>
+        <div class="daily-today-scramble">
+          {{ alg(today.scramble|algorithm_tokens(aufs=False), size='s', copy='scramble', key='s') }}
+        </div>
+        {{ command('term-timer daily' ~ ('' if cube == 3 else ' -c ' ~ cube)) }}
+      {% endcall %}
+      {% if not played and not rows %}
+        <p class="daily-empty">No daily played yet on {{ cube_name }}.</p>
+      {% endif %}
+    </div>
+
+    {% if played %}
+      {# The streak and the participation. #}
+      <div class="daily-zone" data-zone="streak">
+        {% set streak = summary.current_streak %}
+        {% set longest = summary.longest_streak %}
+        {% call numbered('streak', 'Streak', (streak[0]|short_date ~ ' → ' ~ streak[-1]|short_date) if streak else '') %}
+          <div class="daily-streak">
+            <span class="daily-streak-value">{{ streak|length }}</span>
+            <span class="daily-streak-label">day{{ 's' if streak|length != 1 }} in a row</span>
+            {% if streak and streak|length >= longest|length %}
+              {{ badge('Record', 'good') }}
+            {% elif longest %}
+              <span class="daily-streak-record">record <b>{{ longest|length }}</b> · {{ longest[0]|short_date }} → {{ longest[-1]|short_date }}</span>
+            {% endif %}
+          </div>
+          {% call stat_grid() %}
+            {{ stat('Participation', (summary.participation * 100)|round(1), meta=played|length ~ ' of ' ~ summary.span ~ ' days', unit='%') }}
+            {% if summary.best_day %}
+              {{ stat('Best day', summary.best_day[1]|short_time, meta=summary.best_day[0]|short_date, tone='good', href=logbook_url ~ summary.best_day[0] ~ '/') }}
+              {{ stat('Worst day', summary.worst_day[1]|short_time, meta=summary.worst_day[0]|short_date, tone='bad', href=logbook_url ~ summary.worst_day[0] ~ '/') }}
+            {% endif %}
+          {% endcall %}
+        {% endcall %}
+      </div>
+
+      {# Best and first attempt of every played day, on the zones. #}
+      <div class="daily-zone" data-zone="times">
+        {% call numbered('times', 'Times', played|length ~ ' day' ~ ('s' if played|length != 1 else '')) %}
+          {{ chart('times-chart', 'daily-times', times_chart, title='Best and first attempt of each day', legend=[('1', 'Best of the day'), ('3', 'First attempt')], ratio='wide') }}
+          {{ zones_legend(zone_edges) }}
+          {% if times_chart.clipped %}
+            <p class="daily-note">{{ times_chart.clipped }} slow attempt{{ 's' if times_chart.clipped > 1 }} above {{ times_chart.ceiling }} s, off the chart.</p>
+          {% endif %}
+        {% endcall %}
+      </div>
+
+      {# The staircase of the personal best, newest first. #}
+      <div class="daily-zone" data-zone="records">
+        {% call numbered('records', 'Records', records|length ~ ' record' ~ ('s' if records|length != 1 else '')) %}
+          <ol class="daily-records">
+            {% for record in records %}
+              <li class="daily-record"{% if loop.first %} data-current{% endif %}>
+                <a class="daily-record-time" href="{{ logbook_url }}{{ record.day }}/">{{ record.best|short_time }}</a>
+                <span class="daily-record-day">{{ record.day|short_date }}</span>
+                <span class="daily-record-gain">
+                  {%- if record.gain %}&minus;{{ record.gain|format_duration }}{% else %}first{% endif -%}
+                </span>
+              </li>
+            {% endfor %}
+          </ol>
+        {% endcall %}
+      </div>
+    {% endif %}
+
+    {% if rows %}
+      {# Every daily, newest first. #}
+      <div class="daily-zone" data-zone="days">
+        {% call numbered('days', 'Days', rows|length ~ ' day' ~ ('s' if rows|length != 1 else '')) %}
+          {% call table(DAY_COLUMNS) %}
+            {% for row in rows %}
+              {% set url = logbook_url ~ row.day ~ '/' %}
+              <tr class="daily-row"{% if row.day in record_days %} data-tone="good"{% endif %}>
+                <td data-numeric data-sort="{{ row.number or 0 }}">
+                  <a href="{{ url }}">{% if row.number %}#{{ row.number }}{% else %}—{% endif %}</a>
+                </td>
+                <td data-sort="{{ row.day }}">
+                  <a href="{{ url }}">{{ row.day|short_date }}</a> <span class="daily-dim">{{ row.weekday }}</span>
+                </td>
+                <td data-numeric>{{ row.attempts }}</td>
+                <td data-numeric data-sort="{{ row.first or 999999999999 }}">{{ row.first|short_time }}</td>
+                <td class="daily-row-best" data-numeric data-sort="{{ row.best or 999999999999 }}">{{ row.best|short_time }}</td>
+                <td data-numeric data-sort="{{ row.gain or 0 }}">
+                  {%- if row.gain %}&minus;{{ row.gain|format_duration }}{% else %}<span class="daily-dim">—</span>{% endif -%}
+                </td>
+                <td data-sort="{{ row.attempts }}">{{ zones(row.zones, row.times) }}</td>
+              </tr>
+            {% endfor %}
+          {% endcall %}
+        {% endcall %}
+      </div>
+    {% endif %}
+
+  </div>
+{% endblock %}

@@ -2,6 +2,7 @@
 from datetime import date
 from datetime import timedelta
 from typing import TYPE_CHECKING
+from typing import Final
 from typing import cast
 
 from bottle import abort
@@ -11,6 +12,7 @@ from term_timer.config import CUBE_METHOD
 from term_timer.constants import CUBE_SIZES
 from term_timer.constants import DAILY_DAYS_LISTED
 from term_timer.constants import DAILY_DIRECTORY
+from term_timer.constants import DAILY_TIMES_CEILING
 from term_timer.constants import DAILY_ZONE_EDGES
 from term_timer.constants import SECOND
 from term_timer.constants import WEEK_DAYS
@@ -18,7 +20,11 @@ from term_timer.doctor import group_doctor_findings
 from term_timer.in_out import load_all_daily_solves
 from term_timer.in_out import load_solves
 from term_timer.interface.doctor import DoctorReporter
+from term_timer.server.activity import ActivityCalendar
+from term_timer.server.activity import DailyActivityCalendar
+from term_timer.server.annotations import ActivityCalendarData
 from term_timer.server.annotations import BreadcrumbItem
+from term_timer.server.annotations import DailyAttemptsChart
 from term_timer.server.annotations import DailyBannerInfo
 from term_timer.server.annotations import DailyCalendarCell
 from term_timer.server.annotations import DailyCalendarYear
@@ -29,6 +35,8 @@ from term_timer.server.annotations import DailyListContext
 from term_timer.server.annotations import DailyRecord
 from term_timer.server.annotations import DailySeries
 from term_timer.server.annotations import DailyStepSeries
+from term_timer.server.annotations import DailyTimesChart
+from term_timer.server.annotations import DailyToday
 from term_timer.server.views.base import View
 from term_timer.server.views.scramble import ScrambleDetailView
 from term_timer.server.views.solves import SolveDeleteView
@@ -41,6 +49,10 @@ from term_timer.stats import Statistics
 
 if TYPE_CHECKING:
     from term_timer.methods.base import Analyser
+
+
+# Legend keys of the step series, in the colour order of daily-steps.
+STEP_LEGEND_KEYS: Final = ('3', '4', '5', '1')
 
 
 class DailyLocation(SolveLocation):
@@ -80,11 +92,38 @@ class DailyLocation(SolveLocation):
             {'label': f'#{ solve_id }', 'href': ''},
         ]
 
+    @classmethod
+    def logbook_breadcrumb(cls, cube: int) -> list[BreadcrumbItem]:
+        """
+        Build the breadcrumb of the logbook of a cube.
+
+        Returns:
+            Home, then the logbook itself.
+
+        """
+        return [
+            {'label': 'Home', 'href': '/'},
+            {'label': f'Daily { cube }x{ cube }x{ cube }', 'href': ''},
+        ]
+
+    @classmethod
+    def day_breadcrumb(cls, cube: int, day: str) -> list[BreadcrumbItem]:
+        """
+        Build the breadcrumb of the page of a day.
+
+        Returns:
+            Home, the logbook, then the day itself.
+
+        """
+        logbook = cls.logbook_breadcrumb(cube)
+        logbook[-1]['href'] = f'{ cls.url_prefix }/{ cube }/'
+        return [*logbook, {'label': day, 'href': ''}]
+
 
 class DailyListView(DailyLocation, View):
     """View of the logbook of every daily session of a cube."""
 
-    template_name = 'daily.html'
+    template_name = 'v2/daily.html'
 
     def __init__(self, cube: int, today: date | None = None) -> None:
         """
@@ -102,6 +141,22 @@ class DailyListView(DailyLocation, View):
         self.summary = DailySummaryReporter(
             cube, load_all_daily_solves(cube), today,
         )
+
+    def legacy(self, *, v1: bool) -> 'DailyListView':
+        """
+        Render the V1 page instead, kept to compare with the V2 one until
+        the V1 is removed.
+
+        Args:
+            v1: Whether the V1 page is asked for, by ?v1 in the URL.
+
+        Returns:
+            The view itself.
+
+        """
+        if v1:
+            self.template_name = 'daily.html'
+        return self
 
     @staticmethod
     def series(
@@ -188,14 +243,104 @@ class DailyListView(DailyLocation, View):
             the graph series and the records of the daily.
 
         """
+        series = self.series(self.summary, self.summary.played_days)
+
         return {
             'cube': self.cube,
             'summary': self.summary,
             'rows': self.compute_rows(),
             'calendar': self.compute_calendar(),
-            'series': self.series(self.summary, self.summary.played_days),
+            'series': series,
             'records': self.compute_records(),
             'zone_edges': DAILY_ZONE_EDGES,
+            'breadcrumb': self.logbook_breadcrumb(self.cube),
+            'today': self.compute_today(),
+            'activity': self.compute_activity(),
+            'times_chart': self.compute_times_chart(series),
+            'record_days': [
+                day.isoformat() for day, _best in self.summary.records
+            ],
+        }
+
+    def compute_today(self) -> DailyToday:
+        """
+        Present the daily of the day, played or still to play.
+
+        Returns:
+            The day, its number, its scramble and its page, empty until
+            it has a session.
+
+        """
+        summary = self.summary
+        day = summary.today
+        number = summary.day_number(day) or len(summary.played_days) + 1
+
+        return {
+            'day': day,
+            'number': number,
+            'scramble': ScrambleDetailView(
+                self.cube, day.isoformat(), 1,
+            ).get_scramble(),
+            'url': (
+                self.day_url(self.cube, day)
+                if day in summary.sessions else ''
+            ),
+        }
+
+    def compute_activity(self) -> ActivityCalendarData | None:
+        """
+        Lay the attempts of each daily on the punchcard, over the span
+        of the daily.
+
+        Returns:
+            The calendar, None without daily session.
+
+        """
+        sessions = self.summary.sessions
+        if not sessions:
+            return None
+
+        first = next(iter(sessions))
+        today = self.summary.today
+
+        return DailyActivityCalendar(
+            {day: len(times) for day, times in sessions.items()},
+            first,
+            f'{ self.url_prefix }/{ self.cube }/',
+        ).layout(today, ActivityCalendar.span_weeks(first, today))
+
+    @staticmethod
+    def compute_times_chart(series: DailySeries) -> DailyTimesChart | None:
+        """
+        Frame the best and first attempt of each played day on the zones.
+
+        The axis stops at a high percentile of the times: a rare slow
+        first attempt would squash every other day.
+
+        Returns:
+            The chart data, None without played day.
+
+        """
+        values = sorted(
+            value
+            for value in series['best'] + series['first']
+            if value is not None
+        )
+        if not values:
+            return None
+
+        index = int(len(values) * DAILY_TIMES_CEILING)
+        top = values[min(len(values) - 1, index)]
+        ceiling = 5 * (int(top) // 5 + 1)
+
+        return {
+            'labels': series['labels'],
+            'best': series['best'],
+            'first': series['first'],
+            'edges': DAILY_ZONE_EDGES,
+            'floor': 5 * (int(values[0]) // 5),
+            'ceiling': ceiling,
+            'clipped': sum(value > ceiling for value in values),
         }
 
     def compute_rows(self) -> list[DailyDayRow]:
@@ -331,7 +476,7 @@ class DailyListView(DailyLocation, View):
 class DailyDayView(DailyLocation, View):
     """View of the card of a single daily session."""
 
-    template_name = 'daily_day.html'
+    template_name = 'v2/daily_day.html'
 
     def __init__(self, cube: int, day: str) -> None:
         """
@@ -358,6 +503,22 @@ class DailyDayView(DailyLocation, View):
             cube, load_all_daily_solves(cube),
         )
 
+    def legacy(self, *, v1: bool) -> 'DailyDayView':
+        """
+        Render the V1 page instead, kept to compare with the V2 one until
+        the V1 is removed.
+
+        Args:
+            v1: Whether the V1 page is asked for, by ?v1 in the URL.
+
+        Returns:
+            The view itself.
+
+        """
+        if v1:
+            self.template_name = 'daily_day.html'
+        return self
+
     def get_context(self) -> DailyDayContext:
         """
         Build context with the attempts of the day and their analysis.
@@ -375,7 +536,9 @@ class DailyDayView(DailyLocation, View):
         )
 
         times = [solve.final_time for solve in self.solves]
+        zones = [self.summary.zone_index(time) for time in times]
         doctor_total, doctor = self.compute_doctor()
+        steps = self.compute_steps()
 
         return {
             'cube': self.cube,
@@ -387,13 +550,62 @@ class DailyDayView(DailyLocation, View):
             'session_url': self.session_url(self.cube, self.day),
             'solves': self.solves,
             'stats': Statistics(times),
-            'zones': [self.summary.zone_index(time) for time in times],
+            'zones': zones,
             'times': [time / SECOND if time else None for time in times],
-            'steps': self.compute_steps(),
+            'steps': steps,
             'doctor_total': doctor_total,
             'doctor': doctor,
             'share': self.summary.share_card(self.date),
             'zone_edges': DAILY_ZONE_EDGES,
+            'breadcrumb': self.day_breadcrumb(self.cube, self.day),
+            'previous_url': (
+                self.session_url(self.cube, previous_day)
+                if previous_day else ''
+            ),
+            'next_url': (
+                self.session_url(self.cube, next_day) if next_day else ''
+            ),
+            'record': any(
+                day == self.date for day, _best in self.summary.records
+            ),
+            'attempt_urls': [
+                f'{ self.session_url(self.cube, self.day) }{ solve.solve_id }/'
+                for solve in self.solves
+            ],
+            'attempts_chart': self.compute_attempts_chart(times, zones),
+            'steps_chart': {
+                'labels': [f'#{ solve.solve_id }' for solve in self.solves],
+                'steps': steps,
+            },
+            'steps_legend': [
+                (STEP_LEGEND_KEYS[index % len(STEP_LEGEND_KEYS)],
+                 step['label'])
+                for index, step in enumerate(steps)
+            ],
+        }
+
+    def compute_attempts_chart(
+            self, times: list[int], zones: list[int | None],
+    ) -> DailyAttemptsChart:
+        """
+        Lay the attempts of the day in order, each on its zone.
+
+        Returns:
+            The chart data, the best attempt outlined, None for a DNF.
+
+        """
+        seconds = [time / SECOND if time else None for time in times]
+        valid = [value for value in seconds if value is not None]
+        best = seconds.index(min(valid)) if valid else None
+        ceiling = 5 * (int(max(valid)) // 5 + 1) if valid else 0
+
+        return {
+            'labels': [f'#{ solve.solve_id }' for solve in self.solves],
+            'times': seconds,
+            'zones': zones,
+            'best': best,
+            'edges': DAILY_ZONE_EDGES,
+            'ceiling': max(ceiling, DAILY_ZONE_EDGES[-1] + 5),
         }
 
     def compute_steps(self) -> list[DailyStepSeries]:

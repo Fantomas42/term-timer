@@ -137,7 +137,9 @@ class Server:
                 Rendered HTML template.
 
             """
-            return DailyListView(cube).as_view(debug)
+            return DailyListView(cube).legacy(
+                v1='v1' in request.GET,
+            ).as_view(debug)
 
         @app.route(f'{ solve_url }flag/', method='POST')  # type: ignore[untyped-decorator]
         def daily_solve_update_flag(cube: int, day: str, solve: int) -> None:
@@ -186,7 +188,9 @@ class Server:
                 Rendered HTML template.
 
             """
-            return DailyDayView(cube, day).as_view(debug)
+            return DailyDayView(cube, day).legacy(
+                v1='v1' in request.GET,
+            ).as_view(debug)
 
     @staticmethod
     def add_academy_routes(app: Bottle, *, debug: bool) -> None:
