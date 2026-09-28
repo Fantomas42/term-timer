@@ -1,0 +1,10 @@
+{#- A list of facts, a label and its value per row. The caller renders
+    each fact inside facts; a dim span in a value mutes its detail. -#}
+
+{% macro facts() -%}
+  <dl class="facts">{{ caller() }}</dl>
+{%- endmacro %}
+
+{% macro fact(label) -%}
+  <div class="facts-row"><dt>{{ label }}</dt><dd>{{ caller() }}</dd></div>
+{%- endmacro %}

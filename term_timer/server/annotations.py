@@ -8,7 +8,12 @@ from bottle import HTTPError
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeOrientation
 from cubing_algs.cases.case import Case
+from cubing_algs.ergonomics import ErgonomicsData
+from cubing_algs.impacts import ImpactData
+from cubing_algs.memory import MemoryData
+from cubing_algs.metrics import MetricsData
 from cubing_algs.move import Move
+from cubing_algs.structure import StructureData
 
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.doctor import Diagnostic
@@ -492,6 +497,115 @@ class SolveDetailContext(TypedDict):
     replay: PlayerData
 
 
+class AlgorithmCase(TypedDict):
+    """The CFOP last layer case an algorithm solves."""
+
+    step: str
+    code: str
+    label: str
+    aliases: list[str]
+    href: str
+    mode: str
+    arrows: str
+    yours: bool
+    main: bool
+
+
+class AlgorithmMoveStep(TypedDict):
+    """
+    One move of an algorithm as the hands execute it.
+
+    load is the discomfort of the move, 0 for the most comfortable, 1
+    for the least; transition names the kind of hand change from the
+    previous move, and part the member of the structure (A, B, A', B')
+    the move belongs to.
+    """
+
+    move: str
+    hand: str
+    finger: str
+    time: float
+    load: float
+    transition: str
+    regrip: bool
+    part: str
+    structure: int
+
+
+class AlgorithmStructureRow(TypedDict):
+    """A conjugate or commutator detected in an algorithm."""
+
+    number: int
+    kind: str
+    classification: str
+    notation: str
+    setup: str
+    action: str
+    first: int
+    last: int
+    moves: int
+    pure: bool
+    cancels: bool
+    score: float
+
+
+class AlgorithmVariationRow(TypedDict):
+    """A variation of an algorithm, its scores against the original."""
+
+    label: str
+    text: str
+    tokens: list[AlgToken]
+    htm: int
+    htm_delta: int
+    ergonomics: float
+    ergonomics_delta: float
+    memory: float
+    memory_delta: float
+    case: str
+    href: str
+    original: bool
+    best: bool
+
+
+class CubieCycle(TypedDict):
+    """Pieces an algorithm cycles, by their home position."""
+
+    kind: str
+    pieces: list[str]
+
+
+class AlgorithmPatternGroup(TypedDict):
+    """The cube patterns an algorithm leaves, for one category."""
+
+    label: str
+    patterns: list[str]
+
+
+class AlgorithmChart(TypedDict):
+    """
+    Data of the generic algorithm charts: one value per label, each
+    drawn with its colour role, on a scale capped at max when given.
+    """
+
+    labels: list[str]
+    values: list[float]
+    roles: list[str]
+    max: NotRequired[float]
+
+
+class AlgorithmCharts(TypedDict):
+    """The charts of the algorithm page."""
+
+    metrics: AlgorithmChart
+    move_types: AlgorithmChart
+    ergonomics: AlgorithmChart
+    hands: AlgorithmChart
+    fingers: AlgorithmChart
+    memory: AlgorithmChart
+    faces: AlgorithmChart
+    pieces: AlgorithmChart
+
+
 class AlgorithmDetailContext(TypedDict):
     """Template context for algorithm detail view."""
 
@@ -502,6 +616,27 @@ class AlgorithmDetailContext(TypedDict):
     orientation_moves: Algorithm
     orientation_faces: CubeOrientation
     available_orientations: dict[str, str]
+    text: str
+    tokens: list[AlgToken]
+    cube_size: int
+    solved_case: AlgorithmCase | None
+    breadcrumb: list[BreadcrumbItem]
+    metrics: MetricsData
+    ergonomics: ErgonomicsData
+    memory: MemoryData
+    structure: StructureData
+    impacts: ImpactData
+    effect_mask: str
+    cycles: int
+    tones: dict[str, str]
+    track: list[AlgorithmMoveStep]
+    structures: list[AlgorithmStructureRow]
+    cubie_cycles: list[CubieCycle]
+    twisted: list[str]
+    patterns: list[AlgorithmPatternGroup]
+    variations: list[AlgorithmVariationRow]
+    charts: AlgorithmCharts
+    player: PlayerData
 
 
 class StepCounts(TypedDict):
@@ -923,6 +1058,8 @@ class DesignStyleguideContext(TypedDict):
     attempts_chart: AttemptsCurve | None
     forgetting_chart: ForgettingCurve
     forecast_chart: 'ForecastChart'
+    move_track_steps: list[AlgorithmMoveStep]
+    algorithm_charts: AlgorithmCharts
 
 
 class NavigationItem(TypedDict):

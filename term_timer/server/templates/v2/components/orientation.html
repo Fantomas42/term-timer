@@ -1,0 +1,16 @@
+{#- The orientation the cubes of the page are shown in, applied as soon
+    as it is chosen (ui.js); the button is only there without script. -#}
+{% from 'v2/components/button.html' import button %}
+
+{% macro orientation_form(orientations, selected) -%}
+  <form class="orientation" method="get">
+    <label class="orientation-label">Orientation
+      <select class="orientation-select" name="o" data-autosubmit>
+        {%- for orientation, moves in orientations.items() %}
+          <option value="{{ orientation }}"{% if orientation == selected %} selected{% endif %}>{{ orientation }}{% if moves %} ({{ moves }}){% endif %}</option>
+        {%- endfor %}
+      </select>
+    </label>
+    <noscript>{{ button('Apply', type='submit') }}</noscript>
+  </form>
+{%- endmacro %}

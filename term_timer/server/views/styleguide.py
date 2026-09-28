@@ -39,6 +39,7 @@ from term_timer.server.filters import alg_tokens
 from term_timer.server.filters import algorithm_tokens
 from term_timer.server.views.academy import AcademyCaseView
 from term_timer.server.views.academy import AcademyView
+from term_timer.server.views.algorithm import AlgorithmDetailView
 from term_timer.server.views.base import View
 from term_timer.stats import Statistics
 
@@ -241,6 +242,10 @@ class DesignStyleguideView(View):
 
         """
         theme = DesignTheme.load()
+        # The T permutation: a conjugate, a commutator, and both hands.
+        fixture_algorithm = AlgorithmDetailView(
+            "R U R' U' R' F R2 U' R' U' R U R' F'", '',
+        )
 
         return {
             'token_groups': [
@@ -287,6 +292,12 @@ class DesignStyleguideView(View):
             'attempts_chart': DesignStyleguideView.attempts_chart(),
             'forgetting_chart': DesignStyleguideView.forgetting_chart(),
             'forecast_chart': DesignStyleguideView.forecast_chart(),
+            'move_track_steps': fixture_algorithm.build_track(
+                fixture_algorithm.algorithm.structure.structures,
+            ),
+            'algorithm_charts': fixture_algorithm.build_charts(
+                fixture_algorithm.algorithm.impacts(),
+            ),
         }
 
     @staticmethod

@@ -73,75 +73,11 @@
     text-align: center;
   }
 
-  .academy-case-facts {
-    display: grid;
-    padding-top: var(--space-3);
-  }
-
-  .academy-case-fact {
-    display: grid;
-    grid-template-columns: 7rem minmax(0, 1fr);
-    gap: var(--space-3);
-    padding: var(--space-2) 0;
-    border-bottom: var(--hairline) solid var(--line);
-    font-size: var(--step--1);
-  }
-
-  .academy-case-fact dt {
-    color: var(--text-muted);
-    font-size: var(--step--2);
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .academy-case-fact a {
-    color: var(--text);
-    text-decoration-color: var(--line-strong);
-    text-underline-offset: 0.2em;
-  }
-
-  .academy-case-fact a:hover {
-    color: var(--accent);
-  }
-
-  .academy-case-dim {
-    color: var(--text-faint);
-    font-family: var(--font-mono);
-  }
-
   .academy-case-notes {
     display: grid;
     gap: var(--space-2);
     padding: var(--space-4) 0 0;
     color: var(--text-muted);
-  }
-
-  .academy-case-orientation {
-    display: flex;
-    padding-top: var(--space-3);
-  }
-
-  .academy-case-control {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    color: var(--text-muted);
-    font-size: var(--step--2);
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .academy-case-select {
-    min-height: 2rem;
-    padding: 0 var(--space-2);
-    border: var(--hairline) solid var(--line-strong);
-    background: var(--bg);
-    color: var(--text);
-    font: 500 var(--step--1) / 1 var(--font-mono);
-    letter-spacing: 0;
-    text-transform: none;
   }
 
   /* The algorithm to learn ----------------------------------------- */

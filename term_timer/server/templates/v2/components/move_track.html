@@ -1,0 +1,55 @@
+{#- The moves of an algorithm as the hands execute them, one column per
+    move (AlgorithmMoveStep): the member of its structure (A, B, A', B'),
+    the move, a bar as high as the move is uncomfortable, the finger and
+    the hand. A change of hand marks the move, a regrip rules it off
+    from the previous one. -#}
+
+{% set TRACK_FINGERS = {
+  'thumb': 'T',
+  'index': 'I',
+  'middle': 'M',
+  'ring': 'R',
+  'pinky': 'P',
+  'mixed': '·',
+} %}
+
+{% set TRACK_HANDS = {
+  'right': 'R',
+  'left': 'L',
+  'both': 'RL',
+  'rotation': '⟲',
+  'pause': '·',
+} %}
+
+{% macro move_track(steps, label='Moves as the hands execute them') -%}
+  <ol class="move-track" aria-label="{{ label }}">
+    {%- for step in steps %}
+      <li class="move-track-step" data-hand="{{ step.hand }}"
+          {%- if step.part %} data-part="{{ step.part }}"{% endif %}
+          {%- if step.structure and (loop.first or loop.previtem.structure != step.structure) %} data-opens{% endif %}
+          {%- if step.transition %} data-transition="{{ step.transition }}"{% endif %}
+          {%- if step.regrip %} data-regrip{% endif %}
+          style="--load: {{ '%.2f'|format(step.load) }}"
+          title="{{ step.move }} · {{ step.hand }}{% if step.finger %} hand, {{ step.finger }}{% endif %} · {{ '%.0f'|format(step.time * 1000) }} ms{% if step.transition %} · {{ step.transition|replace('_', ' ') }}{% endif %}{% if step.regrip %} · regrip{% endif %}">
+        <span class="move-track-part">{{ step.part }}</span>
+        <span class="move-track-move">{{ step.move }}</span>
+        <span class="move-track-load"><span class="move-track-bar"></span></span>
+        <span class="move-track-finger">{{ TRACK_FINGERS.get(step.finger, '') }}</span>
+        <span class="move-track-hand">{{ TRACK_HANDS[step.hand] }}</span>
+      </li>
+    {%- endfor %}
+  </ol>
+{%- endmacro %}
+
+{% macro move_track_legend() -%}
+  <ul class="move-track-legend">
+    <li class="move-track-key" data-hand="right">Right hand</li>
+    <li class="move-track-key" data-hand="left">Left hand</li>
+    <li class="move-track-key" data-hand="both">Either</li>
+    <li class="move-track-key" data-key="load">Bar · discomfort</li>
+    <li class="move-track-key" data-key="switch">Hand switch</li>
+    <li class="move-track-key" data-key="regrip">Regrip</li>
+    <li class="move-track-key" data-key="parts">A B A′ B′ · structure</li>
+    <li class="move-track-key" data-key="fingers">T I M R · finger</li>
+  </ul>
+{%- endmacro %}

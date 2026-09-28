@@ -386,7 +386,7 @@ class Server:
             return AlgorithmDetailView(
                 algorithm,
                 request.GET.o,
-            ).as_view(debug)
+            ).legacy(v1='v1' in request.GET).as_view(debug)
 
         @app.route('/scramble/')  # type: ignore[untyped-decorator]
         def scramble_home() -> str:

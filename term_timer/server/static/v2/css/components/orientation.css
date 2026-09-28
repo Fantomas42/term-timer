@@ -1,0 +1,30 @@
+/* The orientation selector under a player. */
+
+@layer components {
+  .orientation {
+    display: flex;
+    padding-top: var(--space-3);
+  }
+
+  .orientation-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .orientation-select {
+    min-height: 2rem;
+    padding: 0 var(--space-2);
+    border: var(--hairline) solid var(--line-strong);
+    background: var(--bg);
+    color: var(--text);
+    font: 500 var(--step--1) / 1 var(--font-mono);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+}

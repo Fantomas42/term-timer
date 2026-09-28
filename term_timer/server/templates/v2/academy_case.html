@@ -6,6 +6,8 @@
 {% from 'v2/components/command.html' import command as command_line %}
 {% from 'v2/components/cube.html' import cube as cube_image %}
 {% from 'v2/components/dialog.html' import help_dialog %}
+{% from 'v2/components/facts.html' import facts, fact %}
+{% from 'v2/components/orientation.html' import orientation_form %}
 {% from 'v2/components/page_header.html' import page_header %}
 {% from 'v2/components/player.html' import player as player_box %}
 {% from 'v2/components/section.html' import section %}
@@ -109,29 +111,29 @@
         {% endif %}
       </div>
 
-      <dl class="academy-case-facts">
+      {% call facts() %}
         {% if case.family %}
-          <div class="academy-case-fact"><dt>Family</dt><dd><a href="{{ step_url }}?family={{ case.family|urlencode }}">{{ case.family }}</a></dd></div>
+          {% call fact('Family') %}<a href="{{ step_url }}?family={{ case.family|urlencode }}">{{ case.family }}</a>{% endcall %}
         {% endif %}
         {% if case.groups %}
-          <div class="academy-case-fact"><dt>Groups</dt><dd>
+          {% call fact('Groups') %}
             {%- for group in case.groups %}<a href="{{ step_url }}?group={{ group|urlencode }}">{{ group }}</a>{{ ' · ' if not loop.last }}{% endfor -%}
-          </dd></div>
+          {% endcall %}
         {% endif %}
         {% if case.probability_label %}
-          <div class="academy-case-fact"><dt>Probability</dt><dd>{{ case.probability_label }} <span class="academy-case-dim">{{ '%.4f'|format(case.probability) }}</span></dd></div>
+          {% call fact('Probability') %}{{ case.probability_label }} <span class="facts-dim">{{ '%.4f'|format(case.probability) }}</span>{% endcall %}
         {% endif %}
-        <div class="academy-case-fact"><dt>Optimal</dt><dd>{{ case.optimal_htm }} HTM <span class="academy-case-dim">· {{ case.optimal_stm }} STM</span></dd></div>
+        {% call fact('Optimal') %}{{ case.optimal_htm }} HTM <span class="facts-dim">· {{ case.optimal_stm }} STM</span>{% endcall %}
         {% if case.optimal_cycles %}
-          <div class="academy-case-fact"><dt>Cycles</dt><dd>{{ case.optimal_cycles }}</dd></div>
+          {% call fact('Cycles') %}{{ case.optimal_cycles }}{% endcall %}
         {% endif %}
         {% if case.symmetry %}
-          <div class="academy-case-fact"><dt>Symmetry</dt><dd>{{ case.symmetry|title }}</dd></div>
+          {% call fact('Symmetry') %}{{ case.symmetry|title }}{% endcall %}
         {% endif %}
         {% if DEBUG and case.status %}
-          <div class="academy-case-fact"><dt>Status</dt><dd>{{ badge(case.status, 'good' if case.status == 'OK' else 'bad') }}</dd></div>
+          {% call fact('Status') %}{{ badge(case.status, 'good' if case.status == 'OK' else 'bad') }}{% endcall %}
         {% endif %}
-      </dl>
+      {% endcall %}
 
       {% if description %}
         <div class="academy-case-notes">
@@ -142,16 +144,7 @@
       <div class="academy-case-sticky">
         {% call numbered('player', 'Player', 'your solution' if focus.custom else 'main algorithm') %}
           {{ player_box('case-player', player) }}
-          <form class="academy-case-orientation" method="get">
-            <label class="academy-case-control">Orientation
-              <select class="academy-case-select" name="o" data-autosubmit>
-                {%- for orientation, moves in available_orientations.items() %}
-                  <option value="{{ orientation }}"{% if orientation == orientation_faces %} selected{% endif %}>{{ orientation }}{% if moves %} ({{ moves }}){% endif %}</option>
-                {%- endfor %}
-              </select>
-            </label>
-            <noscript>{{ button('Apply', type='submit') }}</noscript>
-          </form>
+          {{ orientation_form(available_orientations, orientation_faces) }}
         {% endcall %}
       </div>
     </div>

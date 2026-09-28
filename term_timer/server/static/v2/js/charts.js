@@ -665,6 +665,117 @@ register('training-forecast', (data) => ({
   },
 }));
 
+// A colour role made translucent, the theme giving its colours in hex.
+function tint(role, alpha) {
+  const hex = Math.round(alpha * 255).toString(16).padStart(2, '0');
+  return `${token(role)}${hex}`;
+}
+
+// The generic charts of the algorithm page: one value per label, each
+// drawn in its colour role, the roles repeating when fewer.
+// data: {labels, values, roles, max?}
+const roleOf = (data, index) => data.roles[index % data.roles.length];
+const colours = (data) => data.labels.map((_, index) => token(roleOf(data, index)));
+
+const sideLegend = {
+  display: true,
+  position: 'bottom',
+  labels: { boxWidth: 10, boxHeight: 10, padding: 12 },
+};
+
+register('alg-counts', (data) => ({
+  type: 'bar',
+  data: {
+    labels: data.labels,
+    datasets: [{ data: data.values, backgroundColor: colours(data) }],
+  },
+  options: {
+    datasets: { bar: { borderRadius: 0, categoryPercentage: 0.8, barPercentage: 0.9 } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { beginAtZero: true, max: data.max, ticks: { precision: 0 } },
+    },
+    plugins: {
+      tooltip: { callbacks: { label: (item) => `${item.parsed.y}` } },
+    },
+  },
+}));
+
+register('alg-share', (data) => ({
+  type: 'doughnut',
+  data: {
+    labels: data.labels,
+    datasets: [{
+      data: data.values,
+      backgroundColor: colours(data),
+      borderColor: token('bg'),
+      borderWidth: 2,
+    }],
+  },
+  options: {
+    cutout: '62%',
+    plugins: { legend: sideLegend },
+  },
+}));
+
+register('alg-polar', (data) => ({
+  type: 'polarArea',
+  data: {
+    labels: data.labels,
+    datasets: [{
+      data: data.values,
+      backgroundColor: data.labels.map((_, index) => tint(roleOf(data, index), 0.75)),
+      borderColor: token('bg'),
+      borderWidth: 2,
+    }],
+  },
+  options: {
+    scales: {
+      r: {
+        beginAtZero: true,
+        grid: { color: token('chart-grid') },
+        ticks: { precision: 0, backdropColor: 'transparent' },
+      },
+    },
+    plugins: { legend: sideLegend },
+  },
+}));
+
+register('alg-profile', (data) => ({
+  type: 'radar',
+  data: {
+    labels: data.labels,
+    datasets: [{
+      data: data.values,
+      borderColor: token(roleOf(data, 0)),
+      backgroundColor: tint(roleOf(data, 0), 0.18),
+      borderWidth: 2,
+      pointRadius: 3,
+      pointBackgroundColor: token(roleOf(data, 0)),
+      pointBorderWidth: 0,
+    }],
+  },
+  options: {
+    scales: {
+      r: {
+        min: 0,
+        max: data.max,
+        grid: { color: token('chart-grid') },
+        angleLines: { color: token('chart-grid') },
+        pointLabels: { color: token('chart-axis') },
+        ticks: { stepSize: 20, display: false },
+      },
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (item) => `${item.label} ${item.parsed.r.toFixed(0)}`,
+        },
+      },
+    },
+  },
+}));
+
 export function draw(canvas) {
   const build = builders[canvas.dataset.chart];
   if (!build) {
